@@ -33,7 +33,7 @@ import {
   timeSeriesAxisPositionTranslations,
   TimeSeriesChartYAxisSettings
 } from '@home/components/widget/lib/chart/time-series-chart.models';
-import { MatButton } from '@angular/material/button';
+import { MatIconButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import {
@@ -44,17 +44,18 @@ import { TranslateService } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-time-series-chart-y-axis-row',
-  templateUrl: './time-series-chart-y-axis-row.component.html',
-  styleUrls: ['./time-series-chart-y-axis-row.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => TimeSeriesChartYAxisRowComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-time-series-chart-y-axis-row',
+    templateUrl: './time-series-chart-y-axis-row.component.html',
+    styleUrls: ['./time-series-chart-y-axis-row.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TimeSeriesChartYAxisRowComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, OnInit {
 
@@ -147,7 +148,7 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
     this.cd.markForCheck();
   }
 
-  editAxis($event: Event, matButton: MatButton) {
+  editAxis($event: Event, matButton: MatIconButton) {
     if ($event) {
       $event.stopPropagation();
     }

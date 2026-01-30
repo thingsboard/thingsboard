@@ -20,9 +20,10 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@app/shared/models/rule-node.models';
 
 @Component({
-  selector: 'tb-transformation-node-to-email-config',
-  templateUrl: './to-email-config.component.html',
-  styleUrls: ['./to-email-config.component.scss']
+    selector: 'tb-transformation-node-to-email-config',
+    templateUrl: './to-email-config.component.html',
+    styleUrls: ['./to-email-config.component.scss'],
+    standalone: false
 })
 export class ToEmailConfigComponent extends RuleNodeConfigurationComponent {
 

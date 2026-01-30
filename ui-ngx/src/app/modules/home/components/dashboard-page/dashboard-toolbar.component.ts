@@ -17,10 +17,11 @@
 import { Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 
 @Component({
-  selector: 'tb-dashboard-toolbar',
-  templateUrl: './dashboard-toolbar.component.html',
-  styleUrls: ['./dashboard-toolbar.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-dashboard-toolbar',
+    templateUrl: './dashboard-toolbar.component.html',
+    styleUrls: ['./dashboard-toolbar.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class DashboardToolbarComponent implements OnInit {
 

@@ -37,10 +37,11 @@ import { DialogService } from '@core/services/dialog.service';
 import { IEntityDetailsPageComponent } from '@home/models/entity/entity-details-page-component.models';
 
 @Component({
-  selector: 'tb-entity-details-page',
-  templateUrl: './entity-details-page.component.html',
-  styleUrls: ['./entity-details-page.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'tb-entity-details-page',
+    templateUrl: './entity-details-page.component.html',
+    styleUrls: ['./entity-details-page.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class EntityDetailsPageComponent extends EntityDetailsPanelComponent implements IEntityDetailsPageComponent, OnInit, OnDestroy {
 

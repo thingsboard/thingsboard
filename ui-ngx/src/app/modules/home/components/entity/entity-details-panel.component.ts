@@ -47,10 +47,11 @@ import { catchError } from 'rxjs/operators';
 import { HttpStatusCode } from '@angular/common/http';
 
 @Component({
-  selector: 'tb-entity-details-panel',
-  templateUrl: './entity-details-panel.component.html',
-  styleUrls: ['./entity-details-panel.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'tb-entity-details-panel',
+    templateUrl: './entity-details-panel.component.html',
+    styleUrls: ['./entity-details-panel.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class EntityDetailsPanelComponent extends PageComponent implements AfterViewInit, OnDestroy {
 

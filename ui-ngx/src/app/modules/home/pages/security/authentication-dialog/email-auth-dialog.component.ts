@@ -35,9 +35,10 @@ export interface EmailAuthDialogData {
 }
 
 @Component({
-  selector: 'tb-email-auth-dialog',
-  templateUrl: './email-auth-dialog.component.html',
-  styleUrls: ['./authentication-dialog.component.scss']
+    selector: 'tb-email-auth-dialog',
+    templateUrl: './email-auth-dialog.component.html',
+    styleUrls: ['./authentication-dialog.component.scss'],
+    standalone: false
 })
 export class EmailAuthDialogComponent extends DialogComponent<EmailAuthDialogComponent> {
 

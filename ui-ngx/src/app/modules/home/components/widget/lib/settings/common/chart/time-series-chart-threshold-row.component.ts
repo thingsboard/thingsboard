@@ -56,17 +56,18 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-time-series-chart-threshold-row',
-  templateUrl: './time-series-chart-threshold-row.component.html',
-  styleUrls: ['./time-series-chart-threshold-row.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => TimeSeriesChartThresholdRowComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-time-series-chart-threshold-row',
+    templateUrl: './time-series-chart-threshold-row.component.html',
+    styleUrls: ['./time-series-chart-threshold-row.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TimeSeriesChartThresholdRowComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class TimeSeriesChartThresholdRowComponent implements ControlValueAccessor, OnInit, OnChanges {
 

@@ -17,7 +17,8 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({
-  name: 'nospace'
+    name: 'nospace',
+    standalone: false
 })
 export class NospacePipe implements PipeTransform {
 

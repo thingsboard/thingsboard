@@ -40,17 +40,18 @@ import { TbFlotKeyThreshold } from '@home/components/widget/lib/flot-widget.mode
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-flot-threshold',
-  templateUrl: './flot-threshold.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => FlotThresholdComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-flot-threshold',
+    templateUrl: './flot-threshold.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => FlotThresholdComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class FlotThresholdComponent extends PageComponent implements OnInit, ControlValueAccessor {
 

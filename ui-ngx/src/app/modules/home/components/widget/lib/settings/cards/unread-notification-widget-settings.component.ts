@@ -22,9 +22,10 @@ import { AppState } from '@core/core.state';
 import { unreadNotificationDefaultSettings } from '@home/components/widget/lib/cards/unread-notification-widget.models';
 
 @Component({
-  selector: 'tb-unread-notification-widget-settings',
-  templateUrl: './unread-notification-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-unread-notification-widget-settings',
+    templateUrl: './unread-notification-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class UnreadNotificationWidgetSettingsComponent extends WidgetSettingsComponent {
 

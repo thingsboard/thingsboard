@@ -28,9 +28,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { isNotEmptyStr } from '@core/utils';
 
 @Component({
-  selector: 'tb-alarm-assignee',
-  templateUrl: './alarm-assignee.component.html',
-  styleUrls: ['./alarm-assignee.component.scss']
+    selector: 'tb-alarm-assignee',
+    templateUrl: './alarm-assignee.component.html',
+    styleUrls: ['./alarm-assignee.component.scss'],
+    standalone: false
 })
 export class AlarmAssigneeComponent {
   @Input()

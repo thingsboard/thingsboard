@@ -23,9 +23,10 @@ import { GpioItem, gpioItemValidator } from '@home/components/widget/lib/setting
 import { ContentType } from '@shared/models/constants';
 
 @Component({
-  selector: 'tb-gpio-control-widget-settings',
-  templateUrl: './gpio-control-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-gpio-control-widget-settings',
+    templateUrl: './gpio-control-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class GpioControlWidgetSettingsComponent extends WidgetSettingsComponent {
 

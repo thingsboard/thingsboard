@@ -25,11 +25,12 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MarkerImageSettings, MarkerImageType } from '@shared/models/widget/maps/map.models';
 
 @Component({
-  selector: 'tb-marker-image-settings-panel',
-  templateUrl: './marker-image-settings-panel.component.html',
-  providers: [],
-  styleUrls: ['./marker-image-settings-panel.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-marker-image-settings-panel',
+    templateUrl: './marker-image-settings-panel.component.html',
+    providers: [],
+    styleUrls: ['./marker-image-settings-panel.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class MarkerImageSettingsPanelComponent extends PageComponent implements OnInit {
 

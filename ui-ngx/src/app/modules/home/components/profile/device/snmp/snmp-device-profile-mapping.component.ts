@@ -34,20 +34,22 @@ import { isUndefinedOrNull } from '@core/utils';
 import { takeUntil } from 'rxjs/operators';
 
 @Component({
-  selector: 'tb-snmp-device-profile-mapping',
-  templateUrl: './snmp-device-profile-mapping.component.html',
-  styleUrls: ['./snmp-device-profile-mapping.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => SnmpDeviceProfileMappingComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => SnmpDeviceProfileMappingComponent),
-      multi: true
-    }]
+    selector: 'tb-snmp-device-profile-mapping',
+    templateUrl: './snmp-device-profile-mapping.component.html',
+    styleUrls: ['./snmp-device-profile-mapping.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => SnmpDeviceProfileMappingComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => SnmpDeviceProfileMappingComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class SnmpDeviceProfileMappingComponent implements OnInit, OnDestroy, ControlValueAccessor, Validator {
 

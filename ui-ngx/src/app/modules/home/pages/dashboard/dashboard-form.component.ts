@@ -33,9 +33,10 @@ import { isEqual } from '@core/utils';
 import { EntityType } from '@shared/models/entity-type.models';
 
 @Component({
-  selector: 'tb-dashboard-form',
-  templateUrl: './dashboard-form.component.html',
-  styleUrls: ['./dashboard-form.component.scss']
+    selector: 'tb-dashboard-form',
+    templateUrl: './dashboard-form.component.html',
+    styleUrls: ['./dashboard-form.component.scss'],
+    standalone: false
 })
 export class DashboardFormComponent extends EntityComponent<Dashboard> {
 

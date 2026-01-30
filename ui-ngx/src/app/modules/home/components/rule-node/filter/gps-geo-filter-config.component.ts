@@ -21,9 +21,10 @@ import { RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@app/shar
 import { PerimeterType, perimeterTypeTranslations, RangeUnit, rangeUnitTranslations } from '../rule-node-config.models';
 
 @Component({
-  selector: 'tb-filter-node-gps-geofencing-config',
-  templateUrl: './gps-geo-filter-config.component.html',
-  styleUrls: ['./gps-geo-filter-config.component.scss']
+    selector: 'tb-filter-node-gps-geofencing-config',
+    templateUrl: './gps-geo-filter-config.component.html',
+    styleUrls: ['./gps-geo-filter-config.component.scss'],
+    standalone: false
 })
 export class GpsGeoFilterConfigComponent extends RuleNodeConfigurationComponent {
 

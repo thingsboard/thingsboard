@@ -26,9 +26,10 @@ import {
 } from '@angular/core';
 
 @Directive({
-  // eslint-disable-next-line @angular-eslint/directive-selector
-  selector: '[tbStringTemplateOutlet]',
-  exportAs: 'tbStringTemplateOutlet'
+    // eslint-disable-next-line @angular-eslint/directive-selector
+    selector: '[tbStringTemplateOutlet]',
+    exportAs: 'tbStringTemplateOutlet',
+    standalone: false
 })
 export class TbStringTemplateOutletDirective<_T = unknown> implements OnChanges {
   private embeddedViewRef: EmbeddedViewRef<any> | null = null;

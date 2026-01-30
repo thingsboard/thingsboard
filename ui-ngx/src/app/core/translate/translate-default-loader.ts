@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { TranslateLoader } from '@ngx-translate/core';
+import { TranslateLoader, TranslationObject } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
@@ -26,7 +26,7 @@ export class TranslateDefaultLoader implements TranslateLoader {
 
   }
 
-  getTranslation(lang: string): Observable<object> {
-    return this.http.get(`/assets/locale/locale.constant-${lang}.json`);
+  getTranslation(lang: string): Observable<TranslationObject> {
+    return this.http.get<TranslationObject>(`/assets/locale/locale.constant-${lang}.json`);
   }
 }

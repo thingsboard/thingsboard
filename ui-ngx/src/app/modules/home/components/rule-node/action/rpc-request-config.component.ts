@@ -19,9 +19,10 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@shared/models/rule-node.models';
 
 @Component({
-  selector: 'tb-action-node-rpc-request-config',
-  templateUrl: './rpc-request-config.component.html',
-  styleUrls: []
+    selector: 'tb-action-node-rpc-request-config',
+    templateUrl: './rpc-request-config.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class RpcRequestConfigComponent extends RuleNodeConfigurationComponent {
 

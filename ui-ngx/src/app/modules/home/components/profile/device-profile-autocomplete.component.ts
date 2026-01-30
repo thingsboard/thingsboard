@@ -54,14 +54,15 @@ import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 
 @Component({
-  selector: 'tb-device-profile-autocomplete',
-  templateUrl: './device-profile-autocomplete.component.html',
-  styleUrls: ['./device-profile-autocomplete.component.scss'],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => DeviceProfileAutocompleteComponent),
-    multi: true
-  }]
+    selector: 'tb-device-profile-autocomplete',
+    templateUrl: './device-profile-autocomplete.component.html',
+    styleUrls: ['./device-profile-autocomplete.component.scss'],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DeviceProfileAutocompleteComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class DeviceProfileAutocompleteComponent implements ControlValueAccessor, OnInit, OnChanges {
 

@@ -42,10 +42,11 @@ import { SVG, Svg } from '@svgdotjs/svg.js';
 import { MatIconRegistry } from '@angular/material/icon';
 
 @Component({
-  selector: 'tb-power-button-widget',
-  templateUrl: './power-button-widget.component.html',
-  styleUrls: ['../action/action-widget.scss', './power-button-widget.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-power-button-widget',
+    templateUrl: './power-button-widget.component.html',
+    styleUrls: ['../action/action-widget.scss', './power-button-widget.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class PowerButtonWidgetComponent extends
   BasicActionWidgetComponent implements OnInit, AfterViewInit, OnDestroy {

@@ -29,9 +29,10 @@ export interface ErrorAlertDialogData {
 }
 
 @Component({
-  selector: 'tb-error-alert-dialog',
-  templateUrl: './error-alert-dialog.component.html',
-  styleUrls: ['./error-alert-dialog.component.scss']
+    selector: 'tb-error-alert-dialog',
+    templateUrl: './error-alert-dialog.component.html',
+    styleUrls: ['./error-alert-dialog.component.scss'],
+    standalone: false
 })
 export class ErrorAlertDialogComponent extends DialogComponent<ErrorAlertDialogComponent, boolean>{
 

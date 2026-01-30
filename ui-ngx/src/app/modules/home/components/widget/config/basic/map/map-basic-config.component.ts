@@ -31,9 +31,10 @@ import {
 } from '@home/components/widget/config/timewindow-config-panel.component';
 
 @Component({
-  selector: 'tb-map-basic-config',
-  templateUrl: './map-basic-config.component.html',
-  styleUrls: ['../basic-config.scss']
+    selector: 'tb-map-basic-config',
+    templateUrl: './map-basic-config.component.html',
+    styleUrls: ['../basic-config.scss'],
+    standalone: false
 })
 export class MapBasicConfigComponent extends BasicWidgetConfigComponent {
 

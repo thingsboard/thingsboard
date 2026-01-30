@@ -100,9 +100,10 @@ interface DocLinksWidgetSettings {
 }
 
 @Component({
-  selector: 'tb-doc-links-widget',
-  templateUrl: './doc-links-widget.component.html',
-  styleUrls: ['./home-page-widget.scss', './links-widget.component.scss']
+    selector: 'tb-doc-links-widget',
+    templateUrl: './doc-links-widget.component.html',
+    styleUrls: ['./home-page-widget.scss', './links-widget.component.scss'],
+    standalone: false
 })
 export class DocLinksWidgetComponent extends PageComponent implements OnInit, OnDestroy {
 

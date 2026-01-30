@@ -39,9 +39,10 @@ import {
 import { extractType } from '@core/utils';
 
 @Component({
-  selector: 'tb-trip-animation-widget-settings',
-  templateUrl: './trip-animation-widget-settings.component.html',
-  styleUrls: ['./../../widget-settings.scss']
+    selector: 'tb-trip-animation-widget-settings',
+    templateUrl: './trip-animation-widget-settings.component.html',
+    styleUrls: ['./../../widget-settings.scss'],
+    standalone: false
 })
 export class TripAnimationWidgetSettingsComponent extends WidgetSettingsComponent {
 

@@ -21,9 +21,10 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 
 @Component({
-  selector: 'tb-flot-pie-widget-settings',
-  templateUrl: './flot-pie-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-flot-pie-widget-settings',
+    templateUrl: './flot-pie-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class FlotPieWidgetSettingsComponent extends WidgetSettingsComponent {
 

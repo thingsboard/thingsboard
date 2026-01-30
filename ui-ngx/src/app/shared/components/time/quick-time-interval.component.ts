@@ -23,16 +23,17 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { isEqual } from '@core/utils';
 
 @Component({
-  selector: 'tb-quick-time-interval',
-  templateUrl: './quick-time-interval.component.html',
-  styleUrls: ['./quick-time-interval.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => QuickTimeIntervalComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-quick-time-interval',
+    templateUrl: './quick-time-interval.component.html',
+    styleUrls: ['./quick-time-interval.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => QuickTimeIntervalComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class QuickTimeIntervalComponent implements OnInit, ControlValueAccessor, OnChanges {
 

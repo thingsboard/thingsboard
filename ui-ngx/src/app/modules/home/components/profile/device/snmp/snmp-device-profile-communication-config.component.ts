@@ -32,20 +32,22 @@ import { isUndefinedOrNull } from '@core/utils';
 import { takeUntil } from 'rxjs/operators';
 
 @Component({
-  selector: 'tb-snmp-device-profile-communication-config',
-  templateUrl: './snmp-device-profile-communication-config.component.html',
-  styleUrls: ['./snmp-device-profile-communication-config.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => SnmpDeviceProfileCommunicationConfigComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => SnmpDeviceProfileCommunicationConfigComponent),
-      multi: true
-    }]
+    selector: 'tb-snmp-device-profile-communication-config',
+    templateUrl: './snmp-device-profile-communication-config.component.html',
+    styleUrls: ['./snmp-device-profile-communication-config.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => SnmpDeviceProfileCommunicationConfigComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => SnmpDeviceProfileCommunicationConfigComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class SnmpDeviceProfileCommunicationConfigComponent implements OnInit, OnDestroy, ControlValueAccessor, Validator {
 

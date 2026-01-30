@@ -32,10 +32,11 @@ export interface Lwm2mAttributesDialogData {
 }
 
 @Component({
-  selector: 'tb-lwm2m-attributes-dialog',
-  templateUrl: './lwm2m-attributes-dialog.component.html',
-  styleUrls: [],
-  providers: [{provide: ErrorStateMatcher, useExisting: Lwm2mAttributesDialogComponent}],
+    selector: 'tb-lwm2m-attributes-dialog',
+    templateUrl: './lwm2m-attributes-dialog.component.html',
+    styleUrls: [],
+    providers: [{ provide: ErrorStateMatcher, useExisting: Lwm2mAttributesDialogComponent }],
+    standalone: false
 })
 export class Lwm2mAttributesDialogComponent
   extends DialogComponent<Lwm2mAttributesDialogComponent, AttributesNameValueMap> implements ErrorStateMatcher {

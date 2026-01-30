@@ -46,22 +46,23 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 export const selectItemValid = (item: FormSelectItem): boolean => isDefinedAndNotNull(item.value) && !!item.label;
 
 @Component({
-  selector: 'tb-dynamic-form-select-item-row',
-  templateUrl: './dynamic-form-select-item-row.component.html',
-  styleUrls: ['./dynamic-form-select-item-row.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DynamicFormSelectItemRowComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => DynamicFormSelectItemRowComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-dynamic-form-select-item-row',
+    templateUrl: './dynamic-form-select-item-row.component.html',
+    styleUrls: ['./dynamic-form-select-item-row.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DynamicFormSelectItemRowComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => DynamicFormSelectItemRowComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class DynamicFormSelectItemRowComponent implements ControlValueAccessor, OnInit, Validator {
 

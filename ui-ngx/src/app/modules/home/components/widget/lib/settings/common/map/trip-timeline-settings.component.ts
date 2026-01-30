@@ -33,21 +33,22 @@ import {
 } from '@shared/models/widget/maps/map.models';
 
 @Component({
-  selector: 'tb-trip-timeline-settings',
-  templateUrl: './trip-timeline-settings.component.html',
-  styleUrls: ['./../../widget-settings.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => TripTimelineSettingsComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => TripTimelineSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-trip-timeline-settings',
+    templateUrl: './trip-timeline-settings.component.html',
+    styleUrls: ['./../../widget-settings.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TripTimelineSettingsComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => TripTimelineSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class TripTimelineSettingsComponent implements OnInit, ControlValueAccessor, Validator {
 

@@ -24,9 +24,10 @@ interface CircleElement extends RaphaelElement {
 }
 
 @Component({
-  selector: 'tb-led-light',
-  templateUrl: './led-light.component.html',
-  styleUrls: []
+    selector: 'tb-led-light',
+    templateUrl: './led-light.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class LedLightComponent implements OnInit, AfterViewInit, OnChanges {
 

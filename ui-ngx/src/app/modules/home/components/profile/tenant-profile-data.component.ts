@@ -23,14 +23,15 @@ import { TenantProfileData } from '@shared/models/tenant.model';
 import { Subscription } from 'rxjs';
 
 @Component({
-  selector: 'tb-tenant-profile-data',
-  templateUrl: './tenant-profile-data.component.html',
-  styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => TenantProfileDataComponent),
-    multi: true
-  }]
+    selector: 'tb-tenant-profile-data',
+    templateUrl: './tenant-profile-data.component.html',
+    styleUrls: [],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TenantProfileDataComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class TenantProfileDataComponent implements ControlValueAccessor, OnInit, OnDestroy {
 

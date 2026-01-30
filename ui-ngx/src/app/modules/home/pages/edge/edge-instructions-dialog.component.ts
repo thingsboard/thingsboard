@@ -39,9 +39,10 @@ export interface EdgeInstructionsDialogData {
 }
 
 @Component({
-  selector: 'tb-edge-installation-dialog',
-  templateUrl: './edge-instructions-dialog.component.html',
-  styleUrls: ['./edge-instructions-dialog.component.scss']
+    selector: 'tb-edge-installation-dialog',
+    templateUrl: './edge-instructions-dialog.component.html',
+    styleUrls: ['./edge-instructions-dialog.component.scss'],
+    standalone: false
 })
 export class EdgeInstructionsDialogComponent extends DialogComponent<EdgeInstructionsDialogComponent> implements OnInit, OnDestroy {
 

@@ -33,21 +33,22 @@ import { isDefinedAndNotNull } from '@core/utils';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-rate-limits-list',
-  templateUrl: './rate-limits-list.component.html',
-  styleUrls: ['./rate-limits-list.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => RateLimitsListComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => RateLimitsListComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-rate-limits-list',
+    templateUrl: './rate-limits-list.component.html',
+    styleUrls: ['./rate-limits-list.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => RateLimitsListComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => RateLimitsListComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class RateLimitsListComponent implements ControlValueAccessor, Validator, OnInit {
 

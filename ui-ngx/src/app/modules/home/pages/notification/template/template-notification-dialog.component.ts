@@ -44,9 +44,10 @@ export interface TemplateNotificationDialogData {
 }
 
 @Component({
-  selector: 'tb-template-notification-dialog',
-  templateUrl: './template-notification-dialog.component.html',
-  styleUrls: ['./template-notification-dialog.component.scss']
+    selector: 'tb-template-notification-dialog',
+    templateUrl: './template-notification-dialog.component.html',
+    styleUrls: ['./template-notification-dialog.component.scss'],
+    standalone: false
 })
 export class TemplateNotificationDialogComponent
   extends TemplateConfiguration<TemplateNotificationDialogComponent, NotificationTemplate> implements OnDestroy {

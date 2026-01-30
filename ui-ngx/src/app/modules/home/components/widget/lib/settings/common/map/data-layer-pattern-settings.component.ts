@@ -37,21 +37,22 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 import { MapSettingsContext } from '@home/components/widget/lib/settings/common/map/map-settings.component.models';
 
 @Component({
-  selector: 'tb-data-layer-pattern-settings',
-  templateUrl: './data-layer-pattern-settings.component.html',
-  styleUrls: ['./../../widget-settings.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DataLayerPatternSettingsComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => DataLayerPatternSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-data-layer-pattern-settings',
+    templateUrl: './data-layer-pattern-settings.component.html',
+    styleUrls: ['./../../widget-settings.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DataLayerPatternSettingsComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => DataLayerPatternSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class DataLayerPatternSettingsComponent implements OnInit, ControlValueAccessor, Validator {
 

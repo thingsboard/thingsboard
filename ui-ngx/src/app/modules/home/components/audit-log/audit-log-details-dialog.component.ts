@@ -29,9 +29,10 @@ export interface AuditLogDetailsDialogData {
 }
 
 @Component({
-  selector: 'tb-audit-log-details-dialog',
-  templateUrl: './audit-log-details-dialog.component.html',
-  styleUrls: ['./audit-log-details-dialog.component.scss']
+    selector: 'tb-audit-log-details-dialog',
+    templateUrl: './audit-log-details-dialog.component.html',
+    styleUrls: ['./audit-log-details-dialog.component.scss'],
+    standalone: false
 })
 export class AuditLogDetailsDialogComponent extends DialogComponent<AuditLogDetailsDialogComponent> implements OnInit, OnDestroy {
 

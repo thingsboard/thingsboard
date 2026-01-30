@@ -34,10 +34,11 @@ export interface ResourcesDialogData {
 }
 
 @Component({
-  selector: 'tb-resources-dialog',
-  templateUrl: './resources-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: ResourcesDialogComponent}],
-  styleUrls: ['./resources-dialog.component.scss']
+    selector: 'tb-resources-dialog',
+    templateUrl: './resources-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: ResourcesDialogComponent }],
+    styleUrls: ['./resources-dialog.component.scss'],
+    standalone: false
 })
 export class ResourcesDialogComponent extends DialogComponent<ResourcesDialogComponent, Resource> implements ErrorStateMatcher, AfterViewInit {
 

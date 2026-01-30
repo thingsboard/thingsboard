@@ -24,16 +24,17 @@ import { isDefinedAndNotNull } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
-  selector: 'tb-font-settings',
-  templateUrl: './font-settings.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => FontSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-font-settings',
+    templateUrl: './font-settings.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => FontSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class FontSettingsComponent implements OnInit, ControlValueAccessor {
 

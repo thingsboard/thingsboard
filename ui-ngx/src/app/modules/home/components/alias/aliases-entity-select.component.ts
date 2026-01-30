@@ -41,9 +41,10 @@ import { deepClone } from '@core/utils';
 import { AliasFilterType } from '@shared/models/alias.models';
 
 @Component({
-  selector: 'tb-aliases-entity-select',
-  templateUrl: './aliases-entity-select.component.html',
-  styleUrls: ['./aliases-entity-select.component.scss']
+    selector: 'tb-aliases-entity-select',
+    templateUrl: './aliases-entity-select.component.html',
+    styleUrls: ['./aliases-entity-select.component.scss'],
+    standalone: false
 })
 export class AliasesEntitySelectComponent implements OnInit, OnDestroy {
 

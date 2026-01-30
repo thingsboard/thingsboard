@@ -37,9 +37,10 @@ export interface ImageDialogData {
 }
 
 @Component({
-  selector: 'tb-image-dialog',
-  templateUrl: './image-dialog.component.html',
-  styleUrls: ['./image-dialog.component.scss']
+    selector: 'tb-image-dialog',
+    templateUrl: './image-dialog.component.html',
+    styleUrls: ['./image-dialog.component.scss'],
+    standalone: false
 })
 export class ImageDialogComponent extends
   DialogComponent<ImageDialogComponent, ImageResourceInfo> implements OnInit {

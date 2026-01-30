@@ -22,9 +22,10 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { EntityViewInfo } from '@app/shared/models/entity-view.models';
 
 @Component({
-  selector: 'tb-entity-view-table-header',
-  templateUrl: './entity-view-table-header.component.html',
-  styleUrls: []
+    selector: 'tb-entity-view-table-header',
+    templateUrl: './entity-view-table-header.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class EntityViewTableHeaderComponent extends EntityTableHeaderComponent<EntityViewInfo> {
 

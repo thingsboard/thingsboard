@@ -56,10 +56,11 @@ export interface CalculatedFieldDialogData {
 }
 
 @Component({
-  selector: 'tb-calculated-field-dialog',
-  templateUrl: './calculated-field-dialog.component.html',
-  styleUrls: ['./calculated-field-dialog.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-calculated-field-dialog',
+    templateUrl: './calculated-field-dialog.component.html',
+    styleUrls: ['./calculated-field-dialog.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFieldDialogComponent, CalculatedField> {
 

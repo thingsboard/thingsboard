@@ -46,16 +46,17 @@ export function labelDataKeyValidator(control: AbstractControl): ValidationError
 }
 
 @Component({
-  selector: 'tb-label-data-key',
-  templateUrl: './label-data-key.component.html',
-  styleUrls: ['./label-data-key.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => LabelDataKeyComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-label-data-key',
+    templateUrl: './label-data-key.component.html',
+    styleUrls: ['./label-data-key.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => LabelDataKeyComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class LabelDataKeyComponent extends PageComponent implements OnInit, ControlValueAccessor {
 

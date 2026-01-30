@@ -23,9 +23,10 @@ import { RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@shared/m
 
 
 @Component({
-  selector: 'tb-transformation-node-rename-keys-config',
-  templateUrl: './rename-keys-config.component.html',
-  styleUrls: ['./rename-keys-config.component.scss']
+    selector: 'tb-transformation-node-rename-keys-config',
+    templateUrl: './rename-keys-config.component.html',
+    styleUrls: ['./rename-keys-config.component.scss'],
+    standalone: false
 })
 export class RenameKeysConfigComponent extends RuleNodeConfigurationComponent {
   renameKeysConfigForm: FormGroup;

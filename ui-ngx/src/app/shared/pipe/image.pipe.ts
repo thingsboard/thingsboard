@@ -30,7 +30,8 @@ export interface UrlHolder {
 }
 
 @Pipe({
-  name: 'image'
+    name: 'image',
+    standalone: false
 })
 export class ImagePipe implements PipeTransform {
 

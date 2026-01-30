@@ -71,10 +71,11 @@ import { EntityDetailsPanelComponent } from '@home/components/entity/entity-deta
 import { FormBuilder } from '@angular/forms';
 
 @Component({
-  selector: 'tb-entities-table',
-  templateUrl: './entities-table.component.html',
-  styleUrls: ['./entities-table.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'tb-entities-table',
+    templateUrl: './entities-table.component.html',
+    styleUrls: ['./entities-table.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class EntitiesTableComponent extends PageComponent implements IEntitiesTableComponent, AfterViewInit, OnInit, OnChanges, OnDestroy {
 

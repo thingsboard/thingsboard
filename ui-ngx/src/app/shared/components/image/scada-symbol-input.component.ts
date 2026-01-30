@@ -44,16 +44,17 @@ export enum ScadaSymbolLinkType {
 }
 
 @Component({
-  selector: 'tb-scada-symbol-input',
-  templateUrl: './scada-symbol-input.component.html',
-  styleUrls: ['./scada-symbol-input.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ScadaSymbolInputComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-scada-symbol-input',
+    templateUrl: './scada-symbol-input.component.html',
+    styleUrls: ['./scada-symbol-input.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ScadaSymbolInputComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ScadaSymbolInputComponent extends PageComponent implements OnInit, OnDestroy, ControlValueAccessor {
 
