@@ -125,7 +125,7 @@
       <section class="tb-form-panel stroked">
         <div class="flex flex-row items-center justify-between">
           <div class="tb-form-panel-title">{{ 'alarm-rule.type' | translate }}</div>
-          <tb-toggle-select formControlName="type" selectMediaBreakpoint="xs" [disabled]="isNoData">
+          <tb-toggle-select formControlName="type" selectMediaBreakpoint="xs">
             <tb-toggle-option *ngFor="let alarmConditionType of alarmConditionTypes" [value]="alarmConditionType">
               {{ alarmConditionTypeTranslation.get(alarmConditionType) | translate }}
             </tb-toggle-option>

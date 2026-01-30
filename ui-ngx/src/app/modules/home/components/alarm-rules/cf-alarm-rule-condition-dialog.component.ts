@@ -228,6 +228,11 @@ export class CfAlarmRuleConditionDialogComponent extends DialogComponent<CfAlarm
     if (this.isNoData && this.conditionFormGroup.get('type').value !== AlarmRuleConditionType.SIMPLE) {
       this.conditionFormGroup.get('type').patchValue(AlarmRuleConditionType.SIMPLE);
     }
+    if (this.isNoData) {
+      this.conditionFormGroup.get('type').disable({emitEvent: false});
+    } else {
+      this.conditionFormGroup.get('type').enable({emitEvent: false});
+    }
   }
 
   private hasNoData(data: Array<AlarmRuleFilter>) {

@@ -28,7 +28,6 @@ import { UserId } from '@shared/models/id/user-id';
 import { AlarmFilter } from '@shared/models/query/query.models';
 import { HasTenantId } from '@shared/models/entity.models';
 import { isDefinedAndNotNull, isNotEmptyStr } from '@core/utils';
-import { defaults } from 'lodash';
 
 export enum AlarmsMode {
   ALL,
