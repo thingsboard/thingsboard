@@ -50,10 +50,11 @@ import tinycolor from 'tinycolor2';
 import { UnitService } from '@core/services/unit.service';
 
 @Component({
-  selector: 'tb-slider-widget',
-  templateUrl: './slider-widget.component.html',
-  styleUrls: ['../action/action-widget.scss', './slider-widget.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-slider-widget',
+    templateUrl: './slider-widget.component.html',
+    styleUrls: ['../action/action-widget.scss', './slider-widget.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class SliderWidgetComponent extends
   BasicActionWidgetComponent implements OnInit, AfterViewInit, OnDestroy {

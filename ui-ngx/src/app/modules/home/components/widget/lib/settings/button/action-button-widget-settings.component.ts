@@ -24,9 +24,10 @@ import { getTargetDeviceFromDatasources } from '@shared/models/widget-settings.m
 import { actionButtonDefaultSettings } from '@home/components/widget/lib/button/action-button-widget.models';
 
 @Component({
-  selector: 'tb-action-button-widget-settings',
-  templateUrl: './action-button-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-action-button-widget-settings',
+    templateUrl: './action-button-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class ActionButtonWidgetSettingsComponent extends WidgetSettingsComponent {
 

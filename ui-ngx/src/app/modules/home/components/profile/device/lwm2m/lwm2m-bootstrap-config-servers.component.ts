@@ -35,20 +35,21 @@ import { DeviceProfileService } from '@core/http/device-profile.service';
 import { Lwm2mSecurityType } from '@shared/models/lwm2m-security-config.models';
 
 @Component({
-  selector: 'tb-profile-lwm2m-bootstrap-config-servers',
-  templateUrl: './lwm2m-bootstrap-config-servers.component.html',
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => Lwm2mBootstrapConfigServersComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => Lwm2mBootstrapConfigServersComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-profile-lwm2m-bootstrap-config-servers',
+    templateUrl: './lwm2m-bootstrap-config-servers.component.html',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => Lwm2mBootstrapConfigServersComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => Lwm2mBootstrapConfigServersComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class Lwm2mBootstrapConfigServersComponent implements OnInit, ControlValueAccessor, OnDestroy {
 

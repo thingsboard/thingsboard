@@ -32,9 +32,10 @@ export interface ColorPickerDialogResult {
 }
 
 @Component({
-  selector: 'tb-color-picker-dialog',
-  templateUrl: './color-picker-dialog.component.html',
-  styleUrls: ['./color-picker-dialog.component.scss']
+    selector: 'tb-color-picker-dialog',
+    templateUrl: './color-picker-dialog.component.html',
+    styleUrls: ['./color-picker-dialog.component.scss'],
+    standalone: false
 })
 export class ColorPickerDialogComponent extends DialogComponent<ColorPickerDialogComponent, ColorPickerDialogResult> {
 

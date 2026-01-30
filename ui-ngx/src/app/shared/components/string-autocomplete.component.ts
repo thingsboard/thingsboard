@@ -34,16 +34,17 @@ export interface ErrorMessageConfig {
 }
 
 @Component({
-  selector: 'tb-string-autocomplete',
-  templateUrl: './string-autocomplete.component.html',
-  styleUrls: ['./string-autocomplete.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => StringAutocompleteComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-string-autocomplete',
+    templateUrl: './string-autocomplete.component.html',
+    styleUrls: ['./string-autocomplete.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => StringAutocompleteComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class StringAutocompleteComponent implements ControlValueAccessor, OnInit {
 

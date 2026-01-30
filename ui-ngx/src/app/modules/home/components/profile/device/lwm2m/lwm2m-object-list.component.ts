@@ -37,20 +37,21 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 
 @Component({
-  selector: 'tb-profile-lwm2m-object-list',
-  templateUrl: './lwm2m-object-list.component.html',
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => Lwm2mObjectListComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => Lwm2mObjectListComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-profile-lwm2m-object-list',
+    templateUrl: './lwm2m-object-list.component.html',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => Lwm2mObjectListComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => Lwm2mObjectListComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, Validator {
 

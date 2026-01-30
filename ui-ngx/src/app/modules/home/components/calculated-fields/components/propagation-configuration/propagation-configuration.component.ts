@@ -48,20 +48,21 @@ import {AppState} from "@core/core.state";
 import {getCurrentAuthState} from "@core/auth/auth.selectors";
 
 @Component({
-  selector: 'tb-propagation-configuration',
-  templateUrl: './propagation-configuration.component.html',
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => PropagationConfigurationComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => PropagationConfigurationComponent),
-      multi: true
-    }
-  ],
+    selector: 'tb-propagation-configuration',
+    templateUrl: './propagation-configuration.component.html',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => PropagationConfigurationComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => PropagationConfigurationComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class PropagationConfigurationComponent implements ControlValueAccessor, Validator {
 

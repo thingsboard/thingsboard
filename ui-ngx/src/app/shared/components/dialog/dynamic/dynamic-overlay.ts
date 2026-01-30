@@ -19,9 +19,9 @@ import {
   ScrollStrategyOptions,
   OverlayKeyboardDispatcher, OverlayOutsideClickDispatcher, OverlayPositionBuilder
 } from '@angular/cdk/overlay';
-import { ComponentFactoryResolver, Inject, Injectable, Injector, NgZone } from '@angular/core';
+import { ComponentFactoryResolver, Inject, Injectable, Injector, NgZone, DOCUMENT } from '@angular/core';
 import { DynamicOverlayContainer } from './dynamic-overlay-container';
-import { DOCUMENT, Location } from '@angular/common';
+import { Location } from '@angular/common';
 import { Directionality } from '@angular/cdk/bidi';
 
 @Injectable()

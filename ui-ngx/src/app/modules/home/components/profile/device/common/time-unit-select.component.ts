@@ -44,21 +44,22 @@ interface FormGroupModel {
 }
 
 @Component({
-  selector: 'tb-time-unit-select',
-  templateUrl: './time-unit-select.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => TimeUnitSelectComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => TimeUnitSelectComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-time-unit-select',
+    templateUrl: './time-unit-select.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TimeUnitSelectComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => TimeUnitSelectComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class TimeUnitSelectComponent implements OnInit, OnDestroy, ControlValueAccessor, Validator {
 

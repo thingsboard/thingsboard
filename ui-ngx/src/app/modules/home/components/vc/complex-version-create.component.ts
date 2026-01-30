@@ -37,9 +37,10 @@ import { share } from 'rxjs/operators';
 import { parseHttpErrorMessage } from '@core/utils';
 
 @Component({
-  selector: 'tb-complex-version-create',
-  templateUrl: './complex-version-create.component.html',
-  styleUrls: ['./version-control.scss']
+    selector: 'tb-complex-version-create',
+    templateUrl: './complex-version-create.component.html',
+    styleUrls: ['./version-control.scss'],
+    standalone: false
 })
 export class ComplexVersionCreateComponent extends PageComponent implements OnInit, OnDestroy {
 

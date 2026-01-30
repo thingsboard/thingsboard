@@ -61,10 +61,11 @@ export interface AlarmRuleDialogData {
 }
 
 @Component({
-  selector: 'tb-alarm-rule-dialog',
-  templateUrl: './alarm-rule-dialog.component.html',
-  styleUrls: ['./alarm-rule-dialog.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-alarm-rule-dialog',
+    templateUrl: './alarm-rule-dialog.component.html',
+    styleUrls: ['./alarm-rule-dialog.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogComponent, CalculatedField> {
 

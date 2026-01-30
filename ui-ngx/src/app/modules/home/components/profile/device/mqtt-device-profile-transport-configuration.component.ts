@@ -44,21 +44,22 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 @Component({
-  selector: 'tb-mqtt-device-profile-transport-configuration',
-  templateUrl: './mqtt-device-profile-transport-configuration.component.html',
-  styleUrls: ['./mqtt-device-profile-transport-configuration.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => MqttDeviceProfileTransportConfigurationComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => MqttDeviceProfileTransportConfigurationComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-mqtt-device-profile-transport-configuration',
+    templateUrl: './mqtt-device-profile-transport-configuration.component.html',
+    styleUrls: ['./mqtt-device-profile-transport-configuration.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => MqttDeviceProfileTransportConfigurationComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => MqttDeviceProfileTransportConfigurationComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class MqttDeviceProfileTransportConfigurationComponent implements ControlValueAccessor, OnInit, OnDestroy, Validator {
 

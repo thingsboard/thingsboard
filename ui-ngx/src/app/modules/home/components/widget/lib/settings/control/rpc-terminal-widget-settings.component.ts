@@ -21,9 +21,10 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 
 @Component({
-  selector: 'tb-rpc-terminal-widget-settings',
-  templateUrl: './rpc-terminal-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-rpc-terminal-widget-settings',
+    templateUrl: './rpc-terminal-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class RpcTerminalWidgetSettingsComponent extends WidgetSettingsComponent {
 

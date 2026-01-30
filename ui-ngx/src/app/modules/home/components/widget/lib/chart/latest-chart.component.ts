@@ -49,10 +49,11 @@ export interface LatestChartComponentCallbacks {
 }
 
 @Component({
-  selector: 'tb-latest-chart',
-  templateUrl: './latest-chart.component.html',
-  styleUrls: ['./latest-chart.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-latest-chart',
+    templateUrl: './latest-chart.component.html',
+    styleUrls: ['./latest-chart.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class LatestChartComponent implements OnInit, OnDestroy, AfterViewInit {
 

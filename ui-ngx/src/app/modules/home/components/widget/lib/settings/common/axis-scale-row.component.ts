@@ -36,20 +36,21 @@ import { DataKeysCallbacks } from '@home/components/widget/lib/settings/common/k
 import { merge } from 'rxjs';
 
 @Component({
-  selector: 'tb-axis-scale-row',
-  templateUrl: './axis-scale-row.component.html',
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => AxisScaleRowComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => AxisScaleRowComponent),
-      multi: true
-    },
-  ]
+    selector: 'tb-axis-scale-row',
+    templateUrl: './axis-scale-row.component.html',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => AxisScaleRowComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => AxisScaleRowComponent),
+            multi: true
+        },
+    ],
+    standalone: false
 })
 export class AxisScaleRowComponent implements ControlValueAccessor, OnInit, Validator {
 

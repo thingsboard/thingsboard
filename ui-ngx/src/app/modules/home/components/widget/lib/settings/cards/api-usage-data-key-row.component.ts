@@ -42,17 +42,18 @@ import {
 import { Observable, of } from "rxjs";
 
 @Component({
-  selector: 'tb-api-usage-data-key-row',
-  templateUrl: './api-usage-data-key-row.component.html',
-  styleUrls: ['./api-usage-data-key-row.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ApiUsageDataKeyRowComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-api-usage-data-key-row',
+    templateUrl: './api-usage-data-key-row.component.html',
+    styleUrls: ['./api-usage-data-key-row.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ApiUsageDataKeyRowComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class ApiUsageDataKeyRowComponent implements ControlValueAccessor, OnInit {
 

@@ -25,16 +25,17 @@ import {
 } from '@home/components/widget/lib/settings/common/chart/time-series-chart-axis-settings-panel.component';
 
 @Component({
-  selector: 'tb-time-series-chart-axis-settings-button',
-  templateUrl: './time-series-chart-axis-settings-button.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => TimeSeriesChartAxisSettingsButtonComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-time-series-chart-axis-settings-button',
+    templateUrl: './time-series-chart-axis-settings-button.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TimeSeriesChartAxisSettingsButtonComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class TimeSeriesChartAxisSettingsButtonComponent implements OnInit, ControlValueAccessor {
 

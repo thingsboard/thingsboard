@@ -54,9 +54,10 @@ interface QuickLinksWidgetSettings {
 }
 
 @Component({
-  selector: 'tb-quick-links-widget',
-  templateUrl: './quick-links-widget.component.html',
-  styleUrls: ['./home-page-widget.scss', './links-widget.component.scss']
+    selector: 'tb-quick-links-widget',
+    templateUrl: './quick-links-widget.component.html',
+    styleUrls: ['./home-page-widget.scss', './links-widget.component.scss'],
+    standalone: false
 })
 export class QuickLinksWidgetComponent extends PageComponent implements OnInit, OnDestroy {
 

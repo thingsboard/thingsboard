@@ -22,16 +22,17 @@ import { getAce, updateEditorSize } from '@shared/models/ace/ace.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
-  selector: 'tb-json-object-view',
-  templateUrl: './json-object-view.component.html',
-  styleUrls: ['./json-object-view.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => JsonObjectViewComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-json-object-view',
+    templateUrl: './json-object-view.component.html',
+    styleUrls: ['./json-object-view.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => JsonObjectViewComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class JsonObjectViewComponent implements OnInit, OnDestroy, ControlValueAccessor {
 

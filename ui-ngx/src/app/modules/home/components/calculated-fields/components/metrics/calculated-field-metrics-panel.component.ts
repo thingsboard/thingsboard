@@ -42,9 +42,10 @@ interface CalculatedFieldAggMetricValuePanel extends CalculatedFieldAggMetricVal
 }
 
 @Component({
-  selector: 'tb-calculated-field-metrics-panel',
-  templateUrl: './calculated-field-metrics-panel.component.html',
-  styleUrls: ['../common/calculated-field-panel.scss', '../../calculated-field.component.scss'],
+    selector: 'tb-calculated-field-metrics-panel',
+    templateUrl: './calculated-field-metrics-panel.component.html',
+    styleUrls: ['../common/calculated-field-panel.scss', '../../calculated-field.component.scss'],
+    standalone: false
 })
 export class CalculatedFieldMetricsPanelComponent implements OnInit {
 

@@ -31,9 +31,10 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 @Component({
-  selector: 'tb-general-settings',
-  templateUrl: './general-settings.component.html',
-  styleUrls: ['./general-settings.component.scss', './settings-card.scss']
+    selector: 'tb-general-settings',
+    templateUrl: './general-settings.component.html',
+    styleUrls: ['./general-settings.component.scss', './settings-card.scss'],
+    standalone: false
 })
 export class GeneralSettingsComponent extends PageComponent implements HasConfirmForm, OnDestroy {
 

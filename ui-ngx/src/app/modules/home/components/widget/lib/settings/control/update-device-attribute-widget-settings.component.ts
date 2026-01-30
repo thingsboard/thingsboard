@@ -22,9 +22,10 @@ import { AppState } from '@core/core.state';
 import { ContentType } from '@shared/models/constants';
 
 @Component({
-  selector: 'tb-update-device-attribute-widget-settings',
-  templateUrl: './update-device-attribute-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-update-device-attribute-widget-settings',
+    templateUrl: './update-device-attribute-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class UpdateDeviceAttributeWidgetSettingsComponent extends WidgetSettingsComponent {
 

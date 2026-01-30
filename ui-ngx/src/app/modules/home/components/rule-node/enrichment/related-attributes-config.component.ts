@@ -30,9 +30,10 @@ import {
 import { entityFields } from '@shared/models/entity.models';
 
 @Component({
-  selector: 'tb-enrichment-node-related-attributes-config',
-  templateUrl: './related-attributes-config.component.html',
-  styleUrls: []
+    selector: 'tb-enrichment-node-related-attributes-config',
+    templateUrl: './related-attributes-config.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class RelatedAttributesConfigComponent extends RuleNodeConfigurationComponent {
 

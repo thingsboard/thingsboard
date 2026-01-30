@@ -57,9 +57,10 @@ import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { TenantId } from '@shared/models/id/tenant-id';
 
 @Component({
-  selector: 'tb-calculated-field-argument-panel',
-  templateUrl: './calculated-field-argument-panel.component.html',
-  styleUrls: ['../common/calculated-field-panel.scss', './calculated-field-argument-panel.component.scss']
+    selector: 'tb-calculated-field-argument-panel',
+    templateUrl: './calculated-field-argument-panel.component.html',
+    styleUrls: ['../common/calculated-field-panel.scss', './calculated-field-argument-panel.component.scss'],
+    standalone: false
 })
 export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewInit {
 

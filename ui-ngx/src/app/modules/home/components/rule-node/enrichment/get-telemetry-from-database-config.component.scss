@@ -44,10 +44,10 @@
     }
 
     &.error {
-      color: var(--mdc-theme-error, #f44336);
+      color: var(--mat-theme-error, #f44336);
 
       .description-icon {
-        color: var(--mdc-theme-error, #f44336);
+        color: var(--mat-theme-error, #f44336);
       }
     }
   }

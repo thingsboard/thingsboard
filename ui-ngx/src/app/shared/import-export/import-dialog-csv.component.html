@@ -119,17 +119,17 @@
       <mat-step>
         <ng-template matStepLabel>{{ 'action.done' | translate }}</ng-template>
         <div class="flex flex-col">
-          <p class="mat-body-2" *ngIf="this.statistical?.created">
-            {{ translate.instant('import.message.create-entities', {count: this.statistical.created}) }}
+          <p class="mat-body-2" *ngIf="statistical?.created">
+            {{ translate.instant('import.message.create-entities', {count: statistical.created}) }}
           </p>
-          <p class="mat-body-2" *ngIf="this.statistical?.updated">
-            {{ translate.instant('import.message.update-entities', {count: this.statistical.updated}) }}
+          <p class="mat-body-2" *ngIf="statistical?.updated">
+            {{ translate.instant('import.message.update-entities', {count: statistical.updated}) }}
           </p>
-          <p class="mat-body-2" style="margin-bottom: 0.8em" *ngIf="this.statistical?.errors">
-            {{ translate.instant('import.message.error-entities', {count: this.statistical.errors}) }}
+          <p class="mat-body-2" style="margin-bottom: 0.8em" *ngIf="statistical?.errors">
+            {{ translate.instant('import.message.error-entities', {count: statistical.errors}) }}
           </p>
           <mat-expansion-panel class="advanced-logs" [expanded]="false"
-                               *ngIf="this.statistical?.errorsList?.length"
+                               *ngIf="statistical?.errorsList?.length"
                                (opened)="initEditor()">
             <mat-expansion-panel-header [collapsedHeight]="'38px'" [expandedHeight]="'38px'">
               <mat-panel-title>

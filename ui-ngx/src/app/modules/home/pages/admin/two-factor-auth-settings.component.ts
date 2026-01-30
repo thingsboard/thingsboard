@@ -35,9 +35,10 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-2fa-settings',
-  templateUrl: './two-factor-auth-settings.component.html',
-  styleUrls: [ './settings-card.scss', './two-factor-auth-settings.component.scss']
+    selector: 'tb-2fa-settings',
+    templateUrl: './two-factor-auth-settings.component.html',
+    styleUrls: ['./settings-card.scss', './two-factor-auth-settings.component.scss'],
+    standalone: false
 })
 export class TwoFactorAuthSettingsComponent extends PageComponent implements OnInit, HasConfirmForm {
 

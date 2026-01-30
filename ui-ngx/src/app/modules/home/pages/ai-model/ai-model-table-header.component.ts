@@ -21,14 +21,15 @@ import { AppState } from '@core/core.state';
 import { AiModel } from '@shared/models/ai-model.models';
 
 @Component({
-  selector: 'tb-ai-model-table-header',
-  templateUrl: './ai-model-table-header.component.html',
-  styles: [`
+    selector: 'tb-ai-model-table-header',
+    templateUrl: './ai-model-table-header.component.html',
+    styles: [`
     :host {
         width: 100%;
     }
   `],
-  styleUrls: []
+    styleUrls: [],
+    standalone: false
 })
 export class AiModelTableHeaderComponent extends EntityTableHeaderComponent<AiModel> {
 

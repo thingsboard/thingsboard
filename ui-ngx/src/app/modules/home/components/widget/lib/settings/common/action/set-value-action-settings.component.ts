@@ -39,17 +39,18 @@ import {
 import { ValueType } from '@shared/models/constants';
 
 @Component({
-  selector: 'tb-set-value-action-settings',
-  templateUrl: './action-settings-button.component.html',
-  styleUrls: ['./action-settings-button.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => SetValueActionSettingsComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-set-value-action-settings',
+    templateUrl: './action-settings-button.component.html',
+    styleUrls: ['./action-settings-button.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => SetValueActionSettingsComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class SetValueActionSettingsComponent implements OnInit, ControlValueAccessor {
 

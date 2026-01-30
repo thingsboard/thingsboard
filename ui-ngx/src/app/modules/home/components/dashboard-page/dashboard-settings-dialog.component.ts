@@ -47,10 +47,11 @@ export interface DashboardSettingsDialogData {
 }
 
 @Component({
-  selector: 'tb-dashboard-settings-dialog',
-  templateUrl: './dashboard-settings-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: DashboardSettingsDialogComponent}],
-  styleUrls: ['./dashboard-settings-dialog.component.scss']
+    selector: 'tb-dashboard-settings-dialog',
+    templateUrl: './dashboard-settings-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: DashboardSettingsDialogComponent }],
+    styleUrls: ['./dashboard-settings-dialog.component.scss'],
+    standalone: false
 })
 export class DashboardSettingsDialogComponent extends DialogComponent<DashboardSettingsDialogComponent, DashboardSettingsDialogData>
   implements OnDestroy, ErrorStateMatcher {

@@ -29,21 +29,22 @@ import { EntityKeyValueType, FilterPredicateType, KeyFilterPredicateInfo } from 
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-filter-predicate',
-  templateUrl: './filter-predicate.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => FilterPredicateComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => FilterPredicateComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-filter-predicate',
+    templateUrl: './filter-predicate.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => FilterPredicateComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => FilterPredicateComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class FilterPredicateComponent implements ControlValueAccessor, Validator, OnInit {
 

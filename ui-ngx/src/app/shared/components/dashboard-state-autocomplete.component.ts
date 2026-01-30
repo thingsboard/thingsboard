@@ -28,14 +28,15 @@ import { FloatLabelType } from '@angular/material/form-field';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 
 @Component({
-  selector: 'tb-dashboard-state-autocomplete',
-  templateUrl: './dashboard-state-autocomplete.component.html',
-  styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => DashboardStateAutocompleteComponent),
-    multi: true
-  }]
+    selector: 'tb-dashboard-state-autocomplete',
+    templateUrl: './dashboard-state-autocomplete.component.html',
+    styleUrls: [],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DashboardStateAutocompleteComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class DashboardStateAutocompleteComponent implements ControlValueAccessor, OnInit {
 

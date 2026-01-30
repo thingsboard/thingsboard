@@ -24,14 +24,15 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 
 @Component({
-  selector: 'tb-entity-type-select',
-  templateUrl: './entity-type-select.component.html',
-  styleUrls: ['./entity-type-select.component.scss'],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => EntityTypeSelectComponent),
-    multi: true
-  }]
+    selector: 'tb-entity-type-select',
+    templateUrl: './entity-type-select.component.html',
+    styleUrls: ['./entity-type-select.component.scss'],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => EntityTypeSelectComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, OnChanges {
 

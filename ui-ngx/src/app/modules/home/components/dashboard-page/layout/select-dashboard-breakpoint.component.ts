@@ -21,9 +21,10 @@ import { BreakpointId } from '@shared/models/dashboard.models';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 
 @Component({
-  selector: 'tb-select-dashboard-breakpoint',
-  templateUrl: './select-dashboard-breakpoint.component.html',
-  styleUrls: ['./select-dashboard-breakpoint.component.scss']
+    selector: 'tb-select-dashboard-breakpoint',
+    templateUrl: './select-dashboard-breakpoint.component.html',
+    styleUrls: ['./select-dashboard-breakpoint.component.scss'],
+    standalone: false
 })
 export class SelectDashboardBreakpointComponent implements OnInit, OnDestroy {
 

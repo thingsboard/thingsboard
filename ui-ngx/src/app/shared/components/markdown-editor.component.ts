@@ -32,17 +32,18 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 
 @Component({
-  selector: 'tb-markdown-editor',
-  templateUrl: './markdown-editor.component.html',
-  styleUrls: ['./markdown-editor.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => MarkdownEditorComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-markdown-editor',
+    templateUrl: './markdown-editor.component.html',
+    styleUrls: ['./markdown-editor.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => MarkdownEditorComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class MarkdownEditorComponent implements OnInit, ControlValueAccessor, OnDestroy {
 

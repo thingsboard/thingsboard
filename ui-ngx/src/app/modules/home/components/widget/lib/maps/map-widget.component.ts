@@ -40,10 +40,11 @@ import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
 
 @Component({
-  selector: 'tb-map-widget',
-  templateUrl: './map-widget.component.html',
-  styleUrls: ['./map-widget.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-map-widget',
+    templateUrl: './map-widget.component.html',
+    styleUrls: ['./map-widget.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class MapWidgetComponent implements OnInit, OnDestroy {
 

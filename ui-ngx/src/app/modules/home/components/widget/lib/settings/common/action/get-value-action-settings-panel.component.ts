@@ -38,11 +38,12 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-get-value-action-settings-panel',
-  templateUrl: './get-value-action-settings-panel.component.html',
-  providers: [],
-  styleUrls: ['./action-settings-panel.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-get-value-action-settings-panel',
+    templateUrl: './get-value-action-settings-panel.component.html',
+    providers: [],
+    styleUrls: ['./action-settings-panel.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class GetValueActionSettingsPanelComponent extends PageComponent implements OnInit {
 

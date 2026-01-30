@@ -33,9 +33,10 @@ export interface MobileAppConfigurationDialogData {
 }
 
 @Component({
-  selector: 'tb-mobile-app-configuration-dialog',
-  templateUrl: './mobile-app-configuration-dialog.component.html',
-  styleUrls: ['./mobile-app-configuration-dialog.component.scss']
+    selector: 'tb-mobile-app-configuration-dialog',
+    templateUrl: './mobile-app-configuration-dialog.component.html',
+    styleUrls: ['./mobile-app-configuration-dialog.component.scss'],
+    standalone: false
 })
 export class MobileAppConfigurationDialogComponent extends DialogComponent<MobileAppConfigurationDialogComponent> {
 

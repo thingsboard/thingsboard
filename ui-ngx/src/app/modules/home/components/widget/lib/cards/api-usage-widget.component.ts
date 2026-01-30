@@ -32,10 +32,11 @@ import {
 } from '@home/components/widget/lib/settings/cards/api-usage-settings.component.models';
 
 @Component({
-  selector: 'tb-api-usage-widget',
-  templateUrl: './api-usage-widget.component.html',
-  styleUrls: ['api-usage-widget.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-api-usage-widget',
+    templateUrl: './api-usage-widget.component.html',
+    styleUrls: ['api-usage-widget.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class ApiUsageWidgetComponent implements OnInit, OnDestroy {
 

@@ -35,8 +35,9 @@ export interface AddNewBreakpointDialogResult {
 }
 
 @Component({
-  selector: 'add-new-breakpoint-dialog',
-  templateUrl: './add-new-breakpoint-dialog.component.html',
+    selector: 'add-new-breakpoint-dialog',
+    templateUrl: './add-new-breakpoint-dialog.component.html',
+    standalone: false
 })
 export class AddNewBreakpointDialogComponent extends DialogComponent<AddNewBreakpointDialogComponent, AddNewBreakpointDialogResult> {
 

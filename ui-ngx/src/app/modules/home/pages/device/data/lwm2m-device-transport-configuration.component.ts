@@ -29,14 +29,15 @@ import { Subject } from 'rxjs';
 import { isDefinedAndNotNull } from '@core/utils';
 
 @Component({
-  selector: 'tb-lwm2m-device-transport-configuration',
-  templateUrl: './lwm2m-device-transport-configuration.component.html',
-  styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => Lwm2mDeviceTransportConfigurationComponent),
-    multi: true
-  }]
+    selector: 'tb-lwm2m-device-transport-configuration',
+    templateUrl: './lwm2m-device-transport-configuration.component.html',
+    styleUrls: [],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => Lwm2mDeviceTransportConfigurationComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class Lwm2mDeviceTransportConfigurationComponent implements ControlValueAccessor, OnInit, OnDestroy {
 

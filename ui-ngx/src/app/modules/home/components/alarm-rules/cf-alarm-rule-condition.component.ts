@@ -54,21 +54,22 @@ import { coerceBoolean } from "@shared/decorators/coercion";
 import { Observable } from "rxjs";
 
 @Component({
-  selector: 'tb-cf-alarm-rule-condition',
-  templateUrl: './cf-alarm-rule-condition.component.html',
-  styleUrls: ['./cf-alarm-rule-condition.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => CfAlarmRuleConditionComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => CfAlarmRuleConditionComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-cf-alarm-rule-condition',
+    templateUrl: './cf-alarm-rule-condition.component.html',
+    styleUrls: ['./cf-alarm-rule-condition.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => CfAlarmRuleConditionComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => CfAlarmRuleConditionComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class CfAlarmRuleConditionComponent implements ControlValueAccessor, Validator, OnChanges {
 

@@ -14,8 +14,6 @@
 /// limitations under the License.
 ///
 
-/* eslint-disable max-len */
-
 import * as AngularAnimations from '@angular/animations';
 import * as AngularCore from '@angular/core';
 import * as AngularCommon from '@angular/common';
@@ -351,7 +349,7 @@ class ModulesMap implements IModulesMap {
 
   private modulesMap: {[key: string]: any} = {
     '@angular/animations': AngularAnimations,
-    '@angular/core': AngularCore,
+    '@angular/core': this.angularCoreModule20to18Patch(AngularCore),
     '@angular/common': AngularCommon,
     '@angular/common/http': HttpClientModule,
     '@angular/forms': AngularForms,
@@ -405,7 +403,7 @@ class ModulesMap implements IModulesMap {
     '@ngrx/store': NgrxStore,
     rxjs: RxJs,
     'rxjs/operators': RxJsOperators,
-    '@ngx-translate/core': TranslateCore,
+    '@ngx-translate/core': this.translateModule20to18Patch(TranslateCore),
     '@mat-datetimepicker/core': MatDateTimePicker,
     moment: _moment,
     tslib,
@@ -705,6 +703,28 @@ class ModulesMap implements IModulesMap {
       this.initialized = true;
     }
     return of(null);
+  }
+
+  private angularCoreModule20to18Patch(module: typeof AngularCore): typeof AngularCore {
+    const result = {...module};
+    (result as any).ɵɵStandaloneFeature = () => {};
+    (result as any).ɵɵInputTransformsFeature = () => {};
+    (result as any).ɵɵpropertyInterpolate = (propName: string, v0: any, sanitizer?: any) => {
+      return result.ɵɵproperty(propName, v0, sanitizer);
+    };
+    return result;
+  }
+
+  private translateModule20to18Patch(module: typeof TranslateCore): typeof TranslateCore {
+    const translateServiceCls = module.TranslateService;
+    Object.defineProperty(translateServiceCls.prototype, 'translations', {
+      get: function() {
+        return this.store.translations;
+      },
+      enumerable: true,
+      configurable: true
+    });
+    return module;
   }
 }
 

@@ -23,9 +23,10 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { DeviceProfileId } from '../../../../shared/models/id/device-profile-id';
 
 @Component({
-  selector: 'tb-device-table-header',
-  templateUrl: './device-table-header.component.html',
-  styleUrls: []
+    selector: 'tb-device-table-header',
+    templateUrl: './device-table-header.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class DeviceTableHeaderComponent extends EntityTableHeaderComponent<DeviceInfo> {
 

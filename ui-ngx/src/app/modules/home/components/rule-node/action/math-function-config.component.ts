@@ -27,9 +27,10 @@ import {
 
 
 @Component({
-  selector: 'tb-action-node-math-function-config',
-  templateUrl: './math-function-config.component.html',
-  styleUrls: ['./math-function-config.component.scss']
+    selector: 'tb-action-node-math-function-config',
+    templateUrl: './math-function-config.component.html',
+    styleUrls: ['./math-function-config.component.scss'],
+    standalone: false
 })
 export class MathFunctionConfigComponent extends RuleNodeConfigurationComponent {
 

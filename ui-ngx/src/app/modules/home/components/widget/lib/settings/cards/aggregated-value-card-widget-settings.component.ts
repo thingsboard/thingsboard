@@ -23,9 +23,10 @@ import { DateFormatProcessor, DateFormatSettings } from '@shared/models/widget-s
 import { aggregatedValueCardDefaultSettings } from '@home/components/widget/lib/cards/aggregated-value-card.models';
 
 @Component({
-  selector: 'tb-aggregated-value-card-widget-settings',
-  templateUrl: './aggregated-value-card-widget-settings.component.html',
-  styleUrls: []
+    selector: 'tb-aggregated-value-card-widget-settings',
+    templateUrl: './aggregated-value-card-widget-settings.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class AggregatedValueCardWidgetSettingsComponent extends WidgetSettingsComponent {
 

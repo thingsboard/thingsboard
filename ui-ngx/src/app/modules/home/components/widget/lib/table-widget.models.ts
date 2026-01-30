@@ -454,23 +454,23 @@ export function constructTableCssString(widgetConfig: WidgetConfig): string {
   
   const cssString = ` {
     --mat-toolbar-container-text-color: ${mdDark};
-    --mat-tab-header-active-label-text-color: ${mdDark};
-    --mat-tab-header-inactive-label-text-color: ${mdDark};
-    --mat-tab-header-pagination-icon-color: ${mdDark};
-    --mat-tab-header-pagination-disabled-icon-color: ${mdDarkDisabled2};
+    --mat-tab-active-label-text-color: ${mdDark};
+    --mat-tab-inactive-label-text-color: ${mdDark};
+    --mat-tab-pagination-icon-color: ${mdDark};
+    --mat-tab-pagination-disabled-icon-color: ${mdDarkDisabled2};
     --mat-table-header-headline-color: ${mdDarkSecondary};
     --mat-table-row-item-label-text-color: ${mdDark};
     --mat-icon-color: ${mdDarkSecondary};
-    --mdc-icon-button-disabled-icon-color: ${mdDarkDisabled};
+    --mat-icon-button-disabled-icon-color: ${mdDarkDisabled};
     --mat-divider-color: ${mdDarkDivider};
     --mat-paginator-container-text-color: ${mdDarkSecondary};
-    --mdc-icon-button-icon-color: ${mdDarkSecondary};
+    --mat-icon-button-icon-color: ${mdDarkSecondary};
     --mat-paginator-enabled-icon-color: ${mdDarkSecondary};
     --mat-paginator-disabled-icon-color: ${mdDarkDisabled};
     --mat-select-enabled-trigger-text-color: ${mdDarkSecondary};
     --mat-select-disabled-trigger-text-color: ${mdDarkDisabled};
     --mat-table-row-item-outline-color: ${mdDarkDivider};
-    --mdc-checkbox-unselected-focus-icon-color: ${mdDarkSecondary};
+    --mat-checkbox-unselected-focus-icon-color: ${mdDarkSecondary};
 
     --tb-orig-background-color: ${origBackgroundColor};
     --tb-current-entity-color: ${currentEntityColor};

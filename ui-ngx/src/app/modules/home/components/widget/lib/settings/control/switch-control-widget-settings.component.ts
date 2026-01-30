@@ -23,9 +23,10 @@ import { switchRpcDefaultSettings } from '@home/components/widget/lib/settings/c
 import { deepClone } from '@core/utils';
 
 @Component({
-  selector: 'tb-switch-control-widget-settings',
-  templateUrl: './switch-control-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-switch-control-widget-settings',
+    templateUrl: './switch-control-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class SwitchControlWidgetSettingsComponent extends WidgetSettingsComponent {
 

@@ -23,10 +23,11 @@ import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
 
 @Component({
-  selector: 'tb-getting-started-completed-dialog',
-  templateUrl: './getting-started-completed-dialog.component.html',
-  styleUrls: ['./getting-started-completed-dialog.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-getting-started-completed-dialog',
+    templateUrl: './getting-started-completed-dialog.component.html',
+    styleUrls: ['./getting-started-completed-dialog.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class GettingStartedCompletedDialogComponent extends
   DialogComponent<GettingStartedCompletedDialogComponent, void> {

@@ -22,10 +22,11 @@ import { UserPasswordPolicy } from '@shared/models/settings.models';
 import { POSITION_MAP } from '@shared/models/overlay.models';
 
 @Component({
-  selector: 'tb-password-requirements-tooltip',
-  templateUrl: './password-requirements-tooltip.component.html',
-  styleUrl: './password-requirements-tooltip.component.scss',
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-password-requirements-tooltip',
+    templateUrl: './password-requirements-tooltip.component.html',
+    styleUrl: './password-requirements-tooltip.component.scss',
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class PasswordRequirementsTooltipComponent {
   @Input() passwordControl: AbstractControl;

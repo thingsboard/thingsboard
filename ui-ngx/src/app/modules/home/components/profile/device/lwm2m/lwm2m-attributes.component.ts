@@ -25,14 +25,15 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 @Component({
-  selector: 'tb-profile-lwm2m-attributes',
-  templateUrl: './lwm2m-attributes.component.html',
-  styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => Lwm2mAttributesComponent),
-    multi: true
-  }]
+    selector: 'tb-profile-lwm2m-attributes',
+    templateUrl: './lwm2m-attributes.component.html',
+    styleUrls: [],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => Lwm2mAttributesComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class Lwm2mAttributesComponent implements ControlValueAccessor, OnDestroy {
   attributesFormGroup: UntypedFormGroup;

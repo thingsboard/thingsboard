@@ -34,16 +34,17 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 import { AlarmAssigneeOption } from '@shared/models/alarm.models';
 
 @Component({
-  selector: 'tb-alarm-assignee-select',
-  templateUrl: './alarm-assignee-select.component.html',
-  styleUrls: ['./alarm-assignee.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => AlarmAssigneeSelectComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-alarm-assignee-select',
+    templateUrl: './alarm-assignee-select.component.html',
+    styleUrls: ['./alarm-assignee.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => AlarmAssigneeSelectComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class AlarmAssigneeSelectComponent implements OnInit, ControlValueAccessor {
 
