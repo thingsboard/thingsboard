@@ -1,5 +1,5 @@
 diff --git a/node_modules/@angular/compiler/fesm2022/compiler.mjs b/node_modules/@angular/compiler/fesm2022/compiler.mjs
-index a00b189..260e7be 100755
+index a00b189..58896de 100755
 --- a/node_modules/@angular/compiler/fesm2022/compiler.mjs
 +++ b/node_modules/@angular/compiler/fesm2022/compiler.mjs
 @@ -18631,6 +18631,7 @@ function SECURITY_SCHEMA() {
@@ -86,3 +86,12 @@ index a00b189..260e7be 100755
          ]);
          registerContext(SecurityContext.RESOURCE_URL, [
              'applet|code',
+@@ -18659,6 +18729,8 @@ function SECURITY_SCHEMA() {
+             'object|codebase',
+             'object|data',
+             'script|src',
++            'script|href',
++            'script|xlink:href',
+         ]);
+     }
+     return _SECURITY_SCHEMA;

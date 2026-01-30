@@ -78,6 +78,7 @@ import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import static org.awaitility.Awaitility.await;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_CONNECTION_ID_LENGTH;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY;
 import static org.eclipse.leshan.core.LwM2mId.ACCESS_CONTROL;
@@ -88,6 +89,7 @@ import static org.eclipse.leshan.core.LwM2mId.SECURITY;
 import static org.eclipse.leshan.core.LwM2mId.SERVER;
 import static org.eclipse.leshan.core.LwM2mId.SOFTWARE_MANAGEMENT;
 import static org.eclipse.leshan.core.node.codec.DefaultLwM2mEncoder.getDefaultPathEncoder;
+import static org.thingsboard.server.transport.AbstractTransportIntegrationTest.DEFAULT_WAIT_TIMEOUT_SECONDS;
 import static org.thingsboard.server.transport.lwm2m.AbstractLwM2MIntegrationTest.serverId;
 import static org.thingsboard.server.transport.lwm2m.AbstractLwM2MIntegrationTest.serverIdBs;
 import static org.thingsboard.server.transport.lwm2m.AbstractLwM2MIntegrationTest.shortServerId;
@@ -118,6 +120,7 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INST
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.TEMPERATURE_SENSOR;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.lwm2mClientResources;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.setDtlsConnectorConfigCidLength;
+import static org.thingsboard.server.utils.PortFinder.isUDPPortAvailable;
 
 
 @Slf4j
@@ -140,12 +143,14 @@ public class LwM2MTestClient {
     private LwM2mClientContext clientContext;
     private LwM2mTemperatureSensor lwM2mTemperatureSensor12;
     private String deviceIdStr;
+    private int clientPort;
 
-    public void init(Security security, Security securityBs, int port, boolean isRpc,
+    public void init(Security security, Security securityBs, int clientPort, boolean isRpc,
                      LwM2mUplinkMsgHandler defaultLwM2mUplinkMsgHandler,
                      LwM2mClientContext clientContext, Integer cIdLength, boolean queueMode,
                      boolean supportFormatOnly_SenMLJSON_SenMLCBOR, Integer value3_0_9) throws InvalidDDFFileException, IOException {
         Assert.assertNull("client already initialized", leshanClient);
+        this.clientPort = clientPort;
         this.defaultLwM2mUplinkMsgHandlerTest = defaultLwM2mUplinkMsgHandler;
         this.clientContext = clientContext;
 
@@ -266,7 +271,7 @@ public class LwM2MTestClient {
 
         // Set Californium Configuration
         endpointsBuilder.setConfiguration(clientCoapConfig);
-        endpointsBuilder.setClientAddress(new InetSocketAddress(port).getAddress());
+        endpointsBuilder.setClientAddress(new InetSocketAddress(clientPort).getAddress());
 
 
         // creates EndpointsProvider
@@ -461,10 +466,19 @@ public class LwM2MTestClient {
         if (lwM2MTemperatureSensor != null) {
             lwM2MTemperatureSensor.destroy();
         }
+        if (lwM2mTemperatureSensor12 != null) {
+            lwM2mTemperatureSensor12.destroy();
+        }
     }
 
     public void start(boolean isStartLw) {
         if (leshanClient != null) {
+            if (clientPort > 0) {
+                log.error("Await UDP clientPort {} to be available before leshanClient.start()", clientPort);
+                await("Await UDP clientPort " + clientPort + " to be available before leshanClient.start()")
+                        .atMost(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                        .until(() -> isUDPPortAvailable(clientPort));
+            }
             leshanClient.start();
             if (isStartLw) {
                 this.awaitClientAfterStartConnectLw();
@@ -477,6 +491,12 @@ public class LwM2MTestClient {
     public void stop(boolean deregister) {
         if (leshanClient != null) {
             leshanClient.stop(deregister);
+            if (clientPort > 0) {
+                log.error("Await UDP clientPort {} to disconnect after leshanClient.stop(deregister)", clientPort);
+                await("Await client UDP port " + clientPort + " to disconnect after leshanClient.stop(deregister)")
+                        .atMost(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                        .until(() -> isUDPPortAvailable(clientPort));
+            }
         }
     }
 

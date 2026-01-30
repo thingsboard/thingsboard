@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.ApiUsageStateId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.msg.queue.TbCallback;
@@ -40,6 +41,7 @@ import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -47,7 +49,10 @@ import static java.time.ZoneOffset.UTC;
 import static java.time.temporal.ChronoField.DAY_OF_MONTH;
 import static java.time.temporal.ChronoUnit.MONTHS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
+import static org.thingsboard.server.common.data.ApiFeature.SMS;
+import static org.thingsboard.server.common.data.ApiUsageRecordKey.SMS_EXEC_COUNT;
 
 @DaoSqlTest
 public class DefaultTbApiUsageStateServiceTest extends AbstractControllerTest {
@@ -155,6 +160,85 @@ public class DefaultTbApiUsageStateServiceTest extends AbstractControllerTest {
                         .plus(1, MONTHS))
                 .atStartOfDay(UTC).toInstant().toEpochMilli();
         assertThat(tenantApiUsageState.getNextCycleTs()).isEqualTo(firstOfNextMonth);
+    }
+
+    @Test
+    public void checkTenantCreatedWithSmsDisabledApiUsage() throws Exception {
+        TenantProfile tenantProfile = new TenantProfile();
+        tenantProfile.setName("Test profile");
+        TenantProfileData tenantProfileData = new TenantProfileData();
+        DefaultTenantProfileConfiguration config = DefaultTenantProfileConfiguration.builder()
+                .smsEnabled(false)
+                .build();
+
+        tenantProfileData.setConfiguration(config);
+        tenantProfile.setProfileData(tenantProfileData);
+        tenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
+
+        Tenant tenant = new Tenant();
+        tenant.setTitle("My test tenant");
+        tenant.setTenantProfileId(tenantProfile.getId());
+        tenant = saveTenant(tenant);
+
+        ApiUsageState apiUsageState = apiUsageStateService.findApiUsageStateByEntityId(tenant.getId());
+        assertThat(apiUsageState.getSmsExecState()).isEqualTo(ApiUsageStateValue.DISABLED);
+
+        TenantId finalTenantId = tenant.getId();
+        ApiUsageStateId finalApiUsageStateId = apiUsageState.getId();
+
+
+        await().atMost(5, TimeUnit.SECONDS).until(() -> {
+            Optional<TsKvEntry> smsApiState = tsService.findLatest(finalTenantId, finalApiUsageStateId, SMS.getApiStateKey()).get();
+            return smsApiState.isPresent() && smsApiState.get().getValueAsString().equals(ApiUsageStateValue.DISABLED.name());
+        });
+
+        await().atMost(5, TimeUnit.SECONDS).until(() -> {
+            Optional<TsKvEntry> smsApiState = tsService.findLatest(finalTenantId, finalApiUsageStateId, SMS_EXEC_COUNT.getApiLimitKey()).get();
+            return smsApiState.isPresent() && smsApiState.get().getLongValue().get().equals(0L);
+        });
+
+        // enable SMS and check that the ApiUsageState is updated accordingly
+        config = DefaultTenantProfileConfiguration.builder()
+                .smsEnabled(true)
+                .maxSms(10)
+                .build();
+        tenantProfileData.setConfiguration(config);
+        tenantProfile.setProfileData(tenantProfileData);
+        doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
+
+        await().atMost(5, TimeUnit.SECONDS).until(() ->
+                apiUsageStateService.findApiUsageStateByEntityId(finalTenantId).getSmsExecState() == ApiUsageStateValue.ENABLED);
+
+        await().atMost(5, TimeUnit.SECONDS).until(() -> {
+            Optional<TsKvEntry> smsApiState = tsService.findLatest(finalTenantId, finalApiUsageStateId, SMS.getApiStateKey()).get();
+            return smsApiState.isPresent() && smsApiState.get().getValueAsString().equals(ApiUsageStateValue.ENABLED.name());
+        });
+
+        await().atMost(5, TimeUnit.SECONDS).until(() -> {
+            Optional<TsKvEntry> smsApiState = tsService.findLatest(finalTenantId, finalApiUsageStateId, SMS_EXEC_COUNT.getApiLimitKey()).get();
+            return smsApiState.isPresent() && smsApiState.get().getLongValue().get().equals(10L);
+        });
+
+        //disable SMS and check that the ApiUsageState is updated accordingly
+        config = DefaultTenantProfileConfiguration.builder()
+                .smsEnabled(false)
+                .build();
+        tenantProfileData.setConfiguration(config);
+        tenantProfile.setProfileData(tenantProfileData);
+        doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
+
+        await().atMost(5, TimeUnit.SECONDS).until(() ->
+                apiUsageStateService.findApiUsageStateByEntityId(finalTenantId).getSmsExecState() == ApiUsageStateValue.DISABLED);
+
+        await().atMost(5, TimeUnit.SECONDS).until(() -> {
+            Optional<TsKvEntry> smsApiState = tsService.findLatest(finalTenantId, finalApiUsageStateId, SMS.getApiStateKey()).get();
+            return smsApiState.isPresent() && smsApiState.get().getValueAsString().equals(ApiUsageStateValue.DISABLED.name());
+        });
+
+        await().atMost(5, TimeUnit.SECONDS).until(() -> {
+            Optional<TsKvEntry> smsApiState = tsService.findLatest(finalTenantId, finalApiUsageStateId, SMS_EXEC_COUNT.getApiLimitKey()).get();
+            return smsApiState.isPresent() && smsApiState.get().getLongValue().get().equals(0L);
+        });
     }
 
     private TenantProfile createTenantProfile() {

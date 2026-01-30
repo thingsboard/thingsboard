@@ -25,6 +25,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.script.api.tbel.TbUtils;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Output;
+import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.kv.BasicKvEntry;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 
@@ -74,7 +75,7 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
 
         Output output = ctx.getOutput();
         Object result = formatResult(expressionResult, output.getDecimalsByDefault());
-        JsonNode outputResult = createResultJson(ctx.isUseLatestTs(), output.getName(), result);
+        JsonNode outputResult = createResultJson(ctx, result);
 
         return Futures.immediateFuture(new CalculatedFieldResult(output.getType(), output.getScope(), outputResult));
     }
@@ -89,7 +90,9 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
         return TbUtils.toFixed(expressionResult, decimals);
     }
 
-    private JsonNode createResultJson(boolean useLatestTs, String outputName, Object result) {
+    private JsonNode createResultJson(CalculatedFieldCtx ctx, Object result) {
+        Output output = ctx.getOutput();
+        String outputName = output.getName();
         ObjectNode valuesNode = JacksonUtil.newObjectNode();
         if (result instanceof Double doubleValue) {
             valuesNode.put(outputName, doubleValue);
@@ -98,16 +101,17 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
         } else {
             valuesNode.set(outputName, JacksonUtil.valueToTree(result));
         }
-
-        long latestTs = getLatestTimestamp();
-        if (useLatestTs && latestTs != DEFAULT_LAST_UPDATE_TS) {
-            ObjectNode resultNode = JacksonUtil.newObjectNode();
-            resultNode.put("ts", latestTs);
-            resultNode.set("values", valuesNode);
-            return resultNode;
-        } else {
+        if (output.getType() == OutputType.ATTRIBUTES || !ctx.isUseLatestTs()) {
             return valuesNode;
         }
+        long latestTs = getLatestTimestamp();
+        if (latestTs == DEFAULT_LAST_UPDATE_TS) {
+            return valuesNode;
+        }
+        ObjectNode resultNode = JacksonUtil.newObjectNode();
+        resultNode.put("ts", latestTs);
+        resultNode.set("values", valuesNode);
+        return resultNode;
     }
 
 }

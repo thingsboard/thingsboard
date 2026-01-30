@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.notification;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +31,12 @@ import org.thingsboard.server.common.data.notification.targets.NotificationTarge
 import org.thingsboard.server.common.data.notification.targets.platform.AllUsersFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.CustomerUsersFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.PlatformUsersNotificationTargetConfig;
+import org.thingsboard.server.common.data.notification.targets.platform.SystemAdministratorsFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.UserListFilter;
+import org.thingsboard.server.common.data.notification.targets.platform.UsersFilterType;
+import org.thingsboard.server.common.data.notification.targets.slack.SlackConversation;
+import org.thingsboard.server.common.data.notification.targets.slack.SlackConversationType;
+import org.thingsboard.server.common.data.notification.targets.slack.SlackNotificationTargetConfig;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.notification.NotificationTargetDao;
@@ -173,6 +179,28 @@ public class NotificationTargetApiTest extends AbstractNotificationApiTest {
         String error = getErrorMessage(doDelete("/api/notification/target/" + target.getId())
                 .andExpect(status().isBadRequest()));
         assertThat(error).containsIgnoringCase("referenced by scheduled notification request");
+    }
+
+    @Test
+    public void findByTenantIdAndUsersFilterType() throws Exception {
+        loginSysAdmin();
+        NotificationTarget sysAdmins = createNotificationTarget(new SystemAdministratorsFilter());
+
+        NotificationTarget slack = new NotificationTarget();
+        slack.setName(RandomStringUtils.randomNumeric(5));
+        SlackNotificationTargetConfig slackConfig = new SlackNotificationTargetConfig();
+        SlackConversation slackConversation = new SlackConversation();
+        slackConversation.setType(SlackConversationType.DIRECT);
+        slackConversation.setId("U12345678");
+        slackConversation.setName("test");
+        slackConfig.setConversation(slackConversation);
+        slack.setConfiguration(slackConfig);
+        slack = saveNotificationTarget(slack);
+
+        List<NotificationTarget> sysAdminTargets = notificationTargetDao.findByTenantIdAndUsersFilterType(
+                TenantId.SYS_TENANT_ID, UsersFilterType.SYSTEM_ADMINISTRATORS
+        );
+        assertThat(sysAdminTargets).containsOnly(sysAdmins);
     }
 
     private String saveAndGetError(NotificationTarget notificationTarget, ResultMatcher statusMatcher) throws Exception {
