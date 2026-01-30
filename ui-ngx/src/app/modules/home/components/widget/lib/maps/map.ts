@@ -197,7 +197,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
         imperial: this.settings.scales.includes(MapScale.imperial)
       }).addTo(this.map);
     }
-    if (this.map.zoomControl) {
+    if (this.map?.zoomControl) {
       this.map.zoomControl.setPosition(this.settings.controlsPosition);
     }
     this.dragMode = !this.settings.dragModeButton;
