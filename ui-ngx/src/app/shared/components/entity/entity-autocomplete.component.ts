@@ -17,8 +17,8 @@
 import { Component, ElementRef, EventEmitter, forwardRef, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
-import { firstValueFrom, merge, Observable, of, Subject } from 'rxjs';
-import { catchError, debounceTime, map, share, switchMap, tap } from 'rxjs/operators';
+import { firstValueFrom, merge, Observable, of, shareReplay, Subject } from 'rxjs';
+import { catchError, debounceTime, first, map, switchMap, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
@@ -27,13 +27,14 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { EntityService } from '@core/http/entity.service';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
-import { getEntityDetailsPageURL, isDefinedAndNotNull, isEqual } from '@core/utils';
+import { getEntityDetailsPageURL, isDefinedAndNotNull, isEqual, objectRequired } from '@core/utils';
 import { coerceArray, coerceBoolean } from '@shared/decorators/coercion';
+import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 
 @Component({
   selector: 'tb-entity-autocomplete',
   templateUrl: './entity-autocomplete.component.html',
-  styleUrls: [],
+  styleUrls: ['./entity-autocomplete.component.scss'],
   providers: [{
     provide: NG_VALUE_ACCESSOR,
     useExisting: forwardRef(() => EntityAutocompleteComponent),
@@ -69,6 +70,8 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
 
   private propagateChange: (value: any) => void = () => { };
 
+  private onTouched = () => { };
+
   @Input()
   set entityType(entityType: EntityType) {
     if (this.entityTypeValue !== entityType) {
@@ -95,6 +98,9 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
       this.selectEntityFormGroup.get('entity').updateValueAndValidity();
     }
   }
+
+  @Input()
+  entityNotValidText = 'entity.entity-not-valid';
 
   @Input()
   excludeEntityIds: Array<string>;
@@ -150,6 +156,9 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
 
   @ViewChild('entityInput', {static: true}) entityInput: ElementRef;
 
+  @ViewChild('autocompleteTrigger') autocompleteTrigger: MatAutocompleteTrigger;
+
+
   get requiredErrorText(): string {
     if (this.requiredText && this.requiredText.length) {
       return this.requiredText;
@@ -169,7 +178,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
               private entityService: EntityService,
               private fb: UntypedFormBuilder) {
     this.selectEntityFormGroup = this.fb.group({
-      entity: [null]
+      entity: [null, objectRequired()]
     });
   }
 
@@ -177,7 +186,8 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
     this.propagateChange = fn;
   }
 
-  registerOnTouched(_fn: any): void {
+  registerOnTouched(fn: any): void {
+    this.onTouched = fn;
   }
 
   ngOnInit() {
@@ -201,7 +211,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
           // startWith<string | BaseData<EntityId>>(''),
           map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
           switchMap(name => this.fetchEntities(name)),
-          share()
+          shareReplay(1)
         )
     );
   }
@@ -214,30 +224,35 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
           this.noEntitiesMatchingText = 'asset.no-assets-matching';
           this.entityRequiredText = 'asset.asset-required';
           this.notFoundEntities = 'asset.no-assets-text';
+          this.entityNotValidText = 'asset.asset-not-valid';
           break;
         case EntityType.DEVICE:
           this.entityText = 'device.device';
           this.noEntitiesMatchingText = 'device.no-devices-matching';
           this.entityRequiredText = 'device.device-required';
           this.notFoundEntities = 'device.no-devices-text';
+          this.entityNotValidText = 'device.device-not-valid';
           break;
         case EntityType.EDGE:
           this.entityText = 'edge.edge';
           this.noEntitiesMatchingText = 'edge.no-edges-matching';
           this.entityRequiredText = 'edge.edge-required';
           this.notFoundEntities = 'edge.no-edges-text';
+          this.entityNotValidText = 'edge.edge-not-valid';
           break;
         case EntityType.ENTITY_VIEW:
           this.entityText = 'entity-view.entity-view';
           this.noEntitiesMatchingText = 'entity-view.no-entity-views-matching';
           this.entityRequiredText = 'entity-view.entity-view-required';
           this.notFoundEntities = 'entity-view.no-entity-views-text';
+          this.entityNotValidText = 'entity-view.entity-view-not-valid';
           break;
         case EntityType.RULE_CHAIN:
           this.entityText = 'rulechain.rulechain';
           this.noEntitiesMatchingText = 'rulechain.no-rulechains-matching';
           this.entityRequiredText = 'rulechain.rulechain-required';
           this.notFoundEntities = 'rulechain.no-rulechains-text';
+          this.entityNotValidText = 'rulechain.rulechain-not-valid';
           break;
         case EntityType.TENANT:
         case AliasEntityType.CURRENT_TENANT:
@@ -245,12 +260,14 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
           this.noEntitiesMatchingText = 'tenant.no-tenants-matching';
           this.entityRequiredText = 'tenant.tenant-required';
           this.notFoundEntities = 'tenant.no-tenants-text';
+          this.entityNotValidText = 'tenant.tenant-not-valid';
           break;
         case EntityType.CUSTOMER:
           this.entityText = 'customer.customer';
           this.noEntitiesMatchingText = 'customer.no-customers-matching';
           this.entityRequiredText = 'customer.customer-required';
           this.notFoundEntities = 'customer.no-customers-text';
+          this.entityNotValidText = 'customer.customer-not-valid';
           break;
         case EntityType.USER:
         case AliasEntityType.CURRENT_USER:
@@ -258,66 +275,77 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
           this.noEntitiesMatchingText = 'user.no-users-matching';
           this.entityRequiredText = 'user.user-required';
           this.notFoundEntities = 'user.no-users-text';
+          this.entityNotValidText = 'user.user-not-valid';
           break;
         case EntityType.DASHBOARD:
           this.entityText = 'dashboard.dashboard';
           this.noEntitiesMatchingText = 'dashboard.no-dashboards-matching';
           this.entityRequiredText = 'dashboard.dashboard-required';
           this.notFoundEntities = 'dashboard.no-dashboards-text';
+          this.entityNotValidText = 'dashboard.dashboard-not-valid';
           break;
         case EntityType.ALARM:
           this.entityText = 'alarm.alarm';
           this.noEntitiesMatchingText = 'alarm.no-alarms-matching';
           this.entityRequiredText = 'alarm.alarm-required';
           this.notFoundEntities = 'alarm.no-alarms-prompt';
+          this.entityNotValidText = 'alarm.alarm-not-valid';
           break;
         case EntityType.QUEUE_STATS:
           this.entityText = 'queue-statistics.queue-statistics';
           this.noEntitiesMatchingText = 'queue-statistics.no-queue-statistics-matching';
           this.entityRequiredText = 'queue-statistics.queue-statistics-required';
           this.notFoundEntities = 'queue-statistics.no-queue-statistics-text';
+          this.entityNotValidText = 'queue-statistics.queue-statistics-not-valid';
           break;
         case EntityType.MOBILE_APP:
           this.entityText = 'mobile.application';
           this.noEntitiesMatchingText = 'mobile.no-application-matching';
           this.entityRequiredText = 'mobile.application-required';
           this.notFoundEntities = 'mobile.no-application-text';
+          this.entityNotValidText = 'mobile.application-not-valid';
           break;
         case EntityType.MOBILE_APP_BUNDLE:
           this.entityText = 'mobile.bundle';
           this.noEntitiesMatchingText = 'mobile.no-bundle-matching';
           this.entityRequiredText = 'mobile.bundle-required';
           this.notFoundEntities = 'mobile.no-bundle-text';
+          this.entityNotValidText = 'mobile.bundle-not-valid';
           break;
         case EntityType.NOTIFICATION_TARGET:
           this.entityText = 'notification.notification-recipient';
           this.noEntitiesMatchingText = 'notification.no-recipients-matching';
           this.entityRequiredText = 'notification.notification-recipient-required';
           this.notFoundEntities = 'notification.no-recipients-text';
+          this.entityNotValidText = 'notification.notification-recipient-not-valid';
           break;
         case EntityType.AI_MODEL:
           this.entityText = 'ai-models.ai-model';
           this.noEntitiesMatchingText = 'ai-models.no-model-matching';
           this.entityRequiredText = 'ai-models.model-required';
           this.notFoundEntities = 'ai-models.no-model-text';
+          this.entityNotValidText = 'ai-models.model-not-valid';
           break;
         case EntityType.DEVICE_PROFILE:
           this.entityText = 'device-profile.device-profile';
           this.noEntitiesMatchingText = 'device-profile.no-device-profiles-matching';
           this.entityRequiredText = 'device-profile.device-profile-required';
           this.notFoundEntities = 'device-profile.no-device-profiles-text';
+          this.entityNotValidText = 'device-profile.device-profile-not-valid';
           break;
         case EntityType.ASSET_PROFILE:
           this.entityText = 'asset-profile.asset-profile';
           this.noEntitiesMatchingText = 'asset-profile.no-asset-profiles-matching';
           this.entityRequiredText = 'asset-profile.asset-profile-required';
           this.notFoundEntities = 'asset-profile.no-asset-profiles-text';
+          this.entityNotValidText = 'asset-profile.asset-profile-not-valid';
           break;
         case AliasEntityType.CURRENT_CUSTOMER:
           this.entityText = 'customer.default-customer';
           this.noEntitiesMatchingText = 'customer.no-customers-matching';
           this.entityRequiredText = 'customer.default-customer-required';
           this.notFoundEntities = 'customer.no-customers-text';
+          this.entityNotValidText = 'customer.customer-not-valid';
           break;
         case AliasEntityType.CURRENT_USER_OWNER:
           const authUser =  getCurrentAuthUser(this.store);
@@ -325,10 +353,12 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
             this.entityText = 'tenant.tenant';
             this.noEntitiesMatchingText = 'tenant.no-tenants-matching';
             this.entityRequiredText = 'tenant.tenant-required';
+            this.entityNotValidText = 'tenant.tenant-not-valid';
           } else {
             this.entityText = 'customer.customer';
             this.noEntitiesMatchingText = 'customer.no-customers-matching';
             this.entityRequiredText = 'customer.customer-required';
+            this.entityNotValidText = 'customer.customer-not-valid';
           }
           break;
       }
@@ -478,5 +508,23 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
 
   markAsTouched(): void {
     this.selectEntityFormGroup.get('entity').markAsTouched();
+  }
+
+  onBlur(): void {
+    this.onTouched();
+
+    if (!this.modelValue) {
+      this.filteredEntities.pipe(
+        first()
+      ).subscribe(entities => {
+        if (entities && entities.length === 1) {
+          const entity = entities[0];
+          this.selectEntityFormGroup.get('entity').setValue(entity, { emitEvent: false });
+          const newModelValue = this.useFullEntityId ? entity.id : entity.id.id;
+          this.updateView(newModelValue, entity);
+          this.autocompleteTrigger?.closePanel();
+        }
+      });
+    }
   }
 }
