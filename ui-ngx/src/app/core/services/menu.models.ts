@@ -816,7 +816,8 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
               {id: MenuId.domains},
               {id: MenuId.clients}
             ]
-          }
+          },
+          {id: MenuId.audit_log}
         ]
       }
     ]

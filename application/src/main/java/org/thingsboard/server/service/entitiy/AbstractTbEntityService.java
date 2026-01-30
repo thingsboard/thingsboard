@@ -97,6 +97,10 @@ public abstract class AbstractTbEntityService {
         return (I) EntityIdFactory.getByTypeAndUuid(entityType, ModelConstants.NULL_UUID);
     }
 
+    protected <I extends EntityId> I getOrEmptyId(I entityId, EntityType entityType) {
+        return entityId == null ? emptyId(entityType) : entityId;
+    }
+
     protected ListenableFuture<UUID> autoCommit(User user, EntityId entityId) {
         if (vcService != null) {
             return vcService.autoCommit(user, entityId);
