@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -173,8 +173,14 @@ public class JpaBaseEventDao implements EventDao {
 
     @Override
     public void removeEvents(UUID tenantId, UUID entityId, Long startTime, Long endTime) {
+        removeEvents(tenantId, entityId, startTime, endTime, EventType.values());
+    }
+
+    @Override
+    public void removeEvents(UUID tenantId, UUID entityId, Long startTime, Long endTime, EventType... types) {
         log.debug("[{}][{}] Remove events [{}-{}] ", tenantId, entityId, startTime, endTime);
-        for (EventType eventType : EventType.values()) {
+        EventType[] eventTypes = (types == null || types.length == 0) ? EventType.values() : types;
+        for (EventType eventType : eventTypes) {
             getEventRepository(eventType).removeEvents(tenantId, entityId, startTime, endTime);
         }
     }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.cf.CalculatedField;
@@ -36,7 +37,9 @@ import org.thingsboard.server.common.data.cf.configuration.ScriptCalculatedField
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.id.AssetProfileId;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.controller.CalculatedFieldControllerTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
@@ -872,6 +875,96 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                     assertThat(result).isNotNull();
                     assertThat(result.get("latestA").get(0).get("value").asText()).isEqualTo("7");
                     assertThat(result.get("avgB").get(0).get("value").asText()).isEqualTo("126.0");
+                });
+    }
+
+    @Test
+    public void testCalculatedFieldsWhenOneIsInvalid() throws Exception {
+        Device testDevice = createDevice("Test device", "1234567890");
+        long now = System.currentTimeMillis();
+        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode(String.format("{\"ts\": %s, \"values\": {\"a\":5}}", now - TimeUnit.MINUTES.toMillis(3))));
+
+        // Script CF - invalid
+        CalculatedField invalidCF = new CalculatedField();
+        invalidCF.setEntityId(testDevice.getId());
+        invalidCF.setType(CalculatedFieldType.SCRIPT);
+        invalidCF.setName("Script CF");
+        invalidCF.setDebugSettings(DebugSettings.all());
+
+        ScriptCalculatedFieldConfiguration scriptConfig = new ScriptCalculatedFieldConfiguration();
+
+        ReferencedEntityKey refEntityKeyA = new ReferencedEntityKey("a", ArgumentType.TS_LATEST, null);
+        Argument argumentA = new Argument();
+        argumentA.setRefEntityKey(refEntityKeyA);
+        scriptConfig.setArguments(Map.of("a", argumentA));
+        scriptConfig.setExpression("""
+                return {
+                    "temperature": temp
+                };
+                """);
+
+        Output scriptOutput = new Output();
+        scriptOutput.setType(OutputType.TIME_SERIES);
+        scriptConfig.setOutput(scriptOutput);
+
+        invalidCF.setConfiguration(scriptConfig);
+
+        invalidCF = doPost("/api/calculatedField", invalidCF, CalculatedField.class);
+        CalculatedFieldId invalidCfId = invalidCF.getId();
+
+        await().alias("create invalid CF -> check error").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    PageData<EventInfo> debugEvents = getDebugEvents(tenantId, invalidCfId, 1);
+                    if (!debugEvents.getData().isEmpty()) {
+                        EventInfo eventInfo = debugEvents.getData().get(0);
+                        assertThat(eventInfo.getBody().has("error")).isTrue();
+                    }
+                });
+
+        // Simple CF - valid
+        CalculatedField validCF = new CalculatedField();
+        validCF.setEntityId(testDevice.getId());
+        validCF.setType(CalculatedFieldType.SIMPLE);
+        validCF.setName("Simple CF");
+        validCF.setDebugSettings(DebugSettings.all());
+
+        SimpleCalculatedFieldConfiguration simpleConfig = new SimpleCalculatedFieldConfiguration();
+        simpleConfig.setArguments(Map.of("a", argumentA));
+        simpleConfig.setExpression("a+1");
+
+        Output simpleOutput = new Output();
+        simpleOutput.setName("a+1");
+        simpleOutput.setType(OutputType.TIME_SERIES);
+        simpleOutput.setDecimalsByDefault(0);
+        simpleConfig.setOutput(simpleOutput);
+
+        validCF.setConfiguration(simpleConfig);
+
+        validCF = doPost("/api/calculatedField", validCF, CalculatedField.class);
+        CalculatedFieldId validCfId = validCF.getId();
+
+        await().alias("create CF -> check initial calculation").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    PageData<EventInfo> debugEvents = getDebugEvents(tenantId, validCfId, 1);
+                    if (!debugEvents.getData().isEmpty()) {
+                        EventInfo eventInfo = debugEvents.getData().get(0);
+                        assertThat(eventInfo.getBody().has("error")).isFalse();
+                    }
+                    ObjectNode result = getLatestTelemetry(testDevice.getId(), "a+1");
+                    assertThat(result).isNotNull();
+                    assertThat(result.get("a+1").get(0).get("value").asText()).isEqualTo("6");
+                });
+
+        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"a\":6}"));
+
+        await().alias("update telemetry -> recalculate state").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode result = getLatestTelemetry(testDevice.getId(), "a+1");
+                    assertThat(result).isNotNull();
+                    assertThat(result.get("a+1").get(0).get("value").asText()).isEqualTo("7");
                 });
     }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicInteger;
 import static org.thingsboard.server.dao.service.OtaPackageServiceTest.TARGET_FW_VERSION;
 import static org.thingsboard.server.dao.service.OtaPackageServiceTest.TITLE;
@@ -137,6 +136,7 @@ public class FwLwM2MDevice extends BaseInstanceEnabler implements Destroyable {
     @Override
     public void destroy() {
         scheduler.shutdownNow();
+        this.leshanClient = null;
     }
 
     private void startDownloading() {

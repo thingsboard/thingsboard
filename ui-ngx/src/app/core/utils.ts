@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -27,13 +27,14 @@ import { serverErrorCodesTranslations } from '@shared/models/constants';
 import { SubscriptionEntityInfo } from '@core/api/widget-api.models';
 import {
   CompiledTbFunction,
-  compileTbFunction, GenericFunction,
+  compileTbFunction,
+  GenericFunction,
   isNotEmptyTbFunction,
   TbFunction
 } from '@shared/models/js-function.models';
 import { DomSanitizer } from '@angular/platform-browser';
 import { SecurityContext } from '@angular/core';
-import { AbstractControl, ValidationErrors, Validators } from '@angular/forms';
+import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 
 const varsRegex = /\${([^}]*)}/g;
 const emailRegex = /^[A-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
@@ -998,3 +999,12 @@ export const validateEmail = (control: AbstractControl): ValidationErrors | null
   return emailRegex.test(control.value) ? null : {email: true};
 };
 
+export const objectRequired = (): ValidatorFn => {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const value = control.value;
+    if (value && !isObject(value)) {
+      return { objectRequired: true };
+    }
+    return null;
+  };
+}

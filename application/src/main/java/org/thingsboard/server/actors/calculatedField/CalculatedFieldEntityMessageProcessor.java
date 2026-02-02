@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,6 @@ import java.util.stream.Collectors;
 
 import static org.thingsboard.server.service.cf.ctx.state.TsRollingArgumentEntry.getValueForTsRecord;
 
-
 /**
  * @author Andrew Shvayka
  */
@@ -131,7 +130,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             if (state.isSizeOk()) {
                 processStateIfReady(ctx, Collections.singletonList(ctx.getCfId()), state, null, null, msg.getCallback());
             } else {
-                throw new RuntimeException(ctx.getSizeExceedsLimitMessage());
+                throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).errorMessage(ctx.getSizeExceedsLimitMessage()).build();
             }
         } catch (Exception e) {
             if (e instanceof CalculatedFieldException cfe) {
@@ -200,6 +199,9 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                 }
             }
         } catch (Exception e) {
+            if (e instanceof CalculatedFieldException cfe) {
+                throw cfe;
+            }
             throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).cause(e).build();
         }
     }
@@ -223,7 +225,11 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             }
         } catch (Exception e) {
             if (e instanceof CalculatedFieldException cfe) {
-                throw cfe;
+                if (DebugModeUtil.isDebugFailuresAvailable(cfe.getCtx().getCalculatedField())) {
+                    systemContext.persistCalculatedFieldDebugError(cfe);
+                }
+                callback.onSuccess();
+                return;
             }
             throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).cause(e).build();
         }

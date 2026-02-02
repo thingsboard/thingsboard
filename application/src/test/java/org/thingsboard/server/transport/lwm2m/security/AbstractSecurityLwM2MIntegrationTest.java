@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -359,8 +359,8 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
         }
         bootstrapServerCredential.setShortServerId(isBootstrap ? shortServerIdBs0 : shortServerId);
         bootstrapServerCredential.setBootstrapServerIs(isBootstrap);
-        bootstrapServerCredential.setHost(isBootstrap ? hostBs : host);
-        bootstrapServerCredential.setPort(isBootstrap ? securityPortBs : securityPort);
+        bootstrapServerCredential.setHost(isBootstrap ? LWM2M_BOOTSTRAP_HOST : LWM2M_HOST);
+        bootstrapServerCredential.setPort(isBootstrap ? LWM2MS_BOOTSTRAP_PORT : LWM2MS_PORT);
         return bootstrapServerCredential;
     }
 

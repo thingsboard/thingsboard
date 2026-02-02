@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,20 +80,20 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
 
     @Override
     public void validateUserCredentials(TenantId tenantId, UserCredentials userCredentials, String username, String password) throws AuthenticationException {
+        if (!userCredentials.isEnabled()) {
+            throw new DisabledException("User is not active");
+        }
+
         if (!encoder.matches(password, userCredentials.getPassword())) {
             int failedLoginAttempts = userService.increaseFailedLoginAttempts(tenantId, userCredentials.getUserId());
             SecuritySettings securitySettings = securitySettingsService.getSecuritySettings();
             if (securitySettings.getMaxFailedLoginAttempts() != null && securitySettings.getMaxFailedLoginAttempts() > 0) {
-                if (failedLoginAttempts > securitySettings.getMaxFailedLoginAttempts() && userCredentials.isEnabled()) {
+                if (failedLoginAttempts > securitySettings.getMaxFailedLoginAttempts()) {
                     lockAccount(userCredentials.getUserId(), username, securitySettings.getUserLockoutNotificationEmail(), securitySettings.getMaxFailedLoginAttempts());
                     throw new LockedException("Authentication Failed. Username was locked due to security policy.");
                 }
             }
             throw new BadCredentialsException("Authentication Failed. Username or Password not valid.");
-        }
-
-        if (!userCredentials.isEnabled()) {
-            throw new DisabledException("User is not active");
         }
 
         userService.resetFailedLoginAttempts(tenantId, userCredentials.getUserId());

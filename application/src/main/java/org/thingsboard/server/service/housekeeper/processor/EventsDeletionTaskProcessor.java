@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,12 @@ package org.thingsboard.server.service.housekeeper.processor;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTask;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
 import org.thingsboard.server.dao.event.EventService;
+
+import java.util.Arrays;
 
 @Component
 @RequiredArgsConstructor
@@ -29,7 +32,9 @@ public class EventsDeletionTaskProcessor extends HousekeeperTaskProcessor<Housek
 
     @Override
     public void process(HousekeeperTask task) throws Exception {
-        eventService.removeEvents(task.getTenantId(), task.getEntityId(), null, 0L, System.currentTimeMillis());
+        // Only delete non-debug events for deleted entities.
+        EventType[] nonDebugEventTypes = Arrays.stream(EventType.values()).filter(eventType -> !eventType.isDebug()).toArray(EventType[]::new);
+        eventService.removeEvents(task.getTenantId(), task.getEntityId(), 0L, System.currentTimeMillis(), nonDebugEventTypes);
     }
 
     @Override

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import { AlarmCommentId } from '@shared/models/id/alarm-comment-id';
 import { UserId } from '@shared/models/id/user-id';
 import { AlarmFilter } from '@shared/models/query/query.models';
 import { HasTenantId } from '@shared/models/entity.models';
-import { isNotEmptyStr } from '@core/utils';
+import { isDefinedAndNotNull, isNotEmptyStr } from '@core/utils';
 
 export enum AlarmsMode {
   ALL,
@@ -354,18 +354,20 @@ export class AlarmQueryV2 {
 
 export const getUserDisplayName = (alarmAssignee: AlarmAssignee |  AlarmCommentInfo) => {
   let displayName = '';
-  if (isNotEmptyStr(alarmAssignee.firstName) || isNotEmptyStr(alarmAssignee.lastName)) {
-    if (alarmAssignee.firstName) {
-      displayName += alarmAssignee.firstName;
-    }
-    if (alarmAssignee.lastName) {
-      if (displayName.length > 0) {
-        displayName += ' ';
+  if (isDefinedAndNotNull(alarmAssignee)) {
+   if (isNotEmptyStr(alarmAssignee.firstName) || isNotEmptyStr(alarmAssignee.lastName)) {
+      if (alarmAssignee.firstName) {
+       displayName += alarmAssignee.firstName;
       }
-      displayName += alarmAssignee.lastName;
+      if (alarmAssignee.lastName) {
+        if (displayName.length > 0) {
+          displayName += ' ';
+        }
+        displayName += alarmAssignee.lastName;
+      }
+    }   else {
+      displayName = alarmAssignee.email;
     }
-  } else {
-    displayName = alarmAssignee.email;
   }
   return displayName;
 };

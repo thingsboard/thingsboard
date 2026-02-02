@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -171,9 +171,9 @@ export class GalleryImageInputComponent extends PageComponent implements OnInit,
     }
   }
 
-  private updateModel(value: string) {
+  private updateModel(value: string, forcedToUpdate = false): void {
     this.cd.markForCheck();
-    if (this.imageUrl !== value) {
+    if (this.imageUrl !== value || forcedToUpdate) {
       this.imageUrl = value;
       this.propagateChange(prependTbImagePrefix(this.imageUrl));
     }
@@ -211,9 +211,10 @@ export class GalleryImageInputComponent extends PageComponent implements OnInit,
         }
     }).afterClosed().subscribe((image) => {
       if (image) {
+        const forcedToUpdate =  this.imageUrl === image.link && this.imageResource?.descriptor?.etag !== image.descriptor.etag;
         this.linkType = ImageLinkType.resource;
         this.imageResource = image;
-        this.updateModel(image.link);
+        this.updateModel(image.link, forcedToUpdate);
       }
     });
   }

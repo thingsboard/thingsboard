@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,6 +67,7 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.service.validator.DeviceCredentialsDataValidator;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
 
 import java.nio.ByteBuffer;
@@ -96,6 +97,8 @@ public class DeviceServiceTest extends AbstractServiceTest {
     OtaPackageService otaPackageService;
     @Autowired
     TenantProfileService tenantProfileService;
+    @Autowired
+    TbTenantProfileCache tenantProfileCache;
     @Autowired
     private CalculatedFieldService calculatedFieldService;
     @Autowired
@@ -131,6 +134,7 @@ public class DeviceServiceTest extends AbstractServiceTest {
         TenantProfile defaultTenantProfile = tenantProfileService.findDefaultTenantProfile(tenantId);
         defaultTenantProfile.getProfileData().setConfiguration(DefaultTenantProfileConfiguration.builder().maxDevices(Long.MAX_VALUE).build());
         tenantProfileService.saveTenantProfile(tenantId, defaultTenantProfile);
+        tenantProfileCache.evict(defaultTenantProfile.getId());
 
         Device device = this.saveDevice(tenantId, "My device");
         deleteDevice(tenantId, device);
@@ -141,6 +145,7 @@ public class DeviceServiceTest extends AbstractServiceTest {
         TenantProfile defaultTenantProfile = tenantProfileService.findDefaultTenantProfile(tenantId);
         defaultTenantProfile.getProfileData().setConfiguration(DefaultTenantProfileConfiguration.builder().maxDevices(1).build());
         tenantProfileService.saveTenantProfile(tenantId, defaultTenantProfile);
+        tenantProfileCache.evict(defaultTenantProfile.getId());
 
         Assert.assertEquals(0, deviceService.countByTenantId(tenantId));
 

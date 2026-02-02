@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,14 +15,19 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="countryFormGroup" class="mat-block" subscriptSizing="{{subscriptSizing}}" [appearance]="appearance">
+<mat-form-field [formGroup]="countryFormGroup" class="mat-block" [subscriptSizing]="subscriptSizing" [appearance]="appearance">
   <mat-label>{{ labelText }}</mat-label>
+  @if (countryFormGroup.get('country').value?.flag) {
+    <span matPrefix>
+      {{ countryFormGroup.get('country').value.flag }}
+    </span>
+  }
   <input matInput type="text"
          #countryInput
+         #autocompleteTrigger="matAutocompleteTrigger"
          formControlName="country"
          (focusin)="onFocus()"
-         (blur)="onTouched()"
-         [required]="required"
+         (blur)="checkInputAndAutoSelect()"
          [matAutocomplete]="countryAutocomplete">
   <button *ngIf="countryFormGroup.get('country').value && !disabled"
           type="button"
@@ -54,5 +59,8 @@
   <mat-hint *ngIf="autocompleteHint">{{ autocompleteHint }}</mat-hint>
   <mat-error *ngIf="countryFormGroup.get('country').hasError('required')">
     {{ requiredText }}
+  </mat-error>
+  <mat-error *ngIf="countryFormGroup.get('country').hasError('objectRequired')">
+    {{ objectRequiredText }}
   </mat-error>
 </mat-form-field>

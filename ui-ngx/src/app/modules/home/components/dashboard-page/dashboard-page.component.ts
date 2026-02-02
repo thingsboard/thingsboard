@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -650,7 +650,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   private hideToolbarSetting(): boolean {
     if (isDefined(this.dashboard.configuration?.settings?.hideToolbar)) {
-      const canApplyHideSetting = !this.forceFullscreen || this.isMobileApp;
+      const canApplyHideSetting = !this.forceFullscreen || this.isMobileApp || this.isPublicUser();
       return this.dashboard.configuration.settings.hideToolbar && canApplyHideSetting;
     } else {
       return false;
