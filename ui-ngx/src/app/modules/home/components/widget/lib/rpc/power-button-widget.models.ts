@@ -28,7 +28,7 @@ import { Circle, Effect, Element, G, Gradient, Path, Runner, Svg, Text, Timeline
 import '@svgdotjs/svg.filter.js';
 import tinycolor from 'tinycolor2';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { Observable, of } from 'rxjs';
+import { Observable, of, shareReplay } from 'rxjs';
 import { isSvgIcon, splitIconName } from '@shared/models/icon.models';
 import { catchError, map, take } from 'rxjs/operators';
 import { MatIconRegistry } from '@angular/material/icon';
@@ -336,6 +336,8 @@ export abstract class PowerButtonShape {
   protected onPowerSymbolCircle: Path;
   protected onPowerSymbolLine: Path;
 
+  private onIcon$: Observable<Element>;
+
   protected constructor(protected widgetContext: WidgetContext,
                         protected svgShape: Svg,
                         protected iconRegistry: MatIconRegistry,
@@ -428,7 +430,10 @@ export abstract class PowerButtonShape {
 
   public drawOnShape(onCenterGroup?: G, label?: boolean, labelWeight?: string, circleStroke?: boolean, mask?: Circle) {
     if (this.icons.onButtonIcon.showIcon) {
-      this.createIconElement(this.icons.onButtonIcon.icon, this.icons.onButtonIcon.iconSize).subscribe(icon => {
+      this.onIcon$ = this.createIconElement(this.icons.onButtonIcon.icon, this.icons.onButtonIcon.iconSize)
+        .pipe(shareReplay(1));
+
+      this.onIcon$.subscribe(icon => {
         this.onPowerSymbolIcon = icon.center(cx, cy);
         if (isDefinedAndNotNull(onCenterGroup)) {
           this.onPowerSymbolIcon.addTo(onCenterGroup);
@@ -462,7 +467,9 @@ export abstract class PowerButtonShape {
 
   public onCenterTimeLine(timeline: Timeline, label: boolean) {
     if (this.icons.onButtonIcon.showIcon) {
-      this.onPowerSymbolIcon.timeline(timeline);
+      if (this.onIcon$) {
+        this.onIcon$.subscribe(icon => icon.timeline(timeline))
+      }
     } else {
       if (label) {
         this.onLabelShape.timeline(timeline);

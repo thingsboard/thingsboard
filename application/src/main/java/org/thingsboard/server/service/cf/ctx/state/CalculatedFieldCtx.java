@@ -387,7 +387,7 @@ public class CalculatedFieldCtx implements Closeable {
             tbelExpressions.put(expression, engine);
         } catch (Exception e) {
             initialized = false;
-            throw new RuntimeException("Failed to init calculated field ctx. Invalid expression syntax.", e);
+            throw new RuntimeException("Failed to initialize CF context. The script expression is invalid. Please check for syntax errors or unsupported functions.", e);
         }
     }
 
@@ -404,7 +404,7 @@ public class CalculatedFieldCtx implements Closeable {
             simpleExpressions.put(expression, compiledExpression);
         } else {
             initialized = false;
-            throw new RuntimeException("Failed to init calculated field ctx. Invalid expression syntax.");
+            throw new RuntimeException("Failed to initialize CF context. The expression has invalid syntax or unknown variables. Ensure all mathematical operators are correct.");
         }
     }
 
@@ -726,6 +726,9 @@ public class CalculatedFieldCtx implements Closeable {
                 return true;
             }
         }
+        if (cfType == CalculatedFieldType.PROPAGATION && !propagationArgument.equals(other.propagationArgument)) {
+            return true;
+        }
         if (hasGeofencingZoneGroupConfigurationChanges(other)) {
             return true;
         }
@@ -801,7 +804,7 @@ public class CalculatedFieldCtx implements Closeable {
     }
 
     public String getSizeExceedsLimitMessage() {
-        return "Failed to init CF state. State size exceeds limit of " + (maxStateSize / 1024) + "Kb!";
+        return "State size exceeds limit of " + (maxStateSize / 1024) + "Kb!";
     }
 
     public boolean hasCurrentOwnerSourceArguments() {
