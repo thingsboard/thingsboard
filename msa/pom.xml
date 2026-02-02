@@ -134,7 +134,7 @@
             </activation>
             <properties>
                 <docker.lts.tag>4.2.1-latest</docker.lts.tag>
-                <docker.skip.latest.tag>false</docker.skip.latest.tag>
+                <docker.skip.latest.tag>true</docker.skip.latest.tag>
             </properties>
             <build>
                 <plugins>
