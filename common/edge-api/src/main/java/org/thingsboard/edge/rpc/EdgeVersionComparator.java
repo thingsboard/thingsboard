@@ -25,6 +25,23 @@ public class EdgeVersionComparator implements Comparator<EdgeVersion> {
 
     @Override
     public int compare(EdgeVersion v1, EdgeVersion v2) {
+        if (v1 == v2) {
+            return 0;
+        }
+        // UNRECOGNIZED is less than any other version
+        if (v1 == EdgeVersion.UNRECOGNIZED) {
+            return -1;
+        }
+        if (v2 == EdgeVersion.UNRECOGNIZED) {
+            return 1;
+        }
+        // V_LATEST is treated as the newest version
+        if (v1 == EdgeVersion.V_LATEST) {
+            v1 = getNewestEdgeVersion();
+        }
+        if (v2 == EdgeVersion.V_LATEST) {
+            v2 = getNewestEdgeVersion();
+        }
         return compareVersionParts(parseVersionParts(v1), parseVersionParts(v2));
     }
 

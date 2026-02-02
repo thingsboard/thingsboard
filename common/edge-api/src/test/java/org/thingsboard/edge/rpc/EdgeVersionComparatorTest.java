@@ -70,4 +70,33 @@ class EdgeVersionComparatorTest {
         assertThat(newest).isNotEqualTo(EdgeVersion.V_LATEST);
         assertThat(newest).isNotEqualTo(EdgeVersion.UNRECOGNIZED);
     }
+
+    @Test
+    void compare_vLatest_treatedAsNewestVersion() {
+        EdgeVersion newest = EdgeVersionComparator.getNewestEdgeVersion();
+        // V_LATEST equals the newest version
+        assertThat(EdgeVersionComparator.INSTANCE.compare(EdgeVersion.V_LATEST, newest)).isEqualTo(0);
+        assertThat(EdgeVersionComparator.INSTANCE.compare(newest, EdgeVersion.V_LATEST)).isEqualTo(0);
+        // V_LATEST is greater than older versions
+        assertThat(EdgeVersionComparator.INSTANCE.compare(EdgeVersion.V_LATEST, EdgeVersion.V_3_3_0)).isGreaterThan(0);
+        assertThat(EdgeVersionComparator.INSTANCE.compare(EdgeVersion.V_3_3_0, EdgeVersion.V_LATEST)).isLessThan(0);
+    }
+
+    @Test
+    void compare_vLatest_withItself_returnsZero() {
+        assertThat(EdgeVersionComparator.INSTANCE.compare(EdgeVersion.V_LATEST, EdgeVersion.V_LATEST)).isEqualTo(0);
+    }
+
+    @Test
+    void compare_unrecognized_isLessThanAnyVersion() {
+        assertThat(EdgeVersionComparator.INSTANCE.compare(EdgeVersion.UNRECOGNIZED, EdgeVersion.V_3_3_0)).isLessThan(0);
+        assertThat(EdgeVersionComparator.INSTANCE.compare(EdgeVersion.UNRECOGNIZED, EdgeVersion.V_LATEST)).isLessThan(0);
+        assertThat(EdgeVersionComparator.INSTANCE.compare(EdgeVersion.V_3_3_0, EdgeVersion.UNRECOGNIZED)).isGreaterThan(0);
+        assertThat(EdgeVersionComparator.INSTANCE.compare(EdgeVersion.V_LATEST, EdgeVersion.UNRECOGNIZED)).isGreaterThan(0);
+    }
+
+    @Test
+    void compare_unrecognized_withItself_returnsZero() {
+        assertThat(EdgeVersionComparator.INSTANCE.compare(EdgeVersion.UNRECOGNIZED, EdgeVersion.UNRECOGNIZED)).isEqualTo(0);
+    }
 }
