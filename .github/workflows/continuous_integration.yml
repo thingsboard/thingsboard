@@ -1,0 +1,57 @@
+name:  CI Thingsboard
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_DB: thingsboard
+          POSTGRES_USER: postgre
+          POSTGRES_PASSWORD: postgre
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U tb_user -d thingsboard"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-
+      
+      - name: Build and Test with Maven
+        run: mvn clean install -DskipTests=false
+
+      - name: Start ThingsBoard
+        run: |
+          nohup mvn -pl application -am spring-boot:run &
+          sleep 60 # Wait for ThingsBoard to start
+      
+      - name: Verify ThingsBoard is running
+        run: |
+          curl -f http://localhost:8080 || exit 1
