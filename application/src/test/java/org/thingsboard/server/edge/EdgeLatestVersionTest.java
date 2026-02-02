@@ -17,20 +17,14 @@ package org.thingsboard.server.edge;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.thingsboard.edge.rpc.EdgeVersionComparator;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
-
-import java.util.Arrays;
-import java.util.Comparator;
 
 public class EdgeLatestVersionTest {
 
     @Test
     public void edgeLatestVersionIsSynchronizedTest() {
-        EdgeVersion currentHighestEdgeVersion = Arrays.stream(EdgeVersion.values())
-                .filter(v -> v != EdgeVersion.UNRECOGNIZED)
-                .filter(v -> v != EdgeVersion.V_LATEST)
-                .max(Comparator.comparingInt(EdgeVersion::getNumber))
-                .orElseThrow();
+        EdgeVersion currentHighestEdgeVersion = EdgeVersionComparator.getNewestEdgeVersion();
 
         String projectVersion = EdgeLatestVersionTest.class.getPackage().getImplementationVersion();
         if (projectVersion == null || projectVersion.isBlank()) {
