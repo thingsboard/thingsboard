@@ -144,15 +144,43 @@ public class EdgeGrpcClient implements EdgeRpcClient {
 
     public static EdgeVersion getNewestEdgeVersion() {
         EdgeVersion newest = null;
+        int[] newestParts = null;
         for (EdgeVersion v : EdgeVersion.values()) {
             if (v == EdgeVersion.V_LATEST || v == EdgeVersion.UNRECOGNIZED) {
                 continue;
             }
-            if (newest == null || v.getNumber() > newest.getNumber()) {
+            int[] parts = parseVersionParts(v);
+            if (newest == null || compareVersionParts(parts, newestParts) > 0) {
                 newest = v;
+                newestParts = parts;
             }
         }
         return newest;
+    }
+
+    private static int[] parseVersionParts(EdgeVersion version) {
+        String name = version.name();
+        if (name.startsWith("V_")) {
+            name = name.substring(2);
+        }
+        String[] parts = name.split("_");
+        int[] result = new int[parts.length];
+        for (int i = 0; i < parts.length; i++) {
+            result[i] = Integer.parseInt(parts[i]);
+        }
+        return result;
+    }
+
+    private static int compareVersionParts(int[] a, int[] b) {
+        int maxLen = Math.max(a.length, b.length);
+        for (int i = 0; i < maxLen; i++) {
+            int partA = i < a.length ? a[i] : 0;
+            int partB = i < b.length ? b[i] : 0;
+            if (partA != partB) {
+                return Integer.compare(partA, partB);
+            }
+        }
+        return 0;
     }
 
     private StreamObserver<ResponseMsg> initOutputStream(String edgeKey,
