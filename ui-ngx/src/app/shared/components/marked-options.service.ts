@@ -19,13 +19,13 @@ import { Inject, Injectable, DOCUMENT } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 
 import { WINDOW } from '@core/services/window.service';
-import { Tokens, marked, TokenizerObject } from 'marked';
+import { Parser, Tokens, marked, TokenizerObject } from 'marked';
 import { Clipboard } from '@angular/cdk/clipboard';
 
 const copyCodeBlock = '{:copy-code}';
 const codeStyleRegex = '^{:code-style="(.*)"}\n';
 const autoBlock = '{:auto}';
-const targetBlankBlock = '{:target=&quot;_blank&quot;}';
+const targetBlankBlock = '{:target="_blank"}';
 
 // @dynamic
 @Injectable({
@@ -42,7 +42,9 @@ export class MarkedOptionsService implements MarkedOptions {
   smartypants = false;
   mangle = false;
 
-  private renderer2 = new MarkedRenderer();
+  private parser = new Parser({
+    renderer: this.renderer
+  });
 
   private id = 1;
 
@@ -70,47 +72,66 @@ export class MarkedOptionsService implements MarkedOptions {
       }
     };
     marked.use({tokenizer});
-    this.renderer.code = (code: string, language: string | undefined, isEscaped: boolean) => {
-      const codeContext = processCode(code);
+
+    const origCode = this.renderer.code.bind(this.renderer);
+    const origTable = this.renderer.table.bind(this.renderer);
+    const origTablecell = this.renderer.tablecell.bind(this.renderer);
+    const origLink = this.renderer.link.bind(this.renderer);
+
+    this.renderer.code = (code: Tokens.Code) => {
+      const codeContext = processCode(code.text);
+      code.text = codeContext.code;
       if (codeContext.copyCode) {
-        const content = postProcessCodeContent(this.renderer2.code(codeContext.code, language, isEscaped), codeContext);
+        const content = postProcessCodeContent(origCode(code), codeContext);
         this.id++;
         return this.wrapCopyCode(this.id, content, codeContext);
       } else {
-        return this.wrapDiv(postProcessCodeContent(this.renderer2.code(codeContext.code, language, isEscaped), codeContext));
+        return this.wrapDiv(postProcessCodeContent(origCode(code), codeContext));
       }
     };
-    this.renderer.table = (header: string, body: string) => {
+    this.renderer.table = (token: Tokens.Table) => {
       let autoLayout = false;
-      if (header.includes(autoBlock)) {
-        autoLayout = true;
-        header = header.replace(autoBlock, '');
+      for (const h of token.header) {
+        if (h.text.includes(autoBlock)) {
+          autoLayout = true;
+          if (h.tokens?.length) {
+            h.tokens.filter(t => t.type === 'text').forEach((t: Tokens.Text) => t.text = t.text.replace(autoBlock, ''));
+          }
+        }
       }
-      let table = this.renderer2.table(header, body);
+      let table = origTable(token);
       if (autoLayout) {
         table = table.replace('<table', '<table class="auto"');
       }
       return table;
     };
-    this.renderer.tablecell = (content: string, flags: {
-      header: boolean;
-      align: 'center' | 'left' | 'right' | null;
-    }) => {
-      const codeContext = processCode(content);
+    this.renderer.tablecell = (token: Tokens.TableCell) => {
+      const codeContext = processCode(token.text);
       codeContext.multiline = false;
       if (codeContext.copyCode) {
         this.id++;
-        content = this.wrapCopyCode(this.id, codeContext.code, codeContext);
+        if (token.tokens?.length && token.tokens[token.tokens.length - 1].type === 'text') {
+          const textToken = token.tokens[token.tokens.length - 1] as Tokens.HTML;
+          textToken.text = this.wrapCopyCode(this.id, codeContext.code, codeContext);
+          textToken.type = 'html';
+        } else {
+          token.text = this.wrapCopyCode(this.id, codeContext.code, codeContext);
+        }
       }
-      return this.renderer2.tablecell(content, flags);
+      return origTablecell(token);
     };
-    this.renderer.link = (href: string | null, title: string | null, text: string) => {
-      if (text.endsWith(targetBlankBlock)) {
-        text = text.substring(0, text.length - targetBlankBlock.length);
-        const content = this.renderer2.link(href, title, text);
+    this.renderer.link = (token: Tokens.Link) => {
+      if (token.text.endsWith(targetBlankBlock)) {
+        if (token.tokens?.length && token.tokens[token.tokens.length - 1].type === 'text') {
+          const textToken = token.tokens[token.tokens.length - 1] as Tokens.Text;
+          textToken.text = textToken.text.substring(0, textToken.text.length - targetBlankBlock.length);
+        } else {
+          token.text = token.text.substring(0, token.text.length - targetBlankBlock.length);
+        }
+        const content = origLink(token);
         return content.replace('<a href=', '<a target="_blank" href=');
       } else {
-        return this.renderer2.link(href, title, text);
+        return origLink(token);
       }
     };
     this.document.addEventListener('selectionchange', this.onSelectionChange.bind(this));

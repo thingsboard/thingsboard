@@ -64,7 +64,7 @@ import {
 import { deepClone, guid, isDefinedAndNotNull, isObject, isUndefined } from '@core/utils';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { AggregationType } from '@shared/models/time/time.models';
-import { DndDropEvent } from 'ngx-drag-drop/lib/dnd-dropzone.directive';
+import { DndDropEvent } from 'ngx-drag-drop';
 import { moveItemInArray } from '@angular/cdk/drag-drop';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { ColorPickerPanelComponent } from '@shared/components/color-picker/color-picker-panel.component';

@@ -357,11 +357,12 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
         this.jsEditor.on('change', () => {
           this.cleanupJsErrors();
         });
-        if (!(this.jsEditor as any).completer) {
+        if (!this.jsEditor.completer) {
           this.jsEditor.execCommand("startAutocomplete");
-          (this.jsEditor as any).completer.detach();
+          this.jsEditor.completer.detach();
         }
-        (this.jsEditor as any).completer.popup.container.style.width = '500px';
+        (this.jsEditor.completer as Ace.Autocomplete).editor = this.jsEditor;
+        (this.jsEditor.completer as Ace.Autocomplete).getPopup().container.style.width = '500px';
         this.initialCompleters = this.jsEditor.completers || [];
       })
     ));

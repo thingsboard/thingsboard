@@ -33,7 +33,7 @@ import {
   timeSeriesAxisPositionTranslations,
   TimeSeriesChartYAxisSettings
 } from '@home/components/widget/lib/chart/time-series-chart.models';
-import { MatButton } from '@angular/material/button';
+import { MatIconButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import {
@@ -153,7 +153,7 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
     this.cd.markForCheck();
   }
 
-  editAxis($event: Event, matButton: MatButton) {
+  editAxis($event: Event, matButton: MatIconButton) {
     if ($event) {
       $event.stopPropagation();
     }
