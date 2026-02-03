@@ -76,7 +76,7 @@ public class DefaultTbEdgeService extends AbstractTbEntityService implements TbE
             edgeService.deleteEdge(tenantId, edgeId);
             logEntityActionService.logEntityAction(tenantId, edgeId, edge, edge.getCustomerId(), actionType, user, edgeId.toString());
         } catch (Exception e) {
-            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.EDGE), actionType,
+            logEntityActionService.logEntityAction(tenantId, getOrEmptyId(edgeId, EntityType.EDGE), actionType,
                     user, e, edgeId.toString());
             throw e;
         }
