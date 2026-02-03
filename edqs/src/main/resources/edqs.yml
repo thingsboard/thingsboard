@@ -210,7 +210,7 @@ management:
     web:
       exposure:
         # Expose metrics endpoint (use value 'prometheus' to enable prometheus metrics).
-        include: '${METRICS_ENDPOINTS_EXPOSE:info}'
+        include: "${METRICS_ENDPOINTS_EXPOSE:info}"
   health:
     elasticsearch:
       # Enable the org.springframework.boot.actuate.elasticsearch.ElasticsearchRestClientHealthIndicator.doHealthCheck
