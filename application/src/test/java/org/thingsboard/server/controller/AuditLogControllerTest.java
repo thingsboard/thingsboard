@@ -28,6 +28,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
@@ -111,48 +112,51 @@ public class AuditLogControllerTest extends AbstractControllerTest {
             doPost("/api/device", device, Device.class);
         }
 
+        List<AuditLog> loadedAuditLogs = getAuditLogs(5, "/api/audit/logs?");
+        TimePageLink pageLink;
+        PageData<AuditLog> pageData;
+
+        Assert.assertEquals(11 + 1, loadedAuditLogs.size());
+
+        loadedAuditLogs = getAuditLogs(5, "/api/audit/logs/customer/" + ModelConstants.NULL_UUID + "?");
+
+        Assert.assertEquals(11 + 1, loadedAuditLogs.size());
+
+        loadedAuditLogs = getAuditLogs(5, "/api/audit/logs/user/" + tenantAdmin.getId().getId().toString() + "?");
+
+        Assert.assertEquals(11 + 1, loadedAuditLogs.size());
+    }
+
+    @Test
+    public void testAuditLogsSysAdmin() throws Exception {
+        loginSysAdmin();
+        List<AuditLog> loadedAuditLogsBefore = getAuditLogs(100, "/api/audit/logs?");
+
+        for (int i = 0; i < 3; i++) {
+            TenantProfile tenantProfile = new TenantProfile();
+            tenantProfile.setName("Profile " + UUID.randomUUID());
+            doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
+        }
+
+        List<AuditLog> loadedAuditLogs = getAuditLogs(100, "/api/audit/logs?");
+
+        Assert.assertEquals("Have X audit log before this test + New tenant profiles in the test", loadedAuditLogsBefore.size() + 3, loadedAuditLogs.size());
+    }
+
+    private List<AuditLog> getAuditLogs(int pageSize, String urlTemplate) throws Exception {
         List<AuditLog> loadedAuditLogs = new ArrayList<>();
-        TimePageLink pageLink = new TimePageLink(5);
+        TimePageLink pageLink = new TimePageLink(pageSize);
         PageData<AuditLog> pageData;
         do {
-            pageData = doGetTypedWithTimePageLink("/api/audit/logs?",
-                    new TypeReference<PageData<AuditLog>>() {
+            pageData = doGetTypedWithTimePageLink(urlTemplate,
+                    new TypeReference<>() {
                     }, pageLink);
             loadedAuditLogs.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
-
-        Assert.assertEquals(11 + 1, loadedAuditLogs.size());
-
-        loadedAuditLogs = new ArrayList<>();
-        pageLink = new TimePageLink(5);
-        do {
-            pageData = doGetTypedWithTimePageLink("/api/audit/logs/customer/" + ModelConstants.NULL_UUID + "?",
-                    new TypeReference<PageData<AuditLog>>() {
-                    }, pageLink);
-            loadedAuditLogs.addAll(pageData.getData());
-            if (pageData.hasNext()) {
-                pageLink = pageLink.nextPageLink();
-            }
-        } while (pageData.hasNext());
-
-        Assert.assertEquals(11 + 1, loadedAuditLogs.size());
-
-        loadedAuditLogs = new ArrayList<>();
-        pageLink = new TimePageLink(5);
-        do {
-            pageData = doGetTypedWithTimePageLink("/api/audit/logs/user/" + tenantAdmin.getId().getId().toString() + "?",
-                    new TypeReference<PageData<AuditLog>>() {
-                    }, pageLink);
-            loadedAuditLogs.addAll(pageData.getData());
-            if (pageData.hasNext()) {
-                pageLink = pageLink.nextPageLink();
-            }
-        } while (pageData.hasNext());
-
-        Assert.assertEquals(11 + 1, loadedAuditLogs.size());
+        return loadedAuditLogs;
     }
 
     @Test
@@ -166,18 +170,7 @@ public class AuditLogControllerTest extends AbstractControllerTest {
             savedDevice = doPost("/api/device", savedDevice, Device.class);
         }
 
-        List<AuditLog> loadedAuditLogs = new ArrayList<>();
-        TimePageLink pageLink = new TimePageLink(5);
-        PageData<AuditLog> pageData;
-        do {
-            pageData = doGetTypedWithTimePageLink("/api/audit/logs/entity/DEVICE/" + savedDevice.getId().getId() + "?",
-                    new TypeReference<PageData<AuditLog>>() {
-                    }, pageLink);
-            loadedAuditLogs.addAll(pageData.getData());
-            if (pageData.hasNext()) {
-                pageLink = pageLink.nextPageLink();
-            }
-        } while (pageData.hasNext());
+        List<AuditLog> loadedAuditLogs = getAuditLogs(5, "/api/audit/logs/entity/DEVICE/" + savedDevice.getId().getId() + "?");
 
         Assert.assertEquals(11 + 1, loadedAuditLogs.size());
     }
