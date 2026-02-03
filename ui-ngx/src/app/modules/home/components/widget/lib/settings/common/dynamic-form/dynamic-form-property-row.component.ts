@@ -59,22 +59,23 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-dynamic-form-property-row',
-  templateUrl: './dynamic-form-property-row.component.html',
-  styleUrls: ['./dynamic-form-property-row.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DynamicFormPropertyRowComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => DynamicFormPropertyRowComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-dynamic-form-property-row',
+    templateUrl: './dynamic-form-property-row.component.html',
+    styleUrls: ['./dynamic-form-property-row.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DynamicFormPropertyRowComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => DynamicFormPropertyRowComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class DynamicFormPropertyRowComponent implements ControlValueAccessor, OnInit, Validator {
 

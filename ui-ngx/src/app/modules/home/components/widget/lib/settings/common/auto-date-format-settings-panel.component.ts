@@ -30,11 +30,12 @@ import { DatePipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-auto-date-format-settings-panel',
-  templateUrl: './auto-date-format-settings-panel.component.html',
-  providers: [],
-  styleUrls: ['./auto-date-format-settings-panel.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-auto-date-format-settings-panel',
+    templateUrl: './auto-date-format-settings-panel.component.html',
+    providers: [],
+    styleUrls: ['./auto-date-format-settings-panel.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class AutoDateFormatSettingsPanelComponent extends PageComponent implements OnInit {
 

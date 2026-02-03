@@ -32,16 +32,17 @@ import { DndDropEvent } from 'ngx-drag-drop';
 import { isUndefined } from '@core/utils';
 
 @Component({
-  selector: 'tb-multiple-image-input',
-  templateUrl: './multiple-image-input.component.html',
-  styleUrls: ['./multiple-image-input.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => MultipleImageInputComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-multiple-image-input',
+    templateUrl: './multiple-image-input.component.html',
+    styleUrls: ['./multiple-image-input.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => MultipleImageInputComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class MultipleImageInputComponent extends PageComponent implements AfterViewInit, OnDestroy, ControlValueAccessor {
 

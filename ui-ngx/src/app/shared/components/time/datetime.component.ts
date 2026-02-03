@@ -22,16 +22,17 @@ import { MatDatetimepickerType } from '@mat-datetimepicker/core/datetimepicker/d
 import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
-  selector: 'tb-datetime',
-  templateUrl: './datetime.component.html',
-  styleUrls: ['./datetime.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DatetimeComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-datetime',
+    templateUrl: './datetime.component.html',
+    styleUrls: ['./datetime.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DatetimeComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class DatetimeComponent implements OnInit, ControlValueAccessor {
 

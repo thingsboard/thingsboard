@@ -59,10 +59,11 @@ interface DataMap {
 }
 
 @Component({
-  // eslint-disable-next-line @angular-eslint/component-selector
-  selector: 'trip-animation',
-  templateUrl: './trip-animation.component.html',
-  styleUrls: ['./trip-animation.component.scss']
+    // eslint-disable-next-line @angular-eslint/component-selector
+    selector: 'trip-animation',
+    templateUrl: './trip-animation.component.html',
+    styleUrls: ['./trip-animation.component.scss'],
+    standalone: false
 })
 export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy {
 

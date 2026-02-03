@@ -63,9 +63,10 @@ const valuesLayoutHeight = 66;
 const valuesLayoutVerticalPadding = 16;
 
 @Component({
-  selector: 'tb-aggregated-value-card-widget',
-  templateUrl: './aggregated-value-card-widget.component.html',
-  styleUrls: ['./aggregated-value-card-widget.component.scss']
+    selector: 'tb-aggregated-value-card-widget',
+    templateUrl: './aggregated-value-card-widget.component.html',
+    styleUrls: ['./aggregated-value-card-widget.component.scss'],
+    standalone: false
 })
 export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
 

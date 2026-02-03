@@ -46,17 +46,18 @@ import { TimeSeriesChartYAxesPanelComponent } from '@home/components/widget/lib/
 import { ValueSourceType } from '@shared/models/widget-settings.models';
 
 @Component({
-  selector: 'tb-time-series-chart-y-axis-row',
-  templateUrl: './time-series-chart-y-axis-row.component.html',
-  styleUrls: ['./time-series-chart-y-axis-row.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => TimeSeriesChartYAxisRowComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-time-series-chart-y-axis-row',
+    templateUrl: './time-series-chart-y-axis-row.component.html',
+    styleUrls: ['./time-series-chart-y-axis-row.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TimeSeriesChartYAxisRowComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, OnInit {
 

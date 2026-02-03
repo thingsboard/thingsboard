@@ -37,14 +37,15 @@ import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 
 @Component({
-  selector: 'tb-ota-package-autocomplete',
-  templateUrl: './ota-package-autocomplete.component.html',
-  styleUrls: ['./ota-package-autocomplete.component.scss'],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => OtaPackageAutocompleteComponent),
-    multi: true
-  }]
+    selector: 'tb-ota-package-autocomplete',
+    templateUrl: './ota-package-autocomplete.component.html',
+    styleUrls: ['./ota-package-autocomplete.component.scss'],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => OtaPackageAutocompleteComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class OtaPackageAutocompleteComponent implements ControlValueAccessor, OnInit, OnDestroy {
 

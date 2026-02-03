@@ -28,9 +28,10 @@ export interface AIModelDialogData {
 }
 
 @Component({
-  selector: 'tb-check-connectivity-dialog',
-  templateUrl: './check-connectivity-dialog.component.html',
-  styleUrls: ['./check-connectivity-dialog.component.scss']
+    selector: 'tb-check-connectivity-dialog',
+    templateUrl: './check-connectivity-dialog.component.html',
+    styleUrls: ['./check-connectivity-dialog.component.scss'],
+    standalone: false
 })
 export class CheckConnectivityDialogComponent extends DialogComponent<CheckConnectivityDialogComponent> {
 

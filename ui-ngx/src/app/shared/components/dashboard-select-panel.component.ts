@@ -27,9 +27,10 @@ export interface DashboardSelectPanelData {
 }
 
 @Component({
-  selector: 'tb-dashboard-select-panel',
-  templateUrl: './dashboard-select-panel.component.html',
-  styleUrls: ['./dashboard-select-panel.component.scss']
+    selector: 'tb-dashboard-select-panel',
+    templateUrl: './dashboard-select-panel.component.html',
+    styleUrls: ['./dashboard-select-panel.component.scss'],
+    standalone: false
 })
 export class DashboardSelectPanelComponent {
 

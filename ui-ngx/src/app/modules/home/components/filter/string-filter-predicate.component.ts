@@ -35,21 +35,22 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-string-filter-predicate',
-  templateUrl: './string-filter-predicate.component.html',
-  styleUrls: ['./filter-predicate.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => StringFilterPredicateComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => StringFilterPredicateComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-string-filter-predicate',
+    templateUrl: './string-filter-predicate.component.html',
+    styleUrls: ['./filter-predicate.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => StringFilterPredicateComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => StringFilterPredicateComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class StringFilterPredicateComponent implements ControlValueAccessor, Validator, OnInit {
 

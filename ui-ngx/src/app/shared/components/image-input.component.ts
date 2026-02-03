@@ -40,16 +40,17 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 
 @Component({
-  selector: 'tb-image-input',
-  templateUrl: './image-input.component.html',
-  styleUrls: ['./image-input.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ImageInputComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-image-input',
+    templateUrl: './image-input.component.html',
+    styleUrls: ['./image-input.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ImageInputComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ImageInputComponent extends PageComponent implements AfterViewInit, OnDestroy, ControlValueAccessor {
 

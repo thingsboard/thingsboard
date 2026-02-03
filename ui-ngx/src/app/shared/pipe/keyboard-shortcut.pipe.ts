@@ -19,7 +19,8 @@ import { WINDOW } from '@core/services/window.service';
 
 // @dynamic
 @Pipe({
-  name: 'keyboardShortcut'
+    name: 'keyboardShortcut',
+    standalone: false
 })
 export class KeyboardShortcutPipe implements PipeTransform {
 

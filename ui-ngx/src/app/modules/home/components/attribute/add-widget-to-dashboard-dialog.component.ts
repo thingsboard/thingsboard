@@ -49,10 +49,11 @@ export interface AddWidgetToDashboardDialogData {
 }
 
 @Component({
-  selector: 'tb-add-widget-to-dashboard-dialog',
-  templateUrl: './add-widget-to-dashboard-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: AddWidgetToDashboardDialogComponent}],
-  styleUrls: ['./add-widget-to-dashboard-dialog.component.scss']
+    selector: 'tb-add-widget-to-dashboard-dialog',
+    templateUrl: './add-widget-to-dashboard-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: AddWidgetToDashboardDialogComponent }],
+    styleUrls: ['./add-widget-to-dashboard-dialog.component.scss'],
+    standalone: false
 })
 export class AddWidgetToDashboardDialogComponent extends
   DialogComponent<AddWidgetToDashboardDialogComponent, void>

@@ -45,10 +45,11 @@ const horizontalLayoutPadding = 24;
 const verticalLayoutPadding = 16;
 
 @Component({
-  selector: 'tb-widget-button',
-  templateUrl: './widget-button.component.html',
-  styleUrls: ['./widget-button.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-widget-button',
+    templateUrl: './widget-button.component.html',
+    styleUrls: ['./widget-button.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class WidgetButtonComponent implements OnInit, AfterViewInit, OnDestroy, OnChanges {
 

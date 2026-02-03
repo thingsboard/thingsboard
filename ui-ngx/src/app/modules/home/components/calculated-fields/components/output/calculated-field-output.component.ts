@@ -42,21 +42,22 @@ import { merge } from 'rxjs';
 import { deepClone } from '@core/utils';
 
 @Component({
-  selector: 'tb-calculate-field-output',
-  templateUrl: './calculated-field-output.component.html',
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => CalculatedFieldOutputComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => CalculatedFieldOutputComponent),
-      multi: true
-    }
-  ],
-  styleUrls: ['./calculated-field-output.component.scss'],
+    selector: 'tb-calculate-field-output',
+    templateUrl: './calculated-field-output.component.html',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => CalculatedFieldOutputComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => CalculatedFieldOutputComponent),
+            multi: true
+        }
+    ],
+    styleUrls: ['./calculated-field-output.component.scss'],
+    standalone: false
 })
 export class CalculatedFieldOutputComponent implements ControlValueAccessor, Validator, OnInit, OnChanges {
 

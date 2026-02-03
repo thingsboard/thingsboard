@@ -30,16 +30,17 @@ import {
 import { deepClone } from '@core/utils';
 
 @Component({
-  selector: 'tb-filter-user-info',
-  templateUrl: './filter-user-info.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => FilterUserInfoComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-filter-user-info',
+    templateUrl: './filter-user-info.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => FilterUserInfoComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class FilterUserInfoComponent implements ControlValueAccessor, OnInit {
 

@@ -48,16 +48,17 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-date-format-select',
-  templateUrl: './date-format-select.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DateFormatSelectComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-date-format-select',
+    templateUrl: './date-format-select.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DateFormatSelectComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class DateFormatSelectComponent implements OnInit, ControlValueAccessor {
 

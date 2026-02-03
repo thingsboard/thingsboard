@@ -37,17 +37,18 @@ import { TranslateService } from '@ngx-translate/core';
 import { deepClone } from '@core/utils';
 
 @Component({
-  selector: 'tb-map-tooltip-tag-actions-panel',
-  templateUrl: './map-tooltip-tag-actions.component.html',
-  styleUrls: ['./map-tooltip-tag-actions.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => MapTooltipTagActionsComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-map-tooltip-tag-actions-panel',
+    templateUrl: './map-tooltip-tag-actions.component.html',
+    styleUrls: ['./map-tooltip-tag-actions.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => MapTooltipTagActionsComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class MapTooltipTagActionsComponent implements ControlValueAccessor, OnInit {
 

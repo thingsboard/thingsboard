@@ -42,9 +42,10 @@ interface RoundSwitchSettings {
 }
 
 @Component({
-  selector: 'tb-round-switch',
-  templateUrl: './round-switch.component.html',
-  styleUrls: ['./round-switch.component.scss']
+    selector: 'tb-round-switch',
+    templateUrl: './round-switch.component.html',
+    styleUrls: ['./round-switch.component.scss'],
+    standalone: false
 })
 export class RoundSwitchComponent extends PageComponent implements OnInit, OnDestroy {
 

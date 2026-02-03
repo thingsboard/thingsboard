@@ -27,9 +27,10 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { Subscription } from 'rxjs';
 
 @Component({
-  selector: 'tb-dashboard-state',
-  templateUrl: './dashboard-state.component.html',
-  styleUrls: ['./dashboard-state.component.scss']
+    selector: 'tb-dashboard-state',
+    templateUrl: './dashboard-state.component.html',
+    styleUrls: ['./dashboard-state.component.scss'],
+    standalone: false
 })
 export class DashboardStateComponent extends PageComponent implements OnInit, OnDestroy {
 

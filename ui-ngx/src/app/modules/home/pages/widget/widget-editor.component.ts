@@ -78,10 +78,11 @@ import Timeout = NodeJS.Timeout;
 
 // @dynamic
 @Component({
-  selector: 'tb-widget-editor',
-  templateUrl: './widget-editor.component.html',
-  styleUrls: ['./widget-editor.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-widget-editor',
+    templateUrl: './widget-editor.component.html',
+    styleUrls: ['./widget-editor.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class WidgetEditorComponent extends PageComponent implements OnInit, OnDestroy, HasDirtyFlag {
 

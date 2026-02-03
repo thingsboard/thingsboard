@@ -34,14 +34,15 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-sms-provider-configuration',
-  templateUrl: './sms-provider-configuration.component.html',
-  styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => SmsProviderConfigurationComponent),
-    multi: true
-  }]
+    selector: 'tb-sms-provider-configuration',
+    templateUrl: './sms-provider-configuration.component.html',
+    styleUrls: [],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => SmsProviderConfigurationComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class SmsProviderConfigurationComponent implements ControlValueAccessor, OnInit {
 

@@ -32,9 +32,10 @@ export interface EditLinksDialogData {
 }
 
 @Component({
-  selector: 'tb-edit-links-dialog',
-  templateUrl: './edit-links-dialog.component.html',
-  styleUrls: ['./edit-links-dialog.component.scss']
+    selector: 'tb-edit-links-dialog',
+    templateUrl: './edit-links-dialog.component.html',
+    styleUrls: ['./edit-links-dialog.component.scss'],
+    standalone: false
 })
 export class EditLinksDialogComponent extends
   DialogComponent<EditLinksDialogComponent, boolean> implements OnInit {

@@ -24,16 +24,17 @@ import { Subject, Subscription } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 @Component({
-  selector: 'tb-entity-filter',
-  templateUrl: './entity-filter.component.html',
-  styleUrls: ['./entity-filter.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => EntityFilterComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-entity-filter',
+    templateUrl: './entity-filter.component.html',
+    styleUrls: ['./entity-filter.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => EntityFilterComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class EntityFilterComponent implements ControlValueAccessor, OnInit, OnDestroy {
 

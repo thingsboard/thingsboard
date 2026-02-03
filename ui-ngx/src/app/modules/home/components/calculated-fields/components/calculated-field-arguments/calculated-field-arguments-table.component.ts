@@ -65,21 +65,22 @@ import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { BaseData } from '@shared/models/base-data';
 
 @Component({
-  selector: 'tb-calculated-field-arguments-table',
-  templateUrl: './calculated-field-arguments-table.component.html',
-  styleUrls: [`calculated-field-arguments-table.component.scss`],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => CalculatedFieldArgumentsTableComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => CalculatedFieldArgumentsTableComponent),
-      multi: true
-    }
-  ],
+    selector: 'tb-calculated-field-arguments-table',
+    templateUrl: './calculated-field-arguments-table.component.html',
+    styleUrls: [`calculated-field-arguments-table.component.scss`],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => CalculatedFieldArgumentsTableComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => CalculatedFieldArgumentsTableComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class CalculatedFieldArgumentsTableComponent implements ControlValueAccessor, Validator, OnChanges, AfterViewInit {
 
