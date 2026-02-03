@@ -174,6 +174,27 @@ public class AuditLogControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testAuditLogs_byTenantIdAndEntityId_Sysadmin() throws Exception {
+        loginSysAdmin();
+
+        //created
+        TenantProfile tenantProfile = new TenantProfile();
+        tenantProfile.setName("Profile " + UUID.randomUUID());
+        tenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
+
+        //updated
+        tenantProfile.setName(tenantProfile.getName() + "(old)");
+        tenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
+
+        List<AuditLog> loadedAuditLogs = getAuditLogs(5, "/api/audit/logs/entity/" +tenantProfile.getId().getEntityType()+ "/" + tenantProfile.getId().getId() + "?");
+
+        Assert.assertEquals("Audit logs count by Tenant Profile entity", 2, loadedAuditLogs.size());
+
+        //cleanup
+        doDelete("/api/tenantProfile/" + tenantProfile.getId().getId().toString());
+    }
+
+    @Test
     public void whenSavingNewAuditLog_thenCheckAndCreatePartitionIfNotExists() throws ParseException {
         long entityTs = ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.parse("2024-01-01T01:43:11Z").getTime();
         reset(getPartitioningRepository());
