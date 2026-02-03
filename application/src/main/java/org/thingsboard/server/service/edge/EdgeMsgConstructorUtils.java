@@ -26,6 +26,7 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.edge.rpc.EdgeVersionComparator;
 import org.thingsboard.rule.engine.action.TbSaveToCustomCassandraTableNode;
 import org.thingsboard.rule.engine.ai.TbAiNode;
 import org.thingsboard.rule.engine.aws.lambda.TbAwsLambdaNode;
@@ -281,7 +282,7 @@ public class EdgeMsgConstructorUtils {
 
     public static String getEntityAndFixLwm2mBootstrapShortServerId(DeviceProfile deviceProfile, EdgeVersion edgeVersion) {
         DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
-        if (!(transportConfiguration instanceof Lwm2mDeviceProfileTransportConfiguration) || edgeVersion.getNumber() >= EdgeVersion.V_4_3_0.getNumber()) {
+        if (!(transportConfiguration instanceof Lwm2mDeviceProfileTransportConfiguration) || EdgeVersionComparator.INSTANCE.compare(edgeVersion, EdgeVersion.V_4_3_0) >= 0) {
             return JacksonUtil.toString(deviceProfile);
         }
         JsonNode jsonNode = JacksonUtil.valueToTree(deviceProfile);

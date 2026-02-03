@@ -205,6 +205,15 @@ public class EntityAggregationCalculatedFieldTest extends AbstractControllerTest
         CustomInterval customInterval = new CustomInterval(TZ, 0L, 2L);
         createConsumptionCF(device.getId(), customInterval, null);
 
+        long interval = customInterval.getCurrentIntervalDurationMillis();
+
+        // Wait for a fresh interval
+        long initialIntervalStart = customInterval.getCurrentIntervalStartTs();
+        await().alias("wait for fresh interval")
+                .atMost(interval + 100, TimeUnit.MILLISECONDS)
+                .pollInterval(100, TimeUnit.MILLISECONDS)
+                .until(() -> customInterval.getCurrentIntervalStartTs() != initialIntervalStart);
+
         long currentIntervalStartTs = customInterval.getCurrentIntervalStartTs();
 
         long tsBeforeInterval = currentIntervalStartTs - 1000;
@@ -215,8 +224,6 @@ public class EntityAggregationCalculatedFieldTest extends AbstractControllerTest
         postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"energy\":100}}", tsInInterval_1));
         postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"energy\":180}}", tsInInterval_2));
         postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"energy\":120}}", tsInInterval_3));
-
-        long interval = customInterval.getCurrentIntervalDurationMillis();
 
         await().alias("create CF -> perform aggregation after interval end")
                 .atMost(2 * interval, TimeUnit.MILLISECONDS)
