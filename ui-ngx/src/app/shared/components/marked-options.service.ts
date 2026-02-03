@@ -15,9 +15,9 @@
 ///
 
 import { MarkedOptions, MarkedRenderer } from 'ngx-markdown';
-import { Inject, Injectable } from '@angular/core';
+import { Inject, Injectable, DOCUMENT } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { DOCUMENT } from '@angular/common';
+
 import { WINDOW } from '@core/services/window.service';
 import { Tokens, marked, TokenizerObject } from 'marked';
 import { Clipboard } from '@angular/cdk/clipboard';
