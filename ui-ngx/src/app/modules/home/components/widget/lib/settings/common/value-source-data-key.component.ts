@@ -39,16 +39,17 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-value-source-data-key',
-  templateUrl: './value-source-data-key.component.html',
-  styleUrls: ['value-source-data-key.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ValueSourceDataKeyComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-value-source-data-key',
+    templateUrl: './value-source-data-key.component.html',
+    styleUrls: ['value-source-data-key.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ValueSourceDataKeyComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ValueSourceDataKeyComponent extends PageComponent implements OnInit, ControlValueAccessor {
 

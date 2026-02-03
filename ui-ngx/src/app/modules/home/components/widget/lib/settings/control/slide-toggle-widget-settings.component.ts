@@ -23,9 +23,10 @@ import { switchRpcDefaultSettings } from '@home/components/widget/lib/settings/c
 import { deepClone } from '@core/utils';
 
 @Component({
-  selector: 'tb-slide-toggle-widget-settings',
-  templateUrl: './slide-toggle-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-slide-toggle-widget-settings',
+    templateUrl: './slide-toggle-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class SlideToggleWidgetSettingsComponent extends WidgetSettingsComponent {
 

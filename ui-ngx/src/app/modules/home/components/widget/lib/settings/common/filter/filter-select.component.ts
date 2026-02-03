@@ -37,18 +37,19 @@ import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-filter-select',
-  templateUrl: './filter-select.component.html',
-  styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => FilterSelectComponent),
-    multi: true
-  },
-    {
-      provide: ErrorStateMatcher,
-      useExisting: FilterSelectComponent
-    }]
+    selector: 'tb-filter-select',
+    templateUrl: './filter-select.component.html',
+    styleUrls: [],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => FilterSelectComponent),
+            multi: true
+        },
+        {
+            provide: ErrorStateMatcher,
+            useExisting: FilterSelectComponent
+        }],
+    standalone: false
 })
 export class FilterSelectComponent implements ControlValueAccessor, OnInit, ErrorStateMatcher {
 

@@ -54,9 +54,10 @@ import { UserPasswordPolicy } from '@shared/models/settings.models';
 import { MatCheckboxChange } from '@angular/material/checkbox';
 
 @Component({
-  selector: 'tb-security',
-  templateUrl: './security.component.html',
-  styleUrls: ['./security.component.scss']
+    selector: 'tb-security',
+    templateUrl: './security.component.html',
+    styleUrls: ['./security.component.scss'],
+    standalone: false
 })
 export class SecurityComponent extends PageComponent implements OnInit, OnDestroy {
 

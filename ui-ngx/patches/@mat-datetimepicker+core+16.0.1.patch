@@ -1,0 +1,17 @@
+diff --git a/node_modules/@mat-datetimepicker/core/fesm2022/mat-datetimepicker-core.mjs b/node_modules/@mat-datetimepicker/core/fesm2022/mat-datetimepicker-core.mjs
+index 83a6413..70d9c3e 100644
+--- a/node_modules/@mat-datetimepicker/core/fesm2022/mat-datetimepicker-core.mjs
++++ b/node_modules/@mat-datetimepicker/core/fesm2022/mat-datetimepicker-core.mjs
+@@ -935,9 +935,9 @@ class MatDatetimepickerClockComponent {
+                 value = 0;
+             }
+             // Don't close the minutes view if an invalid minute is clicked.
+-            if (!this._minutes.find((m) => m?.['value'] === value)?.['enabled']) {
+-                return;
+-            }
++            // if (!this._minutes.find((m) => m?.['value'] === value)?.['enabled']) {
++            //    return;
++            // }
+             date = this._adapter.createDatetime(this._adapter.getYear(this.activeDate), this._adapter.getMonth(this.activeDate), this._adapter.getDate(this.activeDate), this._adapter.getHour(this.activeDate), value);
+         }
+         this._timeChanged = true;

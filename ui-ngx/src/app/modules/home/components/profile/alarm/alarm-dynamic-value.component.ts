@@ -29,13 +29,14 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-alarm-dynamic-value',
-  templateUrl: './alarm-dynamic-value.component.html',
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => AlarmDynamicValue),
-    multi: true
-  }]
+    selector: 'tb-alarm-dynamic-value',
+    templateUrl: './alarm-dynamic-value.component.html',
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => AlarmDynamicValue),
+            multi: true
+        }],
+    standalone: false
 })
 
 export class AlarmDynamicValue implements ControlValueAccessor, OnInit{

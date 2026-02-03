@@ -25,9 +25,10 @@ export interface DisplayColumnsPanelData {
 }
 
 @Component({
-  selector: 'tb-display-columns-panel',
-  templateUrl: './display-columns-panel.component.html',
-  styleUrls: ['./display-columns-panel.component.scss']
+    selector: 'tb-display-columns-panel',
+    templateUrl: './display-columns-panel.component.html',
+    styleUrls: ['./display-columns-panel.component.scss'],
+    standalone: false
 })
 export class DisplayColumnsPanelComponent {
 

@@ -54,21 +54,22 @@ export function updateAttributeGeneralDefaultSettings(hasLabelValue = true): Upd
 }
 
 @Component({
-  selector: 'tb-update-attribute-general-settings',
-  templateUrl: './update-attribute-general-settings.component.html',
-  styleUrls: ['./../widget-settings.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => UpdateAttributeGeneralSettingsComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => UpdateAttributeGeneralSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-update-attribute-general-settings',
+    templateUrl: './update-attribute-general-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => UpdateAttributeGeneralSettingsComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => UpdateAttributeGeneralSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class UpdateAttributeGeneralSettingsComponent extends PageComponent implements OnInit, ControlValueAccessor, Validator {
 

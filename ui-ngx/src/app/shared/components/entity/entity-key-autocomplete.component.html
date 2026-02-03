@@ -43,7 +43,7 @@
     @for (key of filteredKeys$ | async; track key) {
       <mat-option [value]="key"><span [innerHTML]="key | highlight: searchText"></span></mat-option>
     } @empty {
-      @if (!this.keyControl.value) {
+      @if (!keyControl.value) {
         <mat-option [value]="''">{{ 'entity.no-keys-found' | translate }}</mat-option>
       }
     }

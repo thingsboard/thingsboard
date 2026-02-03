@@ -37,21 +37,22 @@ import { WidgetService } from '@core/http/widget.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-trip-animation-path-settings',
-  templateUrl: './trip-animation-path-settings.component.html',
-  styleUrls: ['./../../widget-settings.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => TripAnimationPathSettingsComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => TripAnimationPathSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-trip-animation-path-settings',
+    templateUrl: './trip-animation-path-settings.component.html',
+    styleUrls: ['./../../widget-settings.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TripAnimationPathSettingsComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => TripAnimationPathSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class TripAnimationPathSettingsComponent extends PageComponent implements OnInit, ControlValueAccessor, Validator {
 

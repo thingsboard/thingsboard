@@ -39,11 +39,12 @@ import { MediaBreakpoints } from '@shared/models/constants';
 import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
-  selector: 'tb-material-icons',
-  templateUrl: './material-icons.component.html',
-  providers: [],
-  styleUrls: ['./material-icons.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-material-icons',
+    templateUrl: './material-icons.component.html',
+    providers: [],
+    styleUrls: ['./material-icons.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class MaterialIconsComponent extends PageComponent implements OnInit {
 

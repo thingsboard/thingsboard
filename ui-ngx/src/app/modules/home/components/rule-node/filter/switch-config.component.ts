@@ -27,9 +27,10 @@ import type { JsFuncComponent } from '@app/shared/components/js-func.component';
 import { DebugRuleNodeEventBody } from '@shared/models/event.models';
 
 @Component({
-  selector: 'tb-filter-node-switch-config',
-  templateUrl: './switch-config.component.html',
-  styleUrls: []
+    selector: 'tb-filter-node-switch-config',
+    templateUrl: './switch-config.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class SwitchConfigComponent extends RuleNodeConfigurationComponent {
 

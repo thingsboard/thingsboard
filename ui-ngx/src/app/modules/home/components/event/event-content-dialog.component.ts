@@ -36,9 +36,10 @@ export interface EventContentDialogData {
 }
 
 @Component({
-  selector: 'tb-event-content-dialog',
-  templateUrl: './event-content-dialog.component.html',
-  styleUrls: ['./event-content-dialog.component.scss']
+    selector: 'tb-event-content-dialog',
+    templateUrl: './event-content-dialog.component.html',
+    styleUrls: ['./event-content-dialog.component.scss'],
+    standalone: false
 })
 export class EventContentDialogComponent extends DialogComponent<EventContentDialogData> implements OnInit, OnDestroy {
 

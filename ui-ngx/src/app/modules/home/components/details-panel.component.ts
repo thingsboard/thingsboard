@@ -31,9 +31,10 @@ import { Subscription } from 'rxjs';
 import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
-  selector: 'tb-details-panel',
-  templateUrl: './details-panel.component.html',
-  styleUrls: ['./details-panel.component.scss']
+    selector: 'tb-details-panel',
+    templateUrl: './details-panel.component.html',
+    styleUrls: ['./details-panel.component.scss'],
+    standalone: false
 })
 export class DetailsPanelComponent extends PageComponent implements OnDestroy {
 

@@ -51,9 +51,10 @@ interface AlarmCommentsDisplayData {
 }
 
 @Component({
-  selector: 'tb-alarm-comment',
-  templateUrl: './alarm-comment.component.html',
-  styleUrls: ['./alarm-comment.component.scss']
+    selector: 'tb-alarm-comment',
+    templateUrl: './alarm-comment.component.html',
+    styleUrls: ['./alarm-comment.component.scss'],
+    standalone: false
 })
 export class AlarmCommentComponent implements OnInit {
   @Input()

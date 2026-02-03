@@ -49,16 +49,17 @@ export const setTimewindowConfig = (config: WidgetConfig, data: TimewindowConfig
 };
 
 @Component({
-  selector: 'tb-timewindow-config-panel',
-  templateUrl: './timewindow-config-panel.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => TimewindowConfigPanelComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-timewindow-config-panel',
+    templateUrl: './timewindow-config-panel.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TimewindowConfigPanelComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class TimewindowConfigPanelComponent implements ControlValueAccessor, OnInit {
 

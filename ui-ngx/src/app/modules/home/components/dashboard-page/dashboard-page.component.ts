@@ -33,7 +33,8 @@ import {
   StaticProvider,
   ViewChild,
   ViewContainerRef,
-  ViewEncapsulation
+  ViewEncapsulation,
+  DOCUMENT
 } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
@@ -143,9 +144,9 @@ import {
 } from '@home/components/dashboard-page/dashboard-image-dialog.component';
 import { SafeUrl } from '@angular/platform-browser';
 import cssjs from '@core/css/css';
-import { DOCUMENT } from '@angular/common';
+
 import { IAliasController } from '@core/api/widget-api.models';
-import { MatButton } from '@angular/material/button';
+import { MatButton, MatIconButton } from '@angular/material/button';
 import { VersionControlComponent } from '@home/components/vc/version-control.component';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { catchError, distinctUntilChanged, map, skip, tap } from 'rxjs/operators';
@@ -160,11 +161,12 @@ import { HttpStatusCode } from '@angular/common/http';
 
 // @dynamic
 @Component({
-  selector: 'tb-dashboard-page',
-  templateUrl: './dashboard-page.component.html',
-  styleUrls: ['./dashboard-page.component.scss'],
-  encapsulation: ViewEncapsulation.None,
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'tb-dashboard-page',
+    templateUrl: './dashboard-page.component.html',
+    styleUrls: ['./dashboard-page.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class DashboardPageComponent extends PageComponent implements IDashboardController, HasDirtyFlag, OnInit, AfterViewInit, OnDestroy {
 
@@ -1752,7 +1754,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     });
   }
 
-  toggleVersionControl($event: Event, versionControlButton: MatButton) {
+  toggleVersionControl($event: Event, versionControlButton: MatButton | MatIconButton) {
     if ($event) {
       $event.stopPropagation();
     }

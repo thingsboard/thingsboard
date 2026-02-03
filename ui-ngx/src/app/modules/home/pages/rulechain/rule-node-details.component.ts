@@ -39,9 +39,10 @@ import { ServiceType } from '@shared/models/queue.models';
 import { takeUntil } from 'rxjs/operators';
 
 @Component({
-  selector: 'tb-rule-node',
-  templateUrl: './rule-node-details.component.html',
-  styleUrls: ['./rule-node-details.component.scss']
+    selector: 'tb-rule-node',
+    templateUrl: './rule-node-details.component.html',
+    styleUrls: ['./rule-node-details.component.scss'],
+    standalone: false
 })
 export class RuleNodeDetailsComponent extends PageComponent implements OnInit, OnChanges, OnDestroy {
 

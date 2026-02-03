@@ -35,9 +35,10 @@ export interface CalculatedFieldDebugDialogData {
 }
 
 @Component({
-  selector: 'tb-calculated-field-debug-dialog',
-  styleUrls: ['calculated-field-debug-dialog.component.scss'],
-  templateUrl: './calculated-field-debug-dialog.component.html',
+    selector: 'tb-calculated-field-debug-dialog',
+    styleUrls: ['calculated-field-debug-dialog.component.scss'],
+    templateUrl: './calculated-field-debug-dialog.component.html',
+    standalone: false
 })
 export class CalculatedFieldDebugDialogComponent extends DialogComponent<CalculatedFieldDebugDialogComponent, string> implements AfterViewInit {
 

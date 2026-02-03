@@ -46,9 +46,10 @@ import { RuleChainType } from '@shared/models/rule-chain.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-device-profile',
-  templateUrl: './device-profile.component.html',
-  styleUrls: []
+    selector: 'tb-device-profile',
+    templateUrl: './device-profile.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
 

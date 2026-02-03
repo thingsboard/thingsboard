@@ -34,16 +34,17 @@ import { WidgetService } from '@core/http/widget.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-time-series-chart-axis-settings',
-  templateUrl: './time-series-chart-axis-settings.component.html',
-  styleUrls: ['./../../widget-settings.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => TimeSeriesChartAxisSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-time-series-chart-axis-settings',
+    templateUrl: './time-series-chart-axis-settings.component.html',
+    styleUrls: ['./../../widget-settings.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TimeSeriesChartAxisSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class TimeSeriesChartAxisSettingsComponent implements OnInit, ControlValueAccessor {
 

@@ -41,16 +41,17 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { getSourceTbUnitSymbol, isNotEmptyTbUnits } from '@shared/models/unit.models';
 
 @Component({
-  selector: 'tb-chart-bar-settings',
-  templateUrl: './chart-bar-settings.component.html',
-  styleUrls: ['./../../widget-settings.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ChartBarSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-chart-bar-settings',
+    templateUrl: './chart-bar-settings.component.html',
+    styleUrls: ['./../../widget-settings.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ChartBarSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ChartBarSettingsComponent implements OnInit, ControlValueAccessor {
 

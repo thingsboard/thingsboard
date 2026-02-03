@@ -38,10 +38,11 @@ const modulesValidator: ValidatorFn = control => {
 };
 
 @Component({
-  selector: 'tb-js-func-modules',
-  templateUrl: './js-func-modules.component.html',
-  styleUrls: ['./js-func-modules.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-js-func-modules',
+    templateUrl: './js-func-modules.component.html',
+    styleUrls: ['./js-func-modules.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class JsFuncModulesComponent implements OnInit {
 

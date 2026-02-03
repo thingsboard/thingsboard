@@ -23,11 +23,12 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({
-  selector: 'tb-widget-action-settings-panel',
-  templateUrl: './widget-action-settings-panel.component.html',
-  providers: [],
-  styleUrls: ['./action-settings-panel.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-widget-action-settings-panel',
+    templateUrl: './widget-action-settings-panel.component.html',
+    providers: [],
+    styleUrls: ['./action-settings-panel.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class WidgetActionSettingsPanelComponent implements OnInit {
 

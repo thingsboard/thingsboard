@@ -27,9 +27,10 @@ export interface PersistentFilterPanelData {
 }
 
 @Component({
-  selector: 'tb-persistent-filter-panel',
-  templateUrl: './persistent-filter-panel.component.html',
-  styleUrls: ['./persistent-filter-panel.component.scss']
+    selector: 'tb-persistent-filter-panel',
+    templateUrl: './persistent-filter-panel.component.html',
+    styleUrls: ['./persistent-filter-panel.component.scss'],
+    standalone: false
 })
 export class PersistentFilterPanelComponent {
 

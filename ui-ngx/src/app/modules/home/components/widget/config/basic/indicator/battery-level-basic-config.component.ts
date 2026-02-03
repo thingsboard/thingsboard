@@ -46,9 +46,10 @@ import {
 import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Component({
-  selector: 'tb-battery-level-basic-config',
-  templateUrl: './battery-level-basic-config.component.html',
-  styleUrls: ['../basic-config.scss']
+    selector: 'tb-battery-level-basic-config',
+    templateUrl: './battery-level-basic-config.component.html',
+    styleUrls: ['../basic-config.scss'],
+    standalone: false
 })
 export class BatteryLevelBasicConfigComponent extends BasicWidgetConfigComponent {
 

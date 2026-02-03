@@ -24,16 +24,17 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-status-widget-state-settings',
-  templateUrl: './status-widget-state-settings.component.html',
-  styleUrls: ['./../../widget-settings.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => StatusWidgetStateSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-status-widget-state-settings',
+    templateUrl: './status-widget-state-settings.component.html',
+    styleUrls: ['./../../widget-settings.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => StatusWidgetStateSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class StatusWidgetStateSettingsComponent implements OnInit, OnChanges, ControlValueAccessor {
 

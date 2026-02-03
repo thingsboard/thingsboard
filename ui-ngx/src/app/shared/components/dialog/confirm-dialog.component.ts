@@ -30,9 +30,10 @@ export interface ConfirmDialogData {
 
 // @dynamic
 @Component({
-  selector: 'tb-confirm-dialog',
-  templateUrl: './confirm-dialog.component.html',
-  styleUrls: ['./confirm-dialog.component.scss']
+    selector: 'tb-confirm-dialog',
+    templateUrl: './confirm-dialog.component.html',
+    styleUrls: ['./confirm-dialog.component.scss'],
+    standalone: false
 })
 export class ConfirmDialogComponent extends DialogComponent<ConfirmDialogComponent, boolean>{
   constructor(protected store: Store<AppState>,

@@ -62,21 +62,22 @@ import { FormProperty } from '@shared/models/dynamic-form.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-data-key-config',
-  templateUrl: './data-key-config.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DataKeyConfigComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => DataKeyConfigComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-data-key-config',
+    templateUrl: './data-key-config.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DataKeyConfigComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => DataKeyConfigComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class DataKeyConfigComponent extends PageComponent implements OnInit, ControlValueAccessor, Validator {
 
