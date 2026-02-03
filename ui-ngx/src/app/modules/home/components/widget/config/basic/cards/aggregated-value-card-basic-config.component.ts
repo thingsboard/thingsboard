@@ -52,9 +52,10 @@ import {
 } from '@shared/models/time/time.models';
 
 @Component({
-  selector: 'tb-aggregated-value-card-basic-config',
-  templateUrl: './aggregated-value-card-basic-config.component.html',
-  styleUrls: ['../basic-config.scss']
+    selector: 'tb-aggregated-value-card-basic-config',
+    templateUrl: './aggregated-value-card-basic-config.component.html',
+    styleUrls: ['../basic-config.scss'],
+    standalone: false
 })
 export class AggregatedValueCardBasicConfigComponent extends BasicWidgetConfigComponent {
 

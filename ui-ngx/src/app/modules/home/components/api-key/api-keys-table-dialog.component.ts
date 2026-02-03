@@ -27,9 +27,10 @@ export interface ApiKeysTableDialogData {
 }
 
 @Component({
-  selector: 'tb-api-keys-table-dialog',
-  templateUrl: './api-keys-table-dialog.component.html',
-  styleUrls: ['api-keys-table-dialog.component.scss']
+    selector: 'tb-api-keys-table-dialog',
+    templateUrl: './api-keys-table-dialog.component.html',
+    styleUrls: ['api-keys-table-dialog.component.scss'],
+    standalone: false
 })
 export class ApiKeysTableDialogComponent {
 

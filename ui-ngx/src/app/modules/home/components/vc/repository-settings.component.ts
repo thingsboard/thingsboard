@@ -38,9 +38,10 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-repository-settings',
-  templateUrl: './repository-settings.component.html',
-  styleUrls: ['./repository-settings.component.scss', './../../pages/admin/settings-card.scss']
+    selector: 'tb-repository-settings',
+    templateUrl: './repository-settings.component.html',
+    styleUrls: ['./repository-settings.component.scss', './../../pages/admin/settings-card.scss'],
+    standalone: false
 })
 export class RepositorySettingsComponent extends PageComponent implements OnInit {
 

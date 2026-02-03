@@ -42,21 +42,22 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatButton } from '@angular/material/button';
 
 @Component({
-  selector: 'tb-escalation-form',
-  templateUrl: './escalation-form.component.html',
-  styleUrls: ['./escalation-form.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => EscalationFormComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => EscalationFormComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-escalation-form',
+    templateUrl: './escalation-form.component.html',
+    styleUrls: ['./escalation-form.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => EscalationFormComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => EscalationFormComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class EscalationFormComponent implements ControlValueAccessor, OnInit, OnDestroy, Validator {
 

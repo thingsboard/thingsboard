@@ -25,9 +25,10 @@ import { toggleButtonDefaultSettings } from '@home/components/widget/lib/button/
 type ButtonAppearanceType = 'checked' | 'unchecked';
 
 @Component({
-  selector: 'tb-toggle-button-widget-settings',
-  templateUrl: './toggle-button-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-toggle-button-widget-settings',
+    templateUrl: './toggle-button-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class ToggleButtonWidgetSettingsComponent extends WidgetSettingsComponent {
 

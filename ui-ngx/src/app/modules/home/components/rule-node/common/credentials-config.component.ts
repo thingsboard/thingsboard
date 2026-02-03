@@ -45,21 +45,22 @@ interface CredentialsConfig {
 }
 
 @Component({
-  selector: 'tb-credentials-config',
-  templateUrl: './credentials-config.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => CredentialsConfigComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => CredentialsConfigComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-credentials-config',
+    templateUrl: './credentials-config.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => CredentialsConfigComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => CredentialsConfigComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class CredentialsConfigComponent extends PageComponent implements ControlValueAccessor, OnInit, Validator, OnChanges {
 

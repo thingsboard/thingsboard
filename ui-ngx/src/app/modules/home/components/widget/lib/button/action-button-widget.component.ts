@@ -26,10 +26,11 @@ import {
 import { WidgetButtonAppearance } from '@shared/components/button/widget-button.models';
 
 @Component({
-  selector: 'tb-action-button-widget',
-  templateUrl: './action-button-widget.component.html',
-  styleUrls: ['../action/action-widget.scss', './action-button-widget.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-action-button-widget',
+    templateUrl: './action-button-widget.component.html',
+    styleUrls: ['../action/action-widget.scss', './action-button-widget.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class ActionButtonWidgetComponent extends
   BasicActionWidgetComponent implements OnInit, AfterViewInit, OnDestroy {

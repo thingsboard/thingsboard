@@ -40,10 +40,11 @@ export interface UserFilterDialogData {
 }
 
 @Component({
-  selector: 'tb-user-filter-dialog',
-  templateUrl: './user-filter-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: UserFilterDialogComponent}],
-  styleUrls: ['./user-filter-dialog.component.scss'],
+    selector: 'tb-user-filter-dialog',
+    templateUrl: './user-filter-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: UserFilterDialogComponent }],
+    styleUrls: ['./user-filter-dialog.component.scss'],
+    standalone: false
 })
 export class UserFilterDialogComponent extends DialogComponent<UserFilterDialogComponent, Filter>
   implements ErrorStateMatcher {

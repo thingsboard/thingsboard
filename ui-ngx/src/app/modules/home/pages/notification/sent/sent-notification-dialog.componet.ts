@@ -54,9 +54,10 @@ export interface RequestNotificationDialogData {
 }
 
 @Component({
-  selector: 'tb-sent-notification-dialog',
-  templateUrl: './sent-notification-dialog.component.html',
-  styleUrls: ['./sent-notification-dialog.component.scss']
+    selector: 'tb-sent-notification-dialog',
+    templateUrl: './sent-notification-dialog.component.html',
+    styleUrls: ['./sent-notification-dialog.component.scss'],
+    standalone: false
 })
 export class SentNotificationDialogComponent extends
   TemplateConfiguration<SentNotificationDialogComponent, NotificationRequest> implements OnDestroy {

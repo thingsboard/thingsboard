@@ -37,11 +37,12 @@ import {
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({
-  selector: 'tb-map-layer-settings-panel',
-  templateUrl: './map-layer-settings-panel.component.html',
-  providers: [],
-  styleUrls: ['./map-layer-settings-panel.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-map-layer-settings-panel',
+    templateUrl: './map-layer-settings-panel.component.html',
+    providers: [],
+    styleUrls: ['./map-layer-settings-panel.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class MapLayerSettingsPanelComponent implements OnInit {
 

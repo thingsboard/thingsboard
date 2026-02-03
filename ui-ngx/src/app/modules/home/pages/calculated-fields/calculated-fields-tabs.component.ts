@@ -24,9 +24,10 @@ import type {
 import { debugCfActionEnabled } from '@shared/models/calculated-field.models';
 
 @Component({
-  selector: 'tb-calculated-fields-tabs',
-  templateUrl: './calculated-fields-tabs.component.html',
-  styleUrls: []
+    selector: 'tb-calculated-fields-tabs',
+    templateUrl: './calculated-fields-tabs.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class CalculatedFieldsTabsComponent extends EntityTabsComponent<CalculatedFieldsTableEntity> {
 

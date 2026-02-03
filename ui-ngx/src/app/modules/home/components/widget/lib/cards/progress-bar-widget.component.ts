@@ -52,10 +52,11 @@ const defaultAspect = defaultLayoutHeight / 150;
 const simplifiedAspect = simplifiedLayoutHeight / 150;
 
 @Component({
-  selector: 'tb-progress-bar-widget',
-  templateUrl: './progress-bar-widget.component.html',
-  styleUrls: ['./progress-bar-widget.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-progress-bar-widget',
+    templateUrl: './progress-bar-widget.component.html',
+    styleUrls: ['./progress-bar-widget.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class ProgressBarWidgetComponent implements OnInit, OnDestroy, AfterViewInit {
 

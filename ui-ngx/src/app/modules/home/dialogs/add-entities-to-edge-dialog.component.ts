@@ -38,10 +38,11 @@ export interface AddEntitiesToEdgeDialogData {
 }
 
 @Component({
-  selector: 'tb-add-entities-to-edge-dialog',
-  templateUrl: './add-entities-to-edge-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: AddEntitiesToEdgeDialogComponent}],
-  styleUrls: []
+    selector: 'tb-add-entities-to-edge-dialog',
+    templateUrl: './add-entities-to-edge-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: AddEntitiesToEdgeDialogComponent }],
+    styleUrls: [],
+    standalone: false
 })
 export class AddEntitiesToEdgeDialogComponent extends
   DialogComponent<AddEntitiesToEdgeDialogComponent, boolean> implements OnInit, ErrorStateMatcher {

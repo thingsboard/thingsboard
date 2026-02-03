@@ -19,7 +19,7 @@
   <div translate>widgets.maps.data-layer.tooltip-tag-actions</div>
   <div class="flex min-w-0 flex-1 flex-row items-center justify-end gap-4 xs:justify-between">
     <mat-chip-listbox class="min-w-0">
-      <mat-chip *ngFor="let action of this.actionsFormGroup.get('actions').value; let $index = index;"
+      <mat-chip *ngFor="let action of actionsFormGroup.get('actions').value; let $index = index;"
                 class="tb-tag-action-chip"
                 [removable]="!disabled" (removed)="removeAction($index)">
         <div class="flex flex-row items-center justify-start gap-1">

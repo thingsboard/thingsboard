@@ -36,16 +36,17 @@ import { TimeService } from '@core/services/time.service';
 
 // @dynamic
 @Component({
-  selector: 'tb-timezone',
-  templateUrl: './timezone.component.html',
-  styleUrls: ['./timezone.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => TimezoneComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-timezone',
+    templateUrl: './timezone.component.html',
+    styleUrls: ['./timezone.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TimezoneComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class TimezoneComponent implements ControlValueAccessor, OnInit {
 

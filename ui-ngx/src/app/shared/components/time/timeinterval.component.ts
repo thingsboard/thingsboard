@@ -36,16 +36,17 @@ import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 
 @Component({
-  selector: 'tb-timeinterval',
-  templateUrl: './timeinterval.component.html',
-  styleUrls: ['./timeinterval.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => TimeintervalComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-timeinterval',
+    templateUrl: './timeinterval.component.html',
+    styleUrls: ['./timeinterval.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TimeintervalComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class TimeintervalComponent implements OnInit, ControlValueAccessor, OnChanges, OnDestroy {
 

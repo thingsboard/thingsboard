@@ -21,9 +21,10 @@ import { AppState } from '@core/core.state';
 import { DomainInfo } from '@shared/models/oauth2.models';
 
 @Component({
-  selector: 'tb-domain-table-header',
-  templateUrl: './domain-table-header.component.html',
-  styleUrls: []
+    selector: 'tb-domain-table-header',
+    templateUrl: './domain-table-header.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class DomainTableHeaderComponent extends EntityTableHeaderComponent<DomainInfo> {
 

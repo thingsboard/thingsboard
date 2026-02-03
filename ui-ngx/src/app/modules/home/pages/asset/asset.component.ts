@@ -27,9 +27,10 @@ import { AssetInfo } from '@app/shared/models/asset.models';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 
 @Component({
-  selector: 'tb-asset',
-  templateUrl: './asset.component.html',
-  styleUrls: ['./asset.component.scss']
+    selector: 'tb-asset',
+    templateUrl: './asset.component.html',
+    styleUrls: ['./asset.component.scss'],
+    standalone: false
 })
 export class AssetComponent extends EntityComponent<AssetInfo> {
 

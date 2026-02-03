@@ -37,22 +37,23 @@ import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 import { beautifyCss } from '@shared/models/beautify.models';
 
 @Component({
-  selector: 'tb-css',
-  templateUrl: './css.component.html',
-  styleUrls: ['./css.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => CssComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => CssComponent),
-      multi: true,
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-css',
+    templateUrl: './css.component.html',
+    styleUrls: ['./css.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => CssComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => CssComponent),
+            multi: true,
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class CssComponent implements OnInit, OnDestroy, ControlValueAccessor, Validator {
 

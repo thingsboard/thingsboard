@@ -40,9 +40,10 @@ import { takeUntil } from 'rxjs/operators';
 import { AdditionalDebugActionConfig } from '@home/components/entity/debug/entity-debug-settings.model';
 
 @Component({
-  selector: 'tb-rule-node',
-  templateUrl: './rule-node-details.component.html',
-  styleUrls: ['./rule-node-details.component.scss']
+    selector: 'tb-rule-node',
+    templateUrl: './rule-node-details.component.html',
+    styleUrls: ['./rule-node-details.component.scss'],
+    standalone: false
 })
 export class RuleNodeDetailsComponent extends PageComponent implements OnInit, OnChanges, OnDestroy {
 

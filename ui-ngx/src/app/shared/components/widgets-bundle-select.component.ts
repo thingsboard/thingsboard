@@ -42,15 +42,16 @@ import {
 } from '@home/pages/widget/widgets-bundle-dialog.component';
 
 @Component({
-  selector: 'tb-widgets-bundle-select',
-  templateUrl: './widgets-bundle-select.component.html',
-  styleUrls: ['./widgets-bundle-select.component.scss'],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => WidgetsBundleSelectComponent),
-    multi: true
-  }],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-widgets-bundle-select',
+    templateUrl: './widgets-bundle-select.component.html',
+    styleUrls: ['./widgets-bundle-select.component.scss'],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => WidgetsBundleSelectComponent),
+            multi: true
+        }],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class WidgetsBundleSelectComponent implements ControlValueAccessor, OnInit, OnChanges {
 

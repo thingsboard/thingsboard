@@ -24,16 +24,17 @@ import {
 } from '@home/components/widget/lib/settings/common/map/shape-fill-image-settings-panel.component';
 
 @Component({
-  selector: 'tb-shape-fill-image-settings',
-  templateUrl: './shape-fill-image-settings.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ShapeFillImageSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-shape-fill-image-settings',
+    templateUrl: './shape-fill-image-settings.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ShapeFillImageSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ShapeFillImageSettingsComponent implements ControlValueAccessor {
 

@@ -27,9 +27,10 @@ import { guid } from '@core/utils';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-tenant-profile',
-  templateUrl: './tenant-profile.component.html',
-  styleUrls: ['./tenant-profile.component.scss']
+    selector: 'tb-tenant-profile',
+    templateUrl: './tenant-profile.component.html',
+    styleUrls: ['./tenant-profile.component.scss'],
+    standalone: false
 })
 export class TenantProfileComponent extends EntityComponent<TenantProfile> {
 
