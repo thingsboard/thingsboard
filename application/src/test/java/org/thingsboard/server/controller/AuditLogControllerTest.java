@@ -113,8 +113,6 @@ public class AuditLogControllerTest extends AbstractControllerTest {
         }
 
         List<AuditLog> loadedAuditLogs = getAuditLogs(5, "/api/audit/logs?");
-        TimePageLink pageLink;
-        PageData<AuditLog> pageData;
 
         Assert.assertEquals(11 + 1, loadedAuditLogs.size());
 
