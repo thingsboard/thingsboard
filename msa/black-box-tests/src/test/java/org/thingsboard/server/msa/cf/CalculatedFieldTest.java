@@ -810,18 +810,27 @@ public class CalculatedFieldTest extends AbstractContainerTest {
         // --- Build CF: PROPAGATION ---
         CalculatedField saved = createPropagationCF(device.getId());
 
+        // Wait for INITIALIZED event
+        waitForDebugEvent(saved, CalculatedFieldEventType.INITIALIZED.name(), 1);
+
         // Create relations FROM asset 2 TO device
         Asset asset2 = testRestClient.postAsset(createAsset("Propagated Asset 2", null));
         EntityRelation rel2 = new EntityRelation(asset2.getId(), device.getId(), EntityRelation.CONTAINS_TYPE);
         testRestClient.postEntityRelation(rel2);
 
+        // Wait for RELATION_ADD_OR_UPDATE event
+        waitForDebugEvent(saved, CalculatedFieldEventType.RELATION_ADD_OR_UPDATE.name(), 2);
+
         // Telemetry on device
         testRestClient.postTelemetry(deviceToken, JacksonUtil.toJsonNode("{\"temperature\":25.1}"));
+
+        // Wait for POST_TELEMETRY_REQUEST event
+        waitForDebugEvent(saved, TbMsgType.POST_TELEMETRY_REQUEST.name(), 3);
 
         // Delete relation between asset 1 and device
         testRestClient.deleteEntityRelation(asset1.getId(), EntityRelation.CONTAINS_TYPE, device.getId());
 
-        // --- Assert propagated calculation (arguments-only mode) ---
+        // --- Assert all debug events in correct sequence ---
         await().alias("check debug events")
                 .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
@@ -843,6 +852,19 @@ public class CalculatedFieldTest extends AbstractContainerTest {
         testRestClient.deleteDeviceIfExists(device.getId());
         testRestClient.deleteAsset(asset1.getId());
         testRestClient.deleteAsset(asset2.getId());
+    }
+
+    private void waitForDebugEvent(CalculatedField cf, String expectedEventType, int expectedTotalEvents) {
+        await().alias("wait for debug event: " + expectedEventType)
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    List<String> eventTypes = testRestClient.getEvents(cf.getId(), EventType.DEBUG_CALCULATED_FIELD, tenantId, new TimePageLink(expectedTotalEvents, 0, null, SortOrder.BY_CREATED_TIME_DESC)).getData().stream()
+                            .map(e -> e.getBody().get("msgType").asText())
+                            .toList();
+                    assertThat(eventTypes).hasSize(expectedTotalEvents);
+                    assertThat(eventTypes.get(0)).isEqualTo(expectedEventType);
+                });
     }
 
     private CalculatedField createPropagationCF(EntityId entityId) {
