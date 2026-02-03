@@ -39,17 +39,18 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { MapSettingsContext } from '@home/components/widget/lib/settings/common/map/map-settings.component.models';
 
 @Component({
-  selector: 'tb-map-data-source-row',
-  templateUrl: './map-data-source-row.component.html',
-  styleUrls: ['./map-data-source-row.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => MapDataSourceRowComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-map-data-source-row',
+    templateUrl: './map-data-source-row.component.html',
+    styleUrls: ['./map-data-source-row.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => MapDataSourceRowComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class MapDataSourceRowComponent implements ControlValueAccessor, OnInit {
 

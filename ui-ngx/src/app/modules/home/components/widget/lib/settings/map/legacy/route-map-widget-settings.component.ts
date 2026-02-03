@@ -22,9 +22,10 @@ import { AppState } from '@core/core.state';
 import { defaultMapSettings } from 'src/app/modules/home/components/widget/lib/maps-legacy/map-models';
 
 @Component({
-  selector: 'tb-route-map-widget-settings',
-  templateUrl: './route-map-widget-settings.component.html',
-  styleUrls: ['./../../widget-settings.scss']
+    selector: 'tb-route-map-widget-settings',
+    templateUrl: './route-map-widget-settings.component.html',
+    styleUrls: ['./../../widget-settings.scss'],
+    standalone: false
 })
 export class RouteMapWidgetSettingsComponent extends WidgetSettingsComponent {
 

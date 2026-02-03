@@ -26,14 +26,15 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-default-device-profile-configuration',
-  templateUrl: './default-device-profile-configuration.component.html',
-  styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => DefaultDeviceProfileConfigurationComponent),
-    multi: true
-  }]
+    selector: 'tb-default-device-profile-configuration',
+    templateUrl: './default-device-profile-configuration.component.html',
+    styleUrls: [],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DefaultDeviceProfileConfigurationComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class DefaultDeviceProfileConfigurationComponent implements ControlValueAccessor, OnInit {
 

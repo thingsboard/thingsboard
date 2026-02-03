@@ -64,7 +64,7 @@ import {
 import { deepClone, guid, isDefinedAndNotNull, isObject, isUndefined } from '@core/utils';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { AggregationType } from '@shared/models/time/time.models';
-import { DndDropEvent } from 'ngx-drag-drop/lib/dnd-dropzone.directive';
+import { DndDropEvent } from 'ngx-drag-drop';
 import { moveItemInArray } from '@angular/cdk/drag-drop';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { ColorPickerPanelComponent } from '@shared/components/color-picker/color-picker-panel.component';
@@ -75,26 +75,27 @@ import { FormProperty } from '@shared/models/dynamic-form.models';
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 
 @Component({
-  selector: 'tb-data-keys',
-  templateUrl: './data-keys.component.html',
-  styleUrls: ['./data-keys.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DataKeysComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => DataKeysComponent),
-      multi: true,
-    },
-    {
-      provide: ErrorStateMatcher,
-      useExisting: DataKeysComponent
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-data-keys',
+    templateUrl: './data-keys.component.html',
+    styleUrls: ['./data-keys.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DataKeysComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => DataKeysComponent),
+            multi: true,
+        },
+        {
+            provide: ErrorStateMatcher,
+            useExisting: DataKeysComponent
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChanges, ErrorStateMatcher, Validator {
 

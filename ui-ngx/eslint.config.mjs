@@ -64,7 +64,9 @@ export default tsEslint.config(
       "@typescript-eslint/ban-ts-comment": "off",
       "no-case-declarations": "off",
       "no-prototype-builtins": "off",
-      "@typescript-eslint/consistent-type-definitions": "off"
+      "@typescript-eslint/consistent-type-definitions": "off",
+      "@angular-eslint/prefer-standalone": "off",
+      "@angular-eslint/prefer-inject": "off"
     },
   },
   {

@@ -33,16 +33,17 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-chart-fill-settings',
-  templateUrl: './chart-fill-settings.component.html',
-  styleUrls: ['./../../widget-settings.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ChartFillSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-chart-fill-settings',
+    templateUrl: './chart-fill-settings.component.html',
+    styleUrls: ['./../../widget-settings.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ChartFillSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ChartFillSettingsComponent implements OnInit, ControlValueAccessor {
 

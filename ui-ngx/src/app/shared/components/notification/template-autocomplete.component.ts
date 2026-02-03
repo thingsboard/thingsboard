@@ -43,15 +43,16 @@ import { MatButton } from '@angular/material/button';
 import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
-  selector: 'tb-template-autocomplete',
-  templateUrl: './template-autocomplete.component.html',
-  styleUrls: ['./template-autocomplete.component.scss'],
-  encapsulation: ViewEncapsulation.None,
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => TemplateAutocompleteComponent),
-    multi: true
-  }]
+    selector: 'tb-template-autocomplete',
+    templateUrl: './template-autocomplete.component.html',
+    styleUrls: ['./template-autocomplete.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TemplateAutocompleteComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class TemplateAutocompleteComponent implements ControlValueAccessor, OnInit {
 

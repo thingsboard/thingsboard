@@ -71,10 +71,11 @@ import { UnitService } from '@core/services/unit.service';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 
 @Component({
-  selector: 'tb-liquid-level-widget',
-  templateUrl: './liquid-level-widget.component.html',
-  styleUrls: ['./liquid-level-widget.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-liquid-level-widget',
+    templateUrl: './liquid-level-widget.component.html',
+    styleUrls: ['./liquid-level-widget.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class LiquidLevelWidgetComponent implements OnInit {
 

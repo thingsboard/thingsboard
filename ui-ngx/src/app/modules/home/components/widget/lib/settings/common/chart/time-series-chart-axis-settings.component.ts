@@ -39,21 +39,22 @@ import { Datasource } from '@app/shared/public-api';
 import { DataKeysCallbacks } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 
 @Component({
-  selector: 'tb-time-series-chart-axis-settings',
-  templateUrl: './time-series-chart-axis-settings.component.html',
-  styleUrls: ['./../../widget-settings.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => TimeSeriesChartAxisSettingsComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => TimeSeriesChartAxisSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-time-series-chart-axis-settings',
+    templateUrl: './time-series-chart-axis-settings.component.html',
+    styleUrls: ['./../../widget-settings.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TimeSeriesChartAxisSettingsComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => TimeSeriesChartAxisSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class TimeSeriesChartAxisSettingsComponent implements OnInit, ControlValueAccessor, Validator {
 

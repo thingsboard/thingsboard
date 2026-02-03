@@ -46,9 +46,10 @@ import {
 import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Component({
-  selector: 'tb-progress-bar-basic-config',
-  templateUrl: './progress-bar-basic-config.component.html',
-  styleUrls: ['../basic-config.scss']
+    selector: 'tb-progress-bar-basic-config',
+    templateUrl: './progress-bar-basic-config.component.html',
+    styleUrls: ['../basic-config.scss'],
+    standalone: false
 })
 export class ProgressBarBasicConfigComponent extends BasicWidgetConfigComponent {
 

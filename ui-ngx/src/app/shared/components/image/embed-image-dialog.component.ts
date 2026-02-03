@@ -31,9 +31,10 @@ export interface EmbedImageDialogData {
 }
 
 @Component({
-  selector: 'tb-embed-image-dialog',
-  templateUrl: './embed-image-dialog.component.html',
-  styleUrls: ['./embed-image-dialog.component.scss']
+    selector: 'tb-embed-image-dialog',
+    templateUrl: './embed-image-dialog.component.html',
+    styleUrls: ['./embed-image-dialog.component.scss'],
+    standalone: false
 })
 export class EmbedImageDialogComponent extends
   DialogComponent<EmbedImageDialogComponent, ImageResourceInfo> implements OnInit {

@@ -32,20 +32,21 @@ import { isDefinedAndNotNull } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
-  selector: 'tb-notification-action-button-configuration',
-  templateUrl: './notification-action-button-configuration.component.html',
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => NotificationActionButtonConfigurationComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => NotificationActionButtonConfigurationComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-notification-action-button-configuration',
+    templateUrl: './notification-action-button-configuration.component.html',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => NotificationActionButtonConfigurationComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => NotificationActionButtonConfigurationComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class NotificationActionButtonConfigurationComponent implements ControlValueAccessor, Validator, OnInit, OnDestroy {
 

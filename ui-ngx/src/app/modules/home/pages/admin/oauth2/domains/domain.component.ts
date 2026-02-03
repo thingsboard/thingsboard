@@ -31,9 +31,10 @@ import { ClientDialogComponent } from '@home/pages/admin/oauth2/clients/client-d
 import { EntityType } from '@shared/models/entity-type.models';
 
 @Component({
-  selector: 'tb-domain',
-  templateUrl: './domain.component.html',
-  styleUrls: []
+    selector: 'tb-domain',
+    templateUrl: './domain.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class DomainComponent extends EntityComponent<DomainInfo> {
 

@@ -28,11 +28,12 @@ import { MapSettingsContext } from '@home/components/widget/lib/settings/common/
 import { DatasourceType } from '@shared/models/widget.models';
 
 @Component({
-  selector: 'tb-shape-fill-stripe-settings-panel',
-  templateUrl: './shape-fill-stripe-settings-panel.component.html',
-  providers: [],
-  styleUrls: ['./shape-fill-stripe-settings-panel.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-shape-fill-stripe-settings-panel',
+    templateUrl: './shape-fill-stripe-settings-panel.component.html',
+    providers: [],
+    styleUrls: ['./shape-fill-stripe-settings-panel.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class ShapeFillStripeSettingsPanelComponent implements OnInit {
 

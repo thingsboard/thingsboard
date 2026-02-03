@@ -21,9 +21,10 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 
 @Component({
-  selector: 'tb-doughnut-chart-widget-settings',
-  templateUrl: './doughnut-chart-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-doughnut-chart-widget-settings',
+    templateUrl: './doughnut-chart-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class DoughnutChartWidgetSettingsComponent extends WidgetSettingsComponent {
 

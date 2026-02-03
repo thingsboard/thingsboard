@@ -34,21 +34,22 @@ import { isEqual } from '@core/public-api';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-kv-map-config',
-  templateUrl: './kv-map-config.component.html',
-  styleUrls: ['./kv-map-config.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => KvMapConfigComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => KvMapConfigComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-kv-map-config',
+    templateUrl: './kv-map-config.component.html',
+    styleUrls: ['./kv-map-config.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => KvMapConfigComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => KvMapConfigComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class KvMapConfigComponent implements ControlValueAccessor, OnInit, Validator {
 

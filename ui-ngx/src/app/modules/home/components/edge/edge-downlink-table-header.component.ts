@@ -22,9 +22,10 @@ import { EdgeEvent } from '@shared/models/edge.models';
 import { EdgeDownlinkTableConfig } from '@home/components/edge/edge-downlink-table-config';
 
 @Component({
-  selector: 'tb-edge-downlink-table-header',
-  templateUrl: './edge-downlink-table-header.component.html',
-  styleUrls: ['./edge-downlink-table-header.component.scss']
+    selector: 'tb-edge-downlink-table-header',
+    templateUrl: './edge-downlink-table-header.component.html',
+    styleUrls: ['./edge-downlink-table-header.component.scss'],
+    standalone: false
 })
 export class EdgeDownlinkTableHeaderComponent extends EntityTableHeaderComponent<EdgeEvent> {
 

@@ -22,9 +22,10 @@ import { AppState } from '@core/core.state';
 import { ContentType } from '@shared/models/constants';
 
 @Component({
-  selector: 'tb-send-rpc-widget-settings',
-  templateUrl: './send-rpc-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-send-rpc-widget-settings',
+    templateUrl: './send-rpc-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class SendRpcWidgetSettingsComponent extends WidgetSettingsComponent {
 

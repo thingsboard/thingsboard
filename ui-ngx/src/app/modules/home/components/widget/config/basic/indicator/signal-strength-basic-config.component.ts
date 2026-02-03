@@ -50,9 +50,10 @@ import {
 import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Component({
-  selector: 'tb-signal-strength-basic-config',
-  templateUrl: './signal-strength-basic-config.component.html',
-  styleUrls: ['../basic-config.scss']
+    selector: 'tb-signal-strength-basic-config',
+    templateUrl: './signal-strength-basic-config.component.html',
+    styleUrls: ['../basic-config.scss'],
+    standalone: false
 })
 export class SignalStrengthBasicConfigComponent extends BasicWidgetConfigComponent {
 

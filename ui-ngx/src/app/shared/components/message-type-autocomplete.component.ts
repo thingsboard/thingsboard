@@ -26,14 +26,15 @@ import { MessageType, messageTypeNames } from '@shared/models/rule-node.models';
 import { objectValues } from '@core/utils';
 
 @Component({
-  selector: 'tb-message-type-autocomplete',
-  templateUrl: './message-type-autocomplete.component.html',
-  styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => MessageTypeAutocompleteComponent),
-    multi: true
-  }]
+    selector: 'tb-message-type-autocomplete',
+    templateUrl: './message-type-autocomplete.component.html',
+    styleUrls: [],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => MessageTypeAutocompleteComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class MessageTypeAutocompleteComponent implements ControlValueAccessor, OnInit, AfterViewInit, OnDestroy {
 

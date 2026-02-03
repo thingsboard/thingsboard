@@ -36,9 +36,10 @@ import { parseHttpErrorMessage } from '@core/utils';
 import { EntityType } from '@shared/models/entity-type.models';
 
 @Component({
-  selector: 'tb-entity-version-restore',
-  templateUrl: './entity-version-restore.component.html',
-  styleUrls: ['./version-control.scss']
+    selector: 'tb-entity-version-restore',
+    templateUrl: './entity-version-restore.component.html',
+    styleUrls: ['./version-control.scss'],
+    standalone: false
 })
 export class EntityVersionRestoreComponent extends PageComponent implements OnInit, OnDestroy {
 

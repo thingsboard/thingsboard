@@ -47,15 +47,16 @@ import { deepClone } from '@core/utils';
 import { RuleChainType } from '@shared/models/rule-chain.models';
 
 @Component({
-  selector: 'tb-rule-node-config',
-  templateUrl: './rule-node-config.component.html',
-  styleUrls: ['./rule-node-config.component.scss'],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => RuleNodeConfigComponent),
-    multi: true
-  }],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-rule-node-config',
+    templateUrl: './rule-node-config.component.html',
+    styleUrls: ['./rule-node-config.component.scss'],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => RuleNodeConfigComponent),
+            multi: true
+        }],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class RuleNodeConfigComponent implements ControlValueAccessor, OnDestroy {
 

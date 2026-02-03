@@ -24,9 +24,10 @@ import type {
 import { debugCfActionEnabled } from '@shared/models/calculated-field.models';
 
 @Component({
-  selector: 'tb-alarm-rules-tabs',
-  templateUrl: './alarm-rules-tabs.component.html',
-  styleUrls: []
+    selector: 'tb-alarm-rules-tabs',
+    templateUrl: './alarm-rules-tabs.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class AlarmRulesTabsComponent extends EntityTabsComponent<CalculatedFieldsTableEntity> {
 
