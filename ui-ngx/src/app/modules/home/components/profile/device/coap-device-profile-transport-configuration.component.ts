@@ -46,21 +46,22 @@ import { takeUntil } from 'rxjs/operators';
 import { PowerMode } from '@home/components/profile/device/lwm2m/lwm2m-profile-config.models';
 
 @Component({
-  selector: 'tb-coap-device-profile-transport-configuration',
-  templateUrl: './coap-device-profile-transport-configuration.component.html',
-  styleUrls: ['./coap-device-profile-transport-configuration.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => CoapDeviceProfileTransportConfigurationComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => CoapDeviceProfileTransportConfigurationComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-coap-device-profile-transport-configuration',
+    templateUrl: './coap-device-profile-transport-configuration.component.html',
+    styleUrls: ['./coap-device-profile-transport-configuration.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => CoapDeviceProfileTransportConfigurationComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => CoapDeviceProfileTransportConfigurationComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class CoapDeviceProfileTransportConfigurationComponent implements ControlValueAccessor, OnInit, OnDestroy, Validator {
 

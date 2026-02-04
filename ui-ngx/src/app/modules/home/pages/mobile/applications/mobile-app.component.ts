@@ -26,14 +26,15 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { MobileApp, MobileAppStatus, mobileAppStatusTranslations } from '@shared/models/mobile-app.models';
 import { PlatformType, platformTypeTranslations } from '@shared/models/oauth2.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { MatButton } from '@angular/material/button';
+import { MatIconButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { EditorPanelComponent } from '@home/pages/mobile/common/editor-panel.component';
 
 @Component({
-  selector: 'tb-mobile-app',
-  templateUrl: './mobile-app.component.html',
-  styleUrls: ['./mobile-app.component.scss']
+    selector: 'tb-mobile-app',
+    templateUrl: './mobile-app.component.html',
+    styleUrls: ['./mobile-app.component.scss'],
+    standalone: false
 })
 export class MobileAppComponent extends EntityComponent<MobileApp> {
 
@@ -152,7 +153,7 @@ export class MobileAppComponent extends EntityComponent<MobileApp> {
     this.entityForm.get('appSecret').markAsDirty();
   }
 
-  editReleaseNote($event: Event, matButton: MatButton, isLatest: boolean) {
+  editReleaseNote($event: Event, matButton: MatIconButton, isLatest: boolean) {
     if ($event) {
       $event.stopPropagation();
     }

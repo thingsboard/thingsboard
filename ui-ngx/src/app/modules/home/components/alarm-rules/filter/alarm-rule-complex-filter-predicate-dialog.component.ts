@@ -40,10 +40,11 @@ export interface AlarmRuleComplexFilterPredicateDialogData {
 }
 
 @Component({
-  selector: 'tb-alarm-rule-complex-filter-predicate-dialog',
-  templateUrl: './alarm-rule-complex-filter-predicate-dialog.component.html',
-  providers: [],
-  styleUrls: []
+    selector: 'tb-alarm-rule-complex-filter-predicate-dialog',
+    templateUrl: './alarm-rule-complex-filter-predicate-dialog.component.html',
+    providers: [],
+    styleUrls: [],
+    standalone: false
 })
 
 export class AlarmRuleComplexFilterPredicateDialogComponent extends

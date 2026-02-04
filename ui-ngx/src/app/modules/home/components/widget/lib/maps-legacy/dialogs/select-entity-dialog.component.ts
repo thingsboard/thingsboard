@@ -28,9 +28,10 @@ export interface SelectEntityDialogData {
 }
 
 @Component({
-  selector: 'tb-select-entity-dialog',
-  templateUrl: './select-entity-dialog.component.html',
-  styleUrls: ['./select-entity-dialog.component.scss']
+    selector: 'tb-select-entity-dialog',
+    templateUrl: './select-entity-dialog.component.html',
+    styleUrls: ['./select-entity-dialog.component.scss'],
+    standalone: false
 })
 export class SelectEntityDialogComponent extends DialogComponent<SelectEntityDialogComponent, FormattedData> {
   selectEntityFormGroup: FormGroup;

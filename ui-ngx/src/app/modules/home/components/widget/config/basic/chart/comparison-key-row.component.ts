@@ -32,17 +32,18 @@ import { deepClone } from '@core/utils';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-comparison-key-row',
-  templateUrl: './comparison-key-row.component.html',
-  styleUrls: ['./comparison-key-row.component.scss', '../../../lib/settings/common/key/data-keys.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ComparisonKeyRowComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-comparison-key-row',
+    templateUrl: './comparison-key-row.component.html',
+    styleUrls: ['./comparison-key-row.component.scss', '../../../lib/settings/common/key/data-keys.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ComparisonKeyRowComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class ComparisonKeyRowComponent implements ControlValueAccessor, OnInit {
 

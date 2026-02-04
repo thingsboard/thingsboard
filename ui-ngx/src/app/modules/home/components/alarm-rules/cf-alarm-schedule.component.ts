@@ -47,18 +47,19 @@ import { MatChipSelectionChange } from "@angular/material/chips";
 import { coerceBoolean } from "@shared/decorators/coercion";
 
 @Component({
-  selector: 'tb-cf-alarm-schedule',
-  templateUrl: './cf-alarm-schedule.component.html',
-  styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => CfAlarmScheduleComponent),
-    multi: true
-  }, {
-    provide: NG_VALIDATORS,
-    useExisting: forwardRef(() => CfAlarmScheduleComponent),
-    multi: true
-  }]
+    selector: 'tb-cf-alarm-schedule',
+    templateUrl: './cf-alarm-schedule.component.html',
+    styleUrls: [],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => CfAlarmScheduleComponent),
+            multi: true
+        }, {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => CfAlarmScheduleComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class CfAlarmScheduleComponent implements ControlValueAccessor, Validator, OnInit, OnChanges {
 

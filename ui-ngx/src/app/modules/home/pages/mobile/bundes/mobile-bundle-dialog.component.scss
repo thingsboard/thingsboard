@@ -22,7 +22,7 @@
   max-height: 100vh;
   display: grid;
   grid-template-rows: min-content 4px minmax(auto, 1fr) min-content;
-  --mdc-outlined-text-field-outline-color: rgba(0,0,0,0.12);
+  --mat-form-field-outlined-outline-color: rgba(0,0,0,0.12);
 
   .mat-mdc-slide-toggle {
     margin-bottom: 16px;
@@ -62,7 +62,7 @@
           @media #{$mat-gt-sm} {
             min-width: 500px;
           }
-          .mat-horizontal-stepper-content:not(.mat-horizontal-stepper-content-inactive):nth-child(3) {
+          .mat-horizontal-stepper-content.mat-horizontal-stepper-content-current:nth-child(3) {
             height: 100%;
             max-height: 100%;
             overflow: hidden;

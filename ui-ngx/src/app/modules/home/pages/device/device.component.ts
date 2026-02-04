@@ -39,9 +39,10 @@ import { distinctUntilChanged } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-device',
-  templateUrl: './device.component.html',
-  styleUrls: ['./device.component.scss']
+    selector: 'tb-device',
+    templateUrl: './device.component.html',
+    styleUrls: ['./device.component.scss'],
+    standalone: false
 })
 export class DeviceComponent extends EntityComponent<DeviceInfo> {
 

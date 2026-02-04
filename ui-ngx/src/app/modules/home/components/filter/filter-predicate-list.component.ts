@@ -43,21 +43,22 @@ import { COMPLEX_FILTER_PREDICATE_DIALOG_COMPONENT_TOKEN } from '@home/component
 import { ComplexFilterPredicateDialogData } from '@home/components/filter/filter-component.models';
 
 @Component({
-  selector: 'tb-filter-predicate-list',
-  templateUrl: './filter-predicate-list.component.html',
-  styleUrls: ['./filter-predicate-list.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => FilterPredicateListComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => FilterPredicateListComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-filter-predicate-list',
+    templateUrl: './filter-predicate-list.component.html',
+    styleUrls: ['./filter-predicate-list.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => FilterPredicateListComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => FilterPredicateListComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class FilterPredicateListComponent implements ControlValueAccessor, Validator, OnInit, OnDestroy {
 

@@ -45,16 +45,17 @@ export const dataKeySelectOptionValidator = (control: AbstractControl) => {
 };
 
 @Component({
-  selector: 'tb-datakey-select-option',
-  templateUrl: './datakey-select-option.component.html',
-  styleUrls: ['./datakey-select-option.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DataKeySelectOptionComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-datakey-select-option',
+    templateUrl: './datakey-select-option.component.html',
+    styleUrls: ['./datakey-select-option.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DataKeySelectOptionComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class DataKeySelectOptionComponent extends PageComponent implements OnInit, ControlValueAccessor {
 

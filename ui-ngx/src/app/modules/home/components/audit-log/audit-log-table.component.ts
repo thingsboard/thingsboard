@@ -32,9 +32,10 @@ import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { ActivatedRoute } from '@angular/router';
 
 @Component({
-  selector: 'tb-audit-log-table',
-  templateUrl: './audit-log-table.component.html',
-  styleUrls: ['./audit-log-table.component.scss']
+    selector: 'tb-audit-log-table',
+    templateUrl: './audit-log-table.component.html',
+    styleUrls: ['./audit-log-table.component.scss'],
+    standalone: false
 })
 export class AuditLogTableComponent implements OnInit {
 

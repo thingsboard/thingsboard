@@ -45,16 +45,17 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { getSourceTbUnitSymbol, isNotEmptyTbUnits } from '@shared/models/unit.models';
 
 @Component({
-  selector: 'tb-time-series-chart-line-settings',
-  templateUrl: './time-series-chart-line-settings.component.html',
-  styleUrls: ['./../widget-settings.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => TimeSeriesChartLineSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-time-series-chart-line-settings',
+    templateUrl: './time-series-chart-line-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TimeSeriesChartLineSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class TimeSeriesChartLineSettingsComponent implements OnInit, ControlValueAccessor {
 

@@ -43,21 +43,22 @@ import { Store } from "@ngrx/store";
 import { AppState } from "@core/core.state";
 
 @Component({
-  selector: 'tb-device-credentials-lwm2m',
-  templateUrl: './device-credentials-lwm2m.component.html',
-  styleUrls: ['./device-credentials-lwm2m.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DeviceCredentialsLwm2mComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => DeviceCredentialsLwm2mComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-device-credentials-lwm2m',
+    templateUrl: './device-credentials-lwm2m.component.html',
+    styleUrls: ['./device-credentials-lwm2m.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DeviceCredentialsLwm2mComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => DeviceCredentialsLwm2mComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 
 export class DeviceCredentialsLwm2mComponent implements ControlValueAccessor, Validator, OnDestroy {

@@ -38,21 +38,22 @@ import { Subscription } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-queue-form',
-  templateUrl: './queue-form.component.html',
-  styleUrls: ['./queue-form.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => QueueFormComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => QueueFormComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-queue-form',
+    templateUrl: './queue-form.component.html',
+    styleUrls: ['./queue-form.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => QueueFormComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => QueueFormComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class QueueFormComponent implements ControlValueAccessor, OnInit, Validator {
 

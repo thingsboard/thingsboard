@@ -39,11 +39,12 @@ import { UtilsService } from "@core/services/utils.service";
 import { ActivatedRoute, Router } from "@angular/router";
 
 @Component({
-  selector: 'tb-alarm-rules-table',
-  templateUrl: './alarm-rules-table.component.html',
-  styleUrls: ['./alarm-rules-table.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [EntityDebugSettingsService]
+    selector: 'tb-alarm-rules-table',
+    templateUrl: './alarm-rules-table.component.html',
+    styleUrls: ['./alarm-rules-table.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    providers: [EntityDebugSettingsService],
+    standalone: false
 })
 export class AlarmRulesTableComponent {
 

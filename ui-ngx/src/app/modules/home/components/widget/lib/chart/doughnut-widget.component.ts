@@ -31,10 +31,11 @@ import {
 } from '@home/components/widget/lib/chart/latest-chart.component';
 
 @Component({
-  selector: 'tb-doughnut-widget',
-  templateUrl: './latest-chart-widget.component.html',
-  styleUrls: [],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-doughnut-widget',
+    templateUrl: './latest-chart-widget.component.html',
+    styleUrls: [],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class DoughnutWidgetComponent implements OnInit {
 

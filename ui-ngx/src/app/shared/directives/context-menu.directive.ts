@@ -18,7 +18,8 @@ import { Directive, ElementRef, EventEmitter, OnDestroy, Output } from '@angular
 import { TbContextMenuEvent } from '@shared/models/jquery-event.models';
 
 @Directive({
-  selector: '[tbcontextmenu]'
+    selector: '[tbcontextmenu]',
+    standalone: false
 })
 export class ContextMenuDirective implements OnDestroy {
 

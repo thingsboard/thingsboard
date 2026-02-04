@@ -130,7 +130,7 @@
           </mat-checkbox>
         </section>
         <div class="flex flex-row xs:flex-col sm:gap-2 md:flex-col gt-xs:gap-2"
-             *ngIf="!(isAdd && this.entityForm.get('generateChecksum').value)">
+             *ngIf="!(isAdd && entityForm.get('generateChecksum').value)">
           <mat-form-field class="mat-block flex-full gt-xs:max-w-33%">
             <mat-label translate>ota-update.checksum-algorithm</mat-label>
             <mat-select formControlName="checksumAlgorithm">

@@ -37,21 +37,22 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { takeUntil } from 'rxjs/operators';
 
 @Component({
-  selector: 'tb-device-profile-alarms',
-  templateUrl: './device-profile-alarms.component.html',
-  styleUrls: ['./device-profile-alarms.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DeviceProfileAlarmsComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => DeviceProfileAlarmsComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-device-profile-alarms',
+    templateUrl: './device-profile-alarms.component.html',
+    styleUrls: ['./device-profile-alarms.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DeviceProfileAlarmsComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => DeviceProfileAlarmsComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class DeviceProfileAlarmsComponent implements ControlValueAccessor, OnInit, Validator, OnDestroy {
 

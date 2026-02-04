@@ -25,8 +25,9 @@ import { RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@app/shar
 import { EntityType } from '@app/shared/models/entity-type.models';
 
 @Component({
-  selector: 'tb-transformation-node-change-originator-config',
-  templateUrl: './change-originator-config.component.html'
+    selector: 'tb-transformation-node-change-originator-config',
+    templateUrl: './change-originator-config.component.html',
+    standalone: false
 })
 export class ChangeOriginatorConfigComponent extends RuleNodeConfigurationComponent {
 

@@ -45,9 +45,10 @@ import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { EntityService } from '@core/http/entity.service';
 
 @Component({
-  selector: 'tb-calculated-field',
-  templateUrl: './calculated-field.component.html',
-  styleUrls: ['./calculated-field.component.scss']
+    selector: 'tb-calculated-field',
+    templateUrl: './calculated-field.component.html',
+    styleUrls: ['./calculated-field.component.scss'],
+    standalone: false
 })
 export class CalculatedFieldComponent extends EntityComponent<CalculatedFieldsTableEntity> {
 

@@ -23,14 +23,15 @@ import { TranslateService } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-rule-node-link',
-  templateUrl: './rule-node-link.component.html',
-  styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => RuleNodeLinkComponent),
-    multi: true
-  }]
+    selector: 'tb-rule-node-link',
+    templateUrl: './rule-node-link.component.html',
+    styleUrls: [],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => RuleNodeLinkComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class RuleNodeLinkComponent implements ControlValueAccessor, OnInit {
 
