@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>4.3.0.2-SNAPSHOT</version>
+        <version>4.4.0-SNAPSHOT</version>
         <artifactId>thingsboard</artifactId>
     </parent>
     <artifactId>msa</artifactId>
