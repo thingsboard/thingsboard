@@ -21,9 +21,10 @@ import { EntityTabsComponent } from '../../components/entity/entity-tabs.compone
 import { Customer } from '@shared/models/customer.model';
 
 @Component({
-  selector: 'tb-customer-tabs',
-  templateUrl: './customer-tabs.component.html',
-  styleUrls: []
+    selector: 'tb-customer-tabs',
+    templateUrl: './customer-tabs.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class CustomerTabsComponent extends EntityTabsComponent<Customer> {
 

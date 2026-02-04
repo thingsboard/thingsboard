@@ -36,10 +36,11 @@ export interface AssignToCustomerDialogData {
 }
 
 @Component({
-  selector: 'tb-assign-to-customer-dialog',
-  templateUrl: './assign-to-customer-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: AssignToCustomerDialogComponent}],
-  styleUrls: []
+    selector: 'tb-assign-to-customer-dialog',
+    templateUrl: './assign-to-customer-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: AssignToCustomerDialogComponent }],
+    styleUrls: [],
+    standalone: false
 })
 export class AssignToCustomerDialogComponent extends
   DialogComponent<AssignToCustomerDialogComponent, boolean> implements OnInit, ErrorStateMatcher {

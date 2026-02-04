@@ -26,9 +26,10 @@ import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 
 @Component({
-  selector: 'tb-power-mode-settings',
-  templateUrl: './power-mode-setting.component.html',
-  styleUrls: []
+    selector: 'tb-power-mode-settings',
+    templateUrl: './power-mode-setting.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class PowerModeSettingComponent implements OnInit, OnDestroy {
 

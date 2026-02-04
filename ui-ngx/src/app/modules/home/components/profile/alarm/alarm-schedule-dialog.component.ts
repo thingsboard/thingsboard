@@ -32,10 +32,11 @@ export interface AlarmScheduleDialogData {
 }
 
 @Component({
-  selector: 'tb-alarm-schedule-dialog',
-  templateUrl: './alarm-schedule-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: AlarmScheduleDialogComponent}],
-  styleUrls: []
+    selector: 'tb-alarm-schedule-dialog',
+    templateUrl: './alarm-schedule-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: AlarmScheduleDialogComponent }],
+    styleUrls: [],
+    standalone: false
 })
 export class AlarmScheduleDialogComponent extends DialogComponent<AlarmScheduleDialogComponent, AlarmSchedule>
   implements OnInit, ErrorStateMatcher {

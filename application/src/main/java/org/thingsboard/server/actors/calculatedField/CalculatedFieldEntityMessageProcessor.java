@@ -171,7 +171,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                 if (state.isSizeOk()) {
                     processStateIfReady(state, Collections.emptyMap(), ctx, Collections.singletonList(ctx.getCfId()), null, msg.getEventType().name(), msg.getCallback());
                 } else {
-                    throw new RuntimeException(ctx.getSizeExceedsLimitMessage());
+                    throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).errorMessage(ctx.getSizeExceedsLimitMessage()).build();
                 }
             } else {
                 msg.getCallback().onSuccess();
@@ -261,7 +261,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                 throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).errorMessage(ctx.getSizeExceedsLimitMessage()).build();
             }
         } catch (Exception e) {
-            log.debug("[{}][{}] Failed to initialize CF state", entityId, ctx.getCfId(), e);
+            log.debug("[{}][{}] Failed to handle relation update", entityId, ctx.getCfId(), e);
             if (e instanceof CalculatedFieldException cfe) {
                 throw cfe;
             }
@@ -273,31 +273,39 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         CalculatedFieldCtx ctx = msg.getCalculatedField();
         CalculatedFieldId cfId = ctx.getCfId();
         CalculatedFieldState state = states.get(cfId);
-        if (state == null) {
+        try {
+            if (state == null) {
+                msg.getCallback().onSuccess();
+                return;
+            }
+            if (state instanceof RelatedEntitiesAggregationCalculatedFieldState aggState) {
+                aggState.cleanupEntityData(msg.getRelatedEntityId());
+
+                state.checkStateSize(new CalculatedFieldEntityCtxId(tenantId, ctx.getCfId(), entityId), ctx.getMaxStateSize());
+
+                if (state.isSizeOk()) {
+                    processStateIfReady(state, Collections.emptyMap(), ctx, Collections.singletonList(ctx.getCfId()), null, TbMsgType.RELATION_DELETED.name(), msg.getCallback());
+                } else {
+                    throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).errorMessage(ctx.getSizeExceedsLimitMessage()).build();
+                }
+                return;
+            }
+            if (state instanceof PropagationCalculatedFieldState propagationState) {
+                PropagationArgumentEntry entry = new PropagationArgumentEntry();
+                entry.setRemoved(msg.getRelatedEntityId());
+                propagationState.update(Map.of(PROPAGATION_CONFIG_ARGUMENT, entry), ctx);
+                if (DebugModeUtil.isDebugAllAvailable(ctx.getCalculatedField())) {
+                    systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, state.getArgumentsJson(), null, TbMsgType.RELATION_DELETED.name(), null, null);
+                }
+            }
             msg.getCallback().onSuccess();
-            return;
-        }
-        if (state instanceof RelatedEntitiesAggregationCalculatedFieldState aggState) {
-            aggState.cleanupEntityData(msg.getRelatedEntityId());
-
-            state.checkStateSize(new CalculatedFieldEntityCtxId(tenantId, ctx.getCfId(), entityId), ctx.getMaxStateSize());
-
-            if (state.isSizeOk()) {
-                processStateIfReady(state, Collections.emptyMap(), ctx, Collections.singletonList(ctx.getCfId()), null, TbMsgType.RELATION_DELETED.name(), msg.getCallback());
-            } else {
-                throw new RuntimeException(ctx.getSizeExceedsLimitMessage());
+        } catch (Exception e) {
+            log.debug("[{}][{}] Failed to handle relation delete", entityId, ctx.getCfId(), e);
+            if (e instanceof CalculatedFieldException cfe) {
+                throw cfe;
             }
-            return;
+            throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).cause(e).build();
         }
-        if (state instanceof PropagationCalculatedFieldState propagationState) {
-            PropagationArgumentEntry entry = new PropagationArgumentEntry();
-            entry.setRemoved(msg.getRelatedEntityId());
-            propagationState.update(Map.of(PROPAGATION_CONFIG_ARGUMENT, entry), ctx);
-            if (DebugModeUtil.isDebugAllAvailable(ctx.getCalculatedField())) {
-                systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, state.getArgumentsJson(), null, TbMsgType.RELATION_DELETED.name(), null, null);
-            }
-        }
-        msg.getCallback().onSuccess();
     }
 
     public void process(EntityCalculatedFieldTelemetryMsg msg) throws CalculatedFieldException {
@@ -366,7 +374,11 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         } catch (Exception e) {
             log.debug("[{}][{}] Failed to process CF telemetry msg: {}", entityId, ctx.getCfId(), proto, e);
             if (e instanceof CalculatedFieldException cfe) {
-                throw cfe;
+                if (DebugModeUtil.isDebugFailuresAvailable(cfe.getCtx().getCalculatedField())) {
+                    systemContext.persistCalculatedFieldDebugError(cfe);
+                }
+                callback.onSuccess();
+                return;
             }
             throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).cause(e).build();
         }
@@ -384,7 +396,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             log.debug("[{}][{}] Reevaluating CF state", entityId, cfId);
             processStateIfReady(state, null, ctx, Collections.singletonList(cfId), null, CalculatedFieldEventType.REEVALUATION_MSG.name(), msg.getCallback());
         } else {
-            throw new RuntimeException(ctx.getSizeExceedsLimitMessage());
+            throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).errorMessage(ctx.getSizeExceedsLimitMessage()).build();
         }
     }
 

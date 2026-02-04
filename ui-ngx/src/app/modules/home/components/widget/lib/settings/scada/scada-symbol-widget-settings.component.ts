@@ -22,9 +22,10 @@ import { AppState } from '@core/core.state';
 import { scadaSymbolWidgetDefaultSettings } from '@home/components/widget/lib/scada/scada-symbol-widget.models';
 
 @Component({
-  selector: 'tb-scada-symbol-widget-settings',
-  templateUrl: './scada-symbol-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-scada-symbol-widget-settings',
+    templateUrl: './scada-symbol-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class ScadaSymbolWidgetSettingsComponent extends WidgetSettingsComponent {
 

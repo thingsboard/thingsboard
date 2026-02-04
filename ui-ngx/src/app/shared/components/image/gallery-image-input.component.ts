@@ -45,16 +45,17 @@ export enum ImageLinkType {
 }
 
 @Component({
-  selector: 'tb-gallery-image-input',
-  templateUrl: './gallery-image-input.component.html',
-  styleUrls: ['./gallery-image-input.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => GalleryImageInputComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-gallery-image-input',
+    templateUrl: './gallery-image-input.component.html',
+    styleUrls: ['./gallery-image-input.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => GalleryImageInputComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class GalleryImageInputComponent extends PageComponent implements OnInit, OnDestroy, ControlValueAccessor {
 
@@ -171,9 +172,9 @@ export class GalleryImageInputComponent extends PageComponent implements OnInit,
     }
   }
 
-  private updateModel(value: string) {
+  private updateModel(value: string, forcedToUpdate = false): void {
     this.cd.markForCheck();
-    if (this.imageUrl !== value) {
+    if (this.imageUrl !== value || forcedToUpdate) {
       this.imageUrl = value;
       this.propagateChange(prependTbImagePrefix(this.imageUrl));
     }
@@ -211,9 +212,10 @@ export class GalleryImageInputComponent extends PageComponent implements OnInit,
         }
     }).afterClosed().subscribe((image) => {
       if (image) {
+        const forcedToUpdate =  this.imageUrl === image.link && this.imageResource?.descriptor?.etag !== image.descriptor.etag;
         this.linkType = ImageLinkType.resource;
         this.imageResource = image;
-        this.updateModel(image.link);
+        this.updateModel(image.link, forcedToUpdate);
       }
     });
   }

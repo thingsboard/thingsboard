@@ -32,9 +32,10 @@ import { DebugRuleNodeEventBody } from '@shared/models/event.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-action-node-create-alarm-config',
-  templateUrl: './create-alarm-config.component.html',
-  styleUrls: []
+    selector: 'tb-action-node-create-alarm-config',
+    templateUrl: './create-alarm-config.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class CreateAlarmConfigComponent extends RuleNodeConfigurationComponent {
 

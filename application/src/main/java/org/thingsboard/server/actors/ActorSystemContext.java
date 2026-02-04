@@ -42,6 +42,7 @@ import org.thingsboard.rule.engine.api.notification.SlackService;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
 import org.thingsboard.script.api.js.JsInvokeService;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
+import org.thingsboard.server.actors.calculatedField.CalculatedFieldException;
 import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.actors.tenant.DebugTbRateLimits;
 import org.thingsboard.server.cache.limits.RateLimitService;
@@ -829,6 +830,18 @@ public class ActorSystemContext {
 
         ListenableFuture<Void> future = eventService.saveAsync(event.build());
         Futures.addCallback(future, RULE_CHAIN_DEBUG_EVENT_ERROR_CALLBACK, MoreExecutors.directExecutor());
+    }
+
+    public void persistCalculatedFieldDebugError(CalculatedFieldException cfe) {
+        String message;
+        if (cfe.getErrorMessage() != null) {
+            message = cfe.getErrorMessage();
+        } else if (cfe.getCause() != null) {
+            message = cfe.getCause().getMessage();
+        } else {
+            message = "N/A";
+        }
+        persistCalculatedFieldDebugEvent(cfe.getCtx().getTenantId(), cfe.getCtx().getCfId(), cfe.getEventEntity(), cfe.getArguments(), cfe.getMsgId(), cfe.getMsgType(), null, message);
     }
 
     public void persistCalculatedFieldDebugEvent(TenantId tenantId, CalculatedFieldId calculatedFieldId, EntityId entityId, JsonNode arguments, UUID tbMsgId, String tbMsgType, String result, String errorMessage) {

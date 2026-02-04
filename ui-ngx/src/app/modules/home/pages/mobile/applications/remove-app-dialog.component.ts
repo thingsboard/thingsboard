@@ -32,9 +32,10 @@ export interface MobileAppDeleteDialogData {
 }
 
 @Component({
-  selector: 'tb-remove-app-dialog',
-  templateUrl: './remove-app-dialog.component.html',
-  styleUrls: ['./remove-app-dialog.component.scss']
+    selector: 'tb-remove-app-dialog',
+    templateUrl: './remove-app-dialog.component.html',
+    styleUrls: ['./remove-app-dialog.component.scss'],
+    standalone: false
 })
 export class RemoveAppDialogComponent extends DialogComponent<RemoveAppDialogComponent, boolean> {
 

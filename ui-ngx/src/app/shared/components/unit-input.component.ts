@@ -48,17 +48,18 @@ import { UnitSettingsPanelComponent } from '@shared/components/unit-settings-pan
 import { isDefinedAndNotNull, isEqual } from '@core/utils';
 
 @Component({
-  selector: 'tb-unit-input',
-  templateUrl: './unit-input.component.html',
-  styleUrls: ['./unit-input.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => UnitInputComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-unit-input',
+    templateUrl: './unit-input.component.html',
+    styleUrls: ['./unit-input.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => UnitInputComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChanges {
 

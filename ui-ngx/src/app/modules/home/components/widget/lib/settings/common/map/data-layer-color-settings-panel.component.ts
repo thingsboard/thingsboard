@@ -28,11 +28,12 @@ import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { MapSettingsContext } from '@home/components/widget/lib/settings/common/map/map-settings.component.models';
 
 @Component({
-  selector: 'tb-data-layer-color-settings-panel',
-  templateUrl: './data-layer-color-settings-panel.component.html',
-  providers: [],
-  styleUrls: ['./data-layer-color-settings-panel.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-data-layer-color-settings-panel',
+    templateUrl: './data-layer-color-settings-panel.component.html',
+    providers: [],
+    styleUrls: ['./data-layer-color-settings-panel.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class DataLayerColorSettingsPanelComponent extends PageComponent implements OnInit {
 

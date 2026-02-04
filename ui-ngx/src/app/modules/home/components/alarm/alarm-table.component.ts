@@ -42,9 +42,10 @@ interface AlarmPageQueryParams extends PageQueryParam {
 }
 
 @Component({
-  selector: 'tb-alarm-table',
-  templateUrl: './alarm-table.component.html',
-  styleUrls: ['./alarm-table.component.scss']
+    selector: 'tb-alarm-table',
+    templateUrl: './alarm-table.component.html',
+    styleUrls: ['./alarm-table.component.scss'],
+    standalone: false
 })
 export class AlarmTableComponent implements OnInit {
 

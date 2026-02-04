@@ -23,9 +23,10 @@ import { AssetInfo } from '@shared/models/asset.models';
 import { AssetProfileId } from '@shared/models/id/asset-profile-id';
 
 @Component({
-  selector: 'tb-asset-table-header',
-  templateUrl: './asset-table-header.component.html',
-  styleUrls: []
+    selector: 'tb-asset-table-header',
+    templateUrl: './asset-table-header.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class AssetTableHeaderComponent extends EntityTableHeaderComponent<AssetInfo> {
 

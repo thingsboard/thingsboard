@@ -47,16 +47,17 @@ import {
 import { TemplatePortal } from '@angular/cdk/portal';
 
 @Component({
-  selector: 'tb-string-pattern-autocomplete',
-  templateUrl: './string-pattern-autocomplete.component.html',
-  styleUrls: ['./string-pattern-autocomplete.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => StringPatternAutocompleteComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-string-pattern-autocomplete',
+    templateUrl: './string-pattern-autocomplete.component.html',
+    styleUrls: ['./string-pattern-autocomplete.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => StringPatternAutocompleteComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class StringPatternAutocompleteComponent implements ControlValueAccessor, OnInit, OnChanges {
 

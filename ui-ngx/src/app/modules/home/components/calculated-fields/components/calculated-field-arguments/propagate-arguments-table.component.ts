@@ -41,21 +41,22 @@ import { isDefined, isUndefinedOrNull } from '@core/utils';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 
 @Component({
-  selector: 'tb-propagate-arguments-table',
-  templateUrl: './calculated-field-arguments-table.component.html',
-  styleUrls: [`calculated-field-arguments-table.component.scss`],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => PropagateArgumentsTableComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => PropagateArgumentsTableComponent),
-      multi: true
-    }
-  ],
+    selector: 'tb-propagate-arguments-table',
+    templateUrl: './calculated-field-arguments-table.component.html',
+    styleUrls: [`calculated-field-arguments-table.component.scss`],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => PropagateArgumentsTableComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => PropagateArgumentsTableComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class PropagateArgumentsTableComponent extends CalculatedFieldArgumentsTableComponent implements OnInit {
 

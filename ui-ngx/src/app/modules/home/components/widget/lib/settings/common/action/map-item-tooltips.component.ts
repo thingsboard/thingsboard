@@ -21,15 +21,16 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { deepTrim, isEqual } from '@core/utils';
 
 @Component({
-  selector: 'tb-map-item-tooltips',
-  templateUrl: './map-item-tooltips.component.html',
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => MapItemTooltipsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-map-item-tooltips',
+    templateUrl: './map-item-tooltips.component.html',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => MapItemTooltipsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class MapItemTooltipsComponent implements ControlValueAccessor, OnChanges {
 

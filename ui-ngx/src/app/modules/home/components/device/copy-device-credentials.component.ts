@@ -28,9 +28,10 @@ import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({
-  selector: 'tb-copy-device-credentials',
-  templateUrl: './copy-device-credentials.component.html',
-  styleUrls: []
+    selector: 'tb-copy-device-credentials',
+    templateUrl: './copy-device-credentials.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class CopyDeviceCredentialsComponent implements OnInit, OnDestroy {
 

@@ -31,8 +31,9 @@ import { IStateControllerComponent } from '@home/components/dashboard-page/state
 import { BehaviorSubject, Subject } from 'rxjs';
 
 @Directive({
-  // eslint-disable-next-line @angular-eslint/directive-selector
-  selector: 'tb-states-component'
+    // eslint-disable-next-line @angular-eslint/directive-selector
+    selector: 'tb-states-component',
+    standalone: false
 })
 export class StatesComponentDirective implements OnInit, OnDestroy, OnChanges {
 

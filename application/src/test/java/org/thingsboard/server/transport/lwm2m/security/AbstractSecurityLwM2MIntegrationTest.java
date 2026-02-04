@@ -366,8 +366,8 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
         }
         bootstrapServerCredential.setShortServerId(isBootstrap ? null : shortServerId);
         bootstrapServerCredential.setBootstrapServerIs(isBootstrap);
-        bootstrapServerCredential.setHost(isBootstrap ? hostBs : host);
-        bootstrapServerCredential.setPort(isBootstrap ? securityPortBs : securityPort);
+        bootstrapServerCredential.setHost(isBootstrap ? LWM2M_BOOTSTRAP_HOST : LWM2M_HOST);
+        bootstrapServerCredential.setPort(isBootstrap ? LWM2MS_BOOTSTRAP_PORT : LWM2MS_PORT);
         return bootstrapServerCredential;
     }
 
