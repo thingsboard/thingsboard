@@ -69,6 +69,11 @@
       }
     }
   }
+  .mat-mdc-button-base {
+    .mat-icon {
+      min-height: auto;
+    }
+  }
 }
 
 @mixin _mat-icon-overwrites() {
