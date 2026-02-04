@@ -78,7 +78,7 @@ public class DefaultWidgetTypeService extends AbstractTbEntityService implements
             widgetTypeService.deleteWidgetType(widgetTypeDetails.getTenantId(), widgetTypeDetails.getId());
             logEntityActionService.logEntityAction(tenantId, widgetTypeDetails.getId(), widgetTypeDetails, null, actionType, user);
         } catch (Exception e) {
-            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.WIDGET_TYPE), actionType, user, e, widgetTypeDetails.getId());
+            logEntityActionService.logEntityAction(tenantId, getOrEmptyId(widgetTypeDetails.getId(), EntityType.WIDGET_TYPE), actionType, user, e, widgetTypeDetails.getId());
             throw e;
         }
     }
