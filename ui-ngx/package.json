@@ -1,6 +1,6 @@
 {
   "name": "thingsboard",
-  "version": "4.3.0.1",
+  "version": "4.3.0.2",
   "scripts": {
     "ng": "ng",
     "start": "node --max_old_space_size=8048 ./node_modules/@angular/cli/bin/ng serve --configuration development --host 0.0.0.0 --open",
