@@ -161,6 +161,12 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
     }
   }
 
+  public onLatestDataUpdated() {
+    if (this.timeSeriesChart) {
+      this.timeSeriesChart.latestUpdated();
+    }
+  }
+
   public toggleRangeItem(item: RangeItem) {
     item.enabled = !item.enabled;
     this.timeSeriesChart.toggleVisualMapRange(item.index);

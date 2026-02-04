@@ -30,7 +30,7 @@ import { rangeChartDefaultSettings } from '@home/components/widget/lib/chart/ran
 import { DateFormatProcessor, DateFormatSettings } from '@shared/models/widget-settings.models';
 import {
   lineSeriesStepTypes,
-  lineSeriesStepTypeTranslations
+  lineSeriesStepTypeTranslations, normalizeAxisLimit, updateLatestDataKeys
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import {
   chartLabelPositions,
@@ -101,6 +101,12 @@ export class RangeChartWidgetSettingsComponent extends WidgetSettingsComponent {
   }
 
   protected onSettingsSet(settings: WidgetSettings) {
+
+    const minConfig = normalizeAxisLimit(settings.yAxis.min);
+    const maxConfig = normalizeAxisLimit(settings.yAxis.max);
+    settings.yAxis.min = minConfig;
+    settings.yAxis.max = maxConfig;
+
     this.rangeChartWidgetSettingsForm = this.fb.group({
       dataZoom: [settings.dataZoom, []],
       rangeColors: [settings.rangeColors, []],
@@ -266,6 +272,11 @@ export class RangeChartWidgetSettingsComponent extends WidgetSettingsComponent {
       this.rangeChartWidgetSettingsForm.get('tooltipBackgroundColor').disable();
       this.rangeChartWidgetSettingsForm.get('tooltipBackgroundBlur').disable();
     }
+  }
+
+  protected onSettingsChanged(updated: WidgetSettings) {
+    updateLatestDataKeys([updated.yAxis], this.datasource, this.dataKeyCallbacks);
+    super.onSettingsChanged(updated);
   }
 
   private _pointLabelPreviewFn(): string {
