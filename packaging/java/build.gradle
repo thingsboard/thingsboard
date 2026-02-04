@@ -16,7 +16,7 @@
 import org.apache.tools.ant.filters.ReplaceTokens
 
 plugins {
-    id "nebula.ospackage" version "8.6.3"
+    id "com.netflix.nebula.ospackage" version "12.1.1"
 }
 
 buildDir = projectBuildDir
@@ -92,7 +92,7 @@ buildRpm {
     archiveVersion = projectVersion.replace('-', '')
     archiveFileName = "${pkgName}.rpm"
 
-    // Support Java 17 (existing), plus Java 21 and Java 25 for RPM-based distros
+    // Support Java 25 (current), plus Java 21 and Java 17 (backward compatibility) for RPM-based distros
     // Keep using RPM boolean expression syntax since .or() chaining is for DEB only
     requires("(java-17 or java-17-headless or jre-17 or jre-17-headless or " +
               "java-21 or java-21-headless or jre-21 or jre-21-headless or " +

@@ -8,15 +8,15 @@ sudo yum install -y nano wget && sudo yum install -y https://dl.fedoraproject.or
 {:copy-code}
 ```
 
-#### Step 1. Install Java 17 (OpenJDK)
-ThingsBoard service is running on Java 17. To install OpenJDK 17, follow these instructions:
+#### Step 1. Install Java 25 (OpenJDK)
+ThingsBoard service is running on Java 25. To install OpenJDK 25, follow these instructions:
 
 ```bash
-sudo dnf install java-17-openjdk
+sudo dnf install java-25-openjdk
 {:copy-code}
 ```
 
-Configure your operating system to use OpenJDK 17 by default. You can configure the default version by running the following command:
+Configure your operating system to use OpenJDK 25 by default. You can configure the default version by running the following command:
 
 ```bash
 sudo update-alternatives --config java
@@ -33,7 +33,7 @@ java -version
 The expected result is:
 
 ```text
-openjdk version "17.x.xx"
+openjdk version "25.x.xx"
 OpenJDK Runtime Environment (...)
 OpenJDK 64-Bit Server VM (build ...)
 ```

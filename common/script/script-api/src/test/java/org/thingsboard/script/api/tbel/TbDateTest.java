@@ -209,7 +209,9 @@ class TbDateTest {
                 .put("timeZone", "America/New_York")
                 .put("dateStyle", "full")
                 .toString()));
-        Assertions.assertEquals("середа, 6 вересня 2023 р.", d.toLocaleDateString("uk-UA", JacksonUtil.newObjectNode()
+        // Java 21+ uses narrow no-break space (U+202F) before "р." per CLDR 42+
+        String expectedDate_ukUA = Runtime.version().feature() >= 21 ? "середа, 6 вересня 2023\u202Fр." : "середа, 6 вересня 2023 р.";
+        Assertions.assertEquals(expectedDate_ukUA, d.toLocaleDateString("uk-UA", JacksonUtil.newObjectNode()
                 .put("timeZone", "Europe/Kiev")
                 .put("dateStyle", "full")
                 .toString()));
@@ -244,12 +246,18 @@ class TbDateTest {
         Assertions.assertNotNull(d.toLocaleTimeString());
         Assertions.assertNotNull(d.toLocaleTimeString("en-US"));
 
-        Assertions.assertEquals("9:04:05 PM", d.toLocaleTimeString("en-US", "America/New_York"));
+        // Java 21+ uses narrow no-break space (U+202F) before AM/PM per CLDR 42+
+        String expectedTime_enUS = Runtime.version().feature() >= 21 ? "9:04:05\u202FPM" : "9:04:05 PM";
+        Assertions.assertEquals(expectedTime_enUS, d.toLocaleTimeString("en-US", "America/New_York"));
         Assertions.assertEquals("오후 9:04:05", d.toLocaleTimeString("ko-KR",  "America/New_York"));
         Assertions.assertEquals("04:04:05",  d.toLocaleTimeString( "uk-UA", "Europe/Kiev"));
         Assertions.assertEquals("9:04:05 م",  d.toLocaleTimeString( "ar-EG", "America/New_York"));
 
-        Assertions.assertEquals("9:04:05 PM Eastern Daylight Time", d.toLocaleTimeString("en-US", JacksonUtil.newObjectNode()
+        // Java 21+ uses narrow no-break space (U+202F) before AM/PM per CLDR 42+
+        String expectedFullTime_enUS = Runtime.version().feature() >= 21
+                ? "9:04:05\u202FPM Eastern Daylight Time"
+                : "9:04:05 PM Eastern Daylight Time";
+        Assertions.assertEquals(expectedFullTime_enUS, d.toLocaleTimeString("en-US", JacksonUtil.newObjectNode()
                 .put("timeZone", "America/New_York")
                 .put("timeStyle", "full")
                 .toString()));
@@ -292,14 +300,27 @@ class TbDateTest {
         Assertions.assertNotNull(d.toLocaleString());
         Assertions.assertNotNull(d.toLocaleString("en-US"));
 
-        Assertions.assertEquals("9/5/23, 9:04:05 PM", d.toLocaleString("en-US", "America/New_York"));
+        // Java 21+ uses narrow no-break space (U+202F) before AM/PM per CLDR 42+
+        String expectedLocale_enUS = Runtime.version().feature() >= 21 ? "9/5/23, 9:04:05\u202FPM" : "9/5/23, 9:04:05 PM";
+        Assertions.assertEquals(expectedLocale_enUS, d.toLocaleString("en-US", "America/New_York"));
         Assertions.assertEquals("23. 9. 5. 오후 9:04:05", d.toLocaleString("ko-KR",  "America/New_York"));
         Assertions.assertEquals("06.09.23, 04:04:05",  d.toLocaleString( "uk-UA", "Europe/Kiev"));
-        String expected_ver = Runtime.version().feature() == 11 ? "5\u200F/9\u200F/2023 9:04:05 م" :
-                                                                  "5\u200F/9\u200F/2023, 9:04:05 م";
-        Assertions.assertEquals(expected_ver,  d.toLocaleString( "ar-EG", "America/New_York"));
+        // Java 11 has no comma, Java 17 uses ASCII comma, Java 21+ uses Arabic comma (U+060C)
+        String expected_ar;
+        if (Runtime.version().feature() == 11) {
+            expected_ar = "5\u200F/9\u200F/2023 9:04:05 م";
+        } else if (Runtime.version().feature() >= 21) {
+            expected_ar = "5\u200F/9\u200F/2023\u060C 9:04:05 م";
+        } else {
+            expected_ar = "5\u200F/9\u200F/2023, 9:04:05 م";
+        }
+        Assertions.assertEquals(expected_ar,  d.toLocaleString( "ar-EG", "America/New_York"));
 
-        Assertions.assertEquals("Tuesday, September 5, 2023 at 9:04:05 PM Eastern Daylight Time", d.toLocaleString("en-US", JacksonUtil.newObjectNode()
+        // Java 21+ changed "at" to "," and uses NNBSP before AM/PM per CLDR 42+
+        String expected_enUS_full = Runtime.version().feature() >= 21
+                ? "Tuesday, September 5, 2023, 9:04:05\u202FPM Eastern Daylight Time"
+                : "Tuesday, September 5, 2023 at 9:04:05 PM Eastern Daylight Time";
+        Assertions.assertEquals(expected_enUS_full, d.toLocaleString("en-US", JacksonUtil.newObjectNode()
                 .put("timeZone", "America/New_York")
                 .put("dateStyle", "full")
                 .put("timeStyle", "full")
@@ -309,15 +330,26 @@ class TbDateTest {
                 .put("dateStyle", "full")
                 .put("timeStyle", "full")
                 .toString()));
-        Assertions.assertEquals("середа, 6 вересня 2023 р. о 04:04:05 за східноєвропейським літнім часом", d.toLocaleString("uk-UA", JacksonUtil.newObjectNode()
+        // Java 21+ changed Ukrainian locale: "о" replaced with "," and NNBSP before "р." per CLDR 42+
+        String expected_ukUA_full_summer = Runtime.version().feature() >= 21
+                ? "середа, 6 вересня 2023\u202Fр., 04:04:05 за східноєвропейським літнім часом"
+                : "середа, 6 вересня 2023 р. о 04:04:05 за східноєвропейським літнім часом";
+        Assertions.assertEquals(expected_ukUA_full_summer, d.toLocaleString("uk-UA", JacksonUtil.newObjectNode()
                 .put("timeZone", "Europe/Kiev")
                 .put("dateStyle", "full")
                 .put("timeStyle", "full")
                 .toString()));
 
-        expected_ver = Runtime.version().feature() == 11 ? "الثلاثاء، 5 سبتمبر 2023 9:04:05 م التوقيت الصيفي الشرقي لأمريكا الشمالية" :
-                                                           "الثلاثاء، 5 سبتمبر 2023 في 9:04:05 م التوقيت الصيفي الشرقي لأمريكا الشمالية";
-        Assertions.assertEquals(expected_ver, d.toLocaleString("ar-EG", JacksonUtil.newObjectNode()
+        // Java 11 has no connector, Java 17 uses "في", Java 21+ uses Arabic comma "،"
+        String expected_ar_full;
+        if (Runtime.version().feature() == 11) {
+            expected_ar_full = "الثلاثاء، 5 سبتمبر 2023 9:04:05 م التوقيت الصيفي الشرقي لأمريكا الشمالية";
+        } else if (Runtime.version().feature() >= 21) {
+            expected_ar_full = "الثلاثاء، 5 سبتمبر 2023\u060C 9:04:05 م التوقيت الصيفي الشرقي لأمريكا الشمالية";
+        } else {
+            expected_ar_full = "الثلاثاء، 5 سبتمبر 2023 في 9:04:05 م التوقيت الصيفي الشرقي لأمريكا الشمالية";
+        }
+        Assertions.assertEquals(expected_ar_full, d.toLocaleString("ar-EG", JacksonUtil.newObjectNode()
                 .put("timeZone", "America/New_York")
                 .put("dateStyle", "full")
                 .put("timeStyle", "full")
@@ -825,16 +857,44 @@ class TbDateTest {
     @Test
     public void toStringAsJs() {
         TbDate d1 = new TbDate(1975, 12, 31, 23,15,30, 567,"-04:00");
-        Assertions.assertEquals("четвер, 1 січня 1976 р. о 06:15:30 за східноєвропейським стандартним часом", d1.toString("uk-UA", "Europe/Kyiv"));
-        Assertions.assertEquals("Thursday, January 1, 1976 at 6:15:30 AM Eastern European Standard Time", d1.toString("en-US", "Europe/Kyiv"));
-        Assertions.assertEquals("1976 Jan 1, Thu 06:15:30 Eastern European Time", d1.toString("UTC", "Europe/Kyiv"));
-        Assertions.assertEquals("Wednesday, December 31, 1975 at 10:15:30 PM Eastern Standard Time", d1.toString("en-US", "America/New_York"));
-        Assertions.assertEquals("1975 Dec 31, Wed 22:15:30 Eastern Standard Time", d1.toString("GMT", "America/New_York"));
-        Assertions.assertEquals("1975 Dec 31, Wed 22:15:30 Eastern Standard Time", d1.toString("UTC", "America/New_York"));
+        // Java 21+ changed Ukrainian locale: "о" (at) replaced with "," and NNBSP before "р." per CLDR 42+
+        String expected_ukUA_full = Runtime.version().feature() >= 21
+                ? "четвер, 1 січня 1976\u202Fр., 06:15:30 за східноєвропейським стандартним часом"
+                : "четвер, 1 січня 1976 р. о 06:15:30 за східноєвропейським стандартним часом";
+        Assertions.assertEquals(expected_ukUA_full, d1.toString("uk-UA", "Europe/Kyiv"));
+        // Java 21+ changed "at" to "," and uses NNBSP before AM/PM per CLDR 42+
+        String expected_enUS_Kyiv = Runtime.version().feature() >= 21
+                ? "Thursday, January 1, 1976, 6:15:30\u202FAM Eastern European Standard Time"
+                : "Thursday, January 1, 1976 at 6:15:30 AM Eastern European Standard Time";
+        Assertions.assertEquals(expected_enUS_Kyiv, d1.toString("en-US", "Europe/Kyiv"));
+        // Java 21+ changed timezone display for UTC locale
+        String expected_UTC_Kyiv = Runtime.version().feature() >= 21
+                ? "1976 Jan 1, Thu 06:15:30 Kyiv (+0)"
+                : "1976 Jan 1, Thu 06:15:30 Eastern European Time";
+        Assertions.assertEquals(expected_UTC_Kyiv, d1.toString("UTC", "Europe/Kyiv"));
+        // Java 21+ changed "at" to "," and uses NNBSP before AM/PM per CLDR 42+
+        String expected_enUS_NY = Runtime.version().feature() >= 21
+                ? "Wednesday, December 31, 1975, 10:15:30\u202FPM Eastern Standard Time"
+                : "Wednesday, December 31, 1975 at 10:15:30 PM Eastern Standard Time";
+        Assertions.assertEquals(expected_enUS_NY, d1.toString("en-US", "America/New_York"));
+        // Java 21+ changed timezone display for GMT/UTC locales
+        String expected_GMT_NY = Runtime.version().feature() >= 21
+                ? "1975 Dec 31, Wed 22:15:30 New York (+0)"
+                : "1975 Dec 31, Wed 22:15:30 Eastern Standard Time";
+        Assertions.assertEquals(expected_GMT_NY, d1.toString("GMT", "America/New_York"));
+        Assertions.assertEquals(expected_GMT_NY, d1.toString("UTC", "America/New_York"));
 
         Assertions.assertEquals(d1.toUTCString("UTC"), d1.toUTCString());
-        Assertions.assertEquals("четвер, 1 січня 1976 р., 03:15:30", d1.toUTCString("uk-UA"));
-        Assertions.assertEquals("Thursday, January 1, 1976, 3:15:30 AM", d1.toUTCString("en-US"));
+        // Java 21+ uses NNBSP before "р." per CLDR 42+
+        String expected_ukUA_utc = Runtime.version().feature() >= 21
+                ? "четвер, 1 січня 1976\u202Fр., 03:15:30"
+                : "четвер, 1 січня 1976 р., 03:15:30";
+        Assertions.assertEquals(expected_ukUA_utc, d1.toUTCString("uk-UA"));
+        // Java 21+ uses NNBSP before AM/PM per CLDR 42+
+        String expected_enUS_utc = Runtime.version().feature() >= 21
+                ? "Thursday, January 1, 1976, 3:15:30\u202FAM"
+                : "Thursday, January 1, 1976, 3:15:30 AM";
+        Assertions.assertEquals(expected_enUS_utc, d1.toUTCString("en-US"));
 
         Assertions.assertEquals("1976-01-01T03:15:30.567Z", d1.toJSON());
         Assertions.assertEquals("1976-01-01T03:15:30.567Z", d1.toISOString());
@@ -842,22 +902,44 @@ class TbDateTest {
         Assertions.assertEquals("1976-01-01 06:15:30", d1.toLocaleString("UTC", "Europe/Kyiv"));
         Assertions.assertEquals("01.01.76, 06:15:30", d1.toLocaleString("uk-UA", "Europe/Kyiv"));
         Assertions.assertEquals("1975-12-31 22:15:30", d1.toLocaleString("UTC", "America/New_York"));
-        Assertions.assertEquals("12/31/75, 10:15:30 PM", d1.toLocaleString("en-US", "America/New_York"));
+        // Java 21+ uses NNBSP before AM/PM per CLDR 42+
+        String expected_enUS_locale_NY = Runtime.version().feature() >= 21
+                ? "12/31/75, 10:15:30\u202FPM"
+                : "12/31/75, 10:15:30 PM";
+        Assertions.assertEquals(expected_enUS_locale_NY, d1.toLocaleString("en-US", "America/New_York"));
 
         Assertions.assertEquals("1976 Jan 1, Thu", d1.toDateString("UTC", "Europe/Kyiv"));
-        Assertions.assertEquals("четвер, 1 січня 1976 р.", d1.toDateString("uk-UA", "Europe/Kyiv"));
+        // Java 21+ uses NNBSP before "р." per CLDR 42+
+        String expected_ukUA_date = Runtime.version().feature() >= 21
+                ? "четвер, 1 січня 1976\u202Fр."
+                : "четвер, 1 січня 1976 р.";
+        Assertions.assertEquals(expected_ukUA_date, d1.toDateString("uk-UA", "Europe/Kyiv"));
         Assertions.assertEquals("1975 Dec 31, Wed", d1.toDateString("UTC", "America/New_York"));
         Assertions.assertEquals("Wednesday, December 31, 1975", d1.toDateString("en-US", "America/New_York"));
 
         Assertions.assertEquals("06:15:30", d1.toLocaleTimeString("uk-UA", "Europe/Kyiv"));
         Assertions.assertEquals("06:15:30", d1.toLocaleTimeString("UTC", "Europe/Kyiv"));
-        Assertions.assertEquals("10:15:30 PM", d1.toLocaleTimeString("en-US", "America/New_York"));
+        // Java 21+ uses NNBSP before AM/PM per CLDR 42+
+        String expected_enUS_time = Runtime.version().feature() >= 21 ? "10:15:30\u202FPM" : "10:15:30 PM";
+        Assertions.assertEquals(expected_enUS_time, d1.toLocaleTimeString("en-US", "America/New_York"));
         Assertions.assertEquals("22:15:30", d1.toLocaleTimeString("UTC", "America/New_York"));
 
         Assertions.assertEquals("06:15:30 за східноєвропейським стандартним часом", d1.toTimeString("uk-UA", "Europe/Kyiv"));
-        Assertions.assertEquals("06:15:30 Eastern European Time", d1.toTimeString("UTC", "Europe/Kyiv"));
-        Assertions.assertEquals("10:15:30 PM Eastern Standard Time", d1.toTimeString("en-US", "America/New_York"));
-        Assertions.assertEquals("22:15:30 Eastern Standard Time", d1.toTimeString("UTC", "America/New_York"));
+        // Java 21+ changed timezone display for UTC locale
+        String expected_UTC_time_Kyiv = Runtime.version().feature() >= 21
+                ? "06:15:30 Kyiv (+0)"
+                : "06:15:30 Eastern European Time";
+        Assertions.assertEquals(expected_UTC_time_Kyiv, d1.toTimeString("UTC", "Europe/Kyiv"));
+        // Java 21+ uses NNBSP before AM/PM per CLDR 42+
+        String expected_enUS_timeStr = Runtime.version().feature() >= 21
+                ? "10:15:30\u202FPM Eastern Standard Time"
+                : "10:15:30 PM Eastern Standard Time";
+        Assertions.assertEquals(expected_enUS_timeStr, d1.toTimeString("en-US", "America/New_York"));
+        // Java 21+ changed timezone display for UTC locale
+        String expected_UTC_time_NY = Runtime.version().feature() >= 21
+                ? "22:15:30 New York (+0)"
+                : "22:15:30 Eastern Standard Time";
+        Assertions.assertEquals(expected_UTC_time_NY, d1.toTimeString("UTC", "America/New_York"));
     }
 
     @Test
