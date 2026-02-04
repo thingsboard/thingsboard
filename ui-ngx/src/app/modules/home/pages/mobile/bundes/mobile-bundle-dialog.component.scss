@@ -62,7 +62,7 @@
           @media #{$mat-gt-sm} {
             min-width: 500px;
           }
-          .mat-horizontal-stepper-content:not(.mat-horizontal-stepper-content-inactive):nth-child(3) {
+          .mat-horizontal-stepper-content.mat-horizontal-stepper-content-current:nth-child(3) {
             height: 100%;
             max-height: 100%;
             overflow: hidden;
