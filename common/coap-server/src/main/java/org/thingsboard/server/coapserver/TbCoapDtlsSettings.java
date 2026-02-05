@@ -100,6 +100,10 @@ public class TbCoapDtlsSettings {
     @Autowired(required = false)
     private TbServiceInfoProvider serviceInfoProvider;
 
+    public void registerReloadCallback(Runnable callback) {
+        coapDtlsCredentialsConfig.registerReloadCallback(callback);
+    }
+
     public DtlsConnectorConfig dtlsConnectorConfig(Configuration configuration) throws UnknownHostException {
         DtlsConnectorConfig.Builder configBuilder = new DtlsConnectorConfig.Builder(configuration);
         configBuilder.setAddress(getInetSocketAddress());
@@ -154,5 +158,5 @@ public class TbCoapDtlsSettings {
         }
         return null;
     }
-}
 
+}

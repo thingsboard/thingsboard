@@ -51,11 +51,9 @@ public class ResourceUtils {
             return true;
         } else {
             try {
-                URL url = Resources.getResource(path);
-                if (url != null) {
-                    return true;
-                }
-            } catch (IllegalArgumentException e) {}
+                Resources.getResource(path);
+                return true;
+            } catch (IllegalArgumentException ignored) {}
         }
         return false;
     }
@@ -93,9 +91,9 @@ public class ResourceUtils {
             }
         } catch (Exception e) {
             if (e instanceof NullPointerException) {
-                log.warn("Unable to find resource: " + filePath);
+                log.warn("Unable to find resource: {}", filePath);
             } else {
-                log.warn("Unable to find resource: " + filePath, e);
+                log.warn("Unable to find resource: {}", filePath, e);
             }
         }
         throw new RuntimeException("Unable to find resource: " + filePath);
@@ -113,15 +111,16 @@ public class ResourceUtils {
                 return resourceFile.getAbsolutePath();
             } else {
                 URL url = classLoader.getResource(filePath);
-                return url.toURI().toString();
+                return url != null ? url.toURI().toString() : null;
             }
         } catch (Exception e) {
             if (e instanceof NullPointerException) {
-                log.warn("Unable to find resource: " + filePath);
+                log.warn("Unable to find resource: {}", filePath);
             } else {
-                log.warn("Unable to find resource: " + filePath, e);
+                log.warn("Unable to find resource: {}", filePath, e);
             }
             throw new RuntimeException("Unable to find resource: " + filePath);
         }
     }
+
 }

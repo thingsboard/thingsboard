@@ -31,10 +31,6 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Base64;
 
-
-/**
- * @author Valerii Sosliuk
- */
 @Slf4j
 public class SslUtil {
 
@@ -51,7 +47,7 @@ public class SslUtil {
         String begin = "-----BEGIN CERTIFICATE-----";
         String end = "-----END CERTIFICATE-----";
         StringBuilder stringBuilder = new StringBuilder();
-        for (Certificate cert: chain) {
+        for (Certificate cert : chain) {
             stringBuilder.append(begin).append(EncryptionUtil.certTrimNewLines(Base64.getEncoder().encodeToString(cert.getEncoded()))).append(end).append("\n");
         }
         return stringBuilder.toString();
@@ -85,4 +81,5 @@ public class SslUtil {
         RDN cn = x500name.getRDNs(BCStyle.CN)[0];
         return IETFUtils.valueToString(cn.getFirst().getValue());
     }
+
 }

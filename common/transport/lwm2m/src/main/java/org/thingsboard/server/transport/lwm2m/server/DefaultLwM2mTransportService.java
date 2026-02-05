@@ -15,9 +15,11 @@
  */
 package org.thingsboard.server.transport.lwm2m.server;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.eclipse.californium.core.CoapResource;
 import org.eclipse.californium.core.CoapServer;
 import org.eclipse.californium.elements.config.Configuration;
@@ -68,7 +70,7 @@ import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.se
 @DependsOn({"lwM2mDownlinkMsgHandler", "lwM2mUplinkMsgHandler"})
 @TbLwM2mTransportComponent
 @RequiredArgsConstructor
-public class DefaultLwM2mTransportService implements LwM2MTransportService {
+public class DefaultLwM2mTransportService implements LwM2MTransportService, SmartInitializingSingleton {
 
     public static final CipherSuite[] RPK_OR_X509_CIPHER_SUITES = {TLS_PSK_WITH_AES_128_CCM_8, TLS_PSK_WITH_AES_128_CBC_SHA256, TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8, TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256};
     public static final CipherSuite[] PSK_CIPHER_SUITES = {TLS_PSK_WITH_AES_128_CCM_8, TLS_PSK_WITH_AES_128_CBC_SHA256};
@@ -84,6 +86,20 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
     private final LwM2mVersionedModelProvider modelProvider;
 
     private LeshanServer server;
+    private LwM2mServerListener serverListener;
+
+    @Override
+    public void afterSingletonsInstantiated() {
+        config.registerServerReloadCallback(() -> {
+            try {
+                log.info("LwM2M certificates reloaded. Recreating LwM2M server...");
+                recreateLwM2mServer();
+                log.info("LwM2M server recreated successfully with new certificates.");
+            } catch (Exception e) {
+                log.error("Failed to recreate LwM2M server after certificate reload", e);
+            }
+        });
+    }
 
     @AfterStartUp(order = AfterStartUp.AFTER_TRANSPORT_SERVICE)
     public void init() {
@@ -95,11 +111,11 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
     private void startLhServer() {
         log.info("Starting LwM2M transport server...");
         this.server.start();
-        LwM2mServerListener lhServerCertListener = new LwM2mServerListener(handler);
-        this.server.getRegistrationService().addListener(lhServerCertListener.registrationListener);
-        this.server.getPresenceService().addListener(lhServerCertListener.presenceListener);
-        this.server.getObservationService().addListener(lhServerCertListener.observationListener);
-        this.server.getSendService().addListener(lhServerCertListener.sendListener);
+        serverListener = new LwM2mServerListener(handler);
+        this.server.getRegistrationService().addListener(serverListener.registrationListener);
+        this.server.getPresenceService().addListener(serverListener.presenceListener);
+        this.server.getObservationService().addListener(serverListener.observationListener);
+        this.server.getSendService().addListener(serverListener.sendListener);
         log.info("Started LwM2M transport server.");
     }
 
@@ -212,6 +228,28 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
             /* by default trust all */
             builder.setTrustedCertificates(new X509Certificate[0]);
         }
+    }
+
+    private synchronized void recreateLwM2mServer() {
+        if (server != null) {
+            log.info("Stopping old LwM2M server...");
+
+            if (serverListener != null) {
+                server.getRegistrationService().removeListener(serverListener.registrationListener);
+                server.getPresenceService().removeListener(serverListener.presenceListener);
+                server.getObservationService().removeListener(serverListener.observationListener);
+                server.getSendService().removeListener(serverListener.sendListener);
+            }
+
+            server.destroy();
+            log.info("Old LwM2M server stopped.");
+        }
+
+        log.info("Creating new LwM2M server with updated certificates...");
+        this.server = getLhServer();
+        this.context.setServer(server);
+        this.startLhServer();
+        log.info("New LwM2M server started successfully.");
     }
 
     @Override
