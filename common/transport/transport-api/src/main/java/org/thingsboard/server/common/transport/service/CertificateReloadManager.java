@@ -143,8 +143,8 @@ public class CertificateReloadManager implements SmartInitializingSingleton, Dis
     private static class CertificateWatcher {
         private final Path path;
         private final Runnable reloadCallback;
-        private long lastModified;
-        private String lastChecksum;
+        private volatile long lastModified;
+        private volatile String lastChecksum;
 
         CertificateWatcher(Path path, Runnable reloadCallback) {
             this.path = path;
@@ -153,23 +153,34 @@ public class CertificateReloadManager implements SmartInitializingSingleton, Dis
             this.lastChecksum = calculateChecksum();
         }
 
-        boolean hasChanged() {
+        synchronized boolean hasChanged() {
             long currentModified = getLastModifiedTime();
             if (currentModified != lastModified) {
                 String currentChecksum = calculateChecksum();
-                return !currentChecksum.equals(lastChecksum);
+                if (!currentChecksum.equals(lastChecksum)) {
+                    return true;
+                }
+                // Content unchanged, but timestamp changed - update timestamp to avoid repeated checksum calculations
+                lastModified = currentModified;
             }
             return false;
         }
 
-        void reload() {
+        synchronized void reload() {
+            long newModified = getLastModifiedTime();
+            String newChecksum = calculateChecksum();
+
             reloadCallback.run();
-            lastModified = getLastModifiedTime();
-            lastChecksum = calculateChecksum();
+
+            lastModified = newModified;
+            lastChecksum = newChecksum;
         }
 
         private long getLastModifiedTime() {
             try {
+                if (!Files.exists(path)) {
+                    return 0;
+                }
                 return Files.getLastModifiedTime(path).toMillis();
             } catch (IOException e) {
                 return 0;
@@ -178,6 +189,9 @@ public class CertificateReloadManager implements SmartInitializingSingleton, Dis
 
         private String calculateChecksum() {
             try {
+                if (!Files.exists(path)) {
+                    return "";
+                }
                 MessageDigest md = MessageDigest.getInstance("SHA-256");
                 byte[] bytes = Files.readAllBytes(path);
                 byte[] hash = md.digest(bytes);
