@@ -82,11 +82,12 @@ export class MarkerImageSettingsComponent implements ControlValueAccessor {
         renderer: this.renderer,
         componentType: MarkerImageSettingsPanelComponent,
         hostView: this.viewContainerRef,
-        preferredPlacement: 'left',
+        preferredPlacement: 'leftOnly',
         context: {
           markerImageSettings: this.modelValue,
         },
-        isModal: true
+        isModal: true,
+        overlayStyle: {padding: '10px'}
       });
       markerImageSettingsPanelPopover.tbComponentRef.instance.popover = markerImageSettingsPanelPopover;
       markerImageSettingsPanelPopover.tbComponentRef.instance.markerImageSettingsApplied.subscribe((markerImageSettings) => {
