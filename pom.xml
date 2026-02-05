@@ -650,7 +650,7 @@
                 <plugin>
                     <groupId>org.thingsboard</groupId>
                     <artifactId>gradle-maven-plugin</artifactId>
-                    <version>1.0.12</version>
+                    <version>1.0.15</version>
                 </plugin>
                 <plugin>
                     <groupId>com.github.eirslett</groupId>

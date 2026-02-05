@@ -21,7 +21,9 @@ plugins {
 
 buildDir = projectBuildDir
 version = projectVersion
-distsDirName = "./"
+base {
+    distsDirectory = layout.buildDirectory.dir("./")
+}
 
 // OS Package plugin configuration
 ospackage {
@@ -33,8 +35,8 @@ ospackage {
 
     into pkgInstallFolder
 
-    user pkgUser
-    permissionGroup pkgUser
+    user = pkgUser
+    permissionGroup = pkgUser
 
     // Copy the actual .jar file
     from(mainJar) {
@@ -42,19 +44,25 @@ ospackage {
         rename { String fileName ->
             "${pkgName}.jar"
         }
-        fileMode 0500
+        filePermissions {
+            unix('r-x------')  // 0500
+        }
         into "bin"
     }
 
     if("${pkgCopyInstallScripts}".equalsIgnoreCase("true")) {
         // Copy the install files
         from("${buildDir}/bin/install/install.sh") {
-            fileMode 0775
+            filePermissions {
+                unix('rwxrwxr-x')  // 0775
+            }
             into "bin/install"
         }
 
         from("${buildDir}/bin/install/upgrade.sh") {
-            fileMode 0775
+            filePermissions {
+                unix('rwxrwxr-x')  // 0775
+            }
             into "bin/install"
         }
 
@@ -67,14 +75,18 @@ ospackage {
     from("${buildDir}/conf") {
         exclude "${pkgName}.conf"
         fileType CONFIG | NOREPLACE
-        fileMode 0754
+        filePermissions {
+            unix('rwxr-xr--')  // 0754
+        }
         into "conf"
     }
 
     // Copy the data files
     from("${buildDir}/data") {
         fileType CONFIG | NOREPLACE
-        fileMode 0754
+        filePermissions {
+            unix('rwxr-xr--')  // 0754
+        }
         into "data"
     }
 
@@ -102,7 +114,9 @@ buildRpm {
         include "${pkgName}.conf"
         filter(ReplaceTokens, tokens: ['pkg.platform': 'rpm'])
         fileType CONFIG | NOREPLACE
-        fileMode 0754
+        filePermissions {
+            unix('rwxr-xr--')  // 0754
+        }
         into "${pkgInstallFolder}/conf"
     }
 
@@ -111,13 +125,15 @@ buildRpm {
     preUninstall file("${buildDir}/control/rpm/prerm")
     postUninstall file("${buildDir}/control/rpm/postrm")
 
-    user pkgUser
-    permissionGroup pkgUser
+    user = pkgUser
+    permissionGroup = pkgUser
 
     // Copy the system unit files
     from("${buildDir}/control/template.service") {
         addParentDirs = false
-        fileMode 0644
+        filePermissions {
+            unix('rw-r--r--')  // 0644
+        }
         into "/usr/lib/systemd/system"
         rename { String filename ->
             "${pkgName}.service"
@@ -143,7 +159,9 @@ buildDeb {
         include "${pkgName}.conf"
         filter(ReplaceTokens, tokens: ['pkg.platform': 'deb'])
         fileType CONFIG | NOREPLACE
-        fileMode 0754
+        filePermissions {
+            unix('rwxr-xr--')  // 0754
+        }
         into "${pkgInstallFolder}/conf"
     }
 
@@ -157,13 +175,15 @@ buildDeb {
     preUninstall file("${buildDir}/control/deb/prerm")
     postUninstall file("${buildDir}/control/deb/postrm")
 
-    user pkgUser
-    permissionGroup pkgUser
+    user = pkgUser
+    permissionGroup = pkgUser
 
     // Copy the system unit files
     from("${buildDir}/control/template.service") {
         addParentDirs = false
-        fileMode 0644
+        filePermissions {
+            unix('rw-r--r--')  // 0644
+        }
         into "/lib/systemd/system"
         rename { String filename ->
             "${pkgName}.service"
