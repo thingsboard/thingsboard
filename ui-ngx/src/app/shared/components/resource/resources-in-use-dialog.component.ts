@@ -47,9 +47,10 @@ export interface ResourcesInUseDialogData {
 }
 
 @Component({
-  selector: 'tb-resources-in-use-dialog',
-  templateUrl: './resources-in-use-dialog.component.html',
-  styleUrls: ['./resources-in-use-dialog.component.scss']
+    selector: 'tb-resources-in-use-dialog',
+    templateUrl: './resources-in-use-dialog.component.html',
+    styleUrls: ['./resources-in-use-dialog.component.scss'],
+    standalone: false
 })
 export class ResourcesInUseDialogComponent extends
   DialogComponent<ResourcesInUseDialogComponent, ResourceInfo[]> implements OnInit {

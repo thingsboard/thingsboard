@@ -37,22 +37,23 @@ import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 import { beautifyHtml } from '@shared/models/beautify.models';
 
 @Component({
-  selector: 'tb-html',
-  templateUrl: './html.component.html',
-  styleUrls: ['./html.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => HtmlComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => HtmlComponent),
-      multi: true,
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-html',
+    templateUrl: './html.component.html',
+    styleUrls: ['./html.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => HtmlComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => HtmlComponent),
+            multi: true,
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class HtmlComponent implements OnInit, OnDestroy, ControlValueAccessor, Validator {
 

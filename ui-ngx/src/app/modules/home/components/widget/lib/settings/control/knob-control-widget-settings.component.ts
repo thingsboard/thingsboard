@@ -24,9 +24,10 @@ import { ValueType } from '@shared/models/constants';
 import { deepClone } from '@core/utils';
 
 @Component({
-  selector: 'tb-knob-control-widget-settings',
-  templateUrl: './knob-control-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-knob-control-widget-settings',
+    templateUrl: './knob-control-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class KnobControlWidgetSettingsComponent extends WidgetSettingsComponent {
 

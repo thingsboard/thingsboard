@@ -22,9 +22,10 @@ import { ThemePalette } from '@angular/material/core';
 import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
-  selector: 'tb-copy-button',
-  styleUrls: ['copy-button.component.scss'],
-  templateUrl: './copy-button.component.html'
+    selector: 'tb-copy-button',
+    styleUrls: ['copy-button.component.scss'],
+    templateUrl: './copy-button.component.html',
+    standalone: false
 })
 export class CopyButtonComponent {
 

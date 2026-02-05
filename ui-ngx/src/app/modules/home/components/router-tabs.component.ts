@@ -28,9 +28,10 @@ import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 
 @Component({
-  selector: 'tb-router-tabs',
-  templateUrl: './router-tabs.component.html',
-  styleUrls: ['./router-tabs.component.scss']
+    selector: 'tb-router-tabs',
+    templateUrl: './router-tabs.component.html',
+    styleUrls: ['./router-tabs.component.scss'],
+    standalone: false
 })
 export class RouterTabsComponent extends PageComponent implements OnInit {
 

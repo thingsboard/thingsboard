@@ -22,9 +22,10 @@ import { RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@app/shar
 import { FetchTo, FetchToTranslation } from '@home/components/rule-node/rule-node-config.models';
 
 @Component({
-  selector: 'tb-transformation-node-delete-keys-config',
-  templateUrl: './delete-keys-config.component.html',
-  styleUrls: []
+    selector: 'tb-transformation-node-delete-keys-config',
+    templateUrl: './delete-keys-config.component.html',
+    styleUrls: [],
+    standalone: false
 })
 
 export class DeleteKeysConfigComponent extends RuleNodeConfigurationComponent {

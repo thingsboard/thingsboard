@@ -33,9 +33,10 @@ import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 type ButtonAppearanceType = 'left' | 'right';
 
 @Component({
-  selector: 'tb-value-stepper-widget-settings',
-  templateUrl: './value-stepper-widget-settings.component.html',
-  styleUrls: ['../widget-settings.scss']
+    selector: 'tb-value-stepper-widget-settings',
+    templateUrl: './value-stepper-widget-settings.component.html',
+    styleUrls: ['../widget-settings.scss'],
+    standalone: false
 })
 export class ValueStepperWidgetSettingsComponent extends WidgetSettingsComponent {
 

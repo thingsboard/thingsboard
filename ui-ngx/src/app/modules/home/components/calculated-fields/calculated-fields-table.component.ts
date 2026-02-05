@@ -39,11 +39,12 @@ import { UtilsService } from "@core/services/utils.service";
 import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
-  selector: 'tb-calculated-fields-table',
-  templateUrl: './calculated-fields-table.component.html',
-  styleUrls: ['./calculated-fields-table.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [EntityDebugSettingsService]
+    selector: 'tb-calculated-fields-table',
+    templateUrl: './calculated-fields-table.component.html',
+    styleUrls: ['./calculated-fields-table.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    providers: [EntityDebugSettingsService],
+    standalone: false
 })
 export class CalculatedFieldsTableComponent {
 

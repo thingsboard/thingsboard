@@ -37,9 +37,10 @@ export interface EventsDialogData {
 }
 
 @Component({
-  selector: 'tb-debug-dialog',
-  templateUrl: './events-dialog.component.html',
-  styleUrl: './events-dialog.component.scss'
+    selector: 'tb-debug-dialog',
+    templateUrl: './events-dialog.component.html',
+    styleUrl: './events-dialog.component.scss',
+    standalone: false
 })
 export class EventsDialogComponent extends DialogComponent<EventsDialogComponent, string> implements AfterViewInit{
 

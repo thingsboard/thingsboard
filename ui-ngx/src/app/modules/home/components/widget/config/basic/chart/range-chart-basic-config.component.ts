@@ -60,9 +60,10 @@ import {
 import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Component({
-  selector: 'tb-range-chart-basic-config',
-  templateUrl: './range-chart-basic-config.component.html',
-  styleUrls: ['../basic-config.scss']
+    selector: 'tb-range-chart-basic-config',
+    templateUrl: './range-chart-basic-config.component.html',
+    styleUrls: ['../basic-config.scss'],
+    standalone: false
 })
 export class RangeChartBasicConfigComponent extends BasicWidgetConfigComponent {
 

@@ -29,9 +29,10 @@ import {
 import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Component({
-  selector: 'tb-value-chart-card-widget-settings',
-  templateUrl: './value-chart-card-widget-settings.component.html',
-  styleUrls: []
+    selector: 'tb-value-chart-card-widget-settings',
+    templateUrl: './value-chart-card-widget-settings.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class ValueChartCardWidgetSettingsComponent extends WidgetSettingsComponent {
 

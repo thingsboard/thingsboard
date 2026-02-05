@@ -36,21 +36,22 @@ import { OriginatorFieldsMappingValues, SvMapOption } from '../rule-node-config.
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-sv-map-config',
-  templateUrl: './sv-map-config.component.html',
-  styleUrls: ['./sv-map-config.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => SvMapConfigComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => SvMapConfigComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-sv-map-config',
+    templateUrl: './sv-map-config.component.html',
+    styleUrls: ['./sv-map-config.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => SvMapConfigComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => SvMapConfigComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class SvMapConfigComponent extends PageComponent implements ControlValueAccessor, OnInit, Validator {
 

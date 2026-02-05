@@ -37,10 +37,11 @@ export interface ManageWidgetActionsDialogData {
 }
 
 @Component({
-  selector: 'tb-manage-widget-actions-dialog',
-  templateUrl: './manage-widget-actions-dialog.component.html',
-  providers: [],
-  styleUrls: []
+    selector: 'tb-manage-widget-actions-dialog',
+    templateUrl: './manage-widget-actions-dialog.component.html',
+    providers: [],
+    styleUrls: [],
+    standalone: false
 })
 export class ManageWidgetActionsDialogComponent extends DialogComponent<ManageWidgetActionsDialogComponent,
   WidgetActionsData> implements OnInit {

@@ -20,10 +20,11 @@ import { TbPopoverComponent } from '@shared/components/popover.component';
 import { EditorOptions } from 'tinymce';
 
 @Component({
-  selector: 'tb-release-notes-panel',
-  templateUrl: './editor-panel.component.html',
-  styleUrls: ['./editor-panel.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-release-notes-panel',
+    templateUrl: './editor-panel.component.html',
+    styleUrls: ['./editor-panel.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class EditorPanelComponent implements OnInit {
 

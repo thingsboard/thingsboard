@@ -57,10 +57,11 @@ import { UtilsService } from '@core/services/utils.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-value-stepper-widget',
-  templateUrl: './value-stepper-widget.component.html',
-  styleUrls: ['../action/action-widget.scss', './value-stepper-widget.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-value-stepper-widget',
+    templateUrl: './value-stepper-widget.component.html',
+    styleUrls: ['../action/action-widget.scss', './value-stepper-widget.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class ValueStepperWidgetComponent extends
   BasicActionWidgetComponent implements OnInit, AfterViewInit, OnDestroy {

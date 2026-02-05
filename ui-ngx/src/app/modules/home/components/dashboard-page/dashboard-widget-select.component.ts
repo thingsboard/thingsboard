@@ -48,10 +48,11 @@ interface BundleWidgetsFilter extends WidgetsFilter {
 }
 
 @Component({
-  selector: 'tb-dashboard-widget-select',
-  templateUrl: './dashboard-widget-select.component.html',
-  styleUrls: ['./dashboard-widget-select.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-dashboard-widget-select',
+    templateUrl: './dashboard-widget-select.component.html',
+    styleUrls: ['./dashboard-widget-select.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class DashboardWidgetSelectComponent implements OnInit {
 

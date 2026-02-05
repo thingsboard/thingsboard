@@ -46,7 +46,7 @@ public interface TenantProfileService extends EntityDaoService {
 
     EntityInfo findDefaultTenantProfileInfo(TenantId tenantId);
 
-    boolean setDefaultTenantProfile(TenantId tenantId, TenantProfileId tenantProfileId);
+    TenantProfile setDefaultTenantProfile(TenantId tenantId, TenantProfileId tenantProfileId);
 
     void deleteTenantProfiles(TenantId tenantId);
 

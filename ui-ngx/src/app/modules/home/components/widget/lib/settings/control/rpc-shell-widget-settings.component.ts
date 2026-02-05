@@ -21,9 +21,10 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 
 @Component({
-  selector: 'tb-rpc-shell-widget-settings',
-  templateUrl: './rpc-shell-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-rpc-shell-widget-settings',
+    templateUrl: './rpc-shell-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class RpcShellWidgetSettingsComponent extends WidgetSettingsComponent {
 

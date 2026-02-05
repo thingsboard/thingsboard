@@ -39,10 +39,11 @@ import { coerceBoolean } from "@shared/decorators/coercion";
 import { timeUnitTranslationMap } from "@shared/models/time/time.models";
 
 @Component({
-  selector: 'tb-alarm-rule-filter-text',
-  templateUrl: './alarm-rule-filter-text.component.html',
-  styleUrls: ['./alarm-rule-filter-text.component.scss'],
-  providers: []
+    selector: 'tb-alarm-rule-filter-text',
+    templateUrl: './alarm-rule-filter-text.component.html',
+    styleUrls: ['./alarm-rule-filter-text.component.scss'],
+    providers: [],
+    standalone: false
 })
 export class AlarmRuleFilterTextComponent {
 

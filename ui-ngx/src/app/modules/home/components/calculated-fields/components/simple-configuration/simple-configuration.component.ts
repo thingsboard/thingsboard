@@ -46,20 +46,21 @@ import { map } from 'rxjs/operators';
 type SimpeConfiguration = CalculatedFieldSimpleConfiguration | CalculatedFieldScriptConfiguration;
 
 @Component({
-  selector: 'tb-simple-configuration',
-  templateUrl: './simple-configuration.component.html',
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => SimpleConfigurationComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => SimpleConfigurationComponent),
-      multi: true
-    }
-  ],
+    selector: 'tb-simple-configuration',
+    templateUrl: './simple-configuration.component.html',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => SimpleConfigurationComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => SimpleConfigurationComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class SimpleConfigurationComponent implements ControlValueAccessor, Validator, OnChanges {
 

@@ -27,9 +27,10 @@ import { UsageInfoService } from '@core/http/usage-info.service';
 import { ShortNumberPipe } from '@shared/pipe/short-number.pipe';
 
 @Component({
-  selector: 'tb-usage-info-widget',
-  templateUrl: './usage-info-widget.component.html',
-  styleUrls: ['./home-page-widget.scss', './usage-info-widget.component.scss']
+    selector: 'tb-usage-info-widget',
+    templateUrl: './usage-info-widget.component.html',
+    styleUrls: ['./home-page-widget.scss', './usage-info-widget.component.scss'],
+    standalone: false
 })
 export class UsageInfoWidgetComponent extends PageComponent implements OnInit, OnDestroy {
 
