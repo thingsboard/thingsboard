@@ -184,7 +184,7 @@
                     (click)="editAttribute($event, attribute)">
             <div class="flex flex-1 flex-row" style="align-items: center">
               <div class="flex flex-1 flex-row" style="overflow: hidden; align-items: center;">
-                <span class="ellipsis">{{attribute.value | tbJson}}</span>
+                <span class="ellipsis">{{ ((attribute.value | tbJson) + '') | slice:0:300 }}{{ ((attribute.value | tbJson) + '').length > 300 ? '...' : '' }}</span>
                 <tb-copy-button
                   *ngIf="attribute.value !== ''"
                   class="attribute-copy"
