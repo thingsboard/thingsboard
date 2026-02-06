@@ -5405,9 +5405,9 @@ eastasianwidth@^0.2.0:
   resolved "https://registry.yarnpkg.com/eastasianwidth/-/eastasianwidth-0.2.0.tgz#696ce2ec0aa0e6ea93a397ffcf24aa7840c827cb"
   integrity sha512-I88TYZWc9XiYHRQ4/3c5rjjfgkjhLyW2luGIheGERbNQ6OY7yTybanSpDXZa8y7VUP9YmDcYa+eyq4ca7iLqWA==
 
-"echarts@https://github.com/thingsboard/echarts/archive/5.5.1-TB.tar.gz":
-  version "5.5.1-TB"
-  resolved "https://github.com/thingsboard/echarts/archive/5.5.1-TB.tar.gz#8cf0cbb1b4c6161f0b587a1a649ff4f8eecbbf42"
+"echarts@https://github.com/thingsboard/echarts/archive/5.5.2-TB.tar.gz":
+  version "5.5.2-TB"
+  resolved "https://github.com/thingsboard/echarts/archive/5.5.2-TB.tar.gz#779494c24fb5448ecaf79315bf609bb52b431df9"
   dependencies:
     tslib "2.3.0"
     zrender "https://github.com/thingsboard/zrender/archive/5.5.0-TB.tar.gz"
@@ -8098,9 +8098,9 @@ ngx-drag-drop@^20.0.1:
   dependencies:
     tslib "^2.3.0"
 
-"ngx-flowchart@https://github.com/thingsboard/ngx-flowchart.git#release/3.0.0":
-  version "3.0.0"
-  resolved "https://github.com/thingsboard/ngx-flowchart.git#0160a1356129c2a3d4dcf7e064e4ba0a39ff668d"
+"ngx-flowchart@https://github.com/thingsboard/ngx-flowchart.git#release/4.0.0":
+  version "4.0.0"
+  resolved "https://github.com/thingsboard/ngx-flowchart.git#735bc818ef218a169ac50e87edc6a093b3e97715"
   dependencies:
     tslib "^2.3.0"
 

@@ -1102,6 +1102,7 @@
         "expression": "Expression",
         "no-found": "No calculated fields found",
         "list": "{ count, plural, =1 {One calculated field} other {List of # calculated fields} }",
+        "add": "Add calculated field",
         "selected-fields": "{ count, plural, =1 {1 calculated field} other {# calculated fields} } selected",
         "type": {
             "simple": "Simple",

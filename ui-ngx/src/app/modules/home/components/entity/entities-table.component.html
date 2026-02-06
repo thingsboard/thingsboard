@@ -82,12 +82,21 @@
                   </button>
                 </ng-container>
                 <ng-template #addActionsMenu>
-                  <button mat-icon-button [disabled]="isLoading$ | async"
-                          matTooltip="{{ translations.add | translate }}"
-                          matTooltipPosition="above"
-                          [matMenuTriggerFor]="addActionsMenu">
-                    <mat-icon>add</mat-icon>
-                  </button>
+                  @if (entitiesTableConfig.addAsTextButton) {
+                    <button mat-stroked-button color="primary"
+                            [disabled]="isLoading$ | async"
+                            [matMenuTriggerFor]="addActionsMenu">
+                      <mat-icon>add</mat-icon>
+                      {{ translations.add | translate }}
+                    </button>
+                  } @else {
+                    <button mat-icon-button [disabled]="isLoading$ | async"
+                            matTooltip="{{ translations.add | translate }}"
+                            matTooltipPosition="above"
+                            [matMenuTriggerFor]="addActionsMenu">
+                      <mat-icon>add</mat-icon>
+                    </button>
+                  }
                   <mat-menu #addActionsMenu="matMenu" xPosition="before">
                     <button mat-menu-item *ngFor="let actionDescriptor of entitiesTableConfig.addActionDescriptors"
                             [disabled]="isLoading$ | async"
