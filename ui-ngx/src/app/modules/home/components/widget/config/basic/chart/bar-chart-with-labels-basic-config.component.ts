@@ -45,7 +45,11 @@ import {
   barChartWithLabelsDefaultSettings,
   BarChartWithLabelsWidgetSettings
 } from '@home/components/widget/lib/chart/bar-chart-with-labels-widget.models';
-import { TimeSeriesChartType } from '@home/components/widget/lib/chart/time-series-chart.models';
+import {
+  normalizeAxisLimit,
+  TimeSeriesChartType,
+  updateLatestDataKeys
+} from '@home/components/widget/lib/chart/time-series-chart.models';
 import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Component({
@@ -76,7 +80,7 @@ export class BarChartWithLabelsBasicConfigComponent extends BasicWidgetConfigCom
   tooltipDatePreviewFn = this._tooltipDatePreviewFn.bind(this);
 
   predefinedValues = widgetTitleAutocompleteValues;
-  
+
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,
               private $injector: Injector,
@@ -96,6 +100,12 @@ export class BarChartWithLabelsBasicConfigComponent extends BasicWidgetConfigCom
     const settings: BarChartWithLabelsWidgetSettings = mergeDeep<BarChartWithLabelsWidgetSettings>({} as BarChartWithLabelsWidgetSettings,
       barChartWithLabelsDefaultSettings, configData.config.settings as BarChartWithLabelsWidgetSettings);
     const iconSize = resolveCssSize(configData.config.iconSize);
+
+    const minConfig = normalizeAxisLimit(settings.yAxis.min);
+    const maxConfig = normalizeAxisLimit(settings.yAxis.max);
+    settings.yAxis.min = minConfig;
+    settings.yAxis.max = maxConfig;
+
     this.barChartWidgetConfigForm = this.fb.group({
       timewindowConfig: [getTimewindowConfig(configData.config), []],
       datasources: [configData.config.datasources, []],
@@ -165,6 +175,11 @@ export class BarChartWithLabelsBasicConfigComponent extends BasicWidgetConfigCom
 
       actions: [configData.config.actions || {}, []]
     });
+  }
+
+  protected onConfigChanged(widgetConfig: WidgetConfigComponentData) {
+    updateLatestDataKeys([widgetConfig.config.settings.yAxis], this.datasource, this.callbacks);
+    super.onConfigChanged(widgetConfig);
   }
 
   protected prepareOutputConfig(config: any): WidgetConfigComponentData {
