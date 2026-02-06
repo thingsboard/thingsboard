@@ -17,6 +17,7 @@ package org.thingsboard.server.common.data.tenant.profile;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -173,6 +174,7 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     @Schema(example = "10")
     private long maxArgumentsPerCF = 10;
     @Schema(example = "10")
+    @PositiveOrZero
     private int minAllowedScheduledUpdateIntervalInSecForCF = 10;
     @Builder.Default
     @Schema(example = "2")
