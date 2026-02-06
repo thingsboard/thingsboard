@@ -1,5 +1,7 @@
 Here is the list of commands that can be used to quickly install ThingsBoard Edge on Ubuntu Server and connect to the server.
 
+**Note:** OpenJDK 25 requires Ubuntu 22.04 LTS or newer. Earlier versions (20.04 and below) are not supported.
+
 #### Step 1. Install Java 25 (OpenJDK)
 ThingsBoard service is running on Java 25. To install OpenJDK 25, follow these instructions:
 
