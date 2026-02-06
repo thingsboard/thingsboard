@@ -142,7 +142,7 @@
         <ng-container matColumnDef="select" sticky>
           <mat-header-cell *matHeaderCellDef style="width: 40px;">
             <mat-checkbox (change)="$event ? dataSource.masterToggle() : null"
-                          [checked]="dataSource.selection.hasValue() && (dataSource.isAllSelected() | async)"
+                          [(ngModel)]="selectAllModel"
                           [indeterminate]="dataSource.selection.hasValue() && !(dataSource.isAllSelected() | async)">
             </mat-checkbox>
           </mat-header-cell>
