@@ -23,13 +23,15 @@ import { AddUserDialogComponent } from '@modules/home/pages/user/add-user-dialog
 import { ActivationLinkDialogComponent } from '@modules/home/pages/user/activation-link-dialog.component';
 import { HomeComponentsModule } from '@modules/home/components/home-components.module';
 import { UserTabsComponent } from '@home/pages/user/user-tabs.component';
+import { Manage2FADialogComponent } from '@modules/home/pages/user/manage-2fa-dialog.component';
 
 @NgModule({
   declarations: [
     UserComponent,
     UserTabsComponent,
     AddUserDialogComponent,
-    ActivationLinkDialogComponent
+    ActivationLinkDialogComponent,
+    Manage2FADialogComponent
   ],
   imports: [
     CommonModule,
