@@ -485,6 +485,7 @@
         },
         "2fa":  {
             "2fa": "Two-factor authentication",
+            "no-2fa": "Two-factor authentication is not configuared for the system",
             "available-providers": "Available providers",
             "available-providers-required": "At least one 2FA provider should be configured.",
             "issuer-name": "Issuer name",
@@ -4897,7 +4898,12 @@
             "2fa-description": "Two-factor authentication protects your account from unauthorized access. All you have to do is enter a security code when you log in.",
             "authenticate-with": "You can authenticate with:",
             "disable-2fa-provider-text": "Disabling {{name}} will make your account less secure",
+            "disable-user-2fa-provider-text": "Disabling {{name}} will make this account less secure",
             "disable-2fa-provider-title": "Are you sure you want to disable {{name}}?",
+            "reset-2fa-provider-totp": "Reset Authenticator app",
+            "reset-2fa-provider-sms": "Reset SMS",
+            "reset-2fa-provider-email": "Reset Email",
+            "reset-2fa-provider-backup-code": "Reset Backup code",
             "get-new-code": "Get new code",
             "main-2fa-method": "Use as main two-factor authentication method",
             "dialog": {
@@ -7199,6 +7205,7 @@
         "enable-account": "Enable User Account",
         "enable-account-message": "User account was successfully enabled!",
         "disable-account-message": "User account was successfully disabled!",
+        "manage-2fa": "Manage User 2FA",
         "copyId": "Copy user Id",
         "idCopiedMessage": "User Id has been copied to clipboard",
         "user-list": "User list",

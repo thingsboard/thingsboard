@@ -29,6 +29,8 @@ import { ActionNotificationShow } from '@app/core/notification/notification.acti
 import { TranslateService } from '@ngx-translate/core';
 import { environment as env } from '@env/environment';
 import { UnitSystems } from '@shared/models/unit.models';
+import { MatDialog } from '@angular/material/dialog';
+import { Manage2FADialogComponent, User2FADialogData } from '@modules/home/pages/user/manage-2fa-dialog.component';
 
 @Component({
     selector: 'tb-user',
@@ -52,7 +54,8 @@ export class UserComponent extends EntityComponent<User>{
               @Optional() @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<User>,
               public fb: UntypedFormBuilder,
               protected cd: ChangeDetectorRef,
-              protected translate: TranslateService) {
+              protected translate: TranslateService,
+              private dialog: MatDialog) {
     super(store, fb, entityValue, entitiesTableConfigValue, cd);
   }
 
@@ -114,6 +117,16 @@ export class UserComponent extends EntityComponent<User>{
     this.entityForm.patchValue({additionalInfo:
         {homeDashboardHideToolbar: entity.additionalInfo &&
           isDefinedAndNotNull(entity.additionalInfo.homeDashboardHideToolbar) ? entity.additionalInfo.homeDashboardHideToolbar : true}});
+  }
+
+  updateUser2FA() {
+    this.dialog.open<Manage2FADialogComponent, User2FADialogData>(Manage2FADialogComponent, {
+          disableClose: true,
+          panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+          data: {
+            userId: this.entity.id?.id,
+          }
+    });
   }
 
   onUserIdCopied($event) {

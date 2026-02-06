@@ -119,6 +119,40 @@ export interface TwoFactorAuthProviderData {
   activatedHint: string;
 }
 
+export interface TwoFactorAuthProviderManagementData {
+  name: string;
+  disable: string;
+}
+
+export const twoFactorAuthManagementData = new Map<TwoFactorAuthProviderType, TwoFactorAuthProviderManagementData>(
+  [
+    [
+      TwoFactorAuthProviderType.TOTP, {
+        name: 'security.2fa.provider.totp',
+        disable: 'security.2fa.reset-2fa-provider-totp'
+      }
+    ],
+    [
+      TwoFactorAuthProviderType.SMS, {
+        name: 'security.2fa.provider.sms',
+        disable: 'security.2fa.reset-2fa-provider-sms'
+      }
+    ],
+    [
+      TwoFactorAuthProviderType.EMAIL, {
+        name: 'security.2fa.provider.email',
+        disable: 'security.2fa.reset-2fa-provider-email'
+      }
+    ],
+    [
+      TwoFactorAuthProviderType.BACKUP_CODE, {
+        name: 'security.2fa.provider.backup_code',
+        disable: 'security.2fa.reset-2fa-provider-backup-code'
+      }
+    ]
+  ]
+);
+
 export interface TwoFactorAuthProviderLoginData extends Omit<TwoFactorAuthProviderData, 'activatedHint'> {
   icon: string;
   placeholder: string;
