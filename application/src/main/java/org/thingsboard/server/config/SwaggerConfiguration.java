@@ -147,7 +147,7 @@ public class SwaggerConfiguration {
                 .bearerFormat("/api/auth/login|X-Authorization");
 
         var openApi = new OpenAPI()
-                .components(new Components().addSecuritySchemes("HTTP login form", securityScheme))
+                .components(new Components().addSecuritySchemes("http_login_form", securityScheme))
                 .info(info);
         addDefaultSchemas(openApi);
         addLoginOperation(openApi);
@@ -240,7 +240,7 @@ public class SwaggerConfiguration {
         return GroupedOpenApi.builder()
                 .group(groupName)
                 .pathsToMatch(apiPath)
-                .addRouterOperationCustomizer(routerOperationCustomizer(localSpringDocParameterNameDiscoverer))
+                //.addRouterOperationCustomizer(routerOperationCustomizer(localSpringDocParameterNameDiscoverer)) // removed to meet open-api standard
                 .addOperationCustomizer(operationCustomizer())
                 .addOpenApiCustomizer(customOpenApiCustomizer())
                 .build();

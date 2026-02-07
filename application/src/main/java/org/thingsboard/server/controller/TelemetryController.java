@@ -24,6 +24,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -36,6 +37,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -263,8 +265,7 @@ public class TelemetryController extends BaseController {
                     + MARKDOWN_CODE_BLOCK_END
                     + "\n\n " + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/{entityType}/{entityId}/values/timeseries", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/{entityType}/{entityId}/values/timeseries")
     public DeferredResult<ResponseEntity> getLatestTimeseries(
             @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "DEVICE")) @PathVariable("entityType") String entityType,
             @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true) @PathVariable("entityId") String entityIdStr,
@@ -276,7 +277,32 @@ public class TelemetryController extends BaseController {
                 (result, tenantId, entityId) -> getLatestTimeseriesValuesCallback(result, user, entityId, keysStr, useStrictDataTypes));
     }
 
-    @ApiOperation(value = "Get time series data (getTimeseries)",
+    @Hidden
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping(value = "/{entityType}/{entityId}/values/timeseries", params = {"keys", "startTs", "endTs"})
+    public DeferredResult<ResponseEntity> getTimeseries(
+            @PathVariable("entityType") String entityType,
+            @PathVariable("entityId") String entityIdStr,
+            @RequestParam(name = "keys") String keys,
+            @RequestParam(name = "startTs") Long startTs,
+            @RequestParam(name = "endTs") Long endTs,
+            @RequestParam(name = "intervalType", required = false) IntervalType intervalType,
+            @RequestParam(name = "interval", defaultValue = "0") Long interval,
+            @RequestParam(name = "timeZone", required = false) String timeZone,
+            @Parameter(description = "An integer value that represents a max number of time series data points to fetch." +
+                    " This parameter is used only in the case if 'agg' parameter is set to 'NONE'.", schema = @Schema(defaultValue = "100"))
+            @RequestParam(name = "limit", defaultValue = "100") Integer limit,
+            @RequestParam(name = "agg", defaultValue = "NONE") String aggStr,
+            @RequestParam(name = "orderBy", defaultValue = "DESC") String orderBy,
+            @RequestParam(name = "useStrictDataTypes", required = false, defaultValue = "false") Boolean useStrictDataTypes) throws ThingsboardException {
+        DeferredResult<ResponseEntity> response = new DeferredResult<>();
+        Futures.addCallback(tbTelemetryService.getTimeseries(EntityIdFactory.getByTypeAndId(entityType, entityIdStr), toKeysList(keys), startTs, endTs,
+                        intervalType, interval, timeZone, limit, Aggregation.valueOf(aggStr), orderBy, useStrictDataTypes, getCurrentUser()),
+                getTsKvListCallback(response, useStrictDataTypes), MoreExecutors.directExecutor());
+        return response;
+    }
+
+    @ApiOperation(value = "Get time series data (getTimeseriesHistory)",
             notes = "Returns a range of time series values for specified entity. " +
                     "Returns not aggregated data by default. " +
                     "Use aggregation function ('agg') and aggregation interval ('interval') to enable aggregation of the results on the database / server side. " +
@@ -286,9 +312,8 @@ public class TelemetryController extends BaseController {
                     + MARKDOWN_CODE_BLOCK_END
                     + "\n\n" + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/{entityType}/{entityId}/values/timeseries", method = RequestMethod.GET, params = {"keys", "startTs", "endTs"})
-    @ResponseBody
-    public DeferredResult<ResponseEntity> getTimeseries(
+    @GetMapping(value = "/{entityType}/{entityId}/values/timeseries/history")
+    public DeferredResult<ResponseEntity> getTimeseriesHistory(
             @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "DEVICE")) @PathVariable("entityType") String entityType,
             @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true) @PathVariable("entityId") String entityIdStr,
             @Parameter(description = TELEMETRY_KEYS_BASE_DESCRIPTION, required = true) @RequestParam(name = "keys") String keys,
@@ -313,11 +338,7 @@ public class TelemetryController extends BaseController {
             @RequestParam(name = "orderBy", defaultValue = "DESC") String orderBy,
             @Parameter(description = STRICT_DATA_TYPES_DESCRIPTION)
             @RequestParam(name = "useStrictDataTypes", required = false, defaultValue = "false") Boolean useStrictDataTypes) throws ThingsboardException {
-        DeferredResult<ResponseEntity> response = new DeferredResult<>();
-        Futures.addCallback(tbTelemetryService.getTimeseries(EntityIdFactory.getByTypeAndId(entityType, entityIdStr), toKeysList(keys), startTs, endTs,
-                        intervalType, interval, timeZone, limit, Aggregation.valueOf(aggStr), orderBy, useStrictDataTypes, getCurrentUser()),
-                getTsKvListCallback(response, useStrictDataTypes), MoreExecutors.directExecutor());
-        return response;
+        return getTimeseries(entityType, entityIdStr, keys, startTs, endTs, intervalType, interval, timeZone, limit, aggStr, orderBy, useStrictDataTypes);
     }
 
     @ApiOperation(value = "Save device attributes (saveDeviceAttributes)",
