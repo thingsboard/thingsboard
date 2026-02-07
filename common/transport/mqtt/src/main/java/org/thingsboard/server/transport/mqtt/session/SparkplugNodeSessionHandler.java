@@ -108,10 +108,9 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
     public void onAttributesTelemetryProto(int msgId, SparkplugBProto.Payload sparkplugBProto, SparkplugTopic topic) throws AdaptorException, ThingsboardException {
         String deviceName = checkDeviceName(this.deviceSessionCtx.getDeviceInfo().getDeviceName());
         ListenableFuture<MqttDeviceAwareSessionContext> contextListenableFuture;
-        TransportProtos.SessionInfoProto sessionInfo = this.deviceSessionCtx.getSessionInfo();
         if (topic.isNode()) {
             if (topic.isType(NBIRTH)) {
-                sendSparkplugStateOnTelemetry(sessionInfo, deviceName, ONLINE,
+                sendSparkplugStateOnTelemetry(this.deviceSessionCtx.getSessionInfo(), deviceName, ONLINE,
                         sparkplugBProto.getTimestamp());
                 setNodeBirthMetrics(sparkplugBProto.getMetricsList());
             }
@@ -123,7 +122,7 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
                 String finalDeviceName = deviceName;
                 contextListenableFuture = Futures.transform(deviceCtx, ctx -> {
                     if (topic.isType(DBIRTH)) {
-                        sendSparkplugStateOnTelemetry(sessionInfo, finalDeviceName, ONLINE,
+                        sendSparkplugStateOnTelemetry(ctx.getSessionInfo(), finalDeviceName, ONLINE,
                                 sparkplugBProto.getTimestamp());
                             ctx.setDeviceBirthMetrics(sparkplugBProto.getMetricsList());
                     }

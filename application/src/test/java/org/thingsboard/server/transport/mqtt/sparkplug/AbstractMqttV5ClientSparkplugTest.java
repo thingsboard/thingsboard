@@ -179,14 +179,14 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
             SparkplugBProto.Payload.Builder payloadBirthDevice = SparkplugBProto.Payload.newBuilder()
                     .setTimestamp(ts)
                     .setSeq(getSeqNum());
-            String deviceName = deviceId + "_" + i;
-
+            String deviceIdName = deviceId + "_" + i;
+            String deviceName =  groupId +  ":" + edgeNode +  ":" + deviceIdName;
             payloadBirthDevice.addMetrics(metric);
             if (client.isConnected()) {
-                client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/" + SparkplugMessageType.DBIRTH.name() + "/" + edgeNode + "/" + deviceName,
+                client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/" + SparkplugMessageType.DBIRTH.name() + "/" + edgeNode + "/" + deviceIdName,
                         payloadBirthDevice.build().toByteArray(), 0, false);
                 AtomicReference<Device> device = new AtomicReference<>();
-                await(alias + "find device [" + deviceName + "] after created")
+                await(alias + "find device [" + deviceIdName + "] after created")
                         .atMost(200, TimeUnit.SECONDS)
                         .until(() -> {
                             device.set(doGet("/api/tenant/devices?deviceName=" + deviceName, Device.class));
@@ -194,7 +194,6 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
                         });
                 devices.add(device.get());
             }
-
         }
 
         Assert.assertEquals(cntDevices, devices.size());
@@ -224,11 +223,12 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         SparkplugBProto.Payload.Builder payloadBirthDevice = SparkplugBProto.Payload.newBuilder()
                 .setTimestamp(ts)
                 .setSeq(getSeqNum());
-        String deviceName = deviceId + "_" + 1;
+        String deviceIdName = deviceId + "_" + 1;
+        String deviceName =  groupId +  ":" + edgeNode +  ":" + deviceIdName;
 
         payloadBirthDevice.addMetrics(metric);
         if (client.isConnected()) {
-            client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/" + SparkplugMessageType.DBIRTH.name() + "/" + edgeNode + "/" + deviceName,
+            client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/" + SparkplugMessageType.DBIRTH.name() + "/" + edgeNode + "/" + deviceIdName,
                     payloadBirthDevice.build().toByteArray(), 0, false);
             AtomicReference<Device> device = new AtomicReference<>();
             await(alias + "find device [" + deviceName + "] after created")
