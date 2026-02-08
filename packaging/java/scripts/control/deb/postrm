@@ -1,7 +1,0 @@
-#!/bin/sh
-
-set -e
-
-systemctl --no-reload disable --now ${pkg.name}.service > /dev/null 2>&1 || :
-
-exit 0

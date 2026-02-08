@@ -1,0 +1,92 @@
+#
+# Copyright © 2016-2025 The Thingsboard Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+name: CI ThingsBoard Complete
+
+on:
+  push:
+    branches: [ "new-function" ]
+  workflow_dispatch:
+
+jobs:
+  build-test-run:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_DB: thingsboard
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: ui-ngx/package-lock.json
+      - name: Build and Test Specific Modules
+        run: |
+          mvn clean install -pl "common/message,common/data" -am -DskipTests=false -Dmaven.test.failure.ignore=true -B
+
+      - name: Launch Application (Verify Startup)
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/thingsboard
+          SPRING_DATASOURCE_USERNAME: postgres
+          SPRING_DATASOURCE_PASSWORD: postgres
+        run: |
+          echo "Démarrage de ThingsBoard..."
+          JAR_FILE=$(find application/target -name "thingsboard-*.jar" | grep -v "boot" | head -n 1)
+          
+          if [ -z "$JAR_FILE" ]; then
+            echo "Erreur: Jar file introuvable!"
+            exit 1
+          fi
+
+          echo "Lancement de $JAR_FILE"
+          java -jar $JAR_FILE &
+          PID=$!
+          
+          echo "Application lancée (PID: $PID). Attente pou l'initialisation"
+          sleep 60
+          
+          if kill -0 $PID; then
+            echo "SUCCÈS: L'application est toujours en cours d'exécution"
+            kill $PID
+            exit 0
+          else
+            echo "ÉCHEC: L'application s'est arrêtée de manière imprévue"
+            exit 1
+          fi
