@@ -22,6 +22,7 @@ import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
+import org.apache.hc.core5.net.URIBuilder;
 import org.apache.commons.lang3.concurrent.LazyInitializer;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.ByteArrayResource;
@@ -93,6 +94,8 @@ import org.thingsboard.server.common.data.asset.AssetSearchQuery;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldInfo;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.domain.Domain;
 import org.thingsboard.server.common.data.domain.DomainInfo;
@@ -210,11 +213,13 @@ import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -4307,6 +4312,46 @@ public class RestClient implements Closeable {
                 new ParameterizedTypeReference<PageData<CalculatedField>>() {
                 }, params).getBody();
 
+    }
+
+    @SneakyThrows(URISyntaxException.class)
+    public PageData<CalculatedFieldInfo> getCalculatedFields(PageLink pageLink,
+                                                             Set<CalculatedFieldType> types,
+                                                             EntityType entityType,
+                                                             Set<UUID> entities,
+                                                             Set<String> names) {
+        var urlBuilder = new URIBuilder(baseURL).appendPath("/api/calculatedFields");
+        urlBuilder.addParameter("pageSize", String.valueOf(pageLink.getPageSize()));
+        urlBuilder.addParameter("page", String.valueOf(pageLink.getPage()));
+        if (!isEmpty(pageLink.getTextSearch())) {
+            urlBuilder.addParameter("textSearch", pageLink.getTextSearch());
+        }
+        if (pageLink.getSortOrder() != null) {
+            urlBuilder.addParameter("sortProperty", pageLink.getSortOrder().getProperty());
+            urlBuilder.addParameter("sortOrder", pageLink.getSortOrder().getDirection().name());
+        }
+        if (!CollectionUtils.isEmpty(types)) {
+            for (CalculatedFieldType type : types) {
+                urlBuilder.addParameter("types", type.name());
+            }
+        }
+        if (entityType != null) {
+            urlBuilder.addParameter("entityType", entityType.name());
+        }
+        if (!CollectionUtils.isEmpty(entities)) {
+            for (UUID entity : entities) {
+                urlBuilder.addParameter("entities", entity.toString());
+            }
+        }
+        if (!CollectionUtils.isEmpty(names)) {
+            for (String name : names) {
+                urlBuilder.addParameter("name", name);
+            }
+        }
+        return restTemplate.exchange(
+                urlBuilder.build(),
+                HttpMethod.GET, HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<CalculatedFieldInfo>>() {}).getBody();
     }
 
     public void deleteCalculatedField(CalculatedFieldId calculatedFieldId) {
