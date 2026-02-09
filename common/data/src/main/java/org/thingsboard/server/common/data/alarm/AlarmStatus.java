@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.common.data.alarm;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(enumAsRef = true)
 public enum AlarmStatus {
 
     ACTIVE_UNACK, ACTIVE_ACK, CLEARED_UNACK, CLEARED_ACK;

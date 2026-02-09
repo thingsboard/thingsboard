@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.common.data.mobile.app;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(enumAsRef = true)
 public enum MobileAppStatus {
 
     DRAFT,

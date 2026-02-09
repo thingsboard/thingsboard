@@ -17,6 +17,8 @@ package org.thingsboard.server.common.data.ai.model;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.thingsboard.server.common.data.ai.model.chat.AmazonBedrockChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.chat.AnthropicChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.chat.AzureOpenAiChatModelConfig;
@@ -55,10 +57,45 @@ import org.thingsboard.server.common.data.ai.provider.OpenAiProviderConfig;
         @JsonSubTypes.Type(value = GitHubModelsChatModelConfig.class, name = "GITHUB_MODELS"),
         @JsonSubTypes.Type(value = OllamaChatModelConfig.class, name = "OLLAMA")
 })
+@Schema(
+        name = "AiModelConfig",
+        description = "Root configuration for AI models",
+        discriminatorProperty = "provider",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "OPENAI", schema = OpenAiChatModelConfig.class),
+                @DiscriminatorMapping(value = "AZURE_OPENAI", schema = AzureOpenAiChatModelConfig.class),
+                @DiscriminatorMapping(value = "GOOGLE_AI_GEMINI", schema = GoogleAiGeminiChatModelConfig.class),
+                @DiscriminatorMapping(value = "GOOGLE_VERTEX_AI_GEMINI", schema = GoogleVertexAiGeminiChatModelConfig.class),
+                @DiscriminatorMapping(value = "MISTRAL_AI", schema = MistralAiChatModelConfig.class),
+                @DiscriminatorMapping(value = "ANTHROPIC", schema = AnthropicChatModelConfig.class),
+                @DiscriminatorMapping(value = "AMAZON_BEDROCK", schema = AmazonBedrockChatModelConfig.class),
+                @DiscriminatorMapping(value = "GITHUB_MODELS", schema = GitHubModelsChatModelConfig.class),
+                @DiscriminatorMapping(value = "OLLAMA", schema = OllamaChatModelConfig.class)
+        }
+)
 public interface AiModelConfig {
 
+    @Schema(
+            description = "AI Provider",
+            requiredMode = Schema.RequiredMode.REQUIRED
+    )
     AiProvider provider();
 
+    @Schema(
+            description = "Provider-specific configuration details",
+            discriminatorProperty = "provider",
+            discriminatorMapping = {
+                    @DiscriminatorMapping(value = "OPENAI", schema = OpenAiProviderConfig.class),
+                    @DiscriminatorMapping(value = "AZURE_OPENAI", schema = AzureOpenAiProviderConfig.class),
+                    @DiscriminatorMapping(value = "GOOGLE_AI_GEMINI", schema = GoogleAiGeminiProviderConfig.class),
+                    @DiscriminatorMapping(value = "GOOGLE_VERTEX_AI_GEMINI", schema = GoogleVertexAiGeminiProviderConfig.class),
+                    @DiscriminatorMapping(value = "MISTRAL_AI", schema = MistralAiProviderConfig.class),
+                    @DiscriminatorMapping(value = "ANTHROPIC", schema = AnthropicProviderConfig.class),
+                    @DiscriminatorMapping(value = "AMAZON_BEDROCK", schema = AmazonBedrockProviderConfig.class),
+                    @DiscriminatorMapping(value = "GITHUB_MODELS", schema = GitHubModelsProviderConfig.class),
+                    @DiscriminatorMapping(value = "OLLAMA", schema = OllamaProviderConfig.class)
+            }
+    )
     @JsonTypeInfo(
             use = JsonTypeInfo.Id.NAME,
             include = JsonTypeInfo.As.EXTERNAL_PROPERTY,

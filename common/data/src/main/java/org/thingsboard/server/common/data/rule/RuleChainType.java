@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.common.data.rule;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(enumAsRef = true)
 public enum RuleChainType {
     CORE, EDGE
 }

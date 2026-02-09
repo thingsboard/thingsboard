@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.common.data.query;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(enumAsRef = true)
 public enum EntityFilterType {
     SINGLE_ENTITY("singleEntity"),
     ENTITY_LIST("entityList"),

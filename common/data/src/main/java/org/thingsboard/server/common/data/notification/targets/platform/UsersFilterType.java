@@ -15,10 +15,12 @@
  */
 package org.thingsboard.server.common.data.notification.targets.platform;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+@Schema(enumAsRef = true)
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter

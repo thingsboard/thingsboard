@@ -15,9 +15,11 @@
  */
 package org.thingsboard.server.common.data.notification.rule.trigger.config;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 
 @Getter
+@Schema(enumAsRef = true)
 public enum NotificationRuleTriggerType {
 
     ENTITY_ACTION,

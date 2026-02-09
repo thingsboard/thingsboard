@@ -15,9 +15,11 @@
  */
 package org.thingsboard.server.common.data.notification;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+@Schema(enumAsRef = true)
 @RequiredArgsConstructor
 public enum NotificationDeliveryMethod {
 

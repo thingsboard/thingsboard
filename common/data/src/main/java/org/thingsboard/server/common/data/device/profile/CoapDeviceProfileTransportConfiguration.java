@@ -15,16 +15,19 @@
  */
 package org.thingsboard.server.common.data.device.profile;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.device.data.PowerSavingConfiguration;
 
+@Schema
 @Data
 public class CoapDeviceProfileTransportConfiguration implements DeviceProfileTransportConfiguration {
 
     private CoapDeviceTypeConfiguration coapDeviceTypeConfiguration;
     private PowerSavingConfiguration clientSettings;
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Type of the device transport")
     @Override
     public DeviceTransportType getType() {
         return DeviceTransportType.COAP;

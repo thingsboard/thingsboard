@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.common.data.security.model.mfa.provider;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(enumAsRef = true)
 public enum TwoFaProviderType {
     TOTP,
     SMS,

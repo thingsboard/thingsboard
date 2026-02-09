@@ -15,9 +15,11 @@
  */
 package org.thingsboard.server.common.data.housekeeper;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+@Schema(enumAsRef = true)
 @RequiredArgsConstructor
 @Getter
 public enum HousekeeperTaskType {

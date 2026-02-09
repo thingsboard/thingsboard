@@ -15,9 +15,11 @@
  */
 package org.thingsboard.server.common.data.job;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+@Schema(enumAsRef = true)
 @RequiredArgsConstructor
 @Getter
 public enum JobType {

@@ -16,6 +16,7 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.servlet.http.HttpServletRequest;
@@ -461,10 +462,7 @@ public class UserController extends BaseController {
         return userSettingsService.saveUserSettings(currentUser.getTenantId(), userSettings).getSettings();
     }
 
-    @ApiOperation(value = "Update user settings (saveUserSettings)",
-            notes = "Update user settings for authorized user. Only specified json elements will be updated." +
-                    "Example: you have such settings: {A:5, B:{C:10, D:20}}. Updating it with {B:{C:10, D:30}} will result in" +
-                    "{A:5, B:{C:10, D:30}}. The same could be achieved by putting {B.D:30}")
+    @Hidden
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @PutMapping(value = "/user/settings")
     public void putUserSettings(@RequestBody JsonNode settings) throws ThingsboardException {
@@ -472,8 +470,7 @@ public class UserController extends BaseController {
         userSettingsService.updateUserSettings(currentUser.getTenantId(), currentUser.getId(), UserSettingsType.GENERAL, settings);
     }
 
-    @ApiOperation(value = "Get user settings (getUserSettings)",
-            notes = "Fetch the User settings based on authorized user. ")
+    @Hidden
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/user/settings")
     public JsonNode getUserSettings() throws ThingsboardException {

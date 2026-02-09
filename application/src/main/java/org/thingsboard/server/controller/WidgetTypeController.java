@@ -248,7 +248,7 @@ public class WidgetTypeController extends AutoCommitController {
     @GetMapping(value = "/widgetsBundles/{widgetsBundleId}/widgetTypes")
     public List<WidgetType> getBundleWidgetTypesV2(
             @Parameter(description = "Widget Bundle Id", required = true)
-            @RequestParam("widgetsBundleId") String strWidgetsBundleId) throws ThingsboardException {
+            @PathVariable("widgetsBundleId") String strWidgetsBundleId) throws ThingsboardException {
         return getBundleWidgetTypes(strWidgetsBundleId);
     }
 

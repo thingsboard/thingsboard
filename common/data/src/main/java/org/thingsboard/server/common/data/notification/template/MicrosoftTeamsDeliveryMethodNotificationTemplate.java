@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.notification.template;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -30,8 +31,17 @@ import java.util.UUID;
 @ToString(callSuper = true)
 public class MicrosoftTeamsDeliveryMethodNotificationTemplate extends DeliveryMethodNotificationTemplate implements HasSubject {
 
+    @Schema(
+            description = "The header or title shown at the top of the Teams message card.",
+            example = "System Alert: High CPU Usage"
+    )
     private String subject;
+    @Schema(
+            description = "The hex color code for the accent bar on the left side of the Teams card.",
+            example = "0078D7"
+    )
     private String themeColor;
+    @Schema(description = "Configuration for an optional call-to-action button within the Teams message.")
     private Button button;
 
     private final List<TemplatableValue> templatableValues = List.of(
@@ -50,6 +60,7 @@ public class MicrosoftTeamsDeliveryMethodNotificationTemplate extends DeliveryMe
         this.button = other.button != null ? new Button(other.button) : null;
     }
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public NotificationDeliveryMethod getMethod() {
         return NotificationDeliveryMethod.MICROSOFT_TEAMS;
@@ -82,6 +93,7 @@ public class MicrosoftTeamsDeliveryMethodNotificationTemplate extends DeliveryMe
             this.setEntityIdInState = other.setEntityIdInState;
         }
 
+        @Schema(enumAsRef = true)
         public enum LinkType {
             LINK, DASHBOARD
         }

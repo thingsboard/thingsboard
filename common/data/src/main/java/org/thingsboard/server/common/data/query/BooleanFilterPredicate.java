@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.query;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 @Data
@@ -28,6 +29,7 @@ public class BooleanFilterPredicate implements SimpleKeyFilterPredicate<Boolean>
         return FilterPredicateType.BOOLEAN;
     }
 
+    @Schema(enumAsRef = true)
     public enum BooleanOperation {
         EQUAL,
         NOT_EQUAL

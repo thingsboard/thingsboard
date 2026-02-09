@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.common.data.device.profile;
 
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.StringUtils;
@@ -26,18 +28,26 @@ import java.util.Set;
 @Data
 public class MqttDeviceProfileTransportConfiguration implements DeviceProfileTransportConfiguration {
 
+    @Schema
     @NoXss
     private String deviceTelemetryTopic = MqttTopics.DEVICE_TELEMETRY_TOPIC;
+    @Schema
     @NoXss
     private String deviceAttributesTopic = MqttTopics.DEVICE_ATTRIBUTES_TOPIC;
+    @Schema
     @NoXss
     private String deviceAttributesSubscribeTopic = MqttTopics.DEVICE_ATTRIBUTES_TOPIC;
 
+    @Schema
     private TransportPayloadTypeConfiguration transportPayloadTypeConfiguration;
+    @Schema
     private boolean sparkplug;
+    @ArraySchema(schema = @Schema(implementation = String.class))
     private Set<String> sparkplugAttributesMetricNames;
+    @Schema
     private boolean sendAckOnValidationException;
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Type of the device transport")
     @Override
     public DeviceTransportType getType() {
         return DeviceTransportType.MQTT;

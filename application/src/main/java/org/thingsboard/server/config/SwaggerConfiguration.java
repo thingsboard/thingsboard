@@ -322,7 +322,7 @@ public class SwaggerConfiguration {
     }
 
     private OpenApiCustomizer customOpenApiCustomizer() {
-        var loginForm = new SecurityRequirement().addList("HTTP login form", Arrays.asList(
+        var loginForm = new SecurityRequirement().addList("http_login_form", Arrays.asList(
                 Authority.SYS_ADMIN.name(),
                 Authority.TENANT_ADMIN.name(),
                 Authority.CUSTOMER_USER.name()
@@ -350,9 +350,81 @@ public class SwaggerConfiguration {
             });
             sortedPaths.setExtensions(paths.getExtensions());
             openAPI.setPaths(sortedPaths);
+
+            // Fix schemas with additionalProperties to ensure they have type: object
+            if (openAPI.getComponents() != null && openAPI.getComponents().getSchemas() != null) {
+                Map<String, Schema> schemas = openAPI.getComponents().getSchemas();
+
+                // Fix all schemas: if they have additionalProperties but no type, set type to object
+                schemas.forEach((schemaName, schema) -> {
+                    if (schema.getAdditionalProperties() != null && schema.getType() == null) {
+                        schema.setType("object");
+                        log.debug("Added type 'object' to schema: {}", schemaName);
+                    }
+                });
+
+                // Fix polymorphic maps: replace oneOf in additionalProperties with base type reference
+                schemas.values().forEach(schema -> {
+                    if (schema.getProperties() != null) {
+                        schema.getProperties().forEach((propName, propSchema) -> {
+                            if (propSchema instanceof Schema) {
+                                Schema<?> prop = (Schema<?>) propSchema;
+
+                                // Check if additionalProperties has oneOf (polymorphic map values)
+                                if (prop.getAdditionalProperties() instanceof Schema) {
+                                    Schema<?> additionalProps = (Schema<?>) prop.getAdditionalProperties();
+
+                                    if (additionalProps.getOneOf() != null && !additionalProps.getOneOf().isEmpty()) {
+                                        // Find the base type from discriminator mappings
+                                        String baseType = findBaseTypeForOneOf(schemas, additionalProps.getOneOf());
+
+                                        if (baseType != null) {
+                                            // Replace oneOf with direct reference to base type
+                                            Schema<?> refSchema = new Schema<>();
+                                            refSchema.set$ref("#/components/schemas/" + baseType);
+                                            prop.setAdditionalProperties(refSchema);
+                                            log.debug("Replaced oneOf with $ref to {} in property {}", baseType, propName);
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    }
+                });
+            }
+
             var sortedSchemas = new TreeMap<>(openAPI.getComponents().getSchemas());
             openAPI.getComponents().setSchemas(new LinkedHashMap<>(sortedSchemas));
         };
+    }
+
+    // Add this helper method
+    private String findBaseTypeForOneOf(Map<String, Schema> schemas, List<Schema> oneOfSchemas) {
+        if (oneOfSchemas.isEmpty()) {
+            return null;
+        }
+
+        // Extract the first subtype name from oneOf
+        String firstRef = oneOfSchemas.get(0).get$ref();
+        if (firstRef == null) {
+            return null;
+        }
+
+        String subtypeName = firstRef.substring(firstRef.lastIndexOf('/') + 1);
+
+        // Find which schema has this subtype in its discriminator mapping
+        return schemas.entrySet().stream()
+                .filter(entry -> {
+                    Schema<?> schema = entry.getValue();
+                    if (schema.getDiscriminator() != null && schema.getDiscriminator().getMapping() != null) {
+                        return schema.getDiscriminator().getMapping().values().stream()
+                                .anyMatch(ref -> ref.endsWith("/" + subtypeName));
+                    }
+                    return false;
+                })
+                .map(Map.Entry::getKey)
+                .findFirst()
+                .orElse(null);
     }
 
 
@@ -449,29 +521,37 @@ public class SwaggerConfiguration {
     private static ApiResponses loginErrorResponses() {
         ApiResponses apiResponses = new ApiResponses();
 
-        apiResponses.addApiResponse("401", errorResponse("Unauthorized",
-                Map.of(
-                        "bad-credentials", errorExample("Bad credentials",
-                                ThingsboardErrorResponse.of("Invalid username or password", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED)),
-                        "token-expired", errorExample("JWT token expired",
-                                ThingsboardErrorResponse.of("Token has expired", ThingsboardErrorCode.JWT_TOKEN_EXPIRED, HttpStatus.UNAUTHORIZED)),
-                        "account-disabled", errorExample("Disabled account",
-                                ThingsboardErrorResponse.of("User account is not active", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED)),
-                        "account-locked", errorExample("Locked account",
-                                ThingsboardErrorResponse.of("User account is locked due to security policy", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED)),
-                        "authentication-failed", errorExample("General authentication error",
-                                ThingsboardErrorResponse.of("Authentication failed", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED))
-                )
+        // Combine all 401 examples into a single map
+        Map<String, Example> unauthorizedExamples = new LinkedHashMap<>();
+
+        unauthorizedExamples.put("bad-credentials", errorExample("Bad credentials",
+                ThingsboardErrorResponse.of("Invalid username or password", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED)));
+
+        unauthorizedExamples.put("token-expired", errorExample("JWT token expired",
+                ThingsboardErrorResponse.of("Token has expired", ThingsboardErrorCode.JWT_TOKEN_EXPIRED, HttpStatus.UNAUTHORIZED)));
+
+        unauthorizedExamples.put("account-disabled", errorExample("Disabled account",
+                ThingsboardErrorResponse.of("User account is not active", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED)));
+
+        unauthorizedExamples.put("account-locked", errorExample("Locked account",
+                ThingsboardErrorResponse.of("User account is locked due to security policy", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED)));
+
+        unauthorizedExamples.put("authentication-failed", errorExample("General authentication error",
+                ThingsboardErrorResponse.of("Authentication failed", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED)));
+
+        unauthorizedExamples.put("credentials-expired", errorExample("Expired credentials",
+                ThingsboardCredentialsExpiredResponse.of("User password expired!", StringUtils.randomAlphanumeric(30))));
+
+        // Create a schema that can represent both response types using oneOf
+        Schema<? extends ThingsboardErrorResponse> unauthorizedSchema = new Schema<>();
+        unauthorizedSchema.oneOf(List.of(
+                new Schema<ThingsboardErrorResponse>().$ref("#/components/schemas/ThingsboardErrorResponse"),
+                new Schema<ThingsboardCredentialsExpiredResponse>().$ref("#/components/schemas/ThingsboardCredentialsExpiredResponse")
         ));
-        var credentialsExpiredSchema = new Schema<ThingsboardCredentialsExpiredResponse>();
-        credentialsExpiredSchema.$ref("#/components/schemas/ThingsboardCredentialsExpiredResponse");
-        apiResponses.addApiResponse("401 ", errorResponse("Unauthorized (**Expired credentials**)",
-                Map.of(
-                        "credentials-expired", errorExample("Expired credentials",
-                                ThingsboardCredentialsExpiredResponse.of("User password expired!", StringUtils.randomAlphanumeric(30)))
-                ),
-                credentialsExpiredSchema
-        ));
+
+        // Add single 401 response with all examples
+        apiResponses.addApiResponse("401", errorResponse("Unauthorized", unauthorizedExamples, unauthorizedSchema));
+
         return apiResponses;
     }
 

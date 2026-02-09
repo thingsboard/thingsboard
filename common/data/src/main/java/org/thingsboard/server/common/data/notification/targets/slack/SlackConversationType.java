@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.common.data.notification.targets.slack;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(enumAsRef = true)
 public enum SlackConversationType {
     DIRECT,
     PUBLIC_CHANNEL,

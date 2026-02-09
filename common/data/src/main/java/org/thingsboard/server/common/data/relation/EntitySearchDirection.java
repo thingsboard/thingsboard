@@ -15,9 +15,12 @@
  */
 package org.thingsboard.server.common.data.relation;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * Created by ashvayka on 02.05.17.
  */
+@Schema(enumAsRef = true)
 public enum EntitySearchDirection {
 
     FROM, TO;

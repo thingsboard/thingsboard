@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.common.data.notification.rule.trigger.config;
 
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -27,11 +29,14 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Schema
 public class EdgeCommunicationFailureNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
 
+    @ArraySchema(schema = @Schema(implementation = UUID.class))
     private Set<UUID> edges; // if empty - all edges
 
     @Override
+    @Schema(description = "Type of the notification rule trigger")
     public NotificationRuleTriggerType getTriggerType() {
         return NotificationRuleTriggerType.EDGE_COMMUNICATION_FAILURE;
     }

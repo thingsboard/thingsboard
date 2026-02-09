@@ -15,8 +15,10 @@
  */
 package org.thingsboard.server.common.data.kv;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 
+@Schema(enumAsRef = true)
 public enum DataType {
 
     BOOLEAN(0),

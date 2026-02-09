@@ -23,6 +23,9 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.As;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
@@ -45,6 +48,17 @@ import java.util.Map;
         @Type(name = "OTA_PACKAGE", value = OtaPackageExportData.class)
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Schema(
+        description = "Base export container for ThingsBoard entities",
+        discriminatorProperty = "entityType",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "DEVICE", schema = DeviceExportData.class),
+                @DiscriminatorMapping(value = "RULE_CHAIN", schema = RuleChainExportData.class),
+                @DiscriminatorMapping(value = "WIDGET_TYPE", schema = WidgetTypeExportData.class),
+                @DiscriminatorMapping(value = "WIDGETS_BUNDLE", schema = WidgetsBundleExportData.class),
+                @DiscriminatorMapping(value = "OTA_PACKAGE", schema = OtaPackageExportData.class)
+        }
+)
 @Data
 public class EntityExportData<E extends ExportableEntity<? extends EntityId>> {
 
@@ -61,16 +75,21 @@ public class EntityExportData<E extends ExportableEntity<? extends EntityId>> {
 
     @JsonProperty(index = 2)
     @JsonTbEntity
+    @Schema
     private E entity;
     @JsonProperty(index = 1)
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private EntityType entityType;
 
     @JsonProperty(index = 100)
+    @ArraySchema(schema = @Schema(implementation = EntityRelation.class))
     private List<EntityRelation> relations;
     @JsonProperty(index = 101)
+    @Schema(description = "Map of attributes where key is the scope of attributes and value is the list of attributes for that scope")
     private Map<String, List<AttributeExportData>> attributes;
     @JsonProperty(index = 102)
     @JsonIgnoreProperties({"id", "entityId", "createdTime", "version"})
+    @ArraySchema(schema = @Schema(implementation = CalculatedField.class))
     private List<CalculatedField> calculatedFields;
 
     public EntityExportData<E> sort() {

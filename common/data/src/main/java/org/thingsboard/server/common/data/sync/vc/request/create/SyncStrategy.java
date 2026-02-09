@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.common.data.sync.vc.request.create;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(enumAsRef = true)
 public enum SyncStrategy {
     MERGE,
     OVERWRITE

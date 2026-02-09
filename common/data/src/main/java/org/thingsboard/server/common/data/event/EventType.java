@@ -15,8 +15,10 @@
  */
 package org.thingsboard.server.common.data.event;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 
+@Schema(enumAsRef = true)
 public enum EventType {
     ERROR("error_event", "ERROR"),
     LC_EVENT("lc_event", "LC_EVENT"),

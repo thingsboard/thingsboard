@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.common.data.notification.rule.trigger.config;
 
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,19 +31,26 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@Schema
 public class AlarmAssignmentNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
 
+    @ArraySchema(schema = @Schema(implementation = String.class))
     private Set<String> alarmTypes;
+    @ArraySchema(schema = @Schema(implementation = AlarmSeverity.class))
     private Set<AlarmSeverity> alarmSeverities;
+    @ArraySchema(schema = @Schema(implementation = AlarmSearchStatus.class))
     private Set<AlarmSearchStatus> alarmStatuses;
     @NotEmpty
+    @ArraySchema(schema = @Schema(implementation = Action.class))
     private Set<Action> notifyOn;
 
     @Override
+    @Schema(description = "Type of the notification rule trigger")
     public NotificationRuleTriggerType getTriggerType() {
         return NotificationRuleTriggerType.ALARM_ASSIGNMENT;
     }
 
+    @Schema(enumAsRef = true)
     public enum Action {
         ASSIGNED, UNASSIGNED
     }

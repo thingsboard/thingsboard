@@ -19,12 +19,13 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.thingsboard.server.common.data.DeviceProfileType;
 
-@Schema
+@Schema(description = "Default device configuration", allOf = DeviceConfiguration.class)
 @Data
 public class DefaultDeviceConfiguration implements DeviceConfiguration {
 
     private static final long serialVersionUID = -2225378639573611325L;
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Device profile type")
     @Override
     public DeviceProfileType getType() {
         return DeviceProfileType.DEFAULT;

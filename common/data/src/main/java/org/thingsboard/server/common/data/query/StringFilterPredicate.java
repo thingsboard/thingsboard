@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.query;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import lombok.Data;
 
@@ -31,6 +32,7 @@ public class StringFilterPredicate implements SimpleKeyFilterPredicate<String> {
         return FilterPredicateType.STRING;
     }
 
+    @Schema(enumAsRef = true)
     public enum StringOperation {
         EQUAL,
         NOT_EQUAL,

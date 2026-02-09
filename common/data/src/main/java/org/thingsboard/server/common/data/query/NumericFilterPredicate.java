@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.query;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 @Data
@@ -28,6 +29,7 @@ public class NumericFilterPredicate implements SimpleKeyFilterPredicate<Double> 
         return FilterPredicateType.NUMERIC;
     }
 
+    @Schema(enumAsRef = true)
     public enum NumericOperation {
         EQUAL,
         NOT_EQUAL,

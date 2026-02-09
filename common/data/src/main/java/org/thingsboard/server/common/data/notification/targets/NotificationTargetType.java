@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.notification.targets;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
@@ -22,6 +23,7 @@ import org.thingsboard.server.common.data.notification.NotificationDeliveryMetho
 import java.util.Arrays;
 import java.util.Set;
 
+@Schema(enumAsRef = true)
 @RequiredArgsConstructor
 public enum NotificationTargetType {
 

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.query;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.util.List;
@@ -30,6 +31,7 @@ public class ComplexFilterPredicate implements KeyFilterPredicate {
         return FilterPredicateType.COMPLEX;
     }
 
+    @Schema(enumAsRef = true)
     public enum ComplexOperation {
         AND,
         OR

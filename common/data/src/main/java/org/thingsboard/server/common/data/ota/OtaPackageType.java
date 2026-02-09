@@ -15,8 +15,10 @@
  */
 package org.thingsboard.server.common.data.ota;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 
+@Schema(enumAsRef = true)
 public enum OtaPackageType {
 
     FIRMWARE("fw"), SOFTWARE("sw");
