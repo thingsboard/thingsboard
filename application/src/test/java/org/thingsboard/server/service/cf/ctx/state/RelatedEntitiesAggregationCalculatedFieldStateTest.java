@@ -234,6 +234,8 @@ public class RelatedEntitiesAggregationCalculatedFieldStateTest {
 
         config.setUseLatestTs(true);
 
+        config.setScheduledUpdateInterval(10);
+
         calculatedField.setConfiguration(config);
         calculatedField.setVersion(1L);
         return calculatedField;
