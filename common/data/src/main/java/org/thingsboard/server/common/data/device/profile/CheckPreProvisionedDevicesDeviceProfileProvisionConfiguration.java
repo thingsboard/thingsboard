@@ -15,14 +15,17 @@
  */
 package org.thingsboard.server.common.data.device.profile;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 
 @Data
+@Schema
 public class CheckPreProvisionedDevicesDeviceProfileProvisionConfiguration implements DeviceProfileProvisionConfiguration {
 
     private final String provisionDeviceSecret;
 
+    @Schema(description = "Device profile provision type", requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public DeviceProfileProvisionType getType() {
         return DeviceProfileProvisionType.CHECK_PRE_PROVISIONED_DEVICES;

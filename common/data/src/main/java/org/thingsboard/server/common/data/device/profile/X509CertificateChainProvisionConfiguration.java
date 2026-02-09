@@ -15,10 +15,12 @@
  */
 package org.thingsboard.server.common.data.device.profile;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 
+@Schema
 @Data
 @NoArgsConstructor
 public class X509CertificateChainProvisionConfiguration implements DeviceProfileProvisionConfiguration {
@@ -28,6 +30,7 @@ public class X509CertificateChainProvisionConfiguration implements DeviceProfile
     private boolean allowCreateNewDevicesByX509Certificate;
 
     @Override
+    @Schema(description = "Device profile provision type", requiredMode = Schema.RequiredMode.REQUIRED)
     public DeviceProfileProvisionType getType() {
         return DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN;
     }

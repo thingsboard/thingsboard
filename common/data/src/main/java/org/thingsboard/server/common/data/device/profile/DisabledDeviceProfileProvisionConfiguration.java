@@ -15,15 +15,18 @@
  */
 package org.thingsboard.server.common.data.device.profile;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 
 @Data
+@Schema
 public class DisabledDeviceProfileProvisionConfiguration implements DeviceProfileProvisionConfiguration {
 
     private final String provisionDeviceSecret;
 
     @Override
+    @Schema(description = "Device profile provision type", requiredMode = Schema.RequiredMode.REQUIRED)
     public DeviceProfileProvisionType getType() {
         return DeviceProfileProvisionType.DISABLED;
     }

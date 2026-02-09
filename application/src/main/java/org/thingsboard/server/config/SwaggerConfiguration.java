@@ -391,6 +391,32 @@ public class SwaggerConfiguration {
                         });
                     }
                 });
+
+                schemas.values().forEach(schema -> {
+                    if (schema.getProperties() != null) {
+                        schema.getProperties().forEach((propName, propSchema) -> {
+                            if (propSchema instanceof Schema) {
+                                Schema<?> prop = (Schema<?>) propSchema;
+
+                                // If property has oneOf, try to find the base discriminated type
+                                if (prop.getOneOf() != null && !prop.getOneOf().isEmpty()) {
+                                    String baseType = findBaseTypeForOneOf(schemas, prop.getOneOf());
+
+                                    if (baseType != null) {
+                                        // Replace oneOf with reference to base type
+                                        Schema<?> refSchema = new Schema<>();
+                                        refSchema.set$ref("#/components/schemas/" + baseType);
+                                        if (prop.getDescription() != null) {
+                                            refSchema.setDescription(prop.getDescription());
+                                        }
+                                        schema.getProperties().put(propName, refSchema);
+                                        log.debug("Replaced oneOf with $ref to {} in property {}", baseType, propName);
+                                    }
+                                }
+                            }
+                        });
+                    }
+                });
             }
 
             var sortedSchemas = new TreeMap<>(openAPI.getComponents().getSchemas());
