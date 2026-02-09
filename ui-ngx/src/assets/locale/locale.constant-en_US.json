@@ -5947,7 +5947,7 @@
         "tell-failure-aws-lambda-hint": "Rule node forces failure of message processing if AWS Lambda function execution raises exception.",
         "basic-mode": "Basic",
         "advanced-mode": "Advanced",
-        "url-hint" : "Enter the request URL. Ensure special characters are percent-encoded.",
+        "url-hint": "Enter the request URL. Ensure special characters are percent-encoded.",
         "query-params": "Query parameters",
         "query-params-hint": "Additional query parameters to include in the request URL. Both names and values support templatization and are strictly (RFC 3986) encoded after template resolution.",
         "query-params-empty": "No query parameters configured",
@@ -5956,6 +5956,7 @@
         "query-params-name-required": "Name is required",
         "query-params-value-required": "Value is required",
         "headers-empty": "No headers configured",
+        "request-url": "Request URL",
         "url": "URL",
         "save-time-series": {
             "processing-settings": "Processing settings",

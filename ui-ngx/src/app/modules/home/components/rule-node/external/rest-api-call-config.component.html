@@ -17,7 +17,7 @@
 -->
 <section [formGroup]="restApiCallConfigForm" class="flex flex-col gap-4">
   <div class="tb-form-panel stroked">
-    <div class="tb-form-panel-title">Request URL</div>
+    <div class="tb-form-panel-title" translate>rule-node-config.request-url</div>
     <mat-form-field class="mat-block" subscriptSizing="dynamic">
       <mat-label translate>rule-node-config.url</mat-label>
       <input required matInput formControlName="restEndpointUrlPattern">
@@ -129,8 +129,7 @@
             {{ 'rule-node-config.ignore-request-body' | translate }}
           </mat-slide-toggle>
         </div>
-        <mat-form-field *ngIf="restApiCallConfigForm.get('enableProxy').value" class="mat-block"
-                        subscriptSizing="dynamic">
+        <mat-form-field class="mat-block" subscriptSizing="dynamic">
           <mat-label translate>rule-node-config.read-timeout</mat-label>
           <input type="text" min="0" [max]="IntLimit" inputmode="numeric" pattern="[0-9]*" matInput formControlName="readTimeoutMs">
           <mat-hint translate>rule-node-config.read-timeout-hint</mat-hint>

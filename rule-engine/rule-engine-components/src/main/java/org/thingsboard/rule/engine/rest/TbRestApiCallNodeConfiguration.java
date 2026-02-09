@@ -57,7 +57,7 @@ public class TbRestApiCallNodeConfiguration implements NodeConfiguration<TbRestA
     @AssertTrue(message = "query parameter names and values must be non-null")
     public boolean isValid() {
         if (queryParams == null) {
-            return true; // @NotNull will handle this
+            return true; // null indicates legacy configuration; keep using old URL encoding logic
         }
         for (KeyValueEntry<String, String> queryParam : queryParams) {
             if (queryParam == null || queryParam.key() == null || queryParam.value() == null) {

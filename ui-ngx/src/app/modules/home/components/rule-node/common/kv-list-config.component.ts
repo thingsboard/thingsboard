@@ -29,6 +29,7 @@ import { KvMapConfigOldComponent } from '@home/components/rule-node/common/kv-ma
   selector: 'tb-kv-list-config',
   templateUrl: './kv-map-config-old.component.html',
   styleUrls: ['./kv-map-config-old.component.scss'],
+  standalone: false,
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -42,7 +43,7 @@ import { KvMapConfigOldComponent } from '@home/components/rule-node/common/kv-ma
     }
   ]
 })
-export class KvListConfigComponent extends KvMapConfigOldComponent implements ControlValueAccessor, OnInit, Validator{
+export class KvListConfigComponent extends KvMapConfigOldComponent implements ControlValueAccessor, OnInit, Validator {
 
   override writeValue(kvList: any): void {
     const keyValsControls: Array<AbstractControl> = [];
@@ -51,7 +52,7 @@ export class KvListConfigComponent extends KvMapConfigOldComponent implements Co
         keyValsControls.push(this.fb.group({
           key: [property.key, [Validators.required]],
           value: [property.value, [Validators.required]]
-        }))
+        }));
       }
     }
     this.kvListFormGroup.setControl('keyVals', this.fb.array(keyValsControls), {emitEvent: false});
