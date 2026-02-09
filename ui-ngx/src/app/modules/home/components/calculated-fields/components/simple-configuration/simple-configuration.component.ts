@@ -46,20 +46,21 @@ import { map } from 'rxjs/operators';
 type SimpeConfiguration = CalculatedFieldSimpleConfiguration | CalculatedFieldScriptConfiguration;
 
 @Component({
-  selector: 'tb-simple-configuration',
-  templateUrl: './simple-configuration.component.html',
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => SimpleConfigurationComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => SimpleConfigurationComponent),
-      multi: true
-    }
-  ],
+    selector: 'tb-simple-configuration',
+    templateUrl: './simple-configuration.component.html',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => SimpleConfigurationComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => SimpleConfigurationComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class SimpleConfigurationComponent implements ControlValueAccessor, Validator, OnChanges {
 
@@ -200,7 +201,7 @@ export class SimpleConfigurationComponent implements ControlValueAccessor, Valid
   }
 
   private toggleScopeByOutputType(): void {
-    if (this.isScript || this.simpleConfiguration.get('output').value.type === OutputType.Attribute) {
+    if (this.isScript || this.simpleConfiguration.get('output').value.type === OutputType.Attribute || this.disabled) {
       this.simpleConfiguration.get('useLatestTs').disable({emitEvent: false});
     } else {
       this.simpleConfiguration.get('useLatestTs').enable({emitEvent: false});

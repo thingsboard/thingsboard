@@ -208,7 +208,7 @@
                   <mat-expansion-panel class="tb-settings">
                     <mat-expansion-panel-header>
                       <mat-panel-title>
-                        <mat-slide-toggle class="mat-slide flex items-center justify-start" (mousedown)="toggleExtensionPanel($event, providersForm.length, twoFaFormGroup.get('verificationCodeCheckRateLimitEnable').value)"
+                        <mat-slide-toggle class="mat-slide flex items-center justify-start" (mousedown)="toggleExtensionPanel($event, providersForm.length+1, twoFaFormGroup.get('verificationCodeCheckRateLimitEnable').value)"
                                           formControlName="verificationCodeCheckRateLimitEnable">
                           {{ 'admin.2fa.verification-code-check-rate-limit' | translate }}
                         </mat-slide-toggle>

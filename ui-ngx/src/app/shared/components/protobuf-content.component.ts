@@ -34,16 +34,17 @@ import { getAce } from '@shared/models/ace/ace.models';
 import { beautifyJs } from '@shared/models/beautify.models';
 
 @Component({
-  selector: 'tb-protobuf-content',
-  templateUrl: './protobuf-content.component.html',
-  styleUrls: ['./protobuf-content.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ProtobufContentComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-protobuf-content',
+    templateUrl: './protobuf-content.component.html',
+    styleUrls: ['./protobuf-content.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ProtobufContentComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ProtobufContentComponent implements OnInit, ControlValueAccessor, OnDestroy {
 

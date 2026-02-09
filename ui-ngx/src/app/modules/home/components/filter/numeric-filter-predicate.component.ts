@@ -35,21 +35,22 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-numeric-filter-predicate',
-  templateUrl: './numeric-filter-predicate.component.html',
-  styleUrls: ['./filter-predicate.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => NumericFilterPredicateComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => NumericFilterPredicateComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-numeric-filter-predicate',
+    templateUrl: './numeric-filter-predicate.component.html',
+    styleUrls: ['./filter-predicate.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => NumericFilterPredicateComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => NumericFilterPredicateComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class NumericFilterPredicateComponent implements ControlValueAccessor, Validator, OnInit {
 

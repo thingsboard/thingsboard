@@ -164,13 +164,13 @@ public class TenantProfileServiceTest extends AbstractServiceTest {
         TenantProfile savedTenantProfile1 = tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, tenantProfile1);
         TenantProfile savedTenantProfile2 = tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, tenantProfile2);
 
-        boolean result = tenantProfileService.setDefaultTenantProfile(TenantId.SYS_TENANT_ID, savedTenantProfile1.getId());
-        Assert.assertTrue(result);
+        TenantProfile setDefaultTenantProfile1 = tenantProfileService.setDefaultTenantProfile(TenantId.SYS_TENANT_ID, savedTenantProfile1.getId());
+        Assert.assertNotEquals(savedTenantProfile1.isDefault(), setDefaultTenantProfile1.isDefault());
         TenantProfile defaultTenantProfile = tenantProfileService.findDefaultTenantProfile(TenantId.SYS_TENANT_ID);
         Assert.assertNotNull(defaultTenantProfile);
         Assert.assertEquals(savedTenantProfile1.getId(), defaultTenantProfile.getId());
-        result = tenantProfileService.setDefaultTenantProfile(TenantId.SYS_TENANT_ID, savedTenantProfile2.getId());
-        Assert.assertTrue(result);
+        TenantProfile setDefaultTenantProfile2 = tenantProfileService.setDefaultTenantProfile(TenantId.SYS_TENANT_ID, savedTenantProfile2.getId());
+        Assert.assertNotEquals(savedTenantProfile2.isDefault(), setDefaultTenantProfile2.isDefault());
         defaultTenantProfile = tenantProfileService.findDefaultTenantProfile(TenantId.SYS_TENANT_ID);
         Assert.assertNotNull(defaultTenantProfile);
         Assert.assertEquals(savedTenantProfile2.getId(), defaultTenantProfile.getId());

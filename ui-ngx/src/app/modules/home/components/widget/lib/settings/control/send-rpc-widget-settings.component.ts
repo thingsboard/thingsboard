@@ -15,24 +15,23 @@
 ///
 
 import { Component } from '@angular/core';
-import { WidgetSettings, WidgetSettingsComponent, widgetTitleAutocompleteValues } from '@shared/models/widget.models';
+import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { ContentType } from '@shared/models/constants';
 
 @Component({
-  selector: 'tb-send-rpc-widget-settings',
-  templateUrl: './send-rpc-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-send-rpc-widget-settings',
+    templateUrl: './send-rpc-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class SendRpcWidgetSettingsComponent extends WidgetSettingsComponent {
 
   sendRpcWidgetSettingsForm: UntypedFormGroup;
 
   contentTypes = ContentType;
-
-  predefinedValues = widgetTitleAutocompleteValues;
 
   constructor(protected store: Store<AppState>,
               private fb: UntypedFormBuilder) {

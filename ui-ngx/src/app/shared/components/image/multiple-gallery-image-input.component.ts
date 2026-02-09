@@ -37,16 +37,17 @@ import {
 } from '@shared/components/image/image-gallery-dialog.component';
 
 @Component({
-  selector: 'tb-multiple-gallery-image-input',
-  templateUrl: './multiple-gallery-image-input.component.html',
-  styleUrls: ['./multiple-gallery-image-input.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => MultipleGalleryImageInputComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-multiple-gallery-image-input',
+    templateUrl: './multiple-gallery-image-input.component.html',
+    styleUrls: ['./multiple-gallery-image-input.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => MultipleGalleryImageInputComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class MultipleGalleryImageInputComponent extends PageComponent implements OnDestroy, ControlValueAccessor {
 

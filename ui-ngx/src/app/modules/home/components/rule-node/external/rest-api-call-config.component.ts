@@ -21,9 +21,10 @@ import { HttpRequestType, IntLimit } from '../rule-node-config.models';
 import { isDefinedAndNotNull } from '@core/utils';
 
 @Component({
-  selector: 'tb-external-node-rest-api-call-config',
-  templateUrl: './rest-api-call-config.component.html',
-  styleUrls: ['./rest-api-call-config.component.scss']
+    selector: 'tb-external-node-rest-api-call-config',
+    templateUrl: './rest-api-call-config.component.html',
+    styleUrls: ['./rest-api-call-config.component.scss'],
+    standalone: false
 })
 export class RestApiCallConfigComponent extends RuleNodeConfigurationComponent {
 

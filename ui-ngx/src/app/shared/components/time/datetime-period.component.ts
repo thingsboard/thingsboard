@@ -27,16 +27,17 @@ interface DateTimePeriod {
 }
 
 @Component({
-  selector: 'tb-datetime-period',
-  templateUrl: './datetime-period.component.html',
-  styleUrls: ['./datetime-period.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DatetimePeriodComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-datetime-period',
+    templateUrl: './datetime-period.component.html',
+    styleUrls: ['./datetime-period.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DatetimePeriodComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class DatetimePeriodComponent implements ControlValueAccessor {
 

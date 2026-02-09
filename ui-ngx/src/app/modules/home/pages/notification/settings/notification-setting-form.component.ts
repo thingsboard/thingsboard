@@ -25,16 +25,17 @@ import {
 } from '@shared/models/notification.models';
 
 @Component({
-  selector: 'tb-notification-setting-form',
-  templateUrl: './notification-setting-form.component.html',
-  styleUrls: ['./notification-setting-form.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => NotificationSettingFormComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-notification-setting-form',
+    templateUrl: './notification-setting-form.component.html',
+    styleUrls: ['./notification-setting-form.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => NotificationSettingFormComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class NotificationSettingFormComponent implements ControlValueAccessor, OnInit, OnDestroy {
 

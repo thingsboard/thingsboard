@@ -22,13 +22,13 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.EqualsAndHashCode;
 import net.objecthunter.exp4j.Expression;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.NumberUtils;
 import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 import org.thingsboard.server.service.cf.TelemetryCalculatedFieldResult;
-import org.thingsboard.common.util.NumberUtils;
 
 import java.util.Map;
 
@@ -53,7 +53,7 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
 
         Output output = ctx.getOutput();
         Object result = NumberUtils.roundResult(expressionResult, output.getDecimalsByDefault());
-        JsonNode outputResult = createResultJson(ctx.isUseLatestTs(), output.getName(), result);
+        JsonNode outputResult = createResultJson(output.getName(), result);
 
         return Futures.immediateFuture(TelemetryCalculatedFieldResult.builder()
                 .outputStrategy(output.getStrategy())
@@ -63,7 +63,7 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
                 .build());
     }
 
-    private JsonNode createResultJson(boolean useLatestTs, String outputName, Object result) {
+    private JsonNode createResultJson(String outputName, Object result) {
         ObjectNode valuesNode = JacksonUtil.newObjectNode();
         if (result instanceof Double doubleValue) {
             valuesNode.put(outputName, doubleValue);
@@ -72,7 +72,7 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
         } else {
             valuesNode.set(outputName, JacksonUtil.valueToTree(result));
         }
-        return toSimpleResult(useLatestTs, valuesNode);
+        return toResultNode(valuesNode);
     }
 
     @Override

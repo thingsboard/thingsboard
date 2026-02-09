@@ -47,9 +47,10 @@ import {
 import { getSourceTbUnitSymbol, TbUnit } from '@shared/models/unit.models';
 
 @Component({
-  selector: 'tb-wind-speed-direction-basic-config',
-  templateUrl: './wind-speed-direction-basic-config.component.html',
-  styleUrls: ['../basic-config.scss']
+    selector: 'tb-wind-speed-direction-basic-config',
+    templateUrl: './wind-speed-direction-basic-config.component.html',
+    styleUrls: ['../basic-config.scss'],
+    standalone: false
 })
 export class WindSpeedDirectionBasicConfigComponent extends BasicWidgetConfigComponent {
 

@@ -30,7 +30,8 @@ import { Observable } from 'rxjs';
 import {
   ComplexOperation,
   complexOperationTranslationMap,
-  EntityKeyValueType
+  EntityKeyValueType,
+  entityKeyValueTypesMap
 } from '@shared/models/query/query.models';
 import { MatDialog } from '@angular/material/dialog';
 import { deepClone } from '@core/utils';
@@ -38,30 +39,27 @@ import {
   AlarmRuleFilterDialogComponent,
   AlarmRuleFilterDialogData
 } from "@home/components/alarm-rules/filter/alarm-rule-filter-dialog.component";
-import {
-  AlarmRuleFilter,
-  areFilterAndPredicateArgumentsValid,
-  FilterPredicateTypeTranslationMap
-} from "@shared/models/alarm-rule.models";
+import { AlarmRuleFilter, areFilterAndPredicateArgumentsValid } from "@shared/models/alarm-rule.models";
 import { CalculatedFieldArgument } from "@shared/models/calculated-field.models";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
-  selector: 'tb-alarm-rule-filter-list',
-  templateUrl: './alarm-rule-filter-list.component.html',
-  styleUrls: ['./alarm-rule-filter-list.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => AlarmRuleFilterListComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => AlarmRuleFilterListComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-alarm-rule-filter-list',
+    templateUrl: './alarm-rule-filter-list.component.html',
+    styleUrls: ['./alarm-rule-filter-list.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => AlarmRuleFilterListComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => AlarmRuleFilterListComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class AlarmRuleFilterListComponent implements ControlValueAccessor, Validator {
 
@@ -83,7 +81,8 @@ export class AlarmRuleFilterListComponent implements ControlValueAccessor, Valid
   areFilterAndPredicateArgumentsValid = areFilterAndPredicateArgumentsValid;
 
   complexOperationTranslationMap = complexOperationTranslationMap;
-  FilterPredicateTypeTranslationMap = FilterPredicateTypeTranslationMap
+  entityKeyValueTypes = entityKeyValueTypesMap;
+  entityKeyValueTypeEnum = EntityKeyValueType;
 
   private propagateChange = (v: any) => { };
 

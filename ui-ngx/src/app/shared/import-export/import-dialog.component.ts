@@ -34,10 +34,11 @@ export interface ImportDialogData {
 }
 
 @Component({
-  selector: 'tb-import-dialog',
-  templateUrl: './import-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: ImportDialogComponent}],
-  styleUrls: []
+    selector: 'tb-import-dialog',
+    templateUrl: './import-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: ImportDialogComponent }],
+    styleUrls: [],
+    standalone: false
 })
 export class ImportDialogComponent extends DialogComponent<ImportDialogComponent>
   implements OnInit, ErrorStateMatcher {

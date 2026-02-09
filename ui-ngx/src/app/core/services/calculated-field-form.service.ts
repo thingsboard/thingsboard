@@ -71,7 +71,7 @@ export class CalculatedFieldFormService {
       takeUntilDestroyed(destroyRef)
     ).subscribe(([prevType, nextType]) => {
       const shouldCheck = isEditActive ? isEditActive() : true;
-      if (shouldCheck) {
+      if (shouldCheck && prevType !== nextType) {
         if (![CalculatedFieldType.SIMPLE, CalculatedFieldType.SCRIPT].includes(prevType) ||
           ![CalculatedFieldType.SIMPLE, CalculatedFieldType.SCRIPT].includes(nextType)) {
           form.get('configuration').setValue({} as CalculatedFieldConfiguration, { emitEvent: false });

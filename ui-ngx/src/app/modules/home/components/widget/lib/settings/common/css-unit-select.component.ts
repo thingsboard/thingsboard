@@ -21,16 +21,17 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-css-unit-select',
-  templateUrl: './css-unit-select.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => CssUnitSelectComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-css-unit-select',
+    templateUrl: './css-unit-select.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => CssUnitSelectComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class CssUnitSelectComponent implements OnInit, ControlValueAccessor {
 

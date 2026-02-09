@@ -67,11 +67,12 @@ export class WidgetComponentAction {
 
 // @dynamic
 @Component({
-  selector: 'tb-widget-container',
-  templateUrl: './widget-container.component.html',
-  styleUrls: ['./widget-container.component.scss'],
-  encapsulation: ViewEncapsulation.None,
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'tb-widget-container',
+    templateUrl: './widget-container.component.html',
+    styleUrls: ['./widget-container.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class WidgetContainerComponent extends PageComponent implements OnInit, OnChanges, AfterViewInit, OnDestroy {
 
@@ -394,7 +395,7 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
 }
 
 @Component({
-  template: `
+    template: `
     <div class="tb-widget-action-container">
       <div class="tb-widget-reference-panel tb-primary-fill" *ngIf="container.widget.isReference">
         {{ 'widget.reference' | translate }}
@@ -431,8 +432,9 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
         </button>
       </div>
     </div>`,
-  styles: [],
-  encapsulation: ViewEncapsulation.None
+    styles: [],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class EditWidgetActionsTooltipComponent implements AfterViewInit {
 

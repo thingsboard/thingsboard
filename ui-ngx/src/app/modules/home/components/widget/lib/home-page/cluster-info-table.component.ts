@@ -43,9 +43,10 @@ export interface SystemInfoData {
 }
 
 @Component({
-  selector: 'tb-cluster-info-table',
-  templateUrl: './cluster-info-table.component.html',
-  styleUrls: ['./cluster-info-table.component.scss']
+    selector: 'tb-cluster-info-table',
+    templateUrl: './cluster-info-table.component.html',
+    styleUrls: ['./cluster-info-table.component.scss'],
+    standalone: false
 })
 export class ClusterInfoTableComponent extends PageComponent implements OnInit, AfterViewInit {
 

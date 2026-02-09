@@ -19,6 +19,7 @@ import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.util.concurrent.FluentFuture;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -53,6 +54,12 @@ public class DefaultTbResourceDataCache implements TbResourceDataCache {
                 .expireAfterAccess(cacheValueTtl, TimeUnit.MINUTES)
                 .executor(executorService)
                 .buildAsync((key, executor) -> CompletableFuture.supplyAsync(() -> resourceService.getResourceDataInfo(key.tenantId(), key.resourceId()), executor));
+    }
+
+    @PreDestroy
+    private void destroy() {
+        cache.synchronous().invalidateAll();
+        cache = null;
     }
 
     @Override

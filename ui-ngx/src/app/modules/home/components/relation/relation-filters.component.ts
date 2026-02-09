@@ -33,16 +33,17 @@ import { takeUntil } from 'rxjs/operators';
 import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
-  selector: 'tb-relation-filters',
-  templateUrl: './relation-filters.component.html',
-  styleUrls: ['./relation-filters.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => RelationFiltersComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-relation-filters',
+    templateUrl: './relation-filters.component.html',
+    styleUrls: ['./relation-filters.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => RelationFiltersComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class RelationFiltersComponent extends PageComponent implements ControlValueAccessor, OnInit, OnDestroy {
 

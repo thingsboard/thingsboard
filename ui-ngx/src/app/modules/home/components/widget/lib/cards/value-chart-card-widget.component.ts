@@ -62,10 +62,11 @@ const layoutHeight = 56;
 const valueRelativeWidth = 0.35;
 
 @Component({
-  selector: 'tb-value-chart-card-widget',
-  templateUrl: './value-chart-card-widget.component.html',
-  styleUrls: ['./value-chart-card-widget.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-value-chart-card-widget',
+    templateUrl: './value-chart-card-widget.component.html',
+    styleUrls: ['./value-chart-card-widget.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class ValueChartCardWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
 

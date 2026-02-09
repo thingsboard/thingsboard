@@ -22,9 +22,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.edge.rpc.EdgeVersionComparator;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -46,6 +48,9 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 
 import java.util.UUID;
+
+import static org.thingsboard.server.common.data.cf.CalculatedFieldType.SCRIPT;
+import static org.thingsboard.server.common.data.cf.CalculatedFieldType.SIMPLE;
 
 @Slf4j
 @Component
@@ -91,7 +96,7 @@ public class CalculatedFieldEdgeProcessor extends BaseCalculatedFieldProcessor i
         switch (edgeEvent.getAction()) {
             case ADDED, UPDATED -> {
                 CalculatedField calculatedField = edgeCtx.getCalculatedFieldService().findById(edgeEvent.getTenantId(), calculatedFieldId);
-                if (calculatedField != null) {
+                if (calculatedField != null && isValidCfToSend(calculatedField.getType(), edgeVersion)) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
                     CalculatedFieldUpdateMsg calculatedFieldUpdateMsg = EdgeMsgConstructorUtils.constructCalculatedFieldUpdatedMsg(msgType, calculatedField);
                     return DownlinkMsg.newBuilder()
@@ -109,6 +114,10 @@ public class CalculatedFieldEdgeProcessor extends BaseCalculatedFieldProcessor i
             }
         }
         return null;
+    }
+
+    private boolean isValidCfToSend(CalculatedFieldType type, EdgeVersion edgeVersion) {
+        return EdgeVersionComparator.INSTANCE.compare(edgeVersion, EdgeVersion.V_4_3_0) >= 0 || (type == SIMPLE || type == SCRIPT);
     }
 
     @Override

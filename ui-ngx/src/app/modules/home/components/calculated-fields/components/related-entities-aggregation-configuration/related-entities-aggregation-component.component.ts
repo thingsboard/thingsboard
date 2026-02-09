@@ -46,21 +46,22 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 
 @Component({
-  selector: 'tb-related-entities-aggregation-component',
-  templateUrl: './related-entities-aggregation-component.component.html',
-  styleUrl: './related-entities-aggregation-component.component.scss',
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => RelatedEntitiesAggregationComponentComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => RelatedEntitiesAggregationComponentComponent),
-      multi: true
-    }
-  ],
+    selector: 'tb-related-entities-aggregation-component',
+    templateUrl: './related-entities-aggregation-component.component.html',
+    styleUrl: './related-entities-aggregation-component.component.scss',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => RelatedEntitiesAggregationComponentComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => RelatedEntitiesAggregationComponentComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class RelatedEntitiesAggregationComponentComponent implements ControlValueAccessor, Validator {
 
@@ -120,7 +121,12 @@ export class RelatedEntitiesAggregationComponentComponent implements ControlValu
       takeUntilDestroyed()
     ).subscribe((value: CalculatedFieldRelatedAggregationConfiguration) => {
       this.updatedModel(value);
-    })
+    });
+    this.relatedAggregationConfiguration.get('output').valueChanges.pipe(
+      takeUntilDestroyed(),
+    ).subscribe(() => {
+      this.toggleScopeByOutputType();
+    });
   }
 
   validate(): ValidationErrors | null {
@@ -157,5 +163,13 @@ export class RelatedEntitiesAggregationComponentComponent implements ControlValu
     value.type = CalculatedFieldType.RELATED_ENTITIES_AGGREGATION;
     value.scheduledUpdateInterval = this.minAllowedScheduledUpdateIntervalInSecForCF;
     this.propagateChange(value);
+  }
+
+  private toggleScopeByOutputType(): void {
+    if (this.relatedAggregationConfiguration.get('output').value.type === OutputType.Attribute) {
+      this.relatedAggregationConfiguration.get('useLatestTs').disable({emitEvent: false});
+    } else {
+      this.relatedAggregationConfiguration.get('useLatestTs').enable({emitEvent: false});
+    }
   }
 }
