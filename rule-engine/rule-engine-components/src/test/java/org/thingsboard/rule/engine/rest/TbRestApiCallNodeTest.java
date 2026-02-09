@@ -25,6 +25,7 @@ import org.apache.http.impl.bootstrap.ServerBootstrap;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpRequestHandler;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.provider.Arguments;
@@ -43,23 +44,33 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.common.data.util.KeyValueEntry;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.exception.DataValidationException;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
+
+    private RuleNode ruleNode;
 
     @Spy
     private TbRestApiCallNode restNode;
@@ -94,11 +105,111 @@ public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
         }
     }
 
+    @BeforeEach
+    public void setup() {
+        ruleNode = new RuleNode();
+        ruleNode.setId(ruleNodeId);
+        ruleNode.setName("Test REST API call node");
+        lenient().when(ctx.getSelf()).thenReturn(ruleNode);
+    }
+
     @AfterEach
     public void teardown() {
         if (server != null) {
             server.stop();
         }
+    }
+
+    @Test
+    public void shouldNotAllowNullQueryParamNames() {
+        // GIVEN
+        var config = new TbRestApiCallNodeConfiguration().defaultConfiguration();
+        config.setQueryParams(List.of(new KeyValueEntry<>(null, "value")));
+
+        // WHEN-THEN
+        assertThatThrownBy(() -> new TbRestApiCallNode().init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config))))
+                .isInstanceOf(TbNodeException.class)
+                .matches(e -> ((TbNodeException) e).isUnrecoverable())
+                .rootCause()
+                .isInstanceOf(DataValidationException.class)
+                .hasMessageContaining("query parameter names and values must be non-null");
+    }
+
+    @Test
+    public void shouldNotAllowNullQueryParamValues() {
+        // GIVEN
+        var config = new TbRestApiCallNodeConfiguration().defaultConfiguration();
+        config.setQueryParams(List.of(new KeyValueEntry<>("key", null)));
+
+        // WHEN-THEN
+        assertThatThrownBy(() -> new TbRestApiCallNode().init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config))))
+                .isInstanceOf(TbNodeException.class)
+                .matches(e -> ((TbNodeException) e).isUnrecoverable())
+                .rootCause()
+                .isInstanceOf(DataValidationException.class)
+                .hasMessageContaining("query parameter names and values must be non-null");
+    }
+
+    @Test
+    public void shouldNotAllowNullQueryParamEntries() {
+        // GIVEN
+        var config = new TbRestApiCallNodeConfiguration().defaultConfiguration();
+
+        var queryParams = new ArrayList<KeyValueEntry<String, String>>();
+        queryParams.add(new KeyValueEntry<>("key", "value"));
+        queryParams.add(null);
+        config.setQueryParams(queryParams);
+
+        // WHEN-THEN
+        assertThatThrownBy(() -> new TbRestApiCallNode().init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config))))
+                .isInstanceOf(TbNodeException.class)
+                .matches(e -> ((TbNodeException) e).isUnrecoverable())
+                .rootCause()
+                .isInstanceOf(DataValidationException.class)
+                .hasMessageContaining("must not be null");
+    }
+
+    @Test
+    public void shouldUseNewEncodingForNewNodesByDefault() {
+        // GIVEN-WHEN
+        var defaultConfig = new TbRestApiCallNodeConfiguration().defaultConfiguration();
+
+        // THEN
+        assertEquals(Collections.emptyList(), defaultConfig.getQueryParams());
+    }
+
+    @Test
+    public void shouldDefaultToOldEncodingForLegacyConfigs() {
+        // GIVEN
+        String configJson = """
+                {
+                    "restEndpointUrlPattern": "http://url?param=value",
+                    "requestMethod": "GET",
+                    "parseToPlainText": false,
+                    "ignoreRequestBody": false,
+                    "enableProxy": false,
+                    "useSystemProxyProperties": false,
+                    "proxyHost": null,
+                    "proxyPort": 0,
+                    "proxyUser": null,
+                    "proxyPassword": null,
+                    "readTimeoutMs": 0,
+                    "maxParallelRequestsCount": 0,
+                    "headers": {
+                        "Content-Type": "application/json",
+                        "X-Authorization": "Bearer eyJhbGciOi...."
+                    },
+                    "credentials": {
+                        "type": "anonymous"
+                    },
+                    "maxInMemoryBufferSizeInKb": 256
+                }""";
+
+        // WHEN
+        var config = JacksonUtil.fromString(configJson, TbRestApiCallNodeConfiguration.class);
+
+        // THEN
+        assertNull(config.getQueryParams());
     }
 
     @Test
@@ -235,7 +346,6 @@ public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
 
     private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig() {
         return Stream.of(
-                // config for version 2 with upgrade from version 0
                 Arguments.of(0,
                         "{\"restEndpointUrlPattern\":\"http://localhost/api\",\"requestMethod\":\"POST\"," +
                                 "\"useSimpleClientHttpFactory\":false,\"ignoreRequestBody\":false,\"enableProxy\":false," +
@@ -245,13 +355,12 @@ public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
                                 "\"trimQueue\":null,\"maxQueueSize\":null,\"credentials\":{\"type\":\"anonymous\"},\"trimDoubleQuotes\":false}",
                         true,
                         "{\"restEndpointUrlPattern\":\"http://localhost/api\",\"requestMethod\": \"POST\"," +
-                                "\"useSimpleClientHttpFactory\": false,\"parseToPlainText\": false,\"ignoreRequestBody\": false," +
-                                "\"enableProxy\": false,\"useSystemProxyProperties\": false,\"proxyScheme\": null,\"proxyHost\": null," +
+                                "\"parseToPlainText\": false,\"ignoreRequestBody\": false," +
+                                "\"enableProxy\": false,\"useSystemProxyProperties\": false,\"proxyHost\": null," +
                                 "\"proxyPort\": 0,\"proxyUser\": null,\"proxyPassword\": null,\"readTimeoutMs\": 0," +
                                 "\"maxParallelRequestsCount\": 0,\"headers\": {\"Content-Type\": \"application/json\"}," +
                                 "\"credentials\": {\"type\": \"anonymous\"}," +
                                 "\"maxInMemoryBufferSizeInKb\": 256}"),
-                // config for version 2 with upgrade from version 1
                 Arguments.of(1,
                         "{\"restEndpointUrlPattern\":\"http://localhost/api\",\"requestMethod\": \"POST\"," +
                                 "\"useSimpleClientHttpFactory\": false,\"parseToPlainText\": false,\"ignoreRequestBody\": false," +
@@ -262,13 +371,12 @@ public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
                                 "\"credentials\": {\"type\": \"anonymous\"}}",
                         true,
                         "{\"restEndpointUrlPattern\":\"http://localhost/api\",\"requestMethod\": \"POST\"," +
-                                "\"useSimpleClientHttpFactory\": false,\"parseToPlainText\": false,\"ignoreRequestBody\": false," +
-                                "\"enableProxy\": false,\"useSystemProxyProperties\": false,\"proxyScheme\": null,\"proxyHost\": null," +
+                                "\"parseToPlainText\": false,\"ignoreRequestBody\": false," +
+                                "\"enableProxy\": false,\"useSystemProxyProperties\": false,\"proxyHost\": null," +
                                 "\"proxyPort\": 0,\"proxyUser\": null,\"proxyPassword\": null,\"readTimeoutMs\": 0," +
                                 "\"maxParallelRequestsCount\": 0,\"headers\": {\"Content-Type\": \"application/json\"}," +
                                 "\"credentials\": {\"type\": \"anonymous\"}," +
                                 "\"maxInMemoryBufferSizeInKb\": 256}"),
-                // config for version 3 with upgrade from version 2
                 Arguments.of(2,
                         "{\"restEndpointUrlPattern\":\"http://localhost/api\",\"requestMethod\": \"POST\"," +
                                 "\"useSimpleClientHttpFactory\": false,\"parseToPlainText\": false,\"ignoreRequestBody\": false," +
@@ -278,12 +386,62 @@ public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
                                 "\"credentials\": {\"type\": \"anonymous\"}}",
                         true,
                         "{\"restEndpointUrlPattern\":\"http://localhost/api\",\"requestMethod\": \"POST\"," +
-                                "\"useSimpleClientHttpFactory\": false,\"parseToPlainText\": false,\"ignoreRequestBody\": false," +
-                                "\"enableProxy\": false,\"useSystemProxyProperties\": false,\"proxyScheme\": null,\"proxyHost\": null," +
+                                "\"parseToPlainText\": false,\"ignoreRequestBody\": false," +
+                                "\"enableProxy\": false,\"useSystemProxyProperties\": false,\"proxyHost\": null," +
                                 "\"proxyPort\": 0,\"proxyUser\": null,\"proxyPassword\": null,\"readTimeoutMs\": 0," +
                                 "\"maxParallelRequestsCount\": 0,\"headers\": {\"Content-Type\": \"application/json\"}," +
                                 "\"credentials\": {\"type\": \"anonymous\"}," +
-                                "\"maxInMemoryBufferSizeInKb\": 256}")
+                                "\"maxInMemoryBufferSizeInKb\": 256}"),
+                Arguments.of(3, """
+                                {
+                                    "restEndpointUrlPattern": "http://localhost/api",
+                                    "requestMethod": "POST",
+                                    "useSimpleClientHttpFactory": true,
+                                    "parseToPlainText": false,
+                                    "ignoreRequestBody": false,
+                                    "enableProxy": false,
+                                    "useSystemProxyProperties": false,
+                                    "proxyScheme": null,
+                                    "proxyHost": null,
+                                    "proxyPort": 0,
+                                    "proxyUser": null,
+                                    "proxyPassword": null,
+                                    "readTimeoutMs": 0,
+                                    "maxParallelRequestsCount": 0,
+                                    "headers": {
+                                        "Content-Type": "application/json"
+                                    },
+                                    "credentials": {
+                                        "type": "anonymous"
+                                    },
+                                    "maxInMemoryBufferSizeInKb": 256,
+                                    "trimQueue": true,
+                                    "maxQueueSize": 100,
+                                    "trimDoubleQuotes": false,
+                                    "useRedisQueueForMsgPersistence": false
+                                }""",
+                        true, """
+                                {
+                                    "restEndpointUrlPattern": "http://localhost/api",
+                                    "requestMethod": "POST",
+                                    "parseToPlainText": false,
+                                    "ignoreRequestBody": false,
+                                    "enableProxy": false,
+                                    "useSystemProxyProperties": false,
+                                    "proxyHost": null,
+                                    "proxyPort": 0,
+                                    "proxyUser": null,
+                                    "proxyPassword": null,
+                                    "readTimeoutMs": 0,
+                                    "maxParallelRequestsCount": 0,
+                                    "headers": {
+                                        "Content-Type": "application/json"
+                                    },
+                                    "credentials": {
+                                        "type": "anonymous"
+                                    },
+                                    "maxInMemoryBufferSizeInKb": 256
+                                }""")
         );
     }
 
