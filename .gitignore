@@ -37,3 +37,4 @@ rebuild-docker.sh
 */.run/**
 .run/**
 .run
+.claude/
