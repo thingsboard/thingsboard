@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 -->
 <div class="tb-form-panel no-border no-gap no-padding" [formGroup]="filterPredicateValueNoDataFormGroup">
   <div class="tb-form-row no-padding no-border column-xs">
-    <mat-form-field hideRequiredMarker class="flex-1 w-full max-w-30% xs:max-w-full" appearance="outline" subscriptSizing="dynamic">
+    <mat-form-field hideRequiredMarker class="w-full max-w-30% flex-1 xs:max-w-full" appearance="outline" subscriptSizing="dynamic">
       <mat-select [formControl]="dynamicModeControl" placeholder="{{'filter.dynamic-source-type' | translate}}">
         <mat-option [value]="false">{{'alarm-rule.static' | translate}}</mat-option>
         <mat-option [value]="true">{{'alarm-rule.dynamic' | translate}}</mat-option>
@@ -39,7 +39,7 @@
             }
         </mat-form-field>
       } @else {
-        <mat-form-field class="flex-1 w-full" appearance="outline" subscriptSizing="dynamic">
+        <mat-form-field class="w-full flex-1" appearance="outline" subscriptSizing="dynamic">
           <mat-select formControlName="dynamicValueArgument" placeholder="{{ 'action.set' | translate }}">
             @for (argument of argumentsList; track argument) {
               <mat-option [value]="argument" [disabled]="argument === argumentInUse">{{ argument }}</mat-option>

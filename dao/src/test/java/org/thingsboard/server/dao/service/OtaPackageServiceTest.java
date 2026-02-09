@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,8 +36,9 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.ota.OtaPackageService;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
 
 import java.nio.ByteBuffer;
@@ -75,6 +76,8 @@ public class OtaPackageServiceTest extends AbstractServiceTest {
     OtaPackageService otaPackageService;
     @Autowired
     TenantProfileService tenantProfileService;
+    @Autowired
+    TbTenantProfileCache tenantProfileCache;
 
     @Before
     public void before() {
@@ -95,6 +98,7 @@ public class OtaPackageServiceTest extends AbstractServiceTest {
         TenantProfile defaultTenantProfile = tenantProfileService.findDefaultTenantProfile(tenantId);
         defaultTenantProfile.getProfileData().setConfiguration(DefaultTenantProfileConfiguration.builder().maxOtaPackagesInBytes(DATA_SIZE).build());
         tenantProfileService.saveTenantProfile(tenantId, defaultTenantProfile);
+        tenantProfileCache.evict(defaultTenantProfile.getId());
 
         Assert.assertEquals(0, otaPackageService.sumDataSizeByTenantId(tenantId));
 

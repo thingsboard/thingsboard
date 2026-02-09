@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -31,18 +31,19 @@ import { isDefinedAndNotNull } from '@core/public-api';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-select-attributes',
-  templateUrl: './select-attributes.component.html',
-  styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => SelectAttributesComponent),
-    multi: true
-  }, {
-    provide: NG_VALIDATORS,
-    useExisting: SelectAttributesComponent,
-    multi: true
-  }]
+    selector: 'tb-select-attributes',
+    templateUrl: './select-attributes.component.html',
+    styleUrls: [],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => SelectAttributesComponent),
+            multi: true
+        }, {
+            provide: NG_VALIDATORS,
+            useExisting: SelectAttributesComponent,
+            multi: true
+        }],
+    standalone: false
 })
 
 export class SelectAttributesComponent implements OnInit, ControlValueAccessor {

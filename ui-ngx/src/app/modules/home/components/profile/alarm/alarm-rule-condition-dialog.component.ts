@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -36,10 +36,11 @@ export interface AlarmRuleConditionDialogData {
 }
 
 @Component({
-  selector: 'tb-alarm-rule-condition-dialog',
-  templateUrl: './alarm-rule-condition-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: AlarmRuleConditionDialogComponent}],
-  styleUrls: ['./alarm-rule-condition-dialog.component.scss']
+    selector: 'tb-alarm-rule-condition-dialog',
+    templateUrl: './alarm-rule-condition-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: AlarmRuleConditionDialogComponent }],
+    styleUrls: ['./alarm-rule-condition-dialog.component.scss'],
+    standalone: false
 })
 export class AlarmRuleConditionDialogComponent extends DialogComponent<AlarmRuleConditionDialogComponent, AlarmCondition>
   implements OnInit, ErrorStateMatcher {

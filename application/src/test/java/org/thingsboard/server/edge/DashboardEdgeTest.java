@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,11 +27,15 @@ import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.ShortCustomerInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.gen.edge.v1.CustomerUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DashboardUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.EdgeConfiguration;
 import org.thingsboard.server.gen.edge.v1.ResourceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
@@ -183,6 +187,22 @@ public class DashboardEdgeTest extends AbstractEdgeTest {
         customer.setTitle("Edge Customer");
         Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
 
+        // assign edge to customer
+        edgeImitator.expectMessageAmount(2);
+        doPost("/api/customer/" + savedCustomer.getUuidId() + "/edge/" + edge.getUuidId(), Edge.class);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+        Optional<EdgeConfiguration> edgeConfigurationOpt = edgeImitator.findMessageByType(EdgeConfiguration.class);
+        Assert.assertTrue(edgeConfigurationOpt.isPresent());
+        EdgeConfiguration edgeConfiguration = edgeConfigurationOpt.get();
+        Assert.assertEquals(savedCustomer.getUuidId().getMostSignificantBits(), edgeConfiguration.getCustomerIdMSB());
+        Assert.assertEquals(savedCustomer.getUuidId().getLeastSignificantBits(), edgeConfiguration.getCustomerIdLSB());
+        Optional<CustomerUpdateMsg> customerUpdateOpt = edgeImitator.findMessageByType(CustomerUpdateMsg.class);
+        Assert.assertTrue(customerUpdateOpt.isPresent());
+        CustomerUpdateMsg customerUpdateMsg = customerUpdateOpt.get();
+        Customer customerMsg = JacksonUtil.fromString(customerUpdateMsg.getEntity(), Customer.class, true);
+        Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, customerUpdateMsg.getMsgType());
+        Assert.assertEquals(savedCustomer, customerMsg);
+
         Dashboard dashboard = buildDashboardForUplinkMsg(savedCustomer);
 
         // create dashboard on edge
@@ -225,6 +245,23 @@ public class DashboardEdgeTest extends AbstractEdgeTest {
 
         foundDashboard = doGet("/api/dashboard/" + dashboard.getUuidId(), Dashboard.class);
         Assert.assertEquals(DASHBOARD_TITLE + " Updated", foundDashboard.getName());
+
+        // unassign edge from customer
+        edgeImitator.expectMessageAmount(2);
+        doDelete("/api/customer/edge/" + edge.getUuidId(), Edge.class);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+        edgeConfigurationOpt = edgeImitator.findMessageByType(EdgeConfiguration.class);
+        Assert.assertTrue(edgeConfigurationOpt.isPresent());
+        edgeConfiguration = edgeConfigurationOpt.get();
+        Assert.assertEquals(
+                new CustomerId(EntityId.NULL_UUID),
+                new CustomerId(new UUID(edgeConfiguration.getCustomerIdMSB(), edgeConfiguration.getCustomerIdLSB())));
+        customerUpdateOpt = edgeImitator.findMessageByType(CustomerUpdateMsg.class);
+        Assert.assertTrue(customerUpdateOpt.isPresent());
+        customerUpdateMsg = customerUpdateOpt.get();
+        Assert.assertEquals(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE, customerUpdateMsg.getMsgType());
+        Assert.assertEquals(savedCustomer.getUuidId().getMostSignificantBits(), customerUpdateMsg.getIdMSB());
+        Assert.assertEquals(savedCustomer.getUuidId().getLeastSignificantBits(), customerUpdateMsg.getIdLSB());
     }
 
     @Test

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -57,9 +57,10 @@ import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { TenantId } from '@shared/models/id/tenant-id';
 
 @Component({
-  selector: 'tb-calculated-field-argument-panel',
-  templateUrl: './calculated-field-argument-panel.component.html',
-  styleUrls: ['../common/calculated-field-panel.scss', './calculated-field-argument-panel.component.scss']
+    selector: 'tb-calculated-field-argument-panel',
+    templateUrl: './calculated-field-argument-panel.component.html',
+    styleUrls: ['../common/calculated-field-panel.scss', './calculated-field-argument-panel.component.scss'],
+    standalone: false
 })
 export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewInit {
 
@@ -88,6 +89,7 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
     maxlength: 'calculated-fields.hint.argument-name-max-length',
     forbidden: 'calculated-fields.hint.argument-name-forbidden'
   };
+  @Input() readonly = false;
 
   @ViewChild('entityAutocomplete') entityAutocomplete: EntityAutocompleteComponent;
 
@@ -176,6 +178,11 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
 
     this.argumentTypes = Object.values(ArgumentType)
       .filter(type => type !== ArgumentType.Rolling || this.isScript);
+
+    if (this.readonly) {
+      this.argumentType.disable({emitEvent: false});
+      this.argumentFormGroup.disable({emitEvent: false});
+    }
   }
 
   ngAfterViewInit(): void {
@@ -259,7 +266,11 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
         };
     }
     if (!onInit) {
-      this.argumentFormGroup.get('refEntityKey').get('key').setValue('');
+      this.argumentFormGroup.get('refEntityKey').get('key').setValue('', {emitEvents: !this.watchKeyChange});
+      if (this.watchKeyChange && this.argumentFormGroup.get('argumentName').pristine) {
+        this.argumentFormGroup.get('argumentName').markAsUntouched({emitEvent: false});
+        this.argumentFormGroup.get('argumentName').setValue('', {emitEvent: false});
+      }
     } else if (this.predefinedEntityFilter) {
       entityFilter = this.predefinedEntityFilter;
     }
@@ -318,6 +329,7 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
     ).subscribe((key) => {
       if (this.argumentFormGroup.get('argumentName').pristine) {
         this.argumentFormGroup.get('argumentName').setValue(key);
+        this.argumentFormGroup.get('argumentName').markAsTouched({emitEvent: false});
       }
     });
   }

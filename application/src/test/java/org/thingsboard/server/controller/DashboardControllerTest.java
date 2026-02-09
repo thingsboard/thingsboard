@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,13 +51,16 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.dashboard.DashboardDao;
-import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -153,6 +156,42 @@ public class DashboardControllerTest extends AbstractControllerTest {
         Dashboard foundDashboard = doGet("/api/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
         Assert.assertNotNull(foundDashboard);
         Assert.assertEquals(savedDashboard, foundDashboard);
+    }
+
+    @Test
+    public void testFindDashboardInfosByIds() throws Exception {
+        List<Dashboard> dashboards = new ArrayList<>();
+        for (int i = 0; i < 20; i++) {
+            Dashboard dashboard = new Dashboard();
+            dashboard.setTitle("My dashboard " + i);
+            dashboards.add(doPost("/api/dashboard", dashboard, Dashboard.class));
+        }
+
+        List<Dashboard> expected = dashboards.subList(5, 15);
+
+        String idsParam = expected.stream()
+                .map(d -> d.getId().getId().toString())
+                .collect(Collectors.joining(","));
+
+        DashboardInfo[] result = doGet(
+                "/api/dashboards?dashboardIds=" + idsParam,
+                DashboardInfo[].class
+        );
+
+        Assert.assertNotNull(result);
+        Assert.assertEquals(expected.size(), result.length);
+
+        Map<UUID, DashboardInfo> infoById = Arrays.stream(result)
+                .collect(Collectors.toMap(info -> info.getId().getId(), Function.identity()));
+
+        for (Dashboard dashboard : expected) {
+            UUID id = dashboard.getId().getId();
+            DashboardInfo info = infoById.get(id);
+            Assert.assertNotNull("DashboardInfo not found for id " + id, info);
+
+            Assert.assertEquals(dashboard.getId(), info.getId());
+            Assert.assertEquals(dashboard.getTitle(), info.getTitle());
+        }
     }
 
     @Test

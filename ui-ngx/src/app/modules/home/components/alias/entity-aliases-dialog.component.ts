@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -54,10 +54,11 @@ export interface EntityAliasesDialogData {
 }
 
 @Component({
-  selector: 'tb-entity-aliases-dialog',
-  templateUrl: './entity-aliases-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: EntityAliasesDialogComponent}],
-  styleUrls: ['./entity-aliases-dialog.component.scss']
+    selector: 'tb-entity-aliases-dialog',
+    templateUrl: './entity-aliases-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: EntityAliasesDialogComponent }],
+    styleUrls: ['./entity-aliases-dialog.component.scss'],
+    standalone: false
 })
 export class EntityAliasesDialogComponent extends DialogComponent<EntityAliasesDialogComponent, EntityAliases>
   implements ErrorStateMatcher {

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,8 +15,11 @@
     limitations under the License.
 
 -->
-<div class="tb-two-factor-auth-login-content mat-app-background tb-dark flex flex-row items-center justify-center"
+<div class="tb-two-factor-auth-login-content mat-app-background tb-dark flex flex-col items-center justify-center"
      style="width: 100%;">
+  @if (isLoading$ | async) {
+    <mat-progress-bar color="warn" class="progress-bar" mode="indeterminate"></mat-progress-bar>
+  }
   @switch (state()) {
     @case (ForceTwoFAState.SETUP) {
       <mat-card appearance="raised" class="tb-two-factor-auth-login-card flex-initial">
@@ -38,7 +41,7 @@
               </button>
             }
             @if (config) {
-              <button type="button" mat-raised-button color="accent" class="navigation w-full" (click)="cancelLogin()">
+              <button type="button" mat-flat-button color="accent" class="navigation w-full" (click)="cancelLogin()">
                 {{ 'login.login' | translate }}
               </button>
             }
@@ -59,11 +62,11 @@
               </mat-card-title>
             </mat-card-header>
             <mat-card-content>
-              <div class="flex flex-col items-center justify-start">
+              <div tb-toast class="flex flex-col items-center justify-start">
                 <p class="mat-body qr-code-description mb-4" translate>login.scan-qr-code</p>
                 <canvas class="flex-1" #canvas [style.display]="totpAuthURL ? 'block' : 'none'"></canvas>
                 <p class="mat-body qr-code-description" translate>login.enter-key-manually</p>
-                <div class="flex flex-row items-center mb-8 w-full overflow-hidden">
+                <div class="mb-8 flex w-full flex-row items-center overflow-hidden">
                   <span tbTruncateWithTooltip class="w-full">{{ totpAuthURLSecret }}</span>
                   <tb-copy-button
                     class="attribute-copy"
@@ -76,7 +79,7 @@
                   >
                   </tb-copy-button>
                 </div>
-                <div class="flex flex-col items-center justify-start gap-2 w-full">
+                <div class="flex w-full flex-col items-center justify-start gap-2">
                   <button type="button" mat-stroked-button class="navigation w-full" (click)="appState.set(ProvidersState.ENTER_CODE)">
                     {{ 'login.continue' | translate }}
                   </button>
@@ -109,7 +112,7 @@
               </mat-card-title>
             </mat-card-header>
             <mat-card-content>
-              <div class="flex flex-col items-center justify-start">
+              <div tb-toast class="flex flex-col items-center justify-start">
                 <form [formGroup]="smsConfigForm" class="mb-12">
                   <p class="mat-body step-description input" translate>login.sms-description</p>
                   <div class="flex flex-row items-center justify-between gap-3.75">
@@ -123,7 +126,7 @@
                     </tb-phone-input>
                   </div>
                 </form>
-                <div class="flex flex-col items-center justify-start gap-2 w-full">
+                <div class="flex w-full flex-col items-center justify-start gap-2">
                   <button type="button" mat-stroked-button [disabled]="(isLoading$ | async) || smsConfigForm.invalid || !smsConfigForm.dirty" class="navigation w-full" (click)="sendSmsCode()">
                     {{ 'login.send-code' | translate }}
                   </button>
@@ -156,12 +159,13 @@
               </mat-card-title>
             </mat-card-header>
             <mat-card-content>
-              <div class="flex flex-col items-center justify-start">
+              <div tb-toast class="flex flex-col items-center justify-start">
                 <form [formGroup]="emailConfigForm" class="mb-8 w-full">
                   <p class="mat-body step-description input" translate>login.email-description</p>
-                  <mat-form-field class="mat-block input-container flex-1">
+                  <mat-form-field class="mat-block input-container tb-autofilled flex-1" appearance="outline">
                     <input matInput formControlName="email"
                            type="email" required
+                           autocomplete="email"
                            placeholder="{{ 'login.email-label' | translate }}" />
                     <mat-error *ngIf="emailConfigForm.get('email').hasError('required')">
                       {{ 'login.email-required' | translate }}
@@ -171,7 +175,7 @@
                     </mat-error>
                   </mat-form-field>
                 </form>
-                <div class="flex flex-col items-center justify-start gap-2 w-full">
+                <div class="flex w-full flex-col items-center justify-start gap-2">
                   <button type="button" mat-stroked-button [disabled]="(isLoading$ | async) || emailConfigForm.invalid" class="navigation w-full" (click)="sendEmailCode()">
                     {{ 'login.send-code' | translate }}
                   </button>
@@ -220,7 +224,7 @@
                   </button>
                 </div>
                 <p class="mat-body-2 description" translate>login.backup-code-warn</p>
-                <button type="button" mat-raised-button color="accent" class="navigation w-full" (click)="backupCodeState.set(BackupCodeState.SUCCESS)">
+                <button type="button" mat-flat-button color="accent" class="navigation w-full" (click)="backupCodeState.set(BackupCodeState.SUCCESS)">
                   {{ 'login.continue' | translate }}
                 </button>
               </div>
@@ -256,11 +260,11 @@
         }
       </p>
       <form [formGroup]="configForm" class="flex flex-col items-center justify-start">
-        <mat-form-field class="mat-block w-full">
+        <mat-form-field class="mat-block tb-autofilled w-full" appearance="outline">
           <input matInput formControlName="verificationCode"
                  maxlength="6" type="text" required
                  inputmode="numeric" pattern="[0-9]*"
-                 autocomplete="off"
+                 autocomplete="one-time-code"
                  placeholder="{{ 'login.verification-code' | translate }}">
           @if (configForm.get('verificationCode').getError('required') ||
           configForm.get('verificationCode').getError('minlength') ||
@@ -275,7 +279,7 @@
             <mat-error>{{ 'login.verification-code-many-request' | translate }}</mat-error>
           }
         </mat-form-field>
-        <div class="flex flex-col items-center justify-start gap-2 w-full">
+        <div class="flex w-full flex-col items-center justify-start gap-2">
           <button type="button" mat-flat-button color="accent" [disabled]="(isLoading$ | async) || configForm.invalid || !configForm.dirty" class="navigation w-full" (click)="saveConfig(providerType)">
             {{ 'login.confirm' | translate }}
           </button>
@@ -297,8 +301,8 @@
     <mat-card-content>
       <p class="mat-body mb-16" translate>{{ twoFactorAuthProvidersSuccessCardTranslate.get(providerType).description | translate }}</p>
       <div class="flex flex-col items-center justify-start">
-        <div class="flex flex-col items-center justify-start gap-2 w-full">
-          <button type="button" mat-raised-button color="accent" class="navigation w-full" (click)="cancelLogin()">
+        <div class="flex w-full flex-col items-center justify-start gap-2">
+          <button type="button" mat-flat-button color="accent" class="navigation w-full" (click)="cancelLogin()">
             {{ 'login.login' | translate }}
           </button>
           @if (isAnyProviderAvailable) {

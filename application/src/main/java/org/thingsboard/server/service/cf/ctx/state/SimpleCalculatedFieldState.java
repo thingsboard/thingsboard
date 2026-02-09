@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.EqualsAndHashCode;
 import net.objecthunter.exp4j.Expression;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.script.api.tbel.TbUtils;
+import org.thingsboard.common.util.NumberUtils;
 import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Output;
@@ -52,8 +52,8 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
         double expressionResult = ctx.evaluateSimpleExpression(expression.get(), this);
 
         Output output = ctx.getOutput();
-        Object result = TbUtils.roundResult(expressionResult, output.getDecimalsByDefault());
-        JsonNode outputResult = createResultJson(ctx.isUseLatestTs(), output.getName(), result);
+        Object result = NumberUtils.roundResult(expressionResult, output.getDecimalsByDefault());
+        JsonNode outputResult = createResultJson(output.getName(), result);
 
         return Futures.immediateFuture(TelemetryCalculatedFieldResult.builder()
                 .outputStrategy(output.getStrategy())
@@ -63,7 +63,7 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
                 .build());
     }
 
-    private JsonNode createResultJson(boolean useLatestTs, String outputName, Object result) {
+    private JsonNode createResultJson(String outputName, Object result) {
         ObjectNode valuesNode = JacksonUtil.newObjectNode();
         if (result instanceof Double doubleValue) {
             valuesNode.put(outputName, doubleValue);
@@ -72,7 +72,7 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
         } else {
             valuesNode.set(outputName, JacksonUtil.valueToTree(result));
         }
-        return toSimpleResult(useLatestTs, valuesNode);
+        return toResultNode(valuesNode);
     }
 
     @Override

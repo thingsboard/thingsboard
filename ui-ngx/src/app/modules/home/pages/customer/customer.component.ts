@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -29,9 +29,10 @@ import { AuthState } from '@core/auth/auth.models';
 import { CountryData } from '@shared/models/country.models';
 
 @Component({
-  selector: 'tb-customer',
-  templateUrl: './customer.component.html',
-  styleUrls: ['./customer.component.scss']
+    selector: 'tb-customer',
+    templateUrl: './customer.component.html',
+    styleUrls: ['./customer.component.scss'],
+    standalone: false
 })
 export class CustomerComponent extends ContactBasedComponent<Customer> {
 

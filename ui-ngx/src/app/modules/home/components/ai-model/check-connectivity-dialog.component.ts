@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -28,9 +28,10 @@ export interface AIModelDialogData {
 }
 
 @Component({
-  selector: 'tb-check-connectivity-dialog',
-  templateUrl: './check-connectivity-dialog.component.html',
-  styleUrls: ['./check-connectivity-dialog.component.scss']
+    selector: 'tb-check-connectivity-dialog',
+    templateUrl: './check-connectivity-dialog.component.html',
+    styleUrls: ['./check-connectivity-dialog.component.scss'],
+    standalone: false
 })
 export class CheckConnectivityDialogComponent extends DialogComponent<CheckConnectivityDialogComponent> {
 
@@ -56,9 +57,7 @@ export class CheckConnectivityDialogComponent extends DialogComponent<CheckConne
         },
         chatModelConfig: {
           modelType: ModelType.CHAT,
-          provider: this.data.AIModel.configuration.provider,
-          providerConfig: {...this.data.AIModel.configuration.providerConfig},
-          modelId: this.data.AIModel.configuration.modelId,
+          ...this.data.AIModel.configuration,
           maxRetries: 0,
           timeoutSeconds: 20
         }

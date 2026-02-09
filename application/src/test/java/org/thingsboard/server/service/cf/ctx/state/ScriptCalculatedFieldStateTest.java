@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.thingsboard.script.api.tbel.DefaultTbelInvokeService;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
@@ -41,13 +42,15 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.stats.DefaultStatsFactory;
-import org.thingsboard.server.dao.usagerecord.ApiLimitService;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.service.cf.TelemetryCalculatedFieldResult;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -75,15 +78,19 @@ public class ScriptCalculatedFieldStateTest {
     private TbelInvokeService tbelInvokeService;
 
     @MockitoBean
-    private ApiLimitService apiLimitService;
+    private TenantProfile tenantProfile;
+
+    @MockitoBean
+    private TbTenantProfileCache tenantProfileCache;
 
     @BeforeEach
     void setUp() {
         ActorSystemContext systemContext = Mockito.mock(ActorSystemContext.class);
         when(systemContext.getTbelInvokeService()).thenReturn(tbelInvokeService);
-        when(systemContext.getApiLimitService()).thenReturn(apiLimitService);
+        when(systemContext.getTenantProfileCache()).thenReturn(tenantProfileCache);
+        when(tenantProfileCache.get(any(TenantId.class))).thenReturn(tenantProfile);
+        when(tenantProfile.getProfileConfiguration()).thenReturn(Optional.of(new DefaultTenantProfileConfiguration()));
 
-        when(apiLimitService.getLimit(any(), any())).thenReturn(1000L);
         ctx = new CalculatedFieldCtx(getCalculatedField(), systemContext);
         ctx.init();
         state = new ScriptCalculatedFieldState(ctx.getEntityId());

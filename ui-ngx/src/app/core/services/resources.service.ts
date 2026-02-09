@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -24,14 +24,15 @@ import {
   ɵCssSelectorList,
   ɵNG_COMP_DEF,
   ɵNG_MOD_DEF,
-  ɵNgModuleDef
+  ɵNgModuleDef,
+  DOCUMENT
 } from '@angular/core';
-import { DOCUMENT } from '@angular/common';
+
 import { forkJoin, from, Observable, ReplaySubject, throwError } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { IModulesMap } from '@modules/common/modules-map.models';
 import { TbResourceId } from '@shared/models/id/tb-resource-id';
-import { camelCase, isObject } from '@core/utils';
+import { camelCase, isObject, isUndefined } from '@core/utils';
 import { AuthService } from '@core/auth/auth.service';
 import { select, Store } from '@ngrx/store';
 import { selectIsAuthenticated } from '@core/auth/auth.selectors';
@@ -285,6 +286,23 @@ export class ResourcesService {
         const moduleInfo: ModuleInfo = {
           module: moduleDef,
           components: []
+        }
+        const declarationsDecl = moduleDef.declarations;
+        let declarations: Type<any>[];
+        if (Array.isArray(declarationsDecl)) {
+          declarations = declarationsDecl;
+        } else {
+          declarations = declarationsDecl();
+        }
+        if (declarations) {
+          for (const decl of declarations) {
+            if (ɵNG_COMP_DEF in decl) {
+              const component: ɵComponentDef<any> = decl[ɵNG_COMP_DEF];
+              if (isUndefined(component.standalone) || component.standalone) {
+                (component as any).standalone = false;
+              }
+            }
+          }
         }
         modulesWithComponents.modules.push(moduleInfo);
         const exportsDecl = moduleDef.exports;

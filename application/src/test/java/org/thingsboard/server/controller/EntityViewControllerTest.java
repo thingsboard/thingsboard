@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.common.util.ThingsBoardExecutors;
@@ -63,16 +65,19 @@ import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.entityview.EntityViewDao;
-import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.util.concurrent.TimeUnit.HOURS;
@@ -85,6 +90,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
+import static org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest.MQTT_PORT;
+import static org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest.MQTT_URL;
 
 @TestPropertySource(properties = {
         "transport.mqtt.enabled=true",
@@ -94,6 +101,12 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 @ContextConfiguration(classes = {EntityViewControllerTest.Config.class})
 @DaoSqlTest
 public class EntityViewControllerTest extends AbstractControllerTest {
+    @DynamicPropertySource
+    static void props(DynamicPropertyRegistry registry) {
+        log.warn("transport.mqtt.bind_port = {}", MQTT_PORT);
+        registry.add("transport.mqtt.bind_port", () -> MQTT_PORT);
+    }
+
     static final TypeReference<PageData<EntityView>> PAGE_DATA_ENTITY_VIEW_TYPE_REF = new TypeReference<>() {
     };
     static final TypeReference<PageData<EntityViewInfo>> PAGE_DATA_ENTITY_VIEW_INFO_TYPE_REF = new TypeReference<>() {
@@ -146,6 +159,36 @@ public class EntityViewControllerTest extends AbstractControllerTest {
         EntityView foundView = doGet("/api/entityView/" + savedView.getId().getId().toString(), EntityView.class);
         Assert.assertNotNull(foundView);
         assertEquals(savedView, foundView);
+    }
+
+    @Test
+    public void testFindEntityViewByIds() throws Exception {
+        List<EntityView> assetProfiles = new ArrayList<>();
+        for (int i = 0; i < 20; i++) {
+            assetProfiles.add(getNewSavedEntityView("Test entity view " + i));
+        }
+
+        List<EntityView> expected = assetProfiles.subList(5, 15);
+
+        String idsParam = expected.stream()
+                .map(ap -> ap.getId().getId().toString())
+                .collect(Collectors.joining(","));
+        EntityView[] foundEntityViews = doGet("/api/entityViews?entityViewIds=" + idsParam, EntityView[].class);
+
+        Assert.assertNotNull(foundEntityViews);
+        Assert.assertEquals(expected.size(), foundEntityViews.length);
+
+        Map<UUID, EntityView> infoById = Arrays.stream(foundEntityViews)
+                .collect(Collectors.toMap(info -> info.getId().getId(), Function.identity()));
+
+        for (EntityView entityView : expected) {
+            UUID id = entityView.getId().getId();
+            EntityView view = infoById.get(id);
+            Assert.assertNotNull("Entity view not found for id " + id, view);
+
+            Assert.assertEquals(entityView.getId(), view.getId());
+            Assert.assertEquals(entityView.getName(), view.getName());
+        }
     }
 
     @Test
@@ -650,7 +693,7 @@ public class EntityViewControllerTest extends AbstractControllerTest {
         String viewDeviceId = testDevice.getId().getId().toString();
 
         String clientId = MqttAsyncClient.generateClientId();
-        MqttAsyncClient client = new MqttAsyncClient("tcp://localhost:1883", clientId, new MemoryPersistence());
+        MqttAsyncClient client = new MqttAsyncClient(MQTT_URL, clientId, new MemoryPersistence());
 
         MqttConnectOptions options = new MqttConnectOptions();
         options.setUserName(accessToken);
@@ -701,7 +744,7 @@ public class EntityViewControllerTest extends AbstractControllerTest {
         assertNotNull(accessToken);
 
         String clientId = MqttAsyncClient.generateClientId();
-        MqttAsyncClient client = new MqttAsyncClient("tcp://localhost:1883", clientId, new MemoryPersistence());
+        MqttAsyncClient client = new MqttAsyncClient(MQTT_URL, clientId, new MemoryPersistence());
 
         MqttConnectOptions options = new MqttConnectOptions();
         options.setUserName(accessToken);

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input } from '@angular/core';
+import { booleanAttribute, Component, forwardRef, Input } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -46,21 +46,22 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 
 @Component({
-  selector: 'tb-related-entities-aggregation-component',
-  templateUrl: './related-entities-aggregation-component.component.html',
-  styleUrl: './related-entities-aggregation-component.component.scss',
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => RelatedEntitiesAggregationComponentComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => RelatedEntitiesAggregationComponentComponent),
-      multi: true
-    }
-  ],
+    selector: 'tb-related-entities-aggregation-component',
+    templateUrl: './related-entities-aggregation-component.component.html',
+    styleUrl: './related-entities-aggregation-component.component.scss',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => RelatedEntitiesAggregationComponentComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => RelatedEntitiesAggregationComponentComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class RelatedEntitiesAggregationComponentComponent implements ControlValueAccessor, Validator {
 
@@ -76,12 +77,15 @@ export class RelatedEntitiesAggregationComponentComponent implements ControlValu
   @Input({required: true})
   testScript: (expression?: string) => Observable<string>;
 
+  @Input({transform: booleanAttribute}) isEditValue = true;
+
   readonly ScriptLanguage = ScriptLanguage;
   readonly CalculatedFieldType = CalculatedFieldType;
   readonly OutputType = OutputType;
   readonly Directions = Object.values(EntitySearchDirection) as Array<EntitySearchDirection>;
   readonly PropagationDirectionTranslations = PropagationDirectionTranslations;
   readonly minAllowedDeduplicationIntervalInSecForCF = getCurrentAuthState(this.store).minAllowedDeduplicationIntervalInSecForCF;
+  readonly maxRelatedEntitiesToReturnPerCfArgument = getCurrentAuthState(this.store).maxRelatedEntitiesToReturnPerCfArgument;
 
   relatedAggregationConfiguration = this.fb.group({
     relation: this.fb.group({
@@ -117,7 +121,12 @@ export class RelatedEntitiesAggregationComponentComponent implements ControlValu
       takeUntilDestroyed()
     ).subscribe((value: CalculatedFieldRelatedAggregationConfiguration) => {
       this.updatedModel(value);
-    })
+    });
+    this.relatedAggregationConfiguration.get('output').valueChanges.pipe(
+      takeUntilDestroyed(),
+    ).subscribe(() => {
+      this.toggleScopeByOutputType();
+    });
   }
 
   validate(): ValidationErrors | null {
@@ -154,5 +163,13 @@ export class RelatedEntitiesAggregationComponentComponent implements ControlValu
     value.type = CalculatedFieldType.RELATED_ENTITIES_AGGREGATION;
     value.scheduledUpdateInterval = this.minAllowedScheduledUpdateIntervalInSecForCF;
     this.propagateChange(value);
+  }
+
+  private toggleScopeByOutputType(): void {
+    if (this.relatedAggregationConfiguration.get('output').value.type === OutputType.Attribute) {
+      this.relatedAggregationConfiguration.get('useLatestTs').disable({emitEvent: false});
+    } else {
+      this.relatedAggregationConfiguration.get('useLatestTs').enable({emitEvent: false});
+    }
   }
 }

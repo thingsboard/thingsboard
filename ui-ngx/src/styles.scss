@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -224,10 +224,10 @@ div {
 
 .tb-hint {
   padding: 0 16px 16px;
-  font-size: var(--mdc-typography-caption-font-size, 12px);
-  line-height: var(--mdc-typography-caption-line-height, 20px);
-  font-weight: var(--mdc-typography-caption-font-weight, 400);
-  letter-spacing: var(--mdc-typography-caption-letter-spacing, 0.0333333333em);
+  font-size: var(--mat-typography-caption-font-size, 12px);
+  line-height: var(--mat-typography-caption-line-height, 20px);
+  font-weight: var(--mat-typography-caption-font-weight, 400);
+  letter-spacing: var(--mat-typography-caption-letter-spacing, 0.0333333333em);
   color: rgba(0, 0, 0, 0.6);
   white-space: normal;
 }
@@ -632,6 +632,43 @@ pre.tb-highlight {
       .mat-mdc-form-field-infix {
         padding-top: 28px;
         padding-bottom: 4px;
+      }
+    }
+  }
+
+  .tb-autofilled:has(input:-webkit-autofill){
+    --mat-form-field-outlined-label-text-color: var(--mat-form-field-outlined-input-text-color);
+    --mat-form-field-outlined-hover-label-text-color: var(--mat-form-field-outlined-input-text-color);
+    .mat-mdc-form-field-flex {
+      &:before {
+        display: block;
+        height: auto;
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: #7986cb;
+        opacity: 0.5;
+        pointer-events: none;
+        border-radius: 4px;
+      }
+    }
+
+    .mdc-floating-label {
+      --mat-mdc-form-field-label-transform: translateY(calc(calc(6.7px + var(--mat-form-field-container-height) / 2) * -1)) scale(var(--mat-mdc-form-field-floating-label-scale, 0.75));
+    }
+    .mat-mdc-form-field-infix {
+      input {
+        &:-webkit-autofill,
+        &:-webkit-autofill:hover,
+        &:-webkit-autofill:focus,
+        &:-webkit-autofill:active {
+          -webkit-background-clip: text !important;
+          -webkit-text-fill-color: var(--mat-form-field-outlined-input-text-color);
+        }
+        &::spelling-error {
+          color: var(--mat-form-field-outlined-input-text-color);
+          text-decoration: none;
+        }
       }
     }
   }
@@ -1292,7 +1329,7 @@ pre.tb-highlight {
     }
 
     &.active:not(:disabled) {
-      --mdc-outlined-button-outline-color: $primary;
+      --mat-button-outlined-outline-color: $primary;
     }
 
     &:disabled {

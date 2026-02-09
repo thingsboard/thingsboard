@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,11 @@ import org.thingsboard.server.common.data.ShortCustomerInfo;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
-import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.gen.edge.v1.DashboardUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
@@ -36,8 +37,10 @@ import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -116,14 +119,24 @@ public class DashboardEdgeProcessor extends BaseDashboardProcessor implements Da
     }
 
     @Override
-    protected Set<ShortCustomerInfo> filterNonExistingCustomers(TenantId tenantId, Set<ShortCustomerInfo> currentAssignedCustomers, Set<ShortCustomerInfo> newAssignedCustomers) {
-        newAssignedCustomers.addAll(currentAssignedCustomers);
-        return newAssignedCustomers;
+    protected Set<ShortCustomerInfo> filterNonExistingCustomers(TenantId tenantId, CustomerId edgeCustomerId, Set<ShortCustomerInfo> currentAssignedCustomers, Set<ShortCustomerInfo> newAssignedCustomers) {
+        boolean edgeCustomerPresentInNewAssignments = newAssignedCustomers.stream()
+                .map(ShortCustomerInfo::getCustomerId)
+                .anyMatch(edgeCustomerId::equals);
+
+        if (edgeCustomerPresentInNewAssignments) {
+            Set<ShortCustomerInfo> result = new HashSet<>(newAssignedCustomers);
+            result.addAll(currentAssignedCustomers);
+            return result;
+        } else {
+            return currentAssignedCustomers.stream()
+                    .filter(info -> !edgeCustomerId.equals(info.getCustomerId()))
+                    .collect(Collectors.toSet());
+        }
     }
 
     @Override
     public EdgeEventType getEdgeEventType() {
         return EdgeEventType.DASHBOARD;
     }
-
 }

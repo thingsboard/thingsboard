@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -27,9 +27,10 @@ import { UsageInfoService } from '@core/http/usage-info.service';
 import { ShortNumberPipe } from '@shared/pipe/short-number.pipe';
 
 @Component({
-  selector: 'tb-usage-info-widget',
-  templateUrl: './usage-info-widget.component.html',
-  styleUrls: ['./home-page-widget.scss', './usage-info-widget.component.scss']
+    selector: 'tb-usage-info-widget',
+    templateUrl: './usage-info-widget.component.html',
+    styleUrls: ['./home-page-widget.scss', './usage-info-widget.component.scss'],
+    standalone: false
 })
 export class UsageInfoWidgetComponent extends PageComponent implements OnInit, OnDestroy {
 

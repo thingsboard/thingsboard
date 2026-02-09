@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
   <div class="tb-single-switch-title-panel">
     <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
   </div>
-  <div #singleSwitchContent class="tb-single-switch-content" [class]="this.layout" [class.no-label]="!showIcon && !showLabel" [class.auto-scale]="autoScale">
+  <div #singleSwitchContent class="tb-single-switch-content" [class]="layout" [class.no-label]="!showIcon && !showLabel" [class.auto-scale]="autoScale">
     <div *ngIf="showIcon || showLabel" #singleSwitchLabelRow class="tb-single-switch-label-row">
       <tb-icon *ngIf="showIcon" [style]="iconStyle"
                [style.color]="(disabled || (loading$ | async)) ? disabledColor : settings.iconColor">{{ icon }}</tb-icon>

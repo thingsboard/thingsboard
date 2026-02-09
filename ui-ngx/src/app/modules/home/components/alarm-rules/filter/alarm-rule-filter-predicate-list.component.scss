@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@import "../../../../../../scss/constants";
+
 :host {
   .filter-title {
     padding: 12px 8px;
     font-size: 14px;
     font-weight: 500;
   }
-  .predicate-list {
-    .no-data-found {
-      height: 50px;
-    }
+  .no-data-found {
+    height: 50px;
+    font-size: 16px;
   }
 
   .key-filter-list-divider {
@@ -41,11 +42,11 @@
     &-label {
       font-size: 15px;
       font-weight: 400;
-      color: #00695C;
+      color: $tb-primary-color;
       padding: 0 8px;
       border-radius: 4px;
-      border: 1px solid rgba(#00695C, 0.32);
-      background-color: rgba(#00695C, 0.04);
+      border: 1px solid rgba($tb-primary-color, 0.32);
+      background-color: rgba($tb-primary-color, 0.04);
     }
   }
 }

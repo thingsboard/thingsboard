@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -52,7 +52,8 @@ export interface ImageCardsColumns {
   {
     // eslint-disable-next-line @angular-eslint/directive-selector
     selector: 'tb-image-cards-select-option',
-  }
+    standalone: false
+}
 )
 export class ImageCardsSelectOptionDirective {
 
@@ -70,17 +71,18 @@ export class ImageCardsSelectOptionDirective {
 }
 
 @Component({
-  selector: 'tb-image-cards-select',
-  templateUrl: './image-cards-select.component.html',
-  styleUrls: ['./image-cards-select.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ImageCardsSelectComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-image-cards-select',
+    templateUrl: './image-cards-select.component.html',
+    styleUrls: ['./image-cards-select.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ImageCardsSelectComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class ImageCardsSelectComponent implements ControlValueAccessor, OnInit, OnChanges, AfterContentInit, OnDestroy {
 

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -370,6 +370,34 @@
         </div>
         <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
           <mat-form-field class="mat-block flex-1" appearance="fill" subscriptSizing="dynamic">
+            <mat-label translate>tenant-profile.intermediate-aggregation-interval</mat-label>
+            <input matInput required min="0" step="1"
+                   formControlName="intermediateAggregationIntervalInSecForCF"
+                   type="number">
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('intermediateAggregationIntervalInSecForCF').hasError('required')">
+              {{ 'tenant-profile.intermediate-aggregation-interval-required' | translate}}
+            </mat-error>
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('intermediateAggregationIntervalInSecForCF').hasError('min')">
+              {{ 'tenant-profile.intermediate-aggregation-interval-range' | translate}}
+            </mat-error>
+            <mat-hint></mat-hint>
+          </mat-form-field>
+          <mat-form-field class="mat-block flex-1" appearance="fill" subscriptSizing="dynamic">
+            <mat-label translate>tenant-profile.reevaluation-check-interval</mat-label>
+            <input matInput required min="0" step="1"
+                   formControlName="cfReevaluationCheckInterval"
+                   type="number">
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('cfReevaluationCheckInterval').hasError('required')">
+              {{ 'tenant-profile.reevaluation-check-interval-required' | translate}}
+            </mat-error>
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('cfReevaluationCheckInterval').hasError('min')">
+              {{ 'tenant-profile.reevaluation-check-interval-range' | translate}}
+            </mat-error>
+            <mat-hint></mat-hint>
+          </mat-form-field>
+        </div>
+        <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
+          <mat-form-field class="mat-block flex-1" appearance="fill" subscriptSizing="dynamic">
             <mat-label translate>tenant-profile.relation-search-entity-limit</mat-label>
             <input matInput required min="1" step="1"
                    formControlName="maxRelatedEntitiesToReturnPerCfArgument"
@@ -525,6 +553,22 @@
         </mat-error>
         <mat-hint></mat-hint>
       </mat-form-field>
+    </div>
+    <div class="fields-element flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
+      <mat-form-field class="mat-block flex-1" appearance="fill" subscriptSizing="dynamic">
+        <mat-label translate>tenant-profile.alarms-reevaluation-interval</mat-label>
+        <input matInput required min="0" step="1"
+               formControlName="alarmsReevaluationInterval"
+               type="number">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('alarmsReevaluationInterval').hasError('required')">
+          {{ 'tenant-profile.alarms-reevaluation-interval-required' | translate}}
+        </mat-error>
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('alarmsReevaluationInterval').hasError('min')">
+          {{ 'tenant-profile.alarms-reevaluation-interval-range' | translate}}
+        </mat-error>
+        <mat-hint></mat-hint>
+      </mat-form-field>
+      <div class="flex-1"></div>
     </div>
   </fieldset>
 

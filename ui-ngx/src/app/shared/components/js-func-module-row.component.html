@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -37,14 +37,14 @@
                             placeholder="{{ 'widget-config.set' | translate }}">
   </tb-resource-autocomplete>
   <div class="tb-form-table-row-cell-buttons">
-    <div [tb-help-popup-async-content]="this.moduleRowFormGroup.get('moduleLink').value ? moduleDescription : null"
+    <div [tb-help-popup-async-content]="moduleRowFormGroup.get('moduleLink').value ? moduleDescription : null"
          tb-help-popup-placement="top"
          [tb-help-popup-style]="{marginTop: '8px'}"
          help-icon-button-class=""
          help-icon="info_outline"
          help-opened-icon="info"
          help-icon-tooltip="{{ 'js-func.show-module-info' | translate }}"></div>
-    <div [tb-help-popup-async-content]="this.moduleRowFormGroup.get('moduleLink').value ? moduleSourceCode : null"
+    <div [tb-help-popup-async-content]="moduleRowFormGroup.get('moduleLink').value ? moduleSourceCode : null"
          tb-help-popup-placement="top"
          [tb-help-popup-style]="{marginTop: '8px'}"
          help-icon-button-class=""

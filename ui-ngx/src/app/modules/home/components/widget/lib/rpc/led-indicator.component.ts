@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -46,9 +46,10 @@ interface LedIndicatorSettings {
 }
 
 @Component({
-  selector: 'tb-led-indicator',
-  templateUrl: './led-indicator.component.html',
-  styleUrls: ['./led-indicator.component.scss']
+    selector: 'tb-led-indicator',
+    templateUrl: './led-indicator.component.html',
+    styleUrls: ['./led-indicator.component.scss'],
+    standalone: false
 })
 export class LedIndicatorComponent extends PageComponent implements OnInit, OnDestroy {
 

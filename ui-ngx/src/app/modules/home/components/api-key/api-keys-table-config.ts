@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ export class ApiKeysTableConfig extends EntityTableConfig<ApiKeyInfo> {
       new DateEntityTableColumn<ApiKeyInfo>('createdTime', 'common.created-time', this.datePipe, '170px'),
       new EntityTableColumn<ApiKeyInfo>('description', 'api-key.description', '100%',
         (entity) => this.customTranslate.transform(entity?.description), () => ({}), true, () => ({}),
-        (entity) => entity?.description.length > 80 ? this.customTranslate.transform(entity.description) : undefined, false,
+        (entity) => entity?.description.length > 40 ? this.customTranslate.transform(entity.description) : undefined, false,
         {
           name: this.translate.instant('api-key.edit-description'),
           icon: 'edit',

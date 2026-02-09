@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -27,16 +27,17 @@ import { MapSettingsContext } from '@home/components/widget/lib/settings/common/
 import { DatasourceType } from '@shared/models/widget.models';
 
 @Component({
-  selector: 'tb-data-layer-color-settings',
-  templateUrl: './data-layer-color-settings.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DataLayerColorSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-data-layer-color-settings',
+    templateUrl: './data-layer-color-settings.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DataLayerColorSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class DataLayerColorSettingsComponent implements ControlValueAccessor {
 

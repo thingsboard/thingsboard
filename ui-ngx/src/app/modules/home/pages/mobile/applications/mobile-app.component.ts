@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -26,14 +26,15 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { MobileApp, MobileAppStatus, mobileAppStatusTranslations } from '@shared/models/mobile-app.models';
 import { PlatformType, platformTypeTranslations } from '@shared/models/oauth2.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { MatButton } from '@angular/material/button';
+import { MatIconButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { EditorPanelComponent } from '@home/pages/mobile/common/editor-panel.component';
 
 @Component({
-  selector: 'tb-mobile-app',
-  templateUrl: './mobile-app.component.html',
-  styleUrls: ['./mobile-app.component.scss']
+    selector: 'tb-mobile-app',
+    templateUrl: './mobile-app.component.html',
+    styleUrls: ['./mobile-app.component.scss'],
+    standalone: false
 })
 export class MobileAppComponent extends EntityComponent<MobileApp> {
 
@@ -152,7 +153,7 @@ export class MobileAppComponent extends EntityComponent<MobileApp> {
     this.entityForm.get('appSecret').markAsDirty();
   }
 
-  editReleaseNote($event: Event, matButton: MatButton, isLatest: boolean) {
+  editReleaseNote($event: Event, matButton: MatIconButton, isLatest: boolean) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -176,7 +177,7 @@ export class MobileAppComponent extends EntityComponent<MobileApp> {
         context: ctx,
         showCloseButton: false,
         popoverContentStyle: {padding: '16px 24px'},
-        isModal: false
+        isModal: true
       });
       releaseNotesPanelPopover.tbComponentRef.instance.popover = releaseNotesPanelPopover;
       releaseNotesPanelPopover.tbComponentRef.instance.editorContentApplied.subscribe((releaseNotes) => {

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -161,14 +161,17 @@ public class TenantProfileController extends BaseController {
                     "      \"warnThreshold\": 0,\n" +
                     "      \"maxCalculatedFieldsPerEntity\": 5,\n" +
                     "      \"maxArgumentsPerCF\": 10,\n" +
-                    "      \"minAllowedScheduledUpdateIntervalInSecForCF\": 60,\n" +
-                    "      \"maxRelationLevelPerCfArgument\": 10,\n" +
+                    "      \"minAllowedScheduledUpdateIntervalInSecForCF\": 10,\n" +
+                    "      \"maxRelationLevelPerCfArgument\": 2,\n" +
                     "      \"maxRelatedEntitiesToReturnPerCfArgument\": 100,\n" +
                     "      \"maxDataPointsPerRollingArg\": 1000,\n" +
                     "      \"maxStateSizeInKBytes\": 32,\n" +
-                    "      \"maxSingleValueArgumentSizeInKBytes\": 2" +
-                    "      \"minAllowedDeduplicationIntervalInSecForCF\": 60" +
-                    "      \"minAllowedAggregationIntervalInSecForCF\": 60" +
+                    "      \"maxSingleValueArgumentSizeInKBytes\": 2," +
+                    "      \"minAllowedDeduplicationIntervalInSecForCF\": 10," +
+                    "      \"minAllowedAggregationIntervalInSecForCF\": 60," +
+                    "      \"intermediateAggregationIntervalInSecForCF\": 300," +
+                    "      \"cfReevaluationCheckInterval\": 60," +
+                    "      \"alarmsReevaluationInterval\": 60" +
                     "    }\n" +
                     "  },\n" +
                     "  \"default\": false\n" +
@@ -188,7 +191,7 @@ public class TenantProfileController extends BaseController {
             oldProfile = checkTenantProfileId(tenantProfile.getId(), Operation.WRITE);
         }
 
-        return tbTenantProfileService.save(getTenantId(), tenantProfile, oldProfile);
+        return tbTenantProfileService.save(getTenantId(), tenantProfile, oldProfile, getCurrentUser());
     }
 
     @ApiOperation(value = "Delete Tenant Profile (deleteTenantProfile)",
@@ -201,7 +204,7 @@ public class TenantProfileController extends BaseController {
         checkParameter("tenantProfileId", strTenantProfileId);
         TenantProfileId tenantProfileId = new TenantProfileId(toUUID(strTenantProfileId));
         TenantProfile profile = checkTenantProfileId(tenantProfileId, Operation.DELETE);
-        tbTenantProfileService.delete(getTenantId(), profile);
+        tbTenantProfileService.delete(getTenantId(), profile, getCurrentUser());
     }
 
     @ApiOperation(value = "Make tenant profile default (setDefaultTenantProfile)",
@@ -214,7 +217,7 @@ public class TenantProfileController extends BaseController {
         checkParameter("tenantProfileId", strTenantProfileId);
         TenantProfileId tenantProfileId = new TenantProfileId(toUUID(strTenantProfileId));
         TenantProfile tenantProfile = checkTenantProfileId(tenantProfileId, Operation.WRITE);
-        tenantProfileService.setDefaultTenantProfile(getTenantId(), tenantProfileId);
+        tenantProfile = tbTenantProfileService.setDefaultTenantProfile(getTenantId(), tenantProfile, getCurrentUser());
         return tenantProfile;
     }
 

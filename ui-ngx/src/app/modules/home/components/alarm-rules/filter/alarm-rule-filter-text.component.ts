@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -39,10 +39,11 @@ import { coerceBoolean } from "@shared/decorators/coercion";
 import { timeUnitTranslationMap } from "@shared/models/time/time.models";
 
 @Component({
-  selector: 'tb-alarm-rule-filter-text',
-  templateUrl: './alarm-rule-filter-text.component.html',
-  styleUrls: ['./alarm-rule-filter-text.component.scss'],
-  providers: []
+    selector: 'tb-alarm-rule-filter-text',
+    templateUrl: './alarm-rule-filter-text.component.html',
+    styleUrls: ['./alarm-rule-filter-text.component.scss'],
+    providers: [],
+    standalone: false
 })
 export class AlarmRuleFilterTextComponent {
 
@@ -62,6 +63,10 @@ export class AlarmRuleFilterTextComponent {
 
   @Input()
   arguments: Record<string, CalculatedFieldArgument>;
+
+  @Input()
+  @coerceBoolean()
+  disabled = false;
 
   private alarmRuleExpressionValue: AlarmRuleExpression;
   get alarmRuleExpression(): AlarmRuleExpression {

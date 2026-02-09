@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,15 +15,14 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { TranslateParser } from '@ngx-translate/core';
+import { InterpolateFunction, InterpolationParameters, TranslateParser } from '@ngx-translate/core';
 import { isDefinedAndNotNull } from '@core/utils';
 
 @Injectable({ providedIn: 'root' })
 export class TranslateDefaultParser extends TranslateParser {
   templateMatcher: RegExp = /{{\s?([^{}\s]*)\s?}}/g;
 
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  public interpolate(expr: string | Function, params?: any): string {
+  public interpolate(expr: string | InterpolateFunction, params?: InterpolationParameters): string {
     let result: string;
 
     if (typeof expr === 'string') {
@@ -58,12 +57,11 @@ export class TranslateDefaultParser extends TranslateParser {
     return target;
   }
 
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  private interpolateFunction(fn: Function, params?: any) {
+  private interpolateFunction(fn: InterpolateFunction, params?: InterpolationParameters) {
     return fn(params);
   }
 
-  private interpolateString(expr: string, params?: any) {
+  private interpolateString(expr: string, params?: InterpolationParameters) {
     if (!params) {
       return expr;
     }

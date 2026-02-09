@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.action.TbAlarmResult;
@@ -86,10 +85,6 @@ import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
 @Slf4j
 @DaoSqlTest
-@TestPropertySource(properties = {
-        "actors.calculated_fields.check_interval=1",
-        "actors.alarms.reevaluation_interval=1"
-})
 public class AlarmRulesTest extends AbstractControllerTest {
 
     @MockitoSpyBean
@@ -105,6 +100,13 @@ public class AlarmRulesTest extends AbstractControllerTest {
 
     @Before
     public void beforeEach() throws Exception {
+        loginSysAdmin();
+
+        updateDefaultTenantProfileConfig(tenantProfileConfig -> {
+            tenantProfileConfig.setCfReevaluationCheckInterval(1);
+            tenantProfileConfig.setAlarmsReevaluationInterval(1);
+        });
+
         loginTenantAdmin();
         device = createDevice("Device A", "aaa");
         deviceId = device.getId();
@@ -187,6 +189,30 @@ public class AlarmRulesTest extends AbstractControllerTest {
                 arguments, createRules, null);
 
         postTelemetry(deviceId, "{\"temperature\":100}");
+        checkAlarmResult(calculatedField, alarmResult -> {
+            assertThat(alarmResult.isCreated()).isTrue();
+            assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.CRITICAL);
+            assertThat(alarmResult.getAlarm().getStatus()).isEqualTo(AlarmStatus.ACTIVE_UNACK);
+        });
+    }
+
+    @Test
+    public void testCreateAlarm_eventBeforeDefaultTs() throws Exception {
+        Argument temperatureArgument = new Argument();
+        temperatureArgument.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
+        temperatureArgument.setDefaultValue("0");
+        Map<String, Argument> arguments = Map.of(
+                "temperature", temperatureArgument
+        );
+
+        Map<AlarmSeverity, Condition> createRules = Map.of(
+                AlarmSeverity.CRITICAL, new Condition("return temperature >= 50;", null, null)
+        );
+
+        CalculatedField calculatedField = createAlarmCf(deviceId, "High Temperature Alarm",
+                arguments, createRules, null);
+
+        postTelemetry(deviceId, "{\"values\": {\"temperature\": 50}, \"ts\": " + (System.currentTimeMillis() - TimeUnit.DAYS.toMillis(30) + "}"));
         checkAlarmResult(calculatedField, alarmResult -> {
             assertThat(alarmResult.isCreated()).isTrue();
             assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.CRITICAL);
@@ -341,6 +367,32 @@ public class AlarmRulesTest extends AbstractControllerTest {
                 arguments, createRules, null);
         postTelemetry(deviceId, "{\"powerConsumption\":3500}");
         postAttributes(deviceId, AttributeScope.SERVER_SCOPE, "{\"duration\":" + createDurationMs + "}");
+
+        checkAlarmResult(calculatedField, alarmResult -> {
+            assertThat(alarmResult.isCreated()).isTrue();
+            assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.CRITICAL);
+            assertThat(alarmResult.getAlarm().getStatus()).isEqualTo(AlarmStatus.ACTIVE_UNACK);
+            assertThat(alarmResult.getConditionDuration()).isBetween(createDurationMs, createDurationMs + 2000);
+        });
+    }
+
+    @Test
+    public void testCreateAlarm_durationCondition_defaultValue() {
+        Argument powerConsumptionArgument = new Argument();
+        powerConsumptionArgument.setRefEntityKey(new ReferencedEntityKey("powerConsumption", ArgumentType.TS_LATEST, null));
+        powerConsumptionArgument.setDefaultValue("3500");
+        Map<String, Argument> arguments = Map.of(
+                "powerConsumption", powerConsumptionArgument
+        );
+
+        long createDurationMs = 2000L;
+        Map<AlarmSeverity, Condition> createRules = Map.of(
+                AlarmSeverity.CRITICAL, new Condition("return powerConsumption >= 3000;", null, null,
+                        new AlarmConditionValue<Long>(2000L, null), null)
+        );
+
+        CalculatedField calculatedField = createAlarmCf(deviceId, "High power consumption during 2 seconds",
+                arguments, createRules, null);
 
         checkAlarmResult(calculatedField, alarmResult -> {
             assertThat(alarmResult.isCreated()).isTrue();

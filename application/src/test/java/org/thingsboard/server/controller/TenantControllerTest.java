@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,6 +68,7 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.QueueKey;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -77,6 +78,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -186,6 +188,51 @@ public class TenantControllerTest extends AbstractControllerTest {
         Assert.assertEquals(savedTenant, foundTenant);
         deleteTenant(savedTenant.getId());
     }
+
+    @Test
+    public void testFindTenantsByIds() throws Exception {
+        loginSysAdmin();
+
+        List<Tenant> savedTenants = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            Tenant tenant = new Tenant();
+            tenant.setTitle("My tenant " + i);
+            savedTenants.add(saveTenant(tenant));
+        }
+
+        String idsParam = savedTenants.stream()
+                .map(t -> t.getId().getId().toString())
+                .collect(Collectors.joining(","));
+
+        Tenant[] foundTenants = doGet("/api/tenants?tenantIds=" + idsParam, Tenant[].class);
+
+        Assert.assertNotNull(foundTenants);
+        Assert.assertEquals(savedTenants.size(), foundTenants.length);
+
+        Map<UUID, Tenant> foundById = Arrays.stream(foundTenants)
+                .collect(Collectors.toMap(t -> t.getId().getId(), Function.identity()));
+
+        for (Tenant savedTenant : savedTenants) {
+            UUID id = savedTenant.getId().getId();
+            Tenant foundTenant = foundById.get(id);
+            Assert.assertNotNull("Tenant not found for id " + id, foundTenant);
+            Assert.assertEquals(savedTenant, foundTenant);
+        }
+
+        loginTenantAdmin();
+        Tenant[] foundTenantsByTenant = doGet("/api/tenants?tenantIds=" + idsParam, Tenant[].class);
+        assertThat(foundTenantsByTenant).isEmpty();
+
+        Tenant[] foundCurrentTenant = doGet("/api/tenants?tenantIds=" + tenantId, Tenant[].class);
+        assertThat(foundCurrentTenant).hasSize(1);
+        assertThat(foundCurrentTenant[0].getTenantId()).isEqualTo(tenantId);
+
+        loginSysAdmin();
+        for (Tenant savedTenant : savedTenants) {
+            deleteTenant(savedTenant.getId());
+        }
+    }
+
 
     @Test
     public void testFindTenantInfoById() throws Exception {

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.entitiy;
 
+import jakarta.validation.constraints.NotNull;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -37,7 +38,7 @@ public interface TbLogEntityActionService {
     <E extends HasName, I extends EntityId> void logEntityAction(TenantId tenantId, I entityId, E entity, CustomerId customerId,
                                                                  ActionType actionType, User user, Object... additionalInfo);
 
-    <E extends HasName, I extends EntityId> void logEntityAction(TenantId tenantId, I entityId, E entity, CustomerId customerId,
+    <E extends HasName, I extends EntityId> void logEntityAction(TenantId tenantId, @NotNull I entityId, E entity, CustomerId customerId,
                                                                  ActionType actionType, User user, Exception e,
                                                                  Object... additionalInfo);
 

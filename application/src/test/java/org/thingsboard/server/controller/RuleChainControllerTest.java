@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,12 +47,17 @@ import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.rule.RuleChainDao;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -230,6 +235,44 @@ public class RuleChainControllerTest extends AbstractControllerTest {
         Assert.assertNotNull(foundRuleChain);
         Assert.assertEquals(savedRuleChain, foundRuleChain);
     }
+
+    @Test
+    public void testFindRuleChainsByIds() throws Exception {
+        List<RuleChain> ruleChains = new ArrayList<>();
+        for (int i = 0; i < 20; i++) {
+            RuleChain ruleChain = new RuleChain();
+            ruleChain.setName("RuleChain " + i);
+            ruleChains.add(doPost("/api/ruleChain", ruleChain, RuleChain.class));
+        }
+
+        List<RuleChain> expected = ruleChains.subList(5, 15);
+
+        String idsParam = expected.stream()
+                .map(rc -> rc.getId().getId().toString())
+                .collect(Collectors.joining(","));
+
+        RuleChain[] result = doGet(
+                "/api/ruleChains?ruleChainIds=" + idsParam,
+                RuleChain[].class
+        );
+
+        Assert.assertNotNull(result);
+        Assert.assertEquals(expected.size(), result.length);
+
+        Map<UUID, RuleChain> rcById = Arrays.stream(result)
+                .collect(Collectors.toMap(rc -> rc.getId().getId(), Function.identity()));
+
+        for (RuleChain rc : expected) {
+            UUID id = rc.getId().getId();
+            RuleChain found = rcById.get(id);
+            Assert.assertNotNull("RuleChain not found for id " + id, found);
+
+            Assert.assertEquals(rc.getId(), found.getId());
+            Assert.assertEquals(rc.getName(), found.getName());
+            Assert.assertEquals(rc.getTenantId(), found.getTenantId());
+        }
+    }
+
 
     @Test
     public void testDeleteRuleChain() throws Exception {

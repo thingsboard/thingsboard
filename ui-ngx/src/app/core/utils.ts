@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ import {
 } from '@shared/models/js-function.models';
 import { DomSanitizer } from '@angular/platform-browser';
 import { SecurityContext } from '@angular/core';
-import { AbstractControl, ValidationErrors, Validators } from '@angular/forms';
+import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 
 const varsRegex = /\${([^}]*)}/g;
 const emailRegex = /^[A-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
@@ -421,7 +421,7 @@ export function mergeDeep<T>(target: T, ...sources: T[]): T {
 
 function ignoreArrayMergeFunc(target: any, sources: any) {
   if (_.isArray(target)) {
-    return sources;
+    return deepClone(sources);
   }
 }
 
@@ -795,31 +795,72 @@ export function deepTrim<T>(obj: T): T {
   }, (Array.isArray(obj) ? [] : {}) as T);
 }
 
+const isValidValue = (value: any): boolean => {
+  return (
+    value !== undefined &&
+    value !== null &&
+    value !== '' &&
+    !Number.isNaN(value)
+  );
+};
+
 export function deepClean<T extends Record<string, any> | any[]>(obj: T, {
-  cleanKeys = []
+  cleanKeys = [],
+  cleanOnlyKey = false
 } = {}): T {
-  return _.transform(obj, (result, value, key) => {
-    if (cleanKeys.includes(key)) {
-      return;
-    }
-    if (Array.isArray(value) || isLiteralObject(value)) {
-      value = deepClean(value, {cleanKeys});
-    }
-    if(isLiteralObject(value) && isEmpty(value)) {
-      return;
-    }
-    if (Array.isArray(value) && !value.length) {
-      return;
-    }
-    if (value === undefined || value === null || value === '' || Number.isNaN(value)) {
-      return;
+  const keysToRemove = new Set(cleanKeys);
+
+  const clean = (input: any): any => {
+    if (Array.isArray(input)) {
+      const result: any[] = [];
+      for (const item of input) {
+        const value = clean(item);
+
+        if (cleanOnlyKey) {
+          result.push(value);
+          continue;
+        }
+
+        if (isValidValue(value)) {
+          const isEmptyArray = Array.isArray(value) && value.length === 0;
+          const isEmptyObj = isLiteralObject(value) && Object.keys(value).length === 0;
+
+          if (!isEmptyArray && !isEmptyObj) {
+            result.push(value);
+          }
+        }
+      }
+      return result;
     }
 
-    if (Array.isArray(result)) {
-      return result.push(value);
+    if (isLiteralObject(input)) {
+      const result: Record<string, any> = {};
+
+      for (const key in input) {
+        if (keysToRemove.has(key)) continue;
+
+        const value = clean(input[key]);
+
+        if (cleanOnlyKey) {
+          result[key] = value;
+          continue;
+        }
+
+        if (isValidValue(value)) {
+          const isEmptyArray = Array.isArray(value) && value.length === 0;
+          const isEmptyObj = isLiteralObject(value) && Object.keys(value).length === 0;
+
+          if (!isEmptyArray && !isEmptyObj) {
+            result[key] = value;
+          }
+        }
+      }
+      return result;
     }
-    result[key] = value;
-  });
+    return input;
+  };
+
+  return clean(obj);
 }
 
 export function generateSecret(length?: number): string {
@@ -1043,3 +1084,12 @@ export const validateEmail = (control: AbstractControl): ValidationErrors | null
   return emailRegex.test(control.value) ? null : {email: true};
 };
 
+export const objectRequired = (): ValidatorFn => {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const value = control.value;
+    if (value && !isObject(value)) {
+      return { objectRequired: true };
+    }
+    return null;
+  };
+}

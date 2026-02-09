@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -29,17 +29,18 @@ import { DocumentationLink } from '@shared/models/user-settings.models';
 import { ErrorStateMatcher } from '@angular/material/core';
 
 @Component({
-  selector: 'tb-doc-link',
-  templateUrl: './doc-link.component.html',
-  styleUrls: ['./link.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DocLinkComponent),
-      multi: true
-    },
-    {provide: ErrorStateMatcher, useExisting: DocLinkComponent}
-  ]
+    selector: 'tb-doc-link',
+    templateUrl: './doc-link.component.html',
+    styleUrls: ['./link.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DocLinkComponent),
+            multi: true
+        },
+        { provide: ErrorStateMatcher, useExisting: DocLinkComponent }
+    ],
+    standalone: false
 })
 export class DocLinkComponent extends PageComponent implements OnInit, ControlValueAccessor, ErrorStateMatcher {
 

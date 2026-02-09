@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
     top: 0;
     z-index: 5;
     padding-bottom: 12px;
-    background-color: var(--mdc-dialog-container-color, white);
+    background-color: var(--mat-dialog-container-color, white);
 
     .tb-hint-available-params {
       color: rgba(0, 0, 0, 0.54);
@@ -54,10 +54,10 @@
     }
 
     &.tb-error {
-      color: var(--mdc-theme-error, #f44336);
+      color: var(--mat-theme-error, #f44336);
 
       &.tb-required::after {
-        color: var(--mdc-theme-error, #f44336);
+        color: var(--mat-theme-error, #f44336);
       }
     }
   }

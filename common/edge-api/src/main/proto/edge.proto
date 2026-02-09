@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,11 @@ enum EdgeVersion {
   V_4_1_0 = 11;
   V_4_2_0 = 12;
   V_4_3_0 = 13;
+  V_4_2_1_2 = 14;
+  V_4_2_1_3 = 420;
+  V_4_3_0_1 = 15;
+  V_4_3_0_2 = 430;
+  V_4_4_0 = 440;
 
   V_LATEST = 999;
 }

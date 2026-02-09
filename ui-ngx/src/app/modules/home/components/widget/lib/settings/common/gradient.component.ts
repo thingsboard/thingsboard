@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -37,16 +37,17 @@ import { DataKeysCallbacks } from '@home/components/widget/lib/settings/common/k
 import { Datasource } from '@shared/models/widget.models';
 
 @Component({
-  selector: 'tb-gradient',
-  templateUrl: './gradient.component.html',
-  styleUrls: ['color-settings-panel.component.scss', 'gradient.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => GradientComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-gradient',
+    templateUrl: './gradient.component.html',
+    styleUrls: ['color-settings-panel.component.scss', 'gradient.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => GradientComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class GradientComponent implements OnInit, ControlValueAccessor, OnDestroy {
 
@@ -117,9 +118,6 @@ export class GradientComponent implements OnInit, ControlValueAccessor, OnDestro
     this.gradientFormGroup.valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe(() => this.updateModel());
-    this.gradientFormGroup.get('advancedMode').valueChanges.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe(() => setTimeout(() => {this.popover?.updatePosition();}, 0));
   }
 
   ngOnDestroy() {
@@ -236,7 +234,6 @@ export class GradientComponent implements OnInit, ControlValueAccessor, OnDestro
       this.gradientListFormArray.removeAt(index);
     }
     this.gradientFormGroup.markAsDirty();
-    setTimeout(() => {this.popover?.updatePosition();}, 0);
   }
 
   gradientDrop(event: CdkDragDrop<string[]>, advanced = false) {
@@ -255,7 +252,6 @@ export class GradientComponent implements OnInit, ControlValueAccessor, OnDestro
       this.gradientListFormArray.push(this.colorGradientControl('rgba(0,0,0,0.87)'));
     }
     this.gradientFormGroup.markAsDirty();
-    setTimeout(() => {this.popover?.updatePosition();}, 0);
   }
 
   updateModel() {

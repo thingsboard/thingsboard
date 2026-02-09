@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ import { fromEvent, Subscription } from 'rxjs';
 import { POSITION_MAP } from '@shared/models/overlay.models';
 import { UtilsService } from '@core/services/utils.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AlarmRuleFilterConfig } from "@shared/models/alarm-rule.models";
+import { alarmRuleEntityTypeList, AlarmRuleFilterConfig } from "@shared/models/alarm-rule.models";
 
 export const ALARM_FILTER_CONFIG_DATA = new InjectionToken<any>('AlarmRuleFilterConfigData');
 
@@ -51,16 +51,17 @@ export interface AlarmRuleFilterConfigData {
 }
 
 @Component({
-  selector: 'tb-alarm-rule-filter-config',
-  templateUrl: './alarm-rule-filter-config.component.html',
-  styleUrls: ['./alarm-rule-filter-config.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => AlarmRuleFilterConfigComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-alarm-rule-filter-config',
+    templateUrl: './alarm-rule-filter-config.component.html',
+    styleUrls: ['./alarm-rule-filter-config.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => AlarmRuleFilterConfigComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class AlarmRuleFilterConfigComponent implements OnInit, ControlValueAccessor {
 
@@ -72,14 +73,6 @@ export class AlarmRuleFilterConfigComponent implements OnInit, ControlValueAcces
   @coerceBoolean()
   @Input()
   buttonMode = true;
-
-  @coerceBoolean()
-  @Input()
-  userMode = false;
-
-  @coerceBoolean()
-  @Input()
-  propagatedFilter = true;
 
   @Input()
   initialAlarmRuleFilterConfig: AlarmRuleFilterConfig = {
@@ -100,7 +93,7 @@ export class AlarmRuleFilterConfigComponent implements OnInit, ControlValueAcces
 
   entityType = EntityType;
 
-  listEntityTypes = [EntityType.DEVICE, EntityType.ASSET, EntityType.CUSTOMER, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE];
+  listEntityTypes = alarmRuleEntityTypeList;
   entityTypeTranslations = entityTypeTranslations;
 
   private alarmRuleFilterConfig: AlarmRuleFilterConfig;
@@ -124,7 +117,6 @@ export class AlarmRuleFilterConfigComponent implements OnInit, ControlValueAcces
   ngOnInit(): void {
     if (this.data) {
       this.panelMode = this.data.panelMode;
-      this.userMode = this.data.userMode;
       this.alarmRuleFilterConfig = this.data.alarmRuleFilterConfig;
       this.initialAlarmRuleFilterConfig = this.data.initialAlarmRuleFilterConfig;
       if (this.panelMode && !this.initialAlarmRuleFilterConfig) {
@@ -205,6 +197,7 @@ export class AlarmRuleFilterConfigComponent implements OnInit, ControlValueAcces
 
   cancel() {
     this.updateAlarmRuleConfigForm(this.alarmRuleFilterConfig);
+    this.alarmRuleFilterConfigForm.markAsPristine();
     if (this.overlayRef) {
       this.overlayRef.dispose();
     } else {
@@ -248,7 +241,7 @@ export class AlarmRuleFilterConfigComponent implements OnInit, ControlValueAcces
       if (!isArraysEqualIgnoreUndefined(filter1.entities, filter2.entities)) {
         return false;
       }
-      return filter1.entityType !== filter2.entityType;
+      return filter1.entityType === filter2.entityType;
     }
     return false;
   };
@@ -287,7 +280,7 @@ export class AlarmRuleFilterConfigComponent implements OnInit, ControlValueAcces
       if (!filterTextParts.length) {
         this.buttonDisplayValue = this.translate.instant('alarm-rule.alarm-rule-filter-title');
       } else {
-        this.buttonDisplayValue = this.translate.instant('alarm-rule.alarm-rule-filter-title') + `: ${filterTextParts.join(', ')}`;
+        this.buttonDisplayValue = this.translate.instant('alarm-rule.filter-title') + `: ${filterTextParts.join(', ')}`;
       }
     }
   }

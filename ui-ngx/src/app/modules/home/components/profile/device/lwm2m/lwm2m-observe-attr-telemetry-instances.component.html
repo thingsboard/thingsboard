@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@
           </div>
           <div class="flex max-w-10% flex-full items-center justify-center">
             <mat-checkbox color="warn"
-                          [disabled]="this.disabled"
+                          [disabled]="disabled"
                           [checked]="getChecked(instances, 'attribute')"
                           (click)="$event.stopPropagation()"
                           (change)="changeInstanceResourcesCheckBox($event.checked, instances, 'attribute')"
@@ -39,7 +39,7 @@
           </div>
           <div class="flex max-w-10% flex-full items-center justify-center">
             <mat-checkbox color="primary"
-                          [disabled]="this.disabled"
+                          [disabled]="disabled"
                           [checked]="getChecked(instances, 'telemetry')"
                           (click)="$event.stopPropagation()"
                           (change)="changeInstanceResourcesCheckBox($event.checked, instances, 'telemetry')"

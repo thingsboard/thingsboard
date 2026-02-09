@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -53,22 +53,23 @@ import { catchError } from 'rxjs/operators';
 import { tbelUtilsAutocompletes, tbelUtilsFuncHighlightRules } from '@shared/models/ace/tbel-utils.models';
 
 @Component({
-  selector: 'tb-js-func',
-  templateUrl: './js-func.component.html',
-  styleUrls: ['./js-func.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => JsFuncComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => JsFuncComponent),
-      multi: true,
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-js-func',
+    templateUrl: './js-func.component.html',
+    styleUrls: ['./js-func.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => JsFuncComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => JsFuncComponent),
+            multi: true,
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class JsFuncComponent implements OnInit, OnChanges, OnDestroy, ControlValueAccessor, Validator {
 

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,32 +14,39 @@
 /// limitations under the License.
 ///
 
-import { Component, DestroyRef, Inject, ViewEncapsulation } from '@angular/core';
+import { Component, DestroyRef, Inject, ViewChild, ViewEncapsulation } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { CalculatedField, CalculatedFieldArgument, CalculatedFieldType } from '@shared/models/calculated-field.models';
-import { oneSpaceInsideRegex } from '@shared/models/regex.constants';
-import { AliasEntityType, EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
+import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ScriptLanguage } from '@shared/models/rule-node.models';
 import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AdditionalDebugActionConfig } from '@home/components/entity/debug/entity-debug-settings.model';
 import { COMMA, ENTER, SEMICOLON } from "@angular/cdk/keycodes";
-import { MatChipInputEvent } from "@angular/material/chips";
 import {
   AlarmRule,
   AlarmRuleConditionType,
+  alarmRuleEntityTypeList,
   AlarmRuleExpressionType,
   AlarmRuleTestScriptFn
 } from "@shared/models/alarm-rule.models";
 import { deepTrim } from "@core/utils";
-import { Observable } from "rxjs";
-import { switchMap } from "rxjs/operators";
+import { combineLatest, Observable } from "rxjs";
+import { debounceTime, startWith } from "rxjs/operators";
+import { RelationTypes } from "@shared/models/relation.models";
+import { StringItemsOption } from "@shared/components/string-items-list.component";
+import { BaseData } from "@shared/models/base-data";
+import { CalculatedFieldFormService } from '@core/services/calculated-field-form.service';
+import { EntitySelectComponent } from '@shared/components/entity/entity-select.component';
+import { NULL_UUID } from '@shared/models/id/has-uuid';
+import { AssetInfo } from '@shared/models/asset.models';
+import { DeviceInfo } from '@shared/models/device.models';
 
 export interface AlarmRuleDialogData {
   value?: CalculatedField;
@@ -54,31 +61,17 @@ export interface AlarmRuleDialogData {
 }
 
 @Component({
-  selector: 'tb-alarm-rule-dialog',
-  templateUrl: './alarm-rule-dialog.component.html',
-  styleUrls: ['./alarm-rule-dialog.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-alarm-rule-dialog',
+    templateUrl: './alarm-rule-dialog.component.html',
+    styleUrls: ['./alarm-rule-dialog.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogComponent, CalculatedField> {
 
-  fieldFormGroup = this.fb.group({
-    name: ['', [Validators.required, Validators.pattern(oneSpaceInsideRegex), Validators.maxLength(255)]],
-    type: [CalculatedFieldType.ALARM],
-    debugSettings: [],
-    entityId: this.fb.group({
-      entityType: this.fb.control<EntityType | AliasEntityType | null>(null, Validators.required),
-      id: [null as null | string, Validators.required],
-    }),
-    configuration: this.fb.group({
-      arguments: this.fb.control({}),
-      propagate: [false],
-      propagateToOwner: [false],
-      propagateToTenant: [false],
-      propagateRelationTypes: [null],
-      createRules: [null, Validators.required],
-      clearRule: [null],
-    }),
-  });
+  @ViewChild('entitySelect') entitySelect!: EntitySelectComponent;
+
+  fieldFormGroup: FormGroup ;
 
   additionalDebugActionConfig = this.data.value?.id ? {
     ...this.data.additionalDebugActionConfig,
@@ -87,11 +80,18 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
 
   readonly EntityType = EntityType;
   readonly entityTypeTranslations = entityTypeTranslations;
-  readonly alarmRuleEntityTypeList = [EntityType.DEVICE, EntityType.ASSET, EntityType.CUSTOMER, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE];
+  readonly alarmRuleEntityTypeList = alarmRuleEntityTypeList;
   readonly CalculatedFieldType = CalculatedFieldType;
   readonly ScriptLanguage = ScriptLanguage;
 
   separatorKeysCodes = [ENTER, COMMA, SEMICOLON];
+
+  entityName = this.data.entityName;
+  ownerId = this.data.ownerId;
+
+  disabledClearRuleButton = false;
+  disabledArguments = false;
+  isLoading = false;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -99,9 +99,39 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
               protected dialogRef: MatDialogRef<AlarmRuleDialogComponent, CalculatedField>,
               private calculatedFieldsService: CalculatedFieldsService,
               private destroyRef: DestroyRef,
-              private fb: FormBuilder) {
+              private cfFormService: CalculatedFieldFormService) {
     super(store, router, dialogRef);
+    this.fieldFormGroup = this.cfFormService.buildAlarmRuleForm();
     this.applyDialogData();
+    this.updateRulesValidators();
+
+    if (this.data.isDirty) {
+      this.fieldFormGroup.markAsDirty();
+    }
+
+    this.fieldFormGroup.get('configuration.arguments').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
+      this.updateRulesValidators();
+    });
+
+    if (!this.data.entityId) {
+      combineLatest([
+        this.fieldFormGroup.get('entityId')!.valueChanges.pipe(startWith(this.fieldFormGroup.get('entityId')!.value)),
+        this.fieldFormGroup.get('name')!.valueChanges.pipe(startWith(this.fieldFormGroup.get('name')!.value))
+      ]).pipe(
+        debounceTime(50),
+        takeUntilDestroyed()
+      ).subscribe(([entityId, name]) => {
+        this.disabledArguments = !entityId || !name?.length;
+        const argsControl = this.fieldFormGroup.get('configuration.arguments')!;
+        if (this.disabledArguments) {
+          argsControl.disable({ emitEvent: false });
+        } else {
+          argsControl.enable({ emitEvent: false });
+        }
+      });
+    }
   }
 
   get configFormGroup(): FormGroup {
@@ -129,30 +159,6 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
     this.configFormGroup.patchValue({clearRule: clearAlarmRule});
   }
 
-  removeRelationType(key: string): void {
-    const keys: string[] = this.configFormGroup.get('propagateRelationTypes').value;
-    const index = keys.indexOf(key);
-    if (index >= 0) {
-      keys.splice(index, 1);
-      this.configFormGroup.get('propagateRelationTypes').setValue(keys);
-    }
-  }
-
-  addRelationType(event: MatChipInputEvent): void {
-    const input = event.chipInput.inputElement;
-    let value = (event.value ?? '').trim();
-    if (value) {
-      let keys: string[] = this.configFormGroup.get('propagateRelationTypes').value ?? [];
-      if (keys.indexOf(value) === -1) {
-        keys.push(value);
-        this.configFormGroup.get('propagateRelationTypes').setValue(keys);
-      }
-    }
-    if (input) {
-      input.value = '';
-    }
-  }
-
   get fromGroupValue(): CalculatedField {
     return deepTrim(this.fieldFormGroup.value as CalculatedField);
   }
@@ -162,13 +168,20 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
   }
 
   add(): void {
-    if (this.fieldFormGroup.valid) {
+    if (this.fieldFormGroup.valid && Object.keys(this.arguments ?? {}).length > 0) {
+      this.isLoading = true;
       const alarmRule = { entityId: this.data.entityId, ...(this.data.value ?? {}),  ...this.fromGroupValue};
       alarmRule.configuration.type = CalculatedFieldType.ALARM;
 
       this.calculatedFieldsService.saveCalculatedField(alarmRule)
         .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe(calculatedField => this.dialogRef.close(calculatedField));
+        .subscribe({
+          next: calculatedField => this.dialogRef.close(calculatedField),
+          error: () => this.isLoading = false
+        });
+    } else {
+      this.fieldFormGroup.get('name').markAsTouched();
+      this.entitySelect?.entityAutocompleteMarkAsTouched();
     }
   }
 
@@ -178,17 +191,49 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
   }
 
   onTestScript(expression: string): Observable<string> {
-    const calculatedFieldId = this.data.value?.id?.id;
-    if (calculatedFieldId) {
-      return this.calculatedFieldsService.getLatestCalculatedFieldDebugEvent(calculatedFieldId, {ignoreLoading: true})
-        .pipe(
-          switchMap(event => {
-            const args = event?.arguments ? JSON.parse(event.arguments) : null;
-            return this.data.getTestScriptDialogFn(this.fromGroupValue, expression, args, false);
-          }),
-          takeUntilDestroyed(this.destroyRef)
-        )
+    return this.cfFormService.testScript(
+      this.data.value?.id?.id,
+      this.fromGroupValue,
+      this.data.getTestScriptDialogFn,
+      this.destroyRef,
+      expression
+    );
+  }
+
+  private updateRulesValidators(): void {
+    if (Object.keys(this.arguments ?? {}).length > 0) {
+      this.fieldFormGroup.get('configuration.createRules').enable({emitEvent: false});
+      this.fieldFormGroup.get('configuration.clearRule').enable({emitEvent: false});
+      this.fieldFormGroup.get('configuration.propagate').enable({emitEvent: false});
+      this.fieldFormGroup.get('configuration.propagateToOwner').enable({emitEvent: false});
+      this.fieldFormGroup.get('configuration.propagateToTenant').enable({emitEvent: false});
+      this.fieldFormGroup.get('configuration.propagateRelationTypes').enable({emitEvent: false});
+      this.disabledClearRuleButton = false;
+    } else {
+      this.fieldFormGroup.get('configuration.createRules').disable({emitEvent: false});
+      this.fieldFormGroup.get('configuration.clearRule').disable({emitEvent: false});
+      this.fieldFormGroup.get('configuration.propagate').disable({emitEvent: false});
+      this.fieldFormGroup.get('configuration.propagateToOwner').disable({emitEvent: false});
+      this.fieldFormGroup.get('configuration.propagateToTenant').disable({emitEvent: false});
+      this.fieldFormGroup.get('configuration.propagateRelationTypes').disable({emitEvent: false});
+      this.disabledClearRuleButton = true;
     }
-    return this.data.getTestScriptDialogFn(this.fromGroupValue, expression, null, false);
+  }
+  get predefinedTypeValues(): StringItemsOption[] {
+    return RelationTypes.map(type => ({
+      name: type,
+      value: type
+    }));
+  }
+
+  changeEntity(entity: BaseData<EntityId>): void {
+    this.entityName = entity.name;
+    if (this.isAssignedToCustomer(entity as AssetInfo | DeviceInfo)) {
+      this.ownerId = (entity as AssetInfo | DeviceInfo).customerId;
+    }
+  }
+
+  private isAssignedToCustomer(entity: AssetInfo | DeviceInfo): boolean {
+    return entity && entity.customerId && entity.customerId.id !== NULL_UUID;
   }
 }

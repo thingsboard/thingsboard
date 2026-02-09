@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import lombok.Data;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
+import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
@@ -30,6 +31,7 @@ public class CalculatedFieldStateRestoreMsg implements ToCalculatedFieldSystemMs
     private final CalculatedFieldEntityCtxId id;
     private final CalculatedFieldState state;
     private final TopicPartitionInfo partition;
+    private final TbCallback callback;
     private CalculatedFieldCtx ctx;
 
     @Override
@@ -41,4 +43,5 @@ public class CalculatedFieldStateRestoreMsg implements ToCalculatedFieldSystemMs
     public TenantId getTenantId() {
         return id.tenantId();
     }
+
 }

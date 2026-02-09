@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -32,8 +32,9 @@ import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
 import { DomSanitizer, SafeStyle } from '@angular/platform-browser';
 
 @Directive({
-  // eslint-disable-next-line @angular-eslint/directive-selector
-  selector: '[tb-fullscreen]'
+    // eslint-disable-next-line @angular-eslint/directive-selector
+    selector: '[tb-fullscreen]',
+    standalone: false
 })
 export class FullscreenDirective implements OnChanges, OnDestroy {
 

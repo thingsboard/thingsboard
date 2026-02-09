@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -19,12 +19,6 @@
   <mat-toolbar color="primary">
     <h2>{{ (readonly ? 'alarm-rule.alarm-rule-condition' : 'alarm-rule.edit-alarm-rule-condition') | translate }}</h2>
     <span class="flex-1"></span>
-    <div formGroupName="expression" class="flex flex-row items-center justify-start gt-xs:gap-4" style="min-width: fit-content;">
-      <tb-toggle-select formControlName="type" appearance="fill-invert" selectMediaBreakpoint="xs">
-        <tb-toggle-option [value]="AlarmRuleExpressionType.SIMPLE">{{ 'alarm-rule.expression-type.simple' | translate }}</tb-toggle-option>
-        <tb-toggle-option [value]="AlarmRuleExpressionType.TBEL">{{ 'alarm-rule.expression-type.script' | translate }}</tb-toggle-option>
-      </tb-toggle-select>
-    </div>
     <button mat-icon-button
             (click)="cancel()"
             type="button">
@@ -33,106 +27,116 @@
   </mat-toolbar>
   <div mat-dialog-content>
     <div class="tb-form-panel no-padding no-border">
-      <div class="flex flex-1 flex-col" formGroupName="expression">
-        @if (conditionFormGroup.get('expression.type').value === AlarmRuleExpressionType.SIMPLE) {
-          <div class="tb-form-panel">
-            <div class="flex flex-row items-center justify-between">
-              <div class="tb-form-panel-title">{{ 'alarm-rule.argument-filters' | translate }}</div>
-              <tb-toggle-select formControlName="operation"
-                                selectMediaBreakpoint="xs">
-                <tb-toggle-option [value]="ComplexOperation.AND">{{ complexOperationTranslationMap.get(ComplexOperation.AND) | translate }}</tb-toggle-option>
-                <tb-toggle-option [value]="ComplexOperation.OR">{{ complexOperationTranslationMap.get(ComplexOperation.OR) | translate }}</tb-toggle-option>
-              </tb-toggle-select>
-            </div>
-            <tb-alarm-rule-filter-list
-              [operation]="conditionFormGroup.get('expression.operation').value"
-              [arguments]="arguments"
-              formControlName="filters">
-            </tb-alarm-rule-filter-list>
-          </div>
-        } @else {
-          <div class="tb-form-panel no-gap">
-            <div class="tb-form-panel-title tb-required">
-              {{ 'alarm-rule.script' | translate }}
-            </div>
-            <tb-js-func formControlName="expression"
-                        functionName="expression"
-                        class="tb-alarm-rule-script"
-                        [disableUndefinedCheck]="true"
-                        [scriptLanguage]="scriptLanguage.TBEL"
-                        [functionArgs]="functionArgs"
-                        [highlightRules]="argumentsHighlightRules"
-                        [editorCompleter]="argumentsEditorCompleter"
-                        noValidate="true"
-                        [helpPopupStyle]="{ width: '1200px' }"
-                        helpId="alarm-rule/expression_fn">
-              <div toolbarPrefixButton
-                   class="tb-primary-background tbel-script-lang-chip">{{ 'alarm-rule.tbel' | translate }}
+      <div class="tb-form-panel stroked">
+        <div class="flex flex-row items-center justify-between" formGroupName="expression">
+          <div class="tb-form-panel-title">{{ 'alarm-rule.mode' | translate }}</div>
+          <tb-toggle-select formControlName="type" selectMediaBreakpoint="xs">
+            <tb-toggle-option [value]="AlarmRuleExpressionType.SIMPLE">{{ 'alarm-rule.expression-type.simple' | translate }}</tb-toggle-option>
+            <tb-toggle-option [value]="AlarmRuleExpressionType.TBEL">{{ 'alarm-rule.expression-type.script' | translate }}</tb-toggle-option>
+          </tb-toggle-select>
+        </div>
+        <div class="tb-form-panel no-padding no-border">
+          <div class="flex flex-1 flex-col" formGroupName="expression">
+            @if (conditionFormGroup.get('expression.type').value === AlarmRuleExpressionType.SIMPLE) {
+              <div class="tb-form-panel stroked">
+                <div class="flex flex-row items-center justify-between">
+                  <div class="tb-form-panel-title">{{ 'alarm-rule.argument-filters' | translate }}</div>
+                  <tb-toggle-select formControlName="operation"
+                                    selectMediaBreakpoint="xs">
+                    <tb-toggle-option [value]="ComplexOperation.AND">{{ complexOperationTranslationMap.get(ComplexOperation.AND) | translate }}</tb-toggle-option>
+                    <tb-toggle-option [value]="ComplexOperation.OR">{{ complexOperationTranslationMap.get(ComplexOperation.OR) | translate }}</tb-toggle-option>
+                  </tb-toggle-select>
+                </div>
+                <tb-alarm-rule-filter-list
+                  [operation]="conditionFormGroup.get('expression.operation').value"
+                  [arguments]="arguments"
+                  [readonly]="readonly"
+                  formControlName="filters">
+                </tb-alarm-rule-filter-list>
               </div>
-              <button toolbarSuffixButton
-                      mat-icon-button
-                      matTooltip="{{ 'calculated-fields.test-script-function' | translate }}"
-                      matTooltipPosition="above"
-                      class="tb-mat-32"
-                      [disabled]="!argumentsList.length"
-                      (click)="onTestScript()">
-                <mat-icon class="material-icons" color="primary">bug_report</mat-icon>
-              </button>
-            </tb-js-func>
-            <div>
-              <button mat-button mat-raised-button color="primary"
-                      type="button"
-                      (click)="onTestScript()"
-                      [disabled]="!argumentsList.length">
-                {{ 'calculated-fields.test-script-function' | translate }}
-              </button>
+            } @else {
+              <div class="tb-form-panel no-gap stroked">
+                <div class="tb-form-panel-title tb-required">{{ 'alarm-rule.script' | translate }}</div>
+                <tb-js-func formControlName="expression"
+                            functionName="expression"
+                            class="tb-alarm-rule-script"
+                            [disableUndefinedCheck]="true"
+                            [scriptLanguage]="scriptLanguage.TBEL"
+                            [functionArgs]="functionArgs"
+                            [highlightRules]="argumentsHighlightRules"
+                            [editorCompleter]="argumentsEditorCompleter"
+                            noValidate="true"
+                            [helpPopupStyle]="{ width: '1200px' }"
+                            helpId="alarm-rule/expression_fn">
+                  <div toolbarPrefixButton
+                       class="tb-primary-background tbel-script-lang-chip">{{ 'alarm-rule.tbel' | translate }}
+                  </div>
+                  <button toolbarSuffixButton
+                          mat-icon-button
+                          matTooltip="{{ 'calculated-fields.test-script-function' | translate }}"
+                          matTooltipPosition="above"
+                          class="tb-mat-32"
+                          [disabled]="!argumentsList.length || readonly"
+                          (click)="onTestScript($event)">
+                    <mat-icon class="material-icons" color="primary">bug_report</mat-icon>
+                  </button>
+                </tb-js-func>
+                <div>
+                  <button mat-button mat-raised-button color="primary"
+                          type="button"
+                          (click)="onTestScript($event)"
+                          [disabled]="!argumentsList.length || readonly">
+                    {{ 'calculated-fields.test-script-function' | translate }}
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+
+          @if (conditionFormGroup.get('expression.type').value === AlarmRuleExpressionType.SIMPLE) {
+            <div class="tb-form-panel no-gap stroked">
+              <mat-expansion-panel class="tb-settings" [expanded]="true">
+                <mat-expansion-panel-header>
+                  {{ 'alarm-rule.filter-preview' | translate }}
+                </mat-expansion-panel-header>
+                <ng-template matExpansionPanelContent>
+                  <div>
+                    @if (specText) {
+                      <span class="spec-text">{{ specText }}</span>
+                    }
+                    @if (conditionFormGroup.get('expression.filters').value?.length) {
+                      <tb-alarm-rule-filter-text [alarmRuleExpression]="conditionFormGroup.get('expression').value"
+                                                 [arguments]="arguments"
+                                                 class="flex-1"
+                                                 [nowrap]="false"
+                                                 required>
+                      </tb-alarm-rule-filter-text>
+                    } @else {
+                      <span class="tb-prompt justify-center text-base">{{ 'alarm-rule.no-filter-preview' | translate }}</span>
+                    }
+                  </div>
+                </ng-template>
+              </mat-expansion-panel>
             </div>
+          }
+      </div>
+    </div>
+
+      <section class="tb-form-panel stroked">
+        <div class="flex flex-row items-center justify-between">
+          <div class="tb-form-panel-title">{{ 'alarm-rule.type' | translate }}</div>
+          <tb-toggle-select formControlName="type" selectMediaBreakpoint="xs">
+            <tb-toggle-option *ngFor="let alarmConditionType of alarmConditionTypes" [value]="alarmConditionType">
+              {{ alarmConditionTypeTranslation.get(alarmConditionType) | translate }}
+            </tb-toggle-option>
+          </tb-toggle-select>
+        </div>
+        @if (isNoData) {
+          <div class="tb-form-hint tb-primary-fill max-args-warning flex items-center gap-2">
+            <span>{{ 'alarm-rule.condition-type-hint' | translate }}</span>
           </div>
         }
-      </div>
-
-      @if (conditionFormGroup.get('expression.type').value === AlarmRuleExpressionType.SIMPLE) {
-        <div class="tb-form-panel no-gap">
-          <mat-expansion-panel class="tb-settings" [expanded]="true">
-            <mat-expansion-panel-header>
-              {{ 'alarm-rule.filter-preview' | translate }}
-            </mat-expansion-panel-header>
-            <ng-template matExpansionPanelContent>
-              <div>
-                @if (specText) {
-                  <span class="spec-text">{{ specText }}</span>
-                }
-                @if (conditionFormGroup.get('expression.filters').value?.length) {
-                  <tb-alarm-rule-filter-text [alarmRuleExpression]="conditionFormGroup.get('expression').value"
-                                             [arguments]="arguments"
-                                             class="flex-1"
-                                             [nowrap]="false"
-                                             required>
-                  </tb-alarm-rule-filter-text>
-                } @else {
-                  <span class="tb-prompt justify-center">{{ 'alarm-rule.no-filter-preview' | translate }}</span>
-                }
-              </div>
-            </ng-template>
-          </mat-expansion-panel>
-        </div>
-      }
-
-      <section class="tb-form-panel">
-        <div class="tb-form-panel-title">{{ 'alarm-rule.condition-settings' | translate }}</div>
-        <mat-form-field class="mat-block" hideRequiredMarker appearance="outline" subscriptSizing="dynamic">
-          <mat-label translate>alarm-rule.condition-type</mat-label>
-          <mat-select formControlName="type" required>
-            <mat-option *ngFor="let alarmConditionType of alarmConditionTypes" [value]="alarmConditionType"
-                        [disabled]="isNoData ? alarmConditionType === AlarmConditionType.REPEATING || alarmConditionType === AlarmConditionType.DURATION : false">
-              {{ alarmConditionTypeTranslation.get(alarmConditionType) | translate }}
-            </mat-option>
-          </mat-select>
-          @if (isNoData) {
-            <mat-hint translate>alarm-rule.condition-type-hint</mat-hint>
-          }
-        </mat-form-field>
-        @if (conditionFormGroup.get('type').value == AlarmConditionType.DURATION) {
+        @if (conditionFormGroup.get('type').value === AlarmConditionType.DURATION) {
           <div class="tb-form-panel stroked no-padding-bottom">
             <div class="flex flex-row items-center justify-between">
               <div class="tb-form-panel-title">{{ 'alarm-rule.value' | translate }}</div>
@@ -164,7 +168,7 @@
               </div>
             </div>
           </div>
-        } @else if (conditionFormGroup.get('type').value == AlarmConditionType.REPEATING) {
+        } @else if (conditionFormGroup.get('type').value === AlarmConditionType.REPEATING) {
           <div class="tb-form-panel stroked">
             <div class="flex flex-row items-center justify-between">
               <div class="tb-form-panel-title">{{ 'alarm-rule.value' | translate }}</div>

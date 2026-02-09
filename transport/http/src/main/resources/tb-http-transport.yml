@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2025 The Thingsboard Authors
+# Copyright © 2016-2026 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -127,6 +127,8 @@ redis:
   db: "${REDIS_DB:0}"
   # db password
   password: "${REDIS_PASSWORD:}"
+  # Redis username for ACL authentication (Redis 6.0+). Leave empty for legacy password-only auth
+  username: "${REDIS_USERNAME:}"
   ssl:
     # Enable/disable secure connection
     enabled: "${TB_REDIS_SSL_ENABLED:false}"
@@ -281,6 +283,8 @@ queue:
       notifications: "${TB_QUEUE_KAFKA_NOTIFICATIONS_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
       # Kafka properties for Housekeeper tasks topic
       housekeeper: "${TB_QUEUE_KAFKA_HOUSEKEEPER_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:1048576000;partitions:10;min.insync.replicas:1}"
+    # Topics cache TTL in milliseconds. 5 minutes by default
+    topics_cache_ttl_ms: "${TB_QUEUE_KAFKA_TOPICS_CACHE_TTL_MS:300000}"
   partitions:
     hash_function_name: "${TB_QUEUE_PARTITIONS_HASH_FUNCTION_NAME:murmur3_128}" # murmur3_32, murmur3_128 or sha256
   transport_api:

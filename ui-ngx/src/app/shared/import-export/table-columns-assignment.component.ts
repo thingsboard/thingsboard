@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -28,21 +28,22 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 
 @Component({
-  selector: 'tb-table-columns-assignment',
-  templateUrl: './table-columns-assignment.component.html',
-  styleUrls: ['./table-columns-assignment.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => TableColumnsAssignmentComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => TableColumnsAssignmentComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-table-columns-assignment',
+    templateUrl: './table-columns-assignment.component.html',
+    styleUrls: ['./table-columns-assignment.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TableColumnsAssignmentComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => TableColumnsAssignmentComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class TableColumnsAssignmentComponent implements OnInit, ControlValueAccessor, Validator {
 

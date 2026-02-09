@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -89,7 +89,7 @@ export const apiUsageDefaultSettings: ApiUsageWidgetSettings = {
     generateDataKey('{i18n:api-usage.data-points-storage-days}', 'dbApiState', 'storageDataPointsLimit', 'storageDataPointsCount'),
     generateDataKey('{i18n:api-usage.alarms-created}', 'alarmApiState', 'createdAlarmsLimit', 'createdAlarmsCount'),
     generateDataKey('{i18n:api-usage.emails}', 'emailApiState', 'emailLimit', 'emailCount'),
-    generateDataKey('{i18n:api-usage.sms}', 'notificationApiState', 'smsLimit', 'smsCount'),
+    generateDataKey('{i18n:api-usage.sms}', 'smsApiState', 'smsLimit', 'smsCount'),
   ],
   targetDashboardState: 'default',
   background: {

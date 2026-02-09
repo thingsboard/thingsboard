@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -65,6 +65,11 @@ export class RuleChainService {
   public getRuleChains(pageLink: PageLink, type: RuleChainType = RuleChainType.CORE,
                        config?: RequestConfig): Observable<PageData<RuleChain>> {
     return this.http.get<PageData<RuleChain>>(`/api/ruleChains${pageLink.toQuery()}&type=${type}`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  public getRuleChainsByIds(ruleChainIds: Array<string>, config?: RequestConfig): Observable<Array<RuleChain>> {
+    return this.http.get<Array<RuleChain>>(`/api/ruleChains?&ruleChainIds=${ruleChainIds.join(',')}`,
       defaultHttpOptionsFromConfig(config));
   }
 

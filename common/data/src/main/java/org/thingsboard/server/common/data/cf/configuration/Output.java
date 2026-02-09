@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.thingsboard.server.common.data.AttributeScope;
+
+import java.util.Objects;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -49,5 +51,24 @@ public interface Output {
     Integer getDecimalsByDefault();
 
     void setDecimalsByDefault(Integer decimalsByDefault);
+
+    default boolean hasContextOnlyChanges(Output other) {
+        if (!getType().equals(other.getType())) {
+            return true;
+        }
+        if (!Objects.equals(getName(), other.getName())) {
+            return true;
+        }
+        if (getScope() != (other.getScope())) {
+            return true;
+        }
+        if (!Objects.equals(getDecimalsByDefault(), other.getDecimalsByDefault())) {
+            return true;
+        }
+        if (getStrategy().hasContextOnlyChanges(other.getStrategy())) {
+            return true;
+        }
+        return false;
+    }
 
 }

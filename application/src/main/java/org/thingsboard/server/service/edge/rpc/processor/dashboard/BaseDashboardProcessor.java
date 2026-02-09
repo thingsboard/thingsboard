@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,19 +58,18 @@ public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
             dashboard.setAssignedCustomers(dashboardById.getAssignedCustomers());
         }
 
-        dashboardValidator.validate(dashboard, Dashboard::getTenantId);
-        if (created) {
-            dashboard.setId(dashboardId);
+        if (isSaveRequired(dashboardById, dashboard)) {
+            dashboardValidator.validate(dashboard, Dashboard::getTenantId);
+            if (created) {
+                dashboard.setId(dashboardId);
+            }
+            dashboard = edgeCtx.getDashboardService().saveDashboard(dashboard, false);
         }
-
-        Dashboard savedDashboard = edgeCtx.getDashboardService().saveDashboard(dashboard, false);
-
-        updateDashboardAssignments(tenantId, dashboardById, savedDashboard, newAssignedCustomers);
-
+        updateDashboardAssignments(tenantId, customerId, dashboardById, dashboard, newAssignedCustomers);
         return created;
     }
 
-    private void updateDashboardAssignments(TenantId tenantId, Dashboard dashboardById, Dashboard savedDashboard, Set<ShortCustomerInfo> newAssignedCustomers) {
+    private void updateDashboardAssignments(TenantId tenantId, CustomerId edgeCustomerId, Dashboard dashboardById, Dashboard savedDashboard, Set<ShortCustomerInfo> newAssignedCustomers) {
         Set<ShortCustomerInfo> currentAssignedCustomers = new HashSet<>();
         if (dashboardById != null) {
             if (dashboardById.getAssignedCustomers() != null) {
@@ -78,7 +77,7 @@ public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
             }
         }
 
-        newAssignedCustomers = filterNonExistingCustomers(tenantId, currentAssignedCustomers, newAssignedCustomers);
+        newAssignedCustomers = filterNonExistingCustomers(tenantId, edgeCustomerId, currentAssignedCustomers, newAssignedCustomers);
 
         Set<CustomerId> addedCustomerIds = new HashSet<>();
         Set<CustomerId> removedCustomerIds = new HashSet<>();
@@ -114,6 +113,6 @@ public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
         }
     }
 
-    protected abstract Set<ShortCustomerInfo> filterNonExistingCustomers(TenantId tenantId, Set<ShortCustomerInfo> currentAssignedCustomers, Set<ShortCustomerInfo> newAssignedCustomers);
+    protected abstract Set<ShortCustomerInfo> filterNonExistingCustomers(TenantId tenantId, CustomerId customerId, Set<ShortCustomerInfo> currentAssignedCustomers, Set<ShortCustomerInfo> newAssignedCustomers);
 
 }

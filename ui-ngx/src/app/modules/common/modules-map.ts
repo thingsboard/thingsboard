@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -13,8 +13,6 @@
 /// See the License for the specific language governing permissions and
 /// limitations under the License.
 ///
-
-/* eslint-disable max-len */
 
 import * as AngularAnimations from '@angular/animations';
 import * as AngularCore from '@angular/core';
@@ -121,6 +119,7 @@ import * as TbErrorComponent from '@shared/components/tb-error.component';
 import * as TbCheatSheetComponent from '@shared/components/cheatsheet.component';
 import * as BreadcrumbComponent from '@shared/components/breadcrumb.component';
 import * as UserMenuComponent from '@shared/components/user-menu.component';
+import * as TimeUnitInputComponent from '@shared/components/time-unit-input.component';
 import * as TimewindowComponent from '@shared/components/time/timewindow.component';
 import * as TimewindowPanelComponent from '@shared/components/time/timewindow-panel.component';
 import * as TimeintervalComponent from '@shared/components/time/timeinterval.component';
@@ -343,6 +342,7 @@ import * as AIModelDialogComponent from '@home/components/ai-model/ai-model-dial
 import { IModulesMap } from '@modules/common/modules-map.models';
 import { Observable, of } from 'rxjs';
 import { isJSResourceUrl } from '@shared/public-api';
+import { ɵɵinterpolate, ɵɵinterpolate2 } from '@angular/core';
 
 class ModulesMap implements IModulesMap {
 
@@ -350,7 +350,7 @@ class ModulesMap implements IModulesMap {
 
   private modulesMap: {[key: string]: any} = {
     '@angular/animations': AngularAnimations,
-    '@angular/core': AngularCore,
+    '@angular/core': this.angularCoreModule20to18Patch(AngularCore),
     '@angular/common': AngularCommon,
     '@angular/common/http': HttpClientModule,
     '@angular/forms': AngularForms,
@@ -404,7 +404,7 @@ class ModulesMap implements IModulesMap {
     '@ngrx/store': NgrxStore,
     rxjs: RxJs,
     'rxjs/operators': RxJsOperators,
-    '@ngx-translate/core': TranslateCore,
+    '@ngx-translate/core': this.translateModule20to18Patch(TranslateCore),
     '@mat-datetimepicker/core': MatDateTimePicker,
     moment: _moment,
     tslib,
@@ -458,6 +458,7 @@ class ModulesMap implements IModulesMap {
     '@shared/components/cheatsheet.component': TbCheatSheetComponent,
     '@shared/components/breadcrumb.component': BreadcrumbComponent,
     '@shared/components/user-menu.component': UserMenuComponent,
+    '@shared/components/time-unit-input.component': TimeUnitInputComponent,
     '@shared/components/time/timewindow.component': TimewindowComponent,
     '@shared/components/time/timewindow-panel.component': TimewindowPanelComponent,
     '@shared/components/time/timeinterval.component': TimeintervalComponent,
@@ -703,6 +704,55 @@ class ModulesMap implements IModulesMap {
       this.initialized = true;
     }
     return of(null);
+  }
+
+  private angularCoreModule20to18Patch(module: typeof AngularCore): typeof AngularCore {
+    const result = {...module};
+    (result as any).ɵɵStandaloneFeature = () => {};
+    (result as any).ɵɵInputTransformsFeature = () => {};
+    (result as any).ɵɵpropertyInterpolate = (propName: string, v0: any, sanitizer?: any) => {
+      return result.ɵɵproperty(propName, result.ɵɵinterpolate(v0), sanitizer);
+    };
+    (result as any).ɵɵpropertyInterpolate1 = (propName: string, prefix: string, v0: any, suffix: string, sanitizer?: any) => {
+      return result.ɵɵproperty(propName, result.ɵɵinterpolate1(prefix, v0, suffix), sanitizer);
+    };
+    (result as any).ɵɵpropertyInterpolate2 = (propName: string, prefix: string, v0: any, i0: string, v1: any, suffix: string, sanitizer?: any) => {
+      return result.ɵɵproperty(propName, result.ɵɵinterpolate2(prefix, v0, i0, v1, suffix), sanitizer);
+    };
+    (result as any).ɵɵpropertyInterpolate3 = (propName: string, prefix: string, v0: any, i0: string, v1: any, i1: string, v2: any, suffix: string, sanitizer?: any) => {
+      return result.ɵɵproperty(propName, result.ɵɵinterpolate3(prefix, v0, i0, v1, i1, v2, suffix), sanitizer);
+    };
+    (result as any).ɵɵpropertyInterpolate4 = (propName: string, prefix: string, v0: any, i0: string, v1: any, i1: string, v2: any, i2: string, v3: any, suffix: string, sanitizer?: any) => {
+      return result.ɵɵproperty(propName, result.ɵɵinterpolate4(prefix, v0, i0, v1, i1, v2, i2, v3, suffix), sanitizer);
+    };
+    (result as any).ɵɵpropertyInterpolate5 = (propName: string, prefix: string, v0: any, i0: string, v1: any, i1: string, v2: any, i2: string, v3: any, i3: string, v4: any, suffix: string, sanitizer?: any) => {
+      return result.ɵɵproperty(propName, result.ɵɵinterpolate5(prefix, v0, i0, v1, i1, v2, i2, v3, i3, v4, suffix), sanitizer);
+    };
+    (result as any).ɵɵpropertyInterpolate6 = (propName: string, prefix: string, v0: any, i0: string, v1: any, i1: string, v2: any, i2: string, v3: any, i3: string, v4: any, i4: string, v5: any, suffix: string, sanitizer?: any) => {
+      return result.ɵɵproperty(propName, result.ɵɵinterpolate6(prefix, v0, i0, v1, i1, v2, i2, v3, i3, v4, i4, v5, suffix), sanitizer);
+    };
+    (result as any).ɵɵpropertyInterpolate7 = (propName: string, prefix: string, v0: any, i0: string, v1: any, i1: string, v2: any, i2: string, v3: any, i3: string, v4: any, i4: string, v5: any, i5: string, v6: any, suffix: string, sanitizer?: any) => {
+      return result.ɵɵproperty(propName, result.ɵɵinterpolate7(prefix, v0, i0, v1, i1, v2, i2, v3, i3, v4, i4, v5, i5, v6, suffix), sanitizer);
+    };
+    (result as any).ɵɵpropertyInterpolate8 = (propName: string, prefix: string, v0: any, i0: string, v1: any, i1: string, v2: any, i2: string, v3: any, i3: string, v4: any, i4: string, v5: any, i5: string, v6: any, i6: string, v7: any, suffix: string, sanitizer?: any) => {
+      return result.ɵɵproperty(propName, result.ɵɵinterpolate8(prefix, v0, i0, v1, i1, v2, i2, v3, i3, v4, i4, v5, i5, v6, i6, v7, suffix), sanitizer);
+    };
+    (result as any).ɵɵpropertyInterpolateV = (propName: string, values: any[], sanitizer?: any) => {
+      return result.ɵɵproperty(propName, result.ɵɵinterpolateV(values), sanitizer);
+    };
+    return result;
+  }
+
+  private translateModule20to18Patch(module: typeof TranslateCore): typeof TranslateCore {
+    const translateServiceCls = module.TranslateService;
+    Object.defineProperty(translateServiceCls.prototype, 'translations', {
+      get: function() {
+        return this.store.translations;
+      },
+      enumerable: true,
+      configurable: true
+    });
+    return module;
   }
 }
 

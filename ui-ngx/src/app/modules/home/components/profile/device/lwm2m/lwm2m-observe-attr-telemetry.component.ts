@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -39,21 +39,22 @@ import _ from 'lodash';
 import { Subscription } from 'rxjs';
 
 @Component({
-  selector: 'tb-profile-lwm2m-observe-attr-telemetry',
-  templateUrl: './lwm2m-observe-attr-telemetry.component.html',
-  styleUrls: [ './lwm2m-observe-attr-telemetry.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => Lwm2mObserveAttrTelemetryComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => Lwm2mObserveAttrTelemetryComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-profile-lwm2m-observe-attr-telemetry',
+    templateUrl: './lwm2m-observe-attr-telemetry.component.html',
+    styleUrls: ['./lwm2m-observe-attr-telemetry.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => Lwm2mObserveAttrTelemetryComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => Lwm2mObserveAttrTelemetryComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 
 export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor, OnDestroy, Validator {

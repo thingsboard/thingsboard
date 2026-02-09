@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -24,14 +24,15 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { isEqual } from '@core/utils';
 
 @Component({
-  selector: 'tb-aggregation-type-select',
-  templateUrl: './aggregation-type-select.component.html',
-  styleUrls: ['./aggregation-type-select.component.scss'],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => AggregationTypeSelectComponent),
-    multi: true
-  }]
+    selector: 'tb-aggregation-type-select',
+    templateUrl: './aggregation-type-select.component.html',
+    styleUrls: ['./aggregation-type-select.component.scss'],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => AggregationTypeSelectComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class AggregationTypeSelectComponent implements ControlValueAccessor, OnInit, OnChanges {
 

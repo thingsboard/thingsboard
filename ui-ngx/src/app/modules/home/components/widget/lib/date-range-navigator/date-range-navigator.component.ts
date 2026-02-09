@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -50,9 +50,10 @@ import { HistoryWindowType, TimewindowType } from '@shared/models/time/time.mode
 import { isDefined } from '@core/utils';
 
 @Component({
-  selector: 'tb-date-range-navigator-widget',
-  templateUrl: './date-range-navigator.component.html',
-  styleUrls: ['./date-range-navigator.component.scss']
+    selector: 'tb-date-range-navigator-widget',
+    templateUrl: './date-range-navigator.component.html',
+    styleUrls: ['./date-range-navigator.component.scss'],
+    standalone: false
 })
 export class DateRangeNavigatorWidgetComponent extends PageComponent implements OnInit, OnDestroy {
 
@@ -276,10 +277,11 @@ export interface DateRangeNavigatorPanelData {
 }
 
 @Component({
-  selector: 'tb-date-range-navigator-panel',
-  templateUrl: './date-range-navigator-panel.component.html',
-  styleUrls: ['./date-range-navigator-panel.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-date-range-navigator-panel',
+    templateUrl: './date-range-navigator-panel.component.html',
+    styleUrls: ['./date-range-navigator-panel.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class DateRangeNavigatorPanelComponent {
 

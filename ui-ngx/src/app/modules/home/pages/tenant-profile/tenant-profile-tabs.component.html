@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -30,5 +30,9 @@
                         [entityId]="entity.id"
                         [entityName]="entity.name">
     </tb-attribute-table>
+  </mat-tab>
+  <mat-tab *ngIf="!isEdit" #auditLogsTab="matTab"
+           label="{{ 'audit-log.audit-logs' | translate }}">
+    <tb-audit-log-table detailsMode="true" [active]="auditLogsTab.isActive" [auditLogMode]="auditLogModes.ENTITY" [entityId]="entity.id"></tb-audit-log-table>
   </mat-tab>
 }

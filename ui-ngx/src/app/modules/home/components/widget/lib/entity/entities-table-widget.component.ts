@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -123,9 +123,10 @@ interface EntitiesTableWidgetSettings extends TableWidgetSettings {
 }
 
 @Component({
-  selector: 'tb-entities-table-widget',
-  templateUrl: './entities-table-widget.component.html',
-  styleUrls: ['./entities-table-widget.component.scss', './../table-widget.scss']
+    selector: 'tb-entities-table-widget',
+    templateUrl: './entities-table-widget.component.html',
+    styleUrls: ['./entities-table-widget.component.scss', './../table-widget.scss'],
+    standalone: false
 })
 export class EntitiesTableWidgetComponent extends PageComponent implements OnInit, AfterViewInit, OnDestroy {
 
@@ -471,7 +472,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
         }
         dataKeys.push(dataKey);
 
-        const keySettings: TableWidgetDataKeySettings = dataKey.settings;
+        const keySettings: TableWidgetDataKeySettings = dataKey.settings ?? {};
         dataKey.label = this.utils.customTranslation(dataKey.label, dataKey.label);
         dataKey.title = getHeaderTitle(dataKey, keySettings, this.utils);
         dataKey.def = 'def' + this.columns.length;

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -280,13 +280,6 @@ public class TbUtilsTest {
     }
 
     @Test
-    public void toFixedFloat() {
-        float actualF = TbUtils.toFixed(floatVal, 3);
-        Assertions.assertEquals(1, Float.compare(floatVal, actualF));
-        Assertions.assertEquals(0, Float.compare(29.298f, actualF));
-    }
-
-    @Test
     public void parseBytesToFloat() {
         byte[] floatValByte = {0x0A};
         Assertions.assertEquals(0, Float.compare(1.4E-44f, TbUtils.parseBytesToFloat(floatValByte)));
@@ -459,13 +452,6 @@ public class TbUtilsTest {
         Assertions.assertEquals(0, Double.compare(doubleValRev, TbUtils.parseHexToDouble(longValHex, false)));
         Assertions.assertEquals(0, Double.compare(doubleVal, TbUtils.parseBigEndianHexToDouble(longValHex)));
         Assertions.assertEquals(0, Double.compare(doubleVal, TbUtils.parseLittleEndianHexToDouble(longValHexRev)));
-    }
-
-    @Test
-    public void toFixedDouble() {
-        double actualD = TbUtils.toFixed(doubleVal, 3);
-        Assertions.assertEquals(-1, Double.compare(doubleVal, actualD));
-        Assertions.assertEquals(0, Double.compare(1729.173, actualD));
     }
 
     @Test
@@ -1145,26 +1131,6 @@ public class TbUtilsTest {
         expected = "BB53";
         actual = TbUtils.bytesToHex(expectedList);
         Assertions.assertEquals(expected, actual);
-    }
-
-    @Test
-    public void toInt() {
-        Assertions.assertEquals(1729, TbUtils.toInt(doubleVal));
-        Assertions.assertEquals(13, TbUtils.toInt(12.8));
-        Assertions.assertEquals(28, TbUtils.toInt(28.0));
-    }
-
-    @Test
-    public void roundResult() {
-        Assertions.assertEquals(1729.1729, TbUtils.roundResult(doubleVal, null));
-        Assertions.assertEquals(1729, TbUtils.roundResult(doubleVal, 0));
-        Assertions.assertEquals(1729.17, TbUtils.roundResult(doubleVal, 2));
-    }
-
-    @Test
-    public void isNaN() {
-        assertFalse(TbUtils.isNaN(doubleVal));
-        assertTrue(TbUtils.isNaN(Double.NaN));
     }
 
     @Test

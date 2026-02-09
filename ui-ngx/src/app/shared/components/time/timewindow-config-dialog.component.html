@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -301,6 +301,16 @@
         </tb-timezone-select>
       </div>
     </section>
+    @if (showSaveAsDefault) {
+      <section class="tb-form-panel">
+        <div class="tb-form-panel-title" translate>timewindow.save-current-settings-as-default</div>
+        <div class="tb-form-row">
+          <mat-slide-toggle class="mat-slide" formControlName="hideSaveAsDefault">
+            {{ 'timewindow.hide-option-from-end-users' | translate }}
+          </mat-slide-toggle>
+        </div>
+      </section>
+    }
   </div>
   <mat-divider></mat-divider>
   <div mat-dialog-actions class="tb-dialog-actions tb-flex flex-end no-gap">

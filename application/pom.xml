@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>4.3.0-SNAPSHOT</version>
+        <version>4.4.0-SNAPSHOT</version>
         <artifactId>thingsboard</artifactId>
     </parent>
     <artifactId>application</artifactId>
@@ -382,35 +382,35 @@
             <artifactId>rocksdbjni</artifactId>
         </dependency>
         <dependency>
-            <groupId>dev.langchain4j</groupId>
+            <groupId>org.thingsboard.langchain4j</groupId>
             <artifactId>langchain4j-open-ai</artifactId>
         </dependency>
         <dependency>
-            <groupId>dev.langchain4j</groupId>
+            <groupId>org.thingsboard.langchain4j</groupId>
             <artifactId>langchain4j-azure-open-ai</artifactId>
         </dependency>
         <dependency>
-            <groupId>dev.langchain4j</groupId>
+            <groupId>org.thingsboard.langchain4j</groupId>
             <artifactId>langchain4j-google-ai-gemini</artifactId>
         </dependency>
         <dependency>
-            <groupId>dev.langchain4j</groupId>
+            <groupId>org.thingsboard.langchain4j</groupId>
             <artifactId>langchain4j-vertex-ai-gemini</artifactId>
         </dependency>
         <dependency>
-            <groupId>dev.langchain4j</groupId>
+            <groupId>org.thingsboard.langchain4j</groupId>
             <artifactId>langchain4j-mistral-ai</artifactId>
         </dependency>
         <dependency>
-            <groupId>dev.langchain4j</groupId>
+            <groupId>org.thingsboard.langchain4j</groupId>
             <artifactId>langchain4j-anthropic</artifactId>
         </dependency>
         <dependency>
-            <groupId>dev.langchain4j</groupId>
+            <groupId>org.thingsboard.langchain4j</groupId>
             <artifactId>langchain4j-bedrock</artifactId>
         </dependency>
         <dependency>
-            <groupId>dev.langchain4j</groupId>
+            <groupId>org.thingsboard.langchain4j</groupId>
             <artifactId>langchain4j-github-models</artifactId>
             <exclusions>
                 <exclusion>
@@ -420,7 +420,7 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>dev.langchain4j</groupId>
+            <groupId>org.thingsboard.langchain4j</groupId>
             <artifactId>langchain4j-ollama</artifactId>
         </dependency>
     </dependencies>
@@ -458,6 +458,7 @@
                 <configuration>
                     <systemPropertyVariables>
                         <spring.config.name>thingsboard</spring.config.name>
+                        <project.version>${project.version}</project.version>
                     </systemPropertyVariables>
                     <excludes>
                         <exclude>**/nosql/*Test.java</exclude>

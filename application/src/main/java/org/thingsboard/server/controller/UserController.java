@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -82,6 +83,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.query.EntityKeyType.ENTITY_FIELD;
 import static org.thingsboard.server.controller.ControllerConstants.ALARM_ID_PARAM_DESCRIPTION;
@@ -577,6 +581,32 @@ public class UserController extends BaseController {
     public void removeMobileSession(@RequestHeader(MOBILE_TOKEN_HEADER) String mobileToken,
                                     @AuthenticationPrincipal SecurityUser user) {
         userService.removeMobileSession(user.getTenantId(), mobileToken);
+    }
+
+    @ApiOperation(value = "Get Users By Ids (getUsersByIds)",
+            notes = "Requested users must be owned by tenant or assigned to customer which user is performing the request. ")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping(value = "/users", params = {"userIds"})
+    public List<User> getUsersByIds(
+            @Parameter(description = "A list of user ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+            @RequestParam("userIds") Set<UUID> userUUIDs) throws ThingsboardException {
+        TenantId tenantId = getCurrentUser().getTenantId();
+        List<UserId> userIds = new ArrayList<>();
+        for (UUID userUUID : userUUIDs) {
+            userIds.add(new UserId(userUUID));
+        }
+        List<User> users = userService.findUsersByTenantIdAndIds(tenantId, userIds);
+        return filterUsersByReadPermission(users);
+    }
+
+    private List<User> filterUsersByReadPermission(List<User> users) {
+        return users.stream().filter(user -> {
+            try {
+                return accessControlService.hasPermission(getCurrentUser(), Resource.USER, Operation.READ, user.getId(), user);
+            } catch (ThingsboardException e) {
+                return false;
+            }
+        }).collect(Collectors.toList());
     }
 
     private void checkNotReserved(String strType, UserSettingsType type) throws ThingsboardException {

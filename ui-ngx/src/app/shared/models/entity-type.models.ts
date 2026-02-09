@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -490,7 +490,7 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
         type: 'entity.type-calculated-field',
         typePlural: 'entity.type-calculated-fields',
         list: 'calculated-fields.list',
-        add: 'action.add',
+        details: 'calculated-fields.calculated-field-details',
         noEntities: 'calculated-fields.no-found',
         search: 'action.search',
         selectedEntities: 'calculated-fields.selected-fields'
@@ -656,6 +656,12 @@ export const entityTypeResources = new Map<EntityType, EntityTypeResource<BaseDa
       EntityType.AI_MODEL,
       {
         helpLinkId: 'aiModels'
+      }
+    ],
+    [
+      EntityType.CALCULATED_FIELD,
+      {
+        helpLinkId: 'calculatedField'
       }
     ],
     [

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.util.concurrent.FluentFuture;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -53,6 +54,12 @@ public class DefaultTbResourceDataCache implements TbResourceDataCache {
                 .expireAfterAccess(cacheValueTtl, TimeUnit.MINUTES)
                 .executor(executorService)
                 .buildAsync((key, executor) -> CompletableFuture.supplyAsync(() -> resourceService.getResourceDataInfo(key.tenantId(), key.resourceId()), executor));
+    }
+
+    @PreDestroy
+    private void destroy() {
+        cache.synchronous().invalidateAll();
+        cache = null;
     }
 
     @Override

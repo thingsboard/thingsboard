@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,21 +16,25 @@
 
 import { Component } from '@angular/core';
 import { AuthService } from '@core/auth/auth.service';
-import { PageComponent } from '@shared/components/page.component';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { UserPasswordPolicy } from '@shared/models/settings.models';
 import { passwordsMatchValidator, passwordStrengthValidator } from '@shared/models/password.models';
+import { finalize } from 'rxjs/operators';
+import { PageComponent } from '@shared/components/page.component';
 
 @Component({
-  selector: 'tb-create-password',
-  templateUrl: './create-password.component.html',
-  styleUrls: ['./create-password.component.scss']
+    selector: 'tb-create-password',
+    templateUrl: './create-password.component.html',
+    styleUrls: ['./password.component.scss'],
+    standalone: false
 })
 export class CreatePasswordComponent extends PageComponent {
 
   passwordPolicy: UserPasswordPolicy;
   createPassword: FormGroup;
+
+  isLoading = false;
 
   private activateToken: string;
 
@@ -38,7 +42,6 @@ export class CreatePasswordComponent extends PageComponent {
               private authService: AuthService,
               private fb: FormBuilder) {
     super();
-
     this.activateToken = this.route.snapshot.queryParams['activateToken'] || '';
     this.passwordPolicy = this.route.snapshot.data['passwordPolicy'];
 
@@ -60,9 +63,10 @@ export class CreatePasswordComponent extends PageComponent {
     if (this.createPassword.invalid) {
       this.createPassword.markAllAsTouched();
     } else {
-      this.authService.activate(
-        this.activateToken,
-        this.createPassword.get('newPassword').value, true).subscribe();
+      this.isLoading = true;
+      this.authService.activate(this.activateToken, this.createPassword.get('newPassword').value, true).pipe(
+        finalize(() => {this.isLoading = false;})
+      ).subscribe(() => {});
     }
   }
 }

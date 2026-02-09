@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ import {
   mobilePageTypeTranslations
 } from '@shared/models/mobile-app.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { MatButton } from '@angular/material/button';
+import { MatIconButton } from '@angular/material/button';
 import { deepClone } from '@core/utils';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { CustomMobilePagePanelComponent } from '@home/pages/mobile/bundes/layout/custom-mobile-page-panel.component';
@@ -58,22 +58,23 @@ import { TranslateService } from '@ngx-translate/core';
 import { DisplayPopoverConfig } from '@shared/components/popover.models';
 
 @Component({
-  selector: 'tb-mobile-menu-item-row',
-  templateUrl: './mobile-page-item-row.component.html',
-  styleUrls: ['./mobile-page-item-row.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => MobilePageItemRowComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => MobilePageItemRowComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-mobile-menu-item-row',
+    templateUrl: './mobile-page-item-row.component.html',
+    styleUrls: ['./mobile-page-item-row.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => MobilePageItemRowComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => MobilePageItemRowComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class MobilePageItemRowComponent implements ControlValueAccessor, OnInit, Validator {
 
@@ -215,7 +216,7 @@ export class MobilePageItemRowComponent implements ControlValueAccessor, OnInit,
     this.pageRemoved.emit();
   }
 
-  edit($event: Event, matButton: MatButton) {
+  edit($event: Event, matButton: MatIconButton) {
     if ($event) {
       $event.stopPropagation();
     }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -33,21 +33,22 @@ import { TranslateService } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-kv-map-config-old',
-  templateUrl: './kv-map-config-old.component.html',
-  styleUrls: ['./kv-map-config-old.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => KvMapConfigOldComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => KvMapConfigOldComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-kv-map-config-old',
+    templateUrl: './kv-map-config-old.component.html',
+    styleUrls: ['./kv-map-config-old.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => KvMapConfigOldComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => KvMapConfigOldComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class KvMapConfigOldComponent extends PageComponent implements ControlValueAccessor, OnInit, Validator {
 

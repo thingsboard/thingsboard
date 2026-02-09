@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -32,10 +32,11 @@ export interface TenantProfileDialogData {
 }
 
 @Component({
-  selector: 'tb-tenant-profile-dialog',
-  templateUrl: './tenant-profile-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: TenantProfileDialogComponent}],
-  styleUrls: ['tenant-profile-dialog.component.scss']
+    selector: 'tb-tenant-profile-dialog',
+    templateUrl: './tenant-profile-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: TenantProfileDialogComponent }],
+    styleUrls: ['tenant-profile-dialog.component.scss'],
+    standalone: false
 })
 export class TenantProfileDialogComponent extends
   DialogComponent<TenantProfileDialogComponent, TenantProfile> implements ErrorStateMatcher, AfterViewInit {

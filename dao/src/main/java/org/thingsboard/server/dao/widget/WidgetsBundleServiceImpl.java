@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
+import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
 import static org.thingsboard.server.dao.entity.AbstractEntityService.checkConstraintViolation;
 
 @Service("WidgetsBundleDaoService")
@@ -250,6 +251,12 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
             }
             widgetTypeService.updateWidgetsBundleWidgetFqns(TenantId.SYS_TENANT_ID, widgetsBundle.getId(), widgetTypeFqns);
         });
+    }
+
+    @Override
+    public List<WidgetsBundle> findSystemOrTenantWidgetsBundlesByIds(TenantId tenantId, List<WidgetsBundleId> widgetsBundleIds) {
+        log.trace("Executing findSystemOrTenantWidgetsBundlesByIds, tenantId [{}], widgetsBundleIds [{}]", tenantId, widgetsBundleIds);
+        return widgetsBundleDao.findSystemOrTenantWidgetBundlesByIds(tenantId.getId(), toUUIDs(widgetsBundleIds));
     }
 
     private WidgetTypeDetails updateSystemWidget(JsonNode widgetTypeJson) {

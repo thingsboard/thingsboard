@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -257,6 +257,7 @@ public class ModelConstants {
     public static final String ALARM_ORIGINATOR_NAME_PROPERTY = "originator_name";
     public static final String ALARM_ORIGINATOR_LABEL_PROPERTY = "originator_label";
     public static final String ALARM_ORIGINATOR_TYPE_PROPERTY = "originator_type";
+    public static final String ALARM_ORIGINATOR_DISPLAY_NAME_PROPERTY = "originator_display_name";
     public static final String ALARM_SEVERITY_PROPERTY = "severity";
     public static final String ALARM_ASSIGNEE_ID_PROPERTY = "assignee_id";
     public static final String ALARM_ASSIGNEE_FIRST_NAME_PROPERTY = "assignee_first_name";

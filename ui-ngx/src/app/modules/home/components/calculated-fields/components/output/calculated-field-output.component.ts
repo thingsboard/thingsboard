@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -42,21 +42,22 @@ import { merge } from 'rxjs';
 import { deepClone } from '@core/utils';
 
 @Component({
-  selector: 'tb-calculate-field-output',
-  templateUrl: './calculated-field-output.component.html',
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => CalculatedFieldOutputComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => CalculatedFieldOutputComponent),
-      multi: true
-    }
-  ],
-  styleUrls: ['./calculated-field-output.component.scss'],
+    selector: 'tb-calculate-field-output',
+    templateUrl: './calculated-field-output.component.html',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => CalculatedFieldOutputComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => CalculatedFieldOutputComponent),
+            multi: true
+        }
+    ],
+    styleUrls: ['./calculated-field-output.component.scss'],
+    standalone: false
 })
 export class CalculatedFieldOutputComponent implements ControlValueAccessor, Validator, OnInit, OnChanges {
 
@@ -77,6 +78,8 @@ export class CalculatedFieldOutputComponent implements ControlValueAccessor, Val
 
   @Input({required: true})
   entityId: EntityId;
+
+  disabled = false;
 
   readonly outputTypes = Object.values(OutputType) as OutputType[];
   readonly OutputType = OutputType;
@@ -120,6 +123,10 @@ export class CalculatedFieldOutputComponent implements ControlValueAccessor, Val
         this.updatedStrategy();
       });
 
+    this.outputForm.get('strategy.saveTimeSeries').valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(value => this.updateTimeSeriesTtl(value));
+
     merge(
       this.outputForm.get('strategy.type').valueChanges,
       this.outputForm.get('strategy.useCustomTtl').valueChanges
@@ -142,7 +149,7 @@ export class CalculatedFieldOutputComponent implements ControlValueAccessor, Val
     for (const propName of Object.keys(changes)) {
       const change = changes[propName];
       if (change.currentValue !== change.previousValue) {
-        if (propName === 'simpleMode') {
+        if (propName === 'simpleMode' && !this.disabled) {
           this.updatedFormWithMode();
           if (!change.firstChange) {
             this.outputForm.updateValueAndValidity();
@@ -161,7 +168,7 @@ export class CalculatedFieldOutputComponent implements ControlValueAccessor, Val
     if (value.type === OutputType.Timeseries && value.strategy?.type === OutputStrategyType.IMMEDIATE && value.strategy?.ttl) {
       this.outputForm.get('strategy.useCustomTtl').setValue(true, {emitEvent: false});
     }
-    this.outputForm.get('type').updateValueAndValidity({onlySelf: true});
+    this.outputForm.get('type').updateValueAndValidity({onlySelf: true, emitEvent: false});
   }
 
   registerOnChange(fn: (config: CalculatedFieldOutput | CalculatedFieldSimpleOutput) => void): void {
@@ -171,6 +178,7 @@ export class CalculatedFieldOutputComponent implements ControlValueAccessor, Val
   registerOnTouched(_: any): void { }
 
   setDisabledState(isDisabled: boolean): void {
+    this.disabled = isDisabled;
     if (isDisabled) {
       this.outputForm.disable({emitEvent: false});
     } else {
@@ -178,6 +186,10 @@ export class CalculatedFieldOutputComponent implements ControlValueAccessor, Val
       this.updatedFormWithMode();
       this.toggleScopeByOutputType(this.outputForm.get('type').value);
       this.updatedStrategy();
+      this.updateTimeSeriesTtl(this.outputForm.get('strategy.saveTimeSeries').value);
+      if (this.outputForm.invalid) {
+        this.outputForm.updateValueAndValidity();
+      }
     }
   }
 
@@ -240,6 +252,15 @@ export class CalculatedFieldOutputComponent implements ControlValueAccessor, Val
           this.outputForm.get('strategy.ttl').enable({emitEvent: false});
         }
       }
+    }
+  }
+
+  private updateTimeSeriesTtl(value: boolean) {
+    if (value) {
+      this.outputForm.get('strategy.useCustomTtl').enable({emitEvent: false});
+    } else {
+      this.outputForm.get('strategy.useCustomTtl').disable({emitEvent: false});
+      this.outputForm.get('strategy.ttl').disable({emitEvent: false});
     }
   }
 }

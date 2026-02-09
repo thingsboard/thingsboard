@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,40 +15,43 @@
     limitations under the License.
 
 -->
-<div class="tb-alarm-rule-condition flex flex-col gap-4 min-w-0" [formGroup]="alarmRuleConditionFormGroup">
+<div class="tb-alarm-rule-condition flex min-w-0 flex-col gap-4" [formGroup]="alarmRuleConditionFormGroup">
   <div class="tb-form-row column-xs">
     <div class="min-w-40 xs:min-w-fit">{{ 'alarm-rule.condition' | translate }}</div>
-    <button [disabled]="disabled"
-            type="button"
+    <button type="button"
             class="tb-alarm-rule-condition-button"
-            mat-stroked-button [color]="conditionSet() && this.filtersArgumentsValid ? 'primary' : 'warn'"
+            mat-stroked-button [color]="conditionSet() || filtersArgumentsValid ? 'primary' : 'warn'"
             (click)="openFilterDialog($event)">
-      <div class="flex items-center gap-2 justify-between">
+      <div class="flex items-center justify-between gap-2">
         <tb-alarm-rule-filter-text [alarmRuleExpression]="alarmRuleConditionFormGroup.get('expression').value"
                                    [arguments]="arguments"
+                                   [disabled]="disabled"
                                    class="flex-1"
                                    [nowrap]="true"
                                    [specText]="specText"
                                    required
-                                   addFilterPrompt="{{ (isClearCondition ? 'alarm-rule.enter-alarm-rule-clear-condition-prompt' :'alarm-rule.enter-alarm-rule-condition-prompt') | translate }}">
+                                   addFilterPrompt="{{ 'alarm-rule.enter-alarm-rule-condition-prompt' | translate }}">
         </tb-alarm-rule-filter-text>
-        <mat-icon [color]="conditionSet() && this.filtersArgumentsValid ? 'primary' : 'warn'" class="tb-mat-20 tb-alarm-rule-schedule-edit-icon">
-          {{ conditionSet() ? 'edit' : 'add' }}
+        <mat-icon [color]="disabled ? '' : (conditionSet() && filtersArgumentsValid ? 'primary' : 'warn')"
+                  class="tb-mat-20 tb-alarm-rule-schedule-edit-icon">
+          {{ disabled ? 'visibility' : (conditionSet() ? 'edit' : 'add') }}
         </mat-icon>
       </div>
     </button>
   </div>
   <div class="tb-form-row column-xs">
     <div class="min-w-40 xs:min-w-fit">{{ 'alarm-rule.schedule-title' | translate }}</div>
-    <button [disabled]="disabled"
-            [color]="schedulerArgumentsValid ? 'primary' : 'warn'"
+    <button [color]="schedulerArgumentsValid ? 'primary' : 'warn'"
             type="button"
             class="tb-alarm-rule-condition-button"
             mat-stroked-button
             (click)="openScheduleDialog($event)">
       <div class="flex items-center gap-2">
         <span class="tb-alarm-rule-condition-label" tbTruncateWithTooltip [innerHTML]="scheduleText"></span>
-        <mat-icon [color]="schedulerArgumentsValid ? 'primary' : 'warn'" class="tb-mat-20 tb-alarm-rule-schedule-edit-icon">edit</mat-icon>
+        <mat-icon [color]="disabled ? '' : (schedulerArgumentsValid ? 'primary' : 'warn')"
+                  class="tb-mat-20 tb-alarm-rule-schedule-edit-icon">
+          {{ disabled ? 'visibility' : 'edit' }}
+        </mat-icon>
       </div>
     </button>
   </div>

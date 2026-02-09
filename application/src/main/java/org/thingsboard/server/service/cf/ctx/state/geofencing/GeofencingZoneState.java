@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,9 +51,10 @@ public class GeofencingZoneState {
         this.ts = attributeKvEntry.getLastUpdateTs();
         this.version = attributeKvEntry.getVersion();
         if (entry.getValueAsString() == null) {
-            throw new IllegalArgumentException("Perimeter attribute key '" + entry.getKey() + "' not found for Zone with id: " + zoneId);
+            throw new IllegalArgumentException("Perimeter attribute '" + entry.getKey() + "' not found for Zone with id: " + zoneId);
         }
-        this.perimeterDefinition = JacksonUtil.fromString(entry.getValueAsString(), PerimeterDefinition.class);
+        this.perimeterDefinition = JacksonUtil.fromString(entry.getValueAsString(), PerimeterDefinition.class,
+                "Invalid perimeter definition format for Zone with id: " + zoneId + ". Failed to parse attribute '" + entry.getKey() + "'");
     }
 
     public GeofencingZoneState(GeofencingZoneProto proto) {
@@ -89,11 +90,7 @@ public class GeofencingZoneState {
         // first evaluation
         if (this.lastPresence == null) {
             this.lastPresence = status;
-            GeofencingTransitionEvent transition = null;
-            if (status == GeofencingPresenceStatus.INSIDE) {
-                transition = GeofencingTransitionEvent.ENTERED;
-            }
-            return new GeofencingEvalResult(transition, status);
+            return new GeofencingEvalResult(null, status);
         }
         // State changed
         if (this.lastPresence != status) {

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -99,12 +99,15 @@ import { TbContextMenuEvent } from '@shared/models/jquery-event.models';
 import { EntityDebugSettings } from '@shared/models/entity.models';
 import Timeout = NodeJS.Timeout;
 import { DomSanitizer } from '@angular/platform-browser';
+import { AdditionalDebugActionConfig } from '@home/components/entity/debug/entity-debug-settings.model';
+import { EventsDialogComponent } from '@home/dialogs/events-dialog.component';
 
 @Component({
-  selector: 'tb-rulechain-page',
-  templateUrl: './rulechain-page.component.html',
-  styleUrls: ['./rulechain-page.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-rulechain-page',
+    templateUrl: './rulechain-page.component.html',
+    styleUrls: ['./rulechain-page.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class RuleChainPageComponent extends PageComponent
   implements AfterViewInit, OnInit, OnDestroy, HasDirtyFlag, ISearchableComponent, AfterViewChecked {
@@ -1366,7 +1369,7 @@ export class RuleChainPageComponent extends PageComponent
           details = this.sanitizer.sanitize(SecurityContext.HTML, node.additionalInfo.description);
         }
       }
-      
+
       name = this.sanitizer.sanitize(SecurityContext.HTML, name);
       desc = this.sanitizer.sanitize(SecurityContext.HTML, desc);
 
@@ -1656,6 +1659,39 @@ export class RuleChainPageComponent extends PageComponent
     }
   }
 
+  get additionalActionConfig (): AdditionalDebugActionConfig {
+    return {
+      title: this.translate.instant('action.see-debug-events'),
+      action: this.switchToEventsTab.bind(this)
+    }
+  }
+
+  private switchToEventsTab() {
+    if(!this.ruleNodeComponent.ruleNodeFormGroup.dirty) {
+      this.selectedRuleNodeTabIndex = 1;
+    } else {
+      this.openDebugEventsDialog();
+    }
+  }
+
+  private openDebugEventsDialog(): void {
+    this.dialog.open<EventsDialogComponent>(EventsDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        title: 'rulenode.events',
+        debugEventTypes: [DebugEventType.DEBUG_RULE_NODE],
+        defaultEventType: DebugEventType.DEBUG_RULE_NODE,
+        tenantId: this.ruleChain.tenantId.id,
+        entityId: this.editingRuleNode.ruleNodeId,
+        functionTestButtonLabel: this.ruleNodeTestButtonLabel,
+        onDebugEventSelected: this.onDebugEventSelected.bind(this)
+      }
+    })
+      .afterClosed()
+      .subscribe();
+  }
+
   private updateNodeErrorTooltip(node: FcRuleNode) {
     if (node.error) {
       const element = $('#' + node.id);
@@ -1753,10 +1789,11 @@ export interface AddRuleNodeLinkDialogData {
 }
 
 @Component({
-  selector: 'tb-add-rule-node-link-dialog',
-  templateUrl: './add-rule-node-link-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: AddRuleNodeLinkDialogComponent}],
-  styleUrls: ['./add-rule-node-link-dialog.component.scss']
+    selector: 'tb-add-rule-node-link-dialog',
+    templateUrl: './add-rule-node-link-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: AddRuleNodeLinkDialogComponent }],
+    styleUrls: ['./add-rule-node-link-dialog.component.scss'],
+    standalone: false
 })
 export class AddRuleNodeLinkDialogComponent extends DialogComponent<AddRuleNodeLinkDialogComponent, FcRuleEdge>
   implements OnInit, ErrorStateMatcher {
@@ -1817,10 +1854,11 @@ export interface AddRuleNodeDialogData {
 }
 
 @Component({
-  selector: 'tb-add-rule-node-dialog',
-  templateUrl: './add-rule-node-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: AddRuleNodeDialogComponent}],
-  styleUrls: ['./add-rule-node-dialog.component.scss']
+    selector: 'tb-add-rule-node-dialog',
+    templateUrl: './add-rule-node-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: AddRuleNodeDialogComponent }],
+    styleUrls: ['./add-rule-node-dialog.component.scss'],
+    standalone: false
 })
 export class AddRuleNodeDialogComponent extends DialogComponent<AddRuleNodeDialogComponent, FcRuleNode>
   implements OnInit, ErrorStateMatcher {
@@ -1877,10 +1915,11 @@ export interface CreateNestedRuleChainDialogData {
 }
 
 @Component({
-  selector: 'tb-create-nested-rulechain-dialog',
-  templateUrl: './create-nested-rulechain-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: CreateNestedRuleChainDialogComponent}],
-  styleUrls: []
+    selector: 'tb-create-nested-rulechain-dialog',
+    templateUrl: './create-nested-rulechain-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: CreateNestedRuleChainDialogComponent }],
+    styleUrls: [],
+    standalone: false
 })
 export class CreateNestedRuleChainDialogComponent extends DialogComponent<CreateNestedRuleChainDialogComponent, RuleChain>
   implements OnInit, ErrorStateMatcher {

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,8 +15,7 @@
     limitations under the License.
 
 -->
-
-<div class="flex flex-1 flex-col">
+<div class="flex flex-1 flex-col gap-4">
   @for (createAlarmRuleControl of createAlarmRulesFormArray().controls; track createAlarmRuleControl; let index = $index) {
     <div class="flex flex-row items-center justify-start gap-2 pb-2" [formGroup]="createAlarmRuleControl">
       <div class="create-alarm-rule flex flex-1 flex-col gap-4"
@@ -48,14 +47,14 @@
       </button>
     </div>
   }
-  <div *ngIf="!createAlarmRulesFormArray().controls.length && !disabled">
-      <span translate class="flex items-center justify-center tb-prompt required" style="margin: 16px 0">
+  @if (!createAlarmRulesFormArray().controls.length) {
+    <span translate class="tb-prompt required flex items-center justify-center text-base" [class.required]="!disabled">
         alarm-rule.add-create-alarm-rule-prompt
-      </span>
-  </div>
-  <div *ngIf="!disabled">
+    </span>
+  }
+  <div>
     <button mat-stroked-button color="primary"
-            [disabled]="createAlarmRulesFormArray().controls.length > 4"
+            [disabled]="createAlarmRulesFormArray().controls.length > 4 || disabled"
             type="button"
             (click)="addCreateAlarmRule()">
       {{ 'alarm-rule.add-create-alarm-rule' | translate }}

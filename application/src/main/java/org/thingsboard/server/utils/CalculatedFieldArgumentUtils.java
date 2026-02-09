@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,7 @@
  */
 package org.thingsboard.server.utils;
 
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
+import lombok.NonNull;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
@@ -25,6 +23,7 @@ import org.thingsboard.server.common.data.cf.configuration.aggregation.AggMetric
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
@@ -48,20 +47,13 @@ import org.thingsboard.server.service.cf.ctx.state.propagation.PropagationCalcul
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+
+import static org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry.DEFAULT_VERSION;
 
 public class CalculatedFieldArgumentUtils {
 
-    public static ListenableFuture<ArgumentEntry> transformSingleValueArgument(ListenableFuture<Optional<? extends KvEntry>> kvEntryFuture) {
-        return Futures.transform(kvEntryFuture, CalculatedFieldArgumentUtils::transformSingleValueArgument, MoreExecutors.directExecutor());
-    }
-
-    public static ArgumentEntry transformSingleValueArgument(Optional<? extends KvEntry> kvEntry) {
-        if (kvEntry.isPresent() && kvEntry.get().getValue() != null) {
-            return ArgumentEntry.createSingleValueArgument(kvEntry.get());
-        } else {
-            return new SingleValueArgumentEntry();
-        }
+    public static ArgumentEntry transformSingleValueArgument(@NonNull KvEntry kvEntry) {
+        return kvEntry.getValue() != null ? ArgumentEntry.createSingleValueArgument(kvEntry) : new SingleValueArgumentEntry();
     }
 
     public static ArgumentEntry transformTsRollingArgument(List<TsKvEntry> tsRolling, int limit, long argTimeWindow) {
@@ -76,9 +68,9 @@ public class CalculatedFieldArgumentUtils {
     }
 
     public static ArgumentEntry createDefaultMetricArgumentEntry(String argKey, AggMetric metric) {
-        Long defaultValue = metric.getDefaultValue();
+        Double defaultValue = metric.getDefaultValue();
         if (defaultValue != null) {
-            return ArgumentEntry.createSingleValueArgument(new DoubleDataEntry(argKey, defaultValue.doubleValue()));
+            return ArgumentEntry.createSingleValueArgument(new DoubleDataEntry(argKey, defaultValue));
         }
         return new SingleValueArgumentEntry();
     }
@@ -94,7 +86,7 @@ public class CalculatedFieldArgumentUtils {
         return new EntityAggregationArgumentEntry(aggIntervals);
     }
 
-    public static KvEntry createDefaultKvEntry(Argument argument) {
+    private static KvEntry createDefaultKvEntry(Argument argument) {
         String key = argument.getRefEntityKey().getKey();
         String defaultValue = argument.getDefaultValue();
         if (StringUtils.isBlank(defaultValue)) {
@@ -109,9 +101,11 @@ public class CalculatedFieldArgumentUtils {
         return new StringDataEntry(key, defaultValue);
     }
 
+    public static TsKvEntry createDefaultTsKvEntry(Argument argument, long ts) {
+        return new BasicTsKvEntry(ts, createDefaultKvEntry(argument), DEFAULT_VERSION);
+    }
     public static AttributeKvEntry createDefaultAttributeEntry(Argument argument, long ts) {
-        KvEntry kvEntry = createDefaultKvEntry(argument);
-        return new BaseAttributeKvEntry(kvEntry, ts, 0L);
+        return new BaseAttributeKvEntry(createDefaultKvEntry(argument), ts, DEFAULT_VERSION);
     }
 
     public static CalculatedFieldState createStateByType(CalculatedFieldCtx ctx, EntityId entityId) {

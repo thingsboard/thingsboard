@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,15 +41,7 @@ public abstract class AbstractCalculatedFieldActor extends ContextAwareActor {
                 return doProcessCfMsg(cfm);
             } catch (CalculatedFieldException cfe) {
                 if (DebugModeUtil.isDebugFailuresAvailable(cfe.getCtx().getCalculatedField())) {
-                    String message;
-                    if (cfe.getErrorMessage() != null) {
-                        message = cfe.getErrorMessage();
-                    } else if (cfe.getCause() != null) {
-                        message = cfe.getCause().getMessage();
-                    } else {
-                        message = "N/A";
-                    }
-                    systemContext.persistCalculatedFieldDebugEvent(tenantId, cfe.getCtx().getCfId(), cfe.getEventEntity(), cfe.getArguments(), cfe.getMsgId(), cfe.getMsgType(), null, message);
+                    systemContext.persistCalculatedFieldDebugError(cfe);
                 }
                 cause = cfe.getCause();
             } catch (Exception e) {

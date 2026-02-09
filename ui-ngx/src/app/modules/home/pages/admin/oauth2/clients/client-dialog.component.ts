@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -27,10 +27,11 @@ import { ClientComponent } from '@home/pages/admin/oauth2/clients/client.compone
 import { ErrorStateMatcher } from '@angular/material/core';
 
 @Component({
-  selector: 'tb-client-dialog',
-  templateUrl: './client-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: ClientDialogComponent}],
-  styleUrls: []
+    selector: 'tb-client-dialog',
+    templateUrl: './client-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: ClientDialogComponent }],
+    styleUrls: [],
+    standalone: false
 })
 export class ClientDialogComponent extends DialogComponent<ClientDialogComponent, OAuth2Client> implements OnDestroy, AfterViewInit {
 

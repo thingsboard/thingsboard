@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,11 +62,22 @@ public class RocksDBCalculatedFieldStateService extends AbstractCalculatedFieldS
     public void restore(QueueKey queueKey, Set<TopicPartitionInfo> partitions) {
         if (stateService.getPartitions().isEmpty()) {
             cfRocksDb.forEach((key, value) -> {
+                CalculatedFieldStateProto stateMsg;
                 try {
-                    processRestoredState(CalculatedFieldStateProto.parseFrom(value), null);
+                    stateMsg = CalculatedFieldStateProto.parseFrom(value);
                 } catch (Exception e) {
-                    log.error("[{}] Failed to process restored state", key, e);
+                    log.error("Failed to parse CalculatedFieldStateProto for key {}", key, e);
+                    return;
                 }
+                processRestoredState(stateMsg, null, new TbCallback() {
+                    @Override
+                    public void onSuccess() {}
+
+                    @Override
+                    public void onFailure(Throwable t) {
+                        log.error("Failed to process CF state message: {}", stateMsg, t);
+                    }
+                });
             });
         }
         super.restore(queueKey, partitions);

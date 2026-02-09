@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,12 @@
 package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -49,10 +51,12 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import static org.thingsboard.server.controller.ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER;
 import static org.thingsboard.server.controller.ControllerConstants.INLINE_IMAGES;
 import static org.thingsboard.server.controller.ControllerConstants.INLINE_IMAGES_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.NEW_LINE;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
@@ -229,6 +233,21 @@ public class WidgetsBundleController extends BaseController {
             TenantId tenantId = getCurrentUser().getTenantId();
             return checkNotNull(widgetsBundleService.findAllTenantWidgetsBundlesByTenantId(tenantId));
         }
+    }
+
+    @ApiOperation(value = "Get Widgets Bundles By Ids (getWidgetsBundlesByIds)",
+            notes = "Requested widgets bundles must be system level or owned by tenant of the user which is performing the request. " +
+                    NEW_LINE)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping(value = "/widgetsBundles", params = {"widgetsBundleIds"})
+    public List<WidgetsBundle> getWidgetsBundlesByIds(
+            @Parameter(description = "A list of widgets bundle ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+            @RequestParam("widgetsBundleIds") Set<UUID> widgetsBundleUUIDs) throws ThingsboardException {
+        List<WidgetsBundleId> widgetsBundleIds = new ArrayList<>();
+        for (UUID widgetsBundleUUID : widgetsBundleUUIDs) {
+            widgetsBundleIds.add(new WidgetsBundleId(widgetsBundleUUID));
+        }
+        return widgetsBundleService.findSystemOrTenantWidgetsBundlesByIds(getTenantId(), widgetsBundleIds);
     }
 
 }

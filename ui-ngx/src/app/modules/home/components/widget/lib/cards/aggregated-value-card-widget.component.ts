@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -63,9 +63,10 @@ const valuesLayoutHeight = 66;
 const valuesLayoutVerticalPadding = 16;
 
 @Component({
-  selector: 'tb-aggregated-value-card-widget',
-  templateUrl: './aggregated-value-card-widget.component.html',
-  styleUrls: ['./aggregated-value-card-widget.component.scss']
+    selector: 'tb-aggregated-value-card-widget',
+    templateUrl: './aggregated-value-card-widget.component.html',
+    styleUrls: ['./aggregated-value-card-widget.component.scss'],
+    standalone: false
 })
 export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
 

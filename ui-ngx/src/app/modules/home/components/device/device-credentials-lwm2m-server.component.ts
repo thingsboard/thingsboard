@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -36,21 +36,22 @@ import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 
 @Component({
-  selector: 'tb-device-credentials-lwm2m-server',
-  templateUrl: './device-credentials-lwm2m-server.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DeviceCredentialsLwm2mServerComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => DeviceCredentialsLwm2mServerComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-device-credentials-lwm2m-server',
+    templateUrl: './device-credentials-lwm2m-server.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DeviceCredentialsLwm2mServerComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => DeviceCredentialsLwm2mServerComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 
 export class DeviceCredentialsLwm2mServerComponent implements OnDestroy, ControlValueAccessor, Validator {

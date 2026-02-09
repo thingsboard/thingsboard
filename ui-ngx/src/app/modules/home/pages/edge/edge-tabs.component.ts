@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -21,9 +21,10 @@ import { EdgeInfo } from '@shared/models/edge.models';
 import { EntityTabsComponent } from '@home/components/entity/entity-tabs.component';
 
 @Component({
-  selector: 'tb-edge-tabs',
-  templateUrl: './edge-tabs.component.html',
-  styleUrls: []
+    selector: 'tb-edge-tabs',
+    templateUrl: './edge-tabs.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class EdgeTabsComponent extends EntityTabsComponent<EdgeInfo> {
 

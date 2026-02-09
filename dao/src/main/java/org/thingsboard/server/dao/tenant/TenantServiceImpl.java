@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,9 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
+import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
 import static org.thingsboard.server.dao.service.Validator.validateId;
+import static org.thingsboard.server.dao.service.Validator.validateIds;
 
 @Service("TenantDaoService")
 @Slf4j
@@ -223,6 +225,12 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
         log.trace("Executing findTenantsIds");
         Validator.validatePageLink(pageLink);
         return tenantDao.findTenantsIds(pageLink);
+    }
+
+    @Override
+    public List<Tenant> findTenantsByIds(TenantId callerId, List<TenantId> tenantIds) {
+        log.trace("Executing findTenantsByIds, callerId [{}], tenantIds [{}]", callerId, tenantIds);
+        return tenantDao.findTenantsByIds(callerId.getId(), toUUIDs(tenantIds));
     }
 
     @Override

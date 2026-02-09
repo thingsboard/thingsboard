@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -198,6 +198,7 @@
           <ng-container *ngIf="isEdit; else timewindowTemplate">
             <tb-timewindow class="lt-xl:!hidden" asButton
                            flatButton
+                           showSaveAsDefault
                            [displayTimewindowValue]="false"
                            [isEdit]="true"
                            tooltipPosition="below"
@@ -207,6 +208,7 @@
             </tb-timewindow>
             <tb-timewindow class="gt-lg:!hidden"
                            hideLabel
+                           showSaveAsDefault
                            [isEdit]="true"
                            tooltipPosition="below"
                            aggregation="true"
@@ -222,14 +224,18 @@
                              tooltipPosition="below"
                              aggregation="true"
                              timezone="true"
-                             [(ngModel)]="dashboardCtx.dashboardTimewindow">
+                             [showSaveAsDefault]="!readonly"
+                             [(ngModel)]="dashboardCtx.dashboardTimewindow"
+                             (saveAsDefault)="saveDashboard()">>
               </tb-timewindow>
               <tb-timewindow class="lt-lg:!hidden"
                              [isEdit]="false"
                              tooltipPosition="below"
                              aggregation="true"
                              timezone="true"
-                             [(ngModel)]="dashboardCtx.dashboardTimewindow">
+                             [showSaveAsDefault]="!readonly"
+                             [(ngModel)]="dashboardCtx.dashboardTimewindow"
+                             (saveAsDefault)="saveDashboard()">>
               </tb-timewindow>
             </ng-container>
           </ng-template>

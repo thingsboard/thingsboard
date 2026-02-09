@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,9 @@ import lombok.Data;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.HasUseLatestTsConfig;
 import org.thingsboard.server.common.data.cf.configuration.Output;
+import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.cf.configuration.ScheduledUpdateSupportedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.EntityId;
 
@@ -35,7 +37,7 @@ import java.util.Set;
 import static java.util.stream.Collectors.toSet;
 
 @Data
-public class GeofencingCalculatedFieldConfiguration implements ArgumentsBasedCalculatedFieldConfiguration, ScheduledUpdateSupportedCalculatedFieldConfiguration {
+public class GeofencingCalculatedFieldConfiguration implements ArgumentsBasedCalculatedFieldConfiguration, ScheduledUpdateSupportedCalculatedFieldConfiguration, HasUseLatestTsConfig {
 
     @Valid
     @NotNull
@@ -46,9 +48,16 @@ public class GeofencingCalculatedFieldConfiguration implements ArgumentsBasedCal
     private Map<String, ZoneGroupConfiguration> zoneGroups;
 
     private boolean scheduledUpdateEnabled;
-    private int scheduledUpdateInterval;
+    private Integer scheduledUpdateInterval;
 
+    @NotNull
     private Output output;
+
+    @Override
+    @JsonIgnore
+    public boolean isUseLatestTs() {
+        return output.getType() == OutputType.TIME_SERIES;
+    }
 
     @Override
     public CalculatedFieldType getType() {
@@ -79,6 +88,9 @@ public class GeofencingCalculatedFieldConfiguration implements ArgumentsBasedCal
 
     @Override
     public void validate() {
+        if (scheduledUpdateEnabled && scheduledUpdateInterval == null) {
+            throw new IllegalArgumentException("Refresh interval is required when periodic zone group refresh is enabled.");
+        }
         zoneGroups.forEach((key, value) -> value.validate(key));
     }
 

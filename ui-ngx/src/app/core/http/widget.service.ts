@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -329,6 +329,11 @@ export class WidgetService {
 
   public deleteWidgetInfoFromCache(fullFqn: string) {
     this.widgetsInfoInMemoryCache.delete(fullFqn);
+  }
+
+  public getWidgetsBundlesByIds(widgetsBundleIds: Array<string>, config?: RequestConfig): Observable<Array<WidgetsBundle>> {
+    return this.http.get<Array<WidgetsBundle>>(`/api/widgetsBundles?widgetsBundleIds=${widgetsBundleIds.join(',')}`,
+      defaultHttpOptionsFromConfig(config));
   }
 
   private loadWidgetsBundleCache(config?: RequestConfig): Observable<any> {

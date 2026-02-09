@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -24,9 +24,10 @@ interface CircleElement extends RaphaelElement {
 }
 
 @Component({
-  selector: 'tb-led-light',
-  templateUrl: './led-light.component.html',
-  styleUrls: []
+    selector: 'tb-led-light',
+    templateUrl: './led-light.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class LedLightComponent implements OnInit, AfterViewInit, OnChanges {
 

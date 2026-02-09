@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -31,21 +31,21 @@
   </button>
   <mat-icon *ngIf="selectionFormControl.errors && selectionFormControl.touched && !showInlineError"
             matIconSuffix
-            [matTooltip]="errorText"
+            [matTooltip]="getErrorMessage"
             matTooltipPosition="above"
             [matTooltipClass]="tooltipClass"
             class="material-icons tb-suffix-show-always tb-error">
     warning
   </mat-icon>
   <mat-error *ngIf="selectionFormControl.errors && showInlineError">
-    {{errorText}}
+    {{ getErrorMessage }}
   </mat-error>
   <mat-autocomplete
     #optionsAutocomplete="matAutocomplete"
-    class="tb-autocomplete tb-options-input-autocomplete"
+    class="tb-autocomplete"
     [panelWidth]="panelWidth">
     <mat-option *ngFor="let option of filteredOptions$ | async" [value]="option">
-      <span class="tb-option-name flex-1" [innerHTML]="option | highlight:searchText:true:'ig'"></span>
+      <span [innerHTML]="option | highlight:searchText:true:'ig'"></span>
     </mat-option>
   </mat-autocomplete>
 </mat-form-field>

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@
             <mat-slider [min]="minTimeIndex" [max]="maxTimeIndex" #ngSlider><input matSliderThumb [(ngModel)]="index"  (input)="changeIndex({source: ngSliderThumb, parent: ngSlider, value: ngSliderThumb.value}.value)" #ngSliderThumb="matSliderThumb" />
             </mat-slider>
             <div class="panel-timer">
-                <span *ngIf="this.currentTime">{{ this.currentTime | date:'medium'}}</span>
-                <span *ngIf="!this.currentTime">{{ "widget.no-data-found" | translate}}</span>
+                <span *ngIf="currentTime">{{ currentTime | date:'medium'}}</span>
+                <span *ngIf="!currentTime">{{ "widget.no-data-found" | translate}}</span>
             </div>
         </div>
         <button mat-icon-button class="mat-icon-button" aria-label="Next" (click)="moveNext()">

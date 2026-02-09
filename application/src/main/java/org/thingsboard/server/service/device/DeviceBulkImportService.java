@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -258,8 +258,7 @@ public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
 
                     Lwm2mDeviceProfileTransportConfiguration transportConfiguration = new Lwm2mDeviceProfileTransportConfiguration();
                     transportConfiguration.setBootstrap(Collections.emptyList());
-                    transportConfiguration.setClientLwM2mSettings(new OtherConfiguration(false,1, 1, 1, PowerMode.DRX, null, null, null, null, null, V1_0.toString()));
-                    transportConfiguration.setObserveAttr(new TelemetryMappingConfiguration(Collections.emptyMap(), Collections.emptySet(), Collections.emptySet(), Collections.emptySet(), Collections.emptyMap(), false, SINGLE));
+                    transportConfiguration.setClientLwM2mSettings(new OtherConfiguration());
 
                     DeviceProfileData deviceProfileData = new DeviceProfileData();
                     DefaultDeviceProfileConfiguration configuration = new DefaultDeviceProfileConfiguration();

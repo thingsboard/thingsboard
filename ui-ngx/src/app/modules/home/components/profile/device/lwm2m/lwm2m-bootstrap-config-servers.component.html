@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@
     <button mat-raised-button color="primary"
             type="button"
             (click)="addServerConfig()">
-      <span>{{ (this.isBootstrapServerNotAvailable() ? 'device-profile.lwm2m.add-lwm2m-server-config' :
+      <span>{{ (isBootstrapServerNotAvailable() ? 'device-profile.lwm2m.add-lwm2m-server-config' :
         'device-profile.lwm2m.add-server-config') | translate }}</span>
     </button>
   </div>

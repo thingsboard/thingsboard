@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -22,9 +22,10 @@ import { Resource, ResourceInfo, ResourceSubType, ResourceSubTypeTranslationMap 
 import { PageLink } from '@shared/models/page/page-link';
 
 @Component({
-  selector: 'tb-js-library-table-header',
-  templateUrl: './js-library-table-header.component.html',
-  styleUrls: []
+    selector: 'tb-js-library-table-header',
+    templateUrl: './js-library-table-header.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class JsLibraryTableHeaderComponent extends EntityTableHeaderComponent<Resource, PageLink, ResourceInfo> {
 

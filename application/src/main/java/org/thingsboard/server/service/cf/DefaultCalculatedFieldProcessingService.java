@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,13 @@ package org.thingsboard.server.service.cf;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.function.TriConsumer;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.actors.calculatedField.CalculatedFieldTelemetryMsg;
 import org.thingsboard.server.actors.calculatedField.MultipleTbCallback;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.AggMetric;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.RelatedEntitiesAggregationCalculatedFieldConfiguration;
@@ -50,6 +50,7 @@ import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.aggregation.single.AggIntervalEntry;
+import org.thingsboard.server.service.cf.ctx.state.propagation.PropagationArgumentEntry;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import java.util.ArrayList;
@@ -57,6 +58,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
@@ -94,11 +96,18 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
 
     @Override
     public Map<String, ArgumentEntry> fetchDynamicArgsFromDb(CalculatedFieldCtx ctx, EntityId entityId) {
-        return switch (ctx.getCfType()) {
-            case GEOFENCING -> resolveArgumentFutures(fetchGeofencingCalculatedFieldArguments(ctx, entityId, true, System.currentTimeMillis()));
-            case PROPAGATION -> resolveArgumentFutures(Map.of(PROPAGATION_CONFIG_ARGUMENT, fetchPropagationCalculatedFieldArgument(ctx, entityId)));
-            default -> Collections.emptyMap();
-        };
+        return ctx.getCfType() == CalculatedFieldType.GEOFENCING ?
+                resolveArgumentFutures(fetchGeofencingCalculatedFieldArguments(ctx, entityId, true, System.currentTimeMillis())) :
+                Collections.emptyMap();
+    }
+
+    @Override
+    public Optional<PropagationArgumentEntry> fetchPropagationArgumentFromDb(CalculatedFieldCtx ctx, EntityId entityId) {
+        if (ctx.getCfType() != CalculatedFieldType.PROPAGATION) {
+            return Optional.empty();
+        }
+        return Optional.of((PropagationArgumentEntry)
+                resolveArgumentValue(PROPAGATION_CONFIG_ARGUMENT, fetchPropagationCalculatedFieldArgument(ctx, entityId)));
     }
 
     @Override
@@ -167,24 +176,6 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
         }
 
         sendMsgToRuleEngine(tenantId, entityId, callback, result.toTbMsg(entityId, cfName, cfIds));
-    }
-
-    private void handlePropagationResults(PropagationCalculatedFieldResult propagationResult, TbCallback callback,
-                                          TriConsumer<EntityId, TelemetryCalculatedFieldResult, TbCallback> telemetryResultHandler) {
-        List<EntityId> propagationEntityIds = propagationResult.getPropagationEntityIds();
-        if (propagationEntityIds.isEmpty()) {
-            callback.onSuccess();
-            return;
-        }
-        if (propagationEntityIds.size() == 1) {
-            EntityId propagationEntityId = propagationEntityIds.get(0);
-            telemetryResultHandler.accept(propagationEntityId, propagationResult.getResult(), callback);
-            return;
-        }
-        MultipleTbCallback multipleTbCallback = new MultipleTbCallback(propagationEntityIds.size(), callback);
-        for (var propagationEntityId : propagationEntityIds) {
-            telemetryResultHandler.accept(propagationEntityId, propagationResult.getResult(), multipleTbCallback);
-        }
     }
 
     @Override

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -71,10 +71,11 @@ import { EntityDetailsPanelComponent } from '@home/components/entity/entity-deta
 import { FormBuilder } from '@angular/forms';
 
 @Component({
-  selector: 'tb-entities-table',
-  templateUrl: './entities-table.component.html',
-  styleUrls: ['./entities-table.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'tb-entities-table',
+    templateUrl: './entities-table.component.html',
+    styleUrls: ['./entities-table.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class EntitiesTableComponent extends PageComponent implements IEntitiesTableComponent, AfterViewInit, OnInit, OnChanges, OnDestroy {
 

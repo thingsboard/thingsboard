@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -236,6 +236,9 @@ import { PasswordRequirementsTooltipComponent } from '@shared/components/passwor
 import { StringPatternAutocompleteComponent } from '@shared/components/string-pattern-autocomplete.component';
 import { TimeUnitInputComponent } from '@shared/components/time-unit-input.component';
 import { DateExpirationPipe } from '@shared/pipe/date-expiration.pipe';
+import { EntityLimitExceededDialogComponent } from '@shared/components/dialog/entity-limit-exceeded-dialog.component';
+import { DynamicMatDialogModule } from '@shared/components/dialog/dynamic/dynamic-dialog.module';
+import { MAT_BUTTON_TOGGLE_DEFAULT_OPTIONS } from '@angular/material/button-toggle';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -294,6 +297,13 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
       provide: MAT_TOOLTIP_DEFAULT_OPTIONS,
       useValue: {
         disableTooltipInteractivity: true
+      }
+    },
+    {
+      provide: MAT_BUTTON_TOGGLE_DEFAULT_OPTIONS,
+      useValue: {
+        hideSingleSelectionIndicator: true,
+        hideMultipleSelectionIndicator: true
       }
     },
     CountryData
@@ -374,6 +384,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TodoDialogComponent,
     ColorPickerDialogComponent,
     MaterialIconsDialogComponent,
+    EntityLimitExceededDialogComponent,
     ColorInputComponent,
     MaterialIconSelectComponent,
     NodeScriptTestDialogComponent,
@@ -518,7 +529,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
         useFactory: MarkedOptionsFactory,
         deps: [MarkedOptionsService]
       }
-    })
+    }),
+    DynamicMatDialogModule
   ],
   exports: [
     FooterComponent,
@@ -643,6 +655,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TodoDialogComponent,
     ColorPickerDialogComponent,
     MaterialIconsDialogComponent,
+    EntityLimitExceededDialogComponent,
     ColorInputComponent,
     MaterialIconSelectComponent,
     NodeScriptTestDialogComponent,
@@ -723,7 +736,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     MqttVersionSelectComponent,
     PasswordRequirementsTooltipComponent,
     TimeUnitInputComponent,
-    StringPatternAutocompleteComponent
+    StringPatternAutocompleteComponent,
+    DynamicMatDialogModule
   ]
 })
 export class SharedModule { }

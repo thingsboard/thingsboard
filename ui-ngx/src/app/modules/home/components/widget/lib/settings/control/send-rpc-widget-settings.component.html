@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -18,15 +18,10 @@
 <section class="tb-widget-settings flex flex-col" [formGroup]="sendRpcWidgetSettingsForm">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.rpc.common-settings</legend>
-    <tb-string-pattern-autocomplete class="mat-block flex-1"
-                                    brackets="curly"
-                                    predefinedValuesButton="true"
-                                    label="{{'widgets.rpc.common-settings' | translate }}"
-                                    [disabled]="!sendRpcWidgetSettingsForm.get('showLabel').value"
-                                    [predefinedValues]="predefinedValues"
-                                    placeholderText="{{ 'widgets.rpc.widget-title' | translate }}"
-                                    formControlName="title"
-    ></tb-string-pattern-autocomplete>
+    <mat-form-field class="mat-block flex-1">
+      <mat-label translate>widgets.rpc.widget-title</mat-label>
+      <input matInput formControlName="title">
+    </mat-form-field>
     <mat-form-field class="mat-block flex-1">
       <mat-label translate>widgets.rpc.button-label</mat-label>
       <input matInput formControlName="buttonText">

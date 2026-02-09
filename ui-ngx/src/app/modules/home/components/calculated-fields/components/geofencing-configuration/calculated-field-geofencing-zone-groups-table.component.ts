@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 import {
   AfterViewInit,
+  booleanAttribute,
   ChangeDetectorRef,
   Component,
   DestroyRef,
@@ -39,7 +40,7 @@ import {
   CalculatedFieldGeofencingValue,
   GeofencingReportStrategyTranslations,
 } from '@shared/models/calculated-field.models';
-import { MatButton } from '@angular/material/button';
+import { MatIconButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EntityId } from '@shared/models/id/entity-id';
@@ -60,21 +61,22 @@ import {
 } from '@home/components/calculated-fields/components/geofencing-configuration/calculated-field-geofencing-zone-groups-panel.component';
 
 @Component({
-  selector: 'tb-calculated-field-geofencing-zone-groups-table',
-  templateUrl: './calculated-field-geofencing-zone-groups-table.component.html',
-  styleUrls: [`../calculated-field-arguments/calculated-field-arguments-table.component.scss`],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => CalculatedFieldGeofencingZoneGroupsTableComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => CalculatedFieldGeofencingZoneGroupsTableComponent),
-      multi: true
-    }
-  ],
+    selector: 'tb-calculated-field-geofencing-zone-groups-table',
+    templateUrl: './calculated-field-geofencing-zone-groups-table.component.html',
+    styleUrls: [`../calculated-field-arguments/calculated-field-arguments-table.component.scss`],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => CalculatedFieldGeofencingZoneGroupsTableComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => CalculatedFieldGeofencingZoneGroupsTableComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class CalculatedFieldGeofencingZoneGroupsTableComponent implements ControlValueAccessor, Validator, AfterViewInit {
 
@@ -82,6 +84,7 @@ export class CalculatedFieldGeofencingZoneGroupsTableComponent implements Contro
   @Input({required: true}) tenantId: string;
   @Input({required: true}) entityName: string;
   @Input({required: true}) ownerId: EntityId;
+  @Input({transform: booleanAttribute}) isEditValue = true;
 
   @ViewChild(MatSort, { static: true }) sort: MatSort;
 
@@ -90,6 +93,7 @@ export class CalculatedFieldGeofencingZoneGroupsTableComponent implements Contro
   entityNameMap = new Map<string, string>();
   sortOrder = { direction: 'asc', property: '' };
   dataSource = new CalculatedFieldZoneDatasource();
+  disable = false;
 
   readonly GeofencingReportStrategyTranslations = GeofencingReportStrategyTranslations;
   readonly entityTypeTranslations = entityTypeTranslations;
@@ -135,6 +139,10 @@ export class CalculatedFieldGeofencingZoneGroupsTableComponent implements Contro
     return this.errorText ? { zonesFormArray: false } : null;
   }
 
+  setDisabledState(isDisabled: boolean): void {
+    this.disable = isDisabled;
+  }
+
   onDelete($event: Event, zone: CalculatedFieldGeofencingValue): void {
     $event.stopPropagation();
     const index = this.zoneGroupsFormArray.controls.findIndex(control => isEqual(control.value, zone));
@@ -142,7 +150,7 @@ export class CalculatedFieldGeofencingZoneGroupsTableComponent implements Contro
     this.zoneGroupsFormArray.markAsDirty();
   }
 
-  manageZone($event: Event, matButton: MatButton, zone = {} as CalculatedFieldGeofencingValue): void {
+  manageZone($event: Event, matButton: MatIconButton, zone = {} as CalculatedFieldGeofencingValue, readonly: boolean = false): void {
     $event?.stopPropagation();
     if (this.popoverComponent && !this.popoverComponent.tbHidden) {
       this.popoverComponent.hide();
@@ -162,6 +170,7 @@ export class CalculatedFieldGeofencingZoneGroupsTableComponent implements Contro
         entityName: this.entityName,
         ownerId: this.ownerId,
         usedNames: this.zoneGroupsFormArray.value.map(({ name }) => name).filter(name => name !== zone.name),
+        readonly
       };
       this.popoverComponent = this.popoverService.displayPopover({
         trigger,
@@ -195,8 +204,6 @@ export class CalculatedFieldGeofencingZoneGroupsTableComponent implements Contro
   private updateErrorText(): void {
     if (this.zoneGroupsFormArray.controls.some(control => control.value.refEntityId?.id === NULL_UUID)) {
       this.errorText = 'calculated-fields.hint.geofencing-entity-not-found';
-    } else if (!this.zoneGroupsFormArray.controls.length) {
-      this.errorText = 'calculated-fields.hint.geofencing-empty';
     } else {
       this.errorText = '';
     }
@@ -211,7 +218,7 @@ export class CalculatedFieldGeofencingZoneGroupsTableComponent implements Contro
   }
 
   writeValue(zonesObj: Record<string, CalculatedFieldGeofencing>): void {
-    this.zoneGroupsFormArray.clear();
+    this.zoneGroupsFormArray.clear({emitEvent: false});
     this.populateZonesFormArray(zonesObj);
     this.updateEntityNameMap(this.zoneGroupsFormArray.value);
   }
@@ -228,7 +235,7 @@ export class CalculatedFieldGeofencingZoneGroupsTableComponent implements Contro
       };
       this.zoneGroupsFormArray.push(this.fb.control(value), { emitEvent: false });
     });
-    this.zoneGroupsFormArray.updateValueAndValidity();
+    this.updateDataSource(this.zoneGroupsFormArray.value);
   }
 
   private updateEntityNameMap(values: CalculatedFieldGeofencingValue[]): void {

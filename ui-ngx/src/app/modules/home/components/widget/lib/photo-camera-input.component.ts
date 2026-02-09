@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -51,10 +51,11 @@ interface PhotoCameraInputWidgetSettings {
 
 // @dynamic
 @Component({
-  selector: 'tb-photo-camera-widget',
-  templateUrl: './photo-camera-input.component.html',
-  styleUrls: ['./photo-camera-input.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-photo-camera-widget',
+    templateUrl: './photo-camera-input.component.html',
+    styleUrls: ['./photo-camera-input.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class PhotoCameraInputWidgetComponent extends PageComponent implements OnInit, OnDestroy {
 

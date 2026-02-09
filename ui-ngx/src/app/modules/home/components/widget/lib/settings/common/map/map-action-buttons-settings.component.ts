@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -31,18 +31,19 @@ import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-map-action-button-settings',
-  templateUrl: './map-action-buttons-settings.component.html',
-  providers: [{
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => MapActionButtonsSettingsComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => MapActionButtonsSettingsComponent),
-      multi: true
-    }]
+    selector: 'tb-map-action-button-settings',
+    templateUrl: './map-action-buttons-settings.component.html',
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => MapActionButtonsSettingsComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => MapActionButtonsSettingsComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class MapActionButtonsSettingsComponent implements ControlValueAccessor, Validator {
 

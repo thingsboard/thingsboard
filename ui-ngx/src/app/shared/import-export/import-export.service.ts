@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Inject, Injectable } from '@angular/core';
+import { Inject, Injectable, DOCUMENT } from '@angular/core';
 import { DashboardService } from '@core/http/dashboard.service';
 import { TranslateService } from '@ngx-translate/core';
 import { select, Store } from '@ngrx/store';
@@ -22,7 +22,7 @@ import { AppState } from '@core/core.state';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { BreakpointId, Dashboard, DashboardLayoutId } from '@shared/models/dashboard.models';
 import { deepClone, guid, isDefined, isNotEmptyStr, isObject, isString, isUndefined } from '@core/utils';
-import { DOCUMENT } from '@angular/common';
+
 import {
   AliasesInfo,
   AliasFilterType,
@@ -183,8 +183,8 @@ export class ImportExportService {
     });
   }
 
-  public openCalculatedFieldImportDialog(): Observable<CalculatedField> {
-    return this.openImportDialog('calculated-fields.import', 'calculated-fields.file').pipe(
+  public openCalculatedFieldImportDialog(importTitle = 'calculated-fields.import', importFileLabel = 'calculated-fields.file'): Observable<CalculatedField> {
+    return this.openImportDialog(importTitle, importFileLabel).pipe(
       catchError(() => of(null)),
     );
   }

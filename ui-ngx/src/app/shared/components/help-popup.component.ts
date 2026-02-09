@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -34,10 +34,11 @@ import { Observable } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({
-  selector: '[tb-help-popup], [tb-help-popup-content], [tb-help-popup-content-base64], [tb-help-popup-async-content]',
-  templateUrl: './help-popup.component.html',
-  styleUrls: ['./help-popup.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: '[tb-help-popup], [tb-help-popup-content], [tb-help-popup-content-base64], [tb-help-popup-async-content]',
+    templateUrl: './help-popup.component.html',
+    styleUrls: ['./help-popup.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class HelpPopupComponent implements OnChanges {
 

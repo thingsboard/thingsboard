@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -24,9 +24,10 @@ import { ValueType } from '@shared/models/constants';
 import { deepClone } from '@core/utils';
 
 @Component({
-  selector: 'tb-knob-control-widget-settings',
-  templateUrl: './knob-control-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-knob-control-widget-settings',
+    templateUrl: './knob-control-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class KnobControlWidgetSettingsComponent extends WidgetSettingsComponent {
 

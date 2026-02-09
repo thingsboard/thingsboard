@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.springframework.lang.Nullable;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.script.api.tbel.TbelCfArg;
@@ -34,10 +33,13 @@ import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeValueProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 
+import static org.thingsboard.server.service.cf.ctx.state.BaseCalculatedFieldState.DEFAULT_LAST_UPDATE_TS;
+
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
 public class SingleValueArgumentEntry implements ArgumentEntry {
+
+    public static final Long DEFAULT_VERSION = -1L;
 
     @Nullable
     protected EntityId entityId;
@@ -48,7 +50,10 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
 
     protected boolean forceResetPrevious;
 
-    public static final Long DEFAULT_VERSION = -1L;
+    public SingleValueArgumentEntry() {
+        this.ts = DEFAULT_LAST_UPDATE_TS;
+        this.version = DEFAULT_VERSION;
+    }
 
     public SingleValueArgumentEntry(EntityId entityId, ArgumentEntry entry) {
         this(entry);
@@ -154,12 +159,10 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
     }
 
     @Override
-    public boolean updateEntry(ArgumentEntry entry) {
+    public boolean updateEntry(ArgumentEntry entry, CalculatedFieldCtx ctx) {
         if (entry instanceof SingleValueArgumentEntry singleValueEntry) {
             if (singleValueEntry.getTs() < this.ts) {
-                if (!isDefaultValue()) {
-                    return false;
-                }
+                return false;
             }
 
             Long newVersion = singleValueEntry.getVersion();

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -95,7 +95,9 @@
     <ng-container [formGroup]="refDynamicSourceFormGroup">
       <div class="tb-form-panel stroked" *ngIf="entityType === ArgumentEntityType.RelationQuery">
         <mat-expansion-panel class="tb-settings" expanded>
-          <mat-expansion-panel-header>{{ 'calculated-fields.entity-zone-relationship' | translate }}</mat-expansion-panel-header>
+          <mat-expansion-panel-header>
+            <span class="tb-form-panel-title tb-required">{{ 'calculated-fields.entity-zone-relationship' | translate }}</span>
+          </mat-expansion-panel-header>
           <div class="tb-form-table">
             <div class="tb-form-table-header">
               <div class="tb-form-table-header-cell tb-actions-header"></div>
@@ -145,6 +147,7 @@
                       <button type="button"
                               mat-icon-button
                               (click)="removeKey($index)"
+                              [disabled]="readonly"
                               matTooltip="{{ 'calculated-fields.delete-level' | translate }}"
                               matTooltipPosition="above">
                         <mat-icon>delete</mat-icon>
@@ -167,7 +170,7 @@
                 <span>{{ 'calculated-fields.max-allowed-levels-error' | translate }}</span>
               </div>
             } @else {
-              <button type="button" mat-stroked-button color="primary" (click)="addKey()">
+              <button type="button" mat-stroked-button color="primary" (click)="addKey()" [disabled]="readonly">
                 {{ 'calculated-fields.add-level' | translate }}
               </button>
             }
@@ -221,7 +224,7 @@
         </mat-form-field>
       </div>
     </ng-container>
-    <div class="tb-form-panel stroked">
+    <div class="tb-form-panel stroked" [class.!hidden]="entityType !== ArgumentEntityType.RelationQuery">
       <mat-slide-toggle class="mat-slide" formControlName="createRelationsWithMatchedZones" (click)="$event.stopPropagation()">
         <div tb-hint-tooltip-icon="{{ 'calculated-fields.hint.create-relation-with-matched-zones' | translate }}">
           {{ 'calculated-fields.create-relation-with-matched-zones' | translate }}
@@ -258,12 +261,14 @@
             (click)="cancel()">
       {{ 'action.cancel' | translate }}
     </button>
-    <button mat-raised-button
-            color="primary"
-            type="button"
-            (click)="saveZone()"
-            [disabled]="geofencingFormGroup.invalid || !geofencingFormGroup.dirty">
-      {{ buttonTitle | translate }}
-    </button>
+    @if (!readonly) {
+      <button mat-raised-button
+              color="primary"
+              type="button"
+              (click)="saveZone()"
+              [disabled]="geofencingFormGroup.invalid || !geofencingFormGroup.dirty">
+        {{ buttonTitle | translate }}
+      </button>
+    }
   </div>
 </div>

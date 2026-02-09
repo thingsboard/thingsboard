@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -50,9 +50,10 @@ import { DashboardInfo } from '@shared/models/dashboard.models';
 import { DashboardAutocompleteComponent } from '@shared/components/dashboard-autocomplete.component';
 
 @Component({
-  selector: 'tb-recent-dashboards-widget',
-  templateUrl: './recent-dashboards-widget.component.html',
-  styleUrls: ['./home-page-widget.scss', './recent-dashboards-widget.component.scss']
+    selector: 'tb-recent-dashboards-widget',
+    templateUrl: './recent-dashboards-widget.component.html',
+    styleUrls: ['./home-page-widget.scss', './recent-dashboards-widget.component.scss'],
+    standalone: false
 })
 export class RecentDashboardsWidgetComponent extends PageComponent implements OnInit, AfterViewInit, OnDestroy {
 

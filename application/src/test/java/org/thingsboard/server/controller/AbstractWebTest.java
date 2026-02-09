@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.context.WebApplicationContext;
@@ -349,7 +350,14 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
         if (this.mockMvc == null) {
             this.mockMvc = webAppContextSetup(webApplicationContext)
-                    .apply(springSecurity()).build();
+                    .apply(springSecurity())
+                    // conditional printing of non 2xx responses
+                    .alwaysDo(result -> {
+                        if (result.getResponse().getStatus() >= 400) {
+                            MockMvcResultHandlers.log().handle(result);
+                        }
+                    })
+                    .build();
         }
         loginSysAdmin();
 
@@ -423,7 +431,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
         jdbcTemplate.execute("TRUNCATE TABLE notification");
 
-        log.info("Executed web test teardown");
+        log.debug("Executed web test teardown");
     }
 
     private void verifyNoTenantsLeft() throws Exception {
@@ -1143,7 +1151,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected void createEntityRelation(EntityId entityIdFrom, EntityId entityIdTo, String typeRelation) throws Exception {
         EntityRelation relation = new EntityRelation(entityIdFrom, entityIdTo, typeRelation);
-        doPost("/api/relation", relation);
+        doPost("/api/relation", relation).andExpect(status().isOk());
     }
 
     protected void deleteEntityRelation(EntityRelation entityRelation) throws Exception {
@@ -1209,7 +1217,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         Map<CalculatedFieldId, CalculatedFieldState> statesMap = (Map<CalculatedFieldId, CalculatedFieldState>) ReflectionTestUtils.getField(processor, "states");
         Awaitility.await("CF state for entity actor ready to refresh dynamic arguments").atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> {
             CalculatedFieldState calculatedFieldState = statesMap.get(cfId);
-            boolean isReady = calculatedFieldState != null && ((GeofencingCalculatedFieldState) calculatedFieldState).getLastDynamicArgumentsRefreshTs() <
+            boolean isReady = calculatedFieldState != null && ((GeofencingCalculatedFieldState) calculatedFieldState).getLastScheduledRefreshTs() <
                                                               System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(scheduledUpdateInterval);
             log.warn("entityId {}, cfId {}, state ready to refresh == {}", entityId, cfId, isReady);
             return isReady;
@@ -1260,7 +1268,8 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         TenantProfile oldTenantProfile = tenantProfileService.findDefaultTenantProfile(TenantId.SYS_TENANT_ID);
         TenantProfile tenantProfile = JacksonUtil.clone(oldTenantProfile);
         updater.accept(tenantProfile);
-        tbTenantProfileService.save(TenantId.SYS_TENANT_ID, tenantProfile, oldTenantProfile);
+        // user should be sysadmin as this operation allowed only for sysadmins. But for the simplification of the test - already existed variable provided. This affects only an audit log content
+        tbTenantProfileService.save(TenantId.SYS_TENANT_ID, tenantProfile, oldTenantProfile, tenantAdminUser);
     }
 
     protected OAuth2Client createOauth2Client(TenantId tenantId, String title) {
@@ -1441,7 +1450,8 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
                                                             EntityType entityType,
                                                             List<UUID> entities,
                                                             List<String> names) throws Exception {
-        return doGetTypedWithPageLink("/api/calculatedFields?type=" + type + "&" +
+        return doGetTypedWithPageLink("/api/calculatedFields?" +
+                                      (type != null ? "types=" + type + "&" : "") +
                                       (entityType != null ? "entityType=" + entityType + "&" : "") +
                                       (entities != null ? "entities=" + String.join(",",
                                               entities.stream().map(UUID::toString).toList()) + "&" : "") +

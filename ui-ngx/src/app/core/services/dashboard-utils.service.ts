@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -35,7 +35,15 @@ import {
   LayoutType,
   WidgetLayout
 } from '@shared/models/dashboard.models';
-import { deepClone, isDefined, isDefinedAndNotNull, isNotEmptyStr, isString, isUndefined } from '@core/utils';
+import {
+  deepClean,
+  deepClone,
+  isDefined,
+  isDefinedAndNotNull,
+  isNotEmptyStr,
+  isString,
+  isUndefined
+} from '@core/utils';
 import {
   Datasource,
   datasourcesHasAggregation,
@@ -50,8 +58,7 @@ import {
   WidgetConfigMode,
   WidgetSize,
   widgetType,
-  WidgetTypeDescriptor,
-  widgetTypeHasTimewindow
+  WidgetTypeDescriptor
 } from '@app/shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AliasFilterType, EntityAlias, EntityAliasFilter } from '@app/shared/models/alias.models';
@@ -64,7 +71,11 @@ import { MediaBreakpoints } from '@shared/models/constants';
 import { TranslateService } from '@ngx-translate/core';
 import { DashboardPageLayout } from '@home/components/dashboard-page/dashboard-page.models';
 import { maxGridsterCol, maxGridsterRow } from '@home/models/dashboard-component.models';
-import { findWidgetModelDefinition } from '@shared/models/widget/widget-model.definition';
+import {
+  findWidgetModelDefinition,
+  widgetHasTimewindow,
+  WidgetModelDefinition
+} from '@shared/models/widget/widget-model.definition';
 
 @Injectable({
   providedIn: 'root'
@@ -80,7 +91,10 @@ export class DashboardUtilsService {
 
   public validateAndUpdateDashboard(dashboard: Dashboard): Dashboard {
     if (!dashboard.configuration) {
-      dashboard.configuration = {};
+      dashboard.configuration = {
+        entityAliases: {},
+        filters: {},
+      };
     }
     if (isUndefined(dashboard.configuration.widgets)) {
       dashboard.configuration.widgets = {};
@@ -233,7 +247,12 @@ export class DashboardUtilsService {
   }
 
   public validateAndUpdateWidget(widget: Widget): Widget {
-    widget.config = this.validateAndUpdateWidgetConfig(widget.config, widget.type);
+    const widgetDefinition = widget.config ? findWidgetModelDefinition(widget) : null;
+    if (widgetDefinition) {
+      widget.config = this.validateAndUpdateWidgetConfigWithModelDefinition(widget, widgetDefinition);
+    } else {
+      widget.config = this.validateAndUpdateWidgetConfig(widget.config, widget.type);
+    }
     widget = this.validateAndUpdateWidgetTypeFqn(widget);
     this.removeTimewindowConfigIfUnused(widget);
     if (isDefined((widget as any).title)) {
@@ -350,33 +369,33 @@ export class DashboardUtilsService {
         }
       }
     }
-    return widgetConfig;
+    return deepClean(widgetConfig, {cleanKeys: ['_hash'], cleanOnlyKey: true});
+  }
+
+  public validateAndUpdateWidgetConfigWithModelDefinition(widget: Widget, widgetDefinition: WidgetModelDefinition): WidgetConfig {
+    const widgetConfig = widget.config;
+    if (widget.type === widgetType.latest && widgetDefinition.hasTimewindow(widget)) {
+      widgetConfig.timewindow = initModelFromDefaultTimewindow(widgetConfig.timewindow, true,
+        widgetDefinition.datasourcesHasOnlyComparisonAggregation(widget), this.timeService, false);
+    }
+    return deepClean(widgetConfig, {cleanKeys: ['_hash'], cleanOnlyKey: true});
   }
 
   private removeTimewindowConfigIfUnused(widget: Widget) {
-    const widgetHasTimewindow = this.widgetHasTimewindow(widget);
-    if (!widgetHasTimewindow || widget.config.useDashboardTimewindow) {
+    const hasTimewindow = widgetHasTimewindow(widget);
+    if (!hasTimewindow || widget.config.useDashboardTimewindow) {
       delete widget.config.displayTimewindow;
       delete widget.config.timewindow;
-      delete widget.config.timewindowStyle;
 
-      if (!widgetHasTimewindow) {
+      if (!hasTimewindow) {
         delete widget.config.useDashboardTimewindow;
       }
     }
   }
 
-  private widgetHasTimewindow(widget: Widget): boolean {
-    const widgetDefinition = findWidgetModelDefinition(widget);
-    if (widgetDefinition) {
-      return widgetDefinition.hasTimewindow(widget);
-    }
-    return widgetTypeHasTimewindow(widget.type)
-      || (widget.type === widgetType.latest && datasourcesHasAggregation(widget.config.datasources));
-  }
-
   public prepareWidgetForSaving(widget: Widget): Widget {
     this.removeTimewindowConfigIfUnused(widget);
+    widget = deepClean(widget, {cleanKeys: ['_hash'], cleanOnlyKey: true});
     return widget;
   }
 

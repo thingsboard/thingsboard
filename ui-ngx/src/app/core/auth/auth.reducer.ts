@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -37,8 +37,10 @@ const emptyUserAuthState: AuthPayload = {
   minAllowedAggregationIntervalInSecForCF: 0,
   minAllowedScheduledUpdateIntervalInSecForCF: 0,
   maxRelationLevelPerCfArgument: 0,
+  maxRelatedEntitiesToReturnPerCfArgument: 0,
   maxDataPointsPerRollingArg: 0,
   maxDebugModeDurationMinutes: 0,
+  intermediateAggregationIntervalInSecForCF: 0,
   userSettings: initialUserSettings,
   trendzSettings: initialTrendzSettings
 };

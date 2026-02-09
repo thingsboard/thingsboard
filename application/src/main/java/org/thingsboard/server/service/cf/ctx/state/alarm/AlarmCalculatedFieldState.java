@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,8 +94,6 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
     private Alarm currentAlarm;
     private boolean initialFetchDone;
 
-    // TODO: deprecate device profile node, describe the differences and improvements
-
     public AlarmCalculatedFieldState(EntityId entityId) {
         super(entityId);
     }
@@ -152,7 +150,8 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
                 clearRuleState = null;
             }
         }
-        log.debug("Initialized create rule states {} and clear rule state {} for {}", createRuleStates, clearRuleState, configuration);
+        log.debug("Initialized create rule states {} and clear rule state {} for {}. Restored: {}, reeval needed: {}",
+                createRuleStates, clearRuleState, configuration, restored, reevalNeeded);
 
         if (reevalNeeded.get()) {
             initCurrentAlarm(ctx);
@@ -223,6 +222,20 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
         return Futures.immediateFuture(AlarmCalculatedFieldResult.builder()
                 .alarmResult(result)
                 .build());
+    }
+
+    @Override
+    protected boolean updateEntry(ArgumentEntry existingArgumentEntry, ArgumentEntry newArgumentEntry, CalculatedFieldCtx ctx) {
+        if (!(existingArgumentEntry instanceof SingleValueArgumentEntry existingEntry) ||
+            !(newArgumentEntry instanceof SingleValueArgumentEntry newEntry)) {
+            return super.updateEntry(existingArgumentEntry, newArgumentEntry, ctx);
+        }
+        if (newEntry.getTs() < existingEntry.getTs()) {
+            if (existingEntry.isDefaultValue()) {
+                existingEntry.setTs(newEntry.getTs());
+            }
+        }
+        return super.updateEntry(existingEntry, newEntry, ctx);
     }
 
     public void processAlarmAction(Alarm alarm, ActionType action) {
@@ -344,7 +357,7 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
             newAlarm.setAcknowledged(false);
             newAlarm.setCleared(false);
             newAlarm.setSeverity(severity);
-            long startTs = latestTimestamp;
+            long startTs = getLatestTimestamp();
             long currentTime = System.currentTimeMillis();
             if (startTs <= 0L || startTs > currentTime) {
                 startTs = currentTime;

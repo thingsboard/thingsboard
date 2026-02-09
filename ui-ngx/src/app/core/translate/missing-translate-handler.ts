@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,11 +14,12 @@
 /// limitations under the License.
 ///
 
-import { MissingTranslationHandler, MissingTranslationHandlerParams } from '@ngx-translate/core';
+import { MissingTranslationHandler, MissingTranslationHandlerParams, StrictTranslation } from '@ngx-translate/core';
 import { customTranslationsPrefix } from '@app/shared/models/constants';
+import { Observable } from 'rxjs';
 
 export class TbMissingTranslationHandler implements MissingTranslationHandler {
-  handle(params: MissingTranslationHandlerParams) {
+  handle(params: MissingTranslationHandlerParams): StrictTranslation | Observable<StrictTranslation> {
     if (params.key && !params.key.startsWith(customTranslationsPrefix)) {
       console.warn('Translation for \'' + params.key + '\' doesn\'t exist');
       let translations: any;
@@ -32,7 +33,8 @@ export class TbMissingTranslationHandler implements MissingTranslationHandler {
         }
         translations = newTranslations;
       }
-      params.translateService.setTranslation(params.translateService.currentLang, translations, true);
+      params.translateService.setTranslation(params.translateService.getCurrentLang(), translations, true);
     }
+    return undefined;
   }
 }

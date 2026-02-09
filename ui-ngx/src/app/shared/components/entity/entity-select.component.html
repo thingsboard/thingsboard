@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -19,21 +19,25 @@
   <tb-entity-type-select
     *ngIf="displayEntityTypeSelect"
     class="flex-1"
+    [label]="entityTypeLabel ?? null"
     [appearance]="appearance"
     [showLabel]="true"
     [required]="required"
     [useAliasEntityTypes]="useAliasEntityTypes"
     [allowedEntityTypes]="allowedEntityTypes"
     [additionEntityTypes]="additionEntityTypes"
+    [filterAllowedEntityTypes]="filterAllowedEntityTypes"
     formControlName="entityType">
   </tb-entity-type-select>
   <tb-entity-autocomplete
+    #entityAutocompleteComponent
     *ngIf="modelValue.entityType && !entityTypeNullUUID.has(modelValue.entityType)"
     class="flex-1"
     [appearance]="appearance"
-    [required]="required"
+    [required]="required && modelValue.entityType !== AliasEntityType.CURRENT_CUSTOMER"
     [entityType]="modelValue.entityType"
     [useEntityDisplayName]="useEntityDisplayName"
+    (entityChanged)="changeEntity($event)"
     formControlName="entityId">
   </tb-entity-autocomplete>
 </div>

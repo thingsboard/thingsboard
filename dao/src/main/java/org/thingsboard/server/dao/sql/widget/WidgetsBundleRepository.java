@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.thingsboard.server.common.data.edqs.fields.WidgetTypeFields;
 import org.thingsboard.server.common.data.edqs.fields.WidgetsBundleFields;
 import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.WidgetsBundleEntity;
@@ -29,9 +28,6 @@ import org.thingsboard.server.dao.model.sql.WidgetsBundleEntity;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Created by Valerii Sosliuk on 4/23/2017.
- */
 public interface WidgetsBundleRepository extends JpaRepository<WidgetsBundleEntity, UUID>, ExportableEntityRepository<WidgetsBundleEntity> {
 
     WidgetsBundleEntity findWidgetsBundleByTenantIdAndAlias(UUID tenantId, String alias);
@@ -146,4 +142,11 @@ public interface WidgetsBundleRepository extends JpaRepository<WidgetsBundleEnti
     @Query("SELECT new org.thingsboard.server.common.data.edqs.fields.WidgetsBundleFields(w.id, w.createdTime, w.tenantId," +
             "w.alias, w.version) FROM WidgetsBundleEntity w WHERE w.id > :id ORDER BY w.id")
     List<WidgetsBundleFields> findNextBatch(@Param("id") UUID id, Limit limit);
+
+    @Query("SELECT wb FROM WidgetsBundleEntity wb WHERE " +
+            "wb.id IN (:widgetsBundleIds) AND (wb.tenantId = :tenantId OR wb.tenantId = :systemTenantId)")
+    List<WidgetsBundleEntity> findSystemOrTenantWidgetsBundlesByIdIn(@Param("tenantId") UUID tenantId,
+                                                                     @Param("systemTenantId") UUID systemTenantId,
+                                                                     @Param("widgetsBundleIds") List<UUID> widgetsBundleIds);
+
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,8 +105,6 @@ public class DataConstants {
     public static final String RPC_EXPIRED = "RPC_EXPIRED";
     public static final String RPC_FAILED = "RPC_FAILED";
     public static final String RPC_DELETED = "RPC_DELETED";
-
-    public static final String REEVALUATION_MSG = "REEVALUATION_MSG";
 
     public static final String DEFAULT_SECRET_KEY = "";
     public static final String SECRET_KEY_FIELD_NAME = "secretKey";

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -31,9 +31,10 @@ import { ClientDialogComponent } from '@home/pages/admin/oauth2/clients/client-d
 import { EntityType } from '@shared/models/entity-type.models';
 
 @Component({
-  selector: 'tb-domain',
-  templateUrl: './domain.component.html',
-  styleUrls: []
+    selector: 'tb-domain',
+    templateUrl: './domain.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class DomainComponent extends EntityComponent<DomainInfo> {
 

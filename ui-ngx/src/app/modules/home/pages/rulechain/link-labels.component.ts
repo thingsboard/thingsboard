@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -29,14 +29,15 @@ import { catchError, map, mergeMap, share, startWith } from 'rxjs/operators';
 import { RuleChainService } from '@core/http/rule-chain.service';
 
 @Component({
-  selector: 'tb-link-labels',
-  templateUrl: './link-labels.component.html',
-  styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => LinkLabelsComponent),
-    multi: true
-  }]
+    selector: 'tb-link-labels',
+    templateUrl: './link-labels.component.html',
+    styleUrls: [],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => LinkLabelsComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class LinkLabelsComponent implements ControlValueAccessor, OnInit, OnChanges {
 

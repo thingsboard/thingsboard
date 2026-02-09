@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,12 +15,13 @@
     limitations under the License.
 
 -->
-<div [formGroup]="fieldFormGroup" class="calculated-field-dialog-container flex size-full max-w-4xl flex-col">
+<div [formGroup]="fieldFormGroup" class="calculated-field-dialog-container flex flex-col">
   <mat-toolbar color="primary">
     <h2>{{ 'entity.type-calculated-field' | translate}}</h2>
     <span class="flex-1"></span>
     <div tb-help="calculatedField"></div>
     <button mat-icon-button
+            [disabled]="isLoading"
             (click)="cancel()"
             type="button">
       <mat-icon class="material-icons">close</mat-icon>
@@ -28,8 +29,8 @@
   </mat-toolbar>
   <div mat-dialog-content class="flex-1">
     <div class="tb-form-panel no-border no-padding">
-      <div class="tb-form-panel">
-        <div class="tb-form-panel-title">{{ 'common.general' | translate }}</div>
+      <div class="tb-form-panel no-gap">
+        <div class="tb-form-panel-title mb-4">{{ 'common.general' | translate }}</div>
         <div class="flex items-center gap-2">
           <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-label>{{ 'entity-field.title' | translate }}</mat-label>
@@ -45,64 +46,91 @@
                 }
               </mat-error>
             }
+            <mat-hint></mat-hint>
           </mat-form-field>
           <tb-entity-debug-settings-button
             formControlName="debugSettings"
-            [class.mb-5]="fieldFormGroup.get('name').errors && fieldFormGroup.get('name').touched"
+            style="margin-bottom: 22px"
             [entityType]="EntityType.CALCULATED_FIELD"
             [additionalActionConfig]="additionalDebugActionConfig"
           />
         </div>
+        @if (!data.entityId) {
+          <tb-entity-select formControlName="entityId"
+                            appearance="outline"
+                            required
+                            entityTypeLabel="{{ 'entity.entity-type' | translate }}"
+                            [filterAllowedEntityTypes]="false"
+                            [allowedEntityTypes]="calculatedFieldsEntityTypeList"
+                            [defaultEntityType]="EntityType.DEVICE_PROFILE"
+                            (entityChanged)="changeEntity($event)">
+          </tb-entity-select>
+        }
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>{{ 'common.type' | translate }}</mat-label>
           <mat-select formControlName="type">
+            <mat-select-trigger>
+              {{ CalculatedFieldTypeTranslations.has(fieldFormGroup.get('type').value)
+                  ? (CalculatedFieldTypeTranslations.get(fieldFormGroup.get('type').value).name | translate)
+                  : fieldFormGroup.get('type').value }}
+            </mat-select-trigger>
             @for (type of fieldTypes; track type) {
-              <mat-option [value]="type">{{ CalculatedFieldTypeTranslations.get(type).name | translate}}</mat-option>
+              <mat-option [value]="type" class="py-1">
+                <span matListItemTitle>
+                  {{ CalculatedFieldTypeTranslations.get(type).name | translate}}
+                </span>
+                <br>
+                <small matListItemMeta style="color: inherit">
+                  {{ CalculatedFieldTypeTranslations.get(type).hint | translate }}
+                </small>
+              </mat-option>
             }
           </mat-select>
-          @if (CalculatedFieldTypeTranslations.get(fieldFormGroup.get('type').value).hint) {
-            <mat-hint>{{ CalculatedFieldTypeTranslations.get(fieldFormGroup.get('type').value).hint | translate }}</mat-hint>
-          }
         </mat-form-field>
       </div>
       @switch (fieldFormGroup.get('type').value) {
         @case (CalculatedFieldType.GEOFENCING) {
           <tb-geofencing-configuration formControlName="configuration"
-                                       [entityId]="data.entityId"
-                                       [entityName]="data.entityName"
-                                       [ownerId]="data.ownerId"
+                                       [class.tb-form-panel-disabled]="disabledConfiguration"
+                                       [entityId]="entityId"
+                                       [entityName]="entityName"
+                                       [ownerId]="ownerId"
                                        [tenantId]="data.tenantId"
           ></tb-geofencing-configuration>
         }
         @case (CalculatedFieldType.PROPAGATION) {
           <tb-propagation-configuration formControlName="configuration"
-                                        [entityId]="data.entityId"
-                                        [entityName]="data.entityName"
+                                        [class.tb-form-panel-disabled]="disabledConfiguration"
+                                        [entityId]="entityId"
+                                        [entityName]="entityName"
                                         [tenantId]="data.tenantId"
-                                        [ownerId]="data.ownerId"
+                                        [ownerId]="ownerId"
                                         [testScript]="onTestScript.bind(this)"
           ></tb-propagation-configuration>
         }
         @case (CalculatedFieldType.RELATED_ENTITIES_AGGREGATION) {
           <tb-related-entities-aggregation-component formControlName="configuration"
-                                                     [entityId]="data.entityId"
-                                                     [entityName]="data.entityName"
+                                                     [class.tb-form-panel-disabled]="disabledConfiguration"
+                                                     [entityId]="entityId"
+                                                     [entityName]="entityName"
                                                      [tenantId]="data.tenantId"
                                                      [testScript]="onTestScript.bind(this)"
           ></tb-related-entities-aggregation-component>
         }
         @case (CalculatedFieldType.ENTITY_AGGREGATION) {
           <tb-entity-aggregation-component formControlName="configuration"
-                                           [entityId]="data.entityId"
-                                           [entityName]="data.entityName"
+                                           [class.tb-form-panel-disabled]="disabledConfiguration"
+                                           [entityId]="entityId"
+                                           [entityName]="entityName"
                                            [tenantId]="data.tenantId"
           ></tb-entity-aggregation-component>
         }
         @default {
           <tb-simple-configuration formControlName="configuration"
-                                   [entityId]="data.entityId"
-                                   [entityName]="data.entityName"
-                                   [ownerId]="data.ownerId"
+                                   [class.tb-form-panel-disabled]="disabledConfiguration"
+                                   [entityId]="entityId"
+                                   [entityName]="entityName"
+                                   [ownerId]="ownerId"
                                    [tenantId]="data.tenantId"
                                    [isScript]="fieldFormGroup.get('type').value === CalculatedFieldType.SCRIPT"
                                    [testScript]="onTestScript.bind(this)"
@@ -115,12 +143,13 @@
     <button mat-button color="primary"
             type="button"
             cdkFocusInitial
+            [disabled]="isLoading"
             (click)="cancel()">
       {{ 'action.cancel' | translate }}
     </button>
     <button mat-raised-button color="primary"
             (click)="add()"
-            [disabled]="(isLoading$ | async) || fieldFormGroup.invalid || !fieldFormGroup.dirty">
+            [disabled]="isLoading || fieldFormGroup.invalid || !fieldFormGroup.dirty">
       {{ data.buttonTitle | translate }}
     </button>
   </div>

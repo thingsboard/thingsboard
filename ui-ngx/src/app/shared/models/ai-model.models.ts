@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -110,6 +110,7 @@ export const AiModelMap = new Map<AiProvider, { modelList: string[], providerFie
         'o3',
         'o3-mini',
         'o1',
+        'gpt-5.1',
         'gpt-5',
         'gpt-5-mini',
         'gpt-5-nano',
@@ -135,6 +136,7 @@ export const AiModelMap = new Map<AiProvider, { modelList: string[], providerFie
     AiProvider.GOOGLE_AI_GEMINI,
     {
       modelList: [
+        'gemini-3-pro-preview',
         'gemini-2.5-pro',
         'gemini-2.5-flash',
         'gemini-2.5-flash-lite',
@@ -149,6 +151,7 @@ export const AiModelMap = new Map<AiProvider, { modelList: string[], providerFie
     AiProvider.GOOGLE_VERTEX_AI_GEMINI,
     {
       modelList: [
+        'gemini-3-pro-preview',
         'gemini-2.5-pro',
         'gemini-2.5-flash',
         'gemini-2.5-flash-lite',
@@ -181,12 +184,10 @@ export const AiModelMap = new Map<AiProvider, { modelList: string[], providerFie
     AiProvider.ANTHROPIC,
     {
       modelList: [
+        'claude-opus-4-5',
         'claude-opus-4-1',
-        'claude-opus-4-0',
         'claude-sonnet-4-5',
-        'claude-sonnet-4-0',
-        'claude-3-7-sonnet-latest',
-        'claude-3-5-haiku-latest',
+        'claude-haiku-4-5'
       ],
       providerFieldsList: ['apiKey'],
       modelFieldsList: ['temperature', 'topP', 'topK', 'maxOutputTokens'],

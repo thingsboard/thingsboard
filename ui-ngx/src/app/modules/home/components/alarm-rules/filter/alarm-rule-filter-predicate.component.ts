@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import {
   alarmRuleNumericOperationTranslationMap,
   AlarmRuleStringOperation,
   alarmRuleStringOperationTranslationMap,
+  checkPredicates,
   ComplexAlarmRuleFilterPredicate
 } from "@shared/models/alarm-rule.models";
 import { MatDialog } from "@angular/material/dialog";
@@ -44,21 +45,22 @@ import {
 import { CalculatedFieldArgument } from "@shared/models/calculated-field.models";
 
 @Component({
-  selector: 'tb-alarm-rule-filter-predicate',
-  templateUrl: './alarm-rule-filter-predicate.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => AlarmRuleFilterPredicateComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => AlarmRuleFilterPredicateComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-alarm-rule-filter-predicate',
+    templateUrl: './alarm-rule-filter-predicate.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => AlarmRuleFilterPredicateComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => AlarmRuleFilterPredicateComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class AlarmRuleFilterPredicateComponent implements ControlValueAccessor, Validator {
 
@@ -111,6 +113,18 @@ export class AlarmRuleFilterPredicateComponent implements ControlValueAccessor, 
       this.updateModel();
     });
 
+    this.filterPredicateFormGroup.get('operation').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(value => {
+      if (value === 'NO_DATA') {
+        this.filterPredicateFormGroup.get('duration').enable({emitEvent: false});
+        this.filterPredicateFormGroup.get('value').disable({emitEvent: false});
+      } else {
+        this.filterPredicateFormGroup.get('duration').disable({emitEvent: false});
+        this.filterPredicateFormGroup.get('value').enable({emitEvent: false});
+      }
+    })
+
     this.filterPredicateFormGroup.get('predicates').valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(predicates => {
@@ -137,28 +151,20 @@ export class AlarmRuleFilterPredicateComponent implements ControlValueAccessor, 
       this.filterPredicateFormGroup.disable({emitEvent: false});
     } else {
       this.filterPredicateFormGroup.enable({emitEvent: false});
+      if (this.filterPredicateFormGroup.get('operation').value === 'NO_DATA') {
+        this.filterPredicateFormGroup.get('duration').enable({emitEvent: false});
+        this.filterPredicateFormGroup.get('value').disable({emitEvent: false});
+      } else {
+        this.filterPredicateFormGroup.get('duration').disable({emitEvent: false});
+        this.filterPredicateFormGroup.get('value').enable({emitEvent: false});
+      }
     }
   }
 
-  private isPredicateArgumentsValid(predicates: any): boolean {
+  private isPredicateArgumentsValid(predicates: AlarmRuleFilterPredicate[]): boolean {
     const validSet = new Set(Object.keys(this.arguments));
-    function checkPredicates(predicates: any[]): boolean {
-      for (const p of predicates) {
-        if (p.value?.dynamicValueArgument) {
-          if (!validSet.has(p.value.dynamicValueArgument)) {
-            return false;
-          }
-        }
-        if (p.type === 'COMPLEX' && Array.isArray(p.predicates)) {
-          if (!checkPredicates(p.predicates)) {
-            return false;
-          }
-        }
-      }
-      return true;
-    }
     if (Array.isArray(predicates)) {
-      if (!checkPredicates(predicates)) {
+      if (!checkPredicates(predicates, validSet)) {
         return false;
       }
     }
@@ -183,30 +189,6 @@ export class AlarmRuleFilterPredicateComponent implements ControlValueAccessor, 
     if (predicate.operation === 'NO_DATA') {
       this.propagateChange(predicate.duration);
     } else {
-      if (!predicate.value) {
-        switch (this.valueType) {
-          case EntityKeyValueType.STRING:
-            predicate.value = {
-              staticValue: ''
-            };
-            break;
-          case EntityKeyValueType.NUMERIC:
-            predicate.value = {
-              staticValue: 0
-            };
-            break;
-          case EntityKeyValueType.DATE_TIME:
-            predicate.value = {
-              staticValue: Date.now()
-            };
-            break;
-          case EntityKeyValueType.BOOLEAN:
-            predicate.value = {
-              staticValue: false
-            };
-            break;
-        }
-      }
       this.propagateChange({type: this.type, ...predicate});
     }
   }
@@ -222,6 +204,7 @@ export class AlarmRuleFilterPredicateComponent implements ControlValueAccessor, 
         isAdd: false,
         arguments: this.arguments,
         argumentInUse: this.argumentInUse,
+        readonly: this.disabled
       }
     }).afterClosed().subscribe(
       (result) => {

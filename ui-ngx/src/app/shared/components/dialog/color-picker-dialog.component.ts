@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -32,9 +32,10 @@ export interface ColorPickerDialogResult {
 }
 
 @Component({
-  selector: 'tb-color-picker-dialog',
-  templateUrl: './color-picker-dialog.component.html',
-  styleUrls: ['./color-picker-dialog.component.scss']
+    selector: 'tb-color-picker-dialog',
+    templateUrl: './color-picker-dialog.component.html',
+    styleUrls: ['./color-picker-dialog.component.scss'],
+    standalone: false
 })
 export class ColorPickerDialogComponent extends DialogComponent<ColorPickerDialogComponent, ColorPickerDialogResult> {
 

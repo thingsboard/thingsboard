@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,4 +67,6 @@ public interface CustomerRepository extends JpaRepository<CustomerEntity, UUID>,
             "c.title, c.version, c.additionalInfo, c.country, c.state, c.city, c.address, c.address2, c.zip, c.phone, c.email) " +
             "FROM CustomerEntity c WHERE c.id > :id ORDER BY c.id")
     List<CustomerFields> findNextBatch(@Param("id") UUID id, Limit limit);
+
+    List<CustomerEntity> findCustomersByTenantIdAndIdIn(UUID tenantId, List<UUID> customerIds);
 }

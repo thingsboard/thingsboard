@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,13 +25,17 @@ import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntryType;
+import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
+import org.thingsboard.server.service.cf.ctx.state.HasLatestTs;
 
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.service.cf.ctx.state.BaseCalculatedFieldState.DEFAULT_LAST_UPDATE_TS;
+
 @Data
 @Slf4j
-public class GeofencingArgumentEntry implements ArgumentEntry {
+public class GeofencingArgumentEntry implements ArgumentEntry, HasLatestTs {
 
     private Map<EntityId, GeofencingZoneState> zoneStates;
 
@@ -59,7 +63,13 @@ public class GeofencingArgumentEntry implements ArgumentEntry {
     }
 
     @Override
-    public boolean updateEntry(ArgumentEntry entry) {
+    public long getLatestTs() {
+        return zoneStates.values().stream()
+                .mapToLong(GeofencingZoneState::getTs).max().orElse(DEFAULT_LAST_UPDATE_TS);
+    }
+
+    @Override
+    public boolean updateEntry(ArgumentEntry entry, CalculatedFieldCtx ctx) {
         if (!(entry instanceof GeofencingArgumentEntry geofencingArgumentEntry)) {
             throw new IllegalArgumentException("Unsupported argument entry type for geofencing argument entry: " + entry.getType());
         }

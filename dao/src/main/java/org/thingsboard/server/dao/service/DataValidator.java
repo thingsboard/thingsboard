@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package org.thingsboard.server.dao.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.thingsboard.server.exception.DataValidationException;
+import org.thingsboard.server.exception.EntitiesLimitExceededException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,8 +29,6 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.TenantEntityWithDataDao;
-import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.dao.exception.EntitiesLimitException;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 
 import java.util.HashSet;
@@ -51,7 +51,8 @@ public abstract class DataValidator<D extends BaseData<?>> {
     private static final String NAME = "name";
     private static final String TOPIC = "topic";
 
-    @Autowired @Lazy
+    @Autowired
+    @Lazy
     private ApiLimitService apiLimitService;
 
     // Returns old instance of the same object that is fetched during validation.
@@ -123,7 +124,8 @@ public abstract class DataValidator<D extends BaseData<?>> {
     protected void validateNumberOfEntitiesPerTenant(TenantId tenantId,
                                                      EntityType entityType) {
         if (!apiLimitService.checkEntitiesLimit(tenantId, entityType)) {
-            throw new EntitiesLimitException(tenantId, entityType);
+            long limit = apiLimitService.getLimit(tenantId, profileConfiguration -> profileConfiguration.getEntitiesLimit(entityType));
+            throw new EntitiesLimitExceededException(tenantId, entityType, limit);
         }
     }
 

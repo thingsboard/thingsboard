@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -192,9 +192,6 @@ import { AIModelDialogComponent } from '@home/components/ai-model/ai-model-dialo
 import { ResourcesDialogComponent } from "@home/components/resources/resources-dialog.component";
 import { ResourcesLibraryComponent } from "@home/components/resources/resources-library.component";
 import { CalculatedFieldsTableComponent } from '@home/components/calculated-fields/calculated-fields-table.component';
-import {
-  CalculatedFieldDebugDialogComponent
-} from '@home/components/calculated-fields/components/debug-dialog/calculated-field-debug-dialog.component';
 import { CalculatedFieldsModule } from '@home/components/calculated-fields/calculated-field.module';
 import { AlarmRuleModule } from "@home/components/alarm-rules/alarm-rule.module";
 import { AlarmRulesTableComponent } from "@home/components/alarm-rules/alarm-rules-table.component";
@@ -204,6 +201,7 @@ import { EditApiKeyDescriptionPanelComponent } from '@home/components/api-key/ed
 import { ApiKeyGeneratedDialogComponent } from '@home/components/api-key/api-key-generated-dialog.component';
 import { ApiKeysTableDialogComponent } from '@home/components/api-key/api-keys-table-dialog.component';
 import { AuditLogFilterComponent } from "@home/components/audit-log/audit-log-filter.component";
+import { EventsDialogComponent } from '@home/dialogs/events-dialog.component';
 
 @NgModule({
   declarations:
@@ -217,7 +215,6 @@ import { AuditLogFilterComponent } from "@home/components/audit-log/audit-log-fi
       AuditLogTableComponent,
       AuditLogDetailsDialogComponent,
       CalculatedFieldsTableComponent,
-      CalculatedFieldDebugDialogComponent,
       AlarmRulesTableComponent,
       EventContentDialogComponent,
       EventTableHeaderComponent,
@@ -361,7 +358,8 @@ import { AuditLogFilterComponent } from "@home/components/audit-log/audit-log-fi
       EditApiKeyDescriptionPanelComponent,
       ApiKeyGeneratedDialogComponent,
       AuditLogHeaderComponent,
-      AuditLogFilterComponent
+      AuditLogFilterComponent,
+      EventsDialogComponent
     ],
   imports: [
     CommonModule,
@@ -510,6 +508,7 @@ import { AuditLogFilterComponent } from "@home/components/audit-log/audit-log-fi
     ResourcesLibraryComponent,
     ApiKeysTableComponent,
     ApiKeysTableDialogComponent,
+    EventsDialogComponent
   ],
   providers: [
     WidgetComponentService,

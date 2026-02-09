@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 -->
 <div [formGroup]="relatedAggregationConfiguration" class="tb-form-panel no-border no-padding">
   <div class="tb-form-panel">
-    <div class="tb-form-panel-title" tbTruncateWithTooltip tb-hint-tooltip-icon="{{ 'calculated-fields.hint.aggregation-path-related-entities' | translate }}">
+    <div class="tb-form-panel-title" tbTruncateWithTooltip tb-hint-tooltip-icon="{{ 'calculated-fields.hint.aggregation-path-related-entities' | translate: {max: maxRelatedEntitiesToReturnPerCfArgument} }}">
       {{ 'calculated-fields.aggregation-path-related-entities' | translate }}
     </div>
     <div class="flex gap-3 xs:flex-col" formGroupName="relation">
@@ -48,6 +48,7 @@
                                             [entityId]="entityId"
                                             [tenantId]="tenantId"
                                             [entityName]="entityName"
+                                            [isEditValue]="isEditValue"
                                             [relation]="relatedAggregationConfiguration.get('relation').value"/>
   </div>
   <div class="tb-form-panel">
@@ -63,21 +64,23 @@
     <tb-time-unit-input required
                         sameWidthInputs
                         appearance="outline"
-                        subscriptSizing="dynamic"
                         labelText="{{ 'calculated-fields.deduplication-interval' | translate }}"
                         requiredText="{{ 'calculated-fields.deduplication-interval-required' | translate }}"
                         minErrorText="{{ 'calculated-fields.deduplication-interval-min' | translate: {sec: minAllowedDeduplicationIntervalInSecForCF} }}"
+                        hintText="{{ 'calculated-fields.deduplication-interval-hint' | translate }}"
                         [minTime]="minAllowedDeduplicationIntervalInSecForCF"
                         formControlName="deduplicationIntervalInSec">
     </tb-time-unit-input>
   </div>
   <tb-calculate-field-output formControlName="output" [entityId]="entityId" simpleMode hiddenName>
-    <div class="tb-form-row simpleMode flex-1">
-      <mat-slide-toggle class="mat-slide" formControlName="useLatestTs">
-        <div tb-hint-tooltip-icon="{{ 'calculated-fields.hint.use-latest-timestamp' | translate }}">
-          <div translate tbTruncateWithTooltip>calculated-fields.use-latest-timestamp</div>
-        </div>
-      </mat-slide-toggle>
-    </div>
+    @if (relatedAggregationConfiguration.get('output').value?.type === OutputType.Timeseries) {
+      <div class="tb-form-row simpleMode flex-1">
+        <mat-slide-toggle class="mat-slide" formControlName="useLatestTs">
+          <div tb-hint-tooltip-icon="{{ 'calculated-fields.hint.use-latest-timestamp' | translate }}">
+            <div translate tbTruncateWithTooltip>calculated-fields.use-latest-timestamp</div>
+          </div>
+        </mat-slide-toggle>
+      </div>
+    }
   </tb-calculate-field-output>
 </div>

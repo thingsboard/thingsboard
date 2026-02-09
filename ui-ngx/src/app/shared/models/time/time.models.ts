@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -169,6 +169,7 @@ export interface Timewindow {
   history?: HistoryWindow;
   aggregation?: Aggregation;
   timezone?: string;
+  hideSaveAsDefault?: boolean;
 }
 
 export interface SubscriptionAggregation extends Aggregation {
@@ -330,6 +331,9 @@ export const initModelFromDefaultTimewindow = (value: Timewindow, quickIntervalO
     }
     if (value.hideTimezone) {
       model.hideTimezone = value.hideTimezone;
+    }
+    if (value.hideSaveAsDefault) {
+      model.hideSaveAsDefault = value.hideSaveAsDefault;
     }
 
     model.selectedTab = getTimewindowType(value);
@@ -1115,6 +1119,9 @@ export const cloneSelectedTimewindow = (timewindow: Timewindow): Timewindow => {
   }
   if (timewindow.hideTimezone) {
     cloned.hideTimezone = timewindow.hideTimezone;
+  }
+  if (timewindow.hideSaveAsDefault) {
+    cloned.hideSaveAsDefault = timewindow.hideSaveAsDefault;
   }
   if (isDefined(timewindow.selectedTab)) {
     cloned.selectedTab = timewindow.selectedTab;

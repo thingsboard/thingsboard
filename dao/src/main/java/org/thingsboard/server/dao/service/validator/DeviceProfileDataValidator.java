@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,11 +52,11 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceDao;
 import org.thingsboard.server.dao.device.DeviceProfileDao;
 import org.thingsboard.server.dao.device.DeviceProfileService;
-import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
+import org.thingsboard.server.exception.DataValidationException;
 
 import java.io.FileInputStream;
 import java.security.KeyStore;
@@ -99,6 +99,18 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
     private RuleChainService ruleChainService;
     @Autowired
     private DashboardService dashboardService;
+
+    @Value("${transport.lwm2m.server.bind_port:5685}")
+    private Integer lwm2mPort;
+
+    @Value("${transport.lwm2m.server.security.bind_port:5686}")
+    private Integer lwm2mSecurePort;
+
+    @Value("${transport.lwm2m.bootstrap.bind_port:5687}")
+    private Integer lwm2mBootstrapPort;
+
+    @Value("${transport.lwm2m.bootstrap.security.bind_port:5688}")
+    private Integer lwm2mBootstrapSecurePort;
 
     @Value("${security.java_cacerts.path:}")
     private String javaCacertsPath;
@@ -174,6 +186,8 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
                 for (LwM2MBootstrapServerCredential bootstrapServerCredential : lwM2MBootstrapServersConfigurations) {
                     validateLwm2mServersCredentialOfBootstrapForClient(bootstrapServerCredential);
                 }
+                // call setProfileData after validation to ensure 'profileData' and 'profileDataBytes' fields are synchronized and ProtoUtils.toProto is not broken
+                deviceProfile.setProfileData(deviceProfile.getProfileData());
             }
         }
 
@@ -341,7 +355,7 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
                 throw new DeviceCredentialsValidationException("Bootstrap config must not include \"Bootstrap Server\". \"Include Bootstrap Server updates\" is " + isBootstrapServerUpdateEnable + ".");
             }
 
-            if (serverConfig.isBootstrapServerIs()){
+            if (serverConfig.isBootstrapServerIs()) {
                 if (serverConfig.getShortServerId() != null) {
                     if (serverConfig.getShortServerId() == 0) {
                         serverConfig.setShortServerId(null);
@@ -369,9 +383,9 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
             }
             int port;
             if (LwM2MSecurityMode.NO_SEC.equals(serverConfig.getSecurityMode())) {
-                port = serverConfig.isBootstrapServerIs() ? 5687 : 5685;
+                port = serverConfig.isBootstrapServerIs() ? lwm2mBootstrapPort : lwm2mPort;
             } else {
-                port = serverConfig.isBootstrapServerIs() ? 5688 : 5686;
+                port = serverConfig.isBootstrapServerIs() ? lwm2mBootstrapSecurePort : lwm2mSecurePort;
             }
             if (serverConfig.getPort() == null || serverConfig.getPort() != port) {
                 throw new DeviceCredentialsValidationException(server + " \"Port\" value = " + serverConfig.getPort() + ". This value for security " + serverConfig.getSecurityMode().name() + " must be " + port + "!");

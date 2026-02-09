@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -39,15 +39,14 @@ import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.m
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
 
 @Component({
-  selector: 'tb-entity-debug-settings-panel',
-  templateUrl: './entity-debug-settings-panel.component.html',
-  standalone: true,
-  imports: [
-    SharedModule,
-    CommonModule,
-    DurationLeftPipe
-  ],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'tb-entity-debug-settings-panel',
+    templateUrl: './entity-debug-settings-panel.component.html',
+    imports: [
+        SharedModule,
+        CommonModule,
+        DurationLeftPipe
+    ],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EntityDebugSettingsPanelComponent extends PageComponent implements OnInit {
 

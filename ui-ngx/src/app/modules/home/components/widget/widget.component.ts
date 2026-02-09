@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -130,11 +130,12 @@ import { HttpClient } from '@angular/common/http';
 import { addDiagnosticChain } from '@angular/compiler-cli/src/ngtsc/diagnostics';
 
 @Component({
-  selector: 'tb-widget',
-  templateUrl: './widget.component.html',
-  styleUrls: ['./widget.component.scss'],
-  encapsulation: ViewEncapsulation.None,
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'tb-widget',
+    templateUrl: './widget.component.html',
+    styleUrls: ['./widget.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class WidgetComponent extends PageComponent implements OnInit, OnChanges, OnDestroy {
 
@@ -377,23 +378,23 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
     const buttonStyle = {};
     switch (buttonType) {
       case WidgetHeaderActionButtonType.basic:
-        buttonStyle['--mdc-text-button-label-text-color'] = buttonColor;
+        buttonStyle['--mat-button-text-label-text-color'] = buttonColor;
         break;
       case WidgetHeaderActionButtonType.raised:
-        buttonStyle['--mdc-protected-button-label-text-color'] = buttonColor;
-        buttonStyle['--mdc-protected-button-container-color'] = backgroundColor;
+        buttonStyle['--mat-button-protected-label-text-color'] = buttonColor;
+        buttonStyle['--mat-button-protected-container-color'] = backgroundColor;
         break;
       case WidgetHeaderActionButtonType.stroked:
-        buttonStyle['--mdc-outlined-button-label-text-color'] = buttonColor;
-        buttonStyle['--mdc-outlined-button-outline-color'] = borderColor;
+        buttonStyle['--mat-button-outlined-label-text-color'] = buttonColor;
+        buttonStyle['--mat-button-outlined-outline-color'] = borderColor;
         break;
       case WidgetHeaderActionButtonType.flat:
-        buttonStyle['--mdc-filled-button-label-text-color'] = buttonColor;
-        buttonStyle['--mdc-filled-button-container-color'] = backgroundColor;
+        buttonStyle['--mat-button-filled-label-text-color'] = buttonColor;
+        buttonStyle['--mat-button-filled-container-color'] = backgroundColor;
         break;
       case WidgetHeaderActionButtonType.miniFab:
         buttonStyle['--mat-fab-small-foreground-color'] = buttonColor;
-        buttonStyle['--mdc-fab-small-container-color'] = backgroundColor;
+        buttonStyle['--mat-fab-small-container-color'] = backgroundColor;
         break;
       default:
         buttonStyle['--mat-icon-color'] = buttonColor;

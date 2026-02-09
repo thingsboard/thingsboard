@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@
     <mat-icon class="material-icons">close</mat-icon>
   </button>
 </mat-toolbar>
-<div mat-dialog-content class="flex flex-col">
-  <div #eventContentEditor class="tb-event-content">
+<div mat-dialog-content class="flex flex-col" style="padding:16px;">
+  <div #eventContentEditor class="tb-event-content size-full min-h-12 max-w-full" [class.border]="showBorder">
   </div>
 </div>
 <div mat-dialog-actions class="flex flex-row">

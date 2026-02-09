@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,6 @@ package org.thingsboard.server.dao.sqlts.dictionary;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.exception.ConstraintViolationException;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,43 +46,34 @@ public class JpaKeyDictionaryDao extends JpaAbstractDaoListeningExecutorService 
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     @Override
     public Integer getOrSaveKeyId(String strKey) {
-        Integer keyId = keyDictionaryMap.get(strKey);
-        if (keyId == null) {
-            Optional<KeyDictionaryEntry> tsKvDictionaryOptional;
-            tsKvDictionaryOptional = keyDictionaryRepository.findById(new KeyDictionaryCompositeKey(strKey));
-            if (tsKvDictionaryOptional.isEmpty()) {
-                creationLock.lock();
-                try {
-                    keyId = keyDictionaryMap.get(strKey);
-                    if (keyId != null) {
-                        return keyId;
-                    }
-                    tsKvDictionaryOptional = keyDictionaryRepository.findById(new KeyDictionaryCompositeKey(strKey));
-                    if (tsKvDictionaryOptional.isEmpty()) {
-                        KeyDictionaryEntry keyDictionaryEntry = new KeyDictionaryEntry();
-                        keyDictionaryEntry.setKey(strKey);
-                        try {
-                            KeyDictionaryEntry saved = keyDictionaryRepository.save(keyDictionaryEntry);
-                            keyDictionaryMap.put(saved.getKey(), saved.getKeyId());
-                            keyId = saved.getKeyId();
-                        } catch (DataIntegrityViolationException | ConstraintViolationException e) {
-                            tsKvDictionaryOptional = keyDictionaryRepository.findById(new KeyDictionaryCompositeKey(strKey));
-                            KeyDictionaryEntry dictionary = tsKvDictionaryOptional.orElseThrow(() -> new RuntimeException("Failed to get KeyDictionaryEntry entity from DB!"));
-                            keyDictionaryMap.put(dictionary.getKey(), dictionary.getKeyId());
-                            keyId = dictionary.getKeyId();
-                        }
-                    } else {
-                        keyId = tsKvDictionaryOptional.get().getKeyId();
-                    }
-                } finally {
-                    creationLock.unlock();
-                }
-            } else {
-                keyId = tsKvDictionaryOptional.get().getKeyId();
-                keyDictionaryMap.put(strKey, keyId);
-            }
+        Integer cached = keyDictionaryMap.get(strKey);
+        if (cached != null) {
+            return cached;
         }
-        return keyId;
+        var compositeKey = new KeyDictionaryCompositeKey(strKey);
+        Optional<Integer> existingId = keyDictionaryRepository.findById(compositeKey).map(KeyDictionaryEntry::getKeyId);
+        if (existingId.isPresent()) {
+            return cacheAndReturn(strKey, existingId.get());
+        }
+        creationLock.lock();
+        try {
+            Integer fromCache = keyDictionaryMap.get(strKey);
+            if (fromCache != null) {
+                return fromCache;
+            }
+            Integer keyId = keyDictionaryRepository.upsertAndGetKeyId(strKey);
+            if (keyId != null) {
+                return cacheAndReturn(strKey, keyId);
+            }
+            log.warn("upsertAndGetKeyId returned: [{}] for key: [{}], falling back to findById", keyId, strKey);
+            keyId = keyDictionaryRepository.findById(compositeKey)
+                    .map(KeyDictionaryEntry::getKeyId)
+                    .orElseThrow(() -> new IllegalStateException(
+                            "Failed to resolve keyId for string key: " + strKey + " after fallback."));
+            return cacheAndReturn(strKey, keyId);
+        } finally {
+            creationLock.unlock();
+        }
     }
 
     @Override
@@ -96,6 +85,11 @@ public class JpaKeyDictionaryDao extends JpaAbstractDaoListeningExecutorService 
     @Override
     public PageData<KeyDictionaryEntry> findAll(PageLink pageLink) {
         return DaoUtil.pageToPageData(keyDictionaryRepository.findAll(DaoUtil.toPageable(pageLink)));
+    }
+
+    private Integer cacheAndReturn(String key, Integer keyId) {
+        keyDictionaryMap.put(key, keyId);
+        return keyId;
     }
 
 }

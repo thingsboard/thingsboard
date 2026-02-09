@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
   <div class="tb-form-panel no-border no-padding-right flex-1" style="flex-direction: row">
     @switch (type) {
       @case (filterPredicateType.STRING) {
-        <div class="tb-form-row no-padding no-border column-xs w-full max-w-30% xs:max-w-full flex-1/">
+        <div class="tb-form-row no-padding no-border column-xs flex-1/ w-full max-w-30% xs:max-w-full">
           <mat-form-field hideRequiredMarker class="flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-select required formControlName="operation" placeholder="{{'filter.operation.operation' | translate}}">
               <mat-option *ngFor="let operation of stringOperations" [value]="operation">
@@ -58,32 +58,29 @@
       }
       @case (filterPredicateType.COMPLEX) {
         <div class="tb-form-row no-border no-padding flex-1">
-          <button type="button" style="--mat-outlined-button-horizontal-padding: 3px 0px 12px;"
+          <button type="button" style="--mat-button-outlined-horizontal-padding: 3px 0px 12px;"
                   class="block w-full"
                   mat-stroked-button [color]="predicateValid ? 'primary' : 'warn'"
                   (click)="openComplexFilterDialog()">
             <div class="flex items-center gap-2">
               <span class="w-full text-start" translate>filter.complex-filter</span>
-              <mat-icon class="tb-mat-20 tb-alarm-rule-schedule-edit-icon">edit</mat-icon>
+              <mat-icon class="tb-mat-20 tb-alarm-rule-schedule-edit-icon">{{ disabled ? 'visibility' : 'edit' }} </mat-icon>
             </div>
           </button>
         </div>
       }
     }
-    @if (filterPredicateFormGroup.get('operation').value === stringOperation.NO_DATA) {
-      <tb-alarm-rule-filter-predicate-no-data-value class="flex-full"
-                                                    [arguments]="arguments"
-                                                    [argumentInUse]="argumentInUse"
-                                                    [valueType]="valueType"
-                                                    formControlName="duration">
-      </tb-alarm-rule-filter-predicate-no-data-value>
-    } @else if (type !== filterPredicateType.COMPLEX) {
-      <tb-alarm-rule-filter-predicate-value class="flex-full"
-                                            [arguments]="arguments"
-                                            [argumentInUse]="argumentInUse"
-                                            [valueType]="valueType"
-                                            formControlName="value">
-      </tb-alarm-rule-filter-predicate-value>
-    }
+    <tb-alarm-rule-filter-predicate-no-data-value class="flex-full" [class.!hidden]="!(filterPredicateFormGroup.get('operation').value === stringOperation.NO_DATA)"
+                                                  [arguments]="arguments"
+                                                  [argumentInUse]="argumentInUse"
+                                                  [valueType]="valueType"
+                                                  formControlName="duration">
+    </tb-alarm-rule-filter-predicate-no-data-value>
+    <tb-alarm-rule-filter-predicate-value class="flex-full" [class.!hidden]="!(filterPredicateFormGroup.get('operation').value !== stringOperation.NO_DATA && type !== filterPredicateType.COMPLEX)"
+                                          [arguments]="arguments"
+                                          [argumentInUse]="argumentInUse"
+                                          [valueType]="valueType"
+                                          formControlName="value">
+    </tb-alarm-rule-filter-predicate-value>
   </div>
 </div>
