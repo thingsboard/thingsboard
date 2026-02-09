@@ -32,20 +32,14 @@
           </tb-branch-autocomplete>
         </div>
         <span class="flex-1"></span>
-        <div class="flex flex-row items-center justify-center xs:flex-col xs:items-end xs:justify-center">
+        <div class="flex flex-row items-center justify-center xs:flex-col xs:items-end xs:justify-center"
+             [class.xs:flex-col-reverse]="!singleEntityMode">
           <button *ngIf="singleEntityMode" mat-stroked-button color="primary"
                   #createVersionButton
                   [disabled]="(isLoading$ | async) || (isReadOnly | async)"
                   (click)="toggleCreateVersion($event, createVersionButton)">
             <mat-icon>update</mat-icon>
             {{'version-control.create-version' | translate }}
-          </button>
-          <button *ngIf="!singleEntityMode" mat-stroked-button color="primary"
-                  #complexCreateVersionButton
-                  [disabled]="(isLoading$ | async) || (isReadOnly | async)"
-                  (click)="toggleComplexCreateVersion($event, complexCreateVersionButton)">
-            <mat-icon>update</mat-icon>
-            {{'version-control.create-entities-version' | translate }}
           </button>
           <div class="flex flex-row">
             <button mat-icon-button [disabled]="isLoading$ | async" (click)="updateData()"
@@ -61,6 +55,14 @@
               <mat-icon>search</mat-icon>
             </button>
           </div>
+          <button *ngIf="!singleEntityMode" mat-flat-button color="primary"
+                  class="gt-xs:ml-3"
+                  #complexCreateVersionButton
+                  [disabled]="(isLoading$ | async) || (isReadOnly | async)"
+                  (click)="toggleComplexCreateVersion($event, complexCreateVersionButton)">
+            <mat-icon>update</mat-icon>
+            {{'version-control.create-entities-version' | translate }}
+          </button>
         </div>
       </div>
     </mat-toolbar>
