@@ -29,16 +29,8 @@ public class RestAuthenticationDetails implements Serializable {
     private final Client userAgent;
 
     public RestAuthenticationDetails(HttpServletRequest request) {
-        this.clientAddress = getClientIP(request);
+        this.clientAddress = request.getRemoteAddr();
         this.userAgent = getUserAgent(request);
-    }
-
-    private static String getClientIP(HttpServletRequest request) {
-        String xfHeader = request.getHeader("X-Forwarded-For");
-        if (xfHeader == null) {
-            return request.getRemoteAddr();
-        }
-        return xfHeader.split(",")[0];
     }
 
     private static Client getUserAgent(HttpServletRequest request) {
