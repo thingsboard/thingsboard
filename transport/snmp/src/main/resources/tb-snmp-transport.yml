@@ -373,7 +373,7 @@ management:
     web:
       exposure:
         # Expose metrics endpoint (use value 'prometheus' to enable prometheus metrics).
-        include: '${METRICS_ENDPOINTS_EXPOSE:info}'
+        include: "${METRICS_ENDPOINTS_EXPOSE:info}"
 
 # Notification system parameters
 notification_system:
