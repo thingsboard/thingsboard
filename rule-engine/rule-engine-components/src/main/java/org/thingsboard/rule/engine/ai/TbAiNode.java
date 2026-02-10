@@ -48,6 +48,7 @@ import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.ai.AiModel;
 import org.thingsboard.server.common.data.ai.model.AiModelType;
 import org.thingsboard.server.common.data.ai.model.chat.AiChatModelConfig;
+import org.thingsboard.server.common.data.ai.provider.AiProviderConfig;
 import org.thingsboard.server.common.data.id.AiModelId;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -126,7 +127,7 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
         if (modelType != AiModelType.CHAT) {
             throw new TbNodeException("[" + ctx.getTenantId() + "] AI model with ID: [" + modelId + "] must be of type CHAT, but was " + modelType, true);
         }
-        AiChatModelConfig<?> chatModelConfig = (AiChatModelConfig<?>) model.getConfiguration();
+        AiChatModelConfig<?, ?> chatModelConfig = (AiChatModelConfig<?, ?>) model.getConfiguration();
         if (isJsonModeConfigured(config)) {
             if (!chatModelConfig.supportsJsonMode()) {
                 throw new TbNodeException("[" + ctx.getTenantId() + "] AI model with ID: [" + modelId + "] does not support '" + config.getResponseFormat().type() + "' response format", true);
@@ -218,7 +219,7 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
         }, directExecutor());
     }
 
-    private <C extends AiChatModelConfig<C>> FluentFuture<ChatResponse> sendChatRequestAsync(TbContext ctx, ChatRequest chatRequest) {
+    private  <C extends AiChatModelConfig<C, P>, P extends AiProviderConfig> FluentFuture<ChatResponse> sendChatRequestAsync(TbContext ctx, ChatRequest chatRequest) {
         return ctx.getAiModelService().findAiModelByTenantIdAndIdAsync(ctx.getTenantId(), modelId).transformAsync(modelOpt -> {
             if (modelOpt.isEmpty()) {
                 throw new NoSuchElementException("[" + ctx.getTenantId() + "] AI model with ID: [" + modelId + "] was not found");
@@ -230,7 +231,7 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
             }
 
             @SuppressWarnings("unchecked")
-            AiChatModelConfig<C> chatModelConfig = (AiChatModelConfig<C>) model.getConfiguration();
+            AiChatModelConfig<C, P> chatModelConfig = (AiChatModelConfig<C, P>) model.getConfiguration();
 
             chatModelConfig = chatModelConfig
                     .withTimeoutSeconds(timeoutSeconds)

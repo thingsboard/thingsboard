@@ -17,6 +17,7 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
@@ -154,12 +155,30 @@ public class CalculatedFieldController extends BaseController {
         return calculatedField;
     }
 
+    @Hidden
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @GetMapping(value = "/{entityType}/{entityId}/calculatedFields", params = {"pageSize", "page"})
+    public PageData<CalculatedField> getCalculatedFieldsByEntityId(
+            @PathVariable("entityType") String entityType,
+            @PathVariable("entityId") String entityIdStr,
+            @RequestParam int pageSize,
+            @RequestParam int page,
+            @RequestParam(required = false) String textSearch,
+            @RequestParam(required = false) String sortProperty,
+            @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+        checkParameter("entityId", entityIdStr);
+        EntityId entityId = EntityIdFactory.getByTypeAndUuid(entityType, entityIdStr);
+        checkEntityId(entityId, Operation.READ_CALCULATED_FIELD);
+        return checkNotNull(tbCalculatedFieldService.findAllByTenantIdAndEntityId(entityId, getCurrentUser(), pageLink));
+    }
+
     @ApiOperation(value = "Get Calculated Fields by Entity Id (getCalculatedFieldsByEntityId)",
             notes = "Fetch the Calculated Fields based on the provided Entity Id."
     )
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @GetMapping(value = "/{entityType}/{entityId}/calculatedFields", params = {"pageSize", "page"})
-    public PageData<CalculatedField> getCalculatedFieldsByEntityId(
+    @GetMapping(value = "/calculatedField/{entityType}/{entityId}", params = {"pageSize", "page"})
+    public PageData<CalculatedField> getCalculatedFieldsByEntityIdV2(
             @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "DEVICE")) @PathVariable("entityType") String entityType,
             @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true) @PathVariable("entityId") String entityIdStr,
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true) @RequestParam int pageSize,
@@ -167,11 +186,7 @@ public class CalculatedFieldController extends BaseController {
             @Parameter(description = CF_TEXT_SEARCH_DESCRIPTION) @RequestParam(required = false) String textSearch,
             @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "name"})) @RequestParam(required = false) String sortProperty,
             @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"})) @RequestParam(required = false) String sortOrder) throws ThingsboardException {
-        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        checkParameter("entityId", entityIdStr);
-        EntityId entityId = EntityIdFactory.getByTypeAndUuid(entityType, entityIdStr);
-        checkEntityId(entityId, Operation.READ_CALCULATED_FIELD);
-        return checkNotNull(tbCalculatedFieldService.findAllByTenantIdAndEntityId(entityId, getCurrentUser(), pageLink));
+        return getCalculatedFieldsByEntityId(entityType, entityIdStr, pageSize, page, textSearch, sortProperty, sortOrder);
     }
 
     @ApiOperation(value = "Delete Calculated Field (deleteCalculatedField)",

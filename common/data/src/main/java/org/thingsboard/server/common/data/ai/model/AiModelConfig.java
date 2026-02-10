@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.ai.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
@@ -73,7 +74,7 @@ import org.thingsboard.server.common.data.ai.provider.OpenAiProviderConfig;
                 @DiscriminatorMapping(value = "OLLAMA", schema = OllamaChatModelConfig.class)
         }
 )
-public interface AiModelConfig {
+public interface AiModelConfig <T extends AiProviderConfig>{
 
     @Schema(
             description = "AI Provider",
@@ -112,7 +113,8 @@ public interface AiModelConfig {
             @JsonSubTypes.Type(value = GitHubModelsProviderConfig.class, name = "GITHUB_MODELS"),
             @JsonSubTypes.Type(value = OllamaProviderConfig.class, name = "OLLAMA")
     })
-    AiProviderConfig providerConfig();
+    @JsonIgnore
+    T providerConfig();
 
     AiModelType modelType();
 

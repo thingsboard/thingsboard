@@ -207,7 +207,7 @@ public class SwaggerConfiguration {
 
         operation.responses(loginResponses);
 
-        operation.addTagsItem("login-endpoint");
+        operation.addTagsItem("Thingsboard");
         var pathItem = new PathItem().post(operation);
         openAPI.path(LOGIN_ENDPOINT, pathItem);
     }
@@ -230,7 +230,7 @@ public class SwaggerConfiguration {
 
         operation.responses(loginResponses);
 
-        operation.addTagsItem("login-endpoint");
+        operation.addTagsItem("Thingsboard");
         var pathItem = new PathItem().post(operation);
         openAPI.path(REFRESH_TOKEN_ENDPOINT, pathItem);
     }
@@ -272,11 +272,11 @@ public class SwaggerConfiguration {
     }
 
     private void addDefaultSchemas(OpenAPI openAPI) {
-        var jsonNodeSchema = ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(JsonNode.class)).schema;
-        jsonNodeSchema.setType("any");
-        //noinspection unchecked
-        jsonNodeSchema.setExamples(List.of(JacksonUtil.newObjectNode()));
-        jsonNodeSchema.setDescription("A value representing the any type (object or primitive)");
+        Schema<?> jsonNodeSchema = new Schema<>()
+                .type("object")
+                .description("Arbitrary JSON object or primitive value")
+                .additionalProperties(true)
+                .example(JacksonUtil.newObjectNode());
         openAPI.getComponents()
                 .addSchemas("JsonNode", jsonNodeSchema)
                 .addSchemas("LoginRequest", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(LoginRequest.class)).schema)

@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data.ai.model.chat;
 
 import dev.langchain4j.model.chat.ChatModel;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
@@ -23,24 +24,32 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Builder;
+import lombok.Data;
 import lombok.With;
 import org.thingsboard.server.common.data.ai.provider.AiProvider;
 import org.thingsboard.server.common.data.ai.provider.AmazonBedrockProviderConfig;
 
+@Schema(description = "Amazon Bedrock chat model configuration")
 @Builder
-public record AmazonBedrockChatModelConfig(
-        @NotNull @Valid AmazonBedrockProviderConfig providerConfig,
-        @NotBlank String modelId,
-        @PositiveOrZero Double temperature,
-        @Positive @Max(1) Double topP,
-        Integer maxOutputTokens,
-        @With @Positive Integer timeoutSeconds,
-        @With @PositiveOrZero Integer maxRetries
-) implements AiChatModelConfig<AmazonBedrockChatModelConfig> {
+@Data
+public final class AmazonBedrockChatModelConfig implements AiChatModelConfig<AmazonBedrockChatModelConfig, AmazonBedrockProviderConfig> {
+
+    @NotNull @Valid AmazonBedrockProviderConfig providerConfig;
+    @NotBlank String modelId;
+    @PositiveOrZero Double temperature;
+    @Positive @Max(1) Double topP;
+    Integer maxOutputTokens;
+    @With @Positive Integer timeoutSeconds;
+    @With @PositiveOrZero Integer maxRetries;
 
     @Override
     public AiProvider provider() {
         return AiProvider.AMAZON_BEDROCK;
+    }
+
+    @Override
+    public AmazonBedrockProviderConfig providerConfig() {
+        return providerConfig;
     }
 
     @Override
@@ -49,8 +58,17 @@ public record AmazonBedrockChatModelConfig(
     }
 
     @Override
+    public Integer timeoutSeconds() {
+        return timeoutSeconds;
+    }
+
+    @Override
+    public Integer maxRetries() {
+        return maxRetries;
+    }
+
+    @Override
     public boolean supportsJsonMode() {
         return false;
     }
-
 }

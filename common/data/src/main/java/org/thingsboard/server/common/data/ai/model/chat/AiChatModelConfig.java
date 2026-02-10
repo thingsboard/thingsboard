@@ -17,10 +17,13 @@ package org.thingsboard.server.common.data.ai.model.chat;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import dev.langchain4j.model.chat.ChatModel;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.thingsboard.server.common.data.ai.model.AiModelConfig;
 import org.thingsboard.server.common.data.ai.model.AiModelType;
+import org.thingsboard.server.common.data.ai.provider.AiProviderConfig;
 
-public sealed interface AiChatModelConfig<C extends AiChatModelConfig<C>> extends AiModelConfig
+@Schema(description = "AI provider-specific configuration")
+public sealed interface AiChatModelConfig<C extends AiChatModelConfig<C, P>, P extends AiProviderConfig> extends AiModelConfig<P>
         permits
         OpenAiChatModelConfig, AzureOpenAiChatModelConfig, GoogleAiGeminiChatModelConfig,
         GoogleVertexAiGeminiChatModelConfig, MistralAiChatModelConfig, AnthropicChatModelConfig,

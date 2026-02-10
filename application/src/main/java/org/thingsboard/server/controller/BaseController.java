@@ -18,6 +18,7 @@ package org.thingsboard.server.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
@@ -219,6 +220,9 @@ import static org.thingsboard.server.controller.UserController.YOU_DON_T_HAVE_PE
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @TbCoreComponent
+@Tag(
+        name = "Thingsboard"
+)
 public abstract class BaseController {
 
     protected static final String DASHBOARD_ID = "dashboardId";

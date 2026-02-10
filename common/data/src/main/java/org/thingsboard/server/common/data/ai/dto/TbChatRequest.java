@@ -73,7 +73,7 @@ public record TbChatRequest(
                 }
         )
         @NotNull @Valid
-        AiChatModelConfig<?> chatModelConfig
+        AiChatModelConfig<?, ?> chatModelConfig
 ) {
 
     public ChatRequest toLangChainChatRequest() {
