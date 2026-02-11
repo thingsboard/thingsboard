@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
@@ -46,16 +47,19 @@ public class ResourceUtils {
                 return true;
             }
         }
-        InputStream classPathStream = classLoader.getResourceAsStream(path);
-        if (classPathStream != null) {
-            return true;
-        } else {
-            try {
-                URL url = Resources.getResource(path);
-                if (url != null) {
-                    return true;
+        try (InputStream classPathStream = classLoader.getResourceAsStream(path)) {
+            if (classPathStream != null) {
+                return true;
+            } else {
+                try {
+                    URL url = Resources.getResource(path);
+                    if (url != null) {
+                        return true;
+                    }
+                } catch (IllegalArgumentException e) {
                 }
-            } catch (IllegalArgumentException e) {}
+            }
+        } catch (IOException ignored) {
         }
         return false;
     }
