@@ -55,7 +55,7 @@ public class TimeseriesServiceNoSqlTest extends BaseTimeseriesServiceTest {
                 new BasicTsKvEntry(TimeUnit.MINUTES.toMillis(5), new JsonDataEntry("test", "{\"test\":\"testValue\"}")));
 
         DeviceId deviceId = new DeviceId(Uuids.timeBased());
-        tsService.save(tenantId, deviceId, timeseries, ttlInSec);
+        tsService.save(tenantId, deviceId, timeseries, ttlInSec).get(MAX_TIMEOUT, TimeUnit.SECONDS);
 
         List<TsKvEntry> fullList = tsService.findAll(tenantId, deviceId, Collections.singletonList(new BaseReadTsKvQuery("test", 0L,
                 TimeUnit.MINUTES.toMillis(6), 1000, 10, Aggregation.NONE))).get(MAX_TIMEOUT, TimeUnit.SECONDS);
