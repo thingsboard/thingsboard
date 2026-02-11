@@ -65,7 +65,7 @@
 
 :host ::ng-deep {
   .tb-form-panel .mat-expansion-panel.tb-settings {
-    & > .mat-expansion-panel-content > .mat-expansion-panel-body {
+    .mat-expansion-panel-content > .mat-expansion-panel-body {
       gap: 0;
     }
   }
