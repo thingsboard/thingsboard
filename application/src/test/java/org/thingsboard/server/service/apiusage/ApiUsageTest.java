@@ -117,7 +117,7 @@ public class ApiUsageTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testSmsApiUsageState() {
+    public void testSmsApiUsage() {
         long smsWarnThreshold = (long) (MAX_SMS_ENABLE_VALUE * WARN_THRESHOLD_VALUE);
 
         for (int i = 0; i < smsWarnThreshold; i++) {
