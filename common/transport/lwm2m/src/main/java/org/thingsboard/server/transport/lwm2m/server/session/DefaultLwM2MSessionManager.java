@@ -65,7 +65,14 @@ public class DefaultLwM2MSessionManager implements LwM2MSessionManager {
 
     @Override
     public void deregister(TransportProtos.SessionInfoProto sessionInfo) {
-        transportService.process(sessionInfo, SESSION_EVENT_MSG_CLOSED, null);
+        deregister(sessionInfo, true);
+    }
+
+    @Override
+    public void deregister(TransportProtos.SessionInfoProto sessionInfo, boolean notifyCore) {
+        if (notifyCore) {
+            transportService.process(sessionInfo, SESSION_EVENT_MSG_CLOSED, null);
+        }
         transportService.deregisterSession(sessionInfo);
     }
 }

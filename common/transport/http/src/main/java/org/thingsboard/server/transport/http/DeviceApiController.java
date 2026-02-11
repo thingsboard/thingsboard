@@ -618,6 +618,10 @@ public class DeviceApiController implements TbTransportService {
             responseWriter.setResult(new ResponseEntity<>("Device was deleted!", HttpStatus.FORBIDDEN));
         }
 
+        @Override
+        public void onTenantDeleted(DeviceId deviceId) {
+            onDeviceDeleted(deviceId);
+        }
     }
 
     private static MediaType parseMediaType(String contentType) {

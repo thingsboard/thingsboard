@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.device.data.PowerMode;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
+import org.thingsboard.server.common.transport.session.SessionCloseReason;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.coap.TransportConfigurationContainer;
 import org.thingsboard.server.transport.coap.adaptors.CoapTransportAdaptor;
@@ -72,6 +73,9 @@ public class TbCoapClientState {
     @Getter
     @Setter
     private Future<Void> sleepTask;
+    @Getter
+    @Setter
+    private SessionCloseReason sessionCloseReason;
 
     private boolean firstEdrxDownlink = true;
 
@@ -148,5 +152,9 @@ public class TbCoapClientState {
         var result = this.missedAttributeUpdates;
         this.missedAttributeUpdates = null;
         return result;
+    }
+
+    public boolean shouldNotifyCore() {
+        return sessionCloseReason == null || sessionCloseReason != SessionCloseReason.TENANT_DELETED;
     }
 }
