@@ -38,6 +38,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.notification.rule.trigger.AlarmAssignmentTrigger;
@@ -162,6 +163,18 @@ public class EntityActionService {
                         entityNode.put("endTs", extractParameter(Long.class, 2, additionalInfo));
                     } else if (ActionType.RELATION_ADD_OR_UPDATE.equals(actionType) || ActionType.RELATION_DELETED.equals(actionType)) {
                         entityNode = JacksonUtil.OBJECT_MAPPER.valueToTree(extractParameter(EntityRelation.class, 0, additionalInfo));
+                    } else if (actionType == ActionType.OTA_ATTRIBUTES_UPDATED || actionType == ActionType.OTA_ATTRIBUTES_DELETED || actionType == ActionType.OTA_TIMESERIES_UPDATED) {
+                        entityNode = JacksonUtil.newObjectNode();
+                        @SuppressWarnings("unchecked")
+                        List<KvEntry> data = extractParameter(List.class, 0, additionalInfo);
+                        HasName ota = extractParameter(HasName.class, 1, additionalInfo);
+                        if (data != null) {
+                            for (KvEntry attr : data) {
+                                JacksonUtil.addKvEntry(entityNode, attr);
+                            }
+                        }
+                        metaData.putValue("entityName", ota.getName());
+                        metaData.putValue("entityType", entityId.getEntityType().toString());
                     }
                 }
 
