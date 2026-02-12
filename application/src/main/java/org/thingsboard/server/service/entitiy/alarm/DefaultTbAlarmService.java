@@ -203,7 +203,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
         try {
             deleted = alarmSubscriptionService.deleteAlarm(tenantId, alarmId);
         } catch (Exception e) {
-            logEntityActionService.logEntityAction(tenantId, alarmOriginatorId == null ? alarmId: alarmOriginatorId, ActionType.ALARM_DELETE, user, e, alarmId);
+            logEntityActionService.logEntityAction(tenantId, alarmOriginatorId == null ? alarmId : alarmOriginatorId, ActionType.ALARM_DELETE, user, e, alarmId);
             throw e;
         }
 
