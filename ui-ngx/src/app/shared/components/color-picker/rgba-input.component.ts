@@ -18,12 +18,13 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Color } from '@iplab/ngx-color-picker';
 import { coerceBoolean } from '@shared/decorators/coercion';
 
-type Channel = 'R' | 'G' | 'B' | 'A';
+type Channel = 'R' | 'G' | 'B';
 
 @Component({
   selector: 'tb-rgba-input',
   templateUrl: './rgba-input.component.html',
-  styleUrl: './color-input.base.scss'
+  styleUrl: './color-input.base.scss',
+  standalone: false
 })
 export class RgbaInputComponent {
 

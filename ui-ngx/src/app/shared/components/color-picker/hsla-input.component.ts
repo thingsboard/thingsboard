@@ -23,7 +23,8 @@ type Channel = 'H' | 'S' | 'L';
 @Component({
   selector: 'tb-hsla-input',
   templateUrl: './hsla-input.component.html',
-  styleUrl: './color-input.base.scss'
+  styleUrl: './color-input.base.scss',
+  standalone: false
 })
 export class HslaInputComponent {
 

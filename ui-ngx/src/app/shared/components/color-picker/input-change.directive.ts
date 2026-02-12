@@ -17,7 +17,8 @@
 import { Directive, EventEmitter, HostBinding, HostListener, Input, numberAttribute, Output } from '@angular/core';
 
 @Directive({
-  selector: '[inputChange]'
+  selector: '[inputChange]',
+  standalone: false
 })
 export class InputChangeDirective {
 
