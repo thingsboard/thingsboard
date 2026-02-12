@@ -430,6 +430,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         tenantProfileService.deleteTenantProfiles(TenantId.SYS_TENANT_ID);
 
         jdbcTemplate.execute("TRUNCATE TABLE notification");
+        jdbcTemplate.execute("TRUNCATE TABLE audit_log");
 
         log.debug("Executed web test teardown");
     }
