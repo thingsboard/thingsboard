@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data.security.model.mfa.account;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -23,6 +24,7 @@ import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProvi
 
 import java.util.Set;
 
+@Schema
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class BackupCodeTwoFaAccountConfig extends TwoFaAccountConfig {
@@ -30,6 +32,7 @@ public class BackupCodeTwoFaAccountConfig extends TwoFaAccountConfig {
     @NotEmpty
     private Set<String> codes;
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Two-Factor Authentication provider type")
     @Override
     public TwoFaProviderType getProviderType() {
         return TwoFaProviderType.BACKUP_CODE;

@@ -17,6 +17,7 @@ package org.thingsboard.server.common.data.notification.targets.slack;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -28,6 +29,7 @@ import org.thingsboard.server.common.data.notification.targets.NotificationRecip
 
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 
+@Schema
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

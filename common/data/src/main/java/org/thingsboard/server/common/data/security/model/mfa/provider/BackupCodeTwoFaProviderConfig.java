@@ -15,16 +15,19 @@
  */
 package org.thingsboard.server.common.data.security.model.mfa.provider;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import lombok.Data;
 
 @Data
+@Schema
 public class BackupCodeTwoFaProviderConfig implements TwoFaProviderConfig {
 
     @Min(value = 1, message = "must be greater than 0")
     private int codesQuantity;
 
     @Override
+    @Schema(description = "Two-Factor Authentication provider type", requiredMode = Schema.RequiredMode.REQUIRED)
     public TwoFaProviderType getProviderType() {
         return TwoFaProviderType.BACKUP_CODE;
     }

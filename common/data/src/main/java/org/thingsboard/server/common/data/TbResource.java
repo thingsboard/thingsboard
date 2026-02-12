@@ -28,6 +28,7 @@ import java.io.Serial;
 import java.util.Base64;
 import java.util.Optional;
 
+@Schema
 @Slf4j
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -36,8 +37,10 @@ public class TbResource extends TbResourceInfo {
     @Serial
     private static final long serialVersionUID = 7379609705527272306L;
 
+    @JsonIgnore
     private byte[] data;
 
+    @JsonIgnore
     private byte[] preview;
 
     public TbResource() {
@@ -73,6 +76,7 @@ public class TbResource extends TbResourceInfo {
                 .orElse(null);
     }
 
+    @Schema(description = "Resource preview data.", accessMode = Schema.AccessMode.READ_WRITE)
     @JsonGetter("preview")
     public String getEncodedPreview() {
         return Optional.ofNullable(preview)

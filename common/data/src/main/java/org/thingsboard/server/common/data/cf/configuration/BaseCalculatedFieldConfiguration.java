@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
@@ -27,6 +28,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Data
+@Schema
 public abstract class BaseCalculatedFieldConfiguration implements CalculatedFieldConfiguration {
 
     protected Map<String, Argument> arguments;

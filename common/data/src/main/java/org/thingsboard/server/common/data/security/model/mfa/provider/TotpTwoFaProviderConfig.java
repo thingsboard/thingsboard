@@ -15,16 +15,19 @@
  */
 package org.thingsboard.server.common.data.security.model.mfa.provider;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
+@Schema
 public class TotpTwoFaProviderConfig implements TwoFaProviderConfig {
 
     @NotBlank
     private String issuerName;
 
     @Override
+    @Schema(description = "Two-Factor Authentication provider type", requiredMode = Schema.RequiredMode.REQUIRED)
     public TwoFaProviderType getProviderType() {
         return TwoFaProviderType.TOTP;
     }

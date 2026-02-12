@@ -24,7 +24,7 @@ import org.thingsboard.server.common.data.device.data.PowerSavingConfiguration;
 @Data
 public class CoapDeviceProfileTransportConfiguration implements DeviceProfileTransportConfiguration {
 
-    @Schema
+    @Schema(implementation = CoapDeviceTypeConfiguration.class)
     private CoapDeviceTypeConfiguration coapDeviceTypeConfiguration;
     @Schema
     private PowerSavingConfiguration clientSettings;

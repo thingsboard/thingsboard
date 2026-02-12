@@ -15,12 +15,14 @@
  */
 package org.thingsboard.server.common.data.sync.vc.request.create;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.EntityType;
 
 import java.util.Map;
 
+@Schema
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class ComplexVersionCreateRequest extends VersionCreateRequest {
@@ -29,6 +31,7 @@ public class ComplexVersionCreateRequest extends VersionCreateRequest {
     private SyncStrategy syncStrategy;
     private Map<EntityType, EntityTypeVersionCreateConfig> entityTypes;
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Type of the version to create")
     @Override
     public VersionCreateRequestType getType() {
         return VersionCreateRequestType.COMPLEX;

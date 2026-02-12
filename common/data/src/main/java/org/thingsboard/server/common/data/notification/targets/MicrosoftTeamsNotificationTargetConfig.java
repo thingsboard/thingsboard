@@ -15,11 +15,13 @@
  */
 package org.thingsboard.server.common.data.notification.targets;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+@Schema
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class MicrosoftTeamsNotificationTargetConfig extends NotificationTargetConfig implements NotificationRecipient {
@@ -30,6 +32,7 @@ public class MicrosoftTeamsNotificationTargetConfig extends NotificationTargetCo
     private String channelName;
     private Boolean useOldApi = Boolean.TRUE;
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Type of the notification target")
     @Override
     public NotificationTargetType getType() {
         return NotificationTargetType.MICROSOFT_TEAMS;

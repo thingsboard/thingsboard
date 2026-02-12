@@ -16,6 +16,8 @@
 package org.thingsboard.server.common.data.security.model.mfa;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -28,9 +30,11 @@ import java.util.List;
 import java.util.Optional;
 
 @Data
+@Schema(description = "Platform Two-Factor Authentication settings")
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PlatformTwoFaSettings {
 
+    @ArraySchema(schema = @Schema(implementation = TwoFaProviderConfig.class))
     @Valid
     @NotNull
     private List<TwoFaProviderConfig> providers;

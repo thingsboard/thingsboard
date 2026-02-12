@@ -18,6 +18,7 @@ package org.thingsboard.server.common.data.device.data;
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.thingsboard.server.common.data.DeviceTransportType;
 
@@ -25,6 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Data
+@Schema
 public class CoapDeviceTransportConfiguration extends PowerSavingConfiguration implements DeviceTransportConfiguration {
 
     private static final long serialVersionUID = 6061442236008925609L;
@@ -42,6 +44,7 @@ public class CoapDeviceTransportConfiguration extends PowerSavingConfiguration i
         this.properties.put(name, value);
     }
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public DeviceTransportType getType() {
         return DeviceTransportType.COAP;

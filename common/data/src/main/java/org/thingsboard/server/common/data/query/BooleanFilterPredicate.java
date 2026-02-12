@@ -18,12 +18,14 @@ package org.thingsboard.server.common.data.query;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+@Schema
 @Data
 public class BooleanFilterPredicate implements SimpleKeyFilterPredicate<Boolean> {
 
     private BooleanOperation operation;
     private FilterPredicateValue<Boolean> value;
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public FilterPredicateType getType() {
         return FilterPredicateType.BOOLEAN;

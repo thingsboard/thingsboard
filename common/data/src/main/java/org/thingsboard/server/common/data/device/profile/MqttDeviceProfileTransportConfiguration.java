@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.validation.NoXss;
 import java.util.Objects;
 import java.util.Set;
 
+@Schema
 @Data
 public class MqttDeviceProfileTransportConfiguration implements DeviceProfileTransportConfiguration {
 

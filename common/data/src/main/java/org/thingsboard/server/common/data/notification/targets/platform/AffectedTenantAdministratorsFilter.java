@@ -15,11 +15,14 @@
  */
 package org.thingsboard.server.common.data.notification.targets.platform;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+@Schema
 @Data
 public class AffectedTenantAdministratorsFilter implements UsersFilter {
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Type of the users filter")
     @Override
     public UsersFilterType getType() {
         return UsersFilterType.AFFECTED_TENANT_ADMINISTRATORS;

@@ -19,6 +19,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
@@ -28,6 +30,14 @@ import org.thingsboard.server.common.data.id.TenantId;
 import java.util.List;
 import java.util.Map;
 
+@Schema(
+        description = "Configuration for calculated fields",
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "SIMPLE", schema = SimpleCalculatedFieldConfiguration.class),
+                @DiscriminatorMapping(value = "SCRIPT", schema = ScriptCalculatedFieldConfiguration.class)
+        }
+)
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         include = JsonTypeInfo.As.PROPERTY,
@@ -40,15 +50,31 @@ import java.util.Map;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public interface CalculatedFieldConfiguration {
 
+    @Schema(
+            description = "Type of calculated field configuration",
+            requiredMode = Schema.RequiredMode.REQUIRED
+    )
     @JsonIgnore
     CalculatedFieldType getType();
 
+    @Schema(
+            description = "Arguments/parameters for the calculated field",
+            example = "{\"param1\": {\"type\": \"STRING\", \"value\": \"example\"}}"
+    )
     Map<String, Argument> getArguments();
 
+    @Schema(
+            description = "Expression or formula for calculating the field value",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "value1 + value2"
+    )
     String getExpression();
 
     void setExpression(String expression);
 
+    @Schema(
+            description = "Output configuration for the calculated field result"
+    )
     Output getOutput();
 
     @JsonIgnore

@@ -351,7 +351,6 @@ public class SwaggerConfiguration {
             sortedPaths.setExtensions(paths.getExtensions());
             openAPI.setPaths(sortedPaths);
 
-            // Fix schemas with additionalProperties to ensure they have type: object
             if (openAPI.getComponents() != null && openAPI.getComponents().getSchemas() != null) {
                 Map<String, Schema> schemas = openAPI.getComponents().getSchemas();
 
@@ -363,58 +362,14 @@ public class SwaggerConfiguration {
                     }
                 });
 
-                // Fix polymorphic maps: replace oneOf in additionalProperties with base type reference
+                // Fix polymorphic properties: replace inline oneOf with base type $ref
                 schemas.values().forEach(schema -> {
-                    if (schema.getProperties() != null) {
-                        schema.getProperties().forEach((propName, propSchema) -> {
-                            if (propSchema instanceof Schema) {
-                                Schema<?> prop = (Schema<?>) propSchema;
-
-                                // Check if additionalProperties has oneOf (polymorphic map values)
-                                if (prop.getAdditionalProperties() instanceof Schema) {
-                                    Schema<?> additionalProps = (Schema<?>) prop.getAdditionalProperties();
-
-                                    if (additionalProps.getOneOf() != null && !additionalProps.getOneOf().isEmpty()) {
-                                        // Find the base type from discriminator mappings
-                                        String baseType = findBaseTypeForOneOf(schemas, additionalProps.getOneOf());
-
-                                        if (baseType != null) {
-                                            // Replace oneOf with direct reference to base type
-                                            Schema<?> refSchema = new Schema<>();
-                                            refSchema.set$ref("#/components/schemas/" + baseType);
-                                            prop.setAdditionalProperties(refSchema);
-                                            log.debug("Replaced oneOf with $ref to {} in property {}", baseType, propName);
-                                        }
-                                    }
-                                }
-                            }
-                        });
-                    }
-                });
-
-                schemas.values().forEach(schema -> {
-                    if (schema.getProperties() != null) {
-                        schema.getProperties().forEach((propName, propSchema) -> {
-                            if (propSchema instanceof Schema) {
-                                Schema<?> prop = (Schema<?>) propSchema;
-
-                                // If property has oneOf, try to find the base discriminated type
-                                if (prop.getOneOf() != null && !prop.getOneOf().isEmpty()) {
-                                    String baseType = findBaseTypeForOneOf(schemas, prop.getOneOf());
-
-                                    if (baseType != null) {
-                                        // Replace oneOf with reference to base type
-                                        Schema<?> refSchema = new Schema<>();
-                                        refSchema.set$ref("#/components/schemas/" + baseType);
-                                        if (prop.getDescription() != null) {
-                                            refSchema.setDescription(prop.getDescription());
-                                        }
-                                        schema.getProperties().put(propName, refSchema);
-                                        log.debug("Replaced oneOf with $ref to {} in property {}", baseType, propName);
-                                    }
-                                }
-                            }
-                        });
+                    replaceInlineOneOfProperties(schema, schemas);
+                    if (schema.getAllOf() != null) {
+                        List<Schema> allOf = schema.getAllOf();
+                        for (Schema allOfElement : allOf) {
+                            replaceInlineOneOfProperties(allOfElement, schemas);
+                        }
                     }
                 });
             }
@@ -424,35 +379,86 @@ public class SwaggerConfiguration {
         };
     }
 
-    // Add this helper method
     private String findBaseTypeForOneOf(Map<String, Schema> schemas, List<Schema> oneOfSchemas) {
         if (oneOfSchemas.isEmpty()) {
             return null;
         }
 
-        // Extract the first subtype name from oneOf
-        String firstRef = oneOfSchemas.get(0).get$ref();
-        if (firstRef == null) {
-            return null;
+        for (Schema oneOfSchema : oneOfSchemas) {
+            String ref = oneOfSchema.get$ref();
+            if (ref == null) {
+                continue;
+            }
+            String refName = ref.substring(ref.lastIndexOf('/') + 1);
+
+            // Check if this entry is itself a base type with discriminator
+            Schema<?> candidate = schemas.get(refName);
+            if (candidate != null && candidate.getDiscriminator() != null
+                    && candidate.getDiscriminator().getMapping() != null) {
+                return refName;
+            }
+
+            // Check if this subtype is in another schema's discriminator mapping
+            String baseType = schemas.entrySet().stream()
+                    .filter(entry -> {
+                        Schema<?> schema = entry.getValue();
+                        if (schema.getDiscriminator() != null && schema.getDiscriminator().getMapping() != null) {
+                            return schema.getDiscriminator().getMapping().values().stream()
+                                    .anyMatch(r -> r.endsWith("/" + refName));
+                        }
+                        return false;
+                    })
+                    .map(Map.Entry::getKey)
+                    .findFirst()
+                    .orElse(null);
+
+            if (baseType != null) {
+                return baseType;
+            }
         }
-
-        String subtypeName = firstRef.substring(firstRef.lastIndexOf('/') + 1);
-
-        // Find which schema has this subtype in its discriminator mapping
-        return schemas.entrySet().stream()
-                .filter(entry -> {
-                    Schema<?> schema = entry.getValue();
-                    if (schema.getDiscriminator() != null && schema.getDiscriminator().getMapping() != null) {
-                        return schema.getDiscriminator().getMapping().values().stream()
-                                .anyMatch(ref -> ref.endsWith("/" + subtypeName));
-                    }
-                    return false;
-                })
-                .map(Map.Entry::getKey)
-                .findFirst()
-                .orElse(null);
+        return null;
     }
 
+
+    @SuppressWarnings("unchecked")
+    private void replaceInlineOneOfProperties(Schema<?> schema, Map<String, Schema> allSchemas) {
+        if (schema == null || schema.getProperties() == null) {
+            return;
+        }
+        schema.getProperties().forEach((propName, propSchema) -> {
+            if (propSchema instanceof Schema) {
+                Schema<?> prop = (Schema<?>) propSchema;
+
+                // Check if additionalProperties has oneOf (polymorphic map values)
+                if (prop.getAdditionalProperties() instanceof Schema) {
+                    Schema<?> additionalProps = (Schema<?>) prop.getAdditionalProperties();
+                    if (additionalProps.getOneOf() != null && !additionalProps.getOneOf().isEmpty()) {
+                        String baseType = findBaseTypeForOneOf(allSchemas, additionalProps.getOneOf());
+                        if (baseType != null) {
+                            Schema<?> refSchema = new Schema<>();
+                            refSchema.set$ref("#/components/schemas/" + baseType);
+                            prop.setAdditionalProperties(refSchema);
+                            log.debug("Replaced oneOf in additionalProperties with $ref to {} in property {}", baseType, propName);
+                        }
+                    }
+                }
+
+                // If property has oneOf, try to find the base discriminated type
+                if (prop.getOneOf() != null && !prop.getOneOf().isEmpty()) {
+                    String baseType = findBaseTypeForOneOf(allSchemas, prop.getOneOf());
+                    if (baseType != null) {
+                        Schema<?> refSchema = new Schema<>();
+                        refSchema.set$ref("#/components/schemas/" + baseType);
+                        if (prop.getDescription() != null) {
+                            refSchema.setDescription(prop.getDescription());
+                        }
+                        schema.getProperties().put(propName, refSchema);
+                        log.debug("Replaced oneOf with $ref to {} in property {}", baseType, propName);
+                    }
+                }
+            }
+        });
+    }
 
     private Tag tagsCustomization(Map.Entry<String, PathItem> entry) {
         var tagItem = tagItemFromPathItem(entry.getValue());

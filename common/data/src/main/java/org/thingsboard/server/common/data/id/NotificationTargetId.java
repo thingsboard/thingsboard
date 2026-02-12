@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.EntityType;
 
 import java.util.UUID;
 
+@Schema
 public class NotificationTargetId extends UUIDBased implements EntityId {
 
     @JsonCreator

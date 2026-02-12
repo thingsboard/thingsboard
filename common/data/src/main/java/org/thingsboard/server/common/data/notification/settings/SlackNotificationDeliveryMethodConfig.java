@@ -15,16 +15,19 @@
  */
 package org.thingsboard.server.common.data.notification.settings;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 
+@Schema
 @Data
 public class SlackNotificationDeliveryMethodConfig implements NotificationDeliveryMethodConfig {
 
     @NotEmpty
     private String botToken;
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Type of the notification delivery method")
     @Override
     public NotificationDeliveryMethod getMethod() {
         return NotificationDeliveryMethod.SLACK;

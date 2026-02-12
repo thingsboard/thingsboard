@@ -48,6 +48,8 @@ import java.io.Serializable;
         @JsonSubTypes.Type(value = Lwm2mDeviceTransportConfiguration.class, name = "LWM2M"),
         @JsonSubTypes.Type(value = SnmpDeviceTransportConfiguration.class, name = "SNMP")})
 public interface DeviceTransportConfiguration extends Serializable {
+
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @JsonIgnore
     DeviceTransportType getType();
 

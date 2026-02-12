@@ -75,7 +75,7 @@ public class EntityExportData<E extends ExportableEntity<? extends EntityId>> {
 
     @JsonProperty(index = 2)
     @JsonTbEntity
-    @Schema
+    @Schema(implementation = ExportableEntity.class)
     private E entity;
     @JsonProperty(index = 1)
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)

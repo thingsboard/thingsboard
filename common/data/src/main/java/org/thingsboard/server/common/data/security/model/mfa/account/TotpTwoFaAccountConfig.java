@@ -15,12 +15,14 @@
  */
 package org.thingsboard.server.common.data.security.model.mfa.account;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderType;
 
+@Schema
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class TotpTwoFaAccountConfig extends TwoFaAccountConfig {
@@ -29,6 +31,7 @@ public class TotpTwoFaAccountConfig extends TwoFaAccountConfig {
     @Pattern(regexp = "otpauth://totp/(\\S+?):(\\S+?)\\?issuer=(\\S+?)&secret=(\\w+?)", message = "is invalid")
     private String authUrl;
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Two-Factor Authentication provider type")
     @Override
     public TwoFaProviderType getProviderType() {
         return TwoFaProviderType.TOTP;
