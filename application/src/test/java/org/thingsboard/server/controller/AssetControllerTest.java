@@ -407,7 +407,7 @@ public class AssetControllerTest extends AbstractControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityIsNullOneTimeEdgeServiceNeverError(savedAsset1, savedTenant.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+        testNotifyEntityIsNullOneTimeEdgeServiceNeverError(savedAsset1, savedAsset1.getId(), savedTenant.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
                 ActionType.DELETED, new DataValidationException(msgError), savedAsset1.getId().getId().toString());
 
         savedView.setEntityId(savedAsset2.getId());
