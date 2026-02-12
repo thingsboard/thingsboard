@@ -156,11 +156,7 @@ public class ProtoConverter {
                 case BOOLEAN_V:
                 case LONG_V:
                 case DOUBLE_V:
-                    break;
                 case STRING_V:
-                    if (StringUtils.isEmpty(keyValueProto.getStringV())) {
-                        throw new IllegalArgumentException("Value is empty for key: " + key + "!");
-                    }
                     break;
                 case JSON_V:
                     try {
