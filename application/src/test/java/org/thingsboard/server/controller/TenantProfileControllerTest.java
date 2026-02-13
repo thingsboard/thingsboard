@@ -407,20 +407,15 @@ public class TenantProfileControllerTest extends AbstractControllerTest {
         testBroadcastEntityStateChangeEventNeverTenantProfile();
     }
 
-    private void awaitAuditLog(String awaitMessage, TenantProfileId tenantProfileId, ActionType expectedAction) throws Exception {
+    private void awaitAuditLog(String awaitMessage, TenantProfileId tenantProfileId, ActionType expectedAction) {
         Awaitility.await(awaitMessage)
                 .atMost(TIMEOUT, TimeUnit.SECONDS)
-                .until(() ->
-                        doGetTypedWithTimePageLink(
-                                "/api/audit/logs/entity/TENANT_PROFILE/" + tenantProfileId.getId() + "?",
-                                new TypeReference<PageData<AuditLog>>() {
-                                },
-                                new TimePageLink(5))
-                                .getData()
-                                .stream()
-                                .anyMatch(log -> log.getActionType() == expectedAction)
+                .until(() -> doGetTypedWithTimePageLink(
+                        "/api/audit/logs?",
+                        new TypeReference<PageData<AuditLog>>() {},
+                        new TimePageLink(100)).getData().stream()
+                        .anyMatch(log -> log.getEntityId().equals(tenantProfileId) && log.getActionType() == expectedAction)
                 );
-
     }
 
     private TenantProfile createTenantProfile(String name) {
