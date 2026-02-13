@@ -41,6 +41,7 @@ import static org.awaitility.Awaitility.await;
 @TestPropertySource(properties = {
         "usage.stats.report.enabled=true",
         "usage.stats.report.interval=2",
+        "usage.stats.report.urgent_interval=1",
         "usage.stats.gauge_report_interval=1",
         "usage.stats.devices.report_interval=3",
         "state.defaultStateCheckIntervalInSec=3",

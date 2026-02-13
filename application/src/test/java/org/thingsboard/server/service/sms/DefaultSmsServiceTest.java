@@ -52,6 +52,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @TestPropertySource(properties = {
         "usage.stats.report.enabled=true",
         "usage.stats.report.interval=1",
+        "usage.stats.report.urgent_interval=1"
 })
 public class DefaultSmsServiceTest extends AbstractControllerTest {
     @SpyBean
