@@ -24,27 +24,24 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Builder;
-import lombok.Data;
 import lombok.With;
 import org.thingsboard.server.common.data.ai.provider.AiProvider;
 import org.thingsboard.server.common.data.ai.provider.AzureOpenAiProviderConfig;
 
-@Schema()
+@Schema
 @Builder
-@Data
-public final class AzureOpenAiChatModelConfig implements AiChatModelConfig<AzureOpenAiChatModelConfig, AzureOpenAiProviderConfig> {
-
-    @NotNull @Valid AzureOpenAiProviderConfig providerConfig;
-    @NotBlank String modelId;
-    @PositiveOrZero Double temperature;
-    @Positive @Max(1) Double topP;
-    Double frequencyPenalty;
-    Double presencePenalty;
-    Integer maxOutputTokens;
-    @With
-    @Positive Integer timeoutSeconds;
-    @With
-    @PositiveOrZero Integer maxRetries;
+public record AzureOpenAiChatModelConfig(
+        @Schema(ref = "#/components/schemas/AzureOpenAiProviderConfig")
+        @NotNull @Valid AzureOpenAiProviderConfig providerConfig,
+        @NotBlank String modelId,
+        @PositiveOrZero Double temperature,
+        @Positive @Max(1) Double topP,
+        Double frequencyPenalty,
+        Double presencePenalty,
+        Integer maxOutputTokens,
+        @With @Positive Integer timeoutSeconds,
+        @With @PositiveOrZero Integer maxRetries
+) implements AiChatModelConfig<AzureOpenAiChatModelConfig> {
 
     @Override
     public AiProvider provider() {
@@ -52,23 +49,8 @@ public final class AzureOpenAiChatModelConfig implements AiChatModelConfig<Azure
     }
 
     @Override
-    public AzureOpenAiProviderConfig providerConfig() {
-        return providerConfig;
-    }
-
-    @Override
     public ChatModel configure(Langchain4jChatModelConfigurer configurer) {
         return configurer.configureChatModel(this);
-    }
-
-    @Override
-    public Integer timeoutSeconds() {
-        return timeoutSeconds;
-    }
-
-    @Override
-    public Integer maxRetries() {
-        return maxRetries;
     }
 
     @Override

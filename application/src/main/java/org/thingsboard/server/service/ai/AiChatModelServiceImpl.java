@@ -29,7 +29,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.ai.model.chat.AiChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.chat.Langchain4jChatModelConfigurer;
-import org.thingsboard.server.common.data.ai.provider.AiProviderConfig;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -42,7 +41,7 @@ class AiChatModelServiceImpl implements AiChatModelService {
     private final AiRequestsExecutor aiRequestsExecutor;
 
     @Override
-    public <C extends AiChatModelConfig<C, P>, P extends AiProviderConfig> FluentFuture<ChatResponse> sendChatRequestAsync(AiChatModelConfig<C, P> chatModelConfig, ChatRequest chatRequest) {
+    public <C extends AiChatModelConfig<C>> FluentFuture<ChatResponse> sendChatRequestAsync(AiChatModelConfig<C> chatModelConfig, ChatRequest chatRequest) {
         ChatModel langChainChatModel = chatModelConfig.configure(chatModelConfigurer);
         if (langChainChatModel.provider() == ModelProvider.GITHUB_MODELS) {
             chatRequest = prepareGithubChatRequest(chatRequest);

@@ -19,10 +19,9 @@ import com.google.common.util.concurrent.FluentFuture;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import org.thingsboard.server.common.data.ai.model.chat.AiChatModelConfig;
-import org.thingsboard.server.common.data.ai.provider.AiProviderConfig;
 
 public interface RuleEngineAiChatModelService {
 
-    <C extends AiChatModelConfig<C, P>, P extends AiProviderConfig> FluentFuture<ChatResponse> sendChatRequestAsync(AiChatModelConfig<C, P> chatModelConfig, ChatRequest chatRequest);
+    <C extends AiChatModelConfig<C>> FluentFuture<ChatResponse> sendChatRequestAsync(AiChatModelConfig<C> chatModelConfig, ChatRequest chatRequest);
 
 }

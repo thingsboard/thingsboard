@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.common.data.ai.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
@@ -74,7 +73,7 @@ import org.thingsboard.server.common.data.ai.provider.OpenAiProviderConfig;
                 @DiscriminatorMapping(value = "OLLAMA", schema = OllamaChatModelConfig.class)
         }
 )
-public interface AiModelConfig <T extends AiProviderConfig>{
+public interface AiModelConfig {
 
     @Schema(
             description = "AI Provider",
@@ -82,21 +81,7 @@ public interface AiModelConfig <T extends AiProviderConfig>{
     )
     AiProvider provider();
 
-    @Schema(
-            description = "Provider-specific configuration details",
-            discriminatorProperty = "provider",
-            discriminatorMapping = {
-                    @DiscriminatorMapping(value = "OPENAI", schema = OpenAiProviderConfig.class),
-                    @DiscriminatorMapping(value = "AZURE_OPENAI", schema = AzureOpenAiProviderConfig.class),
-                    @DiscriminatorMapping(value = "GOOGLE_AI_GEMINI", schema = GoogleAiGeminiProviderConfig.class),
-                    @DiscriminatorMapping(value = "GOOGLE_VERTEX_AI_GEMINI", schema = GoogleVertexAiGeminiProviderConfig.class),
-                    @DiscriminatorMapping(value = "MISTRAL_AI", schema = MistralAiProviderConfig.class),
-                    @DiscriminatorMapping(value = "ANTHROPIC", schema = AnthropicProviderConfig.class),
-                    @DiscriminatorMapping(value = "AMAZON_BEDROCK", schema = AmazonBedrockProviderConfig.class),
-                    @DiscriminatorMapping(value = "GITHUB_MODELS", schema = GitHubModelsProviderConfig.class),
-                    @DiscriminatorMapping(value = "OLLAMA", schema = OllamaProviderConfig.class)
-            }
-    )
+    @Schema(hidden = true)
     @JsonTypeInfo(
             use = JsonTypeInfo.Id.NAME,
             include = JsonTypeInfo.As.EXTERNAL_PROPERTY,
@@ -113,8 +98,7 @@ public interface AiModelConfig <T extends AiProviderConfig>{
             @JsonSubTypes.Type(value = GitHubModelsProviderConfig.class, name = "GITHUB_MODELS"),
             @JsonSubTypes.Type(value = OllamaProviderConfig.class, name = "OLLAMA")
     })
-    @JsonIgnore
-    T providerConfig();
+    AiProviderConfig providerConfig();
 
     AiModelType modelType();
 

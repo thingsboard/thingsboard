@@ -24,32 +24,26 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Builder;
-import lombok.Data;
 import lombok.With;
 import org.thingsboard.server.common.data.ai.provider.AiProvider;
 import org.thingsboard.server.common.data.ai.provider.AmazonBedrockProviderConfig;
 
-@Schema(description = "Amazon Bedrock chat model configuration")
+@Schema
 @Builder
-@Data
-public final class AmazonBedrockChatModelConfig implements AiChatModelConfig<AmazonBedrockChatModelConfig, AmazonBedrockProviderConfig> {
-
-    @NotNull @Valid AmazonBedrockProviderConfig providerConfig;
-    @NotBlank String modelId;
-    @PositiveOrZero Double temperature;
-    @Positive @Max(1) Double topP;
-    Integer maxOutputTokens;
-    @With @Positive Integer timeoutSeconds;
-    @With @PositiveOrZero Integer maxRetries;
+public record AmazonBedrockChatModelConfig(
+        @Schema(ref = "#/components/schemas/AmazonBedrockProviderConfig")
+        @NotNull @Valid AmazonBedrockProviderConfig providerConfig,
+        @NotBlank String modelId,
+        @PositiveOrZero Double temperature,
+        @Positive @Max(1) Double topP,
+        Integer maxOutputTokens,
+        @With @Positive Integer timeoutSeconds,
+        @With @PositiveOrZero Integer maxRetries
+) implements AiChatModelConfig<AmazonBedrockChatModelConfig> {
 
     @Override
     public AiProvider provider() {
         return AiProvider.AMAZON_BEDROCK;
-    }
-
-    @Override
-    public AmazonBedrockProviderConfig providerConfig() {
-        return providerConfig;
     }
 
     @Override
@@ -58,17 +52,8 @@ public final class AmazonBedrockChatModelConfig implements AiChatModelConfig<Ama
     }
 
     @Override
-    public Integer timeoutSeconds() {
-        return timeoutSeconds;
-    }
-
-    @Override
-    public Integer maxRetries() {
-        return maxRetries;
-    }
-
-    @Override
     public boolean supportsJsonMode() {
         return false;
     }
+
 }

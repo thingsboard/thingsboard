@@ -72,12 +72,12 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
         return OpenAiChatModel.builder()
                 .baseUrl(chatModelConfig.providerConfig().baseUrl())
                 .apiKey(chatModelConfig.providerConfig().apiKey())
-                .modelName(chatModelConfig.getModelId())
-                .temperature(chatModelConfig.getTemperature())
-                .topP(chatModelConfig.getTopP())
-                .frequencyPenalty(chatModelConfig.getFrequencyPenalty())
-                .presencePenalty(chatModelConfig.getPresencePenalty())
-                .maxTokens(chatModelConfig.getMaxOutputTokens())
+                .modelName(chatModelConfig.modelId())
+                .temperature(chatModelConfig.temperature())
+                .topP(chatModelConfig.topP())
+                .frequencyPenalty(chatModelConfig.frequencyPenalty())
+                .presencePenalty(chatModelConfig.presencePenalty())
+                .maxTokens(chatModelConfig.maxOutputTokens())
                 .timeout(toDuration(chatModelConfig.timeoutSeconds()))
                 .maxRetries(chatModelConfig.maxRetries())
                 .build();
@@ -90,12 +90,12 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
                 .endpoint(providerConfig.endpoint())
                 .serviceVersion(providerConfig.serviceVersion())
                 .apiKey(providerConfig.apiKey())
-                .deploymentName(chatModelConfig.getModelId())
-                .temperature(chatModelConfig.getTemperature())
-                .topP(chatModelConfig.getTopP())
-                .frequencyPenalty(chatModelConfig.getFrequencyPenalty())
-                .presencePenalty(chatModelConfig.getPresencePenalty())
-                .maxTokens(chatModelConfig.getMaxOutputTokens())
+                .deploymentName(chatModelConfig.modelId())
+                .temperature(chatModelConfig.temperature())
+                .topP(chatModelConfig.topP())
+                .frequencyPenalty(chatModelConfig.frequencyPenalty())
+                .presencePenalty(chatModelConfig.presencePenalty())
+                .maxTokens(chatModelConfig.maxOutputTokens())
                 .timeout(toDuration(chatModelConfig.timeoutSeconds()))
                 .maxRetries(chatModelConfig.maxRetries())
                 .build();
@@ -105,13 +105,13 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
     public ChatModel configureChatModel(GoogleAiGeminiChatModelConfig chatModelConfig) {
         return GoogleAiGeminiChatModel.builder()
                 .apiKey(chatModelConfig.providerConfig().apiKey())
-                .modelName(chatModelConfig.getModelId())
-                .temperature(chatModelConfig.getTemperature())
-                .topP(chatModelConfig.getTopP())
-                .topK(chatModelConfig.getTopK())
-                .frequencyPenalty(chatModelConfig.getFrequencyPenalty())
-                .presencePenalty(chatModelConfig.getPresencePenalty())
-                .maxOutputTokens(chatModelConfig.getMaxOutputTokens())
+                .modelName(chatModelConfig.modelId())
+                .temperature(chatModelConfig.temperature())
+                .topP(chatModelConfig.topP())
+                .topK(chatModelConfig.topK())
+                .frequencyPenalty(chatModelConfig.frequencyPenalty())
+                .presencePenalty(chatModelConfig.presencePenalty())
+                .maxOutputTokens(chatModelConfig.maxOutputTokens())
                 .timeout(toDuration(chatModelConfig.timeoutSeconds()))
                 .maxRetries(chatModelConfig.maxRetries())
                 .build();
@@ -165,28 +165,28 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
 
         // map model config to generation config
         var generationConfigBuilder = GenerationConfig.newBuilder();
-        if (chatModelConfig.getTemperature() != null) {
-            generationConfigBuilder.setTemperature(chatModelConfig.getTemperature().floatValue());
+        if (chatModelConfig.temperature() != null) {
+            generationConfigBuilder.setTemperature(chatModelConfig.temperature().floatValue());
         }
-        if (chatModelConfig.getTopP() != null) {
-            generationConfigBuilder.setTopP(chatModelConfig.getTopP().floatValue());
+        if (chatModelConfig.topP() != null) {
+            generationConfigBuilder.setTopP(chatModelConfig.topP().floatValue());
         }
-        if (chatModelConfig.getTopK() != null) {
-            generationConfigBuilder.setTopK(chatModelConfig.getTopK());
+        if (chatModelConfig.topK() != null) {
+            generationConfigBuilder.setTopK(chatModelConfig.topK());
         }
-        if (chatModelConfig.getFrequencyPenalty() != null) {
-            generationConfigBuilder.setFrequencyPenalty(chatModelConfig.getFrequencyPenalty().floatValue());
+        if (chatModelConfig.frequencyPenalty() != null) {
+            generationConfigBuilder.setFrequencyPenalty(chatModelConfig.frequencyPenalty().floatValue());
         }
-        if (chatModelConfig.getFrequencyPenalty() != null) {
-            generationConfigBuilder.setPresencePenalty(chatModelConfig.getFrequencyPenalty().floatValue());
+        if (chatModelConfig.frequencyPenalty() != null) {
+            generationConfigBuilder.setPresencePenalty(chatModelConfig.frequencyPenalty().floatValue());
         }
-        if (chatModelConfig.getMaxOutputTokens() != null) {
-            generationConfigBuilder.setMaxOutputTokens(chatModelConfig.getMaxOutputTokens());
+        if (chatModelConfig.maxOutputTokens() != null) {
+            generationConfigBuilder.setMaxOutputTokens(chatModelConfig.maxOutputTokens());
         }
         var generationConfig = generationConfigBuilder.build();
 
         // construct generative model instance
-        var generativeModel = new GenerativeModel(chatModelConfig.getModelId(), vertexAI).withGenerationConfig(generationConfig);
+        var generativeModel = new GenerativeModel(chatModelConfig.modelId(), vertexAI).withGenerationConfig(generationConfig);
 
         return new VertexAiGeminiChatModel(generativeModel, generationConfig, chatModelConfig.maxRetries());
     }
@@ -203,12 +203,12 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
     public ChatModel configureChatModel(MistralAiChatModelConfig chatModelConfig) {
         return MistralAiChatModel.builder()
                 .apiKey(chatModelConfig.providerConfig().apiKey())
-                .modelName(chatModelConfig.getModelId())
-                .temperature(chatModelConfig.getTemperature())
-                .topP(chatModelConfig.getTopP())
-                .frequencyPenalty(chatModelConfig.getFrequencyPenalty())
-                .presencePenalty(chatModelConfig.getPresencePenalty())
-                .maxTokens(chatModelConfig.getMaxOutputTokens())
+                .modelName(chatModelConfig.modelId())
+                .temperature(chatModelConfig.temperature())
+                .topP(chatModelConfig.topP())
+                .frequencyPenalty(chatModelConfig.frequencyPenalty())
+                .presencePenalty(chatModelConfig.presencePenalty())
+                .maxTokens(chatModelConfig.maxOutputTokens())
                 .timeout(toDuration(chatModelConfig.timeoutSeconds()))
                 .maxRetries(chatModelConfig.maxRetries())
                 .build();
@@ -218,11 +218,11 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
     public ChatModel configureChatModel(AnthropicChatModelConfig chatModelConfig) {
         return AnthropicChatModel.builder()
                 .apiKey(chatModelConfig.providerConfig().apiKey())
-                .modelName(chatModelConfig.getModelId())
-                .temperature(chatModelConfig.getTemperature())
-                .topP(chatModelConfig.getTopP())
-                .topK(chatModelConfig.getTopK())
-                .maxTokens(chatModelConfig.getMaxOutputTokens())
+                .modelName(chatModelConfig.modelId())
+                .temperature(chatModelConfig.temperature())
+                .topP(chatModelConfig.topP())
+                .topK(chatModelConfig.topK())
+                .maxTokens(chatModelConfig.maxOutputTokens())
                 .timeout(toDuration(chatModelConfig.timeoutSeconds()))
                 .maxRetries(chatModelConfig.maxRetries())
                 .build();
@@ -242,14 +242,14 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
                 .build();
 
         var defaultChatRequestParams = ChatRequestParameters.builder()
-                .temperature(chatModelConfig.getTemperature())
-                .topP(chatModelConfig.getTopP())
-                .maxOutputTokens(chatModelConfig.getMaxOutputTokens())
+                .temperature(chatModelConfig.temperature())
+                .topP(chatModelConfig.topP())
+                .maxOutputTokens(chatModelConfig.maxOutputTokens())
                 .build();
 
         return BedrockChatModel.builder()
                 .client(bedrockClient)
-                .modelId(chatModelConfig.getModelId())
+                .modelId(chatModelConfig.modelId())
                 .defaultRequestParameters(defaultChatRequestParams)
                 .timeout(toDuration(chatModelConfig.timeoutSeconds()))
                 .maxRetries(chatModelConfig.maxRetries())
@@ -260,12 +260,12 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
     public ChatModel configureChatModel(GitHubModelsChatModelConfig chatModelConfig) {
         return GitHubModelsChatModel.builder()
                 .gitHubToken(chatModelConfig.providerConfig().personalAccessToken())
-                .modelName(chatModelConfig.getModelId())
-                .temperature(chatModelConfig.getTemperature())
-                .topP(chatModelConfig.getTopP())
-                .frequencyPenalty(chatModelConfig.getFrequencyPenalty())
-                .presencePenalty(chatModelConfig.getPresencePenalty())
-                .maxTokens(chatModelConfig.getMaxOutputTokens())
+                .modelName(chatModelConfig.modelId())
+                .temperature(chatModelConfig.temperature())
+                .topP(chatModelConfig.topP())
+                .frequencyPenalty(chatModelConfig.frequencyPenalty())
+                .presencePenalty(chatModelConfig.presencePenalty())
+                .maxTokens(chatModelConfig.maxOutputTokens())
                 .timeout(toDuration(chatModelConfig.timeoutSeconds()))
                 .maxRetries(chatModelConfig.maxRetries())
                 .build();
@@ -275,12 +275,12 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
     public ChatModel configureChatModel(OllamaChatModelConfig chatModelConfig) {
         var builder = OllamaChatModel.builder()
                 .baseUrl(chatModelConfig.providerConfig().baseUrl())
-                .modelName(chatModelConfig.getModelId())
-                .temperature(chatModelConfig.getTemperature())
-                .topP(chatModelConfig.getTopP())
-                .topK(chatModelConfig.getTopK())
-                .numCtx(chatModelConfig.getContextLength())
-                .numPredict(chatModelConfig.getContextLength())
+                .modelName(chatModelConfig.modelId())
+                .temperature(chatModelConfig.temperature())
+                .topP(chatModelConfig.topP())
+                .topK(chatModelConfig.topK())
+                .numCtx(chatModelConfig.contextLength())
+                .numPredict(chatModelConfig.maxOutputTokens())
                 .timeout(toDuration(chatModelConfig.timeoutSeconds()))
                 .maxRetries(chatModelConfig.maxRetries());
 

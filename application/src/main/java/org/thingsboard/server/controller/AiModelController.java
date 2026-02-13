@@ -174,7 +174,7 @@ class AiModelController extends BaseController {
     @PostMapping("/chat")
     public DeferredResult<TbChatResponse> sendChatRequest(@Valid @RequestBody TbChatRequest tbChatRequest) {
         ChatRequest langChainChatRequest = tbChatRequest.toLangChainChatRequest();
-        AiChatModelConfig<?, ?> chatModelConfig = tbChatRequest.chatModelConfig();
+        AiChatModelConfig<?> chatModelConfig = tbChatRequest.chatModelConfig();
 
         ListenableFuture<TbChatResponse> future = aiChatModelService.sendChatRequestAsync(chatModelConfig, langChainChatRequest)
                 .transform(chatResponse -> (TbChatResponse) new TbChatResponse.Success(chatResponse.aiMessage().text()), directExecutor())
