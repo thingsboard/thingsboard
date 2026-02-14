@@ -59,7 +59,6 @@ export class ApiKeysTableConfig extends EntityTableConfig<ApiKeyInfo> {
 
     this.entityType = EntityType.API_KEY;
     this.detailsPanelEnabled = false;
-    this.addAsTextButton = true;
     this.pageMode = false;
 
     this.entityTranslations = entityTypeTranslations.get(EntityType.API_KEY);

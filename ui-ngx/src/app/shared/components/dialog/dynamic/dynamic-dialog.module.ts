@@ -14,9 +14,9 @@
 /// limitations under the License.
 ///
 
-import { OverlayModule } from '@angular/cdk/overlay';
+import { Overlay, OverlayContainer, OverlayModule } from '@angular/cdk/overlay';
 import { NgModule } from '@angular/core';
-import { DEFAULT_DIALOG_CONFIG, DialogConfig, DialogModule } from '@angular/cdk/dialog';
+import { DEFAULT_DIALOG_CONFIG, Dialog, DialogConfig, DialogModule } from '@angular/cdk/dialog';
 import { MatDialogModule } from '@angular/material/dialog';
 import { DynamicDialog, DynamicMatDialog } from './dynamic-dialog';
 import { DynamicOverlay } from './dynamic-overlay';
@@ -24,8 +24,11 @@ import { DynamicOverlayContainer } from './dynamic-overlay-container';
 
 export const DYNAMIC_MAT_DIALOG_PROVIDERS = [
   DynamicOverlayContainer,
+  { provide: OverlayContainer, useExisting: DynamicOverlayContainer },
   DynamicOverlay,
+  { provide: Overlay, useExisting: DynamicOverlay },
   DynamicDialog,
+  { provide: Dialog, useExisting: DynamicDialog },
   DynamicMatDialog,
   {
     provide: DEFAULT_DIALOG_CONFIG,
