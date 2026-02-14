@@ -11,7 +11,7 @@
     "resources": [],
     "templateHtml": "<tb-bar-chart-with-labels-widget \n    [ctx]=\"ctx\">\n</tb-bar-chart-with-labels-widget>",
     "templateCss": ".legend {\n    font-size: 13px;\n    line-height: 10px;\n}\n\n.legend table { \n    border-spacing: 0px;\n    border-collapse: separate;\n}\n\n.mouse-events .flot-overlay {\n    cursor: crosshair; \n}\n\n",
-    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.barChartWidget.onInit();\n};\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.barChartWidget.onDataUpdated();\n}\n\nself.typeParameters = function() {\n    return {\n        previewWidth: '80%',\n        embedTitlePanel: true,\n        embedActionsPanel: true,\n        supportsUnitConversion: true,\n        hasAdditionalLatestDataKeys: false,\n        defaultDataKeysFunction: function() {\n            return [{ name: 'humidity', label: 'Humidity', type: 'timeseries' }];\n        }\n    };\n}\n",
+    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.barChartWidget.onInit();\n};\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.barChartWidget.onDataUpdated();\n}\n\nself.onLatestDataUpdated = function() {\n    self.ctx.$scope.barChartWidget.onLatestDataUpdated();\n}\n\nself.typeParameters = function() {\n    return {\n        previewWidth: '80%',\n        embedTitlePanel: true,\n        embedActionsPanel: true,\n        supportsUnitConversion: true,\n        hasAdditionalLatestDataKeys: false,\n        defaultDataKeysFunction: function() {\n            return [{ name: 'humidity', label: 'Humidity', type: 'timeseries' }];\n        }\n    };\n}\n",
     "settingsForm": [],
     "dataKeySettingsForm": [],
     "latestDataKeySettingsForm": [],
