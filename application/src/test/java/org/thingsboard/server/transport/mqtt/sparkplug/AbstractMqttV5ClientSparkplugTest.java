@@ -67,6 +67,9 @@ import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataTyp
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.UInt32;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.UInt64;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.UInt8;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugConnectionState.ONLINE;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.STATE;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.messageName;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil.createMetric;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicService.TOPIC_ROOT_SPB_V_1_0;
 
@@ -82,6 +85,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
     protected ThreadLocalRandom random = ThreadLocalRandom.current();
 
     protected static final String groupId = "SparkplugBGroupId";
+    protected static final String edgeNodeDeviceName = "Test Connect Sparkplug client node";
     protected static final String edgeNode = "SparkpluBNode";
     protected static final String keysBdSeq = "bdSeq";
     protected static final String alias = "Failed Telemetry/Attribute proto sparkplug payload. SparkplugMessageType ";
@@ -98,14 +102,39 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
     protected static final String metricBirthName_Int32 = "Device Metric int32";
     protected Set<String> sparkplugAttributesMetricNames;
 
-    public void beforeSparkplugTest() throws Exception {
-        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
-                .gatewayName("Test Connect Sparkplug client node")
-                .isSparkplug(true)
-                .sparkplugAttributesMetricNames(sparkplugAttributesMetricNames)
-                .transportPayloadType(TransportPayloadType.PROTOBUF)
-                .build();
-        processBeforeTest(configProperties);
+    public void beforeSparkplugTest(boolean isCreateDevices) throws Exception {
+        if (isCreateDevices) {
+            MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                    .gatewayName(edgeNodeDeviceName)
+                    .isSparkplug(true)
+                    .sparkplugAttributesMetricNames(sparkplugAttributesMetricNames)
+                    .transportPayloadType(TransportPayloadType.PROTOBUF)
+                    .build();
+            processBeforeTest(configProperties);
+            configProperties = MqttTestConfigProperties.builder()
+                    .gatewayName(deviceId)
+                    .isSparkplug(true)
+                    .sparkplugAttributesMetricNames(sparkplugAttributesMetricNames)
+                    .transportPayloadType(TransportPayloadType.PROTOBUF)
+                    .build();
+            processBeforeTest(configProperties);
+            configProperties = MqttTestConfigProperties.builder()
+                    .gatewayName(groupId +  ":" + edgeNode +  ":" + deviceId)
+                    .isSparkplug(true)
+                    .sparkplugAttributesMetricNames(sparkplugAttributesMetricNames)
+                    .transportPayloadType(TransportPayloadType.PROTOBUF)
+                    .build();
+            processBeforeTest(configProperties);
+
+        } else {
+            MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                    .gatewayName(edgeNodeDeviceName)
+                    .isSparkplug(true)
+                    .sparkplugAttributesMetricNames(sparkplugAttributesMetricNames)
+                    .transportPayloadType(TransportPayloadType.PROTOBUF)
+                    .build();
+            processBeforeTest(configProperties);
+        }
     }
 
     public void clientWithCorrectNodeAccessTokenWithNDEATH() throws Exception {
@@ -198,6 +227,97 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
 
         Assert.assertEquals(cntDevices, devices.size());
         return devices;
+    }
+
+    protected void connectClientWithCorrectAccessTokenWithNDEATHDevicesCreatingBefore_Test(int cntDevices) throws Exception {
+        long ts = calendar.getTimeInMillis();
+        List<Device> devices = new ArrayList<>();
+        clientWithCorrectNodeAccessTokenWithNDEATH();
+        MetricDataType metricDataType = Int32;
+        String key = "Node Metric int32";
+        int valueDeviceInt32 = 1024;
+        SparkplugBProto.Payload.Metric metric = createMetric(valueDeviceInt32, ts, key, metricDataType, -1L);
+        SparkplugBProto.Payload.Builder payloadBirthNode = SparkplugBProto.Payload.newBuilder()
+                .setTimestamp(ts)
+                .setSeq(getBdSeqNum());
+        payloadBirthNode.addMetrics(metric);
+        payloadBirthNode.setTimestamp(ts);
+        if (client.isConnected()) {
+            client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/" + SparkplugMessageType.NBIRTH.name() + "/" + edgeNode,
+                    payloadBirthNode.build().toByteArray(), 0, false);
+        }
+
+        valueDeviceInt32 = 4024;
+        metric = createMetric(valueDeviceInt32, ts, metricBirthName_Int32, metricBirthDataType_Int32, -1L);
+        // as old device name -> deviceId
+        String deviceName = deviceId;
+        AtomicReference<Device> device1 = new AtomicReference<>();
+        String finalDeviceName1 = deviceName;
+        await(alias + "find device [" + deviceId + "] before connecting")
+                .atMost(200, TimeUnit.SECONDS)
+                .until(() -> {
+                    device1.set(doGet("/api/tenant/devices?deviceName=" + finalDeviceName1, Device.class));
+                    return device1.get() != null;
+                });
+
+        if (client.isConnected()) {
+            SparkplugBProto.Payload.Builder payloadBirthDevice1 = SparkplugBProto.Payload.newBuilder()
+                    .setTimestamp(ts)
+                    .setSeq(getSeqNum());
+            payloadBirthDevice1.addMetrics(metric);
+            client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/" + SparkplugMessageType.DBIRTH.name() + "/" + edgeNode + "/" + deviceId,
+                    payloadBirthDevice1.build().toByteArray(), 0, false);
+            devices.add(device1.get());
+        }
+        // as new device name ->  groupId +  ":" + edgeNode +  ":" + deviceId;
+        deviceName = groupId + ":" + edgeNode + ":" + deviceId;
+        AtomicReference<Device> device2 = new AtomicReference<>();
+        String finalDeviceName2 = deviceName;
+        await(alias + "find device [" + deviceName + "] before connecting")
+                .atMost(200, TimeUnit.SECONDS)
+                .until(() -> {
+                    device2.set(doGet("/api/tenant/devices?deviceName=" + finalDeviceName2, Device.class));
+                    return device2.get() != null;
+                });
+
+        if (client.isConnected()) {
+            SparkplugBProto.Payload.Builder payloadBirthDevice2 = SparkplugBProto.Payload.newBuilder()
+                    .setTimestamp(ts)
+                    .setSeq(getSeqNum());
+            payloadBirthDevice2.addMetrics(metric);
+            client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/" + SparkplugMessageType.DBIRTH.name() + "/" + edgeNode + "/" + deviceId,
+                    payloadBirthDevice2.build().toByteArray(), 0, false);
+            devices.add(device2.get());
+        }
+        Assert.assertEquals(cntDevices, devices.size());
+        state_ONLINE_ALL (devices, calendar.getTimeInMillis());
+    }
+
+    protected void state_ONLINE_ALL (List<Device> devices, long ts) {
+        TsKvEntry tsKvEntry = new BasicTsKvEntry(ts, new StringDataEntry(messageName(STATE), ONLINE.name()));
+        await(alias + messageName(STATE) + ", device: " + savedGateway.getName())
+                .atMost(40, TimeUnit.SECONDS)
+                .until(() -> {
+                    var foundEntry = tsService.findAllLatest(tenantId, savedGateway.getId()).get().stream()
+                            .filter(tsKv -> tsKv.getKey().equals(tsKvEntry.getKey()))
+                            .filter(tsKv -> tsKv.getValue().equals(tsKvEntry.getValue()))
+                            .filter(tsKv -> tsKv.getTs() == tsKvEntry.getTs())
+                            .findFirst();
+                    return foundEntry.isPresent();
+                });
+
+        for (Device device : devices) {
+            await(alias + messageName(STATE) + ", device: " + device.getName())
+                    .atMost(40, TimeUnit.SECONDS)
+                    .until(() -> {
+                        var foundEntry = tsService.findAllLatest(tenantId, device.getId()).get().stream()
+                                .filter(tsKv -> tsKv.getKey().equals(tsKvEntry.getKey()))
+                                .filter(tsKv -> tsKv.getValue().equals(tsKvEntry.getValue()))
+                                .filter(tsKv -> tsKv.getTs() == tsKvEntry.getTs())
+                                .findFirst();
+                        return foundEntry.isPresent();
+                    });
+        }
     }
 
     protected List<Device> connectClientWithCorrectAccessTokenWithNDEATHWithAliasCreatedDevices(long ts) throws Exception {
