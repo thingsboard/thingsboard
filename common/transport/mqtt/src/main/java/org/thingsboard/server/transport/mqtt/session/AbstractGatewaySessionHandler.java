@@ -68,6 +68,7 @@ import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.ProtoMqttAdaptor;
 import org.thingsboard.server.transport.mqtt.gateway.GatewayMetricsService;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugConnectionState;
+import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopic;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -291,6 +292,15 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
             } finally {
                 deviceCreationLock.unlock();
             }
+        } else {
+            return Futures.immediateFuture(result);
+        }
+    }
+
+    ListenableFuture<T> onDeviceConnectSparkplug(SparkplugTopic topic, String deviceType) {
+        T result = devices.get(topic.getNodeDeviceName());
+        if (result == null) {
+            return onDeviceConnect(topic.getNodeDeviceNameAllPath(), deviceType);
         } else {
             return Futures.immediateFuture(result);
         }
@@ -844,7 +854,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
                                 deviceSessionCtx, msgId, MqttReasonCodes.PubAck.UNSPECIFIED_ERROR.byteValue()));
                     }
                 }
-                if (msgId <= 0) {
+                if (!deviceSessionCtx.isSparkplug() && msgId <= 0) {
                     closeDeviceSession(deviceName, MqttReasonCodes.Disconnect.MALFORMED_PACKET);
                 }
             }
