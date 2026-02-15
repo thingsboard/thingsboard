@@ -22,7 +22,7 @@ import org.junit.Test;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 /**
- * Created by nickAS21 on 12.01.23
+ * Created by nickAS21 on 16.02.26
  */
 @DaoSqlTest
 public class MqttV5ClientSparkplugBConnectionDevicesCreatingBeforeTest extends AbstractMqttV5ClientSparkplugConnectionTest {
