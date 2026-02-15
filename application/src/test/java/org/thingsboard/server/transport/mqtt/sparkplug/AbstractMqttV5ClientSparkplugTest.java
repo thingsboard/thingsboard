@@ -71,7 +71,9 @@ import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugConn
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.STATE;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.messageName;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil.createMetric;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicService.DEVICE_NAME_SPLIT_REGEXP;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicService.TOPIC_ROOT_SPB_V_1_0;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicService.TOPIC_SPLIT_REGEXP;
 
 /**
  * Created by nickAS21 on 12.01.23
@@ -103,37 +105,18 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
     protected Set<String> sparkplugAttributesMetricNames;
 
     public void beforeSparkplugTest(boolean isCreateDevices) throws Exception {
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .gatewayName(edgeNodeDeviceName)
+                .isSparkplug(true)
+                .sparkplugAttributesMetricNames(sparkplugAttributesMetricNames)
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .build();
+        processBeforeTest(configProperties);
         if (isCreateDevices) {
-            MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
-                    .gatewayName(edgeNodeDeviceName)
-                    .isSparkplug(true)
-                    .sparkplugAttributesMetricNames(sparkplugAttributesMetricNames)
-                    .transportPayloadType(TransportPayloadType.PROTOBUF)
-                    .build();
-            processBeforeTest(configProperties);
-            configProperties = MqttTestConfigProperties.builder()
-                    .gatewayName(deviceId)
-                    .isSparkplug(true)
-                    .sparkplugAttributesMetricNames(sparkplugAttributesMetricNames)
-                    .transportPayloadType(TransportPayloadType.PROTOBUF)
-                    .build();
-            processBeforeTest(configProperties);
-            configProperties = MqttTestConfigProperties.builder()
-                    .gatewayName(groupId +  ":" + edgeNode +  ":" + deviceId)
-                    .isSparkplug(true)
-                    .sparkplugAttributesMetricNames(sparkplugAttributesMetricNames)
-                    .transportPayloadType(TransportPayloadType.PROTOBUF)
-                    .build();
-            processBeforeTest(configProperties);
-
-        } else {
-            MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
-                    .gatewayName(edgeNodeDeviceName)
-                    .isSparkplug(true)
-                    .sparkplugAttributesMetricNames(sparkplugAttributesMetricNames)
-                    .transportPayloadType(TransportPayloadType.PROTOBUF)
-                    .build();
-            processBeforeTest(configProperties);
+            String deviceName = deviceId + "_1";
+            createDevice(deviceName, deviceProfile.getName(), false);
+            deviceName = groupId + DEVICE_NAME_SPLIT_REGEXP + edgeNode + DEVICE_NAME_SPLIT_REGEXP + deviceId + "_2";
+            createDevice(deviceName, deviceProfile.getName(), false);
         }
     }
 
@@ -175,7 +158,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         options.setSessionExpiryInterval(0L);
         options.setUserName(gatewayAccessToken);
         String nameSpace = nameSpaceBad.length == 0 ? TOPIC_ROOT_SPB_V_1_0 : nameSpaceBad[0];
-        String topic = nameSpace + "/" + groupId + "/" + SparkplugMessageType.NDEATH.name() + "/" + edgeNode;
+        String topic = nameSpace + TOPIC_SPLIT_REGEXP + groupId + TOPIC_SPLIT_REGEXP + SparkplugMessageType.NDEATH.name() + TOPIC_SPLIT_REGEXP + edgeNode;
         // The NDEATH message MUST set the MQTT Will QoS to 1 and Retained flag to false
         MqttMessage msg = new MqttMessage();
         msg.setId(0);
@@ -198,7 +181,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         payloadBirthNode.addMetrics(metric);
         payloadBirthNode.setTimestamp(ts);
         if (client.isConnected()) {
-            client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/" + SparkplugMessageType.NBIRTH.name() + "/" + edgeNode,
+            client.publish(TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_REGEXP + groupId + TOPIC_SPLIT_REGEXP + SparkplugMessageType.NBIRTH.name() + TOPIC_SPLIT_REGEXP + edgeNode,
                     payloadBirthNode.build().toByteArray(), 0, false);
         }
 
@@ -212,7 +195,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
             String deviceName =  groupId +  ":" + edgeNode +  ":" + deviceIdName;
             payloadBirthDevice.addMetrics(metric);
             if (client.isConnected()) {
-                client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/" + SparkplugMessageType.DBIRTH.name() + "/" + edgeNode + "/" + deviceIdName,
+                client.publish(TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_REGEXP + groupId + TOPIC_SPLIT_REGEXP + SparkplugMessageType.DBIRTH.name() + TOPIC_SPLIT_REGEXP + edgeNode + TOPIC_SPLIT_REGEXP + deviceIdName,
                         payloadBirthDevice.build().toByteArray(), 0, false);
                 AtomicReference<Device> device = new AtomicReference<>();
                 await(alias + "find device [" + deviceIdName + "] after created")
@@ -243,52 +226,53 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         payloadBirthNode.addMetrics(metric);
         payloadBirthNode.setTimestamp(ts);
         if (client.isConnected()) {
-            client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/" + SparkplugMessageType.NBIRTH.name() + "/" + edgeNode,
+            client.publish(TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_REGEXP + groupId + TOPIC_SPLIT_REGEXP + SparkplugMessageType.NBIRTH.name() + TOPIC_SPLIT_REGEXP + edgeNode,
                     payloadBirthNode.build().toByteArray(), 0, false);
         }
 
         valueDeviceInt32 = 4024;
         metric = createMetric(valueDeviceInt32, ts, metricBirthName_Int32, metricBirthDataType_Int32, -1L);
         // as old device name -> deviceId
-        String deviceName = deviceId;
-        AtomicReference<Device> device1 = new AtomicReference<>();
-        String finalDeviceName1 = deviceName;
-        await(alias + "find device [" + deviceId + "] before connecting")
-                .atMost(200, TimeUnit.SECONDS)
-                .until(() -> {
-                    device1.set(doGet("/api/tenant/devices?deviceName=" + finalDeviceName1, Device.class));
-                    return device1.get() != null;
-                });
+        String deviceiDName1 = deviceId + "_1";
 
         if (client.isConnected()) {
             SparkplugBProto.Payload.Builder payloadBirthDevice1 = SparkplugBProto.Payload.newBuilder()
                     .setTimestamp(ts)
                     .setSeq(getSeqNum());
             payloadBirthDevice1.addMetrics(metric);
-            client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/" + SparkplugMessageType.DBIRTH.name() + "/" + edgeNode + "/" + deviceId,
+            client.publish(TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_REGEXP + groupId + TOPIC_SPLIT_REGEXP + SparkplugMessageType.DBIRTH.name() + TOPIC_SPLIT_REGEXP + edgeNode + TOPIC_SPLIT_REGEXP + deviceiDName1,
                     payloadBirthDevice1.build().toByteArray(), 0, false);
-            devices.add(device1.get());
+
         }
-        // as new device name ->  groupId +  ":" + edgeNode +  ":" + deviceId;
-        deviceName = groupId + ":" + edgeNode + ":" + deviceId;
-        AtomicReference<Device> device2 = new AtomicReference<>();
-        String finalDeviceName2 = deviceName;
-        await(alias + "find device [" + deviceName + "] before connecting")
+        String deviceName1 = groupId + DEVICE_NAME_SPLIT_REGEXP + edgeNode + DEVICE_NAME_SPLIT_REGEXP + deviceiDName1;;
+        AtomicReference<Device> device1 = new AtomicReference<>();
+        await(alias + "find device [" + deviceName1 + "] before connecting")
                 .atMost(200, TimeUnit.SECONDS)
                 .until(() -> {
-                    device2.set(doGet("/api/tenant/devices?deviceName=" + finalDeviceName2, Device.class));
-                    return device2.get() != null;
+                    device1.set(doGet("/api/tenant/devices?deviceName=" + deviceName1, Device.class));
+                    return device1.get() != null;
                 });
+        devices.add(device1.get());
 
+        // as new device name ->  groupId +  ":" + edgeNode +  ":" + deviceId;
+        String deviceiDName2 = deviceId + "_2";
         if (client.isConnected()) {
             SparkplugBProto.Payload.Builder payloadBirthDevice2 = SparkplugBProto.Payload.newBuilder()
                     .setTimestamp(ts)
                     .setSeq(getSeqNum());
             payloadBirthDevice2.addMetrics(metric);
-            client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/" + SparkplugMessageType.DBIRTH.name() + "/" + edgeNode + "/" + deviceId,
+            client.publish(TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_REGEXP + groupId + TOPIC_SPLIT_REGEXP + SparkplugMessageType.DBIRTH.name() + TOPIC_SPLIT_REGEXP + edgeNode + TOPIC_SPLIT_REGEXP + deviceiDName2,
                     payloadBirthDevice2.build().toByteArray(), 0, false);
-            devices.add(device2.get());
         }
+        String deviceName2 = groupId + ":" + edgeNode + ":" + deviceiDName2;
+        AtomicReference<Device> device2 = new AtomicReference<>();
+        await(alias + "find device [" + deviceName2 + "] before connecting")
+                .atMost(200, TimeUnit.SECONDS)
+                .until(() -> {
+                    device2.set(doGet("/api/tenant/devices?deviceName=" + deviceName2, Device.class));
+                    return device2.get() != null;
+                });
+        devices.add(device2.get());
         Assert.assertEquals(cntDevices, devices.size());
         state_ONLINE_ALL (devices, calendar.getTimeInMillis());
     }
@@ -334,7 +318,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         payloadBirthNode.addMetrics(metric);
         payloadBirthNode.setTimestamp(ts);
         if (client.isConnected()) {
-            client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/" + SparkplugMessageType.NBIRTH.name() + "/" + edgeNode,
+            client.publish(TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_REGEXP + groupId + TOPIC_SPLIT_REGEXP + SparkplugMessageType.NBIRTH.name() + TOPIC_SPLIT_REGEXP + edgeNode,
                     payloadBirthNode.build().toByteArray(), 0, false);
         }
 
@@ -348,7 +332,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
 
         payloadBirthDevice.addMetrics(metric);
         if (client.isConnected()) {
-            client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/" + SparkplugMessageType.DBIRTH.name() + "/" + edgeNode + "/" + deviceIdName,
+            client.publish(TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_REGEXP + groupId + TOPIC_SPLIT_REGEXP + SparkplugMessageType.DBIRTH.name() + TOPIC_SPLIT_REGEXP + edgeNode + TOPIC_SPLIT_REGEXP + deviceIdName,
                     payloadBirthDevice.build().toByteArray(), 0, false);
             AtomicReference<Device> device = new AtomicReference<>();
             await(alias + "find device [" + deviceName + "] after created")
@@ -397,7 +381,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         listKeys.add(metricKey);
 
         if (client.isConnected()) {
-            client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/" + SparkplugMessageType.NBIRTH.name() + "/" + edgeNode,
+            client.publish(TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_REGEXP + groupId + TOPIC_SPLIT_REGEXP + SparkplugMessageType.NBIRTH.name() + TOPIC_SPLIT_REGEXP + edgeNode,
                     payloadBirthNode.build().toByteArray(), 0, false);
         }
         return listKeys;
