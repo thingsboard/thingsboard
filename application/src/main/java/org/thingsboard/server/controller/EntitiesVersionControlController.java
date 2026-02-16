@@ -160,10 +160,8 @@ public class EntitiesVersionControlController extends BaseController {
             "status of operation via `getVersionCreateRequestStatus`.\n" +
             TENANT_AUTHORITY_PARAGRAPH)
     @PostMapping("/version")
-    public DeferredResult<UUID> saveEntitiesVersion(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON value representing the version create request.",
-                                                              required = true, content = @Content(mediaType = "application/json",
-                                                              schema = @Schema(implementation = VersionCreateRequest.class)))
-                                                      @RequestBody VersionCreateRequest request) throws Exception {
+    public DeferredResult<UUID> saveEntitiesVersion(@io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(schema = @Schema(implementation = VersionCreateRequest.class)))
+                                                    @RequestBody VersionCreateRequest request) throws Exception {
         SecurityUser user = getCurrentUser();
         accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.WRITE);
         return wrapFuture(versionControlService.saveEntitiesVersion(user, request));
@@ -431,10 +429,8 @@ public class EntitiesVersionControlController extends BaseController {
             "via `getVersionLoadRequestStatus`." +
             TENANT_AUTHORITY_PARAGRAPH)
     @PostMapping("/entity")
-    public UUID loadEntitiesVersion(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON value representing the version load request.",
-                                                required = true, content = @Content(mediaType = "application/json",
-                                                schema = @Schema(implementation = VersionLoadRequest.class)))
-                                        @RequestBody VersionLoadRequest request) throws Exception {
+    public UUID loadEntitiesVersion(@io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(schema = @Schema(implementation = VersionLoadRequest.class)))
+                                    @RequestBody VersionLoadRequest request) throws Exception {
         SecurityUser user = getCurrentUser();
         accessControlService.checkPermission(user, Resource.VERSION_CONTROL, Operation.WRITE);
         return versionControlService.loadEntitiesVersion(user, request);

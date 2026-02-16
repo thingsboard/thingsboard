@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
@@ -54,7 +55,7 @@ public abstract class JobResult implements Serializable {
     private int discardedCount;
     @Schema(description = "Total number of tasks, set when all tasks are submitted", nullable = true)
     private Integer totalCount = null;
-    @Schema(description = "List of task results, preserving only first 100 errors")
+    @ArraySchema(schema = @Schema(ref = "#/components/schemas/TaskResult"))
     private List<TaskResult> results = new ArrayList<>();
     @Schema(description = "General error message if the job failed")
     private String generalError;

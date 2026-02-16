@@ -170,7 +170,7 @@ public class EntityViewController extends BaseController {
             notes = "Fetch the Entity View object based on the tenant id and entity view name. " + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping(value = "/tenant/entityView")
-    public EntityView getTenantEntityViewV2(
+    public EntityView getTenantEntityViewByName(
             @Parameter(description = "Entity View name")
             @RequestParam String entityViewName) throws ThingsboardException {
         return getTenantEntityView(entityViewName);

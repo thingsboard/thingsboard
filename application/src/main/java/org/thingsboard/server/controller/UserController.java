@@ -470,6 +470,16 @@ public class UserController extends BaseController {
         userSettingsService.updateUserSettings(currentUser.getTenantId(), currentUser.getId(), UserSettingsType.GENERAL, settings);
     }
 
+    @ApiOperation(value = "Update user settings (saveUserSettings)",
+            notes = "Update user settings for authorized user. Only specified json elements will be updated." +
+                    "Example: you have such settings: {A:5, B:{C:10, D:20}}. Updating it with {B:{C:10, D:30}} will result in" +
+                    "{A:5, B:{C:10, D:30}}. The same could be achieved by putting {B.D:30}")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PutMapping(value = "/user/settings/general")
+    public void putGeneralUserSettings(@RequestBody JsonNode settings) throws ThingsboardException {
+        putUserSettings(settings);
+    }
+
     @Hidden
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/user/settings")
@@ -478,6 +488,14 @@ public class UserController extends BaseController {
 
         UserSettings userSettings = userSettingsService.findUserSettings(currentUser.getTenantId(), currentUser.getId(), UserSettingsType.GENERAL);
         return userSettings == null ? JacksonUtil.newObjectNode() : userSettings.getSettings();
+    }
+
+    @ApiOperation(value = "Get user settings (getUserSettings)",
+            notes = "Fetch the User settings based on authorized user. ")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping(value = "/user/settings/general")
+    public JsonNode getGeneralUserSettings() throws ThingsboardException {
+        return getUserSettings();
     }
 
     @ApiOperation(value = "Delete user settings (deleteUserSettings)",

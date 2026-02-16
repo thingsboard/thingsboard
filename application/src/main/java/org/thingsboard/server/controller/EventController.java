@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -153,6 +154,7 @@ public class EventController extends BaseController {
         return checkNotNull(eventService.findEvents(tenantId, entityId, resolveEventType(eventType), pageLink));
     }
 
+    @Hidden
     @ApiOperation(value = "Get Events (Deprecated)",
             notes = "Returns a page of events for specified entity. Deprecated and will be removed in next minor release. " +
                     "The call was deprecated to improve the performance of the system. " +
@@ -214,7 +216,7 @@ public class EventController extends BaseController {
             @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
             @RequestParam int page,
             @Parameter(description = "A JSON value representing the event filter.", required = true)
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, content = @Content(schema = @Schema(implementation = EventFilter.class)))
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(schema = @Schema(implementation = EventFilter.class)))
             @RequestBody EventFilter eventFilter,
             @Parameter(description = EVENT_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
@@ -249,9 +251,7 @@ public class EventController extends BaseController {
                             @RequestParam(required = false) Long startTime,
                             @Parameter(description = EVENT_END_TIME_DESCRIPTION)
                             @RequestParam(required = false) Long endTime,
-                            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON value representing the event filter.",
-                                    required = true, content = @Content(mediaType = "application/json",
-                                    schema = @Schema(implementation = EventFilter.class)))
+                            @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(schema = @Schema(implementation = EventFilter.class)))
                             @RequestBody EventFilter eventFilter) throws ThingsboardException {
         checkParameter("EntityId", strEntityId);
         checkParameter("EntityType", strEntityType);

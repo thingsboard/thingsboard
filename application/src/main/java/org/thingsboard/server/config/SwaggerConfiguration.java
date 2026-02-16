@@ -240,7 +240,6 @@ public class SwaggerConfiguration {
         return GroupedOpenApi.builder()
                 .group(groupName)
                 .pathsToMatch(apiPath)
-                //.addRouterOperationCustomizer(routerOperationCustomizer(localSpringDocParameterNameDiscoverer)) // removed to meet open-api standard
                 .addOperationCustomizer(operationCustomizer())
                 .addOpenApiCustomizer(customOpenApiCustomizer())
                 .build();
@@ -553,7 +552,6 @@ public class SwaggerConfiguration {
     private static ApiResponses loginErrorResponses() {
         ApiResponses apiResponses = new ApiResponses();
 
-        // Combine all 401 examples into a single map
         Map<String, Example> unauthorizedExamples = new LinkedHashMap<>();
 
         unauthorizedExamples.put("bad-credentials", errorExample("Bad credentials",
@@ -574,14 +572,12 @@ public class SwaggerConfiguration {
         unauthorizedExamples.put("credentials-expired", errorExample("Expired credentials",
                 ThingsboardCredentialsExpiredResponse.of("User password expired!", StringUtils.randomAlphanumeric(30))));
 
-        // Create a schema that can represent both response types using oneOf
         Schema<? extends ThingsboardErrorResponse> unauthorizedSchema = new Schema<>();
         unauthorizedSchema.oneOf(List.of(
                 new Schema<ThingsboardErrorResponse>().$ref("#/components/schemas/ThingsboardErrorResponse"),
                 new Schema<ThingsboardCredentialsExpiredResponse>().$ref("#/components/schemas/ThingsboardCredentialsExpiredResponse")
         ));
 
-        // Add single 401 response with all examples
         apiResponses.addApiResponse("401", errorResponse("Unauthorized", unauthorizedExamples, unauthorizedSchema));
 
         return apiResponses;

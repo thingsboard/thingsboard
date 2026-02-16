@@ -260,7 +260,7 @@ public class EntityRelationController extends BaseController {
                     SECURITY_CHECKS_ENTITY_DESCRIPTION)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/relations/from/{fromType}/{fromId}/{relationType}")
-    public List<EntityRelation> findByFromV2(@Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true) @PathVariable(FROM_TYPE) String strFromType,
+    public List<EntityRelation> findByFromAndRelationTypeV2(@Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true) @PathVariable(FROM_TYPE) String strFromType,
                                              @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true) @PathVariable(FROM_ID) String strFromId,
                                              @Parameter(description = RELATION_TYPE_PARAM_DESCRIPTION, required = true) @PathVariable(RELATION_TYPE) String strRelationType,
                                              @Parameter(description = RELATION_TYPE_GROUP_PARAM_DESCRIPTION)
@@ -344,7 +344,7 @@ public class EntityRelationController extends BaseController {
                     SECURITY_CHECKS_ENTITY_DESCRIPTION)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/relations/to/{toType}/{toId}/{relationType}")
-    public List<EntityRelation> findByToV2(@Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true) @PathVariable(TO_TYPE) String strToType,
+    public List<EntityRelation> findByToAndRelationTypeV2(@Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true) @PathVariable(TO_TYPE) String strToType,
                                            @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true) @PathVariable(TO_ID) String strToId,
                                            @Parameter(description = RELATION_TYPE_PARAM_DESCRIPTION, required = true) @PathVariable(RELATION_TYPE) String strRelationType,
                                            @Parameter(description = RELATION_TYPE_GROUP_PARAM_DESCRIPTION)

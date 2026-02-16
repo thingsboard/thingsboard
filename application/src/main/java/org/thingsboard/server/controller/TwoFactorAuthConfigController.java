@@ -70,11 +70,6 @@ public class TwoFactorAuthConfigController extends BaseController {
                     "    \"SMS\": {\n      \"providerType\": \"SMS\",\n      \"useByDefault\": false,\n      \"phoneNumber\": \"+380501253652\"\n    }\n" +
                     "  }\n}\n```" +
                     ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER)
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "OK",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = AccountTwoFaSettings.class)))
-    })
     @GetMapping("/account/settings")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     public AccountTwoFaSettings getAccountTwoFaSettings() throws ThingsboardException {
@@ -108,9 +103,7 @@ public class TwoFactorAuthConfigController extends BaseController {
                     "Will throw an error (Bad Request) if the provider is not configured for usage. " +
                     ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "OK",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = TwoFaAccountConfig.class)))
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = TwoFaAccountConfig.class)))
     })
     @PostMapping("/account/config/generate")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
@@ -142,9 +135,7 @@ public class TwoFactorAuthConfigController extends BaseController {
                     ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PostMapping("/account/config/submit")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    public void submitTwoFaAccountConfig(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "2FA account config to submit for verification",
-            required = true, content = @Content(mediaType = "application/json",
-            schema = @Schema(implementation = TwoFaAccountConfig.class)))
+    public void submitTwoFaAccountConfig(@io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(schema = @Schema(implementation = TwoFaAccountConfig.class)))
                                          @Valid @RequestBody TwoFaAccountConfig accountConfig) throws Exception {
         SecurityUser user = getCurrentUser();
         twoFactorAuthService.prepareVerificationCode(user, accountConfig, false);
@@ -155,11 +146,6 @@ public class TwoFactorAuthConfigController extends BaseController {
                     "Returns whole account's 2FA settings object.\n" +
                     "Will throw an error (Bad Request) if the provider is not configured for usage. " +
                     ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER)
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "OK",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = AccountTwoFaSettings.class)))
-    })
     @PostMapping("/account/config")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     public AccountTwoFaSettings verifyAndSaveTwoFaAccountConfig(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "2FA account config to submit for verification",
@@ -191,11 +177,6 @@ public class TwoFactorAuthConfigController extends BaseController {
                     "```\n{\n  \"useByDefault\": true\n}\n```\n" +
                     "Returns whole account's 2FA settings object.\n" +
                     ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER)
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "OK",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = AccountTwoFaSettings.class)))
-    })
     @PutMapping("/account/config")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     public AccountTwoFaSettings updateTwoFaAccountConfig(@RequestParam TwoFaProviderType providerType,
@@ -215,11 +196,6 @@ public class TwoFactorAuthConfigController extends BaseController {
             "Delete 2FA config for a given 2FA provider type. \n" +
                     "Returns whole account's 2FA settings object.\n" +
                     ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER)
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "OK",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = AccountTwoFaSettings.class)))
-    })
     @DeleteMapping("/account/config")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     public AccountTwoFaSettings deleteTwoFaAccountConfig(@RequestParam TwoFaProviderType providerType) throws ThingsboardException {
@@ -235,9 +211,7 @@ public class TwoFactorAuthConfigController extends BaseController {
                     ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "OK",
-                    content = @Content(mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = TwoFaProviderType.class))))
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(array = @ArraySchema(schema = @Schema(implementation = TwoFaProviderType.class))))
     })
     @GetMapping("/providers")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
@@ -253,11 +227,6 @@ public class TwoFactorAuthConfigController extends BaseController {
             notes = "Get platform settings for 2FA. The settings are described for savePlatformTwoFaSettings API method. " +
                     "If 2FA is not configured, then an empty response will be returned." +
                     ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "OK",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = PlatformTwoFaSettings.class)))
-    })
     @GetMapping("/settings")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     public PlatformTwoFaSettings getPlatformTwoFaSettings() throws ThingsboardException {
@@ -305,17 +274,9 @@ public class TwoFactorAuthConfigController extends BaseController {
                     "  \"totalAllowedTimeForVerification\": 600\n" +
                     "}\n```" +
                     ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "OK",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = PlatformTwoFaSettings.class)))
-    })
     @PostMapping("/settings")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
-    public PlatformTwoFaSettings savePlatformTwoFaSettings(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Platform 2FA settings",
-                                                                 required = true, content = @Content(mediaType = "application/json",
-                                                                 schema = @Schema(implementation = PlatformTwoFaSettings.class)))
-                                          @RequestBody PlatformTwoFaSettings twoFaSettings) throws ThingsboardException {
+    public PlatformTwoFaSettings savePlatformTwoFaSettings(@RequestBody PlatformTwoFaSettings twoFaSettings) throws ThingsboardException {
         return twoFaConfigManager.savePlatformTwoFaSettings(getTenantId(), twoFaSettings);
     }
 
