@@ -371,6 +371,22 @@ public class SwaggerConfiguration {
                         }
                     }
                 });
+
+                // Fix polymorphic request/response bodies: replace inline oneOf with base type $ref
+                paths.values().stream()
+                        .flatMap(pathItem -> pathItem.readOperationsMap().values().stream())
+                        .forEach(operation -> {
+                            // Request bodies
+                            if (operation.getRequestBody() != null && operation.getRequestBody().getContent() != null) {
+                                replaceInlineOneOfInContent(operation.getRequestBody().getContent(), schemas);
+                            }
+                            // Response bodies
+                            if (operation.getResponses() != null) {
+                                operation.getResponses().values().stream()
+                                        .filter(response -> response.getContent() != null)
+                                        .forEach(response -> replaceInlineOneOfInContent(response.getContent(), schemas));
+                            }
+                        });
             }
 
             var sortedSchemas = new TreeMap<>(openAPI.getComponents().getSchemas());
@@ -418,6 +434,21 @@ public class SwaggerConfiguration {
         return null;
     }
 
+
+    private void replaceInlineOneOfInContent(Content content, Map<String, Schema> schemas) {
+        content.values().forEach(mediaType -> {
+            Schema<?> schema = mediaType.getSchema();
+            if (schema != null && schema.getOneOf() != null && !schema.getOneOf().isEmpty()) {
+                String baseType = findBaseTypeForOneOf(schemas, schema.getOneOf());
+                if (baseType != null) {
+                    Schema<?> refSchema = new Schema<>();
+                    refSchema.set$ref("#/components/schemas/" + baseType);
+                    mediaType.setSchema(refSchema);
+                    log.debug("Replaced oneOf in content with $ref to {}", baseType);
+                }
+            }
+        });
+    }
 
     @SuppressWarnings("unchecked")
     private void replaceInlineOneOfProperties(Schema<?> schema, Map<String, Schema> allSchemas) {

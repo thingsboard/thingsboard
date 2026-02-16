@@ -102,9 +102,6 @@ public class TwoFactorAuthConfigController extends BaseController {
                     "}\n```" + NEW_LINE +
                     "Will throw an error (Bad Request) if the provider is not configured for usage. " +
                     ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER)
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = TwoFaAccountConfig.class)))
-    })
     @PostMapping("/account/config/generate")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     public TwoFaAccountConfig generateTwoFaAccountConfig(@Parameter(description = "2FA provider type to generate new account config for", schema = @Schema(defaultValue = "TOTP", requiredMode = Schema.RequiredMode.REQUIRED))
@@ -135,8 +132,7 @@ public class TwoFactorAuthConfigController extends BaseController {
                     ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PostMapping("/account/config/submit")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    public void submitTwoFaAccountConfig(@io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(schema = @Schema(implementation = TwoFaAccountConfig.class)))
-                                         @Valid @RequestBody TwoFaAccountConfig accountConfig) throws Exception {
+    public void submitTwoFaAccountConfig(@Valid @RequestBody TwoFaAccountConfig accountConfig) throws Exception {
         SecurityUser user = getCurrentUser();
         twoFactorAuthService.prepareVerificationCode(user, accountConfig, false);
     }
@@ -148,10 +144,7 @@ public class TwoFactorAuthConfigController extends BaseController {
                     ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PostMapping("/account/config")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    public AccountTwoFaSettings verifyAndSaveTwoFaAccountConfig(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "2FA account config to submit for verification",
-            required = true, content = @Content(mediaType = "application/json",
-            schema = @Schema(implementation = TwoFaAccountConfig.class)))
-                                                                @Valid @RequestBody TwoFaAccountConfig accountConfig,
+    public AccountTwoFaSettings verifyAndSaveTwoFaAccountConfig(@Valid @RequestBody TwoFaAccountConfig accountConfig,
                                                                 @RequestParam(required = false) String verificationCode) throws Exception {
         SecurityUser user = getCurrentUser();
         if (twoFaConfigManager.getTwoFaAccountConfig(user.getTenantId(), user.getId(), accountConfig.getProviderType()).isPresent()) {
@@ -180,9 +173,6 @@ public class TwoFactorAuthConfigController extends BaseController {
     @PutMapping("/account/config")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     public AccountTwoFaSettings updateTwoFaAccountConfig(@RequestParam TwoFaProviderType providerType,
-                                                         @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "2FA account config update request",
-                                                                 required = true, content = @Content(mediaType = "application/json",
-                                                                 schema = @Schema(implementation = TwoFaAccountConfigUpdateRequest.class)))
                                                          @RequestBody TwoFaAccountConfigUpdateRequest updateRequest) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
 
@@ -210,9 +200,6 @@ public class TwoFactorAuthConfigController extends BaseController {
                     "```\n[\n  \"TOTP\",\n  \"EMAIL\",\n  \"SMS\"\n]\n```" +
                     ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER
     )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "OK", content = @Content(array = @ArraySchema(schema = @Schema(implementation = TwoFaProviderType.class))))
-    })
     @GetMapping("/providers")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     public List<TwoFaProviderType> getAvailableTwoFaProviders() throws ThingsboardException {
@@ -276,7 +263,8 @@ public class TwoFactorAuthConfigController extends BaseController {
                     ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PostMapping("/settings")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
-    public PlatformTwoFaSettings savePlatformTwoFaSettings(@RequestBody PlatformTwoFaSettings twoFaSettings) throws ThingsboardException {
+    public PlatformTwoFaSettings savePlatformTwoFaSettings(@Parameter(description = "Settings value", required = true)
+                                                           @RequestBody PlatformTwoFaSettings twoFaSettings) throws ThingsboardException {
         return twoFaConfigManager.savePlatformTwoFaSettings(getTenantId(), twoFaSettings);
     }
 

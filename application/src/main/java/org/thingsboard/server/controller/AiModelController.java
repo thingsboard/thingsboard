@@ -166,11 +166,6 @@ class AiModelController extends BaseController {
                     TENANT_AUTHORITY_PARAGRAPH
     )
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "OK",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = TbChatResponse.class)))
-    })
     @PostMapping("/chat")
     public DeferredResult<TbChatResponse> sendChatRequest(@Valid @RequestBody TbChatRequest tbChatRequest) {
         ChatRequest langChainChatRequest = tbChatRequest.toLangChainChatRequest();
