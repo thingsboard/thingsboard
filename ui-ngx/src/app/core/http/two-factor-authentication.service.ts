@@ -57,6 +57,10 @@ export class TwoFactorAuthenticationService {
     return this.http.get<AccountTwoFaSettings>(`/api/2fa/account/settings`, defaultHttpOptionsFromConfig(config));
   }
 
+  getUsersTwoFaSettings(userId: string, config?: RequestConfig): Observable<AccountTwoFaSettings> {
+    return this.http.get<AccountTwoFaSettings>(`/api/2fa/${userId}/settings`, defaultHttpOptionsFromConfig(config));
+  }
+
   updateTwoFaAccountConfig(providerType: TwoFactorAuthProviderType, useByDefault: boolean,
                            config?: RequestConfig): Observable<AccountTwoFaSettings> {
     return this.http.put<AccountTwoFaSettings>(`/api/2fa/account/config?providerType=${providerType}`, {useByDefault},
@@ -78,6 +82,11 @@ export class TwoFactorAuthenticationService {
 
   deleteTwoFaAccountConfig(providerType: TwoFactorAuthProviderType, config?: RequestConfig): Observable<AccountTwoFaSettings> {
     return this.http.delete<AccountTwoFaSettings>(`/api/2fa/account/config?providerType=${providerType}`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  deleteUserTwoFaAccountConfig(providerType: TwoFactorAuthProviderType, userId: String, config?: RequestConfig): Observable<AccountTwoFaSettings> {
+    return this.http.delete<AccountTwoFaSettings>(`/api/2fa/${userId}/config?providerType=${providerType}`,
       defaultHttpOptionsFromConfig(config));
   }
 

@@ -292,6 +292,23 @@ public class TwoFactorAuthConfigTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testGetUsersTwoFaAccountConfig_whenProviderNotConfigured() throws Exception {
+        testVerifyAndSaveTotpTwoFaAccountConfig();
+        loginSysAdmin();
+        String deleteUser2faUrl = "/api/2fa/" + tenantAdminUser.getId().getId() + "/config?providerType=SMS";
+        assertThat(readResponse(doGet(deleteUser2faUrl).andExpect(status().isOk()),
+                AccountTwoFaSettings.class).getConfigs()).isNotEmpty();
+
+        loginSysAdmin();
+        saveProvidersConfigs();
+
+        loginTenantAdmin();
+
+        assertThat(readResponse(doGet("/api/2fa/account/settings").andExpect(status().isOk()), AccountTwoFaSettings.class).getConfigs())
+                .isEmpty();
+    }
+
+    @Test
     public void testGenerateSmsTwoFaAccountConfig() throws Exception {
         configureSmsTwoFaProvider("${code}");
         doPost("/api/2fa/account/config/generate?providerType=SMS")
@@ -446,6 +463,35 @@ public class TwoFactorAuthConfigTest extends AbstractControllerTest {
         twoFaConfigManager.savePlatformTwoFaSettings(TenantId.SYS_TENANT_ID, twoFaSettings);
 
         doDelete("/api/2fa/account/config?providerType=SMS").andExpect(status().isOk());
+
+        assertThat(readResponse(doGet("/api/2fa/account/settings").andExpect(status().isOk()), AccountTwoFaSettings.class).getConfigs())
+                .doesNotContainKey(TwoFaProviderType.SMS);
+    }
+
+    @Test
+    public void testDeleteUserTwoFaAccountConfig() throws Exception {
+        configureSmsTwoFaProvider("${code}");
+        loginTenantAdmin();
+        SmsTwoFaAccountConfig accountConfig = new SmsTwoFaAccountConfig();
+        accountConfig.setPhoneNumber("+38050505050");
+        twoFaConfigManager.saveTwoFaAccountConfig(tenantId, tenantAdminUser, accountConfig);
+
+        AccountTwoFaSettings accountTwoFaSettings = readResponse(doGet("/api/2fa/account/settings").andExpect(status().isOk()), AccountTwoFaSettings.class);
+        TwoFaAccountConfig savedAccountConfig = accountTwoFaSettings.getConfigs().get(TwoFaProviderType.SMS);
+        assertThat(savedAccountConfig).isEqualTo(accountConfig);
+
+        PlatformTwoFaSettings twoFaSettings = twoFaConfigManager.getPlatformTwoFaSettings(TenantId.SYS_TENANT_ID, true).get();
+        twoFaSettings.setEnforceTwoFa(true);
+        TenantAdministratorsFilter enforcedUsersFilter = new TenantAdministratorsFilter();
+        enforcedUsersFilter.setTenantsIds(Set.of(tenantId.getId()));
+        twoFaSettings.setEnforcedUsersFilter(enforcedUsersFilter);
+        twoFaConfigManager.savePlatformTwoFaSettings(TenantId.SYS_TENANT_ID, twoFaSettings);
+
+        twoFaSettings.setEnforceTwoFa(false);
+        twoFaConfigManager.savePlatformTwoFaSettings(TenantId.SYS_TENANT_ID, twoFaSettings);
+
+        String deleteUser2faUrl = "/api/2fa/" + tenantAdminUser.getId().getId() + "/config?providerType=SMS";
+        doDelete(deleteUser2faUrl).andExpect(status().isOk());
 
         assertThat(readResponse(doGet("/api/2fa/account/settings").andExpect(status().isOk()), AccountTwoFaSettings.class).getConfigs())
                 .doesNotContainKey(TwoFaProviderType.SMS);
