@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.DoubleNode;
 import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.awaitility.core.ThrowingRunnable;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -1467,6 +1468,10 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         return result;
     }
 
+    protected void verifyAvailableKeysByQueryV2(ThrowingRunnable assertion) throws Throwable {
+        assertion.run();
+    }
+
     private KeyFilter getEntityFieldEqualFilter(String keyName, String value) {
         return getEntityFieldKeyFilter(keyName, value, StringFilterPredicate.StringOperation.EQUAL);
     }
@@ -1510,7 +1515,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
     // --- findAvailableEntityKeysV2 tests ---
 
     @Test
-    public void testFindAvailableKeysByQueryV2() throws Exception {
+    public void testFindAvailableKeysByQueryV2() throws Throwable {
         // GIVEN — two devices matched by query; a third device should not be matched
         var device1 = createDevice("Test device 1");
         var device2 = createDevice("Test device 2");
@@ -1550,100 +1555,106 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         EntityDataPageLink pageLink = new EntityDataPageLink(100, 0, null, null);
         EntityDataQuery query = new EntityDataQuery(filter, pageLink, List.of(), null, null);
 
-        AvailableEntityKeysV2 result = findAvailableEntityKeysByQueryV2(query,
-                true, true, List.of(AttributeScope.SHARED_SCOPE, AttributeScope.CLIENT_SCOPE), true);
-
         // THEN
-        assertThat(result.entityTypes()).containsExactly(EntityType.DEVICE);
+        verifyAvailableKeysByQueryV2(() -> {
+            AvailableEntityKeysV2 result = findAvailableEntityKeysByQueryV2(query,
+                    true, true, List.of(AttributeScope.SHARED_SCOPE, AttributeScope.CLIENT_SCOPE), true);
 
-        // timeseries: keys collected from both devices, samples contain the freshest data points
-        assertThat(result.timeseries()).extracting(KeyInfo::key)
-                .containsExactly("timeseries1", "timeseries2", "timeseries3");
-        assertThat(result.timeseries()).allSatisfy(ki -> assertThat(ki.sample()).isNotNull());
-        assertKeySample(result.timeseries(), "timeseries1", new DoubleNode(20.5), 2000);   // from device1
-        assertKeySample(result.timeseries(), "timeseries2", new IntNode(300), 3000);        // from device2 (newer)
-        assertKeySample(result.timeseries(), "timeseries3", new DoubleNode(99.9), 5000);    // only on device2
+            assertThat(result.entityTypes()).containsExactly(EntityType.DEVICE);
 
-        // SERVER_SCOPE must be fully omitted from the response
-        assertThat(result.attributes()).containsOnlyKeys(AttributeScope.SHARED_SCOPE, AttributeScope.CLIENT_SCOPE);
+            // timeseries: keys collected from both devices, samples contain the freshest data points
+            assertThat(result.timeseries()).extracting(KeyInfo::key)
+                    .containsExactly("timeseries1", "timeseries2", "timeseries3");
+            assertThat(result.timeseries()).allSatisfy(ki -> assertThat(ki.sample()).isNotNull());
+            assertKeySample(result.timeseries(), "timeseries1", new DoubleNode(20.5), 2000);   // from device1
+            assertKeySample(result.timeseries(), "timeseries2", new IntNode(300), 3000);        // from device2 (newer)
+            assertKeySample(result.timeseries(), "timeseries3", new DoubleNode(99.9), 5000);    // only on device2
 
-        // SHARED_SCOPE: from device1 (alphabetical order)
-        assertThat(result.attributes().get(AttributeScope.SHARED_SCOPE))
-                .extracting(KeyInfo::key).containsExactly("sharedAttribute1", "sharedAttribute2");
-        assertKeySample(result.attributes().get(AttributeScope.SHARED_SCOPE), "sharedAttribute1", BooleanNode.TRUE);
-        assertKeySample(result.attributes().get(AttributeScope.SHARED_SCOPE), "sharedAttribute2", new DoubleNode(3.14));
+            // SERVER_SCOPE must be fully omitted from the response
+            assertThat(result.attributes()).containsOnlyKeys(AttributeScope.SHARED_SCOPE, AttributeScope.CLIENT_SCOPE);
 
-        // CLIENT_SCOPE: from device2 (alphabetical order)
-        assertThat(result.attributes().get(AttributeScope.CLIENT_SCOPE))
-                .extracting(KeyInfo::key).containsExactly("clientAttribute1", "clientAttribute2");
-        assertKeySample(result.attributes().get(AttributeScope.CLIENT_SCOPE), "clientAttribute1", JacksonUtil.toJsonNode("{\"key\":\"val\"}"));
-        assertKeySample(result.attributes().get(AttributeScope.CLIENT_SCOPE), "clientAttribute2", BooleanNode.FALSE);
+            // SHARED_SCOPE: from device1 (alphabetical order)
+            assertThat(result.attributes().get(AttributeScope.SHARED_SCOPE))
+                    .extracting(KeyInfo::key).containsExactly("sharedAttribute1", "sharedAttribute2");
+            assertKeySample(result.attributes().get(AttributeScope.SHARED_SCOPE), "sharedAttribute1", BooleanNode.TRUE);
+            assertKeySample(result.attributes().get(AttributeScope.SHARED_SCOPE), "sharedAttribute2", new DoubleNode(3.14));
+
+            // CLIENT_SCOPE: from device2 (alphabetical order)
+            assertThat(result.attributes().get(AttributeScope.CLIENT_SCOPE))
+                    .extracting(KeyInfo::key).containsExactly("clientAttribute1", "clientAttribute2");
+            assertKeySample(result.attributes().get(AttributeScope.CLIENT_SCOPE), "clientAttribute1", JacksonUtil.toJsonNode("{\"key\":\"val\"}"));
+            assertKeySample(result.attributes().get(AttributeScope.CLIENT_SCOPE), "clientAttribute2", BooleanNode.FALSE);
+        });
     }
 
     @Test
-    public void testFindAvailableKeysByQueryV2_withoutSamples() throws Exception {
+    public void testFindAvailableKeysByQueryV2_withoutSamples() throws Throwable {
         // GIVEN
         var device = createDevice("Test device");
         postTelemetry(device.getId(), new BasicTsKvEntry(System.currentTimeMillis(), new DoubleDataEntry("temperature", 10.0)));
         postAttributes(device.getId(), AttributeScope.SERVER_SCOPE, new StringDataEntry("firmware", "v1.0"));
 
-        // WHEN
-        AvailableEntityKeysV2 result = findAvailableEntityKeysByQueryV2(
-                buildDeviceQuery("Test device"), true, true, null, false);
-
         // THEN
-        assertThat(result.timeseries()).allSatisfy(ki -> assertThat(ki.sample()).isNull());
-        assertThat(result.attributes().get(AttributeScope.SERVER_SCOPE))
-                .allSatisfy(ki -> assertThat(ki.sample()).isNull());
+        verifyAvailableKeysByQueryV2(() -> {
+            AvailableEntityKeysV2 result = findAvailableEntityKeysByQueryV2(
+                    buildDeviceQuery("Test device"), true, true, null, false);
+
+            assertThat(result.timeseries()).allSatisfy(ki -> assertThat(ki.sample()).isNull());
+            assertThat(result.attributes().get(AttributeScope.SERVER_SCOPE))
+                    .allSatisfy(ki -> assertThat(ki.sample()).isNull());
+        });
     }
 
     @Test
-    public void testFindAvailableKeysByQueryV2_timeseriesOnly() throws Exception {
+    public void testFindAvailableKeysByQueryV2_timeseriesOnly() throws Throwable {
         // GIVEN
         var device = createDevice("Test device");
         postTelemetry(device.getId(), new BasicTsKvEntry(System.currentTimeMillis(), new DoubleDataEntry("temperature", 10.0)));
         postAttributes(device.getId(), AttributeScope.SERVER_SCOPE, new StringDataEntry("firmware", "v1.0"));
 
-        // WHEN
-        AvailableEntityKeysV2 result = findAvailableEntityKeysByQueryV2(
-                buildDeviceQuery("Test device"), true, false, null, false);
-
         // THEN
-        assertThat(result.timeseries()).extracting(KeyInfo::key).contains("temperature");
-        assertThat(result.attributes()).isNull();
+        verifyAvailableKeysByQueryV2(() -> {
+            AvailableEntityKeysV2 result = findAvailableEntityKeysByQueryV2(
+                    buildDeviceQuery("Test device"), true, false, null, false);
+
+            assertThat(result.timeseries()).extracting(KeyInfo::key).contains("temperature");
+            assertThat(result.attributes()).isNull();
+        });
     }
 
     @Test
-    public void testFindAvailableKeysByQueryV2_attributesOnly() throws Exception {
+    public void testFindAvailableKeysByQueryV2_attributesOnly() throws Throwable {
         // GIVEN
         var device = createDevice("Test device");
         postTelemetry(device.getId(), new BasicTsKvEntry(System.currentTimeMillis(), new DoubleDataEntry("temperature", 10.0)));
         postAttributes(device.getId(), AttributeScope.SERVER_SCOPE, new StringDataEntry("firmware", "v1.0"));
 
-        // WHEN
-        AvailableEntityKeysV2 result = findAvailableEntityKeysByQueryV2(
-                buildDeviceQuery("Test device"), false, true, null, false);
-
         // THEN
-        assertThat(result.timeseries()).isNull();
-        assertThat(result.attributes().get(AttributeScope.SERVER_SCOPE))
-                .extracting(KeyInfo::key).contains("firmware");
+        verifyAvailableKeysByQueryV2(() -> {
+            AvailableEntityKeysV2 result = findAvailableEntityKeysByQueryV2(
+                    buildDeviceQuery("Test device"), false, true, null, false);
+
+            assertThat(result.timeseries()).isNull();
+            assertThat(result.attributes().get(AttributeScope.SERVER_SCOPE))
+                    .extracting(KeyInfo::key).contains("firmware");
+        });
     }
 
     @Test
-    public void testFindAvailableKeysByQueryV2_noMatchingEntities() throws Exception {
-        // WHEN
-        AvailableEntityKeysV2 result = findAvailableEntityKeysByQueryV2(
-                buildDeviceQuery("NonExistentDevice_" + UUID.randomUUID()), true, true, null, true);
-
+    public void testFindAvailableKeysByQueryV2_noMatchingEntities() throws Throwable {
         // THEN
-        assertThat(result.entityTypes()).isEmpty();
-        assertThat(result.timeseries()).isEmpty();
-        assertThat(result.attributes()).isEmpty();
+        verifyAvailableKeysByQueryV2(() -> {
+            AvailableEntityKeysV2 result = findAvailableEntityKeysByQueryV2(
+                    buildDeviceQuery("NonExistentDevice_" + UUID.randomUUID()), true, true, null, true);
+
+            assertThat(result.entityTypes()).isEmpty();
+            assertThat(result.timeseries()).isEmpty();
+            assertThat(result.attributes()).isEmpty();
+        });
     }
 
     @Test
-    public void testFindAvailableKeysByQueryV2_assetUsesServerScopeOnly() throws Exception {
+    public void testFindAvailableKeysByQueryV2_assetUsesServerScopeOnly() throws Throwable {
         // GIVEN
         var asset = new Asset();
         asset.setName("Test asset");
@@ -1656,13 +1667,15 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         filter.setSingleEntity(AliasEntityId.fromEntityId(asset.getId()));
         var query = new EntityDataQuery(filter, new EntityDataPageLink(1, 0, null, null), Collections.emptyList(), null, null);
 
-        AvailableEntityKeysV2 result = findAvailableEntityKeysByQueryV2(query, false, true, null, false);
-
         // THEN
-        assertThat(result.entityTypes()).containsExactly(EntityType.ASSET);
-        assertThat(result.attributes()).containsOnlyKeys(AttributeScope.SERVER_SCOPE);
-        assertThat(result.attributes().get(AttributeScope.SERVER_SCOPE))
-                .extracting(KeyInfo::key).containsExactly("location");
+        verifyAvailableKeysByQueryV2(() -> {
+            AvailableEntityKeysV2 result = findAvailableEntityKeysByQueryV2(query, false, true, null, false);
+
+            assertThat(result.entityTypes()).containsExactly(EntityType.ASSET);
+            assertThat(result.attributes()).containsOnlyKeys(AttributeScope.SERVER_SCOPE);
+            assertThat(result.attributes().get(AttributeScope.SERVER_SCOPE))
+                    .extracting(KeyInfo::key).containsExactly("location");
+        });
     }
 
     @Test
@@ -1674,9 +1687,9 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
                 query, 30_000L).andExpect(status().isBadRequest());
     }
 
-    private AvailableEntityKeysV2 findAvailableEntityKeysByQueryV2(EntityDataQuery query,
-                                                                   boolean includeTimeseries, boolean includeAttributes,
-                                                                   List<AttributeScope> scopes, boolean includeSamples) throws Exception {
+    protected AvailableEntityKeysV2 findAvailableEntityKeysByQueryV2(EntityDataQuery query,
+                                                                     boolean includeTimeseries, boolean includeAttributes,
+                                                                     List<AttributeScope> scopes, boolean includeSamples) throws Exception {
         StringBuilder url = new StringBuilder("/api/v2/entitiesQuery/find/keys?")
                 .append("includeTimeseries=").append(includeTimeseries)
                 .append("&includeAttributes=").append(includeAttributes)
