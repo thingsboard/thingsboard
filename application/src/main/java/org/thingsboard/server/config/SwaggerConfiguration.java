@@ -68,6 +68,7 @@ import org.thingsboard.server.service.security.auth.rest.LoginRequest;
 import org.thingsboard.server.service.security.auth.rest.LoginResponse;
 
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -254,9 +255,15 @@ public class SwaggerConfiguration {
     @Lazy(false)
     ModelConverter mapAwareConverter() {
         return (type, context, chain) -> {
+            JavaType javaType = Json.mapper().constructType(type.getType());
+            if (javaType != null) {
+                Class<?> cls = javaType.getRawClass();
+                if (AtomicInteger.class.isAssignableFrom(cls)) {
+                    return new Schema<>().type("integer").format("int32");
+                }
+            }
             if (chain.hasNext()) {
                 Schema schema = chain.next().resolve(type, context, chain);
-                JavaType javaType = Json.mapper().constructType(type.getType());
                 if (javaType != null) {
                     Class<?> cls = javaType.getRawClass();
                     if (Map.class.isAssignableFrom(cls)) {
