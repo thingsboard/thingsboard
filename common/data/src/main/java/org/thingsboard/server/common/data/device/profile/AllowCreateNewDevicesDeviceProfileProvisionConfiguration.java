@@ -26,7 +26,7 @@ public class AllowCreateNewDevicesDeviceProfileProvisionConfiguration implements
     private final String provisionDeviceSecret;
 
     @Override
-    @Schema(description = "Device profile provision type", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     public DeviceProfileProvisionType getType() {
         return DeviceProfileProvisionType.ALLOW_CREATE_NEW_DEVICES;
     }

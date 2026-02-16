@@ -15,9 +15,6 @@
  */
 package org.thingsboard.server.common.data.device.data;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-
-@Schema(enumAsRef = true)
 public enum  PowerMode {
     PSM, DRX, E_DRX
 }

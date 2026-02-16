@@ -31,7 +31,7 @@ public class ComplexVersionCreateRequest extends VersionCreateRequest {
     private SyncStrategy syncStrategy;
     private Map<EntityType, EntityTypeVersionCreateConfig> entityTypes;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Type of the version to create")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public VersionCreateRequestType getType() {
         return VersionCreateRequestType.COMPLEX;

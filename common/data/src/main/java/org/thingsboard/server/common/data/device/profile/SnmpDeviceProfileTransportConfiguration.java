@@ -32,7 +32,7 @@ public class SnmpDeviceProfileTransportConfiguration implements DeviceProfileTra
     @ArraySchema(schema = @Schema(implementation = SnmpCommunicationConfig.class))
     private List<SnmpCommunicationConfig> communicationConfigs;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Type of the device transport")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public DeviceTransportType getType() {
         return DeviceTransportType.SNMP;

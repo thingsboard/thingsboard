@@ -35,7 +35,7 @@ public class EntityDataSortOrder {
         this.direction = direction;
     }
 
-    @Schema(enumAsRef = true)
+    @Schema
     public enum Direction {
         ASC, DESC
     }

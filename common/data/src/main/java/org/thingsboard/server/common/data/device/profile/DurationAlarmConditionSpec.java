@@ -33,7 +33,7 @@ public class DurationAlarmConditionSpec implements AlarmConditionSpec {
     private FilterPredicateValue<Long> predicate;
 
     @Override
-    @Schema(description = "Type of the Alarm Condition Specification", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     public AlarmConditionSpecType getType() {
         return AlarmConditionSpecType.DURATION;
     }

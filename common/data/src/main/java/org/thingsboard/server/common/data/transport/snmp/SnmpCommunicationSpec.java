@@ -15,11 +15,9 @@
  */
 package org.thingsboard.server.common.data.transport.snmp;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-@Schema(enumAsRef = true)
 @AllArgsConstructor
 @Getter
 public enum SnmpCommunicationSpec {

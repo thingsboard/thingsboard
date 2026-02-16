@@ -16,9 +16,6 @@
 package org.thingsboard.server.common.data.mobile.qrCodeSettings;
 
 
-import io.swagger.v3.oas.annotations.media.Schema;
-
-@Schema(enumAsRef = true)
 public enum BadgePosition {
 
     RIGHT,

@@ -15,9 +15,6 @@
  */
 package org.thingsboard.server.common.data.sync.vc.request.load;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-
-@Schema(enumAsRef = true)
 public enum VersionLoadRequestType {
     SINGLE_ENTITY,
     ENTITY_TYPE

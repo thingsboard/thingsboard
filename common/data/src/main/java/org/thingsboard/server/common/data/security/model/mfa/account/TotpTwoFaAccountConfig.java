@@ -31,7 +31,7 @@ public class TotpTwoFaAccountConfig extends TwoFaAccountConfig {
     @Pattern(regexp = "otpauth://totp/(\\S+?):(\\S+?)\\?issuer=(\\S+?)&secret=(\\w+?)", message = "is invalid")
     private String authUrl;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Two-Factor Authentication provider type")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public TwoFaProviderType getProviderType() {
         return TwoFaProviderType.TOTP;

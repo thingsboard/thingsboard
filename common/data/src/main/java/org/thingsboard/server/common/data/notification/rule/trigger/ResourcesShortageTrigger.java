@@ -67,7 +67,7 @@ public class ResourcesShortageTrigger implements NotificationRuleTrigger {
         return NotificationRuleTriggerType.RESOURCES_SHORTAGE;
     }
 
-    @Schema(enumAsRef = true)
+    @Schema
     public enum Resource {
         CPU, RAM, STORAGE
     }

@@ -15,14 +15,12 @@
  */
 package org.thingsboard.server.common.data.plugin;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 import java.io.Serializable;
 import java.util.Arrays;
 
-@Schema(enumAsRef = true)
 @RequiredArgsConstructor
 public enum ComponentLifecycleEvent implements Serializable {
 

@@ -15,12 +15,9 @@
  */
 package org.thingsboard.server.common.data.transport.snmp;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-
 import java.util.Arrays;
 import java.util.Optional;
 
-@Schema(enumAsRef = true)
 public enum PrivacyProtocol {
     DES("1.3.6.1.6.3.10.1.2.2"),
     AES_128("1.3.6.1.6.3.10.1.2.4"),

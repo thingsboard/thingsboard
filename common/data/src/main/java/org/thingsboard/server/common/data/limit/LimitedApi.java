@@ -15,14 +15,12 @@
  */
 package org.thingsboard.server.common.data.limit;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 
 import java.util.Optional;
 import java.util.function.Function;
 
-@Schema(enumAsRef = true)
 @Getter
 public enum LimitedApi {
 

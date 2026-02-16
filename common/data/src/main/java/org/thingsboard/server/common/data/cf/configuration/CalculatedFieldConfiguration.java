@@ -57,24 +57,12 @@ public interface CalculatedFieldConfiguration {
     @JsonIgnore
     CalculatedFieldType getType();
 
-    @Schema(
-            description = "Arguments/parameters for the calculated field",
-            example = "{\"param1\": {\"type\": \"STRING\", \"value\": \"example\"}}"
-    )
     Map<String, Argument> getArguments();
 
-    @Schema(
-            description = "Expression or formula for calculating the field value",
-            requiredMode = Schema.RequiredMode.REQUIRED,
-            example = "value1 + value2"
-    )
     String getExpression();
 
     void setExpression(String expression);
 
-    @Schema(
-            description = "Output configuration for the calculated field result"
-    )
     Output getOutput();
 
     @JsonIgnore

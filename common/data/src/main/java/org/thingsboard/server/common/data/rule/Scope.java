@@ -15,15 +15,12 @@
  */
 package org.thingsboard.server.common.data.rule;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-
 /**
  * Defines scope of the rule execution in the actor system
  * 
  * @author ashvayka
  *
  */
-@Schema(enumAsRef = true)
 public enum Scope {
 
     SYSTEM, TENANT, CUSTOMER, DEVICE, RULE;

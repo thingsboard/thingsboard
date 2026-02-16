@@ -37,7 +37,7 @@ public class RateLimitsNotificationRuleTriggerConfig implements NotificationRule
     private Set<LimitedApi> apis;
 
     @Override
-    @Schema(description = "Type of the notification rule trigger")
+    @Schema
     public NotificationRuleTriggerType getTriggerType() {
         return NotificationRuleTriggerType.RATE_LIMITS;
     }

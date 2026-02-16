@@ -42,7 +42,7 @@ public class ResourcesShortageNotificationRuleTriggerConfig implements Notificat
     private float storageThreshold; // in percents
 
     @Override
-    @Schema(description = "Type of the notification rule trigger")
+    @Schema
     public NotificationRuleTriggerType getTriggerType() {
         return NotificationRuleTriggerType.RESOURCES_SHORTAGE;
     }

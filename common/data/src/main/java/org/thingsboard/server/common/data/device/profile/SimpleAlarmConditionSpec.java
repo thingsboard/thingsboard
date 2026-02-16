@@ -24,7 +24,7 @@ import lombok.Data;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SimpleAlarmConditionSpec implements AlarmConditionSpec {
     @Override
-    @Schema(description = "Type of the Alarm Condition Specification", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     public AlarmConditionSpecType getType() {
         return AlarmConditionSpecType.SIMPLE;
     }

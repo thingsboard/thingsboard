@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.common.data;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 
@@ -23,7 +22,6 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 
-@Schema(enumAsRef = true)
 public enum EntityType {
     TENANT(1),
     CUSTOMER(2),

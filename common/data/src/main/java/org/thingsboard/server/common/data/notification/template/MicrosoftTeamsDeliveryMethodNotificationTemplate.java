@@ -31,17 +31,11 @@ import java.util.UUID;
 @ToString(callSuper = true)
 public class MicrosoftTeamsDeliveryMethodNotificationTemplate extends DeliveryMethodNotificationTemplate implements HasSubject {
 
-    @Schema(
-            description = "The header or title shown at the top of the Teams message card.",
-            example = "System Alert: High CPU Usage"
-    )
+    @Schema
     private String subject;
-    @Schema(
-            description = "The hex color code for the accent bar on the left side of the Teams card.",
-            example = "0078D7"
-    )
+    @Schema
     private String themeColor;
-    @Schema(description = "Configuration for an optional call-to-action button within the Teams message.")
+    @Schema
     private Button button;
 
     private final List<TemplatableValue> templatableValues = List.of(
@@ -93,7 +87,7 @@ public class MicrosoftTeamsDeliveryMethodNotificationTemplate extends DeliveryMe
             this.setEntityIdInState = other.setEntityIdInState;
         }
 
-        @Schema(enumAsRef = true)
+        @Schema
         public enum LinkType {
             LINK, DASHBOARD
         }

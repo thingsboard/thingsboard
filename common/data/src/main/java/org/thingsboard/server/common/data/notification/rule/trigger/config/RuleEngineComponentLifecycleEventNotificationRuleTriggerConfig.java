@@ -45,7 +45,7 @@ public class RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig impl
     private boolean onlyRuleNodeLifecycleFailures;
 
     @Override
-    @Schema(description = "Type of the notification rule trigger")
+    @Schema
     public NotificationRuleTriggerType getTriggerType() {
         return NotificationRuleTriggerType.RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT;
     }

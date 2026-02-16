@@ -15,9 +15,6 @@
  */
 package org.thingsboard.server.common.data.queue;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-
-@Schema(enumAsRef = true)
 public enum SubmitStrategyType {
     BURST, BATCH, SEQUENTIAL_BY_ORIGINATOR, SEQUENTIAL_BY_TENANT, SEQUENTIAL
 }

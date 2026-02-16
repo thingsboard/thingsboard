@@ -29,7 +29,7 @@ public class CoapDeviceProfileTransportConfiguration implements DeviceProfileTra
     @Schema
     private PowerSavingConfiguration clientSettings;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Type of the device transport")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public DeviceTransportType getType() {
         return DeviceTransportType.COAP;

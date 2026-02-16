@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.core.converter.AnnotatedType;
 import io.swagger.v3.core.converter.ModelConverter;
 import io.swagger.v3.core.converter.ModelConverters;
+import io.swagger.v3.core.jackson.ModelResolver;
 import io.swagger.v3.core.util.Json;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
@@ -82,6 +83,10 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @ConditionalOnExpression("('${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core') && '${springdoc.api-docs.enabled:true}'=='true'")
 @Profile("!test")
 public class SwaggerConfiguration {
+
+    static {
+        ModelResolver.enumsAsRef = true;
+    }
 
     public static final String LOGIN_ENDPOINT = "/api/auth/login";
     public static final String REFRESH_TOKEN_ENDPOINT = "/api/auth/token";
@@ -276,12 +281,18 @@ public class SwaggerConfiguration {
                 .description("Arbitrary JSON object or primitive value")
                 .additionalProperties(true)
                 .example(JacksonUtil.newObjectNode());
+        Schema<?> errorCodeSchema = new Schema<>()
+                .type("integer")
+                .description("Platform error code")
+                ._enum(Arrays.asList(2, 10, 11, 15, 20, 30, 31, 32, 33, 34, 35, 40, 45, 46));
+        openAPI.getComponents().addSchemas("ThingsboardErrorCode", errorCodeSchema);
         openAPI.getComponents()
                 .addSchemas("JsonNode", jsonNodeSchema)
                 .addSchemas("LoginRequest", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(LoginRequest.class)).schema)
                 .addSchemas("LoginResponse", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(LoginResponse.class)).schema)
                 .addSchemas("ThingsboardErrorResponse", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(ThingsboardErrorResponse.class)).schema)
-                .addSchemas("ThingsboardCredentialsExpiredResponse", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(ThingsboardCredentialsExpiredResponse.class)).schema);
+                .addSchemas("ThingsboardCredentialsExpiredResponse", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(ThingsboardCredentialsExpiredResponse.class)).schema)
+                .addSchemas("ThingsboardErrorCode", errorCodeSchema);
     }
 
     private RouterOperationCustomizer routerOperationCustomizer(SpringDocParameterNameDiscoverer localSpringDocParameterNameDiscoverer) {

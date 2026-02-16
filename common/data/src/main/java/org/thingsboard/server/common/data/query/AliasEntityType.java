@@ -15,9 +15,6 @@
  */
 package org.thingsboard.server.common.data.query;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-
-@Schema(enumAsRef = true)
 public enum AliasEntityType {
     CURRENT_CUSTOMER,
     CURRENT_TENANT,

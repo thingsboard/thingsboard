@@ -31,7 +31,7 @@ public class EmailTwoFaAccountConfig extends OtpBasedTwoFaAccountConfig {
     @Email
     private String email;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Two-Factor Authentication provider type")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public TwoFaProviderType getProviderType() {
         return TwoFaProviderType.EMAIL;

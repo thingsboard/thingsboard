@@ -28,7 +28,7 @@ public class MobileAppNotificationDeliveryMethodConfig implements NotificationDe
     @NotEmpty
     private String firebaseServiceAccountCredentials;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Type of the notification delivery method")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public NotificationDeliveryMethod getMethod() {
         return NotificationDeliveryMethod.MOBILE_APP;

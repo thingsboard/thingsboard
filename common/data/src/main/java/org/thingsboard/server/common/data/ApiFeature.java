@@ -15,10 +15,8 @@
  */
 package org.thingsboard.server.common.data;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 
-@Schema(enumAsRef = true)
 public enum ApiFeature {
     TRANSPORT("transportApiState", "Device API"),
     DB("dbApiState", "Telemetry persistence"),

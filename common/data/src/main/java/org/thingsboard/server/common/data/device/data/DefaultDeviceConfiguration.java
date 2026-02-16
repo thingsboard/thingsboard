@@ -25,7 +25,7 @@ public class DefaultDeviceConfiguration implements DeviceConfiguration {
 
     private static final long serialVersionUID = -2225378639573611325L;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Device profile type")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public DeviceProfileType getType() {
         return DeviceProfileType.DEFAULT;

@@ -15,15 +15,12 @@
  */
 package org.thingsboard.server.common.data.rule;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-
 /**
  * Defines origin of the rule.
  * 
  * @author ashvayka
  *
  */
-@Schema(enumAsRef = true)
 public enum RuleType {
     
     SYSTEM, USER;

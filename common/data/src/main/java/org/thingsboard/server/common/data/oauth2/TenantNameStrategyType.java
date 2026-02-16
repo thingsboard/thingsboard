@@ -15,9 +15,6 @@
  */
 package org.thingsboard.server.common.data.oauth2;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-
-@Schema(enumAsRef = true)
 public enum TenantNameStrategyType {
     DOMAIN, EMAIL, CUSTOM;
 }

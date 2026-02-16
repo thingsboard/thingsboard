@@ -41,7 +41,7 @@ import java.io.Serializable;
         @JsonSubTypes.Type(value = DefaultDeviceProfileConfiguration.class, name = "DEFAULT")})
 public interface DeviceProfileConfiguration extends Serializable {
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Device profile type")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @JsonIgnore
     DeviceProfileType getType();
 

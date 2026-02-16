@@ -15,9 +15,6 @@
  */
 package org.thingsboard.server.common.data.ota;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-
-@Schema(enumAsRef = true)
 public enum ChecksumAlgorithm {
     MD5,
     SHA256,

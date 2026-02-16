@@ -35,7 +35,7 @@ public class ComplexFilterPredicate implements KeyFilterPredicate {
         return FilterPredicateType.COMPLEX;
     }
 
-    @Schema(enumAsRef = true)
+    @Schema
     public enum ComplexOperation {
         AND,
         OR

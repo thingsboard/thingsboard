@@ -39,7 +39,7 @@ public class EntitiesLimitNotificationRuleTriggerConfig implements NotificationR
     private float threshold; // in percents,
 
     @Override
-    @Schema(description = "Type of the notification rule trigger")
+    @Schema
     public NotificationRuleTriggerType getTriggerType() {
         return NotificationRuleTriggerType.ENTITIES_LIMIT;
     }

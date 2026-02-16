@@ -31,7 +31,7 @@ public class UserListFilter implements UsersFilter {
     @NotEmpty
     private List<UUID> usersIds;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Type of the users filter")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public UsersFilterType getType() {
         return UsersFilterType.USER_LIST;

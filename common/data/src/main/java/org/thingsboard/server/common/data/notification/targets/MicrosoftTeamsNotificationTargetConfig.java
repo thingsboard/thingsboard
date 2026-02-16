@@ -32,7 +32,7 @@ public class MicrosoftTeamsNotificationTargetConfig extends NotificationTargetCo
     private String channelName;
     private Boolean useOldApi = Boolean.TRUE;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Type of the notification target")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public NotificationTargetType getType() {
         return NotificationTargetType.MICROSOFT_TEAMS;

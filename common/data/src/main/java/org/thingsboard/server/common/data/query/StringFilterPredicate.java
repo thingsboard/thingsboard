@@ -34,7 +34,6 @@ public class StringFilterPredicate implements SimpleKeyFilterPredicate<String> {
         return FilterPredicateType.STRING;
     }
 
-    @Schema(enumAsRef = true)
     public enum StringOperation {
         EQUAL,
         NOT_EQUAL,

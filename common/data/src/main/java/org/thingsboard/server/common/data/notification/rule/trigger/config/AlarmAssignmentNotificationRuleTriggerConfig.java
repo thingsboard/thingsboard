@@ -50,7 +50,7 @@ public class AlarmAssignmentNotificationRuleTriggerConfig implements Notificatio
         return NotificationRuleTriggerType.ALARM_ASSIGNMENT;
     }
 
-    @Schema(enumAsRef = true)
+    @Schema
     public enum Action {
         ASSIGNED, UNASSIGNED
     }

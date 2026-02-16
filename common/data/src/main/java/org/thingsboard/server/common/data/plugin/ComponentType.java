@@ -15,12 +15,9 @@
  */
 package org.thingsboard.server.common.data.plugin;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-
 /**
  * @author Andrew Shvayka
  */
-@Schema(enumAsRef = true)
 public enum ComponentType {
 
     ENRICHMENT, FILTER, TRANSFORMATION, ACTION, EXTERNAL, FLOW

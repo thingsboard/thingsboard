@@ -31,7 +31,7 @@ public class NumericFilterPredicate implements SimpleKeyFilterPredicate<Double> 
         return FilterPredicateType.NUMERIC;
     }
 
-    @Schema(enumAsRef = true)
+    @Schema
     public enum NumericOperation {
         EQUAL,
         NOT_EQUAL,

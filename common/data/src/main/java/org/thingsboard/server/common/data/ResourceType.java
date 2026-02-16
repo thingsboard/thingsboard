@@ -15,11 +15,9 @@
  */
 package org.thingsboard.server.common.data;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-@Schema(enumAsRef = true)
 @RequiredArgsConstructor
 public enum ResourceType {
     LWM2M_MODEL("application/xml", false, false),

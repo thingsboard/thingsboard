@@ -27,7 +27,7 @@ public class BackupCodeTwoFaProviderConfig implements TwoFaProviderConfig {
     private int codesQuantity;
 
     @Override
-    @Schema(description = "Two-Factor Authentication provider type", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     public TwoFaProviderType getProviderType() {
         return TwoFaProviderType.BACKUP_CODE;
     }

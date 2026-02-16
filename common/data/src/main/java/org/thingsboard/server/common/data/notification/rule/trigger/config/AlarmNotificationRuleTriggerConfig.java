@@ -46,7 +46,7 @@ public class AlarmNotificationRuleTriggerConfig implements NotificationRuleTrigg
     private ClearRule clearRule;
 
     @Override
-    @Schema(description = "Type of the notification rule trigger")
+    @Schema
     public NotificationRuleTriggerType getTriggerType() {
         return NotificationRuleTriggerType.ALARM;
     }
@@ -56,7 +56,7 @@ public class AlarmNotificationRuleTriggerConfig implements NotificationRuleTrigg
         private Set<AlarmSearchStatus> alarmStatuses;
     }
 
-    @Schema(enumAsRef = true)
+    @Schema
     public enum AlarmAction {
         CREATED, SEVERITY_CHANGED, ACKNOWLEDGED, CLEARED
     }

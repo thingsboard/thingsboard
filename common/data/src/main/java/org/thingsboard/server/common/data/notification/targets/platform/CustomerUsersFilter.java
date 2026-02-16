@@ -28,7 +28,7 @@ public class CustomerUsersFilter implements UsersFilter {
     @NotNull
     private UUID customerId;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Type of the users filter")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public UsersFilterType getType() {
         return UsersFilterType.CUSTOMER_USERS;

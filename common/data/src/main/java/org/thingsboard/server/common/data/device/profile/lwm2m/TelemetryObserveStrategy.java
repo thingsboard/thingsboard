@@ -15,10 +15,8 @@
  */
 package org.thingsboard.server.common.data.device.profile.lwm2m;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 
-@Schema(enumAsRef = true)
 public enum TelemetryObserveStrategy {
 
     SINGLE("One resource equals one single observe request", 0),

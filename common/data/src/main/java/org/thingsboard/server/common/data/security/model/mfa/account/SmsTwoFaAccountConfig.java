@@ -31,7 +31,7 @@ public class SmsTwoFaAccountConfig extends OtpBasedTwoFaAccountConfig {
     @Pattern(regexp = "^\\+[1-9]\\d{1,14}$", message = "is not of E.164 format")
     private String phoneNumber;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Two-Factor Authentication provider type")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public TwoFaProviderType getProviderType() {
         return TwoFaProviderType.SMS;

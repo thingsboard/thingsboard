@@ -42,12 +42,12 @@ public class DeviceActivityNotificationRuleTriggerConfig implements Notification
     private Set<DeviceEvent> notifyOn;
 
     @Override
-    @Schema(description = "Type of the notification rule trigger")
+    @Schema
     public NotificationRuleTriggerType getTriggerType() {
         return NotificationRuleTriggerType.DEVICE_ACTIVITY;
     }
 
-    @Schema(enumAsRef = true)
+    @Schema
     public enum DeviceEvent {
         ACTIVE, INACTIVE
     }

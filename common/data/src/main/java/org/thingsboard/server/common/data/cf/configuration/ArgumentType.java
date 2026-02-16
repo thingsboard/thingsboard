@@ -15,9 +15,6 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-
-@Schema(enumAsRef = true)
 public enum ArgumentType {
 
     TS_LATEST, ATTRIBUTE, TS_ROLLING
