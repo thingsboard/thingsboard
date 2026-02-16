@@ -15,14 +15,12 @@
  */
 package org.thingsboard.server.common.data;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 
 import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@Schema(enumAsRef = true)
 public enum AttributeScope {
 
     CLIENT_SCOPE(1),

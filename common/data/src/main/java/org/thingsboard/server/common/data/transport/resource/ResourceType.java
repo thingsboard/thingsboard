@@ -15,9 +15,6 @@
  */
 package org.thingsboard.server.common.data.transport.resource;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-
-@Schema(enumAsRef = true)
 public enum ResourceType {
     LWM2M_MODEL, JKS, PKCS_12
 }

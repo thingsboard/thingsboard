@@ -22,15 +22,12 @@ import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 @Schema
 public class ThingsboardErrorResponse {
     // HTTP Response Status Code
-    @Schema
     private final HttpStatus status;
 
     // General Error message
-    @Schema
     private final String message;
 
     // Error code
-    @Schema
     private final ThingsboardErrorCode errorCode;
 
     private final long timestamp;

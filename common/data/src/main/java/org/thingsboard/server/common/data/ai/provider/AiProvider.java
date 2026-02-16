@@ -15,9 +15,6 @@
  */
 package org.thingsboard.server.common.data.ai.provider;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-
-@Schema(enumAsRef = true)
 public enum AiProvider {
 
     OPENAI,
