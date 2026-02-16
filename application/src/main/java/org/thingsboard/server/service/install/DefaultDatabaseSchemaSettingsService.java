@@ -19,6 +19,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.service.install.exception.IncompatibleSchemaVersion;
+import org.thingsboard.server.service.install.exception.SchemaUpToDate;
 import org.thingsboard.server.service.install.update.DefaultDataUpdateService;
 
 import java.util.Map;
@@ -54,7 +56,8 @@ public class DefaultDatabaseSchemaSettingsService implements DatabaseSchemaSetti
 
         String dbSchemaVersion = getDbSchemaVersion();
         if (dbSchemaVersion.equals(getPackageSchemaVersion())) {
-            onSchemaSettingsError("Upgrade failed: database already upgraded to current version. You can set SKIP_SCHEMA_VERSION_CHECK to 'true' if force re-upgrade needed.");
+            log.info("Skipped DB upgrade, because schema is already up-to-date!");
+            onSchemaExistsError("Skipped DB upgrade: database already upgraded to current version. You can set SKIP_SCHEMA_VERSION_CHECK to 'true' if force re-upgrade needed.");
         }
 
         if (SUPPORTED_VERSIONS_FOR_UPGRADE.keySet().stream().noneMatch(dbSchemaVersion::startsWith)) {
@@ -135,7 +138,12 @@ public class DefaultDatabaseSchemaSettingsService implements DatabaseSchemaSetti
 
     private void onSchemaSettingsError(String message) {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> log.error(message)));
-        throw new RuntimeException(message);
+        throw new IncompatibleSchemaVersion(message);
+    }
+
+    private void onSchemaExistsError(String message) {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> log.info(message)));
+        throw new SchemaUpToDate(message);
     }
 
     private String normalizeVersion(String version) {
