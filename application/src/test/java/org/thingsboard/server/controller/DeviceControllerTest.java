@@ -1732,11 +1732,4 @@ public class DeviceControllerTest extends AbstractControllerTest {
         assertThat(fifthDevice.getName()).isEqualTo("My unique device_2");
     }
 
-    private Device createDevice(String name) {
-        Device device = new Device();
-        device.setName(name);
-        device.setType("default");
-        return doPost("/api/device", device, Device.class);
-    }
-
 }
