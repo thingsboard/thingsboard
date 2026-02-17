@@ -33,11 +33,11 @@ import org.thingsboard.server.dao.settings.AdminSettingsService;
 public class AdminSettingsEdgeEventFetcher extends BasePageableEdgeEventFetcher<AdminSettings> {
 
     private final AdminSettingsService adminSettingsService;
-    private final TenantId tenantId;
+    private final TenantId fetcherTenantId;
 
     @Override
     PageData<AdminSettings> fetchEntities(TenantId tenantId, Edge edge, PageLink pageLink) {
-        return adminSettingsService.findAllByTenantId(this.tenantId, pageLink);
+        return adminSettingsService.findAllByTenantId(fetcherTenantId, pageLink);
     }
 
     @Override

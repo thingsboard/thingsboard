@@ -36,8 +36,14 @@ public class AdminSettingsEdgeProcessor extends BaseEdgeProcessor {
 
     @Override
     public DownlinkMsg convertEdgeEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
-        AdminSettingsId adminSettingsId = new AdminSettingsId(edgeEvent.getEntityId());
-        AdminSettings adminSettings = edgeCtx.getAdminSettingsService().findAdminSettingsById(edgeEvent.getTenantId(), adminSettingsId);
+        AdminSettings adminSettings = null;
+        if (edgeEvent.getEntityId() != null) {
+            AdminSettingsId adminSettingsId = new AdminSettingsId(edgeEvent.getEntityId());
+            adminSettings = edgeCtx.getAdminSettingsService().findAdminSettingsById(edgeEvent.getTenantId(), adminSettingsId);
+        } else if (edgeEvent.getBody() != null && !edgeEvent.getBody().isEmpty()) {
+            // legacy
+            adminSettings = JacksonUtil.convertValue(edgeEvent.getBody(), AdminSettings.class);
+        }
         if (adminSettings == null) {
             return null;
         }
