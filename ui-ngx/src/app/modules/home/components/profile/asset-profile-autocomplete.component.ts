@@ -51,14 +51,15 @@ import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 
 @Component({
-  selector: 'tb-asset-profile-autocomplete',
-  templateUrl: './asset-profile-autocomplete.component.html',
-  styleUrls: ['./asset-profile-autocomplete.component.scss'],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => AssetProfileAutocompleteComponent),
-    multi: true
-  }]
+    selector: 'tb-asset-profile-autocomplete',
+    templateUrl: './asset-profile-autocomplete.component.html',
+    styleUrls: ['./asset-profile-autocomplete.component.scss'],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => AssetProfileAutocompleteComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class AssetProfileAutocompleteComponent implements ControlValueAccessor, OnInit {
 

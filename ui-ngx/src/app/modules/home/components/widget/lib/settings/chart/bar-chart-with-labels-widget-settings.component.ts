@@ -33,9 +33,10 @@ import {
 import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Component({
-  selector: 'tb-bar-chart-with-labels-widget-settings',
-  templateUrl: './bar-chart-with-labels-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-bar-chart-with-labels-widget-settings',
+    templateUrl: './bar-chart-with-labels-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class BarChartWithLabelsWidgetSettingsComponent extends WidgetSettingsComponent {
 

@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.limit.LimitedApi;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.event.UserCredentialsInvalidationEvent;
 import org.thingsboard.server.common.data.security.event.UserSessionInvalidationEvent;
@@ -48,7 +49,9 @@ import org.thingsboard.server.common.data.security.model.UserPasswordPolicy;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.settings.SecuritySettingsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
 import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetails;
+import org.thingsboard.server.service.security.auth.rest.RestAwareAuthenticationSuccessHandler;
 import org.thingsboard.server.service.security.model.ActivateUserRequest;
 import org.thingsboard.server.service.security.model.ChangePasswordRequest;
 import org.thingsboard.server.service.security.model.ResetPasswordEmailRequest;
@@ -74,7 +77,8 @@ public class AuthController extends BaseController {
     private final SecuritySettingsService securitySettingsService;
     private final RateLimitService rateLimitService;
     private final ApplicationEventPublisher eventPublisher;
-
+    private final TwoFactorAuthService twoFactorAuthService;
+    private final RestAwareAuthenticationSuccessHandler authenticationSuccessHandler;
 
     @ApiOperation(value = "Get current User (getUser)",
             notes = "Get the information about the User which credentials are used to perform this REST API call.")
@@ -221,7 +225,13 @@ public class AuthController extends BaseController {
             }
         }
 
-        var tokenPair = tokenFactory.createTokenPair(securityUser);
+        JwtPair tokenPair;
+        if (twoFactorAuthService.isEnforceTwoFaEnabled(securityUser.getTenantId(), user)) {
+            tokenPair = authenticationSuccessHandler.createMfaTokenPair(securityUser, Authority.MFA_CONFIGURATION_TOKEN);
+        } else {
+            tokenPair = tokenFactory.createTokenPair(securityUser);
+        }
+
         systemSecurityService.logLoginAction(user, new RestAuthenticationDetails(request), ActionType.LOGIN, null);
         return tokenPair;
     }

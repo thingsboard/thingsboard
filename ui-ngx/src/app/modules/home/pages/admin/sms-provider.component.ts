@@ -33,9 +33,10 @@ import { AuthUser } from '@shared/models/user.model';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 
 @Component({
-  selector: 'tb-sms-provider',
-  templateUrl: './sms-provider.component.html',
-  styleUrls: ['./sms-provider.component.scss', './settings-card.scss']
+    selector: 'tb-sms-provider',
+    templateUrl: './sms-provider.component.html',
+    styleUrls: ['./sms-provider.component.scss', './settings-card.scss'],
+    standalone: false
 })
 export class SmsProviderComponent extends PageComponent implements HasConfirmForm {
 

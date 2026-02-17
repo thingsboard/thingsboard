@@ -41,20 +41,21 @@ import {
 import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
-  selector: 'tb-profile-lwm2m-device-config-server',
-  templateUrl: './lwm2m-device-config-server.component.html',
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => Lwm2mDeviceConfigServerComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => Lwm2mDeviceConfigServerComponent),
-      multi: true
-    },
-  ]
+    selector: 'tb-profile-lwm2m-device-config-server',
+    templateUrl: './lwm2m-device-config-server.component.html',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => Lwm2mDeviceConfigServerComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => Lwm2mDeviceConfigServerComponent),
+            multi: true
+        },
+    ],
+    standalone: false
 })
 
 export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAccessor, Validator, OnDestroy {
@@ -74,8 +75,8 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
   currentSecurityMode = null;
   bootstrapDisabled = false;
 
-  shortServerIdMin = 1;
-  shortServerIdMax = 65534;
+  readonly shortServerIdMin = 1;
+  readonly shortServerIdMax = 65534;
 
   @Input()
   @coerceBoolean()
@@ -94,18 +95,15 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
   }
 
   ngOnInit(): void {
-    if (this.isBootstrap) {
-      this.shortServerIdMin = 0;
-      this.shortServerIdMax = 65535;
-    }
     this.serverFormGroup = this.fb.group({
       host: ['', Validators.required],
       port: ['', [Validators.required, Validators.min(1), Validators.max(65535), Validators.pattern('[0-9]*')]],
       securityMode: [Lwm2mSecurityType.NO_SEC],
       serverPublicKey: [''],
       clientHoldOffTime: ['', [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
-      shortServerId: ['',
-        [Validators.required, Validators.min(this.shortServerIdMin), Validators.max(this.shortServerIdMax), Validators.pattern('[0-9]*')]],
+      shortServerId: ['', this.isBootstrap ?
+        [] : [Validators.required, Validators.pattern('[0-9]*'), Validators.min(this.shortServerIdMin), Validators.max(this.shortServerIdMax)]
+      ],
       bootstrapServerAccountTimeout: ['', [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
       binding: [''],
       lifetime: [null, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
@@ -129,6 +127,7 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
         this.serverFormGroup.get('serverPublicKey').patchValue(serverSecurityConfig.serverCertificate, {emitEvent: false});
       }
     });
+
     this.serverFormGroup.valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe(value => {

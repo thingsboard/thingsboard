@@ -38,6 +38,7 @@ import {
 } from '@angular/core';
 import { DashboardWidget } from '@home/models/dashboard-component.models';
 import {
+  MobileImageResult,
   Widget,
   WidgetAction,
   WidgetActionDescriptor,
@@ -126,13 +127,15 @@ import { IModulesMap } from '@modules/common/modules-map.models';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { CompiledTbFunction, compileTbFunction, isNotEmptyTbFunction } from '@shared/models/js-function.models';
 import { HttpClient } from '@angular/common/http';
+import { addDiagnosticChain } from '@angular/compiler-cli/src/ngtsc/diagnostics';
 
 @Component({
-  selector: 'tb-widget',
-  templateUrl: './widget.component.html',
-  styleUrls: ['./widget.component.scss'],
-  encapsulation: ViewEncapsulation.None,
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'tb-widget',
+    templateUrl: './widget.component.html',
+    styleUrls: ['./widget.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class WidgetComponent extends PageComponent implements OnInit, OnChanges, OnDestroy {
 
@@ -375,23 +378,23 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
     const buttonStyle = {};
     switch (buttonType) {
       case WidgetHeaderActionButtonType.basic:
-        buttonStyle['--mdc-text-button-label-text-color'] = buttonColor;
+        buttonStyle['--mat-button-text-label-text-color'] = buttonColor;
         break;
       case WidgetHeaderActionButtonType.raised:
-        buttonStyle['--mdc-protected-button-label-text-color'] = buttonColor;
-        buttonStyle['--mdc-protected-button-container-color'] = backgroundColor;
+        buttonStyle['--mat-button-protected-label-text-color'] = buttonColor;
+        buttonStyle['--mat-button-protected-container-color'] = backgroundColor;
         break;
       case WidgetHeaderActionButtonType.stroked:
-        buttonStyle['--mdc-outlined-button-label-text-color'] = buttonColor;
-        buttonStyle['--mdc-outlined-button-outline-color'] = borderColor;
+        buttonStyle['--mat-button-outlined-label-text-color'] = buttonColor;
+        buttonStyle['--mat-button-outlined-outline-color'] = borderColor;
         break;
       case WidgetHeaderActionButtonType.flat:
-        buttonStyle['--mdc-filled-button-label-text-color'] = buttonColor;
-        buttonStyle['--mdc-filled-button-container-color'] = backgroundColor;
+        buttonStyle['--mat-button-filled-label-text-color'] = buttonColor;
+        buttonStyle['--mat-button-filled-container-color'] = backgroundColor;
         break;
       case WidgetHeaderActionButtonType.miniFab:
         buttonStyle['--mat-fab-small-foreground-color'] = buttonColor;
-        buttonStyle['--mdc-fab-small-container-color'] = backgroundColor;
+        buttonStyle['--mat-fab-small-container-color'] = backgroundColor;
         break;
       default:
         buttonStyle['--mat-icon-color'] = buttonColor;
@@ -1222,11 +1225,15 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
     switch (type) {
       case WidgetMobileActionType.takePictureFromGallery:
       case WidgetMobileActionType.takePhoto:
+      case WidgetMobileActionType.takeScreenshot:
+        argsObservable = of([mobileAction.saveToGallery]);
+        break;
       case WidgetMobileActionType.scanQrCode:
       case WidgetMobileActionType.getLocation:
-      case WidgetMobileActionType.takeScreenshot:
-      case WidgetMobileActionType.deviceProvision:
         argsObservable = of([]);
+        break;
+      case WidgetMobileActionType.deviceProvision:
+        argsObservable = of([mobileAction.provisionType]);
         break;
       case WidgetMobileActionType.mapDirection:
       case WidgetMobileActionType.mapLocation:
@@ -1297,6 +1304,10 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
                     case WidgetMobileActionType.takePhoto:
                     case WidgetMobileActionType.takeScreenshot:
                       const imageUrl = actionResult.imageUrl;
+                      if (!additionalParams) {
+                        additionalParams = {};
+                      }
+                      additionalParams.imageInfo = actionResult.imageInfo;
                       if (isNotEmptyTbFunction(mobileAction.processImageFunction)) {
                         compileTbFunction(this.http, mobileAction.processImageFunction, 'imageUrl', '$event', 'widgetContext', 'entityId',
                           'entityName', 'additionalParams', 'entityLabel').subscribe(
@@ -1420,6 +1431,23 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
                       }
                     );
                   }
+                }
+              } else if (!this.mobileService.isMobileApp()) {
+                if (isNotEmptyTbFunction(mobileAction.handleNonMobileFallbackFunction)) {
+                  compileTbFunction(this.http, mobileAction.handleNonMobileFallbackFunction, '$event', 'widgetContext',).subscribe(
+                    {
+                      next: (compiled) => {
+                        try {
+                          compiled.execute($event, this.widgetContext);
+                        } catch (e) {
+                          console.error(e);
+                        }
+                      },
+                      error: (err) => {
+                        console.error(err);
+                      }
+                    }
+                  );
                 }
               }
             }

@@ -30,7 +30,7 @@
     </tb-copy-button>
   </mat-form-field>
   <mat-form-field class="alpha-input" subscriptSizing="dynamic">
-    <input matInput #hue min="0" max="100" [value]="hueValue" (keyup)="onHueInputChange($event, hue.value)">
+    <input matInput #hue type="number" min="0" max="100" [value]="hueValue" (keyup)="onHueInputChange($event, hue.value)">
     <span matSuffix>%</span>
   </mat-form-field>
 </div>

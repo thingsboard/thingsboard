@@ -24,7 +24,8 @@ import {
   DataKey,
   Datasource,
   datasourcesHasAggregation,
-  datasourcesHasOnlyComparisonAggregation, WidgetConfig
+  datasourcesHasOnlyComparisonAggregation, WidgetConfig,
+  widgetTitleAutocompleteValues
 } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
@@ -35,9 +36,10 @@ import {
 } from '@home/components/widget/config/timewindow-config-panel.component';
 
 @Component({
-  selector: 'tb-entities-table-basic-config',
-  templateUrl: './entities-table-basic-config.component.html',
-  styleUrls: ['../basic-config.scss']
+    selector: 'tb-entities-table-basic-config',
+    templateUrl: './entities-table-basic-config.component.html',
+    styleUrls: ['../basic-config.scss'],
+    standalone: false
 })
 export class EntitiesTableBasicConfigComponent extends BasicWidgetConfigComponent {
 
@@ -61,6 +63,8 @@ export class EntitiesTableBasicConfigComponent extends BasicWidgetConfigComponen
   }
 
   entitiesTableWidgetConfigForm: UntypedFormGroup;
+
+  predefinedValues = widgetTitleAutocompleteValues;
 
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,

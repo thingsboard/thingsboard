@@ -28,7 +28,7 @@ import { Circle, Effect, Element, G, Gradient, Path, Runner, Svg, Text, Timeline
 import '@svgdotjs/svg.filter.js';
 import tinycolor from 'tinycolor2';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { Observable, of } from 'rxjs';
+import { Observable, of, shareReplay } from 'rxjs';
 import { isSvgIcon, splitIconName } from '@shared/models/icon.models';
 import { catchError, map, take } from 'rxjs/operators';
 import { MatIconRegistry } from '@angular/material/icon';
@@ -336,6 +336,11 @@ export abstract class PowerButtonShape {
   protected onPowerSymbolCircle: Path;
   protected onPowerSymbolLine: Path;
 
+  private onIcon$: Observable<Element>;
+  private offIcon$: Observable<Element>;
+  protected onIconOffsetX: number = 0;
+  protected onIconOffsetY: number = 0;
+
   protected constructor(protected widgetContext: WidgetContext,
                         protected svgShape: Svg,
                         protected iconRegistry: MatIconRegistry,
@@ -360,10 +365,14 @@ export abstract class PowerButtonShape {
           take(1),
           map((svgElement) => {
             const element = new Element(svgElement.firstChild);
+            const iconGroup = this.svgShape.group();
+            element.addTo(iconGroup);
             const box = element.bbox();
             const scale = size / box.height;
             element.scale(scale);
-            return element;
+            const scaledBox = iconGroup.bbox();
+            iconGroup.translate(-scaledBox.cx, -scaledBox.cy);
+            return iconGroup;
           }),
           catchError(() => of(null)
           ));
@@ -414,8 +423,15 @@ export abstract class PowerButtonShape {
 
   public drawOffShape(centerGroup: G, label: boolean, labelWeight?: string, circleStroke?: boolean) {
     if (this.icons.offButtonIcon.showIcon) {
-      this.createIconElement(this.icons.offButtonIcon.icon, this.icons.offButtonIcon.iconSize).subscribe(icon =>
-        this.offPowerSymbolIcon = icon.center(cx, cy).addTo(centerGroup));
+      this.offIcon$ = this.createIconElement(this.icons.offButtonIcon.icon, this.icons.offButtonIcon.iconSize)
+        .pipe(shareReplay(1));
+
+      this.offIcon$.pipe(take(1)).subscribe(icon => {
+        this.offPowerSymbolIcon = icon;
+        icon.translate(cx, cy);
+        centerGroup.add(icon);
+      });
+
     } else {
       if (label) {
         this.offLabelShape = this.createOffLabel(labelWeight).addTo(centerGroup);
@@ -428,10 +444,16 @@ export abstract class PowerButtonShape {
 
   public drawOnShape(onCenterGroup?: G, label?: boolean, labelWeight?: string, circleStroke?: boolean, mask?: Circle) {
     if (this.icons.onButtonIcon.showIcon) {
-      this.createIconElement(this.icons.onButtonIcon.icon, this.icons.onButtonIcon.iconSize).subscribe(icon => {
-        this.onPowerSymbolIcon = icon.center(cx, cy);
+      this.onIcon$ = this.createIconElement(this.icons.onButtonIcon.icon, this.icons.onButtonIcon.iconSize)
+        .pipe(shareReplay(1));
+
+      this.onIcon$.subscribe(icon => {
+        const iconBox = icon.bbox();
+        this.onIconOffsetX = iconBox.cx;
+        this.onIconOffsetY = iconBox.cy;
+        this.onPowerSymbolIcon = icon.translate(cx, cy);
         if (isDefinedAndNotNull(onCenterGroup)) {
-          this.onPowerSymbolIcon.addTo(onCenterGroup);
+          onCenterGroup.add(this.onPowerSymbolIcon);
         }
         if (isDefinedAndNotNull(mask)) {
           this.createMask(mask, [this.onPowerSymbolIcon]);
@@ -462,7 +484,9 @@ export abstract class PowerButtonShape {
 
   public onCenterTimeLine(timeline: Timeline, label: boolean) {
     if (this.icons.onButtonIcon.showIcon) {
-      this.onPowerSymbolIcon.timeline(timeline);
+      if (this.onIcon$) {
+        this.onIcon$.subscribe(icon => icon.timeline(timeline));
+      }
     } else {
       if (label) {
         this.onLabelShape.timeline(timeline);
@@ -475,7 +499,7 @@ export abstract class PowerButtonShape {
 
   public offCenterColor(mainColor: PowerButtonColor, label: boolean) {
     if (this.icons.offButtonIcon.showIcon) {
-      this.offPowerSymbolIcon.attr({ fill: mainColor.hex, 'fill-opacity': mainColor.opacity});
+      this.offIcon$.subscribe(icon => icon.attr({ fill: mainColor.hex, 'fill-opacity': mainColor.opacity}))
     } else {
       if (label) {
         this.offLabelShape.attr({ fill: mainColor.hex, 'fill-opacity': mainColor.opacity});
@@ -488,7 +512,7 @@ export abstract class PowerButtonShape {
 
   public onCenterColor(mainColor: PowerButtonColor, label: boolean) {
     if (this.icons.onButtonIcon.showIcon) {
-      this.onPowerSymbolIcon.attr({ fill: mainColor.hex, 'fill-opacity': mainColor.opacity});
+      this.onIcon$.subscribe((icon)=> icon.attr({ fill: mainColor.hex, 'fill-opacity': mainColor.opacity}))
     } else {
       if (label) {
         this.onLabelShape.attr({ fill: mainColor.hex, 'fill-opacity': mainColor.opacity});
@@ -501,7 +525,12 @@ export abstract class PowerButtonShape {
 
   public buttonAnimation(scale: number, label: boolean) {
     if (this.icons.onButtonIcon.showIcon) {
-      powerButtonAnimation(this.onPowerSymbolIcon).transform({scale});
+      const translateX = cx - this.onIconOffsetX;
+      const translateY = cy - this.onIconOffsetY;
+      powerButtonAnimation(this.onPowerSymbolIcon).transform({
+        scale: scale,
+        translate: [translateX, translateY]
+      });
     } else {
       if (label) {
         powerButtonAnimation(this.onLabelShape).transform({scale, origin: {x: cx, y: cy}});

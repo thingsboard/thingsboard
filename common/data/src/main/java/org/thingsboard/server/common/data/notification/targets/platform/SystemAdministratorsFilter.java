@@ -20,7 +20,7 @@ import lombok.Data;
 
 @Schema
 @Data
-public class SystemAdministratorsFilter implements UsersFilter {
+public class SystemAdministratorsFilter implements SystemLevelUsersFilter {
 
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override

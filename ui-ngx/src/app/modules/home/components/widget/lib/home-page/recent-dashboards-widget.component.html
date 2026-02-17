@@ -24,8 +24,15 @@
           <tb-toggle-option value="last">{{ 'widgets.recent-dashboards.last' | translate }}</tb-toggle-option>
           <tb-toggle-option value="starred">{{ 'widgets.recent-dashboards.starred' | translate }}</tb-toggle-option>
         </tb-toggle-header>
-        <a *ngIf="authUser.authority === authority.TENANT_ADMIN" class="md:!hidden"
-           mat-flat-button color="primary" routerLink="/dashboards" [queryParams]="{action: 'add'}">{{ 'dashboard.add' | translate }}</a>
+        <ng-container *ngIf="authUser.authority === authority.TENANT_ADMIN">
+          @if (hasDevice) {
+            <a class="md:!hidden"
+               mat-flat-button color="primary" routerLink="/dashboards/all" [queryParams]="{action: 'add'}">{{ 'dashboard.add' | translate }}</a>
+          } @else {
+            <a class="md:!hidden"
+               mat-stroked-button color="primary" routerLink="/dashboards/all" [queryParams]="{action: 'add'}">{{ 'dashboard.add' | translate }}</a>
+          }
+        </ng-container>
       </div>
     </div>
     <ng-container *ngIf="userDashboardsInfo; else loading" [ngSwitch]="dashboardsToggle.value">

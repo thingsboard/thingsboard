@@ -26,19 +26,21 @@ import {
 import { merge } from 'rxjs';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { widgetTitleAutocompleteValues } from '@shared/models/widget.models';
 
 @Component({
-  selector: 'tb-widget-button-appearance',
-  templateUrl: './widget-button-appearance.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => WidgetButtonAppearanceComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-widget-button-appearance',
+    templateUrl: './widget-button-appearance.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => WidgetButtonAppearanceComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class WidgetButtonAppearanceComponent implements OnInit, ControlValueAccessor {
 
@@ -71,6 +73,8 @@ export class WidgetButtonAppearanceComponent implements OnInit, ControlValueAcce
 
   appearanceFormGroup: UntypedFormGroup;
 
+  predefinedValues = widgetTitleAutocompleteValues;
+  
   private propagateChange = (_val: any) => {};
 
   constructor(private fb: UntypedFormBuilder,

@@ -22,6 +22,7 @@ import lombok.Data;
 @Schema
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
+@Deprecated
 public class SimpleAlarmConditionSpec implements AlarmConditionSpec {
     @Override
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)

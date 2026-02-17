@@ -54,10 +54,11 @@ export interface AddDeviceProfileDialogData {
 }
 
 @Component({
-  selector: 'tb-add-device-profile-dialog',
-  templateUrl: './add-device-profile-dialog.component.html',
-  providers: [],
-  styleUrls: ['./add-device-profile-dialog.component.scss']
+    selector: 'tb-add-device-profile-dialog',
+    templateUrl: './add-device-profile-dialog.component.html',
+    providers: [],
+    styleUrls: ['./add-device-profile-dialog.component.scss'],
+    standalone: false
 })
 export class AddDeviceProfileDialogComponent extends
   DialogComponent<AddDeviceProfileDialogComponent, DeviceProfile> {
@@ -84,8 +85,6 @@ export class AddDeviceProfileDialogComponent extends
   deviceProfileDetailsFormGroup: UntypedFormGroup;
 
   transportConfigFormGroup: UntypedFormGroup;
-
-  alarmRulesFormGroup: UntypedFormGroup;
 
   provisionConfigFormGroup: UntypedFormGroup;
 
@@ -132,12 +131,6 @@ export class AddDeviceProfileDialogComponent extends
       this.deviceProfileTransportTypeChanged();
     });
 
-    this.alarmRulesFormGroup = this.fb.group(
-      {
-        alarms: [null]
-      }
-    );
-
     this.provisionConfigFormGroup = this.fb.group(
       {
         provisionConfiguration: [{
@@ -176,8 +169,6 @@ export class AddDeviceProfileDialogComponent extends
       case 1:
         return this.transportConfigFormGroup;
       case 2:
-        return this.alarmRulesFormGroup;
-      case 3:
         return this.provisionConfigFormGroup;
     }
   }
@@ -199,7 +190,6 @@ export class AddDeviceProfileDialogComponent extends
         profileData: {
           configuration: createDeviceProfileConfiguration(DeviceProfileType.DEFAULT),
           transportConfiguration: this.transportConfigFormGroup.get('transportConfiguration').value,
-          alarms: this.alarmRulesFormGroup.get('alarms').value,
           provisionConfiguration: deviceProvisionConfiguration
         }
       };

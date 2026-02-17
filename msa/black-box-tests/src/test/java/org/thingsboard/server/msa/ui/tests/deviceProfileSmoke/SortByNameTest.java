@@ -45,7 +45,7 @@ public class SortByNameTest extends AbstractDriverBaseTest {
     @AfterMethod
     public void delete() {
         if (name != null) {
-            testRestClient.deleteDeviseProfile(getDeviceProfileByName(name).getId());
+            testRestClient.deleteDeviceProfile(getDeviceProfileByName(name).getId());
             name = null;
         }
     }
@@ -83,9 +83,9 @@ public class SortByNameTest extends AbstractDriverBaseTest {
         profilesPage.setProfileName(2);
         String thirdDeviceProfile = profilesPage.getProfileName();
 
-        testRestClient.deleteDeviseProfile(getDeviceProfileByName(deviceProfile).getId());
-        testRestClient.deleteDeviseProfile(getDeviceProfileByName(deviceProfileNumber).getId());
-        testRestClient.deleteDeviseProfile(getDeviceProfileByName(deviceProfileSymbol).getId());
+        testRestClient.deleteDeviceProfile(getDeviceProfileByName(deviceProfile).getId());
+        testRestClient.deleteDeviceProfile(getDeviceProfileByName(deviceProfileNumber).getId());
+        testRestClient.deleteDeviceProfile(getDeviceProfileByName(deviceProfileSymbol).getId());
 
         Assert.assertEquals(firstDeviceProfile, deviceProfileSymbol);
         Assert.assertEquals(secondDeviceProfile, deviceProfileNumber);
@@ -126,9 +126,9 @@ public class SortByNameTest extends AbstractDriverBaseTest {
         profilesPage.setProfileName(lastIndex - 2);
         String thirdDeviceProfile = profilesPage.getProfileName();
 
-        testRestClient.deleteDeviseProfile(getDeviceProfileByName(deviceProfile).getId());
-        testRestClient.deleteDeviseProfile(getDeviceProfileByName(deviceProfileNumber).getId());
-        testRestClient.deleteDeviseProfile(getDeviceProfileByName(deviceProfileSymbol).getId());
+        testRestClient.deleteDeviceProfile(getDeviceProfileByName(deviceProfile).getId());
+        testRestClient.deleteDeviceProfile(getDeviceProfileByName(deviceProfileNumber).getId());
+        testRestClient.deleteDeviceProfile(getDeviceProfileByName(deviceProfileSymbol).getId());
 
         Assert.assertEquals(firstDeviceProfile, deviceProfileSymbol);
         Assert.assertEquals(secondDeviceProfile, deviceProfileNumber);

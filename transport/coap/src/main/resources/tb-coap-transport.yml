@@ -187,15 +187,15 @@ coap:
     # CoAP DTLS bind port
     bind_port: "${COAP_DTLS_BIND_PORT:5684}"
     # CoAP DTLS connection ID length. RFC 9146, Connection Identifier for DTLS 1.2
-    # Default: off
+    # Default: off. <br>
     # Control usage of DTLS connection ID length (CID).
-    # - 'off' to deactivate it.
-    # - 'on' to activate Connection ID support (same as CID 0 or more 0).
-    # - A positive value defines generated CID size in bytes.
-    # - A value of 0 means we accept using CID but will not generate one for foreign peer (enables support but not for incoming traffic).
-    # - A value between 0 and <= 4: SingleNodeConnectionIdGenerator is used
-    # - A value that are > 4: MultiNodeConnectionIdGenerator is used
-    connection_id_length: "${COAP_DTLS_CONNECTION_ID_LENGTH:}"
+    # <ul> <li> 'off' to deactivate it. </li>
+    # <li> 'on' to activate Connection ID support (same as CID 0 or more 0). </li>
+    # <li> A positive value defines generated CID size in bytes.</li>
+    # <li> A value of 0 means we accept using CID but will not generate one for foreign peer (enables support but not for incoming traffic).</li>
+    # <li> A value between 0 and <= 4: SingleNodeConnectionIdGenerator is used</li>
+    # <li> A value that are > 4: MultiNodeConnectionIdGenerator is used</li> </ul>
+    connection_id_length: "${COAP_DTLS_CONNECTION_ID_LENGTH:8}"
     # Specify the MTU (Maximum Transmission Unit).
     # Should be used if LAN MTU is not used, e.g. if IP tunnels are used or if the client uses a smaller value than the LAN MTU.
     # Default = 1024
@@ -421,6 +421,8 @@ usage:
       enabled_per_customer: "${USAGE_STATS_REPORT_PER_CUSTOMER_ENABLED:false}"
       # Interval of reporting the statistics. By default, the summarized statistics are sent every 10 seconds
       interval: "${USAGE_STATS_REPORT_INTERVAL:60}"
+      # Reporting interval for urgent keys (e.g. SMS, Email) that require quicker usage state updates
+      urgent_interval: "${USAGE_STATS_REPORT_URGENT_INTERVAL:10}"
       # Amount of statistic messages in pack
       pack_size: "${USAGE_STATS_REPORT_PACK_SIZE:1024}"
 
@@ -435,7 +437,7 @@ management:
     web:
       exposure:
         # Expose metrics endpoint (use value 'prometheus' to enable prometheus metrics).
-        include: '${METRICS_ENDPOINTS_EXPOSE:info}'
+        include: "${METRICS_ENDPOINTS_EXPOSE:info}"
 
 # Notification system parameters
 notification_system:

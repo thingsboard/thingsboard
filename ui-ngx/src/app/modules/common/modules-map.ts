@@ -14,8 +14,6 @@
 /// limitations under the License.
 ///
 
-/* eslint-disable max-len */
-
 import * as AngularAnimations from '@angular/animations';
 import * as AngularCore from '@angular/core';
 import * as AngularCommon from '@angular/common';
@@ -121,6 +119,7 @@ import * as TbErrorComponent from '@shared/components/tb-error.component';
 import * as TbCheatSheetComponent from '@shared/components/cheatsheet.component';
 import * as BreadcrumbComponent from '@shared/components/breadcrumb.component';
 import * as UserMenuComponent from '@shared/components/user-menu.component';
+import * as TimeUnitInputComponent from '@shared/components/time-unit-input.component';
 import * as TimewindowComponent from '@shared/components/time/timewindow.component';
 import * as TimewindowPanelComponent from '@shared/components/time/timewindow-panel.component';
 import * as TimeintervalComponent from '@shared/components/time/timeinterval.component';
@@ -178,6 +177,10 @@ import * as OtaPackageAutocompleteComponent from '@shared/components/ota-package
 import * as WidgetsBundleSearchComponent from '@shared/components/widgets-bundle-search.component';
 import * as CopyButtonComponent from '@shared/components/button/copy-button.component';
 import * as TogglePasswordComponent from '@shared/components/button/toggle-password.component';
+import * as WidgetButtonComponent from '@shared/components/button/widget-button.component';
+import * as WidgetButtonToggleComponent from '@shared/components/button/widget-button-toggle.component';
+import * as PhoneInputComponent from '@shared/components/phone-input.component';
+import * as TbPopoverService from '@shared/components/popover.service';
 import * as ProtobufContentComponent from '@shared/components/protobuf-content.component';
 import * as SlackConversationAutocompleteComponent from '@shared/components/slack-conversation-autocomplete.component';
 import * as StringItemsListComponent from '@shared/components/string-items-list.component';
@@ -190,8 +193,6 @@ import * as HintTooltipIconComponent from '@shared/components/hint-tooltip-icon.
 import * as ScrollGridComponent from '@shared/components/grid/scroll-grid.component';
 import * as GalleryImageInputComponent from '@shared/components/image/gallery-image-input.component';
 import * as MultipleGalleryImageInputComponent from '@shared/components/image/multiple-gallery-image-input.component';
-import * as TbPopoverService from '@shared/components/popover.service';
-
 
 import * as CssUnitSelectComponent from '@home/components/widget/lib/settings/common/css-unit-select.component';
 import * as WidgetActionsPanelComponent from '@home/components/widget/config/basic/common/widget-actions-panel.component';
@@ -341,6 +342,7 @@ import * as AIModelDialogComponent from '@home/components/ai-model/ai-model-dial
 import { IModulesMap } from '@modules/common/modules-map.models';
 import { Observable, of } from 'rxjs';
 import { isJSResourceUrl } from '@shared/public-api';
+import { ɵɵinterpolate, ɵɵinterpolate2 } from '@angular/core';
 
 class ModulesMap implements IModulesMap {
 
@@ -348,7 +350,7 @@ class ModulesMap implements IModulesMap {
 
   private modulesMap: {[key: string]: any} = {
     '@angular/animations': AngularAnimations,
-    '@angular/core': AngularCore,
+    '@angular/core': this.angularCoreModule20to18Patch(AngularCore),
     '@angular/common': AngularCommon,
     '@angular/common/http': HttpClientModule,
     '@angular/forms': AngularForms,
@@ -402,7 +404,7 @@ class ModulesMap implements IModulesMap {
     '@ngrx/store': NgrxStore,
     rxjs: RxJs,
     'rxjs/operators': RxJsOperators,
-    '@ngx-translate/core': TranslateCore,
+    '@ngx-translate/core': this.translateModule20to18Patch(TranslateCore),
     '@mat-datetimepicker/core': MatDateTimePicker,
     moment: _moment,
     tslib,
@@ -456,6 +458,7 @@ class ModulesMap implements IModulesMap {
     '@shared/components/cheatsheet.component': TbCheatSheetComponent,
     '@shared/components/breadcrumb.component': BreadcrumbComponent,
     '@shared/components/user-menu.component': UserMenuComponent,
+    '@shared/components/time-unit-input.component': TimeUnitInputComponent,
     '@shared/components/time/timewindow.component': TimewindowComponent,
     '@shared/components/time/timewindow-panel.component': TimewindowPanelComponent,
     '@shared/components/time/timeinterval.component': TimeintervalComponent,
@@ -520,6 +523,10 @@ class ModulesMap implements IModulesMap {
     '@shared/components/widgets-bundle-search.component': WidgetsBundleSearchComponent,
     '@shared/components/button/copy-button.component': CopyButtonComponent,
     '@shared/components/button/toggle-password.component': TogglePasswordComponent,
+    '@shared/components/button/widget-button.component': WidgetButtonComponent,
+    '@shared/components/button/widget-button-toggle.component': WidgetButtonToggleComponent,
+    '@shared/components/popover.service': TbPopoverService,
+    '@shared/components/phone-input.component': PhoneInputComponent,
     '@shared/components/protobuf-content.component': ProtobufContentComponent,
     '@shared/components/slack-conversation-autocomplete.component': SlackConversationAutocompleteComponent,
     '@shared/components/string-items-list.component': StringItemsListComponent,
@@ -532,8 +539,6 @@ class ModulesMap implements IModulesMap {
     '@shared/components/grid/scroll-grid.component': ScrollGridComponent,
     '@shared/components/image/gallery-image-input.component': GalleryImageInputComponent,
     '@shared/components/image/multiple-gallery-image-input.component': MultipleGalleryImageInputComponent,
-    '@shared/components/popover.service': TbPopoverService,
-
 
     '@home/components/alarm/alarm-filter-config.component': AlarmFilterConfigComponent,
     '@home/components/alarm/alarm-comment-dialog.component': AlarmCommentDialogComponent,
@@ -699,6 +704,55 @@ class ModulesMap implements IModulesMap {
       this.initialized = true;
     }
     return of(null);
+  }
+
+  private angularCoreModule20to18Patch(module: typeof AngularCore): typeof AngularCore {
+    const result = {...module};
+    (result as any).ɵɵStandaloneFeature = () => {};
+    (result as any).ɵɵInputTransformsFeature = () => {};
+    (result as any).ɵɵpropertyInterpolate = (propName: string, v0: any, sanitizer?: any) => {
+      return result.ɵɵproperty(propName, result.ɵɵinterpolate(v0), sanitizer);
+    };
+    (result as any).ɵɵpropertyInterpolate1 = (propName: string, prefix: string, v0: any, suffix: string, sanitizer?: any) => {
+      return result.ɵɵproperty(propName, result.ɵɵinterpolate1(prefix, v0, suffix), sanitizer);
+    };
+    (result as any).ɵɵpropertyInterpolate2 = (propName: string, prefix: string, v0: any, i0: string, v1: any, suffix: string, sanitizer?: any) => {
+      return result.ɵɵproperty(propName, result.ɵɵinterpolate2(prefix, v0, i0, v1, suffix), sanitizer);
+    };
+    (result as any).ɵɵpropertyInterpolate3 = (propName: string, prefix: string, v0: any, i0: string, v1: any, i1: string, v2: any, suffix: string, sanitizer?: any) => {
+      return result.ɵɵproperty(propName, result.ɵɵinterpolate3(prefix, v0, i0, v1, i1, v2, suffix), sanitizer);
+    };
+    (result as any).ɵɵpropertyInterpolate4 = (propName: string, prefix: string, v0: any, i0: string, v1: any, i1: string, v2: any, i2: string, v3: any, suffix: string, sanitizer?: any) => {
+      return result.ɵɵproperty(propName, result.ɵɵinterpolate4(prefix, v0, i0, v1, i1, v2, i2, v3, suffix), sanitizer);
+    };
+    (result as any).ɵɵpropertyInterpolate5 = (propName: string, prefix: string, v0: any, i0: string, v1: any, i1: string, v2: any, i2: string, v3: any, i3: string, v4: any, suffix: string, sanitizer?: any) => {
+      return result.ɵɵproperty(propName, result.ɵɵinterpolate5(prefix, v0, i0, v1, i1, v2, i2, v3, i3, v4, suffix), sanitizer);
+    };
+    (result as any).ɵɵpropertyInterpolate6 = (propName: string, prefix: string, v0: any, i0: string, v1: any, i1: string, v2: any, i2: string, v3: any, i3: string, v4: any, i4: string, v5: any, suffix: string, sanitizer?: any) => {
+      return result.ɵɵproperty(propName, result.ɵɵinterpolate6(prefix, v0, i0, v1, i1, v2, i2, v3, i3, v4, i4, v5, suffix), sanitizer);
+    };
+    (result as any).ɵɵpropertyInterpolate7 = (propName: string, prefix: string, v0: any, i0: string, v1: any, i1: string, v2: any, i2: string, v3: any, i3: string, v4: any, i4: string, v5: any, i5: string, v6: any, suffix: string, sanitizer?: any) => {
+      return result.ɵɵproperty(propName, result.ɵɵinterpolate7(prefix, v0, i0, v1, i1, v2, i2, v3, i3, v4, i4, v5, i5, v6, suffix), sanitizer);
+    };
+    (result as any).ɵɵpropertyInterpolate8 = (propName: string, prefix: string, v0: any, i0: string, v1: any, i1: string, v2: any, i2: string, v3: any, i3: string, v4: any, i4: string, v5: any, i5: string, v6: any, i6: string, v7: any, suffix: string, sanitizer?: any) => {
+      return result.ɵɵproperty(propName, result.ɵɵinterpolate8(prefix, v0, i0, v1, i1, v2, i2, v3, i3, v4, i4, v5, i5, v6, i6, v7, suffix), sanitizer);
+    };
+    (result as any).ɵɵpropertyInterpolateV = (propName: string, values: any[], sanitizer?: any) => {
+      return result.ɵɵproperty(propName, result.ɵɵinterpolateV(values), sanitizer);
+    };
+    return result;
+  }
+
+  private translateModule20to18Patch(module: typeof TranslateCore): typeof TranslateCore {
+    const translateServiceCls = module.TranslateService;
+    Object.defineProperty(translateServiceCls.prototype, 'translations', {
+      get: function() {
+        return this.store.translations;
+      },
+      enumerable: true,
+      configurable: true
+    });
+    return module;
   }
 }
 

@@ -16,6 +16,7 @@
 package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -49,7 +50,9 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_PROFILE_DATA;
@@ -275,6 +278,22 @@ public class DeviceProfileController extends BaseController {
         SecurityUser user = getCurrentUser();
         TenantId tenantId = user.getTenantId();
         return checkNotNull(deviceProfileService.findDeviceProfileNamesByTenantId(tenantId, activeOnly));
+    }
+
+    @ApiOperation(value = "Get Device Profile Infos By Ids (getDeviceProfilesByIds)",
+            notes = "Requested device profiles must be owned by tenant which is performing the request. " +
+                    NEW_LINE)
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @GetMapping(value = "/deviceProfileInfos", params = {"deviceProfileIds"})
+    public List<DeviceProfileInfo> getDeviceProfileInfosByIds(
+            @Parameter(description = "A list of device profile ids, separated by comma ','",  array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+            @RequestParam("deviceProfileIds") Set<UUID> deviceProfileUUIDs) throws ThingsboardException {
+        TenantId tenantId = getCurrentUser().getTenantId();
+        List<DeviceProfileId> deviceProfileIds = new ArrayList<>();
+        for (UUID deviceProfileUUID : deviceProfileUUIDs) {
+            deviceProfileIds.add(new DeviceProfileId(deviceProfileUUID));
+        }
+        return deviceProfileService.findDeviceProfilesByIds(tenantId, deviceProfileIds);
     }
 
 }

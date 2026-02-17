@@ -38,6 +38,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
@@ -59,6 +60,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceCredentialsId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -70,15 +72,19 @@ import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportColumn
 import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportRequest;
 import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportResult;
 import org.thingsboard.server.dao.device.DeviceDao;
-import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.service.gateway_device.GatewayNotificationsService;
 import org.thingsboard.server.service.state.DeviceStateService;
+import org.thingsboard.server.utils.CsvUtils;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -1630,6 +1636,57 @@ public class DeviceControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testBulkImportDeviceWithJsonAttr() throws Exception {
+        String deviceName = "some_device";
+        String deviceType = "some_type";
+        String deviceAttr = "{\"threshold\":45}";
+
+        List<List<String>> content = new LinkedList<>();
+        content.add(Arrays.asList("NAME", "TYPE", "ATTR"));
+        content.add(Arrays.asList(deviceName, deviceType, deviceAttr));
+
+        byte[] bytes = CsvUtils.generateCsv(content);
+        BulkImportRequest request = new BulkImportRequest();
+        request.setFile(new String(bytes, StandardCharsets.UTF_8));
+        BulkImportRequest.Mapping mapping = new BulkImportRequest.Mapping();
+        BulkImportRequest.ColumnMapping name = new BulkImportRequest.ColumnMapping();
+        name.setType(BulkImportColumnType.NAME);
+        BulkImportRequest.ColumnMapping type = new BulkImportRequest.ColumnMapping();
+        type.setType(BulkImportColumnType.TYPE);
+        BulkImportRequest.ColumnMapping attr = new BulkImportRequest.ColumnMapping();
+        attr.setType(BulkImportColumnType.SERVER_ATTRIBUTE);
+        attr.setKey("attr");
+        List<BulkImportRequest.ColumnMapping> columns = new ArrayList<>();
+        columns.add(name);
+        columns.add(type);
+        columns.add(attr);
+
+        mapping.setColumns(columns);
+        mapping.setDelimiter(',');
+        mapping.setUpdate(true);
+        mapping.setHeader(true);
+        request.setMapping(mapping);
+
+        BulkImportResult<Device> deviceBulkImportResult = doPostWithTypedResponse("/api/device/bulk_import", request, new TypeReference<>() {});
+
+        Assert.assertEquals(1, deviceBulkImportResult.getCreated().get());
+        Assert.assertEquals(0, deviceBulkImportResult.getErrors().get());
+        Assert.assertEquals(0, deviceBulkImportResult.getUpdated().get());
+        Assert.assertTrue(deviceBulkImportResult.getErrorsList().isEmpty());
+
+        Device savedDevice = doGet("/api/tenant/devices?deviceName=" + deviceName, Device.class);
+
+        Assert.assertNotNull(savedDevice);
+        Assert.assertEquals(deviceName, savedDevice.getName());
+        Assert.assertEquals(deviceType, savedDevice.getType());
+
+        Optional<AttributeKvEntry> retrieved = await().atMost(5, TimeUnit.SECONDS)
+                .until(() -> attributesService.find(tenantId, savedDevice.getId(), AttributeScope.SERVER_SCOPE, "attr").get(), Optional::isPresent);
+        assertThat(retrieved.get().getJsonValue().get()).isEqualTo(deviceAttr);
+        assertThat(retrieved.get().getStrValue()).isNotPresent();
+    }
+
+    @Test
     public void testSaveDeviceWithOutdatedVersion() throws Exception {
         Device device = createDevice("Device v1.0");
         assertThat(device.getVersion()).isOne();
@@ -1649,6 +1706,30 @@ public class DeviceControllerTest extends AbstractControllerTest {
         device = doPost("/api/device", device, Device.class);
         assertThat(device.getName()).isEqualTo("Device v1.1");
         assertThat(device.getVersion()).isEqualTo(3);
+    }
+
+    @Test
+    public void testSaveDeviceWithUniquifyStrategy() throws Exception {
+        Device device = new Device();
+        device.setName("My unique device");
+        device.setType("default");
+        Device savedDevice = doPost("/api/device", device, Device.class);
+
+        doPost("/api/device", device).andExpect(status().isBadRequest());
+
+        doPost("/api/device?nameConflictPolicy=FAIL", device).andExpect(status().isBadRequest());
+
+        Device secondDevice = doPost("/api/device?nameConflictPolicy=UNIQUIFY", device, Device.class);
+        assertThat(secondDevice.getName()).startsWith("My unique device_");
+
+        Device thirdDevice = doPost("/api/device?nameConflictPolicy=UNIQUIFY&uniquifySeparator=-", device, Device.class);
+        assertThat(thirdDevice.getName()).startsWith("My unique device-");
+
+        Device fourthDevice = doPost("/api/device?nameConflictPolicy=UNIQUIFY&uniquifyStrategy=INCREMENTAL", device, Device.class);
+        assertThat(fourthDevice.getName()).isEqualTo("My unique device_1");
+
+        Device fifthDevice = doPost("/api/device?nameConflictPolicy=UNIQUIFY&uniquifyStrategy=INCREMENTAL", device, Device.class);
+        assertThat(fifthDevice.getName()).isEqualTo("My unique device_2");
     }
 
     private Device createDevice(String name) {

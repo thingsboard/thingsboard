@@ -233,7 +233,9 @@
           <div class="notification-content mini" [style.background-color]="preview.processedTemplates.MICROSOFT_TEAMS?.themeColor">
             <div class="subject">{{ preview.processedTemplates.MICROSOFT_TEAMS.subject }}</div>
             {{ preview.processedTemplates.MICROSOFT_TEAMS.body }}
-            <button mat-raised-button>{{ preview.processedTemplates.MICROSOFT_TEAMS.button.text }}</button>
+            @if (preview.processedTemplates.MICROSOFT_TEAMS.button?.enabled) {
+              <button mat-raised-button>{{ preview.processedTemplates.MICROSOFT_TEAMS.button?.text }}</button>
+            }
           </div>
         </section>
       </div>

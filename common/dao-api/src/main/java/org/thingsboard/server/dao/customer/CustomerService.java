@@ -17,12 +17,14 @@ package org.thingsboard.server.dao.customer;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.NameConflictStrategy;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.EntityDaoService;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface CustomerService extends EntityDaoService {
@@ -37,6 +39,8 @@ public interface CustomerService extends EntityDaoService {
 
     Customer saveCustomer(Customer customer);
 
+    Customer saveCustomer(Customer customer, NameConflictStrategy nameConflictStrategy);
+
     void deleteCustomer(TenantId tenantId, CustomerId customerId);
 
     Customer findOrCreatePublicCustomer(TenantId tenantId);
@@ -46,5 +50,7 @@ public interface CustomerService extends EntityDaoService {
     PageData<Customer> findCustomersByTenantId(TenantId tenantId, PageLink pageLink);
 
     void deleteCustomersByTenantId(TenantId tenantId);
+
+    List<Customer> findCustomersByTenantIdAndIds(TenantId tenantId, List<CustomerId> customerIds);
 
 }

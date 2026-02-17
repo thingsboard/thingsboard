@@ -31,7 +31,7 @@
   <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
   <div mat-dialog-content>
     <tb-user></tb-user>
-    <mat-form-field class="mat-block">
+    <mat-form-field class="mat-block" appearance="outline">
       <mat-label translate>user.activation-method</mat-label>
       <mat-select [ngModelOptions]="{standalone: true}" [(ngModel)]="activationMethod">
         <mat-option *ngFor="let activationMethod of activationMethods" [value]="activationMethod">

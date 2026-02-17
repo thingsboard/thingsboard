@@ -39,28 +39,28 @@ import { AdditionalDebugActionConfig } from '@home/components/entity/debug/entit
 import { EntityType } from '@shared/models/entity-type.models';
 
 @Component({
-  selector: 'tb-entity-debug-settings-button',
-  templateUrl: './entity-debug-settings-button.component.html',
-  standalone: true,
-  imports: [
-    CommonModule,
-    SharedModule,
-    DurationLeftPipe,
-  ],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => EntityDebugSettingsButtonComponent),
-      multi: true
-    },
-    EntityDebugSettingsService
-  ],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'tb-entity-debug-settings-button',
+    templateUrl: './entity-debug-settings-button.component.html',
+    imports: [
+        CommonModule,
+        SharedModule,
+        DurationLeftPipe,
+    ],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => EntityDebugSettingsButtonComponent),
+            multi: true
+        },
+        EntityDebugSettingsService
+    ],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EntityDebugSettingsButtonComponent implements ControlValueAccessor {
 
   @Input() additionalActionConfig: AdditionalDebugActionConfig;
   @Input({required: true}) entityType: EntityType;
+  @Input() entityLabel: string;
 
   debugSettingsFormGroup = this.fb.group({
     failuresEnabled: [false],
@@ -124,6 +124,7 @@ export class EntityDebugSettingsButtonComponent implements ControlValueAccessor 
       debugConfig: {
         maxDebugModeDuration: this.maxDebugModeDuration,
         entityType: this.entityType,
+        entityLabel: this.entityLabel,
         additionalActionConfig: this.additionalActionConfig,
       },
       onSettingsAppliedFn: settings => {

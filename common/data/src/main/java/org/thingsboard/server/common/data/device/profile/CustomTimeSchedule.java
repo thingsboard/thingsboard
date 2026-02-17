@@ -21,6 +21,7 @@ import org.thingsboard.server.common.data.query.DynamicValue;
 import java.util.List;
 
 @Data
+@Deprecated
 public class CustomTimeSchedule implements AlarmSchedule {
 
     private String timezone;

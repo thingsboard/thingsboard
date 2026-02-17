@@ -22,13 +22,13 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.StringUtils;
@@ -112,8 +112,7 @@ public class WidgetTypeController extends AutoCommitController {
     @ApiOperation(value = "Get Widget Type Info (getWidgetTypeInfoById)",
             notes = "Get the Widget Type Info based on the provided Widget Type Id. " + WIDGET_TYPE_DETAILS_DESCRIPTION + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/widgetTypeInfo/{widgetTypeId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/widgetTypeInfo/{widgetTypeId}")
     public WidgetTypeInfo getWidgetTypeInfoById(
             @Parameter(description = WIDGET_TYPE_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable("widgetTypeId") String strWidgetTypeId) throws ThingsboardException {
@@ -133,8 +132,7 @@ public class WidgetTypeController extends AutoCommitController {
                     "Remove 'id', 'tenantId' rom the request body example (below) to create new Widget Type entity." +
                     SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/widgetType", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/widgetType")
     public WidgetTypeDetails saveWidgetType(
             @Parameter(description = "A JSON value representing the Widget Type Details.", required = true)
             @RequestBody WidgetTypeDetails widgetTypeDetails,
@@ -154,7 +152,7 @@ public class WidgetTypeController extends AutoCommitController {
     @ApiOperation(value = "Delete widget type (deleteWidgetType)",
             notes = "Deletes the  Widget Type. Referencing non-existing Widget Type Id will cause an error." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/widgetType/{widgetTypeId}", method = RequestMethod.DELETE)
+    @DeleteMapping(value = "/widgetType/{widgetTypeId}")
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteWidgetType(
             @Parameter(description = WIDGET_TYPE_ID_PARAM_DESCRIPTION, required = true)
@@ -169,8 +167,7 @@ public class WidgetTypeController extends AutoCommitController {
             notes = "Returns a page of Widget Type objects available for current user. " + WIDGET_TYPE_DESCRIPTION + " " +
                     PAGE_DATA_PARAMETERS + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/widgetTypes", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/widgetTypes", params = {"pageSize", "page"})
     public PageData<WidgetTypeInfo> getWidgetTypes(
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
@@ -326,8 +323,7 @@ public class WidgetTypeController extends AutoCommitController {
     @ApiOperation(value = "Get Widget Type Info objects (getBundleWidgetTypesInfos)",
             notes = "Get the Widget Type Info objects based on the provided parameters. " + WIDGET_TYPE_INFO_DESCRIPTION + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/widgetTypesInfos", params = {"widgetsBundleId", "pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/widgetTypesInfos", params = {"widgetsBundleId", "pageSize", "page"})
     public PageData<WidgetTypeInfo> getBundleWidgetTypesInfos(
             @Parameter(description = "Widget Bundle Id", required = true)
             @RequestParam("widgetsBundleId") String strWidgetsBundleId,

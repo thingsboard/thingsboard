@@ -15,7 +15,7 @@
 ///
 
 import { Component } from '@angular/core';
-import { TargetDevice, WidgetSettings, WidgetSettingsComponent, widgetType } from '@shared/models/widget.models';
+import { TargetDevice, WidgetSettings, WidgetSettingsComponent, widgetTitleAutocompleteValues, widgetType } from '@shared/models/widget.models';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -28,9 +28,10 @@ import {
 import { ValueType } from '@shared/models/constants';
 
 @Component({
-  selector: 'tb-single-switch-widget-settings',
-  templateUrl: './single-switch-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-single-switch-widget-settings',
+    templateUrl: './single-switch-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class SingleSwitchWidgetSettingsComponent extends WidgetSettingsComponent {
 
@@ -50,6 +51,8 @@ export class SingleSwitchWidgetSettingsComponent extends WidgetSettingsComponent
   valueType = ValueType;
 
   singleSwitchWidgetSettingsForm: UntypedFormGroup;
+
+  predefinedValues = widgetTitleAutocompleteValues;
 
   constructor(protected store: Store<AppState>,
               private fb: UntypedFormBuilder) {

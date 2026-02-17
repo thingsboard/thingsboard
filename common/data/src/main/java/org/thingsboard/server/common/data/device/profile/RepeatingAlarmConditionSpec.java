@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.query.FilterPredicateValue;
 @Schema
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
+@Deprecated
 public class RepeatingAlarmConditionSpec implements AlarmConditionSpec {
 
     @Schema(description = "Repeating predicate")

@@ -25,11 +25,12 @@ import { DatePipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-date-format-settings-panel',
-  templateUrl: './date-format-settings-panel.component.html',
-  providers: [],
-  styleUrls: ['./date-format-settings-panel.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-date-format-settings-panel',
+    templateUrl: './date-format-settings-panel.component.html',
+    providers: [],
+    styleUrls: ['./date-format-settings-panel.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class DateFormatSettingsPanelComponent extends PageComponent implements OnInit {
 

@@ -18,20 +18,20 @@ import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { FloatLabelType, MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
-import { MatDatetimepickerType } from '@mat-datetimepicker/core/datetimepicker/datetimepicker-type';
 import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
-  selector: 'tb-datetime',
-  templateUrl: './datetime.component.html',
-  styleUrls: ['./datetime.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DatetimeComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-datetime',
+    templateUrl: './datetime.component.html',
+    styleUrls: ['./datetime.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DatetimeComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class DatetimeComponent implements OnInit, ControlValueAccessor {
 
@@ -54,7 +54,7 @@ export class DatetimeComponent implements OnInit, ControlValueAccessor {
   appearance: MatFormFieldAppearance = 'fill';
 
   @Input()
-  type: MatDatetimepickerType = 'datetime';
+  type: 'date' | 'time' | 'month' | 'year' | 'datetime' = 'datetime';
 
   @Input()
   disabled: boolean;

@@ -50,22 +50,23 @@ interface CountrySearchData extends Country {
 }
 
 @Component({
-  selector: 'tb-country-autocomplete',
-  templateUrl: 'country-autocomplete.component.html',
-  styleUrls: ['./country-autocomplete.component.scss'],
-  providers: [
-    CountryData,
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => CountryAutocompleteComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => CountryAutocompleteComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-country-autocomplete',
+    templateUrl: 'country-autocomplete.component.html',
+    styleUrls: ['./country-autocomplete.component.scss'],
+    providers: [
+        CountryData,
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => CountryAutocompleteComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => CountryAutocompleteComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class CountryAutocompleteComponent implements OnInit, OnChanges, ControlValueAccessor, Validator {
 

@@ -16,9 +16,13 @@
 package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.mockito.Mockito;
@@ -27,6 +31,8 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
+import org.testcontainers.shaded.org.awaitility.Awaitility;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
@@ -43,10 +49,9 @@ import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
-import org.thingsboard.server.common.data.cf.configuration.Output;
-import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.TimeSeriesOutput;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
@@ -63,7 +68,7 @@ import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.service.validator.DeviceCredentialsDataValidator;
@@ -75,7 +80,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
@@ -108,6 +116,17 @@ public class DeviceServiceTest extends AbstractServiceTest {
 
     private IdComparator<Device> idComparator = new IdComparator<>();
     private TenantId anotherTenantId;
+    private static ListeningExecutorService executor;
+
+    @BeforeClass
+    public static void beforeClass() {
+        executor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10, ThingsBoardThreadFactory.forName("DeviceServiceTestScope")));
+    }
+
+    @AfterClass
+    public static void afterClass() {
+        executor.shutdownNow();
+    }
 
     @Before
     public void before() {
@@ -138,6 +157,31 @@ public class DeviceServiceTest extends AbstractServiceTest {
 
         Device device = this.saveDevice(tenantId, "My device");
         deleteDevice(tenantId, device);
+    }
+
+    @Test
+    public void testDeviceLimitOnTenantProfileLevel() throws InterruptedException {
+        TenantProfile defaultTenantProfile = tenantProfileService.findDefaultTenantProfile(tenantId);
+        defaultTenantProfile.getProfileData().setConfiguration(DefaultTenantProfileConfiguration.builder().maxDevices(5l).build());
+        tenantProfileService.saveTenantProfile(tenantId, defaultTenantProfile);
+
+        for (int i = 0; i < 50; i++) {
+            executor.submit(() -> {
+                Device device = new Device();
+                device.setTenantId(tenantId);
+                device.setName(StringUtils.randomAlphabetic(10));
+                device.setType("default");
+                deviceService.saveDevice(device);
+            });
+        }
+
+        Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> {
+            long countByTenantId = deviceService.countByTenantId(tenantId);
+            return countByTenantId == 5;
+        });
+
+        Thread.sleep(2000);
+        assertThat(deviceService.countByTenantId(tenantId)).isEqualTo(5);
     }
 
     @Test
@@ -1248,9 +1292,8 @@ public class DeviceServiceTest extends AbstractServiceTest {
 
         config.setExpression("T - (100 - H) / 5");
 
-        Output output = new Output();
+        TimeSeriesOutput output = new TimeSeriesOutput();
         output.setName("output");
-        output.setType(OutputType.TIME_SERIES);
 
         config.setOutput(output);
 

@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.DeviceIdInfo;
 import org.thingsboard.server.common.data.DeviceInfo;
 import org.thingsboard.server.common.data.DeviceInfoFilter;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ProfileEntityIdInfo;
@@ -112,6 +113,11 @@ public class JpaDeviceDao extends JpaAbstractDao<DeviceEntity, Device> implement
                         Boolean.TRUE.equals(filter.getActive()),
                         pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public List<EntityInfo> findEntityInfosByNamePrefix(TenantId tenantId, String name) {
+        return deviceRepository.findEntityInfosByNamePrefix(tenantId.getId(), name);
     }
 
     @Override

@@ -25,9 +25,10 @@ import { Router } from '@angular/router';
 import { DocumentationLink } from '@shared/models/user-settings.models';
 
 @Component({
-  selector: 'tb-add-doc-link-dialog',
-  templateUrl: './add-doc-link-dialog.component.html',
-  styleUrls: ['./add-doc-link-dialog.component.scss']
+    selector: 'tb-add-doc-link-dialog',
+    templateUrl: './add-doc-link-dialog.component.html',
+    styleUrls: ['./add-doc-link-dialog.component.scss'],
+    standalone: false
 })
 export class AddDocLinkDialogComponent extends
   DialogComponent<AddDocLinkDialogComponent, DocumentationLink> implements OnInit {

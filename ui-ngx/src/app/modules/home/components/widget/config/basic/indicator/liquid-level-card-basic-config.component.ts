@@ -27,6 +27,7 @@ import {
   datasourcesHasOnlyComparisonAggregation,
   DatasourceType,
   WidgetConfig,
+  widgetTitleAutocompleteValues,
 } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
@@ -66,9 +67,10 @@ import { UtilsService } from '@core/services/utils.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-liquid-level-card-basic-config',
-  templateUrl: './liquid-level-card-basic-config.component.html',
-  styleUrls: ['../basic-config.scss']
+    selector: 'tb-liquid-level-card-basic-config',
+    templateUrl: './liquid-level-card-basic-config.component.html',
+    styleUrls: ['../basic-config.scss'],
+    standalone: false
 })
 export class LiquidLevelCardBasicConfigComponent extends BasicWidgetConfigComponent {
 
@@ -125,6 +127,8 @@ export class LiquidLevelCardBasicConfigComponent extends BasicWidgetConfigCompon
   totalVolumeValuePreviewFn = this._totalVolumeValuePreviewFn.bind(this);
 
   datePreviewFn = this._datePreviewFn.bind(this);
+
+  predefinedValues = widgetTitleAutocompleteValues;
 
   private keySearchText: string;
   private latestKeySearchTextResult: Array<string>;

@@ -25,6 +25,7 @@ import {
   datasourcesHasAggregation,
   datasourcesHasOnlyComparisonAggregation,
   WidgetConfig,
+  widgetTitleAutocompleteValues,
 } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
@@ -49,9 +50,10 @@ import {
 import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Component({
-  selector: 'tb-signal-strength-basic-config',
-  templateUrl: './signal-strength-basic-config.component.html',
-  styleUrls: ['../basic-config.scss']
+    selector: 'tb-signal-strength-basic-config',
+    templateUrl: './signal-strength-basic-config.component.html',
+    styleUrls: ['../basic-config.scss'],
+    standalone: false
 })
 export class SignalStrengthBasicConfigComponent extends BasicWidgetConfigComponent {
 
@@ -76,6 +78,8 @@ export class SignalStrengthBasicConfigComponent extends BasicWidgetConfigCompone
   tooltipValuePreviewFn = this._tooltipValuePreviewFn.bind(this);
   tooltipDatePreviewFn = this._tooltipDatePreviewFn.bind(this);
 
+  predefinedValues = widgetTitleAutocompleteValues;
+  
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,
               private $injector: Injector,

@@ -24,7 +24,7 @@ import java.util.UUID;
 
 @Schema
 @Data
-public class TenantAdministratorsFilter implements UsersFilter {
+public class TenantAdministratorsFilter implements SystemLevelUsersFilter {
 
     @ArraySchema(schema = @Schema(implementation = UUID.class))
     private Set<UUID> tenantsIds;

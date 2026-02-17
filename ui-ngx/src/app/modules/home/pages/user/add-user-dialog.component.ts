@@ -40,9 +40,10 @@ export interface AddUserDialogData {
 }
 
 @Component({
-  selector: 'tb-add-user-dialog',
-  templateUrl: './add-user-dialog.component.html',
-  styleUrls: ['./add-user-dialog.component.scss']
+    selector: 'tb-add-user-dialog',
+    templateUrl: './add-user-dialog.component.html',
+    styleUrls: ['./add-user-dialog.component.scss'],
+    standalone: false
 })
 export class AddUserDialogComponent extends DialogComponent<AddUserDialogComponent, User> implements OnInit {
 
@@ -84,6 +85,12 @@ export class AddUserDialogComponent extends DialogComponent<AddUserDialogCompone
       this.user.authority = this.data.authority;
       this.user.tenantId = new TenantId(this.data.tenantId);
       this.user.customerId = new CustomerId(this.data.customerId);
+      if (!this.user.additionalInfo.lang) {
+        delete this.user.additionalInfo.lang;
+      }
+      if (!this.user.additionalInfo.unitSystem) {
+        delete this.user.additionalInfo.unitSystem;
+      }
       const sendActivationEmail = this.activationMethod === ActivationMethod.SEND_ACTIVATION_MAIL;
       this.userService.saveUser(this.user, sendActivationEmail).subscribe(
         (user) => {

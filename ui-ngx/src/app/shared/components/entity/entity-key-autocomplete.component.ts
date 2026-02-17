@@ -14,7 +14,17 @@
 /// limitations under the License.
 ///
 
-import { Component, effect, ElementRef, forwardRef, input, OnChanges, SimpleChanges, ViewChild, } from '@angular/core';
+import {
+  Component,
+  effect,
+  ElementRef,
+  forwardRef,
+  Input,
+  input,
+  OnChanges,
+  SimpleChanges,
+  ViewChild,
+} from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -32,26 +42,32 @@ import { AttributeScope, DataKeyType } from '@shared/models/telemetry/telemetry.
 import { EntitiesKeysByQuery } from '@shared/models/entity.models';
 import { EntityFilter } from '@shared/models/query/query.models';
 import { isEqual } from '@core/utils';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
-  selector: 'tb-entity-key-autocomplete',
-  templateUrl: './entity-key-autocomplete.component.html',
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => EntityKeyAutocompleteComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => EntityKeyAutocompleteComponent),
-      multi: true
-    }
-  ],
+    selector: 'tb-entity-key-autocomplete',
+    templateUrl: './entity-key-autocomplete.component.html',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => EntityKeyAutocompleteComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => EntityKeyAutocompleteComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class EntityKeyAutocompleteComponent implements ControlValueAccessor, Validator, OnChanges {
 
   @ViewChild('keyInput', {static: true}) keyInput: ElementRef;
+
+  @Input() placeholder = this.translate.instant('action.set');
+  @Input() requiredText = this.translate.instant('common.hint.key-required');
+  @Input() enableAutocomplete = true;
 
   entityFilter = input.required<EntityFilter>();
   dataKeyType = input.required<DataKeyType>();
@@ -67,12 +83,18 @@ export class EntityKeyAutocompleteComponent implements ControlValueAccessor, Val
   keys$ = this.keyInputSubject.asObservable()
     .pipe(
       switchMap(() => {
+        if (!this.enableAutocomplete) {
+          return of([] as string[]);
+        }
         return this.cachedResult ? of(this.cachedResult) : this.entityService.findEntityKeysByQuery({
           pageLink: { page: 0, pageSize: 100 },
           entityFilter: this.entityFilter(),
-        }, this.dataKeyType() === DataKeyType.attribute, this.dataKeyType() === DataKeyType.timeseries, this.keyScopeType());
+        }, this.dataKeyType() === DataKeyType.attribute, this.dataKeyType() === DataKeyType.timeseries, this.keyScopeType(), {ignoreLoading: true});
       }),
       map(result => {
+        if (Array.isArray(result)) {
+          return result;
+        }
         this.cachedResult = result;
         switch (this.dataKeyType()) {
           case DataKeyType.attribute:
@@ -96,6 +118,7 @@ export class EntityKeyAutocompleteComponent implements ControlValueAccessor, Val
   constructor(
     private fb: FormBuilder,
     private entityService: EntityService,
+    private translate: TranslateService,
   ) {
     this.keyControl.valueChanges
       .pipe(takeUntilDestroyed())
@@ -118,6 +141,7 @@ export class EntityKeyAutocompleteComponent implements ControlValueAccessor, Val
 
     if (filterChanged || keyScopeChanged || keyTypeChanged) {
       this.keyControl.setValue('', {emitEvent: false});
+      this.cachedResult = null;
     }
   }
 
@@ -136,10 +160,18 @@ export class EntityKeyAutocompleteComponent implements ControlValueAccessor, Val
   registerOnTouched(_): void {}
 
   validate(): ValidationErrors | null {
-    return this.keyControl.valid ? null : { keyControl: false };
+    return this.keyControl.valid || this.keyControl.disabled ? null : { keyControl: false };
   }
 
   writeValue(value: string): void {
     this.keyControl.patchValue(value, {emitEvent: false});
+  }
+
+  setDisabledState(isDisabled: boolean): void {
+    if (isDisabled) {
+      this.keyControl.disable({emitEvent: false});
+    } else {
+      this.keyControl.enable({emitEvent: false});
+    }
   }
 }

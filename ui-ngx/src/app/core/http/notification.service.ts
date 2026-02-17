@@ -37,6 +37,7 @@ import {
 } from '@shared/models/notification.models';
 import { User } from '@shared/models/user.model';
 import { isNotEmptyStr } from '@core/utils';
+import { EntityType } from '@shared/models/entity-type.models';
 
 @Injectable({
   providedIn: 'root'
@@ -67,6 +68,10 @@ export class NotificationService {
 
   public createNotificationRequest(notification: NotificationRequest, config?: RequestConfig): Observable<NotificationRequest> {
     return this.http.post<NotificationRequest>('/api/notification/request', notification, defaultHttpOptionsFromConfig(config));
+  }
+
+  public sendEntitiesLimitIncreaseRequest(entityType: EntityType, config?: RequestConfig): Observable<void> {
+    return this.http.post<void>(`/api/notification/entitiesLimitIncreaseRequest/${entityType}`, defaultHttpOptionsFromConfig(config));
   }
 
   public getNotificationRequestById(id: string, config?: RequestConfig): Observable<NotificationRequest> {

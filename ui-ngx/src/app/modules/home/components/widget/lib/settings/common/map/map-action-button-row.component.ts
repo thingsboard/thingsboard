@@ -30,18 +30,19 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { isEmptyStr } from '@core/utils';
 
 @Component({
-  selector: 'tb-map-action-button-row',
-  templateUrl: 'map-action-button-row.component.html',
-  providers: [{
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => MapActionButtonRowComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => MapActionButtonRowComponent),
-      multi: true
-    }]
+    selector: 'tb-map-action-button-row',
+    templateUrl: 'map-action-button-row.component.html',
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => MapActionButtonRowComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => MapActionButtonRowComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class MapActionButtonRowComponent implements ControlValueAccessor, Validator {
 

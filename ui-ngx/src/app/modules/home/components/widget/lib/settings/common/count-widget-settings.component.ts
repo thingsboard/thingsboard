@@ -41,16 +41,17 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-count-widget-settings',
-  templateUrl: './count-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => CountWidgetSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-count-widget-settings',
+    templateUrl: './count-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => CountWidgetSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class CountWidgetSettingsComponent extends PageComponent implements OnInit, ControlValueAccessor {
 
@@ -61,6 +62,9 @@ export class CountWidgetSettingsComponent extends PageComponent implements OnIni
   @Input()
   alarmElseEntity: boolean;
 
+  @Input()
+  predefinedValues: string[];
+  
   private propagateChange = null;
 
   countCardLayouts = countCardLayouts;
@@ -69,7 +73,6 @@ export class CountWidgetSettingsComponent extends PageComponent implements OnIni
   countCardLayoutImageMap: Map<CountCardLayout, string>;
 
   countWidgetConfigForm: UntypedFormGroup;
-
   constructor(protected store: Store<AppState>,
               private fb: UntypedFormBuilder,
               private destroyRef: DestroyRef) {

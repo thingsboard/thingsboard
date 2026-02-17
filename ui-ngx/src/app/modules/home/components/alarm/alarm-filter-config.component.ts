@@ -60,16 +60,17 @@ export interface AlarmFilterConfigData {
 
 // @dynamic
 @Component({
-  selector: 'tb-alarm-filter-config',
-  templateUrl: './alarm-filter-config.component.html',
-  styleUrls: ['./alarm-filter-config.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => AlarmFilterConfigComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-alarm-filter-config',
+    templateUrl: './alarm-filter-config.component.html',
+    styleUrls: ['./alarm-filter-config.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => AlarmFilterConfigComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class AlarmFilterConfigComponent implements OnInit, OnDestroy, ControlValueAccessor {
 
@@ -107,7 +108,7 @@ export class AlarmFilterConfigComponent implements OnInit, OnDestroy, ControlVal
 
   alarmSeverityTranslationMap = alarmSeverityTranslations;
 
-  buttonDisplayValue = this.translate.instant('alarm.alarm-filter');
+  buttonDisplayValue = this.translate.instant('alarm.alarm-filter-title');
 
   alarmFilterConfigForm: UntypedFormGroup;
 
@@ -224,6 +225,7 @@ export class AlarmFilterConfigComponent implements OnInit, OnDestroy, ControlVal
 
   cancel() {
     this.updateAlarmConfigForm(this.alarmFilterConfig);
+    this.alarmFilterConfigForm.markAsPristine();
     if (this.overlayRef) {
       this.overlayRef.dispose();
     } else {

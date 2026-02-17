@@ -27,9 +27,10 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-device-profile-tabs',
-  templateUrl: './device-profile-tabs.component.html',
-  styleUrls: []
+    selector: 'tb-device-profile-tabs',
+    templateUrl: './device-profile-tabs.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class DeviceProfileTabsComponent extends EntityTabsComponent<DeviceProfile> implements OnInit {
 
@@ -40,6 +41,9 @@ export class DeviceProfileTabsComponent extends EntityTabsComponent<DeviceProfil
   deviceTransportTypeHints = deviceTransportTypeHintMap;
 
   isTransportTypeChanged = false;
+
+  hasOldRules = false;
+  alarmRulesOldVersion = false;
 
   constructor(protected store: Store<AppState>,
               private destroyRef: DestroyRef) {
@@ -57,6 +61,8 @@ export class DeviceProfileTabsComponent extends EntityTabsComponent<DeviceProfil
 
   protected setEntity(entity: DeviceProfile) {
     this.isTransportTypeChanged = false;
+    this.hasOldRules = !!entity?.profileData?.alarms?.length;
+    this.alarmRulesOldVersion = false;
     super.setEntity(entity);
   }
 

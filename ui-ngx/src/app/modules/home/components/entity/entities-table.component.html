@@ -45,27 +45,19 @@
                               asButton strokedButton historyOnly [forAllTimeEnabled]="entitiesTableConfig.forAllTimeEnabled"></tb-timewindow>
             </div>
             <span class="flex-1"></span>
-            <div [class.!hidden]="!addEnabled()">
-              <ng-container *ngIf="!entitiesTableConfig.addActionDescriptors.length; else addActions">
-                <button *ngIf="!entitiesTableConfig.addAsTextButton"
-                        mat-icon-button
+            <div [class.!hidden]="!addEnabled() || entitiesTableConfig.addAsTextButton">
+              <ng-container *ngIf="!entitiesTableConfig.addActionDescriptors.length; else iconCustom">
+                <button mat-icon-button
                         [disabled]="isLoading$ | async"
                         (click)="addEntity($event)"
                         matTooltip="{{ translations.add | translate }}"
                         matTooltipPosition="above">
                   <mat-icon>add</mat-icon>
                 </button>
-                <button *ngIf="entitiesTableConfig.addAsTextButton"
-                        mat-stroked-button color="primary"
-                        [disabled]="isLoading$ | async"
-                        (click)="addEntity($event)">
-                  <mat-icon>add</mat-icon>
-                  {{ translations.add | translate }}
-                </button>
               </ng-container>
-              <ng-template #addActions>
-                <ng-container *ngIf="entitiesTableConfig.addActionDescriptors.length === 1; else addActionsMenu">
-                  <button *ngIf="!entitiesTableConfig.addAsTextButton && entitiesTableConfig.addActionDescriptors[0].isEnabled()"
+              <ng-template #iconCustom>
+                <ng-container *ngIf="entitiesTableConfig.addActionDescriptors.length === 1; else iconMenu">
+                  <button *ngIf="entitiesTableConfig.addActionDescriptors[0].isEnabled()"
                           mat-icon-button
                           [disabled]="isLoading$ | async"
                           (click)="entitiesTableConfig.addActionDescriptors[0].onAction($event)"
@@ -73,30 +65,14 @@
                           matTooltipPosition="above">
                     <tb-icon>{{entitiesTableConfig.addActionDescriptors[0].icon}}</tb-icon>
                   </button>
-                  <button *ngIf="entitiesTableConfig.addAsTextButton && entitiesTableConfig.addActionDescriptors[0].isEnabled()"
-                          mat-stroked-button color="primary"
-                          [disabled]="isLoading$ | async"
-                          (click)="entitiesTableConfig.addActionDescriptors[0].onAction($event)">
-                    <tb-icon>{{entitiesTableConfig.addActionDescriptors[0].icon}}</tb-icon>
-                    {{ entitiesTableConfig.addActionDescriptors[0].name }}
-                  </button>
                 </ng-container>
-                <ng-template #addActionsMenu>
+                <ng-template #iconMenu>
                   <button mat-icon-button [disabled]="isLoading$ | async"
                           matTooltip="{{ translations.add | translate }}"
                           matTooltipPosition="above"
                           [matMenuTriggerFor]="addActionsMenu">
                     <mat-icon>add</mat-icon>
                   </button>
-                  <mat-menu #addActionsMenu="matMenu" xPosition="before">
-                    <button mat-menu-item *ngFor="let actionDescriptor of entitiesTableConfig.addActionDescriptors"
-                            [disabled]="isLoading$ | async"
-                            [class.!hidden]="!actionDescriptor.isEnabled()"
-                            (click)="actionDescriptor.onAction($event)">
-                      <tb-icon matMenuItemIcon>{{actionDescriptor.icon}}</tb-icon>
-                      <span>{{ actionDescriptor.name }}</span>
-                    </button>
-                  </mat-menu>
                 </ng-template>
               </ng-template>
             </div>
@@ -118,6 +94,72 @@
                     matTooltipPosition="above">
               <mat-icon>search</mat-icon>
             </button>
+            <div [class.!hidden]="!addEnabled() || !entitiesTableConfig.addAsTextButton" class="pl-3" style="--mat-fab-small-container-elevation-shadow: none;">
+              <ng-container *ngIf="!entitiesTableConfig.addActionDescriptors.length; else textActions">
+                <button class="lt-sm:!hidden"
+                        mat-flat-button color="primary"
+                        [disabled]="isLoading$ | async"
+                        (click)="addEntity($event)">
+                  <mat-icon>add</mat-icon>
+                  {{ translations.add | translate }}
+                </button>
+                <button class="gt-xs:!hidden"
+                        mat-mini-fab color="primary"
+                        [disabled]="isLoading$ | async"
+                        (click)="addEntity($event)"
+                        matTooltip="{{ translations.add | translate }}"
+                        matTooltipPosition="above">
+                  <mat-icon>add</mat-icon>
+                </button>
+              </ng-container>
+              <ng-template #textActions>
+                <ng-container *ngIf="entitiesTableConfig.addActionDescriptors.length === 1; else textMenu">
+                  <ng-container *ngIf="entitiesTableConfig.addActionDescriptors[0].isEnabled()">
+                    <button class="lt-sm:!hidden"
+                            mat-flat-button color="primary"
+                            [disabled]="isLoading$ | async"
+                            (click)="entitiesTableConfig.addActionDescriptors[0].onAction($event)">
+                      <tb-icon matButtonIcon>{{entitiesTableConfig.addActionDescriptors[0].icon}}</tb-icon>
+                      {{ entitiesTableConfig.addActionDescriptors[0].name }}
+                    </button>
+                    <button class="gt-xs:!hidden"
+                            mat-mini-fab color="primary"
+                            [disabled]="isLoading$ | async"
+                            (click)="entitiesTableConfig.addActionDescriptors[0].onAction($event)"
+                            matTooltip="{{ entitiesTableConfig.addActionDescriptors[0].name }}"
+                            matTooltipPosition="above">
+                      <mat-icon>{{entitiesTableConfig.addActionDescriptors[0].icon}}</mat-icon>
+                    </button>
+                  </ng-container>
+                </ng-container>
+                <ng-template #textMenu>
+                  <button class="lt-sm:!hidden"
+                          mat-flat-button color="primary"
+                          [disabled]="isLoading$ | async"
+                          [matMenuTriggerFor]="addActionsMenu">
+                    <mat-icon>add</mat-icon>
+                    {{ translations.add | translate }}
+                  </button>
+                  <button class="gt-xs:!hidden"
+                          mat-mini-fab color="primary"
+                          [disabled]="isLoading$ | async"
+                          [matMenuTriggerFor]="addActionsMenu"
+                          matTooltip="{{ translations.add | translate }}"
+                          matTooltipPosition="above">
+                    <mat-icon>add</mat-icon>
+                  </button>
+                </ng-template>
+              </ng-template>
+            </div>
+            <mat-menu #addActionsMenu="matMenu" xPosition="before">
+              <button mat-menu-item *ngFor="let actionDescriptor of entitiesTableConfig.addActionDescriptors"
+                      [disabled]="isLoading$ | async"
+                      [class.!hidden]="!actionDescriptor.isEnabled()"
+                      (click)="actionDescriptor.onAction($event)">
+                <tb-icon matMenuItemIcon>{{actionDescriptor.icon}}</tb-icon>
+                <span>{{ actionDescriptor.name }}</span>
+              </button>
+            </mat-menu>
           </div>
         </mat-toolbar>
         <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="!textSearchMode || !dataSource.selection.isEmpty()">

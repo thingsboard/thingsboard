@@ -44,9 +44,10 @@ export interface TemplateNotificationDialogData {
 }
 
 @Component({
-  selector: 'tb-template-notification-dialog',
-  templateUrl: './template-notification-dialog.component.html',
-  styleUrls: ['./template-notification-dialog.component.scss']
+    selector: 'tb-template-notification-dialog',
+    templateUrl: './template-notification-dialog.component.html',
+    styleUrls: ['./template-notification-dialog.component.scss'],
+    standalone: false
 })
 export class TemplateNotificationDialogComponent
   extends TemplateConfiguration<TemplateNotificationDialogComponent, NotificationTemplate> implements OnDestroy {
@@ -181,6 +182,7 @@ export class TemplateNotificationDialogComponent
   private allowNotificationType(): NotificationType[] {
     const sysAdminAllowNotificationTypes = new Set([
       NotificationType.ENTITIES_LIMIT,
+      NotificationType.ENTITIES_LIMIT_INCREASE_REQUEST,
       NotificationType.API_USAGE_LIMIT,
       NotificationType.NEW_PLATFORM_VERSION,
       NotificationType.RATE_LIMITS,

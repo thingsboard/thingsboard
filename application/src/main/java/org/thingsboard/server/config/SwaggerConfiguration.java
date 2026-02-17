@@ -68,7 +68,6 @@ import org.thingsboard.server.service.security.auth.rest.LoginRequest;
 import org.thingsboard.server.service.security.auth.rest.LoginResponse;
 
 import java.util.ArrayList;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -76,6 +75,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -91,6 +91,9 @@ public class SwaggerConfiguration {
 
     public static final String LOGIN_ENDPOINT = "/api/auth/login";
     public static final String REFRESH_TOKEN_ENDPOINT = "/api/auth/token";
+
+    private static final String LOGIN_PASSWORD_SCHEME = "http_login_form";
+    private static final String API_KEY_SCHEME = "API key form";
 
     private static final ApiResponses loginResponses = loginResponses();
     private static final ApiResponses defaultErrorResponses = defaultErrorResponses(false);
@@ -122,6 +125,8 @@ public class SwaggerConfiguration {
     private String appVersion;
     @Value("${swagger.group_name:thingsboard}")
     private String groupName;
+    @Value("${swagger.doc_expansion:list}")
+    private String docExpansion;
 
     @Bean
     public OpenAPI thingsboardApi() {
@@ -146,14 +151,28 @@ public class SwaggerConfiguration {
                 .license(license)
                 .version(apiVersion);
 
-        SecurityScheme securityScheme = new SecurityScheme()
+        SecurityScheme loginPasswordScheme = new SecurityScheme()
                 .type(SecurityScheme.Type.HTTP)
                 .description("Enter Username / Password")
                 .scheme("loginPassword")
                 .bearerFormat("/api/auth/login|X-Authorization");
 
+        SecurityScheme apiKeyScheme = new SecurityScheme()
+                .type(SecurityScheme.Type.APIKEY)
+                .name("X-Authorization")
+                .in(SecurityScheme.In.HEADER)
+                .description("""
+                        Enter the API key value with 'ApiKey' prefix in format: **ApiKey <your_api_key_value>**
+                                                
+                        Example: **ApiKey tb_5te51SkLRYpjGrujUGwqkjFvooWBlQpVe2An2Dr3w13wjfxDW**
+                                                
+                        <br>**NOTE**: Use only ONE authentication method at a time. If both are authorized, JWT auth takes the priority.<br>
+                        """);
+
         var openApi = new OpenAPI()
-                .components(new Components().addSecuritySchemes("http_login_form", securityScheme))
+                .components(new Components()
+                        .addSecuritySchemes(LOGIN_PASSWORD_SCHEME, loginPasswordScheme)
+                        .addSecuritySchemes(API_KEY_SCHEME, apiKeyScheme))
                 .info(info);
         addDefaultSchemas(openApi);
         addLoginOperation(openApi);
@@ -178,7 +197,7 @@ public class SwaggerConfiguration {
         uiProperties.setDefaultModelExpandDepth(1);
         uiProperties.setDefaultModelRendering("example");
         uiProperties.setDisplayRequestDuration(false);
-        uiProperties.setDocExpansion("list");
+        uiProperties.setDocExpansion(docExpansion);
         uiProperties.setFilter("false");
         uiProperties.setMaxDisplayedTags(null);
         uiProperties.setOperationsSorter("alpha");
@@ -202,13 +221,14 @@ public class SwaggerConfiguration {
         operation.summary("Login method to get user JWT token data");
         operation.description("""
                 Login method used to authenticate user and get JWT token data.
-
+                                
                 Value of the response **token** field can be used as **X-Authorization** header value:
-
+                                
                 `X-Authorization: Bearer $JWT_TOKEN_VALUE`.""");
+
         var requestBody = new RequestBody().description("Login request")
                 .content(new Content().addMediaType(APPLICATION_JSON_VALUE,
-                new MediaType().schema(new Schema<LoginRequest>().$ref("#/components/schemas/LoginRequest"))));
+                        new MediaType().schema(new Schema<LoginRequest>().$ref("#/components/schemas/LoginRequest"))));
         operation.requestBody(requestBody);
 
         operation.responses(loginResponses);
@@ -222,11 +242,11 @@ public class SwaggerConfiguration {
         var operation = new Operation();
         operation.summary("Refresh user JWT token data");
         operation.description("""
-            Method to refresh JWT token. Provide a valid refresh token to get a new JWT token.
-            
-            The response contains a new token that can be used for authorization.
-            
-            `X-Authorization: Bearer $JWT_TOKEN_VALUE`""");
+                Method to refresh JWT token. Provide a valid refresh token to get a new JWT token.
+                                
+                The response contains a new token that can be used for authorization.
+                                
+                `X-Authorization: Bearer $JWT_TOKEN_VALUE`""");
 
         var requestBody = new RequestBody().description("Refresh token request")
                 .content(new Content().addMediaType(APPLICATION_JSON_VALUE,
@@ -306,8 +326,9 @@ public class SwaggerConfiguration {
         return (routerOperation, handlerMethod) -> {
             String[] pNames = localSpringDocParameterNameDiscoverer.getParameterNames(handlerMethod.getMethod());
             String[] reflectionParametersNames = Arrays.stream(handlerMethod.getMethod().getParameters()).map(java.lang.reflect.Parameter::getName).toArray(String[]::new);
-            if (pNames == null || Arrays.stream(pNames).anyMatch(Objects::isNull))
+            if (pNames == null || Arrays.stream(pNames).anyMatch(Objects::isNull)) {
                 pNames = reflectionParametersNames;
+            }
             MethodParameter[] parameters = handlerMethod.getMethodParameters();
             List<String> requestParams = new ArrayList<>();
             for (var i = 0; i < parameters.length; i++) {
@@ -339,26 +360,25 @@ public class SwaggerConfiguration {
     }
 
     private OpenApiCustomizer customOpenApiCustomizer() {
-        var loginForm = new SecurityRequirement().addList("http_login_form", Arrays.asList(
-                Authority.SYS_ADMIN.name(),
-                Authority.TENANT_ADMIN.name(),
-                Authority.CUSTOMER_USER.name()
-        ));
+        var loginRequirement = createSecurityRequirement(LOGIN_PASSWORD_SCHEME);
+        var apiKeyRequirement = createSecurityRequirement(API_KEY_SCHEME);
+
         return openAPI -> {
             var paths = openAPI.getPaths();
-            paths.entrySet().stream().peek(entry -> {
-                securityCustomization(loginForm, entry);
-                if (!entry.getKey().equals(LOGIN_ENDPOINT)) {
-                    defaultErrorResponsesCustomization(entry.getValue());
-                }
-            }).map(this::tagsCustomization).filter(Objects::nonNull).distinct().sorted(Comparator.comparing(Tag::getName)).forEach(openAPI::addTagsItem);
+            paths.entrySet().stream()
+                    .peek(entry -> {
+                        securityCustomization(entry, loginRequirement, apiKeyRequirement);
+                        if (!entry.getKey().equals(LOGIN_ENDPOINT)) {
+                            defaultErrorResponsesCustomization(entry.getValue());
+                        }
+                    })
+                    .map(this::extractTagFromPath).filter(Objects::nonNull).distinct().sorted(Comparator.comparing(Tag::getName)).forEach(openAPI::addTagsItem);
 
             var pathItemsByTags = new TreeMap<String, Map<String, PathItem>>();
             paths.forEach((k, v) -> {
                 var tagItem = tagItemFromPathItem(v);
                 if (tagItem != null) {
-                    var pathItemMap = pathItemsByTags.computeIfAbsent(tagItem, k1 -> new TreeMap<>());
-                    pathItemMap.put(k, v);
+                    pathItemsByTags.computeIfAbsent(tagItem, k1 -> new TreeMap<>()).put(k, v);
                 }
             });
             var sortedPaths = new Paths();
@@ -410,6 +430,19 @@ public class SwaggerConfiguration {
             var sortedSchemas = new TreeMap<>(openAPI.getComponents().getSchemas());
             openAPI.getComponents().setSchemas(new LinkedHashMap<>(sortedSchemas));
         };
+    }
+
+    private SecurityRequirement createSecurityRequirement(String schemeName) {
+        return new SecurityRequirement().addList(schemeName, Arrays.asList(
+                Authority.SYS_ADMIN.name(),
+                Authority.TENANT_ADMIN.name(),
+                Authority.CUSTOMER_USER.name()
+        ));
+    }
+
+    private Tag extractTagFromPath(Map.Entry<String, PathItem> entry) {
+        var tagName = tagItemFromPathItem(entry.getValue());
+        return tagName != null ? tagFromTagItem(tagName) : null;
     }
 
     private String findBaseTypeForOneOf(Map<String, Schema> schemas, List<Schema> oneOfSchemas) {
@@ -533,17 +566,20 @@ public class SwaggerConfiguration {
         StringBuilder sb = new StringBuilder();
 
         for (String word : words) {
-            sb.append(word.substring(0, 1).toUpperCase());
-            sb.append(word.substring(1).toLowerCase());
-            sb.append(" ");
+            if (!word.isEmpty()) {
+                sb.append(word.substring(0, 1).toUpperCase());
+                sb.append(word.substring(1).toLowerCase());
+                sb.append(" ");
+            }
         }
 
         return new Tag().name(tagItem).description(sb.toString().trim());
     }
 
     private void defaultErrorResponsesCustomization(PathItem pathItem) {
-        pathItem.readOperationsMap().forEach(((httpMethod, operation) -> {
+        pathItem.readOperationsMap().forEach((httpMethod, operation) -> {
             var errorResponses = httpMethod.equals(PathItem.HttpMethod.POST) ? defaultPostErrorResponses : defaultErrorResponses;
+
             var responses = operation.getResponses();
             if (responses == null) {
                 responses = errorResponses;
@@ -556,16 +592,19 @@ public class SwaggerConfiguration {
                 });
             }
             operation.setResponses(responses);
-        }));
+        });
     }
 
-    private void securityCustomization(SecurityRequirement loginForm, Map.Entry<String, PathItem> entry) {
+    private void securityCustomization(Map.Entry<String, PathItem> entry, SecurityRequirement jwtBearerRequirement, SecurityRequirement apiKeyRequirement) {
         var path = entry.getKey();
-        if (path.matches(securityPathRegex) && !path.matches(nonSecurityPathRegex) && !path.equals(LOGIN_ENDPOINT)) {
+        if (path.matches(securityPathRegex) && !path.matches(nonSecurityPathRegex) && !path.equals(LOGIN_ENDPOINT) && !path.equals(REFRESH_TOKEN_ENDPOINT)) {
             entry.getValue()
                     .readOperationsMap()
                     .values()
-                    .forEach(operation -> operation.addSecurityItem(loginForm));
+                    .forEach(operation -> {
+                        operation.addSecurityItem(jwtBearerRequirement);
+                        operation.addSecurityItem(apiKeyRequirement);
+                    });
         }
     }
 
@@ -580,6 +619,7 @@ public class SwaggerConfiguration {
 
     private static ApiResponses defaultErrorResponses(boolean isPost) {
         ApiResponses apiResponses = new ApiResponses();
+
         apiResponses.addApiResponse("400", errorResponse("400", "Bad Request",
                 ThingsboardErrorResponse.of(isPost ? "Invalid request body" : "Invalid UUID string: 123", ThingsboardErrorCode.BAD_REQUEST_PARAMS, HttpStatus.BAD_REQUEST)));
 
@@ -637,15 +677,13 @@ public class SwaggerConfiguration {
     }
 
     private static ApiResponse errorResponse(String description, Map<String, Example> examples) {
-        var schema = new Schema<ThingsboardErrorResponse>();
-        schema.$ref("#/components/schemas/ThingsboardErrorResponse");
+        var schema = new Schema<ThingsboardErrorResponse>().$ref("#/components/schemas/ThingsboardErrorResponse");
         return errorResponse(description, examples, schema);
     }
 
     private static ApiResponse errorResponse(String description, Map<String, Example> examples, Schema<? extends ThingsboardErrorResponse> errorResponseSchema) {
-        MediaType mediaType = new MediaType().schema(errorResponseSchema);
-        mediaType.setExamples(examples);
-        Content content =  new Content().addMediaType(org.springframework.http.MediaType.APPLICATION_JSON_VALUE, mediaType);
+        MediaType mediaType = new MediaType().schema(errorResponseSchema).examples(examples);
+        Content content = new Content().addMediaType(org.springframework.http.MediaType.APPLICATION_JSON_VALUE, mediaType);
         return new ApiResponse().description(description).content(content);
     }
 

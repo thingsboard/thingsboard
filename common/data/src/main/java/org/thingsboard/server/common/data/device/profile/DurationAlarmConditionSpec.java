@@ -25,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 @Schema(description = "Duration Alarm Condition Specification")
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
+@Deprecated
 public class DurationAlarmConditionSpec implements AlarmConditionSpec {
 
     @Schema(description = "Duration time unit")

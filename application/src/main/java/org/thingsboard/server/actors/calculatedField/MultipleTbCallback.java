@@ -50,7 +50,7 @@ public class MultipleTbCallback implements TbCallback {
 
     @Override
     public void onFailure(Throwable t) {
-        log.warn("[{}][{}] onFailure.", id, callback.getId());
+        log.warn("[{}][{}] onFailure.", id, callback.getId(), t);
         callback.onFailure(t);
     }
 }

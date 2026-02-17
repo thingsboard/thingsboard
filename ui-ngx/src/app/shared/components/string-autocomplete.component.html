@@ -24,28 +24,28 @@
          [matAutocomplete]="optionsAutocomplete">
   <button *ngIf="selectionFormControl.value && !disabled"
           type="button"
-          class="tb-icon-24 mr-2"
+          class="tb-icon-24"
           matSuffix mat-icon-button aria-label="Clear"
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
-  <mat-icon *ngIf="selectionFormControl.hasError('required') && selectionFormControl.touched && !showInlineError"
+  <mat-icon *ngIf="selectionFormControl.errors && selectionFormControl.touched && !showInlineError"
             matIconSuffix
-            [matTooltip]="errorText"
+            [matTooltip]="getErrorMessage"
             matTooltipPosition="above"
             [matTooltipClass]="tooltipClass"
             class="material-icons tb-suffix-show-always tb-error">
     warning
   </mat-icon>
-  <mat-error *ngIf="selectionFormControl.hasError('required') && showInlineError">
-    {{errorText}}
+  <mat-error *ngIf="selectionFormControl.errors && showInlineError">
+    {{ getErrorMessage }}
   </mat-error>
   <mat-autocomplete
     #optionsAutocomplete="matAutocomplete"
-    class="tb-autocomplete tb-options-input-autocomplete"
+    class="tb-autocomplete"
     [panelWidth]="panelWidth">
     <mat-option *ngFor="let option of filteredOptions$ | async" [value]="option">
-      <span class="tb-option-name flex-1" [innerHTML]="option | highlight:searchText:true:'ig'"></span>
+      <span [innerHTML]="option | highlight:searchText:true:'ig'"></span>
     </mat-option>
   </mat-autocomplete>
 </mat-form-field>

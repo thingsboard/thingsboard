@@ -32,7 +32,7 @@ import {
   UntypedFormGroup,
   Validators
 } from '@angular/forms';
-import { MatButton } from '@angular/material/button';
+import { MatIconButton } from '@angular/material/button';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   CirclesDataLayerSettings,
@@ -40,7 +40,7 @@ import {
   MapDataLayerType,
   MapType,
   MarkersDataLayerSettings,
-  PolygonsDataLayerSettings,
+  PolygonsDataLayerSettings, PolylinesDataLayerSettings,
   TripsDataLayerSettings,
   updateDataKeyToNewDsType
 } from '@shared/models/widget/maps/map.models';
@@ -57,17 +57,18 @@ import {
 import { MapSettingsContext } from '@home/components/widget/lib/settings/common/map/map-settings.component.models';
 
 @Component({
-  selector: 'tb-map-data-layer-row',
-  templateUrl: './map-data-layer-row.component.html',
-  styleUrls: ['./map-data-layer-row.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => MapDataLayerRowComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-map-data-layer-row',
+    templateUrl: './map-data-layer-row.component.html',
+    styleUrls: ['./map-data-layer-row.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => MapDataLayerRowComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class MapDataLayerRowComponent implements ControlValueAccessor, OnInit {
 
@@ -150,6 +151,11 @@ export class MapDataLayerRowComponent implements ControlValueAccessor, OnInit {
         this.removeDataLayerText = 'widgets.maps.data-layer.circle.remove-circle';
         this.dataLayerFormGroup.addControl('circleKey', this.fb.control(null, Validators.required));
         break;
+      case 'polylines':
+        this.editDataLayerText = 'widgets.maps.data-layer.polyline.polyline-configuration';
+        this.removeDataLayerText = 'widgets.maps.data-layer.polyline.remove-polyline';
+        this.dataLayerFormGroup.addControl('polylineKey', this.fb.control(null, Validators.required));
+        break;
     }
     this.dataLayerFormGroup.valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
@@ -225,16 +231,24 @@ export class MapDataLayerRowComponent implements ControlValueAccessor, OnInit {
           }, {emitEvent: false}
         );
         break;
+      case 'polylines':
+        const polylinesDataLayer = value as PolylinesDataLayerSettings;
+        this.dataLayerFormGroup.patchValue(
+          {
+            polylineKey: polylinesDataLayer?.polylineKey
+          }, {emitEvent: false}
+        );
+        break;
     }
     this.updateValidators();
     this.cd.markForCheck();
   }
 
-  editKey(keyType: 'xKey' | 'yKey' | 'polygonKey' | 'circleKey') {
+  editKey(keyType: 'xKey' | 'yKey' | 'polygonKey' | 'circleKey' | 'polylineKey') {
     const targetDataKey: DataKey = this.dataLayerFormGroup.get(keyType).value;
     this.context.editKey(targetDataKey,
       this.dataLayerFormGroup.get('dsDeviceId').value, this.dataLayerFormGroup.get('dsEntityAliasId').value,
-      this.dataLayerType === 'trips' ? widgetType.timeseries : widgetType.latest).subscribe(
+      this.dataLayerType === 'trips' ? widgetType.timeseries : widgetType.latest, false).subscribe(
       (updatedDataKey) => {
         if (updatedDataKey) {
           this.dataLayerFormGroup.get(keyType).patchValue(updatedDataKey);
@@ -243,7 +257,7 @@ export class MapDataLayerRowComponent implements ControlValueAccessor, OnInit {
     );
   }
 
-  editDataLayer($event: Event, matButton: MatButton) {
+  editDataLayer($event: Event, matButton: MatIconButton) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -293,6 +307,13 @@ export class MapDataLayerRowComponent implements ControlValueAccessor, OnInit {
         const circleKey: DataKey = this.dataLayerFormGroup.get('circleKey').value;
         if (updateDataKeyToNewDsType(circleKey, newDsType)) {
           this.dataLayerFormGroup.get('circleKey').patchValue(circleKey, {emitEvent: false});
+          updateModel = true;
+        }
+        break;
+      case 'polylines':
+        const polylineKey: DataKey = this.dataLayerFormGroup.get('polylineKey').value;
+        if (updateDataKeyToNewDsType(polylineKey, newDsType)) {
+          this.dataLayerFormGroup.get('polylineKey').patchValue(polylineKey, {emitEvent: false});
           updateModel = true;
         }
         break;

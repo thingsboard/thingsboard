@@ -50,8 +50,9 @@ interface MarkdownWidgetSettings {
 type MarkdownTextFunction = (data: FormattedData[], ctx: WidgetContext) => string;
 
 @Component({
-  selector: 'tb-markdown-widget',
-  templateUrl: './markdown-widget.component.html'
+    selector: 'tb-markdown-widget',
+    templateUrl: './markdown-widget.component.html',
+    standalone: false
 })
 export class MarkdownWidgetComponent extends PageComponent implements OnInit {
 

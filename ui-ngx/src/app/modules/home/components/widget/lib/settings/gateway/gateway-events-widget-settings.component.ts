@@ -15,7 +15,7 @@
 ///
 
 import { Component } from '@angular/core';
-import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
+import { WidgetSettings, WidgetSettingsComponent, widgetTitleAutocompleteValues } from '@shared/models/widget.models';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -23,15 +23,18 @@ import { MatChipInputEvent } from '@angular/material/chips';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 
 @Component({
-  selector: 'tb-gateway-events-widget-settings',
-  templateUrl: './gateway-events-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-gateway-events-widget-settings',
+    templateUrl: './gateway-events-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class GatewayEventsWidgetSettingsComponent extends WidgetSettingsComponent {
 
   separatorKeysCodes = [ENTER, COMMA, SEMICOLON];
 
   gatewayEventsWidgetSettingsForm: UntypedFormGroup;
+  
+  predefinedValues = widgetTitleAutocompleteValues;
 
   constructor(protected store: Store<AppState>,
               private fb: UntypedFormBuilder) {

@@ -20,7 +20,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { BasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
-import { DataKey, Datasource, WidgetConfig } from '@shared/models/widget.models';
+import { DataKey, Datasource, WidgetConfig, widgetTitleAutocompleteValues } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { deepClone, isUndefined } from '@core/utils';
@@ -30,9 +30,10 @@ import {
 } from '@home/components/widget/config/timewindow-config-panel.component';
 
 @Component({
-  selector: 'tb-timeseries-table-basic-config',
-  templateUrl: './timeseries-table-basic-config.component.html',
-  styleUrls: ['../basic-config.scss']
+    selector: 'tb-timeseries-table-basic-config',
+    templateUrl: './timeseries-table-basic-config.component.html',
+    styleUrls: ['../basic-config.scss'],
+    standalone: false
 })
 export class TimeseriesTableBasicConfigComponent extends BasicWidgetConfigComponent {
 
@@ -47,6 +48,8 @@ export class TimeseriesTableBasicConfigComponent extends BasicWidgetConfigCompon
 
   timeseriesTableWidgetConfigForm: UntypedFormGroup;
 
+  predefinedValues = widgetTitleAutocompleteValues;
+  
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,
               private fb: UntypedFormBuilder) {

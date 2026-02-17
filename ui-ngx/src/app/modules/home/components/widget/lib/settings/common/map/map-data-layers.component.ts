@@ -41,22 +41,23 @@ import { MapSettingsContext } from '@home/components/widget/lib/settings/common/
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 
 @Component({
-  selector: 'tb-map-data-layers',
-  templateUrl: './map-data-layers.component.html',
-  styleUrls: ['./map-data-layers.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => MapDataLayersComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => MapDataLayersComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-map-data-layers',
+    templateUrl: './map-data-layers.component.html',
+    styleUrls: ['./map-data-layers.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => MapDataLayersComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => MapDataLayersComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class MapDataLayersComponent implements ControlValueAccessor, OnInit, Validator {
 
@@ -108,6 +109,10 @@ export class MapDataLayersComponent implements ControlValueAccessor, OnInit, Val
       case 'circles':
         this.addDataLayerText = 'widgets.maps.data-layer.circle.add-circle';
         this.noDataLayersText = 'widgets.maps.data-layer.circle.no-circles';
+        break;
+      case 'polylines':
+        this.addDataLayerText = 'widgets.maps.data-layer.polyline.add-polylines';
+        this.noDataLayersText = 'widgets.maps.data-layer.polyline.no-polylines';
         break;
     }
     this.dataLayersFormGroup = this.fb.group({

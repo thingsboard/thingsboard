@@ -26,11 +26,12 @@ import { deepClone } from '@core/utils';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-timewindow-style-panel',
-  templateUrl: './timewindow-style-panel.component.html',
-  providers: [],
-  styleUrls: ['./timewindow-style-panel.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-timewindow-style-panel',
+    templateUrl: './timewindow-style-panel.component.html',
+    providers: [],
+    styleUrls: ['./timewindow-style-panel.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class TimewindowStylePanelComponent extends PageComponent implements OnInit {
 

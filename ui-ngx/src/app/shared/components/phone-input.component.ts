@@ -34,22 +34,23 @@ import { Subscription } from 'rxjs';
 import { FloatLabelType, MatFormFieldAppearance } from '@angular/material/form-field';
 
 @Component({
-  selector: 'tb-phone-input',
-  templateUrl: './phone-input.component.html',
-  styleUrls: ['./phone-input.component.scss'],
-  providers: [
-    CountryData,
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => PhoneInputComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => PhoneInputComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-phone-input',
+    templateUrl: './phone-input.component.html',
+    styleUrls: ['./phone-input.component.scss'],
+    providers: [
+        CountryData,
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => PhoneInputComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => PhoneInputComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class PhoneInputComponent implements OnInit, ControlValueAccessor, Validator {
 
@@ -76,6 +77,15 @@ export class PhoneInputComponent implements OnInit, ControlValueAccessor, Valida
 
   @Input()
   label = this.translate.instant('phone-input.phone-input-label');
+
+  @Input()
+  hint = 'phone-input.phone-input-hint';
+
+  @Input()
+  requiredErrorText = this.translate.instant('phone-input.phone-input-required');
+
+  @Input()
+  validationErrorText = this.translate.instant('phone-input.phone-input-validation');
 
   get showFlagSelect(): boolean {
     return this.enableFlagsSelect && !this.isLegacy;

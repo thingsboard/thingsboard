@@ -27,6 +27,7 @@ import {
   legendPositions,
   legendPositionTranslationMap,
   WidgetConfig,
+  widgetTitleAutocompleteValues,
 } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
@@ -55,9 +56,10 @@ import { TimeSeriesChartTooltipTrigger } from '@home/components/widget/lib/chart
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-time-series-chart-basic-config',
-  templateUrl: './time-series-chart-basic-config.component.html',
-  styleUrls: ['../basic-config.scss']
+    selector: 'tb-time-series-chart-basic-config',
+    templateUrl: './time-series-chart-basic-config.component.html',
+    styleUrls: ['../basic-config.scss'],
+    standalone: false
 })
 export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigComponent {
 
@@ -93,6 +95,8 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
 
   seriesMode = 'series';
 
+  predefinedValues = widgetTitleAutocompleteValues;
+  
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,
               private $injector: Injector,

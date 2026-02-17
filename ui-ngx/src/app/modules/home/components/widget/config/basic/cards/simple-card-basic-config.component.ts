@@ -25,6 +25,7 @@ import {
   datasourcesHasAggregation,
   datasourcesHasOnlyComparisonAggregation,
   WidgetConfig,
+  widgetTitleAutocompleteValues,
 } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
@@ -36,9 +37,10 @@ import { isUndefined } from '@core/utils';
 import { getLabel, setLabel } from '@shared/models/widget-settings.models';
 
 @Component({
-  selector: 'tb-simple-card-basic-config',
-  templateUrl: './simple-card-basic-config.component.html',
-  styleUrls: ['../basic-config.scss']
+    selector: 'tb-simple-card-basic-config',
+    templateUrl: './simple-card-basic-config.component.html',
+    styleUrls: ['../basic-config.scss'],
+    standalone: false
 })
 export class SimpleCardBasicConfigComponent extends BasicWidgetConfigComponent {
 
@@ -53,6 +55,8 @@ export class SimpleCardBasicConfigComponent extends BasicWidgetConfigComponent {
   }
 
   simpleCardWidgetConfigForm: UntypedFormGroup;
+
+  predefinedValues = widgetTitleAutocompleteValues;
 
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,

@@ -1,0 +1,580 @@
+{
+  "title": "Cloud - Monitoring",
+  "image": null,
+  "mobileHide": false,
+  "mobileOrder": null,
+  "configuration": {
+    "description": "",
+    "widgets": {
+      "7db7f580-2aac-d7ee-20f6-3d9315e7003f": {
+        "type": "timeseries",
+        "sizeX": 8,
+        "sizeY": 5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "6451461f-d748-9528-e3cd-64078c7fae05",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "arrivalLatency",
+                  "type": "timeseries",
+                  "label": "Arrival latency",
+                  "color": "#ffc107",
+                  "settings": {},
+                  "_hash": 0.7424467450112592,
+                  "aggregationType": null,
+                  "units": "ms",
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "processingTime",
+                  "type": "timeseries",
+                  "label": "Processing time",
+                  "color": "#607d8b",
+                  "settings": {},
+                  "_hash": 0.6065128737901203,
+                  "aggregationType": null,
+                  "units": "ms",
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "mqttTransportWsUpdateLatency",
+                  "type": "timeseries",
+                  "label": "MQTT - overall",
+                  "color": "#f44336",
+                  "settings": {},
+                  "_hash": 0.19638031054010696,
+                  "aggregationType": null,
+                  "units": "ms",
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "coapTransportWsUpdateLatency",
+                  "type": "timeseries",
+                  "label": "CoAP - overall",
+                  "color": "#9c27b0",
+                  "settings": {},
+                  "_hash": 0.8167481665043521,
+                  "aggregationType": null,
+                  "units": "ms",
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "httpTransportWsUpdateLatency",
+                  "type": "timeseries",
+                  "label": "HTTP - overall",
+                  "color": "#8bc34a",
+                  "settings": {},
+                  "_hash": 0.45369210935861803,
+                  "aggregationType": null,
+                  "units": "ms",
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "lwm2mTransportWsUpdateLatency",
+                  "type": "timeseries",
+                  "label": "LwM2M - overall",
+                  "color": "#3f51b5",
+                  "settings": {},
+                  "_hash": 0.3477627917073993,
+                  "aggregationType": null,
+                  "units": "ms",
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "coapIntegrationWsUpdateLatency",
+                  "type": "timeseries",
+                  "label": "CoAP integration - overall",
+                  "color": "#e91e63",
+                  "settings": {},
+                  "_hash": 0.8332881819050183,
+                  "aggregationType": null,
+                  "units": "ms",
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "wsSubscribeLatency",
+                  "type": "timeseries",
+                  "label": "WS subscribe latency",
+                  "color": "#03a9f4",
+                  "settings": {},
+                  "_hash": 0.7843180730206556,
+                  "aggregationType": null,
+                  "units": "ms",
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "wsConnectLatency",
+                  "type": "timeseries",
+                  "label": "WS connect latency",
+                  "color": "#4caf50",
+                  "settings": {
+                    "hideDataByDefault": false,
+                    "disableDataHiding": false,
+                    "removeFromLegend": false,
+                    "excludeFromStacking": false,
+                    "showLines": true,
+                    "lineWidth": 1,
+                    "fillLines": false,
+                    "showPoints": false,
+                    "tooltipValueFormatter": "",
+                    "showSeparateAxis": false,
+                    "axisTitle": "",
+                    "axisMin": null,
+                    "axisMax": null,
+                    "axisPosition": "left",
+                    "axisTickSize": null,
+                    "axisTickDecimals": null,
+                    "axisTicksFormatter": "",
+                    "comparisonSettings": {
+                      "showValuesForComparison": true,
+                      "comparisonValuesLabel": "",
+                      "color": ""
+                    },
+                    "thresholds": []
+                  },
+                  "_hash": 0.23140687573220564,
+                  "aggregationType": null,
+                  "units": "ms",
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "logInLatency",
+                  "type": "timeseries",
+                  "label": "Log in latency",
+                  "color": "#2196f3",
+                  "settings": {
+                    "hideDataByDefault": false,
+                    "disableDataHiding": false,
+                    "removeFromLegend": false,
+                    "excludeFromStacking": false,
+                    "showLines": true,
+                    "lineWidth": 1,
+                    "fillLines": false,
+                    "showPoints": false,
+                    "tooltipValueFormatter": "",
+                    "showSeparateAxis": false,
+                    "axisTitle": "",
+                    "axisMin": null,
+                    "axisMax": null,
+                    "axisPosition": "left",
+                    "axisTickSize": null,
+                    "axisTickDecimals": null,
+                    "axisTicksFormatter": "",
+                    "comparisonSettings": {
+                      "showValuesForComparison": true,
+                      "comparisonValuesLabel": "",
+                      "color": ""
+                    },
+                    "thresholds": []
+                  },
+                  "_hash": 0.6130919996800452,
+                  "aggregationType": null,
+                  "units": "ms",
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ],
+              "alarmFilterConfig": {
+                "statusList": [
+                  "ACTIVE"
+                ]
+              },
+              "latestDataKeys": []
+            }
+          ],
+          "timewindow": {
+            "realtime": {
+              "timewindowMs": 60000
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "8px",
+          "settings": {
+            "stack": false,
+            "fontSize": 10,
+            "fontColor": "#545454",
+            "showTooltip": true,
+            "tooltipIndividual": false,
+            "tooltipCumulative": false,
+            "hideZeros": false,
+            "grid": {
+              "verticalLines": true,
+              "horizontalLines": true,
+              "outlineWidth": 1,
+              "color": "#545454",
+              "backgroundColor": null,
+              "tickColor": "#DDDDDD"
+            },
+            "xaxis": {
+              "title": null,
+              "showLabels": true,
+              "color": "#545454"
+            },
+            "yaxis": {
+              "min": null,
+              "max": null,
+              "title": null,
+              "showLabels": true,
+              "color": "#545454",
+              "tickSize": null,
+              "tickDecimals": 0,
+              "ticksFormatter": ""
+            },
+            "shadowSize": 4,
+            "smoothLines": false,
+            "comparisonEnabled": false,
+            "timeForComparison": "previousInterval",
+            "comparisonCustomIntervalValue": 7200000,
+            "xaxisSecond": {
+              "axisPosition": "top",
+              "title": null,
+              "showLabels": true
+            },
+            "customLegendEnabled": false,
+            "dataKeysListForLabels": [],
+            "showLegend": true,
+            "legendConfig": {
+              "direction": "column",
+              "position": "bottom",
+              "sortDataKeys": false,
+              "showMin": false,
+              "showMax": true,
+              "showAvg": true,
+              "showTotal": false,
+              "showLatest": true
+            }
+          },
+          "title": "General latencies",
+          "dropShadow": false,
+          "enableFullscreen": true,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "useDashboardTimewindow": true,
+          "showTitleIcon": false,
+          "titleTooltip": "",
+          "widgetStyle": {},
+          "widgetCss": "",
+          "pageSize": 1024,
+          "noDataDisplayMessage": "",
+          "enableDataExport": true,
+          "displayTimewindow": true
+        },
+        "row": 0,
+        "col": 0,
+        "id": "7db7f580-2aac-d7ee-20f6-3d9315e7003f",
+        "typeFullFqn": "system.charts.basic_timeseries"
+      },
+      "e0a2df43-2f9a-efcf-80f7-bf51b0a174e1": {
+        "type": "timeseries",
+        "sizeX": 8,
+        "sizeY": 5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "6451461f-d748-9528-e3cd-64078c7fae05",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "mqttTransportRequestLatency",
+                  "type": "timeseries",
+                  "label": "MQTT transport request latency",
+                  "color": "#2196f3",
+                  "settings": {},
+                  "_hash": 0.8576659620523571,
+                  "aggregationType": null,
+                  "units": "ms",
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "httpTransportRequestLatency",
+                  "type": "timeseries",
+                  "label": "HTTP transport request latency",
+                  "color": "#4caf50",
+                  "settings": {},
+                  "_hash": 0.9749033105491403,
+                  "aggregationType": null,
+                  "units": "ms",
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "coapTransportRequestLatency",
+                  "type": "timeseries",
+                  "label": "CoAP transport request latency",
+                  "color": "#f44336",
+                  "settings": {},
+                  "_hash": 0.6977575200148037,
+                  "aggregationType": null,
+                  "units": "ms",
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "coapIntegrationRequestLatency",
+                  "type": "timeseries",
+                  "label": "CoAP integration request latency",
+                  "color": "#9c27b0",
+                  "settings": {},
+                  "_hash": 0.18839685494200875,
+                  "aggregationType": null,
+                  "units": "ms",
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "lwm2mTransportRequestLatency",
+                  "type": "timeseries",
+                  "label": "LwM2M transport request latency",
+                  "color": "#ffc107",
+                  "settings": {
+                    "hideDataByDefault": false,
+                    "disableDataHiding": false,
+                    "removeFromLegend": false,
+                    "excludeFromStacking": false,
+                    "showLines": true,
+                    "lineWidth": 1,
+                    "fillLines": false,
+                    "showPoints": false,
+                    "tooltipValueFormatter": "",
+                    "showSeparateAxis": false,
+                    "axisTitle": "",
+                    "axisMin": null,
+                    "axisMax": null,
+                    "axisPosition": "left",
+                    "axisTickSize": null,
+                    "axisTickDecimals": null,
+                    "axisTicksFormatter": "",
+                    "comparisonSettings": {
+                      "showValuesForComparison": true,
+                      "comparisonValuesLabel": "",
+                      "color": ""
+                    },
+                    "thresholds": []
+                  },
+                  "_hash": 0.85549409179514,
+                  "aggregationType": null,
+                  "units": "ms",
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ],
+              "alarmFilterConfig": {
+                "statusList": [
+                  "ACTIVE"
+                ]
+              },
+              "latestDataKeys": []
+            }
+          ],
+          "timewindow": {
+            "realtime": {
+              "timewindowMs": 60000
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "8px",
+          "settings": {
+            "shadowSize": 4,
+            "fontColor": "#545454",
+            "fontSize": 10,
+            "xaxis": {
+              "showLabels": true,
+              "color": "#545454"
+            },
+            "yaxis": {
+              "showLabels": true,
+              "color": "#545454"
+            },
+            "grid": {
+              "color": "#545454",
+              "tickColor": "#DDDDDD",
+              "verticalLines": true,
+              "horizontalLines": true,
+              "outlineWidth": 1
+            },
+            "legend": {
+              "show": true,
+              "position": "nw",
+              "backgroundColor": "#f0f0f0",
+              "backgroundOpacity": 0.85,
+              "labelBoxBorderColor": "rgba(1, 1, 1, 0.45)"
+            },
+            "decimals": 1,
+            "stack": false,
+            "tooltipIndividual": false,
+            "showLegend": true,
+            "legendConfig": {
+              "direction": "column",
+              "position": "bottom",
+              "sortDataKeys": false,
+              "showMin": false,
+              "showMax": true,
+              "showAvg": true,
+              "showTotal": false,
+              "showLatest": true
+            }
+          },
+          "title": "Transport latencies",
+          "dropShadow": false,
+          "enableFullscreen": true,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "useDashboardTimewindow": true,
+          "showTitleIcon": false,
+          "titleTooltip": "",
+          "widgetStyle": {},
+          "widgetCss": "",
+          "pageSize": 1024,
+          "noDataDisplayMessage": "",
+          "enableDataExport": true,
+          "displayTimewindow": true
+        },
+        "row": 0,
+        "col": 0,
+        "id": "e0a2df43-2f9a-efcf-80f7-bf51b0a174e1",
+        "typeFullFqn": "system.charts.basic_timeseries"
+      }
+    },
+    "states": {
+      "default": {
+        "name": "Cloud - Monitoring",
+        "root": true,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "7db7f580-2aac-d7ee-20f6-3d9315e7003f": {
+                "sizeX": 12,
+                "sizeY": 11,
+                "row": 0,
+                "col": 0
+              },
+              "e0a2df43-2f9a-efcf-80f7-bf51b0a174e1": {
+                "sizeX": 12,
+                "sizeY": 11,
+                "row": 0,
+                "col": 12
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "columns": 24,
+              "margin": 10,
+              "backgroundSizeMode": "100%",
+              "outerMargin": true,
+              "layoutType": "default"
+            }
+          }
+        }
+      }
+    },
+    "entityAliases": {
+      "6451461f-d748-9528-e3cd-64078c7fae05": {
+        "id": "6451461f-d748-9528-e3cd-64078c7fae05",
+        "alias": "Monitoring stats asset",
+        "filter": {
+          "type": "entityName",
+          "resolveMultiple": true,
+          "entityType": "ASSET",
+          "entityNameFilter": "[Monitoring] Latencies"
+        }
+      }
+    },
+    "filters": {},
+    "timewindow": {
+      "hideAggregation": false,
+      "hideAggInterval": false,
+      "hideTimezone": false,
+      "selectedTab": 0,
+      "realtime": {
+        "realtimeType": 0,
+        "interval": 120000,
+        "timewindowMs": 18000000,
+        "quickInterval": "CURRENT_DAY",
+        "hideInterval": false,
+        "hideLastInterval": false,
+        "hideQuickInterval": false
+      },
+      "history": {
+        "historyType": 0,
+        "interval": 600000,
+        "timewindowMs": 43200000,
+        "fixedTimewindow": null,
+        "quickInterval": "CURRENT_DAY",
+        "hideInterval": false,
+        "hideLastInterval": false,
+        "hideFixedInterval": false,
+        "hideQuickInterval": false
+      },
+      "aggregation": {
+        "type": "AVG",
+        "limit": 2500
+      },
+      "timezone": null
+    },
+    "settings": {
+      "stateControllerId": "entity",
+      "showTitle": false,
+      "showDashboardsSelect": true,
+      "showEntitiesSelect": true,
+      "showDashboardTimewindow": true,
+      "showDashboardExport": true,
+      "toolbarAlwaysOpen": true
+    }
+  },
+  "name": "Cloud - Monitoring",
+  "resources": null
+}

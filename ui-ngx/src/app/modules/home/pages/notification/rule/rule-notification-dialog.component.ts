@@ -77,9 +77,10 @@ export interface RuleNotificationDialogData {
 }
 
 @Component({
-  selector: 'tb-rule-notification-dialog',
-  templateUrl: './rule-notification-dialog.component.html',
-  styleUrls: ['rule-notification-dialog.component.scss']
+    selector: 'tb-rule-notification-dialog',
+    templateUrl: './rule-notification-dialog.component.html',
+    styleUrls: ['rule-notification-dialog.component.scss'],
+    standalone: false
 })
 export class RuleNotificationDialogComponent extends
   DialogComponent<RuleNotificationDialogComponent, NotificationRule> implements OnDestroy {

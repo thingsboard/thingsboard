@@ -29,13 +29,15 @@ import { MobileAppService } from '@core/http/mobile-app.service';
 
 export interface MobileAppDialogData {
   platformType: PlatformType;
+  name?: string
 }
 
 @Component({
-  selector: 'tb-mobile-app-dialog',
-  templateUrl: './mobile-app-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: MobileAppDialogComponent}],
-  styleUrls: []
+    selector: 'tb-mobile-app-dialog',
+    templateUrl: './mobile-app-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: MobileAppDialogComponent }],
+    styleUrls: [],
+    standalone: false
 })
 export class MobileAppDialogComponent extends DialogComponent<MobileAppDialogComponent, MobileApp> implements OnDestroy, AfterViewInit, ErrorStateMatcher {
 
@@ -55,6 +57,9 @@ export class MobileAppDialogComponent extends DialogComponent<MobileAppDialogCom
   ngAfterViewInit(): void {
     setTimeout(() => {
       this.mobileAppComponent.entityForm.markAsDirty();
+      if (this.data.name) {
+        this.mobileAppComponent.entityForm.get('title').patchValue(this.data.name, {emitEvent: false});
+      }
       this.mobileAppComponent.entityForm.patchValue({platformType: this.data.platformType});
       this.mobileAppComponent.entityForm.get('platformType').disable({emitEvent: false});
       this.mobileAppComponent.isEdit = true;

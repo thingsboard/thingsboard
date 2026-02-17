@@ -50,6 +50,11 @@ export class DeviceProfileService {
     return this.http.get<PageData<DeviceProfile>>(`/api/deviceProfiles${pageLink.toQuery()}`, defaultHttpOptionsFromConfig(config));
   }
 
+  public getDeviceProfilesByIds(deviceProfileIds: Array<string>, config?: RequestConfig): Observable<Array<DeviceProfileInfo>> {
+    return this.http.get<Array<DeviceProfileInfo>>(`/api/deviceProfileInfos?deviceProfileIds=${deviceProfileIds.join(',')}`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
   public getDeviceProfile(deviceProfileId: string, config?: RequestConfig): Observable<DeviceProfile> {
     return this.http.get<DeviceProfile>(`/api/deviceProfile/${deviceProfileId}`, defaultHttpOptionsFromConfig(config));
   }

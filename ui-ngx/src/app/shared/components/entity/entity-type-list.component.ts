@@ -34,16 +34,17 @@ interface EntityTypeInfo {
 }
 
 @Component({
-  selector: 'tb-entity-type-list',
-  templateUrl: './entity-type-list.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => EntityTypeListComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-entity-type-list',
+    templateUrl: './entity-type-list.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => EntityTypeListComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class EntityTypeListComponent implements ControlValueAccessor, OnInit, AfterViewInit {
 

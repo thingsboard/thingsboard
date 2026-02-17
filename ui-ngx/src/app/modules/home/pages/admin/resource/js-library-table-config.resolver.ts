@@ -32,7 +32,7 @@ import {
   ResourceType,
   toResourceDeleteResult
 } from '@shared/models/resource.models';
-import { EntityType, entityTypeResources } from '@shared/models/entity-type.models';
+import { EntityType } from '@shared/models/entity-type.models';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { DatePipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
@@ -47,7 +47,7 @@ import { JsLibraryTableHeaderComponent } from '@home/pages/admin/resource/js-lib
 import { JsResourceComponent } from '@home/pages/admin/resource/js-resource.component';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { ResourceTabsComponent } from '@home/pages/admin/resource/resource-tabs.component';
-import { forkJoin, of } from 'rxjs';
+import { forkJoin, Observable, of } from 'rxjs';
 import { parseHttpErrorMessage } from '@core/utils';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { MatDialog } from '@angular/material/dialog';
@@ -81,7 +81,9 @@ export class JsLibraryTableConfigResolver  {
       search: 'javascript.search',
       selectedEntities: 'javascript.selected-javascript-resources'
     };
-    this.config.entityResources = entityTypeResources.get(EntityType.TB_RESOURCE);
+    this.config.entityResources = {
+      helpLinkId: 'jsExtension'
+    };
     this.config.headerComponent = JsLibraryTableHeaderComponent;
 
     this.config.entityTitle = (resource) => resource ?
@@ -116,9 +118,20 @@ export class JsLibraryTableConfigResolver  {
         return this.resourceService.getResourceInfoById(id.id)
       }
     };
-    this.config.saveEntity = resource => {
+    this.config.saveEntity = (resource: Resource, originalResource: Resource) => {
       resource.resourceType = ResourceType.JS_MODULE;
-      let saveObservable = this.resourceService.saveResource(resource);
+      let saveObservable: Observable<Resource>;
+      if (!originalResource) {
+        saveObservable = this.resourceService.uploadResource(resource);
+      } else {
+        const { data, ...resourceInfo } = resource;
+        saveObservable = this.resourceService.updatedResourceInfo(resource.id.id, resourceInfo);
+        if (data) {
+          saveObservable = saveObservable.pipe(
+            switchMap(() => this.resourceService.updatedResourceData(resource.id.id, data))
+          )
+        }
+      }
       if (resource.resourceSubType === ResourceSubType.MODULE) {
         saveObservable = saveObservable.pipe(
           switchMap((saved) => this.resourceService.getResource(saved.id.id))

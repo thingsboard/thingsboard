@@ -71,10 +71,11 @@ import { UnitService } from '@core/services/unit.service';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 
 @Component({
-  selector: 'tb-liquid-level-widget',
-  templateUrl: './liquid-level-widget.component.html',
-  styleUrls: ['./liquid-level-widget.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-liquid-level-widget',
+    templateUrl: './liquid-level-widget.component.html',
+    styleUrls: ['./liquid-level-widget.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class LiquidLevelWidgetComponent implements OnInit {
 
@@ -510,11 +511,9 @@ export class LiquidLevelWidgetComponent implements OnInit {
     let content: string;
     let container: JQuery<HTMLElement>;
     const jQueryContainerElement = $(this.liquidLevelContent.nativeElement);
-    let value = 'N/A';
-
+    let value: number | string = 'N/A';
     if (isNumeric(data)) {
-      value = this.widgetUnitsConvertor(convertLiters(this.convertOutputData(percentage), this.widgetUnits as CapacityUnits, ConversionType.from))
-          .toFixed(this.settings.decimals || 0);
+      value = +this.widgetUnitsConvertor(convertLiters(this.convertOutputData(percentage), this.widgetUnits as CapacityUnits, ConversionType.from)).toFixed(this.ctx.widgetConfig.decimals || 0);
     }
     this.valueColor.update(value);
     const valueTextStyle = cssTextFromInlineStyle({...inlineTextStyle(this.settings.valueFont),
@@ -528,10 +527,9 @@ export class LiquidLevelWidgetComponent implements OnInit {
       let volume: number | string;
       if (this.widgetUnits !== CapacityUnits.percent) {
         const volumeInLiters: number = convertLiters(this.volume, this.volumeUnits as CapacityUnits, ConversionType.to);
-        volume = this.widgetUnitsConvertor(convertLiters(volumeInLiters, this.widgetUnits as CapacityUnits, ConversionType.from))
-          .toFixed(this.settings.decimals || 0);
+        volume = +this.widgetUnitsConvertor(convertLiters(volumeInLiters, this.widgetUnits as CapacityUnits, ConversionType.from)).toFixed(this.ctx.widgetConfig.decimals || 0);
       } else {
-        volume = this.widgetUnitsConvertor(this.volume).toFixed(this.settings.decimals || 0);
+        volume = +this.widgetUnitsConvertor(this.volume).toFixed(this.ctx.widgetConfig.decimals || 0);
       }
 
       const volumeTextStyle = cssTextFromInlineStyle({...inlineTextStyle(this.settings.volumeFont),

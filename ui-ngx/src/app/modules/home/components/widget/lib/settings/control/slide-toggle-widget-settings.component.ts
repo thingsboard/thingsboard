@@ -15,7 +15,7 @@
 ///
 
 import { Component } from '@angular/core';
-import { TargetDevice, WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
+import { TargetDevice, WidgetSettings, WidgetSettingsComponent, widgetTitleAutocompleteValues } from '@shared/models/widget.models';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -23,13 +23,16 @@ import { switchRpcDefaultSettings } from '@home/components/widget/lib/settings/c
 import { deepClone } from '@core/utils';
 
 @Component({
-  selector: 'tb-slide-toggle-widget-settings',
-  templateUrl: './slide-toggle-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-slide-toggle-widget-settings',
+    templateUrl: './slide-toggle-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class SlideToggleWidgetSettingsComponent extends WidgetSettingsComponent {
 
   slideToggleWidgetSettingsForm: UntypedFormGroup;
+
+  predefinedValues = widgetTitleAutocompleteValues;
 
   constructor(protected store: Store<AppState>,
               private fb: UntypedFormBuilder) {

@@ -20,10 +20,11 @@ import { CustomMobilePage } from '@shared/models/mobile-app.models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 
 @Component({
-  selector: 'tb-custom-menu-item-panel',
-  templateUrl: './custom-mobile-page-panel.component.html',
-  styleUrls: ['./custom-mobile-page-panel.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-custom-menu-item-panel',
+    templateUrl: './custom-mobile-page-panel.component.html',
+    styleUrls: ['./custom-mobile-page-panel.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class CustomMobilePagePanelComponent implements OnInit {
 

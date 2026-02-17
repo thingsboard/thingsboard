@@ -29,14 +29,15 @@ import { EntityService } from '@core/http/entity.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-entity-subtype-select',
-  templateUrl: './entity-subtype-select.component.html',
-  styleUrls: ['./entity-subtype-select.component.scss'],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => EntitySubTypeSelectComponent),
-    multi: true
-  }]
+    selector: 'tb-entity-subtype-select',
+    templateUrl: './entity-subtype-select.component.html',
+    styleUrls: ['./entity-subtype-select.component.scss'],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => EntitySubTypeSelectComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnInit, AfterViewInit, OnDestroy {
 

@@ -22,6 +22,7 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Device;
@@ -41,6 +42,7 @@ import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.StringFilterPredicate;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.edqs.util.EdqsRocksDb;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -62,8 +64,11 @@ public class EdqsControllerTest extends AbstractControllerTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @MockitoBean
+    private EdqsRocksDb edqsRocksDb;
+
     @Before
-    public void beforeEdqsControllerTest() throws Exception {
+    public void before() throws Exception {
         loginTenantAdmin();
     }
 

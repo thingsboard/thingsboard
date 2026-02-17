@@ -36,14 +36,15 @@ import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-smpp-sms-provider-configuration',
-  templateUrl: './smpp-sms-provider-configuration.component.html',
-  styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => SmppSmsProviderConfigurationComponent),
-    multi: true
-  }]
+    selector: 'tb-smpp-sms-provider-configuration',
+    templateUrl: './smpp-sms-provider-configuration.component.html',
+    styleUrls: [],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => SmppSmsProviderConfigurationComponent),
+            multi: true
+        }],
+    standalone: false
 })
 
 export class SmppSmsProviderConfigurationComponent  implements ControlValueAccessor, OnInit{

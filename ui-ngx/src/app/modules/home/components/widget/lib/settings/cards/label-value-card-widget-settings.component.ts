@@ -15,7 +15,7 @@
 ///
 
 import { Component } from '@angular/core';
-import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
+import {WidgetSettings, WidgetSettingsComponent, widgetTitleAutocompleteValues} from '@shared/models/widget.models';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -24,15 +24,18 @@ import { formatValue } from '@core/utils';
 import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Component({
-  selector: 'tb-label-value-card-widget-settings',
-  templateUrl: './label-value-card-widget-settings.component.html',
-  styleUrls: []
+    selector: 'tb-label-value-card-widget-settings',
+    templateUrl: './label-value-card-widget-settings.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class LabelValueCardWidgetSettingsComponent extends WidgetSettingsComponent {
 
   labelValueCardWidgetSettingsForm: UntypedFormGroup;
 
   valuePreviewFn = this._valuePreviewFn.bind(this);
+
+  predefinedValues = widgetTitleAutocompleteValues;
 
   constructor(protected store: Store<AppState>,
               private fb: UntypedFormBuilder) {

@@ -38,9 +38,11 @@ import org.thingsboard.server.queue.common.consumer.MainQueueConsumerManager;
 import org.thingsboard.server.queue.common.consumer.TbQueueConsumerManagerTask;
 import org.thingsboard.server.queue.common.consumer.TbQueueConsumerManagerTask.DeleteQueueTask;
 import org.thingsboard.server.queue.common.consumer.TbQueueConsumerTask;
+import org.thingsboard.server.queue.common.consumer.TbQueueConsumerTask.ConsumerKey;
 import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.service.queue.TbMsgPackCallback;
 import org.thingsboard.server.service.queue.TbMsgPackProcessingContext;
+import org.thingsboard.server.service.queue.TbMsgPackProcessingContextFactory;
 import org.thingsboard.server.service.queue.TbRuleEngineConsumerStats;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingDecision;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingResult;
@@ -66,13 +68,15 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
 
     private final TbRuleEngineConsumerContext ctx;
     private final TbRuleEngineConsumerStats stats;
+    private final TbMsgPackProcessingContextFactory packProcessingContextFactory;
 
     @Builder(builderMethodName = "create") // not to conflict with super.builder()
     public TbRuleEngineQueueConsumerManager(TbRuleEngineConsumerContext ctx,
                                             QueueKey queueKey,
                                             ExecutorService consumerExecutor,
                                             ScheduledExecutorService scheduler,
-                                            ExecutorService taskExecutor) {
+                                            ExecutorService taskExecutor,
+                                            TbMsgPackProcessingContextFactory packProcessingContextFactory) {
         super(queueKey, null, null,
                 (queueConfig, tpi) -> {
                     Integer partitionId = tpi != null ? tpi.getPartition().orElse(-1) : null;
@@ -81,6 +85,7 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
                 consumerExecutor, scheduler, taskExecutor, null);
         this.ctx = ctx;
         this.stats = new TbRuleEngineConsumerStats(queueKey, ctx.getStatsFactory());
+        this.packProcessingContextFactory = packProcessingContextFactory;
     }
 
     public void delete(boolean drainQueue) {
@@ -127,13 +132,13 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
     @Override
     protected void processMsgs(List<TbProtoQueueMsg<ToRuleEngineMsg>> msgs,
                                TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> consumer,
-                               Object consumerKey,
+                               ConsumerKey consumerKey,
                                Queue queue) throws Exception {
         TbRuleEngineSubmitStrategy submitStrategy = getSubmitStrategy(queue);
         TbRuleEngineProcessingStrategy ackStrategy = getProcessingStrategy(queue);
         submitStrategy.init(msgs);
         while (!stopped && !consumer.isStopped()) {
-            TbMsgPackProcessingContext packCtx = new TbMsgPackProcessingContext(queue.getName(), submitStrategy, ackStrategy.isSkipTimeoutMsgs());
+            TbMsgPackProcessingContext packCtx = packProcessingContextFactory.create(queue.getName(), submitStrategy, ackStrategy.isSkipTimeoutMsgs());
             submitStrategy.submitAttempt((id, msg) -> submitMessage(packCtx, id, msg));
 
             final boolean timeout = !packCtx.await(queue.getPackProcessingTimeout(), TimeUnit.MILLISECONDS);

@@ -39,21 +39,22 @@ import { Widget } from '@shared/models/widget.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-polygon-settings',
-  templateUrl: './polygon-settings.component.html',
-  styleUrls: ['./../../widget-settings.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => PolygonSettingsComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => PolygonSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-polygon-settings',
+    templateUrl: './polygon-settings.component.html',
+    styleUrls: ['./../../widget-settings.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => PolygonSettingsComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => PolygonSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class PolygonSettingsComponent extends PageComponent implements OnInit, ControlValueAccessor, Validator {
 

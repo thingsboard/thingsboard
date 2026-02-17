@@ -38,16 +38,17 @@ import { MatButton } from '@angular/material/button';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-material-icon-select',
-  templateUrl: './material-icon-select.component.html',
-  styleUrls: ['./material-icon-select.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => MaterialIconSelectComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-material-icon-select',
+    templateUrl: './material-icon-select.component.html',
+    styleUrls: ['./material-icon-select.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => MaterialIconSelectComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class MaterialIconSelectComponent extends PageComponent implements OnInit, ControlValueAccessor {
 
@@ -70,6 +71,10 @@ export class MaterialIconSelectComponent extends PageComponent implements OnInit
   @Input()
   @coerceBoolean()
   iconClearButton = false;
+
+  @Input()
+  @coerceBoolean()
+  allowedCustomIcon = false;
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -169,7 +174,8 @@ export class MaterialIconSelectComponent extends PageComponent implements OnInit
         this.viewContainerRef, MaterialIconsComponent, 'left', true, null,
         {
           selectedIcon: this.materialIconFormGroup.get('icon').value,
-          iconClearButton: this.iconClearButton
+          iconClearButton: this.iconClearButton,
+          allowedCustomIcon: this.allowedCustomIcon,
         },
         {},
         {}, {}, true);

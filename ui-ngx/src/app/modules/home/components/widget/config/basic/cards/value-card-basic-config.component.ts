@@ -25,6 +25,7 @@ import {
   datasourcesHasAggregation,
   datasourcesHasOnlyComparisonAggregation,
   WidgetConfig,
+  widgetTitleAutocompleteValues,
 } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
@@ -45,9 +46,10 @@ import {
 import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Component({
-  selector: 'tb-value-card-basic-config',
-  templateUrl: './value-card-basic-config.component.html',
-  styleUrls: ['../basic-config.scss']
+    selector: 'tb-value-card-basic-config',
+    templateUrl: './value-card-basic-config.component.html',
+    styleUrls: ['../basic-config.scss'],
+    standalone: false
 })
 export class ValueCardBasicConfigComponent extends BasicWidgetConfigComponent {
 
@@ -83,6 +85,8 @@ export class ValueCardBasicConfigComponent extends BasicWidgetConfigComponent {
     const layout: ValueCardLayout = this.valueCardWidgetConfigForm.get('layout').value;
     return layout !== ValueCardLayout.simplified;
   }
+
+  predefinedValues = widgetTitleAutocompleteValues;
 
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,

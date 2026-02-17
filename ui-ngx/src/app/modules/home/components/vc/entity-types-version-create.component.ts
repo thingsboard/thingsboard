@@ -44,21 +44,22 @@ import { isDefinedAndNotNull } from '@core/utils';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-entity-types-version-create',
-  templateUrl: './entity-types-version-create.component.html',
-  styleUrls: ['./entity-types-version.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => EntityTypesVersionCreateComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => EntityTypesVersionCreateComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-entity-types-version-create',
+    templateUrl: './entity-types-version-create.component.html',
+    styleUrls: ['./entity-types-version.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => EntityTypesVersionCreateComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => EntityTypesVersionCreateComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class EntityTypesVersionCreateComponent extends PageComponent implements OnInit, ControlValueAccessor, Validator {
 
@@ -184,10 +185,6 @@ export class EntityTypesVersionCreateComponent extends PageComponent implements 
 
   entityTypesFormGroupExpanded(entityTypeControl: AbstractControl): boolean {
     return !!(entityTypeControl as any).expanded;
-  }
-
-  public trackByEntityType(index: number, entityTypeControl: AbstractControl): any {
-    return entityTypeControl;
   }
 
   public removeEntityType(index: number) {

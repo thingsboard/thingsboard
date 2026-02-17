@@ -19,9 +19,12 @@ import com.auth0.jwt.JWT;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Strings;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
+import org.apache.hc.core5.net.URIBuilder;
 import org.apache.commons.lang3.concurrent.LazyInitializer;
+import org.apache.hc.core5.net.URIBuilder;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
@@ -38,10 +41,12 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.rest.client.utils.RestJsonConverter;
 import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.ClaimRequest;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
@@ -74,6 +79,7 @@ import org.thingsboard.server.common.data.UpdateMessage;
 import org.thingsboard.server.common.data.UsageInfo;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.UserEmailInfo;
+import org.thingsboard.server.common.data.ai.AiModel;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.AlarmCommentInfo;
@@ -89,6 +95,8 @@ import org.thingsboard.server.common.data.asset.AssetSearchQuery;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldInfo;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.domain.Domain;
 import org.thingsboard.server.common.data.domain.DomainInfo;
@@ -98,8 +106,10 @@ import org.thingsboard.server.common.data.edge.EdgeInfo;
 import org.thingsboard.server.common.data.edge.EdgeInstructions;
 import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
+import org.thingsboard.server.common.data.id.AiModelId;
 import org.thingsboard.server.common.data.id.AlarmCommentId;
 import org.thingsboard.server.common.data.id.AlarmId;
+import org.thingsboard.server.common.data.id.ApiKeyId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
@@ -113,6 +123,8 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.MobileAppBundleId;
 import org.thingsboard.server.common.data.id.MobileAppId;
+import org.thingsboard.server.common.data.id.NotificationId;
+import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.OAuth2ClientRegistrationTemplateId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
@@ -132,6 +144,15 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.mobile.app.MobileApp;
 import org.thingsboard.server.common.data.mobile.bundle.MobileAppBundle;
 import org.thingsboard.server.common.data.mobile.bundle.MobileAppBundleInfo;
+import org.thingsboard.server.common.data.notification.Notification;
+import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
+import org.thingsboard.server.common.data.notification.NotificationRequest;
+import org.thingsboard.server.common.data.notification.NotificationRequestInfo;
+import org.thingsboard.server.common.data.notification.NotificationRequestPreview;
+import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
+import org.thingsboard.server.common.data.notification.settings.UserNotificationSettings;
+import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
+import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientLoginInfo;
@@ -143,11 +164,14 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.pat.ApiKey;
+import org.thingsboard.server.common.data.pat.ApiKeyInfo;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
+import org.thingsboard.server.common.data.query.AvailableEntityKeys;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
@@ -190,29 +214,32 @@ import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static java.util.stream.Collectors.joining;
 import static org.thingsboard.server.common.data.StringUtils.isEmpty;
 
-/**
- * @author Andrew Shvayka
- */
 public class RestClient implements Closeable {
-    private static final String JWT_TOKEN_HEADER_PARAM = "X-Authorization";
+
+    private static final String TOKEN_HEADER_PARAM = "X-Authorization";
     private static final long AVG_REQUEST_TIMEOUT = TimeUnit.SECONDS.toMillis(30);
     protected static final String ACTIVATE_TOKEN_REGEX = "/api/noauth/activate?activateToken=";
     private final LazyInitializer<ExecutorService> executor = LazyInitializer.<ExecutorService>builder()
             .setInitializer(() -> ThingsBoardExecutors.newWorkStealingPool(10, getClass()))
             .get();
+    @Getter
     protected final RestTemplate restTemplate;
     protected final RestTemplate loginRestTemplate;
     protected final String baseURL;
@@ -220,56 +247,70 @@ public class RestClient implements Closeable {
     private String username;
     private String password;
     private String mainToken;
+    @Getter
     private String refreshToken;
     private long mainTokenExpTs;
     private long refreshTokenExpTs;
     private long clientServerTimeDiff;
+
+    public enum AuthType {JWT, API_KEY}
 
     public RestClient(String baseURL) {
         this(new RestTemplate(), baseURL);
     }
 
     public RestClient(RestTemplate restTemplate, String baseURL) {
-        this(restTemplate, baseURL, null);
+        this(restTemplate, baseURL, AuthType.JWT, null);
     }
 
     public RestClient(RestTemplate restTemplate, String baseURL, String accessToken) {
+        this(restTemplate, baseURL, AuthType.JWT, accessToken);
+    }
+
+    public RestClient(RestTemplate restTemplate, String baseURL, AuthType authType, String token) {
         this.restTemplate = restTemplate;
         this.loginRestTemplate = new RestTemplate(restTemplate.getRequestFactory());
         this.baseURL = baseURL;
         this.restTemplate.getInterceptors().add((request, bytes, execution) -> {
             HttpRequest wrapper = new HttpRequestWrapper(request);
-            if (accessToken == null) {
-                long calculatedTs = System.currentTimeMillis() + clientServerTimeDiff + AVG_REQUEST_TIMEOUT;
-                if (calculatedTs > mainTokenExpTs) {
-                    synchronized (RestClient.this) {
+            switch (authType) {
+                case JWT -> {
+                    if (token == null) {
+                        long calculatedTs = System.currentTimeMillis() + clientServerTimeDiff + AVG_REQUEST_TIMEOUT;
                         if (calculatedTs > mainTokenExpTs) {
-                            if (calculatedTs < refreshTokenExpTs) {
-                                refreshToken();
-                            } else {
-                                doLogin();
+                            synchronized (RestClient.this) {
+                                if (calculatedTs > mainTokenExpTs) {
+                                    if (calculatedTs < refreshTokenExpTs) {
+                                        refreshToken();
+                                    } else {
+                                        doLogin();
+                                    }
+                                }
                             }
                         }
+                    } else {
+                        mainToken = token;
                     }
+                    wrapper.getHeaders().set(TOKEN_HEADER_PARAM, "Bearer " + mainToken);
                 }
-            } else {
-                mainToken = accessToken;
+                case API_KEY -> {
+                    wrapper.getHeaders().set(TOKEN_HEADER_PARAM, "ApiKey " + token);
+                }
             }
-            wrapper.getHeaders().set(JWT_TOKEN_HEADER_PARAM, "Bearer " + mainToken);
             return execution.execute(wrapper, bytes);
         });
     }
 
-    public RestTemplate getRestTemplate() {
-        return restTemplate;
+    public static RestClient withApiKey(String baseURL, String token) {
+        return withApiKey(new RestTemplate(), baseURL, token);
+    }
+
+    public static RestClient withApiKey(RestTemplate rt, String baseURL, String token) {
+        return new RestClient(rt, baseURL, AuthType.API_KEY, token);
     }
 
     public String getToken() {
         return mainToken;
-    }
-
-    public String getRefreshToken() {
-        return refreshToken;
     }
 
     public void refreshToken() {
@@ -496,6 +537,99 @@ public class RestClient implements Closeable {
         if (status != null) {
             params.put("status", status.name());
             urlSecondPart += "&status={status}";
+        }
+
+        addTimePageLinkToParam(params, pageLink);
+
+        return restTemplate.exchange(
+                baseURL + urlSecondPart + "&" + getTimeUrlParams(pageLink),
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<AlarmInfo>>() {
+                },
+                params).getBody();
+    }
+
+    public PageData<AlarmInfo> getAllAlarms(AlarmSearchStatus searchStatus, AlarmStatus status, TimePageLink pageLink, Boolean fetchOriginator) {
+        String urlSecondPart = "/api/alarms?";
+        Map<String, String> params = new HashMap<>();
+        if (fetchOriginator != null) {
+            params.put("fetchOriginator", String.valueOf(fetchOriginator));
+            urlSecondPart += "&fetchOriginator={fetchOriginator}";
+        }
+        if (searchStatus != null) {
+            params.put("searchStatus", searchStatus.name());
+            urlSecondPart += "&searchStatus={searchStatus}";
+        }
+        if (status != null) {
+            params.put("status", status.name());
+            urlSecondPart += "&status={status}";
+        }
+
+        addTimePageLinkToParam(params, pageLink);
+
+        return restTemplate.exchange(
+                baseURL + urlSecondPart + "&" + getTimeUrlParams(pageLink),
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<AlarmInfo>>() {
+                },
+                params).getBody();
+    }
+
+    public PageData<AlarmInfo> getAlarmsV2(EntityId entityId, List<AlarmSearchStatus> statusList, List<AlarmSeverity> severityList,
+                                           List<String> typeList, String assignedId, TimePageLink pageLink) {
+        String urlSecondPart = "/api/v2/alarm/{entityType}/{entityId}?";
+        Map<String, String> params = new HashMap<>();
+        params.put("entityType", entityId.getEntityType().name());
+        params.put("entityId", entityId.getId().toString());
+        if (!CollectionUtils.isEmpty(statusList)) {
+            params.put("statusList", listEnumToString(statusList));
+            urlSecondPart += "&statusList={statusList}";
+        }
+        if (!CollectionUtils.isEmpty(severityList)) {
+            params.put("severityList", listEnumToString(severityList));
+            urlSecondPart += "&severityList={severityList}";
+        }
+        if (!CollectionUtils.isEmpty(typeList)) {
+            params.put("typeList", String.join(",", typeList));
+            urlSecondPart += "&typeList={typeList}";
+        }
+        if (assignedId != null) {
+            params.put("assignedId", assignedId);
+            urlSecondPart += "&assignedId={assignedId}";
+        }
+
+        addTimePageLinkToParam(params, pageLink);
+
+        return restTemplate.exchange(
+                baseURL + urlSecondPart + "&" + getTimeUrlParams(pageLink),
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<AlarmInfo>>() {
+                },
+                params).getBody();
+    }
+
+    public PageData<AlarmInfo> getAllAlarmsV2(List<AlarmSearchStatus> statusList, List<AlarmSeverity> severityList,
+                                              List<String> typeList, String assignedId, TimePageLink pageLink) {
+        String urlSecondPart = "/api/v2/alarms?";
+        Map<String, String> params = new HashMap<>();
+        if (!CollectionUtils.isEmpty(statusList)) {
+            params.put("statusList", listEnumToString(statusList));
+            urlSecondPart += "&statusList={statusList}";
+        }
+        if (!CollectionUtils.isEmpty(severityList)) {
+            params.put("severityList", listEnumToString(severityList));
+            urlSecondPart += "&severityList={severityList}";
+        }
+        if (!CollectionUtils.isEmpty(typeList)) {
+            params.put("typeList", String.join(",", typeList));
+            urlSecondPart += "&typeList={typeList}";
+        }
+        if (assignedId != null) {
+            params.put("assignedId", assignedId);
+            urlSecondPart += "&assignedId={assignedId}";
         }
 
         addTimePageLinkToParam(params, pageLink);
@@ -1462,6 +1596,33 @@ public class RestClient implements Closeable {
                 }, activeOnly).getBody();
     }
 
+    public List<DeviceProfileInfo> getDeviceProfileInfosByIds(Set<UUID> ids) {
+        URIBuilder builder;
+        try {
+            builder = new URIBuilder(baseURL);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Invalid base URL: " + baseURL, e);
+        }
+
+        builder.appendPath("/api/deviceProfileInfos");
+
+        String commaSeparatedIds = ids.stream()
+                .filter(Objects::nonNull)
+                .map(UUID::toString)
+                .collect(joining(","));
+
+        builder.addParameter("deviceProfileIds", commaSeparatedIds);
+
+        URI uri;
+        try {
+            uri = builder.build();
+        } catch (URISyntaxException e) {
+            throw new IllegalStateException("Failed to construct API URI from base URL and provided params", e);
+        }
+
+        return restTemplate.exchange(uri, HttpMethod.GET, null, new ParameterizedTypeReference<List<DeviceProfileInfo>>() {}).getBody();
+    }
+
     public JsonNode claimDevice(String deviceName, ClaimRequest claimRequest) {
         return restTemplate.exchange(
                 baseURL + "/api/customer/device/{deviceName}/claim",
@@ -1698,6 +1859,33 @@ public class RestClient implements Closeable {
                 }, params).getBody();
     }
 
+    public List<AssetProfileInfo> getAssetProfilesByIds(Set<UUID> ids) {
+        URIBuilder builder;
+        try {
+            builder = new URIBuilder(baseURL);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Invalid base URL: " + baseURL, e);
+        }
+
+        builder.appendPath("/api/assetProfileInfos");
+
+        String commaSeparatedIds = ids.stream()
+                .filter(Objects::nonNull)
+                .map(UUID::toString)
+                .collect(joining(","));
+
+        builder.addParameter("assetProfileIds", commaSeparatedIds);
+
+        URI uri;
+        try {
+            uri = builder.build();
+        } catch (URISyntaxException e) {
+            throw new IllegalStateException("Failed to construct API URI from base URL and provided params", e);
+        }
+
+        return restTemplate.exchange(uri, HttpMethod.GET, null, new ParameterizedTypeReference<List<AssetProfileInfo>>() {}).getBody();
+    }
+
     public Long countEntitiesByQuery(EntityCountQuery query) {
         return restTemplate.postForObject(baseURL + "/api/entitiesQuery/count", query, Long.class);
     }
@@ -1708,6 +1896,17 @@ public class RestClient implements Closeable {
                 HttpMethod.POST, new HttpEntity<>(query),
                 new ParameterizedTypeReference<PageData<EntityData>>() {
                 }).getBody();
+    }
+
+    public AvailableEntityKeys findAvailableEntityKeysByQuery(EntityDataQuery query, boolean includeTimeseries, boolean includeAttributes, AttributeScope scope) {
+        var uri = UriComponentsBuilder.fromUriString(baseURL)
+                .path("/api/entitiesQuery/find/keys")
+                .queryParam("timeseries", includeTimeseries)
+                .queryParam("attributes", includeAttributes)
+                .queryParamIfPresent("scope", Optional.ofNullable(scope))
+                .build()
+                .toUri();
+        return restTemplate.exchange(uri, HttpMethod.POST, new HttpEntity<>(query), new ParameterizedTypeReference<AvailableEntityKeys>() {}).getBody();
     }
 
     public PageData<AlarmData> findAlarmDataByQuery(AlarmDataQuery query) {
@@ -2158,13 +2357,16 @@ public class RestClient implements Closeable {
         restTemplate.delete(baseURL + "/api/oauth2/client/{id}", oAuth2ClientId.getId());
     }
 
-    public PageData<DomainInfo> getTenantDomainInfos() {
+    public PageData<DomainInfo> getTenantDomainInfos(PageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        addPageLinkToParam(params, pageLink);
         return restTemplate.exchange(
-                baseURL + "/api/domain/infos",
+                baseURL + "/api/domain/infos?" + getUrlParams(pageLink),
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<PageData<DomainInfo>>() {
-                }).getBody();
+                },
+                params).getBody();
     }
 
     public Optional<DomainInfo> getDomainInfoById(DomainId domainId) {
@@ -2192,13 +2394,16 @@ public class RestClient implements Closeable {
         restTemplate.postForLocation(baseURL + "/api/domain/{id}/oauth2Clients", oauth2ClientIds, domainId.getId());
     }
 
-    public PageData<MobileApp> getTenantMobileApps() {
+    public PageData<MobileApp> getTenantMobileApps(PageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        addPageLinkToParam(params, pageLink);
         return restTemplate.exchange(
-                baseURL + "/api/mobile/app",
+                baseURL + "/api/mobile/app?" + getUrlParams(pageLink),
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<PageData<MobileApp>>() {
-                }).getBody();
+                },
+                params).getBody();
     }
 
     public Optional<MobileApp> getMobileAppById(MobileAppId mobileAppId) {
@@ -2222,13 +2427,16 @@ public class RestClient implements Closeable {
         restTemplate.delete(baseURL + "/api/mobile/app/{id}", mobileAppId.getId());
     }
 
-    public PageData<MobileAppBundleInfo> getTenantMobileBundleInfos() {
+    public PageData<MobileAppBundleInfo> getTenantMobileBundleInfos(PageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        addPageLinkToParam(params, pageLink);
         return restTemplate.exchange(
-                baseURL + "/api/mobile/bundle/infos",
+                baseURL + "/api/mobile/bundle/infos?" + getUrlParams(pageLink),
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<PageData<MobileAppBundleInfo>>() {
-                }).getBody();
+                },
+                params).getBody();
     }
 
     public Optional<MobileAppBundle> getMobileBundleById(MobileAppBundleId mobileAppBundleId) {
@@ -2846,6 +3054,17 @@ public class RestClient implements Closeable {
                 }, params).getBody();
     }
 
+    public PageData<UserEmailInfo> getUsersByQuery(PageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        addPageLinkToParam(params, pageLink);
+        return restTemplate.exchange(
+                baseURL + "/api/users/info?" + getUrlParams(pageLink),
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<UserEmailInfo>>() {
+                }, params).getBody();
+    }
+
     public PageData<User> getTenantAdmins(TenantId tenantId, PageLink pageLink) {
         Map<String, String> params = new HashMap<>();
         params.put("tenantId", tenantId.getId().toString());
@@ -2891,6 +3110,44 @@ public class RestClient implements Closeable {
                 null,
                 userId.getId(),
                 userCredentialsEnabled);
+    }
+
+    public ApiKey saveApiKey(ApiKeyInfo apiKeyInfo) {
+        return restTemplate.postForEntity(baseURL + "/api/apiKey", apiKeyInfo, ApiKey.class).getBody();
+    }
+
+    public PageData<ApiKeyInfo> getUserApiKeys(UserId userId, PageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        params.put("userId", userId.getId().toString());
+        addPageLinkToParam(params, pageLink);
+        return restTemplate.exchange(
+                baseURL + "/api/apiKeys/{userId}?" + getUrlParams(pageLink),
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<ApiKeyInfo>>() {}, params).getBody();
+    }
+
+    public ApiKeyInfo updateApiKeyDescription(ApiKeyId apiKeyId, String description) {
+        return restTemplate.exchange(
+                baseURL + "/api/apiKey/{id}/description",
+                HttpMethod.PUT,
+                new HttpEntity<>(description),
+                ApiKeyInfo.class,
+                apiKeyId.getId()).getBody();
+    }
+
+    public ApiKeyInfo enableApiKey(ApiKeyId apiKeyId, boolean enabled) {
+        return restTemplate.exchange(
+                baseURL + "/api/apiKey/{id}/enabled/{enabledValue}",
+                HttpMethod.PUT,
+                HttpEntity.EMPTY,
+                ApiKeyInfo.class,
+                apiKeyId.getId(),
+                enabled).getBody();
+    }
+
+    public void deleteApiKey(ApiKeyId apiKeyId) {
+        restTemplate.delete(baseURL + "/api/apiKey/{id}", apiKeyId.getId());
     }
 
     public Optional<WidgetsBundle> getWidgetsBundleById(WidgetsBundleId widgetsBundleId) {
@@ -3006,7 +3263,7 @@ public class RestClient implements Closeable {
         addWidgetInfoFiltersToParams(tenantOnly, fullSearch, deprecatedFilter, widgetTypeList, params);
         return restTemplate.exchange(
                 baseURL + "/api/widgetTypes?" + getUrlParams(pageLink) +
-                getWidgetTypeInfoPageRequestUrlParams(tenantOnly, fullSearch, deprecatedFilter, widgetTypeList),
+                        getWidgetTypeInfoPageRequestUrlParams(tenantOnly, fullSearch, deprecatedFilter, widgetTypeList),
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<PageData<WidgetTypeInfo>>() {
@@ -3094,7 +3351,7 @@ public class RestClient implements Closeable {
         addWidgetInfoFiltersToParams(tenantOnly, fullSearch, deprecatedFilter, widgetTypeList, params);
         return restTemplate.exchange(
                 baseURL + "/api/widgetTypesInfos?widgetsBundleId={widgetsBundleId}&" + getUrlParams(pageLink) +
-                getWidgetTypeInfoPageRequestUrlParams(tenantOnly, fullSearch, deprecatedFilter, widgetTypeList),
+                        getWidgetTypeInfoPageRequestUrlParams(tenantOnly, fullSearch, deprecatedFilter, widgetTypeList),
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<PageData<WidgetTypeInfo>>() {
@@ -4114,6 +4371,46 @@ public class RestClient implements Closeable {
 
     }
 
+    @SneakyThrows(URISyntaxException.class)
+    public PageData<CalculatedFieldInfo> getCalculatedFields(PageLink pageLink,
+                                                             Set<CalculatedFieldType> types,
+                                                             EntityType entityType,
+                                                             Set<UUID> entities,
+                                                             Set<String> names) {
+        var urlBuilder = new URIBuilder(baseURL).appendPath("/api/calculatedFields");
+        urlBuilder.addParameter("pageSize", String.valueOf(pageLink.getPageSize()));
+        urlBuilder.addParameter("page", String.valueOf(pageLink.getPage()));
+        if (!isEmpty(pageLink.getTextSearch())) {
+            urlBuilder.addParameter("textSearch", pageLink.getTextSearch());
+        }
+        if (pageLink.getSortOrder() != null) {
+            urlBuilder.addParameter("sortProperty", pageLink.getSortOrder().getProperty());
+            urlBuilder.addParameter("sortOrder", pageLink.getSortOrder().getDirection().name());
+        }
+        if (!CollectionUtils.isEmpty(types)) {
+            for (CalculatedFieldType type : types) {
+                urlBuilder.addParameter("types", type.name());
+            }
+        }
+        if (entityType != null) {
+            urlBuilder.addParameter("entityType", entityType.name());
+        }
+        if (!CollectionUtils.isEmpty(entities)) {
+            for (UUID entity : entities) {
+                urlBuilder.addParameter("entities", entity.toString());
+            }
+        }
+        if (!CollectionUtils.isEmpty(names)) {
+            for (String name : names) {
+                urlBuilder.addParameter("name", name);
+            }
+        }
+        return restTemplate.exchange(
+                urlBuilder.build(),
+                HttpMethod.GET, HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<CalculatedFieldInfo>>() {}).getBody();
+    }
+
     public void deleteCalculatedField(CalculatedFieldId calculatedFieldId) {
         restTemplate.delete(baseURL + "/api/calculatedField/{calculatedFieldId}", calculatedFieldId.getId());
     }
@@ -4143,6 +4440,182 @@ public class RestClient implements Closeable {
             }
         }
     }
+
+    public PageData<Notification> getNotifications(Boolean unreadOnly, NotificationDeliveryMethod deliveryMethod, PageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+
+        StringBuilder urlBuilder = new StringBuilder();
+        urlBuilder.append(baseURL).append("/api/notifications?").append(getUrlParams(pageLink));
+        addPageLinkToParam(params, pageLink);
+
+        if (unreadOnly != null) {
+            urlBuilder.append("&unreadOnly={unreadOnly}");
+            params.put("unreadOnly", unreadOnly.toString());
+        }
+        if (deliveryMethod != null) {
+            urlBuilder.append("&deliveryMethod={deliveryMethod}");
+            params.put("deliveryMethod", deliveryMethod.name());
+        }
+
+        return restTemplate.exchange(urlBuilder.toString(),
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<Notification>>() {
+                }, params).getBody();
+    }
+
+    public Integer getUnreadNotificationsCount(NotificationDeliveryMethod deliveryMethod) {
+        String uri = "/api/notifications/unread/count?";
+        Map<String, String> params = new HashMap<>();
+        if (deliveryMethod != null) {
+            params.put("deliveryMethod", deliveryMethod.name());
+            uri += "&deliveryMethod={deliveryMethod}";
+        }
+        return restTemplate.exchange(
+                baseURL + uri,
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                Integer.class, params).getBody();
+    }
+
+    public void markNotificationAsRead(NotificationId notificationId) {
+        restTemplate.exchange(
+                baseURL + "/api/notification/{id}/read",
+                HttpMethod.PUT,
+                HttpEntity.EMPTY,
+                Void.class,
+                notificationId.getId());
+    }
+
+    public void markAllNotificationsAsRead(NotificationDeliveryMethod deliveryMethod) {
+        String uri = "/api/notifications/read?";
+        Map<String, String> params = new HashMap<>();
+        if (deliveryMethod != null) {
+            params.put("deliveryMethod", deliveryMethod.name());
+            uri += "&deliveryMethod={deliveryMethod}";
+        }
+        restTemplate.exchange(
+                baseURL + uri,
+                HttpMethod.PUT,
+                HttpEntity.EMPTY,
+                Void.class,
+                params);
+    }
+
+
+    public void deleteNotification(NotificationId notificationId) {
+        restTemplate.delete(baseURL + "/api/notification/{id}", notificationId.getId());
+    }
+
+    public NotificationRequest saveNotificationRequest(NotificationRequest notificationRequest) {
+        return restTemplate.postForEntity(baseURL + "/api/notification/request", notificationRequest, NotificationRequest.class).getBody();
+    }
+
+    public NotificationRequestPreview getNotificationRequestPreview(NotificationRequest notificationRequest, int recipientsPreviewSize) {
+        return restTemplate.postForEntity(baseURL + "/api/notification/request/preview?recipientsPreviewSize={recipientsPreviewSize}", notificationRequest, NotificationRequestPreview.class, recipientsPreviewSize).getBody();
+    }
+
+    public Optional<NotificationRequestInfo> getNotificationRequestById(NotificationRequestId notificationRequestId) {
+        try {
+            ResponseEntity<NotificationRequestInfo> notificationRequest = restTemplate.getForEntity(baseURL + "/api/notification/request/{id}", NotificationRequestInfo.class, notificationRequestId.getId());
+            return Optional.ofNullable(notificationRequest.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public PageData<NotificationRequestInfo> getNotificationRequests(PageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        addPageLinkToParam(params, pageLink);
+        return restTemplate.exchange(
+                baseURL + "/api/notification/requests?" + getUrlParams(pageLink),
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<NotificationRequestInfo>>() {
+                }, params).getBody();
+    }
+
+    public void deleteNotificationRequest(NotificationRequestId notificationRequestId) {
+        restTemplate.delete(baseURL + "/api/notification/request/{id}", notificationRequestId.getId());
+    }
+
+    public NotificationSettings saveNotificationSettings(NotificationSettings notificationSettings) {
+        return restTemplate.postForEntity(baseURL + "/api/notification/settings", notificationSettings, NotificationSettings.class).getBody();
+    }
+
+    public Optional<NotificationSettings> getNotificationSettings() {
+        try {
+            ResponseEntity<NotificationSettings> notificationSettings = restTemplate.getForEntity(baseURL + "/api/notification/settings", NotificationSettings.class);
+            return Optional.ofNullable(notificationSettings.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public List<NotificationDeliveryMethod> getAvailableDeliveryMethods() {
+        return restTemplate.exchange(URI.create(
+                        baseURL + "/api/notification/deliveryMethods"),
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<List<NotificationDeliveryMethod>>() {
+                }).getBody();
+    }
+
+    public UserNotificationSettings saveUserNotificationSettings(UserNotificationSettings userNotificationSettings) {
+        return restTemplate.postForEntity(baseURL + "/api/notification/settings/user", userNotificationSettings, UserNotificationSettings.class).getBody();
+    }
+
+    public Optional<UserNotificationSettings> getUserNotificationSettings() {
+        try {
+            ResponseEntity<UserNotificationSettings> userNotificationSettings = restTemplate.getForEntity(baseURL + "/api/notification/settings/user", UserNotificationSettings.class);
+            return Optional.ofNullable(userNotificationSettings.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public NotificationTarget saveNotificationTarget(NotificationTarget notificationTarget) {
+        return restTemplate.postForEntity(baseURL + "/api/notification/target", notificationTarget, NotificationTarget.class).getBody();
+    }
+
+    public NotificationTemplate saveNotificationTemplate(NotificationTemplate notificationTemplate) {
+        return restTemplate.postForEntity(baseURL + "/api/notification/template", notificationTemplate, NotificationTemplate.class).getBody();
+    }
+
+    public AiModel saveAiModel(AiModel aiModel) {
+        return restTemplate.postForEntity(baseURL + "/api/ai/model", aiModel, AiModel.class).getBody();
+    }
+
+    public Optional<AiModel> getAiModel(AiModelId aiModelId) {
+        try {
+            ResponseEntity<AiModel> response = restTemplate.getForEntity(
+                    baseURL + "/api/ai/model/{aiModelId}", AiModel.class, aiModelId.getId());
+            return Optional.ofNullable(response.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public void deleteAiModel(AiModelId aiModelId) {
+        restTemplate.delete(baseURL + "/api/ai/model/{aiModelId}", aiModelId.getId());
+    }
+
 
     private String getTimeUrlParams(TimePageLink pageLink) {
         String urlParams = getUrlParams(pageLink);

@@ -40,21 +40,22 @@ import { TranslateService } from '@ngx-translate/core';
 import { EditorOptions } from 'tinymce';
 
 @Component({
-  selector: 'tb-template-configuration',
-  templateUrl: './notification-template-configuration.component.html',
-  styleUrls: ['./notification-template-configuration.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => NotificationTemplateConfigurationComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => NotificationTemplateConfigurationComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-template-configuration',
+    templateUrl: './notification-template-configuration.component.html',
+    styleUrls: ['./notification-template-configuration.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => NotificationTemplateConfigurationComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => NotificationTemplateConfigurationComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class NotificationTemplateConfigurationComponent implements OnDestroy, ControlValueAccessor, Validator {
 

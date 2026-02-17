@@ -30,9 +30,10 @@ import {
 } from '@home/components/widget/lib/multiple-input-widget.component';
 
 @Component({
-  selector: 'tb-update-multiple-attributes-key-settings',
-  templateUrl: './update-multiple-attributes-key-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-update-multiple-attributes-key-settings',
+    templateUrl: './update-multiple-attributes-key-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class UpdateMultipleAttributesKeySettingsComponent extends WidgetSettingsComponent {
 

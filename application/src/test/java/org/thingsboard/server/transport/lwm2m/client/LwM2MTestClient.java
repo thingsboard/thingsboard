@@ -33,7 +33,6 @@ import org.eclipse.leshan.client.object.Security;
 import org.eclipse.leshan.client.object.Server;
 import org.eclipse.leshan.client.observer.LwM2mClientObserver;
 import org.eclipse.leshan.client.resource.DummyInstanceEnabler;
-import org.eclipse.leshan.client.resource.LwM2mInstanceEnabler;
 import org.eclipse.leshan.client.resource.LwM2mObjectEnabler;
 import org.eclipse.leshan.client.resource.ObjectsInitializer;
 import org.eclipse.leshan.client.resource.listener.ObjectsListenerAdapter;
@@ -68,6 +67,9 @@ import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandle
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -77,6 +79,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static org.awaitility.Awaitility.await;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_CONNECTION_ID_LENGTH;
@@ -90,10 +93,7 @@ import static org.eclipse.leshan.core.LwM2mId.SERVER;
 import static org.eclipse.leshan.core.LwM2mId.SOFTWARE_MANAGEMENT;
 import static org.eclipse.leshan.core.node.codec.DefaultLwM2mEncoder.getDefaultPathEncoder;
 import static org.thingsboard.server.transport.AbstractTransportIntegrationTest.DEFAULT_WAIT_TIMEOUT_SECONDS;
-import static org.thingsboard.server.transport.lwm2m.AbstractLwM2MIntegrationTest.serverId;
-import static org.thingsboard.server.transport.lwm2m.AbstractLwM2MIntegrationTest.serverIdBs;
 import static org.thingsboard.server.transport.lwm2m.AbstractLwM2MIntegrationTest.shortServerId;
-import static org.thingsboard.server.transport.lwm2m.AbstractLwM2MIntegrationTest.shortServerIdBs0;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.BINARY_APP_DATA_CONTAINER;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_BOOTSTRAP_FAILURE;
@@ -141,11 +141,11 @@ public class LwM2MTestClient {
     private Map<LwM2MClientState, Integer> clientDtlsCid;
     private LwM2mUplinkMsgHandler defaultLwM2mUplinkMsgHandlerTest;
     private LwM2mClientContext clientContext;
-    private LwM2mTemperatureSensor lwM2mTemperatureSensor12;
+    private LwM2mTemperatureSensor lwM2MTemperatureSensor12;
     private String deviceIdStr;
     private int clientPort;
 
-    public void init(Security security, Security securityBs, int clientPort, boolean isRpc,
+    public void init(Security securityLwm2m, Security securityBs, int clientPort, boolean isRpc,
                      LwM2mUplinkMsgHandler defaultLwM2mUplinkMsgHandler,
                      LwM2mClientContext clientContext, Integer cIdLength, boolean queueMode,
                      boolean supportFormatOnly_SenMLJSON_SenMLCBOR, Integer value3_0_9) throws InvalidDDFFileException, IOException {
@@ -154,55 +154,33 @@ public class LwM2MTestClient {
         this.defaultLwM2mUplinkMsgHandlerTest = defaultLwM2mUplinkMsgHandler;
         this.clientContext = clientContext;
 
-        List<ObjectModel> models = ObjectLoader.loadAllDefault();
-        for (String resourceName : lwm2mClientResources) {
-            models.addAll(ObjectLoader.loadDdfFile(LwM2MTestClient.class.getClassLoader().getResourceAsStream("lwm2m/" + resourceName), resourceName));
-        }
-        if (this.modelResources != null) {
-            List<ObjectModel> modelsRes = new ArrayList<>();
-            for (String resourceName : this.modelResources) {
-                modelsRes.addAll(ObjectLoader.loadDdfFile(LwM2MTestClient.class.getClassLoader().getResourceAsStream("lwm2m/" + resourceName), resourceName));
-            }
-            Set<Integer> idsToRemove = new HashSet<>();
-            for (ObjectModel model : modelsRes) {
-                idsToRemove.add(model.id);
-            }
-            models.removeIf(model -> idsToRemove.contains(model.id));
-            models.addAll(modelsRes);
-        }
+        ObjectsInitializer initializer = createFreshInitializer();
 
-        LwM2mModel model = new StaticModel(models);
-        ObjectsInitializer initializer = new ObjectsInitializer(model);
-        if (securityBs != null && security != null) {
-            // SECURITY
-            security.setId(serverId);
-            securityBs.setId(serverIdBs);
-            LwM2mInstanceEnabler[] instances = new LwM2mInstanceEnabler[]{securityBs, security};
-            initializer.setClassForObject(SECURITY, Security.class);
-            initializer.setInstancesForObject(SECURITY, instances);
-            // SERVER
-            Server lwm2mServer = new Server(shortServerId, TimeUnit.MINUTES.toSeconds(60));
-            lwm2mServer.setId(serverId);
-            Server serverBs = new Server(shortServerIdBs0, TimeUnit.MINUTES.toSeconds(60));
-            serverBs.setId(serverIdBs);
-            instances = new LwM2mInstanceEnabler[]{serverBs, lwm2mServer};
-            initializer.setClassForObject(SERVER, Server.class);
-            initializer.setInstancesForObject(SERVER, instances);
+        // SECURITY
+        if (securityLwm2m != null && securityLwm2m.getId() != null) {
+            forceNullSecurityId(securityLwm2m);
+        }
+        if (securityBs != null && securityBs.getId() != null) {
+            forceNullSecurityId(securityBs);
+        }
+        if (securityBs != null && securityLwm2m != null) {
+            log.warn("Security Both: securityBs: [{}] and security Lwm2m  [{}]", securityBs.getId(), securityLwm2m.getId());
+            initializer.setInstancesForObject(SECURITY, securityBs, securityLwm2m);
         } else if (securityBs != null) {
-            // SECURITY
+            log.warn("Security BS only: securityBs: [{}] ", securityBs.getId());
             initializer.setInstancesForObject(SECURITY, securityBs);
-            // SERVER
-            initializer.setClassForObject(SERVER, Server.class);
-        } else {
+        } else if (securityLwm2m != null) {
             // SECURITY
-            initializer.setInstancesForObject(SECURITY, security);
-            // SERVER
-            Server lwm2mServer = new Server(shortServerId, TimeUnit.MINUTES.toSeconds(60));
-            lwm2mServer.setId(serverId);
-            initializer.setInstancesForObject(SERVER, lwm2mServer);
+            log.warn("Security Lwm2m only: security Lwm2m  [{}]", securityLwm2m.getId());
+            initializer.setInstancesForObject(SECURITY, securityLwm2m);
         }
-
+        // SERVER
+        Server serverLwm2m = new Server(shortServerId, TimeUnit.MINUTES.toSeconds(60));
+        initializer.setInstancesForObject(SERVER, serverLwm2m);
+        // DEVICE
         initializer.setInstancesForObject(DEVICE, lwM2MDevice = new SimpleLwM2MDevice(executor, value3_0_9));
+
+        // OTHER t
         initializer.setInstancesForObject(FIRMWARE, fwLwM2MDevice = new FwLwM2MDevice());
         initializer.setInstancesForObject(SOFTWARE_MANAGEMENT, swLwM2MDevice = new SwLwM2MDevice());
         initializer.setClassForObject(ACCESS_CONTROL, DummyInstanceEnabler.class);
@@ -212,8 +190,8 @@ public class LwM2MTestClient {
         locationParams.getPos();
         initializer.setInstancesForObject(LOCATION, new LwM2mLocation(locationParams.getLatitude(), locationParams.getLongitude(), locationParams.getScaleFactor(), executor, OBJECT_INSTANCE_ID_0));
         LwM2mTemperatureSensor lwM2mTemperatureSensor0 = new LwM2mTemperatureSensor(executor, OBJECT_INSTANCE_ID_0);
-        lwM2mTemperatureSensor12 = new LwM2mTemperatureSensor(executor, OBJECT_INSTANCE_ID_12);
-        initializer.setInstancesForObject(TEMPERATURE_SENSOR, lwM2mTemperatureSensor0, lwM2mTemperatureSensor12);
+        lwM2MTemperatureSensor12 = new LwM2mTemperatureSensor(executor, OBJECT_INSTANCE_ID_12);
+        initializer.setInstancesForObject(TEMPERATURE_SENSOR, lwM2mTemperatureSensor0, lwM2MTemperatureSensor12);
 
         List<LwM2mObjectEnabler> enablers = initializer.createAll();
 
@@ -234,7 +212,9 @@ public class LwM2MTestClient {
                         builder.setSessionListener(new DtlsSessionLogger(clientStates, clientDtlsCid));
 
                         return builder;
-                    };
+                    }
+
+                    ;
                 };
             }
         };
@@ -449,27 +429,44 @@ public class LwM2MTestClient {
 
     public void destroy() {
         if (leshanClient != null) {
-            leshanClient.destroy(true);
+            try {
+                leshanClient.destroy(true);
+            } catch (Exception e) {
+                log.warn("Failed to destroy Leshan client", e);
+            } finally {
+                leshanClient = null;
+            }
         }
-        if (lwM2MDevice != null) {
-            lwM2MDevice.destroy();
-        }
-        if (fwLwM2MDevice != null) {
-            fwLwM2MDevice.destroy();
-        }
-        if (swLwM2MDevice != null) {
-            swLwM2MDevice.destroy();
-        }
-        if (lwM2MBinaryAppDataContainer != null) {
-            lwM2MBinaryAppDataContainer.destroy();
-        }
-        if (lwM2MTemperatureSensor != null) {
-            lwM2MTemperatureSensor.destroy();
-        }
-        if (lwM2mTemperatureSensor12 != null) {
-            lwM2mTemperatureSensor12.destroy();
+
+        // ThingsBoard custom LwM2M objects
+        destroySafe(lwM2MDevice);
+        destroySafe(fwLwM2MDevice);
+        destroySafe(swLwM2MDevice);
+        destroySafe(lwM2MBinaryAppDataContainer);
+        destroySafe(lwM2MTemperatureSensor);
+        destroySafe(lwM2MTemperatureSensor12);
+
+        lwM2MDevice = null;
+        fwLwM2MDevice = null;
+        swLwM2MDevice = null;
+        lwM2MBinaryAppDataContainer = null;
+        lwM2MTemperatureSensor = null;
+        lwM2MTemperatureSensor12 = null;
+    }
+
+
+    private void destroySafe(Object obj) {
+        if (obj == null) return;
+        try {
+            Method destroy = obj.getClass().getMethod("destroy");
+            destroy.invoke(obj);
+        } catch (NoSuchMethodException e) {
+            // не має destroy() — ігноруємо
+        } catch (Exception e) {
+            log.warn("Failed to destroy {}", obj.getClass().getSimpleName(), e);
         }
     }
+
 
     public void start(boolean isStartLw) {
         if (leshanClient != null) {
@@ -483,7 +480,7 @@ public class LwM2MTestClient {
             if (isStartLw) {
                 this.awaitClientAfterStartConnectLw();
             }
-            lwM2mTemperatureSensor12.setLeshanClient(leshanClient);
+            lwM2MTemperatureSensor12.setLeshanClient(leshanClient);
             fwLwM2MDevice.setLeshanClient(leshanClient);
         }
     }
@@ -504,4 +501,60 @@ public class LwM2MTestClient {
         LwM2mClient lwM2MClient = this.clientContext.getClientByEndpoint(endpoint);
         Mockito.doAnswer(invocationOnMock -> null).when(defaultLwM2mUplinkMsgHandlerTest).initAttributes(lwM2MClient, true);
     }
+
+    private ObjectsInitializer createFreshInitializer() {
+        List<ObjectModel> models = new ArrayList<>(ObjectLoader.loadAllDefault());
+        for (String resourceName : lwm2mClientResources) {
+            try (InputStream in = LwM2MTestClient.class.getClassLoader()
+                    .getResourceAsStream("lwm2m/" + resourceName)) {
+                models.addAll(ObjectLoader.loadDdfFile(in, resourceName));
+            } catch (IOException | InvalidDDFFileException e) {
+                log.warn("Failed to load resource {}", resourceName, e);
+            }
+        }
+        if (this.modelResources != null) {
+            List<ObjectModel> modelsRes = new ArrayList<>();
+            for (String resourceName : this.modelResources) {
+                try (InputStream in = LwM2MTestClient.class.getClassLoader()
+                        .getResourceAsStream("lwm2m/" + resourceName)) {
+                    modelsRes.addAll(ObjectLoader.loadDdfFile(in, resourceName));
+                } catch (IOException | InvalidDDFFileException e) {
+                    log.warn("Failed to load resource {}", resourceName, e);
+                }
+            }
+            Set<Integer> idsToRemove = modelsRes.stream()
+                    .map(m -> m.id)
+                    .collect(Collectors.toSet());
+            models.removeIf(m -> idsToRemove.contains(m.id));
+            models.addAll(modelsRes);
+        }
+        LwM2mModel model = new StaticModel(models);
+        return new ObjectsInitializer(model);
+    }
+
+    private void forceNullSecurityId(Security security) {
+        if (security == null) {
+            return;
+        }
+        try {
+            Field field = security.getClass().getDeclaredField("id");
+            field.setAccessible(true);
+            field.set(security, null);
+            log.info("[forceNullSecurityId] Set id=null for {}", security);
+        } catch (NoSuchFieldException e) {
+            try {
+                //(SecurityObjectInstance)
+                Field field = security.getClass().getSuperclass().getDeclaredField("id");
+                field.setAccessible(true);
+                field.set(security, null);
+                log.info("[forceNullSecurityId] Set id=null for {} (via superclass)", security);
+            } catch (Exception ex) {
+                log.error("[forceNullSecurityId] Field 'id' not found for {}", security.getClass(), ex);
+            }
+        } catch (Exception e) {
+            log.error("[forceNullSecurityId] Failed to set id=null for {}", security.getClass(), e);
+        }
+    }
+
 }
+
