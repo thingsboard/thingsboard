@@ -23,7 +23,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.awaitility.Awaitility;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.AttributeScope;
@@ -31,8 +30,12 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BooleanDataEntry;
+import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
+import org.thingsboard.server.dao.attributes.AttributesDao;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.service.AbstractServiceTest;
 
@@ -40,6 +43,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.Executors;
@@ -48,9 +52,6 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * @author Andrew Shvayka
- */
 @Slf4j
 public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
 
@@ -60,9 +61,8 @@ public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
     @Autowired
     private AttributesService attributesService;
 
-    @Before
-    public void before() {
-    }
+    @Autowired
+    private AttributesDao attributesDao;
 
     @Test
     public void saveAndFetch() throws Exception {
@@ -223,7 +223,7 @@ public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
         saveAttribute(tenantId, deviceId, AttributeScope.SERVER_SCOPE, "key2", "123");
 
         Awaitility.await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
-            List<String> keys = attributesService.findAllKeysByEntityIds(tenantId, List.of(deviceId), AttributeScope.SERVER_SCOPE);
+            List<String> keys = attributesService.findAllKeysByEntityIdsAndScope(tenantId, List.of(deviceId), AttributeScope.SERVER_SCOPE);
             assertThat(keys).containsOnly("key1", "key2");
         });
     }
@@ -239,6 +239,84 @@ public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
             List<AttributeKvEntry> attributes = attributesService.findAll(tenantId, deviceId, AttributeScope.SERVER_SCOPE).get();
             assertThat(attributes).extracting(KvEntry::getKey).containsOnly("key1", "key2");
         });
+    }
+
+    @Test
+    public void findLatestByEntityIdsAndScope_returnsOneEntryPerKey() {
+        var device1 = new DeviceId(UUID.randomUUID());
+        var device2 = new DeviceId(UUID.randomUUID());
+
+        // Both devices have "temperature", device2 has a newer ts
+        saveAttribute(tenantId, device1, AttributeScope.SERVER_SCOPE, 1000, new DoubleDataEntry("temperature", 20.0));
+        saveAttribute(tenantId, device2, AttributeScope.SERVER_SCOPE, 2000, new DoubleDataEntry("temperature", 25.0));
+        // Only device1 has "humidity"
+        saveAttribute(tenantId, device1, AttributeScope.SERVER_SCOPE, 1500, new LongDataEntry("humidity", 60L));
+        // Only device2 has "active"
+        saveAttribute(tenantId, device2, AttributeScope.SERVER_SCOPE, 3000, new BooleanDataEntry("active", true));
+
+        List<AttributeKvEntry> results = attributesDao.findLatestByEntityIdsAndScope(tenantId, List.of(device1, device2), AttributeScope.SERVER_SCOPE);
+        Map<String, AttributeKvEntry> byKey = results.stream().collect(Collectors.toMap(AttributeKvEntry::getKey, e -> e));
+
+        Assert.assertEquals(3, byKey.size());
+
+        // "temperature" should pick device2's value (ts=2000 > ts=1000)
+        AttributeKvEntry temp = byKey.get("temperature");
+        Assert.assertNotNull(temp);
+        Assert.assertEquals(25.0, temp.getDoubleValue().orElseThrow(), 0.0);
+        Assert.assertEquals(2000, temp.getLastUpdateTs());
+
+        // "humidity" — only device1 has it
+        AttributeKvEntry humidity = byKey.get("humidity");
+        Assert.assertNotNull(humidity);
+        Assert.assertEquals(60L, (long) humidity.getLongValue().orElseThrow());
+        Assert.assertEquals(1500, humidity.getLastUpdateTs());
+
+        // "active" — only device2 has it
+        AttributeKvEntry active = byKey.get("active");
+        Assert.assertNotNull(active);
+        Assert.assertEquals(true, active.getBooleanValue().orElseThrow());
+        Assert.assertEquals(3000, active.getLastUpdateTs());
+    }
+
+    @Test
+    public void findLatestByEntityIdsAndScope_emptyList() {
+        List<AttributeKvEntry> results = attributesDao.findLatestByEntityIdsAndScope(tenantId, List.of(), AttributeScope.SERVER_SCOPE);
+        Assert.assertTrue(results.isEmpty());
+    }
+
+    @Test
+    public void findLatestByEntityIdsAndScope_singleEntity() throws Exception {
+        var device = new DeviceId(UUID.randomUUID());
+        saveAttribute(tenantId, device, AttributeScope.SERVER_SCOPE, 1000, new StringDataEntry("key1", "value1"));
+        saveAttribute(tenantId, device, AttributeScope.SERVER_SCOPE, 2000, new StringDataEntry("key2", "value2"));
+
+        // sync
+        List<AttributeKvEntry> results = attributesDao.findLatestByEntityIdsAndScope(tenantId, List.of(device), AttributeScope.SERVER_SCOPE);
+        Assert.assertEquals(2, results.size());
+        Map<String, AttributeKvEntry> byKey = results.stream().collect(Collectors.toMap(AttributeKvEntry::getKey, e -> e));
+        Assert.assertEquals("value1", byKey.get("key1").getStrValue().orElseThrow());
+        Assert.assertEquals(1000, byKey.get("key1").getLastUpdateTs());
+        Assert.assertEquals("value2", byKey.get("key2").getStrValue().orElseThrow());
+        Assert.assertEquals(2000, byKey.get("key2").getLastUpdateTs());
+
+        // async — same result
+        List<AttributeKvEntry> asyncResults = attributesDao.findLatestByEntityIdsAndScopeAsync(tenantId, List.of(device), AttributeScope.SERVER_SCOPE).get();
+        Assert.assertEquals(results, asyncResults);
+    }
+
+    @Test
+    public void findLatestByEntityIdsAndScope_filtersScope() {
+        var device = new DeviceId(UUID.randomUUID());
+        saveAttribute(tenantId, device, AttributeScope.SERVER_SCOPE, 1000, new StringDataEntry("serverKey", "sv"));
+        saveAttribute(tenantId, device, AttributeScope.CLIENT_SCOPE, 1000, new StringDataEntry("clientKey", "cv"));
+
+        List<AttributeKvEntry> serverResults = attributesDao.findLatestByEntityIdsAndScope(tenantId, List.of(device), AttributeScope.SERVER_SCOPE);
+        Assert.assertEquals(1, serverResults.size());
+        Assert.assertEquals("serverKey", serverResults.get(0).getKey());
+
+        List<AttributeKvEntry> clientResults = attributesDao.findLatestByEntityIdsAndScope(tenantId, List.of(device), AttributeScope.CLIENT_SCOPE);
+        Assert.assertEquals(1, clientResults.size());
+        Assert.assertEquals("clientKey", clientResults.get(0).getKey());
     }
 
     private void testConcurrentFetchAndUpdate(TenantId tenantId, DeviceId deviceId, ListeningExecutorService pool) throws Exception {
@@ -310,6 +388,15 @@ public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
         } catch (Exception e) {
             log.warn("Failed to save attribute", e.getCause());
             Assert.assertNull(e);
+        }
+    }
+
+    private void saveAttribute(TenantId tenantId, DeviceId deviceId, AttributeScope scope, long ts, KvEntry value) {
+        try {
+            attributesService.save(tenantId, deviceId, scope, Collections.singletonList(new BaseAttributeKvEntry(ts, value))).get(10, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            log.warn("Failed to save attribute", e.getCause());
+            throw new RuntimeException(e);
         }
     }
 
