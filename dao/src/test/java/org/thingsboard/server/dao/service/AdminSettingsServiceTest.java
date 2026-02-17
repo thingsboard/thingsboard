@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
@@ -25,12 +26,16 @@ import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
+@Slf4j
 @DaoSqlTest
 public class AdminSettingsServiceTest extends AbstractServiceTest {
 
@@ -111,6 +116,26 @@ public class AdminSettingsServiceTest extends AbstractServiceTest {
         assertThatThrownBy(() -> {
             adminSettingsService.saveAdminSettings(tenantId, tenantSettings);
         }).hasMessageContaining("already exists");
+    }
+
+    @Test
+    public void testFindAllByTenantId() {
+        int pageSize = 10;
+        int totalElements = 100;
+
+        for (int i = 0; i < totalElements; i++) {
+            AdminSettings settings = new AdminSettings();
+            settings.setTenantId(tenantId);
+            String key = RandomStringUtils.randomAlphanumeric(15);
+            settings.setKey(key);
+            settings.setJsonValue(JacksonUtil.newObjectNode().put("value", i));
+            adminSettingsService.saveAdminSettings(tenantId, settings);
+        }
+
+        PageData<AdminSettings> pageData = adminSettingsService.findAllByTenantId(tenantId, new PageLink(pageSize));
+        assertThat(pageData.getData().size()).isEqualTo(pageSize);
+        assertThat(pageData.getTotalElements()).isEqualTo(totalElements);
+
     }
 
 }
