@@ -13,35 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import "../scss/constants";
-
-.tb-color-picker-panel {
-  width: 370px;
-  display: flex;
-  flex-direction: column;
-  max-height: calc(100vh - 24px);
-  min-height: 100%;
-  @media #{$mat-sm} {
-    width: 578px;
-  }
-  .tb-color-picker-title {
-    font-size: 16px;
-    font-weight: 500;
-    line-height: 24px;
-    letter-spacing: 0.25px;
-    color: rgba(0, 0, 0, 0.87);
-  }
-  .tb-color-picker {
-    padding-right: 4px;
-    overflow-y: scroll;
-  }
-  .tb-color-picker-panel-buttons {
-    height: 60px;
-    padding: 8px 8px 0 0;
+:host {
+  .color-input-container {
     display: flex;
-    flex-direction: row;
-    gap: 16px;
-    justify-content: space-between;
-    align-items: flex-end;
+    gap: 4px;
+    align-items: center;
+  }
+  .color-input {
+    max-width: 72px;
+    margin-bottom: 4px;
   }
 }
+
+
