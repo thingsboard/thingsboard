@@ -99,6 +99,8 @@ import {
   TimeSeriesChartTooltipWidgetSettings
 } from '@home/components/widget/lib/chart/time-series-chart-tooltip.models';
 import { TbUnit, TbUnitConverter } from '@shared/models/unit.models';
+import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { DataKeysCallbacks } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 
 type TimeSeriesChartDataEntry = [number, any, number, number];
 
@@ -1495,3 +1497,101 @@ const createSeriesLabelOption = (item: TimeSeriesChartDataItem, show: boolean,
   }
   return labelOption;
 };
+
+export const checkLatestDataKeys = (yAxes: TimeSeriesChartYAxes, datasource: Datasource): TimeSeriesChartYAxes => {
+  const latestKeys = datasource?.latestDataKeys || [];
+  const result: TimeSeriesChartYAxes = {};
+
+  for (const [id, axis] of Object.entries(yAxes)) {
+    axis.min = normalizeAxisLimit(axis.min);
+    axis.max = normalizeAxisLimit(axis.max);
+    const minCfg = axis.min;
+    const maxCfg = axis.max;
+
+    const minValid = !!minCfg && (
+      minCfg.type !== ValueSourceType.latestKey ||
+      latestKeys.some(k => isYAxisKey(k, minCfg))
+    );
+
+    const maxValid = !!maxCfg && (
+      maxCfg.type !== ValueSourceType.latestKey ||
+      latestKeys.some(k => isYAxisKey(k, maxCfg))
+    );
+
+    if (minValid && maxValid) {
+      result[id] = axis;
+    }
+  }
+
+  return result;
+}
+
+export const updateLatestDataKeys = (yAxes: TimeSeriesChartYAxisSettings[], datasource: Datasource, dataKeyCallbacks: DataKeysCallbacks)=> {
+  if (datasource) {
+    let latestKeys = datasource.latestDataKeys;
+    if (!latestKeys) {
+      latestKeys = [];
+      datasource.latestDataKeys = latestKeys;
+    }
+    const existingYAxisKeys = latestKeys.filter(k => k.settings?.__yAxisMinKey === true || k.settings?.__yAxisMaxKey === true);
+    const foundYAxisKeys: DataKey[] = [];
+
+    for(const yAxis of yAxes) {
+      const min = yAxis.min as ValueSourceConfig;
+      const max = yAxis.max as ValueSourceConfig;
+      if (min && min.type === ValueSourceType.latestKey) {
+        const found = existingYAxisKeys.find(k => isYAxisKey(k, min));
+        if (!found) {
+          const newKey = dataKeyCallbacks.generateDataKey(min.latestKey, min.latestKeyType,
+            null, true, null);
+          newKey.settings.__yAxisMinKey = true;
+          latestKeys.push(newKey);
+        } else if (foundYAxisKeys.indexOf(found) === -1) {
+          foundYAxisKeys.push(found);
+        }
+      }
+      if (max && max.type === ValueSourceType.latestKey) {
+        const found = existingYAxisKeys.find(k => isYAxisKey(k, max));
+        if (!found) {
+          const newKey = dataKeyCallbacks.generateDataKey(max.latestKey, max.latestKeyType,
+            null, true, null);
+          newKey.settings.__yAxisMaxKey = true;
+          latestKeys.push(newKey);
+        } else if (foundYAxisKeys.indexOf(found) === -1) {
+          foundYAxisKeys.push(found);
+        }
+      }
+    }
+    const toRemove = existingYAxisKeys.filter(k => foundYAxisKeys.indexOf(k) === -1);
+    for (const key of toRemove) {
+      const index = latestKeys.indexOf(key);
+      if (index > -1) {
+        latestKeys.splice(index, 1);
+      }
+    }
+  }
+}
+
+export const isYAxisKey = (d: DataKey, limit: ValueSourceConfig): boolean => {
+  return (d.type === DataKeyType.function && d.label === limit.latestKey) ||
+    (d.type !== DataKeyType.function && d.name === limit.latestKey &&
+      d.type === limit.latestKeyType);
+}
+
+export const normalizeAxisLimit = (limit: string | number | ValueSourceConfig): ValueSourceConfig => {
+  if (!limit) {
+    return {
+      type: ValueSourceType.constant,
+      value: null,
+      entityAlias: null
+    };
+  } else if (typeof limit === 'number' || typeof limit === 'string') {
+    return {
+      type: ValueSourceType.constant,
+      value: Number(limit),
+      entityAlias: null
+    };
+  }
+  return limit;
+}
+

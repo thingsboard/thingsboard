@@ -25,7 +25,7 @@ import {
   Validators
 } from '@angular/forms';
 import {
-  AxisPosition, defaultXAxisTicksFormat,
+  AxisPosition, defaultXAxisTicksFormat, normalizeAxisLimit,
   timeSeriesAxisPositionTranslations,
   TimeSeriesChartAxisSettings, TimeSeriesChartXAxisSettings,
   TimeSeriesChartYAxisSettings
@@ -138,8 +138,8 @@ export class TimeSeriesChartAxisSettingsComponent implements OnInit, ControlValu
       this.axisSettingsFormGroup.addControl('ticksGenerator', this.fb.control(null, []));
       this.axisSettingsFormGroup.addControl('interval', this.fb.control(null, [Validators.min(0)]));
       this.axisSettingsFormGroup.addControl('splitNumber', this.fb.control(null, [Validators.min(1)]));
-      this.axisSettingsFormGroup.addControl('min', this.fb.control(null, []));
-      this.axisSettingsFormGroup.addControl('max', this.fb.control(null, []));
+      this.axisSettingsFormGroup.addControl('min', this.fb.control(normalizeAxisLimit(null), []));
+      this.axisSettingsFormGroup.addControl('max', this.fb.control(normalizeAxisLimit(null), []));
     } else if (this.axisType === 'xAxis') {
       this.axisSettingsFormGroup.addControl('ticksFormat', this.fb.control(null, []));
     }
