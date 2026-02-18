@@ -93,7 +93,7 @@ public class SwaggerConfiguration {
     public static final String REFRESH_TOKEN_ENDPOINT = "/api/auth/token";
 
     private static final String LOGIN_PASSWORD_SCHEME = "http_login_form";
-    private static final String API_KEY_SCHEME = "API key form";
+    private static final String API_KEY_SCHEME = "api_key_form";
 
     private static final ApiResponses loginResponses = loginResponses();
     private static final ApiResponses defaultErrorResponses = defaultErrorResponses(false);

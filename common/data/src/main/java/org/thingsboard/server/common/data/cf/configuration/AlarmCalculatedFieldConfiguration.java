@@ -25,6 +25,8 @@ import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.util.CollectionsUtil;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +36,7 @@ import java.util.stream.Stream;
 
 import static java.util.Map.Entry.comparingByKey;
 
+@Schema(allOf = CalculatedFieldConfiguration.class)
 @Data
 public class AlarmCalculatedFieldConfiguration implements ArgumentsBasedCalculatedFieldConfiguration {
 

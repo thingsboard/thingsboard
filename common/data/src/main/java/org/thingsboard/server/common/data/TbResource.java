@@ -76,7 +76,6 @@ public class TbResource extends TbResourceInfo {
                 .orElse(null);
     }
 
-    @Schema(description = "Resource preview data.", accessMode = Schema.AccessMode.READ_WRITE)
     @JsonGetter("preview")
     public String getEncodedPreview() {
         return Optional.ofNullable(preview)

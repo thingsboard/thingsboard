@@ -20,10 +20,20 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.thingsboard.server.common.data.AttributeScope;
 
 import java.util.Objects;
 
+@Schema(
+        description = "Configuration for calculated fields",
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "TIME_SERIES", schema = TimeSeriesOutput.class),
+                @DiscriminatorMapping(value = "ATTRIBUTES", schema = AttributesOutput.class)
+        }
+)
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         include = JsonTypeInfo.As.PROPERTY,
@@ -37,6 +47,7 @@ import java.util.Objects;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public interface Output {
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @JsonIgnore
     OutputType getType();
 

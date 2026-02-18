@@ -17,6 +17,7 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -200,9 +201,7 @@ public class CustomerController extends BaseController {
         return checkNotNull(customerService.findCustomerByTenantIdAndTitle(tenantId, customerTitle), "Customer with title [" + customerTitle + "] is not found");
     }
 
-    @ApiOperation(value = "Get customers by Customer Ids (getCustomersByIds)",
-            notes = "Returns a list of Customer objects based on the provided ids." +
-                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @Hidden
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @GetMapping(value = "/customers", params = {"customerIds"})
     public List<Customer> getCustomersByIds(
@@ -214,6 +213,17 @@ public class CustomerController extends BaseController {
             customerIds.add(new CustomerId(customerUUID));
         }
         return customerService.findCustomersByTenantIdAndIds(tenantId, customerIds);
+    }
+
+    @ApiOperation(value = "Get customers by Customer Ids (getCustomersByIdsV2)",
+            notes = "Returns a list of Customer objects based on the provided ids." +
+                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @GetMapping(value = "/customers/list")
+    public List<Customer> getCustomersByIdsV2(
+            @Parameter(description = "A list of customer ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+            @RequestParam("customerIds") Set<UUID> customerUUIDs) throws ThingsboardException {
+        return getCustomersByIds(customerUUIDs);
     }
 
 }

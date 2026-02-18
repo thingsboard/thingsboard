@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -22,8 +23,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -170,6 +169,7 @@ public class TenantController extends BaseController {
         return checkNotNull(tenantService.findTenantInfos(pageLink));
     }
 
+    @Hidden
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @GetMapping(value = "/tenants", params = {"tenantIds"})
     public List<Tenant> getTenantsByIds(
@@ -182,6 +182,14 @@ public class TenantController extends BaseController {
         }
         List<Tenant> tenants = tenantService.findTenantsByIds(tenantId, tenantIds);
         return filterTenantsByReadPermission(tenants);
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @GetMapping(value = "/tenants/list")
+    public List<Tenant> getTenantsByIdsV2(
+            @Parameter(description = "A list of tenant ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")))
+            @RequestParam("tenantIds") Set<UUID> tenantUUIDs) throws ThingsboardException {
+        return getTenantsByIds(tenantUUIDs);
     }
 
     private List<Tenant> filterTenantsByReadPermission(List<Tenant> tenants) {

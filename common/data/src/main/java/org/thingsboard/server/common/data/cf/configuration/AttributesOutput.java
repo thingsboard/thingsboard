@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.thingsboard.server.common.data.AttributeScope;
 
@@ -31,6 +32,7 @@ public class AttributesOutput implements Output {
         this.strategy = new AttributesRuleChainOutputStrategy();
     }
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public OutputType getType() {
         return OutputType.ATTRIBUTES;

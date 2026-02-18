@@ -19,7 +19,17 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
+@Schema(
+        description = "Configuration for calculated fields",
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "RELATION_PATH_QUERY", schema = RelationPathQueryDynamicSourceConfiguration.class),
+                @DiscriminatorMapping(value = "CURRENT_OWNER", schema = CurrentOwnerDynamicSourceConfiguration.class)
+        }
+)
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         include = JsonTypeInfo.As.PROPERTY,
@@ -32,6 +42,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public interface CfArgumentDynamicSourceConfiguration {
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @JsonIgnore
     CFArgumentDynamicSourceType getType();
 

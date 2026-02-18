@@ -22,8 +22,10 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmCondition;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.thingsboard.server.common.data.id.DashboardId;
 
+@Schema(name = "AlarmRuleDefinition")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

@@ -15,11 +15,13 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 @Data
 public class CurrentOwnerDynamicSourceConfiguration implements CfArgumentDynamicSourceConfiguration {
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public CFArgumentDynamicSourceType getType() {
         return CFArgumentDynamicSourceType.CURRENT_OWNER;

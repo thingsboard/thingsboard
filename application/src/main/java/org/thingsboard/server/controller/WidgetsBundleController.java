@@ -256,12 +256,12 @@ public class WidgetsBundleController extends BaseController {
         return widgetsBundleService.findSystemOrTenantWidgetsBundlesByIds(getTenantId(), widgetsBundleIds);
     }
 
-    @ApiOperation(value = "Get Widgets Bundles By Ids (getWidgetsBundlesByIds)",
+    @ApiOperation(value = "Get Widgets Bundles By Ids (getWidgetsBundlesList)",
             notes = "Requested widgets bundles must be system level or owned by tenant of the user which is performing the request. " +
                     NEW_LINE)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/widgetsBundles/list", params = {"widgetsBundleIds"})
-    public List<WidgetsBundle> getWidgetsBundlesByIds(
+    public List<WidgetsBundle> getWidgetsBundlesList(
             @Parameter(description = "A list of widgets bundle ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
             @RequestParam("widgetsBundleIds") Set<UUID> widgetsBundleUUIDs) throws ThingsboardException {
         return getWidgetsBundlesByIds(widgetsBundleUUIDs);

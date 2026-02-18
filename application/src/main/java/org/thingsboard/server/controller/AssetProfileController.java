@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -225,9 +226,7 @@ public class AssetProfileController extends BaseController {
         return checkNotNull(assetProfileService.findAssetProfileNamesByTenantId(tenantId, activeOnly));
     }
 
-    @ApiOperation(value = "Get Asset Profiles By Ids (getAssetProfilesByIds)",
-            notes = "Requested asset profiles must be owned by tenant which is performing the request. " +
-                    NEW_LINE)
+    @Hidden
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping(value = "/assetProfileInfos", params = {"assetProfileIds"})
     public List<AssetProfileInfo> getAssetProfilesByIds(
@@ -239,6 +238,17 @@ public class AssetProfileController extends BaseController {
             assetProfileIds.add(new AssetProfileId(assetProfileUUID));
         }
         return assetProfileService.findAssetProfilesByIds(tenantId, assetProfileIds);
+    }
+
+    @ApiOperation(value = "Get Asset Profiles By Ids (getAssetProfilesByIdsV2)",
+            notes = "Requested asset profiles must be owned by tenant which is performing the request. " +
+                    NEW_LINE)
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @GetMapping(value = "/assetProfileInfos/list")
+    public List<AssetProfileInfo> getAssetProfilesByIdsV2(
+            @Parameter(description = "A list of asset profile ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+            @RequestParam("assetProfileIds") Set<UUID> assetProfileUUIDs) throws ThingsboardException {
+        return getAssetProfilesByIds(assetProfileUUIDs);
     }
 
 }

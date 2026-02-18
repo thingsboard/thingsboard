@@ -17,6 +17,7 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -602,13 +603,10 @@ public class DashboardController extends BaseController {
         return checkNotNull(filteredResult);
     }
 
-    @ApiOperation(value = "Get dashboards by Dashboard Ids (getDashboardsByIds)",
-            notes = "Returns a list of DashboardInfo objects based on the provided ids. " +
-                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @Hidden
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/dashboards", params = {"dashboardIds"})
-    public List<DashboardInfo> getDashboardsByIds(@Parameter(description = "A list of dashboard ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
-            @RequestParam("dashboardIds") Set<UUID> dashboardUUIDs) throws ThingsboardException {
+    public List<DashboardInfo> getDashboardsByIds(@RequestParam("dashboardIds") Set<UUID> dashboardUUIDs) throws ThingsboardException {
         TenantId tenantId = getCurrentUser().getTenantId();
         List<DashboardId> dashboardIds = new ArrayList<>();
         for (UUID dashboardUUID : dashboardUUIDs) {
@@ -616,6 +614,16 @@ public class DashboardController extends BaseController {
         }
         List<DashboardInfo> dashboards = dashboardService.findDashboardInfoByIds(tenantId, dashboardIds);
         return filterDashboardsByReadPermission(dashboards);
+    }
+
+    @ApiOperation(value = "Get dashboards by Dashboard Ids (getDashboardsByIdsV2)",
+            notes = "Returns a list of DashboardInfo objects based on the provided ids. " +
+                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping(value = "/dashboards/list")
+    public List<DashboardInfo> getDashboardsByIdsV2(@Parameter(description = "A list of dashboard ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+                                                    @RequestParam("dashboardIds") Set<UUID> dashboardUUIDs) throws ThingsboardException {
+        return getDashboardsByIds(dashboardUUIDs);
     }
 
     private Set<CustomerId> customerIdFromStr(String[] strCustomerIds) {

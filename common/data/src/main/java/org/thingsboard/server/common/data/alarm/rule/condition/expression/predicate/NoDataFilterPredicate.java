@@ -20,10 +20,12 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionValue;
 
 import java.util.concurrent.TimeUnit;
 
+@Schema(name = "AlarmRuleNoDataFilterPredicate", allOf = KeyFilterPredicate.class)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

@@ -41,7 +41,12 @@ import java.util.stream.Collectors;
         discriminatorProperty = "type",
         discriminatorMapping = {
                 @DiscriminatorMapping(value = "SIMPLE", schema = SimpleCalculatedFieldConfiguration.class),
-                @DiscriminatorMapping(value = "SCRIPT", schema = ScriptCalculatedFieldConfiguration.class)
+                @DiscriminatorMapping(value = "SCRIPT", schema = ScriptCalculatedFieldConfiguration.class),
+                @DiscriminatorMapping(value = "GEOFENCING", schema = GeofencingCalculatedFieldConfiguration.class),
+                @DiscriminatorMapping(value = "ALARM", schema = AlarmCalculatedFieldConfiguration.class),
+                @DiscriminatorMapping(value = "PROPAGATION", schema = PropagationCalculatedFieldConfiguration.class),
+                @DiscriminatorMapping(value = "RELATED_ENTITIES_AGGREGATION", schema = RelatedEntitiesAggregationCalculatedFieldConfiguration.class),
+                @DiscriminatorMapping(value = "ENTITY_AGGREGATION", schema = EntityAggregationCalculatedFieldConfiguration.class)
         }
 )
 @JsonTypeInfo(

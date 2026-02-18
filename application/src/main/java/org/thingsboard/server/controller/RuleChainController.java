@@ -19,6 +19,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -582,20 +583,27 @@ public class RuleChainController extends BaseController {
         return checkNotNull(result);
     }
 
-    @ApiOperation(value = "Get Rule Chains By Ids (getRuleChainsByIds)",
-            notes = "Requested rule chains must be owned by tenant which is performing the request. " +
-                    NEW_LINE)
+    @Hidden
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping(value = "/ruleChains", params = {"ruleChainIds"})
-    public List<RuleChain> getRuleChainsByIds(
-            @Parameter(description = "A list of rule chain ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
-            @RequestParam("ruleChainIds") Set<UUID> ruleChainUUIDs) throws Exception {
+    public List<RuleChain> getRuleChainsByIds(@RequestParam("ruleChainIds") Set<UUID> ruleChainUUIDs) throws Exception {
         TenantId tenantId = getCurrentUser().getTenantId();
         List<RuleChainId> ruleChainIds = new ArrayList<>();
         for (UUID ruleChainUUID : ruleChainUUIDs) {
             ruleChainIds.add(new RuleChainId(ruleChainUUID));
         }
         return ruleChainService.findRuleChainsByIds(tenantId, ruleChainIds);
+    }
+
+    @ApiOperation(value = "Get Rule Chains By Ids (getRuleChainsByIdsV2)",
+            notes = "Requested rule chains must be owned by tenant which is performing the request. " +
+                    NEW_LINE)
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @GetMapping(value = "/ruleChains/list")
+    public List<RuleChain> getRuleChainsByIdsV2(
+            @Parameter(description = "A list of rule chain ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+            @RequestParam("ruleChainIds") Set<UUID> ruleChainUUIDs) throws Exception {
+        return getRuleChainsByIds(ruleChainUUIDs);
     }
 
 }

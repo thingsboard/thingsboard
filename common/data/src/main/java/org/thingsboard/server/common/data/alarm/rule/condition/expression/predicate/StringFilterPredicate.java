@@ -18,8 +18,10 @@ package org.thingsboard.server.common.data.alarm.rule.condition.expression.predi
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionValue;
 
+@Schema(name = "AlarmRuleStringFilterPredicate", allOf = KeyFilterPredicate.class)
 @Data
 public class StringFilterPredicate implements SimpleKeyFilterPredicate<String> {
 

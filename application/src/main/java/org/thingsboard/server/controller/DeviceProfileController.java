@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -280,20 +281,27 @@ public class DeviceProfileController extends BaseController {
         return checkNotNull(deviceProfileService.findDeviceProfileNamesByTenantId(tenantId, activeOnly));
     }
 
-    @ApiOperation(value = "Get Device Profile Infos By Ids (getDeviceProfilesByIds)",
-            notes = "Requested device profiles must be owned by tenant which is performing the request. " +
-                    NEW_LINE)
+    @Hidden
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping(value = "/deviceProfileInfos", params = {"deviceProfileIds"})
-    public List<DeviceProfileInfo> getDeviceProfileInfosByIds(
-            @Parameter(description = "A list of device profile ids, separated by comma ','",  array = @ArraySchema(schema = @Schema(type = "string")), required = true)
-            @RequestParam("deviceProfileIds") Set<UUID> deviceProfileUUIDs) throws ThingsboardException {
+    public List<DeviceProfileInfo> getDeviceProfileInfosByIds(@RequestParam("deviceProfileIds") Set<UUID> deviceProfileUUIDs) throws ThingsboardException {
         TenantId tenantId = getCurrentUser().getTenantId();
         List<DeviceProfileId> deviceProfileIds = new ArrayList<>();
         for (UUID deviceProfileUUID : deviceProfileUUIDs) {
             deviceProfileIds.add(new DeviceProfileId(deviceProfileUUID));
         }
         return deviceProfileService.findDeviceProfilesByIds(tenantId, deviceProfileIds);
+    }
+
+    @ApiOperation(value = "Get Device Profile Infos By Ids (getDeviceProfileInfosByIdsV2)",
+            notes = "Requested device profiles must be owned by tenant which is performing the request. " +
+                    NEW_LINE)
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @GetMapping(value = "/deviceProfileInfos/list")
+    public List<DeviceProfileInfo> getDeviceProfileInfosByIdsV2(
+            @Parameter(description = "A list of device profile ids, separated by comma ','",  array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+            @RequestParam("deviceProfileIds") Set<UUID> deviceProfileUUIDs) throws ThingsboardException {
+        return getDeviceProfileInfosByIds(deviceProfileUUIDs);
     }
 
 }

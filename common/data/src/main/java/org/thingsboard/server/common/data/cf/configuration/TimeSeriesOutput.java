@@ -15,8 +15,10 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+@Schema
 @Data
 public class TimeSeriesOutput implements Output {
 
@@ -29,6 +31,7 @@ public class TimeSeriesOutput implements Output {
         this.strategy = new TimeSeriesRuleChainOutputStrategy();
     }
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public OutputType getType() {
         return OutputType.TIME_SERIES;
