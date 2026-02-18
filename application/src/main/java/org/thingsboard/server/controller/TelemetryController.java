@@ -303,20 +303,20 @@ public class TelemetryController extends BaseController {
     public DeferredResult<ResponseEntity> getTimeseries(
             @PathVariable("entityType") String entityType,
             @PathVariable("entityId") String entityIdStr,
-            @RequestParam(name = "keys") String keys,
+            @RequestParam(name = "keys", required = false) String keysStr,
             @RequestParam(name = "startTs") Long startTs,
             @RequestParam(name = "endTs") Long endTs,
             @RequestParam(name = "intervalType", required = false) IntervalType intervalType,
             @RequestParam(name = "interval", defaultValue = "0") Long interval,
             @RequestParam(name = "timeZone", required = false) String timeZone,
-            @Parameter(description = "An integer value that represents a max number of time series data points to fetch." +
-                    " This parameter is used only in the case if 'agg' parameter is set to 'NONE'.", schema = @Schema(defaultValue = "100"))
             @RequestParam(name = "limit", defaultValue = "100") Integer limit,
             @RequestParam(name = "agg", defaultValue = "NONE") String aggStr,
             @RequestParam(name = "orderBy", defaultValue = "DESC") String orderBy,
-            @RequestParam(name = "useStrictDataTypes", required = false, defaultValue = "false") Boolean useStrictDataTypes) throws ThingsboardException {
+            @RequestParam(name = "useStrictDataTypes", required = false, defaultValue = "false") Boolean useStrictDataTypes,
+            @RequestParam MultiValueMap<String, String> params) throws ThingsboardException {
+        List<String> keys = getKeys(keysStr, params);
         DeferredResult<ResponseEntity> response = new DeferredResult<>();
-        Futures.addCallback(tbTelemetryService.getTimeseries(EntityIdFactory.getByTypeAndId(entityType, entityIdStr), toKeysList(keys), startTs, endTs,
+        Futures.addCallback(tbTelemetryService.getTimeseries(EntityIdFactory.getByTypeAndId(entityType, entityIdStr), keys, startTs, endTs,
                         intervalType, interval, timeZone, limit, Aggregation.valueOf(aggStr), orderBy, useStrictDataTypes, getCurrentUser()),
                 getTsKvListCallback(response, useStrictDataTypes), MoreExecutors.directExecutor());
         return response;
@@ -364,12 +364,7 @@ public class TelemetryController extends BaseController {
             @RequestParam(name = "useStrictDataTypes", required = false, defaultValue = "false") Boolean useStrictDataTypes,
             @Parameter(hidden = true)
             @RequestParam MultiValueMap<String, String> params) throws ThingsboardException {
-        List<String> keys = getKeys(keysStr, params);
-        DeferredResult<ResponseEntity> response = new DeferredResult<>();
-        Futures.addCallback(tbTelemetryService.getTimeseries(EntityIdFactory.getByTypeAndId(entityType, entityIdStr), keys, startTs, endTs,
-                        intervalType, interval, timeZone, limit, Aggregation.valueOf(aggStr), orderBy, useStrictDataTypes, getCurrentUser()),
-                getTsKvListCallback(response, useStrictDataTypes), MoreExecutors.directExecutor());
-        return response;
+        return getTimeseries(entityType, entityIdStr, keysStr, startTs, endTs, intervalType, interval, timeZone, limit, aggStr, orderBy, useStrictDataTypes, params);
     }
 
     @ApiOperation(value = "Save device attributes (saveDeviceAttributes)",
