@@ -191,6 +191,11 @@ transport:
     type_cast_enabled: "${JSON_TYPE_CAST_ENABLED:true}"
     # Maximum allowed string value length when processing Telemetry/Attributes JSON (0 value disables string value length check)
     max_string_value_length: "${JSON_MAX_STRING_VALUE_LENGTH:0}"
+    # Preserve proto field names (e.g., 'current_fw_title') instead of converting to camelCase (e.g., 'currentFwTitle') when processing Protobuf messages.
+    # When set to 'false' (default), field names are converted to camelCase for backward compatibility.
+    # When set to 'true', field names are preserved as defined in the .proto schema.
+    # This affects dynamic Protobuf messages used in device communication.
+    preserve_proto_field_names: "${TB_TRANSPORT_JSON_PRESERVE_PROTO_FIELD_NAMES:false}"
   log:
     # Enable/Disable log of transport messages to telemetry. For example, logging of LwM2M registration update
     enabled: "${TB_TRANSPORT_LOG_ENABLED:true}"
