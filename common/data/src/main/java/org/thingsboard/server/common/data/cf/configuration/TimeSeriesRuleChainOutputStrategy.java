@@ -15,13 +15,16 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+@Schema
 @Data
 @NoArgsConstructor
 public class TimeSeriesRuleChainOutputStrategy implements TimeSeriesOutputStrategy {
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public OutputStrategyType getType() {
         return OutputStrategyType.RULE_CHAIN;

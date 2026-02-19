@@ -16,13 +16,16 @@
 package org.thingsboard.server.common.data.device.profile;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+@Schema
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Deprecated
 public class SimpleAlarmConditionSpec implements AlarmConditionSpec {
     @Override
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     public AlarmConditionSpecType getType() {
         return AlarmConditionSpecType.SIMPLE;
     }

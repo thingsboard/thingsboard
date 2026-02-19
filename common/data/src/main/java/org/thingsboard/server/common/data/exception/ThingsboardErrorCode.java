@@ -16,7 +16,9 @@
 package org.thingsboard.server.common.data.exception;
 
 import com.fasterxml.jackson.annotation.JsonValue;
+import io.swagger.v3.oas.annotations.media.Schema;
 
+@Schema
 public enum ThingsboardErrorCode {
 
     GENERAL(2),

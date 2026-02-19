@@ -26,10 +26,14 @@ import org.thingsboard.server.common.data.cf.configuration.HasRelationPathLevel;
 import org.thingsboard.server.common.data.cf.configuration.HasUseLatestTsConfig;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.ScheduledUpdateSupportedCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.relation.RelationPathLevel;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Map;
 
+@Schema(allOf = CalculatedFieldConfiguration.class)
 @Data
 public class RelatedEntitiesAggregationCalculatedFieldConfiguration implements ArgumentsBasedCalculatedFieldConfiguration, ScheduledUpdateSupportedCalculatedFieldConfiguration, HasRelationPathLevel, HasUseLatestTsConfig {
 

@@ -20,10 +20,19 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 
 import java.io.Serializable;
 
+@Schema(
+        discriminatorProperty = "method",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "SLACK", schema = SlackNotificationDeliveryMethodConfig.class),
+                @DiscriminatorMapping(value = "MOBILE_APP", schema = MobileAppNotificationDeliveryMethodConfig.class)
+        }
+)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "method")
 @JsonSubTypes({
@@ -32,6 +41,7 @@ import java.io.Serializable;
 })
 public interface NotificationDeliveryMethodConfig extends Serializable {
 
+    @Schema(description = "Notification delivery method", requiredMode = Schema.RequiredMode.REQUIRED)
     @JsonIgnore
     NotificationDeliveryMethod getMethod();
 

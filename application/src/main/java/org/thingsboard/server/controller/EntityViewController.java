@@ -16,6 +16,7 @@
 package org.thingsboard.server.controller;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -23,7 +24,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -79,7 +79,6 @@ import static org.thingsboard.server.controller.ControllerConstants.ENTITY_VIEW_
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_VIEW_TYPE;
 import static org.thingsboard.server.controller.ControllerConstants.MODEL_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.NAME_CONFLICT_POLICY_DESC;
-import static org.thingsboard.server.controller.ControllerConstants.UNIQUIFY_SEPARATOR_DESC;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
@@ -87,6 +86,7 @@ import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_D
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.UNIQUIFY_SEPARATOR_DESC;
 import static org.thingsboard.server.controller.ControllerConstants.UNIQUIFY_STRATEGY_DESC;
 import static org.thingsboard.server.controller.EdgeController.EDGE_ID;
 
@@ -167,15 +167,23 @@ public class EntityViewController extends BaseController {
         tbEntityViewService.delete(entityView, getCurrentUser());
     }
 
-    @ApiOperation(value = "Get Entity View by name (getTenantEntityView)",
-            notes = "Fetch the Entity View object based on the tenant id and entity view name. " + TENANT_AUTHORITY_PARAGRAPH)
+    @Hidden
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping(value = "/tenant/entityViews", params = {"entityViewName"})
     public EntityView getTenantEntityView(
-            @Parameter(description = "Entity View name")
             @RequestParam String entityViewName) throws ThingsboardException {
         TenantId tenantId = getCurrentUser().getTenantId();
         return checkNotNull(entityViewService.findEntityViewByTenantIdAndName(tenantId, entityViewName));
+    }
+
+    @ApiOperation(value = "Get Entity View by name (getTenantEntityViewByName)",
+            notes = "Fetch the Entity View object based on the tenant id and entity view name. " + TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @GetMapping(value = "/tenant/entityView")
+    public EntityView getTenantEntityViewByName(
+            @Parameter(description = "Entity View name")
+            @RequestParam String entityViewName) throws ThingsboardException {
+        return getTenantEntityView(entityViewName);
     }
 
     @ApiOperation(value = "Assign Entity View to customer (assignEntityViewToCustomer)",
@@ -222,7 +230,7 @@ public class EntityViewController extends BaseController {
             notes = "Returns a page of Entity View objects assigned to customer. " +
                     PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @GetMapping(value = "/customer/{customerId}/entityViews", params = {"pageSize", "page"})
+    @GetMapping(value = "/customer/{customerId}/entityViews")
     public PageData<EntityView> getCustomerEntityViews(
             @Parameter(description = CUSTOMER_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(CUSTOMER_ID) String strCustomerId,
@@ -254,7 +262,7 @@ public class EntityViewController extends BaseController {
             notes = "Returns a page of Entity View info objects assigned to customer. " + ENTITY_VIEW_DESCRIPTION +
                     PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @GetMapping(value = "/customer/{customerId}/entityViewInfos", params = {"pageSize", "page"})
+    @GetMapping(value = "/customer/{customerId}/entityViewInfos")
     public PageData<EntityViewInfo> getCustomerEntityViewInfos(
             @Parameter(description = CUSTOMER_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(CUSTOMER_ID) String strCustomerId,
@@ -286,7 +294,7 @@ public class EntityViewController extends BaseController {
             notes = "Returns a page of entity views owned by tenant. " + ENTITY_VIEW_DESCRIPTION +
                     PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @GetMapping(value = "/tenant/entityViews", params = {"pageSize", "page"})
+    @GetMapping(value = "/tenant/entityViews")
     public PageData<EntityView> getTenantEntityViews(
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
@@ -314,7 +322,7 @@ public class EntityViewController extends BaseController {
             notes = "Returns a page of entity views info owned by tenant. " + ENTITY_VIEW_DESCRIPTION +
                     PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @GetMapping(value = "/tenant/entityViewInfos", params = {"pageSize", "page"})
+    @GetMapping(value = "/tenant/entityViewInfos")
     public PageData<EntityViewInfo> getTenantEntityViewInfos(
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
@@ -429,7 +437,7 @@ public class EntityViewController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @GetMapping(value = "/edge/{edgeId}/entityViews", params = {"pageSize", "page"})
+    @GetMapping(value = "/edge/{edgeId}/entityViews")
     public PageData<EntityView> getEdgeEntityViews(
             @PathVariable(EDGE_ID) String strEdgeId,
             @RequestParam int pageSize,
@@ -459,8 +467,7 @@ public class EntityViewController extends BaseController {
         return checkNotNull(filteredResult);
     }
 
-    @ApiOperation(value = "Get Entity Views By Ids (getEntityViewsByIds)",
-            notes = "Requested entity views must be owned by tenant or assigned to customer which user is performing the request. ")
+    @Hidden
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/entityViews", params = {"entityViewIds"})
     public List<EntityView> getEntityViewsByIds(@Parameter(description = "A list of entity view ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
@@ -472,6 +479,15 @@ public class EntityViewController extends BaseController {
         }
         List<EntityView> entityViews = entityViewService.findEntityViewsByTenantIdAndIds(tenantId, entityViewIds);
         return filterEntityViewsByReadPermission(entityViews);
+    }
+
+    @ApiOperation(value = "Get Entity Views By Ids (getEntityViewsByIdsV2)",
+            notes = "Requested entity views must be owned by tenant or assigned to customer which user is performing the request. ")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping(value = "/entityViews/list")
+    public List<EntityView> getEntityViewsByIdsV2(@Parameter(description = "A list of entity view ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+                                                  @RequestParam("entityViewIds") Set<UUID> entityViewUUIDs) throws ThingsboardException {
+        return getEntityViewsByIds(entityViewUUIDs);
     }
 
     private List<EntityView> filterEntityViewsByReadPermission(List<EntityView> entityViews) {

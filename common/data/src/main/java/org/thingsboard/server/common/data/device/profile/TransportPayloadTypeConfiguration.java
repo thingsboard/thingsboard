@@ -19,10 +19,20 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.thingsboard.server.common.data.TransportPayloadType;
 
 import java.io.Serializable;
 
+@Schema(
+        description = "Configuration for transport payload type",
+        discriminatorProperty = "transportPayloadType",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "JSON", schema = JsonTransportPayloadConfiguration.class),
+                @DiscriminatorMapping(value = "PROTOBUF", schema = ProtoTransportPayloadConfiguration.class)
+        }
+)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -33,6 +43,7 @@ import java.io.Serializable;
         @JsonSubTypes.Type(value = ProtoTransportPayloadConfiguration.class, name = "PROTOBUF")})
 public interface TransportPayloadTypeConfiguration extends Serializable {
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @JsonIgnore
     TransportPayloadType getTransportPayloadType();
 

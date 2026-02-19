@@ -86,7 +86,7 @@ public class CalculatedField extends BaseData<CalculatedFieldId> implements HasN
     private DebugSettings debugSettings;
     @Schema(description = "Version of calculated field configuration.", example = "0")
     private int configurationVersion;
-    @Schema(implementation = SimpleCalculatedFieldConfiguration.class)
+    @Schema(implementation = CalculatedFieldConfiguration.class)
     @Valid
     @NotNull
     private CalculatedFieldConfiguration configuration;

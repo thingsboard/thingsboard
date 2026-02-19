@@ -41,19 +41,19 @@ public class OtaPackageInfo extends BaseDataWithAdditionalInfo<OtaPackageId> imp
     @Serial
     private static final long serialVersionUID = 3168391583570815419L;
 
-    @Schema(description = "JSON object with Tenant Id. Tenant Id of the ota package can't be changed.", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(description = "JSON object with Tenant Id. Tenant Id of the ota package can't be changed.")
     private TenantId tenantId;
-    @Schema(description = "JSON object with Device Profile Id. Device Profile Id of the ota package can't be changed.", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(description = "JSON object with Device Profile Id. Device Profile Id of the ota package can't be changed.")
     private DeviceProfileId deviceProfileId;
-    @Schema(description = "OTA Package type.", example = "FIRMWARE", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(description = "OTA Package type.", example = "FIRMWARE")
     private OtaPackageType type;
     @Length(fieldName = "title")
     @NoXss
-    @Schema(description = "OTA Package title.", example = "fw", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(description = "OTA Package title.", example = "fw")
     private String title;
     @Length(fieldName = "version")
     @NoXss
-    @Schema(description = "OTA Package version.", example = "1.0", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(description = "OTA Package version.", example = "1.0")
     private String version;
     @Length(fieldName = "tag")
     @NoXss
@@ -61,22 +61,22 @@ public class OtaPackageInfo extends BaseDataWithAdditionalInfo<OtaPackageId> imp
     private String tag;
     @Length(fieldName = "url")
     @NoXss
-    @Schema(description = "OTA Package url.", example = "http://thingsboard.org/fw/1", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(description = "OTA Package url.", example = "http://thingsboard.org/fw/1")
     private String url;
     @Schema(description = "Indicates OTA Package 'has data'. Field is returned from DB ('true' if data exists or url is set).  If OTA Package 'has data' is 'false' we can not assign the OTA Package to the Device or Device Profile.", example = "true", accessMode = Schema.AccessMode.READ_ONLY)
     private boolean hasData;
     @Length(fieldName = "file name")
     @NoXss
-    @Schema(description = "OTA Package file name.", example = "fw_1.0", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(description = "OTA Package file name.", example = "fw_1.0")
     private String fileName;
     @NoXss
     @Length(fieldName = "contentType")
-    @Schema(description = "OTA Package content type.", example = "APPLICATION_OCTET_STREAM", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(description = "OTA Package content type.", example = "APPLICATION_OCTET_STREAM")
     private String contentType;
-    @Schema(description = "OTA Package checksum algorithm.", example = "CRC32", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(description = "OTA Package checksum algorithm.", example = "CRC32")
     private ChecksumAlgorithm checksumAlgorithm;
     @Length(fieldName = "checksum", max = 1020)
-    @Schema(description = "OTA Package checksum.", example = "0xd87f7e0c", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(description = "OTA Package checksum.", example = "0xd87f7e0c")
     private String checksum;
     @Schema(description = "OTA Package data size.", example = "8", accessMode = Schema.AccessMode.READ_ONLY)
     private Long dataSize;

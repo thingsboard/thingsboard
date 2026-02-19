@@ -15,10 +15,12 @@
  */
 package org.thingsboard.server.common.data.query;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import lombok.Data;
 
 @Data
+@Schema
 public class StringFilterPredicate implements SimpleKeyFilterPredicate<String> {
 
     private StringOperation operation;
@@ -26,6 +28,7 @@ public class StringFilterPredicate implements SimpleKeyFilterPredicate<String> {
     private FilterPredicateValue<String> value;
     private boolean ignoreCase;
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public FilterPredicateType getType() {
         return FilterPredicateType.STRING;

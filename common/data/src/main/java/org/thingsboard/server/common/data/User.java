@@ -91,7 +91,7 @@ public class User extends BaseDataWithAdditionalInfo<UserId> implements HasName,
         return super.getCreatedTime();
     }
 
-    @Schema(description = "JSON object with the Tenant Id.", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(description = "JSON object with the Tenant Id.")
     public TenantId getTenantId() {
         return tenantId;
     }
@@ -100,7 +100,7 @@ public class User extends BaseDataWithAdditionalInfo<UserId> implements HasName,
         this.tenantId = tenantId;
     }
 
-    @Schema(description = "JSON object with the Customer Id.", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(description = "JSON object with the Customer Id.")
     public CustomerId getCustomerId() {
         return customerId;
     }

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -228,8 +229,7 @@ public class DeviceProfileController extends BaseController {
             notes = "Returns a page of devices profile objects owned by tenant. " +
                     PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/deviceProfiles", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/deviceProfiles")
     public PageData<DeviceProfile> getDeviceProfiles(
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
@@ -249,8 +249,7 @@ public class DeviceProfileController extends BaseController {
             notes = "Returns a page of devices profile info objects owned by tenant. " +
                     PAGE_DATA_PARAMETERS + DEVICE_PROFILE_INFO_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/deviceProfileInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/deviceProfileInfos")
     public PageData<DeviceProfileInfo> getDeviceProfileInfos(
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
@@ -282,20 +281,27 @@ public class DeviceProfileController extends BaseController {
         return checkNotNull(deviceProfileService.findDeviceProfileNamesByTenantId(tenantId, activeOnly));
     }
 
-    @ApiOperation(value = "Get Device Profile Infos By Ids (getDeviceProfilesByIds)",
-            notes = "Requested device profiles must be owned by tenant which is performing the request. " +
-                    NEW_LINE)
+    @Hidden
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping(value = "/deviceProfileInfos", params = {"deviceProfileIds"})
-    public List<DeviceProfileInfo> getDeviceProfileInfosByIds(
-            @Parameter(description = "A list of device profile ids, separated by comma ','",  array = @ArraySchema(schema = @Schema(type = "string")), required = true)
-            @RequestParam("deviceProfileIds") Set<UUID> deviceProfileUUIDs) throws ThingsboardException {
+    public List<DeviceProfileInfo> getDeviceProfileInfosByIds(@RequestParam("deviceProfileIds") Set<UUID> deviceProfileUUIDs) throws ThingsboardException {
         TenantId tenantId = getCurrentUser().getTenantId();
         List<DeviceProfileId> deviceProfileIds = new ArrayList<>();
         for (UUID deviceProfileUUID : deviceProfileUUIDs) {
             deviceProfileIds.add(new DeviceProfileId(deviceProfileUUID));
         }
         return deviceProfileService.findDeviceProfilesByIds(tenantId, deviceProfileIds);
+    }
+
+    @ApiOperation(value = "Get Device Profile Infos By Ids (getDeviceProfileInfosByIdsV2)",
+            notes = "Requested device profiles must be owned by tenant which is performing the request. " +
+                    NEW_LINE)
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @GetMapping(value = "/deviceProfileInfos/list")
+    public List<DeviceProfileInfo> getDeviceProfileInfosByIdsV2(
+            @Parameter(description = "A list of device profile ids, separated by comma ','",  array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+            @RequestParam("deviceProfileIds") Set<UUID> deviceProfileUUIDs) throws ThingsboardException {
+        return getDeviceProfileInfosByIds(deviceProfileUUIDs);
     }
 
 }

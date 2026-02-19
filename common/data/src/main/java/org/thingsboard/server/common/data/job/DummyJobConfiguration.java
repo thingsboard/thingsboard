@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.job;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -24,6 +25,7 @@ import lombok.ToString;
 
 import java.util.List;
 
+@Schema(description = "Dummy job configuration", allOf = JobConfiguration.class)
 @Data
 @EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor

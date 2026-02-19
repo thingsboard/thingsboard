@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data.mobile.layout;
 
 import com.fasterxml.jackson.annotation.JsonView;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -28,6 +29,7 @@ import org.thingsboard.server.common.data.Views;
 import java.util.ArrayList;
 import java.util.List;
 
+@Schema
 @Data
 @Builder
 @NoArgsConstructor
@@ -35,7 +37,7 @@ import java.util.List;
 @EqualsAndHashCode
 public class MobileLayoutConfig {
 
-    @Schema(description = "List of pages")
+    @ArraySchema(schema = @Schema(implementation = MobilePage.class))
     @JsonView(Views.Public.class)
     @Valid
     private List<MobilePage> pages = new ArrayList<>();

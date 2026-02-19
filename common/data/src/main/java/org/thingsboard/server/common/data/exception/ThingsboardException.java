@@ -15,10 +15,14 @@
  */
 package org.thingsboard.server.common.data.exception;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema
 public class ThingsboardException extends Exception {
 
     private static final long serialVersionUID = 1L;
 
+    @Schema
     private ThingsboardErrorCode errorCode;
 
     public ThingsboardException() {

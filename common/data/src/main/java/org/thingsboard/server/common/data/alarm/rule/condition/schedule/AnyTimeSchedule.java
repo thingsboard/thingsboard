@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.common.data.alarm.rule.condition.schedule;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(name = "AlarmRuleAnyTimeSchedule", allOf = AlarmSchedule.class)
 public class AnyTimeSchedule implements AlarmSchedule {
 
     @Override

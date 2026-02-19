@@ -24,6 +24,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.Views;
 
+@Schema
 @Data
 @Builder
 @NoArgsConstructor
@@ -35,6 +36,7 @@ public class DefaultMobilePage extends AbstractMobilePage {
     @JsonView(Views.Public.class)
     private DefaultPageId id;
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public MobilePageType getType() {
         return MobilePageType.DEFAULT;

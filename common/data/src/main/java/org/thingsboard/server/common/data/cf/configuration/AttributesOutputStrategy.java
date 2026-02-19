@@ -18,7 +18,17 @@ package org.thingsboard.server.common.data.cf.configuration;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
+@Schema(
+        description = "Configuration for calculated fields",
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "IMMEDIATE", schema = AttributesImmediateOutputStrategy.class),
+                @DiscriminatorMapping(value = "RULE_CHAIN", schema = AttributesRuleChainOutputStrategy.class)
+        }
+)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,

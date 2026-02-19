@@ -15,14 +15,17 @@
  */
 package org.thingsboard.server.common.data.notification.rule.trigger.config;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Data;
 
 @Data
 @Builder
+@Schema
 public class TaskProcessingFailureNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
 
     @Override
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     public NotificationRuleTriggerType getTriggerType() {
         return NotificationRuleTriggerType.TASK_PROCESSING_FAILURE;
     }

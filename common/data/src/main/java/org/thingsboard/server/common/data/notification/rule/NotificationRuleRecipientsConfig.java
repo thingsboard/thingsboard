@@ -20,6 +20,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
@@ -29,6 +31,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+@Schema(
+        discriminatorProperty = "triggerType",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "ALARM", schema = EscalatedNotificationRuleRecipientsConfig.class)
+        })
 @JsonIgnoreProperties
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "triggerType", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY, defaultImpl = DefaultNotificationRuleRecipientsConfig.class)
 @JsonSubTypes({

@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(allOf = CalculatedFieldConfiguration.class)
 public interface ExpressionBasedCalculatedFieldConfiguration extends ArgumentsBasedCalculatedFieldConfiguration {
 
     String getExpression();

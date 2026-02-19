@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data.notification.template;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -31,8 +32,10 @@ import java.util.List;
 @ToString(callSuper = true)
 public class MobileAppDeliveryMethodNotificationTemplate extends DeliveryMethodNotificationTemplate implements HasSubject {
 
+    @Schema(description = "Subject line for the mobile notification", example = "New Message Received")
     @NotEmpty
     private String subject;
+    @Schema(description = "Additional JSON configuration for web buttons/actions", type = "object")
     private JsonNode additionalConfig;
 
     private final List<TemplatableValue> templatableValues = List.of(
@@ -46,6 +49,7 @@ public class MobileAppDeliveryMethodNotificationTemplate extends DeliveryMethodN
         this.additionalConfig = other.additionalConfig;
     }
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public NotificationDeliveryMethod getMethod() {
         return NotificationDeliveryMethod.MOBILE_APP;

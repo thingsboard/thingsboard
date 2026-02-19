@@ -15,11 +15,14 @@
  */
 package org.thingsboard.server.common.data.notification.targets.platform;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+@Schema
 @Data
 public class AllUsersFilter implements SystemLevelUsersFilter {
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public UsersFilterType getType() {
         return UsersFilterType.ALL_USERS;

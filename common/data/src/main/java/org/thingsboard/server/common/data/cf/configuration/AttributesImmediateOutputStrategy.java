@@ -15,10 +15,12 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+@Schema
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -31,6 +33,7 @@ public class AttributesImmediateOutputStrategy implements AttributesOutputStrate
     private boolean sendWsUpdate;
     private boolean processCfs;
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public OutputStrategyType getType() {
         return OutputStrategyType.IMMEDIATE;
