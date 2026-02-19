@@ -257,7 +257,7 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
 
             @Override
             public void onFailure(Throwable t) {
-                log.error("[{}][{}] Failed to fetch partitions for interval {}-{}", entityId.getEntityType().name(), entityId.getId(), minPartition, maxPartition, t);
+                log.error("[{}][{}][{}] Failed to fetch partitions for interval {}-{}", tenantId, entityId.getEntityType(), entityId.getId(), minPartition, maxPartition, t);
                 resultFuture.setException(t);
             }
         }, readResultsProcessingExecutor);
@@ -332,7 +332,7 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
 
             @Override
             public void onFailure(Throwable t) {
-                log.error("[{}][{}] Failed to fetch partitions for interval {}-{}", entityId.getEntityType().name(), entityId.getId(), toPartitionTs(query.getStartTs()), toPartitionTs(query.getEndTs()), t);
+                log.error("[{}][{}][{}] Failed to fetch partitions for interval {}-{}", tenantId, entityId.getEntityType(), entityId.getId(), toPartitionTs(query.getStartTs()), toPartitionTs(query.getEndTs()), t);
                 resultFuture.setException(t);
             }
         }, readResultsProcessingExecutor);
@@ -385,10 +385,10 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
                             @Override
                             public void onFailure(Throwable t) {
                                 if (t instanceof ResultSetSizeLimitExceededException e) {
-                                    log.warn("[{}][{}] Result set size limit exceeded for key [{}], query [{}]: {} bytes, limit {} bytes",
-                                            cursor.getEntityType(), cursor.getEntityId(), cursor.getKey(), stmt.getPreparedStatement().getQuery(), e.getActualBytes(), e.getLimitBytes());
+                                    log.warn("[{}][{}][{}] Result set size limit exceeded for key [{}], query [{}]: {} bytes, limit {} bytes",
+                                            tenantId, cursor.getEntityType(), cursor.getEntityId(), cursor.getKey(), stmt.getPreparedStatement().getQuery(), e.getActualBytes(), e.getLimitBytes());
                                 } else {
-                                    log.error("[{}][{}] Failed to fetch data for key [{}], query [{}]", cursor.getEntityType(), cursor.getEntityId(), cursor.getKey(), stmt.getPreparedStatement().getQuery(), t);
+                                    log.error("[{}][{}][{}] Failed to fetch data for key [{}], query [{}]", tenantId, cursor.getEntityType(), cursor.getEntityId(), cursor.getKey(), stmt.getPreparedStatement().getQuery(), t);
                                 }
                                 resultFuture.setException(t);
                             }
@@ -400,7 +400,7 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
 
                 @Override
                 public void onFailure(Throwable t) {
-                    log.error("[{}][{}] Failed to fetch data for key [{}], query [{}]", cursor.getEntityType(), cursor.getEntityId(), cursor.getKey(), stmt.getPreparedStatement().getQuery(), t);
+                    log.error("[{}][{}][{}] Failed to fetch data for key [{}], query [{}]", tenantId, cursor.getEntityType(), cursor.getEntityId(), cursor.getKey(), stmt.getPreparedStatement().getQuery(), t);
                     resultFuture.setException(t);
                 }
             }, readResultsProcessingExecutor);
@@ -579,7 +579,7 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
 
                 @Override
                 public void onFailure(Throwable t) {
-                    log.error("[{}][{}] Failed to delete data for key [{}], query [{}]", cursor.getEntityType(), cursor.getEntityId(), cursor.getKey(), stmt.getPreparedStatement().getQuery(), t);
+                    log.error("[{}][{}][{}] Failed to delete data for key [{}], query [{}]", tenantId, cursor.getEntityType(), cursor.getEntityId(), cursor.getKey(), stmt.getPreparedStatement().getQuery(), t);
                     resultFuture.setException(t);
                 }
             }, readResultsProcessingExecutor);
