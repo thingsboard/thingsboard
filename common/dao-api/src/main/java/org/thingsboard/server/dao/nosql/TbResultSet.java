@@ -109,9 +109,9 @@ public class TbResultSet implements AsyncResultSet {
                              long maxResultSetSizeBytes,
                              AtomicLong accumulatedBytes) {
         if (maxResultSetSizeBytes > 0) {
-            int pageSize = resultSet.getExecutionInfo().getResponseSizeInBytes();
-            if (pageSize > 0) {
-                accumulatedBytes.addAndGet(pageSize);
+            int pageSizeInBytes = resultSet.getExecutionInfo().getResponseSizeInBytes();
+            if (pageSizeInBytes > 0) {
+                accumulatedBytes.addAndGet(pageSizeInBytes);
             }
             if (accumulatedBytes.get() > maxResultSetSizeBytes) {
                 resultFuture.setException(new ResultSetSizeLimitExceededException(maxResultSetSizeBytes, accumulatedBytes.get()));
