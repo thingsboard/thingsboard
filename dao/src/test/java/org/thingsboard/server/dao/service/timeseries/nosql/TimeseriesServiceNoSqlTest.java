@@ -114,7 +114,7 @@ public class TimeseriesServiceNoSqlTest extends BaseTimeseriesServiceTest {
         for (int i = 0; i < 5; i++) {
             entries.add(new BasicTsKvEntry(TimeUnit.MINUTES.toMillis(i + 1), new StringDataEntry("bigKey", value)));
         }
-        tsService.save(tenantId, deviceId, entries, 0);
+        tsService.save(tenantId, deviceId, entries, 0).get(MAX_TIMEOUT, TimeUnit.SECONDS);
 
         long originalLimit = (long) ReflectionTestUtils.getField(cassandraBaseTimeseriesDao, "maxResultSetSizeBytes");
         try {
