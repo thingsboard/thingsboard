@@ -16,7 +16,10 @@
 package org.thingsboard.server.dao.service.timeseries.nosql;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
@@ -27,9 +30,12 @@ import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.dao.nosql.ResultSetSizeLimitExceededException;
 import org.thingsboard.server.dao.service.DaoNoSqlTest;
 import org.thingsboard.server.dao.service.timeseries.BaseTimeseriesServiceTest;
+import org.thingsboard.server.dao.timeseries.CassandraBaseTimeseriesDao;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -37,12 +43,16 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 @DaoNoSqlTest
 public class TimeseriesServiceNoSqlTest extends BaseTimeseriesServiceTest {
+
+    @Autowired
+    private CassandraBaseTimeseriesDao cassandraBaseTimeseriesDao;
 
     @Test
     public void shouldSaveEntryOfEachTypeWithTtl() throws ExecutionException, InterruptedException, TimeoutException {
@@ -93,5 +103,37 @@ public class TimeseriesServiceNoSqlTest extends BaseTimeseriesServiceTest {
         assertTrue(listWithAgg.get(0).getDoubleValue().isPresent());
         double expectedValue = (doubleValue + longValue)/ 2;
         assertThat(listWithAgg.get(0).getDoubleValue().get()).isEqualTo(expectedValue);
+    }
+
+    @Test
+    public void testResultSetSizeLimitExceeded() throws Exception {
+        DeviceId deviceId = new DeviceId(Uuids.timeBased());
+
+        String value = "x".repeat(500);
+        List<TsKvEntry> entries = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            entries.add(new BasicTsKvEntry(TimeUnit.MINUTES.toMillis(i + 1), new StringDataEntry("bigKey", value)));
+        }
+        tsService.save(tenantId, deviceId, entries, 0);
+
+        long originalLimit = (long) ReflectionTestUtils.getField(cassandraBaseTimeseriesDao, "maxResultSetSizeBytes");
+        try {
+            // Set a very low limit to trigger the exception
+            ReflectionTestUtils.setField(cassandraBaseTimeseriesDao, "maxResultSetSizeBytes", 1024L);
+
+            assertThatThrownBy(() -> tsService.findAll(tenantId, deviceId, Collections.singletonList(
+                    new BaseReadTsKvQuery("bigKey", 0L, TimeUnit.MINUTES.toMillis(6), 1000, 10, Aggregation.NONE)
+            )).get(MAX_TIMEOUT, TimeUnit.SECONDS))
+                    .isInstanceOf(ExecutionException.class)
+                    .satisfies(e -> assertThat(ExceptionUtils.getRootCause(e)).isInstanceOf(ResultSetSizeLimitExceededException.class));
+        } finally {
+            ReflectionTestUtils.setField(cassandraBaseTimeseriesDao, "maxResultSetSizeBytes", originalLimit);
+        }
+
+        // Verify query succeeds with original limit restored
+        List<TsKvEntry> result = tsService.findAll(tenantId, deviceId, Collections.singletonList(
+                new BaseReadTsKvQuery("bigKey", 0L, TimeUnit.MINUTES.toMillis(6), 1000, 10, Aggregation.NONE)
+        )).get(MAX_TIMEOUT, TimeUnit.SECONDS);
+        assertThat(result).hasSize(5);
     }
 }
