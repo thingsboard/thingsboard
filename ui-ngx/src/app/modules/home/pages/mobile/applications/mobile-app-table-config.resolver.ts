@@ -57,7 +57,6 @@ export class MobileAppTableConfigResolver  {
               ) {
     this.config.selectionEnabled = false;
     this.config.entityType = EntityType.MOBILE_APP;
-    this.config.addAsTextButton = true;
     this.config.entitiesDeleteEnabled = false;
     this.config.rowPointer = true;
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.MOBILE_APP);

@@ -215,6 +215,8 @@ usage:
       enabled_per_customer: "${USAGE_STATS_REPORT_PER_CUSTOMER_ENABLED:false}"
       # Interval of reporting the statistics. By default, the summarized statistics are sent every 10 seconds
       interval: "${USAGE_STATS_REPORT_INTERVAL:60}"
+      # Reporting interval for urgent keys (e.g. SMS, Email) that require quicker usage state updates
+      urgent_interval: "${USAGE_STATS_REPORT_URGENT_INTERVAL:10}"
       # Amount of statistic messages in pack
       pack_size: "${USAGE_STATS_REPORT_PACK_SIZE:1024}"
 
@@ -232,7 +234,7 @@ management:
     web:
       exposure:
         # Expose metrics endpoint (use value 'prometheus' to enable prometheus metrics).
-        include: '${METRICS_ENDPOINTS_EXPOSE:info}'
+        include: "${METRICS_ENDPOINTS_EXPOSE:info}"
 
 # Service common properties
 service:

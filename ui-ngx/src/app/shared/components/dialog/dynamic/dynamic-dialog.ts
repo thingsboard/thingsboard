@@ -14,18 +14,11 @@
 /// limitations under the License.
 ///
 
-import { Location } from "@angular/common";
-import { Inject, Injectable, Injector, Optional, SkipSelf, TemplateRef } from '@angular/core';
-import {
-  MAT_DIALOG_DEFAULT_OPTIONS,
-  MAT_DIALOG_SCROLL_STRATEGY,
-  MatDialog,
-  MatDialogConfig, MatDialogRef
-} from '@angular/material/dialog';
-import { DynamicOverlay } from "./dynamic-overlay";
-import { DynamicOverlayContainer } from '@shared/components/dialog/dynamic/dynamic-overlay-container';
-import { ComponentType, ScrollStrategy } from '@angular/cdk/overlay';
-import { DEFAULT_DIALOG_CONFIG, Dialog, DialogConfig } from '@angular/cdk/dialog';
+import { inject, Injectable, TemplateRef } from '@angular/core';
+import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
+import { DynamicOverlay } from './dynamic-overlay';
+import { ComponentType } from '@angular/cdk/overlay';
+import { Dialog } from '@angular/cdk/dialog';
 
 export interface DynamicMatDialogConfig<D> extends MatDialogConfig<D> {
   containerElement?: HTMLElement;
@@ -34,25 +27,12 @@ export interface DynamicMatDialogConfig<D> extends MatDialogConfig<D> {
 @Injectable()
 export class DynamicMatDialog extends MatDialog {
 
-  private _customOverlay: DynamicOverlay;
+  private _customOverlay = inject(DynamicOverlay);
 
-  constructor( _overlay: DynamicOverlay,
-               _injector: Injector,
-               @Optional() location: Location,
-               @Inject( MAT_DIALOG_DEFAULT_OPTIONS ) _defaultOptions: MatDialogConfig,
-               @Inject( MAT_DIALOG_SCROLL_STRATEGY ) _scrollStrategy: ScrollStrategy,
-               @Optional() @SkipSelf() _parentDialog:DynamicMatDialog,
-               _overlayContainer: DynamicOverlayContainer) {
-
-    super( _overlay, _injector, location, _defaultOptions, _scrollStrategy, _parentDialog, _overlayContainer );
-    this._dialog = _injector.get(DynamicDialog);
-    this._customOverlay = _overlay;
-  }
-
-  public open<T, D = any, R = any>(component: ComponentType<T> | TemplateRef<T>, config?: DynamicMatDialogConfig<D>): MatDialogRef<T, R> {
+  public override open<T, D = any, R = any>(component: ComponentType<T> | TemplateRef<T>, config?: DynamicMatDialogConfig<D>): MatDialogRef<T, R> {
     if (config?.containerElement) {
       config.containerElement.style.transform = 'translateZ(0)';
-      this._customOverlay.setContainerElement( config.containerElement );
+      this._customOverlay.setContainerElement(config.containerElement);
     }
     const ref = super.open(component, config);
     if (config?.containerElement) {
@@ -73,13 +53,4 @@ export class DynamicMatDialog extends MatDialog {
 
 @Injectable()
 export class DynamicDialog extends Dialog {
-  constructor( _overlay: DynamicOverlay,
-               _injector: Injector,
-               @Inject( DEFAULT_DIALOG_CONFIG ) _defaultOptions: DialogConfig,
-               @Inject( MAT_DIALOG_SCROLL_STRATEGY ) _scrollStrategy: ScrollStrategy,
-               @Optional() @SkipSelf() _parentDialog: DynamicDialog,
-               _overlayContainer: DynamicOverlayContainer) {
-
-    super( _overlay, _injector, _defaultOptions, _parentDialog, _overlayContainer, _scrollStrategy  );
-  }
 }

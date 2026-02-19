@@ -26,18 +26,21 @@ import org.thingsboard.server.common.data.cf.CalculatedFieldFilter;
 import org.thingsboard.server.common.data.cf.CalculatedFieldInfo;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.RelatedEntitiesAggregationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.validator.CalculatedFieldDataValidator;
+import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -62,6 +65,7 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
     private final EntityService entityService;
     private final CalculatedFieldDao calculatedFieldDao;
     private final CalculatedFieldDataValidator calculatedFieldDataValidator;
+    private final ApiLimitService apiLimitService;
 
     @Override
     public CalculatedField save(CalculatedField calculatedField) {
@@ -70,6 +74,7 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
 
     @Override
     public CalculatedField save(CalculatedField calculatedField, boolean doValidate) {
+        setConfigurationDefaults(calculatedField);
         CalculatedField oldCalculatedField = null;
         if (doValidate) {
             oldCalculatedField = calculatedFieldDataValidator.validate(calculatedField, CalculatedField::getTenantId);
@@ -79,6 +84,15 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
         return doSave(calculatedField, oldCalculatedField);
     }
 
+    private void setConfigurationDefaults(CalculatedField calculatedField) {
+        if (calculatedField.getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration config
+                && config.getScheduledUpdateInterval() == null) {
+            int minScheduledUpdateInterval = (int) apiLimitService.getLimit(
+                    calculatedField.getTenantId(), DefaultTenantProfileConfiguration::getMinAllowedScheduledUpdateIntervalInSecForCF
+            );
+            config.setScheduledUpdateInterval(minScheduledUpdateInterval);
+        }
+    }
 
     private CalculatedField doSave(CalculatedField calculatedField, CalculatedField oldCalculatedField) {
         try {

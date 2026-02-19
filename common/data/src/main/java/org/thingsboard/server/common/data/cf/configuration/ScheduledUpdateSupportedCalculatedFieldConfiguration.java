@@ -22,14 +22,14 @@ public interface ScheduledUpdateSupportedCalculatedFieldConfiguration extends Ca
     boolean isScheduledUpdateEnabled();
 
     @PositiveOrZero
-    int getScheduledUpdateInterval();
+    Integer getScheduledUpdateInterval();
 
-    void setScheduledUpdateInterval(int interval);
+    void setScheduledUpdateInterval(Integer interval);
 
     default void validate(long minAllowedScheduledUpdateInterval) {
         if (getScheduledUpdateInterval() < minAllowedScheduledUpdateInterval) {
-            throw new IllegalArgumentException("Scheduled update interval is less than configured " +
-                                               "minimum allowed interval in tenant profile: " + minAllowedScheduledUpdateInterval);
+            throw new IllegalArgumentException("Scheduled update interval (" + getScheduledUpdateInterval() +
+                    " seconds) is less than minimum allowed interval in tenant profile: " + minAllowedScheduledUpdateInterval + " seconds");
         }
     }
 }
