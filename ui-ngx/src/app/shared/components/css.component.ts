@@ -119,7 +119,8 @@ export class CssComponent implements OnInit, OnDestroy, ControlValueAccessor, Va
       (ace) => {
         this.cssEditor = ace.edit(editorElement, editorOptions);
         this.cssEditor.session.setUseWorker(false);
-        this.languageProvider = LanguageProvider.fromCdn(window.location.origin + '/assets/ace-linters');
+        const worker = new Worker(new URL('../../core/worker/css-linter.worker', import.meta.url), { type: 'module' });
+        this.languageProvider = LanguageProvider.create(worker);
         this.languageProvider.registerEditor(this.cssEditor);
         this.cssEditor.session.setUseWrapMode(true);
         this.cssEditor.setValue(this.modelValue ? this.modelValue : '', -1);
@@ -150,9 +151,6 @@ export class CssComponent implements OnInit, OnDestroy, ControlValueAccessor, Va
   ngOnDestroy(): void {
     if (this.editorResize$) {
       this.editorResize$.disconnect();
-    }
-    if (this.languageProvider && this.cssEditor) {
-      this.languageProvider.unregisterEditor(this.cssEditor);
     }
     if (this.cssEditor) {
       this.cssEditor.destroy();
