@@ -13,21 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.timeseries;
+package org.thingsboard.server.dao.nosql;
 
-import com.google.common.util.concurrent.AbstractFuture;
+import lombok.Getter;
 
-/**
- * Created by ashvayka on 21.02.17.
- */
-public class SimpleListenableFuture<V> extends AbstractFuture<V> {
+@Getter
+public class ResultSetSizeLimitExceededException extends IllegalArgumentException {
 
-    public boolean set(V value) {
-        return super.set(value);
-    }
+    private final long limitBytes;
+    private final long actualBytes;
 
-    public boolean setException(Throwable throwable) {
-        return super.setException(throwable);
+    public ResultSetSizeLimitExceededException(long limitBytes, long actualBytes) {
+        super("Result set size exceeds the maximum allowed limit. Please narrow your query");
+        this.limitBytes = limitBytes;
+        this.actualBytes = actualBytes;
     }
 
 }
