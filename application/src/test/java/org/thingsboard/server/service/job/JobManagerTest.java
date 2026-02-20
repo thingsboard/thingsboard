@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.job;
 
+import com.google.common.util.concurrent.SettableFuture;
 import lombok.SneakyThrows;
 import org.junit.After;
 import org.junit.Before;
@@ -36,6 +37,7 @@ import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.job.task.DummyTaskResult;
 import org.thingsboard.server.common.data.job.task.DummyTaskResult.DummyTaskFailure;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.job.JobDao;
 import org.thingsboard.server.dao.service.DaoSqlTest;
@@ -44,10 +46,12 @@ import org.thingsboard.server.queue.task.JobStatsService;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
@@ -518,19 +522,114 @@ public class JobManagerTest extends AbstractControllerTest {
         });
     }
 
+    @Test
+    public void testSubmitJob_finishCallback_success() {
+        SettableFuture<Void> future = SettableFuture.create();
+
+        int tasksCount = 3;
+        submitJob(DummyJobConfiguration.builder()
+                .successfulTasksCount(tasksCount)
+                .taskProcessingTimeMs(100)
+                .build(), "test-job", TbCallback.wrap(future));
+
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(future.isDone()).isTrue();
+            assertThat(future.get()).isNull();
+        });
+    }
+
+    @Test
+    public void testSubmitJob_finishCallback_taskFailure() {
+        SettableFuture<Void> future = SettableFuture.create();
+
+        submitJob(DummyJobConfiguration.builder()
+                .successfulTasksCount(1)
+                .failedTasksCount(2)
+                .errors(List.of("task error"))
+                .retries(0)
+                .taskProcessingTimeMs(100)
+                .build(), "test-job", TbCallback.wrap(future));
+
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(future.isDone()).isTrue();
+            assertThatThrownBy(future::get)
+                    .isInstanceOf(ExecutionException.class)
+                    .cause()
+                    .hasMessage("task error; task error");
+        });
+    }
+
+    @Test
+    public void testSubmitJob_finishCallback_generalError() {
+        SettableFuture<Void> future = SettableFuture.create();
+
+        submitJob(DummyJobConfiguration.builder()
+                .generalError("Something went wrong")
+                .submittedTasksBeforeGeneralError(0)
+                .build(), "test-job", TbCallback.wrap(future));
+
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(future.isDone()).isTrue();
+            assertThatThrownBy(future::get)
+                    .isInstanceOf(ExecutionException.class)
+                    .cause()
+                    .hasMessage("Something went wrong");
+        });
+    }
+
+    @Test
+    public void testSubmitJob_finishCallback_cancelled() throws Exception {
+        SettableFuture<Void> future = SettableFuture.create();
+
+        JobId jobId = submitJob(DummyJobConfiguration.builder()
+                .successfulTasksCount(200)
+                .taskProcessingTimeMs(50)
+                .build(), "test-job", TbCallback.wrap(future)).getId();
+
+        Thread.sleep(500);
+        cancelJob(jobId);
+
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(future.isDone()).isTrue();
+            assertThatThrownBy(future::get)
+                    .isInstanceOf(ExecutionException.class)
+                    .cause()
+                    .hasMessage("The task was cancelled");
+        });
+    }
+
+    @Test
+    public void testSubmitJob_finishCallback_zeroTasks() {
+        SettableFuture<Void> future = SettableFuture.create();
+
+        submitJob(DummyJobConfiguration.builder()
+                .successfulTasksCount(0)
+                .build(), "test-job", TbCallback.wrap(future));
+
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(future.isDone()).isTrue();
+            assertThat(future.get()).isNull();
+        });
+    }
+
     private Job submitJob(DummyJobConfiguration configuration) {
         return submitJob(configuration, "test-job");
     }
 
     @SneakyThrows
     private Job submitJob(DummyJobConfiguration configuration, String key) {
+        return submitJob(configuration, key, null);
+    }
+
+    @SneakyThrows
+    private Job submitJob(DummyJobConfiguration configuration, String key, TbCallback callback) {
         return jobManager.submitJob(Job.builder()
                 .tenantId(tenantId)
                 .type(JobType.DUMMY)
                 .key(key)
                 .entityId(jobEntity.getId())
                 .configuration(configuration)
-                .build()).get();
+                .build(), callback).get();
     }
 
     private List<DummyTaskFailure> getFailures(JobResult jobResult) {
