@@ -18,6 +18,7 @@ package org.thingsboard.server.service.sync;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.jgit.revwalk.RevCommit;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardExecutors;
@@ -46,6 +47,8 @@ public class DefaultGitSyncService implements GitSyncService {
     private final ScheduledExecutorService executor = ThingsBoardExecutors.newSingleThreadScheduledExecutor("git-sync");
     private final Map<String, GitRepository> repositories = new ConcurrentHashMap<>();
     private final Map<String, Runnable> updateListeners = new ConcurrentHashMap<>();
+
+    private RevCommit lastCommit;
 
     @Override
     public void registerSync(String key, String repoUri, String branch, long fetchFrequencyMs, Runnable onUpdate) {
@@ -84,7 +87,7 @@ public class DefaultGitSyncService implements GitSyncService {
     @Override
     public List<RepoFile> listFiles(String key, String path, int depth, FileType type) {
         GitRepository repository = getRepository(key);
-        return repository.listFilesAtCommit(getBranchRef(repository), path, depth).stream()
+        return repository.listFilesAtCommit(lastCommit, path, depth).stream()
                 .filter(file -> type == null || file.type() == type)
                 .toList();
     }
@@ -93,7 +96,7 @@ public class DefaultGitSyncService implements GitSyncService {
     @Override
     public byte[] getFileContent(String key, String path) {
         GitRepository repository = getRepository(key);
-        return repository.getFileContentAtCommit(path, getBranchRef(repository));
+        return repository.getFileContentAtCommit(path, lastCommit);
     }
 
     @Override
@@ -137,6 +140,15 @@ public class DefaultGitSyncService implements GitSyncService {
     }
 
     private void onUpdate(String key) {
+        GitRepository repository = getRepository(key);
+        String branchRef = getBranchRef(repository);
+        try {
+            lastCommit = repository.resolveCommit(branchRef);
+        } catch (Throwable e) {
+            log.error("[{}] Failed to resolve commit for ref {}", key, branchRef, e);
+            return;
+        }
+
         Runnable listener = updateListeners.get(key);
         if (listener != null) {
             log.debug("[{}] Handling repository update", key);
