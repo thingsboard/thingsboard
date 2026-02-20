@@ -34,20 +34,13 @@ export class DynamicMatDialog extends MatDialog {
       config.containerElement.style.transform = 'translateZ(0)';
       this._customOverlay.setContainerElement(config.containerElement);
     }
-    const ref = super.open(component, config);
-    if (config?.containerElement) {
-      ref.afterClosed().subscribe(
-        {
-          next: () => {
-            this._customOverlay.setContainerElement(null);
-          },
-          error: () => {
-            this._customOverlay.setContainerElement(null);
-          }
-        }
-      );
+    try {
+      return super.open(component, config);
+    } finally {
+      if (config?.containerElement) {
+        this._customOverlay.setContainerElement(null);
+      }
     }
-    return ref;
   }
 }
 
