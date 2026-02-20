@@ -45,6 +45,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.job.Job;
+import org.thingsboard.server.common.data.job.JobStatus;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
@@ -360,10 +361,12 @@ public class EntityStateSourcingListener {
         jobManager.onJobUpdate(job);
 
         ComponentLifecycleEvent event;
-        if (job.getResult().getCancellationTs() > 0) {
+        if (job.getStatus() == JobStatus.CANCELLED) {
             event = ComponentLifecycleEvent.STOPPED;
-        } else if (job.getResult().getGeneralError() != null) {
+        } else if (job.getStatus() == JobStatus.FAILED) {
             event = ComponentLifecycleEvent.FAILED;
+        } else if (job.getStatus() == JobStatus.COMPLETED) {
+            event = ComponentLifecycleEvent.UPDATED;
         } else {
             return;
         }
