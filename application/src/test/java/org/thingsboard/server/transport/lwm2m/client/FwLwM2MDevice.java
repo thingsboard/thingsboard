@@ -140,22 +140,22 @@ public class FwLwM2MDevice extends BaseInstanceEnabler implements Destroyable {
     }
 
     private void startDownloading() {
-        long delay = 0;
+        long delay = 500;
         // Step 1: state = 1
         scheduler.schedule(() -> {
-            state.set(1);
+            state.set(1);               // DOWNLOADING
             fireResourceChange(3);
             log.info("Downloading started: state=[{}]", state.get());
-        }, delay, TimeUnit.MILLISECONDS);
+        }, delay, TimeUnit.MILLISECONDS); // 500 ms
 
-        delay += 100; // next step after 100 ms
+        delay += 1000; // next step after 100 ms
 
         // Step 2: state = 2
         scheduler.schedule(() -> {
-            state.set(2);
+            state.set(2);               // DOWNLOADED
             fireResourceChange(3);
             log.info("Downloading in progress: state=[{}]", state.get());
-        }, delay, TimeUnit.MILLISECONDS);
+        }, delay, TimeUnit.MILLISECONDS);   // 1500 ms
     }
 
 
@@ -177,6 +177,8 @@ public class FwLwM2MDevice extends BaseInstanceEnabler implements Destroyable {
                     this.leshanClient.start();
 
                     // Delayed reset pkgName/pkgVersion, after reboot + registration
+                    // If a client stops, ThingsBoard can mark it as Offline.
+                    // A new registration may take a few seconds.
                     scheduler.schedule(() -> {
                         this.pkgName = this.pkgNameDef;
                         fireResourceChange(6);
@@ -186,7 +188,7 @@ public class FwLwM2MDevice extends BaseInstanceEnabler implements Destroyable {
 
                         log.info("FW resources updating to new values: pkgName=[{}], pkgVersion=[{}]",
                                 this.pkgName, this.pkgVersion);
-                    }, 15, TimeUnit.SECONDS); // 15 sec — safe timing
+                    }, 5, TimeUnit.SECONDS); // 5 sec — safe timing
                 }
             } catch (Exception e) {
                 log.error("Error during firmware update", e);
