@@ -121,7 +121,7 @@
     "angular-eslint": "~20.7.0",
     "autoprefixer": "^10.4.23",
     "directory-tree": "^3.5.2",
-    "eslint": "~9.39.2",
+    "eslint": "9.39.3",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-jsdoc": "^62.4.1",
     "eslint-plugin-prefer-arrow": "^1.2.3",
@@ -141,6 +141,7 @@
     "@babel/core": "7.28.3",
     "esbuild": "0.25.9",
     "rollup": "4.52.3",
-    "jquery.terminal/**/form-data": ">=4.0.4"
+    "jquery.terminal/**/form-data": ">=4.0.4",
+    "js-beautify/**/minimatch": "^9.0.6"
   }
 }
