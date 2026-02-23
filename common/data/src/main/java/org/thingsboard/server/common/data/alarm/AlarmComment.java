@@ -47,7 +47,7 @@ public class AlarmComment extends BaseData<AlarmCommentId> implements HasName {
     private UserId userId;
     @Schema(description = "Defines origination of comment. System type means comment was created by TB. OTHER type means comment was created by user.", example = "SYSTEM/OTHER")
     private AlarmCommentType type;
-    @Schema(description = "JSON object with text of comment.", implementation = JsonNode.class)
+    @Schema(description = "JSON object with text of comment.")
     @NoXss
     @Length(fieldName = "comment", max = 10000)
     @EqualsAndHashCode.Include

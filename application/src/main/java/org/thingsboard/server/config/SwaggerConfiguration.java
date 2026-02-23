@@ -303,18 +303,12 @@ public class SwaggerConfiguration {
     }
 
     private void addDefaultSchemas(OpenAPI openAPI) {
-        Schema<?> jsonNodeSchema = new Schema<>()
-                .type("object")
-                .description("Arbitrary JSON object or primitive value")
-                .additionalProperties(true)
-                .example(JacksonUtil.newObjectNode());
         Schema<?> errorCodeSchema = new Schema<>()
                 .type("integer")
                 .description("Platform error code")
                 ._enum(Arrays.asList(2, 10, 11, 15, 20, 30, 31, 32, 33, 34, 35, 40, 45, 46));
         openAPI.getComponents().addSchemas("ThingsboardErrorCode", errorCodeSchema);
         openAPI.getComponents()
-                .addSchemas("JsonNode", jsonNodeSchema)
                 .addSchemas("LoginRequest", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(LoginRequest.class)).schema)
                 .addSchemas("LoginResponse", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(LoginResponse.class)).schema)
                 .addSchemas("ThingsboardErrorResponse", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(ThingsboardErrorResponse.class)).schema)

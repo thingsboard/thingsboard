@@ -76,7 +76,7 @@ public class DeviceConnectivityController extends BaseController {
                             description = "OK",
                             content = @Content(
                                     mediaType = MediaType.APPLICATION_JSON_VALUE,
-                                    schema = @Schema(ref = "#/components/schemas/JsonNode"),
+                                    schema = @Schema(implementation = JsonNode.class),
                                     examples = {
                                             @ExampleObject(
                                                     name = "http",

@@ -40,7 +40,7 @@ import java.util.function.Supplier;
 public abstract class BaseDataWithAdditionalInfo<I extends UUIDBased> extends BaseData<I> implements HasAdditionalInfo {
 
     @NoXss
-    @Schema(implementation = JsonNode.class)
+    @Schema
     private transient JsonNode additionalInfo;
     @JsonIgnore
     private byte[] additionalInfoBytes;
