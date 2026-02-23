@@ -44,6 +44,9 @@
     "ts-node": "^10.9.2",
     "typescript": "5.9.2"
   },
+  "resolutions": {
+    "@yao-pkg/pkg/tar": ">=7.5.8"
+  },
   "pkg": {
     "assets": [
       "node_modules/config/**/*.*"
