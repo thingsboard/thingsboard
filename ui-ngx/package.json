@@ -140,6 +140,7 @@
     "tinymce": "6.8.6",
     "@babel/core": "7.28.3",
     "esbuild": "0.25.9",
-    "rollup": "4.52.3"
+    "rollup": "4.52.3",
+    "jquery.terminal/**/form-data": ">=4.0.4"
   }
 }
