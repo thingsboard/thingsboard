@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.script;
 
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.script.api.tbel.TbDate;
@@ -1713,7 +1714,7 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         assertEquals(expected, actual);
     }
 
-    @Test
+    @RepeatedTest(value = 3, name = "{displayName} {currentRepetition}/{totalRepetitions}")
     public void parseBytes_Test() throws ExecutionException, InterruptedException {
         byte[] bytesExecutionArrayList = new byte[]{(byte) 0xAA, (byte) 0xBB, (byte) 0xCC, (byte) 0xDD};
         msgStr = "{}";
