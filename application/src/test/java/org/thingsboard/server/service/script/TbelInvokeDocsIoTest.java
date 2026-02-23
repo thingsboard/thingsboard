@@ -2355,7 +2355,8 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         expected.put("date_1", d1.toString());
         TbDate d2 = new TbDate(2023, 8, 6, 4, 4, 5, "Europe/Berlin");
         expected.put("dLocal_2", d2.toLocaleString());
-        expected.put("dLocal_2_us", "8/5/23, 10:04:05 PM");
+        // Java 21+ uses narrow no-break space (U+202F) before AM/PM per CLDR 42+
+        expected.put("dLocal_2_us", Runtime.version().feature() >= 21 ? "8/5/23, 10:04:05\u202FPM" : "8/5/23, 10:04:05 PM");
         expected.put("dIso_2", d2.toISOString());
         expected.put("date_2", d2.toString());
         Object actual = invokeScript(evalScript(decoderStr), msgStr);
@@ -2387,7 +2388,8 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
                 """, s2);
         LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
         TbDate d1 = new TbDate(2023, 8, 6, 4, 4, 5);
-        expected.put("dLocal_1_us", "8/6/23, 4:04:05 AM");
+        // Java 21+ uses narrow no-break space (U+202F) before AM/PM per CLDR 42+
+        expected.put("dLocal_1_us", Runtime.version().feature() >= 21 ? "8/6/23, 4:04:05\u202FAM" : "8/6/23, 4:04:05 AM");
         expected.put("dIso_1", d1.toISOString());
         expected.put("d1", d1.toString());
         TbDate d2 = new TbDate(s2);
@@ -2419,7 +2421,8 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         TbDate d = new TbDate(2023, 8, 6, 4, 4, 5, "Europe/Berlin");
         expected.put("dIso", d.toISOString());
         expected.put("dLocal_utc", d.toLocaleString("UTC"));
-        expected.put("dLocal_us", "8/5/23, 10:04:05 PM");
+        // Java 21+ uses narrow no-break space (U+202F) before AM/PM per CLDR 42+
+        expected.put("dLocal_us", Runtime.version().feature() >= 21 ? "8/5/23, 10:04:05\u202FPM" : "8/5/23, 10:04:05 PM");
         expected.put("dLocal_de", "06.08.23, 04:04:05");
         Object actual = invokeScript(evalScript(decoderStr), msgStr);
         assertEquals(expected, actual);
