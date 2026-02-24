@@ -133,7 +133,7 @@
                 </property>
             </activation>
             <properties>
-                <docker.lts.tag>4.3.0-latest</docker.lts.tag>
+                <docker.lts.tag>4.3.1-latest</docker.lts.tag>
                 <docker.skip.latest.tag>false</docker.skip.latest.tag>
             </properties>
             <build>
