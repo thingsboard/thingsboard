@@ -898,11 +898,11 @@ public class TbUtils {
 
     public static int parseBytesToInt(byte[] data, int offset, int length, boolean bigEndian) {
         validationNumberByLength(data, offset, length, BYTES_LEN_INT_MAX);
-        var bb = ByteBuffer.allocate(4);
+        var bb = ByteBuffer.allocate(BYTES_LEN_INT_MAX);
         if (!bigEndian) {
             bb.order(ByteOrder.LITTLE_ENDIAN);
         }
-        bb.position(bigEndian ? 4 - length : 0);
+        bb.position(bigEndian ? BYTES_LEN_INT_MAX - length : 0);
         bb.put(data, offset, length);
         bb.position(0);
         return bb.getInt();
@@ -923,11 +923,11 @@ public class TbUtils {
     public static long parseBytesToUnsignedInt(byte[] data, int offset, int length, boolean bigEndian) {
         validationNumberByLength(data, offset, length, BYTES_LEN_INT_MAX);
 
-        ByteBuffer bb = ByteBuffer.allocate(8);
+        ByteBuffer bb = ByteBuffer.allocate(BYTES_LEN_LONG_MAX);
         if (!bigEndian) {
             bb.order(ByteOrder.LITTLE_ENDIAN);
         }
-        bb.position(bigEndian ? 8 - length : 0);
+        bb.position(bigEndian ? BYTES_LEN_LONG_MAX - length : 0);
         bb.put(data, offset, length);
         bb.position(0);
 
