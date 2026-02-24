@@ -33,6 +33,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.thingsboard.server.controller.AbstractWebTest.TIMEOUT;
+
 @Slf4j
 public class SwLwM2MDevice extends BaseInstanceEnabler implements Destroyable {
 
@@ -85,10 +87,7 @@ public class SwLwM2MDevice extends BaseInstanceEnabler implements Destroyable {
         log.info("Write on Device resource /{}/{}/{}", getModel().id, getId(), resourceId);
 
         switch (resourceId) {
-            case 2:
-                startDownloading();
-                return WriteResponse.success();
-            case 3:
+            case 2, 3:
                 startDownloading();
                 return WriteResponse.success();
             default:
@@ -123,25 +122,34 @@ public class SwLwM2MDevice extends BaseInstanceEnabler implements Destroyable {
     }
 
     private void startDownloading() {
-        scheduler.schedule(() -> {
-            try {
-                state.set(1);
-                updateResult.set(1);
-                fireResourceChange(7);
-                fireResourceChange(9);
-                Thread.sleep(100);
-                state.set(2);
-                fireResourceChange(7);
-                Thread.sleep(100);
-                state.set(3);
-                fireResourceChange(7);
-                Thread.sleep(100);
-                updateResult.set(3);
-                fireResourceChange(9);
-            } catch (Exception e) {
+        long delay = 0;
 
-            }
-        }, 100, TimeUnit.MILLISECONDS);
+        // Step 1: start downloading
+        scheduler.schedule(() -> {
+            state.set(1);
+            updateResult.set(1);
+            fireResourceChange(7);
+            fireResourceChange(9);
+        }, delay, TimeUnit.MILLISECONDS);
+
+        delay += 100;
+
+        // Step 2: downloading in progress
+        scheduler.schedule(() -> {
+            state.set(2);
+            fireResourceChange(7);
+        }, delay, TimeUnit.MILLISECONDS);
+
+        delay += 100;
+
+        // Step 3: downloading finished
+        scheduler.schedule(() -> {
+            state.set(3);
+            fireResourceChange(7);
+
+            updateResult.set(3);
+            fireResourceChange(9);
+        }, delay, TimeUnit.MILLISECONDS);
     }
 
     private void startUpdating() {
@@ -150,7 +158,13 @@ public class SwLwM2MDevice extends BaseInstanceEnabler implements Destroyable {
             updateResult.set(2);
             fireResourceChange(7);
             fireResourceChange(9);
+
+            // Optional: delayed log about FW update
+            scheduler.schedule(() -> {
+                log.info("FW resources updating to new values: state=[{}], updateResult=[{}]",
+                        state.get(), updateResult.get());
+            }, 500, TimeUnit.MILLISECONDS);
+
         }, 100, TimeUnit.MILLISECONDS);
     }
-
 }

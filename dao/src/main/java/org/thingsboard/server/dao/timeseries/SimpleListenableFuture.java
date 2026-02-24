@@ -26,4 +26,8 @@ public class SimpleListenableFuture<V> extends AbstractFuture<V> {
         return super.set(value);
     }
 
+    public boolean setException(Throwable throwable) {
+        return super.setException(throwable);
+    }
+
 }

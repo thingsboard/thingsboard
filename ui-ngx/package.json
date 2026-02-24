@@ -1,6 +1,6 @@
 {
   "name": "thingsboard",
-  "version": "4.2.1.3",
+  "version": "4.2.2",
   "scripts": {
     "ng": "ng",
     "start": "node --max_old_space_size=8048 ./node_modules/@angular/cli/bin/ng serve --configuration development --host 0.0.0.0 --open",
@@ -94,11 +94,11 @@
   },
   "devDependencies": {
     "@angular-builders/custom-esbuild": "20.0.0",
-    "@angular-devkit/build-angular": "20.3.15",
-    "@angular-devkit/core": "20.3.15",
-    "@angular-devkit/schematics": "20.3.15",
-    "@angular/build": "20.3.15",
-    "@angular/cli": "20.3.15",
+    "@angular-devkit/build-angular": "20.3.16",
+    "@angular-devkit/core": "20.3.16",
+    "@angular-devkit/schematics": "20.3.16",
+    "@angular/build": "20.3.16",
+    "@angular/cli": "20.3.16",
     "@angular/compiler-cli": "20.3.16",
     "@angular/language-service": "20.3.16",
     "@types/ace-diff": "^2.1.4",
@@ -121,7 +121,7 @@
     "angular-eslint": "~20.7.0",
     "autoprefixer": "^10.4.23",
     "directory-tree": "^3.5.2",
-    "eslint": "~9.39.2",
+    "eslint": "9.39.3",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-jsdoc": "^62.4.1",
     "eslint-plugin-prefer-arrow": "^1.2.3",
@@ -139,6 +139,9 @@
     "ace-builds": "1.43.6",
     "tinymce": "6.8.6",
     "@babel/core": "7.28.3",
-    "esbuild": "0.25.9"
+    "esbuild": "0.25.9",
+    "rollup": "4.52.3",
+    "jquery.terminal/**/form-data": ">=4.0.4",
+    "js-beautify/**/minimatch": "^9.0.6"
   }
 }
