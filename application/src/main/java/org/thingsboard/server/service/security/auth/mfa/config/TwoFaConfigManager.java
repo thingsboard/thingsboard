@@ -36,6 +36,7 @@ public interface TwoFaConfigManager {
 
     AccountTwoFaSettings deleteTwoFaAccountConfig(TenantId tenantId, User user, TwoFaProviderType providerType);
 
+    AccountTwoFaSettings deleteUsersTwoFaAccountConfig(TenantId tenantId, User user, TwoFaProviderType providerType) throws ThingsboardException;
 
     Optional<PlatformTwoFaSettings> getPlatformTwoFaSettings(TenantId tenantId, boolean sysadminSettingsAsDefault);
 

@@ -16,6 +16,8 @@
 package org.thingsboard.server.service.security.auth.mfa.config;
 
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
@@ -24,6 +26,7 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.UserAuthSettings;
+import org.thingsboard.server.common.data.security.event.UserCredentialsInvalidationEvent;
 import org.thingsboard.server.common.data.security.model.mfa.PlatformTwoFaSettings;
 import org.thingsboard.server.common.data.security.model.mfa.account.AccountTwoFaSettings;
 import org.thingsboard.server.common.data.security.model.mfa.account.TwoFaAccountConfig;
@@ -48,6 +51,7 @@ public class DefaultTwoFaConfigManager implements TwoFaConfigManager {
     private final UserAuthSettingsDao userAuthSettingsDao;
     private final AdminSettingsService adminSettingsService;
     private final AdminSettingsDao adminSettingsDao;
+    private final ApplicationEventPublisher eventPublisher;
     @Lazy
     private final TwoFactorAuthService twoFactorAuthService;
 
@@ -132,6 +136,21 @@ public class DefaultTwoFaConfigManager implements TwoFaConfigManager {
 
     @Override
     public AccountTwoFaSettings deleteTwoFaAccountConfig(TenantId tenantId, User user, TwoFaProviderType providerType) {
+        AccountTwoFaSettings settings = deleteTwoFaProviderType(tenantId, user, providerType);
+        checkAccountTwoFaSettings(tenantId, user, settings);
+        return saveAccountTwoFaSettings(tenantId, user, settings);
+    }
+    
+    @Override
+    public AccountTwoFaSettings deleteUsersTwoFaAccountConfig(TenantId tenantId, User user, TwoFaProviderType providerType) throws ThingsboardException {
+        AccountTwoFaSettings settings = deleteTwoFaProviderType(tenantId, user, providerType);
+        if (settings.getConfigs().isEmpty()) {
+            eventPublisher.publishEvent(new UserCredentialsInvalidationEvent(user.getId()));
+        }
+        return saveAccountTwoFaSettings(tenantId, user, settings);
+    }
+
+    private AccountTwoFaSettings deleteTwoFaProviderType(TenantId tenantId, User user, TwoFaProviderType providerType) {
         AccountTwoFaSettings settings = getAccountTwoFaSettings(tenantId, user)
                 .orElseThrow(() -> new IllegalArgumentException("2FA not configured"));
         settings.getConfigs().remove(providerType);
@@ -144,8 +163,7 @@ public class DefaultTwoFaConfigManager implements TwoFaConfigManager {
                     .min(Comparator.comparing(TwoFaAccountConfig::getProviderType))
                     .ifPresent(config -> config.setUseByDefault(true));
         }
-        checkAccountTwoFaSettings(tenantId, user, settings);
-        return saveAccountTwoFaSettings(tenantId, user, settings);
+        return settings;
     }
 
 

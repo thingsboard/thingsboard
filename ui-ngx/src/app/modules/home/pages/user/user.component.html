@@ -55,6 +55,12 @@
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
+          (click)="updateUser2FA()"
+          [class.!hidden]="isEdit">
+    {{'user.manage-2fa' | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'delete')"
           [class.!hidden]="hideDelete() || isEdit">
     {{'user.delete' | translate }}
