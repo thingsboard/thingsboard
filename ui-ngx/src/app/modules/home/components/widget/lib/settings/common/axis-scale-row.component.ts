@@ -97,7 +97,7 @@ export class AxisScaleRowComponent implements ControlValueAccessor, OnInit, Vali
     this.limitForm = this.fb.group({
       type: [ValueSourceType.constant],
       value: [null],
-      entityAlias: [null]
+      entityAlias: [null, [Validators.required]]
     });
     this.latestKeyFormControl = this.fb.control(null, [Validators.required]);
     this.entityKeyFormControl = this.fb.control(null, [Validators.required]);
@@ -169,23 +169,24 @@ export class AxisScaleRowComponent implements ControlValueAccessor, OnInit, Vali
   }
 
   private updateValidators() {
-    const axisTypeControl = this.limitForm.get('type');
-    if (axisTypeControl && this.entityKeyFormControl && this.latestKeyFormControl) {
-      const type = axisTypeControl.value;
-      if (type === ValueSourceType.latestKey) {
-        this.latestKeyFormControl.setValidators([Validators.required]);
-        this.entityKeyFormControl.clearValidators();
-      } else if (type === ValueSourceType.entity) {
-        this.latestKeyFormControl.clearValidators();
-        this.limitForm.get('entityAlias').setValidators([Validators.required]);
-        this.entityKeyFormControl.setValidators([Validators.required]);
-      } else {
-        this.latestKeyFormControl.clearValidators();
-        this.entityKeyFormControl.clearValidators();
-      }
-      this.latestKeyFormControl.updateValueAndValidity({ emitEvent: false });
-      this.entityKeyFormControl.updateValueAndValidity({ emitEvent: false });
-    }
+    const type = this.limitForm.get('type')?.value;
+    const entityAliasCtr = this.limitForm.get('entityAlias');
+
+    const isLatestKey = type === ValueSourceType.latestKey;
+    const isEntity = type === ValueSourceType.entity;
+
+    isLatestKey ? this.latestKeyFormControl.enable({ emitEvent: false })
+      : this.latestKeyFormControl.disable({ emitEvent: false });
+
+    isEntity ? this.entityKeyFormControl.enable({ emitEvent: false })
+      : this.entityKeyFormControl.disable({ emitEvent: false });
+
+    isEntity ? entityAliasCtr.enable({ emitEvent: false })
+      : entityAliasCtr.disable({ emitEvent: false });
+
+    this.latestKeyFormControl.updateValueAndValidity({ emitEvent: false });
+    this.entityKeyFormControl.updateValueAndValidity({ emitEvent: false });
+    entityAliasCtr.updateValueAndValidity({ emitEvent: false });
   }
 
   private updateModel() {

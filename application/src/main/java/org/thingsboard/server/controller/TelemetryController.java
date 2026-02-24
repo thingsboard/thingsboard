@@ -299,7 +299,7 @@ public class TelemetryController extends BaseController {
 
     @Hidden
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @GetMapping(value = "/{entityType}/{entityId}/values/timeseries", params = {"keys", "startTs", "endTs"})
+    @GetMapping(value = "/{entityType}/{entityId}/values/timeseries", params = {"startTs", "endTs"})
     public DeferredResult<ResponseEntity> getTimeseries(
             @PathVariable("entityType") String entityType,
             @PathVariable("entityId") String entityIdStr,
