@@ -329,6 +329,17 @@ public class SparkplugTopic {
         return isNode() ? edgeNodeId : deviceId;
     }
 
+    public String getNodeDeviceNameAllPath() {
+        StringBuilder sb = new StringBuilder();
+        if (hostApplicationId == null) {
+            sb.append(getGroupId()).append(":").append(getEdgeNodeId());
+            if (getDeviceId() != null) {
+                sb.append(":").append(getDeviceId());
+            }
+        }
+        return sb.toString();
+    }
+
     public static boolean isValidIdElementToUTF8(String deviceIdElement) {
         if (deviceIdElement == null) {
             return false;

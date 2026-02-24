@@ -21,7 +21,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.JsonSyntaxException;
 import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.handler.codec.mqtt.MqttPublishMessage;
-import io.netty.handler.codec.mqtt.MqttReasonCodes;
 import io.netty.handler.codec.mqtt.MqttTopicSubscription;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -49,6 +48,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -106,9 +106,7 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
     }
 
     public void onAttributesTelemetryProto(int msgId, SparkplugBProto.Payload sparkplugBProto, SparkplugTopic topic) throws AdaptorException, ThingsboardException {
-        String deviceName = topic.getNodeDeviceName();
-        checkDeviceName(deviceName);
-
+        String deviceName = checkDeviceName(this.deviceSessionCtx.getDeviceInfo().getDeviceName());
         ListenableFuture<MqttDeviceAwareSessionContext> contextListenableFuture;
         if (topic.isNode()) {
             if (topic.isType(NBIRTH)) {
@@ -118,19 +116,21 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
             }
             contextListenableFuture = Futures.immediateFuture(this.deviceSessionCtx);
         } else {
-            ListenableFuture<SparkplugDeviceSessionContext> deviceCtx = onDeviceConnectProto(topic);
-            contextListenableFuture = Futures.transform(deviceCtx, ctx -> {
-                if (topic.isType(DBIRTH)) {
-                    sendSparkplugStateOnTelemetry(ctx.getSessionInfo(), deviceName, ONLINE,
-                            sparkplugBProto.getTimestamp());
-                    try {
-                        ctx.setDeviceBirthMetrics(sparkplugBProto.getMetricsList());
-                    } catch (IllegalArgumentException | DuplicateKeyException e) {
-                            throw new RuntimeException(e);
+            try {
+                ListenableFuture<SparkplugDeviceSessionContext> deviceCtx = this.onDeviceConnectProto(topic);
+                deviceName = checkDeviceName(deviceCtx.get().getDeviceInfo().getDeviceName());
+                String finalDeviceName = deviceName;
+                contextListenableFuture = Futures.transform(deviceCtx, ctx -> {
+                    if (topic.isType(DBIRTH)) {
+                        sendSparkplugStateOnTelemetry(ctx.getSessionInfo(), finalDeviceName, ONLINE,
+                                sparkplugBProto.getTimestamp());
+                            ctx.setDeviceBirthMetrics(sparkplugBProto.getMetricsList());
                     }
-                }
-                return ctx;
-            }, MoreExecutors.directExecutor());
+                    return ctx;
+                }, MoreExecutors.directExecutor());
+            }  catch (IllegalArgumentException | DuplicateKeyException | ExecutionException | InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         }
         Set<String> attributesMetricNames = ((MqttDeviceProfileTransportConfiguration) deviceSessionCtx
                 .getDeviceProfile().getProfileData().getTransportConfiguration()).getSparkplugAttributesMetricNames();
@@ -222,7 +222,7 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
             ThingsboardException {
         try {
             String deviceType = this.gateway.getDeviceType() + " device";
-            return onDeviceConnect(topic.getNodeDeviceName(), deviceType);
+            return onDeviceConnectSparkplug(topic, deviceType);
         } catch (RuntimeException e) {
             log.error("Failed Sparkplug Device connect proto!", e);
             throw new ThingsboardException(e, ThingsboardErrorCode.BAD_REQUEST_PARAMS);

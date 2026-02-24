@@ -95,31 +95,7 @@ public abstract class AbstractMqttV5ClientSparkplugConnectionTest extends Abstra
     protected void processConnectClientWithCorrectAccessTokenWithNDEATH_State_ONLINE_ALL(int cntDevices) throws Exception {
         long ts = calendar.getTimeInMillis();
         List<Device> devices = connectClientWithCorrectAccessTokenWithNDEATHCreatedDevices(cntDevices, ts);
-
-        TsKvEntry tsKvEntry = new BasicTsKvEntry(ts, new StringDataEntry(messageName(STATE), ONLINE.name()));
-        await(alias + messageName(STATE) + ", device: " + savedGateway.getName())
-                .atMost(40, TimeUnit.SECONDS)
-                .until(() -> {
-                    var foundEntry = tsService.findAllLatest(tenantId, savedGateway.getId()).get().stream()
-                            .filter(tsKv -> tsKv.getKey().equals(tsKvEntry.getKey()))
-                            .filter(tsKv -> tsKv.getValue().equals(tsKvEntry.getValue()))
-                            .filter(tsKv -> tsKv.getTs() == tsKvEntry.getTs())
-                            .findFirst();
-                    return foundEntry.isPresent();
-                });
-
-        for (Device device : devices) {
-            await(alias + messageName(STATE) + ", device: " + device.getName())
-                    .atMost(40, TimeUnit.SECONDS)
-                    .until(() -> {
-                        var foundEntry = tsService.findAllLatest(tenantId, device.getId()).get().stream()
-                                .filter(tsKv -> tsKv.getKey().equals(tsKvEntry.getKey()))
-                                .filter(tsKv -> tsKv.getValue().equals(tsKvEntry.getValue()))
-                                .filter(tsKv -> tsKv.getTs() == tsKvEntry.getTs())
-                                .findFirst();
-                        return foundEntry.isPresent();
-                    });
-        }
+        state_ONLINE_ALL (devices, ts);
     }
 
     protected void processConnectClientWithCorrectAccessTokenWithNDEATH_State_ONLINE_All_Then_OneDeviceOFFLINE(int cntDevices, int indexDeviceDisconnect) throws Exception {
