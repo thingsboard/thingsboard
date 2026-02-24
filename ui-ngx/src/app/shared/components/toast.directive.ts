@@ -138,7 +138,6 @@ export class ToastDirective implements AfterViewInit, OnDestroy {
           if (this.toastComponentRef) {
             this.viewContainerRef.detach(0);
             this.toastComponentRef.destroy();
-            this.toastComponentRef = null;
           }
         }
       };
@@ -166,6 +165,7 @@ export class ToastDirective implements AfterViewInit, OnDestroy {
           clearTimeout(this.dismissTimeout);
           this.dismissTimeout = null;
         }
+        this.toastComponentRef = null;
         this.currentMessage = null;
       });
     });
