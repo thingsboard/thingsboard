@@ -219,6 +219,7 @@ public class SwaggerConfiguration {
     private void addLoginOperation(OpenAPI openAPI) {
         var operation = new Operation();
         operation.summary("Login method to get user JWT token data");
+        operation.operationId("login");
         operation.description("""
                 Login method used to authenticate user and get JWT token data.
                                 
@@ -241,6 +242,7 @@ public class SwaggerConfiguration {
     private void addRefreshTokenOperation(OpenAPI openAPI) {
         var operation = new Operation();
         operation.summary("Refresh user JWT token data");
+        operation.operationId("refreshToken");
         operation.description("""
                 Method to refresh JWT token. Provide a valid refresh token to get a new JWT token.
                                 
