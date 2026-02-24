@@ -46,7 +46,7 @@ import java.io.Serializable;
 })
 public interface KeyFilterPredicate extends Serializable {
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, ref = "#/components/schemas/AlarmRuleFilterPredicateType")
     @JsonIgnore
     FilterPredicateType getType();
 

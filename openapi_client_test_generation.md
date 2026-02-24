@@ -1,0 +1,32 @@
+
+## To generate tests for generated OpenAPI client, use following prompt in Claude code cli:
+
+Please add tests in `YourFileName` covering the following API client methods:
+getDeviceById
+getDeviceInfoById
+saveDevice
+saveDeviceWithCredentials
+deleteDevice
+assignDeviceToCustomer
+unassignDeviceFromCustomer
+assignDeviceToPublicCustomer
+getDeviceCredentialsByDeviceId
+updateDeviceCredentials
+getTenantDevices
+getTenantDeviceInfos
+getTenantDevice
+getTenantDeviceByName
+getCustomerDevices
+getCustomerDeviceInfos
+getDevicesByIds
+findByQuery
+getDeviceTypes
+claimDevice
+reClaimDevice
+getSecretKey
+assignDeviceToTenant
+assignDeviceToEdge
+unassignDeviceFromEdge
+getEdgeDevices
+countByDeviceProfileAndEmptyOtaPackage
+processDevicesBulkImport....
