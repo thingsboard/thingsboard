@@ -27,7 +27,6 @@ import org.thingsboard.server.common.data.AttributeScope;
 import java.util.Objects;
 
 @Schema(
-        description = "Configuration for calculated fields",
         discriminatorProperty = "type",
         discriminatorMapping = {
                 @DiscriminatorMapping(value = "TIME_SERIES", schema = TimeSeriesOutput.class),

@@ -18,6 +18,7 @@ package org.thingsboard.server.common.data.sms.config;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+@Schema
 @Data
 public class SmppSmsProviderConfiguration implements SmsProviderConfiguration {
     @Schema(description = "SMPP version", allowableValues = "3.3, 3.4", requiredMode = Schema.RequiredMode.REQUIRED)

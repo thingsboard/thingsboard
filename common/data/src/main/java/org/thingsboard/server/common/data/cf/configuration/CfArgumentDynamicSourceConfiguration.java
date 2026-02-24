@@ -23,7 +23,6 @@ import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(
-        description = "Configuration for calculated fields",
         discriminatorProperty = "type",
         discriminatorMapping = {
                 @DiscriminatorMapping(value = "RELATION_PATH_QUERY", schema = RelationPathQueryDynamicSourceConfiguration.class),

@@ -309,7 +309,6 @@ public class SwaggerConfiguration {
                 .type("integer")
                 .description("Platform error code")
                 ._enum(Arrays.asList(2, 10, 11, 15, 20, 30, 31, 32, 33, 34, 35, 40, 45, 46));
-        openAPI.getComponents().addSchemas("ThingsboardErrorCode", errorCodeSchema);
         openAPI.getComponents()
                 .addSchemas("LoginRequest", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(LoginRequest.class)).schema)
                 .addSchemas("LoginResponse", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(LoginResponse.class)).schema)

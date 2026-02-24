@@ -37,7 +37,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Schema(
-        description = "Configuration for calculated fields",
         discriminatorProperty = "type",
         discriminatorMapping = {
                 @DiscriminatorMapping(value = "SIMPLE", schema = SimpleCalculatedFieldConfiguration.class),

@@ -132,7 +132,7 @@ public class DashboardController extends BaseController {
                     "The actual value of the limit is configurable in the system configuration file.")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/dashboard/maxDatapointsLimit")
-    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(type = "integer", format = "int64", example = "1636023857137")))
+    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(type = "integer", format = "int64", example = "5000")))
     public long getMaxDatapointsLimit() {
         return maxDatapointsLimit;
     }

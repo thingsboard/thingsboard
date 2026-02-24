@@ -48,7 +48,6 @@ public class MqttDeviceProfileTransportConfiguration implements DeviceProfileTra
     @Schema
     private boolean sendAckOnValidationException;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Type of the device transport")
     @Override
     public DeviceTransportType getType() {
         return DeviceTransportType.MQTT;

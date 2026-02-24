@@ -24,7 +24,6 @@ import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(
-        description = "Base export container for ThingsBoard entities",
         discriminatorProperty = "type",
         discriminatorMapping = {
                 @DiscriminatorMapping(value = "SIMPLE", schema = SimpleAlarmConditionExpression.class),

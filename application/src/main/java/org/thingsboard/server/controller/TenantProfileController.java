@@ -266,6 +266,7 @@ public class TenantProfileController extends BaseController {
         return tenantProfileService.findTenantProfilesByIds(TenantId.SYS_TENANT_ID, ids);
     }
 
+    @ApiOperation(value = "Get Tenant Profile list (getTenantProfileList)")
     @GetMapping(value = "/tenantProfiles/list")
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     public List<TenantProfile> getTenantProfileList(@Parameter(description = "Comma-separated list of tenant profile ids", array = @ArraySchema(schema = @Schema(type = "string")))

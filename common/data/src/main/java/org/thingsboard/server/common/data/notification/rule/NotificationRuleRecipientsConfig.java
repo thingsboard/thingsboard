@@ -34,7 +34,20 @@ import java.util.UUID;
 @Schema(
         discriminatorProperty = "triggerType",
         discriminatorMapping = {
-                @DiscriminatorMapping(value = "ALARM", schema = EscalatedNotificationRuleRecipientsConfig.class)
+                @DiscriminatorMapping(value = "ENTITY_ACTION", schema = DefaultNotificationRuleRecipientsConfig.class),
+                @DiscriminatorMapping(value = "ALARM", schema = EscalatedNotificationRuleRecipientsConfig.class),
+                @DiscriminatorMapping(value = "ALARM_COMMENT", schema = DefaultNotificationRuleRecipientsConfig.class),
+                @DiscriminatorMapping(value = "ALARM_ASSIGNMENT", schema = DefaultNotificationRuleRecipientsConfig.class),
+                @DiscriminatorMapping(value = "DEVICE_ACTIVITY", schema = DefaultNotificationRuleRecipientsConfig.class),
+                @DiscriminatorMapping(value = "RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT", schema = DefaultNotificationRuleRecipientsConfig.class),
+                @DiscriminatorMapping(value = "EDGE_CONNECTION", schema = DefaultNotificationRuleRecipientsConfig.class),
+                @DiscriminatorMapping(value = "EDGE_COMMUNICATION_FAILURE", schema = DefaultNotificationRuleRecipientsConfig.class),
+                @DiscriminatorMapping(value = "NEW_PLATFORM_VERSION", schema = DefaultNotificationRuleRecipientsConfig.class),
+                @DiscriminatorMapping(value = "ENTITIES_LIMIT", schema = DefaultNotificationRuleRecipientsConfig.class),
+                @DiscriminatorMapping(value = "API_USAGE_LIMIT", schema = DefaultNotificationRuleRecipientsConfig.class),
+                @DiscriminatorMapping(value = "RATE_LIMITS", schema = DefaultNotificationRuleRecipientsConfig.class),
+                @DiscriminatorMapping(value = "TASK_PROCESSING_FAILURE", schema = DefaultNotificationRuleRecipientsConfig.class),
+                @DiscriminatorMapping(value = "RESOURCES_SHORTAGE", schema = DefaultNotificationRuleRecipientsConfig.class)
         })
 @JsonIgnoreProperties
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "triggerType", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY, defaultImpl = DefaultNotificationRuleRecipientsConfig.class)

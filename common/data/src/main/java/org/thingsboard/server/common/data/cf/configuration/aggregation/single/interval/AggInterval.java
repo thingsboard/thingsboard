@@ -26,7 +26,6 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 @Schema(
-        description = "Configuration for calculated fields",
         discriminatorProperty = "type",
         discriminatorMapping = {
                 @DiscriminatorMapping(value = "HOUR", schema = HourInterval.class),

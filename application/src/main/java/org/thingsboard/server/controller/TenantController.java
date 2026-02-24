@@ -184,6 +184,7 @@ public class TenantController extends BaseController {
         return filterTenantsByReadPermission(tenants);
     }
 
+    @ApiOperation(value = "Get Tenants list (getTenantsByIdsV2)")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @GetMapping(value = "/tenants/list")
     public List<Tenant> getTenantsByIdsV2(

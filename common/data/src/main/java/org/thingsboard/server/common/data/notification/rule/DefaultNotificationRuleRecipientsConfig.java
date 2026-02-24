@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.notification.rule;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+@Schema(description = "Default notification rule recipients configuration", allOf = NotificationRuleRecipientsConfig.class)
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class DefaultNotificationRuleRecipientsConfig extends NotificationRuleRecipientsConfig {
