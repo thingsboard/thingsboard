@@ -235,6 +235,7 @@ public class SwaggerConfiguration {
 
         operation.responses(loginResponses);
 
+        operation.addTagsItem("login-endpoint");
         var pathItem = new PathItem().post(operation);
         openAPI.path(LOGIN_ENDPOINT, pathItem);
     }
@@ -258,6 +259,7 @@ public class SwaggerConfiguration {
 
         operation.responses(loginResponses);
 
+        operation.addTagsItem("login-endpoint");
         var pathItem = new PathItem().post(operation);
         openAPI.path(REFRESH_TOKEN_ENDPOINT, pathItem);
     }
