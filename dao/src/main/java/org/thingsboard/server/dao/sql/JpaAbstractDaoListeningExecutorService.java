@@ -17,8 +17,10 @@ package org.thingsboard.server.dao.sql;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.thingsboard.common.util.ListeningExecutor;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
@@ -29,7 +31,8 @@ import java.sql.Statement;
 public abstract class JpaAbstractDaoListeningExecutorService {
 
     @Autowired
-    protected JpaExecutorService service;
+    @Qualifier("jpaExecutorService")
+    protected ListeningExecutor service;
 
     @Autowired
     protected DataSource dataSource;
