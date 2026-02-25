@@ -352,7 +352,7 @@ public class TbResourceController extends BaseController {
 
     @ApiOperation(value = "Get Resource Infos by ids (getSystemOrTenantResourcesByIdsV2)")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @GetMapping(value = "/resource/list", params = {"resourceIds"})
+    @GetMapping(value = "/resource/list")
     public List<TbResourceInfo> getSystemOrTenantResourcesByIdsV2(
             @Parameter(description = "A list of resource ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")))
             @RequestParam("resourceIds") Set<UUID> resourceUuids) throws ThingsboardException {
