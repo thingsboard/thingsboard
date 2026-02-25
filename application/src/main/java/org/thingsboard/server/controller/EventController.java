@@ -15,9 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
-import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -154,7 +152,6 @@ public class EventController extends BaseController {
         return checkNotNull(eventService.findEvents(tenantId, entityId, resolveEventType(eventType), pageLink));
     }
 
-    @Hidden
     @ApiOperation(value = "Get Events (Deprecated)",
             notes = "Returns a page of events for specified entity. Deprecated and will be removed in next minor release. " +
                     "The call was deprecated to improve the performance of the system. " +
@@ -250,6 +247,7 @@ public class EventController extends BaseController {
                             @RequestParam(required = false) Long startTime,
                             @Parameter(description = EVENT_END_TIME_DESCRIPTION)
                             @RequestParam(required = false) Long endTime,
+                            @Parameter(description = EVENT_FILTER_DEFINITION)
                             @RequestBody EventFilter eventFilter) throws ThingsboardException {
         checkParameter("EntityId", strEntityId);
         checkParameter("EntityType", strEntityType);
