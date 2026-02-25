@@ -41,7 +41,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public interface CfArgumentDynamicSourceConfiguration {
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @JsonIgnore
     CFArgumentDynamicSourceType getType();
 

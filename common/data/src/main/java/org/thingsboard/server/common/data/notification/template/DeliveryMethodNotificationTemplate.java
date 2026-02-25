@@ -64,7 +64,6 @@ public abstract class DeliveryMethodNotificationTemplate {
         this.body = other.body;
     }
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @JsonIgnore
     public abstract NotificationDeliveryMethod getMethod();
 

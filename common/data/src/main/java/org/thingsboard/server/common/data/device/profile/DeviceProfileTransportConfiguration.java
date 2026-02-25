@@ -50,7 +50,6 @@ import java.io.Serializable;
 })
 public interface DeviceProfileTransportConfiguration extends Serializable {
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @JsonIgnore
     DeviceTransportType getType();
 

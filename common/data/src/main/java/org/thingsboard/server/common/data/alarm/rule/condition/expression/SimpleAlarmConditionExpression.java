@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.alarm.rule.condition.expression;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
@@ -34,6 +35,7 @@ public class SimpleAlarmConditionExpression implements AlarmConditionExpression 
     private List<AlarmConditionFilter> filters;
     private ComplexOperation operation;
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public AlarmConditionExpressionType getType() {
         return AlarmConditionExpressionType.SIMPLE;

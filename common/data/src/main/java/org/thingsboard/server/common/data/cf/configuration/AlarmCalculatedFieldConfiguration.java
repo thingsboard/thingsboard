@@ -53,6 +53,7 @@ public class AlarmCalculatedFieldConfiguration implements ArgumentsBasedCalculat
     private boolean propagateToTenant;
     private List<String> propagateRelationTypes;
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public CalculatedFieldType getType() {
         return CalculatedFieldType.ALARM;

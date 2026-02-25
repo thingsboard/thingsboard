@@ -45,6 +45,7 @@ public class DummyJobConfiguration extends JobConfiguration {
     private String generalError;
     private int submittedTasksBeforeGeneralError;
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public JobType getType() {
         return JobType.DUMMY;

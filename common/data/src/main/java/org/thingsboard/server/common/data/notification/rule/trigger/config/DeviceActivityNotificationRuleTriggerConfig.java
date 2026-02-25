@@ -42,7 +42,6 @@ public class DeviceActivityNotificationRuleTriggerConfig implements Notification
     private Set<DeviceEvent> notifyOn;
 
     @Override
-    @Schema
     public NotificationRuleTriggerType getTriggerType() {
         return NotificationRuleTriggerType.DEVICE_ACTIVITY;
     }

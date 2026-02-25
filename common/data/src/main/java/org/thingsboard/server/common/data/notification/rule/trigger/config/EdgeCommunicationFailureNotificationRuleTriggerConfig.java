@@ -36,7 +36,6 @@ public class EdgeCommunicationFailureNotificationRuleTriggerConfig implements No
     private Set<UUID> edges; // if empty - all edges
 
     @Override
-    @Schema
     public NotificationRuleTriggerType getTriggerType() {
         return NotificationRuleTriggerType.EDGE_COMMUNICATION_FAILURE;
     }

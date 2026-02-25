@@ -43,7 +43,6 @@ import java.io.Serializable;
         @JsonSubTypes.Type(value = ProtoTransportPayloadConfiguration.class, name = "PROTOBUF")})
 public interface TransportPayloadTypeConfiguration extends Serializable {
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @JsonIgnore
     TransportPayloadType getTransportPayloadType();
 

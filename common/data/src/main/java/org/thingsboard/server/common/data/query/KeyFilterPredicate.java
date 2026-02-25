@@ -45,7 +45,6 @@ import java.io.Serializable;
 public interface KeyFilterPredicate extends Serializable {
 
     @JsonIgnore
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     FilterPredicateType getType();
 
 }

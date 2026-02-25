@@ -56,7 +56,6 @@ import java.time.ZonedDateTime;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public interface AggInterval {
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @JsonIgnore
     AggIntervalType getType();
 

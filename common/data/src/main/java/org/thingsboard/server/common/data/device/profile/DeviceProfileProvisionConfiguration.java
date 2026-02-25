@@ -50,7 +50,6 @@ public interface DeviceProfileProvisionConfiguration extends Serializable {
     @Schema(description = "Provision device secret", example = "secret123")
     String getProvisionDeviceSecret();
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Device profile provision type")
     @JsonIgnore
     DeviceProfileProvisionType getType();
 

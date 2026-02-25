@@ -29,6 +29,7 @@ public class AwsSnsSmsProviderConfiguration implements SmsProviderConfiguration 
     @Schema(description = "The AWS region.")
     private String region;
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public SmsProviderType getType() {
         return SmsProviderType.AWS_SNS;

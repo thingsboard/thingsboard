@@ -235,7 +235,6 @@ public class SwaggerConfiguration {
 
         operation.responses(loginResponses);
 
-        operation.addTagsItem("Thingsboard");
         var pathItem = new PathItem().post(operation);
         openAPI.path(LOGIN_ENDPOINT, pathItem);
     }
@@ -259,7 +258,6 @@ public class SwaggerConfiguration {
 
         operation.responses(loginResponses);
 
-        operation.addTagsItem("Thingsboard");
         var pathItem = new PathItem().post(operation);
         openAPI.path(REFRESH_TOKEN_ENDPOINT, pathItem);
     }
@@ -318,34 +316,6 @@ public class SwaggerConfiguration {
                 .addSchemas("ThingsboardErrorResponse", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(ThingsboardErrorResponse.class)).schema)
                 .addSchemas("ThingsboardCredentialsExpiredResponse", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(ThingsboardCredentialsExpiredResponse.class)).schema)
                 .addSchemas("ThingsboardErrorCode", errorCodeSchema);
-    }
-
-    private RouterOperationCustomizer routerOperationCustomizer(SpringDocParameterNameDiscoverer localSpringDocParameterNameDiscoverer) {
-        return (routerOperation, handlerMethod) -> {
-            String[] pNames = localSpringDocParameterNameDiscoverer.getParameterNames(handlerMethod.getMethod());
-            String[] reflectionParametersNames = Arrays.stream(handlerMethod.getMethod().getParameters()).map(java.lang.reflect.Parameter::getName).toArray(String[]::new);
-            if (pNames == null || Arrays.stream(pNames).anyMatch(Objects::isNull)) {
-                pNames = reflectionParametersNames;
-            }
-            MethodParameter[] parameters = handlerMethod.getMethodParameters();
-            List<String> requestParams = new ArrayList<>();
-            for (var i = 0; i < parameters.length; i++) {
-                var methodParameter = parameters[i];
-                RequestParam requestParam = methodParameter.getParameterAnnotation(RequestParam.class);
-                if (requestParam != null) {
-                    String pName = StringUtils.isNotBlank(requestParam.value()) ? requestParam.value() :
-                            pNames[i];
-                    if (StringUtils.isNotBlank(pName)) {
-                        requestParams.add(pName);
-                    }
-                }
-            }
-            if (!requestParams.isEmpty()) {
-                var path = routerOperation.getPath() + "{?" + String.join(",", requestParams) + "}";
-                routerOperation.setPath(path);
-            }
-            return routerOperation;
-        };
     }
 
     private OperationCustomizer operationCustomizer() {
@@ -424,6 +394,11 @@ public class SwaggerConfiguration {
                             }
                         });
             }
+
+            // Set JsonNode schema last so model scanning cannot overwrite it
+            openAPI.getComponents().addSchemas("JsonNode", new Schema<>()
+                    .description("A value representing the any type (object or primitive)")
+                    .example(JacksonUtil.newObjectNode()));
 
             var sortedSchemas = new TreeMap<>(openAPI.getComponents().getSchemas());
             openAPI.getComponents().setSchemas(new LinkedHashMap<>(sortedSchemas));

@@ -25,7 +25,6 @@ import lombok.Data;
 public class TaskProcessingFailureNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
 
     @Override
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     public NotificationRuleTriggerType getTriggerType() {
         return NotificationRuleTriggerType.TASK_PROCESSING_FAILURE;
     }

@@ -39,7 +39,6 @@ public class ApiUsageLimitNotificationRuleTriggerConfig implements NotificationR
     private Set<ApiUsageStateValue> notifyOn;
 
     @Override
-    @Schema
     public NotificationRuleTriggerType getTriggerType() {
         return NotificationRuleTriggerType.API_USAGE_LIMIT;
     }

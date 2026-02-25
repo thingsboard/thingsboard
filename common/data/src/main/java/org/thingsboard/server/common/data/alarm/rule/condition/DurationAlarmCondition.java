@@ -37,6 +37,7 @@ public class DurationAlarmCondition extends AlarmCondition {
     @NotNull
     private AlarmConditionValue<Long> value;
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public AlarmConditionType getType() {
         return AlarmConditionType.DURATION;

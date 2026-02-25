@@ -28,6 +28,7 @@ public class CustomTimeSchedule implements AlarmSchedule {
     private String timezone;
     private List<CustomTimeScheduleItem> items;
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public AlarmScheduleType getType() {
         return AlarmScheduleType.CUSTOM;

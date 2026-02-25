@@ -224,9 +224,6 @@ import static org.thingsboard.server.controller.UserController.YOU_DON_T_HAVE_PE
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @TbCoreComponent
-@Tag(
-        name = "Thingsboard"
-)
 public abstract class BaseController {
 
     protected static final String HOME_DASHBOARD_ID = "homeDashboardId";

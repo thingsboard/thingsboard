@@ -91,7 +91,6 @@ public abstract class JobResult implements Serializable {
         }
     }
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @JsonIgnore
     public abstract JobType getJobType();
 

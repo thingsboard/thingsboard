@@ -44,7 +44,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public interface SmsProviderConfiguration {
 
     @JsonIgnore
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     SmsProviderType getType();
 
 }

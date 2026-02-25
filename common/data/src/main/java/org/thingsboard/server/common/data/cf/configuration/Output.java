@@ -46,7 +46,6 @@ import java.util.Objects;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public interface Output {
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @JsonIgnore
     OutputType getType();
 

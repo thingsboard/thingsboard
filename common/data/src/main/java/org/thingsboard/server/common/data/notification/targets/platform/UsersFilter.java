@@ -50,7 +50,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 })
 public interface UsersFilter {
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Type of the users filter")
     @JsonIgnore
     UsersFilterType getType();
 

@@ -107,6 +107,7 @@ public class SmppSmsProviderConfiguration implements SmsProviderConfiguration {
                     "14 - Korean Graphic Character Set (KS C 5601/KS X 1001)", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private Byte codingScheme;
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public SmsProviderType getType() {
         return SmsProviderType.SMPP;

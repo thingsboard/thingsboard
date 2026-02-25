@@ -49,7 +49,6 @@ public class AlarmCommentNotificationRuleTriggerConfig implements NotificationRu
     private boolean notifyOnCommentUpdate;
 
     @Override
-    @Schema(description = "Type of the notification rule trigger")
     public NotificationRuleTriggerType getTriggerType() {
         return NotificationRuleTriggerType.ALARM_COMMENT;
     }

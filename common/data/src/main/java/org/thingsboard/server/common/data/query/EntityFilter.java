@@ -71,7 +71,6 @@ import static org.thingsboard.server.common.data.query.AliasEntityId.resolveAlia
 public interface EntityFilter {
 
     @JsonIgnore
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     EntityFilterType getType();
 
     static void resolveEntityFilter(EntityFilter filter, TenantId tenantId, UserId userId, EntityId userOwnerId) {

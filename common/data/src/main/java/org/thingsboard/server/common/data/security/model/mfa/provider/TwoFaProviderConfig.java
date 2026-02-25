@@ -45,10 +45,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 })
 public interface TwoFaProviderConfig {
 
-    @Schema(
-            description = "Type of two-factor authentication provider",
-            requiredMode = Schema.RequiredMode.REQUIRED
-    )
     @JsonIgnore
     TwoFaProviderType getProviderType();
 

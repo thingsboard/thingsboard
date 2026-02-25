@@ -65,10 +65,6 @@ import java.util.stream.Collectors;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public interface CalculatedFieldConfiguration {
 
-    @Schema(
-            description = "Type of calculated field configuration",
-            requiredMode = Schema.RequiredMode.REQUIRED
-    )
     @JsonIgnore
     CalculatedFieldType getType();
 

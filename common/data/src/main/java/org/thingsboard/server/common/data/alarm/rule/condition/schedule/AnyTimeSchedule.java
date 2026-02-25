@@ -20,6 +20,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(name = "AlarmRuleAnyTimeSchedule", allOf = AlarmSchedule.class)
 public class AnyTimeSchedule implements AlarmSchedule {
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public AlarmScheduleType getType() {
         return AlarmScheduleType.ANY_TIME;

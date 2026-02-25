@@ -39,7 +39,6 @@ public class EntityActionNotificationRuleTriggerConfig implements NotificationRu
     private boolean deleted;
 
     @Override
-    @Schema
     public NotificationRuleTriggerType getTriggerType() {
         return NotificationRuleTriggerType.ENTITY_ACTION;
     }

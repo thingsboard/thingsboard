@@ -63,6 +63,7 @@ public class GeofencingCalculatedFieldConfiguration implements ArgumentsBasedCal
         return output.getType() == OutputType.TIME_SERIES;
     }
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public CalculatedFieldType getType() {
         return CalculatedFieldType.GEOFENCING;

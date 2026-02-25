@@ -49,7 +49,6 @@ public class AlarmAssignmentNotificationRuleTriggerConfig implements Notificatio
     private Set<Action> notifyOn;
 
     @Override
-    @Schema(description = "Type of the notification rule trigger")
     public NotificationRuleTriggerType getTriggerType() {
         return NotificationRuleTriggerType.ALARM_ASSIGNMENT;
     }

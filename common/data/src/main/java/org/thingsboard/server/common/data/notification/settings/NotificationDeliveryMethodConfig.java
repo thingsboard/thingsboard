@@ -41,7 +41,6 @@ import java.io.Serializable;
 })
 public interface NotificationDeliveryMethodConfig extends Serializable {
 
-    @Schema(description = "Notification delivery method", requiredMode = Schema.RequiredMode.REQUIRED)
     @JsonIgnore
     NotificationDeliveryMethod getMethod();
 

@@ -50,7 +50,6 @@ public class AlarmNotificationRuleTriggerConfig implements NotificationRuleTrigg
     private ClearRule clearRule;
 
     @Override
-    @Schema
     public NotificationRuleTriggerType getTriggerType() {
         return NotificationRuleTriggerType.ALARM;
     }

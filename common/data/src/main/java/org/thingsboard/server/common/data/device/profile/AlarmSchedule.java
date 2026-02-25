@@ -45,7 +45,6 @@ import java.io.Serializable;
 @Deprecated
 public interface AlarmSchedule extends Serializable {
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Type of the alarm schedule")
     AlarmScheduleType getType();
 
     DynamicValue<String> getDynamicValue();

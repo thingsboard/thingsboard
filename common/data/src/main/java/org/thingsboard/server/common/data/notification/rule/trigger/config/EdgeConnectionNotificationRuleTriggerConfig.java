@@ -38,12 +38,10 @@ public class EdgeConnectionNotificationRuleTriggerConfig implements Notification
     private Set<EdgeConnectivityEvent> notifyOn;
 
     @Override
-    @Schema
     public NotificationRuleTriggerType getTriggerType() {
         return NotificationRuleTriggerType.EDGE_CONNECTION;
     }
 
-    @Schema
     public enum EdgeConnectivityEvent {
         CONNECTED, DISCONNECTED
     }

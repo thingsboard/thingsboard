@@ -52,6 +52,7 @@ public class EntityAggregationCalculatedFieldConfiguration implements ArgumentsB
     @NotNull
     private Output output;
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public CalculatedFieldType getType() {
         return CalculatedFieldType.ENTITY_AGGREGATION;

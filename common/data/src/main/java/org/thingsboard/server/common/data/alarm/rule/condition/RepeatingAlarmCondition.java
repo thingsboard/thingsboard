@@ -32,6 +32,7 @@ public class RepeatingAlarmCondition extends AlarmCondition {
     @NotNull
     private AlarmConditionValue<Integer> count;
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public AlarmConditionType getType() {
         return AlarmConditionType.REPEATING;

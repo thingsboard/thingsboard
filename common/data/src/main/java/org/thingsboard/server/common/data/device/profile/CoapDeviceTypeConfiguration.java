@@ -43,7 +43,6 @@ import java.io.Serializable;
         @JsonSubTypes.Type(value = EfentoCoapDeviceTypeConfiguration.class, name = "EFENTO")})
 public interface CoapDeviceTypeConfiguration extends Serializable {
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @JsonIgnore
     CoapDeviceType getCoapDeviceType();
 

@@ -30,6 +30,7 @@ public class ComplexFilterPredicate implements KeyFilterPredicate {
     @ArraySchema(schema = @Schema(ref = "#/components/schemas/AlarmRuleKeyFilterPredicate"))
     private List<KeyFilterPredicate> predicates;
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, ref = "#/components/schemas/AlarmRuleFilterPredicateType")
     @Override
     public FilterPredicateType getType() {
         return FilterPredicateType.COMPLEX;

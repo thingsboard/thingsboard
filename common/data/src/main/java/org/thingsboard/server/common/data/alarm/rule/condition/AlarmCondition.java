@@ -76,7 +76,6 @@ public abstract class AlarmCondition {
         return true;
     }
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @JsonIgnore
     public abstract AlarmConditionType getType();
 

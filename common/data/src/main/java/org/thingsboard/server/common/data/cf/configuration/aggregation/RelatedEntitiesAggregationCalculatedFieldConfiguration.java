@@ -51,6 +51,7 @@ public class RelatedEntitiesAggregationCalculatedFieldConfiguration implements A
 
     private Integer scheduledUpdateInterval;
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public CalculatedFieldType getType() {
         return CalculatedFieldType.RELATED_ENTITIES_AGGREGATION;

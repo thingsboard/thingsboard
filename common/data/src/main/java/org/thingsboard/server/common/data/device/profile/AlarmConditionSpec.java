@@ -45,7 +45,6 @@ import java.io.Serializable;
 @Deprecated
 public interface AlarmConditionSpec extends Serializable {
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @JsonIgnore
     AlarmConditionSpecType getType();
 

@@ -32,6 +32,7 @@ public class StringFilterPredicate implements SimpleKeyFilterPredicate<String> {
     private AlarmConditionValue<String> value;
     private boolean ignoreCase;
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, ref = "#/components/schemas/AlarmRuleFilterPredicateType")
     @Override
     public FilterPredicateType getType() {
         return FilterPredicateType.STRING;

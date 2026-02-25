@@ -38,7 +38,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 })
 public interface AlarmConditionExpression {
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @JsonIgnore
     AlarmConditionExpressionType getType();
 

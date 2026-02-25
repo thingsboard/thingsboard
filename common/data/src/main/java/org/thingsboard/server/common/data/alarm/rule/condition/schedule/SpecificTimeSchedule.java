@@ -30,6 +30,7 @@ public class SpecificTimeSchedule implements AlarmSchedule {
     private long startsOn;
     private long endsOn;
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public AlarmScheduleType getType() {
         return AlarmScheduleType.SPECIFIC_TIME;

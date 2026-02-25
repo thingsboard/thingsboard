@@ -55,7 +55,6 @@ public abstract class TwoFaAccountConfig implements Serializable {
     @JsonIgnore
     protected transient boolean serializeHiddenFields;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Two-Factor Authentication provider type")
     @JsonIgnore
     public abstract TwoFaProviderType getProviderType();
 

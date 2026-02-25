@@ -37,10 +37,8 @@ public class TbResource extends TbResourceInfo {
     @Serial
     private static final long serialVersionUID = 7379609705527272306L;
 
-    @JsonIgnore
     private byte[] data;
 
-    @JsonIgnore
     private byte[] preview;
 
     public TbResource() {

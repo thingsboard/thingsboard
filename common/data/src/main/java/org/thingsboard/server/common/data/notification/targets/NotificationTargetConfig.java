@@ -50,7 +50,6 @@ public abstract class NotificationTargetConfig {
     @Length(max = 500, message = "cannot be longer than 500 chars")
     private String description;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Type of the notification target")
     @JsonIgnore
     public abstract NotificationTargetType getType();
 

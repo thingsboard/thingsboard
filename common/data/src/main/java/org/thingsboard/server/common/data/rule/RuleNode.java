@@ -61,7 +61,7 @@ public class RuleNode extends BaseDataWithAdditionalInfo<RuleNodeId> implements 
     private String queueName;
     @Schema(description = "Version of rule node configuration. ", example = "0")
     private int configurationVersion;
-    @Schema(description = "JSON with the rule node configuration. Structure depends on the rule node implementation.")
+    @Schema(description = "JSON with the rule node configuration. Structure depends on the rule node implementation.", implementation = JsonNode.class)
     private JsonNode configuration;
 
     private RuleNodeId externalId;
@@ -105,8 +105,7 @@ public class RuleNode extends BaseDataWithAdditionalInfo<RuleNodeId> implements 
         return super.getCreatedTime();
     }
 
-    @Schema(description = "Additional parameters of the rule node. Contains 'layoutX' and 'layoutY' properties for visualization.")
-    @Override
+    @Schema(description = "Additional parameters of the rule node. Contains 'layoutX' and 'layoutY' properties for visualization.", implementation = JsonNode.class)    @Override
     public JsonNode getAdditionalInfo() {
         return super.getAdditionalInfo();
     }
