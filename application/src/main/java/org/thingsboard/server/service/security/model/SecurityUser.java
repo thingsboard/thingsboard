@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.security.model;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
@@ -28,7 +27,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@Schema
 public class SecurityUser extends User {
 
     private static final long serialVersionUID = -797397440703066079L;

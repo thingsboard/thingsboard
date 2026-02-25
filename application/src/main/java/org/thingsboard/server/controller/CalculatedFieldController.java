@@ -189,7 +189,7 @@ public class CalculatedFieldController extends BaseController {
             notes = "Fetch the Calculated Fields based on the provided Entity Id."
     )
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @GetMapping(value = "/calculatedField/{entityType}/{entityId}", params = {"pageSize", "page"})
+    @GetMapping(value = "/calculatedField/{entityType}/{entityId}")
     public PageData<CalculatedField> getCalculatedFieldsByEntityIdV2(
             @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "DEVICE")) @PathVariable("entityType") String entityType,
             @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true) @PathVariable("entityId") String entityIdStr,

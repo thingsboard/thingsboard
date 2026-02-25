@@ -59,16 +59,16 @@ public record TbChatRequest(
                 requiredMode = Schema.RequiredMode.REQUIRED,
                 accessMode = Schema.AccessMode.READ_WRITE,
                 description = "Configuration of the AI chat model that should execute the request",
-                discriminatorProperty = "modelType",
+                discriminatorProperty = "provider",
                 discriminatorMapping = {
                         @DiscriminatorMapping(value = "OPENAI", schema = OpenAiChatModelConfig.class),
                         @DiscriminatorMapping(value = "AZURE_OPENAI", schema = AzureOpenAiChatModelConfig.class),
-                        @DiscriminatorMapping(value = "GOOGLE_AI", schema = GoogleAiGeminiChatModelConfig.class),
-                        @DiscriminatorMapping(value = "VERTEX_AI", schema = GoogleVertexAiGeminiChatModelConfig.class),
-                        @DiscriminatorMapping(value = "MISTRAL", schema = MistralAiChatModelConfig.class),
+                        @DiscriminatorMapping(value = "GOOGLE_AI_GEMINI", schema = GoogleAiGeminiChatModelConfig.class),
+                        @DiscriminatorMapping(value = "GOOGLE_VERTEX_AI_GEMINI", schema = GoogleVertexAiGeminiChatModelConfig.class),
+                        @DiscriminatorMapping(value = "MISTRAL_AI", schema = MistralAiChatModelConfig.class),
                         @DiscriminatorMapping(value = "ANTHROPIC", schema = AnthropicChatModelConfig.class),
-                        @DiscriminatorMapping(value = "BEDROCK", schema = AmazonBedrockChatModelConfig.class),
-                        @DiscriminatorMapping(value = "GITHUB", schema = GitHubModelsChatModelConfig.class),
+                        @DiscriminatorMapping(value = "AMAZON_BEDROCK", schema = AmazonBedrockChatModelConfig.class),
+                        @DiscriminatorMapping(value = "GITHUB_MODELS", schema = GitHubModelsChatModelConfig.class),
                         @DiscriminatorMapping(value = "OLLAMA", schema = OllamaChatModelConfig.class)
                 }
         )
