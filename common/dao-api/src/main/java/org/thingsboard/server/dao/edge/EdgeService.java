@@ -51,6 +51,8 @@ public interface EdgeService extends EntityDaoService {
 
     Edge saveEdge(Edge edge);
 
+    Edge saveEdge(Edge edge, boolean publishEvent);
+
     Edge assignEdgeToCustomer(TenantId tenantId, EdgeId edgeId, CustomerId customerId);
 
     Edge unassignEdgeFromCustomer(TenantId tenantId, EdgeId edgeId);

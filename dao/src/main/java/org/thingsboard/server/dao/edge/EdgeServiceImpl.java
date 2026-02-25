@@ -203,18 +203,25 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
 
     @Override
     public Edge saveEdge(Edge edge) {
-        return saveEntity(edge, () -> doSaveEdge(edge));
+        return saveEdge(edge, true);
     }
 
-    private Edge doSaveEdge(Edge edge) {
+    @Override
+    public Edge saveEdge(Edge edge, boolean publishEvent) {
+        return saveEntity(edge, () -> doSaveEdge(edge, publishEvent));
+    }
+
+    private Edge doSaveEdge(Edge edge, boolean publishEvent) {
         log.trace("Executing saveEdge [{}]", edge);
         Edge oldEdge = edgeValidator.validate(edge, Edge::getTenantId);
         EdgeCacheEvictEvent evictEvent = new EdgeCacheEvictEvent(edge.getTenantId(), edge.getName(), oldEdge != null ? oldEdge.getName() : null);
         try {
             Edge savedEdge = edgeDao.save(edge.getTenantId(), edge);
             publishEvictEvent(evictEvent);
-            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedEdge.getTenantId())
-                    .entityId(savedEdge.getId()).entity(savedEdge).created(edge.getId() == null).build());
+            if (publishEvent) {
+                eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedEdge.getTenantId())
+                        .entityId(savedEdge.getId()).entity(savedEdge).created(edge.getId() == null).build());
+            }
             if (edge.getId() == null) {
                 countService.publishCountEntityEvictEvent(savedEdge.getTenantId(), EntityType.EDGE);
             }
@@ -239,9 +246,10 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
             return edge;
         }
         edge.setCustomerId(customerId);
+        Edge result = saveEdge(edge, false);
         eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).entityId(edgeId)
                 .body(JacksonUtil.toString(customerId)).actionType(ActionType.ASSIGNED_TO_CUSTOMER).build());
-        return saveEdge(edge);
+        return result;
     }
 
     @Override
@@ -253,7 +261,7 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
             return edge;
         }
         edge.setCustomerId(null);
-        Edge result = saveEdge(edge);
+        Edge result = saveEdge(edge, false);
         eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).entityId(edgeId)
                 .body(JacksonUtil.toString(customerId)).actionType(ActionType.UNASSIGNED_FROM_CUSTOMER).build());
         return result;
