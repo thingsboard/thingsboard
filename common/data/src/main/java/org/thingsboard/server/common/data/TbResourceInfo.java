@@ -40,7 +40,7 @@ public class TbResourceInfo extends BaseData<TbResourceId> implements HasName, H
     @Serial
     private static final long serialVersionUID = 7282664529021651736L;
 
-    @Schema(description = "JSON object with Tenant Id. Tenant Id of the resource can't be changed.")
+    @Schema(description = "JSON object with Tenant Id. Tenant Id of the resource can't be changed.", accessMode = Schema.AccessMode.READ_ONLY)
     private TenantId tenantId;
     @NoXss
     @Length(fieldName = "title")

@@ -76,6 +76,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -308,7 +309,9 @@ public class SwaggerConfiguration {
         Schema<?> errorCodeSchema = new Schema<>()
                 .type("integer")
                 .description("Platform error code")
-                ._enum(Arrays.asList(2, 10, 11, 15, 20, 30, 31, 32, 33, 34, 35, 40, 45, 46));
+                ._enum(Arrays.stream(ThingsboardErrorCode.values())
+                        .map(ThingsboardErrorCode::getErrorCode)
+                        .collect(Collectors.toList()));
         openAPI.getComponents()
                 .addSchemas("LoginRequest", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(LoginRequest.class)).schema)
                 .addSchemas("LoginResponse", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(LoginResponse.class)).schema)
@@ -534,14 +537,6 @@ public class SwaggerConfiguration {
                 }
             }
         });
-    }
-
-    private Tag tagsCustomization(Map.Entry<String, PathItem> entry) {
-        var tagItem = tagItemFromPathItem(entry.getValue());
-        if (tagItem != null) {
-            return tagFromTagItem(tagItem);
-        }
-        return null;
     }
 
     private String tagItemFromPathItem(PathItem item) {

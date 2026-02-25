@@ -41,7 +41,7 @@ public class OtaPackageInfo extends BaseDataWithAdditionalInfo<OtaPackageId> imp
     @Serial
     private static final long serialVersionUID = 3168391583570815419L;
 
-    @Schema(description = "JSON object with Tenant Id. Tenant Id of the ota package can't be changed.")
+    @Schema(description = "JSON object with Tenant Id. Tenant Id of the ota package can't be changed.", accessMode = Schema.AccessMode.READ_ONLY)
     private TenantId tenantId;
     @Schema(description = "JSON object with Device Profile Id. Device Profile Id of the ota package can't be changed.")
     private DeviceProfileId deviceProfileId;
@@ -67,16 +67,16 @@ public class OtaPackageInfo extends BaseDataWithAdditionalInfo<OtaPackageId> imp
     private boolean hasData;
     @Length(fieldName = "file name")
     @NoXss
-    @Schema(description = "OTA Package file name.", example = "fw_1.0")
+    @Schema(description = "OTA Package file name.", example = "fw_1.0", accessMode = Schema.AccessMode.READ_ONLY)
     private String fileName;
     @NoXss
     @Length(fieldName = "contentType")
-    @Schema(description = "OTA Package content type.", example = "APPLICATION_OCTET_STREAM")
+    @Schema(description = "OTA Package content type.", example = "APPLICATION_OCTET_STREAM", accessMode = Schema.AccessMode.READ_ONLY)
     private String contentType;
-    @Schema(description = "OTA Package checksum algorithm.", example = "CRC32")
+    @Schema(description = "OTA Package checksum algorithm.", example = "CRC32", accessMode = Schema.AccessMode.READ_ONLY)
     private ChecksumAlgorithm checksumAlgorithm;
     @Length(fieldName = "checksum", max = 1020)
-    @Schema(description = "OTA Package checksum.", example = "0xd87f7e0c")
+    @Schema(description = "OTA Package checksum.", example = "0xd87f7e0c", accessMode = Schema.AccessMode.READ_ONLY)
     private String checksum;
     @Schema(description = "OTA Package data size.", example = "8", accessMode = Schema.AccessMode.READ_ONLY)
     private Long dataSize;
