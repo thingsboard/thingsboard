@@ -21,7 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.thingsboard.common.util.ListeningExecutor;
-import org.thingsboard.rule.engine.TestDbCallbackExecutor;
+import org.thingsboard.common.util.DirectListeningExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.data.RelationsQuery;
 import org.thingsboard.server.common.data.Device;
@@ -56,7 +56,7 @@ public class EntitiesRelatedEntityIdAsyncLoaderTest {
 
     private static final EntityId ASSET_ORIGINATOR_ID = new AssetId(UUID.randomUUID());
     private static final TenantId TENANT_ID = new TenantId(UUID.randomUUID());
-    private static final ListeningExecutor DB_EXECUTOR = new TestDbCallbackExecutor();
+    private static final ListeningExecutor DB_EXECUTOR = DirectListeningExecutor.INSTANCE;
 
     private TbContext ctxMock;
     private RelationService relationServiceMock;

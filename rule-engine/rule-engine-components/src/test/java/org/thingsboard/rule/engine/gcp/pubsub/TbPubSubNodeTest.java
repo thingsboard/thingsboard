@@ -32,7 +32,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
-import org.thingsboard.rule.engine.TestDbCallbackExecutor;
+import org.thingsboard.common.util.DirectListeningExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
@@ -65,7 +65,7 @@ import static org.mockito.BDDMockito.willThrow;
 class TbPubSubNodeTest {
 
     private final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("d29849c2-3f21-48e2-8557-74cdd6403290"));
-    private final ListeningExecutor executor = new TestDbCallbackExecutor();
+    private final ListeningExecutor executor = DirectListeningExecutor.INSTANCE;
 
     private TbPubSubNode node;
     private TbPubSubNodeConfiguration config;

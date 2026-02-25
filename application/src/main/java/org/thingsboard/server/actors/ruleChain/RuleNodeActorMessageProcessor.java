@@ -137,7 +137,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
                 defaultCtx.tellFailure(msg.getMsg(), e);
             }
         } else {
-            tbMsg.getCallback().onFailure(new RuleNodeException("Message is processed by more then " + maxRuleNodeExecutionsPerMessage + " rule nodes!", ruleChainName, ruleNode));
+            tbMsg.getCallback().onFailure(new RuleNodeException("Message is processed by more than " + maxRuleNodeExecutionsPerMessage + " rule nodes!", ruleChainName, ruleNode));
         }
     }
 
@@ -160,7 +160,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
                     msg.getCtx().tellFailure(msg.getMsg(), e);
                 }
             } else {
-                tbMsg.getCallback().onFailure(new RuleNodeException("Message is processed by more then " + maxRuleNodeExecutionsPerMessage + " rule nodes!", ruleChainName, ruleNode));
+                tbMsg.getCallback().onFailure(new RuleNodeException("Message is processed by more than " + maxRuleNodeExecutionsPerMessage + " rule nodes!", ruleChainName, ruleNode));
             }
         }
     }

@@ -21,7 +21,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.ListeningExecutor;
-import org.thingsboard.rule.engine.TestDbCallbackExecutor;
+import org.thingsboard.common.util.DirectListeningExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.data.DeviceRelationsQuery;
 import org.thingsboard.server.common.data.Device;
@@ -49,7 +49,7 @@ public class EntitiesRelatedDeviceIdAsyncLoaderTest {
 
     private static final EntityId DUMMY_ORIGINATOR = new DeviceId(UUID.randomUUID());
     private static final TenantId TENANT_ID = new TenantId(UUID.randomUUID());
-    private static final ListeningExecutor DB_EXECUTOR = new TestDbCallbackExecutor();
+    private static final ListeningExecutor DB_EXECUTOR = DirectListeningExecutor.INSTANCE;
     @Mock
     private TbContext ctxMock;
     @Mock

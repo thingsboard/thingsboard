@@ -135,8 +135,10 @@ export class ToastDirective implements AfterViewInit, OnDestroy {
         notification: notificationMessage,
         panelClass,
         destroyToastComponent: () => {
-          this.viewContainerRef.detach(0);
-          this.toastComponentRef.destroy();
+          if (this.toastComponentRef) {
+            this.viewContainerRef.detach(0);
+            this.toastComponentRef.destroy();
+          }
         }
       };
       const providers: StaticProvider[] = [
