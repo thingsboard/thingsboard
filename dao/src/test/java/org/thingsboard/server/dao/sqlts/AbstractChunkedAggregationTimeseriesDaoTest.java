@@ -18,6 +18,8 @@ package org.thingsboard.server.dao.sqlts;
 import com.google.common.util.concurrent.Futures;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.thingsboard.common.util.DirectListeningExecutor;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
@@ -48,6 +50,7 @@ public class AbstractChunkedAggregationTimeseriesDaoTest {
     @Before
     public void setUp() throws Exception {
         tsDao = spy(AbstractChunkedAggregationTimeseriesDao.class);
+        ReflectionTestUtils.setField(tsDao, "service", DirectListeningExecutor.INSTANCE);
         Optional<TsKvEntry> optionalListenableFuture = Optional.of(mock(TsKvEntry.class));
         willReturn(Futures.immediateFuture(optionalListenableFuture)).given(tsDao).findAndAggregateAsync(any(), anyString(), anyLong(), anyLong(), anyLong(), any());
         willReturn(Futures.immediateFuture(mock(ReadTsKvQueryResult.class))).given(tsDao).getReadTsKvQueryResultFuture(any(), any());
