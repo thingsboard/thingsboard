@@ -152,7 +152,7 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
         var aggParams = query.getAggParameters();
         var intervalType = aggParams.getIntervalType();
         if (query.getAggregation() == Aggregation.NONE) {
-            return Futures.immediateFuture(findAllAsyncWithLimit(entityId, query));
+            return service.submit(() -> findAllWithLimit(entityId, query));
         } else if (IntervalType.MILLISECONDS.equals(intervalType)) {
             long startTs = query.getStartTs();
             long endTs = Math.max(query.getStartTs() + 1, query.getEndTs());
@@ -179,7 +179,7 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
         super.cleanup(systemTtl);
     }
 
-    private ReadTsKvQueryResult findAllAsyncWithLimit(EntityId entityId, ReadTsKvQuery query) {
+    private ReadTsKvQueryResult findAllWithLimit(EntityId entityId, ReadTsKvQuery query) {
         String strKey = query.getKey();
         Integer keyId = keyDictionaryDao.getOrSaveKeyId(strKey);
         List<TimescaleTsKvEntity> timescaleTsKvEntities = tsKvRepository.findAllWithLimit(

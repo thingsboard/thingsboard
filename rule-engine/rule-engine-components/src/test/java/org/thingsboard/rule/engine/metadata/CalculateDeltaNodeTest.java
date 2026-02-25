@@ -30,10 +30,10 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.AbstractListeningExecutor;
+import org.thingsboard.common.util.DirectListeningExecutor;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
-import org.thingsboard.rule.engine.TestDbCallbackExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -91,7 +91,7 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
 
     private final DeviceId DUMMY_DEVICE_ORIGINATOR = new DeviceId(UUID.fromString("2ba3ded4-882b-40cf-999a-89da9ccd58f9"));
     private final TenantId TENANT_ID = TenantId.fromUUID(UUID.fromString("3842e740-0d89-43a9-8d52-ae44023847ba"));
-    private final ListeningExecutor DB_EXECUTOR = new TestDbCallbackExecutor();
+    private final ListeningExecutor DB_EXECUTOR = DirectListeningExecutor.INSTANCE;
 
     private static final int RULE_DISPATCHER_POOL_SIZE = 2;
     private static final int DB_CALLBACK_POOL_SIZE = 3;

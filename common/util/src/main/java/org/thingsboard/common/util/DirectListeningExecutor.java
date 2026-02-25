@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine;
+package org.thingsboard.common.util;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import org.thingsboard.common.util.ListeningExecutor;
 
 import java.util.concurrent.Callable;
 
-public class TestDbCallbackExecutor implements ListeningExecutor {
+public enum DirectListeningExecutor implements ListeningExecutor {
+
+    INSTANCE;
 
     @Override
     public <T> ListenableFuture<T> executeAsync(Callable<T> task) {
