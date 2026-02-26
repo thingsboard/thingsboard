@@ -48,6 +48,7 @@ import java.io.Serializable;
 })
 public interface MobilePage extends Serializable {
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @JsonView(Views.Private.class)
     MobilePageType getType();
 
