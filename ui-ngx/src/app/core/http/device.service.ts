@@ -293,4 +293,24 @@ export class DeviceService {
       })
     );
   }
+
+  /**
+   * Ping device to check reachability status
+   * @param deviceId Device UUID
+   * @param config Request configuration
+   * @returns Observable with ping response containing reachability status and last seen timestamp
+   */
+  public pingDevice(deviceId: string, config?: RequestConfig): Observable<DevicePingResponse> {
+    return this.http.get<DevicePingResponse>(`/api/device/ping/${deviceId}`, defaultHttpOptionsFromConfig(config));
+  }
+  
+}
+
+/**
+ * Device ping response interface
+ */
+export interface DevicePingResponse {
+  deviceId: string;
+  reachable: boolean;
+  lastSeen: number | null;
 }
