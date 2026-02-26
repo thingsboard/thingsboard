@@ -17,6 +17,7 @@ package org.thingsboard.server.config;
 
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.v3.core.converter.AnnotatedType;
 import io.swagger.v3.core.converter.ModelConverter;
 import io.swagger.v3.core.converter.ModelConverters;
@@ -649,9 +650,11 @@ public class SwaggerConfiguration {
     }
 
     private static Example errorExample(String summary, ThingsboardErrorResponse example) {
+        var node = (ObjectNode) JacksonUtil.valueToTree(example);
+        node.put("timestamp", 1609459200000L);
         return new Example()
                 .summary(summary)
-                .value(example);
+                .value(node);
     }
 
 }

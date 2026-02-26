@@ -17,11 +17,9 @@ package org.thingsboard.server.common.data.ai.model.chat;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import dev.langchain4j.model.chat.ChatModel;
-import io.swagger.v3.oas.annotations.media.Schema;
 import org.thingsboard.server.common.data.ai.model.AiModelConfig;
 import org.thingsboard.server.common.data.ai.model.AiModelType;
 
-@Schema
 public sealed interface AiChatModelConfig<C extends AiChatModelConfig<C>> extends AiModelConfig
         permits
         OpenAiChatModelConfig, AzureOpenAiChatModelConfig, GoogleAiGeminiChatModelConfig,

@@ -27,7 +27,6 @@ import java.util.Set;
 
 import static java.util.stream.Collectors.toSet;
 
-@Schema(allOf = CalculatedFieldConfiguration.class)
 public interface ArgumentsBasedCalculatedFieldConfiguration extends CalculatedFieldConfiguration {
 
     @Valid

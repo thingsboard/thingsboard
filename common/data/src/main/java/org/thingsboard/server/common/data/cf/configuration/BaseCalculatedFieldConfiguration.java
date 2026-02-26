@@ -21,7 +21,7 @@ import lombok.Data;
 
 import java.util.Map;
 
-@Schema(allOf = CalculatedFieldConfiguration.class)
+@Schema
 @Data
 public abstract class BaseCalculatedFieldConfiguration implements ExpressionBasedCalculatedFieldConfiguration {
 

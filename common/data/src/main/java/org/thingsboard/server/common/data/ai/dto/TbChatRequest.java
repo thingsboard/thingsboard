@@ -20,20 +20,10 @@ import dev.langchain4j.data.message.Content;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.request.ChatRequest;
-import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import org.thingsboard.server.common.data.ai.model.chat.AiChatModelConfig;
-import org.thingsboard.server.common.data.ai.model.chat.AmazonBedrockChatModelConfig;
-import org.thingsboard.server.common.data.ai.model.chat.AnthropicChatModelConfig;
-import org.thingsboard.server.common.data.ai.model.chat.AzureOpenAiChatModelConfig;
-import org.thingsboard.server.common.data.ai.model.chat.GitHubModelsChatModelConfig;
-import org.thingsboard.server.common.data.ai.model.chat.GoogleAiGeminiChatModelConfig;
-import org.thingsboard.server.common.data.ai.model.chat.GoogleVertexAiGeminiChatModelConfig;
-import org.thingsboard.server.common.data.ai.model.chat.MistralAiChatModelConfig;
-import org.thingsboard.server.common.data.ai.model.chat.OllamaChatModelConfig;
-import org.thingsboard.server.common.data.ai.model.chat.OpenAiChatModelConfig;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,19 +48,7 @@ public record TbChatRequest(
         @Schema(
                 requiredMode = Schema.RequiredMode.REQUIRED,
                 accessMode = Schema.AccessMode.READ_WRITE,
-                description = "Configuration of the AI chat model that should execute the request",
-                discriminatorProperty = "provider",
-                discriminatorMapping = {
-                        @DiscriminatorMapping(value = "OPENAI", schema = OpenAiChatModelConfig.class),
-                        @DiscriminatorMapping(value = "AZURE_OPENAI", schema = AzureOpenAiChatModelConfig.class),
-                        @DiscriminatorMapping(value = "GOOGLE_AI_GEMINI", schema = GoogleAiGeminiChatModelConfig.class),
-                        @DiscriminatorMapping(value = "GOOGLE_VERTEX_AI_GEMINI", schema = GoogleVertexAiGeminiChatModelConfig.class),
-                        @DiscriminatorMapping(value = "MISTRAL_AI", schema = MistralAiChatModelConfig.class),
-                        @DiscriminatorMapping(value = "ANTHROPIC", schema = AnthropicChatModelConfig.class),
-                        @DiscriminatorMapping(value = "AMAZON_BEDROCK", schema = AmazonBedrockChatModelConfig.class),
-                        @DiscriminatorMapping(value = "GITHUB_MODELS", schema = GitHubModelsChatModelConfig.class),
-                        @DiscriminatorMapping(value = "OLLAMA", schema = OllamaChatModelConfig.class)
-                }
+                description = "Configuration of the AI chat model that should execute the request"
         )
         @NotNull @Valid
         AiChatModelConfig<?> chatModelConfig
