@@ -800,7 +800,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     .convertToPublish(deviceSessionCtx, firmwareChunk, requestId, chunk, type)
                     .ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
         } catch (Exception e) {
-            log.trace("[{}] Failed to send firmware response!", sessionId, e);
+            log.error("[{}] Failed to send firmware response!", sessionId, e);
         }
     }
 
