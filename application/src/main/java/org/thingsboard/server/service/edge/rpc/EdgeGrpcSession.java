@@ -243,6 +243,11 @@ public abstract class EdgeGrpcSession implements Closeable {
         log.debug("[{}] onConfigurationUpdate [{}]", sessionId, edge);
         this.tenantId = edge.getTenantId();
         this.edge = edge;
+        if (!this.edge.getCustomerId().equals(edge.getCustomerId())) {
+            // do not send edge configuration message on customer update
+            // message send by separate flow from assign_to or unassing_from customer
+            return;
+        }
         EdgeUpdateMsg edgeConfig = EdgeUpdateMsg.newBuilder()
                 .setConfiguration(EdgeMsgConstructorUtils.constructEdgeConfiguration(edge)).build();
         ResponseMsg edgeConfigMsg = ResponseMsg.newBuilder()

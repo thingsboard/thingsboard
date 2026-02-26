@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -66,7 +66,6 @@ import org.thingsboard.server.dao.entity.EntityCountService;
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
-import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -75,6 +74,7 @@ import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.sql.JpaExecutorService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.exception.DataValidationException;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -203,25 +203,18 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
 
     @Override
     public Edge saveEdge(Edge edge) {
-        return saveEdge(edge, true);
+        return saveEntity(edge, () -> doSaveEdge(edge));
     }
 
-    @Override
-    public Edge saveEdge(Edge edge, boolean publishEvent) {
-        return saveEntity(edge, () -> doSaveEdge(edge, publishEvent));
-    }
-
-    private Edge doSaveEdge(Edge edge, boolean publishEvent) {
+    private Edge doSaveEdge(Edge edge) {
         log.trace("Executing saveEdge [{}]", edge);
         Edge oldEdge = edgeValidator.validate(edge, Edge::getTenantId);
         EdgeCacheEvictEvent evictEvent = new EdgeCacheEvictEvent(edge.getTenantId(), edge.getName(), oldEdge != null ? oldEdge.getName() : null);
         try {
             Edge savedEdge = edgeDao.save(edge.getTenantId(), edge);
             publishEvictEvent(evictEvent);
-            if (publishEvent) {
-                eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedEdge.getTenantId())
-                        .entityId(savedEdge.getId()).entity(savedEdge).created(edge.getId() == null).build());
-            }
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedEdge.getTenantId())
+                    .entityId(savedEdge.getId()).entity(savedEdge).created(edge.getId() == null).build());
             if (edge.getId() == null) {
                 countService.publishCountEntityEvictEvent(savedEdge.getTenantId(), EntityType.EDGE);
             }
@@ -246,7 +239,7 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
             return edge;
         }
         edge.setCustomerId(customerId);
-        Edge result = saveEdge(edge, false);
+        Edge result = saveEdge(edge);
         eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).entityId(edgeId)
                 .body(JacksonUtil.toString(customerId)).actionType(ActionType.ASSIGNED_TO_CUSTOMER).build());
         return result;
@@ -261,7 +254,7 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
             return edge;
         }
         edge.setCustomerId(null);
-        Edge result = saveEdge(edge, false);
+        Edge result = saveEdge(edge);
         eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).entityId(edgeId)
                 .body(JacksonUtil.toString(customerId)).actionType(ActionType.UNASSIGNED_FROM_CUSTOMER).build());
         return result;
