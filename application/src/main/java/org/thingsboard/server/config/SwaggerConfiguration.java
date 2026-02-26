@@ -406,11 +406,7 @@ public class SwaggerConfiguration {
     }
 
     private SecurityRequirement createSecurityRequirement(String schemeName) {
-        return new SecurityRequirement().addList(schemeName, Arrays.asList(
-                Authority.SYS_ADMIN.name(),
-                Authority.TENANT_ADMIN.name(),
-                Authority.CUSTOMER_USER.name()
-        ));
+        return new SecurityRequirement().addList(schemeName, List.of());
     }
 
     private Tag extractTagFromPath(Map.Entry<String, PathItem> entry) {
