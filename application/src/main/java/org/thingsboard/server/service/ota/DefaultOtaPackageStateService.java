@@ -17,7 +17,10 @@ package org.thingsboard.server.service.ota;
 
 import com.google.common.util.concurrent.FutureCallback;
 import jakarta.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.AttributesDeleteRequest;
@@ -31,12 +34,14 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
+import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
@@ -55,8 +60,10 @@ import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.provider.TbRuleEngineQueueFactory;
+import org.thingsboard.server.service.entitiy.TbLogEntityActionService;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -87,6 +94,17 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
     private final DeviceProfileService deviceProfileService;
     private final RuleEngineTelemetryService telemetryService;
     private final TbQueueProducer<TbProtoQueueMsg<ToOtaPackageStateServiceMsg>> otaPackageStateMsgProducer;
+    private OtaPackageEvents assignmentTelemetry = OtaPackageEvents.UNKNOWN;
+    private OtaPackageEvents assignmentAttributes = OtaPackageEvents.UNKNOWN;
+
+    @Autowired(required = false)
+    private TbLogEntityActionService logEntityActionService;
+
+    @Value("${queue.core.ota.assignment-event.telemetry:TELEMETRY_EVENT")
+    private String assignmentTelemetryConfig;
+
+    @Value("${queue.core.ota.assignment-event.attributes:TELEMETRY_EVENT}")
+    private String assignmentAttributesConfig;
 
     public DefaultOtaPackageStateService(@Lazy TbClusterService tbClusterService,
                                          OtaPackageService otaPackageService,
@@ -104,6 +122,23 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
             this.otaPackageStateMsgProducer = coreQueueFactory.get().createToOtaPackageStateServiceMsgProducer();
         } else {
             this.otaPackageStateMsgProducer = reQueueFactory.get().createToOtaPackageStateServiceMsgProducer();
+        }
+    }
+
+    @PostConstruct
+    protected void init() {
+        Optional<OtaPackageEvents> assignmentTelemetryOption = OtaPackageEvents.parse(assignmentTelemetryConfig);
+        if (assignmentTelemetryOption.isPresent()) {
+            assignmentTelemetry = assignmentTelemetryOption.get();
+        } else {
+            log.warn("Incorrect configuration of assignemnt event for telemetry {}", assignmentTelemetryConfig);
+        }
+
+        Optional<OtaPackageEvents> assignmentAttributesOption = OtaPackageEvents.parse(assignmentAttributesConfig);
+        if (assignmentAttributesOption.isPresent()) {
+            assignmentAttributes = assignmentAttributesOption.get();
+        } else {
+            log.warn("Incorrect configuration of assignemnt event for attributes {}", assignmentAttributesConfig);
         }
     }
 
@@ -263,22 +298,29 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
         telemetry.add(new BasicTsKvEntry(ts, new LongDataEntry(getTargetTelemetryKey(firmware.getType(), TS), ts)));
         telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(getTelemetryKey(firmware.getType(), STATE), OtaPackageUpdateStatus.QUEUED.name())));
 
-        telemetryService.saveTimeseries(TimeseriesSaveRequest.builder()
-                .tenantId(tenantId)
-                .entityId(deviceId)
-                .entries(telemetry)
-                .callback(new FutureCallback<Void>() {
-                    @Override
-                    public void onSuccess(@Nullable Void tmp) {
-                        log.trace("[{}] Success save firmware status!", deviceId);
-                    }
+        if (assignmentTelemetry.equals(OtaPackageEvents.TELEMETRY_EVENT)) {
+            telemetryService.saveTimeseries(TimeseriesSaveRequest.builder()
+                    .tenantId(tenantId)
+                    .entityId(deviceId)
+                    .entries(telemetry)
+                    .callback(new FutureCallback<Void>() {
+                        @Override
+                        public void onSuccess(@Nullable Void tmp) {
+                            log.trace("[{}] Success save firmware status!", deviceId);
+                        }
 
-                    @Override
-                    public void onFailure(Throwable t) {
-                        log.error("[{}] Failed to save firmware status!", deviceId, t);
-                    }
-                })
-                .build());
+                        @Override
+                        public void onFailure(Throwable t) {
+                            log.error("[{}] Failed to save firmware status!", deviceId, t);
+                        }
+                    })
+                    .build());
+        }
+        else if (assignmentTelemetry.equals(OtaPackageEvents.RULECHAIN_EVENT)) {
+            Device device = deviceService.findDeviceById(tenantId, deviceId);
+            logEntityActionService.logEntityAction(tenantId, deviceId, null, ActionType.OTA_TIMESERIES_UPDATED, null,
+                telemetry, device);
+        }
     }
 
 
@@ -289,24 +331,32 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
 
         BasicTsKvEntry status = new BasicTsKvEntry(System.currentTimeMillis(), new StringDataEntry(getTelemetryKey(otaPackageType, STATE), OtaPackageUpdateStatus.INITIATED.name()));
 
-        telemetryService.saveTimeseries(TimeseriesSaveRequest.builder()
-                .tenantId(tenantId)
-                .entityId(deviceId)
-                .entry(status)
-                .callback(new FutureCallback<>() {
-                    @Override
-                    public void onSuccess(@Nullable Void tmp) {
-                        log.trace("[{}] Success save telemetry with target {} for device!", deviceId, otaPackage);
-                        updateAttributes(device, otaPackage, ts, tenantId, deviceId, otaPackageType);
-                    }
+        if (assignmentTelemetry.equals(OtaPackageEvents.TELEMETRY_EVENT)) {
+            telemetryService.saveTimeseries(TimeseriesSaveRequest.builder()
+                    .tenantId(tenantId)
+                    .entityId(deviceId)
+                    .entry(status)
+                    .callback(new FutureCallback<>() {
+                        @Override
+                        public void onSuccess(@Nullable Void tmp) {
+                            log.trace("[{}] Success save telemetry with target {} for device!", deviceId, otaPackage);
+                            updateAttributes(device, otaPackage, ts, tenantId, deviceId, otaPackageType);
+                        }
 
-                    @Override
-                    public void onFailure(Throwable t) {
-                        log.error("[{}] Failed to save telemetry with target {} for device!", deviceId, otaPackage, t);
-                        updateAttributes(device, otaPackage, ts, tenantId, deviceId, otaPackageType);
-                    }
-                })
-                .build());
+                        @Override
+                        public void onFailure(Throwable t) {
+                            log.error("[{}] Failed to save telemetry with target {} for device!", deviceId, otaPackage, t);
+                            updateAttributes(device, otaPackage, ts, tenantId, deviceId, otaPackageType);
+                        }
+                    })
+                    .build());
+        }
+        else if (assignmentTelemetry.equals(OtaPackageEvents.RULECHAIN_EVENT)) {
+            List<TsKvEntry> telemetry = Collections.singletonList(status);
+            logEntityActionService.logEntityAction(tenantId, deviceId, null, ActionType.OTA_TIMESERIES_UPDATED, null,
+                telemetry, device);
+            updateAttributes(device, otaPackage, ts, tenantId, deviceId, otaPackageType);
+        }
     }
 
     private void updateAttributes(Device device, OtaPackageInfo otaPackage, long ts, TenantId tenantId, DeviceId deviceId, OtaPackageType otaPackageType) {
@@ -348,23 +398,30 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
 
         remove(device, otaPackageType, attrToRemove);
 
-        telemetryService.saveAttributes(AttributesSaveRequest.builder()
-                .tenantId(tenantId)
-                .entityId(deviceId)
-                .scope(AttributeScope.SHARED_SCOPE)
-                .entries(attributes)
-                .callback(new FutureCallback<>() {
-                    @Override
-                    public void onSuccess(@Nullable Void tmp) {
-                        log.trace("[{}] Success save attributes with target firmware!", deviceId);
-                    }
+        if (assignmentAttributes.equals(OtaPackageEvents.TELEMETRY_EVENT)) {
+            telemetryService.saveAttributes(AttributesSaveRequest.builder()
+                    .tenantId(tenantId)
+                    .entityId(deviceId)
+                    .scope(AttributeScope.SHARED_SCOPE)
+                    .entries(attributes)
+                    .callback(new FutureCallback<>() {
+                        @Override
+                        public void onSuccess(@Nullable Void tmp) {
+                            log.trace("[{}] Success save attributes with target firmware!", deviceId);
+                        }
 
-                    @Override
-                    public void onFailure(Throwable t) {
-                        log.error("[{}] Failed to save attributes with target firmware!", deviceId, t);
-                    }
-                })
-                .build());
+                        @Override
+                        public void onFailure(Throwable t) {
+                            log.error("[{}] Failed to save attributes with target firmware!", deviceId, t);
+                        }
+                    })
+                    .build());
+        }
+        else if (assignmentAttributes.equals(OtaPackageEvents.RULECHAIN_EVENT)) {
+            logEntityActionService.logEntityAction(tenantId, deviceId, null, ActionType.OTA_ATTRIBUTES_UPDATED, null,
+                attributes, device);
+        }
+
     }
 
     private void remove(Device device, OtaPackageType otaPackageType) {
@@ -372,24 +429,35 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
     }
 
     private void remove(Device device, OtaPackageType otaPackageType, List<String> attributesKeys) {
-        telemetryService.deleteAttributes(AttributesDeleteRequest.builder()
-                .tenantId(device.getTenantId())
-                .entityId(device.getId())
-                .scope(AttributeScope.SHARED_SCOPE)
-                .keys(attributesKeys)
-                .callback(new FutureCallback<>() {
-                    @Override
-                    public void onSuccess(@Nullable Void tmp) {
-                        log.trace("[{}] Success remove target {} attributes!", device.getId(), otaPackageType);
-                        tbClusterService.pushMsgToCore(DeviceAttributesEventNotificationMsg.onDelete(device.getTenantId(), device.getId(), DataConstants.SHARED_SCOPE, attributesKeys), null);
-                    }
+        if (assignmentAttributes.equals(OtaPackageEvents.TELEMETRY_EVENT)) {
+            telemetryService.deleteAttributes(AttributesDeleteRequest.builder()
+                    .tenantId(device.getTenantId())
+                    .entityId(device.getId())
+                    .scope(AttributeScope.SHARED_SCOPE)
+                    .keys(attributesKeys)
+                    .callback(new FutureCallback<>() {
+                        @Override
+                        public void onSuccess(@Nullable Void tmp) {
+                            log.trace("[{}] Success remove target {} attributes!", device.getId(), otaPackageType);
+                            tbClusterService.pushMsgToCore(DeviceAttributesEventNotificationMsg.onDelete(device.getTenantId(), device.getId(), DataConstants.SHARED_SCOPE, attributesKeys), null);
+                        }
 
-                    @Override
-                    public void onFailure(Throwable t) {
-                        log.error("[{}] Failed to remove target {} attributes!", device.getId(), otaPackageType, t);
-                    }
-                })
-                .build());
+                        @Override
+                        public void onFailure(Throwable t) {
+                            log.error("[{}] Failed to remove target {} attributes!", device.getId(), otaPackageType, t);
+                        }
+                    })
+                    .build());
+        }
+        else if (assignmentAttributes.equals(OtaPackageEvents.RULECHAIN_EVENT)) {
+            TenantId tenantId = device.getTenantId();
+            DeviceId deviceId = device.getId();
+            List<KvEntry> data = new ArrayList<>();
+            long ts = System.currentTimeMillis();
+            data.add(new BaseAttributeKvEntry(ts, new StringDataEntry("attributes", String.join(",", attributesKeys))));
+            logEntityActionService.logEntityAction(tenantId, deviceId, null, ActionType.OTA_ATTRIBUTES_DELETED, null,
+                data, device);
+        }
     }
 
 }
