@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 public class ThingsBoardExecutors {
 
     /** Cannot instantiate. */
-    private ThingsBoardExecutors(){}
+    private ThingsBoardExecutors() {}
 
     /**
      * Method forked from ExecutorService to provide thread pool name
