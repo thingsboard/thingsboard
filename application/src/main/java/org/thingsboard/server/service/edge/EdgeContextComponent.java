@@ -78,6 +78,7 @@ import org.thingsboard.server.service.edge.rpc.processor.telemetry.TelemetryEdge
 import org.thingsboard.server.service.edge.rpc.processor.user.UserProcessor;
 import org.thingsboard.server.service.edge.rpc.sync.EdgeRequestsService;
 import org.thingsboard.server.service.executors.GrpcCallbackExecutorService;
+import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import java.util.EnumMap;
 import java.util.List;
@@ -104,6 +105,9 @@ public class EdgeContextComponent {
     }
 
     // services
+    @Autowired
+    private TelemetrySubscriptionService tsSubService;
+
     @Autowired
     private AdminSettingsService adminSettingsService;
 
