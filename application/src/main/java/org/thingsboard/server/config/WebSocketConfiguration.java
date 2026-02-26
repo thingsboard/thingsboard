@@ -17,6 +17,7 @@ package org.thingsboard.server.config;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.WebSocketHandler;
@@ -40,11 +41,16 @@ public class WebSocketConfiguration implements WebSocketConfigurer {
 
     private final WebSocketHandler wsHandler;
 
+    @Value("${server.ws.max_text_message_buffer_size:32768}")
+    private int maxTextMessageBufferSize;
+    @Value("${server.ws.max_binary_message_buffer_size:32768}")
+    private int maxBinaryMessageBufferSize;
+
     @Bean
     public ServletServerContainerFactoryBean createWebSocketContainer() {
         ServletServerContainerFactoryBean container = new ServletServerContainerFactoryBean();
-        container.setMaxTextMessageBufferSize(32768);
-        container.setMaxBinaryMessageBufferSize(32768);
+        container.setMaxTextMessageBufferSize(maxTextMessageBufferSize);
+        container.setMaxBinaryMessageBufferSize(maxBinaryMessageBufferSize);
         return container;
     }
 
