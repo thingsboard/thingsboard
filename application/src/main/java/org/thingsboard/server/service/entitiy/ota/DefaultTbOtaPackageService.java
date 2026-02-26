@@ -105,7 +105,7 @@ public class DefaultTbOtaPackageService extends AbstractTbEntityService implemen
             logEntityActionService.logEntityAction(tenantId, otaPackageId, otaPackageInfo, null,
                     actionType, user, otaPackageInfo.getId().toString());
         } catch (Exception e) {
-            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.OTA_PACKAGE),
+            logEntityActionService.logEntityAction(tenantId, getOrEmptyId(otaPackageId, EntityType.OTA_PACKAGE),
                     actionType, user, e, otaPackageId.toString());
             throw e;
         }

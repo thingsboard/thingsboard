@@ -197,18 +197,18 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
     public boolean delete(Alarm alarm, User user) {
         var tenantId = alarm.getTenantId();
         var alarmId = alarm.getId();
-        var alarmOriginator = alarm.getOriginator();
+        var alarmOriginatorId = alarm.getOriginator();
 
         boolean deleted;
         try {
             deleted = alarmSubscriptionService.deleteAlarm(tenantId, alarmId);
         } catch (Exception e) {
-            logEntityActionService.logEntityAction(tenantId, emptyId(alarmOriginator.getEntityType()), ActionType.ALARM_DELETE, user, e, alarmId);
+            logEntityActionService.logEntityAction(tenantId, alarmOriginatorId == null ? alarmId : alarmOriginatorId, ActionType.ALARM_DELETE, user, e, alarmId);
             throw e;
         }
 
         if (deleted) {
-            logEntityActionService.logEntityAction(tenantId, alarmOriginator, alarm, alarm.getCustomerId(), ActionType.ALARM_DELETE, user, alarmId);
+            logEntityActionService.logEntityAction(tenantId, alarmOriginatorId == null ? alarmId: alarmOriginatorId, alarm, alarm.getCustomerId(), ActionType.ALARM_DELETE, user, alarmId);
         }
 
         return deleted;

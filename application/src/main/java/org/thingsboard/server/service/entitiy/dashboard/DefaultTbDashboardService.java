@@ -77,7 +77,7 @@ public class DefaultTbDashboardService extends AbstractTbEntityService implement
             dashboardService.deleteDashboard(tenantId, dashboardId);
             logEntityActionService.logEntityAction(tenantId, dashboardId, dashboard, null, actionType, user, dashboardId.toString());
         } catch (Exception e) {
-            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.DASHBOARD), actionType, user, e, dashboardId.toString());
+            logEntityActionService.logEntityAction(tenantId, getOrEmptyId(dashboardId, EntityType.DASHBOARD), actionType, user, e, dashboardId.toString());
             throw e;
         }
     }

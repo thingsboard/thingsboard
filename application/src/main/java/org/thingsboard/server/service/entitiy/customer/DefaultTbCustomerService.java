@@ -58,10 +58,10 @@ public class DefaultTbCustomerService extends AbstractTbEntityService implements
         CustomerId customerId = customer.getId();
         try {
             customerService.deleteCustomer(tenantId, customerId);
-            logEntityActionService.logEntityAction(tenantId, customer.getId(), customer, customerId, actionType,
+            logEntityActionService.logEntityAction(tenantId, customerId, customer, customerId, actionType,
                     user, customerId.toString());
         } catch (Exception e) {
-            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.CUSTOMER), actionType, user,
+            logEntityActionService.logEntityAction(tenantId, getOrEmptyId(customerId, EntityType.CUSTOMER), actionType, user,
                     e, customerId.toString());
             throw e;
         }
