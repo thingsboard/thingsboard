@@ -524,6 +524,31 @@ public class DeviceController extends BaseController {
         return checkNotNull(devices.get());
     }
 
+    @ApiOperation(value = "Get DeviceInfos By Ids (getDeviceInfosByIds)",
+            notes = "Requested deviceInfos must be owned by tenant or assigned to customer which user is performing the request. " + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/deviceInfos", params = {"deviceIds"}, method = RequestMethod.GET)
+    @ResponseBody
+    public List<DeviceInfo> getDevicesByInfoIds(
+            @Parameter(description = "A list of devices ids, separated by comma ','",  array = @ArraySchema(schema = @Schema(type = "string")))
+            @RequestParam("deviceIds") String[] strDeviceIds) throws ThingsboardException, ExecutionException, InterruptedException {
+        checkArrayParameter("deviceIds", strDeviceIds);
+        SecurityUser user = getCurrentUser();
+        TenantId tenantId = user.getTenantId();
+        CustomerId customerId = user.getCustomerId();
+        List<DeviceId> deviceIds = new ArrayList<>();
+        for (String strDeviceId : strDeviceIds) {
+            deviceIds.add(new DeviceId(toUUID(strDeviceId)));
+        }
+        ListenableFuture<List<DeviceInfo>> devices;
+        if (customerId == null || customerId.isNullUid()) {
+            devices = deviceService.findDeviceInfosByTenantIdAndIdsAsync(tenantId, deviceIds);
+        } else {
+            devices = deviceService.findDeviceInfosByTenantIdCustomerIdAndIdsAsync(tenantId, customerId, deviceIds);
+        }
+        return checkNotNull(devices.get());
+    }
+
     @ApiOperation(value = "Find related devices (findByQuery)",
             notes = "Returns all devices that are related to the specific entity. " +
                     "The entity id, relation type, device types, depth of the search, and other query parameters defined using complex 'DeviceSearchQuery' object. " +
@@ -539,6 +564,32 @@ public class DeviceController extends BaseController {
         checkNotNull(query.getDeviceTypes());
         checkEntityId(query.getParameters().getEntityId(), Operation.READ);
         List<Device> devices = checkNotNull(deviceService.findDevicesByQuery(getCurrentUser().getTenantId(), query).get());
+        devices = devices.stream().filter(device -> {
+            try {
+                accessControlService.checkPermission(getCurrentUser(), Resource.DEVICE, Operation.READ, device.getId(), device);
+                return true;
+            } catch (ThingsboardException e) {
+                return false;
+            }
+        }).collect(Collectors.toList());
+        return devices;
+    }
+
+    @ApiOperation(value = "Find related deviceInfos (findByQuery)",
+            notes = "Returns all devices that are related to the specific entity. " +
+                    "The entity id, relation type, device types, depth of the search, and other query parameters defined using complex 'DeviceSearchQuery' object. " +
+                    "See 'Model' tab of the Parameters for more info." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/deviceInfos", method = RequestMethod.POST)
+    @ResponseBody
+    public List<DeviceInfo> findInfoByQuery(
+            @Parameter(description = "The device search query JSON")
+            @RequestBody DeviceSearchQuery query) throws ThingsboardException, ExecutionException, InterruptedException {
+        checkNotNull(query);
+        checkNotNull(query.getParameters());
+        checkNotNull(query.getDeviceTypes());
+        checkEntityId(query.getParameters().getEntityId(), Operation.READ);
+        List<DeviceInfo> devices = checkNotNull(deviceService.findDeviceInfosByQuery(getCurrentUser().getTenantId(), query).get());
         devices = devices.stream().filter(device -> {
             try {
                 accessControlService.checkPermission(getCurrentUser(), Resource.DEVICE, Operation.READ, device.getId(), device);

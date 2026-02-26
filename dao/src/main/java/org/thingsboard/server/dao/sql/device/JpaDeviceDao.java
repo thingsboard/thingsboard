@@ -43,6 +43,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.device.DeviceDao;
 import org.thingsboard.server.dao.model.sql.DeviceEntity;
+import org.thingsboard.server.dao.model.sql.DeviceInfoEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
@@ -133,6 +134,27 @@ public class JpaDeviceDao extends JpaAbstractDao<DeviceEntity, Device> implement
     @Override
     public ListenableFuture<List<Device>> findDevicesByIdsAsync(List<UUID> deviceIds) {
         return service.submit(() -> findDevicesByIds(deviceIds));
+    }
+
+    @Override
+    public List<DeviceInfo> findDeviceInfosByIds(List<UUID> deviceIds) {
+        return DaoUtil.convertDataList(deviceRepository.findDeviceInfosByIdIn(deviceIds));
+    }
+
+    @Override
+    public ListenableFuture<List<DeviceInfo>> findDeviceInfosByIdsAsync(List<UUID> deviceIds) {
+        return service.submit(() -> findDeviceInfosByIds(deviceIds));
+    }
+
+    @Override
+    public ListenableFuture<List<DeviceInfo>> findDeviceInfosByTenantIdAndIdsAsync(UUID tenantId, List<UUID> deviceIds) {
+        return service.submit(() -> DaoUtil.convertDataList(deviceRepository.findDeviceInfosByIdIn(tenantId, deviceIds)));
+    }
+
+    @Override
+    public ListenableFuture<List<DeviceInfo>> findDeviceInfosByTenantIdCustomerIdAndIdsAsync(UUID tenantId, UUID customerId, List<UUID> deviceIds) {
+        return service.submit(() -> DaoUtil.convertDataList(
+                deviceRepository.findDeviceInfosByIdIn(tenantId, customerId, deviceIds)));
     }
 
     @Override
