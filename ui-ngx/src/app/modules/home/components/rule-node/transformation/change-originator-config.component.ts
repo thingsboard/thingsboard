@@ -53,6 +53,8 @@ export class ChangeOriginatorConfigComponent extends RuleNodeConfigurationCompon
       originatorSource: [configuration ? configuration.originatorSource : null, [Validators.required]],
       entityType: [configuration ? configuration.entityType : null, []],
       entityNamePattern: [configuration ? configuration.entityNamePattern : null, []],
+      entityTypePattern: [configuration ? configuration.entityTypePattern : null, []],
+      entityIdPattern: [configuration ? configuration.entityIdPattern : null, []],
       relationsQuery: [configuration ? configuration.relationsQuery : null, []]
     });
   }
@@ -76,6 +78,15 @@ export class ChangeOriginatorConfigComponent extends RuleNodeConfigurationCompon
       this.changeOriginatorConfigForm.get('entityNamePattern').patchValue(null, {emitEvent});
       this.changeOriginatorConfigForm.get('entityType').setValidators([]);
       this.changeOriginatorConfigForm.get('entityNamePattern').setValidators([]);
+    }
+    if (originatorSource === OriginatorSource.ID) {
+      this.changeOriginatorConfigForm.get('entityTypePattern').setValidators([Validators.required]);
+      this.changeOriginatorConfigForm.get('entityIdPattern').setValidators([Validators.required]);
+    } else {
+      this.changeOriginatorConfigForm.get('entityTypePattern').patchValue(null, {emitEvent});
+      this.changeOriginatorConfigForm.get('entityIdPattern').patchValue(null, {emitEvent});
+      this.changeOriginatorConfigForm.get('entityTypePattern').setValidators([]);
+      this.changeOriginatorConfigForm.get('entityIdPattern').setValidators([]);
     }
     this.changeOriginatorConfigForm.get('relationsQuery').updateValueAndValidity({emitEvent});
     this.changeOriginatorConfigForm.get('entityType').updateValueAndValidity({emitEvent});

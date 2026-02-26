@@ -32,6 +32,8 @@ public class TbChangeOriginatorNodeConfiguration implements NodeConfiguration<Tb
     private OriginatorSource originatorSource;
     private RelationsQuery relationsQuery;
     private String entityType;
+    private String entityTypePattern;
+    private String entityIdPattern;
     private String entityNamePattern;
 
     @Override

@@ -75,19 +75,15 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.lenient;
-import static org.thingsboard.rule.engine.transform.OriginatorSource.ALARM_ORIGINATOR;
-import static org.thingsboard.rule.engine.transform.OriginatorSource.CUSTOMER;
-import static org.thingsboard.rule.engine.transform.OriginatorSource.ENTITY;
-import static org.thingsboard.rule.engine.transform.OriginatorSource.RELATED;
-import static org.thingsboard.rule.engine.transform.OriginatorSource.TENANT;
+import static org.thingsboard.rule.engine.transform.OriginatorSource.*;
 
 @ExtendWith(MockitoExtension.class)
 public class TbChangeOriginatorNodeTest {
 
-    private final TenantId TENANT_ID = TenantId.fromUUID(UUID.fromString("79830b6d-4f93-49bd-9b5b-d31ce51da77b"));
-    private final CustomerId CUSTOMER_ID = new CustomerId(UUID.fromString("c6b2c94b-5517-4f20-bf8e-ae9407eb8a7a"));
-    private final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("990605a4-db46-4ed4-942f-e18200453571"));
-    private final AssetId ASSET_ID = new AssetId(UUID.fromString("55de3f10-1b55-4950-b711-ed132896b260"));
+    private final static TenantId TENANT_ID = TenantId.fromUUID(UUID.fromString("79830b6d-4f93-49bd-9b5b-d31ce51da77b"));
+    private final static CustomerId CUSTOMER_ID = new CustomerId(UUID.fromString("c6b2c94b-5517-4f20-bf8e-ae9407eb8a7a"));
+    private final static DeviceId DEVICE_ID = new DeviceId(UUID.fromString("990605a4-db46-4ed4-942f-e18200453571"));
+    private final static AssetId ASSET_ID = new AssetId(UUID.fromString("55de3f10-1b55-4950-b711-ed132896b260"));
 
     private final ListeningExecutor dbExecutor = new TestDbCallbackExecutor();
 
@@ -380,6 +376,48 @@ public class TbChangeOriginatorNodeTest {
                 Arguments.of("test-asset", TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT),
                 Arguments.of("${md-name-pattern}", new TbMsgMetaData(Map.of("md-name-pattern", "md-test-asset")), TbMsg.EMPTY_JSON_OBJECT),
                 Arguments.of("${msg-name-pattern}", TbMsgMetaData.EMPTY, "{\"msg-name-pattern\":\"msg-test-asset\"}")
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    public void givenOriginatorSourceIsId_whenOnMsg_thenTellSuccess(String entityTypePattern, String entityIdPattern, TbMsgMetaData metaData, String data) throws TbNodeException {
+        config.setOriginatorSource(ID);
+        config.setEntityTypePattern(entityTypePattern);
+        config.setEntityIdPattern(entityIdPattern);
+
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(metaData)
+                .data(data)
+                .build();
+        TbMsg expectedMsg = msg.transform()
+                .originator(ASSET_ID)
+                .build();
+
+        given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
+        given(ctxMock.getAssetService()).willReturn(assetServiceMock);
+        given(ctxMock.getTenantId()).willReturn(TENANT_ID);
+        given(assetServiceMock.findAssetById(any(TenantId.class), any(AssetId.class))).willReturn(new Asset(ASSET_ID));
+        given(ctxMock.transformMsgOriginator(any(TbMsg.class), any(EntityId.class))).willReturn(expectedMsg);
+
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+        node.onMsg(ctxMock, msg);
+
+        String expectedEntityId = TbNodeUtils.processPattern(entityIdPattern, msg);
+        then(assetServiceMock).should().findAssetById(TENANT_ID, new AssetId(UUID.fromString(expectedEntityId)));
+        then(ctxMock).should().transformMsgOriginator(msg, ASSET_ID);
+        ArgumentCaptor<TbMsg> actualMsg = ArgumentCaptor.forClass(TbMsg.class);
+        then(ctxMock).should().tellSuccess(actualMsg.capture());
+        assertThat(actualMsg.getValue()).usingRecursiveComparison().ignoringFields("ctx").isEqualTo(expectedMsg);
+    }
+
+    private static Stream<Arguments> givenOriginatorSourceIsId_whenOnMsg_thenTellSuccess() {
+        return Stream.of(
+                Arguments.of(EntityType.ASSET.name(), ASSET_ID.getId().toString(), TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT),
+                Arguments.of("${entityType}", "${id}", new TbMsgMetaData(Map.of("id", ASSET_ID.getId().toString(), "entityType", EntityType.ASSET.name())), TbMsg.EMPTY_JSON_OBJECT),
+                Arguments.of("$[id.entityType]", "$[id.id]", TbMsgMetaData.EMPTY, "{\"id\":{\"id\":\"" + ASSET_ID.getId().toString() + "\", \"entityType\":\"" + EntityType.ASSET.name() + "\"}}")
         );
     }
 
