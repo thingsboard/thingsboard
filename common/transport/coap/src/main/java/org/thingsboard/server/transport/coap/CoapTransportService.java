@@ -66,8 +66,8 @@ public class CoapTransportService implements TbTransportService {
         efento.add(new CoapResource(CURRENT_TIMESTAMP));
         coapServer.add(api);
         coapServer.add(efento);
-        coapServer.add(new OtaPackageTransportResource(coapTransportContext, OtaPackageType.FIRMWARE));
-        coapServer.add(new OtaPackageTransportResource(coapTransportContext, OtaPackageType.SOFTWARE));
+        coapServer.add(new OtaPackageTransportResource(coapTransportContext, coapServerService, OtaPackageType.FIRMWARE));
+        coapServer.add(new OtaPackageTransportResource(coapTransportContext, coapServerService, OtaPackageType.SOFTWARE));
         log.info("CoAP transport started!");
     }
 
