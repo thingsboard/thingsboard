@@ -29,6 +29,7 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INST
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_2;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_3;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_4;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_5;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_8;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_9;
 
@@ -90,14 +91,54 @@ public class RpcLwm2mIntegrationExecuteTest extends AbstractRpcLwM2MIntegrationT
 
 
     /**
-     * execute_resource_with_parameters (execute reboot after 60 seconds on device)
-     * Execute {"id":"3/0/4","value":60}
+     * execute_resource_with_parameters (execute reboot if digit = 5 on device)
+     * Execute {"id":"3/0/4","value":5}
      * {"result":"CHANGED"}
      */
     @Test
-    public void testExecuteResourceWithParametersById_Result_CHANGED() throws Exception {
+    public void testExecuteResourceWithParametersOnlyOneDigitValueNullById_Result_Ok() throws Exception {
         String expectedPath = objectInstanceIdVer_3 + "/" + RESOURCE_ID_4;
-        Object expectedValue = 60;
+        Object expectedValue = 5;
+        String actualResult = sendRPCExecuteWithValueById(expectedPath, expectedValue);
+        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
+    }
+
+    /**
+     * execute_resource_with_parameters (execute Factory Reset if digit = 2 -> after 60 seconds on device)
+     * Execute {"id":"3/0/5","value":"2='60'"}
+
+     */
+    @Test
+    public void testExecuteResourceWithParametersDigit2Value60ById_Result_Ok() throws Exception {
+        String expectedPath = objectInstanceIdVer_3 + "/" + RESOURCE_ID_5;
+        Object expectedValue = "2='60'";
+        String actualResult = sendRPCExecuteWithValueById(expectedPath, expectedValue);
+        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
+    }
+
+    /**
+     * execute_resource_with_parameters (execute Factory Reset after connect with link on device)
+     * Execute {"id":"3/0/5","value":"2,0='https://thingsboard.io/docs/reference/lwm2m-api/'"}
+     */
+    @Test
+    public void testExecuteResourceWithParametersDigit2_0_ValueLinkById_Result_Ok() throws Exception {
+        String expectedPath = objectInstanceIdVer_3 + "/" + RESOURCE_ID_5;
+        Object expectedValue = "2,0='https://thingsboard.io/docs/reference/lwm2m-api/'";
+        String actualResult = sendRPCExecuteWithValueById(expectedPath, expectedValue);
+        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
+    }
+
+    /**
+     * execute_resource_with_parameters (execute Factory Reset after connect with link on device)
+     * Execute {"id":"3/0/5","value":"0,1,2,3,4,5,6,7,8,9"}
+     */
+    @Test
+    public void testExecuteResourceWithParametersDigitManyValueNullById_Result_Ok() throws Exception {
+        String expectedPath = objectInstanceIdVer_3 + "/" + RESOURCE_ID_5;
+        Object expectedValue = "0,1,2,3,4,5,6,7,8,9";
         String actualResult = sendRPCExecuteWithValueById(expectedPath, expectedValue);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
@@ -178,7 +219,7 @@ public class RpcLwm2mIntegrationExecuteTest extends AbstractRpcLwM2MIntegrationT
     }
 
     private String sendRPCExecuteWithValueById(String path, Object value) throws Exception {
-        String setRpcRequest = "{\"method\": \"Execute\", \"params\": {\"id\": \"" + path + "\", \"value\": " + value + " }}";
+        String setRpcRequest = "{\"method\": \"Execute\", \"params\": {\"id\": \"" + path + "\", \"value\": \"" + value + "\"}}";
         return doPostAsync("/api/plugins/rpc/twoway/" + lwM2MTestClient.getDeviceIdStr(), setRpcRequest, String.class, status().isOk());
     }
 
