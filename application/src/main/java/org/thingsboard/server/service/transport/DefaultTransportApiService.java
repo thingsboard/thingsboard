@@ -114,6 +114,7 @@ import java.util.stream.Collectors;
 
 import static org.thingsboard.server.service.transport.BasicCredentialsValidationResult.PASSWORD_MISMATCH;
 import static org.thingsboard.server.service.transport.BasicCredentialsValidationResult.VALID;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicService.DEVICE_NAME_SPLIT_REGEXP;
 
 /**
  * Created by ashvayka on 05.10.18.
@@ -330,84 +331,151 @@ public class DefaultTransportApiService implements TransportApiService {
     }
 
     private TransportApiResponseMsg handle(GetOrCreateDeviceFromGatewayRequestMsg requestMsg) {
-        DeviceId gatewayId = new DeviceId(new UUID(requestMsg.getGatewayIdMSB(), requestMsg.getGatewayIdLSB()));
+        DeviceId gatewayId = toDeviceId(requestMsg);
         Device gateway = deviceService.findDeviceById(TenantId.SYS_TENANT_ID, gatewayId);
-        Lock deviceCreationLock = deviceCreationLocks.computeIfAbsent(requestMsg.getDeviceName(), id -> new ReentrantLock());
-        deviceCreationLock.lock();
+        String deviceName = requestMsg.getDeviceName();
+        Lock lock = deviceCreationLocks.computeIfAbsent(deviceName, k -> new ReentrantLock());
+        lock.lock();
         try {
-            Device device = deviceService.findDeviceByTenantIdAndName(gateway.getTenantId(), requestMsg.getDeviceName());
-            if (device == null) {
-                TenantId tenantId = gateway.getTenantId();
-                device = new Device();
-                device.setTenantId(tenantId);
-                device.setName(requestMsg.getDeviceName());
-                device.setType(requestMsg.getDeviceType());
-                device.setCustomerId(gateway.getCustomerId());
-                DeviceProfile deviceProfile = deviceProfileCache.findOrCreateDeviceProfile(gateway.getTenantId(), requestMsg.getDeviceType());
-
-                device.setDeviceProfileId(deviceProfile.getId());
-                ObjectNode additionalInfo = JacksonUtil.newObjectNode();
-                additionalInfo.put(DataConstants.LAST_CONNECTED_GATEWAY, gatewayId.toString());
-                device.setAdditionalInfo(additionalInfo);
-                device = deviceService.saveDevice(device);
-
-                relationService.saveRelation(tenantId, new EntityRelation(gateway.getId(), device.getId(), "Created"));
-
-                TbMsgMetaData metaData = new TbMsgMetaData();
-                CustomerId customerId = gateway.getCustomerId();
-                if (customerId != null && !customerId.isNullUid()) {
-                    metaData.putValue("customerId", customerId.toString());
-                }
-                metaData.putValue("gatewayId", gatewayId.toString());
-
-                DeviceId deviceId = device.getId();
-                JsonNode entityNode = JacksonUtil.valueToTree(device);
-                TbMsg tbMsg = TbMsg.newMsg()
-                        .type(TbMsgType.ENTITY_CREATED)
-                        .originator(deviceId)
-                        .customerId(customerId)
-                        .copyMetaData(metaData)
-                        .dataType(TbMsgDataType.JSON)
-                        .data(JacksonUtil.toString(entityNode))
-                        .build();
-                tbClusterService.pushMsgToRuleEngine(tenantId, deviceId, tbMsg, null);
-            } else {
-                JsonNode deviceAdditionalInfo = device.getAdditionalInfo();
-                if (deviceAdditionalInfo == null) {
-                    deviceAdditionalInfo = JacksonUtil.newObjectNode();
-                }
-                if (deviceAdditionalInfo.isObject() &&
-                        (!deviceAdditionalInfo.has(DataConstants.LAST_CONNECTED_GATEWAY)
-                                || !gatewayId.toString().equals(deviceAdditionalInfo.get(DataConstants.LAST_CONNECTED_GATEWAY).asText()))) {
-                    ObjectNode newDeviceAdditionalInfo = (ObjectNode) deviceAdditionalInfo;
-                    newDeviceAdditionalInfo.put(DataConstants.LAST_CONNECTED_GATEWAY, gatewayId.toString());
-                    deviceService.saveDevice(device);
-                }
-            }
-            GetOrCreateDeviceFromGatewayResponseMsg.Builder builder = GetOrCreateDeviceFromGatewayResponseMsg.newBuilder()
-                    .setDeviceInfo(ProtoUtils.toDeviceInfoProto(device));
-            DeviceProfile deviceProfile = deviceProfileCache.get(device.getTenantId(), device.getDeviceProfileId());
-            if (deviceProfile != null) {
-                builder.setDeviceProfile(ProtoUtils.toProto(deviceProfile));
-            } else {
-                log.warn("[{}] Failed to find device profile [{}] for device. ", device.getId(), device.getDeviceProfileId());
-            }
-            return TransportApiResponseMsg.newBuilder()
-                    .setGetOrCreateDeviceResponseMsg(builder.build())
-                    .build();
+            Device device = findOrCreateDevice(requestMsg, gateway, gatewayId);
+            updateLastConnectedGateway(device, gatewayId);
+            return buildResponse(device);
         } catch (JsonProcessingException e) {
-            log.warn("[{}] Failed to lookup device by gateway id and name: [{}]", gatewayId, requestMsg.getDeviceName(), e);
+            log.warn("[{}] Failed to process device [{}]", gatewayId, deviceName, e);
             throw new RuntimeException(e);
         } catch (EntitiesLimitExceededException e) {
-            log.warn("[{}][{}] API limit exception: [{}]", e.getTenantId(), gatewayId, e.getMessage());
-            return TransportApiResponseMsg.newBuilder()
-                    .setGetOrCreateDeviceResponseMsg(
-                            GetOrCreateDeviceFromGatewayResponseMsg.newBuilder()
-                                    .setError(TransportProtos.TransportApiRequestErrorCode.ENTITY_LIMIT))
-                    .build();
+            return buildLimitErrorResponse(e, gatewayId);
         } finally {
-            deviceCreationLock.unlock();
+            lock.unlock();
+            deviceCreationLocks.remove(deviceName, lock);
         }
+    }
+
+    private DeviceId toDeviceId(GetOrCreateDeviceFromGatewayRequestMsg requestMsg) {
+        return new DeviceId(new UUID(
+                requestMsg.getGatewayIdMSB(),
+                requestMsg.getGatewayIdLSB()
+        ));
+    }
+
+    private Device findOrCreateDevice(GetOrCreateDeviceFromGatewayRequestMsg requestMsg,
+                                      Device gateway,
+                                      DeviceId gatewayId) throws JsonProcessingException {
+        TenantId tenantId = gateway.getTenantId();
+        String deviceName = requestMsg.getDeviceName();
+        Device device = deviceService.findDeviceByTenantIdAndName(tenantId, deviceName);
+        if (device != null) {
+            return device;
+        }
+        device = tryRenameSparkplugDevice(requestMsg, gateway);
+        if (device != null) {
+            return device;
+        }
+        device = createNewDevice(requestMsg, gateway, gatewayId);
+        pushCreatedEvent(device, gateway);
+        return device;
+    }
+
+    private Device tryRenameSparkplugDevice(GetOrCreateDeviceFromGatewayRequestMsg requestMsg,
+                                            Device gateway) {
+        if (!requestMsg.getIsSparkplug()) {
+            return null;
+        }
+        String[] topicPath = requestMsg.getDeviceName().split(DEVICE_NAME_SPLIT_REGEXP);
+        if (topicPath.length != 3) {
+            return null;
+        }
+        String deviceId = topicPath[2];
+        Device existingDevice =
+                deviceService.findDeviceByTenantIdAndName(gateway.getTenantId(), deviceId);
+        if (existingDevice == null) {
+            return null;
+        }
+        existingDevice.setName(requestMsg.getDeviceName());
+        return deviceService.saveDevice(existingDevice);
+    }
+
+    private Device createNewDevice(GetOrCreateDeviceFromGatewayRequestMsg requestMsg,
+                                   Device gateway,
+                                   DeviceId gatewayId) {
+        TenantId tenantId = gateway.getTenantId();
+        Device device = new Device();
+        device.setTenantId(tenantId);
+        device.setName(requestMsg.getDeviceName());
+        device.setType(requestMsg.getDeviceType());
+        device.setCustomerId(gateway.getCustomerId());
+        DeviceProfile profile =
+                deviceProfileCache.findOrCreateDeviceProfile(tenantId, requestMsg.getDeviceType());
+        device.setDeviceProfileId(profile.getId());
+        ObjectNode additionalInfo = JacksonUtil.newObjectNode();
+        additionalInfo.put(DataConstants.LAST_CONNECTED_GATEWAY, gatewayId.toString());
+        device.setAdditionalInfo(additionalInfo);
+        device = deviceService.saveDevice(device);
+        relationService.saveRelation(
+                tenantId,
+                new EntityRelation(gateway.getId(), device.getId(), "Created")
+        );
+        return device;
+    }
+
+    private void updateLastConnectedGateway(Device device, DeviceId gatewayId) {
+        String gatewayIdStr = gatewayId.toString();
+        JsonNode info = device.getAdditionalInfo();
+        ObjectNode objectNode = (info instanceof ObjectNode)
+                ? (ObjectNode) info
+                : JacksonUtil.newObjectNode();
+        if (!objectNode.has(DataConstants.LAST_CONNECTED_GATEWAY)
+                || !gatewayIdStr.equals(objectNode.get(DataConstants.LAST_CONNECTED_GATEWAY).asText())) {
+            objectNode.put(DataConstants.LAST_CONNECTED_GATEWAY, gatewayIdStr);
+            device.setAdditionalInfo(objectNode);
+            deviceService.saveDevice(device);
+        }
+    }
+
+    private void pushCreatedEvent(Device device, Device gateway) {
+        TenantId tenantId = gateway.getTenantId();
+        CustomerId customerId = gateway.getCustomerId();
+        TbMsgMetaData metaData = new TbMsgMetaData();
+        metaData.putValue("gatewayId", gateway.getId().toString());
+        if (customerId != null && !customerId.isNullUid()) {
+            metaData.putValue("customerId", customerId.toString());
+        }
+        JsonNode entityNode = JacksonUtil.valueToTree(device);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.ENTITY_CREATED)
+                .originator(device.getId())
+                .customerId(customerId)
+                .copyMetaData(metaData)
+                .dataType(TbMsgDataType.JSON)
+                .data(JacksonUtil.toString(entityNode))
+                .build();
+        tbClusterService.pushMsgToRuleEngine(tenantId, device.getId(), msg, null);
+    }
+
+    private TransportApiResponseMsg buildResponse(Device device) throws JsonProcessingException {
+        GetOrCreateDeviceFromGatewayResponseMsg.Builder builder =
+                GetOrCreateDeviceFromGatewayResponseMsg.newBuilder()
+                        .setDeviceInfo(ProtoUtils.toDeviceInfoProto(device));
+        DeviceProfile profile =
+                deviceProfileCache.get(device.getTenantId(), device.getDeviceProfileId());
+        if (profile != null) {
+            builder.setDeviceProfile(ProtoUtils.toProto(profile));
+        }
+        return TransportApiResponseMsg.newBuilder()
+                .setGetOrCreateDeviceResponseMsg(builder.build())
+                .build();
+    }
+
+    private TransportApiResponseMsg buildLimitErrorResponse(EntitiesLimitExceededException e,
+                                                            DeviceId gatewayId) {
+        log.warn("[{}][{}] API limit exception: [{}]",
+                e.getTenantId(), gatewayId, e.getMessage());
+        return TransportApiResponseMsg.newBuilder()
+                .setGetOrCreateDeviceResponseMsg(
+                        GetOrCreateDeviceFromGatewayResponseMsg.newBuilder()
+                                .setError(TransportProtos.TransportApiRequestErrorCode.ENTITY_LIMIT)
+                )
+                .build();
     }
 
     private TransportApiResponseMsg handle(ProvisionDeviceRequestMsg requestMsg) {

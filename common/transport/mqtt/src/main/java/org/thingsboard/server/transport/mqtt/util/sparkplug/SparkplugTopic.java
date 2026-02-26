@@ -21,6 +21,7 @@ import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.parseMessageType;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicService.DEVICE_NAME_SPLIT_REGEXP;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicService.TOPIC_ROOT_SPB_V_1_0;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicService.TOPIC_SPLIT_REGEXP;
 
@@ -327,6 +328,17 @@ public class SparkplugTopic {
 
     public String getNodeDeviceName() {
         return isNode() ? edgeNodeId : deviceId;
+    }
+
+    public String getNodeDeviceNameAllPath() {
+        StringBuilder sb = new StringBuilder();
+        if (hostApplicationId == null) {
+            sb.append(getGroupId()).append(DEVICE_NAME_SPLIT_REGEXP).append(getEdgeNodeId());
+            if (getDeviceId() != null) {
+                sb.append(DEVICE_NAME_SPLIT_REGEXP).append(getDeviceId());
+            }
+        }
+        return sb.toString();
     }
 
     public static boolean isValidIdElementToUTF8(String deviceIdElement) {

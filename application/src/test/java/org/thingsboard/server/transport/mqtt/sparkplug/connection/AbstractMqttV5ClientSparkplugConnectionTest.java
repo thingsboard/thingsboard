@@ -37,10 +37,10 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.awaitility.Awaitility.await;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugConnectionState.OFFLINE;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugConnectionState.ONLINE;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.STATE;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.messageName;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicService.TOPIC_ROOT_SPB_V_1_0;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicService.TOPIC_SPLIT_REGEXP;
 
 /**
  * Created by nickAS21 on 12.01.23
@@ -95,31 +95,7 @@ public abstract class AbstractMqttV5ClientSparkplugConnectionTest extends Abstra
     protected void processConnectClientWithCorrectAccessTokenWithNDEATH_State_ONLINE_ALL(int cntDevices) throws Exception {
         long ts = calendar.getTimeInMillis();
         List<Device> devices = connectClientWithCorrectAccessTokenWithNDEATHCreatedDevices(cntDevices, ts);
-
-        TsKvEntry tsKvEntry = new BasicTsKvEntry(ts, new StringDataEntry(messageName(STATE), ONLINE.name()));
-        await(alias + messageName(STATE) + ", device: " + savedGateway.getName())
-                .atMost(40, TimeUnit.SECONDS)
-                .until(() -> {
-                    var foundEntry = tsService.findAllLatest(tenantId, savedGateway.getId()).get().stream()
-                            .filter(tsKv -> tsKv.getKey().equals(tsKvEntry.getKey()))
-                            .filter(tsKv -> tsKv.getValue().equals(tsKvEntry.getValue()))
-                            .filter(tsKv -> tsKv.getTs() == tsKvEntry.getTs())
-                            .findFirst();
-                    return foundEntry.isPresent();
-                });
-
-        for (Device device : devices) {
-            await(alias + messageName(STATE) + ", device: " + device.getName())
-                    .atMost(40, TimeUnit.SECONDS)
-                    .until(() -> {
-                        var foundEntry = tsService.findAllLatest(tenantId, device.getId()).get().stream()
-                                .filter(tsKv -> tsKv.getKey().equals(tsKvEntry.getKey()))
-                                .filter(tsKv -> tsKv.getValue().equals(tsKvEntry.getValue()))
-                                .filter(tsKv -> tsKv.getTs() == tsKvEntry.getTs())
-                                .findFirst();
-                        return foundEntry.isPresent();
-                    });
-        }
+        state_ONLINE_ALL (devices, ts);
     }
 
     protected void processConnectClientWithCorrectAccessTokenWithNDEATH_State_ONLINE_All_Then_OneDeviceOFFLINE(int cntDevices, int indexDeviceDisconnect) throws Exception {
@@ -135,7 +111,7 @@ public abstract class AbstractMqttV5ClientSparkplugConnectionTest extends Abstra
         if (client.isConnected()) {
             List<Device> devicesList = new ArrayList<>(devices);
             Device device =  devicesList.get(indexDeviceDisconnect);
-            client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/" + SparkplugMessageType.DDEATH.name() + "/" + edgeNode + "/" + device.getName(),
+            client.publish(TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_REGEXP + groupId + TOPIC_SPLIT_REGEXP + SparkplugMessageType.DDEATH.name() + TOPIC_SPLIT_REGEXP + edgeNode + TOPIC_SPLIT_REGEXP + device.getName(),
                     payloadDeathDevice.build().toByteArray(), 0, false);
             await(alias + messageName(STATE) + ", device: " + device.getName())
                     .atMost(40, TimeUnit.SECONDS)
