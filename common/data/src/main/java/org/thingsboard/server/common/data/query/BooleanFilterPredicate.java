@@ -25,7 +25,6 @@ public class BooleanFilterPredicate implements SimpleKeyFilterPredicate<Boolean>
     private BooleanOperation operation;
     private FilterPredicateValue<Boolean> value;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public FilterPredicateType getType() {
         return FilterPredicateType.BOOLEAN;

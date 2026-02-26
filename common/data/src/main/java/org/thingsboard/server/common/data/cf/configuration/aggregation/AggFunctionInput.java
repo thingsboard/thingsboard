@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.common.data.cf.configuration.aggregation;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -27,7 +26,6 @@ public class AggFunctionInput implements AggInput {
 
     private String function;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public String getType() {
         return "function";

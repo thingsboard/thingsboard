@@ -90,8 +90,7 @@ public class SmppSmsProviderConfiguration implements SmsProviderConfiguration {
     @Schema(description = "Address range", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private String addressRange;
 
-    @Schema(minimum = "0",
-            maximum = "14",
+    @Schema(allowableValues = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "13", "14"},
             description = "0 - SMSC Default Alphabet (ASCII for short and long code and to GSM for toll-free, used as default)\n" +
                     "1 - IA5 (ASCII for short and long code, Latin 9 for toll-free (ISO-8859-9))\n" +
                     "2 - Octet Unspecified (8-bit binary)\n" +
@@ -107,7 +106,6 @@ public class SmppSmsProviderConfiguration implements SmsProviderConfiguration {
                     "14 - Korean Graphic Character Set (KS C 5601/KS X 1001)", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private Byte codingScheme;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public SmsProviderType getType() {
         return SmsProviderType.SMPP;

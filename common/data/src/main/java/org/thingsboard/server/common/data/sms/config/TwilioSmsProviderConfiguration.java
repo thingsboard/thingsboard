@@ -29,7 +29,6 @@ public class TwilioSmsProviderConfiguration implements SmsProviderConfiguration 
     @Schema(description = "The number/id of a sender.")
     private String numberFrom;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public SmsProviderType getType() {
         return SmsProviderType.TWILIO;

@@ -25,7 +25,6 @@ public class NumericFilterPredicate implements SimpleKeyFilterPredicate<Double> 
     private NumericOperation operation;
     private FilterPredicateValue<Double> value;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public FilterPredicateType getType() {
         return FilterPredicateType.NUMERIC;

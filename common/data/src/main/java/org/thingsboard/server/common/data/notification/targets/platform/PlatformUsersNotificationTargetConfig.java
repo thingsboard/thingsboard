@@ -33,7 +33,6 @@ public class PlatformUsersNotificationTargetConfig extends NotificationTargetCon
     @Valid
     private UsersFilter usersFilter;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public NotificationTargetType getType() {
         return NotificationTargetType.PLATFORM_USERS;

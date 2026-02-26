@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.common.data.notification.template;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -45,7 +44,6 @@ public class SlackDeliveryMethodNotificationTemplate extends DeliveryMethodNotif
         return super.getBody();
     }
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public NotificationDeliveryMethod getMethod() {
         return NotificationDeliveryMethod.SLACK;

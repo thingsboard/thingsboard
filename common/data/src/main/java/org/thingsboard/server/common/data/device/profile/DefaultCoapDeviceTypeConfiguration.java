@@ -29,7 +29,6 @@ public class DefaultCoapDeviceTypeConfiguration implements CoapDeviceTypeConfigu
     private TransportPayloadTypeConfiguration transportPayloadTypeConfiguration;
 
     @Override
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     public CoapDeviceType getCoapDeviceType() {
         return CoapDeviceType.DEFAULT;
     }

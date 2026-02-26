@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.cf.configuration.aggregation;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -22,14 +23,12 @@ import lombok.Data;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.HasRelationPathLevel;
 import org.thingsboard.server.common.data.cf.configuration.HasUseLatestTsConfig;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.ScheduledUpdateSupportedCalculatedFieldConfiguration;
-import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.relation.RelationPathLevel;
-
-import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Map;
 
@@ -51,7 +50,6 @@ public class RelatedEntitiesAggregationCalculatedFieldConfiguration implements A
 
     private Integer scheduledUpdateInterval;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public CalculatedFieldType getType() {
         return CalculatedFieldType.RELATED_ENTITIES_AGGREGATION;

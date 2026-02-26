@@ -30,7 +30,6 @@ public class X509CertificateChainProvisionConfiguration implements DeviceProfile
     private boolean allowCreateNewDevicesByX509Certificate;
 
     @Override
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     public DeviceProfileProvisionType getType() {
         return DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN;
     }

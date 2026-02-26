@@ -28,7 +28,6 @@ import java.util.Set;
 @Data
 public class RelationsQueryFilter implements EntityFilter {
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public EntityFilterType getType() {
         return EntityFilterType.RELATIONS_QUERY;

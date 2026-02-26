@@ -27,7 +27,6 @@ import java.time.temporal.ChronoUnit;
 @NoArgsConstructor
 public class MonthInterval extends BaseAggInterval {
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public AggIntervalType getType() {
         return AggIntervalType.MONTH;

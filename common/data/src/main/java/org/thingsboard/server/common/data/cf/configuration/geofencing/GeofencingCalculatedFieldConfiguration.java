@@ -16,20 +16,19 @@
 package org.thingsboard.server.common.data.cf.configuration.geofencing;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.HasUseLatestTsConfig;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.cf.configuration.ScheduledUpdateSupportedCalculatedFieldConfiguration;
-import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.EntityId;
-
-import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -63,7 +62,6 @@ public class GeofencingCalculatedFieldConfiguration implements ArgumentsBasedCal
         return output.getType() == OutputType.TIME_SERIES;
     }
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public CalculatedFieldType getType() {
         return CalculatedFieldType.GEOFENCING;

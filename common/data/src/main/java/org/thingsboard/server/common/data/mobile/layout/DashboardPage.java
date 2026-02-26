@@ -36,7 +36,6 @@ public class DashboardPage extends AbstractMobilePage {
     @JsonView(Views.Public.class)
     private String dashboardId;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public MobilePageType getType() {
         return MobilePageType.DASHBOARD;

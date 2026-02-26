@@ -32,7 +32,7 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 public class WidgetsBundleExportData extends EntityExportData<WidgetsBundle> {
 
-    @ArraySchema(schema = @Schema(description = "List of widgets in the bundle"))
+    @ArraySchema(arraySchema = @Schema(description = "List of widgets in the bundle"), schema = @Schema(implementation = JsonNode.class))
     @JsonProperty(index = 3)
     private List<ObjectNode> widgets;
 

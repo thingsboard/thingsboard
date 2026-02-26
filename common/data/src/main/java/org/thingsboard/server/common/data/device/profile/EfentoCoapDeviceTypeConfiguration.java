@@ -26,7 +26,6 @@ public class EfentoCoapDeviceTypeConfiguration implements CoapDeviceTypeConfigur
     private static final long serialVersionUID = -8523081152598707064L;
 
     @Override
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     public CoapDeviceType getCoapDeviceType() {
         return CoapDeviceType.EFENTO;
     }

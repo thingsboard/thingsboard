@@ -49,7 +49,6 @@ public class EmailDeliveryMethodNotificationTemplate extends DeliveryMethodNotif
         this.subject = other.subject;
     }
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public NotificationDeliveryMethod getMethod() {
         return NotificationDeliveryMethod.EMAIL;

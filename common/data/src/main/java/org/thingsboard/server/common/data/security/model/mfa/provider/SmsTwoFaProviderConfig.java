@@ -31,7 +31,6 @@ public class SmsTwoFaProviderConfig extends OtpBasedTwoFaProviderConfig {
     private String smsVerificationMessageTemplate;
 
     @Override
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     public TwoFaProviderType getProviderType() {
         return TwoFaProviderType.SMS;
     }

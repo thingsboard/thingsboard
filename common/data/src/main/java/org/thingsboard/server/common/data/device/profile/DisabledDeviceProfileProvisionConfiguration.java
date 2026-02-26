@@ -26,7 +26,6 @@ public class DisabledDeviceProfileProvisionConfiguration implements DeviceProfil
     private final String provisionDeviceSecret;
 
     @Override
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     public DeviceProfileProvisionType getType() {
         return DeviceProfileProvisionType.DISABLED;
     }

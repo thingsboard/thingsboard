@@ -29,7 +29,6 @@ import java.time.temporal.TemporalAdjusters;
 @NoArgsConstructor
 public class WeekInterval extends BaseAggInterval {
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public AggIntervalType getType() {
         return AggIntervalType.WEEK;

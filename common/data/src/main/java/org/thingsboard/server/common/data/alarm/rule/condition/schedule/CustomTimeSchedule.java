@@ -15,9 +15,8 @@
  */
 package org.thingsboard.server.common.data.alarm.rule.condition.schedule;
 
-import lombok.Data;
-
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
 
 import java.util.List;
 
@@ -28,7 +27,6 @@ public class CustomTimeSchedule implements AlarmSchedule {
     private String timezone;
     private List<CustomTimeScheduleItem> items;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public AlarmScheduleType getType() {
         return AlarmScheduleType.CUSTOM;

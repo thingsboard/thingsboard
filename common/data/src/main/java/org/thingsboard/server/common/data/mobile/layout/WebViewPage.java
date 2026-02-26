@@ -36,7 +36,6 @@ public class WebViewPage extends AbstractMobilePage {
     @JsonView(Views.Public.class)
     private String url;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public MobilePageType getType() {
         return MobilePageType.WEB_VIEW;

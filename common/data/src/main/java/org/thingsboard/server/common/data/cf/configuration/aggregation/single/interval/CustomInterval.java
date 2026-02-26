@@ -40,7 +40,6 @@ public class CustomInterval extends BaseAggInterval {
         this.durationSec = durationSec;
     }
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public AggIntervalType getType() {
         return AggIntervalType.CUSTOM;

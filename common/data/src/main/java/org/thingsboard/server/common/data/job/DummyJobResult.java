@@ -15,11 +15,8 @@
  */
 package org.thingsboard.server.common.data.job;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-
 public class DummyJobResult extends JobResult {
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public JobType getJobType() {
         return JobType.DUMMY;

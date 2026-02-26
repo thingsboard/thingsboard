@@ -22,7 +22,6 @@ import lombok.Data;
 @Data
 public class AllUsersFilter implements SystemLevelUsersFilter {
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public UsersFilterType getType() {
         return UsersFilterType.ALL_USERS;

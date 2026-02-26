@@ -23,7 +23,6 @@ import org.thingsboard.server.common.data.DeviceTransportType;
 @Data
 public class DefaultDeviceTransportConfiguration implements DeviceTransportConfiguration {
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public DeviceTransportType getType() {
         return DeviceTransportType.DEFAULT;

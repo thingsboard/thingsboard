@@ -27,7 +27,6 @@ public class SimpleCalculatedFieldConfiguration extends BaseCalculatedFieldConfi
 
     private boolean useLatestTs;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public CalculatedFieldType getType() {
         return CalculatedFieldType.SIMPLE;

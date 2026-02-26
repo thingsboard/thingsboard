@@ -28,7 +28,6 @@ public class SingleEntityVersionCreateRequest extends VersionCreateRequest {
     private EntityId entityId;
     private VersionCreateConfig config;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public VersionCreateRequestType getType() {
         return VersionCreateRequestType.SINGLE_ENTITY;

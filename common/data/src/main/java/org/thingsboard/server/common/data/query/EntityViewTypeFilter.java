@@ -45,7 +45,6 @@ public class EntityViewTypeFilter implements EntityFilter {
     @Getter
     private String entityViewNameFilter;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public EntityFilterType getType() {
         return EntityFilterType.ENTITY_VIEW_TYPE;

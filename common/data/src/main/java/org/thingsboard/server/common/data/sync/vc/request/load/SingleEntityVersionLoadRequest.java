@@ -29,7 +29,6 @@ public class SingleEntityVersionLoadRequest extends VersionLoadRequest {
 
     private VersionLoadConfig config;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public VersionLoadRequestType getType() {
         return VersionLoadRequestType.SINGLE_ENTITY;

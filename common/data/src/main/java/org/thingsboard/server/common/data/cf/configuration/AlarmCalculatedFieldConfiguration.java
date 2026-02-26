@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data.cf.configuration;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
@@ -24,8 +25,6 @@ import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.util.CollectionsUtil;
-
-import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Comparator;
 import java.util.List;
@@ -53,7 +52,6 @@ public class AlarmCalculatedFieldConfiguration implements ArgumentsBasedCalculat
     private boolean propagateToTenant;
     private List<String> propagateRelationTypes;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public CalculatedFieldType getType() {
         return CalculatedFieldType.ALARM;

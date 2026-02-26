@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.common.data.query;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -27,7 +26,6 @@ import java.util.List;
 @ToString(callSuper = true)
 public class EntityViewSearchQueryFilter extends EntitySearchQueryFilter {
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public EntityFilterType getType() {
         return EntityFilterType.ENTITY_VIEW_SEARCH_QUERY;

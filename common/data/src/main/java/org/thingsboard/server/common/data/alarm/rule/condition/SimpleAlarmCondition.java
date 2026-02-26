@@ -20,7 +20,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(name = "AlarmRuleSimpleCondition", allOf = AlarmCondition.class)
 public class SimpleAlarmCondition extends AlarmCondition {
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public AlarmConditionType getType() {
         return AlarmConditionType.SIMPLE;

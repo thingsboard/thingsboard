@@ -33,7 +33,6 @@ public class RelationPathQueryDynamicSourceConfiguration implements CfArgumentDy
     @ArraySchema(schema = @Schema(implementation = RelationPathLevel.class))
     private List<RelationPathLevel> levels;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public CFArgumentDynamicSourceType getType() {
         return CFArgumentDynamicSourceType.RELATION_PATH_QUERY;

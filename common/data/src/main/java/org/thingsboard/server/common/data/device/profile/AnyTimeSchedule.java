@@ -15,13 +15,11 @@
  */
 package org.thingsboard.server.common.data.device.profile;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import org.thingsboard.server.common.data.query.DynamicValue;
 
 @Deprecated
 public class AnyTimeSchedule implements AlarmSchedule {
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public AlarmScheduleType getType() {
         return AlarmScheduleType.ANY_TIME;

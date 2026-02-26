@@ -25,7 +25,6 @@ import lombok.Data;
 @Deprecated
 public class SimpleAlarmConditionSpec implements AlarmConditionSpec {
     @Override
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     public AlarmConditionSpecType getType() {
         return AlarmConditionSpecType.SIMPLE;
     }

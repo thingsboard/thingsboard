@@ -29,7 +29,6 @@ public class ComplexFilterPredicate implements KeyFilterPredicate {
     @ArraySchema(schema = @Schema(ref = "#/components/schemas/KeyFilterPredicate"))
     private List<KeyFilterPredicate> predicates;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public FilterPredicateType getType() {
         return FilterPredicateType.COMPLEX;

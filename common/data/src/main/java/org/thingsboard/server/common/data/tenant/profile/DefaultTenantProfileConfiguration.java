@@ -250,7 +250,6 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
         };
     }
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public TenantProfileType getType() {
         return TenantProfileType.DEFAULT;

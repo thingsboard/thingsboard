@@ -30,7 +30,6 @@ public class EntityTypeVersionLoadRequest extends VersionLoadRequest {
     private Map<EntityType, EntityTypeVersionLoadConfig> entityTypes;
     private boolean rollbackOnError;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public VersionLoadRequestType getType() {
         return VersionLoadRequestType.ENTITY_TYPE;

@@ -32,7 +32,6 @@ public class BackupCodeTwoFaAccountConfig extends TwoFaAccountConfig {
     @NotEmpty
     private Set<String> codes;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public TwoFaProviderType getProviderType() {
         return TwoFaProviderType.BACKUP_CODE;

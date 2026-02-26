@@ -54,7 +54,6 @@ public class MicrosoftTeamsDeliveryMethodNotificationTemplate extends DeliveryMe
         this.button = other.button != null ? new Button(other.button) : null;
     }
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public NotificationDeliveryMethod getMethod() {
         return NotificationDeliveryMethod.MICROSOFT_TEAMS;

@@ -23,7 +23,6 @@ import org.thingsboard.server.common.data.TransportPayloadType;
 @Schema
 public class JsonTransportPayloadConfiguration implements TransportPayloadTypeConfiguration {
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public TransportPayloadType getTransportPayloadType() {
         return TransportPayloadType.JSON;

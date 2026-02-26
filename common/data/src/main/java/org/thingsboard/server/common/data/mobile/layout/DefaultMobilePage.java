@@ -36,7 +36,6 @@ public class DefaultMobilePage extends AbstractMobilePage {
     @JsonView(Views.Public.class)
     private DefaultPageId id;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public MobilePageType getType() {
         return MobilePageType.DEFAULT;

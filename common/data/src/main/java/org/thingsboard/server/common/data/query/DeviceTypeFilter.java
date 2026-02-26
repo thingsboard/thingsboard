@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.common.data.query;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -54,7 +53,6 @@ public class DeviceTypeFilter implements EntityFilter {
         this.deviceNameFilter = deviceNameFilter;
     }
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public EntityFilterType getType() {
         return EntityFilterType.DEVICE_TYPE;

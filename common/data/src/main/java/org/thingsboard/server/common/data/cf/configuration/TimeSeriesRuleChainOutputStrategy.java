@@ -24,7 +24,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class TimeSeriesRuleChainOutputStrategy implements TimeSeriesOutputStrategy {
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public OutputStrategyType getType() {
         return OutputStrategyType.RULE_CHAIN;

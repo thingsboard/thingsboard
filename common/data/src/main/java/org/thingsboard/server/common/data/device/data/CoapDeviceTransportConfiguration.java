@@ -44,7 +44,6 @@ public class CoapDeviceTransportConfiguration extends PowerSavingConfiguration i
         this.properties.put(name, value);
     }
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public DeviceTransportType getType() {
         return DeviceTransportType.COAP;

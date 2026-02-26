@@ -25,7 +25,6 @@ import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 @EqualsAndHashCode(callSuper = true)
 public class ScriptCalculatedFieldConfiguration extends BaseCalculatedFieldConfiguration implements ArgumentsBasedCalculatedFieldConfiguration {
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public CalculatedFieldType getType() {
         return CalculatedFieldType.SCRIPT;

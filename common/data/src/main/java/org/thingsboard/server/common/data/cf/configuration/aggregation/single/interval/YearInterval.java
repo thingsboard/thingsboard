@@ -28,7 +28,6 @@ import java.time.ZonedDateTime;
 @NoArgsConstructor
 public class YearInterval extends BaseAggInterval {
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public AggIntervalType getType() {
         return AggIntervalType.YEAR;

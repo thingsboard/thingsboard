@@ -49,7 +49,6 @@ public class Lwm2mDeviceProfileTransportConfiguration implements DeviceProfileTr
         updateDefault();
     }
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public DeviceTransportType getType() {
         return DeviceTransportType.LWM2M;

@@ -24,6 +24,5 @@ import java.util.LinkedHashMap;
 @Data
 @Schema(description = "Account Two-Factor Authentication Settings")
 public class AccountTwoFaSettings {
-    @Schema
     private LinkedHashMap<TwoFaProviderType, TwoFaAccountConfig> configs;
 }

@@ -42,7 +42,6 @@ public class Lwm2mDeviceTransportConfiguration extends PowerSavingConfiguration 
         this.properties.put(name, value);
     }
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public DeviceTransportType getType() {
         return DeviceTransportType.LWM2M;

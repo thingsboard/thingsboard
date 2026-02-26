@@ -25,7 +25,6 @@ public class CheckPreProvisionedDevicesDeviceProfileProvisionConfiguration imple
 
     private final String provisionDeviceSecret;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public DeviceProfileProvisionType getType() {
         return DeviceProfileProvisionType.CHECK_PRE_PROVISIONED_DEVICES;

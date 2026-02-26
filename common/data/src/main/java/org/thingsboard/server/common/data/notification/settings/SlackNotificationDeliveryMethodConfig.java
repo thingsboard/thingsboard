@@ -27,7 +27,6 @@ public class SlackNotificationDeliveryMethodConfig implements NotificationDelive
     @NotEmpty
     private String botToken;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public NotificationDeliveryMethod getMethod() {
         return NotificationDeliveryMethod.SLACK;

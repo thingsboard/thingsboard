@@ -22,7 +22,6 @@ import lombok.Data;
 @Data
 public class SystemAdministratorsFilter implements SystemLevelUsersFilter {
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public UsersFilterType getType() {
         return UsersFilterType.SYSTEM_ADMINISTRATORS;

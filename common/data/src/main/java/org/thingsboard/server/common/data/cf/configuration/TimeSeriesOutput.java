@@ -31,7 +31,6 @@ public class TimeSeriesOutput implements Output {
         this.strategy = new TimeSeriesRuleChainOutputStrategy();
     }
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public OutputType getType() {
         return OutputType.TIME_SERIES;

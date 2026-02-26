@@ -27,7 +27,6 @@ public class TotpTwoFaProviderConfig implements TwoFaProviderConfig {
     private String issuerName;
 
     @Override
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     public TwoFaProviderType getProviderType() {
         return TwoFaProviderType.TOTP;
     }

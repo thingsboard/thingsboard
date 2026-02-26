@@ -15,13 +15,10 @@
  */
 package org.thingsboard.server.common.data.query;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
-import org.thingsboard.server.common.data.id.EntityId;
 
 @Data
 public class SingleEntityFilter implements EntityFilter {
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public EntityFilterType getType() {
         return EntityFilterType.SINGLE_ENTITY;

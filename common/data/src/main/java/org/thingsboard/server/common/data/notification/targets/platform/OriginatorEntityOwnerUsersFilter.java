@@ -22,7 +22,6 @@ import lombok.Data;
 @Data
 public class OriginatorEntityOwnerUsersFilter implements UsersFilter {
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public UsersFilterType getType() {
         return UsersFilterType.ORIGINATOR_ENTITY_OWNER_USERS;

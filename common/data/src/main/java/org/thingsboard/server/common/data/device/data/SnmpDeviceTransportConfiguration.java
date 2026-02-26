@@ -57,7 +57,6 @@ public class SnmpDeviceTransportConfiguration implements DeviceTransportConfigur
         this.community = "public";
     }
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public DeviceTransportType getType() {
         return DeviceTransportType.SNMP;

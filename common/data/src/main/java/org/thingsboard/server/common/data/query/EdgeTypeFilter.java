@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.common.data.query;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -45,7 +44,6 @@ public class EdgeTypeFilter implements EntityFilter {
     @Getter
     private String edgeNameFilter;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public EntityFilterType getType() {
         return EntityFilterType.EDGE_TYPE;

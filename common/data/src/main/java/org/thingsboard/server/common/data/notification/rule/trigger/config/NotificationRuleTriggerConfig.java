@@ -66,7 +66,6 @@ import java.io.Serializable;
 })
 public interface NotificationRuleTriggerConfig extends Serializable {
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     NotificationRuleTriggerType getTriggerType();
 
     @JsonIgnore

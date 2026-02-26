@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.common.data.query;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.CustomerId;
 
@@ -24,7 +23,6 @@ public class ApiUsageStateFilter implements EntityFilter {
 
     private CustomerId customerId;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public EntityFilterType getType() {
         return EntityFilterType.API_USAGE_STATE;

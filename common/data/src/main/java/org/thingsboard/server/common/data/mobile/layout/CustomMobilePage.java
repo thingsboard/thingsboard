@@ -36,7 +36,6 @@ public class CustomMobilePage extends AbstractMobilePage {
     @JsonView(Views.Public.class)
     private String path;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public MobilePageType getType() {
         return MobilePageType.CUSTOM;

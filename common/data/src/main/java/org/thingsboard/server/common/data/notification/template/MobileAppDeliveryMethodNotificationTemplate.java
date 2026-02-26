@@ -49,7 +49,6 @@ public class MobileAppDeliveryMethodNotificationTemplate extends DeliveryMethodN
         this.additionalConfig = other.additionalConfig;
     }
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public NotificationDeliveryMethod getMethod() {
         return NotificationDeliveryMethod.MOBILE_APP;

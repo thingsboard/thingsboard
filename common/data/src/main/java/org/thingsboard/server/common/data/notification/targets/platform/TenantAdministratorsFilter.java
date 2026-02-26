@@ -31,7 +31,6 @@ public class TenantAdministratorsFilter implements SystemLevelUsersFilter {
     @ArraySchema(schema = @Schema(implementation = UUID.class))
     private Set<UUID> tenantProfilesIds;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public UsersFilterType getType() {
         return UsersFilterType.TENANT_ADMINISTRATORS;

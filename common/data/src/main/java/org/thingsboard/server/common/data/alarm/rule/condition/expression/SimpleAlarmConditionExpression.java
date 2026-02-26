@@ -35,7 +35,6 @@ public class SimpleAlarmConditionExpression implements AlarmConditionExpression 
     private List<AlarmConditionFilter> filters;
     private ComplexOperation operation;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public AlarmConditionExpressionType getType() {
         return AlarmConditionExpressionType.SIMPLE;

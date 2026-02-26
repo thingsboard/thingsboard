@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.common.data.device.profile;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.thingsboard.server.common.data.query.DynamicValue;
 
@@ -32,7 +31,6 @@ public class SpecificTimeSchedule implements AlarmSchedule {
 
     private DynamicValue<String> dynamicValue;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public AlarmScheduleType getType() {
         return AlarmScheduleType.SPECIFIC_TIME;

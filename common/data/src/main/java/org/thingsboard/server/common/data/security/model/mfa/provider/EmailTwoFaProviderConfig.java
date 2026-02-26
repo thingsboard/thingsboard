@@ -25,7 +25,6 @@ import lombok.EqualsAndHashCode;
 public class EmailTwoFaProviderConfig extends OtpBasedTwoFaProviderConfig {
 
     @Override
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     public TwoFaProviderType getProviderType() {
         return TwoFaProviderType.EMAIL;
     }

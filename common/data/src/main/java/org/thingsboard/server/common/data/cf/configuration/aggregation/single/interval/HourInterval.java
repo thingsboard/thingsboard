@@ -33,7 +33,6 @@ public class HourInterval extends BaseAggInterval {
         super(tz, offsetSec);
     }
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public AggIntervalType getType() {
         return AggIntervalType.HOUR;

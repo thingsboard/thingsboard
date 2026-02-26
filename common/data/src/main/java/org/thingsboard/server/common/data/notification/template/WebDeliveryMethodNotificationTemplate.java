@@ -106,7 +106,6 @@ public class WebDeliveryMethodNotificationTemplate extends DeliveryMethodNotific
                 .map(config -> (ObjectNode) config);
     }
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public NotificationDeliveryMethod getMethod() {
         return NotificationDeliveryMethod.WEB;

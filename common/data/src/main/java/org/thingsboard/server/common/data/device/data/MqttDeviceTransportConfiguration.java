@@ -42,7 +42,6 @@ public class MqttDeviceTransportConfiguration implements DeviceTransportConfigur
         this.properties.put(name, value);
     }
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public DeviceTransportType getType() {
         return DeviceTransportType.MQTT;

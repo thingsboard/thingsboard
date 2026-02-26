@@ -23,7 +23,6 @@ import org.thingsboard.server.common.data.DeviceProfileType;
 @Data
 public class DefaultDeviceProfileConfiguration implements DeviceProfileConfiguration {
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public DeviceProfileType getType() {
         return DeviceProfileType.DEFAULT;

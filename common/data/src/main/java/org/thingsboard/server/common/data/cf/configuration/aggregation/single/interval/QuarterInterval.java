@@ -28,7 +28,6 @@ import java.time.ZonedDateTime;
 @NoArgsConstructor
 public class QuarterInterval extends BaseAggInterval {
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public AggIntervalType getType() {
         return AggIntervalType.QUARTER;

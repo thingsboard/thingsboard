@@ -33,7 +33,6 @@ public class AttributesImmediateOutputStrategy implements AttributesOutputStrate
     private boolean sendWsUpdate;
     private boolean processCfs;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Override
     public OutputStrategyType getType() {
         return OutputStrategyType.IMMEDIATE;
