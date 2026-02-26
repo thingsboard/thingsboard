@@ -208,7 +208,9 @@ public class SnmpTransportContext extends TransportContext {
         transportService.deregisterSession(sessionContext.getSessionInfo());
         snmpTransportService.cancelQueryingTasks(sessionContext);
         sessions.remove(sessionContext.getDeviceId());
-        transportService.lifecycleEvent(sessionContext.getTenantId(), sessionContext.getDeviceId(), ComponentLifecycleEvent.STOPPED, true, null);
+        if (sessionContext.shouldNotifyCore()) {
+            transportService.lifecycleEvent(sessionContext.getTenantId(), sessionContext.getDeviceId(), ComponentLifecycleEvent.STOPPED, true, null);
+        }
         log.trace("Unregistered and removed session");
     }
 
