@@ -147,7 +147,7 @@ public class CalculatedFieldEdgeTest extends AbstractEdgeTest {
         CalculatedFieldUpdateMsg calculatedFieldUpdateMsg = (CalculatedFieldUpdateMsg) latestMessage;
         CalculatedField calculatedFieldFromEdge = JacksonUtil.fromString(calculatedFieldUpdateMsg.getEntity(), CalculatedField.class, true);
         Assert.assertNotNull(calculatedFieldFromEdge);
-        Assert.assertEquals(savedCalculatedField, calculatedFieldFromEdge);
+        compareHasVersionEntities(savedCalculatedField, calculatedFieldFromEdge);
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, calculatedFieldUpdateMsg.getMsgType());
     }
 
