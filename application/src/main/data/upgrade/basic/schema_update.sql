@@ -14,3 +14,9 @@
 -- limitations under the License.
 --
 
+
+-- RULE CHAIN NOTES START
+
+ALTER TABLE rule_chain ADD COLUMN IF NOT EXISTS notes text;
+
+-- RULE CHAIN NOTES END
