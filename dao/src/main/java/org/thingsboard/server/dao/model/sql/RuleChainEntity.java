@@ -69,6 +69,9 @@ public class RuleChainEntity extends BaseVersionedEntity<RuleChain> {
     @Column(name = ModelConstants.ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
 
+    @Column(name = ModelConstants.RULE_CHAIN_NOTES_PROPERTY, columnDefinition = "TEXT")
+    private String notes;
+
     @Column(name = ModelConstants.EXTERNAL_ID_PROPERTY)
     private UUID externalId;
 
@@ -87,6 +90,7 @@ public class RuleChainEntity extends BaseVersionedEntity<RuleChain> {
         this.debugMode = ruleChain.isDebugMode();
         this.configuration = ruleChain.getConfiguration();
         this.additionalInfo = ruleChain.getAdditionalInfo();
+        this.notes = ruleChain.getNotes();
         if (ruleChain.getExternalId() != null) {
             this.externalId = ruleChain.getExternalId().getId();
         }
@@ -107,6 +111,7 @@ public class RuleChainEntity extends BaseVersionedEntity<RuleChain> {
         ruleChain.setDebugMode(debugMode);
         ruleChain.setConfiguration(configuration);
         ruleChain.setAdditionalInfo(additionalInfo);
+        ruleChain.setNotes(notes);
         if (externalId != null) {
             ruleChain.setExternalId(new RuleChainId(externalId));
         }
