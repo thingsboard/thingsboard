@@ -81,10 +81,10 @@ import { RuleChainService } from '@core/http/rule-chain.service';
 import { NEVER, Observable, of, ReplaySubject, skip, startWith, Subject, throwError } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, mergeMap, takeUntil, tap } from 'rxjs/operators';
 import { ISearchableComponent } from '../../models/searchable-component.models';
-import { deepClone, isDefinedAndNotNull } from '@core/utils';
+import { deepClone, guid, isDefinedAndNotNull } from '@core/utils';
 import { RuleNodeDetailsComponent } from '@home/pages/rulechain/rule-node-details.component';
 import { RuleNodeLinkComponent } from './rule-node-link.component';
-import { RuleNoteComponent } from './rule-note.component';
+import { RuleNoteEditorComponent } from './rule-note-editor.component';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { MatMenuTrigger } from '@angular/material/menu';
 import { ItemBufferService, RuleNodeConnection } from '@core/services/item-buffer.service';
@@ -162,7 +162,7 @@ export class RuleChainPageComponent extends PageComponent
 
   @ViewChild('tbRuleNode') ruleNodeComponent: RuleNodeDetailsComponent;
   @ViewChild('tbRuleNodeLink') ruleNodeLinkComponent: RuleNodeLinkComponent;
-  @ViewChild('tbRuleNote') ruleNoteComponent: RuleNoteComponent;
+  @ViewChild('tbRuleNote') ruleNoteComponent: RuleNoteEditorComponent;
 
   editingRuleNodeLink: FcRuleEdge = null;
   isEditingRuleNodeLink = false;
@@ -170,7 +170,7 @@ export class RuleChainPageComponent extends PageComponent
 
   editingNote: FcRuleNote = null;
   isEditingNote = false;
-  editingNoteIndex = -1;
+  editingNoteId: string = null;
 
   hotKeys: Hotkey[] = [];
 
@@ -1306,7 +1306,7 @@ export class RuleChainPageComponent extends PageComponent
           this.ruleChainModel.notes = [];
         }
         ruleChainObjects.notes.forEach((note) => {
-          note.id = 'rule-chain-note-' + Date.now();
+          note.id = guid();
           this.ruleChainModel.notes.push(note);
           this.ruleChainCanvas.modelService.notes.select(note);
         });
@@ -1343,7 +1343,7 @@ export class RuleChainPageComponent extends PageComponent
           y = scrollParent.scrollTop() + scrollParent.height() / 2;
         }
         const note: FcRuleNote = {
-          id: 'rule-chain-note-' + Date.now(),
+          id: guid(),
           x,
           y,
           width: 200,
@@ -1364,7 +1364,10 @@ export class RuleChainPageComponent extends PageComponent
       headerClass: 'tb-rulechain-header',
       icon: 'sticky_note_2',
       title: this.translate.instant('rulechain.note'),
-      subtitle: note.content.length > 24 ? note.content.substring(0, 24) + '…' : note.content,
+      subtitle: (() => {
+        const plain = (note.content || '').replace(/[#*_`>\[\]!\\~]/g, '').trim();
+        return plain.length > 24 ? plain.substring(0, 24) + '…' : plain;
+      })(),
       menuItems: []
     };
     if (!note.readonly) {
@@ -1411,14 +1414,15 @@ export class RuleChainPageComponent extends PageComponent
     this.isEditingRuleNodeLink = false;
     this.editingRuleNodeLink = null;
     this.isEditingNote = true;
-    this.editingNoteIndex = this.ruleChainModel.notes.indexOf(note);
+    this.editingNoteId = note.id;
     this.editingNote = deepClone(note);
   }
 
   saveNote(): void {
     this.ruleNoteComponent.noteForm.markAsPristine();
     Object.assign(this.editingNote, this.ruleNoteComponent.noteForm.value);
-    this.ruleChainModel.notes[this.editingNoteIndex] = this.editingNote;
+    const idx = this.ruleChainModel.notes.findIndex(n => n.id === this.editingNoteId);
+    this.ruleChainModel.notes[idx] = this.editingNote;
     this.editingNote = deepClone(this.editingNote);
     this.isDirty = true;
     this.onModelChanged();
@@ -1426,13 +1430,14 @@ export class RuleChainPageComponent extends PageComponent
 
   onRevertNoteEdit(): void {
     this.ruleNoteComponent.noteForm.markAsPristine();
-    const note = this.ruleChainModel.notes[this.editingNoteIndex];
+    const note = this.ruleChainModel.notes.find(n => n.id === this.editingNoteId);
     this.editingNote = deepClone(note);
   }
 
   onEditNoteClosed(): void {
     this.editingNote = null;
     this.isEditingNote = false;
+    this.editingNoteId = null;
   }
 
   onDetailsDrawerClosed() {
@@ -2165,7 +2170,7 @@ export class CreateNestedRuleChainDialogComponent extends DialogComponent<Create
 })
 export class AddNoteDialogComponent extends DialogComponent<AddNoteDialogComponent, Partial<FcRuleNote>> {
 
-  @ViewChild('tbRuleNote') ruleNoteComponent: RuleNoteComponent;
+  @ViewChild('tbRuleNote') ruleNoteComponent: RuleNoteEditorComponent;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,

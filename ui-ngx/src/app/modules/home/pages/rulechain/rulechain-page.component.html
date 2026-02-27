@@ -167,10 +167,10 @@
                             (toggleDetailsEditMode)="onRevertNoteEdit()"
                             (applyDetails)="saveNote()"
                             [theForm]="tbRuleNote.noteForm">
-            <tb-rule-note #tbRuleNote
+            <tb-rule-note-editor #tbRuleNote
                           [note]="editingNote"
                           class="flex-1">
-            </tb-rule-note>
+            </tb-rule-note-editor>
           </tb-details-panel>
         </mat-drawer>
         <mat-drawer-content class="tb-rulechain-graph-content">

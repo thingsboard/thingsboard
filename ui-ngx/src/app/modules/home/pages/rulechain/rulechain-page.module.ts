@@ -34,13 +34,13 @@ import { RuleNodeDetailsComponent } from '@home/pages/rulechain/rule-node-detail
 import { RuleNodeConfigComponent } from '@home/pages/rulechain/rule-node-config.component';
 import { LinkLabelsComponent } from '@home/pages/rulechain/link-labels.component';
 import { RuleNodeLinkComponent } from '@home/pages/rulechain/rule-node-link.component';
-import { RuleNoteComponent } from '@home/pages/rulechain/rule-note.component';
+import { RuleNoteEditorComponent } from '@home/pages/rulechain/rule-note-editor.component';
 
 @NgModule({
   declarations: [
     RuleChainPageComponent,
     RuleNodeDetailsComponent,
-    RuleNoteComponent,
+    RuleNoteEditorComponent,
     LinkLabelsComponent,
     RuleNodeLinkComponent,
     RuleNodeConfigComponent,

@@ -15,15 +15,15 @@
 ///
 
 import { Component, inject, Input, OnChanges, SimpleChanges } from '@angular/core';
-import { FormBuilder } from '@angular/forms';
+import { FormBuilder, Validators } from '@angular/forms';
 import { FcRuleNote } from '@shared/models/rule-node.models';
 
 @Component({
-    selector: 'tb-rule-note',
-    templateUrl: './rule-note.component.html',
+    selector: 'tb-rule-note-editor',
+    templateUrl: './rule-note-editor.component.html',
     standalone: false
 })
-export class RuleNoteComponent implements OnChanges {
+export class RuleNoteEditorComponent implements OnChanges {
 
   @Input()
   note: FcRuleNote;
@@ -31,10 +31,10 @@ export class RuleNoteComponent implements OnChanges {
   private fb = inject(FormBuilder)
 
   noteForm = this.fb.group({
-    content: [''],
+    content: ['', Validators.maxLength(65536)],
     backgroundColor: ['#FFF9C4'],
     applyDefaultMarkdownStyle: [true],
-    markdownCss: ['']
+    markdownCss: ['', Validators.maxLength(65536)]
   });
 
   ngOnChanges(changes: SimpleChanges): void {
