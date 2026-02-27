@@ -50,35 +50,35 @@ import java.util.List;
 import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "entityType", include = As.EXISTING_PROPERTY, visible = true)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "entityType", include = As.EXISTING_PROPERTY, visible = true, defaultImpl = EntityExportData.class)
 @JsonSubTypes({
-        @Type(name = "CUSTOMER", value = EntityExportData.CustomerExportData.class),
         @Type(name = "DEVICE", value = DeviceExportData.class),
         @Type(name = "RULE_CHAIN", value = RuleChainExportData.class),
         @Type(name = "WIDGET_TYPE", value = WidgetTypeExportData.class),
         @Type(name = "WIDGETS_BUNDLE", value = WidgetsBundleExportData.class),
-        @Type(name = "OTA_PACKAGE", value = OtaPackageExportData.class),
-        @Type(name = "TB_RESOURCE", value = EntityExportData.TbResourceExportData.class),
-        @Type(name = "DASHBOARD", value = EntityExportData.DashboardExportData.class),
-        @Type(name = "ASSET_PROFILE", value = EntityExportData.AssetProfileExportData.class),
-        @Type(name = "ASSET", value = EntityExportData.AssetExportData.class),
-        @Type(name = "DEVICE_PROFILE", value = EntityExportData.DeviceProfileExportData.class),
-        @Type(name = "ENTITY_VIEW", value = EntityExportData.EntityViewExportData.class),
-        @Type(name = "NOTIFICATION_TEMPLATE", value = EntityExportData.NotificationTemplateExportData.class),
-        @Type(name = "NOTIFICATION_TARGET", value = EntityExportData.NotificationTargetExportData.class),
-        @Type(name = "NOTIFICATION_RULE", value = EntityExportData.NotificationRuleExportData.class),
-        @Type(name = "AI_MODEL", value = EntityExportData.AiModelExportData.class),
+        @Type(name = "OTA_PACKAGE", value = OtaPackageExportData.class)
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(
         description = "Base export container for ThingsBoard entities",
         discriminatorProperty = "entityType",
         discriminatorMapping = {
+                @DiscriminatorMapping(value = "CUSTOMER", schema = EntityExportData.CustomerExportData.class),
                 @DiscriminatorMapping(value = "DEVICE", schema = DeviceExportData.class),
                 @DiscriminatorMapping(value = "RULE_CHAIN", schema = RuleChainExportData.class),
                 @DiscriminatorMapping(value = "WIDGET_TYPE", schema = WidgetTypeExportData.class),
                 @DiscriminatorMapping(value = "WIDGETS_BUNDLE", schema = WidgetsBundleExportData.class),
-                @DiscriminatorMapping(value = "OTA_PACKAGE", schema = OtaPackageExportData.class)
+                @DiscriminatorMapping(value = "OTA_PACKAGE", schema = OtaPackageExportData.class),
+                @DiscriminatorMapping(value = "TB_RESOURCE", schema = EntityExportData.TbResourceExportData.class),
+                @DiscriminatorMapping(value = "DASHBOARD", schema = EntityExportData.DashboardExportData.class),
+                @DiscriminatorMapping(value = "ASSET_PROFILE", schema = EntityExportData.AssetProfileExportData.class),
+                @DiscriminatorMapping(value = "ASSET", schema = EntityExportData.AssetExportData.class),
+                @DiscriminatorMapping(value = "DEVICE_PROFILE", schema = EntityExportData.DeviceProfileExportData.class),
+                @DiscriminatorMapping(value = "ENTITY_VIEW", schema = EntityExportData.EntityViewExportData.class),
+                @DiscriminatorMapping(value = "NOTIFICATION_TEMPLATE", schema = EntityExportData.NotificationTemplateExportData.class),
+                @DiscriminatorMapping(value = "NOTIFICATION_TARGET", schema = EntityExportData.NotificationTargetExportData.class),
+                @DiscriminatorMapping(value = "NOTIFICATION_RULE", schema = EntityExportData.NotificationRuleExportData.class),
+                @DiscriminatorMapping(value = "AI_MODEL", schema = EntityExportData.AiModelExportData.class)
         }
 )
 @Data
