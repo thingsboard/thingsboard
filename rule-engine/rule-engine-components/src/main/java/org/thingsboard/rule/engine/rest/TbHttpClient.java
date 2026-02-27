@@ -32,6 +32,7 @@ import org.springframework.web.reactive.function.client.WebClient.RequestBodySpe
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.SsrfProtectionValidator;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
@@ -280,6 +281,8 @@ public class TbHttpClient {
         if (authorityNotValid || hostNotValid) {
             throw new RuntimeException("Url string is invalid!");
         }
+
+        SsrfProtectionValidator.validateUri(uri);
 
         return uri;
     }
