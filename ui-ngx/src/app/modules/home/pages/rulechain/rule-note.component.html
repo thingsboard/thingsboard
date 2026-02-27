@@ -1,0 +1,46 @@
+<!--
+
+    Copyright © 2016-2026 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<form [formGroup]="noteForm" class="mat-padding flex flex-1 flex-col">
+  <tb-markdown-editor formControlName="content"
+                      label="{{ 'rulechain.note-content' | translate }}"
+                      helpId="rulechain/note_content"
+                      [helpPopupStyle]="{'max-width': '850px'}">
+  </tb-markdown-editor>
+  <section class="tb-form-panel stroked">
+    <mat-expansion-panel class="tb-settings">
+      <mat-expansion-panel-header>
+        <mat-panel-title translate>rule-node-config.advanced-settings</mat-panel-title>
+      </mat-expansion-panel-header>
+      <div class="tb-form-row space-between">
+        <div>{{ 'rulechain.note-background-color' | translate }}</div>
+        <tb-color-input asBoxInput
+                        colorClearButton
+                        formControlName="backgroundColor">
+        </tb-color-input>
+      </div>
+      <div class="tb-form-row">
+        <mat-slide-toggle class="mat-slide" formControlName="applyDefaultMarkdownStyle">
+          {{ 'rulechain.note-apply-default-markdown-style' | translate }}
+        </mat-slide-toggle>
+      </div>
+      <tb-css formControlName="markdownCss"
+              label="{{ 'rulechain.note-custom-css' | translate }}">
+      </tb-css>
+    </mat-expansion-panel>
+  </section>
+</form>

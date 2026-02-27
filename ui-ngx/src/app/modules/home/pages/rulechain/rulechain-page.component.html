@@ -84,7 +84,7 @@
           </div>
         </mat-drawer>
         <mat-drawer class="tb-details-drawer"
-                    [opened]="isEditingRuleNode || isEditingRuleNodeLink"
+                    [opened]="isEditingRuleNode || isEditingRuleNodeLink || isEditingNote"
                     (closed)="onDetailsDrawerClosed()"
                     mode="over"
                     position="end">
@@ -157,6 +157,20 @@
               [allowCustom]="editingRuleNodeAllowCustomLabels"
               [sourceRuleChainId]="editingRuleNodeSourceRuleChainId">
             </tb-rule-node-link>
+          </tb-details-panel>
+          <tb-details-panel *ngIf="editingNote" class="flex-1"
+                            headerTitle="{{ 'rulechain.note' | translate }}"
+                            headerSubtitle="{{ 'rulechain.note-details' | translate }}"
+                            [isReadOnly]="false"
+                            [isAlwaysEdit]="true"
+                            (closeDetails)="onEditNoteClosed()"
+                            (toggleDetailsEditMode)="onRevertNoteEdit()"
+                            (applyDetails)="saveNote()"
+                            [theForm]="tbRuleNote.noteForm">
+            <tb-rule-note #tbRuleNote
+                          [note]="editingNote"
+                          class="flex-1">
+            </tb-rule-note>
           </tb-details-panel>
         </mat-drawer>
         <mat-drawer-content class="tb-rulechain-graph-content">

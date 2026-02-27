@@ -5165,7 +5165,17 @@
         "unset-auto-assign-to-edge-title": "Are you sure you do not want to assign the edge rule chain '{{ruleChainName}}' to edge(s) on creation?",
         "unset-auto-assign-to-edge-text": "After the confirmation the edge rule chain will no longer be automatically assigned to edge(s) on creation.",
         "unassign-rulechain-title": "Are you sure you want to unassign the rulechain '{{ruleChainName}}'?",
-        "unassign-rulechains": "Unassign rulechains"
+        "unassign-rulechains": "Unassign rulechains",
+        "add-note": "Add note",
+        "paste-note": "Paste note",
+        "note": "Note",
+        "edit-note": "Edit note",
+        "note-content": "Markdown/HTML content",
+        "note-details": "Note details",
+        "note-empty": "Empty note",
+        "note-background-color": "Background color",
+        "note-apply-default-markdown-style": "Apply default markdown style",
+        "note-custom-css": "Note content CSS"
     },
     "rulenode": {
         "rule-node-events": "Rule node events",
