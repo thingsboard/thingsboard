@@ -42,6 +42,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.TbMsgProcessingStackItem;
@@ -132,6 +133,48 @@ class DefaultTbContextTest {
 
         // THEN
         then(clusterService).should().pushMsgToRuleEngine(eq(tpi), eq(msg.getId()), any(), any());
+    }
+
+    @Test
+    public void givenMsgWithCurrentNodeAlreadyInStack_whenInput_thenTellFailureToPreventLoop() {
+        // GIVEN - simulate the second iteration: current node is already in the return stack,
+        // which happens when forwardMsgToDefaultRuleChain=true and the device's default rule chain
+        // is the same as the rule chain containing this node
+        var callbackMock = mock(TbMsgCallback.class);
+        given(callbackMock.isMsgValid()).willReturn(true);
+
+        var ruleNode = new RuleNode(RULE_NODE_ID);
+        ruleNode.setRuleChainId(RULE_CHAIN_ID);
+        ruleNode.setDebugSettings(DebugSettings.off());
+        given(nodeCtxMock.getSelf()).willReturn(ruleNode);
+        given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
+        given(nodeCtxMock.getChainActor()).willReturn(chainActorMock);
+
+        var msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(TENANT_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_STRING)
+                .callback(callbackMock)
+                .build();
+        // Push current node into the stack - simulates a previous iteration that already forwarded to this rule chain
+        msg.pushToStack(RULE_CHAIN_ID, RULE_NODE_ID);
+
+        var targetRuleChainId = new RuleChainId(UUID.randomUUID());
+
+        // WHEN
+        defaultTbContext.input(msg, targetRuleChainId);
+
+        // THEN - loop detected: tellFailure is called and no message is enqueued
+        ArgumentCaptor<TbActorMsg> tellCaptor = ArgumentCaptor.forClass(TbActorMsg.class);
+        then(chainActorMock).should().tell(tellCaptor.capture());
+        TbActorMsg capturedTellMsg = tellCaptor.getValue();
+        assertThat(capturedTellMsg).isInstanceOf(RuleNodeToRuleChainTellNextMsg.class);
+        RuleNodeToRuleChainTellNextMsg failureMsg = (RuleNodeToRuleChainTellNextMsg) capturedTellMsg;
+        assertThat(failureMsg.getRelationTypes()).containsOnly(TbNodeConnectionType.FAILURE);
+        assertThat(failureMsg.getFailureMessage()).containsIgnoringCase("loop");
+
+        then(mainCtxMock).shouldHaveNoInteractions(); // no message was enqueued
     }
 
     @MethodSource
