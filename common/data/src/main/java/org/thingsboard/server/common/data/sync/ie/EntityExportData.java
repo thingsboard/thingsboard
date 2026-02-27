@@ -27,10 +27,21 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.ExportableEntity;
+import org.thingsboard.server.common.data.TbResource;
+import org.thingsboard.server.common.data.ai.AiModel;
+import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.notification.rule.NotificationRule;
+import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
+import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.sync.JsonTbEntity;
 
@@ -39,13 +50,24 @@ import java.util.List;
 import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "entityType", include = As.EXISTING_PROPERTY, visible = true, defaultImpl = EntityExportData.class)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "entityType", include = As.EXISTING_PROPERTY, visible = true)
 @JsonSubTypes({
+        @Type(name = "CUSTOMER", value = EntityExportData.CustomerExportData.class),
         @Type(name = "DEVICE", value = DeviceExportData.class),
         @Type(name = "RULE_CHAIN", value = RuleChainExportData.class),
         @Type(name = "WIDGET_TYPE", value = WidgetTypeExportData.class),
         @Type(name = "WIDGETS_BUNDLE", value = WidgetsBundleExportData.class),
-        @Type(name = "OTA_PACKAGE", value = OtaPackageExportData.class)
+        @Type(name = "OTA_PACKAGE", value = OtaPackageExportData.class),
+        @Type(name = "TB_RESOURCE", value = EntityExportData.TbResourceExportData.class),
+        @Type(name = "DASHBOARD", value = EntityExportData.DashboardExportData.class),
+        @Type(name = "ASSET_PROFILE", value = EntityExportData.AssetProfileExportData.class),
+        @Type(name = "ASSET", value = EntityExportData.AssetExportData.class),
+        @Type(name = "DEVICE_PROFILE", value = EntityExportData.DeviceProfileExportData.class),
+        @Type(name = "ENTITY_VIEW", value = EntityExportData.EntityViewExportData.class),
+        @Type(name = "NOTIFICATION_TEMPLATE", value = EntityExportData.NotificationTemplateExportData.class),
+        @Type(name = "NOTIFICATION_TARGET", value = EntityExportData.NotificationTargetExportData.class),
+        @Type(name = "NOTIFICATION_RULE", value = EntityExportData.NotificationRuleExportData.class),
+        @Type(name = "AI_MODEL", value = EntityExportData.AiModelExportData.class),
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(
@@ -129,5 +151,28 @@ public class EntityExportData<E extends ExportableEntity<? extends EntityId>> {
     public boolean hasCalculatedFields() {
         return calculatedFields != null && !calculatedFields.isEmpty();
     }
+
+    @Schema
+    public static class CustomerExportData extends EntityExportData<Customer> {}
+    @Schema
+    public static class TbResourceExportData extends EntityExportData<TbResource> {}
+    @Schema
+    public static class DashboardExportData extends EntityExportData<Dashboard> {}
+    @Schema
+    public static class AssetProfileExportData extends EntityExportData<AssetProfile> {}
+    @Schema
+    public static class AssetExportData extends EntityExportData<Asset> {}
+    @Schema
+    public static class DeviceProfileExportData extends EntityExportData<DeviceProfile> {}
+    @Schema
+    public static class EntityViewExportData extends EntityExportData<EntityView> {}
+    @Schema
+    public static class NotificationTemplateExportData extends EntityExportData<NotificationTemplate> {}
+    @Schema
+    public static class NotificationTargetExportData extends EntityExportData<NotificationTarget> {}
+    @Schema
+    public static class NotificationRuleExportData extends EntityExportData<NotificationRule> {}
+    @Schema
+    public static class AiModelExportData extends EntityExportData<AiModel> {}
 
 }

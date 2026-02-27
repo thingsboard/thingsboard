@@ -21,7 +21,7 @@ import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 
 @Data
-@Schema(allOf = CalculatedFieldConfiguration.class)
+@Schema
 @EqualsAndHashCode(callSuper = true)
 public class SimpleCalculatedFieldConfiguration extends BaseCalculatedFieldConfiguration implements ExpressionBasedCalculatedFieldConfiguration, HasUseLatestTsConfig {
 

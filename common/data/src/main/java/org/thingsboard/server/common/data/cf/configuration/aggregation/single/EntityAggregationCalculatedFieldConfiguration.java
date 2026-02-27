@@ -33,7 +33,7 @@ import org.thingsboard.server.common.data.cf.configuration.aggregation.single.in
 
 import java.util.Map;
 
-@Schema(allOf = CalculatedFieldConfiguration.class)
+@Schema
 @Data
 public class EntityAggregationCalculatedFieldConfiguration implements ArgumentsBasedCalculatedFieldConfiguration {
 

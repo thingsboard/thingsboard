@@ -32,7 +32,7 @@ import org.thingsboard.server.common.data.relation.RelationPathLevel;
 
 import java.util.Map;
 
-@Schema(allOf = CalculatedFieldConfiguration.class)
+@Schema
 @Data
 public class RelatedEntitiesAggregationCalculatedFieldConfiguration implements ArgumentsBasedCalculatedFieldConfiguration, ScheduledUpdateSupportedCalculatedFieldConfiguration, HasRelationPathLevel, HasUseLatestTsConfig {
 

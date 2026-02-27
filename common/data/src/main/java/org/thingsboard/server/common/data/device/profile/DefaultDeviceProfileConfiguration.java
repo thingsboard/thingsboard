@@ -19,7 +19,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.thingsboard.server.common.data.DeviceProfileType;
 
-@Schema(description = "Default device profile configuration", allOf = DeviceProfileConfiguration.class)
+@Schema(description = "Default device profile configuration")
 @Data
 public class DefaultDeviceProfileConfiguration implements DeviceProfileConfiguration {
 

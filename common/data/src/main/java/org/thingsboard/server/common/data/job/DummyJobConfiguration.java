@@ -25,7 +25,7 @@ import lombok.ToString;
 
 import java.util.List;
 
-@Schema(description = "Dummy job configuration", allOf = JobConfiguration.class)
+@Schema(description = "Dummy job configuration")
 @Data
 @EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor

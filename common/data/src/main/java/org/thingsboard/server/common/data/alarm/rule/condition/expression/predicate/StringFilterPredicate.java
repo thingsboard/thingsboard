@@ -21,7 +21,7 @@ import lombok.Data;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionValue;
 
-@Schema(name = "AlarmRuleStringFilterPredicate", allOf = KeyFilterPredicate.class)
+@Schema(name = "AlarmRuleStringFilterPredicate")
 @Data
 public class StringFilterPredicate implements SimpleKeyFilterPredicate<String> {
 

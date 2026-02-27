@@ -23,7 +23,7 @@ import lombok.NoArgsConstructor;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionValue;
 
-@Schema(name = "AlarmRuleNumericFilterPredicate", allOf = KeyFilterPredicate.class)
+@Schema(name = "AlarmRuleNumericFilterPredicate")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

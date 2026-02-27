@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-@Schema(description = "Escalated notification rule recipients configuration", allOf = NotificationRuleRecipientsConfig.class)
+@Schema(description = "Escalated notification rule recipients configuration")
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class EscalatedNotificationRuleRecipientsConfig extends NotificationRuleRecipientsConfig {

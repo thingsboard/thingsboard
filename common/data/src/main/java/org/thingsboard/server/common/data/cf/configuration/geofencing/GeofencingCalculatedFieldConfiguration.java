@@ -38,7 +38,7 @@ import java.util.Set;
 
 import static java.util.stream.Collectors.toSet;
 
-@Schema(allOf = CalculatedFieldConfiguration.class)
+@Schema
 @Data
 public class GeofencingCalculatedFieldConfiguration implements ArgumentsBasedCalculatedFieldConfiguration, ScheduledUpdateSupportedCalculatedFieldConfiguration, HasUseLatestTsConfig {
 

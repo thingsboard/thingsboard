@@ -25,7 +25,7 @@ import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionVal
 
 import java.util.concurrent.TimeUnit;
 
-@Schema(name = "AlarmRuleNoDataFilterPredicate", allOf = KeyFilterPredicate.class)
+@Schema(name = "AlarmRuleNoDataFilterPredicate")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

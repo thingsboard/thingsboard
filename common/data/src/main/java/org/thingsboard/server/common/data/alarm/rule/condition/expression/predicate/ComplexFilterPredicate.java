@@ -22,7 +22,7 @@ import org.thingsboard.server.common.data.alarm.rule.condition.expression.Comple
 
 import java.util.List;
 
-@Schema(name = "AlarmRuleComplexFilterPredicate", allOf = KeyFilterPredicate.class)
+@Schema(name = "AlarmRuleComplexFilterPredicate")
 @Data
 public class ComplexFilterPredicate implements KeyFilterPredicate {
 

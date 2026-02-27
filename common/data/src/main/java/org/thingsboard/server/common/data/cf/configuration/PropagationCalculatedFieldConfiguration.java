@@ -27,7 +27,7 @@ import org.thingsboard.server.common.data.relation.RelationPathLevel;
 
 import java.util.List;
 
-@Schema(allOf = CalculatedFieldConfiguration.class)
+@Schema
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class PropagationCalculatedFieldConfiguration extends BaseCalculatedFieldConfiguration implements HasRelationPathLevel, HasUseLatestTsConfig {

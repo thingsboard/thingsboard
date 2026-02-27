@@ -35,7 +35,7 @@ import java.util.stream.Stream;
 
 import static java.util.Map.Entry.comparingByKey;
 
-@Schema(allOf = CalculatedFieldConfiguration.class)
+@Schema
 @Data
 public class AlarmCalculatedFieldConfiguration implements ArgumentsBasedCalculatedFieldConfiguration {
 

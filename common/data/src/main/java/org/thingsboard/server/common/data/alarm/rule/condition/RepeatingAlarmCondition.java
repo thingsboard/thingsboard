@@ -22,7 +22,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
-@Schema(name = "AlarmRuleRepeatingCondition", allOf = AlarmCondition.class)
+@Schema(name = "AlarmRuleRepeatingCondition")
 @Data
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
