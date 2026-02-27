@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -336,11 +337,10 @@ public class TbResourceController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Get Resource Infos by ids (getSystemOrTenantResourcesByIds)")
+    @Hidden
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @GetMapping(value = "/resource", params = {"resourceIds"})
     public List<TbResourceInfo> getSystemOrTenantResourcesByIds(
-            @Parameter(description = "A list of resource ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")))
             @RequestParam("resourceIds") Set<UUID> resourceUuids) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         List<TbResourceId> resourceIds = new ArrayList<>();
@@ -348,6 +348,15 @@ public class TbResourceController extends BaseController {
             resourceIds.add(new TbResourceId(resourceId));
         }
         return resourceService.findSystemOrTenantResourcesByIds(user.getTenantId(), resourceIds);
+    }
+
+    @ApiOperation(value = "Get Resource Infos by ids (getSystemOrTenantResourcesByIdsV2)")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @GetMapping(value = "/resource/list")
+    public List<TbResourceInfo> getSystemOrTenantResourcesByIdsV2(
+            @Parameter(description = "A list of resource ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")))
+            @RequestParam("resourceIds") Set<UUID> resourceUuids) throws ThingsboardException {
+        return getSystemOrTenantResourcesByIds(resourceUuids);
     }
 
     @ApiOperation(value = "Get All Resource Infos (getAllResources)",

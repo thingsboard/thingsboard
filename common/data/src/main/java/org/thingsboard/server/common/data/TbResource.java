@@ -28,6 +28,7 @@ import java.io.Serial;
 import java.util.Base64;
 import java.util.Optional;
 
+@Schema
 @Slf4j
 @Data
 @EqualsAndHashCode(callSuper = true)

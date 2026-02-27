@@ -15,12 +15,14 @@
  */
 package org.thingsboard.server.common.data.alarm.rule.condition;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
+@Schema(name = "AlarmRuleRepeatingCondition")
 @Data
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)

@@ -46,15 +46,17 @@ public class TbResourceInfo extends BaseData<TbResourceId> implements HasName, H
     @Length(fieldName = "title")
     @Schema(description = "Resource title.", example = "BinaryAppDataContainer id=19 v1.0")
     private String title;
-    @Schema(description = "Resource type.", example = "LWM2M_MODEL", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(description = "Resource type.", example = "LWM2M_MODEL")
     private ResourceType resourceType;
-    @Schema(description = "Resource sub type.", example = "IOT_SVG", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(description = "Resource sub type.", example = "IOT_SVG")
     private ResourceSubType resourceSubType;
     @NoXss
     @Length(fieldName = "resourceKey")
-    @Schema(description = "Resource key.", example = "19_1.0", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(description = "Resource key.", example = "19_1.0")
     private String resourceKey;
+    @Schema(description = "Whether the resource is public.", example = "false")
     private boolean isPublic;
+    @Schema(description = "Public resource key.")
     private String publicResourceKey;
     @Schema(description = "Resource search text.", example = "19_1.0:binaryappdatacontainer", accessMode = Schema.AccessMode.READ_ONLY)
     private String searchText;
@@ -63,10 +65,12 @@ public class TbResourceInfo extends BaseData<TbResourceId> implements HasName, H
     private String etag;
     @NoXss
     @Length(fieldName = "file name")
-    @Schema(description = "Resource file name.", example = "19.xml", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(description = "Resource file name.", example = "19.xml")
     private String fileName;
+    @Schema(description = "Resource descriptor.")
     private JsonNode descriptor;
 
+    @Schema(description = "External resource Id used for import/export.")
     private TbResourceId externalId;
 
     public TbResourceInfo() {

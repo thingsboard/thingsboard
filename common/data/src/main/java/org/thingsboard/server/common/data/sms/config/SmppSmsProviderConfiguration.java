@@ -18,6 +18,7 @@ package org.thingsboard.server.common.data.sms.config;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+@Schema
 @Data
 public class SmppSmsProviderConfiguration implements SmsProviderConfiguration {
     @Schema(description = "SMPP version", allowableValues = "3.3, 3.4", requiredMode = Schema.RequiredMode.REQUIRED)
@@ -89,7 +90,7 @@ public class SmppSmsProviderConfiguration implements SmsProviderConfiguration {
     @Schema(description = "Address range", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private String addressRange;
 
-    @Schema(allowableValues = {"0-10" ,"13-14"},
+    @Schema(minimum = "0", maximum = "14",
             description = "0 - SMSC Default Alphabet (ASCII for short and long code and to GSM for toll-free, used as default)\n" +
                     "1 - IA5 (ASCII for short and long code, Latin 9 for toll-free (ISO-8859-9))\n" +
                     "2 - Octet Unspecified (8-bit binary)\n" +

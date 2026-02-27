@@ -20,6 +20,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
@@ -29,6 +31,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+@Schema(
+        discriminatorProperty = "triggerType",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "ENTITY_ACTION", schema = DefaultNotificationRuleRecipientsConfig.EntityActionRecipientsConfig.class),
+                @DiscriminatorMapping(value = "ALARM", schema = EscalatedNotificationRuleRecipientsConfig.class),
+                @DiscriminatorMapping(value = "ALARM_COMMENT", schema = DefaultNotificationRuleRecipientsConfig.AlarmCommentRecipientsConfig.class),
+                @DiscriminatorMapping(value = "ALARM_ASSIGNMENT", schema = DefaultNotificationRuleRecipientsConfig.AlarmAssignmentRecipientsConfig.class),
+                @DiscriminatorMapping(value = "DEVICE_ACTIVITY", schema = DefaultNotificationRuleRecipientsConfig.DeviceActivityRecipientsConfig.class),
+                @DiscriminatorMapping(value = "RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT", schema = DefaultNotificationRuleRecipientsConfig.RuleEngineComponentLifecycleEventRecipientsConfig.class),
+                @DiscriminatorMapping(value = "EDGE_CONNECTION", schema = DefaultNotificationRuleRecipientsConfig.EdgeConnectionRecipientsConfig.class),
+                @DiscriminatorMapping(value = "EDGE_COMMUNICATION_FAILURE", schema = DefaultNotificationRuleRecipientsConfig.EdgeCommunicationFailureRecipientsConfig.class),
+                @DiscriminatorMapping(value = "NEW_PLATFORM_VERSION", schema = DefaultNotificationRuleRecipientsConfig.NewPlatformVersionRecipientsConfig.class),
+                @DiscriminatorMapping(value = "ENTITIES_LIMIT", schema = DefaultNotificationRuleRecipientsConfig.EntitiesLimitRecipientsConfig.class),
+                @DiscriminatorMapping(value = "API_USAGE_LIMIT", schema = DefaultNotificationRuleRecipientsConfig.ApiUsageLimitRecipientsConfig.class),
+                @DiscriminatorMapping(value = "RATE_LIMITS", schema = DefaultNotificationRuleRecipientsConfig.RateLimitsRecipientsConfig.class),
+                @DiscriminatorMapping(value = "TASK_PROCESSING_FAILURE", schema = DefaultNotificationRuleRecipientsConfig.TaskProcessingFailureRecipientsConfig.class),
+                @DiscriminatorMapping(value = "RESOURCES_SHORTAGE", schema = DefaultNotificationRuleRecipientsConfig.ResourceShortageRecipientsConfig.class)
+        })
 @JsonIgnoreProperties
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "triggerType", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY, defaultImpl = DefaultNotificationRuleRecipientsConfig.class)
 @JsonSubTypes({

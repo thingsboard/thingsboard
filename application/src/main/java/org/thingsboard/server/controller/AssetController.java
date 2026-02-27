@@ -16,6 +16,7 @@
 package org.thingsboard.server.controller;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -23,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -217,8 +219,7 @@ public class AssetController extends BaseController {
             notes = "Returns a page of assets owned by tenant. " +
                     PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/assets", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/tenant/assets")
     public PageData<Asset> getTenantAssets(
             @Parameter(description = PAGE_SIZE_DESCRIPTION)
             @RequestParam int pageSize,
@@ -245,8 +246,7 @@ public class AssetController extends BaseController {
             notes = "Returns a page of assets info objects owned by tenant. " +
                     PAGE_DATA_PARAMETERS + ASSET_INFO_DESCRIPTION + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/assetInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/tenant/assetInfos")
     public PageData<AssetInfo> getTenantAssetInfos(
             @Parameter(description = PAGE_SIZE_DESCRIPTION)
             @RequestParam int pageSize,
@@ -274,25 +274,30 @@ public class AssetController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Get Tenant Asset (getTenantAsset)",
+    @Hidden
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @GetMapping(value = "/tenant/assets", params = {"assetName"})
+    public Asset getTenantAsset(@RequestParam String assetName) throws ThingsboardException {
+        TenantId tenantId = getCurrentUser().getTenantId();
+        return checkNotNull(assetService.findAssetByTenantIdAndName(tenantId, assetName));
+    }
+
+    @ApiOperation(value = "Get Tenant Asset (getTenantAssetByName)",
             notes = "Requested asset must be owned by tenant that the user belongs to. " +
                     "Asset name is an unique property of asset. So it can be used to identify the asset." + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/assets", params = {"assetName"}, method = RequestMethod.GET)
-    @ResponseBody
-    public Asset getTenantAsset(
+    @GetMapping(value = "/tenant/asset")
+    public Asset getTenantAssetByName(
             @Parameter(description = ASSET_NAME_DESCRIPTION)
             @RequestParam String assetName) throws ThingsboardException {
-        TenantId tenantId = getCurrentUser().getTenantId();
-        return checkNotNull(assetService.findAssetByTenantIdAndName(tenantId, assetName));
+        return getTenantAsset(assetName);
     }
 
     @ApiOperation(value = "Get Customer Assets (getCustomerAssets)",
             notes = "Returns a page of assets objects assigned to customer. " +
                     PAGE_DATA_PARAMETERS)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/customer/{customerId}/assets", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/customer/{customerId}/assets")
     public PageData<Asset> getCustomerAssets(
             @Parameter(description = CUSTOMER_ID_PARAM_DESCRIPTION)
             @PathVariable("customerId") String strCustomerId,
@@ -324,8 +329,7 @@ public class AssetController extends BaseController {
             notes = "Returns a page of assets info objects assigned to customer. " +
                     PAGE_DATA_PARAMETERS + ASSET_INFO_DESCRIPTION)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/customer/{customerId}/assetInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/customer/{customerId}/assetInfos")
     public PageData<AssetInfo> getCustomerAssetInfos(
             @Parameter(description = CUSTOMER_ID_PARAM_DESCRIPTION)
             @PathVariable("customerId") String strCustomerId,
@@ -361,8 +365,7 @@ public class AssetController extends BaseController {
     @ApiOperation(value = "Get Assets By Ids (getAssetsByIds)",
             notes = "Requested assets must be owned by tenant or assigned to customer which user is performing the request. ")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/assets", params = {"assetIds"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/assets")
     public List<Asset> getAssetsByIds(
             @Parameter(description = "A list of assets ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")))
             @RequestParam("assetIds") String[] strAssetIds) throws ThingsboardException, ExecutionException, InterruptedException {
@@ -469,8 +472,7 @@ public class AssetController extends BaseController {
             notes = "Returns a page of assets assigned to edge. " +
                     PAGE_DATA_PARAMETERS)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/edge/{edgeId}/assets", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/edge/{edgeId}/assets")
     public PageData<Asset> getEdgeAssets(
             @Parameter(description = EDGE_ID_PARAM_DESCRIPTION)
             @PathVariable(EDGE_ID) String strEdgeId,

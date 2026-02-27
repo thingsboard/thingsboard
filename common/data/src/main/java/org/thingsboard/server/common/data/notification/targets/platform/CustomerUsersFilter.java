@@ -15,11 +15,13 @@
  */
 package org.thingsboard.server.common.data.notification.targets.platform;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.util.UUID;
 
+@Schema
 @Data
 public class CustomerUsersFilter implements UsersFilter {
 

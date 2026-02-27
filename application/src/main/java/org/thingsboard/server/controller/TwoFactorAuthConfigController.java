@@ -16,7 +16,11 @@
 package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -261,6 +265,7 @@ public class TwoFactorAuthConfigController extends BaseController {
     }
 
     @Data
+    @Schema
     public static class TwoFaAccountConfigUpdateRequest {
         private boolean useByDefault;
     }

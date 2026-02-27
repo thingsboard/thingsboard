@@ -15,10 +15,12 @@
  */
 package org.thingsboard.server.common.data.alarm.rule.condition.schedule;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.util.Set;
 
+@Schema(name = "AlarmRuleSpecificTimeSchedule")
 @Data
 public class SpecificTimeSchedule implements AlarmSchedule {
 

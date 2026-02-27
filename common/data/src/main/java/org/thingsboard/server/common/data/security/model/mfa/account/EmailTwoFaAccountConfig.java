@@ -15,12 +15,14 @@
  */
 package org.thingsboard.server.common.data.security.model.mfa.account;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderType;
 
+@Schema
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class EmailTwoFaAccountConfig extends OtpBasedTwoFaAccountConfig {

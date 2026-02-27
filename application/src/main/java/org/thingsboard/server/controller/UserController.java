@@ -16,6 +16,7 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -273,7 +274,7 @@ public class UserController extends BaseController {
             notes = "Returns a page of users owned by tenant or customer. The scope depends on authority of the user that performs the request." +
                     PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @GetMapping(value = "/users", params = {"pageSize", "page"})
+    @GetMapping(value = "/users")
     public PageData<User> getUsers(
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
@@ -334,7 +335,7 @@ public class UserController extends BaseController {
     @ApiOperation(value = "Get Tenant Users (getTenantAdmins)",
             notes = "Returns a page of users owned by tenant. " + PAGE_DATA_PARAMETERS + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @GetMapping(value = "/tenant/{tenantId}/users", params = {"pageSize", "page"})
+    @GetMapping(value = "/tenant/{tenantId}/users")
     public PageData<User> getTenantAdmins(
             @Parameter(description = TENANT_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(TENANT_ID) String strTenantId,
@@ -357,7 +358,7 @@ public class UserController extends BaseController {
     @ApiOperation(value = "Get Customer Users (getCustomerUsers)",
             notes = "Returns a page of users owned by customer. " + PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @GetMapping(value = "/customer/{customerId}/users", params = {"pageSize", "page"})
+    @GetMapping(value = "/customer/{customerId}/users")
     public PageData<User> getCustomerUsers(
             @Parameter(description = CUSTOMER_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(CUSTOMER_ID) String strCustomerId,
@@ -404,7 +405,7 @@ public class UserController extends BaseController {
                     "Search is been executed by email, firstName and lastName fields. " +
                     PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @GetMapping(value = "/users/assign/{alarmId}", params = {"pageSize", "page"})
+    @GetMapping(value = "/users/assign/{alarmId}")
     public PageData<UserEmailInfo> getUsersForAssign(
             @Parameter(description = ALARM_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable("alarmId") String strAlarmId,
@@ -456,10 +457,7 @@ public class UserController extends BaseController {
         return userSettingsService.saveUserSettings(currentUser.getTenantId(), userSettings).getSettings();
     }
 
-    @ApiOperation(value = "Update user settings (saveUserSettings)",
-            notes = "Update user settings for authorized user. Only specified json elements will be updated." +
-                    "Example: you have such settings: {A:5, B:{C:10, D:20}}. Updating it with {B:{C:10, D:30}} will result in" +
-                    "{A:5, B:{C:10, D:30}}. The same could be achieved by putting {B.D:30}")
+    @Hidden
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @PutMapping(value = "/user/settings")
     public void putUserSettings(@RequestBody JsonNode settings) throws ThingsboardException {
@@ -467,8 +465,17 @@ public class UserController extends BaseController {
         userSettingsService.updateUserSettings(currentUser.getTenantId(), currentUser.getId(), UserSettingsType.GENERAL, settings);
     }
 
-    @ApiOperation(value = "Get user settings (getUserSettings)",
-            notes = "Fetch the User settings based on authorized user. ")
+    @ApiOperation(value = "Update user settings (saveUserSettings)",
+            notes = "Update user settings for authorized user. Only specified json elements will be updated." +
+                    "Example: you have such settings: {A:5, B:{C:10, D:20}}. Updating it with {B:{C:10, D:30}} will result in" +
+                    "{A:5, B:{C:10, D:30}}. The same could be achieved by putting {B.D:30}")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PutMapping(value = "/user/settings/general")
+    public void putGeneralUserSettings(@RequestBody JsonNode settings) throws ThingsboardException {
+        putUserSettings(settings);
+    }
+
+    @Hidden
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/user/settings")
     public JsonNode getUserSettings() throws ThingsboardException {
@@ -476,6 +483,14 @@ public class UserController extends BaseController {
 
         UserSettings userSettings = userSettingsService.findUserSettings(currentUser.getTenantId(), currentUser.getId(), UserSettingsType.GENERAL);
         return userSettings == null ? JacksonUtil.newObjectNode() : userSettings.getSettings();
+    }
+
+    @ApiOperation(value = "Get user settings (getUserSettings)",
+            notes = "Fetch the User settings based on authorized user. ")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping(value = "/user/settings/general")
+    public JsonNode getGeneralUserSettings() throws ThingsboardException {
+        return getUserSettings();
     }
 
     @ApiOperation(value = "Delete user settings (deleteUserSettings)",
@@ -583,12 +598,10 @@ public class UserController extends BaseController {
         userService.removeMobileSession(user.getTenantId(), mobileToken);
     }
 
-    @ApiOperation(value = "Get Users By Ids (getUsersByIds)",
-            notes = "Requested users must be owned by tenant or assigned to customer which user is performing the request. ")
+    @Hidden
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/users", params = {"userIds"})
     public List<User> getUsersByIds(
-            @Parameter(description = "A list of user ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
             @RequestParam("userIds") Set<UUID> userUUIDs) throws ThingsboardException {
         TenantId tenantId = getCurrentUser().getTenantId();
         List<UserId> userIds = new ArrayList<>();
@@ -597,6 +610,16 @@ public class UserController extends BaseController {
         }
         List<User> users = userService.findUsersByTenantIdAndIds(tenantId, userIds);
         return filterUsersByReadPermission(users);
+    }
+
+    @ApiOperation(value = "Get Users By Ids (getUsersByIdsV2)",
+            notes = "Requested users must be owned by tenant or assigned to customer which user is performing the request. ")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping(value = "/users/list")
+    public List<User> getUsersByIdsV2(
+            @Parameter(description = "A list of user ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+            @RequestParam("userIds") Set<UUID> userUUIDs) throws ThingsboardException {
+        return getUsersByIds(userUUIDs);
     }
 
     private List<User> filterUsersByReadPermission(List<User> users) {

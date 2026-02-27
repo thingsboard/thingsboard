@@ -15,8 +15,10 @@
  */
 package org.thingsboard.server.common.data.query;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+@Schema
 @Data
 public class EntityDataSortOrder {
 
@@ -34,6 +36,7 @@ public class EntityDataSortOrder {
         this.direction = direction;
     }
 
+    @Schema
     public enum Direction {
         ASC, DESC
     }

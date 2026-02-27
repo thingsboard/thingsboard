@@ -23,11 +23,25 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.As;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.ExportableEntity;
+import org.thingsboard.server.common.data.TbResource;
+import org.thingsboard.server.common.data.ai.AiModel;
+import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.notification.rule.NotificationRule;
+import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
+import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.sync.JsonTbEntity;
 
@@ -45,6 +59,28 @@ import java.util.Map;
         @Type(name = "OTA_PACKAGE", value = OtaPackageExportData.class)
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Schema(
+        description = "Base export container for ThingsBoard entities",
+        discriminatorProperty = "entityType",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "CUSTOMER", schema = EntityExportData.CustomerExportData.class),
+                @DiscriminatorMapping(value = "DEVICE", schema = DeviceExportData.class),
+                @DiscriminatorMapping(value = "RULE_CHAIN", schema = RuleChainExportData.class),
+                @DiscriminatorMapping(value = "WIDGET_TYPE", schema = WidgetTypeExportData.class),
+                @DiscriminatorMapping(value = "WIDGETS_BUNDLE", schema = WidgetsBundleExportData.class),
+                @DiscriminatorMapping(value = "OTA_PACKAGE", schema = OtaPackageExportData.class),
+                @DiscriminatorMapping(value = "TB_RESOURCE", schema = EntityExportData.TbResourceExportData.class),
+                @DiscriminatorMapping(value = "DASHBOARD", schema = EntityExportData.DashboardExportData.class),
+                @DiscriminatorMapping(value = "ASSET_PROFILE", schema = EntityExportData.AssetProfileExportData.class),
+                @DiscriminatorMapping(value = "ASSET", schema = EntityExportData.AssetExportData.class),
+                @DiscriminatorMapping(value = "DEVICE_PROFILE", schema = EntityExportData.DeviceProfileExportData.class),
+                @DiscriminatorMapping(value = "ENTITY_VIEW", schema = EntityExportData.EntityViewExportData.class),
+                @DiscriminatorMapping(value = "NOTIFICATION_TEMPLATE", schema = EntityExportData.NotificationTemplateExportData.class),
+                @DiscriminatorMapping(value = "NOTIFICATION_TARGET", schema = EntityExportData.NotificationTargetExportData.class),
+                @DiscriminatorMapping(value = "NOTIFICATION_RULE", schema = EntityExportData.NotificationRuleExportData.class),
+                @DiscriminatorMapping(value = "AI_MODEL", schema = EntityExportData.AiModelExportData.class)
+        }
+)
 @Data
 public class EntityExportData<E extends ExportableEntity<? extends EntityId>> {
 
@@ -61,16 +97,21 @@ public class EntityExportData<E extends ExportableEntity<? extends EntityId>> {
 
     @JsonProperty(index = 2)
     @JsonTbEntity
+    @Schema(implementation = ExportableEntity.class)
     private E entity;
     @JsonProperty(index = 1)
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private EntityType entityType;
 
     @JsonProperty(index = 100)
+    @ArraySchema(schema = @Schema(implementation = EntityRelation.class))
     private List<EntityRelation> relations;
     @JsonProperty(index = 101)
+    @Schema(description = "Map of attributes where key is the scope of attributes and value is the list of attributes for that scope")
     private Map<String, List<AttributeExportData>> attributes;
     @JsonProperty(index = 102)
     @JsonIgnoreProperties({"id", "entityId", "createdTime", "version"})
+    @ArraySchema(schema = @Schema(implementation = CalculatedField.class))
     private List<CalculatedField> calculatedFields;
 
     public EntityExportData<E> sort() {
@@ -110,5 +151,28 @@ public class EntityExportData<E extends ExportableEntity<? extends EntityId>> {
     public boolean hasCalculatedFields() {
         return calculatedFields != null && !calculatedFields.isEmpty();
     }
+
+    @Schema
+    public static class CustomerExportData extends EntityExportData<Customer> {}
+    @Schema
+    public static class TbResourceExportData extends EntityExportData<TbResource> {}
+    @Schema
+    public static class DashboardExportData extends EntityExportData<Dashboard> {}
+    @Schema
+    public static class AssetProfileExportData extends EntityExportData<AssetProfile> {}
+    @Schema
+    public static class AssetExportData extends EntityExportData<Asset> {}
+    @Schema
+    public static class DeviceProfileExportData extends EntityExportData<DeviceProfile> {}
+    @Schema
+    public static class EntityViewExportData extends EntityExportData<EntityView> {}
+    @Schema
+    public static class NotificationTemplateExportData extends EntityExportData<NotificationTemplate> {}
+    @Schema
+    public static class NotificationTargetExportData extends EntityExportData<NotificationTarget> {}
+    @Schema
+    public static class NotificationRuleExportData extends EntityExportData<NotificationRule> {}
+    @Schema
+    public static class AiModelExportData extends EntityExportData<AiModel> {}
 
 }

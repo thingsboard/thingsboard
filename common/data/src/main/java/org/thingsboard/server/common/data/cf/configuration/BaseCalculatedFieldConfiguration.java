@@ -15,11 +15,13 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.util.Map;
 
+@Schema
 @Data
 public abstract class BaseCalculatedFieldConfiguration implements ExpressionBasedCalculatedFieldConfiguration {
 

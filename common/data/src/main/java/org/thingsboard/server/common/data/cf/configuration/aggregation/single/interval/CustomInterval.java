@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.cf.configuration.aggregation.single.interval;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -24,6 +25,7 @@ import lombok.NoArgsConstructor;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 
+@Schema
 @EqualsAndHashCode(callSuper = true)
 @Data
 @NoArgsConstructor

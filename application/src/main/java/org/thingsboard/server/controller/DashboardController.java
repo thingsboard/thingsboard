@@ -17,6 +17,7 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -119,7 +120,7 @@ public class DashboardController extends BaseController {
                     "Used to adjust view of the dashboards according to the difference between browser and server time.")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/dashboard/serverTime")
-    @ApiResponse(responseCode = "200", description = "OK", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "1636023857137")))
+    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(type = "integer", format = "int64", example = "1636023857137")))
     public long getServerTime() {
         return System.currentTimeMillis();
     }
@@ -131,7 +132,7 @@ public class DashboardController extends BaseController {
                     "The actual value of the limit is configurable in the system configuration file.")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/dashboard/maxDatapointsLimit")
-    @ApiResponse(responseCode = "200", description = "OK", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "5000")))
+    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(type = "integer", format = "int64", example = "5000")))
     public long getMaxDatapointsLimit() {
         return maxDatapointsLimit;
     }
@@ -176,6 +177,8 @@ public class DashboardController extends BaseController {
                     "Referencing non-existing dashboard Id will cause 'Not Found' error. " +
                     "Remove 'id', 'tenantId' and optionally 'customerId' from the request body example (below) to create new Dashboard entity. " +
                     TENANT_AUTHORITY_PARAGRAPH)
+    @ApiResponse(responseCode = "200", description = "OK",
+            content = @Content(schema = @Schema(implementation = Dashboard.class)))
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @PostMapping(value = "/dashboard")
     public void saveDashboard(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON value representing the dashboard.")
@@ -329,7 +332,7 @@ public class DashboardController extends BaseController {
             notes = "Returns a page of dashboard info objects owned by tenant. " + DASHBOARD_INFO_DEFINITION + " " + PAGE_DATA_PARAMETERS +
                     SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @GetMapping(value = "/tenant/{tenantId}/dashboards", params = {"pageSize", "page"})
+    @GetMapping(value = "/tenant/{tenantId}/dashboards")
     public PageData<DashboardInfo> getTenantDashboards(
             @Parameter(description = TENANT_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(TENANT_ID) String strTenantId,
@@ -353,7 +356,7 @@ public class DashboardController extends BaseController {
             notes = "Returns a page of dashboard info objects owned by the tenant of a current user. "
                     + DASHBOARD_INFO_DEFINITION + " " + PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @GetMapping(value = "/tenant/dashboards", params = {"pageSize", "page"})
+    @GetMapping(value = "/tenant/dashboards")
     public PageData<DashboardInfo> getTenantDashboards(
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
@@ -380,7 +383,7 @@ public class DashboardController extends BaseController {
             notes = "Returns a page of dashboard info objects owned by the specified customer. "
                     + DASHBOARD_INFO_DEFINITION + " " + PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @GetMapping(value = "/customer/{customerId}/dashboards", params = {"pageSize", "page"})
+    @GetMapping(value = "/customer/{customerId}/dashboards")
     public PageData<DashboardInfo> getCustomerDashboards(
             @Parameter(description = CUSTOMER_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(CUSTOMER_ID) String strCustomerId,
@@ -574,7 +577,7 @@ public class DashboardController extends BaseController {
             notes = "Returns a page of dashboard info objects assigned to the specified edge. "
                     + DASHBOARD_INFO_DEFINITION + " " + PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @GetMapping(value = "/edge/{edgeId}/dashboards", params = {"pageSize", "page"})
+    @GetMapping(value = "/edge/{edgeId}/dashboards")
     public PageData<DashboardInfo> getEdgeDashboards(
             @Parameter(description = EDGE_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(EDGE_ID) String strEdgeId,
@@ -602,13 +605,10 @@ public class DashboardController extends BaseController {
         return checkNotNull(filteredResult);
     }
 
-    @ApiOperation(value = "Get dashboards by Dashboard Ids (getDashboardsByIds)",
-            notes = "Returns a list of DashboardInfo objects based on the provided ids. " +
-                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @Hidden
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/dashboards", params = {"dashboardIds"})
-    public List<DashboardInfo> getDashboardsByIds(@Parameter(description = "A list of dashboard ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
-            @RequestParam("dashboardIds") Set<UUID> dashboardUUIDs) throws ThingsboardException {
+    public List<DashboardInfo> getDashboardsByIds(@RequestParam("dashboardIds") Set<UUID> dashboardUUIDs) throws ThingsboardException {
         TenantId tenantId = getCurrentUser().getTenantId();
         List<DashboardId> dashboardIds = new ArrayList<>();
         for (UUID dashboardUUID : dashboardUUIDs) {
@@ -616,6 +616,16 @@ public class DashboardController extends BaseController {
         }
         List<DashboardInfo> dashboards = dashboardService.findDashboardInfoByIds(tenantId, dashboardIds);
         return filterDashboardsByReadPermission(dashboards);
+    }
+
+    @ApiOperation(value = "Get dashboards by Dashboard Ids (getDashboardsByIdsV2)",
+            notes = "Returns a list of DashboardInfo objects based on the provided ids. " +
+                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping(value = "/dashboards/list")
+    public List<DashboardInfo> getDashboardsByIdsV2(@Parameter(description = "A list of dashboard ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+                                                    @RequestParam("dashboardIds") Set<UUID> dashboardUUIDs) throws ThingsboardException {
+        return getDashboardsByIds(dashboardUUIDs);
     }
 
     private Set<CustomerId> customerIdFromStr(String[] strCustomerIds) {

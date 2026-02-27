@@ -20,9 +20,32 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.io.Serializable;
 
+@Schema(
+        name = "NotificationRuleTriggerConfig",
+        description = "Configuration for notification rule trigger",
+        discriminatorProperty = "triggerType",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "ALARM", schema = AlarmNotificationRuleTriggerConfig.class),
+                @DiscriminatorMapping(value = "DEVICE_ACTIVITY", schema = DeviceActivityNotificationRuleTriggerConfig.class),
+                @DiscriminatorMapping(value = "ENTITY_ACTION", schema = EntityActionNotificationRuleTriggerConfig.class),
+                @DiscriminatorMapping(value = "ALARM_COMMENT", schema = AlarmCommentNotificationRuleTriggerConfig.class),
+                @DiscriminatorMapping(value = "RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT", schema = RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig.class),
+                @DiscriminatorMapping(value = "ALARM_ASSIGNMENT", schema = AlarmAssignmentNotificationRuleTriggerConfig.class),
+                @DiscriminatorMapping(value = "NEW_PLATFORM_VERSION", schema = NewPlatformVersionNotificationRuleTriggerConfig.class),
+                @DiscriminatorMapping(value = "ENTITIES_LIMIT", schema = EntitiesLimitNotificationRuleTriggerConfig.class),
+                @DiscriminatorMapping(value = "API_USAGE_LIMIT", schema = ApiUsageLimitNotificationRuleTriggerConfig.class),
+                @DiscriminatorMapping(value = "RATE_LIMITS", schema = RateLimitsNotificationRuleTriggerConfig.class),
+                @DiscriminatorMapping(value = "EDGE_CONNECTION", schema = EdgeConnectionNotificationRuleTriggerConfig.class),
+                @DiscriminatorMapping(value = "EDGE_COMMUNICATION_FAILURE", schema = EdgeCommunicationFailureNotificationRuleTriggerConfig.class),
+                @DiscriminatorMapping(value = "TASK_PROCESSING_FAILURE", schema = TaskProcessingFailureNotificationRuleTriggerConfig.class),
+                @DiscriminatorMapping(value = "RESOURCES_SHORTAGE", schema = ResourcesShortageNotificationRuleTriggerConfig.class)
+        }
+)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "triggerType")
 @JsonSubTypes({
@@ -43,6 +66,7 @@ import java.io.Serializable;
 })
 public interface NotificationRuleTriggerConfig extends Serializable {
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     NotificationRuleTriggerType getTriggerType();
 
     @JsonIgnore

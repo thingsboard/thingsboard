@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.common.data.alarm.rule.condition;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(name = "AlarmRuleSimpleCondition")
 public class SimpleAlarmCondition extends AlarmCondition {
 
     @Override
