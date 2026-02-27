@@ -1363,8 +1363,8 @@ export class RuleChainPageComponent extends PageComponent
     const contextInfo: RuleChainMenuContextInfo = {
       headerClass: 'tb-rulechain-header',
       icon: 'sticky_note_2',
-      title: note.content || '',
-      subtitle: this.translate.instant('rulechain.note'),
+      title: this.translate.instant('rulechain.note'),
+      subtitle: note.content.length > 24 ? note.content.substring(0, 24) + '…' : note.content,
       menuItems: []
     };
     if (!note.readonly) {
