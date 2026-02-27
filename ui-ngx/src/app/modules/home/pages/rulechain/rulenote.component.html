@@ -1,0 +1,47 @@
+<!--
+
+    Copyright © 2016-2026 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+@if (modelservice.isEditable() && !note.readonly && edit) {
+  <div class="fc-noselect fc-nodeedit"
+       (mousedown)="$event.stopPropagation()"
+       (click)="noteEdit($event)">
+    <i class="fa fa-pencil" aria-hidden="true"></i>
+  </div>
+  <div class="fc-noselect fc-nodedelete"
+       (mousedown)="$event.stopPropagation()"
+       (click)="noteDelete($event)">
+    &times;
+  </div>
+}
+<div class="tb-rule-note-bg"
+     [style.background-color]="note.backgroundColor || '#FFF9C4'"
+     [style.border-color]="borderColorFor(note.backgroundColor)"
+     (dblclick)="userNoteCallbacks?.doubleClick?.($event, note)">
+  @if (note?.content) {
+    <tb-markdown [data]="note.content"
+                 [applyDefaultMarkdownStyle]="note.applyDefaultMarkdownStyle ?? true"
+                 [additionalStyles]="additionalStyles"
+                 [containerClass]="noteClass"
+                 fallbackToPlainMarkdown
+                 usePlainMarkdown>
+    </tb-markdown>
+  } @else {
+    <span class="tb-rule-note-placeholder">
+      {{ 'rulechain.note-empty' | translate }}
+    </span>
+  }
+</div>

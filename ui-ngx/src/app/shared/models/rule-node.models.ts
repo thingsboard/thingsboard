@@ -18,7 +18,7 @@ import { BaseData } from '@shared/models/base-data';
 import { RuleChainId } from '@shared/models/id/rule-chain-id';
 import { RuleNodeId } from '@shared/models/id/rule-node-id';
 import { ComponentDescriptor } from '@shared/models/component-descriptor.models';
-import { FcEdge, FcNode } from 'ngx-flowchart';
+import { FcEdge, FcNode, FcNote } from 'ngx-flowchart';
 import { Observable } from 'rxjs';
 import { PageComponent } from '@shared/components/page.component';
 import { AfterViewInit, DestroyRef, Directive, EventEmitter, inject, OnInit } from '@angular/core';
@@ -27,6 +27,7 @@ import { RuleChainType } from '@shared/models/rule-chain.models';
 import { DebugRuleNodeEventBody } from '@shared/models/event.models';
 import { EntityTestScriptResult, HasEntityDebugSettings } from '@shared/models/entity.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { strings } from '@angular-devkit/core';
 
 export interface RuleNodeConfiguration {
   [key: string]: any;
@@ -356,6 +357,13 @@ export interface FcRuleNode extends FcRuleNodeType {
 
 export interface FcRuleEdge extends FcEdge {
   labels?: string[];
+}
+
+export interface FcRuleNote extends FcNote {
+  content?: string;
+  backgroundColor?: string;
+  applyDefaultMarkdownStyle?: boolean;
+  markdownCss?: string;
 }
 
 export enum ScriptLanguage {
