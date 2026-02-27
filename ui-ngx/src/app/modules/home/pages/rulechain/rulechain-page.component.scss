@@ -188,6 +188,19 @@
           margin: -3px;
           border: solid 3px #f00;
         }
+        &.fc-edit {
+          margin: -2px;
+          border: solid 2px rgba(0, 0, 0, 0.35);
+        }
+      }
+
+      fc-note {
+        &.fc-selected:not(.fc-edit) {
+          box-shadow: 0 0 0 3px #f00;
+        }
+        &.fc-selected.fc-edit {
+          box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.35);
+        }
       }
     }
 

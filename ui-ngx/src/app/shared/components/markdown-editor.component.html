@@ -26,7 +26,7 @@
     <button [class.!hidden]="!editorMode"
             type="button"
             mat-button (click)="toggleEditMode()">{{ 'markdown.preview' | translate }}</button>
-    <div *ngIf = "helpId" [tb-help-popup]="helpId"></div>
+    <div *ngIf = "helpId" [tb-help-popup]="helpId" [tb-help-popup-style]="helpPopupStyle"></div>
     <fieldset style="width: initial">
       <div matTooltip="{{(fullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
            matTooltipPosition="above"

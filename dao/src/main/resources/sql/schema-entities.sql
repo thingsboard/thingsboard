@@ -169,6 +169,7 @@ CREATE TABLE IF NOT EXISTS rule_chain (
     debug_mode boolean,
     tenant_id uuid,
     external_id uuid,
+    notes text,
     version BIGINT DEFAULT 1,
     CONSTRAINT rule_chain_external_id_unq_key UNIQUE (tenant_id, external_id)
 );

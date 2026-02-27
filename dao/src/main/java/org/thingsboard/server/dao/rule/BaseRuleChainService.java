@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.rule;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FluentFuture;
@@ -53,6 +54,7 @@ import org.thingsboard.server.common.data.rule.RuleChainConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChainData;
 import org.thingsboard.server.common.data.rule.RuleChainImportResult;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
+import org.thingsboard.server.common.data.rule.RuleChainNote;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleChainUpdateResult;
 import org.thingsboard.server.common.data.rule.RuleNode;
@@ -316,6 +318,8 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         if (!relations.isEmpty()) {
             relationService.saveRelations(tenantId, relations);
         }
+        ruleChain.setNotes(ruleChainMetaData.getNotes() != null && !ruleChainMetaData.getNotes().isEmpty()
+                ? JacksonUtil.toString(ruleChainMetaData.getNotes()) : null);
         ruleChain = ruleChainDao.save(tenantId, ruleChain);
         eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entity(ruleChain)
                 .entityId(ruleChain.getId()).broadcastEvent(publishSaveEvent).build());
@@ -375,6 +379,9 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         if (ruleChainMetaData.getConnections() != null) {
             Collections.sort(ruleChainMetaData.getConnections(), Comparator.comparingInt(NodeConnectionInfo::getFromIndex)
                     .thenComparing(NodeConnectionInfo::getToIndex).thenComparing(NodeConnectionInfo::getType));
+        }
+        if (ruleChain.getNotes() != null) {
+            ruleChainMetaData.setNotes(JacksonUtil.fromString(ruleChain.getNotes(), new TypeReference<List<RuleChainNote>>() {}));
         }
         return ruleChainMetaData;
     }

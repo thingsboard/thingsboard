@@ -71,7 +71,7 @@
     "ngx-clipboard": "^16.0.0",
     "ngx-daterangepicker-material": "^6.0.4",
     "ngx-drag-drop": "^20.0.1",
-    "ngx-flowchart": "https://github.com/thingsboard/ngx-flowchart.git#release/4.0.0",
+    "ngx-flowchart": "file:../../ngx-flowchart/dist/ngx-flowchart",
     "ngx-hm-carousel": "^19.0.0",
     "ngx-markdown": "^20.1.0",
     "ngx-sharebuttons": "^17.0.0",
