@@ -20,10 +20,14 @@ import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.ResourceUtils;
 import org.thingsboard.server.common.data.StringUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
+import java.util.Collections;
+import java.util.List;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -54,4 +58,16 @@ public class KeystoreSslCredentials extends AbstractSslCredentials {
     protected void updateKeyAlias(String keyAlias) {
         this.keyAlias = keyAlias;
     }
+
+    @Override
+    public List<Path> getCertificateFilePaths() {
+        if (!StringUtils.isEmpty(storeFile) && !storeFile.startsWith(ResourceUtils.CLASSPATH_URL_PREFIX)) {
+            File storeFileObj = new File(storeFile);
+            if (storeFileObj.exists()) {
+                return Collections.singletonList(storeFileObj.toPath().toAbsolutePath());
+            }
+        }
+        return Collections.emptyList();
+    }
+
 }

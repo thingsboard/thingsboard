@@ -29,6 +29,7 @@ import org.eclipse.leshan.server.californium.bootstrap.LwM2mBootstrapPskStore;
 import org.eclipse.leshan.server.californium.bootstrap.endpoint.CaliforniumBootstrapServerEndpointsProvider;
 import org.eclipse.leshan.server.californium.bootstrap.endpoint.coap.CoapBootstrapServerProtocolProvider;
 import org.eclipse.leshan.server.californium.bootstrap.endpoint.coaps.CoapsBootstrapServerProtocolProvider;
+import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.config.ssl.SslCredentials;
@@ -55,7 +56,7 @@ import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.se
 @Component
 @TbLwM2mBootstrapTransportComponent
 @RequiredArgsConstructor
-public class LwM2MTransportBootstrapService {
+public class LwM2MTransportBootstrapService implements SmartInitializingSingleton {
 
     private final LwM2MTransportServerConfig serverConfig;
     private final LwM2MTransportBootstrapConfig bootstrapConfig;
@@ -64,6 +65,19 @@ public class LwM2MTransportBootstrapService {
     private final TransportService transportService;
     private final TbLwM2MDtlsBootstrapCertificateVerifier certificateVerifier;
     private LeshanBootstrapServer server;
+
+    @Override
+    public void afterSingletonsInstantiated() {
+        bootstrapConfig.registerServerReloadCallback(() -> {
+            try {
+                log.info("LwM2M Bootstrap certificates reloaded. Recreating bootstrap server...");
+                recreateBootstrapServer();
+                log.info("LwM2M Bootstrap server recreated successfully with new certificates.");
+            } catch (Exception e) {
+                log.error("Failed to recreate LwM2M Bootstrap server after certificate reload", e);
+            }
+        });
+    }
 
     @PostConstruct
     public void init() {
@@ -110,7 +124,7 @@ public class LwM2MTransportBootstrapService {
 
         // Create Californium Configuration
         Configuration serverCoapConfig = endpointsBuilder.createDefaultConfiguration();
-        getCoapConfig(serverCoapConfig, bootstrapConfig.getPort(), bootstrapConfig.getSecurePort(),serverConfig);
+        getCoapConfig(serverCoapConfig, bootstrapConfig.getPort(), bootstrapConfig.getSecurePort(), serverConfig);
         serverCoapConfig.setTransient(DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY);
         serverCoapConfig.set(DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY, serverConfig.isRecommendedCiphers());
         serverCoapConfig.setTransient(DtlsConfig.DTLS_CONNECTION_ID_LENGTH);
@@ -119,7 +133,7 @@ public class LwM2MTransportBootstrapService {
         serverCoapConfig.set(DTLS_RETRANSMISSION_TIMEOUT, serverConfig.getDtlsRetransmissionTimeout(), MILLISECONDS);
 
         if (serverConfig.getDtlsCidLength() != null) {
-            setDtlsConnectorConfigCidLength( serverCoapConfig, serverConfig.getDtlsCidLength());
+            setDtlsConnectorConfigCidLength(serverCoapConfig, serverConfig.getDtlsCidLength());
         }
 
         /* Create DTLS Config */
@@ -164,4 +178,18 @@ public class LwM2MTransportBootstrapService {
             builder.setTrustedCertificates(new X509Certificate[0]);
         }
     }
+
+    private synchronized void recreateBootstrapServer() {
+        if (server != null) {
+            log.info("Stopping old LwM2M Bootstrap server...");
+            server.destroy();
+            log.info("Old LwM2M Bootstrap server stopped.");
+        }
+
+        log.info("Creating new LwM2M Bootstrap server with updated certificates...");
+        this.server = getLhBootstrapServer();
+        this.server.start();
+        log.info("New LwM2M Bootstrap server started successfully.");
+    }
+
 }
