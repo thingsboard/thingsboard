@@ -71,8 +71,8 @@ public class JpaRpcDao extends JpaAbstractDao<RpcEntity, Rpc> implements RpcDao,
 
     @Transactional
     @Override
-    public int deleteOutdatedRpcByTenantId(TenantId tenantId, Long expirationTime) {
-        return rpcRepository.deleteOutdatedRpcByTenantId(tenantId.getId(), expirationTime);
+    public int deleteOutdatedRpcByTenantIdBatch(TenantId tenantId, Long expirationTime, int batchSize) {
+        return rpcRepository.deleteOutdatedRpcByTenantIdBatch(tenantId.getId(), expirationTime, batchSize);
     }
 
     @Override
