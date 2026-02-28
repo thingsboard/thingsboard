@@ -196,7 +196,9 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
         log.trace("Executing deleteOtaPackage [{}]", otaPackageId);
         validateId(otaPackageId, id -> INCORRECT_OTA_PACKAGE_ID + id);
         try {
+            Long oid = getDataOidById(tenantId, otaPackageId);
             otaPackageDao.removeById(tenantId, otaPackageId.getId());
+            unlinkDataIfPresent(tenantId, otaPackageId, oid);
             publishEvictEvent(new OtaPackageCacheEvictEvent(otaPackageId));
             eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(otaPackageId).build());
         } catch (Exception t) {
@@ -215,6 +217,30 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
         }
     }
 
+    private Long getDataOidById(TenantId tenantId, OtaPackageId otaPackageId) {
+        try {
+            log.trace("Executing getDataOidById tenantId [{}], otaPackageId [{}]", tenantId, otaPackageId);
+            return otaPackageDao.getDataOidById(otaPackageId.getId());
+        } catch (Exception e) {
+            log.warn("[{}][{}] Failed to retrieve OID before deletion", tenantId, otaPackageId, e);
+        }
+        return null;
+    }
+
+    private void unlinkDataIfPresent(TenantId tenantId, OtaPackageId otaPackageId, Long oid) {
+        if (oid == null) {
+            return;
+        }
+        try {
+            Integer result = otaPackageDao.unlinkLargeObject(oid);
+            if (result != 1) {
+                log.warn("[{}][{}] Failed to delete large object (OID: {}). Result code: {}", tenantId, otaPackageId, oid, result);
+            }
+        } catch (Exception e) {
+            log.warn("[{}][{}] Failed to delete large object (OID: {})", tenantId, otaPackageId, oid, e);
+        }
+    }
+
     @Override
     public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
         deleteOtaPackage(tenantId, (OtaPackageId) id);
@@ -226,30 +252,28 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
     }
 
     @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteOtaPackagesByTenantId(tenantId);
+    }
+
+    @Override
     public void deleteOtaPackagesByTenantId(TenantId tenantId) {
         log.trace("Executing deleteOtaPackagesByTenantId, tenantId [{}]", tenantId);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         tenantOtaPackageRemover.removeEntities(tenantId, tenantId);
     }
 
-    @Override
-    public void deleteByTenantId(TenantId tenantId) {
-        deleteOtaPackagesByTenantId(tenantId);
-    }
+    private final PaginatedRemover<TenantId, OtaPackageInfo> tenantOtaPackageRemover = new PaginatedRemover<>() {
+        @Override
+        protected PageData<OtaPackageInfo> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
+            return otaPackageInfoDao.findOtaPackageInfoByTenantId(id, pageLink);
+        }
 
-    private PaginatedRemover<TenantId, OtaPackageInfo> tenantOtaPackageRemover =
-            new PaginatedRemover<>() {
-
-                @Override
-                protected PageData<OtaPackageInfo> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
-                    return otaPackageInfoDao.findOtaPackageInfoByTenantId(id, pageLink);
-                }
-
-                @Override
-                protected void removeEntity(TenantId tenantId, OtaPackageInfo entity) {
-                    deleteOtaPackage(tenantId, entity.getId());
-                }
-            };
+        @Override
+        protected void removeEntity(TenantId tenantId, OtaPackageInfo entity) {
+            deleteOtaPackage(tenantId, entity.getId());
+        }
+    };
 
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {

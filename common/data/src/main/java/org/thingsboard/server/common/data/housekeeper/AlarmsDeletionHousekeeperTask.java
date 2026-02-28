@@ -23,6 +23,7 @@ import lombok.ToString;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 
+import java.io.Serial;
 import java.util.List;
 import java.util.UUID;
 
@@ -31,6 +32,9 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class AlarmsDeletionHousekeeperTask extends HousekeeperTask {
+
+    @Serial
+    private static final long serialVersionUID = 9214680001573764374L;
 
     private List<UUID> alarms;
 
