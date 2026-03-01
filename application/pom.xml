@@ -541,7 +541,7 @@
                                     <profiles>
                                         <profile>openapi</profile>
                                     </profiles>
-                                    <jvmArguments>-Xmx1024m</jvmArguments>
+                                    <jvmArguments>-Xmx1024m -Dspring.config.name=thingsboard</jvmArguments>
                                     <maxAttempts>180</maxAttempts>
                                     <wait>2000</wait>
                                 </configuration>
