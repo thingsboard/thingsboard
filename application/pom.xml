@@ -542,6 +542,10 @@
                                         <profile>openapi</profile>
                                     </profiles>
                                     <jvmArguments>-Xmx1024m -Dspring.config.name=thingsboard</jvmArguments>
+                                    <systemPropertyVariables>
+                                        <spring.datasource.url>jdbc:tc:postgresql:16.6:///thingsboard?TC_DAEMON=true&amp;TC_TMPFS=/testtmpfs:rw&amp;?TC_INITFUNCTION=org.thingsboard.server.dao.PostgreSqlInitializer::initDb</spring.datasource.url>
+                                        <spring.datasource.driverClassName>org.testcontainers.jdbc.ContainerDatabaseDriver</spring.datasource.driverClassName>
+                                    </systemPropertyVariables>
                                     <maxAttempts>180</maxAttempts>
                                     <wait>2000</wait>
                                 </configuration>
