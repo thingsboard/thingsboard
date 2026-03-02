@@ -44,55 +44,42 @@ public class DefaultNotificationRuleRecipientsConfig extends NotificationRuleRec
         return Map.of(0, targets);
     }
 
-    @Schema(allOf = DefaultNotificationRuleRecipientsConfig.class)
     public static class EntityActionRecipientsConfig extends DefaultNotificationRuleRecipientsConfig {
     }
 
-    @Schema(allOf = DefaultNotificationRuleRecipientsConfig.class)
     public static class AlarmCommentRecipientsConfig extends DefaultNotificationRuleRecipientsConfig {
     }
 
-    @Schema(allOf = DefaultNotificationRuleRecipientsConfig.class)
     public static class AlarmAssignmentRecipientsConfig extends DefaultNotificationRuleRecipientsConfig {
     }
 
-    @Schema(allOf = DefaultNotificationRuleRecipientsConfig.class)
     public static class DeviceActivityRecipientsConfig extends DefaultNotificationRuleRecipientsConfig {
     }
 
-    @Schema(allOf = DefaultNotificationRuleRecipientsConfig.class)
     public static class RuleEngineComponentLifecycleEventRecipientsConfig extends DefaultNotificationRuleRecipientsConfig {
     }
 
-    @Schema(allOf = DefaultNotificationRuleRecipientsConfig.class)
     public static class EdgeConnectionRecipientsConfig extends DefaultNotificationRuleRecipientsConfig {
     }
 
-    @Schema(allOf = DefaultNotificationRuleRecipientsConfig.class)
     public static class EdgeCommunicationFailureRecipientsConfig extends DefaultNotificationRuleRecipientsConfig {
     }
 
-    @Schema(allOf = DefaultNotificationRuleRecipientsConfig.class)
     public static class NewPlatformVersionRecipientsConfig extends DefaultNotificationRuleRecipientsConfig {
     }
 
-    @Schema(allOf = DefaultNotificationRuleRecipientsConfig.class)
     public static class EntitiesLimitRecipientsConfig extends DefaultNotificationRuleRecipientsConfig {
     }
 
-    @Schema(allOf = DefaultNotificationRuleRecipientsConfig.class)
     public static class ApiUsageLimitRecipientsConfig extends DefaultNotificationRuleRecipientsConfig {
     }
 
-    @Schema(allOf = DefaultNotificationRuleRecipientsConfig.class)
     public static class RateLimitsRecipientsConfig extends DefaultNotificationRuleRecipientsConfig {
     }
 
-    @Schema(allOf = DefaultNotificationRuleRecipientsConfig.class)
     public static class TaskProcessingFailureRecipientsConfig extends DefaultNotificationRuleRecipientsConfig {
     }
 
-    @Schema(allOf = DefaultNotificationRuleRecipientsConfig.class)
     public static class ResourceShortageRecipientsConfig extends DefaultNotificationRuleRecipientsConfig {
     }
 
