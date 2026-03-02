@@ -62,9 +62,6 @@ public class RuleChain extends BaseDataWithAdditionalInfo<RuleChainId> implement
     private Long version;
 
     @JsonIgnore
-    private String notes;
-
-    @JsonIgnore
     private byte[] configurationBytes;
 
     public RuleChain() {
@@ -85,7 +82,6 @@ public class RuleChain extends BaseDataWithAdditionalInfo<RuleChainId> implement
         this.setConfiguration(ruleChain.getConfiguration());
         this.setExternalId(ruleChain.getExternalId());
         this.version = ruleChain.getVersion();
-        this.notes = ruleChain.getNotes();
     }
 
     @Override

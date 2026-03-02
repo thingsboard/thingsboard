@@ -318,8 +318,9 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         if (!relations.isEmpty()) {
             relationService.saveRelations(tenantId, relations);
         }
-        ruleChain.setNotes(ruleChainMetaData.getNotes() != null && !ruleChainMetaData.getNotes().isEmpty()
-                ? JacksonUtil.toString(ruleChainMetaData.getNotes()) : null);
+        ruleChain.setConfiguration(CollectionUtils.isNotEmpty(ruleChainMetaData.getNotes())
+                ? JacksonUtil.newObjectNode().set("notes", JacksonUtil.valueToTree(ruleChainMetaData.getNotes()))
+                : null);
         ruleChain = ruleChainDao.save(tenantId, ruleChain);
         eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entity(ruleChain)
                 .entityId(ruleChain.getId()).broadcastEvent(publishSaveEvent).build());
@@ -380,9 +381,10 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             Collections.sort(ruleChainMetaData.getConnections(), Comparator.comparingInt(NodeConnectionInfo::getFromIndex)
                     .thenComparing(NodeConnectionInfo::getToIndex).thenComparing(NodeConnectionInfo::getType));
         }
-        if (ruleChain.getNotes() != null) {
-            ruleChainMetaData.setNotes(JacksonUtil.fromString(ruleChain.getNotes(), new TypeReference<List<RuleChainNote>>() {}));
-        }
+        ruleChainMetaData.setNotes(Optional.ofNullable(ruleChain.getConfiguration())
+                .filter(c -> c.has("notes"))
+                .map(c -> JacksonUtil.convertValue(c.get("notes"), new TypeReference<List<RuleChainNote>>() {}))
+                .orElse(null));
         return ruleChainMetaData;
     }
 
