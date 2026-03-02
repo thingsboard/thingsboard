@@ -441,7 +441,7 @@ public class AdminController extends BaseController {
                 .build() + "\"";
     }
 
-    @GetMapping(value = "/mail/oauth2/code")
+    @GetMapping(value = "/mail/oauth2/code", params = {"code", "state"})
     public void codeProcessingUrl(
             @RequestParam(value = "code") String code, @RequestParam(value = "state") String state,
             HttpServletRequest request, HttpServletResponse response) throws ThingsboardException, IOException {
