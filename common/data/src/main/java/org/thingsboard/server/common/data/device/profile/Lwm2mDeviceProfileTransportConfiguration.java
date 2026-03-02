@@ -50,6 +50,6 @@ public class Lwm2mDeviceProfileTransportConfiguration implements DeviceProfileTr
     private void updateDefault(){
         this.setBootstrap(Collections.emptyList());
         this.setClientLwM2mSettings(new OtherConfiguration(false,1, 1, 1, PowerMode.DRX, null, null, null, null, null, V1_0.toString()));
-        this.setObserveAttr(new TelemetryMappingConfiguration(Collections.emptyMap(), Collections.emptySet(), Collections.emptySet(), Collections.emptySet(), Collections.emptyMap(), SINGLE));
+        this.setObserveAttr(new TelemetryMappingConfiguration(Collections.emptyMap(), Collections.emptySet(), Collections.emptySet(), Collections.emptySet(), Collections.emptyMap(), false, SINGLE));
     }
 }

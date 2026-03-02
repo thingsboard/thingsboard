@@ -16,63 +16,86 @@
 
 -->
 <div class="tb-material-icons-panel">
-  <div *ngIf="showTitle" class="tb-material-icons-title" translate>icon.icons</div>
-  <mat-form-field class="tb-material-icons-search tb-inline-field" appearance="outline" subscriptSizing="dynamic">
-    <mat-icon matPrefix>search</mat-icon>
-    <input matInput [formControl]="searchIconControl" placeholder="{{ 'icon.search-icon' | translate }}"/>
-    <button *ngIf="searchIconControl.value"
-            type="button"
-            matSuffix mat-icon-button aria-label="Clear"
-            (click)="clearSearch()">
-      <mat-icon class="material-icons">close</mat-icon>
-    </button>
-  </mat-form-field>
-  <cdk-virtual-scroll-viewport [class.!hidden]="notFound" #iconsPanel
-                               [itemSize]="iconsRowHeight" class="tb-material-icons-viewport"
-                               [style.width]="iconsPanelWidth"
-                               [style.height]="iconsPanelHeight">
-    <div *cdkVirtualFor="let iconRow of iconRows$ | async" class="tb-material-icons-row">
-      <ng-container *ngFor="let icon of iconRow">
-        <button *ngIf="icon.name === selectedIcon"
-                class="tb-select-icon-button"
-                mat-raised-button
-                color="primary"
-                (click)="selectIcon(icon)"
-                matTooltip="{{ icon.displayName }}"
-                matTooltipPosition="above"
-                type="button">
-          <tb-icon matButtonIcon>{{icon.name}}</tb-icon>
-        </button>
-        <button *ngIf="icon.name !== selectedIcon"
-                class="tb-select-icon-button"
-                mat-button
-                (click)="selectIcon(icon)"
-                matTooltip="{{ icon.displayName }}"
-                matTooltipPosition="above"
-                type="button">
-          <tb-icon matButtonIcon>{{icon.name}}</tb-icon>
-        </button>
-      </ng-container>
-    </div>
-  </cdk-virtual-scroll-viewport>
-  <ng-container *ngIf="notFound">
-    <div class="tb-no-data-available" [style.width]="iconsPanelWidth">
-      <div class="tb-no-data-bg"></div>
-      <div class="tb-no-data-text">{{ 'icon.no-icons-found' | translate:{iconSearch: searchIconControl.value} }}</div>
-    </div>
-  </ng-container>
-  <div class="tb-material-icons-panel-buttons" *ngIf="iconClearButton || !showAllSubject.value">
-    <button *ngIf="iconClearButton"
-            mat-button
-            color="primary"
-            type="button"
-            (click)="clearIcon()"
-            [disabled]="!selectedIcon">
-      {{ 'action.clear' | translate }}
-    </button>
-    <span class="flex-1"></span>
-    <button *ngIf="!showAllSubject.value" class="tb-material-icons-show-more" mat-button color="primary" (click)="showAllSubject.next(true)">
-      {{ 'action.show-more' | translate }}
-    </button>
+  <div class="flex w-full">
+    <span *ngIf="showTitle" class="tb-material-icons-title flex-1" translate>icon.icons</span>
+    @if (allowedCustomIcon) {
+      <tb-toggle-select [(ngModel)]="isCustomIcon" [ngModelOptions]="{standalone: true}" (ngModelChange)="selectedIcon = null">
+        <tb-toggle-option [value]="false">{{ 'resource.system' | translate }}</tb-toggle-option>
+        <tb-toggle-option [value]="true">{{ 'icon.custom' | translate }}</tb-toggle-option>
+      </tb-toggle-select>
+      <span class="flex-1"></span>
+    }
   </div>
+  @if (!isCustomIcon) {
+    <mat-form-field class="tb-material-icons-search tb-inline-field" appearance="outline" subscriptSizing="dynamic">
+      <mat-icon matPrefix>search</mat-icon>
+      <input matInput [formControl]="searchIconControl" placeholder="{{ 'icon.search-icon' | translate }}"/>
+      <button *ngIf="searchIconControl.value"
+              type="button"
+              matSuffix mat-icon-button aria-label="Clear"
+              (click)="clearSearch()">
+        <mat-icon class="material-icons">close</mat-icon>
+      </button>
+    </mat-form-field>
+    <cdk-virtual-scroll-viewport [class.!hidden]="notFound" #iconsPanel
+                                 [itemSize]="iconsRowHeight" class="tb-material-icons-viewport"
+                                 [style.width]="iconsPanelWidth"
+                                 [style.height]="iconsPanelHeight">
+      <div *cdkVirtualFor="let iconRow of iconRows$ | async" class="tb-material-icons-row">
+        <ng-container *ngFor="let icon of iconRow">
+          <button *ngIf="icon.name === selectedIcon"
+                  class="tb-select-icon-button"
+                  mat-raised-button
+                  color="primary"
+                  (click)="selectIcon(icon.name)"
+                  matTooltip="{{ icon.displayName }}"
+                  matTooltipPosition="above"
+                  type="button">
+            <tb-icon matButtonIcon>{{icon.name}}</tb-icon>
+          </button>
+          <button *ngIf="icon.name !== selectedIcon"
+                  class="tb-select-icon-button"
+                  mat-button
+                  (click)="selectIcon(icon.name)"
+                  matTooltip="{{ icon.displayName }}"
+                  matTooltipPosition="above"
+                  type="button">
+            <tb-icon matButtonIcon>{{icon.name}}</tb-icon>
+          </button>
+        </ng-container>
+      </div>
+    </cdk-virtual-scroll-viewport>
+    <ng-container *ngIf="notFound">
+      <div class="tb-no-data-available" [style.width]="iconsPanelWidth">
+        <div class="tb-no-data-bg"></div>
+        <div class="tb-no-data-text">{{ 'icon.no-icons-found' | translate:{iconSearch: searchIconControl.value} }}</div>
+      </div>
+    </ng-container>
+    <div class="tb-material-icons-panel-buttons" *ngIf="iconClearButton || !showAllSubject.value">
+      <button *ngIf="iconClearButton"
+              mat-button
+              color="primary"
+              type="button"
+              (click)="clearIcon()"
+              [disabled]="!selectedIcon">
+        {{ 'action.clear' | translate }}
+      </button>
+      <span class="flex-1"></span>
+      <button *ngIf="!showAllSubject.value" class="tb-material-icons-show-more" mat-button color="primary" (click)="showAllSubject.next(true)">
+        {{ 'action.show-more' | translate }}
+      </button>
+    </div>
+  } @else {
+    <tb-gallery-image-input [style.width]="iconsPanelWidth"
+                            [(ngModel)]="selectedIcon">
+    </tb-gallery-image-input>
+    <div class="tb-material-icons-panel-buttons">
+      <span class="flex-1"></span>
+      <button class="tb-material-icons-show-more" mat-button color="primary"
+              [disabled]="!selectedIcon"
+              (click)="selectIcon(selectedIcon)">
+        {{ 'action.set' | translate }}
+      </button>
+    </div>
+  }
 </div>

@@ -163,6 +163,11 @@ export const entityFields: {[fieldName: string]: EntityField} = {
     name: 'entity-field.label',
     value: 'label'
   },
+  displayName: {
+    keyName: 'displayName',
+    name: 'entity-field.name',
+    value: 'name'
+  },
   queueName: {
     keyName: 'queueName',
     name: 'entity-field.queue-name',
@@ -209,3 +214,19 @@ export interface EntityTestScriptResult {
 }
 
 export type VersionedEntity = EntityInfoData & HasVersion | RuleChainMetaData;
+
+export enum NameConflictPolicy {
+  FAIL = 'FAIL',
+  UNIQUIFY = 'UNIQUIFY',
+}
+
+export enum UniquifyStrategy {
+  RANDOM = 'RANDOM',
+  INCREMENTAL = 'INCREMENTAL'
+}
+
+export interface SaveEntityParams {
+  nameConflictPolicy?: NameConflictPolicy;
+  uniquifyStrategy?: UniquifyStrategy;
+  uniquifySeparator?: string;
+}

@@ -55,9 +55,6 @@ import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.StringUtils.isBlank;
 
-/**
- * @author Andrew Shvayka
- */
 @Service
 @Slf4j
 public class BaseTimeseriesService implements TimeseriesService {
@@ -154,6 +151,21 @@ public class BaseTimeseriesService implements TimeseriesService {
     @Override
     public List<String> findAllKeysByEntityIds(TenantId tenantId, List<EntityId> entityIds) {
         return timeseriesLatestDao.findAllKeysByEntityIds(tenantId, entityIds);
+    }
+
+    @Override
+    public ListenableFuture<List<String>> findAllKeysByEntityIdsAsync(TenantId tenantId, List<EntityId> entityIds) {
+        return timeseriesLatestDao.findAllKeysByEntityIdsAsync(tenantId, entityIds);
+    }
+
+    @Override
+    public List<TsKvEntry> findLatestByEntityIds(TenantId tenantId, List<EntityId> entityIds) {
+        return timeseriesLatestDao.findLatestByEntityIds(tenantId, entityIds);
+    }
+
+    @Override
+    public ListenableFuture<List<TsKvEntry>> findLatestByEntityIdsAsync(TenantId tenantId, List<EntityId> entityIds) {
+        return timeseriesLatestDao.findLatestByEntityIdsAsync(tenantId, entityIds);
     }
 
     @Override
@@ -300,13 +312,13 @@ public class BaseTimeseriesService implements TimeseriesService {
             long interval = query.getInterval();
             if (interval < 1) {
                 throw new IncorrectParameterException("Invalid TsKvQuery: 'interval' must be greater than 0, but got " + interval +
-                                                      ". Please check your query parameters and ensure 'endTs' is greater than 'startTs' or increase 'interval'.");
+                        ". Please check your query parameters and ensure 'endTs' is greater than 'startTs' or increase 'interval'.");
             }
             long step = Math.max(interval, 1000);
             long intervalCounts = (query.getEndTs() - query.getStartTs()) / step;
             if (intervalCounts > maxTsIntervals || intervalCounts < 0) {
                 throw new IncorrectParameterException("Incorrect TsKvQuery. Number of intervals is to high - " + intervalCounts + ". " +
-                                                      "Please increase 'interval' parameter for your query or reduce the time range of the query.");
+                        "Please increase 'interval' parameter for your query or reduce the time range of the query.");
             }
         }
     }

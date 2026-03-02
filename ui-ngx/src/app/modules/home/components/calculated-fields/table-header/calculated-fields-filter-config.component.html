@@ -1,0 +1,96 @@
+<!--
+
+    Copyright © 2016-2026 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<ng-container *ngIf="panelMode; else componentMode">
+  <ng-container *ngTemplateOutlet="calculatedFieldsFilterPanel"></ng-container>
+</ng-container>
+<ng-template #componentMode>
+  <ng-container *ngIf="buttonMode; else calculatedFieldsFilter">
+    <button color="primary"
+            matTooltip="{{buttonDisplayValue}}"
+            matTooltipPosition="above"
+            mat-stroked-button
+            (click)="toggleCfFilterPanel($event)">
+      <mat-icon>filter_list</mat-icon>{{buttonDisplayValue}}
+    </button>
+  </ng-container>
+</ng-template>
+<ng-template #calculatedFieldsFilterPanel>
+  <form class="mat-content mat-padding flex flex-col" (ngSubmit)="update()">
+    <ng-container *ngTemplateOutlet="calculatedFieldsFilter"></ng-container>
+    <div class="tb-panel-actions flex flex-row items-center">
+      <button type="button"
+              mat-button
+              color="primary"
+              (click)="reset()">
+        {{ 'action.reset' | translate }}
+      </button>
+      <span class="flex-1"></span>
+      <button type="button"
+              mat-button
+              (click)="cancel()">
+        {{ 'action.cancel' | translate }}
+      </button>
+      <button type="submit"
+              mat-raised-button
+              color="primary"
+              [disabled]="cfFilterForm.invalid || !cfFilterForm.dirty">
+        {{ 'action.update' | translate }}
+      </button>
+    </div>
+  </form>
+</ng-template>
+<ng-template #calculatedFieldsFilter>
+  <div class="tb-form-panel tb-calculated-fields-config-component no-padding no-border" [formGroup]="cfFilterForm">
+    <div class="tb-form-row column-xs">
+      <div class="fixed-title-width" translate>calculated-fields.calculated-field-types</div>
+      <tb-string-items-list subscriptSizing="dynamic"
+                            formControlName="types"
+                            appearance="outline"
+                            fieldClass="flex"
+                            class="flex-1"
+                            placeholder="{{ !cfFilterForm.get('types').value?.length ? ('calculated-fields.any-type' | translate) : '' }}"
+                            [predefinedValues]="types">
+      </tb-string-items-list>
+    </div>
+    <div class="tb-form-row column-xs">
+      <div class="fixed-title-width" translate>entity.entity-type</div>
+      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="entityType" placeholder="{{ 'alarm-rule.any-type' | translate }}">
+          <mat-option>{{ 'alarm-rule.any-type' | translate }}</mat-option>
+          <mat-option *ngFor="let type of listEntityTypes" [value]="type">
+            {{ entityTypeTranslations.get(type)?.type | translate }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+    @if (cfFilterForm.get('entityType').value) {
+      <div class="tb-form-row column-xs">
+        <div class="fixed-title-width" translate>entity.entities</div>
+        <tb-entity-list appearance="outline"
+                        subscriptSizing="dynamic"
+                        class="flex flex-1"
+                        inlineField
+                        syncIdsWithDB
+                        labelText="{{'entity.entity-list' | translate}}"
+                        [entityType]="cfFilterForm.get('entityType').value"
+                        formControlName="entities">
+        </tb-entity-list>
+      </div>
+    }
+  </div>
+</ng-template>

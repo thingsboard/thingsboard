@@ -52,4 +52,6 @@ public interface WidgetsBundleService extends EntityDaoService {
 
     void updateSystemWidgets(Stream<String> bundles, Stream<String> widgets);
 
+    List<WidgetsBundle> findSystemOrTenantWidgetsBundlesByIds(TenantId tenantId, List<WidgetsBundleId> widgetsBundleIds);
+
 }

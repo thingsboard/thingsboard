@@ -47,9 +47,16 @@
         {{ 'widget-config.title' | translate }}
       </mat-slide-toggle>
       <div class="flex flex-1 flex-row items-center justify-start gap-2">
-        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
-          <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
-        </mat-form-field>
+        <tb-string-pattern-autocomplete class="flex-1"
+                                        appearance="outline"
+                                        brackets="curly"
+                                        subscriptSizing="dynamic"
+                                        predefinedValuesButton="true"
+                                        [disabled]="!signalStrengthWidgetConfigForm.get('showTitle').value"
+                                        [predefinedValues]="predefinedValues"
+                                        placeholderText="{{ 'widget-config.set' | translate }}"
+                                        formControlName="title"
+        ></tb-string-pattern-autocomplete>
         <tb-font-settings formControlName="titleFont"
                           clearButton
                           [previewText]="signalStrengthWidgetConfigForm.get('title').value"

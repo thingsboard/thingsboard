@@ -30,6 +30,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.notification.targets.platform.AllUsersFilter;
+import org.thingsboard.server.common.data.notification.targets.platform.TenantAdministratorsFilter;
 import org.thingsboard.server.common.data.security.model.mfa.PlatformTwoFaSettings;
 import org.thingsboard.server.common.data.security.model.mfa.account.AccountTwoFaSettings;
 import org.thingsboard.server.common.data.security.model.mfa.account.SmsTwoFaAccountConfig;
@@ -48,6 +50,7 @@ import org.thingsboard.server.service.security.auth.mfa.provider.impl.TotpTwoFaP
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -85,7 +88,6 @@ public class TwoFactorAuthConfigTest extends AbstractControllerTest {
         twoFaConfigManager.deletePlatformTwoFaSettings(tenantId);
     }
 
-
     @Test
     public void testSavePlatformTwoFaSettings() throws Exception {
         loginSysAdmin();
@@ -102,13 +104,30 @@ public class TwoFactorAuthConfigTest extends AbstractControllerTest {
         twoFaSettings.setVerificationCodeCheckRateLimit("3:900");
         twoFaSettings.setMaxVerificationFailuresBeforeUserLockout(10);
         twoFaSettings.setTotalAllowedTimeForVerification(3600);
+        twoFaSettings.setEnforceTwoFa(true);
+        twoFaSettings.setEnforcedUsersFilter(new AllUsersFilter());
 
-        doPost("/api/2fa/settings", twoFaSettings).andExpect(status().isOk());
+        saveTwoFaSettings(twoFaSettings);
 
-        PlatformTwoFaSettings savedTwoFaSettings = readResponse(doGet("/api/2fa/settings").andExpect(status().isOk()), PlatformTwoFaSettings.class);
+        PlatformTwoFaSettings savedTwoFaSettings = findTwoFaSettings();
 
         assertThat(savedTwoFaSettings.getProviders()).hasSize(2);
         assertThat(savedTwoFaSettings.getProviders()).contains(totpTwoFaProviderConfig, smsTwoFaProviderConfig);
+    }
+
+    @Test
+    public void testSavePlatformTwoFaSettingsWithEnforceTwoFaWithoutProviders() throws Exception {
+        loginSysAdmin();
+
+        PlatformTwoFaSettings twoFaSettings = new PlatformTwoFaSettings();
+        twoFaSettings.setProviders(List.of());
+        twoFaSettings.setMinVerificationCodeSendPeriod(5);
+        twoFaSettings.setVerificationCodeCheckRateLimit("3:900");
+        twoFaSettings.setMaxVerificationFailuresBeforeUserLockout(10);
+        twoFaSettings.setTotalAllowedTimeForVerification(3600);
+        twoFaSettings.setEnforceTwoFa(true);
+
+        doPost("/api/2fa/settings", twoFaSettings).andExpect(status().isBadRequest());
     }
 
     @Test
@@ -156,17 +175,6 @@ public class TwoFactorAuthConfigTest extends AbstractControllerTest {
         assertThat(errorResponse).containsIgnoringCase("smsVerificationMessageTemplate is required");
         assertThat(errorResponse).containsIgnoringCase("verificationCodeLifetime is required");
     }
-
-    private String savePlatformTwoFaSettingsAndGetError(TwoFaProviderConfig invalidTwoFaProviderConfig) throws Exception {
-        PlatformTwoFaSettings twoFaSettings = new PlatformTwoFaSettings();
-        twoFaSettings.setProviders(Collections.singletonList(invalidTwoFaProviderConfig));
-        twoFaSettings.setMinVerificationCodeSendPeriod(5);
-        twoFaSettings.setTotalAllowedTimeForVerification(100);
-
-        return getErrorMessage(doPost("/api/2fa/settings", twoFaSettings)
-                .andExpect(status().isBadRequest()));
-    }
-
 
     @Test
     public void testSaveTwoFaAccountConfig_providerNotConfigured() throws Exception {
@@ -266,24 +274,6 @@ public class TwoFactorAuthConfigTest extends AbstractControllerTest {
                 .andExpect(status().isBadRequest()));
 
         assertThat(errorMessage).containsIgnoringCase("verification code is incorrect");
-    }
-
-    private TotpTwoFaAccountConfig generateTotpTwoFaAccountConfig(TotpTwoFaProviderConfig totpTwoFaProviderConfig) throws Exception {
-        TwoFaAccountConfig generatedTwoFaAccountConfig = readResponse(doPost("/api/2fa/account/config/generate?providerType=TOTP")
-                .andExpect(status().isOk()), TwoFaAccountConfig.class);
-        assertThat(generatedTwoFaAccountConfig).isInstanceOf(TotpTwoFaAccountConfig.class);
-
-        assertThat(((TotpTwoFaAccountConfig) generatedTwoFaAccountConfig)).satisfies(accountConfig -> {
-            UriComponents otpAuthUrl = UriComponentsBuilder.fromUriString(accountConfig.getAuthUrl()).build();
-            assertThat(otpAuthUrl.getScheme()).isEqualTo("otpauth");
-            assertThat(otpAuthUrl.getHost()).isEqualTo("totp");
-            assertThat(otpAuthUrl.getQueryParams().getFirst("issuer")).isEqualTo(totpTwoFaProviderConfig.getIssuerName());
-            assertThat(otpAuthUrl.getPath()).isEqualTo("/%s:%s", totpTwoFaProviderConfig.getIssuerName(), TENANT_ADMIN_EMAIL);
-            assertThat(otpAuthUrl.getQueryParams().getFirst("secret")).satisfies(secretKey -> {
-                assertDoesNotThrow(() -> Base32.decode(secretKey));
-            });
-        });
-        return (TotpTwoFaAccountConfig) generatedTwoFaAccountConfig;
     }
 
     @Test
@@ -419,6 +409,56 @@ public class TwoFactorAuthConfigTest extends AbstractControllerTest {
         assertThat(accountConfig).isEqualTo(initialSmsTwoFaAccountConfig);
     }
 
+    @Test
+    public void testIsTwoFaEnabled() throws Exception {
+        configureSmsTwoFaProvider("${code}");
+        SmsTwoFaAccountConfig accountConfig = new SmsTwoFaAccountConfig();
+        accountConfig.setPhoneNumber("+38050505050");
+        twoFaConfigManager.saveTwoFaAccountConfig(tenantId, tenantAdminUser, accountConfig);
+
+        assertThat(twoFactorAuthService.isTwoFaEnabled(tenantId, tenantAdminUser)).isTrue();
+    }
+
+    @Test
+    public void testDeleteTwoFaAccountConfig() throws Exception {
+        configureSmsTwoFaProvider("${code}");
+        loginTenantAdmin();
+        SmsTwoFaAccountConfig accountConfig = new SmsTwoFaAccountConfig();
+        accountConfig.setPhoneNumber("+38050505050");
+        twoFaConfigManager.saveTwoFaAccountConfig(tenantId, tenantAdminUser, accountConfig);
+
+        AccountTwoFaSettings accountTwoFaSettings = readResponse(doGet("/api/2fa/account/settings").andExpect(status().isOk()), AccountTwoFaSettings.class);
+        TwoFaAccountConfig savedAccountConfig = accountTwoFaSettings.getConfigs().get(TwoFaProviderType.SMS);
+        assertThat(savedAccountConfig).isEqualTo(accountConfig);
+
+        PlatformTwoFaSettings twoFaSettings = twoFaConfigManager.getPlatformTwoFaSettings(TenantId.SYS_TENANT_ID, true).get();
+        twoFaSettings.setEnforceTwoFa(true);
+        TenantAdministratorsFilter enforcedUsersFilter = new TenantAdministratorsFilter();
+        enforcedUsersFilter.setTenantsIds(Set.of(tenantId.getId()));
+        twoFaSettings.setEnforcedUsersFilter(enforcedUsersFilter);
+        twoFaConfigManager.savePlatformTwoFaSettings(TenantId.SYS_TENANT_ID, twoFaSettings);
+
+        String errorMessage = getErrorMessage(doDelete("/api/2fa/account/config?providerType=SMS")
+                .andExpect(status().isBadRequest()));
+        assertThat(errorMessage).isEqualTo("At least one 2FA provider is required");
+
+        twoFaSettings.setEnforceTwoFa(false);
+        twoFaConfigManager.savePlatformTwoFaSettings(TenantId.SYS_TENANT_ID, twoFaSettings);
+
+        doDelete("/api/2fa/account/config?providerType=SMS").andExpect(status().isOk());
+
+        assertThat(readResponse(doGet("/api/2fa/account/settings").andExpect(status().isOk()), AccountTwoFaSettings.class).getConfigs())
+                .doesNotContainKey(TwoFaProviderType.SMS);
+    }
+
+    private PlatformTwoFaSettings findTwoFaSettings() throws Exception {
+        return doGet("/api/2fa/settings", PlatformTwoFaSettings.class);
+    }
+
+    private void saveTwoFaSettings(PlatformTwoFaSettings twoFaSettings) throws Exception {
+        doPost("/api/2fa/settings", twoFaSettings).andExpect(status().isOk());
+    }
+
     private TotpTwoFaProviderConfig configureTotpTwoFaProvider() throws Exception {
         TotpTwoFaProviderConfig totpTwoFaProviderConfig = new TotpTwoFaProviderConfig();
         totpTwoFaProviderConfig.setIssuerName("tb");
@@ -441,37 +481,35 @@ public class TwoFactorAuthConfigTest extends AbstractControllerTest {
         twoFaSettings.setProviders(Arrays.stream(providerConfigs).collect(Collectors.toList()));
         twoFaSettings.setMinVerificationCodeSendPeriod(5);
         twoFaSettings.setTotalAllowedTimeForVerification(100);
-        doPost("/api/2fa/settings", twoFaSettings).andExpect(status().isOk());
+        saveTwoFaSettings(twoFaSettings);
     }
 
-    @Test
-    public void testIsTwoFaEnabled() throws Exception {
-        configureSmsTwoFaProvider("${code}");
-        SmsTwoFaAccountConfig accountConfig = new SmsTwoFaAccountConfig();
-        accountConfig.setPhoneNumber("+38050505050");
-        twoFaConfigManager.saveTwoFaAccountConfig(tenantId, tenantAdminUserId, accountConfig);
+    private TotpTwoFaAccountConfig generateTotpTwoFaAccountConfig(TotpTwoFaProviderConfig totpTwoFaProviderConfig) throws Exception {
+        TwoFaAccountConfig generatedTwoFaAccountConfig = readResponse(doPost("/api/2fa/account/config/generate?providerType=TOTP")
+                .andExpect(status().isOk()), TwoFaAccountConfig.class);
+        assertThat(generatedTwoFaAccountConfig).isInstanceOf(TotpTwoFaAccountConfig.class);
 
-        assertThat(twoFactorAuthService.isTwoFaEnabled(tenantId, tenantAdminUserId)).isTrue();
+        assertThat(((TotpTwoFaAccountConfig) generatedTwoFaAccountConfig)).satisfies(accountConfig -> {
+            UriComponents otpAuthUrl = UriComponentsBuilder.fromUriString(accountConfig.getAuthUrl()).build();
+            assertThat(otpAuthUrl.getScheme()).isEqualTo("otpauth");
+            assertThat(otpAuthUrl.getHost()).isEqualTo("totp");
+            assertThat(otpAuthUrl.getQueryParams().getFirst("issuer")).isEqualTo(totpTwoFaProviderConfig.getIssuerName());
+            assertThat(otpAuthUrl.getPath()).isEqualTo("/%s:%s", totpTwoFaProviderConfig.getIssuerName(), TENANT_ADMIN_EMAIL);
+            assertThat(otpAuthUrl.getQueryParams().getFirst("secret")).satisfies(secretKey -> {
+                assertDoesNotThrow(() -> Base32.decode(secretKey));
+            });
+        });
+        return (TotpTwoFaAccountConfig) generatedTwoFaAccountConfig;
     }
 
-    @Test
-    public void testDeleteTwoFaAccountConfig() throws Exception {
-        configureSmsTwoFaProvider("${code}");
-        SmsTwoFaAccountConfig accountConfig = new SmsTwoFaAccountConfig();
-        accountConfig.setPhoneNumber("+38050505050");
+    private String savePlatformTwoFaSettingsAndGetError(TwoFaProviderConfig invalidTwoFaProviderConfig) throws Exception {
+        PlatformTwoFaSettings twoFaSettings = new PlatformTwoFaSettings();
+        twoFaSettings.setProviders(Collections.singletonList(invalidTwoFaProviderConfig));
+        twoFaSettings.setMinVerificationCodeSendPeriod(5);
+        twoFaSettings.setTotalAllowedTimeForVerification(100);
 
-        loginTenantAdmin();
-
-        twoFaConfigManager.saveTwoFaAccountConfig(tenantId, tenantAdminUserId, accountConfig);
-
-        AccountTwoFaSettings accountTwoFaSettings = readResponse(doGet("/api/2fa/account/settings").andExpect(status().isOk()), AccountTwoFaSettings.class);
-        TwoFaAccountConfig savedAccountConfig = accountTwoFaSettings.getConfigs().get(TwoFaProviderType.SMS);
-        assertThat(savedAccountConfig).isEqualTo(accountConfig);
-
-        doDelete("/api/2fa/account/config?providerType=SMS").andExpect(status().isOk());
-
-        assertThat(readResponse(doGet("/api/2fa/account/settings").andExpect(status().isOk()), AccountTwoFaSettings.class).getConfigs())
-                .doesNotContainKey(TwoFaProviderType.SMS);
+        return getErrorMessage(doPost("/api/2fa/settings", twoFaSettings)
+                .andExpect(status().isBadRequest()));
     }
 
 }

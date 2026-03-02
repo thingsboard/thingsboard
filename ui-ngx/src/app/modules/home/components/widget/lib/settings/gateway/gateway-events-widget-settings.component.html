@@ -16,10 +16,15 @@
 
 -->
 <section class="tb-widget-settings flex flex-col" [formGroup]="gatewayEventsWidgetSettingsForm">
-  <mat-form-field class="mat-block flex-1">
-    <mat-label translate>widgets.gateway.events-title</mat-label>
-    <input matInput formControlName="eventsTitle">
-  </mat-form-field>
+  <tb-string-pattern-autocomplete class="mat-block flex-1" 
+                                  brackets="curly" 
+                                  subscriptSizing="fixed"
+                                  predefinedValuesButton="true"
+                                  label="{{ 'widgets.gateway.events-title' | translate }}"
+                                  [predefinedValues]="predefinedValues"
+                                  placeholderText="{{ 'widget-config.set' | translate }}"
+                                  formControlName="eventsTitle"
+  ></tb-string-pattern-autocomplete>
   <mat-form-field class="mat-block flex-1" floatLabel="always">
     <mat-label translate>widgets.gateway.events-filter</mat-label>
     <mat-chip-grid #chipList formControlName="eventsReg">

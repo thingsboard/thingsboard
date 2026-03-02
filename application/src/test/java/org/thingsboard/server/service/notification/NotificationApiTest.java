@@ -24,8 +24,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpEntity;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.web.client.RestTemplate;
 import org.thingsboard.common.util.JacksonUtil;
@@ -125,7 +125,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
     private NotificationCenter notificationCenter;
     @Autowired
     private MicrosoftTeamsNotificationChannel microsoftTeamsNotificationChannel;
-    @MockBean
+    @MockitoBean
     private FirebaseService firebaseService;
 
     private static final String TEST_MOBILE_TOKEN = "tenantFcmToken";

@@ -115,6 +115,23 @@
     <mat-slide-toggle class="mat-slide" formControlName="useEntityLabel">
       {{ 'widgets.table.use-entity-label-tab-name' | translate }}
     </mat-slide-toggle>
+   <div class="tb-form-row justify-between column-xs" formGroupName="sortOrder">
+    <div class="fixed-title-width" translate>widgets.table.sort-by</div>
+     <div class="flex flex-1 flex-row justify-end gap-2 ">
+       <mat-form-field class="flex-lt-lg medium-width" appearance="outline" subscriptSizing="dynamic">
+         <mat-select formControlName="property" placeholder="{{ 'widget-config.set' | translate }}">
+           <mat-option [value]="entityFields.createdTime.value">{{ entityFields.createdTime.name | translate }}</mat-option>
+           <mat-option  [value]="entityFields.name.value">{{ entityFields.name.name | translate }}</mat-option>
+         </mat-select>
+       </mat-form-field>
+       <mat-form-field class="flex-lt-lg medium-width" appearance="outline" subscriptSizing="dynamic">
+         <mat-select formControlName="direction" placeholder="{{ 'widget-config.set' | translate }}">
+           <mat-option  [value]="Direction.ASC">{{ 'common.sort-asc' | translate }}</mat-option>
+           <mat-option  [value]="Direction.DESC">{{ 'common.sort-desc' | translate }}</mat-option>
+         </mat-select>
+       </mat-form-field>
+     </div>
+   </div>
   </div>
   <div class="tb-form-panel tb-slide-toggle">
     <div class="tb-form-panel-title" style="padding-bottom: 16px;" translate>widgets.table.rows</div>

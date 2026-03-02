@@ -70,7 +70,7 @@
         <tb-file-input formControlName="data"
                        required
                        label="{{ (entityForm.get('resourceType').value === resourceType.LWM2M_MODEL ? 'resource.resource-files' : 'resource.resource-file') | translate }}"
-                       [readAsBinary]="true"
+                       [workFromFileObj]="true"
                        [maxSizeByte]="maxResourceSize"
                        [allowedExtensions]="getAllowedExtensions()"
                        [contentConvertFunction]="convertToBase64File"

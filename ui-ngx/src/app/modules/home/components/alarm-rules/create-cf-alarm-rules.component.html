@@ -1,0 +1,63 @@
+<!--
+
+    Copyright © 2016-2026 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="flex flex-1 flex-col gap-4">
+  @for (createAlarmRuleControl of createAlarmRulesFormArray().controls; track createAlarmRuleControl; let index = $index) {
+    <div class="flex flex-row items-center justify-start gap-2 pb-2" [formGroup]="createAlarmRuleControl">
+      <div class="create-alarm-rule flex flex-1 flex-col gap-4"
+           [style.border-left-color]="AlarmSeverityNotificationColors.get(createAlarmRuleControl.get('severity').value)">
+        <div class="tb-form-row space-between column-xs">
+          <div class="min-w-40 xs:min-w-fit" translate>alarm.severity</div>
+          <mat-form-field appearance="outline" class="flex-1 xs:w-full" subscriptSizing="dynamic">
+            <mat-select formControlName="severity"
+                        required
+                        placeholder="{{ 'alarm-rule.select-alarm-severity' | translate }}">
+              <mat-option *ngFor="let alarmSeverity of alarmSeverities" [value]="alarmSeverity"
+                          [disabled]="isDisabledSeverity(alarmSeverityEnum[alarmSeverity], index)">
+                {{ alarmSeverityTranslationMap.get(alarmSeverityEnum[alarmSeverity]) | translate }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <tb-cf-alarm-rule formControlName="alarmRule" [arguments]="arguments" [testScript]="testScript" required class="flex-1">
+        </tb-cf-alarm-rule>
+      </div>
+      <button *ngIf="!disabled"
+              class="button-icon"
+              mat-icon-button
+              type="button"
+              (click)="removeCreateAlarmRule(index)"
+              matTooltip="{{ 'action.remove' | translate }}"
+              matTooltipPosition="above">
+        <mat-icon>delete</mat-icon>
+      </button>
+    </div>
+  }
+  @if (!createAlarmRulesFormArray().controls.length) {
+    <span translate class="tb-prompt required flex items-center justify-center text-base" [class.required]="!disabled">
+        alarm-rule.add-create-alarm-rule-prompt
+    </span>
+  }
+  <div>
+    <button mat-stroked-button color="primary"
+            [disabled]="createAlarmRulesFormArray().controls.length > 4 || disabled"
+            type="button"
+            (click)="addCreateAlarmRule()">
+      {{ 'alarm-rule.add-create-alarm-rule' | translate }}
+    </button>
+  </div>
+</div>

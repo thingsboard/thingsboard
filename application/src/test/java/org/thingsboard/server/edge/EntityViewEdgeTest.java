@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.edge;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.protobuf.AbstractMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.junit.Assert;
@@ -31,8 +30,6 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.edge.v1.EntityViewUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.EntityViewsRequestMsg;
@@ -40,10 +37,11 @@ import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 import org.thingsboard.server.gen.edge.v1.UplinkResponseMsg;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
+import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
@@ -256,12 +254,9 @@ public class EntityViewEdgeTest extends AbstractEdgeTest {
         edgeImitator.expectResponsesAmount(1);
         edgeImitator.sendUplinkMsg(upLinkMsgBuilder.build());
         Assert.assertTrue(edgeImitator.waitForResponses());
-        EntityViewInfo entityViewInfo = doGet("/api/entityView/info/" + savedEntityView.getUuidId(), EntityViewInfo.class);
-        Assert.assertNotNull(entityViewInfo);
-        List<EntityViewInfo> edgeAssets = doGetTypedWithPageLink("/api/edge/" + edge.getUuidId() + "/entityViews?",
-                new TypeReference<PageData<EntityViewInfo>>() {
-                }, new PageLink(100)).getData();
-        Assert.assertFalse(edgeAssets.contains(entityViewInfo));
+        await().atMost(30, TimeUnit.SECONDS).untilAsserted(() ->
+                doGet("/api/entityView/info/" + savedEntityView.getUuidId(), EntityViewInfo.class, status().isNotFound())
+        );
     }
 
     private void verifyEntityViewUpdateMsg(EntityView entityView, Device device) throws InvalidProtocolBufferException {

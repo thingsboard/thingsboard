@@ -154,21 +154,23 @@
               </tb-device-profile-transport-configuration>
             </ng-template>
           </mat-expansion-panel>
-          <mat-expansion-panel [expanded]="false">
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                <div>{{'device-profile.alarm-rules-with-count' | translate:
-                  {count: entityForm.get('profileData.alarms').value ?
-                      entityForm.get('profileData.alarms').value.length : 0} }}</div>
-              </mat-panel-title>
-            </mat-expansion-panel-header>
-            <ng-template matExpansionPanelContent>
-              <tb-device-profile-alarms
-                formControlName="alarms"
-                [deviceProfileId]="deviceProfileId">
-              </tb-device-profile-alarms>
-            </ng-template>
-          </mat-expansion-panel>
+          @if (entityForm.get('profileData.alarms').value?.length) {
+            <mat-expansion-panel [expanded]="false">
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  <div>{{'device-profile.alarm-rules-with-count' | translate:
+                    {count: entityForm.get('profileData.alarms').value ?
+                        entityForm.get('profileData.alarms').value.length : 0} }}</div>
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+              <ng-template matExpansionPanelContent>
+                <tb-device-profile-alarms
+                  formControlName="alarms"
+                  [deviceProfileId]="deviceProfileId">
+                </tb-device-profile-alarms>
+              </ng-template>
+            </mat-expansion-panel>
+          }
           <mat-expansion-panel [expanded]="true">
             <mat-expansion-panel-header>
               <mat-panel-title>

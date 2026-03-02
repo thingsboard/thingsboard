@@ -38,6 +38,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
@@ -180,8 +181,16 @@ public class LwM2mTransportServerHelper {
                 case BOOLEAN:
                     kvProto.setType(BOOLEAN_V).setBoolV((Boolean) value).build();
                     break;
-                case STRING:
                 case TIME:
+                    if (value instanceof Date) {
+                        kvProto.setType(TransportProtos.KeyValueType.LONG_V).setLongV(((Date) value).getTime());
+                    } else if (value instanceof Integer || value instanceof Long) {
+                        kvProto.setType(TransportProtos.KeyValueType.LONG_V).setLongV((long) (value));
+                    } else {
+                        kvProto.setType(TransportProtos.KeyValueType.STRING_V).setStringV(value.toString());
+                    }
+                    break;
+                case STRING:
                 case OPAQUE:
                 case OBJLNK:
                     kvProto.setType(TransportProtos.KeyValueType.STRING_V).setStringV((String) value);

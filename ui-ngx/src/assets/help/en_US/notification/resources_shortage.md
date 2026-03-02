@@ -13,6 +13,9 @@ Available template parameters:
 * `usage` - the current usage value of the resource;
 * `serviceId` - the service id (convenient in cluster setup);
 * `serviceType` - the service type (convenient in cluster setup);
+* `recipientEmail` - email of the recipient;
+* `recipientFirstName` - first name of the recipient;
+* `recipientLastName` - last name of the recipient;
 
 Parameter names must be wrapped using `${...}`. For example: `${resource}`.
 You may also modify the value of the parameter with one of the suffixes:

@@ -112,17 +112,6 @@
         </tb-device-profile-transport-configuration>
       </form>
     </mat-step>
-    <mat-step [stepControl]="alarmRulesFormGroup" [optional]="true">
-      <form [formGroup]="alarmRulesFormGroup" style="padding-bottom: 16px;">
-        <ng-template matStepLabel>{{'device-profile.alarm-rules-with-count' | translate:
-          {count: alarmRulesFormGroup.get('alarms').value ?
-              alarmRulesFormGroup.get('alarms').value.length : 0} }}</ng-template>
-        <tb-device-profile-alarms
-          formControlName="alarms"
-          [deviceProfileId]="null">
-        </tb-device-profile-alarms>
-      </form>
-    </mat-step>
     <mat-step [stepControl]="provisionConfigFormGroup" [optional]="true">
       <form [formGroup]="provisionConfigFormGroup" style="padding-bottom: 16px;">
         <ng-template matStepLabel>{{ 'device-profile.device-provisioning' | translate }}</ng-template>

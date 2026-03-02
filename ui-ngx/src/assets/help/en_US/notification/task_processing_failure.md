@@ -16,6 +16,9 @@ Available template parameters:
 * `entityType` - the type of the entity to which the task is related;
 * `entityId` - the id of the entity to which the task is related;
 * `attempt` - the number of attempts processing the task
+* `recipientEmail` - email of the recipient;
+* `recipientFirstName` - first name of the recipient;
+* `recipientLastName` - last name of the recipient;
 
 Parameter names must be wrapped using `${...}`. For example: `${entityType}`.
 You may also modify the value of the parameter with one of the suffixes:

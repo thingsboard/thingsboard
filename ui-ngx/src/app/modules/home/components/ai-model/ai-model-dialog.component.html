@@ -225,6 +225,7 @@
                                     additionalClass="tb-suffix-show-on-hover"
                                     appearance="outline"
                                     panelWidth=""
+                                    showInlineError
                                     required
                                     [label]="(provider === aiProvider.AZURE_OPENAI ? 'ai-models.deployment-name': 'ai-models.model-id') | translate"
                                     [errorText]="(provider === aiProvider.AZURE_OPENAI ? 'ai-models.deployment-name-required': 'ai-models.model-id-required') | translate"

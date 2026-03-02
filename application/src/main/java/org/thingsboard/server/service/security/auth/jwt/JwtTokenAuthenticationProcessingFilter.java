@@ -28,12 +28,17 @@ import org.springframework.security.web.authentication.AbstractAuthenticationPro
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.thingsboard.server.service.security.auth.JwtAuthenticationToken;
-import org.thingsboard.server.service.security.auth.jwt.extractor.TokenExtractor;
+import org.thingsboard.server.service.security.auth.extractor.TokenExtractor;
 import org.thingsboard.server.service.security.model.token.RawAccessJwtToken;
 
 import java.io.IOException;
 
+import static org.thingsboard.server.config.ThingsboardSecurityConfiguration.AUTHORIZATION_HEADER;
+import static org.thingsboard.server.config.ThingsboardSecurityConfiguration.AUTHORIZATION_HEADER_V2;
+import static org.thingsboard.server.config.ThingsboardSecurityConfiguration.BEARER_HEADER_PREFIX;
+
 public class JwtTokenAuthenticationProcessingFilter extends AbstractAuthenticationProcessingFilter {
+
     private final AuthenticationFailureHandler failureHandler;
     private final TokenExtractor tokenExtractor;
 
@@ -46,8 +51,7 @@ public class JwtTokenAuthenticationProcessingFilter extends AbstractAuthenticati
     }
 
     @Override
-    public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
-            throws AuthenticationException, IOException, ServletException {
+    public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
         RawAccessJwtToken token = new RawAccessJwtToken(tokenExtractor.extract(request));
         return getAuthenticationManager().authenticate(new JwtAuthenticationToken(token));
     }
@@ -62,9 +66,26 @@ public class JwtTokenAuthenticationProcessingFilter extends AbstractAuthenticati
     }
 
     @Override
+    protected boolean requiresAuthentication(HttpServletRequest request, HttpServletResponse response) {
+        if (!super.requiresAuthentication(request, response)) {
+            return false;
+        }
+        String header = request.getHeader(AUTHORIZATION_HEADER);
+        if (header == null) {
+            header = request.getHeader(AUTHORIZATION_HEADER_V2);
+        }
+        if (header == null) {
+            // If there is NO auth header at all, let the JWT filter try to attempt Authentication and failure in the process.
+            return true;
+        }
+        return header.startsWith(BEARER_HEADER_PREFIX);
+    }
+
+    @Override
     protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response,
                                               AuthenticationException failed) throws IOException, ServletException {
         SecurityContextHolder.clearContext();
         failureHandler.onAuthenticationFailure(request, response, failed);
     }
+
 }

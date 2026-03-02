@@ -35,7 +35,7 @@ import { AssetTabsComponent } from '@home/pages/asset/asset-tabs.component';
     SharedModule,
     HomeComponentsModule,
     HomeDialogsModule,
-    AssetRoutingModule
+    AssetRoutingModule,
   ]
 })
 export class AssetModule { }

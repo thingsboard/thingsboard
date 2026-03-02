@@ -29,6 +29,7 @@ import org.thingsboard.edge.rpc.EdgeGrpcClient;
 import org.thingsboard.edge.rpc.EdgeRpcClient;
 import org.thingsboard.server.controller.AbstractWebTest;
 import org.thingsboard.server.gen.edge.v1.AdminSettingsUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.AiModelUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AlarmCommentUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AlarmUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
@@ -369,6 +370,11 @@ public class EdgeImitator {
                 result.add(saveDownlinkMsg(calculatedFieldUpdateMsg));
             }
         }
+        if (downlinkMsg.getAiModelUpdateMsgCount() > 0) {
+            for (AiModelUpdateMsg aiModelUpdateMsg : downlinkMsg.getAiModelUpdateMsgList()) {
+                result.add(saveDownlinkMsg(aiModelUpdateMsg));
+            }
+        }
         if (downlinkMsg.hasEdgeConfiguration()) {
             result.add(saveDownlinkMsg(downlinkMsg.getEdgeConfiguration()));
         }
@@ -443,7 +449,7 @@ public class EdgeImitator {
         Optional<T> result;
         lock.lock();
         try {
-            result = (Optional<T>) downlinkMsgs.stream().filter(downlinkMsg -> downlinkMsg.getClass().isAssignableFrom(tClass)).findAny();
+            result = (Optional<T>) downlinkMsgs.stream().filter(downlinkMsg -> tClass.isAssignableFrom(downlinkMsg.getClass())).findAny();
         } finally {
             lock.unlock();
         }
@@ -455,7 +461,7 @@ public class EdgeImitator {
         List<T> result;
         lock.lock();
         try {
-            result = (List<T>) downlinkMsgs.stream().filter(downlinkMsg -> downlinkMsg.getClass().isAssignableFrom(tClass)).collect(Collectors.toList());
+            result = (List<T>) downlinkMsgs.stream().filter(downlinkMsg -> tClass.isAssignableFrom(downlinkMsg.getClass())).collect(Collectors.toList());
         } finally {
             lock.unlock();
         }

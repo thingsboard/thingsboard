@@ -25,12 +25,10 @@ import org.springframework.transaction.support.TransactionTemplate;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
-import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
-import org.thingsboard.server.common.data.id.CalculatedFieldLinkId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -48,9 +46,6 @@ public class DefaultNativeCalculatedFieldRepository implements NativeCalculatedF
 
     private final String CF_COUNT_QUERY = "SELECT count(id) FROM calculated_field;";
     private final String CF_QUERY = "SELECT * FROM calculated_field ORDER BY created_time ASC LIMIT %s OFFSET %s";
-
-    private final String CFL_COUNT_QUERY = "SELECT count(id) FROM calculated_field_link;";
-    private final String CFL_QUERY = "SELECT * FROM calculated_field_link ORDER BY created_time ASC LIMIT %s OFFSET %s";
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
     private final TransactionTemplate transactionTemplate;
@@ -98,39 +93,6 @@ public class DefaultNativeCalculatedFieldRepository implements NativeCalculatedF
                 calculatedField.setDebugSettings(JacksonUtil.fromString(debugSettings, DebugSettings.class));
 
                 return calculatedField;
-            }).collect(Collectors.toList());
-            return new PageData<>(data, totalPages, totalElements, hasNext);
-        });
-    }
-
-    @Override
-    public PageData<CalculatedFieldLink> findCalculatedFieldLinks(Pageable pageable) {
-        return transactionTemplate.execute(status -> {
-            long startTs = System.currentTimeMillis();
-            int totalElements = jdbcTemplate.queryForObject(CFL_COUNT_QUERY, Collections.emptyMap(), Integer.class);
-            log.debug("Count query took {} ms", System.currentTimeMillis() - startTs);
-            startTs = System.currentTimeMillis();
-            List<Map<String, Object>> rows = jdbcTemplate.queryForList(String.format(CFL_QUERY, pageable.getPageSize(), pageable.getOffset()), Collections.emptyMap());
-            log.debug("Main query took {} ms", System.currentTimeMillis() - startTs);
-            int totalPages = pageable.getPageSize() > 0 ? (int) Math.ceil((float) totalElements / pageable.getPageSize()) : 1;
-            boolean hasNext = pageable.getPageSize() > 0 && totalElements > pageable.getOffset() + rows.size();
-            var data = rows.stream().map(row -> {
-
-                UUID id = (UUID) row.get("id");
-                long createdTime = (long) row.get("created_time");
-                UUID tenantId = (UUID) row.get("tenant_id");
-                EntityType entityType = EntityType.valueOf((String) row.get("entity_type"));
-                UUID entityId = (UUID) row.get("entity_id");
-                UUID calculatedFieldId = (UUID) row.get("calculated_field_id");
-
-                CalculatedFieldLink calculatedFieldLink = new CalculatedFieldLink();
-                calculatedFieldLink.setId(new CalculatedFieldLinkId(id));
-                calculatedFieldLink.setCreatedTime(createdTime);
-                calculatedFieldLink.setTenantId(new TenantId(tenantId));
-                calculatedFieldLink.setEntityId(EntityIdFactory.getByTypeAndUuid(entityType, entityId));
-                calculatedFieldLink.setCalculatedFieldId(new CalculatedFieldId(calculatedFieldId));
-
-                return calculatedFieldLink;
             }).collect(Collectors.toList());
             return new PageData<>(data, totalPages, totalElements, hasNext);
         });

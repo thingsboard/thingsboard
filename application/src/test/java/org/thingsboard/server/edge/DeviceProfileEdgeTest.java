@@ -151,14 +151,20 @@ public class DeviceProfileEdgeTest extends AbstractEdgeTest {
 
         // delete profile when edge is offline
         edgeImitator.disconnect();
+        verifyEdgeDisconnected();
+
         doDelete("/api/deviceProfile/" + deviceProfile.getUuidId())
                 .andExpect(status().isOk());
-        edgeImitator.connect();
 
         // 25 sync message
-        // + 2 RuleChain and RuleChainMetadata
-        // + 1 delete DeviceProfile
+        // + 1 RuleChain Added
+        // + 1 RuleChainMetadata Added
+        // + 1 DeviceProfile Delete
         edgeImitator.expectMessageAmount(SYNC_MESSAGE_COUNT + 3);
+
+        edgeImitator.connect();
+        verifyEdgeConnected();
+
         Assert.assertTrue(edgeImitator.waitForMessages());
 
         latestMessage = edgeImitator.getLatestMessage();

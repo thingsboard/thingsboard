@@ -25,6 +25,11 @@
             (removeList)="removeObjectsList($event)"
             formControlName="objectIds">
           </tb-profile-lwm2m-object-list>
+          <mat-checkbox formControlName="initAttrTelAsObsStrategy">
+              <span tb-hint-tooltip-icon="{{ 'device-profile.lwm2m.init-attr-tel-as-obs-strategy-hint' | translate }}">
+                {{ 'device-profile.lwm2m.init-attr-tel-as-obs-strategy' | translate }}
+              </span>
+          </mat-checkbox>
           <mat-form-field class="mat-block">
             <mat-label translate>device-profile.lwm2m.observe-strategy.observe-strategy</mat-label>
             <mat-select formControlName="observeStrategy">

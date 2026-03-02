@@ -26,6 +26,10 @@
     width: #{$size}px;
     height: #{$size}px;
   }
+  img {
+    width: #{$size}px;
+    height: #{$size}px;
+  }
 }
 
 @mixin tb-mat-icon-button-size($size) {

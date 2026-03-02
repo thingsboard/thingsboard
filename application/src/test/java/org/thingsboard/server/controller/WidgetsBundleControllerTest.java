@@ -29,12 +29,17 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
-import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -149,6 +154,37 @@ public class WidgetsBundleControllerTest extends AbstractControllerTest {
         Assert.assertNotNull(foundWidgetsBundle);
         Assert.assertEquals(savedWidgetsBundle, foundWidgetsBundle);
     }
+
+    @Test
+    public void testFindWidgetsBundlesByIds() throws Exception {
+        List<WidgetsBundle> savedWidgetsBundles = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            WidgetsBundle widgetsBundle = new WidgetsBundle();
+            widgetsBundle.setTitle("My widgets bundle " + i);
+            savedWidgetsBundles.add(doPost("/api/widgetsBundle", widgetsBundle, WidgetsBundle.class));
+        }
+
+        String idsParam = savedWidgetsBundles.stream()
+                .map(wb -> wb.getId().getId().toString())
+                .collect(Collectors.joining(","));
+
+        WidgetsBundle[] foundWidgetsBundles =
+                doGet("/api/widgetsBundles?widgetsBundleIds=" + idsParam, WidgetsBundle[].class);
+
+        Assert.assertNotNull(foundWidgetsBundles);
+        Assert.assertEquals(savedWidgetsBundles.size(), foundWidgetsBundles.length);
+
+        Map<UUID, WidgetsBundle> foundById = Arrays.stream(foundWidgetsBundles)
+                .collect(Collectors.toMap(wb -> wb.getId().getId(), Function.identity()));
+
+        for (WidgetsBundle savedWidgetsBundle : savedWidgetsBundles) {
+            UUID id = savedWidgetsBundle.getId().getId();
+            WidgetsBundle foundWidgetsBundle = foundById.get(id);
+            Assert.assertNotNull("WidgetsBundle not found for id " + id, foundWidgetsBundle);
+            Assert.assertEquals(savedWidgetsBundle, foundWidgetsBundle);
+        }
+    }
+
 
     @Test
     public void testDeleteWidgetsBundle() throws Exception {

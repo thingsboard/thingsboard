@@ -117,10 +117,13 @@ public class AlarmDataAdapter {
         String originatorName = originatorNameObj != null ? originatorNameObj.toString() : null;
         Object originatorLabelObj = row.get(ModelConstants.ALARM_ORIGINATOR_LABEL_PROPERTY);
         String originatorLabel = originatorLabelObj != null ? originatorLabelObj.toString() : null;
+        Object originatorDisplayNameObj = row.get(ModelConstants.ALARM_ORIGINATOR_DISPLAY_NAME_PROPERTY);
+        String originatorDisplayName = originatorDisplayNameObj != null ? originatorDisplayNameObj.toString() : null;
 
         AlarmData alarmData = new AlarmData(alarm, entityId);
         alarmData.setOriginatorName(originatorName);
         alarmData.setOriginatorLabel(originatorLabel);
+        alarmData.setOriginatorDisplayName(originatorDisplayName);
         if (alarm.getAssigneeId() != null) {
             alarmData.setAssignee(new AlarmAssignee(alarm.getAssigneeId(), assigneeFirstName, assigneeLastName, assigneeEmail));
         }

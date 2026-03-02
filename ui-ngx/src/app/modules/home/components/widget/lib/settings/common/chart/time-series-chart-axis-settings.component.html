@@ -157,24 +157,38 @@
                    type="number" min="1" placeholder="{{ 'widgets.chart.chart-axis.scale-auto' | translate }}">
           </mat-form-field>
         </div>
+        <div *ngIf="axisType === 'yAxis'" class="tb-form-panel stroked">
+          <div class="flex flex-col gap-2">
+            <div translate>widgets.chart.chart-axis.scale-limits</div>
+            <div class="tb-form-table">
+              <div class="tb-form-table-header">
+                <div class="tb-form-table-header-cell" [class]="alwaysExpanded ? 'basis-10' : 'basis-1/5'" translate>widgets.chart.chart-axis.limit</div>
+                <div class="tb-form-table-header-cell flex-grow flex-shrink" [class]="alwaysExpanded ? 'basis-1/2' : 'basis-40%'" translate>widgets.chart.chart-axis.source</div>
+                <div class="tb-form-table-header-cell flex-grow flex-shrink" [class]="alwaysExpanded ? 'basis-1/2' : 'basis-40%'" translate>widgets.chart.chart-axis.key-value</div>
+              </div>
+              <div class="tb-form-table-body">
+                <tb-axis-scale-row
+                  [isPanelView]="alwaysExpanded"
+                  [datasource]="datasource"
+                  [callbacks]="dataKeyCallbacks"
+                  [aliasController]="aliasController"
+                  formControlName="min"
+                  labelKey="widgets.chart.chart-axis.scale-min">
+                </tb-axis-scale-row>
+                <mat-divider class="mt-2 gt-sm:hidden"></mat-divider>
+                <tb-axis-scale-row
+                  [isPanelView]="alwaysExpanded"
+                  [datasource]="datasource"
+                  [callbacks]="dataKeyCallbacks"
+                  [aliasController]="aliasController"
+                  formControlName="max"
+                  labelKey="widgets.chart.chart-axis.scale-max">
+                </tb-axis-scale-row>
+              </div>
+            </div>
+          </div>
+        </div>
       </ng-template>
     </mat-expansion-panel>
-    <div *ngIf="axisType === 'yAxis'" class="tb-form-panel no-border no-padding-top">
-      <div class="tb-form-row space-between column-xs">
-        <div translate>widgets.chart.chart-axis.scale</div>
-        <div class="flex flex-row items-center justify-start gap-2">
-          <div class="tb-small-label" translate>widgets.chart.chart-axis.scale-min</div>
-          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
-            <input matInput formControlName="min"
-                   type="number" placeholder="{{ 'widgets.chart.chart-axis.scale-auto' | translate }}">
-          </mat-form-field>
-          <div class="tb-small-label" translate>widgets.chart.chart-axis.scale-max</div>
-          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
-            <input matInput formControlName="max"
-                   type="number" placeholder="{{ 'widgets.chart.chart-axis.scale-auto' | translate }}">
-          </mat-form-field>
-        </div>
-      </div>
-    </div>
   </div>
 </ng-container>

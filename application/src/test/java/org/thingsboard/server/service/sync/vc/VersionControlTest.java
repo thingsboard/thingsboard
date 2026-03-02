@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.collect.Streams;
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,17 +46,21 @@ import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
+import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmCondition;
+import org.thingsboard.server.common.data.alarm.rule.condition.expression.TbelAlarmConditionExpression;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.configuration.AlarmCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
-import org.thingsboard.server.common.data.cf.configuration.Output;
-import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.TimeSeriesOutput;
 import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.DeviceData;
@@ -244,7 +249,7 @@ public class VersionControlTest extends AbstractControllerTest {
         DeviceProfile deviceProfile = createDeviceProfile(null, null, "Device profile v1.0");
         OtaPackage firmware = createOtaPackage(tenantId1, deviceProfile.getId(), OtaPackageType.FIRMWARE);
         OtaPackage software = createOtaPackage(tenantId1, deviceProfile.getId(), OtaPackageType.SOFTWARE);
-        Device device = createDevice(null, deviceProfile.getId(), "Device v1.0", "test1", newDevice -> {
+        Device device = createDevice(deviceProfile.getId(), "Device v1.0", "test1", newDevice -> {
             newDevice.setFirmwareId(firmware.getId());
             newDevice.setSoftwareId(software.getId());
         });
@@ -267,7 +272,7 @@ public class VersionControlTest extends AbstractControllerTest {
         createVersion("profiles", EntityType.DEVICE_PROFILE);
         OtaPackage firmware = createOtaPackage(tenantId1, deviceProfile.getId(), OtaPackageType.FIRMWARE);
         OtaPackage software = createOtaPackage(tenantId1, deviceProfile.getId(), OtaPackageType.SOFTWARE);
-        Device device = createDevice(null, deviceProfile.getId(), "Device of tenant 1", "test1", newDevice -> {
+        Device device = createDevice(deviceProfile.getId(), "Device of tenant 1", "test1", newDevice -> {
             newDevice.setFirmwareId(firmware.getId());
             newDevice.setSoftwareId(software.getId());
         });
@@ -305,6 +310,54 @@ public class VersionControlTest extends AbstractControllerTest {
         checkImportedOtaPackageData(firmware, importedFirmwareOta);
         checkImportedEntity(tenantId1, software, tenantId2, importedSoftwareOta);
         checkImportedOtaPackageData(software, importedSoftwareOta);
+    }
+
+    @Test
+    public void testDeviceVc_withAlarmRules_betweenTenants() throws Exception {
+        DeviceProfile deviceProfile = createDeviceProfile(null, null, "Device profile of tenant 1");
+        Dashboard dashboard = createDashboard(null, "Mobile dashboard");
+        createAlarmRule(deviceProfile.getId(), "Profile alarm rule", dashboard.getId());
+        Device device = createDevice(deviceProfile.getId(), "Device of tenant 1", "test1");
+        createAlarmRule(device.getId(), "Device alarm rule", dashboard.getId());
+        String version = createVersion("devices, profiles and dashboards", EntityType.DEVICE, EntityType.DEVICE_PROFILE, EntityType.DASHBOARD);
+
+        loginTenant2();
+        Map<EntityType, EntityTypeLoadResult> result = loadVersion(version, config -> {
+            config.setLoadCredentials(false);
+        }, EntityType.DEVICE, EntityType.DEVICE_PROFILE, EntityType.DASHBOARD);
+        assertThat(result.get(EntityType.DEVICE).getCreated()).isEqualTo(1);
+        assertThat(result.get(EntityType.DEVICE_PROFILE).getCreated()).isEqualTo(1);
+        assertThat(result.get(EntityType.DASHBOARD).getCreated()).isEqualTo(1);
+
+        Device importedDevice = findDevice(device.getName());
+        checkImportedEntity(tenantId1, device, tenantId2, importedDevice);
+        checkImportedDeviceData(device, importedDevice);
+
+        DeviceProfile importedDeviceProfile = findDeviceProfile(deviceProfile.getName());
+        checkImportedEntity(tenantId1, deviceProfile, tenantId2, importedDeviceProfile);
+        checkImportedDeviceProfileData(deviceProfile, importedDeviceProfile);
+        assertThat(importedDevice.getDeviceProfileId()).isEqualTo(importedDeviceProfile.getId());
+
+        Dashboard importedDashboard = findDashboard(dashboard.getName());
+        checkImportedEntity(tenantId1, dashboard, tenantId2, importedDashboard);
+        checkImportedDashboardData(dashboard, importedDashboard);
+
+        getCalculatedFields(CalculatedFieldType.ALARM, EntityType.DEVICE_PROFILE,
+                List.of(importedDeviceProfile.getUuidId()), null).forEach(alarmRuleCf -> {
+            assertThat(alarmRuleCf.getName()).isEqualTo("Profile alarm rule");
+            AlarmCalculatedFieldConfiguration config = (AlarmCalculatedFieldConfiguration) alarmRuleCf.getConfiguration();
+            config.getAllRules().map(Pair::getValue).forEach(alarmRule -> {
+                assertThat(alarmRule.getDashboardId()).isEqualTo(importedDashboard.getId());
+            });
+        });
+        getCalculatedFields(CalculatedFieldType.ALARM, EntityType.DEVICE_PROFILE,
+                List.of(importedDevice.getUuidId()), null).forEach(alarmRuleCf -> {
+            assertThat(alarmRuleCf.getName()).isEqualTo("Device alarm rule");
+            AlarmCalculatedFieldConfiguration config = (AlarmCalculatedFieldConfiguration) alarmRuleCf.getConfiguration();
+            config.getAllRules().map(Pair::getValue).forEach(alarmRule -> {
+                assertThat(alarmRule.getDashboardId()).isEqualTo(importedDashboard.getId());
+            });
+        });
     }
 
     @Test
@@ -369,42 +422,42 @@ public class VersionControlTest extends AbstractControllerTest {
         String aliasId = "23c4185d-1497-9457-30b2-6d91e69a5b2c";
         String unknownUuid = "ea0dc8b0-3d85-11ed-9200-77fc04fa14fa";
         String entityAliases = "{\n" +
-                "\"" + aliasId + "\": {\n" +
-                "\"alias\": \"assets\",\n" +
-                "\"filter\": {\n" +
-                "   \"entityList\": [\n" +
-                "   \"" + asset1.getId() + "\",\n" +
-                "   \"" + asset2.getId() + "\",\n" +
-                "   \"" + tenantId1.getId() + "\",\n" +
-                "   \"" + existingDeviceProfile.getId() + "\",\n" +
-                "   \"" + unknownUuid + "\"\n" +
-                "   ],\n" +
-                "   \"id\":\"" + asset1.getId() + "\",\n" +
-                "   \"resolveMultiple\": true\n" +
-                "},\n" +
-                "\"id\": \"" + aliasId + "\"\n" +
-                "}\n" +
-                "}";
+                               "\"" + aliasId + "\": {\n" +
+                               "\"alias\": \"assets\",\n" +
+                               "\"filter\": {\n" +
+                               "   \"entityList\": [\n" +
+                               "   \"" + asset1.getId() + "\",\n" +
+                               "   \"" + asset2.getId() + "\",\n" +
+                               "   \"" + tenantId1.getId() + "\",\n" +
+                               "   \"" + existingDeviceProfile.getId() + "\",\n" +
+                               "   \"" + unknownUuid + "\"\n" +
+                               "   ],\n" +
+                               "   \"id\":\"" + asset1.getId() + "\",\n" +
+                               "   \"resolveMultiple\": true\n" +
+                               "},\n" +
+                               "\"id\": \"" + aliasId + "\"\n" +
+                               "}\n" +
+                               "}";
         String widgetId = "ea8f34a0-264a-f11f-cde3-05201bb4ff4b";
         String actionId = "4a8e6efa-3e68-fa59-7feb-d83366130cae";
         String widgets = "{\n" +
-                "  \"" + widgetId + "\": {\n" +
-                "    \"config\": {\n" +
-                "      \"actions\": {\n" +
-                "        \"rowClick\": [\n" +
-                "          {\n" +
-                "            \"name\": \"go to dashboard\",\n" +
-                "            \"targetDashboardId\": \"" + otherDashboard.getId() + "\",\n" +
-                "            \"id\": \"" + actionId + "\"\n" +
-                "          }\n" +
-                "        ]\n" +
-                "      }\n" +
-                "    },\n" +
-                "    \"row\": 0,\n" +
-                "    \"col\": 0,\n" +
-                "    \"id\": \"" + widgetId + "\"\n" +
-                "  }\n" +
-                "}";
+                         "  \"" + widgetId + "\": {\n" +
+                         "    \"config\": {\n" +
+                         "      \"actions\": {\n" +
+                         "        \"rowClick\": [\n" +
+                         "          {\n" +
+                         "            \"name\": \"go to dashboard\",\n" +
+                         "            \"targetDashboardId\": \"" + otherDashboard.getId() + "\",\n" +
+                         "            \"id\": \"" + actionId + "\"\n" +
+                         "          }\n" +
+                         "        ]\n" +
+                         "      }\n" +
+                         "    },\n" +
+                         "    \"row\": 0,\n" +
+                         "    \"col\": 0,\n" +
+                         "    \"id\": \"" + widgetId + "\"\n" +
+                         "  }\n" +
+                         "}";
 
         ObjectNode dashboardConfiguration = JacksonUtil.newObjectNode();
         dashboardConfiguration.set("entityAliases", JacksonUtil.toJsonNode(entityAliases));
@@ -500,11 +553,12 @@ public class VersionControlTest extends AbstractControllerTest {
         generatorNodeConfig.setMsgCount(1);
         generatorNodeConfig.setScriptLang(ScriptLanguage.JS);
         UUID someUuid = UUID.randomUUID();
-        generatorNodeConfig.setJsScript("var msg = { temp: 42, humidity: 77 };\n" +
-                "var metadata = { data: 40 };\n" +
-                "var msgType = \"POST_TELEMETRY_REQUEST\";\n" +
-                "var someUuid = \"" + someUuid + "\";\n" +
-                "return { msg: msg, metadata: metadata, msgType: msgType };");
+        generatorNodeConfig.setJsScript("""
+                var msg = { temp: 42, humidity: 77 };
+                var metadata = { data: 40 };
+                var msgType = "POST_TELEMETRY_REQUEST";
+                var someUuid = "%s";
+                return { msg: msg, metadata: metadata, msgType: msgType };""".formatted(someUuid));
         generatorNode.setConfiguration(JacksonUtil.valueToTree(generatorNodeConfig));
         nodes.add(generatorNode);
         metaData.setNodes(nodes);
@@ -528,7 +582,7 @@ public class VersionControlTest extends AbstractControllerTest {
     @Test
     public void testVcWithRelations_betweenTenants() throws Exception {
         Asset asset = createAsset(null, null, "Asset 1");
-        Device device = createDevice(null, null, "Device 1", "test1");
+        Device device = createDevice("Device 1", "test1");
         EntityRelation relation = createRelation(asset.getId(), device.getId());
         String versionId = createVersion("assets and devices", EntityType.ASSET, EntityType.DEVICE, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE);
 
@@ -554,11 +608,11 @@ public class VersionControlTest extends AbstractControllerTest {
     @Test
     public void testVcWithRelations_sameTenant() throws Exception {
         Asset asset = createAsset(null, null, "Asset 1");
-        Device device1 = createDevice(null, null, "Device 1", "test1");
+        Device device1 = createDevice("Device 1", "test1");
         EntityRelation relation1 = createRelation(device1.getId(), asset.getId());
         String versionId = createVersion("assets", EntityType.ASSET);
 
-        Device device2 = createDevice(null, null, "Device 2", "test2");
+        Device device2 = createDevice("Device 2", "test2");
         EntityRelation relation2 = createRelation(device2.getId(), asset.getId());
         List<EntityRelation> relations = findRelationsByTo(asset.getId());
         assertThat(relations).contains(relation1, relation2);
@@ -591,7 +645,7 @@ public class VersionControlTest extends AbstractControllerTest {
     @Test
     public void testVcWithCalculatedFields_betweenTenants() throws Exception {
         Asset asset = createAsset(null, null, "Asset 1");
-        Device device = createDevice(null, null, "Device 1", "test1");
+        Device device = createDevice("Device 1", "test1");
         CalculatedField calculatedField = createCalculatedField("CalculatedField1", device.getId(), asset.getId());
         String versionId = createVersion("calculated fields of asset and device", EntityType.ASSET, EntityType.DEVICE, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE);
 
@@ -617,7 +671,7 @@ public class VersionControlTest extends AbstractControllerTest {
     @Test
     public void testVcWithReferencedCalculatedFields_betweenTenants() throws Exception {
         Asset asset = createAsset(null, null, "Asset 1");
-        Device device = createDevice(null, null, "Device 1", "test1");
+        Device device = createDevice("Device 1", "test1");
         CalculatedField deviceCalculatedField = createCalculatedField("CalculatedField1", device.getId(), asset.getId());
         CalculatedField assetCalculatedField = createCalculatedField("CalculatedField2", asset.getId(), device.getId());
         String versionId = createVersion("calculated fields of asset and device", EntityType.ASSET, EntityType.DEVICE, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE);
@@ -638,7 +692,9 @@ public class VersionControlTest extends AbstractControllerTest {
             assertThat(importedField.getName()).isEqualTo(deviceCalculatedField.getName());
             assertThat(importedField.getType()).isEqualTo(deviceCalculatedField.getType());
             assertThat(importedField.getId()).isNotEqualTo(deviceCalculatedField.getId());
-            assertThat(importedField.getConfiguration().getArguments().get("T").getRefEntityId()).isEqualTo(importedAsset.getId());
+            assertThat(importedField.getConfiguration()).isInstanceOf(SimpleCalculatedFieldConfiguration.class);
+            SimpleCalculatedFieldConfiguration simpleCfg = (SimpleCalculatedFieldConfiguration) importedField.getConfiguration();
+            assertThat(simpleCfg.getArguments().get("T").getRefEntityId()).isEqualTo(importedAsset.getId());
         });
 
         List<CalculatedField> importedAssetCalculatedFields = findCalculatedFieldsByEntityId(importedAsset.getId());
@@ -647,7 +703,9 @@ public class VersionControlTest extends AbstractControllerTest {
             assertThat(importedField.getName()).isEqualTo(assetCalculatedField.getName());
             assertThat(importedField.getType()).isEqualTo(assetCalculatedField.getType());
             assertThat(importedField.getId()).isNotEqualTo(assetCalculatedField.getId());
-            assertThat(importedField.getConfiguration().getArguments().get("T").getRefEntityId()).isEqualTo(importedDevice.getId());
+            assertThat(importedField.getConfiguration()).isInstanceOf(SimpleCalculatedFieldConfiguration.class);
+            SimpleCalculatedFieldConfiguration simpleCfg = (SimpleCalculatedFieldConfiguration) importedField.getConfiguration();
+            assertThat(simpleCfg.getArguments().get("T").getRefEntityId()).isEqualTo(importedDevice.getId());
         });
     }
 
@@ -907,9 +965,8 @@ public class VersionControlTest extends AbstractControllerTest {
         login(tenantAdmin2.getEmail(), tenantAdmin2.getEmail());
     }
 
-    private Device createDevice(CustomerId customerId, DeviceProfileId deviceProfileId, String name, String accessToken, Consumer<Device>... modifiers) {
+    private Device createDevice(DeviceProfileId deviceProfileId, String name, String accessToken, Consumer<Device>... modifiers) {
         Device device = new Device();
-        device.setCustomerId(customerId);
         device.setName(name);
         device.setLabel("lbl");
         device.setDeviceProfileId(deviceProfileId);
@@ -1016,20 +1073,21 @@ public class VersionControlTest extends AbstractControllerTest {
 
     protected Dashboard createDashboard(CustomerId customerId, String name, AssetId assetForEntityAlias) {
         Dashboard dashboard = createDashboard(customerId, name);
-        String entityAliases = "{\n" +
-                "\t\"23c4185d-1497-9457-30b2-6d91e69a5b2c\": {\n" +
-                "\t\t\"alias\": \"assets\",\n" +
-                "\t\t\"filter\": {\n" +
-                "\t\t\t\"entityList\": [\n" +
-                "\t\t\t\t\"" + assetForEntityAlias.getId().toString() + "\"\n" +
-                "\t\t\t],\n" +
-                "\t\t\t\"entityType\": \"ASSET\",\n" +
-                "\t\t\t\"resolveMultiple\": true,\n" +
-                "\t\t\t\"type\": \"entityList\"\n" +
-                "\t\t},\n" +
-                "\t\t\"id\": \"23c4185d-1497-9457-30b2-6d91e69a5b2c\"\n" +
-                "\t}\n" +
-                "}";
+        String entityAliases = """
+                {
+                  "23c4185d-1497-9457-30b2-6d91e69a5b2c": {
+                    "alias": "assets",
+                    "filter": {
+                      "entityList": [
+                        "%s"
+                      ],
+                      "entityType": "ASSET",
+                      "resolveMultiple": true,
+                      "type": "entityList"
+                    },
+                    "id": "23c4185d-1497-9457-30b2-6d91e69a5b2c"
+                  }
+                }""".formatted(assetForEntityAlias.getId().toString());
         ObjectNode dashboardConfiguration = JacksonUtil.newObjectNode();
         dashboardConfiguration.set("entityAliases", JacksonUtil.toJsonNode(entityAliases));
         dashboardConfiguration.set("description", new TextNode("hallo"));
@@ -1132,6 +1190,33 @@ public class VersionControlTest extends AbstractControllerTest {
         return doPost("/api/calculatedField", calculatedField, CalculatedField.class);
     }
 
+    private CalculatedField createAlarmRule(EntityId entityId, String alarmType, DashboardId mobileDashboardId) {
+        Argument temperatureArgument = new Argument();
+        temperatureArgument.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
+        temperatureArgument.setDefaultValue("0");
+        Map<String, Argument> arguments = Map.of(
+                "temperature", temperatureArgument
+        );
+
+        CalculatedField calculatedField = new CalculatedField();
+        calculatedField.setEntityId(entityId);
+        calculatedField.setName(alarmType);
+        calculatedField.setType(CalculatedFieldType.ALARM);
+        AlarmCalculatedFieldConfiguration configuration = new AlarmCalculatedFieldConfiguration();
+        configuration.setArguments(arguments);
+        SimpleAlarmCondition createCondition = new SimpleAlarmCondition();
+        createCondition.setExpression(new TbelAlarmConditionExpression("return temperature >= 50;"));
+        configuration.setCreateRules(Map.of(
+                AlarmSeverity.CRITICAL, new AlarmRule(createCondition, "", mobileDashboardId)
+        ));
+        SimpleAlarmCondition clearCondition = new SimpleAlarmCondition();
+        clearCondition.setExpression(new TbelAlarmConditionExpression("return temperature < 50;"));
+        configuration.setClearRule(new AlarmRule(clearCondition, "", mobileDashboardId));
+        calculatedField.setConfiguration(configuration);
+        calculatedField.setDebugSettings(DebugSettings.all());
+        return saveCalculatedField(calculatedField);
+    }
+
     private CalculatedFieldConfiguration getCalculatedFieldConfig(EntityId referencedEntityId) {
         SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
 
@@ -1144,9 +1229,8 @@ public class VersionControlTest extends AbstractControllerTest {
 
         config.setExpression("T - (100 - H) / 5");
 
-        Output output = new Output();
+        TimeSeriesOutput output = new TimeSeriesOutput();
         output.setName("output");
-        output.setType(OutputType.TIME_SERIES);
 
         config.setOutput(output);
 

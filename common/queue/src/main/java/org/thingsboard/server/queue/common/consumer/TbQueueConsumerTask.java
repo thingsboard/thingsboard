@@ -32,7 +32,7 @@ import java.util.function.Supplier;
 public class TbQueueConsumerTask<M extends TbQueueMsg> {
 
     @Getter
-    private final Object key;
+    private final ConsumerKey key;
     private volatile TbQueueConsumer<M> consumer;
     private volatile Supplier<TbQueueConsumer<M>> consumerSupplier;
     @Getter
@@ -41,7 +41,7 @@ public class TbQueueConsumerTask<M extends TbQueueMsg> {
     @Setter
     private Future<?> task;
 
-    public TbQueueConsumerTask(Object key, Supplier<TbQueueConsumer<M>> consumerSupplier, Runnable callback) {
+    public TbQueueConsumerTask(ConsumerKey key, Supplier<TbQueueConsumer<M>> consumerSupplier, Runnable callback) {
         this.key = key;
         this.consumer = null;
         this.consumerSupplier = consumerSupplier;
@@ -95,6 +95,20 @@ public class TbQueueConsumerTask<M extends TbQueueMsg> {
 
     public boolean isRunning() {
         return task != null;
+    }
+
+    public record ConsumerKey(Object queueKey, TopicPartitionInfo partition) {
+
+        @Override
+        public String toString() {
+            if (partition != null) {
+                Integer partitionId = partition.getPartition().orElse(-1);
+                return queueKey + "-" + partitionId;
+            } else {
+                return queueKey.toString();
+            }
+        }
+
     }
 
 }

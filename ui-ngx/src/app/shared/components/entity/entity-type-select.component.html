@@ -16,7 +16,7 @@
 
 -->
 <mat-form-field [formGroup]="entityTypeFormGroup"
-                [subscriptSizing]="inlineField ? 'dynamic' : 'fixed'"
+                [subscriptSizing]="inlineField ? 'dynamic' : subscriptSizing"
                 [appearance]="inlineField ? 'outline' : appearance">
   <mat-label *ngIf="showLabel && !inlineField">{{ label }}</mat-label>
   <mat-select [required]="required" formControlName="entityType">

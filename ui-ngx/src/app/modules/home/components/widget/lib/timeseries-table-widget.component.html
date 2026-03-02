@@ -41,13 +41,13 @@
                    class="flex-1"
                    mat-stretch-tabs="false"
                    [(selectedIndex)]="sourceIndex" (selectedIndexChange)="onSourceIndexChanged()">
-      <mat-tab *ngFor="let source of sources; trackBy: trackBySourcesIndex; let index = index;" [label]="getTabLabel(source)">
+      <mat-tab *ngFor="let source of sources; trackBy: trackBySourcesIndex; let index = index;" [label]="source.displayName">
         <ng-template [ngIf]="isActiveTab(index)">
           <div class="table-container flex-1">
             <table mat-table [dataSource]="source.timeseriesDatasource" [trackBy]="trackByRowTimestamp"
                        matSort [matSortActive]="source.pageLink.sortOrder.property" [matSortDirection]="source.pageLink.sortDirection()" matSortDisableClear>
               <ng-container *ngIf="showTimestamp" [matColumnDef]="'0'">
-                <mat-header-cell *matHeaderCellDef mat-sort-header>Timestamp</mat-header-cell>
+                <mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'widgets.table.timestamp-column-name' | translate }}</mat-header-cell>
                 <mat-cell *matCellDef="let row; let rowIndex = index"
                           [innerHTML]="cellContent(source, null, 0, row, row[0], rowIndex) | async"
                           [style]="cellStyle(source, null, 0, row, row[0], rowIndex) | async">
@@ -78,7 +78,7 @@
                         <span *ngIf="!actionDescriptor.icon" style="width: 40px;"></span>
                         <button *ngIf="actionDescriptor.icon"
                                 class="tb-mat-40"
-                                mat-icon-button [disabled]="isLoading$ | async"
+                                mat-icon-button
                                 matTooltip="{{ actionDescriptor.displayName }}"
                                 matTooltipPosition="above"
                                 (click)="onActionButtonClick($event, row, actionDescriptor)">
@@ -96,7 +96,6 @@
                       <mat-menu #cellActionsMenu="matMenu" xPosition="before">
                         <ng-container *ngFor="let actionDescriptor of row.actionCellButtons; trackBy: trackByActionCellDescriptionId">
                           <button mat-menu-item *ngIf="actionDescriptor.icon"
-                                  [disabled]="isLoading$ | async"
                                   (click)="onActionButtonClick($event, row, actionDescriptor)">
                             <tb-icon matMenuItemIcon>{{actionDescriptor.icon}}</tb-icon>
                             <span>{{ actionDescriptor.displayName }}</span>

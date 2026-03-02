@@ -53,4 +53,6 @@ public interface DeviceProfileDao extends Dao<DeviceProfile>, ExportableEntityDa
 
     List<EntityInfo> findTenantDeviceProfileNames(UUID tenantId, boolean activeOnly);
 
+    List<DeviceProfileInfo> findDeviceProfilesByTenantIdAndIds(UUID tenantId, List<UUID> deviceProfileIds);
+
 }

@@ -20,6 +20,7 @@ import lombok.Data;
 import java.util.Map;
 
 @Data
+@Deprecated
 public class PersistedDeviceState {
 
     Map<String, PersistedAlarmState> alarmStates;

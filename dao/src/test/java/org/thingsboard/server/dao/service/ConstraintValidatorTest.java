@@ -18,7 +18,7 @@ package org.thingsboard.server.dao.service;
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
-import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.exception.DataValidationException;
 
 class ConstraintValidatorTest {
 

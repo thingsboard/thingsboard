@@ -110,6 +110,11 @@ public class InMemoryTbQueueConsumer<T extends TbQueueMsg> implements TbQueueCon
     }
 
     @Override
+    public Set<TopicPartitionInfo> getPartitions() {
+        return partitions;
+    }
+
+    @Override
     public List<String> getFullTopicNames() {
         return partitions.stream().map(TopicPartitionInfo::getFullTopicName).collect(Collectors.toList());
     }

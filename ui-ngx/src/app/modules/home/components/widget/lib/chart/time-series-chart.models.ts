@@ -99,6 +99,8 @@ import {
   TimeSeriesChartTooltipWidgetSettings
 } from '@home/components/widget/lib/chart/time-series-chart-tooltip.models';
 import { TbUnit, TbUnitConverter } from '@shared/models/unit.models';
+import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { DataKeysCallbacks } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 
 type TimeSeriesChartDataEntry = [number, any, number, number];
 
@@ -381,8 +383,8 @@ export interface TimeSeriesChartYAxisSettings extends TimeSeriesChartAxisSetting
   decimals?: number;
   interval?: number;
   splitNumber?: number;
-  min?: number | string;
-  max?: number | string;
+  min?: number | string | ValueSourceConfig;
+  max?: number | string | ValueSourceConfig;
   ticksGenerator?: TimeSeriesChartTicksGenerator | string;
   ticksFormatter?: TimeSeriesChartTicksFormatter | string;
 }
@@ -867,6 +869,9 @@ export interface TimeSeriesChartAxis {
   id: string;
   settings: TimeSeriesChartAxisSettings;
   option: CartesianAxisOption;
+  minLatestDataKey?: DataKey;
+  maxLatestDataKey?: DataKey;
+  unitConvertor?: (value: number) => number;
 }
 
 export interface TimeSeriesChartYAxis extends TimeSeriesChartAxis {
@@ -926,6 +931,29 @@ export const createTimeSeriesYAxis = (units: string,
       return ticks?.filter(tick => tick.value >= extent[0] && tick.value <= extent[1]);
     };
   }
+
+  let initialMin: number | string | undefined;
+  if (isDefinedAndNotNull(settings.min)) {
+    if (typeof settings.min === 'object' && 'type' in settings.min) {
+      initialMin = undefined;
+    } else if (typeof settings.min === 'number') {
+      initialMin = unitConvertor ? unitConvertor(settings.min) : settings.min;
+    } else if (typeof settings.min === 'string') {
+      initialMin = settings.min;
+    }
+  }
+
+  let initialMax: number | string | undefined;
+  if (isDefinedAndNotNull(settings.max)) {
+    if (typeof settings.max === 'object' && 'type' in settings.max) {
+      initialMax = undefined;
+    } else if (typeof settings.max === 'number') {
+      initialMax = unitConvertor ? unitConvertor(settings.max) : settings.max;
+    } else if (typeof settings.max === 'string') {
+      initialMax = settings.max;
+    }
+  }
+
   return {
     id: settings.id,
     decimals,
@@ -939,8 +967,8 @@ export const createTimeSeriesYAxis = (units: string,
       offset: 0,
       alignTicks: true,
       scale: true,
-      min: isDefinedAndNotNull(settings.min) ? unitConvertor(Number(settings.min)) : settings.min,
-      max: isDefinedAndNotNull(settings.max) ? unitConvertor(Number(settings.max)) : settings.max,
+      min: initialMin,
+      max: initialMax,
       minInterval,
       splitNumber,
       interval,
@@ -1411,6 +1439,13 @@ const createTimeSeriesChartSeries = (item: TimeSeriesChartDataItem,
     }
   }
   seriesOption.data = item.data;
+  if (seriesOption.type === 'line') {
+    const settings: TimeSeriesChartKeySettings = item.dataKey.settings;
+    const lineSettings = settings.lineSettings;
+    if (!lineSettings.showPoints) {
+      seriesOption.showSymbol = item.data.length === 1;
+    }
+  }
   return seriesOption;
 };
 
@@ -1462,3 +1497,101 @@ const createSeriesLabelOption = (item: TimeSeriesChartDataItem, show: boolean,
   }
   return labelOption;
 };
+
+export const checkLatestDataKeys = (yAxes: TimeSeriesChartYAxes, datasource: Datasource): TimeSeriesChartYAxes => {
+  const latestKeys = datasource?.latestDataKeys || [];
+  const result: TimeSeriesChartYAxes = {};
+
+  for (const [id, axis] of Object.entries(yAxes)) {
+    axis.min = normalizeAxisLimit(axis.min);
+    axis.max = normalizeAxisLimit(axis.max);
+    const minCfg = axis.min;
+    const maxCfg = axis.max;
+
+    const minValid = !!minCfg && (
+      minCfg.type !== ValueSourceType.latestKey ||
+      latestKeys.some(k => isYAxisKey(k, minCfg))
+    );
+
+    const maxValid = !!maxCfg && (
+      maxCfg.type !== ValueSourceType.latestKey ||
+      latestKeys.some(k => isYAxisKey(k, maxCfg))
+    );
+
+    if (minValid && maxValid) {
+      result[id] = axis;
+    }
+  }
+
+  return result;
+}
+
+export const updateLatestDataKeys = (yAxes: TimeSeriesChartYAxisSettings[], datasource: Datasource, dataKeyCallbacks: DataKeysCallbacks)=> {
+  if (datasource) {
+    let latestKeys = datasource.latestDataKeys;
+    if (!latestKeys) {
+      latestKeys = [];
+      datasource.latestDataKeys = latestKeys;
+    }
+    const existingYAxisKeys = latestKeys.filter(k => k.settings?.__yAxisMinKey === true || k.settings?.__yAxisMaxKey === true);
+    const foundYAxisKeys: DataKey[] = [];
+
+    for(const yAxis of yAxes) {
+      const min = yAxis.min as ValueSourceConfig;
+      const max = yAxis.max as ValueSourceConfig;
+      if (min && min.type === ValueSourceType.latestKey) {
+        const found = existingYAxisKeys.find(k => isYAxisKey(k, min));
+        if (!found) {
+          const newKey = dataKeyCallbacks.generateDataKey(min.latestKey, min.latestKeyType,
+            null, true, null);
+          newKey.settings.__yAxisMinKey = true;
+          latestKeys.push(newKey);
+        } else if (foundYAxisKeys.indexOf(found) === -1) {
+          foundYAxisKeys.push(found);
+        }
+      }
+      if (max && max.type === ValueSourceType.latestKey) {
+        const found = existingYAxisKeys.find(k => isYAxisKey(k, max));
+        if (!found) {
+          const newKey = dataKeyCallbacks.generateDataKey(max.latestKey, max.latestKeyType,
+            null, true, null);
+          newKey.settings.__yAxisMaxKey = true;
+          latestKeys.push(newKey);
+        } else if (foundYAxisKeys.indexOf(found) === -1) {
+          foundYAxisKeys.push(found);
+        }
+      }
+    }
+    const toRemove = existingYAxisKeys.filter(k => foundYAxisKeys.indexOf(k) === -1);
+    for (const key of toRemove) {
+      const index = latestKeys.indexOf(key);
+      if (index > -1) {
+        latestKeys.splice(index, 1);
+      }
+    }
+  }
+}
+
+export const isYAxisKey = (d: DataKey, limit: ValueSourceConfig): boolean => {
+  return (d.type === DataKeyType.function && d.label === limit.latestKey) ||
+    (d.type !== DataKeyType.function && d.name === limit.latestKey &&
+      d.type === limit.latestKeyType);
+}
+
+export const normalizeAxisLimit = (limit: string | number | ValueSourceConfig): ValueSourceConfig => {
+  if (!limit) {
+    return {
+      type: ValueSourceType.constant,
+      value: null,
+      entityAlias: null
+    };
+  } else if (typeof limit === 'number' || typeof limit === 'string') {
+    return {
+      type: ValueSourceType.constant,
+      value: Number(limit),
+      entityAlias: null
+    };
+  }
+  return limit;
+}
+

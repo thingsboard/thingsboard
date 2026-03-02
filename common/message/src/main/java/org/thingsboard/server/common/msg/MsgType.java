@@ -138,16 +138,24 @@ public enum MsgType {
 
     CF_CACHE_INIT_MSG, // Sent to init caches for CF actor;
     CF_STATE_RESTORE_MSG, // Sent to restore particular calculated field entity state;
+    CF_STATE_PARTITION_RESTORE_MSG,
     CF_PARTITIONS_CHANGE_MSG, // Sent when cluster event occures;
 
     CF_ENTITY_LIFECYCLE_MSG, // Sent on CF/Device/Asset create/update/delete;
+    CF_ENTITY_ACTION_EVENT_MSG,
+    CF_ALARM_ACTION_MSG,
     CF_TELEMETRY_MSG, // Sent from queue to actor system;
     CF_LINKED_TELEMETRY_MSG, // Sent from queue to actor system;
 
     /* CF Manager Actor -> CF Entity actor */
     CF_ENTITY_TELEMETRY_MSG,
     CF_ENTITY_INIT_CF_MSG,
-    CF_ENTITY_DELETE_MSG;
+    CF_ENTITY_DELETE_MSG,
+
+    CF_RELATION_ACTION_MSG,
+
+    CF_ARGUMENT_RESET_MSG, // Sent to reset argument;
+    CF_REEVALUATE_MSG;
 
     @Getter
     private final boolean ignoreOnStart;

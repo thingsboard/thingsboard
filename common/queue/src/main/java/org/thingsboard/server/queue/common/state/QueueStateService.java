@@ -49,7 +49,7 @@ public abstract class QueueStateService<E extends TbQueueMsg, S extends TbQueueM
         this.otherConsumers = otherConsumers;
     }
 
-    public void update(QueueKey queueKey, Set<TopicPartitionInfo> newPartitions, Runnable whenAllProcessed) {
+    public void update(QueueKey queueKey, Set<TopicPartitionInfo> newPartitions, RestoreCallback callback) {
         newPartitions = withTopic(newPartitions, eventConsumer.getTopic());
         var writeLock = partitionsLock.writeLock();
         writeLock.lock();
@@ -71,23 +71,15 @@ public abstract class QueueStateService<E extends TbQueueMsg, S extends TbQueueM
         }
 
         if (!addedPartitions.isEmpty()) {
-            addPartitions(queueKey, addedPartitions, whenAllProcessed);
+            addPartitions(queueKey, addedPartitions, callback);
         } else {
-            if (whenAllProcessed != null) {
-                whenAllProcessed.run();
+            if (callback != null) {
+                callback.onAllPartitionsRestored();
             }
         }
     }
 
-    protected void addPartitions(QueueKey queueKey, Set<TopicPartitionInfo> partitions, Runnable whenAllProcessed) {
-        if (whenAllProcessed != null) {
-            whenAllProcessed.run();
-        }
-        eventConsumer.addPartitions(partitions);
-        for (PartitionedQueueConsumerManager<?> consumer : otherConsumers) {
-            consumer.addPartitions(withTopic(partitions, consumer.getTopic()));
-        }
-    }
+    protected abstract void addPartitions(QueueKey queueKey, Set<TopicPartitionInfo> partitions, RestoreCallback callback) ;
 
     protected void removePartitions(QueueKey queueKey, Set<TopicPartitionInfo> partitions) {
         eventConsumer.removePartitions(partitions);
@@ -120,6 +112,14 @@ public abstract class QueueStateService<E extends TbQueueMsg, S extends TbQueueM
     public void stop() {
         eventConsumer.stop();
         eventConsumer.awaitStop();
+    }
+
+    public interface RestoreCallback {
+
+        void onAllPartitionsRestored();
+
+        default void onPartitionRestored(TopicPartitionInfo partition) {}
+
     }
 
 }

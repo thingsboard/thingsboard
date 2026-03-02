@@ -38,9 +38,22 @@
       {{ 'widgets.count.label' | translate }}
     </mat-slide-toggle>
     <div class="flex flex-1 flex-row items-center justify-start gap-2">
-      <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
-        <input matInput formControlName="label" placeholder="{{ 'widget-config.set' | translate }}">
-      </mat-form-field>
+      @if (!predefinedValues) {
+        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+          <input matInput formControlName="label" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+      }@else {
+        <tb-string-pattern-autocomplete class="flex-1"
+                                      appearance="outline"
+                                      brackets="curly"
+                                      subscriptSizing="dynamic"
+                                      predefinedValuesButton="true"
+                                      [disabled]="!countWidgetConfigForm.get('showLabel').value"
+                                      [predefinedValues]="predefinedValues"
+                                      placeholderText="{{ 'widget-config.set' | translate }}"
+                                      formControlName="label"
+        ></tb-string-pattern-autocomplete>
+      }
       <tb-font-settings formControlName="labelFont"
                         [previewText]="countWidgetConfigForm.get('label').value">
       </tb-font-settings>

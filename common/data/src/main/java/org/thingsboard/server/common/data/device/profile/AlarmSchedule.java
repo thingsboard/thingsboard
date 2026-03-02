@@ -31,6 +31,7 @@ import java.io.Serializable;
         @JsonSubTypes.Type(value = AnyTimeSchedule.class, name = "ANY_TIME"),
         @JsonSubTypes.Type(value = SpecificTimeSchedule.class, name = "SPECIFIC_TIME"),
         @JsonSubTypes.Type(value = CustomTimeSchedule.class, name = "CUSTOM")})
+@Deprecated
 public interface AlarmSchedule extends Serializable {
 
     AlarmScheduleType getType();

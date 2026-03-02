@@ -20,6 +20,7 @@ import lombok.Data;
 import java.io.Serializable;
 
 @Data
+@Deprecated
 public class CustomTimeScheduleItem implements Serializable {
 
     private boolean enabled;

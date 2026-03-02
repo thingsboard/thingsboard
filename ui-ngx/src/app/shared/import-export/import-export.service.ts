@@ -183,8 +183,8 @@ export class ImportExportService {
     });
   }
 
-  public openCalculatedFieldImportDialog(): Observable<CalculatedField> {
-    return this.openImportDialog('calculated-fields.import', 'calculated-fields.file').pipe(
+  public openCalculatedFieldImportDialog(importTitle = 'calculated-fields.import', importFileLabel = 'calculated-fields.file'): Observable<CalculatedField> {
+    return this.openImportDialog(importTitle, importFileLabel).pipe(
       catchError(() => of(null)),
     );
   }

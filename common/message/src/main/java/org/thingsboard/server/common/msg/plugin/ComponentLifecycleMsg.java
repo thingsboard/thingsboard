@@ -30,9 +30,6 @@ import org.thingsboard.server.common.msg.cluster.ToAllNodesMsg;
 import java.io.Serial;
 import java.util.Optional;
 
-/**
- * @author Andrew Shvayka
- */
 @Data
 public class ComponentLifecycleMsg implements TenantAwareMsg, ToAllNodesMsg {
 
@@ -46,14 +43,15 @@ public class ComponentLifecycleMsg implements TenantAwareMsg, ToAllNodesMsg {
     private final String name;
     private final EntityId oldProfileId;
     private final EntityId profileId;
+    private final boolean ownerChanged;
     private final JsonNode info;
 
     public ComponentLifecycleMsg(TenantId tenantId, EntityId entityId, ComponentLifecycleEvent event) {
-        this(tenantId, entityId, event, null, null, null, null, null);
+        this(tenantId, entityId, event, null, null, null, null, false, null);
     }
 
     @Builder
-    private ComponentLifecycleMsg(TenantId tenantId, EntityId entityId, ComponentLifecycleEvent event, String oldName, String name, EntityId oldProfileId, EntityId profileId, JsonNode info) {
+    private ComponentLifecycleMsg(TenantId tenantId, EntityId entityId, ComponentLifecycleEvent event, String oldName, String name, EntityId oldProfileId, EntityId profileId, boolean ownerChanged, JsonNode info) {
         this.tenantId = tenantId;
         this.entityId = entityId;
         this.event = event;
@@ -61,6 +59,7 @@ public class ComponentLifecycleMsg implements TenantAwareMsg, ToAllNodesMsg {
         this.name = name;
         this.oldProfileId = oldProfileId;
         this.profileId = profileId;
+        this.ownerChanged = ownerChanged;
         this.info = info;
     }
 

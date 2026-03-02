@@ -136,7 +136,7 @@
               </mat-select>
             </mat-form-field>
           </div>
-          <div class="tb-form-row tb-standard-fields no-border no-padding column-xs" *ngIf="isCustomProvider()">
+          <div class="grid gt-xs:grid-cols-2 gt-xs:gap-4" *ngIf="isCustomProvider()">
             <mat-form-field class="flex" floatLabel="always">
               <mat-label translate>admin.oauth2.login-button-label</mat-label>
               <input matInput formControlName="loginButtonLabel"
@@ -145,10 +145,14 @@
                 {{ 'admin.oauth2.login-button-label-required' | translate }}
               </mat-error>
             </mat-form-field>
-            <mat-form-field class="flex">
-              <mat-label translate>admin.oauth2.login-button-icon</mat-label>
-              <input matInput formControlName="loginButtonIcon">
-            </mat-form-field>
+            <div class="tb-form-row justify-between" style="height: auto; margin-bottom: 22px;">
+              <div translate>admin.oauth2.login-button-icon</div>
+              <tb-material-icon-select asBoxInput
+                                       iconClearButton
+                                       allowedCustomIcon
+                                       formControlName="loginButtonIcon">
+              </tb-material-icon-select>
+            </div>
           </div>
           <section formGroupName="mapperConfig" style="margin-bottom: 22px">
             <div class="tb-form-row no-border no-padding">

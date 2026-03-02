@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Deprecated
 class DataSnapshot {
 
     private volatile boolean ready;

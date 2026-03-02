@@ -94,7 +94,7 @@
 </div>
 
 <ng-template #function>
-  <div class="tb-form-panel no-padding no-border" [formGroup]="colorSettingsFormGroup">
+  <div class="tb-form-panel no-padding no-border overflow-auto" [formGroup]="colorSettingsFormGroup">
     <tb-js-func formControlName="colorFunction"
                 [functionArgs]="['value']"
                 [globalVariables]="functionScopeVariables"

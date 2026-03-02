@@ -19,7 +19,7 @@
   <form [formGroup]="confirmFormGroup" style="padding-top: 16px;">
     <fieldset [disabled]="(isLoading$ | async)">
       <div style="user-select: none;" [innerHTML]="removeOtherEntitiesConfirmText"></div>
-      <mat-form-field class="mat-block">
+      <mat-form-field class="mat-block" appearance="outline">
         <input matInput formControlName="verification"/>
       </mat-form-field>
     </fieldset>

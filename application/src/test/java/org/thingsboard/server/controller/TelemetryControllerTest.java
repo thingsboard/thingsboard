@@ -19,7 +19,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
@@ -99,17 +102,29 @@ public class TelemetryControllerTest extends AbstractControllerTest {
         Assert.assertEquals(11L, thirdIntervalResult.get("value").asLong());
         Assert.assertEquals(thirdIntervalTs, thirdIntervalResult.get("ts").asLong());
 
-        result = doGetAsync("/api/plugins/telemetry/DEVICE/" + device.getId() +
+        ObjectNode resultByMonth = doGetAsync("/api/plugins/telemetry/DEVICE/" + device.getId() +
                         "/values/timeseries?keys=t&startTs={startTs}&endTs={endTs}&agg={agg}&intervalType={intervalType}&timeZone={timeZone}",
                 ObjectNode.class, startTs, endTs, "SUM", "MONTH", "Europe/Kyiv");
 
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.get("t"));
-        Assert.assertEquals(1, result.get("t").size());
+        Assert.assertNotNull(resultByMonth);
+        Assert.assertNotNull(resultByMonth.get("t"));
+        Assert.assertEquals(1, resultByMonth.get("t").size());
 
-        var monthResult = result.get("t").get(0);
+        var monthResult = resultByMonth.get("t").get(0);
         Assert.assertEquals(22L, monthResult.get("value").asLong());
         Assert.assertEquals(middleOfTheInterval, monthResult.get("ts").asLong());
+
+        // check timeseries history with key parameter (instead of keys) has the same result as with keys parameter
+        ObjectNode resultByKey = doGetAsync("/api/plugins/telemetry/DEVICE/" + device.getId() +
+                        "/values/timeseries?key=t&startTs={startTs}&endTs={endTs}&agg={agg}&intervalType={intervalType}&timeZone={timeZone}",
+                ObjectNode.class, startTs, endTs, "SUM", "WEEK_ISO", "Europe/Kyiv");
+        Assert.assertEquals(result, resultByKey);
+
+        // check timeseries history without keys and key results into empty object
+        ObjectNode resultWithoutKeyAndKeys = doGetAsync("/api/plugins/telemetry/DEVICE/" + device.getId() +
+                        "/values/timeseries?startTs={startTs}&endTs={endTs}&agg={agg}&intervalType={intervalType}&timeZone={timeZone}",
+                ObjectNode.class, startTs, endTs, "SUM", "WEEK_ISO", "Europe/Kyiv");
+        Assert.assertTrue(resultWithoutKeyAndKeys.isEmpty());
     }
 
     @Test
@@ -230,6 +245,63 @@ public class TelemetryControllerTest extends AbstractControllerTest {
         String invalidRequestBody2 = "{\" \": \"value\"}";
         doPostAsync("/api/plugins/telemetry/" + device.getId() + "/SHARED_SCOPE", invalidRequestBody2, String.class, status().isBadRequest());
         doPostAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/timeseries/smth", invalidRequestBody2, String.class, status().isBadRequest());
+    }
+
+    @Test
+    public void testDeleteTelemetryByKeyWithComma() throws Exception {
+        loginTenantAdmin();
+        Device device = createDevice();
+
+        String tsKey = "key1,key2";
+        String testBody = JacksonUtil.newObjectNode()
+                .put(tsKey, "value")
+                .toString();
+        doPostAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/timeseries/smth", testBody, String.class, status().isOk());
+
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("key", tsKey);
+        params.add("deleteAllDataForKeys", "true");
+
+        ObjectNode tsData = readResponse(doGetAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/values/timeseries", params), ObjectNode.class);
+        assertThat(tsData.get("key1,key2").get(0).get("value").asText()).isEqualTo("value");
+
+        doDeleteAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/timeseries/delete", params);
+
+        ObjectNode tsDataAfterDeletion = readResponse(doGetAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/values/timeseries", params), ObjectNode.class);
+        Assert.assertTrue(tsDataAfterDeletion.get("key1,key2").get(0).get("value").isNull());
+    }
+
+    @Test
+    public void testDeleteTelemetryByKeysWithComma() throws Exception {
+        loginTenantAdmin();
+        Device device = createDevice();
+
+        String keyWithComma = "key1,key2";
+        String testBody = JacksonUtil.newObjectNode()
+                .put(keyWithComma, "value")
+                .toString();
+        doPostAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/timeseries/smth", testBody, String.class, status().isOk());
+
+        String key = "key3";
+        String testBody2 = JacksonUtil.newObjectNode()
+                .put(key, "value")
+                .toString();
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("key", keyWithComma);
+        params.add("key", key);
+        params.add("deleteAllDataForKeys", "true");
+
+        doPostAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/timeseries/smth", testBody2, String.class, status().isOk());
+
+        ObjectNode tsData = readResponse(doGetAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/values/timeseries", params), ObjectNode.class);
+        assertThat(tsData.get("key1,key2").get(0).get("value").asText()).isEqualTo("value");
+        assertThat(tsData.get("key3").get(0).get("value").asText()).isEqualTo("value");
+
+        doDeleteAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/timeseries/delete", params);
+
+        ObjectNode tsDataAfterDeletion = readResponse(doGetAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/values/timeseries", params), ObjectNode.class);
+        Assert.assertTrue(tsDataAfterDeletion.get("key1,key2").get(0).get("value").isNull());
+        Assert.assertTrue(tsDataAfterDeletion.get("key3").get(0).get("value").isNull());
     }
 
     private Device createDevice() throws Exception {

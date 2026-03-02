@@ -156,6 +156,10 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
 
   @Input()
   @coerceBoolean()
+  hideDataKeyAggregation = false;
+
+  @Input()
+  @coerceBoolean()
   supportsUnitConversion = false;
 
   @ViewChild('keyInput') keyInput: ElementRef;

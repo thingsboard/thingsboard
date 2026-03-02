@@ -45,6 +45,8 @@
         <tb-toggle-option value="markers" [error]="mapSettingsFormGroup.get('markers').invalid ? ('common.required-fields' | translate) : null">{{ 'widgets.maps.overlays.markers' | translate }}</tb-toggle-option>
         <tb-toggle-option value="polygons" [error]="mapSettingsFormGroup.get('polygons').invalid ? ('common.required-fields' | translate) : null">{{ 'widgets.maps.overlays.polygons' | translate }}</tb-toggle-option>
         <tb-toggle-option value="circles" [error]="mapSettingsFormGroup.get('circles').invalid ? ('common.required-fields' | translate) : null">{{ 'widgets.maps.overlays.circles' | translate }}</tb-toggle-option>
+        //todo translation
+        <tb-toggle-option value="polylines" [error]="mapSettingsFormGroup.get('polylines').invalid ? ('common.required-fields' | translate) : null"> Polylines </tb-toggle-option>
       </tb-toggle-select>
     </div>
     <tb-map-data-layers *ngIf="trip"
@@ -66,6 +68,11 @@
     <tb-map-data-layers [class.!hidden]="dataLayerMode !== 'circles'"
                         formControlName="circles"
                         dataLayerType="circles"
+                        [context]="context"
+                        [mapType]="mapSettingsFormGroup.get('mapType').value"></tb-map-data-layers>
+    <tb-map-data-layers [class.!hidden]="dataLayerMode !== 'polylines'"
+                        formControlName="polylines"
+                        dataLayerType="polylines"
                         [context]="context"
                         [mapType]="mapSettingsFormGroup.get('mapType').value"></tb-map-data-layers>
   </div>

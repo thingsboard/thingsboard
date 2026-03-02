@@ -172,6 +172,14 @@ const handleErrorFunctionTemplate: TbFunction =
   '    }, 100);\n' +
   '}\n';
 
+const handleNonMobileFallbackFunctionTemplate: TbFunction =
+  '// Optional function body to handle non-mobile fallback \n' +
+  'showFallbackToast();\n' +
+  '\n' +
+  'function showFallbackToast(title, error) {\n' +
+  '    widgetContext.showWarnToast(\'This action is only available in the mobile application.\');\n' +
+  '}\n';
+
 const getLocationFunctionTemplate: TbFunction =
   '// Function body that should return location as array of two numbers (latitude, longitude) for further processing by mobile action.\n' +
   '// Usually location can be obtained from entity attributes/telemetry. \n\n' +
@@ -326,3 +334,5 @@ export const getDefaultHandleErrorFunction = (type: WidgetMobileActionType): TbF
   }
   return handleErrorFunctionTemplate.replace('--TITLE--', title);
 };
+
+export const getDefaultHandleNonMobileFallBackFunction = () => handleNonMobileFallbackFunctionTemplate;

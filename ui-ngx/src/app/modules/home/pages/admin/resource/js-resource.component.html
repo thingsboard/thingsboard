@@ -70,7 +70,7 @@
                      formControlName="data"
                      [required]="isAdd"
                      label="{{ 'javascript.resource-file' | translate }}"
-                     [readAsBinary]="true"
+                     [workFromFileObj]="true"
                      [maxSizeByte]="maxResourceSize"
                      [allowedExtensions]="getAllowedExtensions()"
                      [contentConvertFunction]="convertToBase64File"

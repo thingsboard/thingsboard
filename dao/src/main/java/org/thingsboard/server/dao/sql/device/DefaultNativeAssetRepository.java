@@ -23,6 +23,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 import org.thingsboard.server.common.data.ProfileEntityIdInfo;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 
@@ -41,13 +43,13 @@ public class DefaultNativeAssetRepository extends AbstractNativeRepository imple
 
     @Override
     public PageData<ProfileEntityIdInfo> findProfileEntityIdInfos(Pageable pageable) {
-        String PROFILE_ASSET_ID_INFO_QUERY = "SELECT tenant_id as tenantId, asset_profile_id as profileId, id as id FROM asset ORDER BY created_time ASC LIMIT %s OFFSET %s";
+        String PROFILE_ASSET_ID_INFO_QUERY = "SELECT tenant_id as tenantId, customer_id as customerId, asset_profile_id as profileId, id as id FROM asset ORDER BY created_time ASC LIMIT %s OFFSET %s";
         return find(COUNT_QUERY, PROFILE_ASSET_ID_INFO_QUERY, pageable, DefaultNativeAssetRepository::toInfo);
     }
 
     @Override
     public PageData<ProfileEntityIdInfo> findProfileEntityIdInfosByTenantId(UUID tenantId, Pageable pageable) {
-        String PROFILE_ASSET_ID_INFO_QUERY = String.format("SELECT tenant_id as tenantId, asset_profile_id as profileId, id as id FROM asset WHERE tenant_id = '%s' ORDER BY created_time ASC LIMIT %%s OFFSET %%s", tenantId);
+        String PROFILE_ASSET_ID_INFO_QUERY = String.format("SELECT tenant_id as tenantId, customer_id as customerId, asset_profile_id as profileId, id as id FROM asset WHERE tenant_id = '%s' ORDER BY created_time ASC LIMIT %%s OFFSET %%s", tenantId);
         String COUNT_QUERY_BY_TENANT = String.format("SELECT count(id) FROM asset WHERE tenant_id = '%s';", tenantId);
         return find(COUNT_QUERY_BY_TENANT, PROFILE_ASSET_ID_INFO_QUERY, pageable, DefaultNativeAssetRepository::toInfo);
     }
@@ -56,8 +58,10 @@ public class DefaultNativeAssetRepository extends AbstractNativeRepository imple
         var tenantIdObj = row.get("tenantId");
         UUID tenantId = tenantIdObj != null ? (UUID) tenantIdObj : TenantId.SYS_TENANT_ID.getId();
         AssetId id = new AssetId((UUID) row.get("id"));
+        CustomerId customerId = new CustomerId((UUID) row.get("customerId"));
+        EntityId ownerId = !customerId.isNullUid() ? customerId : TenantId.fromUUID(tenantId);
         AssetProfileId profileId = new AssetProfileId((UUID) row.get("profileId"));
-        return ProfileEntityIdInfo.create(tenantId, profileId, id);
+        return ProfileEntityIdInfo.create(tenantId, ownerId, profileId, id);
     }
 
 }

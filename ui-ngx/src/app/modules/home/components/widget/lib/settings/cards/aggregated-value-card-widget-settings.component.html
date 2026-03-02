@@ -28,9 +28,16 @@
         {{ 'widgets.aggregated-value-card.subtitle' | translate }}
       </mat-slide-toggle>
       <div class="flex flex-1 flex-row items-center justify-start gap-2">
-        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
-          <input matInput formControlName="subtitle" placeholder="{{ 'widget-config.set' | translate }}">
-        </mat-form-field>
+        <tb-string-pattern-autocomplete class="flex-1"
+                                        appearance="outline"
+                                        brackets="curly"
+                                        subscriptSizing="dynamic"
+                                        [predefinedValuesButton]="true"
+                                        [disabled]="!aggregatedValueCardWidgetSettingsForm.get('showSubtitle').value"
+                                        [predefinedValues]="predefinedValues"
+                                        placeholderText="{{ 'widget-config.set' | translate }}"
+                                        formControlName="subtitle"
+        ></tb-string-pattern-autocomplete>
         <tb-font-settings formControlName="subtitleFont"
                           clearButton
                           [previewText]="aggregatedValueCardWidgetSettingsForm.get('subtitle').value">

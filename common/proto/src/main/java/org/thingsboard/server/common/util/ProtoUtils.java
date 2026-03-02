@@ -129,6 +129,7 @@ public class ProtoUtils {
             builder.setOldProfileIdMSB(msg.getOldProfileId().getId().getMostSignificantBits());
             builder.setOldProfileIdLSB(msg.getOldProfileId().getId().getLeastSignificantBits());
         }
+        builder.setOwnerChanged(msg.isOwnerChanged());
         if (msg.getName() != null) {
             builder.setName(msg.getName());
         }
@@ -165,6 +166,7 @@ public class ProtoUtils {
             var profileType = EntityType.DEVICE.equals(entityId.getEntityType()) ? EntityType.DEVICE_PROFILE : EntityType.ASSET_PROFILE;
             builder.oldProfileId(EntityIdFactory.getByTypeAndUuid(profileType, new UUID(proto.getOldProfileIdMSB(), proto.getOldProfileIdLSB())));
         }
+        builder.ownerChanged(proto.getOwnerChanged());
         if (proto.hasInfo()) {
             builder.info(JacksonUtil.toJsonNode(proto.getInfo()));
         }
@@ -1375,6 +1377,18 @@ public class ProtoUtils {
     @Deprecated(forRemoval = true, since = "4.1") // inline to TbMsg.fromProto(queueName, ruleEngineMsg.getTbMsgProto(), callback)
     public static TbMsg fromTbMsgProto(String queueName, TransportProtos.ToRuleEngineMsg ruleEngineMsg, TbMsgCallback callback) {
         return TbMsg.fromProto(queueName, getTbMsgProto(ruleEngineMsg), callback);
+    }
+
+    public static TransportProtos.EntityIdProto toProto(EntityId entityId) {
+        return TransportProtos.EntityIdProto.newBuilder()
+                .setEntityIdMSB(getMsb(entityId))
+                .setEntityIdLSB(getLsb(entityId))
+                .setType(toProto(entityId.getEntityType()))
+                .build();
+    }
+
+    public static EntityId fromProto(TransportProtos.EntityIdProto entityIdProto) {
+        return EntityIdFactory.getByTypeAndUuid(fromProto(entityIdProto.getType()), new UUID(entityIdProto.getEntityIdMSB(), entityIdProto.getEntityIdLSB()));
     }
 
     private static boolean isNotNull(Object obj) {

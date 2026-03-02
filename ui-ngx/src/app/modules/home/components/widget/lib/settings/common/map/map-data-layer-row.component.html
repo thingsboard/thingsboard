@@ -116,6 +116,24 @@
     (keyEdit)="editKey('circleKey')"
     formControlName="circleKey">
   </tb-data-key-input>
+  <tb-data-key-input
+    class="tb-key-field"
+    *ngIf="dataLayerType === 'polylines'"
+    required
+    requiredText="widgets.maps.data-layer.polyline.polyline-key-required"
+    [datasourceType]="dataLayerFormGroup.get('dsType').value"
+    [entityAliasId]="dataLayerFormGroup.get('dsEntityAliasId').value"
+    [deviceId]="dataLayerFormGroup.get('dsDeviceId').value"
+    [aliasController]="context.aliasController"
+    [widgetType]="widgetType.latest"
+    [dataKeyType]="context.functionsOnly ? DataKeyType.function : null"
+    [dataKeyTypes]="[DataKeyType.attribute, DataKeyType.timeseries]"
+    [callbacks]="context.callbacks"
+    [generateKey]="context.generateDataKey"
+    (keyEdit)="editKey('polylineKey')"
+    formControlName="polylineKey">
+  </tb-data-key-input>
+
   <div class="tb-form-table-row-cell-buttons">
     <button type="button"
             mat-icon-button

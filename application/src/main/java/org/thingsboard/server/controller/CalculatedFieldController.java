@@ -21,10 +21,12 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -44,6 +46,9 @@ import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldFilter;
+import org.thingsboard.server.common.data.cf.CalculatedFieldInfo;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -58,14 +63,18 @@ import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldTbelScriptEngine;
 import org.thingsboard.server.service.entitiy.cf.TbCalculatedFieldService;
+import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.thingsboard.server.controller.ControllerConstants.CF_TEXT_SEARCH_DESCRIPTION;
@@ -98,30 +107,30 @@ public class CalculatedFieldController extends BaseController {
 
     private static final String TEST_SCRIPT_EXPRESSION =
             "Execute the Script expression and return the result. The format of request: \n\n"
-                    + MARKDOWN_CODE_BLOCK_START
-                    + "{\n" +
-                    "  \"expression\": \"var temp = 0; foreach(element: temperature.values) {temp += element.value;} var avgTemperature = temp / temperature.values.size(); var adjustedTemperature = avgTemperature + 0.1 * humidity.value; return {\\\"adjustedTemperature\\\": adjustedTemperature};\",\n" +
-                    "  \"arguments\": {\n" +
-                    "    \"temperature\": {\n" +
-                    "      \"type\": \"TS_ROLLING\",\n" +
-                    "      \"timeWindow\": {\n" +
-                    "        \"startTs\": 1739775630002,\n" +
-                    "        \"endTs\": 65432211,\n" +
-                    "        \"limit\": 5\n" +
-                    "      },\n" +
-                    "      \"values\": [\n" +
-                    "        { \"ts\": 1739775639851, \"value\": 23 },\n" +
-                    "        { \"ts\": 1739775664561, \"value\": 43 },\n" +
-                    "        { \"ts\": 1739775713079, \"value\": 15 },\n" +
-                    "        { \"ts\": 1739775999522, \"value\": 34 },\n" +
-                    "        { \"ts\": 1739776228452, \"value\": 22 }\n" +
-                    "      ]\n" +
-                    "    },\n" +
-                    "    \"humidity\": { \"type\": \"SINGLE_VALUE\", \"ts\": 1739776478057, \"value\": 23 }\n" +
-                    "  }\n" +
-                    "}"
-                    + MARKDOWN_CODE_BLOCK_END
-                    + "\n\n Expected result JSON contains \"output\" and \"error\".";
+            + MARKDOWN_CODE_BLOCK_START
+            + "{\n" +
+            "  \"expression\": \"var temp = 0; foreach(element: temperature.values) {temp += element.value;} var avgTemperature = temp / temperature.values.size(); var adjustedTemperature = avgTemperature + 0.1 * humidity.value; return {\\\"adjustedTemperature\\\": adjustedTemperature};\",\n" +
+            "  \"arguments\": {\n" +
+            "    \"temperature\": {\n" +
+            "      \"type\": \"TS_ROLLING\",\n" +
+            "      \"timeWindow\": {\n" +
+            "        \"startTs\": 1739775630002,\n" +
+            "        \"endTs\": 65432211,\n" +
+            "        \"limit\": 5\n" +
+            "      },\n" +
+            "      \"values\": [\n" +
+            "        { \"ts\": 1739775639851, \"value\": 23 },\n" +
+            "        { \"ts\": 1739775664561, \"value\": 43 },\n" +
+            "        { \"ts\": 1739775713079, \"value\": 15 },\n" +
+            "        { \"ts\": 1739775999522, \"value\": 34 },\n" +
+            "        { \"ts\": 1739776228452, \"value\": 22 }\n" +
+            "      ]\n" +
+            "    },\n" +
+            "    \"humidity\": { \"type\": \"SINGLE_VALUE\", \"ts\": 1739776478057, \"value\": 23 }\n" +
+            "  }\n" +
+            "}"
+            + MARKDOWN_CODE_BLOCK_END
+            + "\n\n Expected result JSON contains \"output\" and \"error\".";
 
     @ApiOperation(value = "Create Or Update Calculated Field (saveCalculatedField)",
             notes = "Creates or Updates the Calculated Field. When creating calculated field, platform generates Calculated Field Id as " + UUID_WIKI_LINK +
@@ -159,19 +168,92 @@ public class CalculatedFieldController extends BaseController {
     )
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @GetMapping(value = "/{entityType}/{entityId}/calculatedFields", params = {"pageSize", "page"})
-    public PageData<CalculatedField> getCalculatedFieldsByEntityId(
-            @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "DEVICE")) @PathVariable("entityType") String entityType,
-            @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true) @PathVariable("entityId") String entityIdStr,
-            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true) @RequestParam int pageSize,
-            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true) @RequestParam int page,
-            @Parameter(description = CF_TEXT_SEARCH_DESCRIPTION) @RequestParam(required = false) String textSearch,
-            @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "name"})) @RequestParam(required = false) String sortProperty,
-            @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"})) @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+    public PageData<CalculatedField> getCalculatedFieldsByEntityId(@Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "DEVICE"))
+                                                                   @PathVariable("entityType") String entityType,
+                                                                   @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true)
+                                                                   @PathVariable("entityId") String entityIdStr,
+                                                                   @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
+                                                                   @RequestParam int pageSize,
+                                                                   @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
+                                                                   @RequestParam int page,
+                                                                   @Parameter(description = "Calculated field type. If not specified, all types will be returned.")
+                                                                   @RequestParam(required = false) CalculatedFieldType type,
+                                                                   @Parameter(description = CF_TEXT_SEARCH_DESCRIPTION)
+                                                                   @RequestParam(required = false) String textSearch,
+                                                                   @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "name"}))
+                                                                   @RequestParam(required = false) String sortProperty,
+                                                                   @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
+                                                                   @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         checkParameter("entityId", entityIdStr);
         EntityId entityId = EntityIdFactory.getByTypeAndUuid(entityType, entityIdStr);
         checkEntityId(entityId, Operation.READ_CALCULATED_FIELD);
-        return checkNotNull(tbCalculatedFieldService.findAllByTenantIdAndEntityId(entityId, getCurrentUser(), pageLink));
+        return checkNotNull(tbCalculatedFieldService.findByTenantIdAndEntityId(getTenantId(), entityId, type, pageLink));
+    }
+
+    @ApiOperation(value = "Get calculated fields (getCalculatedFields)",
+            notes = "Fetch tenant calculated fields based on the filter.")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @GetMapping(value = "/calculatedFields")
+    public PageData<CalculatedFieldInfo> getCalculatedFields(@Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
+                                                             @RequestParam int pageSize,
+                                                             @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
+                                                             @RequestParam int page,
+                                                             @Parameter(description = "Calculated field types filter.")
+                                                             @RequestParam(required = false) Set<CalculatedFieldType> types,
+                                                             @Parameter(description = "Entity type filter. If not specified, calculated fields for all supported entity types will be returned.")
+                                                             @RequestParam(required = false) EntityType entityType,
+                                                             @Parameter(description = "Entities filter. If not specified, calculated fields for entity type filter will be returned.")
+                                                             @RequestParam(required = false) Set<UUID> entities,
+                                                             @Parameter(description = "Name filter. To specify multiple names, duplicate 'name' parameter for each name, for example '?name=name1&name=name2")
+                                                             @RequestParam(required = false) String name, // for Swagger only, retrieved from MultiValueMap params (due to issues when name contains comma)
+                                                             @Parameter(description = CF_TEXT_SEARCH_DESCRIPTION)
+                                                             @RequestParam(required = false) String textSearch,
+                                                             @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "name"}))
+                                                             @RequestParam(required = false) String sortProperty,
+                                                             @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
+                                                             @RequestParam(required = false) String sortOrder,
+                                                             @RequestParam MultiValueMap<String, String> params) throws ThingsboardException {
+        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+        SecurityUser user = getCurrentUser();
+
+        if (CollectionUtils.isEmpty(types)) {
+            types = EnumSet.allOf(CalculatedFieldType.class);
+            types.remove(CalculatedFieldType.ALARM);
+        }
+
+        Set<EntityType> entityTypes;
+        if (entityType == null) {
+            entityTypes = CalculatedField.SUPPORTED_ENTITIES.keySet();
+        } else {
+            entityTypes = EnumSet.of(entityType);
+        }
+
+        CalculatedFieldFilter filter = CalculatedFieldFilter.builder()
+                .types(types)
+                .entityTypes(entityTypes)
+                .entityIds(entities)
+                .names(Optional.ofNullable(params.get("name")).map(HashSet::new).orElse(null))
+                .build();
+        return calculatedFieldService.findCalculatedFieldsByTenantIdAndFilter(user.getTenantId(), filter, pageLink);
+    }
+
+    @ApiOperation(value = "Get calculated field names (getCalculatedFieldNames)",
+            notes = "Fetch the list of calculated field names for specified type.")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @GetMapping(value = "/calculatedFields/names")
+    public PageData<String> getCalculatedFieldNames(@Parameter(description = "Calculated field type filter.")
+                                                    @RequestParam CalculatedFieldType type,
+                                                    @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
+                                                    @RequestParam int pageSize,
+                                                    @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
+                                                    @RequestParam int page,
+                                                    @Parameter(description = CF_TEXT_SEARCH_DESCRIPTION)
+                                                    @RequestParam(required = false) String textSearch,
+                                                    @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
+                                                    @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        PageLink pageLink = createPageLink(pageSize, page, textSearch, "name", sortOrder);
+        return calculatedFieldService.findCalculatedFieldNamesByTenantIdAndType(getTenantId(), type, pageLink);
     }
 
     @ApiOperation(value = "Delete Calculated Field (deleteCalculatedField)",
@@ -278,7 +360,7 @@ public class CalculatedFieldController extends BaseController {
     }
 
     private void checkReferencedEntities(CalculatedFieldConfiguration calculatedFieldConfig) throws ThingsboardException {
-        List<EntityId> referencedEntityIds = calculatedFieldConfig.getReferencedEntities();
+        Set<EntityId> referencedEntityIds = calculatedFieldConfig.getReferencedEntities();
         for (EntityId referencedEntityId : referencedEntityIds) {
             EntityType entityType = referencedEntityId.getEntityType();
             switch (entityType) {
@@ -289,7 +371,6 @@ public class CalculatedFieldController extends BaseController {
                 default -> throw new IllegalArgumentException("Calculated fields do not support '" + entityType + "' for referenced entities.");
             }
         }
-
     }
 
 }

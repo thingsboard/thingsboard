@@ -30,14 +30,14 @@
       </mat-option>
     </mat-select>
   </mat-form-field>
-  <div class="tb-min-field">
+  <div class="tb-min-field" formGroupName="min">
     <mat-form-field appearance="outline" class="tb-inline-field number" subscriptSizing="dynamic">
-      <input matInput formControlName="min" type="number" placeholder="{{ 'widgets.chart.chart-axis.scale-auto' | translate }}">
+      <input matInput formControlName="value" type="number" placeholder="{{ 'widgets.chart.chart-axis.scale-auto' | translate }}">
     </mat-form-field>
   </div>
-  <div class="tb-max-field">
+  <div class="tb-max-field" formGroupName="max">
     <mat-form-field appearance="outline" class="tb-inline-field number" subscriptSizing="dynamic">
-      <input matInput formControlName="max" type="number" placeholder="{{ 'widgets.chart.chart-axis.scale-auto' | translate }}">
+      <input matInput formControlName="value" type="number" placeholder="{{ 'widgets.chart.chart-axis.scale-auto' | translate }}">
     </mat-form-field>
   </div>
   <div class="tb-units-field">

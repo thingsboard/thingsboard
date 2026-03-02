@@ -20,8 +20,7 @@ import { SharedModule } from '@shared/shared.module';
 import { AuditLogRoutingModule } from '@modules/home/pages/audit-log/audit-log-routing.module';
 
 @NgModule({
-  declarations: [
-  ],
+  declarations: [],
   imports: [
     CommonModule,
     SharedModule,

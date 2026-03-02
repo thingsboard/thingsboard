@@ -1,0 +1,100 @@
+<!--
+
+    Copyright © 2016-2026 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<ng-container [formGroup]="apiUsageWidgetSettingsForm">
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widget-config.datasource</div>
+    <tb-entity-alias-select
+      class="tb-entity-alias-field"
+      showLabel
+      tbRequired
+      [appearance]="'outline'"
+      [aliasController]="context.aliasController"
+      formControlName="dsEntityAliasId"
+      [callbacks]="context.callbacks">
+    </tb-entity-alias-select>
+
+    <div class="tb-form-panel no-padding no-border">
+      <div class="tb-form-table tb-map-data-layers">
+        <div class="tb-form-table-header no-padding-right">
+          <div class="tb-form-table-header-cell tb-key-header" translate>widgets.api-usage.label</div>
+          <div class="tb-form-table-header-cell tb-key-header" translate>widgets.api-usage.state-name</div>
+          <div class="tb-form-table-header-cell tb-key-header" translate>widgets.api-usage.status</div>
+          <div class="tb-form-table-header-cell tb-key-header" translate>widgets.api-usage.limit</div>
+          <div class="tb-form-table-header-cell tb-key-header" translate>widgets.api-usage.current-number</div>
+          <div class="tb-form-table-header-cell tb-actions-header"></div>
+        </div>
+        <div cdkDropList cdkDropListOrientation="vertical"
+             [cdkDropListDisabled]="!dragEnabled"
+             (cdkDropListDropped)="layerDrop($event)" *ngIf="dataKeysFormArray().controls?.length; else noDataLayers" class="tb-form-table-body">
+          <div cdkDrag [cdkDragDisabled]="!dragEnabled"
+               *ngFor="let dataKeyControl of dataKeysFormArray().controls; trackBy: trackByDataKey; let $index = index;">
+            <div class="tb-draggable-form-table-row">
+              <tb-api-usage-data-key-row class="flex-1"
+                                         [context]="context"
+                                         [dsEntityAliasId]="apiUsageWidgetSettingsForm.get('dsEntityAliasId').value"
+                                         [formControl]="dataKeyControl"
+                                         (dataKeyRemoved)="removeDataKey($index)">
+              </tb-api-usage-data-key-row>
+              <div class="tb-form-table-row-cell-buttons">
+                <button [class.tb-hidden]="!dragEnabled"
+                        mat-icon-button
+                        type="button"
+                        cdkDragHandle
+                        matTooltip="{{ 'action.drag' | translate }}"
+                        matTooltipPosition="above">
+                  <mat-icon>drag_indicator</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <button type="button" mat-stroked-button color="primary" (click)="addDataKey()">
+          {{ 'widgets.api-usage.add-key' | translate }}
+        </button>
+      </div>
+    </div>
+    <ng-template #noDataLayers>
+      <span class="tb-prompt flex items-center justify-center">{{ 'widgets.api-usage.no-key' | translate }}</span>
+    </ng-template>
+    <tb-string-autocomplete [fetchOptionsFn]="fetchDashboardStates.bind(this)"
+                            additionalClass="tb-suffix-show-on-hover"
+                            appearance="outline"
+                            panelWidth=""
+                            label="{{ 'widgets.api-usage.target-dashboard-state' | translate }}"
+                            style="flex: 1"
+                            formControlName="targetDashboardState">
+    </tb-string-autocomplete>
+  </div>
+
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widget-config.card-appearance</div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widgets.background.background' | translate }}</div>
+      <tb-background-settings formControlName="background">
+      </tb-background-settings>
+    </div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widget-config.card-padding' | translate }}</div>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="padding" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+  </div>
+</ng-container>

@@ -52,7 +52,7 @@ public class CreateDeviceProfileImportTest extends AbstractDriverBaseTest {
     @AfterMethod
     public void delete() {
         if (name != null) {
-            testRestClient.deleteDeviseProfile(getDeviceProfileByName(name).getId());
+            testRestClient.deleteDeviceProfile(getDeviceProfileByName(name).getId());
             name = null;
         }
     }

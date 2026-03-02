@@ -1,0 +1,85 @@
+<!--
+
+    Copyright © 2016-2026 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+@if (filtersFormArray.length) {
+  <section class="tb-form-panel no-padding no-gap stroked mb-4" [formGroup]="filterListFormGroup">
+    <div class="flex flex-row">
+      <span class="max-w-8% flex-full"></span>
+      <div class="flex max-w-92% flex-full flex-row items-center justify-start">
+        <label translate class="filter-title flex-1">alarm-rule.argument-name</label>
+        <label translate class="filter-title flex-1">alarm-rule.value-type</label>
+        <span class="min-w-24">&nbsp;</span>
+      </div>
+    </div>
+    <mat-divider></mat-divider>
+    <div class="filter-list">
+      @for (filterControl of filtersFormArray.controls; track filterControl; let index = $index) {
+        <div class="flex flex-row items-stretch justify-start"
+             formArrayName="filters"
+             [class.filter-list-divider]="index">
+          <div class="filters-operation max-w-8% flex-full">
+            @if ($index) {
+              <div class="filters-operation-container">
+                <span class="filters-operation-label">{{ complexOperationTranslationMap.get(operation) | translate }}</span>
+              </div>
+            }
+          </div>
+          <div class="flex max-w-92% flex-full flex-col">
+            <div class="flex flex-row items-center justify-start">
+              <div class="filters-text flex-1">{{ filterControl.value?.argument }}</div>
+              <div class="filters-text flex-1">{{ entityKeyValueTypes.get(entityKeyValueTypeEnum[filterControl.value?.valueType]).name | translate }}</div>
+              <button mat-icon-button color="primary" class="tb-budge-button"
+                      type="button"
+                      (click)="editFilter(index, readonly)"
+                      matTooltip="{{  'alarm-rule.edit-filter' | translate }}"
+                      matTooltipPosition="above">
+                <mat-icon
+                  [matBadgeHidden]="areFilterAndPredicateArgumentsValid(filterControl.value, arguments)"
+                  matBadgeColor="warn"
+                  matBadgeSize="small"
+                  matBadge="*"
+                >
+                  {{ readonly ? 'visibility' : 'edit' }}
+                </mat-icon>
+              </button>
+              <button mat-icon-button color="primary"
+                      type="button"
+                      [disabled]="disabled || readonly"
+                      (click)="removeFilter(index)"
+                      matTooltip="{{ 'alarm-rule.remove-filter' | translate }}"
+                      matTooltipPosition="above">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+          </div>
+          @if (index) {
+            <mat-divider></mat-divider>
+          }
+        </div>
+      }
+    </div>
+  </section>
+} @else {
+  <span class="no-data-found tb-prompt flex items-center justify-center" [class.required]="!disabled" translate>alarm-rule.no-filter</span>
+}
+<button mat-button mat-stroked-button color="primary"
+        [class.!hidden]="disabled"
+        (click)="addFilter()"
+        type="button">
+  {{ 'alarm-rule.add-filter' | translate }}
+</button>
+

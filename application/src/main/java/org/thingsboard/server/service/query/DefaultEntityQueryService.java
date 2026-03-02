@@ -15,31 +15,34 @@
  */
 package org.thingsboard.server.service.query;
 
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.util.concurrent.FutureCallback;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
-import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.KvUtil;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.DataType;
+import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
+import org.thingsboard.server.common.data.query.AvailableEntityKeys;
+import org.thingsboard.server.common.data.query.AvailableEntityKeysV2;
+import org.thingsboard.server.common.data.query.AvailableEntityKeysV2.KeyInfo;
+import org.thingsboard.server.common.data.query.AvailableEntityKeysV2.KeySample;
 import org.thingsboard.server.common.data.query.ComplexFilterPredicate;
 import org.thingsboard.server.common.data.query.DynamicValue;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
@@ -56,25 +59,25 @@ import org.thingsboard.server.common.data.query.SimpleKeyFilterPredicate;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.entity.EntityService;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.sql.query.EntityKeyMapping;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
-import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
+
+import static com.google.common.util.concurrent.Futures.immediateFuture;
 
 @Service
 @Slf4j
@@ -138,20 +141,12 @@ public class DefaultEntityQueryService implements EntityQueryService {
     }
 
     private <T> void resolveDynamicValue(DynamicValue<T> dynamicValue, SecurityUser user, FilterPredicateType predicateType) {
-        EntityId entityId;
-        switch (dynamicValue.getSourceType()) {
-            case CURRENT_TENANT:
-                entityId = user.getTenantId();
-                break;
-            case CURRENT_CUSTOMER:
-                entityId = user.getCustomerId();
-                break;
-            case CURRENT_USER:
-                entityId = user.getId();
-                break;
-            default:
-                throw new RuntimeException("Not supported operation for source type: {" + dynamicValue.getSourceType() + "}");
-        }
+        EntityId entityId = switch (dynamicValue.getSourceType()) {
+            case CURRENT_TENANT -> user.getTenantId();
+            case CURRENT_CUSTOMER -> user.getCustomerId();
+            case CURRENT_USER -> user.getId();
+            default -> throw new RuntimeException("Not supported operation for source type: {" + dynamicValue.getSourceType() + "}");
+        };
 
         try {
             Optional<AttributeKvEntry> valueOpt = attributesService.find(user.getTenantId(), entityId,
@@ -242,101 +237,182 @@ public class DefaultEntityQueryService implements EntityQueryService {
     }
 
     @Override
-    public DeferredResult<ResponseEntity> getKeysByQuery(SecurityUser securityUser, TenantId tenantId, EntityDataQuery query,
-                                                         boolean isTimeseries, boolean isAttributes, String attributesScope) {
-        final DeferredResult<ResponseEntity> response = new DeferredResult<>();
+    public ListenableFuture<AvailableEntityKeys> getKeysByQuery(SecurityUser securityUser, TenantId tenantId, EntityDataQuery query,
+                                                                boolean isTimeseries, boolean isAttributes, AttributeScope scope) {
         if (!isAttributes && !isTimeseries) {
-            replyWithEmptyResponse(response);
-            return response;
+            return immediateFuture(AvailableEntityKeys.none());
         }
 
-        List<EntityId> ids = this.findEntityDataByQuery(securityUser, query).getData().stream()
+        List<EntityId> ids = findEntityDataByQuery(securityUser, query).getData().stream()
                 .map(EntityData::getEntityId)
-                .collect(Collectors.toList());
+                .toList();
         if (ids.isEmpty()) {
-            replyWithEmptyResponse(response);
-            return response;
+            return immediateFuture(AvailableEntityKeys.none());
         }
 
         Set<EntityType> types = ids.stream().map(EntityId::getEntityType).collect(Collectors.toSet());
-        final ListenableFuture<List<String>> timeseriesKeysFuture;
-        final ListenableFuture<List<String>> attributesKeysFuture;
+        ListenableFuture<List<String>> timeseriesKeysFuture;
+        ListenableFuture<List<String>> attributesKeysFuture;
 
         if (isTimeseries) {
-            timeseriesKeysFuture = dbCallbackExecutor.submit(() -> timeseriesService.findAllKeysByEntityIds(tenantId, ids));
+            timeseriesKeysFuture = timeseriesService.findAllKeysByEntityIdsAsync(tenantId, ids);
         } else {
-            timeseriesKeysFuture = null;
+            timeseriesKeysFuture = immediateFuture(Collections.emptyList());
         }
 
         if (isAttributes) {
             Map<EntityType, List<EntityId>> typesMap = ids.stream().collect(Collectors.groupingBy(EntityId::getEntityType));
             List<ListenableFuture<List<String>>> futures = new ArrayList<>(typesMap.size());
-            typesMap.forEach((type, entityIds) -> futures.add(dbCallbackExecutor.submit(() -> attributesService.findAllKeysByEntityIds(tenantId, entityIds, attributesScope))));
+            typesMap.forEach((type, entityIds) -> futures.add(dbCallbackExecutor.submit(() -> attributesService.findAllKeysByEntityIdsAndScope(tenantId, entityIds, scope))));
             attributesKeysFuture = Futures.transform(Futures.allAsList(futures), lists -> {
                 if (CollectionUtils.isEmpty(lists)) {
                     return Collections.emptyList();
                 }
-                return lists.stream().flatMap(List::stream).distinct().sorted().collect(Collectors.toList());
+                return lists.stream().flatMap(List::stream).distinct().sorted().toList();
             }, dbCallbackExecutor);
         } else {
-            attributesKeysFuture = null;
+            attributesKeysFuture = immediateFuture(Collections.emptyList());
         }
 
-        if (isTimeseries && isAttributes) {
-            Futures.whenAllComplete(timeseriesKeysFuture, attributesKeysFuture).run(() -> {
-                try {
-                    replyWithResponse(response, types, timeseriesKeysFuture.get(), attributesKeysFuture.get());
-                } catch (Exception e) {
-                    log.error("Failed to fetch timeseries and attributes keys!", e);
-                    AccessValidator.handleError(e, response, HttpStatus.INTERNAL_SERVER_ERROR);
-                }
-            }, dbCallbackExecutor);
-        } else if (isTimeseries) {
-            addCallback(timeseriesKeysFuture, keys -> replyWithResponse(response, types, keys, null),
-                    error -> {
-                        log.error("Failed to fetch timeseries keys!", error);
-                        AccessValidator.handleError(error, response, HttpStatus.INTERNAL_SERVER_ERROR);
-                    });
-        } else {
-            addCallback(attributesKeysFuture, keys -> replyWithResponse(response, types, null, keys),
-                    error -> {
-                        log.error("Failed to fetch attributes keys!", error);
-                        AccessValidator.handleError(error, response, HttpStatus.INTERNAL_SERVER_ERROR);
-                    });
+        return Futures.whenAllComplete(timeseriesKeysFuture, attributesKeysFuture)
+                .call(() -> {
+                    try {
+                        return new AvailableEntityKeys(types, Futures.getDone(timeseriesKeysFuture), Futures.getDone(attributesKeysFuture));
+                    } catch (ExecutionException e) {
+                        throw new ThingsboardException(e.getCause(), ThingsboardErrorCode.DATABASE);
+                    }
+                }, dbCallbackExecutor);
+    }
+
+    @Override
+    public ListenableFuture<AvailableEntityKeysV2> findAvailableEntityKeysByQuery(SecurityUser securityUser, EntityDataQuery query,
+                                                                                  boolean includeTimeseries, boolean includeAttributes,
+                                                                                  Set<AttributeScope> scopes, boolean includeSamples) {
+        if (!includeTimeseries && !includeAttributes) {
+            return Futures.immediateFailedFuture(
+                    new IllegalArgumentException("At least one of 'includeTimeseries' or 'includeAttributes' must be true"));
         }
-        return response;
-    }
 
-    private void replyWithResponse(DeferredResult<ResponseEntity> response, Set<EntityType> types, List<String> timeseriesKeys, List<String> attributesKeys) {
-        ObjectNode json = JacksonUtil.newObjectNode();
-        addItemsToArrayNode(json.putArray("entityTypes"), types);
-        addItemsToArrayNode(json.putArray("timeseries"), timeseriesKeys);
-        addItemsToArrayNode(json.putArray("attribute"), attributesKeys);
-        response.setResult(new ResponseEntity<>(json, HttpStatus.OK));
-    }
-
-    private void replyWithEmptyResponse(DeferredResult<ResponseEntity> response) {
-        replyWithResponse(response, Collections.emptySet(), Collections.emptyList(), Collections.emptyList());
-    }
-
-    private void addItemsToArrayNode(ArrayNode arrayNode, Collection<?> collection) {
-        if (!CollectionUtils.isEmpty(collection)) {
-            collection.forEach(item -> arrayNode.add(item.toString()));
-        }
-    }
-
-    private void addCallback(ListenableFuture<List<String>> future, Consumer<List<String>> success, Consumer<Throwable> error) {
-        Futures.addCallback(future, new FutureCallback<List<String>>() {
-            @Override
-            public void onSuccess(@Nullable List<String> keys) {
-                success.accept(keys);
+        return Futures.transformAsync(findEntityIdsByQueryAsync(securityUser, query), ids -> {
+            if (ids.isEmpty()) {
+                return immediateFuture(new AvailableEntityKeysV2(
+                        Collections.emptySet(),
+                        includeTimeseries ? Collections.emptyList() : null,
+                        includeAttributes ? Collections.emptyMap() : null));
             }
 
-            @Override
-            public void onFailure(Throwable t) {
-                error.accept(t);
-            }
+            TenantId tenantId = securityUser.getTenantId();
+            Set<EntityType> entityTypes = ids.stream().map(EntityId::getEntityType).collect(Collectors.toSet());
+
+            var tsFuture = includeTimeseries ? fetchTimeseriesKeys(tenantId, ids, includeSamples) : null;
+
+            Set<AttributeScope> effectiveScopes = includeAttributes
+                    ? resolveAttributeScopes(scopes, entityTypes) : Collections.emptySet();
+            var attrFutures = effectiveScopes.stream()
+                    .map(scope -> fetchAttributeKeys(tenantId, ids, scope, includeSamples))
+                    .toList();
+
+            return assembleResult(entityTypes, tsFuture, attrFutures);
         }, dbCallbackExecutor);
+    }
+
+    private ListenableFuture<List<EntityId>> findEntityIdsByQueryAsync(SecurityUser securityUser, EntityDataQuery query) {
+        return Futures.transform(entityService.findEntityDataByQueryAsync(securityUser.getTenantId(), securityUser.getCustomerId(), query),
+                page -> page.getData().stream()
+                        .map(EntityData::getEntityId)
+                        .toList(),
+                dbCallbackExecutor);
+    }
+
+    private static Set<AttributeScope> resolveAttributeScopes(Set<AttributeScope> requestedScopes, Set<EntityType> entityTypes) {
+        boolean hasDevices = entityTypes.contains(EntityType.DEVICE);
+        Set<AttributeScope> scopes;
+        if (CollectionUtils.isNotEmpty(requestedScopes)) {
+            scopes = requestedScopes;
+        } else { // auto-determine scopes
+            scopes = hasDevices
+                    ? Set.of(AttributeScope.SERVER_SCOPE, AttributeScope.CLIENT_SCOPE, AttributeScope.SHARED_SCOPE)
+                    : Collections.singleton(AttributeScope.SERVER_SCOPE);
+        }
+        // Non-device entities only support SERVER_SCOPE
+        if (!hasDevices) {
+            return scopes.contains(AttributeScope.SERVER_SCOPE)
+                    ? Collections.singleton(AttributeScope.SERVER_SCOPE)
+                    : Collections.emptySet();
+        }
+        return scopes;
+    }
+
+    private ListenableFuture<List<KeyInfo>> fetchTimeseriesKeys(TenantId tenantId, List<EntityId> entityIds, boolean includeSamples) {
+        if (includeSamples) {
+            return Futures.transform(
+                    timeseriesService.findLatestByEntityIdsAsync(tenantId, entityIds),
+                    entries -> toKeyInfos(entries, true),
+                    dbCallbackExecutor);
+        }
+        return Futures.transform(
+                timeseriesService.findAllKeysByEntityIdsAsync(tenantId, entityIds),
+                keys -> keys.stream().sorted().map(k -> new KeyInfo(k, null)).toList(),
+                dbCallbackExecutor);
+    }
+
+    private ListenableFuture<Map.Entry<AttributeScope, List<KeyInfo>>> fetchAttributeKeys(
+            TenantId tenantId, List<EntityId> entityIds, AttributeScope scope, boolean includeSamples) {
+        if (includeSamples) {
+            return Futures.transform(
+                    attributesService.findLatestByEntityIdsAndScopeAsync(tenantId, entityIds, scope),
+                    entries -> Map.entry(scope, toKeyInfos(entries, true)),
+                    dbCallbackExecutor);
+        }
+        return Futures.transform(
+                attributesService.findAllKeysByEntityIdsAndScopeAsync(tenantId, entityIds, scope),
+                keys -> Map.entry(scope, keys.stream().sorted().map(k -> new KeyInfo(k, null)).toList()),
+                dbCallbackExecutor);
+    }
+
+    private ListenableFuture<AvailableEntityKeysV2> assembleResult(
+            Set<EntityType> entityTypes,
+            ListenableFuture<List<KeyInfo>> tsFuture,
+            List<ListenableFuture<Map.Entry<AttributeScope, List<KeyInfo>>>> attrFutures) {
+        var allAttrFuture = attrFutures.isEmpty()
+                ? immediateFuture(List.<Map.Entry<AttributeScope, List<KeyInfo>>>of())
+                : Futures.allAsList(attrFutures);
+
+        List<ListenableFuture<?>> allFutures = new ArrayList<>();
+        if (tsFuture != null) {
+            allFutures.add(tsFuture);
+        }
+        allFutures.add(allAttrFuture);
+
+        var finalTsFuture = tsFuture;
+        return Futures.whenAllComplete(allFutures)
+                .call(() -> {
+                    List<KeyInfo> tsKeys = finalTsFuture != null ? Futures.getDone(finalTsFuture) : null;
+                    Map<AttributeScope, List<KeyInfo>> attrMap = attrFutures.isEmpty() ? null : new TreeMap<>();
+                    if (attrMap != null) {
+                        for (var entry : Futures.getDone(allAttrFuture)) {
+                            attrMap.put(entry.getKey(), entry.getValue());
+                        }
+                    }
+                    return new AvailableEntityKeysV2(entityTypes, tsKeys, attrMap);
+                }, dbCallbackExecutor);
+    }
+
+    private static List<KeyInfo> toKeyInfos(List<? extends KvEntry> entries, boolean includeSamples) {
+        return entries.stream()
+                .map(e -> new KeyInfo(e.getKey(), includeSamples ? toKeySample(e) : null))
+                .sorted(Comparator.comparing(KeyInfo::key))
+                .toList();
+    }
+
+    private static KeySample toKeySample(KvEntry entry) {
+        long ts = entry instanceof TsKvEntry tsKv ? tsKv.getTs()
+                : entry instanceof AttributeKvEntry attr ? attr.getLastUpdateTs()
+                : 0;
+        JsonNode value = entry.getDataType() == DataType.JSON
+                ? JacksonUtil.toJsonNode(entry.getJsonValue().get())
+                : JacksonUtil.valueToTree(entry.getValue());
+        return new KeySample(ts, value);
     }
 
 }

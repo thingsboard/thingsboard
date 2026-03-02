@@ -15,8 +15,20 @@
  */
 package org.thingsboard.server.common.data.cf;
 
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.Set;
+
 public enum CalculatedFieldType {
 
-    SIMPLE, SCRIPT
+    SIMPLE,
+    SCRIPT,
+    GEOFENCING,
+    ALARM,
+    PROPAGATION,
+    RELATED_ENTITIES_AGGREGATION,
+    ENTITY_AGGREGATION;
+
+    public static final Set<CalculatedFieldType> all = Collections.unmodifiableSet(EnumSet.allOf(CalculatedFieldType.class));
 
 }

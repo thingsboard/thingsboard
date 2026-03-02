@@ -60,6 +60,7 @@ export class EntityDebugSettingsButtonComponent implements ControlValueAccessor 
 
   @Input() additionalActionConfig: AdditionalDebugActionConfig;
   @Input({required: true}) entityType: EntityType;
+  @Input() entityLabel: string;
 
   debugSettingsFormGroup = this.fb.group({
     failuresEnabled: [false],
@@ -123,6 +124,7 @@ export class EntityDebugSettingsButtonComponent implements ControlValueAccessor 
       debugConfig: {
         maxDebugModeDuration: this.maxDebugModeDuration,
         entityType: this.entityType,
+        entityLabel: this.entityLabel,
         additionalActionConfig: this.additionalActionConfig,
       },
       onSettingsAppliedFn: settings => {

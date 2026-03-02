@@ -20,6 +20,7 @@ import lombok.Setter;
 import lombok.ToString;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.edqs.fields.EntityFields;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.permission.QueryContext;
@@ -139,8 +140,29 @@ public abstract class BaseEntityData<T extends EntityFields> implements EntityDa
             case "name" -> getEntityName();
             case "ownerName" -> getOwnerName();
             case "ownerType" -> getOwnerType();
+            case "displayName" -> getDisplayName();
             case "entityType" -> Optional.ofNullable(getEntityType()).map(EntityType::name).orElse("");
             default -> fields.getAsString(name);
+        };
+    }
+
+    public String getDisplayName(){
+        return switch (getEntityType()) {
+            case DEVICE, ASSET -> StringUtils.isNotBlank(fields.getLabel()) ? fields.getLabel() : fields.getName();
+            case USER -> {
+                boolean firstNameSet = StringUtils.isNotBlank(fields.getFirstName());
+                boolean lastNameSet = StringUtils.isNotBlank(fields.getLastName());
+                if(firstNameSet && lastNameSet) {
+                    yield fields.getFirstName() + " " + fields.getLastName();
+                } else if(firstNameSet) {
+                    yield fields.getFirstName();
+                } else if  (lastNameSet) {
+                    yield fields.getLastName();
+                } else {
+                    yield fields.getEmail();
+                }
+            }
+            default -> fields.getName();
         };
     }
 

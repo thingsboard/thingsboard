@@ -115,13 +115,16 @@ public class JwtTokenFactory {
             throw new IllegalArgumentException("JWT Token doesn't have any scopes");
         }
 
+        Authority authority = Authority.parse(scopes.get(0));
+
         SecurityUser securityUser = new SecurityUser(new UserId(UUID.fromString(claims.get(USER_ID, String.class))));
         securityUser.setEmail(subject);
-        securityUser.setAuthority(Authority.parse(scopes.get(0)));
+        securityUser.setAuthority(authority);
         String tenantId = claims.get(TENANT_ID, String.class);
+
         if (tenantId != null) {
             securityUser.setTenantId(TenantId.fromUUID(UUID.fromString(tenantId)));
-        } else if (securityUser.getAuthority() == Authority.SYS_ADMIN) {
+        } else if (authority == Authority.SYS_ADMIN) {
             securityUser.setTenantId(TenantId.SYS_TENANT_ID);
         }
         String customerId = claims.get(CUSTOMER_ID, String.class);
@@ -132,18 +135,15 @@ public class JwtTokenFactory {
             securityUser.setSessionId(claims.get(SESSION_ID, String.class));
         }
 
-        UserPrincipal principal;
-        if (securityUser.getAuthority() != Authority.PRE_VERIFICATION_TOKEN) {
+        boolean isPublic = false;
+        if (authority != Authority.PRE_VERIFICATION_TOKEN && authority != Authority.MFA_CONFIGURATION_TOKEN) {
             securityUser.setFirstName(claims.get(FIRST_NAME, String.class));
             securityUser.setLastName(claims.get(LAST_NAME, String.class));
             securityUser.setEnabled(claims.get(ENABLED, Boolean.class));
-            boolean isPublic = claims.get(IS_PUBLIC, Boolean.class);
-            principal = new UserPrincipal(isPublic ? UserPrincipal.Type.PUBLIC_ID : UserPrincipal.Type.USER_NAME, subject);
-        } else {
-            principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, subject);
+            isPublic = claims.get(IS_PUBLIC, Boolean.class);
         }
+        UserPrincipal principal = new UserPrincipal(isPublic ? UserPrincipal.Type.PUBLIC_ID : UserPrincipal.Type.USER_NAME, subject);
         securityUser.setUserPrincipal(principal);
-
         return securityUser;
     }
 
@@ -179,8 +179,8 @@ public class JwtTokenFactory {
         return securityUser;
     }
 
-    public JwtToken createPreVerificationToken(SecurityUser user, Integer expirationTime) {
-        JwtBuilder jwtBuilder = setUpToken(user, Collections.singletonList(Authority.PRE_VERIFICATION_TOKEN.name()), expirationTime)
+    public JwtToken createMfaToken(SecurityUser user, Authority scope, Integer expirationTime) {
+        JwtBuilder jwtBuilder = setUpToken(user, Collections.singletonList(scope.name()), expirationTime)
                 .claim(TENANT_ID, user.getTenantId().toString());
         if (user.getCustomerId() != null) {
             jwtBuilder.claim(CUSTOMER_ID, user.getCustomerId().toString());
@@ -235,7 +235,7 @@ public class JwtTokenFactory {
         securityUser.setSessionId(UUID.randomUUID().toString());
         JwtToken accessToken = createAccessJwtToken(securityUser);
         JwtToken refreshToken = createRefreshToken(securityUser);
-        return new JwtPair(accessToken.getToken(), refreshToken.getToken());
+        return new JwtPair(accessToken.token(), refreshToken.token());
     }
 
     private SecretKey getSecretKey(boolean forceReload) {

@@ -52,7 +52,9 @@
     @for (value of filteredValues | async; track value.value) {
       <mat-option [value]="value"><span [innerHTML]="value.name | highlight:searchText"></span></mat-option>
     } @empty {
-      <mat-option [value]="null">{{ 'common.not-found' | translate }}</mat-option>
+      @if (!allowUserValue) {
+        <mat-option [value]="null">{{ 'common.not-found' | translate }}</mat-option>
+      }
     }
   </mat-autocomplete>
   <mat-hint [hidden]="!hint">

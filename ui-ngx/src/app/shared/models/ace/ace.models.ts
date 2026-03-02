@@ -19,6 +19,7 @@ import { Observable } from 'rxjs/internal/Observable';
 import { forkJoin, from, of } from 'rxjs';
 import { map, mergeMap, tap } from 'rxjs/operators';
 import { unwrapModule } from '@core/utils';
+import { Renderer2 } from '@angular/core';
 
 let aceDependenciesLoaded = false;
 let aceModule: any;
@@ -96,6 +97,46 @@ export function getAceDiff(): Observable<any> {
       })
     );
   }
+}
+
+export function updateEditorSize(editorElement: any, content: string, editor: Ace.Editor, renderer: Renderer2, options?: {
+  showGutter?: boolean,
+  ignoreHeight?: boolean,
+  ignoreWidth?: boolean,
+  setMinHeight?: boolean
+}): void {
+  let newHeight = 200;
+  let newWidth = 600;
+  if (content && content.length > 0) {
+    if (editor.renderer.lineHeight <= 0) {
+      editor.renderer.updateFull(true);
+    }
+    const lines = content.split('\n');
+    newHeight = editor.renderer.lineHeight * lines.length + 16;
+    let maxLineLength = 0;
+    lines.forEach((row) => {
+      const line = row.replace(/\t/g, '  ').replace(/\n/g, '');
+      const lineLength = line.length;
+      maxLineLength = Math.max(maxLineLength, lineLength);
+    });
+    if (options?.showGutter) {
+      maxLineLength += lines.length.toString().length;
+    }
+    newWidth = 10 * maxLineLength + 16;
+    if (options?.showGutter) {
+      newWidth += 32;
+    }
+  }
+  if (!options.ignoreHeight) {
+    renderer.setStyle(editorElement, 'height', newHeight.toString() + 'px');
+  }
+  if (options.setMinHeight) {
+    renderer.setStyle(editorElement, 'minHeight', newHeight.toString() + 'px');
+  }
+  if (!options.ignoreWidth) {
+    renderer.setStyle(editorElement, 'width', newWidth.toString() + 'px');
+  }
+  editor.resize();
 }
 
 export class Range implements Ace.Range {

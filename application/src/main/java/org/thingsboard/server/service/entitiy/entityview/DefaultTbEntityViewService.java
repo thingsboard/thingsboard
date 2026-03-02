@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.NameConflictStrategy;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
@@ -80,10 +81,15 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
 
     @Override
     public EntityView save(EntityView entityView, EntityView existingEntityView, User user) throws Exception {
+        return save(entityView, existingEntityView, NameConflictStrategy.DEFAULT, user);
+    }
+
+    @Override
+    public EntityView save(EntityView entityView, EntityView existingEntityView, NameConflictStrategy nameConflictStrategy, User user) throws Exception {
         ActionType actionType = entityView.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = entityView.getTenantId();
         try {
-            EntityView savedEntityView = checkNotNull(entityViewService.saveEntityView(entityView));
+            EntityView savedEntityView = checkNotNull(entityViewService.saveEntityView(entityView, nameConflictStrategy));
             this.updateEntityViewAttributes(tenantId, savedEntityView, existingEntityView, user);
             autoCommit(user, savedEntityView.getId());
             logEntityActionService.logEntityAction(savedEntityView.getTenantId(), savedEntityView.getId(), savedEntityView,

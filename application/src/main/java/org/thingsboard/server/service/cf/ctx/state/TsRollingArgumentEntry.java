@@ -37,7 +37,7 @@ import static org.thingsboard.server.service.cf.ctx.state.BaseCalculatedFieldSta
 @NoArgsConstructor
 @AllArgsConstructor
 @Slf4j
-public class TsRollingArgumentEntry implements ArgumentEntry {
+public class TsRollingArgumentEntry implements ArgumentEntry, HasLatestTs {
 
     private Integer limit;
     private Long timeWindow;
@@ -100,7 +100,7 @@ public class TsRollingArgumentEntry implements ArgumentEntry {
     }
 
     @Override
-    public boolean updateEntry(ArgumentEntry entry) {
+    public boolean updateEntry(ArgumentEntry entry, CalculatedFieldCtx ctx) {
         if (entry instanceof TsRollingArgumentEntry tsRollingEntry) {
             updateTsRollingEntry(tsRollingEntry);
         } else if (entry instanceof SingleValueArgumentEntry singleValueEntry) {

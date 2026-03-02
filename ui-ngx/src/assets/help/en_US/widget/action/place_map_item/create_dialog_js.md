@@ -79,7 +79,7 @@ function AddEntityDialogController(instance) {
       const mapType = widgetContext.mapInstance.type();
       attributes.push({key: mapType === 'image' ? 'xPos' : 'latitude', value: additionalParams.coordinates.x});
       attributes.push({key: mapType === 'image' ? 'yPos' : 'longitude', value: additionalParams.coordinates.y});
-    } else if (mapItemType === 'Rectangle' || mapItemType === 'Polygon') {
+    } else if (mapItemType === 'Rectangle' || mapItemType === 'Polygon' || mapItemType === 'Line') {
       attributes.push({key: 'perimeter', value: additionalParams.coordinates});
     } else if (mapItemType === 'Circle') {
       attributes.push({key: 'circle', value: additionalParams.coordinates});

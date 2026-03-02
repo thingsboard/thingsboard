@@ -106,6 +106,11 @@ public class JpaAssetProfileDao extends JpaAbstractDao<AssetProfileEntity, Asset
     }
 
     @Override
+    public List<AssetProfileInfo> findAssetProfilesByTenantIdAndIds(UUID tenantId, List<UUID> assetProfileIds) {
+        return assetProfileRepository.findAssetProfileInfosByTenantIdAndIdIn(tenantId, assetProfileIds);
+    }
+
+    @Override
     public AssetProfile findByTenantIdAndExternalId(UUID tenantId, UUID externalId) {
         return DaoUtil.getData(assetProfileRepository.findByTenantIdAndExternalId(tenantId, externalId));
     }

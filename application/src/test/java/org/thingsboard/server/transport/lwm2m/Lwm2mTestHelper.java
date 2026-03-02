@@ -24,8 +24,6 @@ public class Lwm2mTestHelper {
     public static final int TEMPERATURE_SENSOR = 3303;
 
     // Ids in Client
-    public static final int OBJECT_ID_0 = 0;
-    public static final int OBJECT_ID_1 = 1;
     public static final int OBJECT_INSTANCE_ID_0 = 0;
     public static final int OBJECT_INSTANCE_ID_1 = 1;
     public static final int OBJECT_INSTANCE_ID_2 = 2;

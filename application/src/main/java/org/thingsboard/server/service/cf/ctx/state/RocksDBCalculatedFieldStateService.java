@@ -69,7 +69,7 @@ public class RocksDBCalculatedFieldStateService extends AbstractCalculatedFieldS
                     log.error("Failed to parse CalculatedFieldStateProto for key {}", key, e);
                     return;
                 }
-                processRestoredState(stateMsg, new TbCallback() {
+                processRestoredState(stateMsg, null, new TbCallback() {
                     @Override
                     public void onSuccess() {}
 

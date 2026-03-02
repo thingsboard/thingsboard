@@ -33,9 +33,16 @@
         {{ 'widget-config.title' | translate }}
       </mat-slide-toggle>
       <div class="flex flex-1 flex-row items-center justify-start gap-2">
-        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
-          <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
-        </mat-form-field>
+        <tb-string-pattern-autocomplete class="flex-1"
+                                        appearance="outline"
+                                        brackets="curly"
+                                        subscriptSizing="dynamic"
+                                        predefinedValuesButton="true"
+                                        [disabled]="!rangeChartWidgetConfigForm.get('showTitle').value"
+                                        [predefinedValues]="predefinedValues"
+                                        placeholderText="{{ 'widget-config.set' | translate }}"
+                                        formControlName="title"
+        ></tb-string-pattern-autocomplete>
         <tb-font-settings formControlName="titleFont"
                           clearButton
                           [previewText]="rangeChartWidgetConfigForm.get('title').value"
@@ -235,6 +242,9 @@
     <div class="tb-form-panel-title" translate>widgets.time-series-chart.axis.y-axis</div>
     <tb-time-series-chart-axis-settings
         formControlName="yAxis"
+        [aliasController]="aliasController"
+        [dataKeyCallbacks]="callbacks"
+        [datasource]="datasource"
         axisType="yAxis"
         hideUnits
         hideDecimals>

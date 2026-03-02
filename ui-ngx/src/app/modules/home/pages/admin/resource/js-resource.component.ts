@@ -83,7 +83,7 @@ export class JsResourceComponent extends EntityComponent<Resource> implements On
     return this.fb.group({
       title: [entity ? entity.title : '', [Validators.required, Validators.maxLength(255)]],
       resourceSubType: [entity?.resourceSubType ? entity.resourceSubType : ResourceSubType.EXTENSION, Validators.required],
-      fileName: [entity ? entity.fileName : null, Validators.required],
+      fileName: [entity ? entity.fileName : null],
       data: [entity ? entity.data : null, this.isAdd ? [Validators.required] : []],
       content: [entity?.data?.length ? base64toString(entity.data) : '', Validators.required]
     });
@@ -111,7 +111,9 @@ export class JsResourceComponent extends EntityComponent<Resource> implements On
       if (!formValue.fileName) {
         formValue.fileName = formValue.title + '.js';
       }
-      formValue.data = stringToBase64((formValue as any).content);
+      formValue.data = new File([(formValue as any).content], formValue.fileName, {
+        type: 'text/javascript'
+      });
       delete (formValue as any).content;
     }
     return super.prepareFormValue(formValue);
@@ -126,7 +128,7 @@ export class JsResourceComponent extends EntityComponent<Resource> implements On
   }
 
   convertToBase64File(data: string): string {
-    return window.btoa(data);
+    return stringToBase64(data);
   }
 
   onResourceIdCopied(): void {

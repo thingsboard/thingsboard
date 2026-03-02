@@ -14,8 +14,8 @@
 /// limitations under the License.
 ///
 
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { inject, NgModule } from '@angular/core';
+import { ActivatedRouteSnapshot, ResolveFn, Router, RouterModule, RouterStateSnapshot, Routes } from '@angular/router';
 
 import { LoginComponent } from './pages/login/login.component';
 import { AuthGuard } from '@core/guards/auth.guard';
@@ -25,6 +25,22 @@ import { CreatePasswordComponent } from '@modules/login/pages/login/create-passw
 import { TwoFactorAuthLoginComponent } from '@modules/login/pages/login/two-factor-auth-login.component';
 import { Authority } from '@shared/models/authority.enum';
 import { LinkExpiredComponent } from '@modules/login/pages/login/link-expired.component';
+import { ForceTwoFactorAuthLoginComponent } from '@modules/login/pages/login/force-two-factor-auth-login.component';
+import { of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { AuthService } from '@core/auth/auth.service';
+import { UserPasswordPolicy } from '@shared/models/settings.models';
+
+const passwordPolicyResolver: ResolveFn<UserPasswordPolicy> = (route: ActivatedRouteSnapshot,
+   state: RouterStateSnapshot,
+   router = inject(Router),
+   authService = inject(AuthService)) => {
+    return authService.getUserPasswordPolicy({ignoreErrors: true}).pipe(
+      catchError(() => {
+        return of({} as UserPasswordPolicy);
+      })
+    );
+};
 
 const routes: Routes = [
   {
@@ -52,7 +68,10 @@ const routes: Routes = [
       title: 'login.reset-password',
       module: 'public'
     },
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
+    resolve: {
+      passwordPolicy: passwordPolicyResolver
+    }
   },
   {
     path: 'login/resetExpiredPassword',
@@ -62,7 +81,10 @@ const routes: Routes = [
       module: 'public',
       expiredPassword: true
     },
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
+    resolve: {
+      passwordPolicy: passwordPolicyResolver
+    }
   },
   {
     path: 'login/createPassword',
@@ -71,7 +93,10 @@ const routes: Routes = [
       title: 'login.create-password',
       module: 'public'
     },
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
+    resolve: {
+      passwordPolicy: passwordPolicyResolver
+    }
   },
   {
     path: 'login/mfa',
@@ -79,6 +104,16 @@ const routes: Routes = [
     data: {
       title: 'login.two-factor-authentication',
       auth: [Authority.PRE_VERIFICATION_TOKEN],
+      module: 'public'
+    },
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'login/force-mfa',
+    component: ForceTwoFactorAuthLoginComponent,
+    data: {
+      title: 'login.two-factor-authentication',
+      auth: [Authority.MFA_CONFIGURATION_TOKEN],
       module: 'public'
     },
     canActivate: [AuthGuard]

@@ -35,117 +35,73 @@
       </mat-icon>
     </mat-form-field>
   </div>
-  <ng-container [formGroup]="mobileActionTypeFormGroup" [ngSwitch]="mobileActionFormGroup.get('type').value">
-    <ng-template [ngSwitchCase]="mobileActionType.deviceProvision">
-      <tb-js-func
-        formControlName="handleProvisionSuccessFunction"
-        functionName="handleProvisionSuccess"
-        withModules
-        [functionArgs]="['deviceName', '$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel']"
-        [globalVariables]="functionScopeVariables"
-        [editorCompleter]="customActionEditorCompleter"
-        hideBrackets
-      ></tb-js-func>
-    </ng-template>
-    <ng-template [ngSwitchCase]="mobileActionFormGroup.get('type').value === mobileActionType.mapDirection ||
-                                 mobileActionFormGroup.get('type').value === mobileActionType.mapLocation ?
-                                 mobileActionFormGroup.get('type').value : ''">
-      <tb-js-func
-        formControlName="getLocationFunction"
-        functionName="getLocation"
-        withModules
-        [functionArgs]="['$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel']"
-        [globalVariables]="functionScopeVariables"
-        [editorCompleter]="customActionEditorCompleter"
-        hideBrackets
-        helpId="widget/action/mobile_get_location_fn"
-      ></tb-js-func>
-    </ng-template>
-    <ng-template [ngSwitchCase]="mobileActionType.makePhoneCall">
-      <tb-js-func
-        formControlName="getPhoneNumberFunction"
-        functionName="getPhoneNumber"
-        withModules
-        [functionArgs]="['$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel']"
-        [globalVariables]="functionScopeVariables"
-        [editorCompleter]="customActionEditorCompleter"
-        hideBrackets
-        helpId="widget/action/mobile_get_phone_number_fn"
-      ></tb-js-func>
-    </ng-template>
-    <ng-template [ngSwitchCase]="mobileActionFormGroup.get('type').value === mobileActionType.takePhoto ||
-                                 mobileActionFormGroup.get('type').value === mobileActionType.takePictureFromGallery ||
-                                 mobileActionFormGroup.get('type').value === mobileActionType.takeScreenshot ?
-                                 mobileActionFormGroup.get('type').value : ''">
-      <tb-js-func
-        formControlName="processImageFunction"
-        functionName="processImage"
-        withModules
-        [functionArgs]="['imageUrl', '$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel']"
-        [globalVariables]="functionScopeVariables"
-        [editorCompleter]="customActionEditorCompleter"
-        hideBrackets
-        helpId="widget/action/mobile_process_image_fn"
-      ></tb-js-func>
-    </ng-template>
-    <ng-template [ngSwitchCase]="mobileActionType.scanQrCode">
-      <tb-js-func
-        formControlName="processQrCodeFunction"
-        functionName="processQrCode"
-        withModules
-        [functionArgs]="['code', 'format', '$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel']"
-        [globalVariables]="functionScopeVariables"
-        [editorCompleter]="customActionEditorCompleter"
-        hideBrackets
-        helpId="widget/action/mobile_process_qr_code_fn"
-      ></tb-js-func>
-    </ng-template>
-    <ng-template [ngSwitchCase]="mobileActionType.getLocation">
-      <tb-js-func
-        formControlName="processLocationFunction"
-        functionName="processLocation"
-        withModules
-        [functionArgs]="['latitude', 'longitude', '$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel']"
-        [globalVariables]="functionScopeVariables"
-        [editorCompleter]="customActionEditorCompleter"
-        hideBrackets
-        helpId="widget/action/mobile_process_location_fn"
-      ></tb-js-func>
-    </ng-template>
-    <ng-template [ngSwitchCase]="mobileActionFormGroup.get('type').value === mobileActionType.mapDirection ||
-                                 mobileActionFormGroup.get('type').value === mobileActionType.mapLocation ||
-                                 mobileActionFormGroup.get('type').value === mobileActionType.makePhoneCall ?
-                                 mobileActionFormGroup.get('type').value : ''">
-      <tb-js-func
-        formControlName="processLaunchResultFunction"
-        functionName="processLaunchResult"
-        withModules
-        [functionArgs]="['launched', '$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel']"
-        [globalVariables]="functionScopeVariables"
-        [editorCompleter]="customActionEditorCompleter"
-        hideBrackets
-        helpId="widget/action/mobile_process_launch_result_fn"
-      ></tb-js-func>
-    </ng-template>
+  <ng-container [formGroup]="mobileActionTypeFormGroup">
+    @if (mobileActionFormGroup.get('type').value === mobileActionType.takePhoto ||
+      mobileActionFormGroup.get('type').value === mobileActionType.takePictureFromGallery ||
+      mobileActionFormGroup.get('type').value === mobileActionType.takeScreenshot) {
+      <div class="tb-form-row">
+        <mat-slide-toggle class="mat-slide" formControlName="saveToGallery">
+          {{ 'widget-action.mobile.save-to-gallery' | translate }}
+        </mat-slide-toggle>
+      </div>
+    }
+    @if (mobileActionFormGroup.get('type').value === mobileActionType.deviceProvision) {
+      <div class="tb-form-row">
+        <div class="fixed-title-width">{{ 'widget-action.mobile.provision-type' | translate }}*</div>
+        <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+          <mat-select formControlName="provisionType">
+            <mat-option *ngFor="let type of provisionTypes" [value]="type">
+              {{ provisionTypeTranslationMap.get(type) | translate }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+    }
+
+    @for (config of actionConfig; track config.formControlName) {
+      <div class="tb-form-panel stroked">
+        <mat-expansion-panel class="tb-settings">
+          <mat-expansion-panel-header>
+            <mat-panel-description class="flex items-stretch justify-start">
+              {{ config.title | translate }}
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+          <tb-js-func
+            [formControlName]="config.formControlName"
+            [functionName]="config.functionName"
+            withModules
+            [functionArgs]="config.functionArgs"
+            [globalVariables]="functionScopeVariables"
+            [editorCompleter]="customActionEditorCompleter"
+            hideBrackets
+            [helpId]="config.helpId"
+          ></tb-js-func>
+        </mat-expansion-panel>
+      </div>
+    }
   </ng-container>
-  <tb-js-func *ngIf="mobileActionFormGroup.get('type').value"
-              formControlName="handleEmptyResultFunction"
-              functionName="handleEmptyResult"
-              withModules
-              [functionArgs]="['$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel']"
-              [globalVariables]="functionScopeVariables"
-              [editorCompleter]="customActionEditorCompleter"
-              hideBrackets
-              helpId="widget/action/mobile_handle_empty_result_fn"
-  ></tb-js-func>
-  <tb-js-func *ngIf="mobileActionFormGroup.get('type').value"
-              formControlName="handleErrorFunction"
-              functionName="handleError"
-              withModules
-              [functionArgs]="['error', '$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel']"
-              [globalVariables]="functionScopeVariables"
-              [editorCompleter]="customActionEditorCompleter"
-              hideBrackets
-              helpId="widget/action/mobile_handle_error_fn"
-  ></tb-js-func>
+
+  @if(mobileActionFormGroup.get('type').value) {
+    @for (config of commonActionConfig; track config.formControlName) {
+      <div class="tb-form-panel stroked">
+        <mat-expansion-panel class="tb-settings">
+          <mat-expansion-panel-header>
+            <mat-panel-description class="flex items-stretch justify-start">
+              {{ config.title | translate }}
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+          <tb-js-func
+            [formControlName]="config.formControlName"
+            [functionName]="config.functionName"
+            withModules
+            [functionArgs]="config.functionArgs"
+            [globalVariables]="functionScopeVariables"
+            [editorCompleter]="customActionEditorCompleter"
+            hideBrackets
+            [helpId]="config.helpId"
+          ></tb-js-func>
+        </mat-expansion-panel>
+      </div>
+    }
+  }
 </div>

@@ -74,10 +74,10 @@
               <tb-icon>mdi:file-import</tb-icon>
             </button>
             <button [class.!hidden]="dialogMode && isScada"
-                    class="gt-md:!hidden"
+                    class="ml-3 gt-md:!hidden"
                     [disabled]="isLoading$ | async"
-                    mat-icon-button
-                    color="primary"
+                    mat-mini-fab color="primary"
+                    style="--mat-fab-small-container-elevation-shadow: none;"
                     (click)="uploadImage()"
                     matTooltip="{{ (isScada ? 'scada.upload-symbol' : 'image.upload-image' ) | translate }}"
                     matTooltipPosition="above">
