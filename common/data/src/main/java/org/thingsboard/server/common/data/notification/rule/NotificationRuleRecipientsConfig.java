@@ -50,9 +50,22 @@ import java.util.UUID;
                 @DiscriminatorMapping(value = "RESOURCES_SHORTAGE", schema = DefaultNotificationRuleRecipientsConfig.ResourceShortageRecipientsConfig.class)
         })
 @JsonIgnoreProperties
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "triggerType", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY, defaultImpl = DefaultNotificationRuleRecipientsConfig.class)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "triggerType", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
 @JsonSubTypes({
         @Type(name = "ALARM", value = EscalatedNotificationRuleRecipientsConfig.class),
+        @Type(name = "ENTITY_ACTION", value = DefaultNotificationRuleRecipientsConfig.EntityActionRecipientsConfig.class),
+        @Type(name = "ALARM_COMMENT", value = DefaultNotificationRuleRecipientsConfig.AlarmCommentRecipientsConfig.class),
+        @Type(name = "ALARM_ASSIGNMENT", value = DefaultNotificationRuleRecipientsConfig.AlarmAssignmentRecipientsConfig.class),
+        @Type(name = "DEVICE_ACTIVITY", value = DefaultNotificationRuleRecipientsConfig.DeviceActivityRecipientsConfig.class),
+        @Type(name = "RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT", value = DefaultNotificationRuleRecipientsConfig.RuleEngineComponentLifecycleEventRecipientsConfig.class),
+        @Type(name = "EDGE_CONNECTION", value = DefaultNotificationRuleRecipientsConfig.EdgeConnectionRecipientsConfig.class),
+        @Type(name = "EDGE_COMMUNICATION_FAILURE", value = DefaultNotificationRuleRecipientsConfig.EdgeCommunicationFailureRecipientsConfig.class),
+        @Type(name = "NEW_PLATFORM_VERSION", value = DefaultNotificationRuleRecipientsConfig.NewPlatformVersionRecipientsConfig.class),
+        @Type(name = "ENTITIES_LIMIT", value = DefaultNotificationRuleRecipientsConfig.EntitiesLimitRecipientsConfig.class),
+        @Type(name = "API_USAGE_LIMIT", value = DefaultNotificationRuleRecipientsConfig.EntitiesLimitRecipientsConfig.class),
+        @Type(name = "RATE_LIMITS", value = DefaultNotificationRuleRecipientsConfig.RateLimitsRecipientsConfig.class),
+        @Type(name = "TASK_PROCESSING_FAILURE", value = DefaultNotificationRuleRecipientsConfig.TaskProcessingFailureRecipientsConfig.class),
+        @Type(name = "RESOURCES_SHORTAGE", value = DefaultNotificationRuleRecipientsConfig.ResourceShortageRecipientsConfig.class)
 })
 @Data
 public abstract class NotificationRuleRecipientsConfig implements Serializable {
