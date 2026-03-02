@@ -345,13 +345,13 @@ public class EntityViewController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Find related entity views (findByQuery)",
+    @ApiOperation(value = "Find related entity views (findEntityViewsByQuery)",
             notes = "Returns all entity views that are related to the specific entity. " +
                     "The entity id, relation type, entity view types, depth of the search, and other query parameters defined using complex 'EntityViewSearchQuery' object. " +
                     "See 'Model' tab of the Parameters for more info." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @PostMapping(value = "/entityViews")
-    public List<EntityView> findByQuery(
+    public List<EntityView> findEntityViewsByQuery(
             @Parameter(description = "The entity view search query JSON")
             @RequestBody EntityViewSearchQuery query) throws ThingsboardException, ExecutionException, InterruptedException {
         checkNotNull(query);

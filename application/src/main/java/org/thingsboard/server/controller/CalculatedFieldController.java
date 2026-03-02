@@ -303,7 +303,7 @@ public class CalculatedFieldController extends BaseController {
             notes = TEST_SCRIPT_EXPRESSION + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @PostMapping("/calculatedField/testScript")
-    public JsonNode testScript(
+    public JsonNode testCalculatedFieldScript(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Test calculated field TBEL expression.")
             @RequestBody JsonNode inputParams) {
         String expression = inputParams.get("expression").asText();

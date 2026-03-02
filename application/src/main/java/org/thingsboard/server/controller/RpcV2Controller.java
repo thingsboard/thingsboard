@@ -113,7 +113,7 @@ public class RpcV2Controller extends AbstractRpcController {
 
     private static final String TWO_WAY_RPC_REQUEST_DESCRIPTION = "Sends the two-way remote-procedure call (RPC) request to device. " + RPC_REQUEST_DESCRIPTION + TWO_WAY_RPC_RESULT + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
 
-    @ApiOperation(value = "Send one-way RPC request", notes = ONE_WAY_RPC_REQUEST_DESCRIPTION)
+    @ApiOperation(value = "Send one-way RPC request (handleOneWayDeviceRPCRequestV2)", notes = ONE_WAY_RPC_REQUEST_DESCRIPTION)
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Persistent RPC request was saved to the database or lightweight RPC request was sent to the device."),
             @ApiResponse(responseCode = "400", description = "Invalid structure of the request."),
@@ -124,7 +124,7 @@ public class RpcV2Controller extends AbstractRpcController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/oneway/{deviceId}", method = RequestMethod.POST)
     @ResponseBody
-    public DeferredResult<ResponseEntity> handleOneWayDeviceRPCRequest(
+    public DeferredResult<ResponseEntity> handleOneWayDeviceRPCRequestV2(
             @Parameter(description = DEVICE_ID_PARAM_DESCRIPTION)
             @PathVariable("deviceId") String deviceIdStr,
             @Parameter(description = "A JSON value representing the RPC request.")
@@ -132,7 +132,7 @@ public class RpcV2Controller extends AbstractRpcController {
         return handleDeviceRPCRequest(true, new DeviceId(UUID.fromString(deviceIdStr)), requestBody, HttpStatus.GATEWAY_TIMEOUT, HttpStatus.GATEWAY_TIMEOUT);
     }
 
-    @ApiOperation(value = "Send two-way RPC request", notes = TWO_WAY_RPC_REQUEST_DESCRIPTION)
+    @ApiOperation(value = "Send two-way RPC request (handleTwoWayDeviceRPCRequestV2)", notes = TWO_WAY_RPC_REQUEST_DESCRIPTION)
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Persistent RPC request was saved to the database or lightweight RPC response received."),
             @ApiResponse(responseCode = "400", description = "Invalid structure of the request."),
@@ -143,7 +143,7 @@ public class RpcV2Controller extends AbstractRpcController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/twoway/{deviceId}", method = RequestMethod.POST)
     @ResponseBody
-    public DeferredResult<ResponseEntity> handleTwoWayDeviceRPCRequest(
+    public DeferredResult<ResponseEntity> handleTwoWayDeviceRPCRequestV2(
             @Parameter(description = DEVICE_ID_PARAM_DESCRIPTION)
             @PathVariable(DEVICE_ID) String deviceIdStr,
             @Parameter(description = "A JSON value representing the RPC request.")

@@ -130,7 +130,7 @@ public class DeviceProfileController extends BaseController {
         return checkNotNull(deviceProfileService.findDefaultDeviceProfileInfo(getTenantId()));
     }
 
-    @ApiOperation(value = "Get time series keys (getTimeseriesKeys)",
+    @ApiOperation(value = "Get time series keys (getDeviceProfileTimeseriesKeys)",
             notes = "Get a set of unique time series keys used by devices that belong to specified profile. " +
                     "If profile is not set returns a list of unique keys among all profiles. " +
                     "The call is used for auto-complete in the UI forms. " +
@@ -139,7 +139,7 @@ public class DeviceProfileController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/deviceProfile/devices/keys/timeseries", method = RequestMethod.GET)
     @ResponseBody
-    public List<String> getTimeseriesKeys(
+    public List<String> getDeviceProfileTimeseriesKeys(
             @Parameter(description = DEVICE_PROFILE_ID_PARAM_DESCRIPTION)
             @RequestParam(name = DEVICE_PROFILE_ID, required = false) String deviceProfileIdStr) throws ThingsboardException {
         DeviceProfileId deviceProfileId;

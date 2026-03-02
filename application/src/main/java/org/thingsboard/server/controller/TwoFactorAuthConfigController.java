@@ -191,7 +191,7 @@ public class TwoFactorAuthConfigController extends BaseController {
         return twoFaConfigManager.deleteTwoFaAccountConfig(user.getTenantId(), user, providerType);
     }
 
-    @ApiOperation(value = "Get available 2FA providers (getAvailableTwoFaProviders)", notes =
+    @ApiOperation(value = "Get available 2FA providers (getAvailableTwoFaProviderTypes)", notes =
             "Get the list of provider types available for user to use (the ones configured by tenant or sysadmin).\n" +
             "Example of response:\n" +
             "```\n[\n  \"TOTP\",\n  \"EMAIL\",\n  \"SMS\"\n]\n```" +
@@ -199,7 +199,7 @@ public class TwoFactorAuthConfigController extends BaseController {
     )
     @GetMapping("/providers")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER', 'MFA_CONFIGURATION_TOKEN')")
-    public List<TwoFaProviderType> getAvailableTwoFaProviders() throws ThingsboardException {
+    public List<TwoFaProviderType> getAvailableTwoFaProviderTypes() throws ThingsboardException {
         return twoFaConfigManager.getPlatformTwoFaSettings(getTenantId(), true)
                 .map(PlatformTwoFaSettings::getProviders).orElse(Collections.emptyList()).stream()
                 .map(TwoFaProviderConfig::getProviderType)

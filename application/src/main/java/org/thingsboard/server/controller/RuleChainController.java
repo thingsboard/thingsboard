@@ -230,12 +230,12 @@ public class RuleChainController extends BaseController {
         return tbRuleChainService.save(ruleChain, getCurrentUser());
     }
 
-    @ApiOperation(value = "Create Default Rule Chain",
+    @ApiOperation(value = "Create Default Rule Chain (saveDefaultRuleChain)",
             notes = "Create rule chain from template, based on the specified name in the request. " +
                     "Creates the rule chain based on the template that is used to create root rule chain. " + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @PostMapping("/ruleChain/device/default")
-    public RuleChain saveRuleChain(
+    public RuleChain saveDefaultRuleChain(
             @Parameter(description = "A JSON value representing the request.")
             @RequestBody DefaultRuleChainCreateRequest request) throws Exception {
         checkNotNull(request);
@@ -348,7 +348,7 @@ public class RuleChainController extends BaseController {
             notes = TEST_SCRIPT_FUNCTION + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @PostMapping("/ruleChain/testScript")
-    public JsonNode testScript(
+    public JsonNode testRuleChainScript(
             @Parameter(description = "Script language: JS or TBEL")
             @RequestParam(required = false) ScriptLanguage scriptLang,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Test JS request. See API call description above.")

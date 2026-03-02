@@ -21,7 +21,6 @@ import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.servlet.http.HttpServletResponse;
@@ -328,12 +327,12 @@ public class DashboardController extends BaseController {
         return tbDashboardService.unassignDashboardFromPublicCustomer(dashboard, getCurrentUser());
     }
 
-    @ApiOperation(value = "Get Tenant Dashboards by System Administrator (getTenantDashboards)",
+    @ApiOperation(value = "Get Tenant Dashboards by System Administrator (getTenantDashboardsByTenantId)",
             notes = "Returns a page of dashboard info objects owned by tenant. " + DASHBOARD_INFO_DEFINITION + " " + PAGE_DATA_PARAMETERS +
                     SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @GetMapping(value = "/tenant/{tenantId}/dashboards")
-    public PageData<DashboardInfo> getTenantDashboards(
+    public PageData<DashboardInfo> getTenantDashboardsByTenantId(
             @Parameter(description = TENANT_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(TENANT_ID) String strTenantId,
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)

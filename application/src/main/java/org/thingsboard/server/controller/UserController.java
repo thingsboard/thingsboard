@@ -493,13 +493,13 @@ public class UserController extends BaseController {
         return getUserSettings();
     }
 
-    @ApiOperation(value = "Delete user settings (deleteUserSettings)",
+    @ApiOperation(value = "Delete user settings (deleteGeneralUserSettings)",
             notes = "Delete user settings by specifying list of json element xpaths. \n " +
                     "Example: to delete B and C element in { \"A\": {\"B\": 5}, \"C\": 15} send A.B,C in jsonPaths request parameter")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @DeleteMapping(value = "/user/settings/{paths}")
-    public void deleteUserSettings(@Parameter(description = PATHS)
-                                   @PathVariable(PATHS) String paths) throws ThingsboardException {
+    public void deleteGeneralUserSettings(@Parameter(description = PATHS)
+                                          @PathVariable(PATHS) String paths) throws ThingsboardException {
         checkParameter(USER_ID, paths);
 
         SecurityUser currentUser = getCurrentUser();
@@ -533,15 +533,15 @@ public class UserController extends BaseController {
         return userSettings == null ? JacksonUtil.newObjectNode() : userSettings.getSettings();
     }
 
-    @ApiOperation(value = "Delete user settings (deleteUserSettings)",
+    @ApiOperation(value = "Delete user settings by type (deleteUserSettingsByType)",
             notes = "Delete user settings by specifying list of json element xpaths. \n " +
                     "Example: to delete B and C element in { \"A\": {\"B\": 5}, \"C\": 15} send A.B,C in jsonPaths request parameter")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @DeleteMapping(value = "/user/settings/{type}/{paths}")
-    public void deleteUserSettings(@Parameter(description = PATHS)
-                                   @PathVariable(PATHS) String paths,
-                                   @Parameter(description = "Settings type, case insensitive, one of: \"general\", \"quick_links\", \"doc_links\" or \"dashboards\".")
-                                   @PathVariable("type") String strType) throws ThingsboardException {
+    public void deleteUserSettingsByType(@Parameter(description = PATHS)
+                                         @PathVariable(PATHS) String paths,
+                                         @Parameter(description = "Settings type, case insensitive, one of: \"general\", \"quick_links\", \"doc_links\" or \"dashboards\".")
+                                         @PathVariable("type") String strType) throws ThingsboardException {
         checkParameter(USER_ID, paths);
         UserSettingsType type = checkEnumParameter("Settings type", strType, UserSettingsType::valueOf);
         checkNotReserved(strType, type);

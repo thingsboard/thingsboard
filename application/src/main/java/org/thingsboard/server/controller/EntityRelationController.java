@@ -348,14 +348,14 @@ public class EntityRelationController extends BaseController {
         return findByTo(strToId, strToType, strRelationType, strRelationTypeGroup);
     }
 
-    @ApiOperation(value = "Find related entities (findByQuery)",
+    @ApiOperation(value = "Find related entities (findEntityRelationsByQuery)",
             notes = "Returns all entities that are related to the specific entity. " +
                     "The entity id, relation type, entity types, depth of the search, and other query parameters defined using complex 'EntityRelationsQuery' object. " +
                     "See 'Model' tab of the Parameters for more info.")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @PostMapping("/relations")
-    public List<EntityRelation> findByQuery(@Parameter(description = "A JSON value representing the entity relations query object.", required = true)
-                                            @RequestBody EntityRelationsQuery query) throws ThingsboardException, ExecutionException, InterruptedException {
+    public List<EntityRelation> findEntityRelationsByQuery(@Parameter(description = "A JSON value representing the entity relations query object.", required = true)
+                                                           @RequestBody EntityRelationsQuery query) throws ThingsboardException, ExecutionException, InterruptedException {
         checkNotNull(query.getParameters());
         checkNotNull(query.getFilters());
         checkEntityId(query.getParameters().getEntityId(), Operation.READ);

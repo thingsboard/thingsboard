@@ -528,14 +528,14 @@ public class DeviceController extends BaseController {
         return checkNotNull(devices.get());
     }
 
-    @ApiOperation(value = "Find related devices (findByQuery)",
+    @ApiOperation(value = "Find related devices (findDevicesByQuery)",
             notes = "Returns all devices that are related to the specific entity. " +
                     "The entity id, relation type, device types, depth of the search, and other query parameters defined using complex 'DeviceSearchQuery' object. " +
                     "See 'Model' tab of the Parameters for more info." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/devices", method = RequestMethod.POST)
     @ResponseBody
-    public List<Device> findByQuery(
+    public List<Device> findDevicesByQuery(
             @Parameter(description = "The device search query JSON")
             @RequestBody DeviceSearchQuery query) throws ThingsboardException, ExecutionException, InterruptedException {
         checkNotNull(query);
