@@ -62,7 +62,7 @@ import java.util.UUID;
         @Type(name = "EDGE_COMMUNICATION_FAILURE", value = DefaultNotificationRuleRecipientsConfig.EdgeCommunicationFailureRecipientsConfig.class),
         @Type(name = "NEW_PLATFORM_VERSION", value = DefaultNotificationRuleRecipientsConfig.NewPlatformVersionRecipientsConfig.class),
         @Type(name = "ENTITIES_LIMIT", value = DefaultNotificationRuleRecipientsConfig.EntitiesLimitRecipientsConfig.class),
-        @Type(name = "API_USAGE_LIMIT", value = DefaultNotificationRuleRecipientsConfig.EntitiesLimitRecipientsConfig.class),
+        @Type(name = "API_USAGE_LIMIT", value = DefaultNotificationRuleRecipientsConfig.ApiUsageLimitRecipientsConfig.class),
         @Type(name = "RATE_LIMITS", value = DefaultNotificationRuleRecipientsConfig.RateLimitsRecipientsConfig.class),
         @Type(name = "TASK_PROCESSING_FAILURE", value = DefaultNotificationRuleRecipientsConfig.TaskProcessingFailureRecipientsConfig.class),
         @Type(name = "RESOURCES_SHORTAGE", value = DefaultNotificationRuleRecipientsConfig.ResourceShortageRecipientsConfig.class)
