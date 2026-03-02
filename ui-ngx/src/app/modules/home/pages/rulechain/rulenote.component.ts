@@ -18,8 +18,11 @@ import { Component, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { FcNoteComponent } from 'ngx-flowchart';
 import cssjs from '@core/css/css';
 import { hashCode, isNotEmptyStr } from '@core/utils';
-import tinycolor from 'tinycolor2';
-import { FcRuleNote } from '@shared/models/rule-node.models';
+import {
+  FC_RULE_NOTE_DEFAULT_APPLY_MARKDOWN_STYLE,
+  FC_RULE_NOTE_DEFAULT_BACKGROUND_COLOR,
+  FcRuleNote
+} from '@shared/models/rule-node.models';
 
 @Component({
     selector: 'tb-rule-note',
@@ -28,6 +31,9 @@ import { FcRuleNote } from '@shared/models/rule-node.models';
     standalone: false
 })
 export class RuleNoteComponent extends FcNoteComponent implements OnInit, OnChanges {
+
+  readonly defaultBackgroundColor = FC_RULE_NOTE_DEFAULT_BACKGROUND_COLOR;
+  readonly defaultApplyMarkdownStyle = FC_RULE_NOTE_DEFAULT_APPLY_MARKDOWN_STYLE;
 
   additionalStyles: string[];
   noteClass: string;
@@ -42,10 +48,6 @@ export class RuleNoteComponent extends FcNoteComponent implements OnInit, OnChan
     if (changes.note) {
       this.processCss();
     }
-  }
-
-  borderColorFor(backgroundColor: string): string {
-    return tinycolor(backgroundColor || '#FFF9C4').darken(20).toString();
   }
 
   private processCss(): void {

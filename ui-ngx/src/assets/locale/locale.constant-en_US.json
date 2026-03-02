@@ -5174,6 +5174,7 @@
         "note-details": "Note details",
         "note-empty": "Empty note",
         "note-background-color": "Background color",
+        "note-border": "Border",
         "note-apply-default-markdown-style": "Apply default markdown style",
         "note-custom-css": "Note content CSS"
     },

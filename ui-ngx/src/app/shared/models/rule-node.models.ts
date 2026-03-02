@@ -359,9 +359,15 @@ export interface FcRuleEdge extends FcEdge {
   labels?: string[];
 }
 
+export const FC_RULE_NOTE_DEFAULT_BACKGROUND_COLOR = '#FFF9C4';
+export const FC_RULE_NOTE_DEFAULT_BORDER_WIDTH = 1;
+export const FC_RULE_NOTE_DEFAULT_APPLY_MARKDOWN_STYLE = true;
+
 export interface FcRuleNote extends FcNote {
   content?: string;
   backgroundColor?: string;
+  borderColor?: string;
+  borderWidth?: number;
   applyDefaultMarkdownStyle?: boolean;
   markdownCss?: string;
 }

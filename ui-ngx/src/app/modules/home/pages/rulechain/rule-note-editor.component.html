@@ -15,23 +15,36 @@
     limitations under the License.
 
 -->
-<form [formGroup]="noteForm" class="mat-padding flex flex-1 flex-col">
+<form [formGroup]="noteForm" class="tb-form-panel no-border">
   <tb-markdown-editor formControlName="content"
                       label="{{ 'rulechain.note-content' | translate }}"
                       helpId="rulechain/note_content"
                       [helpPopupStyle]="{'max-width': '850px'}">
   </tb-markdown-editor>
+  <div class="tb-form-row space-between">
+    <div>{{ 'rulechain.note-background-color' | translate }}</div>
+    <tb-color-input asBoxInput
+                    colorClearButton
+                    formControlName="backgroundColor">
+    </tb-color-input>
+  </div>
   <section class="tb-form-panel stroked">
-    <mat-expansion-panel class="tb-settings">
+    <mat-expansion-panel #advancedPanel class="tb-settings">
       <mat-expansion-panel-header>
         <mat-panel-title translate>rule-node-config.advanced-settings</mat-panel-title>
       </mat-expansion-panel-header>
       <div class="tb-form-row space-between">
-        <div>{{ 'rulechain.note-background-color' | translate }}</div>
-        <tb-color-input asBoxInput
-                        colorClearButton
-                        formControlName="backgroundColor">
-        </tb-color-input>
+        <div>{{ 'rulechain.note-border' | translate }}</div>
+        <div class="flex flex-row items-center gap-2">
+          <mat-form-field class="number" appearance="outline" subscriptSizing="dynamic">
+            <input matInput type="number" min="0" formControlName="borderWidth">
+            <span matSuffix>px</span>
+          </mat-form-field>
+          <tb-color-input asBoxInput
+                          colorClearButton
+                          formControlName="borderColor">
+          </tb-color-input>
+        </div>
       </div>
       <div class="tb-form-row">
         <mat-slide-toggle class="mat-slide" formControlName="applyDefaultMarkdownStyle">

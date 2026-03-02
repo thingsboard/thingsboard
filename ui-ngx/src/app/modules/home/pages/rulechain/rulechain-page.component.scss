@@ -193,14 +193,15 @@
           border: solid 2px rgba(0, 0, 0, 0.35);
         }
       }
+    }
 
-      fc-note {
-        &.fc-selected:not(.fc-edit) {
-          box-shadow: 0 0 0 3px #f00;
-        }
-        &.fc-selected.fc-edit {
-          box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.35);
-        }
+    .fc-note {
+      border-radius: 8px;
+      &.fc-selected:not(.fc-edit) {
+        box-shadow: 0 0 0 3px #f00;
+      }
+      &.fc-selected.fc-edit {
+        box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.35);
       }
     }
 

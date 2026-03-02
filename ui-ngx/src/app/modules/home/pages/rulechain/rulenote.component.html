@@ -28,12 +28,13 @@
   </div>
 }
 <div class="tb-rule-note-bg"
-     [style.background-color]="note.backgroundColor || '#FFF9C4'"
-     [style.border-color]="borderColorFor(note.backgroundColor)"
+     [style.background-color]="note.backgroundColor || defaultBackgroundColor"
+     [style.border-color]="note.borderColor"
+     [style.border-width]="note.borderWidth !== null ? note.borderWidth + 'px' : null"
      (dblclick)="userNoteCallbacks?.doubleClick?.($event, note)">
   @if (note?.content) {
     <tb-markdown [data]="note.content"
-                 [applyDefaultMarkdownStyle]="note.applyDefaultMarkdownStyle ?? true"
+                 [applyDefaultMarkdownStyle]="note.applyDefaultMarkdownStyle ?? defaultApplyMarkdownStyle"
                  [additionalStyles]="additionalStyles"
                  [containerClass]="noteClass"
                  fallbackToPlainMarkdown

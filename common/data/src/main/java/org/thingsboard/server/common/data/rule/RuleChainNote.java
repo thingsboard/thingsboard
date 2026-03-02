@@ -49,6 +49,12 @@ public class RuleChainNote {
     @Schema(description = "Background color of the note in CSS hex format, e.g. '#FFF9C4'")
     private String backgroundColor;
 
+    @Schema(description = "Border color of the note in CSS hex format, e.g. '#E6C800'")
+    private String borderColor;
+
+    @Schema(description = "Border width of the note in pixels")
+    private Integer borderWidth;
+
     @Schema(description = "Whether to apply the default markdown stylesheet to the note content")
     private Boolean applyDefaultMarkdownStyle;
 

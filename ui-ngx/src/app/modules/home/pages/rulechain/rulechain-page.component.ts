@@ -170,7 +170,7 @@ export class RuleChainPageComponent extends PageComponent
 
   editingNote: FcRuleNote = null;
   isEditingNote = false;
-  editingNoteId: string = null;
+  editingNoteIndex = -1;
 
   hotKeys: Hotkey[] = [];
 
@@ -682,7 +682,7 @@ export class RuleChainPageComponent extends PageComponent
         }
       });
     }
-    this.ruleChainModel.notes = this.ruleChainMetaData.notes || [];
+    this.ruleChainModel.notes = deepClone(this.ruleChainMetaData.notes) || [];
     if (this.ruleChainCanvas) {
       this.ruleChainCanvas.adjustCanvasSize(true);
     }
@@ -1365,7 +1365,7 @@ export class RuleChainPageComponent extends PageComponent
       icon: 'sticky_note_2',
       title: this.translate.instant('rulechain.note'),
       subtitle: (() => {
-        const plain = (note.content || '').replace(/[#*_`>\[\]!\\~]/g, '').trim();
+        const plain = (note.content || '').replace(/[#*_`>[\]!\\~]/g, '').trim();
         return plain.length > 24 ? plain.substring(0, 24) + '…' : plain;
       })(),
       menuItems: []
@@ -1414,30 +1414,27 @@ export class RuleChainPageComponent extends PageComponent
     this.isEditingRuleNodeLink = false;
     this.editingRuleNodeLink = null;
     this.isEditingNote = true;
-    this.editingNoteId = note.id;
+    this.editingNoteIndex = this.ruleChainModel.notes.indexOf(note);
     this.editingNote = deepClone(note);
   }
 
   saveNote(): void {
     this.ruleNoteComponent.noteForm.markAsPristine();
     Object.assign(this.editingNote, this.ruleNoteComponent.noteForm.value);
-    const idx = this.ruleChainModel.notes.findIndex(n => n.id === this.editingNoteId);
-    this.ruleChainModel.notes[idx] = this.editingNote;
+    this.ruleChainModel.notes[this.editingNoteIndex] = this.editingNote;
     this.editingNote = deepClone(this.editingNote);
-    this.isDirty = true;
     this.onModelChanged();
   }
 
   onRevertNoteEdit(): void {
     this.ruleNoteComponent.noteForm.markAsPristine();
-    const note = this.ruleChainModel.notes.find(n => n.id === this.editingNoteId);
+    const note =  this.ruleChainModel.notes[this.editingNoteIndex];
     this.editingNote = deepClone(note);
   }
 
   onEditNoteClosed(): void {
     this.editingNote = null;
     this.isEditingNote = false;
-    this.editingNoteId = null;
   }
 
   onDetailsDrawerClosed() {
@@ -1721,7 +1718,7 @@ export class RuleChainPageComponent extends PageComponent
           this.ruleChain.version = savedRuleChainMetaData.version;
           this.ruleChainMetaData = savedRuleChainMetaData;
           if (!this.ruleChainMetaData.notes) {
-            this.ruleChainMetaData.notes = this.ruleChainModel.notes || [];
+            this.ruleChainMetaData.notes = deepClone(this.ruleChainModel.notes) || [];
           }
           if (this.isImport) {
             this.isDirtyValue = false;
