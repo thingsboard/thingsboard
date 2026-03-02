@@ -243,6 +243,7 @@ export class DashboardUtilsService {
       row: widget.row,
       col: widget.col,
     };
+    dashboard.configuration.timewindow = initModelFromDefaultTimewindow(null, false, false, this.timeService, true, false);
     return dashboard;
   }
 

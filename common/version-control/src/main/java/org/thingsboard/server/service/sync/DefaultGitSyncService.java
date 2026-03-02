@@ -48,7 +48,7 @@ public class DefaultGitSyncService implements GitSyncService {
     private final Map<String, GitRepository> repositories = new ConcurrentHashMap<>();
     private final Map<String, Runnable> updateListeners = new ConcurrentHashMap<>();
 
-    private RevCommit lastCommit;
+    private final Map<String, RevCommit> lastCommits = new ConcurrentHashMap<>();
 
     @Override
     public void registerSync(String key, String repoUri, String branch, long fetchFrequencyMs, Runnable onUpdate) {
@@ -87,7 +87,7 @@ public class DefaultGitSyncService implements GitSyncService {
     @Override
     public List<RepoFile> listFiles(String key, String path, int depth, FileType type) {
         GitRepository repository = getRepository(key);
-        return repository.listFilesAtCommit(lastCommit, path, depth).stream()
+        return repository.listFilesAtCommit(getLastCommit(key), path, depth).stream()
                 .filter(file -> type == null || file.type() == type)
                 .toList();
     }
@@ -96,7 +96,7 @@ public class DefaultGitSyncService implements GitSyncService {
     @Override
     public byte[] getFileContent(String key, String path) {
         GitRepository repository = getRepository(key);
-        return repository.getFileContentAtCommit(path, lastCommit);
+        return repository.getFileContentAtCommit(path, getLastCommit(key));
     }
 
     @Override
@@ -143,7 +143,7 @@ public class DefaultGitSyncService implements GitSyncService {
         GitRepository repository = getRepository(key);
         String branchRef = getBranchRef(repository);
         try {
-            lastCommit = repository.resolveCommit(branchRef);
+            lastCommits.put(key, repository.resolveCommit(branchRef));
         } catch (Throwable e) {
             log.error("[{}] Failed to resolve commit for ref {}", key, branchRef, e);
             return;
@@ -164,6 +164,14 @@ public class DefaultGitSyncService implements GitSyncService {
         // using uri to define folder name in case repo url is changed
         String name = URI.create(settings.getRepositoryUri()).getPath().replaceAll("[^a-zA-Z]", "");
         return Path.of(repositoriesFolder, name);
+    }
+
+    private RevCommit getLastCommit(String key) {
+        RevCommit commit = lastCommits.get(key);
+        if (commit == null) {
+            throw new IllegalStateException(key + " repository has no resolved commit");
+        }
+        return commit;
     }
 
     private String getBranchRef(GitRepository repository) {
