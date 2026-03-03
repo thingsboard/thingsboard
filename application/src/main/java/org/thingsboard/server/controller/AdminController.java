@@ -403,12 +403,12 @@ public class AdminController extends BaseController {
         return systemInfoService.getFeaturesInfo();
     }
 
-    @ApiOperation(value = "Get OAuth2 log in processing URL (getMailOAuth2RedirectUri)", notes = "Returns the URL enclosed in " +
+    @ApiOperation(value = "Get OAuth2 log in processing URL (getMailProcessingUrl)", notes = "Returns the URL enclosed in " +
             "double quotes. After successful authentication with OAuth2 provider and user consent for requested scope, it makes a redirect to this path so that the platform can do " +
             "further log in processing and generating access tokens. " + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @GetMapping(value = "/mail/oauth2/loginProcessingUrl")
-    public String getMailOAuth2RedirectUri() throws ThingsboardException {
+    public String getMailProcessingUrl() throws ThingsboardException {
         accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
         return "\"/api/admin/mail/oauth2/code\"";
     }
