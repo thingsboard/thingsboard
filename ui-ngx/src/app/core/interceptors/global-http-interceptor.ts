@@ -133,6 +133,14 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
         if (!ignoreErrors) {
           this.showError('Request timeout');
         }
+      } else if (errorResponse.status === 503) {
+        if (!ignoreErrors) {
+          this.showError('Service Unavailable');
+        }
+      } else if (errorResponse.status === 502) {
+        if (!ignoreErrors) {
+          this.showError('Bad Gateway');
+        }
       } else {
         unhandled = true;
       }
