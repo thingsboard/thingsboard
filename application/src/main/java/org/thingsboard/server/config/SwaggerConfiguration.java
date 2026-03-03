@@ -33,6 +33,7 @@ import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.media.Content;
+import io.swagger.v3.oas.models.media.IntegerSchema;
 import io.swagger.v3.oas.models.media.MediaType;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.parameters.RequestBody;
@@ -73,7 +74,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
@@ -280,8 +280,14 @@ public class SwaggerConfiguration {
             JavaType javaType = Json.mapper().constructType(type.getType());
             if (javaType != null) {
                 Class<?> cls = javaType.getRawClass();
-                if (AtomicInteger.class.isAssignableFrom(cls)) {
-                    return new Schema<>().type("integer").format("int32");
+                Schema<?> atomicSchema = switch (cls.getName()) {
+                    case "java.util.concurrent.atomic.AtomicInteger" -> new IntegerSchema().format("int32");
+                    case "java.util.concurrent.atomic.AtomicLong" -> new IntegerSchema().format("int64");
+                    case "com.google.common.util.concurrent.AtomicDouble" -> new IntegerSchema().format("double");
+                    default -> null;
+                };
+                if (atomicSchema != null) {
+                    return atomicSchema;
                 }
             }
             if (chain.hasNext()) {

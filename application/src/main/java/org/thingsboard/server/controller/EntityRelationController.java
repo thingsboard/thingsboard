@@ -73,24 +73,21 @@ public class EntityRelationController extends BaseController {
             "If the user has the authority of 'Tenant Administrator', the server checks that the entity is owned by the same tenant. " +
             "If the user has the authority of 'Customer User', the server checks that the entity is assigned to the same customer.";
 
+    @Hidden
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PostMapping(value = "/relation")
+    public void saveRelationV1(@Parameter(description = "A JSON value representing the relation.", required = true)
+                             @RequestBody EntityRelation relation) throws ThingsboardException {
+        doSave(relation);
+    }
+
     @ApiOperation(value = "Create Relation (saveRelation)",
             notes = "Creates or updates a relation between two entities in the platform. " +
                     "Relations unique key is a combination of from/to entity id and relation type group and relation type. " +
                     SECURITY_CHECKS_ENTITIES_DESCRIPTION)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @PostMapping(value = "/relation")
-    public void saveRelation(@Parameter(description = "A JSON value representing the relation.", required = true)
-                             @RequestBody EntityRelation relation) throws ThingsboardException {
-        doSave(relation);
-    }
-
-    @ApiOperation(value = "Create Relation (saveRelationAndReturn)",
-            notes = "Creates or updates a relation between two entities in the platform. " +
-                    "Relations unique key is a combination of from/to entity id and relation type group and relation type. " +
-                    SECURITY_CHECKS_ENTITIES_DESCRIPTION)
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @PostMapping(value = "/v2/relation")
-    public EntityRelation saveRelationAndReturn(@Parameter(description = "A JSON value representing the relation.", required = true)
+    public EntityRelation saveRelation(@Parameter(description = "A JSON value representing the relation.", required = true)
                                                 @RequestBody EntityRelation relation) throws ThingsboardException {
         return doSave(relation);
     }
