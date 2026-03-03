@@ -20,6 +20,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.single.EntityAggregationCalculatedFieldConfiguration;
@@ -34,6 +36,18 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Schema(
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "SIMPLE", schema = SimpleCalculatedFieldConfiguration.class),
+                @DiscriminatorMapping(value = "SCRIPT", schema = ScriptCalculatedFieldConfiguration.class),
+                @DiscriminatorMapping(value = "GEOFENCING", schema = GeofencingCalculatedFieldConfiguration.class),
+                @DiscriminatorMapping(value = "ALARM", schema = AlarmCalculatedFieldConfiguration.class),
+                @DiscriminatorMapping(value = "PROPAGATION", schema = PropagationCalculatedFieldConfiguration.class),
+                @DiscriminatorMapping(value = "RELATED_ENTITIES_AGGREGATION", schema = RelatedEntitiesAggregationCalculatedFieldConfiguration.class),
+                @DiscriminatorMapping(value = "ENTITY_AGGREGATION", schema = EntityAggregationCalculatedFieldConfiguration.class)
+        }
+)
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         include = JsonTypeInfo.As.PROPERTY,

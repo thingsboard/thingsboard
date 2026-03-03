@@ -18,12 +18,14 @@ package org.thingsboard.server.common.data.device.data;
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.thingsboard.server.common.data.DeviceTransportType;
 
 import java.util.HashMap;
 import java.util.Map;
 
+@Schema
 @Data
 public class MqttDeviceTransportConfiguration implements DeviceTransportConfiguration {
 

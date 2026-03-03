@@ -15,12 +15,14 @@
  */
 package org.thingsboard.server.common.data.cf.configuration.aggregation.single.interval;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 
+@Schema
 @Data
 @NoArgsConstructor
 public class DayInterval extends BaseAggInterval {

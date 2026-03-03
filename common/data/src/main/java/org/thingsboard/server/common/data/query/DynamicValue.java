@@ -15,12 +15,14 @@
  */
 package org.thingsboard.server.common.data.query;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 import java.io.Serializable;
 
+@Schema
 @Data
 @RequiredArgsConstructor
 public class DynamicValue<T> implements Serializable {

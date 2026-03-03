@@ -20,6 +20,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.thingsboard.server.common.data.transport.snmp.SnmpCommunicationSpec;
 import org.thingsboard.server.common.data.transport.snmp.SnmpMapping;
 import org.thingsboard.server.common.data.transport.snmp.SnmpMethod;
@@ -31,6 +33,17 @@ import org.thingsboard.server.common.data.transport.snmp.config.impl.ToDeviceRpc
 import java.io.Serializable;
 import java.util.List;
 
+@Schema(
+        description = "SNMP communication configuration",
+        discriminatorProperty = "spec",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "TELEMETRY_QUERYING", schema = TelemetryQueryingSnmpCommunicationConfig.class),
+                @DiscriminatorMapping(value = "CLIENT_ATTRIBUTES_QUERYING", schema = ClientAttributesQueryingSnmpCommunicationConfig.class),
+                @DiscriminatorMapping(value = "SHARED_ATTRIBUTES_SETTING", schema = SharedAttributesSettingSnmpCommunicationConfig.class),
+                @DiscriminatorMapping(value = "TO_DEVICE_RPC_REQUEST", schema = ToDeviceRpcRequestSnmpCommunicationConfig.class),
+                @DiscriminatorMapping(value = "TO_SERVER_RPC_REQUEST", schema = ToServerRpcRequestSnmpCommunicationConfig.class)
+        }
+)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "spec")
 @JsonSubTypes({
@@ -42,6 +55,7 @@ import java.util.List;
 })
 public interface SnmpCommunicationConfig extends Serializable {
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Specification of the SNMP communication")
     SnmpCommunicationSpec getSpec();
 
     @JsonIgnore

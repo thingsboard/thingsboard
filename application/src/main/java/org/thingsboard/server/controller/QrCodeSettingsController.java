@@ -129,7 +129,7 @@ public class QrCodeSettingsController extends BaseController {
         return qrCodeSettingService.saveQrCodeSettings(currentUser.getTenantId(), qrCodeSettings);
     }
 
-    @ApiOperation(value = "Get Mobile application settings (getMobileAppSettings)",
+    @ApiOperation(value = "Get Mobile application settings (getQrCodeSettings)",
             notes = "The response payload contains configuration for android/iOS applications and platform qr code widget settings." + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/api/mobile/qr/settings")
