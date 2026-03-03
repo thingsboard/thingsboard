@@ -119,7 +119,7 @@ public class TbResourceController extends BaseController {
                 .body(resource);
     }
 
-    @ApiOperation(value = "Download resource (downloadResource)",
+    @ApiOperation(value = "Download resource (downloadResourceIfChanged)",
             notes = "Download resource with a given type and key for the given scope" + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/resource/{resourceType}/{scope}/{key}")
@@ -359,7 +359,7 @@ public class TbResourceController extends BaseController {
         return getSystemOrTenantResourcesByIdsV1(resourceUuids);
     }
 
-    @ApiOperation(value = "Get All Resource Infos (getAllResources)",
+    @ApiOperation(value = "Get All Resource Infos (getTenantResources)",
             notes = "Returns a page of Resource Info objects owned by tenant. " +
                     PAGE_DATA_PARAMETERS + RESOURCE_INFO_DESCRIPTION + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")

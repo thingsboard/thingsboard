@@ -465,7 +465,7 @@ public class UserController extends BaseController {
         userSettingsService.updateUserSettings(currentUser.getTenantId(), currentUser.getId(), UserSettingsType.GENERAL, settings);
     }
 
-    @ApiOperation(value = "Update user settings (saveUserSettings)",
+    @ApiOperation(value = "Update user settings (putGeneralUserSettings)",
             notes = "Update user settings for authorized user. Only specified json elements will be updated." +
                     "Example: you have such settings: {A:5, B:{C:10, D:20}}. Updating it with {B:{C:10, D:30}} will result in" +
                     "{A:5, B:{C:10, D:30}}. The same could be achieved by putting {B.D:30}")
@@ -485,7 +485,7 @@ public class UserController extends BaseController {
         return userSettings == null ? JacksonUtil.newObjectNode() : userSettings.getSettings();
     }
 
-    @ApiOperation(value = "Get user settings (getUserSettings)",
+    @ApiOperation(value = "Get user settings (getGeneralUserSettings)",
             notes = "Fetch the User settings based on authorized user. ")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/user/settings/general")
@@ -506,7 +506,7 @@ public class UserController extends BaseController {
         userSettingsService.deleteUserSettings(currentUser.getTenantId(), currentUser.getId(), UserSettingsType.GENERAL, Arrays.asList(paths.split(",")));
     }
 
-    @ApiOperation(value = "Update user settings (saveUserSettings)",
+    @ApiOperation(value = "Update user settings (putUserSettings)",
             notes = "Update user settings for authorized user. Only specified json elements will be updated." +
                     "Example: you have such settings: {A:5, B:{C:10, D:20}}. Updating it with {B:{C:10, D:30}} will result in" +
                     "{A:5, B:{C:10, D:30}}. The same could be achieved by putting {B.D:30}")
@@ -549,7 +549,7 @@ public class UserController extends BaseController {
         userSettingsService.deleteUserSettings(currentUser.getTenantId(), currentUser.getId(), type, Arrays.asList(paths.split(",")));
     }
 
-    @ApiOperation(value = "Get information about last visited and starred dashboards (getLastVisitedDashboards)",
+    @ApiOperation(value = "Get information about last visited and starred dashboards (getUserDashboardsInfo)",
             notes = "Fetch the list of last visited and starred dashboards. Both lists are limited to 10 items." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/user/dashboards")

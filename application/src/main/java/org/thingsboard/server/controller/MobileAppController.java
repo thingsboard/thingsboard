@@ -123,7 +123,7 @@ public class MobileAppController extends BaseController {
         return tbMobileAppService.save(mobileApp, getCurrentUser());
     }
 
-    @ApiOperation(value = "Get mobile app infos (getTenantMobileAppInfos)", notes = SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @ApiOperation(value = "Get mobile app infos (getTenantMobileApps)", notes = SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @GetMapping(value = "/mobile/app")
     public PageData<MobileApp> getTenantMobileApps(@Parameter(description = "Platform type: ANDROID or IOS")
@@ -142,7 +142,7 @@ public class MobileAppController extends BaseController {
         return mobileAppService.findMobileAppsByTenantId(getTenantId(), platformType, pageLink);
     }
 
-    @ApiOperation(value = "Get mobile info by id (getMobileAppInfoById)", notes = SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @ApiOperation(value = "Get mobile info by id (getMobileAppById)", notes = SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @GetMapping(value = "/mobile/app/{id}")
     public MobileApp getMobileAppById(@PathVariable UUID id) throws ThingsboardException {
