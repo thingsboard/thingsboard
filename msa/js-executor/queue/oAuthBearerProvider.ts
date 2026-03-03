@@ -15,6 +15,8 @@
 ///
 
 import { AccessToken, ClientCredentials } from 'simple-oauth2'
+import { _logger, KafkaJsWinstonLogCreator } from '../config/logger';
+
 interface OauthBearerProviderOptions {
   clientId: string;
   clientSecret: string;
@@ -23,6 +25,7 @@ interface OauthBearerProviderOptions {
 }
 
 export const oauthBearerProvider = (options: OauthBearerProviderOptions) => {
+  const logger = _logger('oauthBearerProvider')
   const client = new ClientCredentials({
     client: {
       id: options.clientId,
@@ -37,16 +40,20 @@ export const oauthBearerProvider = (options: OauthBearerProviderOptions) => {
   let accessToken: AccessToken;
 
   async function refreshToken():Promise<string>{
+    logger.info('Start token refreshing/validation');
     try {
       if (accessToken == null) {
         accessToken = await client.getToken({})
+        logger.info('Got new token');
       }
 
       if (accessToken.expired(options.refreshThresholdMs / 1000)) {
+        logger.info(`Token will expire during next ${options.refreshThresholdMs}ms. Refresh token`);
         accessToken = await accessToken.refresh()
       }
       let expires_in = typeof accessToken.token.expires_in === "number" ? accessToken.token.expires_in : 0; //throw exception
       const nextRefresh = expires_in * 1000 - options.refreshThresholdMs;
+      logger.info(`Next token validation in ${nextRefresh}ms.`);
       setTimeout(() => {
         tokenPromise = refreshToken()
       }, nextRefresh);
