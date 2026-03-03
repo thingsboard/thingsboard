@@ -39,7 +39,7 @@
         <docker.name>tb-web-ui</docker.name>
         <pkg.name>tb-web-ui</pkg.name>
         <pkg.type>js</pkg.type>
-        <pkg.disabled>false</pkg.disabled>
+        <pkg.skip.bootjar>false</pkg.skip.bootjar>
         <pkg.process-resources.phase>process-resources</pkg.process-resources.phase>
         <pkg.package.phase>package</pkg.package.phase>
         <pkg.linux.dist>${project.build.directory}/package/linux</pkg.linux.dist>
