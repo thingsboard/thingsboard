@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data.cf.configuration;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -26,6 +27,7 @@ import org.thingsboard.server.common.data.relation.RelationPathLevel;
 
 import java.util.List;
 
+@Schema
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class PropagationCalculatedFieldConfiguration extends BaseCalculatedFieldConfiguration implements HasRelationPathLevel, HasUseLatestTsConfig {

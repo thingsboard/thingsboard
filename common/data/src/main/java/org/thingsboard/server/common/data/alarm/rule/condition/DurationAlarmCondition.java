@@ -21,8 +21,11 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.util.concurrent.TimeUnit;
 
+@Schema(name = "AlarmRuleDurationCondition")
 @Data
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)

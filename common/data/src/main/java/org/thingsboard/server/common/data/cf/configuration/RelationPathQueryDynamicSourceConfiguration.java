@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -28,6 +30,7 @@ import java.util.List;
 @Data
 public class RelationPathQueryDynamicSourceConfiguration implements CfArgumentDynamicSourceConfiguration {
 
+    @ArraySchema(schema = @Schema(implementation = RelationPathLevel.class))
     private List<RelationPathLevel> levels;
 
     @Override

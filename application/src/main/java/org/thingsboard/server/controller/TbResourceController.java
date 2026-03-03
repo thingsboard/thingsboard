@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -118,7 +119,7 @@ public class TbResourceController extends BaseController {
                 .body(resource);
     }
 
-    @ApiOperation(value = "Download resource (downloadResource)",
+    @ApiOperation(value = "Download resource (downloadResourceIfChanged)",
             notes = "Download resource with a given type and key for the given scope" + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/resource/{resourceType}/{scope}/{key}")
@@ -336,11 +337,10 @@ public class TbResourceController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Get Resource Infos by ids (getSystemOrTenantResourcesByIds)")
+    @Hidden
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @GetMapping(value = "/resource", params = {"resourceIds"})
-    public List<TbResourceInfo> getSystemOrTenantResourcesByIds(
-            @Parameter(description = "A list of resource ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")))
+    public List<TbResourceInfo> getSystemOrTenantResourcesByIdsV1(
             @RequestParam("resourceIds") Set<UUID> resourceUuids) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         List<TbResourceId> resourceIds = new ArrayList<>();
@@ -350,7 +350,16 @@ public class TbResourceController extends BaseController {
         return resourceService.findSystemOrTenantResourcesByIds(user.getTenantId(), resourceIds);
     }
 
-    @ApiOperation(value = "Get All Resource Infos (getAllResources)",
+    @ApiOperation(value = "Get Resource Infos by ids (getSystemOrTenantResourcesByIds)")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @GetMapping(value = "/resource/list")
+    public List<TbResourceInfo> getSystemOrTenantResourcesByIds(
+            @Parameter(description = "A list of resource ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")))
+            @RequestParam("resourceIds") Set<UUID> resourceUuids) throws ThingsboardException {
+        return getSystemOrTenantResourcesByIdsV1(resourceUuids);
+    }
+
+    @ApiOperation(value = "Get All Resource Infos (getTenantResources)",
             notes = "Returns a page of Resource Info objects owned by tenant. " +
                     PAGE_DATA_PARAMETERS + RESOURCE_INFO_DESCRIPTION + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")

@@ -24,6 +24,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.Views;
 
+@Schema
 @Data
 @Builder
 @NoArgsConstructor

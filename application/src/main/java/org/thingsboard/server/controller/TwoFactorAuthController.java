@@ -99,7 +99,7 @@ public class TwoFactorAuthController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Get available 2FA providers (getAvailableTwoFaProviders)", notes =
+    @ApiOperation(value = "Get available 2FA providers (getAvailableTwoFaProviderInfos)", notes =
             "Get the list of 2FA provider infos available for user to use. Example:\n" +
             "```\n[\n" +
             "  {\n    \"type\": \"EMAIL\",\n    \"default\": true,\n    \"contact\": \"ab*****ko@gmail.com\"\n  },\n" +
@@ -108,7 +108,7 @@ public class TwoFactorAuthController extends BaseController {
             "]\n```")
     @GetMapping("/providers")
     @PreAuthorize("hasAuthority('PRE_VERIFICATION_TOKEN')")
-    public List<TwoFaProviderInfo> getAvailableTwoFaProviders() throws ThingsboardException {
+    public List<TwoFaProviderInfo> getAvailableTwoFaProviderInfos() throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         Optional<PlatformTwoFaSettings> platformTwoFaSettings = twoFaConfigManager.getPlatformTwoFaSettings(user.getTenantId(), true);
         return twoFaConfigManager.getAccountTwoFaSettings(user.getTenantId(), user)

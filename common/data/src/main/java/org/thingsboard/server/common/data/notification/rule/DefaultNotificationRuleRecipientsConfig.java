@@ -15,14 +15,17 @@
  */
 package org.thingsboard.server.common.data.notification.rule;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
 
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+@Schema(description = "Default notification rule recipients configuration", allOf = NotificationRuleRecipientsConfig.class)
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class DefaultNotificationRuleRecipientsConfig extends NotificationRuleRecipientsConfig {
@@ -31,8 +34,53 @@ public class DefaultNotificationRuleRecipientsConfig extends NotificationRuleRec
     private List<UUID> targets;
 
     @Override
+    @Schema(hidden = true)
+    public NotificationRuleTriggerType getTriggerType() {
+        return super.getTriggerType();
+    }
+
+    @Override
     public Map<Integer, List<UUID>> getTargetsTable() {
         return Map.of(0, targets);
+    }
+
+    public static class EntityActionRecipientsConfig extends DefaultNotificationRuleRecipientsConfig {
+    }
+
+    public static class AlarmCommentRecipientsConfig extends DefaultNotificationRuleRecipientsConfig {
+    }
+
+    public static class AlarmAssignmentRecipientsConfig extends DefaultNotificationRuleRecipientsConfig {
+    }
+
+    public static class DeviceActivityRecipientsConfig extends DefaultNotificationRuleRecipientsConfig {
+    }
+
+    public static class RuleEngineComponentLifecycleEventRecipientsConfig extends DefaultNotificationRuleRecipientsConfig {
+    }
+
+    public static class EdgeConnectionRecipientsConfig extends DefaultNotificationRuleRecipientsConfig {
+    }
+
+    public static class EdgeCommunicationFailureRecipientsConfig extends DefaultNotificationRuleRecipientsConfig {
+    }
+
+    public static class NewPlatformVersionRecipientsConfig extends DefaultNotificationRuleRecipientsConfig {
+    }
+
+    public static class EntitiesLimitRecipientsConfig extends DefaultNotificationRuleRecipientsConfig {
+    }
+
+    public static class ApiUsageLimitRecipientsConfig extends DefaultNotificationRuleRecipientsConfig {
+    }
+
+    public static class RateLimitsRecipientsConfig extends DefaultNotificationRuleRecipientsConfig {
+    }
+
+    public static class TaskProcessingFailureRecipientsConfig extends DefaultNotificationRuleRecipientsConfig {
+    }
+
+    public static class ResourceShortageRecipientsConfig extends DefaultNotificationRuleRecipientsConfig {
     }
 
 }

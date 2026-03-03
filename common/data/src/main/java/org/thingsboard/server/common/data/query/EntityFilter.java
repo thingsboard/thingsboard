@@ -19,12 +19,34 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 
 import static org.thingsboard.server.common.data.query.AliasEntityId.resolveAliasEntityId;
 
+@Schema(
+        description = "Filter for selecting entities",
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "singleEntity", schema = SingleEntityFilter.class),
+                @DiscriminatorMapping(value = "entityList", schema = EntityListFilter.class),
+                @DiscriminatorMapping(value = "entityName", schema = EntityNameFilter.class),
+                @DiscriminatorMapping(value = "entityType", schema = EntityTypeFilter.class),
+                @DiscriminatorMapping(value = "assetType", schema = AssetTypeFilter.class),
+                @DiscriminatorMapping(value = "deviceType", schema = DeviceTypeFilter.class),
+                @DiscriminatorMapping(value = "edgeType", schema = EdgeTypeFilter.class),
+                @DiscriminatorMapping(value = "entityViewType", schema = EntityViewTypeFilter.class),
+                @DiscriminatorMapping(value = "apiUsageState", schema = ApiUsageStateFilter.class),
+                @DiscriminatorMapping(value = "relationsQuery", schema = RelationsQueryFilter.class),
+                @DiscriminatorMapping(value = "assetSearchQuery", schema = AssetSearchQueryFilter.class),
+                @DiscriminatorMapping(value = "deviceSearchQuery", schema = DeviceSearchQueryFilter.class),
+                @DiscriminatorMapping(value = "entityViewSearchQuery", schema = EntityViewSearchQueryFilter.class),
+                @DiscriminatorMapping(value = "edgeSearchQuery", schema = EdgeSearchQueryFilter.class)
+        }
+)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,

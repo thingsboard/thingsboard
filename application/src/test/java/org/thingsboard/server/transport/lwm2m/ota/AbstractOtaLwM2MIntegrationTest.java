@@ -196,12 +196,23 @@ public abstract class AbstractOtaLwM2MIntegrationTest extends AbstractLwM2MInteg
     }
 
     protected boolean predicateForStatuses(List<TsKvEntry> ts) {
-        List<OtaPackageUpdateStatus> statuses = ts.stream()
+        if (ts == null || ts.isEmpty()) return false;
+
+        List<String> statuses = ts.stream()
                 .sorted(Comparator.comparingLong(TsKvEntry::getTs))
                 .map(KvEntry::getValueAsString)
-                .map(OtaPackageUpdateStatus::valueOf)
                 .collect(Collectors.toList());
-        log.warn("{}", statuses);
-        return statuses.containsAll(expectedStatuses);
+
+        // If we haven't received UPDATED yet
+        if (!statuses.contains(OtaPackageUpdateStatus.UPDATED.name())) {
+            return false;
+        }
+
+        log.warn("Captured statuses: {}", statuses);
+
+        // Перевірка, що всі очікувані статуси хоча б раз промайнули
+        return expectedStatuses.stream()
+                .map(Enum::name)
+                .allMatch(statuses::contains);
     }
 }
