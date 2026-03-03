@@ -183,11 +183,24 @@ public class DefaultTbContext implements TbContext {
         if (!msg.isValid()) {
             return;
         }
+        RuleChainId selfRuleChainId = nodeCtx.getSelf().getRuleChainId();
+        RuleNodeId selfId = nodeCtx.getSelf().getId();
+        if (msg.isAlreadyInStack(selfRuleChainId, selfId)) {
+            log.warn("[{}] Detected rule chain processing loop for rule node [{}] in rule chain [{}]. " +
+                    "The message will be failed to prevent infinite loop. " +
+                    "Please check the rule chain configuration for circular references.",
+                    nodeCtx.getTenantId(), selfId, selfRuleChainId);
+            tellFailure(msg, new RuntimeException(
+                    "Detected rule chain processing loop for rule node [" + selfId + "] " +
+                    "in rule chain [" + selfRuleChainId + "]. " +
+                    "Please check the rule chain configuration for circular references."));
+            return;
+        }
         TbMsg tbMsg = msg.copy()
                 .ruleChainId(ruleChainId)
                 .resetRuleNodeId()
                 .build();
-        tbMsg.pushToStack(nodeCtx.getSelf().getRuleChainId(), nodeCtx.getSelf().getId());
+        tbMsg.pushToStack(selfRuleChainId, selfId);
         TopicPartitionInfo tpi = resolvePartition(msg);
         doEnqueue(tpi, tbMsg, new SimpleTbQueueCallback(md -> ack(msg), t -> tellFailure(msg, t)));
     }

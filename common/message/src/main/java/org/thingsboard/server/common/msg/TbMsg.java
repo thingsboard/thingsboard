@@ -265,6 +265,10 @@ public final class TbMsg implements Serializable {
         ctx.push(ruleChainId, ruleNodeId);
     }
 
+    public boolean isAlreadyInStack(RuleChainId ruleChainId, RuleNodeId ruleNodeId) {
+        return ctx.isAlreadyInStack(ruleChainId, ruleNodeId);
+    }
+
     public TbMsgProcessingStackItem popFormStack() {
         return ctx.pop();
     }
