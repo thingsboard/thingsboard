@@ -567,23 +567,24 @@
                             </executions>
                         </plugin>
                         <plugin>
-                            <groupId>org.apache.maven.plugins</groupId>
-                            <artifactId>maven-install-plugin</artifactId>
-                            <configuration>
-                                <file>${project.build.directory}/${pkg.name}.deb</file>
-                                <artifactId>${project.artifactId}</artifactId>
-                                <groupId>${project.groupId}</groupId>
-                                <version>${project.version}</version>
-                                <classifier>deb</classifier>
-                                <packaging>deb</packaging>
-                            </configuration>
+                            <groupId>org.codehaus.mojo</groupId>
+                            <artifactId>build-helper-maven-plugin</artifactId>
                             <executions>
                                 <execution>
-                                    <id>install-deb</id>
+                                    <id>attach-deb</id>
                                     <phase>${pkg.package.phase}</phase>
                                     <goals>
-                                        <goal>install-file</goal>
+                                        <goal>attach-artifact</goal>
                                     </goals>
+                                    <configuration>
+                                        <artifacts>
+                                            <artifact>
+                                                <file>${project.build.directory}/${pkg.name}.deb</file>
+                                                <type>deb</type>
+                                                <classifier>deb</classifier>
+                                            </artifact>
+                                        </artifacts>
+                                    </configuration>
                                 </execution>
                             </executions>
                         </plugin>
