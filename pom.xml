@@ -40,9 +40,9 @@
              consequently the .deb are missing. Each packaging module overrides this to false. -->
         <pkg.skip.bootjar>false</pkg.skip.bootjar>
         <!-- Set to true to skip Gradle buildDeb and suppress the Maven attach-artifact goal
-             that registers the .deb with the reactor. Any msa/* module that declares a
-             Maven dependency on a .deb artifact (e.g. msa/tb-node depends on application:deb)
-             will FAIL if this flag is true and that MSA module is in the same reactor. -->
+             that registers the .deb with the reactor. msa/* docker modules copy the .deb
+             directly from the upstream module's target/ directory (not from .m2), and their
+             copy execution is bound to ${pkg.deb.phase}, so they are silently skipped too. -->
         <pkg.skip.deb>false</pkg.skip.deb>
         <!-- Set to true to skip Gradle buildRpm. No Maven reactor module depends on the RPM
              artifact, so this flag can be toggled freely without breaking downstream modules. -->
@@ -51,10 +51,11 @@
              module depends on the ZIP artifact, so this flag can be toggled freely without
              breaking downstream modules. -->
         <pkg.skip.zip>false</pkg.skip.zip>
-        <!-- Internal: resolved phase for the build-helper attach-deb execution. Overridden to
-             "none" by the skip-deb profile when pkg.skip.deb=true so the goal is silently
-             skipped instead of failing on a non-existent .deb file. -->
-        <pkg.deb.phase>${pkg.package.phase}</pkg.deb.phase>
+        <!-- Internal: resolved phase for DEB-copy and attach-artifact executions. Set to "none"
+             by the skip-deb profile when pkg.skip.deb=true so all such goals are silently
+             skipped. Defaults to "package" so it works for both packaging modules (which define
+             pkg.package.phase=package) and msa/* docker modules (which do not). -->
+        <pkg.deb.phase>package</pkg.deb.phase>
         <pkg.user>thingsboard</pkg.user>
         <pkg.implementationTitle>${project.name}</pkg.implementationTitle>
         <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
