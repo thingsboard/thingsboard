@@ -31,9 +31,30 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <main.dir>${basedir}</main.dir>
-        <pkg.disabled>true</pkg.disabled>
         <pkg.process-resources.phase>none</pkg.process-resources.phase>
         <pkg.package.phase>none</pkg.package.phase>
+        <!-- Set to true to skip spring-boot:repackage (the boot jar, i.e. the *-boot.jar artifact).
+             The boot jar is the mandatory input to Gradle buildDeb; skipping it also prevents
+             the .deb from being produced. Any msa/* module that depends on a .deb artifact
+             (e.g. msa/tb-node depends on application:deb) will FAIL when the boot jar and
+             consequently the .deb are missing. Each packaging module overrides this to false. -->
+        <pkg.skip.bootjar>false</pkg.skip.bootjar>
+        <!-- Set to true to skip Gradle buildDeb and suppress the Maven attach-artifact goal
+             that registers the .deb with the reactor. Any msa/* module that declares a
+             Maven dependency on a .deb artifact (e.g. msa/tb-node depends on application:deb)
+             will FAIL if this flag is true and that MSA module is in the same reactor. -->
+        <pkg.skip.deb>false</pkg.skip.deb>
+        <!-- Set to true to skip Gradle buildRpm. No Maven reactor module depends on the RPM
+             artifact, so this flag can be toggled freely without breaking downstream modules. -->
+        <pkg.skip.rpm>false</pkg.skip.rpm>
+        <!-- Set to true to skip the maven-assembly-plugin Windows ZIP archive. No Maven reactor
+             module depends on the ZIP artifact, so this flag can be toggled freely without
+             breaking downstream modules. -->
+        <pkg.skip.zip>false</pkg.skip.zip>
+        <!-- Internal: resolved phase for the build-helper attach-deb execution. Overridden to
+             "none" by the skip-deb profile when pkg.skip.deb=true so the goal is silently
+             skipped instead of failing on a non-existent .deb file. -->
+        <pkg.deb.phase>${pkg.package.phase}</pkg.deb.phase>
         <pkg.user>thingsboard</pkg.user>
         <pkg.implementationTitle>${project.name}</pkg.implementationTitle>
         <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
@@ -183,6 +204,22 @@
             <properties>
                 <downloadSources>true</downloadSources>
                 <downloadJavadocs>true</downloadJavadocs>
+            </properties>
+        </profile>
+
+        <!-- Activated by -Dpkg.skip.deb=true. Sets the attach-artifact lifecycle phase to "none"
+             so the build-helper goal that registers the .deb with the Maven reactor is silently
+             skipped. Without this, the goal would fail because the .deb file does not exist. -->
+        <profile>
+            <id>skip-deb</id>
+            <activation>
+                <property>
+                    <name>pkg.skip.deb</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <properties>
+                <pkg.deb.phase>none</pkg.deb.phase>
             </properties>
         </profile>
 
@@ -491,7 +528,7 @@
                             <groupId>org.springframework.boot</groupId>
                             <artifactId>spring-boot-maven-plugin</artifactId>
                             <configuration>
-                                <skip>${pkg.disabled}</skip>
+                                <skip>${pkg.skip.bootjar}</skip>
                                 <mainClass>${pkg.mainClass}</mainClass>
                                 <classifier>boot</classifier>
                                 <layout>ZIP</layout>
@@ -535,6 +572,8 @@
                                     <arg>-PpkgInstallFolder=${pkg.installFolder}</arg>
                                     <arg>-PpkgCopyInstallScripts=${pkg.copyInstallScripts}</arg>
                                     <arg>-PpkgLogFolder=${pkg.unixLogFolder}</arg>
+                                    <arg>-PskipDeb=${pkg.skip.deb}</arg>
+                                    <arg>-PskipRpm=${pkg.skip.rpm}</arg>
                                     <arg>--warning-mode</arg>
                                     <arg>all</arg>
                                 </args>
@@ -552,6 +591,7 @@
                             <groupId>org.apache.maven.plugins</groupId>
                             <artifactId>maven-assembly-plugin</artifactId>
                             <configuration>
+                                <skipAssembly>${pkg.skip.zip}</skipAssembly>
                                 <finalName>${pkg.name}</finalName>
                                 <descriptors>
                                     <descriptor>${main.dir}/packaging/${pkg.type}/assembly/windows.xml</descriptor>
@@ -573,7 +613,7 @@
                             <executions>
                                 <execution>
                                     <id>attach-deb</id>
-                                    <phase>${pkg.package.phase}</phase>
+                                    <phase>${pkg.deb.phase}</phase>
                                     <goals>
                                         <goal>attach-artifact</goal>
                                     </goals>

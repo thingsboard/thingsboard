@@ -173,3 +173,6 @@ buildDeb {
     link("${pkgInstallFolder}/bin/${pkgName}.yml", "${pkgInstallFolder}/conf/${pkgName}.yml")
     link("/etc/${pkgName}/conf", "${pkgInstallFolder}/conf")
 }
+
+buildDeb.onlyIf { !findProperty('skipDeb')?.toBoolean() }
+buildRpm.onlyIf { !findProperty('skipRpm')?.toBoolean() }
