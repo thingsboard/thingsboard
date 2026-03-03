@@ -607,7 +607,7 @@ public class DashboardController extends BaseController {
     @Hidden
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/dashboards", params = {"dashboardIds"})
-    public List<DashboardInfo> getDashboardsByIds(@RequestParam("dashboardIds") Set<UUID> dashboardUUIDs) throws ThingsboardException {
+    public List<DashboardInfo> getDashboardsByIdsV1(@RequestParam("dashboardIds") Set<UUID> dashboardUUIDs) throws ThingsboardException {
         TenantId tenantId = getCurrentUser().getTenantId();
         List<DashboardId> dashboardIds = new ArrayList<>();
         for (UUID dashboardUUID : dashboardUUIDs) {
@@ -617,14 +617,14 @@ public class DashboardController extends BaseController {
         return filterDashboardsByReadPermission(dashboards);
     }
 
-    @ApiOperation(value = "Get dashboards by Dashboard Ids (getDashboardsByIdsV2)",
+    @ApiOperation(value = "Get dashboards by Dashboard Ids (getDashboardsByIds)",
             notes = "Returns a list of DashboardInfo objects based on the provided ids. " +
                     TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/dashboards/list")
-    public List<DashboardInfo> getDashboardsByIdsV2(@Parameter(description = "A list of dashboard ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
-                                                    @RequestParam("dashboardIds") Set<UUID> dashboardUUIDs) throws ThingsboardException {
-        return getDashboardsByIds(dashboardUUIDs);
+    public List<DashboardInfo> getDashboardsByIds(@Parameter(description = "A list of dashboard ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+                                                  @RequestParam("dashboardIds") Set<UUID> dashboardUUIDs) throws ThingsboardException {
+        return getDashboardsByIdsV1(dashboardUUIDs);
     }
 
     private Set<CustomerId> customerIdFromStr(String[] strCustomerIds) {

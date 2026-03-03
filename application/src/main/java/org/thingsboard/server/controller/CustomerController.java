@@ -204,7 +204,7 @@ public class CustomerController extends BaseController {
     @Hidden
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @GetMapping(value = "/customers", params = {"customerIds"})
-    public List<Customer> getCustomersByIds(
+    public List<Customer> getCustomersByIdsV1(
             @Parameter(description = "A list of customer ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
             @RequestParam("customerIds") Set<UUID> customerUUIDs) throws ThingsboardException {
         TenantId tenantId = getCurrentUser().getTenantId();
@@ -215,15 +215,15 @@ public class CustomerController extends BaseController {
         return customerService.findCustomersByTenantIdAndIds(tenantId, customerIds);
     }
 
-    @ApiOperation(value = "Get customers by Customer Ids (getCustomersByIdsV2)",
+    @ApiOperation(value = "Get customers by Customer Ids (getCustomersByIds)",
             notes = "Returns a list of Customer objects based on the provided ids." +
                     TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @GetMapping(value = "/customers/list")
-    public List<Customer> getCustomersByIdsV2(
+    public List<Customer> getCustomersByIds(
             @Parameter(description = "A list of customer ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
             @RequestParam("customerIds") Set<UUID> customerUUIDs) throws ThingsboardException {
-        return getCustomersByIds(customerUUIDs);
+        return getCustomersByIdsV1(customerUUIDs);
     }
 
 }

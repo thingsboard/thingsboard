@@ -230,12 +230,12 @@ public class RuleChainController extends BaseController {
         return tbRuleChainService.save(ruleChain, getCurrentUser());
     }
 
-    @ApiOperation(value = "Create Default Rule Chain (saveDefaultRuleChain)",
+    @ApiOperation(value = "Create Default Rule Chain (setDeviceDefaultRuleChain)",
             notes = "Create rule chain from template, based on the specified name in the request. " +
                     "Creates the rule chain based on the template that is used to create root rule chain. " + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @PostMapping("/ruleChain/device/default")
-    public RuleChain saveDefaultRuleChain(
+    public RuleChain setDeviceDefaultRuleChain(
             @Parameter(description = "A JSON value representing the request.")
             @RequestBody DefaultRuleChainCreateRequest request) throws Exception {
         checkNotNull(request);
@@ -586,7 +586,7 @@ public class RuleChainController extends BaseController {
     @Hidden
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping(value = "/ruleChains", params = {"ruleChainIds"})
-    public List<RuleChain> getRuleChainsByIds(@RequestParam("ruleChainIds") Set<UUID> ruleChainUUIDs) throws Exception {
+    public List<RuleChain> getRuleChainsByIdsV1(@RequestParam("ruleChainIds") Set<UUID> ruleChainUUIDs) throws Exception {
         TenantId tenantId = getCurrentUser().getTenantId();
         List<RuleChainId> ruleChainIds = new ArrayList<>();
         for (UUID ruleChainUUID : ruleChainUUIDs) {
@@ -595,15 +595,15 @@ public class RuleChainController extends BaseController {
         return ruleChainService.findRuleChainsByIds(tenantId, ruleChainIds);
     }
 
-    @ApiOperation(value = "Get Rule Chains By Ids (getRuleChainsByIdsV2)",
+    @ApiOperation(value = "Get Rule Chains By Ids (getRuleChainsByIds)",
             notes = "Requested rule chains must be owned by tenant which is performing the request. " +
                     NEW_LINE)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping(value = "/ruleChains/list")
-    public List<RuleChain> getRuleChainsByIdsV2(
+    public List<RuleChain> getRuleChainsByIds(
             @Parameter(description = "A list of rule chain ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
             @RequestParam("ruleChainIds") Set<UUID> ruleChainUUIDs) throws Exception {
-        return getRuleChainsByIds(ruleChainUUIDs);
+        return getRuleChainsByIdsV1(ruleChainUUIDs);
     }
 
 }

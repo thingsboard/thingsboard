@@ -340,7 +340,7 @@ public class TbResourceController extends BaseController {
     @Hidden
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @GetMapping(value = "/resource", params = {"resourceIds"})
-    public List<TbResourceInfo> getSystemOrTenantResourcesByIds(
+    public List<TbResourceInfo> getSystemOrTenantResourcesByIdsV1(
             @RequestParam("resourceIds") Set<UUID> resourceUuids) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         List<TbResourceId> resourceIds = new ArrayList<>();
@@ -350,13 +350,13 @@ public class TbResourceController extends BaseController {
         return resourceService.findSystemOrTenantResourcesByIds(user.getTenantId(), resourceIds);
     }
 
-    @ApiOperation(value = "Get Resource Infos by ids (getSystemOrTenantResourcesByIdsV2)")
+    @ApiOperation(value = "Get Resource Infos by ids (getSystemOrTenantResourcesByIds)")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @GetMapping(value = "/resource/list")
-    public List<TbResourceInfo> getSystemOrTenantResourcesByIdsV2(
+    public List<TbResourceInfo> getSystemOrTenantResourcesByIds(
             @Parameter(description = "A list of resource ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")))
             @RequestParam("resourceIds") Set<UUID> resourceUuids) throws ThingsboardException {
-        return getSystemOrTenantResourcesByIds(resourceUuids);
+        return getSystemOrTenantResourcesByIdsV1(resourceUuids);
     }
 
     @ApiOperation(value = "Get All Resource Infos (getAllResources)",

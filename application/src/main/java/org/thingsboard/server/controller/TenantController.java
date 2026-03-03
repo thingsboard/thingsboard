@@ -172,7 +172,7 @@ public class TenantController extends BaseController {
     @Hidden
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @GetMapping(value = "/tenants", params = {"tenantIds"})
-    public List<Tenant> getTenantsByIds(
+    public List<Tenant> getTenantsByIdsV1(
             @Parameter(description = "A list of tenant ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")))
             @RequestParam("tenantIds") Set<UUID> tenantUUIDs) throws ThingsboardException {
         TenantId tenantId = getCurrentUser().getTenantId();
@@ -184,13 +184,13 @@ public class TenantController extends BaseController {
         return filterTenantsByReadPermission(tenants);
     }
 
-    @ApiOperation(value = "Get Tenants list (getTenantsByIdsV2)")
+    @ApiOperation(value = "Get Tenants list (getTenantsByIds)")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @GetMapping(value = "/tenants/list")
-    public List<Tenant> getTenantsByIdsV2(
+    public List<Tenant> getTenantsByIds(
             @Parameter(description = "A list of tenant ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")))
             @RequestParam("tenantIds") Set<UUID> tenantUUIDs) throws ThingsboardException {
-        return getTenantsByIds(tenantUUIDs);
+        return getTenantsByIdsV1(tenantUUIDs);
     }
 
     private List<Tenant> filterTenantsByReadPermission(List<Tenant> tenants) {

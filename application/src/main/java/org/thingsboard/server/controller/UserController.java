@@ -601,7 +601,7 @@ public class UserController extends BaseController {
     @Hidden
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/users", params = {"userIds"})
-    public List<User> getUsersByIds(
+    public List<User> getUsersByIdsV1(
             @RequestParam("userIds") Set<UUID> userUUIDs) throws ThingsboardException {
         TenantId tenantId = getCurrentUser().getTenantId();
         List<UserId> userIds = new ArrayList<>();
@@ -612,14 +612,14 @@ public class UserController extends BaseController {
         return filterUsersByReadPermission(users);
     }
 
-    @ApiOperation(value = "Get Users By Ids (getUsersByIdsV2)",
+    @ApiOperation(value = "Get Users By Ids (getUsersByIds)",
             notes = "Requested users must be owned by tenant or assigned to customer which user is performing the request. ")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/users/list")
-    public List<User> getUsersByIdsV2(
+    public List<User> getUsersByIds(
             @Parameter(description = "A list of user ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
             @RequestParam("userIds") Set<UUID> userUUIDs) throws ThingsboardException {
-        return getUsersByIds(userUUIDs);
+        return getUsersByIdsV1(userUUIDs);
     }
 
     private List<User> filterUsersByReadPermission(List<User> users) {

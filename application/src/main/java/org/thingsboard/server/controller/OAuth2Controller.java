@@ -136,20 +136,20 @@ public class OAuth2Controller extends BaseController {
     @Hidden
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @GetMapping(value = "/oauth2/client/infos", params = {"clientIds"})
-    public List<OAuth2ClientInfo> findTenantOAuth2ClientInfosByIds(
+    public List<OAuth2ClientInfo> findTenantOAuth2ClientInfosByIdsV1(
             @RequestParam("clientIds") UUID[] clientIds) throws ThingsboardException {
         List<OAuth2ClientId> oAuth2ClientIds = getOAuth2ClientIds(clientIds);
         return oAuth2ClientService.findOAuth2ClientInfosByIds(getTenantId(), oAuth2ClientIds);
     }
 
-    @ApiOperation(value = "Get OAuth2 Client infos By Ids (findTenantOAuth2ClientInfosByIdsV2)",
+    @ApiOperation(value = "Get OAuth2 Client infos By Ids (findTenantOAuth2ClientInfosByIds)",
             notes = "Fetch OAuth2 Client info objects based on the provided ids. " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @GetMapping(value = "/oauth2/client/list")
-    public List<OAuth2ClientInfo> findTenantOAuth2ClientInfosByIdsV2(
+    public List<OAuth2ClientInfo> findTenantOAuth2ClientInfosByIds(
             @Parameter(description = "A list of oauth2 ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
             @RequestParam("clientIds") UUID[] clientIds) throws ThingsboardException {
-        return findTenantOAuth2ClientInfosByIds(clientIds);
+        return findTenantOAuth2ClientInfosByIdsV1(clientIds);
     }
 
     @ApiOperation(value = "Get OAuth2 Client by id (getOAuth2ClientById)", notes = SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)

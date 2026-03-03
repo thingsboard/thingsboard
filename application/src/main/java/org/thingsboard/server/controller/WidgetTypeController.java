@@ -232,7 +232,7 @@ public class WidgetTypeController extends AutoCommitController {
     @Hidden
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/widgetTypes", params = {"widgetsBundleId"})
-    public List<WidgetType> getBundleWidgetTypes(
+    public List<WidgetType> getBundleWidgetTypesV1(
             @Parameter(description = "Widget Bundle Id", required = true)
             @RequestParam("widgetsBundleId") String strWidgetsBundleId) throws ThingsboardException {
         WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
@@ -243,10 +243,10 @@ public class WidgetTypeController extends AutoCommitController {
             notes = "Returns an array of Widget Type objects that belong to specified Widget Bundle." + WIDGET_TYPE_DESCRIPTION + " " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/widgetsBundles/{widgetsBundleId}/widgetTypes")
-    public List<WidgetType> getBundleWidgetTypesV2(
+    public List<WidgetType> getBundleWidgetTypes(
             @Parameter(description = "Widget Bundle Id", required = true)
             @PathVariable("widgetsBundleId") String strWidgetsBundleId) throws ThingsboardException {
-        return getBundleWidgetTypes(strWidgetsBundleId);
+        return getBundleWidgetTypesV1(strWidgetsBundleId);
     }
 
     @Hidden

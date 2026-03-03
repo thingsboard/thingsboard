@@ -229,7 +229,7 @@ public class AssetProfileController extends BaseController {
     @Hidden
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping(value = "/assetProfileInfos", params = {"assetProfileIds"})
-    public List<AssetProfileInfo> getAssetProfilesByIds(
+    public List<AssetProfileInfo> getAssetProfilesByIdsV1(
             @Parameter(description = "A list of asset profile ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
             @RequestParam("assetProfileIds") Set<UUID> assetProfileUUIDs) throws ThingsboardException {
         TenantId tenantId = getCurrentUser().getTenantId();
@@ -240,15 +240,15 @@ public class AssetProfileController extends BaseController {
         return assetProfileService.findAssetProfilesByIds(tenantId, assetProfileIds);
     }
 
-    @ApiOperation(value = "Get Asset Profiles By Ids (getAssetProfilesByIdsV2)",
+    @ApiOperation(value = "Get Asset Profiles By Ids (getAssetProfilesByIds)",
             notes = "Requested asset profiles must be owned by tenant which is performing the request. " +
                     NEW_LINE)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping(value = "/assetProfileInfos/list")
-    public List<AssetProfileInfo> getAssetProfilesByIdsV2(
+    public List<AssetProfileInfo> getAssetProfilesByIds(
             @Parameter(description = "A list of asset profile ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
             @RequestParam("assetProfileIds") Set<UUID> assetProfileUUIDs) throws ThingsboardException {
-        return getAssetProfilesByIds(assetProfileUUIDs);
+        return getAssetProfilesByIdsV1(assetProfileUUIDs);
     }
 
 }

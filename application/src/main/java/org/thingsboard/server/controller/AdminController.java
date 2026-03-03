@@ -403,12 +403,12 @@ public class AdminController extends BaseController {
         return systemInfoService.getFeaturesInfo();
     }
 
-    @ApiOperation(value = "Get OAuth2 log in processing URL (getMailProcessingUrl)", notes = "Returns the URL enclosed in " +
+    @ApiOperation(value = "Get OAuth2 log in processing URL (getMailOAuth2RedirectUri)", notes = "Returns the URL enclosed in " +
             "double quotes. After successful authentication with OAuth2 provider and user consent for requested scope, it makes a redirect to this path so that the platform can do " +
             "further log in processing and generating access tokens. " + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @GetMapping(value = "/mail/oauth2/loginProcessingUrl")
-    public String getMailProcessingUrl() throws ThingsboardException {
+    public String getMailOAuth2RedirectUri() throws ThingsboardException {
         accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
         return "\"/api/admin/mail/oauth2/code\"";
     }
@@ -417,7 +417,7 @@ public class AdminController extends BaseController {
             "provider sends authorization code to specified redirect uri.)")
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @GetMapping(value = "/mail/oauth2/authorize", produces = "application/text")
-    public String getAuthorizationUrl(HttpServletRequest request, HttpServletResponse response) throws ThingsboardException {
+    public String getMailOAuth2AuthorizationUrl(HttpServletRequest request, HttpServletResponse response) throws ThingsboardException {
         String state = StringUtils.generateSafeToken();
         if (request.getParameter(PREV_URI_PATH_PARAMETER) != null) {
             CookieUtils.addCookie(response, PREV_URI_COOKIE_NAME, request.getParameter(PREV_URI_PATH_PARAMETER), 180);
@@ -442,7 +442,7 @@ public class AdminController extends BaseController {
     }
 
     @GetMapping(value = "/mail/oauth2/code", params = {"code", "state"})
-    public void codeProcessingUrl(
+    public void handleMailOAuth2Callback(
             @RequestParam(value = "code") String code, @RequestParam(value = "state") String state,
             HttpServletRequest request, HttpServletResponse response) throws ThingsboardException, IOException {
         Optional<Cookie> prevUrlOpt = CookieUtils.getCookie(request, PREV_URI_COOKIE_NAME);

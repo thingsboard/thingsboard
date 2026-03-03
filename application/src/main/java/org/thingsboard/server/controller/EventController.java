@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -152,12 +153,8 @@ public class EventController extends BaseController {
         return checkNotNull(eventService.findEvents(tenantId, entityId, resolveEventType(eventType), pageLink));
     }
 
-    @ApiOperation(value = "Get Events (getEventsDeprecated) (Deprecated)",
-            notes = "Returns a page of events for specified entity. Deprecated and will be removed in next minor release. " +
-                    "The call was deprecated to improve the performance of the system. " +
-                    "Current implementation will return 'Lifecycle' events only. " +
-                    "Use 'Get events by type' or 'Get events by filter' instead. " +
-                    PAGE_DATA_PARAMETERS)
+
+    @Hidden
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/events/{entityType}/{entityId}", method = RequestMethod.GET)
     @ResponseBody

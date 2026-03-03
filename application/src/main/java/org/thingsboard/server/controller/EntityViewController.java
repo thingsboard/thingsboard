@@ -470,7 +470,7 @@ public class EntityViewController extends BaseController {
     @Hidden
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/entityViews", params = {"entityViewIds"})
-    public List<EntityView> getEntityViewsByIds(@Parameter(description = "A list of entity view ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+    public List<EntityView> getEntityViewsByIdsV1(@Parameter(description = "A list of entity view ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
             @RequestParam("entityViewIds") Set<UUID> entityViewUUIDs) throws ThingsboardException {
         TenantId tenantId = getCurrentUser().getTenantId();
         List<EntityViewId> entityViewIds = new ArrayList<>();
@@ -481,13 +481,13 @@ public class EntityViewController extends BaseController {
         return filterEntityViewsByReadPermission(entityViews);
     }
 
-    @ApiOperation(value = "Get Entity Views By Ids (getEntityViewsByIdsV2)",
+    @ApiOperation(value = "Get Entity Views By Ids (getEntityViewsByIds)",
             notes = "Requested entity views must be owned by tenant or assigned to customer which user is performing the request. ")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/entityViews/list")
-    public List<EntityView> getEntityViewsByIdsV2(@Parameter(description = "A list of entity view ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
-                                                  @RequestParam("entityViewIds") Set<UUID> entityViewUUIDs) throws ThingsboardException {
-        return getEntityViewsByIds(entityViewUUIDs);
+    public List<EntityView> getEntityViewsByIds(@Parameter(description = "A list of entity view ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+                                                @RequestParam("entityViewIds") Set<UUID> entityViewUUIDs) throws ThingsboardException {
+        return getEntityViewsByIdsV1(entityViewUUIDs);
     }
 
     private List<EntityView> filterEntityViewsByReadPermission(List<EntityView> entityViews) {

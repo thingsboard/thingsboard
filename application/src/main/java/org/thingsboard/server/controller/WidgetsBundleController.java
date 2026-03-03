@@ -225,7 +225,7 @@ public class WidgetsBundleController extends BaseController {
     @Hidden
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/widgetsBundles")
-    public List<WidgetsBundle> getWidgetsBundles() throws ThingsboardException {
+    public List<WidgetsBundle> getWidgetsBundlesV1() throws ThingsboardException {
         if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
             return checkNotNull(widgetsBundleService.findSystemWidgetsBundles(getTenantId()));
         } else {
@@ -234,12 +234,12 @@ public class WidgetsBundleController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Get all Widget Bundles (getWidgetsBundlesV2)",
+    @ApiOperation(value = "Get all Widget Bundles (getAllWidgetsBundles)",
             notes = "Returns an array of Widget Bundle objects that are available for current user." + WIDGET_BUNDLE_DESCRIPTION + " " + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/widgetsBundles/all")
-    public List<WidgetsBundle> getWidgetsBundlesV2() throws ThingsboardException {
-        return getWidgetsBundles();
+    public List<WidgetsBundle> getAllWidgetsBundles() throws ThingsboardException {
+        return getWidgetsBundlesV1();
     }
 
     @Hidden

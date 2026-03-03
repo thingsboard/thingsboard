@@ -170,7 +170,7 @@ public class CalculatedFieldController extends BaseController {
     @Hidden
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @GetMapping(value = "/{entityType}/{entityId}/calculatedFields", params = {"pageSize", "page"})
-    public PageData<CalculatedField> getCalculatedFieldsByEntityId(@PathVariable("entityType") String entityType,
+    public PageData<CalculatedField> getCalculatedFieldsByEntityIdV1(@PathVariable("entityType") String entityType,
                                                                    @PathVariable("entityId") String entityIdStr,
                                                                    @RequestParam int pageSize,
                                                                    @RequestParam int page,
@@ -185,12 +185,12 @@ public class CalculatedFieldController extends BaseController {
         return checkNotNull(tbCalculatedFieldService.findByTenantIdAndEntityId(getTenantId(), entityId, type, pageLink));
     }
 
-    @ApiOperation(value = "Get Calculated Fields by Entity Id (getCalculatedFieldsByEntityIdV2)",
+    @ApiOperation(value = "Get Calculated Fields by Entity Id (getCalculatedFieldsByEntityId)",
             notes = "Fetch the Calculated Fields based on the provided Entity Id."
     )
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @GetMapping(value = "/calculatedField/{entityType}/{entityId}")
-    public PageData<CalculatedField> getCalculatedFieldsByEntityIdV2(
+    public PageData<CalculatedField> getCalculatedFieldsByEntityId(
             @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "DEVICE")) @PathVariable("entityType") String entityType,
             @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true) @PathVariable("entityId") String entityIdStr,
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true) @RequestParam int pageSize,
@@ -200,7 +200,7 @@ public class CalculatedFieldController extends BaseController {
             @Parameter(description = CF_TEXT_SEARCH_DESCRIPTION) @RequestParam(required = false) String textSearch,
             @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "name"})) @RequestParam(required = false) String sortProperty,
             @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"})) @RequestParam(required = false) String sortOrder) throws ThingsboardException {
-        return getCalculatedFieldsByEntityId(entityType, entityIdStr, pageSize, page, type, textSearch, sortProperty, sortOrder);
+        return getCalculatedFieldsByEntityIdV1(entityType, entityIdStr, pageSize, page, type, textSearch, sortProperty, sortOrder);
     }
 
     @ApiOperation(value = "Get calculated fields (getCalculatedFields)",

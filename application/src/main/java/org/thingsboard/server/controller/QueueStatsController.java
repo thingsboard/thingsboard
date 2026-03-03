@@ -89,7 +89,7 @@ public class QueueStatsController extends BaseController {
     @Hidden
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @GetMapping(value = "/queueStats", params = {"queueStatsIds"})
-    public List<QueueStats> getQueueStatsByIds(
+    public List<QueueStats> getQueueStatsByIdsV1(
             @RequestParam("queueStatsIds") String[] strQueueStatsIds) throws ThingsboardException {
         checkArrayParameter("queueStatsIds", strQueueStatsIds);
         List<QueueStatsId> queueStatsIds = new ArrayList<>();
@@ -99,13 +99,13 @@ public class QueueStatsController extends BaseController {
         return queueStatsService.findQueueStatsByIds(getTenantId(), queueStatsIds);
     }
 
-    @ApiOperation(value = "Get QueueStats By Ids (getQueueStatsByIdsV2)",
+    @ApiOperation(value = "Get QueueStats By Ids (getQueueStatsByIds)",
             notes = "Fetch the Queue stats objects based on the provided ids. ")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @GetMapping(value = "/queueStats/list")
-    public List<QueueStats> getQueueStatsByIdsV2(
+    public List<QueueStats> getQueueStatsByIds(
             @Parameter(description = "A list of queue stats ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
             @RequestParam("queueStatsIds") String[] strQueueStatsIds) throws ThingsboardException {
-        return getQueueStatsByIds(strQueueStatsIds);
+        return getQueueStatsByIdsV1(strQueueStatsIds);
     }
 }
