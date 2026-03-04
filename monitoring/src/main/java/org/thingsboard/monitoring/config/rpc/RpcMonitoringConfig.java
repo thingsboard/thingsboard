@@ -13,25 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.monitoring.data;
+package org.thingsboard.monitoring.config.rpc;
 
-public class Latencies {
+import lombok.Data;
+import org.thingsboard.monitoring.config.MonitoringConfig;
 
-    public static final String WS_CONNECT = "wsConnect";
-    public static final String WS_SUBSCRIBE = "wsSubscribe";
-    public static final String LOG_IN = "logIn";
-    public static final String EDQS_QUERY = "edqsQuery";
+import java.util.List;
 
-    public static String request(String key) {
-        return String.format("%sRequest", key);
-    }
+@Data
+public abstract class RpcMonitoringConfig implements MonitoringConfig<RpcMonitoringTarget> {
 
-    public static String wsUpdate(String key) {
-        return String.format("%sWsUpdate", key);
-    }
+    private List<RpcMonitoringTarget> targets;
+    private int requestTimeoutMs;
 
-    public static String rpcRoundTrip(String key) {
-        return String.format("%sRpcRoundTrip", key);
-    }
+    public abstract RpcTransportType getTransportType();
 
 }
