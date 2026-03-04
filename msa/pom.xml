@@ -31,6 +31,10 @@
 
     <properties>
         <main.dir>${basedir}/..</main.dir>
+        <!-- msa/* docker modules copy the .deb from target/ directly (not via Maven reactor),
+             so they need the DEB-copy goal to run at the package phase regardless of
+             pkg.package.phase (which is "none" here since these modules don't produce packaging). -->
+        <pkg.deb.phase>package</pkg.deb.phase>
         <docker.repo>thingsboard</docker.repo>
         <docker.base.image>thingsboard/openjdk17:bookworm-slim</docker.base.image>
         <dockerfile.skip>true</dockerfile.skip>
