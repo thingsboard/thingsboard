@@ -65,24 +65,18 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
-import org.bouncycastle.cert.X509CertificateHolder;
-import org.bouncycastle.openssl.PEMDecryptorProvider;
-import org.bouncycastle.openssl.PEMEncryptedKeyPair;
-import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
-import org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder;
-import org.bouncycastle.openssl.jcajce.JceOpenSSLPKCS8DecryptorProviderBuilder;
-import org.bouncycastle.operator.InputDecryptorProvider;
-import org.bouncycastle.pkcs.PKCS8EncryptedPrivateKeyInfo;
+import org.thingsboard.common.util.SslUtil;
 import org.thingsboard.server.common.data.ResourceUtils;
 import org.thingsboard.server.common.data.StringUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import java.security.PrivateKey;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -215,69 +209,38 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     }
 
     private void setupSsl(NettyServerBuilder builder) throws Exception {
-        char[] keyPass = StringUtils.isEmpty(keyPassword) ? null : keyPassword.toCharArray();
-        InputStream certChainIs;
-        InputStream privateKeyIs;
+        String certFileContent = readResourceAsString(certFileResource);
+        List<X509Certificate> certs = SslUtil.readCertFile(certFileContent);
+        PrivateKey privateKey;
         if (StringUtils.isEmpty(privateKeyResource)) {
-            // Combined PEM — split cert chain and private key into separate streams
-            StringWriter certWriter = new StringWriter();
-            StringWriter keyWriter = new StringWriter();
-            try (InputStream inStream = ResourceUtils.getInputStream(this, certFileResource);
-                 PEMParser pemParser = new PEMParser(new InputStreamReader(inStream));
-                 JcaPEMWriter certPemWriter = new JcaPEMWriter(certWriter);
-                 JcaPEMWriter keyPemWriter = new JcaPEMWriter(keyWriter)) {
-                Object object;
-                while ((object = pemParser.readObject()) != null) {
-                    if (object instanceof X509CertificateHolder) {
-                        certPemWriter.writeObject(object);
-                    } else if (object instanceof PEMEncryptedKeyPair && keyPass != null) {
-                        PEMDecryptorProvider decProv = new JcePEMDecryptorProviderBuilder()
-                                .setProvider(BouncyCastleProvider.PROVIDER_NAME).build(keyPass);
-                        keyPemWriter.writeObject(((PEMEncryptedKeyPair) object).decryptKeyPair(decProv));
-                    } else if (object instanceof PKCS8EncryptedPrivateKeyInfo && keyPass != null) {
-                        InputDecryptorProvider decProv = new JceOpenSSLPKCS8DecryptorProviderBuilder()
-                                .setProvider(BouncyCastleProvider.PROVIDER_NAME).build(keyPass);
-                        keyPemWriter.writeObject(((PKCS8EncryptedPrivateKeyInfo) object).decryptPrivateKeyInfo(decProv));
-                    } else {
-                        keyPemWriter.writeObject(object);
-                    }
-                }
-            }
-            if (keyWriter.toString().isEmpty()) {
+            // Combined PEM — private key is embedded in the cert file
+            privateKey = SslUtil.readPrivateKey(certFileContent, keyPassword);
+            if (privateKey == null) {
                 throw new IllegalArgumentException("No private key found in cert file: " + certFileResource
                         + ". Provide a combined PEM (cert + key) or set edges.rpc.ssl.private_key.");
             }
-            certChainIs = new ByteArrayInputStream(certWriter.toString().getBytes(StandardCharsets.UTF_8));
-            privateKeyIs = new ByteArrayInputStream(keyWriter.toString().getBytes(StandardCharsets.UTF_8));
         } else {
-            certChainIs = ResourceUtils.getInputStream(this, certFileResource);
-            privateKeyIs = keyPass != null
-                    ? decryptPemKey(ResourceUtils.getInputStream(this, privateKeyResource), keyPass)
-                    : ResourceUtils.getInputStream(this, privateKeyResource);
+            privateKey = SslUtil.readPrivateKey(readResourceAsString(privateKeyResource), keyPassword);
         }
-        builder.useTransportSecurity(certChainIs, privateKeyIs);
-    }
-
-    private InputStream decryptPemKey(InputStream keyStream, char[] keyPass) throws Exception {
-        StringWriter keyWriter = new StringWriter();
-        try (PEMParser pemParser = new PEMParser(new InputStreamReader(keyStream));
-             JcaPEMWriter keyPemWriter = new JcaPEMWriter(keyWriter)) {
-            Object object;
-            while ((object = pemParser.readObject()) != null) {
-                if (object instanceof PEMEncryptedKeyPair) {
-                    PEMDecryptorProvider decProv = new JcePEMDecryptorProviderBuilder()
-                            .setProvider(BouncyCastleProvider.PROVIDER_NAME).build(keyPass);
-                    keyPemWriter.writeObject(((PEMEncryptedKeyPair) object).decryptKeyPair(decProv));
-                } else if (object instanceof PKCS8EncryptedPrivateKeyInfo) {
-                    InputDecryptorProvider decProv = new JceOpenSSLPKCS8DecryptorProviderBuilder()
-                            .setProvider(BouncyCastleProvider.PROVIDER_NAME).build(keyPass);
-                    keyPemWriter.writeObject(((PKCS8EncryptedPrivateKeyInfo) object).decryptPrivateKeyInfo(decProv));
-                } else {
-                    keyPemWriter.writeObject(object);
-                }
+        StringWriter certSw = new StringWriter();
+        try (JcaPEMWriter certWriter = new JcaPEMWriter(certSw)) {
+            for (X509Certificate cert : certs) {
+                certWriter.writeObject(cert);
             }
         }
-        return new ByteArrayInputStream(keyWriter.toString().getBytes(StandardCharsets.UTF_8));
+        StringWriter keySw = new StringWriter();
+        try (JcaPEMWriter keyWriter = new JcaPEMWriter(keySw)) {
+            keyWriter.writeObject(privateKey);
+        }
+        builder.useTransportSecurity(
+                new ByteArrayInputStream(certSw.toString().getBytes(StandardCharsets.UTF_8)),
+                new ByteArrayInputStream(keySw.toString().getBytes(StandardCharsets.UTF_8)));
+    }
+
+    private String readResourceAsString(String resource) throws IOException {
+        try (InputStream is = ResourceUtils.getInputStream(this, resource)) {
+            return new String(is.readAllBytes(), StandardCharsets.UTF_8);
+        }
     }
 
     @PreDestroy
