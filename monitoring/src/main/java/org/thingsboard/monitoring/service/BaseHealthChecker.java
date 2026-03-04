@@ -48,9 +48,9 @@ public abstract class BaseHealthChecker<C extends MonitoringConfig, T extends Mo
     @Autowired
     protected MonitoringEntityService entityService;
     @Autowired
-    private MonitoringReporter reporter;
+    protected MonitoringReporter reporter;
     @Autowired
-    private TbStopWatch stopWatch;
+    protected TbStopWatch stopWatch;
     @Value("${monitoring.check_timeout_ms}")
     private int resultCheckTimeoutMs;
 
@@ -67,7 +67,7 @@ public abstract class BaseHealthChecker<C extends MonitoringConfig, T extends Mo
 
     protected abstract void initialize();
 
-    public final void check(WsClient wsClient) {
+    public void check(WsClient wsClient) {
         log.debug("[{}] Checking", info);
         try {
             int expectedUpdatesCount = isCfMonitoringEnabled() ? 2 : 1;

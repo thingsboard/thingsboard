@@ -13,25 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.monitoring.data;
+package org.thingsboard.monitoring.config.rpc;
 
-public class Latencies {
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import org.thingsboard.monitoring.service.rpc.BaseRpcHealthChecker;
+import org.thingsboard.monitoring.service.rpc.impl.MqttRpcHealthChecker;
 
-    public static final String WS_CONNECT = "wsConnect";
-    public static final String WS_SUBSCRIBE = "wsSubscribe";
-    public static final String LOG_IN = "logIn";
-    public static final String EDQS_QUERY = "edqsQuery";
+@AllArgsConstructor
+@Getter
+public enum RpcTransportType {
 
-    public static String request(String key) {
-        return String.format("%sRequest", key);
-    }
+    MQTT("MQTT", MqttRpcHealthChecker.class);
 
-    public static String wsUpdate(String key) {
-        return String.format("%sWsUpdate", key);
-    }
-
-    public static String rpcRoundTrip(String key) {
-        return String.format("%sRpcRoundTrip", key);
-    }
+    private final String name;
+    private final Class<? extends BaseRpcHealthChecker<?>> serviceClass;
 
 }
