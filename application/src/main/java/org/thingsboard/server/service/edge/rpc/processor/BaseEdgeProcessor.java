@@ -412,6 +412,9 @@ public abstract class BaseEdgeProcessor implements EdgeProcessor {
     }
 
     protected boolean isSaveRequired(HasVersion current, HasVersion updated) {
+        if (current != null) {
+            current.setVersion(null);
+        }
         updated.setVersion(null);
         return !updated.equals(current);
     }

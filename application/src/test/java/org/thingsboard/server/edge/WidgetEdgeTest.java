@@ -68,7 +68,7 @@ public class WidgetEdgeTest extends AbstractEdgeTest {
         WidgetType widgetsType = JacksonUtil.fromString(widgetTypeUpdateMsg.getEntity(), WidgetType.class, true);
         Assert.assertNotNull(widgetsType);
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, widgetTypeUpdateMsg.getMsgType());
-        Assert.assertEquals(savedWidgetType, widgetsType);
+        compareHasVersionEntities(savedWidgetType, widgetsType);
 
         // update widget bundle
         edgeImitator.expectMessageAmount(1);
