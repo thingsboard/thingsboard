@@ -1505,10 +1505,11 @@ edges:
     ssl:
       # Enable/disable SSL support
       enabled: "${EDGES_RPC_SSL_ENABLED:false}"
-      # Cert file to be used during TLS connectivity to the cloud
+      # Path to the server certificate file (holds server certificate or certificate chain, may include server private key).
+      # For a combined PEM file containing both the certificate chain and the private key, set this to the combined file and leave private_key empty.
       cert: "${EDGES_RPC_SSL_CERT:certChainFile.pem}"
-      # Private key file associated with the Cert certificate. This key is used in the encryption process during a secure connection
-      private_key: "${EDGES_RPC_SSL_PRIVATE_KEY:privateKeyFile.pem}"
+      # Path to the server certificate private key file. Optional when the private key is already included in the cert file (combined PEM).
+      private_key: "${EDGES_RPC_SSL_PRIVATE_KEY:}"
     # Maximum size (in bytes) of inbound messages the cloud can handle from the edge. By default, it can handle messages up to 4 Megabytes
     max_inbound_message_size: "${EDGES_RPC_MAX_INBOUND_MESSAGE_SIZE:4194304}"
     # Maximum length of telemetry (time-series and attributes) message the cloud sends to the edge. By default, there is no limitation.
