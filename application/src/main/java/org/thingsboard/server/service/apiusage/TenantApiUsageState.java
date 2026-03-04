@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.ApiUsageStateValue;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.TenantProfileId;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 
 import java.util.Arrays;
@@ -32,6 +33,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 public class TenantApiUsageState extends BaseApiUsageState {
     @Getter
@@ -63,21 +65,46 @@ public class TenantApiUsageState extends BaseApiUsageState {
         return tenantProfileData.getConfiguration().getWarnThreshold(key);
     }
 
+    /**
+     * Daily quota = monthlyQuota * peakDays / daysInBillingMonth.
+     * Returns 0 (unlimited) when the monthly quota is unlimited.
+     */
+    public long getDailyThreshold(ApiUsageRecordKey key) {
+        long monthly = getProfileThreshold(key);
+        if (monthly == 0) return 0;
+        int peakDays = ((DefaultTenantProfileConfiguration) tenantProfileData.getConfiguration()).getDailyPeakDays();
+        long monthMs = getNextCycleTs() - getCurrentCycleTs();
+        if (monthMs <= 0) return monthly;
+        return Math.max(1L, monthly * peakDays * TimeUnit.DAYS.toMillis(1) / monthMs);
+    }
+
+    public long getDailyWarnThreshold(ApiUsageRecordKey key) {
+        long daily = getDailyThreshold(key);
+        if (daily == 0) return 0;
+        double warnFraction = ((DefaultTenantProfileConfiguration) tenantProfileData.getConfiguration()).getWarnThreshold();
+        return (long) (daily * (warnFraction > 0.0 ? warnFraction : 0.8));
+    }
+
     private Pair<ApiFeature, ApiUsageStateValue> checkStateUpdatedDueToThreshold(ApiFeature feature) {
         ApiUsageStateValue featureValue = ApiUsageStateValue.ENABLED;
         for (ApiUsageRecordKey recordKey : ApiUsageRecordKey.getKeys(feature)) {
             long value = get(recordKey);
+            long dailyValue = getDaily(recordKey);
             boolean featureEnabled = getProfileFeatureEnabled(recordKey);
             ApiUsageStateValue tmpValue;
             if (featureEnabled) {
                 long threshold = getProfileThreshold(recordKey);
                 long warnThreshold = getProfileWarnThreshold(recordKey);
-                if (threshold == 0 || value == 0 || value < warnThreshold) {
+                long dailyThreshold = getDailyThreshold(recordKey);
+                long dailyWarnThreshold = getDailyWarnThreshold(recordKey);
+                if (threshold == 0) {
                     tmpValue = ApiUsageStateValue.ENABLED;
-                } else if (value < threshold) {
+                } else if (value >= threshold || (dailyThreshold > 0 && dailyValue >= dailyThreshold)) {
+                    tmpValue = ApiUsageStateValue.DISABLED;
+                } else if (value >= warnThreshold || (dailyThreshold > 0 && dailyValue >= dailyWarnThreshold)) {
                     tmpValue = ApiUsageStateValue.WARNING;
                 } else {
-                    tmpValue = ApiUsageStateValue.DISABLED;
+                    tmpValue = ApiUsageStateValue.ENABLED;
                 }
             } else {
                 tmpValue = ApiUsageStateValue.DISABLED;
