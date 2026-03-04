@@ -33,7 +33,7 @@ import {
   OutputType,
   OutputTypeTranslations
 } from '@shared/models/calculated-field.models';
-import { digitsRegex, oneSpaceInsideRegex } from '@shared/models/regex.constants';
+import { digitsRegex } from '@shared/models/regex.constants';
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { map, startWith, switchMap } from 'rxjs/operators';
@@ -65,15 +65,15 @@ export interface CalculatedFieldDialogData {
 export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFieldDialogComponent, CalculatedField> {
 
   fieldFormGroup = this.fb.group({
-    name: ['', [Validators.required, Validators.pattern(oneSpaceInsideRegex), Validators.maxLength(255)]],
+    name: ['', [Validators.required, Validators.maxLength(255)]],
     type: [CalculatedFieldType.SIMPLE],
     debugSettings: [],
     configuration: this.fb.group({
       arguments: this.fb.control({}),
-      expressionSIMPLE: ['', [Validators.required, Validators.pattern(oneSpaceInsideRegex), Validators.maxLength(255)]],
+      expressionSIMPLE: ['', [Validators.required, Validators.maxLength(255)]],
       expressionSCRIPT: [calculatedFieldDefaultScript],
       output: this.fb.group({
-        name: ['', [Validators.required, Validators.pattern(oneSpaceInsideRegex), Validators.maxLength(255)]],
+        name: ['', [Validators.required, Validators.maxLength(255)]],
         scope: [{ value: AttributeScope.SERVER_SCOPE, disabled: true }],
         type: [OutputType.Timeseries],
         decimalsByDefault: [null as number, [Validators.min(0), Validators.max(15), Validators.pattern(digitsRegex)]],
