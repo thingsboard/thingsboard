@@ -66,8 +66,14 @@ import org.thingsboard.server.service.edge.EdgeContextComponent;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.openssl.PEMDecryptorProvider;
+import org.bouncycastle.openssl.PEMEncryptedKeyPair;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
+import org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder;
+import org.bouncycastle.openssl.jcajce.JceOpenSSLPKCS8DecryptorProviderBuilder;
+import org.bouncycastle.operator.InputDecryptorProvider;
+import org.bouncycastle.pkcs.PKCS8EncryptedPrivateKeyInfo;
 import org.thingsboard.server.common.data.ResourceUtils;
 import org.thingsboard.server.common.data.StringUtils;
 
@@ -121,6 +127,8 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private String certFileResource;
     @Value("${edges.rpc.ssl.private_key:}")
     private String privateKeyResource;
+    @Value("${edges.rpc.ssl.key_password:}")
+    private String keyPassword;
     @Value("${edges.state.persistToTelemetry:false}")
     private boolean persistToTelemetry;
     @Value("${edges.rpc.client_max_keep_alive_time_sec:1}")
@@ -207,9 +215,11 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     }
 
     private void setupSsl(NettyServerBuilder builder) throws Exception {
+        char[] keyPass = StringUtils.isEmpty(keyPassword) ? null : keyPassword.toCharArray();
         InputStream certChainIs;
         InputStream privateKeyIs;
         if (StringUtils.isEmpty(privateKeyResource)) {
+            // Combined PEM — split cert chain and private key into separate streams
             StringWriter certWriter = new StringWriter();
             StringWriter keyWriter = new StringWriter();
             try (InputStream inStream = ResourceUtils.getInputStream(this, certFileResource);
@@ -220,6 +230,14 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                 while ((object = pemParser.readObject()) != null) {
                     if (object instanceof X509CertificateHolder) {
                         certPemWriter.writeObject(object);
+                    } else if (object instanceof PEMEncryptedKeyPair && keyPass != null) {
+                        PEMDecryptorProvider decProv = new JcePEMDecryptorProviderBuilder()
+                                .setProvider(BouncyCastleProvider.PROVIDER_NAME).build(keyPass);
+                        keyPemWriter.writeObject(((PEMEncryptedKeyPair) object).decryptKeyPair(decProv));
+                    } else if (object instanceof PKCS8EncryptedPrivateKeyInfo && keyPass != null) {
+                        InputDecryptorProvider decProv = new JceOpenSSLPKCS8DecryptorProviderBuilder()
+                                .setProvider(BouncyCastleProvider.PROVIDER_NAME).build(keyPass);
+                        keyPemWriter.writeObject(((PKCS8EncryptedPrivateKeyInfo) object).decryptPrivateKeyInfo(decProv));
                     } else {
                         keyPemWriter.writeObject(object);
                     }
@@ -233,9 +251,33 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             privateKeyIs = new ByteArrayInputStream(keyWriter.toString().getBytes(StandardCharsets.UTF_8));
         } else {
             certChainIs = ResourceUtils.getInputStream(this, certFileResource);
-            privateKeyIs = ResourceUtils.getInputStream(this, privateKeyResource);
+            privateKeyIs = keyPass != null
+                    ? decryptPemKey(ResourceUtils.getInputStream(this, privateKeyResource), keyPass)
+                    : ResourceUtils.getInputStream(this, privateKeyResource);
         }
         builder.useTransportSecurity(certChainIs, privateKeyIs);
+    }
+
+    private InputStream decryptPemKey(InputStream keyStream, char[] keyPass) throws Exception {
+        StringWriter keyWriter = new StringWriter();
+        try (PEMParser pemParser = new PEMParser(new InputStreamReader(keyStream));
+             JcaPEMWriter keyPemWriter = new JcaPEMWriter(keyWriter)) {
+            Object object;
+            while ((object = pemParser.readObject()) != null) {
+                if (object instanceof PEMEncryptedKeyPair) {
+                    PEMDecryptorProvider decProv = new JcePEMDecryptorProviderBuilder()
+                            .setProvider(BouncyCastleProvider.PROVIDER_NAME).build(keyPass);
+                    keyPemWriter.writeObject(((PEMEncryptedKeyPair) object).decryptKeyPair(decProv));
+                } else if (object instanceof PKCS8EncryptedPrivateKeyInfo) {
+                    InputDecryptorProvider decProv = new JceOpenSSLPKCS8DecryptorProviderBuilder()
+                            .setProvider(BouncyCastleProvider.PROVIDER_NAME).build(keyPass);
+                    keyPemWriter.writeObject(((PKCS8EncryptedPrivateKeyInfo) object).decryptPrivateKeyInfo(decProv));
+                } else {
+                    keyPemWriter.writeObject(object);
+                }
+            }
+        }
+        return new ByteArrayInputStream(keyWriter.toString().getBytes(StandardCharsets.UTF_8));
     }
 
     @PreDestroy
