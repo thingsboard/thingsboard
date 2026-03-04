@@ -37,7 +37,6 @@ import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
-import org.thingsboard.server.common.data.ResourceUtils;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -66,8 +65,18 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
+import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.openssl.PEMParser;
+import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
+import org.thingsboard.server.common.data.ResourceUtils;
+import org.thingsboard.server.common.data.StringUtils;
+
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -110,7 +119,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private boolean sslEnabled;
     @Value("${edges.rpc.ssl.cert}")
     private String certFileResource;
-    @Value("${edges.rpc.ssl.private_key}")
+    @Value("${edges.rpc.ssl.private_key:}")
     private String privateKeyResource;
     @Value("${edges.state.persistToTelemetry:false}")
     private boolean persistToTelemetry;
@@ -176,9 +185,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                 .addService(this);
         if (sslEnabled) {
             try {
-                InputStream certFileIs = ResourceUtils.getInputStream(this, certFileResource);
-                InputStream privateKeyFileIs = ResourceUtils.getInputStream(this, privateKeyResource);
-                builder.useTransportSecurity(certFileIs, privateKeyFileIs);
+                setupSsl(builder);
             } catch (Exception e) {
                 log.error("Unable to set up SSL context. Reason: " + e.getMessage(), e);
                 throw new RuntimeException("Unable to set up SSL context!", e);
@@ -197,6 +204,38 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         this.executorService = ThingsBoardExecutors.newSingleThreadScheduledExecutor("edge-service");
         this.executorService.scheduleAtFixedRate(this::cleanupZombieSessions, 60, 60, TimeUnit.SECONDS);
         log.info("Edge RPC service initialized!");
+    }
+
+    private void setupSsl(NettyServerBuilder builder) throws Exception {
+        InputStream certChainIs;
+        InputStream privateKeyIs;
+        if (StringUtils.isEmpty(privateKeyResource)) {
+            StringWriter certWriter = new StringWriter();
+            StringWriter keyWriter = new StringWriter();
+            try (InputStream inStream = ResourceUtils.getInputStream(this, certFileResource);
+                 PEMParser pemParser = new PEMParser(new InputStreamReader(inStream));
+                 JcaPEMWriter certPemWriter = new JcaPEMWriter(certWriter);
+                 JcaPEMWriter keyPemWriter = new JcaPEMWriter(keyWriter)) {
+                Object object;
+                while ((object = pemParser.readObject()) != null) {
+                    if (object instanceof X509CertificateHolder) {
+                        certPemWriter.writeObject(object);
+                    } else {
+                        keyPemWriter.writeObject(object);
+                    }
+                }
+            }
+            if (keyWriter.toString().isEmpty()) {
+                throw new IllegalArgumentException("No private key found in cert file: " + certFileResource
+                        + ". Provide a combined PEM (cert + key) or set edges.rpc.ssl.private_key.");
+            }
+            certChainIs = new ByteArrayInputStream(certWriter.toString().getBytes(StandardCharsets.UTF_8));
+            privateKeyIs = new ByteArrayInputStream(keyWriter.toString().getBytes(StandardCharsets.UTF_8));
+        } else {
+            certChainIs = ResourceUtils.getInputStream(this, certFileResource);
+            privateKeyIs = ResourceUtils.getInputStream(this, privateKeyResource);
+        }
+        builder.useTransportSecurity(certChainIs, privateKeyIs);
     }
 
     @PreDestroy
