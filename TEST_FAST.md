@@ -38,7 +38,7 @@ mvn test -pl application -Dtest='
 | Flag                       | Skips                                     | Safe to skip for tests?                                      |
 |----------------------------|-------------------------------------------|--------------------------------------------------------------|
 | `-Dpkg.skip.bootjar=true`  | `spring-boot:repackage` (`*-boot.jar`)    | Yes — tests use the regular `.jar`, not the fat boot jar     |
-| `-Dpkg.skip.deb=true`      | Gradle `buildDeb` + Maven `attach-artifact` | Yes — if MSA docker modules are excluded from the build    |
+| `-Dpkg.skip.deb=true`      | Gradle `buildDeb` + Maven `attach-artifact` | Yes — MSA docker modules copy the DEB from `target/` directly |
 | `-Dpkg.skip.rpm=true`      | Gradle `buildRpm`                         | Yes — no test depends on the RPM                             |
 | `-Dpkg.skip.zip=true`      | `maven-assembly-plugin` Windows ZIP       | Yes — no test depends on the ZIP                             |
 
