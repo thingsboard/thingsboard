@@ -29,8 +29,6 @@ import {
   calculatedFieldTypes,
   CalculatedFieldTypeTranslations
 } from '@shared/models/calculated-field.models';
-import { digitsRegex } from '@shared/models/regex.constants';
-import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
