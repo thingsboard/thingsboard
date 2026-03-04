@@ -51,11 +51,11 @@
              module depends on the ZIP artifact, so this flag can be toggled freely without
              breaking downstream modules. -->
         <pkg.skip.zip>false</pkg.skip.zip>
-        <!-- Internal: resolved phase for DEB-copy and attach-artifact executions. Set to "none"
-             by the skip-deb profile when pkg.skip.deb=true so all such goals are silently
-             skipped. Defaults to "package" so it works for both packaging modules (which define
-             pkg.package.phase=package) and msa/* docker modules (which do not). -->
-        <pkg.deb.phase>package</pkg.deb.phase>
+        <!-- Internal: resolved phase for the build-helper attach-deb execution. Overridden to
+             "none" by the skip-deb profile when pkg.skip.deb=true so the goal is silently
+             skipped instead of failing on a non-existent .deb file. Packaging modules inherit
+             "package" via pkg.package.phase; msa/* docker modules set it explicitly in msa/pom.xml. -->
+        <pkg.deb.phase>${pkg.package.phase}</pkg.deb.phase>
         <pkg.user>thingsboard</pkg.user>
         <pkg.implementationTitle>${project.name}</pkg.implementationTitle>
         <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
