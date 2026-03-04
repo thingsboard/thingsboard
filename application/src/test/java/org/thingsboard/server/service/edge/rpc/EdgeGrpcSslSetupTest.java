@@ -125,7 +125,7 @@ class EdgeGrpcSslSetupTest {
             X509Certificate cert = new JcaX509CertificateConverter().getCertificate(
                     new JcaX509v3CertificateBuilder(
                             subject, BigInteger.ONE, now,
-                            new Date(now.getTime() + 86_400_000L),
+                            new Date(now.getTime() + TimeUnit.DAYS.toMillis(1)),
                             subject, kp.getPublic())
                             .build(signer));
             return new CertKey(cert, kp.getPrivate());
