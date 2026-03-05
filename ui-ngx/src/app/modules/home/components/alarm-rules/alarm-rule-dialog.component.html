@@ -40,8 +40,6 @@
               <mat-error>
                 @if (fieldFormGroup.get('name').hasError('required')) {
                   {{ 'alarm-rule.alarm-type-required' | translate }}
-                } @else if (fieldFormGroup.get('name').hasError('pattern')) {
-                  {{ 'alarm-rule.alarm-type-pattern' | translate }}
                 } @else if (fieldFormGroup.get('name').hasError('maxlength')) {
                   {{ 'alarm-rule.alarm-type-max-length' | translate }}
                 }

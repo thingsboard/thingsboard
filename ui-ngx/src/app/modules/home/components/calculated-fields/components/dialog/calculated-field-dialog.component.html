@@ -39,8 +39,6 @@
               <mat-error>
                 @if (fieldFormGroup.get('name').hasError('required')) {
                   {{ 'common.hint.title-required' | translate }}
-                } @else if (fieldFormGroup.get('name').hasError('pattern')) {
-                  {{ 'common.hint.title-pattern' | translate }}
                 } @else if (fieldFormGroup.get('name').hasError('maxlength')) {
                   {{ 'common.hint.title-max-length' | translate }}
                 }
