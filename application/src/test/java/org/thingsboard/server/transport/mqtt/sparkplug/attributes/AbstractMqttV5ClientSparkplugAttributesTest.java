@@ -468,6 +468,7 @@ public abstract class AbstractMqttV5ClientSparkplugAttributesTest extends Abstra
         AtomicReference<List<String>> actualKeys = new AtomicReference<>();
         await(alias + SparkplugMessageType.NBIRTH.name())
                 .atMost(40, TimeUnit.SECONDS)
+                .ignoreExceptions()
                 .until(() -> {
                     actualKeys.set(doGetAsyncTyped(urlTemplate, new TypeReference<>() {
                     }));
@@ -483,6 +484,7 @@ public abstract class AbstractMqttV5ClientSparkplugAttributesTest extends Abstra
         AtomicReference<List<String>> actualKeys = new AtomicReference<>();
         await(alias + SparkplugMessageType.DBIRTH.name())
                 .atMost(40, TimeUnit.SECONDS)
+                .ignoreExceptions()
                 .until(() -> {
                     actualKeys.set(doGetAsyncTyped(urlTemplate, new TypeReference<>() {
                     }));
