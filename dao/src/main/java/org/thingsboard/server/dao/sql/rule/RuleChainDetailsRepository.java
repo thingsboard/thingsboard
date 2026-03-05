@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host ::ng-deep {
-  tb-markdown-editor {
-    .markdown-content.tb-edit-mode {
-      &:not(.tb-fullscreen) {
-        padding-bottom: 0;
-      }
-    }
-  }
+package org.thingsboard.server.dao.sql.rule;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.thingsboard.server.dao.model.sql.RuleChainDetailsEntity;
+
+import java.util.UUID;
+
+public interface RuleChainDetailsRepository extends JpaRepository<RuleChainDetailsEntity, UUID> {
+
 }

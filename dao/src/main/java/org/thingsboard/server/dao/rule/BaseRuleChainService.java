@@ -16,7 +16,6 @@
 package org.thingsboard.server.dao.rule;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FluentFuture;
@@ -52,9 +51,9 @@ import org.thingsboard.server.common.data.rule.NodeConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChainData;
+import org.thingsboard.server.common.data.rule.RuleChainDetails;
 import org.thingsboard.server.common.data.rule.RuleChainImportResult;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
-import org.thingsboard.server.common.data.rule.RuleChainNote;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleChainUpdateResult;
 import org.thingsboard.server.common.data.rule.RuleNode;
@@ -318,12 +317,11 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         if (!relations.isEmpty()) {
             relationService.saveRelations(tenantId, relations);
         }
-        ruleChain.setConfiguration(CollectionUtils.isNotEmpty(ruleChainMetaData.getNotes())
-                ? JacksonUtil.newObjectNode().set("notes", JacksonUtil.valueToTree(ruleChainMetaData.getNotes()))
-                : null);
-        ruleChain = ruleChainDao.save(tenantId, ruleChain);
-        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entity(ruleChain)
-                .entityId(ruleChain.getId()).broadcastEvent(publishSaveEvent).build());
+        RuleChainDetails ruleChainDetails = new RuleChainDetails(ruleChain);
+        ruleChainDetails.setNotes(ruleChainMetaData.getNotes());
+        ruleChainDetails = ruleChainDao.saveDetails(ruleChainDetails);
+        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entity(ruleChainDetails)
+                .entityId(ruleChainDetails.getId()).broadcastEvent(publishSaveEvent).build());
         return RuleChainUpdateResult.successful(updatedRuleNodes);
     }
 
@@ -346,13 +344,13 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     @Override
     public RuleChainMetaData loadRuleChainMetaData(TenantId tenantId, RuleChainId ruleChainId) {
         Validator.validateId(ruleChainId, "Incorrect rule chain id.");
-        RuleChain ruleChain = findRuleChainById(tenantId, ruleChainId);
-        if (ruleChain == null) {
+        RuleChainDetails ruleChainDetails = ruleChainDao.findDetailsById(ruleChainId.getId());
+        if (ruleChainDetails == null) {
             return null;
         }
         RuleChainMetaData ruleChainMetaData = new RuleChainMetaData();
         ruleChainMetaData.setRuleChainId(ruleChainId);
-        ruleChainMetaData.setVersion(ruleChain.getVersion());
+        ruleChainMetaData.setVersion(ruleChainDetails.getVersion());
         List<RuleNode> ruleNodes = getRuleChainNodes(tenantId, ruleChainId);
         Collections.sort(ruleNodes, Comparator.comparingLong(RuleNode::getCreatedTime).thenComparing(RuleNode::getId, Comparator.comparing(RuleNodeId::getId)));
         Map<RuleNodeId, Integer> ruleNodeIndexMap = new HashMap<>();
@@ -360,8 +358,8 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             ruleNodeIndexMap.put(node.getId(), ruleNodes.indexOf(node));
         }
         ruleChainMetaData.setNodes(ruleNodes);
-        if (ruleChain.getFirstRuleNodeId() != null) {
-            ruleChainMetaData.setFirstNodeIndex(ruleNodeIndexMap.get(ruleChain.getFirstRuleNodeId()));
+        if (ruleChainDetails.getFirstRuleNodeId() != null) {
+            ruleChainMetaData.setFirstNodeIndex(ruleNodeIndexMap.get(ruleChainDetails.getFirstRuleNodeId()));
         }
         for (RuleNode node : ruleNodes) {
             int fromIndex = ruleNodeIndexMap.get(node.getId());
@@ -381,10 +379,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             Collections.sort(ruleChainMetaData.getConnections(), Comparator.comparingInt(NodeConnectionInfo::getFromIndex)
                     .thenComparing(NodeConnectionInfo::getToIndex).thenComparing(NodeConnectionInfo::getType));
         }
-        ruleChainMetaData.setNotes(Optional.ofNullable(ruleChain.getConfiguration())
-                .filter(c -> c.has("notes"))
-                .map(c -> JacksonUtil.convertValue(c.get("notes"), new TypeReference<List<RuleChainNote>>() {}))
-                .orElse(null));
+        ruleChainMetaData.setNotes(ruleChainDetails.getNotes());
         return ruleChainMetaData;
     }
 
