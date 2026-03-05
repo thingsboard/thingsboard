@@ -57,6 +57,22 @@
     </modules>
 
     <profiles>
+        <!-- Mirror of the root-pom skip-deb profile. Required because Maven resolves
+             child <properties> entries (pkg.deb.phase=package above) with higher priority
+             than profile properties from a parent POM. Redeclaring the profile here ensures
+             pkg.deb.phase=none wins when -Dpkg.skip.deb=true is passed. -->
+        <profile>
+            <id>skip-deb</id>
+            <activation>
+                <property>
+                    <name>pkg.skip.deb</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <properties>
+                <pkg.deb.phase>none</pkg.deb.phase>
+            </properties>
+        </profile>
         <profile>
             <id>black-box-tests</id>
             <activation>

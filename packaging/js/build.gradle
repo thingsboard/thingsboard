@@ -127,5 +127,5 @@ buildDeb {
     link("/etc/${pkgName}/conf", "${pkgInstallFolder}/conf")
 }
 
-buildDeb.onlyIf { !findProperty('skipDeb')?.toBoolean() }
-buildRpm.onlyIf { !findProperty('skipRpm')?.toBoolean() }
+buildDeb.onlyIf { findProperty('skipDeb') != 'true' }
+buildRpm.onlyIf { findProperty('skipRpm') != 'true' }
