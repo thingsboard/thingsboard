@@ -180,7 +180,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         this.rpcAwaitingAck = new ConcurrentHashMap<>();
     }
 
-    private boolean isSSL() {
+    boolean isSSL() {
         return sslHandler != null;
     }
 
@@ -258,7 +258,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         }
     }
 
-    private String getClientAddr(ChannelHandlerContext ctx) {
+    String getClientAddr(ChannelHandlerContext ctx) {
         try {
             InetSocketAddress remote = getAddress(ctx);
             if (remote == null) return "unknown";
