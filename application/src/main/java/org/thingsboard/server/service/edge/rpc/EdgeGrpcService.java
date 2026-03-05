@@ -136,9 +136,6 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private EdgeContextComponent ctx;
 
     @Autowired
-    private TelemetrySubscriptionService tsSubService;
-
-    @Autowired
     private TbClusterService clusterService;
 
     @Autowired
@@ -553,14 +550,14 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private void save(TenantId tenantId, EdgeId edgeId, String key, long value) {
         log.debug("[{}][{}] Updating long edge telemetry [{}] [{}]", tenantId, edgeId, key, value);
         if (persistToTelemetry) {
-            tsSubService.saveTimeseries(TimeseriesSaveRequest.builder()
+            ctx.getTsSubService().saveTimeseries(TimeseriesSaveRequest.builder()
                     .tenantId(tenantId)
                     .entityId(edgeId)
                     .entry(new LongDataEntry(key, value))
                     .callback(new AttributeSaveCallback(tenantId, edgeId, key, value))
                     .build());
         } else {
-            tsSubService.saveAttributes(AttributesSaveRequest.builder()
+            ctx.getTsSubService().saveAttributes(AttributesSaveRequest.builder()
                     .tenantId(tenantId)
                     .entityId(edgeId)
                     .scope(AttributeScope.SERVER_SCOPE)
@@ -573,14 +570,14 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private void save(TenantId tenantId, EdgeId edgeId, String key, boolean value) {
         log.debug("[{}][{}] Updating boolean edge telemetry [{}] [{}]", tenantId, edgeId, key, value);
         if (persistToTelemetry) {
-            tsSubService.saveTimeseries(TimeseriesSaveRequest.builder()
+            ctx.getTsSubService().saveTimeseries(TimeseriesSaveRequest.builder()
                     .tenantId(tenantId)
                     .entityId(edgeId)
                     .entry(new BooleanDataEntry(key, value))
                     .callback(new AttributeSaveCallback(tenantId, edgeId, key, value))
                     .build());
         } else {
-            tsSubService.saveAttributes(AttributesSaveRequest.builder()
+            ctx.getTsSubService().saveAttributes(AttributesSaveRequest.builder()
                     .tenantId(tenantId)
                     .entityId(edgeId)
                     .scope(AttributeScope.SERVER_SCOPE)
@@ -588,32 +585,6 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                     .callback(new AttributeSaveCallback(tenantId, edgeId, key, value))
                     .build());
         }
-    }
-
-    private static class AttributeSaveCallback implements FutureCallback<Void> {
-
-        private final TenantId tenantId;
-        private final EdgeId edgeId;
-        private final String key;
-        private final Object value;
-
-        AttributeSaveCallback(TenantId tenantId, EdgeId edgeId, String key, Object value) {
-            this.tenantId = tenantId;
-            this.edgeId = edgeId;
-            this.key = key;
-            this.value = value;
-        }
-
-        @Override
-        public void onSuccess(@Nullable Void result) {
-            log.trace("[{}][{}] Successfully updated attribute [{}] with value [{}]", tenantId, edgeId, key, value);
-        }
-
-        @Override
-        public void onFailure(Throwable t) {
-            log.warn("[{}][{}] Failed to update attribute [{}] with value [{}]", tenantId, edgeId, key, value, t);
-        }
-
     }
 
     private void pushRuleEngineMessage(TenantId tenantId, Edge edge, long ts, TbMsgType msgType) {
