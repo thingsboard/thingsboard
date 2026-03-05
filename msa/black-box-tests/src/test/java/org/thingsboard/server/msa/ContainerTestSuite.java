@@ -17,8 +17,11 @@ package org.thingsboard.server.msa;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.testcontainers.containers.ContainerLaunchException;
 import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.containers.wait.strategy.WaitStrategy;
+import org.testcontainers.containers.wait.strategy.WaitStrategyTarget;
 import org.thingsboard.server.common.data.StringUtils;
 
 import java.io.File;
@@ -134,21 +137,21 @@ public class ContainerTestSuite {
                     .withEnv("LOAD_BALANCER_NAME", "")
                     .withExposedService("haproxy", 80, Wait.forHttp("/swagger-ui.html").withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
                     .withExposedService("broker", 1883)
-                    .waitingFor("tb-core1", Wait.forLogMessage(TB_CORE_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
-                    .waitingFor("tb-core2", Wait.forLogMessage(TB_CORE_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
-                    .waitingFor("tb-rule-engine1", Wait.forLogMessage(TRANSPORTS_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
-                    .waitingFor("tb-rule-engine2", Wait.forLogMessage(TRANSPORTS_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
-                    .waitingFor("tb-http-transport1", Wait.forLogMessage(TRANSPORTS_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
-                    .waitingFor("tb-http-transport2", Wait.forLogMessage(TRANSPORTS_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
-                    .waitingFor("tb-mqtt-transport1", Wait.forLogMessage(TRANSPORTS_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
-                    .waitingFor("tb-mqtt-transport2", Wait.forLogMessage(TRANSPORTS_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
-                    .waitingFor("tb-coap-transport", Wait.forLogMessage(TRANSPORTS_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
-                    .waitingFor("tb-lwm2m-transport", Wait.forLogMessage(TRANSPORTS_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
-                    .waitingFor("tb-vc-executor1", Wait.forLogMessage(TB_VC_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
-                    .waitingFor("tb-vc-executor2", Wait.forLogMessage(TB_VC_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
-                    .waitingFor("tb-js-executor", Wait.forLogMessage(TB_JS_EXECUTOR_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
-                    .waitingFor("tb-edqs1", Wait.forLogMessage(TB_EDQS_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
-                    .waitingFor("tb-edqs2", Wait.forLogMessage(TB_EDQS_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT));
+                    .waitingFor("tb-core1", waitForLog("tb-core1", TB_CORE_LOG_REGEXP))
+                    .waitingFor("tb-core2", waitForLog("tb-core2", TB_CORE_LOG_REGEXP))
+                    .waitingFor("tb-rule-engine1", waitForLog("tb-rule-engine1", TRANSPORTS_LOG_REGEXP))
+                    .waitingFor("tb-rule-engine2", waitForLog("tb-rule-engine2", TRANSPORTS_LOG_REGEXP))
+                    .waitingFor("tb-http-transport1", waitForLog("tb-http-transport1", TRANSPORTS_LOG_REGEXP))
+                    .waitingFor("tb-http-transport2", waitForLog("tb-http-transport2", TRANSPORTS_LOG_REGEXP))
+                    .waitingFor("tb-mqtt-transport1", waitForLog("tb-mqtt-transport1", TRANSPORTS_LOG_REGEXP))
+                    .waitingFor("tb-mqtt-transport2", waitForLog("tb-mqtt-transport2", TRANSPORTS_LOG_REGEXP))
+                    .waitingFor("tb-coap-transport", waitForLog("tb-coap-transport", TRANSPORTS_LOG_REGEXP))
+                    .waitingFor("tb-lwm2m-transport", waitForLog("tb-lwm2m-transport", TRANSPORTS_LOG_REGEXP))
+                    .waitingFor("tb-vc-executor1", waitForLog("tb-vc-executor1", TB_VC_LOG_REGEXP))
+                    .waitingFor("tb-vc-executor2", waitForLog("tb-vc-executor2", TB_VC_LOG_REGEXP))
+                    .waitingFor("tb-js-executor", waitForLog("tb-js-executor", TB_JS_EXECUTOR_LOG_REGEXP))
+                    .waitingFor("tb-edqs1", waitForLog("tb-edqs1", TB_EDQS_LOG_REGEXP))
+                    .waitingFor("tb-edqs2", waitForLog("tb-edqs2", TB_EDQS_LOG_REGEXP));
             testContainer.start();
             setActive(true);
         } catch (Exception e) {
@@ -255,6 +258,40 @@ public class ContainerTestSuite {
         return testContainer;
     }
 
+    private static WaitStrategy waitForLog(String serviceName, String logRegexp) {
+        return new NamedLogMessageWaitStrategy(serviceName, logRegexp);
+    }
+
+    static class NamedLogMessageWaitStrategy implements WaitStrategy {
+
+        private final String serviceName;
+        private final WaitStrategy delegate;
+
+        NamedLogMessageWaitStrategy(String serviceName, String logRegexp) {
+            this.serviceName = serviceName;
+            this.delegate = Wait.forLogMessage(logRegexp, 1)
+                    .withStartupTimeout(CONTAINER_STARTUP_TIMEOUT);
+        }
+
+        @Override
+        public void waitUntilReady(WaitStrategyTarget waitStrategyTarget) {
+            try {
+                delegate.waitUntilReady(waitStrategyTarget);
+            } catch (Exception e) {
+                throw new ContainerLaunchException(
+                        "Service '" + serviceName + "' failed to start within " +
+                        CONTAINER_STARTUP_TIMEOUT.toSeconds() + "s", e);
+            }
+        }
+
+        @Override
+        public WaitStrategy withStartupTimeout(Duration startupTimeout) {
+            delegate.withStartupTimeout(startupTimeout);
+            return this;
+        }
+
+    }
+
     static class DockerComposeContainerImpl extends DockerComposeContainer<DockerComposeContainerImpl> {
 
         private final String targetDir;
@@ -272,5 +309,7 @@ public class ContainerTestSuite {
         public void cleanup() {
             tryDeleteDir(this.targetDir);
         }
+
     }
+
 }
