@@ -99,7 +99,7 @@ public class MqttTransportContext extends TransportContext {
     }
 
     public void channelRegistered(boolean isSSL) {
-        if  (isSSL) {
+        if (isSSL) {
             connectionsActiveCounterMQTTS.incrementAndGet();
         } else {
             connectionsActiveCounterMQTT.incrementAndGet();
@@ -107,7 +107,7 @@ public class MqttTransportContext extends TransportContext {
     }
 
     public void channelUnregistered(boolean isSSL) {
-        if  (isSSL) {
+        if (isSSL) {
             connectionsActiveCounterMQTTS.decrementAndGet();
         } else {
             connectionsActiveCounterMQTT.decrementAndGet();
