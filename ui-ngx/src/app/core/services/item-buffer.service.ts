@@ -16,7 +16,13 @@
 
 import { Injectable } from '@angular/core';
 import { BreakpointId, Dashboard, DashboardLayoutId } from '@app/shared/models/dashboard.models';
-import { AliasesInfo, EntityAlias, EntityAliases, EntityAliasInfo, getEntityAliasId } from '@shared/models/alias.models';
+import {
+  AliasesInfo,
+  EntityAlias,
+  EntityAliases,
+  EntityAliasInfo,
+  getEntityAliasId
+} from '@shared/models/alias.models';
 import {
   Datasource,
   DatasourceType,
@@ -75,6 +81,8 @@ export interface RuleNodesReference {
   notes?: FcRuleNote[];
   originX?: number;
   originY?: number;
+  minX?: number;
+  minY?: number;
 }
 
 @Injectable({
@@ -375,6 +383,8 @@ export class ItemBufferService {
         height: origNote.height,
         content: origNote.content,
         backgroundColor: origNote.backgroundColor,
+        borderWidth: origNote.borderWidth,
+        borderColor: origNote.borderColor,
         applyDefaultMarkdownStyle: origNote.applyDefaultMarkdownStyle,
         markdownCss: origNote.markdownCss
       });
@@ -392,6 +402,8 @@ export class ItemBufferService {
     }
     ruleNodes.originX = left + (right - left) / 2;
     ruleNodes.originY = top + (bottom - top) / 2;
+    ruleNodes.minX = left;
+    ruleNodes.minY = top;
     connections.forEach(connection => {
       ruleNodes.connections.push(connection);
     });
@@ -405,8 +417,8 @@ export class ItemBufferService {
   public pasteRuleChainObjects(x: number, y: number): RuleNodesReference {
     const ruleNodes: RuleNodesReference = this.storeGet(RULE_NODES);
     if (ruleNodes) {
-      const deltaX = x - ruleNodes.originX;
-      const deltaY = y - ruleNodes.originY;
+      const deltaX = isDefinedAndNotNull(ruleNodes.minX) ? Math.max(x - ruleNodes.originX, -ruleNodes.minX) : x - ruleNodes.originX;
+      const deltaY = isDefinedAndNotNull(ruleNodes.minY) ? Math.max(y - ruleNodes.originY, -ruleNodes.minY) : y - ruleNodes.originY;
       for (const node of ruleNodes.nodes) {
         const component = this.ruleChainService.getRuleNodeComponentByClazz(node.ruleChainType, node.componentClazz);
         if (component) {

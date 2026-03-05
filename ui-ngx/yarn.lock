@@ -7989,8 +7989,9 @@ ngx-drag-drop@^20.0.1:
   dependencies:
     tslib "^2.3.0"
 
-"ngx-flowchart@file:../../ngx-flowchart/dist/ngx-flowchart":
-  version "4.0.0"
+"ngx-flowchart@https://github.com/thingsboard/ngx-flowchart.git#release/4.1.0":
+  version "4.1.0"
+  resolved "https://github.com/thingsboard/ngx-flowchart.git#a3dee1761ecaa96c7d0ca22b1c6538b9e27103af"
   dependencies:
     tslib "^2.3.0"
 

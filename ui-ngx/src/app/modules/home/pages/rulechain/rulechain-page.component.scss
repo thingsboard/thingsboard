@@ -54,6 +54,15 @@
     z-index: 2;
   }
 
+  button.mdc-fab.add-note-button {
+    position: absolute;
+    top: 10px;
+    right: 110px;
+    opacity: .85;
+    margin: 0 6px;
+    z-index: 2;
+  }
+
   .tb-library-node-btn {
     width: 20px;
     height: 90px;

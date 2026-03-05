@@ -34,15 +34,11 @@
      (dblclick)="userNoteCallbacks?.doubleClick?.($event, note)">
   @if (note?.content) {
     <tb-markdown [data]="note.content"
-                 [applyDefaultMarkdownStyle]="note.applyDefaultMarkdownStyle ?? defaultApplyMarkdownStyle"
+                 [applyDefaultMarkdownStyle]="applyDefault"
                  [additionalStyles]="additionalStyles"
                  [containerClass]="noteClass"
                  fallbackToPlainMarkdown
                  usePlainMarkdown>
     </tb-markdown>
-  } @else {
-    <span class="tb-rule-note-placeholder">
-      {{ 'rulechain.note-empty' | translate }}
-    </span>
   }
 </div>

@@ -62,6 +62,8 @@ import {
 } from '@shared/models/rule-chain.models';
 import { FcItemInfo, FlowchartConstants, NgxFlowchartComponent, UserCallbacks } from 'ngx-flowchart';
 import {
+  FC_RULE_NOTE_DEFAULT_APPLY_MARKDOWN_STYLE,
+  FC_RULE_NOTE_DEFAULT_BACKGROUND_COLOR,
   FcRuleEdge,
   FcRuleNode,
   FcRuleNodeType,
@@ -377,12 +379,15 @@ export class RuleChainPageComponent extends PageComponent
     this.selectedObjects = [];
     this.ruleChainModel.nodes = [];
     this.ruleChainModel.edges = [];
+    this.ruleChainModel.notes = [];
     this.ruleNodeTypesModel = {};
     if (this.ruleChainCanvas) {
       this.ruleChainCanvas.adjustCanvasSize(true);
     }
     this.isEditingRuleNode = false;
     this.isEditingRuleNodeLink = false;
+    this.isEditingNote = false;
+    this.editingNote = null;
     this.updateRuleNodesHighlight();
   }
 
@@ -733,7 +738,8 @@ export class RuleChainPageComponent extends PageComponent
       subtitle: this.translate.instant('rulechain.rulechain'),
       menuItems: []
     };
-    if (this.ruleChainCanvas.modelService.nodes.getSelectedNodes().length) {
+    if (this.ruleChainCanvas.modelService.nodes.getSelectedNodes().length ||
+          this.ruleChainCanvas.modelService.notes.getSelectedNotes().length) {
       contextInfo.menuItems.push(
         {
           action: () => {
@@ -964,15 +970,13 @@ export class RuleChainPageComponent extends PageComponent
       }
     }).afterClosed().subscribe((ruleChain) => {
       if (ruleChain) {
+        const selectedNotes: FcRuleNote[] = this.ruleChainCanvas.modelService.notes.getSelectedNotes();
         this.ruleChainCanvas.modelService.deselectAll();
-        const selectedNotes: FcRuleNote[] = (this.ruleChainModel.notes || []).filter(
-          note => this.ruleChainCanvas.modelService.notes.isSelected(note)
-        );
         const ruleChainMetaData: RuleChainMetaData = {
           ruleChainId: ruleChain.id,
           nodes: [],
           connections: [],
-          notes: selectedNotes.map(note => ({ ...note }))
+          notes: deepClone(selectedNotes)
         };
         let outputEdges: FcRuleEdge[] = [];
         let minX: number = null;
@@ -1136,6 +1140,9 @@ export class RuleChainPageComponent extends PageComponent
           });
           selectedNodes.forEach((node) => {
             this.ruleChainCanvas.modelService.nodes.delete(node);
+          });
+          selectedNotes.forEach((note) => {
+            this.ruleChainCanvas.modelService.notes.delete(note);
           });
           this.onModelChanged();
           this.updateRuleNodesHighlight();
@@ -1317,15 +1324,15 @@ export class RuleChainPageComponent extends PageComponent
     }
   }
 
-  private addNote(event?: MouseEvent): void {
+  addNote(event?: MouseEvent): void {
     this.dialog.open<AddNoteDialogComponent, FcRuleNote, Partial<FcRuleNote>>(AddNoteDialogComponent, {
-      disableClose: false,
+      disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         id: '', x: 0, y: 0, width: 200, height: 120,
         content: '',
-        backgroundColor: '#FFF9C4',
-        applyDefaultMarkdownStyle: true,
+        backgroundColor: FC_RULE_NOTE_DEFAULT_BACKGROUND_COLOR,
+        applyDefaultMarkdownStyle: FC_RULE_NOTE_DEFAULT_APPLY_MARKDOWN_STYLE,
         markdownCss: ''
       }
     }).afterClosed().subscribe((noteData) => {
@@ -1364,10 +1371,6 @@ export class RuleChainPageComponent extends PageComponent
       headerClass: 'tb-rulechain-header',
       icon: 'sticky_note_2',
       title: this.translate.instant('rulechain.note'),
-      subtitle: (() => {
-        const plain = (note.content || '').replace(/[#*_`>[\]!\\~]/g, '').trim();
-        return plain.length > 24 ? plain.substring(0, 24) + '…' : plain;
-      })(),
       menuItems: []
     };
     if (!note.readonly) {
@@ -1600,7 +1603,8 @@ export class RuleChainPageComponent extends PageComponent
 
   objectsSelected(): boolean {
     return this.ruleChainCanvas.modelService.nodes.getSelectedNodes().length > 0 ||
-      this.ruleChainCanvas.modelService.edges.getSelectedEdges().length > 0;
+      this.ruleChainCanvas.modelService.edges.getSelectedEdges().length > 0 ||
+      this.ruleChainCanvas.modelService.notes.getSelectedNotes().length > 0;
   }
 
   deleteSelected() {
@@ -1658,7 +1662,7 @@ export class RuleChainPageComponent extends PageComponent
         ruleChainId: this.ruleChain.id,
         nodes: [],
         connections: [],
-        notes: this.ruleChainModel.notes || [],
+        notes: deepClone(this.ruleChainModel.notes) || [],
         version: ruleChain.version
       };
       const nodes: FcRuleNode[] = [];
@@ -2181,6 +2185,8 @@ export class AddNoteDialogComponent extends DialogComponent<AddNoteDialogCompone
   }
 
   save(): void {
-    this.dialogRef.close(this.ruleNoteComponent.noteForm.value);
+    if (this.ruleNoteComponent.noteForm.valid) {
+      this.dialogRef.close(this.ruleNoteComponent.noteForm.value);
+    }
   }
 }

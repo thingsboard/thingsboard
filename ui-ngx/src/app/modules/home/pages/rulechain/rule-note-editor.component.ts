@@ -70,7 +70,8 @@ export class RuleNoteEditorComponent implements OnChanges, OnInit {
   }
 
   private borderColorFrom(bg: string): string {
-    return tinycolor(bg || DEFAULT_BACKGROUND_COLOR).darken(20).toString();
+    const color = tinycolor(bg || DEFAULT_BACKGROUND_COLOR);
+    return color.isDark() ? color.lighten(20).toString() : color.darken(20).toString();
   }
 
   private updatedForm(): void {

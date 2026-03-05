@@ -27,7 +27,7 @@
   </tb-rule-note-editor>
 </div>
 <div mat-dialog-actions class="flex items-center justify-end">
-  <button mat-button color="primary" type="button" (click)="cancel()">
+  <button mat-button color="primary" type="button" (click)="cancel()" cdkFocusInitial>
     {{ 'action.cancel' | translate }}
   </button>
   <button mat-raised-button color="primary" type="button" (click)="save()">
