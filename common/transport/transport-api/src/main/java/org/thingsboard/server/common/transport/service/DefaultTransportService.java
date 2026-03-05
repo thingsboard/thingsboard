@@ -1260,10 +1260,10 @@ public class DefaultTransportService extends TransportActivityManager implements
     public void createGaugeStats(String statsName, AtomicInteger number, String... tags) {
         String key = "thingsboard" + "." + StatsType.TRANSPORT.getName() + "." + statsName;
         statsFactory.createGauge(key, number, tags);
-        statsMap.put(statsName + TagsKey(tags), number);
+        statsMap.put(statsName + tagsKey(tags), number);
     }
 
-    String TagsKey(String... tags) {
+    private String tagsKey(String... tags) {
         if (tags == null || tags.length < 2) return "";
         StringBuilder sb = new StringBuilder("[");
         for (int i = 0; i < tags.length; i += 2) {

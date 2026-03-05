@@ -180,7 +180,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         this.rpcAwaitingAck = new ConcurrentHashMap<>();
     }
 
-    boolean isSSL() {
+    private boolean isSSL() {
         return sslHandler != null;
     }
 
@@ -255,6 +255,17 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             }
         } else {
             log.debug("[{}] Channel is already closed!", sessionId);
+        }
+    }
+
+    private String getClientAddr(ChannelHandlerContext ctx) {
+        try {
+            InetSocketAddress remote = getAddress(ctx);
+            if (remote == null) return "unknown";
+            String host = remote.getAddress() != null ? remote.getAddress().getHostAddress() : remote.getHostString();
+            return host + ":" + remote.getPort();
+        } catch (Exception ignored) {
+            return "unknown";
         }
     }
 
@@ -1152,15 +1163,9 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        String clientAddr = null;
-        try {
-            InetSocketAddress remote = getAddress(ctx);
-            clientAddr = remote != null ? (remote.getAddress() != null ? remote.getAddress().getHostAddress() : remote.getHostString()) + ":" + remote.getPort() : "IPunknown";
-        } catch (Exception ignored) {
-        }
-
         if (cause instanceof IOException) {
             if (log.isDebugEnabled()) {
+                String clientAddr = getClientAddr(ctx);
                 log.debug("[{}][{}][{}][{}] {}: {}", sessionId,
                         Optional.ofNullable(this.deviceSessionCtx.getDeviceInfo()).map(TransportDeviceInfo::getDeviceId).orElse(null),
                         Optional.ofNullable(this.deviceSessionCtx.getDeviceInfo()).map(TransportDeviceInfo::getDeviceName).orElse(""),
@@ -1169,6 +1174,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                         cause.getMessage(),
                         cause);
             } else if (log.isInfoEnabled()) {
+                String clientAddr = getClientAddr(ctx);
                 log.info("[{}][{}][{}][{}] {}: {}", sessionId,
                         Optional.ofNullable(this.deviceSessionCtx.getDeviceInfo()).map(TransportDeviceInfo::getDeviceId).orElse(null),
                         Optional.ofNullable(this.deviceSessionCtx.getDeviceInfo()).map(TransportDeviceInfo::getDeviceName).orElse(""),
@@ -1177,7 +1183,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                         cause.getMessage());
             }
         } else {
-            log.error("[{}][{}] Unexpected Exception", sessionId, clientAddr, cause);
+            log.error("[{}][{}] Unexpected Exception", sessionId, getClientAddr(ctx), cause);
         }
 
         closeCtx(ctx, MqttReasonCodes.Disconnect.SERVER_SHUTTING_DOWN);
