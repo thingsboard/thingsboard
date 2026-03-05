@@ -982,12 +982,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
         List<String> keys = List.of("temperature");
         long now = System.currentTimeMillis();
 
-        // Register for 2 messages: initial entity page data + error
-        getWsClient().registerWaitForUpdate(2);
-        getWsClient().sendHistoryCmd(keys, now, TimeUnit.HOURS.toMillis(1), dtf);
-        getWsClient().waitForUpdate();
-
-        EntityDataUpdate errorUpdate = JacksonUtil.fromString(getWsClient().getLastMsg(), EntityDataUpdate.class);
+        EntityDataUpdate errorUpdate = getWsClient().sendHistoryCmd(keys, now, TimeUnit.HOURS.toMillis(1), dtf);
         assertThat(errorUpdate.getErrorCode()).isEqualTo(SubscriptionErrorCode.INTERNAL_ERROR.getCode());
         assertThat(errorUpdate.getErrorMsg()).isEqualTo(exception.getMessage());
     }
@@ -1001,12 +996,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
         List<String> keys = List.of("temperature");
         long now = System.currentTimeMillis();
 
-        // Register for 2 messages: initial entity page data + error
-        getWsClient().registerWaitForUpdate(2);
-        getWsClient().subscribeTsUpdate(keys, now, TimeUnit.HOURS.toMillis(1), dtf);
-        getWsClient().waitForUpdate();
-
-        EntityDataUpdate errorUpdate = JacksonUtil.fromString(getWsClient().getLastMsg(), EntityDataUpdate.class);
+        EntityDataUpdate errorUpdate = getWsClient().subscribeTsUpdate(keys, now, TimeUnit.HOURS.toMillis(1), dtf);
         assertThat(errorUpdate.getErrorCode()).isEqualTo(SubscriptionErrorCode.INTERNAL_ERROR.getCode());
         assertThat(errorUpdate.getErrorMsg()).isEqualTo(exception.getMessage());
     }
