@@ -528,6 +528,11 @@
                             <groupId>org.springframework.boot</groupId>
                             <artifactId>spring-boot-maven-plugin</artifactId>
                             <configuration>
+                                <!-- Note: pkg.skip.bootjar and pkg.skip.deb are independent flags.
+                                     Passing only -Dpkg.skip.deb=true still builds the boot jar here
+                                     because Gradle's buildDeb task depends on it as its primary input.
+                                     Use -Dpkg.skip.bootjar=true to skip the boot jar entirely
+                                     (which also breaks buildDeb — see pkg.skip.* table in TEST_FAST.md). -->
                                 <skip>${pkg.skip.bootjar}</skip>
                                 <mainClass>${pkg.mainClass}</mainClass>
                                 <classifier>boot</classifier>
@@ -723,6 +728,11 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-deploy-plugin</artifactId>
                     <version>${maven-deploy-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-enforcer-plugin</artifactId>
+                    <version>3.5.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
