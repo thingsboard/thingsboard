@@ -1,0 +1,245 @@
+diff --git a/src/test/java/org/thingsboard/server/msa/AbstractContainerTest.java b/src/test/java/org/thingsboard/server/msa/AbstractContainerTest.java
+index 4f783f0..4484a30 100644
+--- a/src/test/java/org/thingsboard/server/msa/AbstractContainerTest.java
++++ b/src/test/java/org/thingsboard/server/msa/AbstractContainerTest.java
+@@ -943,7 +943,7 @@ protected void unAssignFromEdgeAndDeleteDashboard(DashboardId dashboardId) {
+         cloudRestClient.deleteDashboard(dashboardId);
+     }
+ 
+-    protected OtaPackageId createOtaPackageInfo(DeviceProfileId deviceProfileId, OtaPackageType otaPackageType, String title) {
++    protected OtaPackageId createOtaPackageInfo(DeviceProfileId deviceProfileId, OtaPackageType otaPackageType, String title) throws Exception {
+         OtaPackageInfo otaPackageInfo = new OtaPackageInfo();
+         otaPackageInfo.setDeviceProfileId(deviceProfileId);
+         otaPackageInfo.setType(otaPackageType);
+diff --git a/src/test/java/org/thingsboard/server/msa/edge/CalculatedFieldTest.java b/src/test/java/org/thingsboard/server/msa/edge/CalculatedFieldTest.java
+new file mode 100644
+index 0000000..74e9695
+--- /dev/null
++++ b/src/test/java/org/thingsboard/server/msa/edge/CalculatedFieldTest.java
+@@ -0,0 +1,145 @@
++/**
++ * Copyright © 2016-2025 The Thingsboard Authors
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++package org.thingsboard.server.msa.edge;
++
++import org.junit.Test;
++import org.testcontainers.shaded.org.awaitility.Awaitility;
++import org.thingsboard.server.common.data.Device;
++import org.thingsboard.server.common.data.cf.CalculatedField;
++import org.thingsboard.server.common.data.cf.CalculatedFieldType;
++import org.thingsboard.server.common.data.cf.configuration.Argument;
++import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
++import org.thingsboard.server.common.data.cf.configuration.Output;
++import org.thingsboard.server.common.data.cf.configuration.OutputType;
++import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
++import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
++import org.thingsboard.server.common.data.debug.DebugSettings;
++import org.thingsboard.server.common.data.id.DeviceId;
++import org.thingsboard.server.common.data.id.EntityId;
++import org.thingsboard.server.common.data.page.PageLink;
++import org.thingsboard.server.gen.edge.v1.EdgeVersion;
++import org.thingsboard.server.msa.AbstractContainerTest;
++
++import java.util.Map;
++import java.util.concurrent.TimeUnit;
++
++public class CalculatedFieldTest extends AbstractContainerTest {
++
++    @Test
++    public void testSendCalculatedFieldToEdge() {
++        performTestOnEachEdge(this::_testSendCalculatedFieldToEdge, EdgeVersion.V_4_1_0);
++    }
++
++    private void _testSendCalculatedFieldToEdge() {
++        String deviceProfileName = "Default CalculatedFiled Profile";
++        Device savedDevice = saveAndAssignDeviceToEdge(deviceProfileName);
++        DeviceId savedDeviceId = savedDevice.getId();
++
++        String calculatedFieldName = "CalculatedField";
++        SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
++        CalculatedField calculatedField = createSimpleCalculatedField(savedDevice.getId(), config, calculatedFieldName);
++
++        // create calculatedField on cloud
++        CalculatedField savedCalculatedField = cloudRestClient.saveCalculatedField(calculatedField);
++        Awaitility.await()
++                .pollInterval(500, TimeUnit.MILLISECONDS)
++                .atMost(30, TimeUnit.SECONDS)
++                .until(() -> edgeRestClient.getCalculatedFieldsByEntityId(savedDeviceId, new PageLink(1)).getTotalElements() == 1);
++
++        // update calculatedField on cloud
++        String updateName = calculatedFieldName + " Updated";
++        savedCalculatedField.setName(updateName);
++        cloudRestClient.saveCalculatedField(savedCalculatedField);
++        Awaitility.await()
++                .pollInterval(500, TimeUnit.MILLISECONDS)
++                .atMost(30, TimeUnit.SECONDS)
++                .until(() -> edgeRestClient.getCalculatedFieldsByEntityId(savedDeviceId, new PageLink(1)).getData().get(0).getName().equals(updateName));
++        // delete calculatedField on cloud
++
++        cloudRestClient.deleteCalculatedField(savedCalculatedField.getId());
++        Awaitility.await()
++                .pollInterval(500, TimeUnit.MILLISECONDS)
++                .atMost(30, TimeUnit.SECONDS)
++                .until(() -> edgeRestClient.getCalculatedFieldsByEntityId(savedDeviceId, new PageLink(1)).getData().isEmpty());
++    }
++
++    @Test
++    public void testSendCalculatedFieldToCloud() {
++        performTestOnEachEdge(this::_testSendCalculatedFieldToCloud, EdgeVersion.V_4_1_0);
++    }
++
++    private void _testSendCalculatedFieldToCloud() {
++        String deviceProfileName = "Default CalculatedFiled Profile";
++        Device savedDevice = saveAndAssignDeviceToEdge(deviceProfileName);
++        DeviceId savedDeviceId = savedDevice.getId();
++
++        String calculatedFieldName = "CalculatedField";
++        SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
++        CalculatedField calculatedField = createSimpleCalculatedField(savedDevice.getId(), config, calculatedFieldName);
++
++
++        // create calculatedField on edge
++        CalculatedField savedCalculatedField = edgeRestClient.saveCalculatedField(calculatedField);
++        Awaitility.await()
++                .pollInterval(500, TimeUnit.MILLISECONDS)
++                .atMost(30, TimeUnit.SECONDS)
++                .until(() -> cloudRestClient.getCalculatedFieldsByEntityId(savedDeviceId, new PageLink(1)).getTotalElements() == 1);
++
++        // update calculatedField on cloud
++        String updateName = calculatedFieldName + " Updated";
++        savedCalculatedField.setName(updateName);
++        edgeRestClient.saveCalculatedField(savedCalculatedField);
++        Awaitility.await()
++                .pollInterval(500, TimeUnit.MILLISECONDS)
++                .atMost(30, TimeUnit.SECONDS)
++                .until(() -> cloudRestClient.getCalculatedFieldsByEntityId(savedDeviceId, new PageLink(1)).getData().get(0).getName().equals(updateName));
++
++        // delete calculatedField on edge
++        edgeRestClient.deleteCalculatedField(savedCalculatedField.getId());
++        Awaitility.await()
++                .pollInterval(500, TimeUnit.MILLISECONDS)
++                .atMost(30, TimeUnit.SECONDS)
++                .until(() -> cloudRestClient.getCalculatedFieldsByEntityId(savedDeviceId, new PageLink(1)).getData().isEmpty());
++    }
++
++    private CalculatedField createSimpleCalculatedField(EntityId entityId, SimpleCalculatedFieldConfiguration config, String name) {
++        CalculatedField calculatedField = new CalculatedField();
++        calculatedField.setEntityId(entityId);
++        calculatedField.setTenantId(edge.getTenantId());
++        calculatedField.setType(CalculatedFieldType.SIMPLE);
++        calculatedField.setName(name);
++        calculatedField.setDebugSettings(DebugSettings.all());
++
++        Argument argument = new Argument();
++        ReferencedEntityKey refEntityKey = new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null);
++        argument.setRefEntityKey(refEntityKey);
++        argument.setDefaultValue("12"); // not used because real telemetry value in db is present
++        config.setArguments(Map.of("T", argument));
++
++        config.setExpression("(T * 9/5) + 32");
++
++        Output output = new Output();
++        output.setName("fahrenheitTemp");
++        output.setType(OutputType.TIME_SERIES);
++        output.setDecimalsByDefault(2);
++        config.setOutput(output);
++
++        calculatedField.setConfiguration(config);
++
++        return calculatedField;
++    }
++
++}
+diff --git a/src/test/java/org/thingsboard/server/msa/edge/DeviceClientTest.java b/src/test/java/org/thingsboard/server/msa/edge/DeviceClientTest.java
+index 23e9ef6..821e41f 100644
+--- a/src/test/java/org/thingsboard/server/msa/edge/DeviceClientTest.java
++++ b/src/test/java/org/thingsboard/server/msa/edge/DeviceClientTest.java
+@@ -18,6 +18,7 @@
+ import com.fasterxml.jackson.databind.JsonNode;
+ import com.fasterxml.jackson.databind.node.ObjectNode;
+ import com.google.gson.JsonObject;
++import lombok.SneakyThrows;
+ import lombok.extern.slf4j.Slf4j;
+ import org.awaitility.Awaitility;
+ import org.junit.Assert;
+@@ -71,12 +72,13 @@
+ @Slf4j
+ public class DeviceClientTest extends AbstractContainerTest {
+ 
++    @SneakyThrows
+     @Test
+     public void testDevices() {
+         performTestOnEachEdge(this::_testDevices);
+     }
+ 
+-    private void _testDevices() {
++    private void _testDevices() throws Exception {
+         String deviceProfileName = "Remote Controller";
+         // create device #1 and assign to edge
+         Device savedDevice1 = saveAndAssignDeviceToEdge(deviceProfileName);
+diff --git a/src/test/java/org/thingsboard/server/msa/edge/DeviceProfileClientTest.java b/src/test/java/org/thingsboard/server/msa/edge/DeviceProfileClientTest.java
+index 0f476dd..f09c0b5 100644
+--- a/src/test/java/org/thingsboard/server/msa/edge/DeviceProfileClientTest.java
++++ b/src/test/java/org/thingsboard/server/msa/edge/DeviceProfileClientTest.java
+@@ -15,6 +15,7 @@
+  */
+ package org.thingsboard.server.msa.edge;
+ 
++import lombok.SneakyThrows;
+ import lombok.extern.slf4j.Slf4j;
+ import org.awaitility.Awaitility;
+ import org.junit.Test;
+@@ -142,12 +143,13 @@ public class DeviceProfileClientTest extends AbstractContainerTest {
+                     "    \"clientOnlyObserveAfterConnect\": 1\n" +
+                     "  }";
+ 
++    @SneakyThrows
+     @Test
+     public void testDeviceProfiles() {
+         performTestOnEachEdge(this::_testDeviceProfiles);
+     }
+ 
+-    private void _testDeviceProfiles() {
++    private void _testDeviceProfiles() throws Exception {
+         verifyDeviceProfilesOnEdge(3);
+ 
+         // create device profile
+diff --git a/src/test/java/org/thingsboard/server/msa/edge/OtaPackageClientTest.java b/src/test/java/org/thingsboard/server/msa/edge/OtaPackageClientTest.java
+index 1d0fc3f..eea4b37 100644
+--- a/src/test/java/org/thingsboard/server/msa/edge/OtaPackageClientTest.java
++++ b/src/test/java/org/thingsboard/server/msa/edge/OtaPackageClientTest.java
+@@ -15,6 +15,7 @@
+  */
+ package org.thingsboard.server.msa.edge;
+ 
++import lombok.SneakyThrows;
+ import lombok.extern.slf4j.Slf4j;
+ import org.awaitility.Awaitility;
+ import org.junit.Test;
+@@ -39,12 +40,13 @@
+ @Slf4j
+ public class OtaPackageClientTest extends AbstractContainerTest {
+ 
++    @SneakyThrows
+     @Test
+     public void testOtaPackages() {
+         performTestOnEachEdge(this::_testOtaPackages);
+     }
+ 
+-    private void _testOtaPackages() {
++    private void _testOtaPackages() throws Exception {
+         // create ota package
+         DeviceProfileInfo defaultDeviceProfileInfo = cloudRestClient.getDefaultDeviceProfileInfo();
+         DeviceProfileId deviceProfileId = new DeviceProfileId(defaultDeviceProfileInfo.getId().getId());

@@ -1,0 +1,996 @@
+diff --git a/application/src/main/java/org/thingsboard/server/service/edge/EdgeContextComponent.java b/application/src/main/java/org/thingsboard/server/service/edge/EdgeContextComponent.java
+index cfe2ae1fa23..583e4020301 100644
+--- a/application/src/main/java/org/thingsboard/server/service/edge/EdgeContextComponent.java
++++ b/application/src/main/java/org/thingsboard/server/service/edge/EdgeContextComponent.java
+@@ -45,6 +45,7 @@
+ import org.thingsboard.server.dao.asset.AssetProfileService;
+ import org.thingsboard.server.dao.asset.AssetService;
+ import org.thingsboard.server.dao.attributes.AttributesService;
++import org.thingsboard.server.dao.cf.CalculatedFieldService;
+ import org.thingsboard.server.dao.converter.ConverterService;
+ import org.thingsboard.server.dao.customer.CustomerService;
+ import org.thingsboard.server.dao.dashboard.DashboardService;
+@@ -87,6 +88,7 @@
+ import org.thingsboard.server.service.edge.rpc.processor.alarm.comment.AlarmCommentProcessor;
+ import org.thingsboard.server.service.edge.rpc.processor.asset.AssetEdgeProcessor;
+ import org.thingsboard.server.service.edge.rpc.processor.asset.profile.AssetProfileEdgeProcessor;
++import org.thingsboard.server.service.edge.rpc.processor.cf.CalculatedFieldProcessor;
+ import org.thingsboard.server.service.edge.rpc.processor.converter.ConverterEdgeProcessor;
+ import org.thingsboard.server.service.edge.rpc.processor.dashboard.DashboardEdgeProcessor;
+ import org.thingsboard.server.service.edge.rpc.processor.device.DeviceEdgeProcessor;
+@@ -377,6 +379,12 @@ public EdgeContextComponent(List<EdgeProcessor> processors) {
+     @Autowired
+     private GrpcCallbackExecutorService grpcCallbackExecutorService;
+
++    @Autowired
++    private CalculatedFieldService calculatedFieldService;
++
++    @Autowired
++    private CalculatedFieldProcessor calculatedFieldProcessor;
++
+     public EdgeProcessor getProcessor(EdgeEventType edgeEventType) {
+         EdgeProcessor processor = processorMap.get(edgeEventType);
+         if (processor == null) {
+diff --git a/application/src/main/java/org/thingsboard/server/service/edge/EdgeEventSourcingListener.java b/application/src/main/java/org/thingsboard/server/service/edge/EdgeEventSourcingListener.java
+index 0ee16ea918c..73d3cd44818 100644
+--- a/application/src/main/java/org/thingsboard/server/service/edge/EdgeEventSourcingListener.java
++++ b/application/src/main/java/org/thingsboard/server/service/edge/EdgeEventSourcingListener.java
+@@ -49,6 +49,7 @@
+ import org.thingsboard.server.common.data.alarm.EntityAlarm;
+ import org.thingsboard.server.common.data.audit.ActionType;
+ import org.thingsboard.server.common.data.converter.Converter;
++import org.thingsboard.server.common.data.cf.CalculatedField;
+ import org.thingsboard.server.common.data.domain.Domain;
+ import org.thingsboard.server.common.data.edge.Edge;
+ import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+@@ -315,6 +316,8 @@ private EdgeEventType getEdgeEventTypeForEntityEvent(Object entity) {
+     private String getBodyMsgForEntityEvent(Object entity) {
+         if (entity instanceof AlarmComment || entity instanceof DeviceGroupOtaPackage) {
+             return JacksonUtil.toString(entity);
++        } else if (entity instanceof CalculatedField calculatedField) {
++            return JacksonUtil.toString(calculatedField.getEntityId());
+         }
+         return null;
+     }
+diff --git a/application/src/main/java/org/thingsboard/server/service/edge/EdgeMsgConstructorUtils.java b/application/src/main/java/org/thingsboard/server/service/edge/EdgeMsgConstructorUtils.java
+index f02b5d52d92..82590e2fd97 100644
+--- a/application/src/main/java/org/thingsboard/server/service/edge/EdgeMsgConstructorUtils.java
++++ b/application/src/main/java/org/thingsboard/server/service/edge/EdgeMsgConstructorUtils.java
+@@ -66,12 +66,14 @@
+ import org.thingsboard.server.common.data.asset.Asset;
+ import org.thingsboard.server.common.data.asset.AssetProfile;
+ import org.thingsboard.server.common.data.converter.Converter;
++import org.thingsboard.server.common.data.cf.CalculatedField;
+ import org.thingsboard.server.common.data.domain.DomainInfo;
+ import org.thingsboard.server.common.data.edge.Edge;
+ import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+ import org.thingsboard.server.common.data.group.EntityGroup;
+ import org.thingsboard.server.common.data.id.AssetId;
+ import org.thingsboard.server.common.data.id.AssetProfileId;
++import org.thingsboard.server.common.data.id.CalculatedFieldId;
+ import org.thingsboard.server.common.data.id.CustomerId;
+ import org.thingsboard.server.common.data.id.DashboardId;
+ import org.thingsboard.server.common.data.id.DeviceId;
+@@ -124,6 +126,7 @@
+ import org.thingsboard.server.gen.edge.v1.ConverterUpdateMsg;
+ import org.thingsboard.server.gen.edge.v1.CustomMenuProto;
+ import org.thingsboard.server.gen.edge.v1.CustomTranslationUpdateMsg;
++import org.thingsboard.server.gen.edge.v1.CalculatedFieldUpdateMsg;
+ import org.thingsboard.server.gen.edge.v1.CustomerUpdateMsg;
+ import org.thingsboard.server.gen.edge.v1.DashboardUpdateMsg;
+ import org.thingsboard.server.gen.edge.v1.DeviceCredentialsUpdateMsg;
+@@ -739,6 +742,19 @@ public static WidgetTypeUpdateMsg constructWidgetTypeDeleteMsg(WidgetTypeId widg
+                 .build();
+     }
+
++    public static CalculatedFieldUpdateMsg constructCalculatedFieldUpdatedMsg(UpdateMsgType msgType, CalculatedField calculatedField) {
++        return CalculatedFieldUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(calculatedField))
++                .setIdMSB(calculatedField.getId().getId().getMostSignificantBits())
++                .setIdLSB(calculatedField.getId().getId().getLeastSignificantBits()).build();
++    }
++
++    public static CalculatedFieldUpdateMsg constructCalculatedFieldDeleteMsg(CalculatedFieldId calculatedFieldId) {
++        return CalculatedFieldUpdateMsg.newBuilder()
++                .setMsgType(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE)
++                .setIdMSB(calculatedFieldId.getId().getMostSignificantBits())
++                .setIdLSB(calculatedFieldId.getId().getLeastSignificantBits()).build();
++    }
++
+     // PE constructors:
+
+     public static ConverterUpdateMsg constructConverterUpdateMsg(UpdateMsgType msgType, Converter converter) {
+diff --git a/application/src/main/java/org/thingsboard/server/service/edge/rpc/EdgeGrpcSession.java b/application/src/main/java/org/thingsboard/server/service/edge/rpc/EdgeGrpcSession.java
+index 08f64f1de4d..c859996305e 100644
+--- a/application/src/main/java/org/thingsboard/server/service/edge/rpc/EdgeGrpcSession.java
++++ b/application/src/main/java/org/thingsboard/server/service/edge/rpc/EdgeGrpcSession.java
+@@ -67,6 +67,8 @@
+ import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
+ import org.thingsboard.server.gen.edge.v1.AssetUpdateMsg;
+ import org.thingsboard.server.gen.edge.v1.AttributesRequestMsg;
++import org.thingsboard.server.gen.edge.v1.CalculatedFieldRequestMsg;
++import org.thingsboard.server.gen.edge.v1.CalculatedFieldUpdateMsg;
+ import org.thingsboard.server.gen.edge.v1.ConnectRequestMsg;
+ import org.thingsboard.server.gen.edge.v1.ConnectResponseCode;
+ import org.thingsboard.server.gen.edge.v1.ConnectResponseMsg;
+@@ -937,6 +939,11 @@ protected ListenableFuture<List<Void>> processUplinkMsg(UplinkMsg uplinkMsg) {
+                     result.add(ctx.getEdgeRequestsService().processRelationRequestMsg(edge.getTenantId(), edge, relationRequestMsg));
+                 }
+             }
++            if (uplinkMsg.getCalculatedFieldRequestMsgCount() > 0) {
++                for (CalculatedFieldRequestMsg calculatedFieldRequestMsg : uplinkMsg.getCalculatedFieldRequestMsgList()) {
++                    result.add(ctx.getEdgeRequestsService().processCalculatedFieldRequestMsg(edge.getTenantId(), edge, calculatedFieldRequestMsg));
++                }
++            }
+             if (uplinkMsg.getUserCredentialsRequestMsgCount() > 0) {
+                 for (UserCredentialsRequestMsg userCredentialsRequestMsg : uplinkMsg.getUserCredentialsRequestMsgList()) {
+                     result.add(ctx.getEdgeRequestsService().processUserCredentialsRequestMsg(edge.getTenantId(), edge, userCredentialsRequestMsg));
+@@ -972,6 +979,11 @@ protected ListenableFuture<List<Void>> processUplinkMsg(UplinkMsg uplinkMsg) {
+                     result.add(ctx.getEdgeRequestsService().processEntityGroupPermissionsRequest(edge.getTenantId(), edge, userGroupPermissionsRequestMsg));
+                 }
+             }
++            if (uplinkMsg.getCalculatedFieldUpdateMsgCount() > 0) {
++                for (CalculatedFieldUpdateMsg calculatedFieldUpdateMsg : uplinkMsg.getCalculatedFieldUpdateMsgList()) {
++                    result.add(ctx.getCalculatedFieldProcessor().processCalculatedFieldMsgFromEdge(edge.getTenantId(), edge, calculatedFieldUpdateMsg));
++                }
++            }
+         } catch (Exception e) {
+             String failureMsg = String.format("Can't process uplink msg [%s] from edge", uplinkMsg);
+             log.trace("[{}][{}] Can't process uplink msg [{}]", tenantId, edge.getId(), uplinkMsg, e);
+diff --git a/application/src/main/java/org/thingsboard/server/service/edge/rpc/EdgeSyncCursor.java b/application/src/main/java/org/thingsboard/server/service/edge/rpc/EdgeSyncCursor.java
+index e4a6545514a..06b43f6fbf1 100644
+--- a/application/src/main/java/org/thingsboard/server/service/edge/rpc/EdgeSyncCursor.java
++++ b/application/src/main/java/org/thingsboard/server/service/edge/rpc/EdgeSyncCursor.java
+@@ -167,4 +167,5 @@ public EdgeEventFetcher getNext() {
+         currentIdx++;
+         return edgeEventFetcher;
+     }
++
+ }
+diff --git a/application/src/main/java/org/thingsboard/server/service/edge/rpc/processor/BaseEdgeProcessor.java b/application/src/main/java/org/thingsboard/server/service/edge/rpc/processor/BaseEdgeProcessor.java
+index b5ea8a71cb2..b6a0fb5f0f4 100644
+--- a/application/src/main/java/org/thingsboard/server/service/edge/rpc/processor/BaseEdgeProcessor.java
++++ b/application/src/main/java/org/thingsboard/server/service/edge/rpc/processor/BaseEdgeProcessor.java
+@@ -185,7 +185,7 @@ private boolean doSaveIfEdgeIsOffline(EdgeEventType type, EdgeEventActionType ac
+                  UPDATED_COMMENT, DELETED -> true;
+             default -> switch (type) {
+                 case ALARM, ALARM_COMMENT, RULE_CHAIN, RULE_CHAIN_METADATA, CUSTOMER, TENANT, TENANT_PROFILE, WIDGETS_BUNDLE, WIDGET_TYPE,
+-                     ADMIN_SETTINGS, OTA_PACKAGE, QUEUE, RELATION, NOTIFICATION_TEMPLATE, NOTIFICATION_TARGET, NOTIFICATION_RULE,
++                     ADMIN_SETTINGS, OTA_PACKAGE, QUEUE, RELATION, CALCULATED_FIELD, NOTIFICATION_TEMPLATE, NOTIFICATION_TARGET, NOTIFICATION_RULE,
+                      ROLE, INTEGRATION, CONVERTER, WHITE_LABELING, LOGIN_WHITE_LABELING, CUSTOM_TRANSLATION, CUSTOM_MENU, MAIL_TEMPLATES -> true;
+                 default -> false;
+             };
+diff --git a/application/src/main/java/org/thingsboard/server/service/edge/rpc/processor/cf/BaseCalculatedFieldProcessor.java b/application/src/main/java/org/thingsboard/server/service/edge/rpc/processor/cf/BaseCalculatedFieldProcessor.java
+new file mode 100644
+index 00000000000..f2ef953a671
+--- /dev/null
++++ b/application/src/main/java/org/thingsboard/server/service/edge/rpc/processor/cf/BaseCalculatedFieldProcessor.java
+@@ -0,0 +1,94 @@
++package org.thingsboard.server.service.edge.rpc.processor.cf;
++
++import com.datastax.oss.driver.api.core.uuid.Uuids;
++import lombok.extern.slf4j.Slf4j;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.data.util.Pair;
++import org.thingsboard.common.util.JacksonUtil;
++import org.thingsboard.server.common.data.StringUtils;
++import org.thingsboard.server.common.data.cf.CalculatedField;
++import org.thingsboard.server.common.data.id.CalculatedFieldId;
++import org.thingsboard.server.common.data.id.TenantId;
++import org.thingsboard.server.dao.service.DataValidator;
++import org.thingsboard.server.gen.edge.v1.CalculatedFieldUpdateMsg;
++import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
++
++@Slf4j
++public abstract class BaseCalculatedFieldProcessor extends BaseEdgeProcessor {
++
++    @Autowired
++    private DataValidator<CalculatedField> calculatedFieldValidator;
++
++    protected Pair<Boolean, Boolean> saveOrUpdateCalculatedField(TenantId tenantId, CalculatedFieldId calculatedFieldId, CalculatedFieldUpdateMsg calculatedFieldUpdateMsg) {
++        boolean isCreated = false;
++        boolean isNameUpdated = false;
++        try {
++            CalculatedField calculatedField = JacksonUtil.fromString(calculatedFieldUpdateMsg.getEntity(), CalculatedField.class, true);
++            if (calculatedField == null) {
++                throw new RuntimeException("[{" + tenantId + "}] calculatedFieldUpdateMsg {" + calculatedFieldUpdateMsg + " } cannot be converted to calculatedField");
++            }
++
++            CalculatedField calculatedFieldById = edgeCtx.getCalculatedFieldService().findById(tenantId, calculatedFieldId);
++            if (calculatedFieldById == null) {
++                calculatedField.setCreatedTime(Uuids.unixTimestamp(calculatedFieldId.getId()));
++                isCreated = true;
++                calculatedField.setId(null);
++            } else {
++                calculatedField.setId(calculatedFieldId);
++            }
++
++            String calculatedFieldName = calculatedField.getName();
++            CalculatedField calculatedFieldByName = edgeCtx.getCalculatedFieldService().findByEntityIdAndName(calculatedField.getEntityId(), calculatedFieldName);
++            if (calculatedFieldByName != null && !calculatedFieldByName.getId().equals(calculatedFieldId)) {
++                calculatedFieldName = calculatedFieldName + "_" + StringUtils.randomAlphabetic(15);
++                log.warn("[{}] calculatedField with name {} already exists. Renaming calculatedField name to {}",
++                        tenantId, calculatedField.getName(), calculatedFieldByName.getName());
++                isNameUpdated = true;
++            }
++            calculatedField.setName(calculatedFieldName);
++
++            calculatedFieldValidator.validate(calculatedField, CalculatedField::getTenantId);
++
++            if (isCreated) {
++                calculatedField.setId(calculatedFieldId);
++            }
++
++            edgeCtx.getCalculatedFieldService().save(calculatedField, false);
++        } catch (Exception e) {
++            log.error("[{}] Failed to process calculatedField update msg [{}]", tenantId, calculatedFieldUpdateMsg, e);
++            throw e;
++        }
++        return Pair.of(isCreated, isNameUpdated);
++    }
++
++}
+diff --git a/application/src/main/java/org/thingsboard/server/service/edge/rpc/processor/cf/CalculatedFieldEdgeProcessor.java b/application/src/main/java/org/thingsboard/server/service/edge/rpc/processor/cf/CalculatedFieldEdgeProcessor.java
+new file mode 100644
+index 00000000000..6a9263936d2
+--- /dev/null
++++ b/application/src/main/java/org/thingsboard/server/service/edge/rpc/processor/cf/CalculatedFieldEdgeProcessor.java
+@@ -0,0 +1,184 @@
++package org.thingsboard.server.service.edge.rpc.processor.cf;
++
++import com.fasterxml.jackson.databind.JsonNode;
++import com.google.common.util.concurrent.Futures;
++import com.google.common.util.concurrent.ListenableFuture;
++import lombok.extern.slf4j.Slf4j;
++import org.springframework.data.util.Pair;
++import org.springframework.stereotype.Component;
++import org.thingsboard.common.util.JacksonUtil;
++import org.thingsboard.server.common.data.EdgeUtils;
++import org.thingsboard.server.common.data.EntityType;
++import org.thingsboard.server.common.data.cf.CalculatedField;
++import org.thingsboard.server.common.data.edge.Edge;
++import org.thingsboard.server.common.data.edge.EdgeEvent;
++import org.thingsboard.server.common.data.edge.EdgeEventActionType;
++import org.thingsboard.server.common.data.edge.EdgeEventType;
++import org.thingsboard.server.common.data.id.CalculatedFieldId;
++import org.thingsboard.server.common.data.id.EdgeId;
++import org.thingsboard.server.common.data.id.EntityId;
++import org.thingsboard.server.common.data.id.EntityIdFactory;
++import org.thingsboard.server.common.data.id.TenantId;
++import org.thingsboard.server.common.data.msg.TbMsgType;
++import org.thingsboard.server.common.msg.TbMsgMetaData;
++import org.thingsboard.server.exception.DataValidationException;
++import org.thingsboard.server.gen.edge.v1.CalculatedFieldUpdateMsg;
++import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
++import org.thingsboard.server.gen.edge.v1.EdgeVersion;
++import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
++import org.thingsboard.server.gen.transport.TransportProtos;
++import org.thingsboard.server.queue.util.TbCoreComponent;
++import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
++
++import java.util.UUID;
++
++@Slf4j
++@Component
++@TbCoreComponent
++public class CalculatedFieldEdgeProcessor extends BaseCalculatedFieldProcessor implements CalculatedFieldProcessor {
++
++    @Override
++    public ListenableFuture<Void> processCalculatedFieldMsgFromEdge(TenantId tenantId, Edge edge, CalculatedFieldUpdateMsg calculatedFieldUpdateMsg) {
++        CalculatedFieldId calculatedFieldId = new CalculatedFieldId(new UUID(calculatedFieldUpdateMsg.getIdMSB(), calculatedFieldUpdateMsg.getIdLSB()));
++        try {
++            edgeSynchronizationManager.getEdgeId().set(edge.getId());
++
++            switch (calculatedFieldUpdateMsg.getMsgType()) {
++                case ENTITY_CREATED_RPC_MESSAGE:
++                case ENTITY_UPDATED_RPC_MESSAGE:
++                    processCalculatedField(tenantId, calculatedFieldId, calculatedFieldUpdateMsg, edge);
++                    return Futures.immediateFuture(null);
++                case ENTITY_DELETED_RPC_MESSAGE:
++                    CalculatedField calculatedField = edgeCtx.getCalculatedFieldService().findById(tenantId, calculatedFieldId);
++                    if (calculatedField != null) {
++                        edgeCtx.getCalculatedFieldService().deleteCalculatedField(tenantId, calculatedFieldId);
++                    }
++                    return Futures.immediateFuture(null);
++                case UNRECOGNIZED:
++                default:
++                    return handleUnsupportedMsgType(calculatedFieldUpdateMsg.getMsgType());
++            }
++        } catch (DataValidationException e) {
++            if (e.getMessage().contains("limit reached")) {
++                log.warn("[{}] Number of allowed calculatedField violated {}", tenantId, calculatedFieldUpdateMsg, e);
++                return Futures.immediateFuture(null);
++            } else {
++                return Futures.immediateFailedFuture(e);
++            }
++        } finally {
++            edgeSynchronizationManager.getEdgeId().remove();
++        }
++    }
++
++    @Override
++    public DownlinkMsg convertEdgeEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
++        CalculatedFieldId calculatedFieldId = new CalculatedFieldId(edgeEvent.getEntityId());
++        switch (edgeEvent.getAction()) {
++            case ADDED, UPDATED -> {
++                CalculatedField calculatedField = edgeCtx.getCalculatedFieldService().findById(edgeEvent.getTenantId(), calculatedFieldId);
++                if (calculatedField != null) {
++                    UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
++                    CalculatedFieldUpdateMsg calculatedFieldUpdateMsg = EdgeMsgConstructorUtils.constructCalculatedFieldUpdatedMsg(msgType, calculatedField);
++                    return DownlinkMsg.newBuilder()
++                            .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
++                            .addCalculatedFieldUpdateMsg(calculatedFieldUpdateMsg)
++                            .build();
++                }
++            }
++            case DELETED -> {
++                CalculatedFieldUpdateMsg calculatedFieldUpdateMsg = EdgeMsgConstructorUtils.constructCalculatedFieldDeleteMsg(calculatedFieldId);
++                return DownlinkMsg.newBuilder()
++                        .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
++                        .addCalculatedFieldUpdateMsg(calculatedFieldUpdateMsg)
++                        .build();
++            }
++        }
++        return null;
++    }
++
++    @Override
++    public EdgeEventType getEdgeEventType() {
++        return EdgeEventType.CALCULATED_FIELD;
++    }
++
++    @Override
++    public ListenableFuture<Void> processEntityNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
++        EdgeEventType type = EdgeEventType.valueOf(edgeNotificationMsg.getType());
++        EdgeEventActionType actionType = EdgeEventActionType.valueOf(edgeNotificationMsg.getAction());
++        EntityId entityId = EntityIdFactory.getByEdgeEventTypeAndUuid(type, new UUID(edgeNotificationMsg.getEntityIdMSB(), edgeNotificationMsg.getEntityIdLSB()));
++        EdgeId originatorEdgeId = safeGetEdgeId(edgeNotificationMsg.getOriginatorEdgeIdMSB(), edgeNotificationMsg.getOriginatorEdgeIdLSB());
++
++        switch (actionType) {
++            case UPDATED:
++            case ADDED:
++                EntityId calculatedFieldOwnerId = JacksonUtil.fromString(edgeNotificationMsg.getBody(), EntityId.class);
++                if (calculatedFieldOwnerId != null &&
++                        (EntityType.DEVICE.equals(calculatedFieldOwnerId.getEntityType()) || EntityType.ASSET.equals(calculatedFieldOwnerId.getEntityType()))) {
++                    JsonNode body = JacksonUtil.toJsonNode(edgeNotificationMsg.getBody());
++                    EdgeId edgeId = safeGetEdgeId(edgeNotificationMsg.getEdgeIdMSB(), edgeNotificationMsg.getEdgeIdLSB());
++
++                    return edgeId != null ?
++                            saveEdgeEvent(tenantId, edgeId, type, actionType, entityId, body) :
++                            pushNotificationToAllRelatedEdges(tenantId, calculatedFieldOwnerId, entityId, type, actionType, null, null, originatorEdgeId);
++                } else {
++                    return processActionForAllEdges(tenantId, type, actionType, entityId, null, originatorEdgeId);
++                }
++            default:
++                return super.processEntityNotification(tenantId, edgeNotificationMsg);
++        }
++    }
++
++    private void processCalculatedField(TenantId tenantId, CalculatedFieldId calculatedFieldId, CalculatedFieldUpdateMsg calculatedFieldUpdateMsg, Edge edge) {
++        Pair<Boolean, Boolean> resultPair = super.saveOrUpdateCalculatedField(tenantId, calculatedFieldId, calculatedFieldUpdateMsg);
++        Boolean wasCreated = resultPair.getFirst();
++        if (wasCreated) {
++            pushCalculatedFieldCreatedEventToRuleEngine(tenantId, edge, calculatedFieldId);
++        }
++        Boolean nameWasUpdated = resultPair.getSecond();
++        if (nameWasUpdated) {
++            saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.CALCULATED_FIELD, EdgeEventActionType.UPDATED, calculatedFieldId, null);
++        }
++    }
++
++    private void pushCalculatedFieldCreatedEventToRuleEngine(TenantId tenantId, Edge edge, CalculatedFieldId calculatedFieldId) {
++        try {
++            CalculatedField calculatedField = edgeCtx.getCalculatedFieldService().findById(tenantId, calculatedFieldId);
++            String calculatedFieldAsString = JacksonUtil.toString(calculatedField);
++            TbMsgMetaData msgMetaData = getEdgeActionTbMsgMetaData(edge, edge.getCustomerId());
++            pushEntityEventToRuleEngine(tenantId, calculatedFieldId, edge.getCustomerId(), TbMsgType.ENTITY_CREATED, calculatedFieldAsString, msgMetaData);
++        } catch (Exception e) {
++            log.warn("[{}][{}] Failed to push calculatedField action to rule engine: {}", tenantId, calculatedFieldId, TbMsgType.ENTITY_CREATED.name(), e);
++        }
++    }
++
++}
+diff --git a/application/src/main/java/org/thingsboard/server/service/edge/rpc/processor/cf/CalculatedFieldProcessor.java b/application/src/main/java/org/thingsboard/server/service/edge/rpc/processor/cf/CalculatedFieldProcessor.java
+new file mode 100644
+index 00000000000..61293e6c169
+--- /dev/null
++++ b/application/src/main/java/org/thingsboard/server/service/edge/rpc/processor/cf/CalculatedFieldProcessor.java
+@@ -0,0 +1,43 @@
++package org.thingsboard.server.service.edge.rpc.processor.cf;
++
++import com.google.common.util.concurrent.ListenableFuture;
++import org.thingsboard.server.common.data.edge.Edge;
++import org.thingsboard.server.common.data.id.TenantId;
++import org.thingsboard.server.gen.edge.v1.CalculatedFieldUpdateMsg;
++import org.thingsboard.server.service.edge.rpc.processor.EdgeProcessor;
++
++public interface CalculatedFieldProcessor extends EdgeProcessor {
++
++    ListenableFuture<Void> processCalculatedFieldMsgFromEdge(TenantId tenantId, Edge edge, CalculatedFieldUpdateMsg calculatedFieldUpdateMsg);
++
++}
+diff --git a/application/src/main/java/org/thingsboard/server/service/edge/rpc/processor/device/DeviceEdgeProcessor.java b/application/src/main/java/org/thingsboard/server/service/edge/rpc/processor/device/DeviceEdgeProcessor.java
+index bff2c5a2816..312a409dcf6 100644
+--- a/application/src/main/java/org/thingsboard/server/service/edge/rpc/processor/device/DeviceEdgeProcessor.java
++++ b/application/src/main/java/org/thingsboard/server/service/edge/rpc/processor/device/DeviceEdgeProcessor.java
+@@ -292,6 +292,7 @@ public DownlinkMsg convertEdgeEventToDownlink(EdgeEvent edgeEvent, EdgeVersion e
+                         DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg = EdgeMsgConstructorUtils.constructDeviceCredentialsUpdatedMsg(deviceCredentials);
+                         builder.addDeviceCredentialsUpdateMsg(deviceCredentialsUpdateMsg).build();
+                     }
++
+                     if (UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE.equals(msgType)) {
+                         DeviceProfile deviceProfile = edgeCtx.getDeviceProfileService().findDeviceProfileById(edgeEvent.getTenantId(), device.getDeviceProfileId());
+                         builder.addDeviceProfileUpdateMsg(EdgeMsgConstructorUtils.constructDeviceProfileUpdatedMsg(msgType, deviceProfile));
+diff --git a/application/src/main/java/org/thingsboard/server/service/edge/rpc/sync/DefaultEdgeRequestsService.java b/application/src/main/java/org/thingsboard/server/service/edge/rpc/sync/DefaultEdgeRequestsService.java
+index 65561e99e6e..73f4805a09a 100644
+--- a/application/src/main/java/org/thingsboard/server/service/edge/rpc/sync/DefaultEdgeRequestsService.java
++++ b/application/src/main/java/org/thingsboard/server/service/edge/rpc/sync/DefaultEdgeRequestsService.java
+@@ -87,6 +87,7 @@
+ import org.thingsboard.server.dao.attributes.AttributesService;
+ import org.thingsboard.server.dao.dashboard.DashboardService;
+ import org.thingsboard.server.dao.device.DeviceService;
++import org.thingsboard.server.dao.cf.CalculatedFieldService;
+ import org.thingsboard.server.dao.edge.EdgeEventService;
+ import org.thingsboard.server.dao.exception.IncorrectParameterException;
+ import org.thingsboard.server.dao.group.EntityGroupService;
+@@ -98,6 +99,7 @@
+ import org.thingsboard.server.dao.widget.WidgetTypeService;
+ import org.thingsboard.server.dao.widget.WidgetsBundleService;
+ import org.thingsboard.server.gen.edge.v1.AttributesRequestMsg;
++import org.thingsboard.server.gen.edge.v1.CalculatedFieldRequestMsg;
+ import org.thingsboard.server.gen.edge.v1.DeviceCredentialsRequestMsg;
+ import org.thingsboard.server.gen.edge.v1.EntityGroupRequestMsg;
+ import org.thingsboard.server.gen.edge.v1.EntityViewsRequestMsg;
+@@ -164,6 +166,9 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
+     @Autowired
+     private RoleService roleService;
+
++    @Autowired
++    private CalculatedFieldService calculatedFieldService;
++
+     @Autowired
+     private DbCallbackExecutorService dbCallbackExecutorService;
+
+@@ -356,6 +361,44 @@ public void onFailure(Throwable t) {
+         return futureToSet;
+     }
+
++    @Override
++    public ListenableFuture<Void> processCalculatedFieldRequestMsg(TenantId tenantId, Edge edge, CalculatedFieldRequestMsg calculatedFieldRequestMsg) {
++        log.trace("[{}] processCalculatedFieldRequestMsg [{}][{}]", tenantId, edge.getName(), calculatedFieldRequestMsg);
++
++        EntityId entityId = EntityIdFactory.getByTypeAndUuid(
++                EntityType.valueOf(calculatedFieldRequestMsg.getEntityType()),
++                new UUID(calculatedFieldRequestMsg.getEntityIdMSB(), calculatedFieldRequestMsg.getEntityIdLSB()));
++
++        log.trace("[{}] processCalculatedField [{}][{}] for entity [{}][{}]", tenantId, edge.getName(), calculatedFieldRequestMsg, entityId.getEntityType(), entityId.getId());
++        return saveCalculatedFieldsToEdge(tenantId, edge.getId(), entityId);
++    }
++
++    private ListenableFuture<Void> saveCalculatedFieldsToEdge(TenantId tenantId, EdgeId edgeId, EntityId entityId) {
++        return Futures.transformAsync(
++                dbCallbackExecutorService.submit(() -> calculatedFieldService.findCalculatedFieldsByEntityId(tenantId, entityId)),
++                calculatedFields -> {
++                    log.trace("[{}][{}][{}][{}] calculatedField(s) are going to be pushed to edge.", tenantId, edgeId, entityId, calculatedFields.size());
++
++                    List<ListenableFuture<?>> futures = calculatedFields.stream().map(calculatedField -> {
++                        try {
++                            return saveEdgeEvent(tenantId, edgeId, EdgeEventType.CALCULATED_FIELD,
++                                    EdgeEventActionType.ADDED, calculatedField.getId(), JacksonUtil.valueToTree(calculatedField));
++                        } catch (Exception e) {
++                            log.error("[{}][{}] Exception during loading calculatedField [{}] to edge on sync!", tenantId, edgeId, calculatedField, e);
++                            return Futures.immediateFailedFuture(e);
++                        }
++                    }).toList();
++
++                    return Futures.transform(
++                            Futures.allAsList(futures),
++                            voids -> null,
++                            dbCallbackExecutorService
++                    );
++                },
++                dbCallbackExecutorService
++        );
++    }
++
+     private ListenableFuture<List<EntityRelation>> findRelationByQuery(TenantId tenantId, Edge edge, EntityId entityId, EntitySearchDirection direction) {
+         EntityRelationsQuery query = new EntityRelationsQuery();
+         query.setParameters(new RelationsSearchParameters(entityId, direction, 1, false));
+diff --git a/application/src/main/java/org/thingsboard/server/service/edge/rpc/sync/EdgeRequestsService.java b/application/src/main/java/org/thingsboard/server/service/edge/rpc/sync/EdgeRequestsService.java
+index cdb7a14fa0a..115fa5b5f84 100644
+--- a/application/src/main/java/org/thingsboard/server/service/edge/rpc/sync/EdgeRequestsService.java
++++ b/application/src/main/java/org/thingsboard/server/service/edge/rpc/sync/EdgeRequestsService.java
+@@ -34,6 +34,7 @@
+ import org.thingsboard.server.common.data.edge.Edge;
+ import org.thingsboard.server.common.data.id.TenantId;
+ import org.thingsboard.server.gen.edge.v1.AttributesRequestMsg;
++import org.thingsboard.server.gen.edge.v1.CalculatedFieldRequestMsg;
+ import org.thingsboard.server.gen.edge.v1.DeviceCredentialsRequestMsg;
+ import org.thingsboard.server.gen.edge.v1.EntityGroupRequestMsg;
+ import org.thingsboard.server.gen.edge.v1.EntityViewsRequestMsg;
+@@ -51,6 +52,8 @@ public interface EdgeRequestsService {
+
+     ListenableFuture<Void> processRelationRequestMsg(TenantId tenantId, Edge edge, RelationRequestMsg relationRequestMsg);
+
++    ListenableFuture<Void> processCalculatedFieldRequestMsg(TenantId tenantId, Edge edge, CalculatedFieldRequestMsg calculatedFieldRequestMsg);
++
+     @Deprecated(since = "3.9.1", forRemoval = true)
+     ListenableFuture<Void> processDeviceCredentialsRequestMsg(TenantId tenantId, Edge edge, DeviceCredentialsRequestMsg deviceCredentialsRequestMsg);
+
+diff --git a/application/src/test/java/org/thingsboard/server/edge/CalculatedFieldEdgeTest.java b/application/src/test/java/org/thingsboard/server/edge/CalculatedFieldEdgeTest.java
+new file mode 100644
+index 00000000000..cc2d43dc29c
+--- /dev/null
++++ b/application/src/test/java/org/thingsboard/server/edge/CalculatedFieldEdgeTest.java
+@@ -0,0 +1,282 @@
++package org.thingsboard.server.edge;
++
++import com.datastax.oss.driver.api.core.uuid.Uuids;
++import com.google.protobuf.AbstractMessage;
++import com.google.protobuf.InvalidProtocolBufferException;
++import org.junit.Assert;
++import org.junit.Test;
++import org.thingsboard.common.util.JacksonUtil;
++import org.thingsboard.server.common.data.Device;
++import org.thingsboard.server.common.data.cf.CalculatedField;
++import org.thingsboard.server.common.data.cf.CalculatedFieldType;
++import org.thingsboard.server.common.data.cf.configuration.Argument;
++import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
++import org.thingsboard.server.common.data.cf.configuration.Output;
++import org.thingsboard.server.common.data.cf.configuration.OutputType;
++import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
++import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
++import org.thingsboard.server.common.data.debug.DebugSettings;
++import org.thingsboard.server.common.data.id.EntityId;
++import org.thingsboard.server.dao.service.DaoSqlTest;
++import org.thingsboard.server.gen.edge.v1.CalculatedFieldRequestMsg;
++import org.thingsboard.server.gen.edge.v1.CalculatedFieldUpdateMsg;
++import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
++import org.thingsboard.server.gen.edge.v1.UplinkMsg;
++import org.thingsboard.server.gen.edge.v1.UplinkResponseMsg;
++
++import java.util.Map;
++import java.util.Optional;
++import java.util.UUID;
++
++import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
++
++@DaoSqlTest
++public class CalculatedFieldEdgeTest extends AbstractEdgeTest {
++    private static final String DEFAULT_CF_NAME = "Edge Test CalculatedField";
++    private static final String UPDATED_CF_NAME = "Updated Edge Test CalculatedField";
++
++    @Test
++    public void testCalculatedField_create_update_delete() throws Exception {
++        Device savedDevice = saveDeviceOnCloudAndVerifyDeliveryToEdge();
++
++        // create calculatedField
++        SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
++        CalculatedField calculatedField = createSimpleCalculatedField(savedDevice.getId(), config);
++
++        edgeImitator.expectMessageAmount(1);
++        CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
++        Assert.assertTrue(edgeImitator.waitForMessages());
++
++        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
++        Assert.assertTrue(latestMessage instanceof CalculatedFieldUpdateMsg);
++        CalculatedFieldUpdateMsg calculatedFieldUpdateMsg = (CalculatedFieldUpdateMsg) latestMessage;
++        Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, calculatedFieldUpdateMsg.getMsgType());
++        Assert.assertEquals(savedCalculatedField.getUuidId().getMostSignificantBits(), calculatedFieldUpdateMsg.getIdMSB());
++        Assert.assertEquals(savedCalculatedField.getUuidId().getLeastSignificantBits(), calculatedFieldUpdateMsg.getIdLSB());
++        CalculatedField calculatedFieldFromMsg = JacksonUtil.fromString(calculatedFieldUpdateMsg.getEntity(), CalculatedField.class, true);
++        Assert.assertNotNull(calculatedFieldFromMsg);
++
++        Assert.assertEquals(DEFAULT_CF_NAME, calculatedFieldFromMsg.getName());
++        Assert.assertEquals(savedDevice.getId(), calculatedFieldFromMsg.getEntityId());
++        Assert.assertEquals(config, calculatedFieldFromMsg.getConfiguration());
++
++        edgeImitator.expectMessageAmount(1);
++        savedCalculatedField.setName(UPDATED_CF_NAME);
++        savedCalculatedField = doPost("/api/calculatedField", savedCalculatedField, CalculatedField.class);
++        Assert.assertTrue(edgeImitator.waitForMessages());
++
++        latestMessage = edgeImitator.getLatestMessage();
++        Assert.assertTrue(latestMessage instanceof CalculatedFieldUpdateMsg);
++        calculatedFieldUpdateMsg = (CalculatedFieldUpdateMsg) latestMessage;
++        calculatedFieldFromMsg = JacksonUtil.fromString(calculatedFieldUpdateMsg.getEntity(), CalculatedField.class, true);
++        Assert.assertNotNull(calculatedFieldFromMsg);
++        Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, calculatedFieldUpdateMsg.getMsgType());
++        Assert.assertEquals(UPDATED_CF_NAME, calculatedFieldFromMsg.getName());
++
++        // delete calculatedField
++        edgeImitator.expectMessageAmount(1);
++        doDelete("/api/calculatedField/" + savedCalculatedField.getUuidId())
++                .andExpect(status().isOk());
++        Assert.assertTrue(edgeImitator.waitForMessages());
++
++        latestMessage = edgeImitator.getLatestMessage();
++        Assert.assertTrue(latestMessage instanceof CalculatedFieldUpdateMsg);
++        calculatedFieldUpdateMsg = (CalculatedFieldUpdateMsg) latestMessage;
++        Assert.assertEquals(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE, calculatedFieldUpdateMsg.getMsgType());
++        Assert.assertEquals(savedCalculatedField.getUuidId().getMostSignificantBits(), calculatedFieldUpdateMsg.getIdMSB());
++        Assert.assertEquals(savedCalculatedField.getUuidId().getLeastSignificantBits(), calculatedFieldUpdateMsg.getIdLSB());
++    }
++
++    @Test
++    public void testSendCalculatedFieldToCloud() throws Exception {
++        Device savedDevice = saveDeviceOnCloudAndVerifyDeliveryToEdge();
++
++        // create calculatedField
++        SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
++        CalculatedField calculatedField = createSimpleCalculatedField(savedDevice.getId(), config);
++        UUID uuid = Uuids.timeBased();
++        UplinkMsg uplinkMsg = getUplinkMsg(uuid, calculatedField, UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE);
++
++        checkCalculatedFieldOnCloud(uplinkMsg, uuid, calculatedField.getName());
++    }
++
++    @Test
++    public void testSendCalculatedFieldRequestToCloud() throws Exception {
++        Device savedDevice = saveDeviceOnCloudAndVerifyDeliveryToEdge();
++
++        // create calculatedField
++        SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
++        CalculatedField calculatedField = createSimpleCalculatedField(savedDevice.getId(), config);
++
++        edgeImitator.expectMessageAmount(1);
++        CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
++        Assert.assertTrue(edgeImitator.waitForMessages());
++
++        UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();
++        CalculatedFieldRequestMsg.Builder calculatedFieldRequestMsgBuilder = CalculatedFieldRequestMsg.newBuilder();
++        calculatedFieldRequestMsgBuilder.setEntityIdMSB(savedDevice.getId().getId().getMostSignificantBits());
++        calculatedFieldRequestMsgBuilder.setEntityIdLSB(savedDevice.getId().getId().getLeastSignificantBits());
++        calculatedFieldRequestMsgBuilder.setEntityType(savedDevice.getId().getEntityType().name());
++        testAutoGeneratedCodeByProtobuf(calculatedFieldRequestMsgBuilder);
++
++        uplinkMsgBuilder.addCalculatedFieldRequestMsg(calculatedFieldRequestMsgBuilder.build());
++        testAutoGeneratedCodeByProtobuf(uplinkMsgBuilder);
++
++        edgeImitator.expectResponsesAmount(1);
++        edgeImitator.expectMessageAmount(1);
++        edgeImitator.sendUplinkMsg(uplinkMsgBuilder.build());
++        Assert.assertTrue(edgeImitator.waitForResponses());
++        Assert.assertTrue(edgeImitator.waitForMessages());
++
++        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
++        Assert.assertTrue(latestMessage instanceof CalculatedFieldUpdateMsg);
++        CalculatedFieldUpdateMsg calculatedFieldUpdateMsg = (CalculatedFieldUpdateMsg) latestMessage;
++        CalculatedField calculatedFieldFromEdge = JacksonUtil.fromString(calculatedFieldUpdateMsg.getEntity(), CalculatedField.class, true);
++        Assert.assertNotNull(calculatedFieldFromEdge);
++        Assert.assertEquals(savedCalculatedField, calculatedFieldFromEdge);
++        Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, calculatedFieldUpdateMsg.getMsgType());
++    }
++
++    @Test
++    public void testUpdateCalculatedFieldNameOnCloud() throws Exception {
++        Device savedDevice = saveDeviceOnCloudAndVerifyDeliveryToEdge();
++
++        // create calculatedField
++        SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
++        CalculatedField calculatedField = createSimpleCalculatedField(savedDevice.getId(), config);
++        UUID uuid = Uuids.timeBased();
++        UplinkMsg uplinkMsg = getUplinkMsg(uuid, calculatedField, UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE);
++
++        checkCalculatedFieldOnCloud(uplinkMsg, uuid, calculatedField.getName());
++
++        calculatedField.setName(UPDATED_CF_NAME);
++        UplinkMsg updatedUplinkMsg = getUplinkMsg(uuid, calculatedField, UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE);
++
++        checkCalculatedFieldOnCloud(updatedUplinkMsg, uuid, calculatedField.getName());
++    }
++
++    @Test
++    public void testCalculatedFieldToCloudWithNameThatAlreadyExistsOnCloud() throws Exception {
++        Device savedDevice = saveDeviceOnCloudAndVerifyDeliveryToEdge();
++
++        // create calculatedField
++        SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
++        CalculatedField calculatedField = createSimpleCalculatedField(savedDevice.getId(), config);
++
++        edgeImitator.expectMessageAmount(1);
++        CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
++        Assert.assertTrue(edgeImitator.waitForMessages());
++
++        UUID uuid = Uuids.timeBased();
++
++        UplinkMsg uplinkMsg = getUplinkMsg(uuid, calculatedField, UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE);
++
++        edgeImitator.expectResponsesAmount(1);
++        edgeImitator.expectMessageAmount(1);
++
++        edgeImitator.sendUplinkMsg(uplinkMsg);
++
++        Assert.assertTrue(edgeImitator.waitForResponses());
++        Assert.assertTrue(edgeImitator.waitForMessages());
++
++        Optional<CalculatedFieldUpdateMsg> calculatedFieldUpdateMsgOpt = edgeImitator.findMessageByType(CalculatedFieldUpdateMsg.class);
++        Assert.assertTrue(calculatedFieldUpdateMsgOpt.isPresent());
++        CalculatedFieldUpdateMsg latestCalculatedFieldUpdateMsg = calculatedFieldUpdateMsgOpt.get();
++        CalculatedField calculatedFieldFromMsg = JacksonUtil.fromString(latestCalculatedFieldUpdateMsg.getEntity(), CalculatedField.class, true);
++        Assert.assertNotNull(calculatedFieldFromMsg);
++        Assert.assertNotEquals(DEFAULT_CF_NAME, calculatedFieldFromMsg.getName());
++
++        Assert.assertNotEquals(savedCalculatedField.getUuidId(), uuid);
++
++        CalculatedField calculatedFieldFromCloud = doGet("/api/calculatedField/" + uuid, CalculatedField.class);
++        Assert.assertNotNull(calculatedFieldFromCloud);
++        Assert.assertNotEquals(DEFAULT_CF_NAME, calculatedFieldFromCloud.getName());
++    }
++
++    private CalculatedField createSimpleCalculatedField(EntityId entityId, SimpleCalculatedFieldConfiguration config) {
++        CalculatedField calculatedField = new CalculatedField();
++        calculatedField.setEntityId(entityId);
++        calculatedField.setTenantId(tenantId);
++        calculatedField.setType(CalculatedFieldType.SIMPLE);
++        calculatedField.setName(DEFAULT_CF_NAME);
++        calculatedField.setDebugSettings(DebugSettings.all());
++
++        Argument argument = new Argument();
++        ReferencedEntityKey refEntityKey = new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null);
++        argument.setRefEntityKey(refEntityKey);
++        argument.setDefaultValue("12"); // not used because real telemetry value in db is present
++        config.setArguments(Map.of("T", argument));
++
++        config.setExpression("(T * 9/5) + 32");
++
++        Output output = new Output();
++        output.setName("fahrenheitTemp");
++        output.setType(OutputType.TIME_SERIES);
++        output.setDecimalsByDefault(2);
++        config.setOutput(output);
++
++        calculatedField.setConfiguration(config);
++
++        return calculatedField;
++    }
++
++    private UplinkMsg getUplinkMsg(UUID uuid, CalculatedField calculatedField, UpdateMsgType updateMsgType) throws InvalidProtocolBufferException {
++        UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();
++        CalculatedFieldUpdateMsg.Builder calculatedFieldUpdateMsgBuilder = CalculatedFieldUpdateMsg.newBuilder();
++        calculatedFieldUpdateMsgBuilder.setIdMSB(uuid.getMostSignificantBits());
++        calculatedFieldUpdateMsgBuilder.setIdLSB(uuid.getLeastSignificantBits());
++        calculatedFieldUpdateMsgBuilder.setEntity(JacksonUtil.toString(calculatedField));
++        calculatedFieldUpdateMsgBuilder.setMsgType(updateMsgType);
++        testAutoGeneratedCodeByProtobuf(calculatedFieldUpdateMsgBuilder);
++        uplinkMsgBuilder.addCalculatedFieldUpdateMsg(calculatedFieldUpdateMsgBuilder.build());
++
++        testAutoGeneratedCodeByProtobuf(uplinkMsgBuilder);
++
++        return uplinkMsgBuilder.build();
++    }
++
++    private void checkCalculatedFieldOnCloud(UplinkMsg uplinkMsg, UUID uuid, String resourceTitle) throws Exception {
++        edgeImitator.expectResponsesAmount(1);
++        edgeImitator.sendUplinkMsg(uplinkMsg);
++
++        Assert.assertTrue(edgeImitator.waitForResponses());
++
++        UplinkResponseMsg latestResponseMsg = edgeImitator.getLatestResponseMsg();
++        Assert.assertTrue(latestResponseMsg.getSuccess());
++
++        CalculatedField calculatedField = doGet("/api/calculatedField/" + uuid, CalculatedField.class);
++        Assert.assertNotNull(calculatedField);
++        Assert.assertEquals(resourceTitle, calculatedField.getName());
++    }
++
++}
+diff --git a/application/src/test/java/org/thingsboard/server/edge/imitator/EdgeImitator.java b/application/src/test/java/org/thingsboard/server/edge/imitator/EdgeImitator.java
+index bfba8712b60..de158fa758a 100644
+--- a/application/src/test/java/org/thingsboard/server/edge/imitator/EdgeImitator.java
++++ b/application/src/test/java/org/thingsboard/server/edge/imitator/EdgeImitator.java
+@@ -49,6 +49,7 @@
+ import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
+ import org.thingsboard.server.gen.edge.v1.AssetUpdateMsg;
+ import org.thingsboard.server.gen.edge.v1.ConverterUpdateMsg;
++import org.thingsboard.server.gen.edge.v1.CalculatedFieldUpdateMsg;
+ import org.thingsboard.server.gen.edge.v1.CustomerUpdateMsg;
+ import org.thingsboard.server.gen.edge.v1.DashboardUpdateMsg;
+ import org.thingsboard.server.gen.edge.v1.DeviceCredentialsRequestMsg;
+@@ -418,6 +419,11 @@ private ListenableFuture<List<Void>> processDownlinkMsg(DownlinkMsg downlinkMsg)
+                 result.add(saveDownlinkMsg(notificationTargetUpdateMsg));
+             }
+         }
++        if (downlinkMsg.getCalculatedFieldUpdateMsgCount() > 0) {
++            for (CalculatedFieldUpdateMsg calculatedFieldUpdateMsg : downlinkMsg.getCalculatedFieldUpdateMsgList()) {
++                result.add(saveDownlinkMsg(calculatedFieldUpdateMsg));
++            }
++        }
+         if (downlinkMsg.hasEdgeConfiguration()) {
+             result.add(saveDownlinkMsg(downlinkMsg.getEdgeConfiguration()));
+         }
+diff --git a/common/dao-api/src/main/java/org/thingsboard/server/dao/cf/CalculatedFieldService.java b/common/dao-api/src/main/java/org/thingsboard/server/dao/cf/CalculatedFieldService.java
+index 81a95790377..ff973a5ea3a 100644
+--- a/common/dao-api/src/main/java/org/thingsboard/server/dao/cf/CalculatedFieldService.java
++++ b/common/dao-api/src/main/java/org/thingsboard/server/dao/cf/CalculatedFieldService.java
+@@ -46,8 +46,12 @@ public interface CalculatedFieldService extends EntityDaoService {
+
+     CalculatedField save(CalculatedField calculatedField);
+
++    CalculatedField save(CalculatedField calculatedField, boolean doValidate);
++
+     CalculatedField findById(TenantId tenantId, CalculatedFieldId calculatedFieldId);
+
++    CalculatedField findByEntityIdAndName(EntityId entityId, String name);
++
+     List<CalculatedFieldId> findCalculatedFieldIdsByEntityId(TenantId tenantId, EntityId entityId);
+
+     List<CalculatedField> findCalculatedFieldsByEntityId(TenantId tenantId, EntityId entityId);
+diff --git a/common/data/src/main/java/org/thingsboard/server/common/data/edge/EdgeEventType.java b/common/data/src/main/java/org/thingsboard/server/common/data/edge/EdgeEventType.java
+index c4457c84ea5..2b71b57de90 100644
+--- a/common/data/src/main/java/org/thingsboard/server/common/data/edge/EdgeEventType.java
++++ b/common/data/src/main/java/org/thingsboard/server/common/data/edge/EdgeEventType.java
+@@ -67,13 +67,14 @@ public enum EdgeEventType {
+     GROUP_PERMISSION(true, EntityType.GROUP_PERMISSION),
+     CONVERTER(false, EntityType.CONVERTER),
+     INTEGRATION(false, EntityType.INTEGRATION),
+-    NOTIFICATION_RULE (true, EntityType.NOTIFICATION_RULE),
+-    NOTIFICATION_TARGET (true, EntityType.NOTIFICATION_TARGET),
+-    NOTIFICATION_TEMPLATE (true, EntityType.NOTIFICATION_TEMPLATE),
++    NOTIFICATION_RULE(true, EntityType.NOTIFICATION_RULE),
++    NOTIFICATION_TARGET(true, EntityType.NOTIFICATION_TARGET),
++    NOTIFICATION_TEMPLATE(true, EntityType.NOTIFICATION_TEMPLATE),
+     TB_RESOURCE(true, EntityType.TB_RESOURCE),
+     DEVICE_GROUP_OTA(false, null),
+     OAUTH2_CLIENT(true, EntityType.OAUTH2_CLIENT),
+-    DOMAIN(true, EntityType.DOMAIN);
++    DOMAIN(true, EntityType.DOMAIN),
++    CALCULATED_FIELD(false, EntityType.CALCULATED_FIELD);
+
+     private final boolean allEdgesRelated;
+
+diff --git a/common/data/src/main/java/org/thingsboard/server/common/data/id/EntityIdFactory.java b/common/data/src/main/java/org/thingsboard/server/common/data/id/EntityIdFactory.java
+index b2c6342ba03..f28290e4619 100644
+--- a/common/data/src/main/java/org/thingsboard/server/common/data/id/EntityIdFactory.java
++++ b/common/data/src/main/java/org/thingsboard/server/common/data/id/EntityIdFactory.java
+@@ -219,6 +219,8 @@ public static EntityId getByEdgeEventTypeAndUuid(EdgeEventType edgeEventType, UU
+                 return new OAuth2ClientId(uuid);
+             case DOMAIN:
+                 return new DomainId(uuid);
++            case CALCULATED_FIELD:
++                return new CalculatedFieldId(uuid);
+         }
+         throw new IllegalArgumentException("EdgeEventType " + edgeEventType + " is not supported!");
+     }
+diff --git a/common/edge-api/src/main/java/org/thingsboard/edge/rpc/EdgeGrpcClient.java b/common/edge-api/src/main/java/org/thingsboard/edge/rpc/EdgeGrpcClient.java
+index b6e72cda3bd..a7b8c88f756 100644
+--- a/common/edge-api/src/main/java/org/thingsboard/edge/rpc/EdgeGrpcClient.java
++++ b/common/edge-api/src/main/java/org/thingsboard/edge/rpc/EdgeGrpcClient.java
+@@ -151,7 +151,7 @@ public void connect(String edgeKey,
+                 .setConnectRequestMsg(ConnectRequestMsg.newBuilder()
+                         .setEdgeRoutingKey(edgeKey)
+                         .setEdgeSecret(edgeSecret)
+-                        .setEdgeVersion(EdgeVersion.V_4_0_0)
++                        .setEdgeVersion(EdgeVersion.V_4_1_0)
+                         .setMaxInboundMessageSize(maxInboundMessageSize)
+                         .build())
+                 .build());
+diff --git a/common/edge-api/src/main/proto/edge.proto b/common/edge-api/src/main/proto/edge.proto
+index 73911d13437..574e1445e1b 100644
+--- a/common/edge-api/src/main/proto/edge.proto
++++ b/common/edge-api/src/main/proto/edge.proto
+@@ -141,6 +142,14 @@ enum UpdateMsgType {
+   // use 6 as a next number
+ }
+
++message CalculatedFieldUpdateMsg{
++  UpdateMsgType msgType = 1;
++  int64 idMSB = 2;
++  int64 idLSB = 3;
++  string entity = 4;
++}
++
++
+ message EntityDataProto {
+   int64 entityIdMSB = 1;
+   int64 entityIdLSB = 2;
+@@ -360,6 +369,12 @@ message RelationRequestMsg {
+   string entityType = 3;
+ }
+
++message CalculatedFieldRequestMsg {
++  int64 entityIdMSB = 1;
++  int64 entityIdLSB = 2;
++  string entityType = 3;
++}
++
+ // DEPRECATED. FOR REMOVAL
+ message UserCredentialsRequestMsg {
+   option deprecated = true;
+@@ -531,6 +546,8 @@ message UplinkMsg {
+   repeated AlarmCommentUpdateMsg alarmCommentUpdateMsg = 24;
+   repeated RuleChainUpdateMsg ruleChainUpdateMsg = 25;
+   repeated RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg = 26;
++  repeated CalculatedFieldUpdateMsg calculatedFieldUpdateMsg = 27;
++  repeated CalculatedFieldRequestMsg calculatedFieldRequestMsg = 28;
+ }
+
+ message UplinkResponseMsg {
+@@ -590,4 +607,5 @@ message DownlinkMsg {
+   repeated NotificationTemplateUpdateMsg notificationTemplateUpdateMsg = 51;
+   CustomTranslationUpdateMsg customTranslationUpdateMsg = 100;
+   repeated OAuth2DomainUpdateMsg oAuth2DomainUpdateMsg = 52;
++  repeated CalculatedFieldUpdateMsg calculatedFieldUpdateMsg = 53;
+ }
+diff --git a/dao/src/main/java/org/thingsboard/server/dao/cf/BaseCalculatedFieldService.java b/dao/src/main/java/org/thingsboard/server/dao/cf/BaseCalculatedFieldService.java
+index 464581b1451..7af0f73fcbf 100644
+--- a/dao/src/main/java/org/thingsboard/server/dao/cf/BaseCalculatedFieldService.java
++++ b/dao/src/main/java/org/thingsboard/server/dao/cf/BaseCalculatedFieldService.java
+@@ -73,6 +73,22 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
+     @Override
+     public CalculatedField save(CalculatedField calculatedField) {
+         CalculatedField oldCalculatedField = calculatedFieldDataValidator.validate(calculatedField, CalculatedField::getTenantId);
++        return doSave(calculatedField, oldCalculatedField);
++    }
++
++    @Override
++    public CalculatedField save(CalculatedField calculatedField, boolean doValidate) {
++        CalculatedField oldCalculatedField = null;
++        if (doValidate) {
++            oldCalculatedField = calculatedFieldDataValidator.validate(calculatedField, CalculatedField::getTenantId);
++        } else if (calculatedField.getId() != null) {
++            oldCalculatedField = findById(calculatedField.getTenantId(), calculatedField.getId());
++        }
++        return doSave(calculatedField, oldCalculatedField);
++    }
++
++
++    private CalculatedField doSave(CalculatedField calculatedField, CalculatedField oldCalculatedField) {
+         try {
+             TenantId tenantId = calculatedField.getTenantId();
+             log.trace("Executing save calculated field, [{}]", calculatedField);
+@@ -98,6 +114,13 @@ public CalculatedField findById(TenantId tenantId, CalculatedFieldId calculatedF
+         return calculatedFieldDao.findById(tenantId, calculatedFieldId.getId());
+     }
+
++    @Override
++    public CalculatedField findByEntityIdAndName(EntityId entityId, String name) {
++        log.trace("Executing findByEntityIdAndName [{}], calculatedFieldName[{}]", entityId, name);
++        validateId(entityId.getId(), id -> INCORRECT_ENTITY_ID + id);
++        return calculatedFieldDao.findByEntityIdAndName(entityId, name);
++    }
++
+     @Override
+     public List<CalculatedFieldId> findCalculatedFieldIdsByEntityId(TenantId tenantId, EntityId entityId) {
+         log.trace("Executing findCalculatedFieldIdsByEntityId [{}]", entityId);
+diff --git a/dao/src/main/java/org/thingsboard/server/dao/cf/CalculatedFieldDao.java b/dao/src/main/java/org/thingsboard/server/dao/cf/CalculatedFieldDao.java
+index 2adc186d398..068fca1aaef 100644
+--- a/dao/src/main/java/org/thingsboard/server/dao/cf/CalculatedFieldDao.java
++++ b/dao/src/main/java/org/thingsboard/server/dao/cf/CalculatedFieldDao.java
+@@ -50,6 +50,8 @@ public interface CalculatedFieldDao extends Dao<CalculatedField> {
+
+     List<CalculatedField> findAll();
+
++    CalculatedField findByEntityIdAndName(EntityId entityId, String name);
++
+     PageData<CalculatedField> findAll(PageLink pageLink);
+
+     PageData<CalculatedField> findAllByTenantId(TenantId tenantId, PageLink pageLink);
+diff --git a/dao/src/main/java/org/thingsboard/server/dao/sql/cf/CalculatedFieldRepository.java b/dao/src/main/java/org/thingsboard/server/dao/sql/cf/CalculatedFieldRepository.java
+index 89d3f7473d3..87bf286da09 100644
+--- a/dao/src/main/java/org/thingsboard/server/dao/sql/cf/CalculatedFieldRepository.java
++++ b/dao/src/main/java/org/thingsboard/server/dao/sql/cf/CalculatedFieldRepository.java
+@@ -43,6 +43,8 @@ public interface CalculatedFieldRepository extends JpaRepository<CalculatedField
+
+     boolean existsByTenantIdAndEntityId(UUID tenantId, UUID entityId);
+
++    CalculatedFieldEntity findByEntityIdAndName(UUID entityId, String name);
++
+     List<CalculatedFieldId> findCalculatedFieldIdsByTenantIdAndEntityId(UUID tenantId, UUID entityId);
+
+     List<CalculatedFieldEntity> findAllByTenantIdAndEntityId(UUID tenantId, UUID entityId);
+diff --git a/dao/src/main/java/org/thingsboard/server/dao/sql/cf/JpaCalculatedFieldDao.java b/dao/src/main/java/org/thingsboard/server/dao/sql/cf/JpaCalculatedFieldDao.java
+index 6eed8b6044b..ab1b9b068ae 100644
+--- a/dao/src/main/java/org/thingsboard/server/dao/sql/cf/JpaCalculatedFieldDao.java
++++ b/dao/src/main/java/org/thingsboard/server/dao/sql/cf/JpaCalculatedFieldDao.java
+@@ -80,6 +80,11 @@ public List<CalculatedField> findAll() {
+         return DaoUtil.convertDataList(calculatedFieldRepository.findAll());
+     }
+
++    @Override
++    public CalculatedField findByEntityIdAndName(EntityId entityId, String name) {
++        return DaoUtil.getData(calculatedFieldRepository.findByEntityIdAndName(entityId.getId(), name));
++    }
++
+     @Override
+     public PageData<CalculatedField> findAll(PageLink pageLink) {
+         log.debug("Try to find calculated fields by pageLink [{}]", pageLink);
