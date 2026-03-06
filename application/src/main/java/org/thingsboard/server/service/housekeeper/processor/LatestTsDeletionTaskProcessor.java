@@ -42,7 +42,7 @@ public class LatestTsDeletionTaskProcessor extends HousekeeperTaskProcessor<Late
     @Override
     public ListenableFuture<Void> processAsync(LatestTsDeletionHousekeeperTask task) {
         var future = timeseriesService.removeLatest(task.getTenantId(), task.getEntityId(), List.of(task.getKey()));
-        return Futures.transform(future, result -> {
+        return Futures.transform(future, _ -> {
             log.debug("[{}][{}][{}] Deleted latest telemetry for key '{}'", task.getTenantId(), task.getEntityId().getEntityType(), task.getEntityId(), task.getKey());
             return null;
         }, MoreExecutors.directExecutor());

@@ -45,7 +45,7 @@ public class TsHistoryDeletionTaskProcessor extends HousekeeperTaskProcessor<TsH
     public ListenableFuture<Void> processAsync(TsHistoryDeletionHousekeeperTask task) {
         DeleteTsKvQuery deleteQuery = new BaseDeleteTsKvQuery(task.getKey(), 0, System.currentTimeMillis(), false, false);
         ListenableFuture<?> future = timeseriesService.remove(task.getTenantId(), task.getEntityId(), List.of(deleteQuery));
-        return Futures.transform(future, input -> {
+        return Futures.transform(future, _ -> {
             log.debug("[{}][{}][{}] Deleted timeseries history for key '{}'", task.getTenantId(), task.getEntityId().getEntityType(), task.getEntityId(), task.getKey());
             return null;
         }, MoreExecutors.directExecutor());

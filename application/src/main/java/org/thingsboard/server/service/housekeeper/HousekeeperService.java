@@ -92,7 +92,7 @@ public class HousekeeperService {
                 .build();
         this.taskProcessors = taskProcessors.stream().collect(Collectors.toMap(HousekeeperTaskProcessor::getTaskType, p -> p));
         if (config.isAsyncProcessingEnabled()) {
-            int threads = config.getAsyncProcessingThreads() == 0 ? Math.max(4, Runtime.getRuntime().availableProcessors()) : config.getAsyncProcessingThreads();
+            int threads = config.getAsyncProcessingThreads() <= 0 ? Math.max(4, Runtime.getRuntime().availableProcessors()) : config.getAsyncProcessingThreads();
             this.asyncTaskExecutor = Executors.newFixedThreadPool(threads, ThingsBoardThreadFactory.forName("housekeeper-async-task-processor"));
             this.timeoutScheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("housekeeper-timeout-scheduler"));
             log.trace("Async processing enabled with {} threads and timeout scheduler", threads);
@@ -156,6 +156,8 @@ public class HousekeeperService {
             throw new IllegalArgumentException("Unsupported task type " + taskType);
         }
 
+        // Reprocessed tasks always go through the sync path by design: if async processing failed,
+        // the task is resubmitted and retried synchronously to avoid repeated async failures.
         if (!isReprocessing && config.isAsyncProcessingEnabled() && taskProcessor.supportsAsyncProcessing()) {
             return processTaskAsync(msg, task, taskType, taskProcessor);
         } else {
@@ -176,8 +178,8 @@ public class HousekeeperService {
 
                     ScheduledFuture<?> timeoutFuture = timeoutScheduler.schedule(() -> {
                         TimeoutException timeoutException = new TimeoutException("Timeout after " + config.getTaskProcessingTimeout() + " ms");
+                        processFuture.cancel(true);
                         if (completionFuture.setException(timeoutException)) {
-                            processFuture.cancel(true);
                             handleFailure(taskType, msg, task, timeoutException);
                         }
                     }, config.getTaskProcessingTimeout(), TimeUnit.MILLISECONDS);
