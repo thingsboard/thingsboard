@@ -68,6 +68,7 @@ import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.ProtoMqttAdaptor;
 import org.thingsboard.server.transport.mqtt.gateway.GatewayMetricsService;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugConnectionState;
+import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopic;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -260,7 +261,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
         log.trace("[{}][{}][{}] onDeviceConnect: [{}]", gateway.getTenantId(), gateway.getDeviceId(), sessionId, deviceName);
         int msgId = getMsgId(msg);
         AtomicBoolean ackSent = new AtomicBoolean(false);
-        process(onDeviceConnect(deviceName, deviceType),
+        process(onDeviceConnect(deviceName, deviceType, false),
                 result -> {
                     ack(msg, MqttReasonCodes.PubAck.SUCCESS);
                     log.trace("[{}][{}][{}] onDeviceConnectOk: [{}]", gateway.getTenantId(), gateway.getDeviceId(), sessionId, deviceName);
@@ -276,7 +277,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
         }
     }
 
-    ListenableFuture<T> onDeviceConnect(String deviceName, String deviceType) {
+    ListenableFuture<T> onDeviceConnect(String deviceName, String deviceType, boolean isSparkplug) {
         T result = devices.get(deviceName);
         if (result == null) {
             Lock deviceCreationLock = deviceCreationLockMap.computeIfAbsent(deviceName, s -> new ReentrantLock());
@@ -284,7 +285,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
             try {
                 result = devices.get(deviceName);
                 if (result == null) {
-                    return getDeviceCreationFuture(deviceName, deviceType);
+                    return getDeviceCreationFuture(deviceName, deviceType, isSparkplug);
                 } else {
                     return Futures.immediateFuture(result);
                 }
@@ -296,7 +297,16 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
         }
     }
 
-    private ListenableFuture<T> getDeviceCreationFuture(String deviceName, String deviceType) {
+    ListenableFuture<T> onDeviceConnectSparkplug(SparkplugTopic topic, String deviceType) {
+        T result = devices.get(topic.getNodeDeviceName());
+        if (result == null) {
+            return onDeviceConnect(topic.getNodeDeviceNameAllPath(), deviceType, true);
+        } else {
+            return Futures.immediateFuture(result);
+        }
+    }
+
+    private ListenableFuture<T> getDeviceCreationFuture(String deviceName, String deviceType, boolean isSparkplug) {
         final SettableFuture<T> futureToSet = SettableFuture.create();
         ListenableFuture<T> future = deviceFutures.putIfAbsent(deviceName, futureToSet);
         if (future != null) {
@@ -309,6 +319,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
                             .setDeviceType(deviceType)
                             .setGatewayIdMSB(gateway.getDeviceId().getId().getMostSignificantBits())
                             .setGatewayIdLSB(gateway.getDeviceId().getId().getLeastSignificantBits())
+                            .setIsSparkplug(isSparkplug)
                             .build(),
                     new TransportServiceCallback<>() {
                         @Override
@@ -844,7 +855,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
                                 deviceSessionCtx, msgId, MqttReasonCodes.PubAck.UNSPECIFIED_ERROR.byteValue()));
                     }
                 }
-                if (msgId <= 0) {
+                if (!deviceSessionCtx.isSparkplug() && msgId <= 0) {
                     closeDeviceSession(deviceName, MqttReasonCodes.Disconnect.MALFORMED_PACKET);
                 }
             }
@@ -872,7 +883,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
     }
 
     protected void process(String deviceName, Consumer<T> onSuccess, Consumer<Throwable> onFailure) {
-        ListenableFuture<T> deviceCtxFuture = onDeviceConnect(deviceName, DEFAULT_DEVICE_TYPE);
+        ListenableFuture<T> deviceCtxFuture = onDeviceConnect(deviceName, DEFAULT_DEVICE_TYPE, false);
         process(deviceCtxFuture, onSuccess, onFailure);
     }
 
