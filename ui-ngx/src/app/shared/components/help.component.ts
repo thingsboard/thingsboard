@@ -18,8 +18,9 @@ import { Component, Input } from '@angular/core';
 import { HelpLinks } from '@shared/models/constants';
 
 @Component({
-  selector: '[tb-help]',
-  templateUrl: './help.component.html'
+    selector: '[tb-help]',
+    templateUrl: './help.component.html',
+    standalone: false
 })
 export class HelpComponent {
 

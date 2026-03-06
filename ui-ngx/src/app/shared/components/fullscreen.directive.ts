@@ -32,8 +32,9 @@ import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
 import { DomSanitizer, SafeStyle } from '@angular/platform-browser';
 
 @Directive({
-  // eslint-disable-next-line @angular-eslint/directive-selector
-  selector: '[tb-fullscreen]'
+    // eslint-disable-next-line @angular-eslint/directive-selector
+    selector: '[tb-fullscreen]',
+    standalone: false
 })
 export class FullscreenDirective implements OnChanges, OnDestroy {
 

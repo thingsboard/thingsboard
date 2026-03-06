@@ -31,10 +31,11 @@ export interface WidgetsBundleDialogData {
 }
 
 @Component({
-  selector: 'tb-widgets-bundle-dialog',
-  templateUrl: './widgets-bundle-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: WidgetsBundleDialogComponent}],
-  styleUrls: ['widgets-bundle-dialog.component.scss']
+    selector: 'tb-widgets-bundle-dialog',
+    templateUrl: './widgets-bundle-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: WidgetsBundleDialogComponent }],
+    styleUrls: ['widgets-bundle-dialog.component.scss'],
+    standalone: false
 })
 export class WidgetsBundleDialogComponent extends
   DialogComponent<WidgetsBundleDialogComponent, WidgetsBundle> implements ErrorStateMatcher {

@@ -35,9 +35,10 @@ interface DisplayColumn {
 }
 
 @Component({
-  selector: 'tb-persistent-table-widget-settings',
-  templateUrl: './persistent-table-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-persistent-table-widget-settings',
+    templateUrl: './persistent-table-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class PersistentTableWidgetSettingsComponent extends WidgetSettingsComponent {
 

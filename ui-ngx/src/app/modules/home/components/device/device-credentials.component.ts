@@ -38,20 +38,22 @@ import { generateSecret, isDefinedAndNotNull } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
-  selector: 'tb-device-credentials',
-  templateUrl: './device-credentials.component.html',
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DeviceCredentialsComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => DeviceCredentialsComponent),
-      multi: true,
-    }],
-  styleUrls: ['./device-credentials.component.scss']
+    selector: 'tb-device-credentials',
+    templateUrl: './device-credentials.component.html',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DeviceCredentialsComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => DeviceCredentialsComponent),
+            multi: true,
+        }
+    ],
+    styleUrls: ['./device-credentials.component.scss'],
+    standalone: false
 })
 export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit, Validator, OnDestroy {
 

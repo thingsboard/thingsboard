@@ -31,9 +31,10 @@ export interface NotificationRequestErrorDialogData {
 }
 
 @Component({
-  selector: 'tb-notification-send-error-dialog',
-  templateUrl: './sent-error-dialog.component.html',
-  styleUrls: ['sent-error-dialog.component.scss']
+    selector: 'tb-notification-send-error-dialog',
+    templateUrl: './sent-error-dialog.component.html',
+    styleUrls: ['sent-error-dialog.component.scss'],
+    standalone: false
 })
 export class SentErrorDialogComponent extends DialogComponent<SentErrorDialogComponent, void> {
 

@@ -31,9 +31,10 @@ import { phoneNumberPattern } from '@shared/models/settings.models';
 import { MatStepper } from '@angular/material/stepper';
 
 @Component({
-  selector: 'tb-sms-auth-dialog',
-  templateUrl: './sms-auth-dialog.component.html',
-  styleUrls: ['./authentication-dialog.component.scss']
+    selector: 'tb-sms-auth-dialog',
+    templateUrl: './sms-auth-dialog.component.html',
+    styleUrls: ['./authentication-dialog.component.scss'],
+    standalone: false
 })
 export class SMSAuthDialogComponent extends DialogComponent<SMSAuthDialogComponent> {
 

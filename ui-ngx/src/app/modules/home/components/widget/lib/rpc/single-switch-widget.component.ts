@@ -50,10 +50,11 @@ const horizontalLayoutPadding = 48;
 const verticalLayoutPadding = 36;
 
 @Component({
-  selector: 'tb-single-switch-widget',
-  templateUrl: './single-switch-widget.component.html',
-  styleUrls: ['../action/action-widget.scss', './single-switch-widget.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-single-switch-widget',
+    templateUrl: './single-switch-widget.component.html',
+    styleUrls: ['../action/action-widget.scss', './single-switch-widget.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class SingleSwitchWidgetComponent extends
   BasicActionWidgetComponent implements OnInit, AfterViewInit, OnDestroy {

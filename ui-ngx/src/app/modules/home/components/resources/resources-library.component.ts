@@ -35,8 +35,9 @@ import { isDefinedAndNotNull } from '@core/utils';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
 
 @Component({
-  selector: 'tb-resources-library',
-  templateUrl: './resources-library.component.html'
+    selector: 'tb-resources-library',
+    templateUrl: './resources-library.component.html',
+    standalone: false
 })
 export class ResourcesLibraryComponent extends EntityComponent<Resource> implements OnInit, OnDestroy {
 

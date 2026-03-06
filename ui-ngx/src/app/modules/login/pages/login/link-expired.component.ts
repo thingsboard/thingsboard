@@ -21,9 +21,10 @@ import { PageComponent } from '@shared/components/page.component';
 import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
-  selector: 'tb-link-expired',
-  templateUrl: './link-expired.component.html',
-  styleUrls: ['./link-expired.component.scss']
+    selector: 'tb-link-expired',
+    templateUrl: './link-expired.component.html',
+    styleUrls: ['./link-expired.component.scss'],
+    standalone: false
 })
 export class LinkExpiredComponent extends PageComponent {
 

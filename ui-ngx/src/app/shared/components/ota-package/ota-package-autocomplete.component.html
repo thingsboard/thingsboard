@@ -39,7 +39,7 @@
                     #packageAutocomplete="matAutocomplete"
                     [displayWith]="displayPackageFn">
     <mat-option *ngFor="let package of filteredPackages | async" [value]="package">
-      <span [innerHTML]="this.packageTitleText(package) | highlight:searchText"></span>
+      <span [innerHTML]="packageTitleText(package) | highlight:searchText"></span>
     </mat-option>
     <mat-option *ngIf="!(filteredPackages | async)?.length" [value]="null" class="tb-not-found">
       <div class="tb-not-found-content" (click)="$event.stopPropagation()">

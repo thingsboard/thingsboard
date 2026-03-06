@@ -41,17 +41,18 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-time-series-chart-state-row',
-  templateUrl: './time-series-chart-state-row.component.html',
-  styleUrls: ['./time-series-chart-state-row.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => TimeSeriesChartStateRowComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-time-series-chart-state-row',
+    templateUrl: './time-series-chart-state-row.component.html',
+    styleUrls: ['./time-series-chart-state-row.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TimeSeriesChartStateRowComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class TimeSeriesChartStateRowComponent implements ControlValueAccessor, OnInit {
 

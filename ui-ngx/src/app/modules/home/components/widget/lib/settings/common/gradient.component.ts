@@ -37,16 +37,17 @@ import { DataKeysCallbacks } from '@home/components/widget/lib/settings/common/k
 import { Datasource } from '@shared/models/widget.models';
 
 @Component({
-  selector: 'tb-gradient',
-  templateUrl: './gradient.component.html',
-  styleUrls: ['color-settings-panel.component.scss', 'gradient.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => GradientComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-gradient',
+    templateUrl: './gradient.component.html',
+    styleUrls: ['color-settings-panel.component.scss', 'gradient.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => GradientComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class GradientComponent implements OnInit, ControlValueAccessor, OnDestroy {
 

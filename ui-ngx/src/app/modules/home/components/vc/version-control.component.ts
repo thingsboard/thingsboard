@@ -26,9 +26,10 @@ import { Observable } from 'rxjs';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 
 @Component({
-  selector: 'tb-version-control',
-  templateUrl: './version-control.component.html',
-  styleUrls: ['./version-control.component.scss']
+    selector: 'tb-version-control',
+    templateUrl: './version-control.component.html',
+    styleUrls: ['./version-control.component.scss'],
+    standalone: false
 })
 export class VersionControlComponent implements OnInit, HasConfirmForm {
 

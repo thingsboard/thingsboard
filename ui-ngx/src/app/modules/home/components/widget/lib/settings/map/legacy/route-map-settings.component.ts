@@ -33,21 +33,22 @@ import { WidgetService } from '@core/http/widget.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-route-map-settings',
-  templateUrl: './route-map-settings.component.html',
-  styleUrls: ['./../../widget-settings.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => RouteMapSettingsComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => RouteMapSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-route-map-settings',
+    templateUrl: './route-map-settings.component.html',
+    styleUrls: ['./../../widget-settings.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => RouteMapSettingsComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => RouteMapSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class RouteMapSettingsComponent extends PageComponent implements OnInit, ControlValueAccessor, Validator {
 

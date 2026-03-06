@@ -55,10 +55,11 @@ export interface CalculatedFieldTestScriptDialogData extends CalculatedFieldTest
 }
 
 @Component({
-  selector: 'tb-calculated-field-script-test-dialog',
-  templateUrl: './calculated-field-script-test-dialog.component.html',
-  styleUrls: ['./calculated-field-script-test-dialog.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-calculated-field-script-test-dialog',
+    templateUrl: './calculated-field-script-test-dialog.component.html',
+    styleUrls: ['./calculated-field-script-test-dialog.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class CalculatedFieldScriptTestDialogComponent extends DialogComponent<CalculatedFieldScriptTestDialogComponent,
   string> implements AfterViewInit, OnDestroy {

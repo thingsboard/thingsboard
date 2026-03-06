@@ -45,8 +45,8 @@
   <tb-calculated-fields-table [active]="calculatedFieldsTab.isActive" [entityId]="entity.id" [entityName]="entity.name"/>
 </mat-tab>
 <mat-tab *ngIf="entity" #alarmRules="matTab"
-         label="{{ this.detailsForm.get('profileData.alarms').value?.length
-         ? ('device-profile.alarm-rules-with-count' | translate: { count: this.detailsForm.get('profileData.alarms').value.length })
+         label="{{ detailsForm.get('profileData.alarms').value?.length
+         ? ('device-profile.alarm-rules-with-count' | translate: { count: detailsForm.get('profileData.alarms').value.length })
          : 'device-profile.alarm-rules' | translate }}">
   <div class="mat-padding" [formGroup]="detailsForm" *ngIf="alarmRules.isActive">
     <div formGroupName="profileData">

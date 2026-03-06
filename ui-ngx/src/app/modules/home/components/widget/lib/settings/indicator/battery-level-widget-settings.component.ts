@@ -30,9 +30,10 @@ import {
 import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Component({
-  selector: 'tb-battery-level-widget-settings',
-  templateUrl: './battery-level-widget-settings.component.html',
-  styleUrls: []
+    selector: 'tb-battery-level-widget-settings',
+    templateUrl: './battery-level-widget-settings.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class BatteryLevelWidgetSettingsComponent extends WidgetSettingsComponent {
 

@@ -31,18 +31,19 @@ import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-map-action-button-settings',
-  templateUrl: './map-action-buttons-settings.component.html',
-  providers: [{
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => MapActionButtonsSettingsComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => MapActionButtonsSettingsComponent),
-      multi: true
-    }]
+    selector: 'tb-map-action-button-settings',
+    templateUrl: './map-action-buttons-settings.component.html',
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => MapActionButtonsSettingsComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => MapActionButtonsSettingsComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class MapActionButtonsSettingsComponent implements ControlValueAccessor, Validator {
 

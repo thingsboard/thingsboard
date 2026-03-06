@@ -22,9 +22,10 @@ import { OAuth2Client, OAuth2ClientInfo } from '@shared/models/oauth2.models';
 import { PageLink } from '@shared/models/page/page-link';
 
 @Component({
-  selector: 'tb-client-table-header',
-  templateUrl: './client-table-header.component.html',
-  styleUrls: []
+    selector: 'tb-client-table-header',
+    templateUrl: './client-table-header.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class ClientTableHeaderComponent extends EntityTableHeaderComponent<OAuth2Client, PageLink, OAuth2ClientInfo> {
 

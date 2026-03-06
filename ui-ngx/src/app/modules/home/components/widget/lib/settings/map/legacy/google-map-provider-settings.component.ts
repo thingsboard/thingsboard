@@ -37,21 +37,22 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-google-map-provider-settings',
-  templateUrl: './google-map-provider-settings.component.html',
-  styleUrls: ['./../../widget-settings.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => GoogleMapProviderSettingsComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => GoogleMapProviderSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-google-map-provider-settings',
+    templateUrl: './google-map-provider-settings.component.html',
+    styleUrls: ['./../../widget-settings.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => GoogleMapProviderSettingsComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => GoogleMapProviderSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class GoogleMapProviderSettingsComponent extends PageComponent implements OnInit, ControlValueAccessor, Validator {
 

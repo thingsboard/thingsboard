@@ -31,9 +31,10 @@ import { DataKeySettingsFunction } from '@home/components/widget/lib/settings/co
 import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
-  selector: 'tb-edit-widget',
-  templateUrl: './edit-widget.component.html',
-  styleUrls: ['./edit-widget.component.scss']
+    selector: 'tb-edit-widget',
+    templateUrl: './edit-widget.component.html',
+    styleUrls: ['./edit-widget.component.scss'],
+    standalone: false
 })
 export class EditWidgetComponent extends PageComponent implements OnInit, OnChanges {
 

@@ -22,10 +22,11 @@ import { AppState } from '@core/core.state';
 import { ActionPreferencesUpdateOpenedMenuSection } from '@core/auth/auth.actions';
 
 @Component({
-  selector: 'tb-menu-toggle',
-  templateUrl: './menu-toggle.component.html',
-  styleUrls: ['./menu-toggle.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'tb-menu-toggle',
+    templateUrl: './menu-toggle.component.html',
+    styleUrls: ['./menu-toggle.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class MenuToggleComponent implements OnInit {
 

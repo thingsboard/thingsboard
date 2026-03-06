@@ -30,9 +30,10 @@ interface NavigationCardsWidgetSettings {
 }
 
 @Component({
-  selector: 'tb-navigation-cards-widget',
-  templateUrl: './navigation-cards-widget.component.html',
-  styleUrls: ['./navigation-cards-widget.component.scss']
+    selector: 'tb-navigation-cards-widget',
+    templateUrl: './navigation-cards-widget.component.html',
+    styleUrls: ['./navigation-cards-widget.component.scss'],
+    standalone: false
 })
 export class NavigationCardsWidgetComponent extends PageComponent implements OnInit {
 

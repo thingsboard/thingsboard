@@ -68,10 +68,11 @@ const ticksTextMap: {[angle: number]: string} = {
 };
 
 @Component({
-  selector: 'tb-wind-speed-direction-widget',
-  templateUrl: './wind-speed-direction-widget.component.html',
-  styleUrls: ['./wind-speed-direction-widget.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-wind-speed-direction-widget',
+    templateUrl: './wind-speed-direction-widget.component.html',
+    styleUrls: ['./wind-speed-direction-widget.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class WindSpeedDirectionWidgetComponent implements OnInit, OnDestroy, AfterViewInit {
 

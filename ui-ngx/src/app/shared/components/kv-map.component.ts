@@ -36,21 +36,22 @@ import { takeUntil } from 'rxjs/operators';
 import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
-  selector: 'tb-key-val-map',
-  templateUrl: './kv-map.component.html',
-  styleUrls: ['./kv-map.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => KeyValMapComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => KeyValMapComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-key-val-map',
+    templateUrl: './kv-map.component.html',
+    styleUrls: ['./kv-map.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => KeyValMapComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => KeyValMapComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class KeyValMapComponent extends PageComponent implements ControlValueAccessor, OnInit, OnDestroy, Validator {
 

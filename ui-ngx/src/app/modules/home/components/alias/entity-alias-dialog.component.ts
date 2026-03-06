@@ -46,10 +46,11 @@ export interface EntityAliasDialogData {
 }
 
 @Component({
-  selector: 'tb-entity-alias-dialog',
-  templateUrl: './entity-alias-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: EntityAliasDialogComponent}],
-  styleUrls: ['./entity-alias-dialog.component.scss']
+    selector: 'tb-entity-alias-dialog',
+    templateUrl: './entity-alias-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: EntityAliasDialogComponent }],
+    styleUrls: ['./entity-alias-dialog.component.scss'],
+    standalone: false
 })
 export class EntityAliasDialogComponent extends DialogComponent<EntityAliasDialogComponent, EntityAlias>
   implements OnInit, ErrorStateMatcher {

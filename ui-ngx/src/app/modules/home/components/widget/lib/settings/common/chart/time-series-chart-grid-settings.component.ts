@@ -27,16 +27,17 @@ import { WidgetService } from '@core/http/widget.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-time-series-chart-grid-settings',
-  templateUrl: './time-series-chart-grid-settings.component.html',
-  styleUrls: ['./../../widget-settings.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => TimeSeriesChartGridSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-time-series-chart-grid-settings',
+    templateUrl: './time-series-chart-grid-settings.component.html',
+    styleUrls: ['./../../widget-settings.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TimeSeriesChartGridSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class TimeSeriesChartGridSettingsComponent implements OnInit, ControlValueAccessor {
 

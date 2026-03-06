@@ -30,10 +30,11 @@ export interface SelectTargetStateDialogData {
 }
 
 @Component({
-  selector: 'tb-select-target-state-dialog',
-  templateUrl: './select-target-state-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: SelectTargetStateDialogComponent}],
-  styleUrls: []
+    selector: 'tb-select-target-state-dialog',
+    templateUrl: './select-target-state-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: SelectTargetStateDialogComponent }],
+    styleUrls: [],
+    standalone: false
 })
 export class SelectTargetStateDialogComponent extends
   DialogComponent<SelectTargetStateDialogComponent, string>

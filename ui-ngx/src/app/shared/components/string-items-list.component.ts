@@ -37,17 +37,18 @@ export interface StringItemsOption {
   value: any;
 }
 @Component({
-  selector: 'tb-string-items-list',
-  templateUrl: './string-items-list.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => StringItemsListComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-string-items-list',
+    templateUrl: './string-items-list.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => StringItemsListComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class StringItemsListComponent implements ControlValueAccessor, OnInit {
 

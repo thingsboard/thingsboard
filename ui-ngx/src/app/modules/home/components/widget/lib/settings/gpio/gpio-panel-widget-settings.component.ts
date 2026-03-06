@@ -22,9 +22,10 @@ import { AppState } from '@core/core.state';
 import { GpioItem, gpioItemValidator } from '@home/components/widget/lib/settings/gpio/gpio-item.component';
 
 @Component({
-  selector: 'tb-gpio-panel-widget-settings',
-  templateUrl: './gpio-panel-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-gpio-panel-widget-settings',
+    templateUrl: './gpio-panel-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class GpioPanelWidgetSettingsComponent extends WidgetSettingsComponent {
 

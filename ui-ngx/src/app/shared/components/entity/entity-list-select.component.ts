@@ -28,14 +28,15 @@ interface EntityListSelectModel {
 }
 
 @Component({
-  selector: 'tb-entity-list-select',
-  templateUrl: './entity-list-select.component.html',
-  styleUrls: ['./entity-list-select.component.scss'],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => EntityListSelectComponent),
-    multi: true
-  }]
+    selector: 'tb-entity-list-select',
+    templateUrl: './entity-list-select.component.html',
+    styleUrls: ['./entity-list-select.component.scss'],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => EntityListSelectComponent),
+            multi: true
+        }],
+    standalone: false
 })
 
 export class EntityListSelectComponent implements ControlValueAccessor, OnInit {

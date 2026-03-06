@@ -36,21 +36,22 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-device-data',
-  templateUrl: './device-data.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DeviceDataComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => DeviceDataComponent),
-      multi: true
-    },
-  ]
+    selector: 'tb-device-data',
+    templateUrl: './device-data.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DeviceDataComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => DeviceDataComponent),
+            multi: true
+        },
+    ],
+    standalone: false
 })
 export class DeviceDataComponent implements ControlValueAccessor, OnInit, Validator {
 

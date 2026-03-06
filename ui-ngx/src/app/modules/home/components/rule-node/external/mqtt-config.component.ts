@@ -20,9 +20,10 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@shared/models/rule-node.models';
 
 @Component({
-  selector: 'tb-external-node-mqtt-config',
-  templateUrl: './mqtt-config.component.html',
-  styleUrls: ['./mqtt-config.component.scss']
+    selector: 'tb-external-node-mqtt-config',
+    templateUrl: './mqtt-config.component.html',
+    styleUrls: ['./mqtt-config.component.scss'],
+    standalone: false
 })
 export class MqttConfigComponent extends RuleNodeConfigurationComponent {
 

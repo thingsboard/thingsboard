@@ -155,9 +155,10 @@ interface TimeseriesTableSource {
 }
 
 @Component({
-  selector: 'tb-timeseries-table-widget',
-  templateUrl: './timeseries-table-widget.component.html',
-  styleUrls: ['./timeseries-table-widget.component.scss', './table-widget.scss']
+    selector: 'tb-timeseries-table-widget',
+    templateUrl: './timeseries-table-widget.component.html',
+    styleUrls: ['./timeseries-table-widget.component.scss', './table-widget.scss'],
+    standalone: false
 })
 export class TimeseriesTableWidgetComponent extends PageComponent implements OnInit, AfterViewInit, OnDestroy {
 

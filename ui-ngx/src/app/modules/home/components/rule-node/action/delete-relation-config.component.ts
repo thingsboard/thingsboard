@@ -21,9 +21,10 @@ import { EntitySearchDirection } from '@app/shared/models/relation.models';
 import { RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@app/shared/models/rule-node.models';
 
 @Component({
-  selector: 'tb-action-node-delete-relation-config',
-  templateUrl: './delete-relation-config.component.html',
-  styleUrls: []
+    selector: 'tb-action-node-delete-relation-config',
+    templateUrl: './delete-relation-config.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class DeleteRelationConfigComponent extends RuleNodeConfigurationComponent {
 

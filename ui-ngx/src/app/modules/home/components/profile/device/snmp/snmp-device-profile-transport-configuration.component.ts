@@ -42,20 +42,22 @@ export interface OidMappingConfiguration {
 }
 
 @Component({
-  selector: 'tb-snmp-device-profile-transport-configuration',
-  templateUrl: './snmp-device-profile-transport-configuration.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => SnmpDeviceProfileTransportConfigurationComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => SnmpDeviceProfileTransportConfigurationComponent),
-      multi: true
-    }]
+    selector: 'tb-snmp-device-profile-transport-configuration',
+    templateUrl: './snmp-device-profile-transport-configuration.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => SnmpDeviceProfileTransportConfigurationComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => SnmpDeviceProfileTransportConfigurationComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class SnmpDeviceProfileTransportConfigurationComponent implements OnInit, OnDestroy, ControlValueAccessor, Validator {
 

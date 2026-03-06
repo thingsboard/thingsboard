@@ -87,21 +87,22 @@ import { WidgetService } from '@core/http/widget.service';
 import Timeout = NodeJS.Timeout;
 
 @Component({
-  selector: 'tb-widget-config',
-  templateUrl: './widget-config.component.html',
-  styleUrls: ['./widget-config.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => WidgetConfigComponent),
-      multi: true
-    },
-    {
-      provide: NG_ASYNC_VALIDATORS,
-      useExisting: forwardRef(() => WidgetConfigComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-widget-config',
+    templateUrl: './widget-config.component.html',
+    styleUrls: ['./widget-config.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => WidgetConfigComponent),
+            multi: true
+        },
+        {
+            provide: NG_ASYNC_VALIDATORS,
+            useExisting: forwardRef(() => WidgetConfigComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class WidgetConfigComponent extends PageComponent implements OnInit, OnDestroy, ControlValueAccessor, AsyncValidator {
 

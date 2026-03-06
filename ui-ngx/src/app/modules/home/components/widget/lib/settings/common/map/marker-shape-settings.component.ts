@@ -53,16 +53,17 @@ import { MapSettingsContext } from '@home/components/widget/lib/settings/common/
 import { DatasourceType } from '@shared/models/widget.models';
 
 @Component({
-  selector: 'tb-marker-shape-settings',
-  templateUrl: './marker-shape-settings.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => MarkerShapeSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-marker-shape-settings',
+    templateUrl: './marker-shape-settings.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => MarkerShapeSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class MarkerShapeSettingsComponent implements ControlValueAccessor, OnInit {
 

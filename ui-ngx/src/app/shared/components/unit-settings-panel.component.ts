@@ -24,11 +24,12 @@ import { debounceTime } from 'rxjs/operators';
 import { isUndefinedOrNull } from '@core/utils';
 
 @Component({
-  selector: 'tb-covert-unit-settings-panel',
-  templateUrl: './unit-settings-panel.component.html',
-  styleUrls: ['./unit-settings-panel.component.scss'],
-  providers: [],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-covert-unit-settings-panel',
+    templateUrl: './unit-settings-panel.component.html',
+    styleUrls: ['./unit-settings-panel.component.scss'],
+    providers: [],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class UnitSettingsPanelComponent implements OnInit {
 

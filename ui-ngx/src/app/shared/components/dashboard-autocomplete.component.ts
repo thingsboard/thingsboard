@@ -42,14 +42,15 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 
 @Component({
-  selector: 'tb-dashboard-autocomplete',
-  templateUrl: './dashboard-autocomplete.component.html',
-  styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => DashboardAutocompleteComponent),
-    multi: true
-  }]
+    selector: 'tb-dashboard-autocomplete',
+    templateUrl: './dashboard-autocomplete.component.html',
+    styleUrls: [],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DashboardAutocompleteComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class DashboardAutocompleteComponent implements ControlValueAccessor, OnInit {
 

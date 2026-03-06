@@ -58,11 +58,12 @@ export interface NodeScriptTestDialogData {
 
 // @dynamic
 @Component({
-  selector: 'tb-node-script-test-dialog',
-  templateUrl: './node-script-test-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: NodeScriptTestDialogComponent}],
-  styleUrls: ['./node-script-test-dialog.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-node-script-test-dialog',
+    templateUrl: './node-script-test-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: NodeScriptTestDialogComponent }],
+    styleUrls: ['./node-script-test-dialog.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class NodeScriptTestDialogComponent extends DialogComponent<NodeScriptTestDialogComponent,
   string> implements OnInit, AfterViewInit, ErrorStateMatcher {

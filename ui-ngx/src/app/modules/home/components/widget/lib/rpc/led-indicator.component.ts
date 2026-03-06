@@ -46,9 +46,10 @@ interface LedIndicatorSettings {
 }
 
 @Component({
-  selector: 'tb-led-indicator',
-  templateUrl: './led-indicator.component.html',
-  styleUrls: ['./led-indicator.component.scss']
+    selector: 'tb-led-indicator',
+    templateUrl: './led-indicator.component.html',
+    styleUrls: ['./led-indicator.component.scss'],
+    standalone: false
 })
 export class LedIndicatorComponent extends PageComponent implements OnInit, OnDestroy {
 

@@ -140,45 +140,63 @@ public class FwLwM2MDevice extends BaseInstanceEnabler implements Destroyable {
     }
 
     private void startDownloading() {
+        long delay = 500;
+        // Step 1: state = 1
         scheduler.schedule(() -> {
-            try {
-                state.set(1);
-                fireResourceChange(3);
-                Thread.sleep(100);
-                state.set(2);
-                fireResourceChange(3);
-            } catch (Exception e) {
-            }
-        }, 100, TimeUnit.MILLISECONDS);
+            state.set(1);               // DOWNLOADING
+            fireResourceChange(3);
+            log.info("Downloading started: state=[{}]", state.get());
+        }, delay, TimeUnit.MILLISECONDS); // 500 ms
+
+        delay += 1000; // next step after 100 ms
+
+        // Step 2: state = 2
+        scheduler.schedule(() -> {
+            state.set(2);               // DOWNLOADED
+            fireResourceChange(3);
+            log.info("Downloading in progress: state=[{}]", state.get());
+        }, delay, TimeUnit.MILLISECONDS);   // 1500 ms
     }
+
 
     private void startUpdating(LwM2mServer identity) {
         scheduler.schedule(() -> {
             try {
+                // Update state + result
                 state.set(3);
                 fireResourceChange(3);
-                Thread.sleep(100);
+
                 updateResult.set(1);
                 fireResourceChange(5);
-                this.pkgName = TITLE;
-                fireResourceChange(6);
-                this.pkgVersion = TARGET_FW_VERSION;
-                fireResourceChange(7);
+
                 if (this.leshanClient != null) {
                     log.info("Stop/reboot LwM2M client {}", this.leshanClient.getEndpoint(identity));
                     this.leshanClient.stop(false);
+
                     log.info("Start after update fw LwM2M client {}", this.leshanClient.getEndpoint(identity));
                     this.leshanClient.start();
-                    this.pkgName = this.pkgNameDef;
-                    this.pkgVersion = this.pkgVersionDef;
+
+                    // Delayed reset pkgName/pkgVersion, after reboot + registration
+                    // If a client stops, ThingsBoard can mark it as Offline.
+                    // A new registration may take a few seconds.
+                    scheduler.schedule(() -> {
+                        this.pkgName = this.pkgNameDef;
+                        fireResourceChange(6);
+
+                        this.pkgVersion = this.pkgVersionDef;
+                        fireResourceChange(7);
+
+                        log.info("FW resources updating to new values: pkgName=[{}], pkgVersion=[{}]",
+                                this.pkgName, this.pkgVersion);
+                    }, 5, TimeUnit.SECONDS); // 5 sec — safe timing
                 }
             } catch (Exception e) {
+                log.error("Error during firmware update", e);
             }
-        }, 100, TimeUnit.MILLISECONDS);
+        }, 0, TimeUnit.SECONDS); // start immediately, without further delay
     }
 
     protected void setLeshanClient(LeshanClient leshanClient) {
         this.leshanClient = leshanClient;
     }
-
 }

@@ -31,9 +31,10 @@ import { getDataKey } from '@shared/models/widget-settings.models';
 import { getSourceTbUnitSymbol, TbUnit } from '@shared/models/unit.models';
 
 @Component({
-  selector: 'tb-wind-speed-direction-widget-settings',
-  templateUrl: './wind-speed-direction-widget-settings.component.html',
-  styleUrls: []
+    selector: 'tb-wind-speed-direction-widget-settings',
+    templateUrl: './wind-speed-direction-widget-settings.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class WindSpeedDirectionWidgetSettingsComponent extends WidgetSettingsComponent {
 

@@ -31,21 +31,22 @@ import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 
 @Component({
-  selector: 'tb-datapoints-limit',
-  templateUrl: './datapoints-limit.component.html',
-  styleUrls: ['./datapoints-limit.component.scss'],
-  providers: [
-    {
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => DatapointsLimitComponent),
-    multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => DatapointsLimitComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-datapoints-limit',
+    templateUrl: './datapoints-limit.component.html',
+    styleUrls: ['./datapoints-limit.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DatapointsLimitComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => DatapointsLimitComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class DatapointsLimitComponent implements ControlValueAccessor, Validator, OnInit, OnDestroy {
 

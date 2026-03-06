@@ -45,9 +45,10 @@ import { EntityAutocompleteComponent } from '@shared/components/entity/entity-au
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 
 @Component({
-  selector: 'tb-calculated-field-argument-panel',
-  templateUrl: './calculated-field-argument-panel.component.html',
-  styleUrls: ['./calculated-field-argument-panel.component.scss']
+    selector: 'tb-calculated-field-argument-panel',
+    templateUrl: './calculated-field-argument-panel.component.html',
+    styleUrls: ['./calculated-field-argument-panel.component.scss'],
+    standalone: false
 })
 export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewInit {
 

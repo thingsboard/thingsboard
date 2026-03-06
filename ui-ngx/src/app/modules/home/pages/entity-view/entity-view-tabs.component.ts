@@ -21,9 +21,10 @@ import { EntityTabsComponent } from '../../components/entity/entity-tabs.compone
 import { EntityViewInfo } from '@app/shared/models/entity-view.models';
 
 @Component({
-  selector: 'tb-entity-view-tabs',
-  templateUrl: './entity-view-tabs.component.html',
-  styleUrls: []
+    selector: 'tb-entity-view-tabs',
+    templateUrl: './entity-view-tabs.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class EntityViewTabsComponent extends EntityTabsComponent<EntityViewInfo> {
 

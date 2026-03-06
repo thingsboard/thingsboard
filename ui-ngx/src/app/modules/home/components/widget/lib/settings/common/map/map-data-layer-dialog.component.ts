@@ -56,10 +56,11 @@ export interface MapDataLayerDialogData {
 }
 
 @Component({
-  selector: 'tb-map-data-layer-dialog',
-  templateUrl: './map-data-layer-dialog.component.html',
-  styleUrls: ['./map-data-layer-dialog.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-map-data-layer-dialog',
+    templateUrl: './map-data-layer-dialog.component.html',
+    styleUrls: ['./map-data-layer-dialog.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDialogComponent, MapDataLayerSettings> {
 

@@ -34,7 +34,7 @@
     <button mat-raised-button color="primary"
             type="button"
             (click)="addServerConfig()">
-      <span>{{ (this.isBootstrapServerNotAvailable() ? 'device-profile.lwm2m.add-lwm2m-server-config' :
+      <span>{{ (isBootstrapServerNotAvailable() ? 'device-profile.lwm2m.add-lwm2m-server-config' :
         'device-profile.lwm2m.add-server-config') | translate }}</span>
     </button>
   </div>

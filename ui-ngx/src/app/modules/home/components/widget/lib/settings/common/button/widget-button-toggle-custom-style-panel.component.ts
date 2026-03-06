@@ -48,11 +48,12 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-widget-button-toggle-custom-style-panel',
-  templateUrl: './widget-button-toggle-custom-style-panel.component.html',
-  providers: [],
-  styleUrls: ['./widget-button-toggle-custom-style-panel.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-widget-button-toggle-custom-style-panel',
+    templateUrl: './widget-button-toggle-custom-style-panel.component.html',
+    providers: [],
+    styleUrls: ['./widget-button-toggle-custom-style-panel.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class WidgetButtonToggleCustomStylePanelComponent extends PageComponent implements OnInit {
 

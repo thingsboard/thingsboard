@@ -66,21 +66,22 @@ const stateDisplayTypesTranslations = new Map<stateDisplayType, string>(
 );
 
 @Component({
-  selector: 'tb-widget-action',
-  templateUrl: './widget-action.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => WidgetActionComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => WidgetActionComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-widget-action',
+    templateUrl: './widget-action.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => WidgetActionComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => WidgetActionComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class WidgetActionComponent implements ControlValueAccessor, OnInit, Validator {
 

@@ -54,10 +54,10 @@
     }
 
     &.tb-error {
-      color: var(--mdc-theme-error, #f44336);
+      color: var(--mat-theme-error, #f44336);
 
       &.tb-required::after {
-        color: var(--mdc-theme-error, #f44336);
+        color: var(--mat-theme-error, #f44336);
       }
     }
   }
