@@ -34,6 +34,7 @@ import org.springframework.web.socket.CloseStatus;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.dao.nosql.ResultSetSizeLimitExceededException;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
@@ -242,7 +243,10 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
 
                     @Override
                     public void onFailure(Throwable t) {
-                        log.warn("[{}][{}] Failed to process command", finalCtx.getSessionId(), finalCtx.getCmdId());
+                        log.warn("[{}][{}] Failed to process command", finalCtx.getSessionId(), finalCtx.getCmdId(), t);
+                        if (t instanceof ResultSetSizeLimitExceededException) {
+                            finalCtx.sendWsMsg(new EntityDataUpdate(finalCtx.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR.getCode(), t.getMessage()));
+                        }
                     }
                 }, wsCallBackExecutor);
             }
@@ -258,7 +262,18 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                     handleLatestCmd(ctx, cmd.getLatestCmd());
                 }
                 if (cmd.getTsCmd() != null) {
-                    handleTimeSeriesCmd(ctx, cmd.getTsCmd());
+                    Futures.addCallback(handleTimeSeriesCmd(ctx, cmd.getTsCmd()), new FutureCallback<>() {
+                        @Override
+                        public void onSuccess(TbEntityDataSubCtx result) {}
+
+                        @Override
+                        public void onFailure(Throwable t) {
+                            log.warn("[{}][{}] Failed to process timeseries command", ctx.getSessionId(), ctx.getCmdId(), t);
+                            if (t instanceof ResultSetSizeLimitExceededException) {
+                                ctx.sendWsMsg(new EntityDataUpdate(ctx.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR.getCode(), t.getMessage()));
+                            }
+                        }
+                    }, wsCallBackExecutor);
                 }
             } else {
                 checkAndSendInitialData(ctx);
