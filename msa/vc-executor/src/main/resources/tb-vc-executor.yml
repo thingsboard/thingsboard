@@ -28,7 +28,8 @@ server:
   # Server bind port (has no effect if web-environment is disabled).
   port: "${HTTP_BIND_PORT:8086}"
 
-# Zookeeper connection parameters. Used for service discovery.
+# Zookeeper connection parameters
+# Controls ZooKeeper-based service discovery and cluster coordination for microservice deployments.
 zk:
   # Enable/disable zookeeper discovery service.
   enabled: "${ZOOKEEPER_ENABLED:true}"
