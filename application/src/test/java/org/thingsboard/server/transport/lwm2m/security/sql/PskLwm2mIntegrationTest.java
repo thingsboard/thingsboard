@@ -161,13 +161,26 @@ public class PskLwm2mIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
         clientCredentials.setKey(keyPsk);
         Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsSecure(PSK, NONE));
         DeviceProfile deviceProfile = createLwm2mDeviceProfile("profileFor" + clientEndpoint, transportConfiguration);
+
+        // Wait for the profile to become available. This synchronizes asynchronous processes  and prevents TenantNotFoundException during tearDown.
+        org.awaitility.Awaitility.await()
+                .atMost(10, java.util.concurrent.TimeUnit.SECONDS)
+                .pollInterval(200, java.util.concurrent.TimeUnit.MILLISECONDS)
+                .until(() -> {
+                    try {
+                        String url = "/api/deviceProfile/" + deviceProfile.getId().getId().toString();
+                        return doGet(url, DeviceProfile.class) != null;
+                    } catch (Exception e) {
+                        return false;
+                    }
+                });
+
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsSecure(clientCredentials, null, null, PSK, false);
         MvcResult result = createDeviceWithMvcResult(deviceCredentials, clientEndpoint, deviceProfile.getId());
         assertEquals(HttpServletResponse.SC_BAD_REQUEST, result.getResponse().getStatus());
         String msgExpected = "Key must be HexDec format: 32, 64, 128 characters!";
         assertTrue(result.getResponse().getContentAsString().contains(msgExpected));
     }
-
 
     // Bootstrap + Lwm2m
     @Test

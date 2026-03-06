@@ -33,7 +33,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.common.util.ListeningExecutor;
-import org.thingsboard.rule.engine.TestDbCallbackExecutor;
+import org.thingsboard.common.util.DirectListeningExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.aws.sqs.TbSqsNodeConfiguration.QueueType;
@@ -63,7 +63,7 @@ import static org.mockito.BDDMockito.verifyNoMoreInteractions;
 class TbSqsNodeTest {
 
     private final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("764de824-929f-4114-95ea-0ea0401ffa3d"));
-    private final ListeningExecutor executor = new TestDbCallbackExecutor();
+    private final ListeningExecutor executor = DirectListeningExecutor.INSTANCE;
 
     private final String messageId = "msgId-1d186a16-80c7-44b3-a245-a1fc835f20c7";
     private final String requestId = "reqId-bef0799b-dde9-4aa0-855b-86bbafaeaf31";

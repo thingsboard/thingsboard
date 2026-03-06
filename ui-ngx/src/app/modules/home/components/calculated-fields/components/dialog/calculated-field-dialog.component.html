@@ -38,8 +38,6 @@
               <mat-error>
                 @if (fieldFormGroup.get('name').hasError('required')) {
                   {{ 'common.hint.title-required' | translate }}
-                } @else if (fieldFormGroup.get('name').hasError('pattern')) {
-                  {{ 'common.hint.title-pattern' | translate }}
                 } @else if (fieldFormGroup.get('name').hasError('maxlength')) {
                   {{ 'common.hint.title-max-length' | translate }}
                 }
@@ -89,8 +87,6 @@
               <mat-error>
                 @if (configFormGroup.get('expressionSIMPLE').hasError('required')) {
                   {{ 'calculated-fields.hint.expression-required' | translate }}
-                } @else if (configFormGroup.get('expressionSIMPLE').hasError('pattern')) {
-                  {{ 'calculated-fields.hint.expression-invalid' | translate }}
                 } @else if (configFormGroup.get('expressionSIMPLE').hasError('maxLength')) {
                   {{ 'calculated-fields.hint.expression-max-length' | translate }}
                 }
@@ -173,8 +169,6 @@
                   <mat-error>
                     @if (outputFormGroup.get('name').hasError('required')) {
                       {{ 'common.hint.key-required' | translate }}
-                    } @else if (outputFormGroup.get('name').hasError('pattern')) {
-                      {{ 'common.hint.key-pattern' | translate }}
                     } @else if (outputFormGroup.get('name').hasError('maxlength')) {
                       {{ 'common.hint.key-max-length' | translate }}
                     }

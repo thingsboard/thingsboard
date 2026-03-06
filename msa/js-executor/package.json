@@ -1,7 +1,7 @@
 {
   "name": "thingsboard-js-executor",
   "private": true,
-  "version": "4.2.1.3",
+  "version": "4.2.2",
   "description": "ThingsBoard JavaScript Executor Microservice",
   "main": "server.ts",
   "bin": "server.js",
@@ -40,6 +40,9 @@
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
     "typescript": "5.9.2"
+  },
+  "resolutions": {
+    "@yao-pkg/pkg/tar": ">=7.5.8"
   },
   "pkg": {
     "assets": [

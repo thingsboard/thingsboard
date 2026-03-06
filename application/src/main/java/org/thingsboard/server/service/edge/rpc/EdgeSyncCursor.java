@@ -19,6 +19,7 @@ import lombok.Getter;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
 import org.thingsboard.server.service.edge.rpc.fetch.AdminSettingsEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.AssetProfilesEdgeEventFetcher;
@@ -62,7 +63,8 @@ public class EdgeSyncCursor {
             fetchers.add(new TenantEdgeEventFetcher(ctx.getTenantService()));
             fetchers.add(new QueuesEdgeEventFetcher(ctx.getQueueService()));
             fetchers.add(new RuleChainsEdgeEventFetcher(ctx.getRuleChainService()));
-            fetchers.add(new AdminSettingsEdgeEventFetcher(ctx.getAdminSettingsService()));
+            fetchers.add(new AdminSettingsEdgeEventFetcher(ctx.getAdminSettingsService(), TenantId.SYS_TENANT_ID));
+            fetchers.add(new AdminSettingsEdgeEventFetcher(ctx.getAdminSettingsService(), edge.getTenantId()));
             fetchers.add(new TenantAdminUsersEdgeEventFetcher(ctx.getUserService()));
         }
         Customer publicCustomer = ctx.getCustomerService().findPublicCustomer(edge.getTenantId());
