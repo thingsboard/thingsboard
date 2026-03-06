@@ -20,6 +20,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.rule.RuleChainDetails;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.ExportableEntityDao;
@@ -84,5 +85,9 @@ public interface RuleChainDao extends Dao<RuleChain>, TenantEntityDao<RuleChain>
     Collection<RuleChain> findByTenantIdAndTypeAndName(TenantId tenantId, RuleChainType type, String name);
 
     List<RuleChain> findRuleChainsByTenantIdAndIds(UUID tenantId, List<UUID> ruleChainIds);
+
+    RuleChainDetails findDetailsById(UUID id);
+
+    RuleChainDetails saveDetails(RuleChainDetails ruleChainDetails);
 
 }

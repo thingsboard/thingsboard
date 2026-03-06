@@ -29,8 +29,10 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.rule.RuleChainDetails;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.model.sql.RuleChainDetailsEntity;
 import org.thingsboard.server.dao.model.sql.RuleChainEntity;
 import org.thingsboard.server.dao.rule.RuleChainDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
@@ -48,6 +50,9 @@ public class JpaRuleChainDao extends JpaAbstractDao<RuleChainEntity, RuleChain> 
 
     @Autowired
     private RuleChainRepository ruleChainRepository;
+
+    @Autowired
+    private RuleChainDetailsRepository ruleChainDetailsRepository;
 
     @Override
     protected Class<RuleChainEntity> getEntityClass() {
@@ -161,6 +166,16 @@ public class JpaRuleChainDao extends JpaAbstractDao<RuleChainEntity, RuleChain> 
     @Override
     public List<RuleChainFields> findNextBatch(UUID id, int batchSize) {
         return ruleChainRepository.findNextBatch(id, Limit.of(batchSize));
+    }
+
+    @Override
+    public RuleChainDetails findDetailsById(UUID id) {
+        return DaoUtil.getData(ruleChainDetailsRepository.findById(id));
+    }
+
+    @Override
+    public RuleChainDetails saveDetails(RuleChainDetails ruleChainDetails) {
+        return DaoUtil.getData(ruleChainDetailsRepository.save(new RuleChainDetailsEntity(ruleChainDetails)));
     }
 
     @Override
