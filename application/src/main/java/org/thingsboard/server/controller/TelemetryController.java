@@ -608,12 +608,13 @@ public class TelemetryController extends BaseController {
 
     @ApiOperation(value = "Delete entity attributes (deleteEntityAttributes)",
             notes = "Delete entity attributes using provided Entity Id, scope and a list of keys. " +
+                    "This operation is idempotent: keys that do not exist are silently ignored and the response is still 200 OK. " +
                     INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @Parameters({
             @Parameter(name = "key", description = "Repeatable key query parameter (alternative to comma-separated 'keys')", in = ParameterIn.QUERY, required = false, array = @ArraySchema(schema = @Schema(type = "string")))
     })
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Entity attributes was removed for the selected keys in the request. " +
+            @ApiResponse(responseCode = "200", description = "Entity attributes were removed for the selected keys in the request (keys that did not exist are silently ignored). " +
                     "Platform creates an audit log event about entity attributes removal with action type 'ATTRIBUTES_DELETED'."),
             @ApiResponse(responseCode = "400", description = "Platform returns a bad request in case if keys or scope are not specified."),
             @ApiResponse(responseCode = "401", description = "User is not authorized to delete entity attributes for selected entity. Most likely, User belongs to different Customer or Tenant."),

@@ -140,7 +140,12 @@ public class Customer extends ContactBased<CustomerId> implements HasTenantId, E
         return super.getEmail();
     }
 
-    @Schema(description = "Additional parameters of the device",implementation = com.fasterxml.jackson.databind.JsonNode.class)
+    @Schema(description = "Additional parameters of the customer. " +
+            "May include: 'description' (string), 'homeDashboardId' (string, UUID of the home dashboard), " +
+            "'homeDashboardHideToolbar' (boolean, whether to hide the dashboard toolbar), " +
+            "'isPublic' (boolean, whether this is a public customer).",
+            implementation = com.fasterxml.jackson.databind.JsonNode.class,
+            example = "{\"description\":\"Regional customer\",\"homeDashboardId\":\"784f394c-42b6-435a-983c-b7beff2784f9\",\"homeDashboardHideToolbar\":false,\"isPublic\":false}")
     @Override
     public JsonNode getAdditionalInfo() {
         return super.getAdditionalInfo();
