@@ -53,6 +53,8 @@ public class TbTestWebSocketClient extends WebSocketClient {
 
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(30);
 
+    private final CountDownLatch closeLatch = new CountDownLatch(1);
+
     @Getter
     private volatile String lastMsg;
     private volatile CountDownLatch reply;
@@ -98,6 +100,16 @@ public class TbTestWebSocketClient extends WebSocketClient {
     @Override
     public void onClose(int i, String s, boolean b) {
         log.info("CLOSED.");
+        closeLatch.countDown();
+    }
+
+    public boolean waitForClose() {
+        try {
+            return closeLatch.await(TIMEOUT, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            log.warn("Failed to await close", e);
+            return false;
+        }
     }
 
     @Override
