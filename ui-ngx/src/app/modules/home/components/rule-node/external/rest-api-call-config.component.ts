@@ -49,6 +49,7 @@ export class RestApiCallConfigComponent extends RuleNodeConfigurationComponent {
       useSimpleClientHttpFactory: [configuration ? configuration.useSimpleClientHttpFactory : false, []],
       parseToPlainText: [configuration ? configuration.parseToPlainText : false, []],
       ignoreRequestBody: [configuration ? configuration.ignoreRequestBody : false, []],
+      requestBodyTemplate: [configuration ? configuration.requestBodyTemplate : null, []],
       enableProxy: [configuration ? configuration.enableProxy : false, []],
       useSystemProxyProperties: [configuration ? configuration.enableProxy : false, []],
       proxyScheme: [configuration ? configuration.proxyHost : null, []],

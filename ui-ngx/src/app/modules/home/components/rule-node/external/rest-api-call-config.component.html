@@ -45,6 +45,19 @@
   <mat-checkbox formControlName="ignoreRequestBody">
     {{ 'rule-node-config.ignore-request-body' | translate }}
   </mat-checkbox>
+  <section *ngIf="!restApiCallConfigForm.get('ignoreRequestBody').value">
+    <label translate class="tb-title">rule-node-config.request-body-template</label>
+    <div class="tb-hint" [innerHTML]="'rule-node-config.request-body-template-hint' | translate | safe: 'html'"></div>
+    <mat-form-field class="mat-block" subscriptSizing="dynamic">
+      <mat-label translate>rule-node-config.request-body-template</mat-label>
+      <textarea matInput
+                formControlName="requestBodyTemplate"
+                class="tb-enable-vertical-resize"
+                cdkTextareaAutosize
+                cdkAutosizeMinRows="3"></textarea>
+      <mat-hint translate>rule-node-config.request-body-template-empty-hint</mat-hint>
+    </mat-form-field>
+  </section>
   <div *ngIf="restApiCallConfigForm.get('enableProxy').value">
     <mat-checkbox formControlName="useSystemProxyProperties">
       {{ 'rule-node-config.use-system-proxy-properties' | translate }}

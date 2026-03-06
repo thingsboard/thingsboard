@@ -36,7 +36,9 @@ import java.util.List;
         version = 3,
         nodeDescription = "Invoke REST API calls to external REST server",
         nodeDetails = "Will invoke REST API call <code>GET | POST | PUT | DELETE</code> to external REST server. " +
-                "Message payload added into Request body. Configured attributes can be added into Headers from Message Metadata." +
+                "Message payload is used as the request body by default. " +
+                "Optionally, a request body template can be configured with <code>${metadataKey}</code> and <code>$[messageKey]</code> placeholders. " +
+                "Configured attributes can be added into Headers from Message Metadata." +
                 " Outbound message will contain response fields " +
                 "(<code>status</code>, <code>statusCode</code>, <code>statusReason</code> and response <code>headers</code>) in the Message Metadata." +
                 " Response body saved in outbound Message payload. " +
