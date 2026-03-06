@@ -4374,6 +4374,7 @@
         "app-id-pattern": "Invalid format App Site Association ID",
         "app-store-link": "App Store link",
         "app-store-link-required": "App Store link is required",
+        "store-link-not-allowed":"Store link is not available for these type of Application status",
         "application-details": "Application details",
         "application-package": "Application Package",
         "application-secret": "Application Secret",

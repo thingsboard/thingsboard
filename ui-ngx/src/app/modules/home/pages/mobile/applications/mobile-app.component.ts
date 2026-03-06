@@ -20,7 +20,15 @@ import { AppState } from '@core/core.state';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngrx/store';
-import { FormBuilder, FormGroup, UntypedFormControl, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  FormGroup,
+  UntypedFormControl,
+  ValidationErrors,
+  ValidatorFn,
+  Validators
+} from '@angular/forms';
 import { randomAlphanumeric } from '@core/utils';
 import { EntityType } from '@shared/models/entity-type.models';
 import { MobileApp, MobileAppStatus, mobileAppStatusTranslations } from '@shared/models/mobile-app.models';
@@ -78,7 +86,7 @@ export class MobileAppComponent extends EntityComponent<MobileApp> {
       }),
       storeInfo: this.fb.group({
         storeLink: [entity?.storeInfo?.storeLink ? entity.storeInfo.storeLink : '',
-          Validators.pattern(/^https?:\/\/play\.google\.com\/store\/apps\/details\?id=[a-zA-Z0-9._]+(?:&[a-zA-Z0-9._-]+=[a-zA-Z0-9._%-]*)*$/)],
+          [Validators.pattern(/^https?:\/\/play\.google\.com\/store\/apps\/details\?id=[a-zA-Z0-9._]+(?:&[a-zA-Z0-9._-]+=[a-zA-Z0-9._%-]*)*$/), this.storeLinkStatusValidator()]],
         sha256CertFingerprints: [entity?.storeInfo?.sha256CertFingerprints ? entity.storeInfo.sha256CertFingerprints : '',
           Validators.pattern(/^[A-Fa-f0-9]{2}(:[A-Fa-f0-9]{2}){31}$/)],
         appId: [entity?.storeInfo?.appId ? entity.storeInfo.appId : '', Validators.pattern(/^[A-Z0-9]{10}\.[a-zA-Z0-9]+(\.[a-zA-Z0-9]+)*$/)],
@@ -91,11 +99,11 @@ export class MobileAppComponent extends EntityComponent<MobileApp> {
       if (value === PlatformType.ANDROID) {
         form.get('storeInfo.sha256CertFingerprints').enable({emitEvent: false});
         form.get('storeInfo.appId').disable({emitEvent: false});
-        form.get('storeInfo.storeLink').setValidators(Validators.pattern(/^https?:\/\/play\.google\.com\/store\/apps\/details\?id=[a-zA-Z0-9._]+(?:&[a-zA-Z0-9._-]+=[a-zA-Z0-9._%-]*)*$/));
+        form.get('storeInfo.storeLink').setValidators([Validators.pattern(/^https?:\/\/play\.google\.com\/store\/apps\/details\?id=[a-zA-Z0-9._]+(?:&[a-zA-Z0-9._-]+=[a-zA-Z0-9._%-]*)*$/), this.storeLinkStatusValidator()]);
       } else if (value === PlatformType.IOS) {
         form.get('storeInfo.sha256CertFingerprints').disable({emitEvent: false});
         form.get('storeInfo.appId').enable({emitEvent: false});
-        form.get('storeInfo.storeLink').setValidators(Validators.pattern(/^https?:\/\/apps\.apple\.com\/[a-z]{2}\/app\/[\w-]+\/id\d{7,10}(?:\?[^\s]*)?$/));
+        form.get('storeInfo.storeLink').setValidators([Validators.pattern(/^https?:\/\/apps\.apple\.com\/[a-z]{2}\/app\/[\w-]+\/id\d{7,10}(?:\?[^\s]*)?$/), this.storeLinkStatusValidator()]);
       }
       form.get('storeInfo.storeLink').setValue('', {emitEvent: false});
     });
@@ -109,7 +117,7 @@ export class MobileAppComponent extends EntityComponent<MobileApp> {
           .addValidators(Validators.required);
         form.get('storeInfo.appId').addValidators(Validators.required);
       } else {
-        form.get('storeInfo.storeLink').clearValidators();
+        form.get('storeInfo.storeLink').removeValidators(Validators.required);
         form.get('storeInfo.sha256CertFingerprints').removeValidators(Validators.required);
         form.get('storeInfo.appId').removeValidators(Validators.required);
       }
@@ -206,5 +214,15 @@ export class MobileAppComponent extends EntityComponent<MobileApp> {
     } catch (e) {
       return {base64: true};
     }
+  }
+
+  private storeLinkStatusValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const status = control.parent?.parent?.get('status')?.value;
+      if (control.value && (status === MobileAppStatus.SUSPENDED || status === MobileAppStatus.DEPRECATED)) {
+        return { invalidStoreLinkForStatus: true };
+      }
+      return null;
+    };
   }
 }
