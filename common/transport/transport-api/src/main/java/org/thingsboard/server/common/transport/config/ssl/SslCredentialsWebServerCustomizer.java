@@ -50,7 +50,7 @@ public class SslCredentialsWebServerCustomizer implements WebServerFactoryCustom
     private SslCredentialsConfig httpServerSslCredentialsConfig;
 
     @Autowired
-    SslBundles sslBundles;
+    private SslBundles sslBundles;
 
     public SslCredentialsWebServerCustomizer(ServerProperties serverProperties) {
         this.serverProperties = serverProperties;

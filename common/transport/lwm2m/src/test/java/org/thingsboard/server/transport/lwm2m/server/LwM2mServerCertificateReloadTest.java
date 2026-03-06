@@ -38,6 +38,8 @@ import org.thingsboard.server.transport.lwm2m.server.store.TbSecurityStore;
 import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -125,7 +127,7 @@ public class LwM2mServerCertificateReloadTest {
     }
 
     @Test
-    public void givenReloadCallback_whenInvoked_thenShouldTriggerServerRecreation() {
+    public void givenReloadCallback_whenNewServerCreationFails_thenOldServerIsPreserved() {
         lwm2mTransportService.afterSingletonsInstantiated();
 
         ArgumentCaptor<Runnable> callbackCaptor = ArgumentCaptor.forClass(Runnable.class);
@@ -134,11 +136,17 @@ public class LwM2mServerCertificateReloadTest {
 
         ReflectionTestUtils.setField(lwm2mTransportService, "server", mockLeshanServer);
 
-        assertThat(reloadCallback).isNotNull();
+        // getLhServer() will fail because Leshan dependencies are not fully mocked.
+        // With create-then-swap, the old server should NOT be destroyed if the new one fails.
+        reloadCallback.run();
+
+        verify(mockLeshanServer, never()).destroy();
+        // Old server should still be the active one
+        assertThat(ReflectionTestUtils.getField(lwm2mTransportService, "server")).isSameAs(mockLeshanServer);
     }
 
     @Test
-    public void givenServerWithListeners_whenRecreate_thenShouldRemoveOldListeners() {
+    public void givenServerWithListeners_whenNewServerCreationFails_thenListenersArePreserved() {
         lwm2mTransportService.afterSingletonsInstantiated();
 
         ArgumentCaptor<Runnable> callbackCaptor = ArgumentCaptor.forClass(Runnable.class);
@@ -149,25 +157,21 @@ public class LwM2mServerCertificateReloadTest {
         LwM2mServerListener serverListener = new LwM2mServerListener(mockHandler);
         ReflectionTestUtils.setField(lwm2mTransportService, "serverListener", serverListener);
 
-        Runnable reloadCallback = callbackCaptor.getValue();
-        assertThat(reloadCallback).isNotNull();
+        // Invoke the callback — new server creation will fail, old listeners should stay
+        callbackCaptor.getValue().run();
+
+        verify(mockRegistrationService, never()).removeListener(any());
     }
 
     @Test
-    public void givenMultipleReloadCallbacks_whenInvoked_thenShouldHandleGracefully() {
+    public void givenMultipleReloadCallbacks_whenInvoked_thenShouldRegisterExactlyOne() {
         lwm2mTransportService.afterSingletonsInstantiated();
 
-        ArgumentCaptor<Runnable> callbackCaptor = ArgumentCaptor.forClass(Runnable.class);
-        verify(mockConfig, times(1)).registerServerReloadCallback(callbackCaptor.capture());
-
-        Runnable reloadCallback = callbackCaptor.getValue();
-        ReflectionTestUtils.setField(lwm2mTransportService, "server", mockLeshanServer);
-
-        assertThat(reloadCallback).isNotNull();
+        verify(mockConfig, times(1)).registerServerReloadCallback(any());
     }
 
     @Test
-    public void givenCertificateReload_whenServerNull_thenShouldHandleGracefully() {
+    public void givenCertificateReload_whenServerNull_thenShouldNotThrow() {
         lwm2mTransportService.afterSingletonsInstantiated();
 
         ArgumentCaptor<Runnable> callbackCaptor = ArgumentCaptor.forClass(Runnable.class);
@@ -175,9 +179,8 @@ public class LwM2mServerCertificateReloadTest {
 
         ReflectionTestUtils.setField(lwm2mTransportService, "server", null);
 
-        Runnable reloadCallback = callbackCaptor.getValue();
-
-        assertThat(reloadCallback).isNotNull();
+        // Should not throw - callback catches exceptions internally
+        callbackCaptor.getValue().run();
     }
 
 }

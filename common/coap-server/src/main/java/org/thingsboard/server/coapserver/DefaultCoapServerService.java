@@ -168,16 +168,8 @@ public class DefaultCoapServerService implements CoapServerService, SmartInitial
     }
 
     private synchronized void recreateDtlsEndpoint() throws IOException {
-        if (dtlsCoapEndpoint != null) {
-            log.info("Stopping old DTLS endpoint...");
-            dtlsCoapEndpoint.stop();
-            server.getEndpoints().remove(dtlsCoapEndpoint);
-            if (dtlsConnector != null) {
-                dtlsConnector.destroy();
-            }
-            dtlsCoapEndpoint.destroy();
-            log.info("Old DTLS endpoint stopped and removed.");
-        }
+        CoapEndpoint oldDtlsEndpoint = dtlsCoapEndpoint;
+        DTLSConnector oldDtlsConnector = dtlsConnector;
 
         Configuration networkConfig = createNetworkConfiguration();
 
@@ -185,6 +177,17 @@ public class DefaultCoapServerService implements CoapServerService, SmartInitial
         createDtlsEndpoint(networkConfig);
         dtlsCoapEndpoint.start();
         log.info("New DTLS endpoint started successfully.");
+
+        if (oldDtlsEndpoint != null) {
+            log.info("Stopping old DTLS endpoint...");
+            oldDtlsEndpoint.stop();
+            server.getEndpoints().remove(oldDtlsEndpoint);
+            if (oldDtlsConnector != null) {
+                oldDtlsConnector.destroy();
+            }
+            oldDtlsEndpoint.destroy();
+            log.info("Old DTLS endpoint stopped and removed.");
+        }
     }
 
 }

@@ -63,10 +63,9 @@ public class CertificateReloadManagerTest {
             reloadLatch.countDown();
         });
 
-        Thread.sleep(100); // Small delay to ensure the initial state is captured
+        Thread.sleep(100);
         Files.writeString(certFile, "-----BEGIN CERTIFICATE-----\nTEST_CERT_V2_MODIFIED\n-----END CERTIFICATE-----\n");
 
-        // Manually trigger check (since a scheduled task runs every 1 minute)
         ReflectionTestUtils.invokeMethod(certificateReloadManager, "checkCertificates");
 
         boolean reloadTriggered = reloadLatch.await(2, TimeUnit.SECONDS);
@@ -103,7 +102,7 @@ public class CertificateReloadManagerTest {
     }
 
     @Test
-    public void givenWatcherRegistered_whenFileDeleted_thenShouldHandleGracefully() throws Exception {
+    public void givenWatcherRegistered_whenFileDeleted_thenShouldNotCrash() throws Exception {
         AtomicInteger reloadCount = new AtomicInteger(0);
 
         certificateReloadManager.registerWatcher("test-cert", certFile, reloadCount::incrementAndGet);
@@ -115,6 +114,9 @@ public class CertificateReloadManagerTest {
 
         ReflectionTestUtils.invokeMethod(certificateReloadManager, "checkCertificates");
         Thread.sleep(100);
+
+        // File deletion changes checksum from real hash to "", so reload is triggered
+        assertThat(reloadCount.get()).isEqualTo(1);
     }
 
     @Test
@@ -146,7 +148,7 @@ public class CertificateReloadManagerTest {
         boolean keyReloaded = keyReloadLatch.await(2, TimeUnit.SECONDS);
 
         assertThat(keyReloaded).isTrue();
-        assertThat(certReloadLatch.getCount()).isEqualTo(1); // Cert isn't reloaded
+        assertThat(certReloadLatch.getCount()).isEqualTo(1);
     }
 
     @Test
@@ -214,7 +216,7 @@ public class CertificateReloadManagerTest {
         ReflectionTestUtils.invokeMethod(certificateReloadManager, "checkCertificates");
 
         Thread.sleep(200);
-        assertThat(reloadCount.get()).isGreaterThanOrEqualTo(1);
+        assertThat(reloadCount.get()).isEqualTo(2);
     }
 
     @Test
@@ -243,7 +245,7 @@ public class CertificateReloadManagerTest {
     }
 
     @Test
-    public void givenConcurrentChecks_whenCheckForChanges_thenShouldHandleSafely() throws Exception {
+    public void givenConcurrentChecks_whenCheckForChanges_thenShouldReloadExactlyOnce() throws Exception {
         AtomicInteger reloadCount = new AtomicInteger(0);
         CountDownLatch startLatch = new CountDownLatch(1);
         CountDownLatch doneLatch = new CountDownLatch(5);
@@ -271,7 +273,8 @@ public class CertificateReloadManagerTest {
         boolean completed = doneLatch.await(5, TimeUnit.SECONDS);
 
         assertThat(completed).isTrue();
-        assertThat(reloadCount.get()).isGreaterThanOrEqualTo(1);
+        // With atomic checkAndReload, exactly one reload should happen
+        assertThat(reloadCount.get()).isEqualTo(1);
     }
 
     @Test
@@ -290,6 +293,91 @@ public class CertificateReloadManagerTest {
 
         Thread.sleep(200);
         assertThat(reloadCount.get()).isEqualTo(0);
+    }
+
+    @Test
+    public void givenCallbackFailsRepeatedly_whenMaxFailuresReached_thenShouldStopRetrying() throws Exception {
+        AtomicInteger reloadAttempts = new AtomicInteger(0);
+
+        certificateReloadManager.registerWatcher("test-cert", certFile, () -> {
+            reloadAttempts.incrementAndGet();
+            throw new RuntimeException("Persistent failure");
+        });
+
+        Thread.sleep(100);
+        Files.writeString(certFile, "-----BEGIN CERTIFICATE-----\nBAD_CERT\n-----END CERTIFICATE-----\n");
+        Thread.sleep(100);
+
+        // Retry up to MAX_CONSECUTIVE_FAILURES (10) + a few extra to confirm it stops
+        for (int i = 0; i < 15; i++) {
+            ReflectionTestUtils.invokeMethod(certificateReloadManager, "checkCertificates");
+        }
+
+        assertThat(reloadAttempts.get()).isEqualTo(10);
+    }
+
+    @Test
+    public void givenCallbackFailedPreviously_whenFileChangesAgain_thenShouldResetAndRetry() throws Exception {
+        AtomicInteger reloadAttempts = new AtomicInteger(0);
+        AtomicInteger shouldFail = new AtomicInteger(1);
+
+        certificateReloadManager.registerWatcher("test-cert", certFile, () -> {
+            reloadAttempts.incrementAndGet();
+            if (shouldFail.get() == 1) {
+                throw new RuntimeException("Transient failure");
+            }
+        });
+
+        Thread.sleep(100);
+        Files.writeString(certFile, "-----BEGIN CERTIFICATE-----\nBAD_CERT\n-----END CERTIFICATE-----\n");
+        Thread.sleep(100);
+
+        // First attempt fails
+        ReflectionTestUtils.invokeMethod(certificateReloadManager, "checkCertificates");
+        assertThat(reloadAttempts.get()).isEqualTo(1);
+
+        // Fix the callback and change the file to new content
+        shouldFail.set(0);
+        Thread.sleep(100);
+        Files.writeString(certFile, "-----BEGIN CERTIFICATE-----\nGOOD_CERT\n-----END CERTIFICATE-----\n");
+        Thread.sleep(100);
+
+        // Should reset failure counter and succeed because file content changed
+        ReflectionTestUtils.invokeMethod(certificateReloadManager, "checkCertificates");
+        assertThat(reloadAttempts.get()).isEqualTo(2);
+    }
+
+    @Test
+    public void givenCallbackHitMaxFailures_whenFileChangesToNewContent_thenShouldResetAndRetry() throws Exception {
+        AtomicInteger reloadAttempts = new AtomicInteger(0);
+        AtomicInteger shouldFail = new AtomicInteger(1);
+
+        certificateReloadManager.registerWatcher("test-cert", certFile, () -> {
+            reloadAttempts.incrementAndGet();
+            if (shouldFail.get() == 1) {
+                throw new RuntimeException("Persistent failure");
+            }
+        });
+
+        Thread.sleep(100);
+        Files.writeString(certFile, "-----BEGIN CERTIFICATE-----\nBAD_CERT\n-----END CERTIFICATE-----\n");
+        Thread.sleep(100);
+
+        // Exhaust all retries
+        for (int i = 0; i < 15; i++) {
+            ReflectionTestUtils.invokeMethod(certificateReloadManager, "checkCertificates");
+        }
+        assertThat(reloadAttempts.get()).isEqualTo(10);
+
+        // Fix callback and change file to new content
+        shouldFail.set(0);
+        Thread.sleep(100);
+        Files.writeString(certFile, "-----BEGIN CERTIFICATE-----\nFIXED_CERT\n-----END CERTIFICATE-----\n");
+        Thread.sleep(100);
+
+        // Should detect new content, reset counter, and succeed
+        ReflectionTestUtils.invokeMethod(certificateReloadManager, "checkCertificates");
+        assertThat(reloadAttempts.get()).isEqualTo(11);
     }
 
 }

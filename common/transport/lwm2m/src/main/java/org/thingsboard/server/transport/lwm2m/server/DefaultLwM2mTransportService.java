@@ -15,11 +15,9 @@
  */
 package org.thingsboard.server.transport.lwm2m.server;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.eclipse.californium.core.CoapResource;
 import org.eclipse.californium.core.CoapServer;
 import org.eclipse.californium.elements.config.Configuration;
@@ -35,6 +33,7 @@ import org.eclipse.leshan.server.californium.endpoint.CaliforniumServerEndpoints
 import org.eclipse.leshan.server.californium.endpoint.coap.CoapServerProtocolProvider;
 import org.eclipse.leshan.server.californium.endpoint.coaps.CoapsServerProtocolProvider;
 import org.eclipse.leshan.server.registration.RegistrationStore;
+import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
@@ -231,25 +230,26 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService, Smar
     }
 
     private synchronized void recreateLwM2mServer() {
-        if (server != null) {
-            log.info("Stopping old LwM2M server...");
-
-            if (serverListener != null) {
-                server.getRegistrationService().removeListener(serverListener.registrationListener);
-                server.getPresenceService().removeListener(serverListener.presenceListener);
-                server.getObservationService().removeListener(serverListener.observationListener);
-                server.getSendService().removeListener(serverListener.sendListener);
-            }
-
-            server.destroy();
-            log.info("Old LwM2M server stopped.");
-        }
+        LeshanServer oldServer = this.server;
+        LwM2mServerListener oldListener = this.serverListener;
 
         log.info("Creating new LwM2M server with updated certificates...");
         this.server = getLhServer();
         this.context.setServer(server);
         this.startLhServer();
         log.info("New LwM2M server started successfully.");
+
+        if (oldServer != null) {
+            log.info("Stopping old LwM2M server...");
+            if (oldListener != null) {
+                oldServer.getRegistrationService().removeListener(oldListener.registrationListener);
+                oldServer.getPresenceService().removeListener(oldListener.presenceListener);
+                oldServer.getObservationService().removeListener(oldListener.observationListener);
+                oldServer.getSendService().removeListener(oldListener.sendListener);
+            }
+            oldServer.destroy();
+            log.info("Old LwM2M server stopped.");
+        }
     }
 
     @Override

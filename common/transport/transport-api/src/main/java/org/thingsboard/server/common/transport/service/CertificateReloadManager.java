@@ -44,6 +44,8 @@ import java.util.concurrent.TimeUnit;
 @TbTransportComponent
 public class CertificateReloadManager implements SmartInitializingSingleton, DisposableBean {
 
+    private static final int MAX_CONSECUTIVE_FAILURES = 10;
+
     @Value("${transport.ssl.certificate.reload.enabled:true}")
     private boolean reloadEnabled;
 
@@ -54,7 +56,7 @@ public class CertificateReloadManager implements SmartInitializingSingleton, Dis
     protected ApplicationContext applicationContext;
 
     private final Map<String, CertificateWatcher> watchers = new ConcurrentHashMap<>();
-    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("certificate-reload-manager"));
+    private volatile ScheduledExecutorService scheduler;
 
     public void registerWatcher(String name, Path certPath, Runnable reloadCallback) {
         watchers.put(name, new CertificateWatcher(certPath, reloadCallback));
@@ -64,10 +66,7 @@ public class CertificateReloadManager implements SmartInitializingSingleton, Dis
     private void checkCertificates() {
         watchers.forEach((name, watcher) -> {
             try {
-                if (watcher.hasChanged()) {
-                    log.info("Certificate change detected for: {}. Triggering reload...", name);
-                    watcher.reload();
-                }
+                watcher.checkAndReload(name);
             } catch (Exception e) {
                 log.error("Error checking certificate for {}: {}", name, e.getMessage(), e);
             }
@@ -124,7 +123,12 @@ public class CertificateReloadManager implements SmartInitializingSingleton, Dis
 
     @Override
     public void destroy() throws Exception {
-        scheduler.shutdown();
+        if (scheduler != null) {
+            scheduler.shutdown();
+            if (!scheduler.awaitTermination(5, TimeUnit.SECONDS)) {
+                scheduler.shutdownNow();
+            }
+        }
     }
 
     @Override
@@ -137,43 +141,61 @@ public class CertificateReloadManager implements SmartInitializingSingleton, Dis
 
         discoverAndRegisterSslCredentials();
 
+        scheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("certificate-reload-manager"));
         scheduler.scheduleWithFixedDelay(this::checkCertificates, checkIntervalInSeconds, checkIntervalInSeconds, TimeUnit.SECONDS);
     }
 
-    private static class CertificateWatcher {
+    static class CertificateWatcher {
         private final Path path;
         private final Runnable reloadCallback;
-        private volatile long lastModified;
-        private volatile String lastChecksum;
+        private long lastModified;
+        private String lastChecksum;
+        private int consecutiveFailures;
+        private String failedChecksum;
 
         CertificateWatcher(Path path, Runnable reloadCallback) {
             this.path = path;
             this.reloadCallback = reloadCallback;
             this.lastModified = getLastModifiedTime();
             this.lastChecksum = calculateChecksum();
+            this.consecutiveFailures = 0;
         }
 
-        synchronized boolean hasChanged() {
+        synchronized void checkAndReload(String name) {
             long currentModified = getLastModifiedTime();
-            if (currentModified != lastModified) {
-                String currentChecksum = calculateChecksum();
-                if (!currentChecksum.equals(lastChecksum)) {
-                    return true;
-                }
-                // Content unchanged, but timestamp changed - update timestamp to avoid repeated checksum calculations
-                lastModified = currentModified;
+            if (currentModified == lastModified) {
+                return;
             }
-            return false;
-        }
 
-        synchronized void reload() {
-            long newModified = getLastModifiedTime();
-            String newChecksum = calculateChecksum();
+            String currentChecksum = calculateChecksum();
+            if (currentChecksum.equals(lastChecksum)) {
+                lastModified = currentModified;
+                return;
+            }
 
-            reloadCallback.run();
+            if (!currentChecksum.equals(failedChecksum) && consecutiveFailures > 0) {
+                // File content changed since last failure — reset and retry
+                consecutiveFailures = 0;
+                failedChecksum = null;
+            }
 
-            lastModified = newModified;
-            lastChecksum = newChecksum;
+            if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+                return;
+            }
+
+            try {
+                log.info("Certificate change detected for: {}. Triggering reload...", name);
+                reloadCallback.run();
+                lastModified = currentModified;
+                lastChecksum = currentChecksum;
+                consecutiveFailures = 0;
+                failedChecksum = null;
+            } catch (Exception e) {
+                consecutiveFailures++;
+                failedChecksum = currentChecksum;
+                log.error("Failed to reload certificate for {} (attempt {}/{}): {}",
+                        name, consecutiveFailures, MAX_CONSECUTIVE_FAILURES, e.getMessage(), e);
+            }
         }
 
         private long getLastModifiedTime() {

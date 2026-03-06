@@ -180,16 +180,18 @@ public class LwM2MTransportBootstrapService implements SmartInitializingSingleto
     }
 
     private synchronized void recreateBootstrapServer() {
-        if (server != null) {
-            log.info("Stopping old LwM2M Bootstrap server...");
-            server.destroy();
-            log.info("Old LwM2M Bootstrap server stopped.");
-        }
+        LeshanBootstrapServer oldServer = this.server;
 
         log.info("Creating new LwM2M Bootstrap server with updated certificates...");
         this.server = getLhBootstrapServer();
         this.server.start();
         log.info("New LwM2M Bootstrap server started successfully.");
+
+        if (oldServer != null) {
+            log.info("Stopping old LwM2M Bootstrap server...");
+            oldServer.destroy();
+            log.info("Old LwM2M Bootstrap server stopped.");
+        }
     }
 
 }
