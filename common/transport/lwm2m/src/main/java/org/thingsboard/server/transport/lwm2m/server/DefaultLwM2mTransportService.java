@@ -234,9 +234,16 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService, Smar
         LwM2mServerListener oldListener = this.serverListener;
 
         log.info("Creating new LwM2M server with updated certificates...");
-        this.server = getLhServer();
-        this.context.setServer(server);
-        this.startLhServer();
+        LeshanServer newServer = getLhServer();
+        newServer.start();
+
+        this.server = newServer;
+        this.context.setServer(newServer);
+        this.serverListener = new LwM2mServerListener(handler);
+        newServer.getRegistrationService().addListener(this.serverListener.registrationListener);
+        newServer.getPresenceService().addListener(this.serverListener.presenceListener);
+        newServer.getObservationService().addListener(this.serverListener.observationListener);
+        newServer.getSendService().addListener(this.serverListener.sendListener);
         log.info("New LwM2M server started successfully.");
 
         if (oldServer != null) {

@@ -106,13 +106,16 @@ public class LwM2mBootstrapCertificateReloadTest {
     public void givenReloadCallback_whenNewServerCreationFails_thenOldServerIsPreserved() {
         ReflectionTestUtils.setField(bootstrapService, "server", mockBootstrapServer);
 
+        // Force getLhBootstrapServer() to fail by returning null host (causes InetSocketAddress to throw)
+        when(mockBootstrapConfig.getHost()).thenReturn(null);
+
         ArgumentCaptor<Runnable> callbackCaptor = ArgumentCaptor.forClass(Runnable.class);
         bootstrapService.afterSingletonsInstantiated();
         verify(mockBootstrapConfig).registerServerReloadCallback(callbackCaptor.capture());
 
         Runnable reloadCallback = callbackCaptor.getValue();
 
-        // getLhBootstrapServer() will fail due to incomplete Leshan mock setup.
+        // getLhBootstrapServer() will fail due to null host.
         // With create-then-swap, the old server should NOT be destroyed.
         reloadCallback.run();
 

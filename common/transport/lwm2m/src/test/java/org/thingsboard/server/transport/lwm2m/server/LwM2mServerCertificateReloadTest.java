@@ -136,7 +136,9 @@ public class LwM2mServerCertificateReloadTest {
 
         ReflectionTestUtils.setField(lwm2mTransportService, "server", mockLeshanServer);
 
-        // getLhServer() will fail because Leshan dependencies are not fully mocked.
+        // Force getLhServer() to fail by returning null host (causes InetSocketAddress to throw)
+        when(mockConfig.getHost()).thenReturn(null);
+
         // With create-then-swap, the old server should NOT be destroyed if the new one fails.
         reloadCallback.run();
 

@@ -183,8 +183,9 @@ public class LwM2MTransportBootstrapService implements SmartInitializingSingleto
         LeshanBootstrapServer oldServer = this.server;
 
         log.info("Creating new LwM2M Bootstrap server with updated certificates...");
-        this.server = getLhBootstrapServer();
-        this.server.start();
+        LeshanBootstrapServer newServer = getLhBootstrapServer();
+        newServer.start();
+        this.server = newServer;
         log.info("New LwM2M Bootstrap server started successfully.");
 
         if (oldServer != null) {
