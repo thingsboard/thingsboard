@@ -127,8 +127,8 @@ public class WebSocketApiTest extends AbstractControllerTest {
         PageData<EntityData> pageData = update.getData();
         Assert.assertNotNull(pageData);
         Assert.assertEquals(1, pageData.getData().size());
-        Assert.assertEquals(device.getId(), pageData.getData().getFirst().getEntityId());
-        Assert.assertEquals(0, pageData.getData().getFirst().getTimeseries().get("temperature").length);
+        Assert.assertEquals(device.getId(), pageData.getData().get(0).getEntityId());
+        Assert.assertEquals(0, pageData.getData().get(0).getTimeseries().get("temperature").length);
 
         TsKvEntry dataPoint1 = new BasicTsKvEntry(now - TimeUnit.MINUTES.toMillis(1), new LongDataEntry("temperature", 42L));
         TsKvEntry dataPoint2 = new BasicTsKvEntry(now - TimeUnit.MINUTES.toMillis(2), new LongDataEntry("temperature", 42L));
@@ -143,8 +143,8 @@ public class WebSocketApiTest extends AbstractControllerTest {
         List<EntityData> dataList = update.getUpdate();
         Assert.assertNotNull(dataList);
         Assert.assertEquals(1, dataList.size());
-        Assert.assertEquals(device.getId(), dataList.getFirst().getEntityId());
-        TsValue[] tsArray = dataList.getFirst().getTimeseries().get("temperature");
+        Assert.assertEquals(device.getId(), dataList.get(0).getEntityId());
+        TsValue[] tsArray = dataList.get(0).getTimeseries().get("temperature");
         Assert.assertEquals(3, tsArray.length);
         Assert.assertEquals(new TsValue(dataPoint1.getTs(), dataPoint1.getValueAsString()), tsArray[0]);
         Assert.assertEquals(new TsValue(dataPoint2.getTs(), dataPoint2.getValueAsString()), tsArray[1]);
@@ -161,7 +161,7 @@ public class WebSocketApiTest extends AbstractControllerTest {
         PageData<EntityData> pageData = update.getData();
         Assert.assertNotNull(pageData);
         Assert.assertEquals(1, pageData.getData().size());
-        Assert.assertEquals(device.getId(), pageData.getData().getFirst().getEntityId());
+        Assert.assertEquals(device.getId(), pageData.getData().get(0).getEntityId());
 
         TsKvEntry dataPoint1 = new BasicTsKvEntry(now - TimeUnit.MINUTES.toMillis(1), new LongDataEntry("temperature", 42L));
         TsKvEntry dataPoint2 = new BasicTsKvEntry(now - TimeUnit.MINUTES.toMillis(2), new LongDataEntry("temperature", 43L));
@@ -175,8 +175,8 @@ public class WebSocketApiTest extends AbstractControllerTest {
         List<EntityData> listData = update.getUpdate();
         Assert.assertNotNull(listData);
         Assert.assertEquals(1, listData.size());
-        Assert.assertEquals(device.getId(), listData.getFirst().getEntityId());
-        TsValue[] tsArray = listData.getFirst().getTimeseries().get("temperature");
+        Assert.assertEquals(device.getId(), listData.get(0).getEntityId());
+        TsValue[] tsArray = listData.get(0).getTimeseries().get("temperature");
         Assert.assertEquals(3, tsArray.length);
         Assert.assertEquals(new TsValue(dataPoint1.getTs(), dataPoint1.getValueAsString()), tsArray[0]);
         Assert.assertEquals(new TsValue(dataPoint2.getTs(), dataPoint2.getValueAsString()), tsArray[1]);
@@ -193,9 +193,9 @@ public class WebSocketApiTest extends AbstractControllerTest {
         List<EntityData> eData = update.getUpdate();
         Assert.assertNotNull(eData);
         Assert.assertEquals(1, eData.size());
-        Assert.assertEquals(device.getId(), eData.getFirst().getEntityId());
-        Assert.assertNotNull(eData.getFirst().getTimeseries());
-        TsValue[] tsValues = eData.getFirst().getTimeseries().get("temperature");
+        Assert.assertEquals(device.getId(), eData.get(0).getEntityId());
+        Assert.assertNotNull(eData.get(0).getTimeseries());
+        TsValue[] tsValues = eData.get(0).getTimeseries().get("temperature");
         Assert.assertNotNull(tsValues);
         Assert.assertEquals(new TsValue(dataPoint4.getTs(), dataPoint4.getValueAsString()), tsValues[0]);
     }
@@ -588,10 +588,10 @@ public class WebSocketApiTest extends AbstractControllerTest {
         PageData<EntityData> pageData = update.getData();
         Assert.assertNotNull(pageData);
         Assert.assertEquals(1, pageData.getData().size());
-        Assert.assertEquals(device.getId(), pageData.getData().getFirst().getEntityId());
-        Assert.assertNotNull(pageData.getData().getFirst().getLatest().get(EntityKeyType.TIME_SERIES).get("temperature"));
-        Assert.assertEquals(0, pageData.getData().getFirst().getLatest().get(EntityKeyType.TIME_SERIES).get("temperature").getTs());
-        Assert.assertEquals("", pageData.getData().getFirst().getLatest().get(EntityKeyType.TIME_SERIES).get("temperature").getValue());
+        Assert.assertEquals(device.getId(), pageData.getData().get(0).getEntityId());
+        Assert.assertNotNull(pageData.getData().get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("temperature"));
+        Assert.assertEquals(0, pageData.getData().get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("temperature").getTs());
+        Assert.assertEquals("", pageData.getData().get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("temperature").getValue());
 
         TsKvEntry dataPoint1 = new BasicTsKvEntry(now - TimeUnit.MINUTES.toMillis(1), new LongDataEntry("temperature", 42L));
         List<TsKvEntry> tsData = List.of(dataPoint1);
@@ -604,9 +604,9 @@ public class WebSocketApiTest extends AbstractControllerTest {
         List<EntityData> listData = update.getUpdate();
         Assert.assertNotNull(listData);
         Assert.assertEquals(1, listData.size());
-        Assert.assertEquals(device.getId(), listData.getFirst().getEntityId());
-        Assert.assertNotNull(listData.getFirst().getLatest().get(EntityKeyType.TIME_SERIES));
-        TsValue tsValue = listData.getFirst().getLatest().get(EntityKeyType.TIME_SERIES).get("temperature");
+        Assert.assertEquals(device.getId(), listData.get(0).getEntityId());
+        Assert.assertNotNull(listData.get(0).getLatest().get(EntityKeyType.TIME_SERIES));
+        TsValue tsValue = listData.get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("temperature");
         Assert.assertEquals(new TsValue(dataPoint1.getTs(), dataPoint1.getValueAsString()), tsValue);
 
         now = System.currentTimeMillis();
@@ -620,9 +620,9 @@ public class WebSocketApiTest extends AbstractControllerTest {
         List<EntityData> eData = update.getUpdate();
         Assert.assertNotNull(eData);
         Assert.assertEquals(1, eData.size());
-        Assert.assertEquals(device.getId(), eData.getFirst().getEntityId());
-        Assert.assertNotNull(eData.getFirst().getLatest().get(EntityKeyType.TIME_SERIES));
-        tsValue = eData.getFirst().getLatest().get(EntityKeyType.TIME_SERIES).get("temperature");
+        Assert.assertEquals(device.getId(), eData.get(0).getEntityId());
+        Assert.assertNotNull(eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES));
+        tsValue = eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("temperature");
         Assert.assertEquals(new TsValue(dataPoint2.getTs(), dataPoint2.getValueAsString()), tsValue);
 
         //Sending update from the past, while latest value has new timestamp;
@@ -676,10 +676,10 @@ public class WebSocketApiTest extends AbstractControllerTest {
         PageData<EntityData> pageData = update.getData();
         Assert.assertNotNull(pageData);
         Assert.assertEquals(1, pageData.getData().size());
-        Assert.assertEquals(device.getId(), pageData.getData().getFirst().getEntityId());
-        Assert.assertNotNull(pageData.getData().getFirst().getLatest().get(EntityKeyType.TIME_SERIES).get("temperature"));
-        Assert.assertEquals(0, pageData.getData().getFirst().getLatest().get(EntityKeyType.TIME_SERIES).get("temperature").getTs());
-        Assert.assertEquals("", pageData.getData().getFirst().getLatest().get(EntityKeyType.TIME_SERIES).get("temperature").getValue());
+        Assert.assertEquals(device.getId(), pageData.getData().get(0).getEntityId());
+        Assert.assertNotNull(pageData.getData().get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("temperature"));
+        Assert.assertEquals(0, pageData.getData().get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("temperature").getTs());
+        Assert.assertEquals("", pageData.getData().get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("temperature").getValue());
 
         getWsClient().registerWaitForUpdate();
         TsKvEntry dataPoint1 = new BasicTsKvEntry(now - TimeUnit.MINUTES.toMillis(1), new LongDataEntry("temperature", 42L));
@@ -693,9 +693,9 @@ public class WebSocketApiTest extends AbstractControllerTest {
         List<EntityData> listData = update.getUpdate();
         Assert.assertNotNull(listData);
         Assert.assertEquals(1, listData.size());
-        Assert.assertEquals(device.getId(), listData.getFirst().getEntityId());
-        Assert.assertNotNull(listData.getFirst().getLatest().get(EntityKeyType.TIME_SERIES));
-        TsValue tsValue = listData.getFirst().getLatest().get(EntityKeyType.TIME_SERIES).get("temperature");
+        Assert.assertEquals(device.getId(), listData.get(0).getEntityId());
+        Assert.assertNotNull(listData.get(0).getLatest().get(EntityKeyType.TIME_SERIES));
+        TsValue tsValue = listData.get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("temperature");
         Assert.assertEquals(new TsValue(dataPoint1.getTs(), dataPoint1.getValueAsString()), tsValue);
 
         now = System.currentTimeMillis();
@@ -707,9 +707,9 @@ public class WebSocketApiTest extends AbstractControllerTest {
         List<EntityData> eData = update.getUpdate();
         Assert.assertNotNull(eData);
         Assert.assertEquals(1, eData.size());
-        Assert.assertEquals(device.getId(), eData.getFirst().getEntityId());
-        Assert.assertNotNull(eData.getFirst().getLatest().get(EntityKeyType.TIME_SERIES));
-        tsValue = eData.getFirst().getLatest().get(EntityKeyType.TIME_SERIES).get("temperature");
+        Assert.assertEquals(device.getId(), eData.get(0).getEntityId());
+        Assert.assertNotNull(eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES));
+        tsValue = eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("temperature");
         Assert.assertEquals(new TsValue(dataPoint2.getTs(), dataPoint2.getValueAsString()), tsValue);
 
         //Sending update from the past, while the latest value has new timestamp;
@@ -735,10 +735,10 @@ public class WebSocketApiTest extends AbstractControllerTest {
         PageData<EntityData> pageData = update.getData();
         Assert.assertNotNull(pageData);
         Assert.assertEquals(1, pageData.getData().size());
-        Assert.assertEquals(device.getId(), pageData.getData().getFirst().getEntityId());
-        Assert.assertNotNull(pageData.getData().getFirst().getLatest().get(EntityKeyType.SERVER_ATTRIBUTE).get("serverAttributeKey"));
-        Assert.assertEquals(0, pageData.getData().getFirst().getLatest().get(EntityKeyType.SERVER_ATTRIBUTE).get("serverAttributeKey").getTs());
-        Assert.assertEquals("", pageData.getData().getFirst().getLatest().get(EntityKeyType.SERVER_ATTRIBUTE).get("serverAttributeKey").getValue());
+        Assert.assertEquals(device.getId(), pageData.getData().get(0).getEntityId());
+        Assert.assertNotNull(pageData.getData().get(0).getLatest().get(EntityKeyType.SERVER_ATTRIBUTE).get("serverAttributeKey"));
+        Assert.assertEquals(0, pageData.getData().get(0).getLatest().get(EntityKeyType.SERVER_ATTRIBUTE).get("serverAttributeKey").getTs());
+        Assert.assertEquals("", pageData.getData().get(0).getLatest().get(EntityKeyType.SERVER_ATTRIBUTE).get("serverAttributeKey").getValue());
 
         getWsClient().registerWaitForUpdate();
 
@@ -760,9 +760,9 @@ public class WebSocketApiTest extends AbstractControllerTest {
         List<EntityData> listData = update.getUpdate();
         Assert.assertNotNull(listData);
         Assert.assertEquals(1, listData.size());
-        Assert.assertEquals(device.getId(), listData.getFirst().getEntityId());
-        Assert.assertNotNull(listData.getFirst().getLatest().get(EntityKeyType.SERVER_ATTRIBUTE));
-        TsValue tsValue = listData.getFirst().getLatest().get(EntityKeyType.SERVER_ATTRIBUTE).get("serverAttributeKey");
+        Assert.assertEquals(device.getId(), listData.get(0).getEntityId());
+        Assert.assertNotNull(listData.get(0).getLatest().get(EntityKeyType.SERVER_ATTRIBUTE));
+        TsValue tsValue = listData.get(0).getLatest().get(EntityKeyType.SERVER_ATTRIBUTE).get("serverAttributeKey");
         Assert.assertEquals(new TsValue(dataPoint1.getLastUpdateTs(), dataPoint1.getValueAsString()), tsValue);
 
         now = System.currentTimeMillis();
@@ -778,9 +778,9 @@ public class WebSocketApiTest extends AbstractControllerTest {
         List<EntityData> eData = update.getUpdate();
         Assert.assertNotNull(eData);
         Assert.assertEquals(1, eData.size());
-        Assert.assertEquals(device.getId(), eData.getFirst().getEntityId());
-        Assert.assertNotNull(eData.getFirst().getLatest().get(EntityKeyType.SERVER_ATTRIBUTE));
-        tsValue = eData.getFirst().getLatest().get(EntityKeyType.SERVER_ATTRIBUTE).get("serverAttributeKey");
+        Assert.assertEquals(device.getId(), eData.get(0).getEntityId());
+        Assert.assertNotNull(eData.get(0).getLatest().get(EntityKeyType.SERVER_ATTRIBUTE));
+        tsValue = eData.get(0).getLatest().get(EntityKeyType.SERVER_ATTRIBUTE).get("serverAttributeKey");
         Assert.assertEquals(new TsValue(dataPoint2.getLastUpdateTs(), dataPoint2.getValueAsString()), tsValue);
 
         //Sending update from the past, while the latest value has new timestamp;
@@ -811,19 +811,19 @@ public class WebSocketApiTest extends AbstractControllerTest {
         PageData<EntityData> pageData = update.getData();
         Assert.assertNotNull(pageData);
         Assert.assertEquals(1, pageData.getData().size());
-        Assert.assertEquals(device.getId(), pageData.getData().getFirst().getEntityId());
-        Assert.assertNotNull(pageData.getData().getFirst().getLatest().get(EntityKeyType.SERVER_ATTRIBUTE).get("serverAttributeKey"));
-        Assert.assertEquals(0, pageData.getData().getFirst().getLatest().get(EntityKeyType.SERVER_ATTRIBUTE).get("serverAttributeKey").getTs());
-        Assert.assertEquals("", pageData.getData().getFirst().getLatest().get(EntityKeyType.SERVER_ATTRIBUTE).get("serverAttributeKey").getValue());
-        Assert.assertNotNull(pageData.getData().getFirst().getLatest().get(EntityKeyType.CLIENT_ATTRIBUTE).get("clientAttributeKey"));
-        Assert.assertEquals(0, pageData.getData().getFirst().getLatest().get(EntityKeyType.CLIENT_ATTRIBUTE).get("clientAttributeKey").getTs());
-        Assert.assertEquals("", pageData.getData().getFirst().getLatest().get(EntityKeyType.CLIENT_ATTRIBUTE).get("clientAttributeKey").getValue());
-        Assert.assertNotNull(pageData.getData().getFirst().getLatest().get(EntityKeyType.SHARED_ATTRIBUTE).get("sharedAttributeKey"));
-        Assert.assertEquals(0, pageData.getData().getFirst().getLatest().get(EntityKeyType.SHARED_ATTRIBUTE).get("sharedAttributeKey").getTs());
-        Assert.assertEquals("", pageData.getData().getFirst().getLatest().get(EntityKeyType.SHARED_ATTRIBUTE).get("sharedAttributeKey").getValue());
-        Assert.assertNotNull(pageData.getData().getFirst().getLatest().get(EntityKeyType.ATTRIBUTE).get("anyAttributeKey"));
-        Assert.assertEquals(0, pageData.getData().getFirst().getLatest().get(EntityKeyType.ATTRIBUTE).get("anyAttributeKey").getTs());
-        Assert.assertEquals("", pageData.getData().getFirst().getLatest().get(EntityKeyType.ATTRIBUTE).get("anyAttributeKey").getValue());
+        Assert.assertEquals(device.getId(), pageData.getData().get(0).getEntityId());
+        Assert.assertNotNull(pageData.getData().get(0).getLatest().get(EntityKeyType.SERVER_ATTRIBUTE).get("serverAttributeKey"));
+        Assert.assertEquals(0, pageData.getData().get(0).getLatest().get(EntityKeyType.SERVER_ATTRIBUTE).get("serverAttributeKey").getTs());
+        Assert.assertEquals("", pageData.getData().get(0).getLatest().get(EntityKeyType.SERVER_ATTRIBUTE).get("serverAttributeKey").getValue());
+        Assert.assertNotNull(pageData.getData().get(0).getLatest().get(EntityKeyType.CLIENT_ATTRIBUTE).get("clientAttributeKey"));
+        Assert.assertEquals(0, pageData.getData().get(0).getLatest().get(EntityKeyType.CLIENT_ATTRIBUTE).get("clientAttributeKey").getTs());
+        Assert.assertEquals("", pageData.getData().get(0).getLatest().get(EntityKeyType.CLIENT_ATTRIBUTE).get("clientAttributeKey").getValue());
+        Assert.assertNotNull(pageData.getData().get(0).getLatest().get(EntityKeyType.SHARED_ATTRIBUTE).get("sharedAttributeKey"));
+        Assert.assertEquals(0, pageData.getData().get(0).getLatest().get(EntityKeyType.SHARED_ATTRIBUTE).get("sharedAttributeKey").getTs());
+        Assert.assertEquals("", pageData.getData().get(0).getLatest().get(EntityKeyType.SHARED_ATTRIBUTE).get("sharedAttributeKey").getValue());
+        Assert.assertNotNull(pageData.getData().get(0).getLatest().get(EntityKeyType.ATTRIBUTE).get("anyAttributeKey"));
+        Assert.assertEquals(0, pageData.getData().get(0).getLatest().get(EntityKeyType.ATTRIBUTE).get("anyAttributeKey").getTs());
+        Assert.assertEquals("", pageData.getData().get(0).getLatest().get(EntityKeyType.ATTRIBUTE).get("anyAttributeKey").getValue());
 
         getWsClient().registerWaitForUpdate();
         AttributeKvEntry dataPoint1 = new BaseAttributeKvEntry(now - TimeUnit.MINUTES.toMillis(1), new LongDataEntry("serverAttributeKey", 42L));
@@ -838,9 +838,9 @@ public class WebSocketApiTest extends AbstractControllerTest {
         List<EntityData> eData = update.getUpdate();
         Assert.assertNotNull(eData);
         Assert.assertEquals(1, eData.size());
-        Assert.assertEquals(device.getId(), eData.getFirst().getEntityId());
-        Assert.assertNotNull(eData.getFirst().getLatest().get(EntityKeyType.SERVER_ATTRIBUTE));
-        TsValue attrValue = eData.getFirst().getLatest().get(EntityKeyType.SERVER_ATTRIBUTE).get("serverAttributeKey");
+        Assert.assertEquals(device.getId(), eData.get(0).getEntityId());
+        Assert.assertNotNull(eData.get(0).getLatest().get(EntityKeyType.SERVER_ATTRIBUTE));
+        TsValue attrValue = eData.get(0).getLatest().get(EntityKeyType.SERVER_ATTRIBUTE).get("serverAttributeKey");
         Assert.assertEquals(new TsValue(dataPoint1.getLastUpdateTs(), dataPoint1.getValueAsString()), attrValue);
 
         //Sending update from the past, while the latest value has new timestamp;
@@ -865,9 +865,9 @@ public class WebSocketApiTest extends AbstractControllerTest {
         eData = update.getUpdate();
         Assert.assertNotNull(eData);
         Assert.assertEquals(1, eData.size());
-        Assert.assertEquals(device.getId(), eData.getFirst().getEntityId());
-        Assert.assertNotNull(eData.getFirst().getLatest().get(EntityKeyType.SHARED_ATTRIBUTE));
-        attrValue = eData.getFirst().getLatest().get(EntityKeyType.SHARED_ATTRIBUTE).get("sharedAttributeKey");
+        Assert.assertEquals(device.getId(), eData.get(0).getEntityId());
+        Assert.assertNotNull(eData.get(0).getLatest().get(EntityKeyType.SHARED_ATTRIBUTE));
+        attrValue = eData.get(0).getLatest().get(EntityKeyType.SHARED_ATTRIBUTE).get("sharedAttributeKey");
         Assert.assertEquals(new TsValue(dataPoint2.getLastUpdateTs(), dataPoint2.getValueAsString()), attrValue);
 
         getWsClient().registerWaitForUpdate();
@@ -879,9 +879,9 @@ public class WebSocketApiTest extends AbstractControllerTest {
         eData = update.getUpdate();
         Assert.assertNotNull(eData);
         Assert.assertEquals(1, eData.size());
-        Assert.assertEquals(device.getId(), eData.getFirst().getEntityId());
-        Assert.assertNotNull(eData.getFirst().getLatest().get(EntityKeyType.CLIENT_ATTRIBUTE));
-        attrValue = eData.getFirst().getLatest().get(EntityKeyType.CLIENT_ATTRIBUTE).get("clientAttributeKey");
+        Assert.assertEquals(device.getId(), eData.get(0).getEntityId());
+        Assert.assertNotNull(eData.get(0).getLatest().get(EntityKeyType.CLIENT_ATTRIBUTE));
+        attrValue = eData.get(0).getLatest().get(EntityKeyType.CLIENT_ATTRIBUTE).get("clientAttributeKey");
         Assert.assertEquals(new TsValue(dataPoint3.getLastUpdateTs(), dataPoint3.getValueAsString()), attrValue);
 
         getWsClient().registerWaitForUpdate();
@@ -893,9 +893,9 @@ public class WebSocketApiTest extends AbstractControllerTest {
         eData = update.getUpdate();
         Assert.assertNotNull(eData);
         Assert.assertEquals(1, eData.size());
-        Assert.assertEquals(device.getId(), eData.getFirst().getEntityId());
-        Assert.assertNotNull(eData.getFirst().getLatest().get(EntityKeyType.ATTRIBUTE));
-        attrValue = eData.getFirst().getLatest().get(EntityKeyType.ATTRIBUTE).get("anyAttributeKey");
+        Assert.assertEquals(device.getId(), eData.get(0).getEntityId());
+        Assert.assertNotNull(eData.get(0).getLatest().get(EntityKeyType.ATTRIBUTE));
+        attrValue = eData.get(0).getLatest().get(EntityKeyType.ATTRIBUTE).get("anyAttributeKey");
         Assert.assertEquals(new TsValue(dataPoint4.getLastUpdateTs(), dataPoint4.getValueAsString()), attrValue);
 
         getWsClient().registerWaitForUpdate();
@@ -907,9 +907,9 @@ public class WebSocketApiTest extends AbstractControllerTest {
         eData = update.getUpdate();
         Assert.assertNotNull(eData);
         Assert.assertEquals(1, eData.size());
-        Assert.assertEquals(device.getId(), eData.getFirst().getEntityId());
-        Assert.assertNotNull(eData.getFirst().getLatest().get(EntityKeyType.ATTRIBUTE));
-        attrValue = eData.getFirst().getLatest().get(EntityKeyType.ATTRIBUTE).get("anyAttributeKey");
+        Assert.assertEquals(device.getId(), eData.get(0).getEntityId());
+        Assert.assertNotNull(eData.get(0).getLatest().get(EntityKeyType.ATTRIBUTE));
+        attrValue = eData.get(0).getLatest().get(EntityKeyType.ATTRIBUTE).get("anyAttributeKey");
         Assert.assertEquals(new TsValue(dataPoint5.getLastUpdateTs(), dataPoint5.getValueAsString()), attrValue);
     }
 
