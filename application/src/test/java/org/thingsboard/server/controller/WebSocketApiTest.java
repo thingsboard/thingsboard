@@ -71,13 +71,11 @@ import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmStatusUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataUpdate;
-import org.thingsboard.server.service.ws.telemetry.sub.TelemetrySubscriptionUpdate;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -91,7 +89,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "server.ws.alarms_per_alarm_status_subscription_cache_size=5",
         "server.ws.dynamic_page_link.refresh_interval=15"
 })
-public class WebsocketApiTest extends AbstractControllerTest {
+public class WebSocketApiTest extends AbstractControllerTest {
+
     @Autowired
     private TelemetrySubscriptionService tsService;
 
@@ -186,7 +185,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
         now = System.currentTimeMillis();
         TsKvEntry dataPoint4 = new BasicTsKvEntry(now, new LongDataEntry("temperature", 45L));
         getWsClient().registerWaitForUpdate();
-        sendTelemetry(device, Arrays.asList(dataPoint4));
+        sendTelemetry(device, List.of(dataPoint4));
         String msg = getWsClient().waitForUpdate();
 
         update = JacksonUtil.fromString(msg, EntityDataUpdate.class);
@@ -521,7 +520,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
         String msg = getWsClient().waitForUpdate(TimeUnit.SECONDS.toMillis(1));
         Assert.assertNull(msg);
 
-        // check device
+        // check a device
         AlarmStatusCmd deviceCmd = new AlarmStatusCmd(2, device.getId(), null, List.of(AlarmSeverity.CRITICAL));
         getWsClient().send(deviceCmd);
 
@@ -595,7 +594,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
         Assert.assertEquals("", pageData.getData().get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("temperature").getValue());
 
         TsKvEntry dataPoint1 = new BasicTsKvEntry(now - TimeUnit.MINUTES.toMillis(1), new LongDataEntry("temperature", 42L));
-        List<TsKvEntry> tsData = Arrays.asList(dataPoint1);
+        List<TsKvEntry> tsData = List.of(dataPoint1);
         sendTelemetry(device, tsData);
 
         update = getWsClient().subscribeLatestUpdate(keys);
@@ -614,7 +613,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
         TsKvEntry dataPoint2 = new BasicTsKvEntry(now, new LongDataEntry("temperature", 52L));
 
         getWsClient().registerWaitForUpdate();
-        sendTelemetry(device, Arrays.asList(dataPoint2));
+        sendTelemetry(device, List.of(dataPoint2));
 
         update = getWsClient().parseDataReply(getWsClient().waitForUpdate());
         Assert.assertEquals(1, update.getCmdId());
@@ -628,13 +627,13 @@ public class WebsocketApiTest extends AbstractControllerTest {
 
         //Sending update from the past, while latest value has new timestamp;
         getWsClient().registerWaitForUpdate();
-        sendTelemetry(device, Arrays.asList(dataPoint1));
+        sendTelemetry(device, List.of(dataPoint1));
         String msg = getWsClient().waitForUpdate(TimeUnit.SECONDS.toMillis(1));
         Assert.assertNull(msg);
 
         //Sending duplicate update again
         getWsClient().registerWaitForUpdate();
-        sendTelemetry(device, Arrays.asList(dataPoint2));
+        sendTelemetry(device, List.of(dataPoint2));
         msg = getWsClient().waitForUpdate(TimeUnit.SECONDS.toMillis(1));
         Assert.assertNull(msg);
     }
@@ -684,7 +683,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
 
         getWsClient().registerWaitForUpdate();
         TsKvEntry dataPoint1 = new BasicTsKvEntry(now - TimeUnit.MINUTES.toMillis(1), new LongDataEntry("temperature", 42L));
-        List<TsKvEntry> tsData = Arrays.asList(dataPoint1);
+        List<TsKvEntry> tsData = List.of(dataPoint1);
         sendTelemetry(device, tsData);
 
         update = getWsClient().parseDataReply(getWsClient().waitForUpdate());
@@ -702,7 +701,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
         now = System.currentTimeMillis();
         TsKvEntry dataPoint2 = new BasicTsKvEntry(now, new LongDataEntry("temperature", 52L));
         getWsClient().registerWaitForUpdate();
-        sendTelemetry(device, Arrays.asList(dataPoint2));
+        sendTelemetry(device, List.of(dataPoint2));
         update = getWsClient().parseDataReply(getWsClient().waitForUpdate());
         Assert.assertEquals(1, update.getCmdId());
         List<EntityData> eData = update.getUpdate();
@@ -713,15 +712,15 @@ public class WebsocketApiTest extends AbstractControllerTest {
         tsValue = eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("temperature");
         Assert.assertEquals(new TsValue(dataPoint2.getTs(), dataPoint2.getValueAsString()), tsValue);
 
-        //Sending update from the past, while latest value has new timestamp;
+        //Sending update from the past, while the latest value has new timestamp;
         getWsClient().registerWaitForUpdate();
-        sendTelemetry(device, Arrays.asList(dataPoint1));
+        sendTelemetry(device, List.of(dataPoint1));
         String msg = getWsClient().waitForUpdate(TimeUnit.SECONDS.toMillis(1));
         Assert.assertNull(msg);
 
         //Sending duplicate update again
         getWsClient().registerWaitForUpdate();
-        sendTelemetry(device, Arrays.asList(dataPoint2));
+        sendTelemetry(device, List.of(dataPoint2));
         msg = getWsClient().waitForUpdate(TimeUnit.SECONDS.toMillis(1));
         Assert.assertNull(msg);
     }
@@ -743,14 +742,14 @@ public class WebsocketApiTest extends AbstractControllerTest {
 
         getWsClient().registerWaitForUpdate();
 
-        // Pushing update with wrong scope and make sure it will not arrive.
+        // Pushing update with the wrong scope and make sure it will not arrive.
         AttributeKvEntry invalidDataPoint = new BaseAttributeKvEntry(now - TimeUnit.MINUTES.toMillis(1), new LongDataEntry("serverAttributeKey", 55L));
-        sendAttributes(device, TbAttributeSubscriptionScope.CLIENT_SCOPE, Arrays.asList(invalidDataPoint));
+        sendAttributes(device, TbAttributeSubscriptionScope.CLIENT_SCOPE, List.of(invalidDataPoint));
 
         Assert.assertNull(getWsClient().waitForUpdate(3000));
 
         AttributeKvEntry dataPoint1 = new BaseAttributeKvEntry(now - TimeUnit.MINUTES.toMillis(1), new LongDataEntry("serverAttributeKey", 42L));
-        List<AttributeKvEntry> tsData = Arrays.asList(dataPoint1);
+        List<AttributeKvEntry> tsData = List.of(dataPoint1);
         sendAttributes(device, TbAttributeSubscriptionScope.SERVER_SCOPE, tsData);
 
         String msg = getWsClient().waitForUpdate();
@@ -770,7 +769,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
         AttributeKvEntry dataPoint2 = new BaseAttributeKvEntry(now, new LongDataEntry("serverAttributeKey", 52L));
 
         getWsClient().registerWaitForUpdate();
-        sendAttributes(device, TbAttributeSubscriptionScope.SERVER_SCOPE, Arrays.asList(dataPoint2));
+        sendAttributes(device, TbAttributeSubscriptionScope.SERVER_SCOPE, List.of(dataPoint2));
         msg = getWsClient().waitForUpdate();
         Assert.assertNotNull(msg);
 
@@ -784,15 +783,15 @@ public class WebsocketApiTest extends AbstractControllerTest {
         tsValue = eData.get(0).getLatest().get(EntityKeyType.SERVER_ATTRIBUTE).get("serverAttributeKey");
         Assert.assertEquals(new TsValue(dataPoint2.getLastUpdateTs(), dataPoint2.getValueAsString()), tsValue);
 
-        //Sending update from the past, while latest value has new timestamp;
+        //Sending update from the past, while the latest value has new timestamp;
         getWsClient().registerWaitForUpdate();
-        sendAttributes(device, TbAttributeSubscriptionScope.SERVER_SCOPE, Arrays.asList(dataPoint1));
+        sendAttributes(device, TbAttributeSubscriptionScope.SERVER_SCOPE, List.of(dataPoint1));
         msg = getWsClient().waitForUpdate(TimeUnit.SECONDS.toMillis(1));
         Assert.assertNull(msg);
 
         //Sending duplicate update again
         getWsClient().registerWaitForUpdate();
-        sendAttributes(device, TbAttributeSubscriptionScope.SERVER_SCOPE, Arrays.asList(dataPoint2));
+        sendAttributes(device, TbAttributeSubscriptionScope.SERVER_SCOPE, List.of(dataPoint2));
         msg = getWsClient().waitForUpdate(TimeUnit.SECONDS.toMillis(1));
         Assert.assertNull(msg);
     }
@@ -828,7 +827,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
 
         getWsClient().registerWaitForUpdate();
         AttributeKvEntry dataPoint1 = new BaseAttributeKvEntry(now - TimeUnit.MINUTES.toMillis(1), new LongDataEntry("serverAttributeKey", 42L));
-        List<AttributeKvEntry> tsData = Arrays.asList(dataPoint1);
+        List<AttributeKvEntry> tsData = List.of(dataPoint1);
 
         sendAttributes(device, TbAttributeSubscriptionScope.SERVER_SCOPE, tsData);
 
@@ -844,22 +843,22 @@ public class WebsocketApiTest extends AbstractControllerTest {
         TsValue attrValue = eData.get(0).getLatest().get(EntityKeyType.SERVER_ATTRIBUTE).get("serverAttributeKey");
         Assert.assertEquals(new TsValue(dataPoint1.getLastUpdateTs(), dataPoint1.getValueAsString()), attrValue);
 
-        //Sending update from the past, while latest value has new timestamp;
+        //Sending update from the past, while the latest value has new timestamp;
         getWsClient().registerWaitForUpdate();
-        sendAttributes(device, TbAttributeSubscriptionScope.SHARED_SCOPE, Arrays.asList(dataPoint1));
+        sendAttributes(device, TbAttributeSubscriptionScope.SHARED_SCOPE, List.of(dataPoint1));
         msg = getWsClient().waitForUpdate(TimeUnit.SECONDS.toMillis(1));
         Assert.assertNull(msg);
 
         //Sending duplicate update again
         getWsClient().registerWaitForUpdate();
-        sendAttributes(device, TbAttributeSubscriptionScope.CLIENT_SCOPE, Arrays.asList(dataPoint1));
+        sendAttributes(device, TbAttributeSubscriptionScope.CLIENT_SCOPE, List.of(dataPoint1));
         msg = getWsClient().waitForUpdate(TimeUnit.SECONDS.toMillis(1));
         Assert.assertNull(msg);
 
         //Sending update from the past, while latest value has new timestamp;
         getWsClient().registerWaitForUpdate();
         AttributeKvEntry dataPoint2 = new BaseAttributeKvEntry(now, new LongDataEntry("sharedAttributeKey", 42L));
-        sendAttributes(device, TbAttributeSubscriptionScope.SHARED_SCOPE, Arrays.asList(dataPoint2));
+        sendAttributes(device, TbAttributeSubscriptionScope.SHARED_SCOPE, List.of(dataPoint2));
         msg = getWsClient().waitForUpdate(TimeUnit.SECONDS.toMillis(1));
         update = JacksonUtil.fromString(msg, EntityDataUpdate.class);
         Assert.assertEquals(1, update.getCmdId());
@@ -873,7 +872,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
 
         getWsClient().registerWaitForUpdate();
         AttributeKvEntry dataPoint3 = new BaseAttributeKvEntry(now, new LongDataEntry("clientAttributeKey", 42L));
-        sendAttributes(device, TbAttributeSubscriptionScope.CLIENT_SCOPE, Arrays.asList(dataPoint3));
+        sendAttributes(device, TbAttributeSubscriptionScope.CLIENT_SCOPE, List.of(dataPoint3));
         msg = getWsClient().waitForUpdate(TimeUnit.SECONDS.toMillis(1));
         update = JacksonUtil.fromString(msg, EntityDataUpdate.class);
         Assert.assertEquals(1, update.getCmdId());
@@ -887,7 +886,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
 
         getWsClient().registerWaitForUpdate();
         AttributeKvEntry dataPoint4 = new BaseAttributeKvEntry(now, new LongDataEntry("anyAttributeKey", 42L));
-        sendAttributes(device, TbAttributeSubscriptionScope.CLIENT_SCOPE, Arrays.asList(dataPoint4));
+        sendAttributes(device, TbAttributeSubscriptionScope.CLIENT_SCOPE, List.of(dataPoint4));
         msg = getWsClient().waitForUpdate(TimeUnit.SECONDS.toMillis(1));
         update = JacksonUtil.fromString(msg, EntityDataUpdate.class);
         Assert.assertEquals(1, update.getCmdId());
@@ -901,7 +900,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
 
         getWsClient().registerWaitForUpdate();
         AttributeKvEntry dataPoint5 = new BaseAttributeKvEntry(now, new LongDataEntry("anyAttributeKey", 43L));
-        sendAttributes(device, TbAttributeSubscriptionScope.SERVER_SCOPE, Arrays.asList(dataPoint5));
+        sendAttributes(device, TbAttributeSubscriptionScope.SERVER_SCOPE, List.of(dataPoint5));
         msg = getWsClient().waitForUpdate(TimeUnit.SECONDS.toMillis(1));
         update = JacksonUtil.fromString(msg, EntityDataUpdate.class);
         Assert.assertEquals(1, update.getCmdId());
@@ -971,7 +970,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
                 .tenantId(device.getTenantId())
                 .entityId(device.getId())
                 .entries(tsData)
-                .callback(new FutureCallback<Void>() {
+                .callback(new FutureCallback<>() {
                     @Override
                     public void onSuccess(@Nullable Void result) {
                         log.debug("sendTelemetry callback onSuccess");

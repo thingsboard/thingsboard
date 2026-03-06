@@ -39,12 +39,12 @@ import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityHistoryCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.LatestValueCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.TimeSeriesCmd;
-import org.thingsboard.server.service.ws.telemetry.sub.TelemetrySubscriptionUpdate;
 
 import java.net.URI;
 import java.nio.channels.NotYetConnectedException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -52,6 +52,8 @@ import java.util.concurrent.TimeUnit;
 public class TbTestWebSocketClient extends WebSocketClient {
 
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(30);
+
+    private final CountDownLatch closeLatch = new CountDownLatch(1);
 
     @Getter
     private volatile String lastMsg;
@@ -62,6 +64,10 @@ public class TbTestWebSocketClient extends WebSocketClient {
         super(serverUri);
     }
 
+    public TbTestWebSocketClient(URI serverUri, Map<String, String> httpHeaders) {
+        super(serverUri, httpHeaders);
+    }
+
     @Override
     public void onOpen(ServerHandshake serverHandshake) {
 
@@ -69,7 +75,13 @@ public class TbTestWebSocketClient extends WebSocketClient {
 
     public void authenticate(String token) {
         WsCommandsWrapper cmdsWrapper = new WsCommandsWrapper();
-        cmdsWrapper.setAuthCmd(new AuthCmd(1, token));
+        cmdsWrapper.setAuthCmd(new AuthCmd(1, token, null));
+        send(JacksonUtil.toString(cmdsWrapper));
+    }
+
+    public void authenticateWithApiKey(String apiKey) {
+        WsCommandsWrapper cmdsWrapper = new WsCommandsWrapper();
+        cmdsWrapper.setAuthCmd(new AuthCmd(1, null, apiKey));
         send(JacksonUtil.toString(cmdsWrapper));
     }
 
@@ -88,6 +100,16 @@ public class TbTestWebSocketClient extends WebSocketClient {
     @Override
     public void onClose(int i, String s, boolean b) {
         log.info("CLOSED.");
+        closeLatch.countDown();
+    }
+
+    public boolean waitForClose() {
+        try {
+            return closeLatch.await(TIMEOUT, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            log.warn("Failed to await close", e);
+            return false;
+        }
     }
 
     @Override
@@ -275,7 +297,7 @@ public class TbTestWebSocketClient extends WebSocketClient {
 
     public JsonNode sendTimeseriesCmd(EntityId entityId, String scope) {
         log.warn("sendTimeseriesCmd entityId: {}, scope: {}", entityId, scope);
-        TimeseriesSubscriptionCmd cmd = new TimeseriesSubscriptionCmd(0, 0, 0, 10,  null);
+        TimeseriesSubscriptionCmd cmd = new TimeseriesSubscriptionCmd(0, 0, 0, 10, null);
         cmd.setEntityId(entityId.getId().toString());
         cmd.setEntityType(entityId.getEntityType().toString());
         cmd.setCmdId(1);
