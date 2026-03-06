@@ -301,6 +301,25 @@ public class SwaggerConfiguration {
                                 schema.setProperties(null);
                             }
                         }
+                    } else if (schema != null && schema.getProperties() != null && !schema.getProperties().isEmpty()) {
+                        try {
+                            var beanDesc = Json.mapper().getSerializationConfig().introspect(javaType);
+                            var orderedNames = beanDesc.findProperties().stream()
+                                    .map(p -> p.getName())
+                                    .toList();
+                            if (!orderedNames.isEmpty()) {
+                                Map<String, Schema> current = schema.getProperties();
+                                var reordered = new LinkedHashMap<String, Object>();
+                                for (String name : orderedNames) {
+                                    Object prop = current.get(name);
+                                    if (prop != null) reordered.put(name, prop);
+                                }
+                                current.forEach((k, v) -> reordered.putIfAbsent(k, v));
+                                schema.setProperties(reordered);
+                            }
+                        } catch (Exception ignored) {
+                            // keep original order if introspection fails
+                        }
                     }
                 }
                 return schema;
@@ -627,7 +646,7 @@ public class SwaggerConfiguration {
                 ThingsboardErrorResponse.of("Authentication failed", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED)));
 
         unauthorizedExamples.put("credentials-expired", errorExample("Expired credentials",
-                ThingsboardCredentialsExpiredResponse.of("User password expired!", StringUtils.randomAlphanumeric(30))));
+                ThingsboardCredentialsExpiredResponse.of("User password expired!", "udgDQOpS1Q4ZFEL8qHF9s8cSKQ7d1h")));
 
         Schema<? extends ThingsboardErrorResponse> unauthorizedSchema = new Schema<>();
         unauthorizedSchema.oneOf(List.of(
