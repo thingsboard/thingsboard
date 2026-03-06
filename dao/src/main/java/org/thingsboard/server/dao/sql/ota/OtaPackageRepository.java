@@ -15,12 +15,12 @@
  */
 package org.thingsboard.server.dao.sql.ota;
 
-import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.OtaPackageEntity;
 
@@ -41,6 +41,7 @@ public interface OtaPackageRepository extends JpaRepository<OtaPackageEntity, UU
     @Query("SELECT r.id FROM OtaPackageEntity r WHERE r.tenantId = :tenantId")
     Page<UUID> findIdsByTenantId(@Param("tenantId") UUID tenantId, Pageable pageable);
 
+    // The 'data' column is of type OID (PostgreSQL large object reference), so it returns the OID as Long
     @Query(value = "SELECT data FROM ota_package WHERE id = :id AND data IS NOT NULL", nativeQuery = true)
     Long getDataOidById(@Param("id") UUID id);
 

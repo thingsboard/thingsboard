@@ -44,7 +44,6 @@ import org.thingsboard.server.dao.tenant.TenantProfileService;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -121,10 +120,8 @@ public class OtaPackageServiceTest extends AbstractServiceTest {
         Assert.assertEquals(1, otaPackageService.sumDataSizeByTenantId(tenantId));
 
         int maxSumDataSize = 8;
-        List<OtaPackage> packages = new ArrayList<>(maxSumDataSize);
-
         for (int i = 2; i <= maxSumDataSize; i++) {
-            packages.add(createAndSaveFirmware(tenantId, "0." + i));
+            createAndSaveFirmware(tenantId, "0." + i);
             Assert.assertEquals(i, otaPackageService.sumDataSizeByTenantId(tenantId));
         }
 
@@ -603,8 +600,8 @@ public class OtaPackageServiceTest extends AbstractServiceTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(firmwares, idComparator);
-        Collections.sort(loadedFirmwares, idComparator);
+        firmwares.sort(idComparator);
+        loadedFirmwares.sort(idComparator);
 
         assertThat(firmwares).isEqualTo(loadedFirmwares);
 
@@ -658,8 +655,8 @@ public class OtaPackageServiceTest extends AbstractServiceTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(firmwares, idComparator);
-        Collections.sort(loadedFirmwares, idComparator);
+        firmwares.sort(idComparator);
+        loadedFirmwares.sort(idComparator);
 
         assertThat(firmwares).isEqualTo(loadedFirmwares);
 
