@@ -306,7 +306,7 @@ public class SwaggerConfiguration {
                         }
                     } else if (schema != null && schema.getProperties() != null && !schema.getProperties().isEmpty()) {
                         try {
-                            var beanDesc = JacksonUtil.OBJECT_MAPPER.getSerializationConfig().introspect(javaType);
+                            var beanDesc = Json.mapper().getSerializationConfig().introspect(javaType);
                             var orderedNames = resolvePropertyOrder(cls, beanDesc);
                             if (!orderedNames.isEmpty()) {
                                 @SuppressWarnings("unchecked")
@@ -320,7 +320,7 @@ public class SwaggerConfiguration {
                                 schema.setProperties(reordered);
                             }
                         } catch (Exception ignored) {
-                            // keep original order if introspection fails
+                            log.trace("Failed to resolve property order for {}", cls.getName(), ignored);
                         }
                     }
                 }
