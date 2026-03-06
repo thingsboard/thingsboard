@@ -13,11 +13,13 @@
     "build": "tsc"
   },
   "dependencies": {
+    "@types/simple-oauth2": "^5.0.8",
     "config": "^4.1.1",
     "express": "^5.1.0",
     "js-yaml": "^4.1.1",
     "kafkajs": "^2.2.4",
     "long": "^5.3.2",
+    "simple-oauth2": "^5.1.0",
     "uuid-parse": "^1.1.0",
     "winston": "^3.17.0",
     "winston-daily-rotate-file": "^5.0.0"
