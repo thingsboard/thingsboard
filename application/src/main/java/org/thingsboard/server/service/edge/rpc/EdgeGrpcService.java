@@ -37,7 +37,6 @@ import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
-import org.thingsboard.server.common.data.ResourceUtils;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -66,8 +65,18 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
+import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
+import org.thingsboard.common.util.SslUtil;
+import org.thingsboard.server.common.data.ResourceUtils;
+import org.thingsboard.server.common.data.StringUtils;
+
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
+import java.security.PrivateKey;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -110,8 +119,10 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private boolean sslEnabled;
     @Value("${edges.rpc.ssl.cert}")
     private String certFileResource;
-    @Value("${edges.rpc.ssl.private_key}")
+    @Value("${edges.rpc.ssl.private_key:}")
     private String privateKeyResource;
+    @Value("${edges.rpc.ssl.key_password:}")
+    private String keyPassword;
     @Value("${edges.state.persistToTelemetry:false}")
     private boolean persistToTelemetry;
     @Value("${edges.rpc.client_max_keep_alive_time_sec:1}")
@@ -176,9 +187,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                 .addService(this);
         if (sslEnabled) {
             try {
-                InputStream certFileIs = ResourceUtils.getInputStream(this, certFileResource);
-                InputStream privateKeyFileIs = ResourceUtils.getInputStream(this, privateKeyResource);
-                builder.useTransportSecurity(certFileIs, privateKeyFileIs);
+                setupSsl(builder);
             } catch (Exception e) {
                 log.error("Unable to set up SSL context. Reason: " + e.getMessage(), e);
                 throw new RuntimeException("Unable to set up SSL context!", e);
@@ -197,6 +206,41 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         this.executorService = ThingsBoardExecutors.newSingleThreadScheduledExecutor("edge-service");
         this.executorService.scheduleAtFixedRate(this::cleanupZombieSessions, 60, 60, TimeUnit.SECONDS);
         log.info("Edge RPC service initialized!");
+    }
+
+    private void setupSsl(NettyServerBuilder builder) throws Exception {
+        String certFileContent = readResourceAsString(certFileResource);
+        List<X509Certificate> certs = SslUtil.readCertFile(certFileContent);
+        PrivateKey privateKey;
+        if (StringUtils.isEmpty(privateKeyResource)) {
+            // Combined PEM — private key is embedded in the cert file
+            privateKey = SslUtil.readPrivateKey(certFileContent, keyPassword);
+            if (privateKey == null) {
+                throw new IllegalArgumentException("No private key found in cert file: " + certFileResource
+                        + ". Provide a combined PEM (cert + key) or set edges.rpc.ssl.private_key.");
+            }
+        } else {
+            privateKey = SslUtil.readPrivateKey(readResourceAsString(privateKeyResource), keyPassword);
+        }
+        StringWriter certSw = new StringWriter();
+        try (JcaPEMWriter certWriter = new JcaPEMWriter(certSw)) {
+            for (X509Certificate cert : certs) {
+                certWriter.writeObject(cert);
+            }
+        }
+        StringWriter keySw = new StringWriter();
+        try (JcaPEMWriter keyWriter = new JcaPEMWriter(keySw)) {
+            keyWriter.writeObject(privateKey);
+        }
+        builder.useTransportSecurity(
+                new ByteArrayInputStream(certSw.toString().getBytes(StandardCharsets.UTF_8)),
+                new ByteArrayInputStream(keySw.toString().getBytes(StandardCharsets.UTF_8)));
+    }
+
+    private String readResourceAsString(String resource) throws IOException {
+        try (InputStream is = ResourceUtils.getInputStream(this, resource)) {
+            return new String(is.readAllBytes(), StandardCharsets.UTF_8);
+        }
     }
 
     @PreDestroy
