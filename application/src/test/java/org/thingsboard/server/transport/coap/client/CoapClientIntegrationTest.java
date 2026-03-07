@@ -100,7 +100,7 @@ public class CoapClientIntegrationTest extends AbstractCoapIntegrationTest {
         client = createClientForFeatureWithConfirmableParameter(FeatureType.ATTRIBUTES, confirmable);
         CoapResponse coapResponse = client.postMethod(PAYLOAD_VALUES_STR.getBytes());
         assertEquals(CoAP.ResponseCode.CREATED, coapResponse.getCode());
-        assertEquals("CoAP response type is wrong!", client.getType(), coapResponse.advanced().getType());
+        assertValidResponseType(client.getType(), coapResponse.advanced().getType());
 
         DeviceId deviceId = savedDevice.getId();
         List<String> actualKeys = getActualKeysList(deviceId);
@@ -184,7 +184,7 @@ public class CoapClientIntegrationTest extends AbstractCoapIntegrationTest {
         String featureTokenUrl = CoapTestClient.getFeatureTokenUrl(accessToken, FeatureType.ATTRIBUTES) + "?clientKeys=" + keysParam + "&sharedKeys=" + keysParam;
         client.setURI(featureTokenUrl);
         CoapResponse response = client.getMethod();
-        assertEquals("CoAP response type is wrong!", client.getType(), response.advanced().getType());
+        assertValidResponseType(client.getType(), response.advanced().getType());
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -260,7 +260,7 @@ public class CoapClientIntegrationTest extends AbstractCoapIntegrationTest {
             payloadBytes = response.getPayload();
             responseCode = response.getCode();
             observe = response.getOptions().getObserve();
-            wasSuccessful = client.getType().equals(response.advanced().getType());
+            wasSuccessful = isValidResponseType(client.getType(), response.advanced().getType());
             if (observe != null) {
                 if (observe > 0) {
                     processOnLoadResponse(response, client);
@@ -303,5 +303,18 @@ public class CoapClientIntegrationTest extends AbstractCoapIntegrationTest {
 
     private List<EntityKey> getEntityKeys(EntityKeyType scope) {
         return CoapClientIntegrationTest.EXPECTED_KEYS.stream().map(key -> new EntityKey(scope, key)).collect(Collectors.toList());
+    }
+
+    private static void assertValidResponseType(CoAP.Type requestType, CoAP.Type responseType) {
+        assertTrue("Unexpected CoAP response type " + responseType + " for request type " + requestType,
+                isValidResponseType(requestType, responseType));
+    }
+
+    private static boolean isValidResponseType(CoAP.Type requestType, CoAP.Type responseType) {
+        return switch (requestType) {
+            case CON -> CoAP.Type.ACK.equals(responseType) || CoAP.Type.CON.equals(responseType) || CoAP.Type.NON.equals(responseType);
+            case NON -> CoAP.Type.NON.equals(responseType) || CoAP.Type.CON.equals(responseType);
+            default -> false;
+        };
     }
 }

@@ -87,7 +87,6 @@ public abstract class AbstractSyncSessionCallback implements SessionMsgListener 
 
     protected void respond(Response response) {
         response.getOptions().setContentFormat(TbCoapContentFormatUtil.getContentFormat(exchange.getRequestOptions().getContentFormat(), state.getContentFormat()));
-        response.setConfirmable(exchange.advanced().getRequest().isConfirmable());
         exchange.respond(response);
     }
 
