@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.awaitility.Awaitility;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -136,9 +137,10 @@ public class AuditLogControllerTest extends AbstractControllerTest {
             doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
         }
 
-        List<AuditLog> loadedAuditLogs = getAuditLogs(100, "/api/audit/logs?");
-
-        Assert.assertEquals("Have X audit log before this test + New tenant profiles in the test", loadedAuditLogsBefore.size() + 3, loadedAuditLogs.size());
+        int expectedSize = loadedAuditLogsBefore.size() + 3;
+        Awaitility.await().atMost(10, TimeUnit.SECONDS).untilAsserted(() ->
+                Assert.assertEquals("Have X audit log before this test + New tenant profiles in the test",
+                        expectedSize, getAuditLogs(100, "/api/audit/logs?").size()));
     }
 
     private List<AuditLog> getAuditLogs(int pageSize, String urlTemplate) throws Exception {
