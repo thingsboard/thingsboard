@@ -27,6 +27,7 @@ import org.thingsboard.server.dao.model.sql.RpcEntity;
 import java.util.UUID;
 
 public interface RpcRepository extends JpaRepository<RpcEntity, UUID> {
+
     Page<RpcEntity> findAllByTenantIdAndDeviceId(UUID tenantId, UUID deviceId, Pageable pageable);
 
     Page<RpcEntity> findAllByTenantIdAndDeviceIdAndStatus(UUID tenantId, UUID deviceId, RpcStatus status, Pageable pageable);
@@ -34,7 +35,11 @@ public interface RpcRepository extends JpaRepository<RpcEntity, UUID> {
     Page<RpcEntity> findAllByTenantId(UUID tenantId, Pageable pageable);
 
     @Modifying
-    @Query(value = "DELETE FROM rpc WHERE tenant_id = :tenantId AND created_time < :expirationTime",
+    @Query(value = "DELETE FROM rpc WHERE id IN " +
+            "(SELECT id FROM rpc WHERE tenant_id = :tenantId AND created_time < :expirationTime LIMIT :batchSize)",
             nativeQuery = true)
-    int deleteOutdatedRpcByTenantId(@Param("tenantId") UUID tenantId, @Param("expirationTime") Long expirationTime);
+    int deleteOutdatedRpcByTenantIdBatch(@Param("tenantId") UUID tenantId,
+                                         @Param("expirationTime") Long expirationTime,
+                                         @Param("batchSize") int batchSize);
+
 }
