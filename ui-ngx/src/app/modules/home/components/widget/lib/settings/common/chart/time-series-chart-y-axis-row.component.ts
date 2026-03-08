@@ -29,11 +29,11 @@ import {
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import {
-  AxisPosition,
+  AxisPosition, normalizeAxisLimit,
   timeSeriesAxisPositionTranslations,
   TimeSeriesChartYAxisSettings
 } from '@home/components/widget/lib/chart/time-series-chart.models';
-import { MatButton } from '@angular/material/button';
+import { MatIconButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import {
@@ -46,17 +46,18 @@ import { TimeSeriesChartYAxesPanelComponent } from '@home/components/widget/lib/
 import { ValueSourceType } from '@shared/models/widget-settings.models';
 
 @Component({
-  selector: 'tb-time-series-chart-y-axis-row',
-  templateUrl: './time-series-chart-y-axis-row.component.html',
-  styleUrls: ['./time-series-chart-y-axis-row.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => TimeSeriesChartYAxisRowComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-time-series-chart-y-axis-row',
+    templateUrl: './time-series-chart-y-axis-row.component.html',
+    styleUrls: ['./time-series-chart-y-axis-row.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TimeSeriesChartYAxisRowComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, OnInit {
 
@@ -135,8 +136,8 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
 
   writeValue(value: TimeSeriesChartYAxisSettings): void {
     this.modelValue = value;
-    const min = this.normalizeLimit(value.min);
-    const max = this.normalizeLimit(value.max);
+    const min = normalizeAxisLimit(value.min);
+    const max = normalizeAxisLimit(value.max);
 
     this.axisFormGroup.patchValue({
       label: value.label,
@@ -152,7 +153,7 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
     this.cd.markForCheck();
   }
 
-  editAxis($event: Event, matButton: MatButton) {
+  editAxis($event: Event, matButton: MatIconButton) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -250,28 +251,5 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
       entityKey: [null, []],
       entityKeyType: [null, []]
     });
-  }
-
-  private normalizeLimit(limit: any) {
-    const base = {
-      type: ValueSourceType.constant,
-      value: null,
-      latestKey: null,
-      latestKeyType: null,
-      entityAlias: null,
-      entityKey: null,
-      entityKeyType: null
-    };
-
-    if (limit == null) return base;
-
-    if (typeof limit === 'number' || typeof limit === 'string') {
-      return { ...base, type: ValueSourceType.constant, value: Number(limit) };
-    }
-
-    return {
-      ...base,
-      ...limit,
-    };
   }
 }

@@ -23,9 +23,10 @@ import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 
 @Component({
-  selector: 'tb-widgets-bundle',
-  templateUrl: './widgets-bundle.component.html',
-  styleUrls: ['./widgets-bundle.component.scss']
+    selector: 'tb-widgets-bundle',
+    templateUrl: './widgets-bundle.component.html',
+    styleUrls: ['./widgets-bundle.component.scss'],
+    standalone: false
 })
 export class WidgetsBundleComponent extends EntityComponent<WidgetsBundle> {
 

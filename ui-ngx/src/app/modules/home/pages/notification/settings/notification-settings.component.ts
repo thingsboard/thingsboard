@@ -32,9 +32,10 @@ import { NotificationService } from '@core/http/notification.service';
 import { DialogService } from '@core/services/dialog.service';
 
 @Component({
-  selector: 'tb-notification-settings',
-  templateUrl: './notification-settings.component.html',
-  styleUrls: ['./notification-settings.component.scss']
+    selector: 'tb-notification-settings',
+    templateUrl: './notification-settings.component.html',
+    styleUrls: ['./notification-settings.component.scss'],
+    standalone: false
 })
 export class NotificationSettingsComponent extends PageComponent implements OnInit, HasConfirmForm {
 

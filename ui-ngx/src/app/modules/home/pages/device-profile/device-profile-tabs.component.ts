@@ -27,9 +27,10 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-device-profile-tabs',
-  templateUrl: './device-profile-tabs.component.html',
-  styleUrls: []
+    selector: 'tb-device-profile-tabs',
+    templateUrl: './device-profile-tabs.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class DeviceProfileTabsComponent extends EntityTabsComponent<DeviceProfile> implements OnInit {
 

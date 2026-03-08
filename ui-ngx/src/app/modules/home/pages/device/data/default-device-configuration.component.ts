@@ -27,14 +27,15 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-default-device-configuration',
-  templateUrl: './default-device-configuration.component.html',
-  styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => DefaultDeviceConfigurationComponent),
-    multi: true
-  }]
+    selector: 'tb-default-device-configuration',
+    templateUrl: './default-device-configuration.component.html',
+    styleUrls: [],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DefaultDeviceConfigurationComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class DefaultDeviceConfigurationComponent implements ControlValueAccessor, OnInit {
 

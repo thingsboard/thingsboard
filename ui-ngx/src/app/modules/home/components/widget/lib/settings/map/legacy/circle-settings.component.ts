@@ -39,21 +39,22 @@ import { Widget } from '@shared/models/widget.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-circle-settings',
-  templateUrl: './circle-settings.component.html',
-  styleUrls: ['./../../widget-settings.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => CircleSettingsComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => CircleSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-circle-settings',
+    templateUrl: './circle-settings.component.html',
+    styleUrls: ['./../../widget-settings.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => CircleSettingsComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => CircleSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class CircleSettingsComponent extends PageComponent implements OnInit, ControlValueAccessor, Validator {
 

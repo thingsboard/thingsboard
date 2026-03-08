@@ -23,9 +23,10 @@ import { switchRpcDefaultSettings } from '@home/components/widget/lib/settings/c
 import { deepClone } from '@core/utils';
 
 @Component({
-  selector: 'tb-round-switch-widget-settings',
-  templateUrl: './round-switch-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-round-switch-widget-settings',
+    templateUrl: './round-switch-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class RoundSwitchWidgetSettingsComponent extends WidgetSettingsComponent {
 

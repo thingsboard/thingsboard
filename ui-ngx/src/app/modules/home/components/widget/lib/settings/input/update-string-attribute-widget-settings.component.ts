@@ -25,9 +25,10 @@ import {
 } from '@home/components/widget/lib/settings/input/update-attribute-general-settings.component';
 
 @Component({
-  selector: 'tb-update-string-attribute-widget-settings',
-  templateUrl: './update-string-attribute-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-update-string-attribute-widget-settings',
+    templateUrl: './update-string-attribute-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class UpdateStringAttributeWidgetSettingsComponent extends WidgetSettingsComponent {
 

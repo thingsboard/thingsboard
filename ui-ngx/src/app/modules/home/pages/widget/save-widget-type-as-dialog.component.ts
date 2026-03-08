@@ -36,9 +36,10 @@ export interface SaveWidgetTypeAsDialogData {
 }
 
 @Component({
-  selector: 'tb-save-widget-type-as-dialog',
-  templateUrl: './save-widget-type-as-dialog.component.html',
-  styleUrls: []
+    selector: 'tb-save-widget-type-as-dialog',
+    templateUrl: './save-widget-type-as-dialog.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class SaveWidgetTypeAsDialogComponent extends
   DialogComponent<SaveWidgetTypeAsDialogComponent, SaveWidgetTypeAsDialogResult> implements OnInit {

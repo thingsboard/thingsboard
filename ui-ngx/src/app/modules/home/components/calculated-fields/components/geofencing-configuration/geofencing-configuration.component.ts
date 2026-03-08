@@ -43,20 +43,21 @@ import { EntityFilter } from '@shared/models/query/query.models';
 import { EntityId } from '@shared/models/id/entity-id';
 
 @Component({
-  selector: 'tb-geofencing-configuration',
-  templateUrl: './geofencing-configuration.component.html',
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => GeofencingConfigurationComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => GeofencingConfigurationComponent),
-      multi: true
-    }
-  ],
+    selector: 'tb-geofencing-configuration',
+    templateUrl: './geofencing-configuration.component.html',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => GeofencingConfigurationComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => GeofencingConfigurationComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class GeofencingConfigurationComponent implements ControlValueAccessor, Validator, OnChanges {
 

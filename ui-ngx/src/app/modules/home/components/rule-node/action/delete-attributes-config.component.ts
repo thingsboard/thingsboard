@@ -23,9 +23,10 @@ import { AttributeScope, telemetryTypeTranslations } from '@shared/models/teleme
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-action-node-delete-attributes-config',
-  templateUrl: './delete-attributes-config.component.html',
-  styleUrls: []
+    selector: 'tb-action-node-delete-attributes-config',
+    templateUrl: './delete-attributes-config.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class DeleteAttributesConfigComponent extends RuleNodeConfigurationComponent {
   @ViewChild('attributeChipList') attributeChipList: MatChipGrid;

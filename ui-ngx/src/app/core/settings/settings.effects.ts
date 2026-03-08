@@ -15,7 +15,7 @@
 ///
 
 import { ActivationEnd, Router } from '@angular/router';
-import { Inject, Injectable } from '@angular/core';
+import { Inject, Injectable, DOCUMENT } from '@angular/core';
 import { select, Store } from '@ngrx/store';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { TranslateService } from '@ngx-translate/core';
@@ -31,7 +31,7 @@ import { updateUserLang } from '@app/core/settings/settings.utils';
 import { UtilsService } from '@core/services/utils.service';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { ActionAuthUpdateLastPublicDashboardId } from '../auth/auth.actions';
-import { DOCUMENT } from '@angular/common';
+
 
 export const SETTINGS_KEY = 'SETTINGS';
 

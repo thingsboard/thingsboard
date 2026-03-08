@@ -31,10 +31,11 @@ export interface AlarmRuleScheduleDialogData {
 }
 
 @Component({
-  selector: 'tb-cf-alarm-schedule-dialog',
-  templateUrl: './cf-alarm-schedule-dialog.component.html',
-  providers: [],
-  styleUrls: ['./cf-alarm-rules-dialog.component.scss'],
+    selector: 'tb-cf-alarm-schedule-dialog',
+    templateUrl: './cf-alarm-schedule-dialog.component.html',
+    providers: [],
+    styleUrls: ['./cf-alarm-rules-dialog.component.scss'],
+    standalone: false
 })
 export class CfAlarmScheduleDialogComponent extends DialogComponent<CfAlarmScheduleDialogComponent, AlarmRuleSchedule>{
 

@@ -48,16 +48,17 @@ import { MatDialog } from '@angular/material/dialog';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 
 @Component({
-  selector: 'tb-api-usage-widget-settings',
-  templateUrl: './api-usage-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss', 'api-usage-widget-settings.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ApiUsageWidgetSettingsComponent),
-      multi: true
-    }
-  ],
+    selector: 'tb-api-usage-widget-settings',
+    templateUrl: './api-usage-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss', 'api-usage-widget-settings.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ApiUsageWidgetSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ApiUsageWidgetSettingsComponent extends WidgetSettingsComponent {
 

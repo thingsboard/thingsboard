@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Inject, Injectable, NgZone, Renderer2 } from '@angular/core';
+import { Inject, Injectable, NgZone, Renderer2, DOCUMENT } from '@angular/core';
 import { WINDOW } from '@core/services/window.service';
 import { ExceptionData, parseException } from '@app/shared/models/error.models';
 import {
@@ -45,7 +45,7 @@ import { publishReplay, refCount } from 'rxjs/operators';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
 import { AttributeData, LatestTelemetry, TelemetryType } from '@shared/models/telemetry/telemetry.models';
 import { EntityId } from '@shared/models/id/entity-id';
-import { DatePipe, DOCUMENT } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { entityTypeTranslations } from '@shared/models/entity-type.models';
 import cssjs from '@core/css/css';
 import { isNotEmptyTbFunction } from '@shared/models/js-function.models';

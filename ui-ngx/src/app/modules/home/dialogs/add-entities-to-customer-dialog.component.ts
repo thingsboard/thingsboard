@@ -36,10 +36,11 @@ export interface AddEntitiesToCustomerDialogData {
 }
 
 @Component({
-  selector: 'tb-add-entities-to-customer-dialog',
-  templateUrl: './add-entities-to-customer-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: AddEntitiesToCustomerDialogComponent}],
-  styleUrls: []
+    selector: 'tb-add-entities-to-customer-dialog',
+    templateUrl: './add-entities-to-customer-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: AddEntitiesToCustomerDialogComponent }],
+    styleUrls: [],
+    standalone: false
 })
 export class AddEntitiesToCustomerDialogComponent extends
   DialogComponent<AddEntitiesToCustomerDialogComponent, boolean> implements OnInit, ErrorStateMatcher {

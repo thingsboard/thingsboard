@@ -32,10 +32,11 @@ export interface TenantProfileDialogData {
 }
 
 @Component({
-  selector: 'tb-tenant-profile-dialog',
-  templateUrl: './tenant-profile-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: TenantProfileDialogComponent}],
-  styleUrls: ['tenant-profile-dialog.component.scss']
+    selector: 'tb-tenant-profile-dialog',
+    templateUrl: './tenant-profile-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: TenantProfileDialogComponent }],
+    styleUrls: ['tenant-profile-dialog.component.scss'],
+    standalone: false
 })
 export class TenantProfileDialogComponent extends
   DialogComponent<TenantProfileDialogComponent, TenantProfile> implements ErrorStateMatcher, AfterViewInit {

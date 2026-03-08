@@ -28,10 +28,11 @@ export interface MoveWidgetsDialogResult {
 }
 
 @Component({
-  selector: 'tb-move-widgets-dialog',
-  templateUrl: './move-widgets-dialog.component.html',
-  providers: [],
-  styleUrls: []
+    selector: 'tb-move-widgets-dialog',
+    templateUrl: './move-widgets-dialog.component.html',
+    providers: [],
+    styleUrls: [],
+    standalone: false
 })
 export class MoveWidgetsDialogComponent extends DialogComponent<MoveWidgetsDialogComponent, MoveWidgetsDialogResult> {
 

@@ -32,10 +32,11 @@ export interface DeviceProfileDialogData {
 }
 
 @Component({
-  selector: 'tb-device-profile-dialog',
-  templateUrl: './device-profile-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: DeviceProfileDialogComponent}],
-  styleUrls: []
+    selector: 'tb-device-profile-dialog',
+    templateUrl: './device-profile-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: DeviceProfileDialogComponent }],
+    styleUrls: [],
+    standalone: false
 })
 export class DeviceProfileDialogComponent extends
   DialogComponent<DeviceProfileDialogComponent, DeviceProfile> implements ErrorStateMatcher, AfterViewInit {

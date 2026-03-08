@@ -28,9 +28,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { MediaBreakpoints } from '@shared/models/constants';
 
 @Component({
-  selector: 'tb-configured-features',
-  templateUrl: './configured-features.component.html',
-  styleUrls: ['./home-page-widget.scss', './configured-features.component.scss']
+    selector: 'tb-configured-features',
+    templateUrl: './configured-features.component.html',
+    styleUrls: ['./home-page-widget.scss', './configured-features.component.scss'],
+    standalone: false
 })
 export class ConfiguredFeaturesComponent extends PageComponent implements OnInit, OnDestroy {
 

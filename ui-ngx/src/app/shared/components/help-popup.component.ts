@@ -34,10 +34,11 @@ import { Observable } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({
-  selector: '[tb-help-popup], [tb-help-popup-content], [tb-help-popup-content-base64], [tb-help-popup-async-content]',
-  templateUrl: './help-popup.component.html',
-  styleUrls: ['./help-popup.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: '[tb-help-popup], [tb-help-popup-content], [tb-help-popup-content-base64], [tb-help-popup-async-content]',
+    templateUrl: './help-popup.component.html',
+    styleUrls: ['./help-popup.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class HelpPopupComponent implements OnChanges {
 

@@ -54,10 +54,11 @@ import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 
 @Component({
-  selector: 'tb-unread-notification-widget',
-  templateUrl: './unread-notification-widget.component.html',
-  styleUrls: ['unread-notification-widget.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-unread-notification-widget',
+    templateUrl: './unread-notification-widget.component.html',
+    styleUrls: ['unread-notification-widget.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class UnreadNotificationWidgetComponent implements OnInit, OnDestroy {
 

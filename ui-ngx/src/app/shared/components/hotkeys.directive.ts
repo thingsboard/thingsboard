@@ -21,8 +21,9 @@ import Mousetrap from 'mousetrap';
 import { TbCheatSheetComponent } from '@shared/components/cheatsheet.component';
 
 @Directive({
-  // eslint-disable-next-line @angular-eslint/directive-selector
-  selector : '[tb-hotkeys]'
+    // eslint-disable-next-line @angular-eslint/directive-selector
+    selector: '[tb-hotkeys]',
+    standalone: false
 })
 export class TbHotkeysDirective implements OnInit, OnDestroy {
   @Input('tb-hotkeys') hotkeys: Hotkey[] = [];

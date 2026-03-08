@@ -23,9 +23,10 @@ import { Router } from '@angular/router';
 import { widgetType, widgetTypesData } from '@shared/models/widget.models';
 
 @Component({
-  selector: 'tb-select-widget-type-dialog',
-  templateUrl: './select-widget-type-dialog.component.html',
-  styleUrls: ['./select-widget-type-dialog.component.scss']
+    selector: 'tb-select-widget-type-dialog',
+    templateUrl: './select-widget-type-dialog.component.html',
+    styleUrls: ['./select-widget-type-dialog.component.scss'],
+    standalone: false
 })
 export class SelectWidgetTypeDialogComponent extends
   DialogComponent<SelectWidgetTypeDialogComponent, widgetType> {

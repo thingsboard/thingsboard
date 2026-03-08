@@ -34,21 +34,22 @@ interface MessageType {
 }
 
 @Component({
-  selector: 'tb-output-message-type-autocomplete',
-  templateUrl: './output-message-type-autocomplete.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => OutputMessageTypeAutocompleteComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => OutputMessageTypeAutocompleteComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-output-message-type-autocomplete',
+    templateUrl: './output-message-type-autocomplete.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => OutputMessageTypeAutocompleteComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => OutputMessageTypeAutocompleteComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 
 export class OutputMessageTypeAutocompleteComponent implements ControlValueAccessor, Validator {

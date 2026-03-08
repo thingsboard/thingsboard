@@ -19,6 +19,10 @@ changelog:
     labels:
       - Ignore for release
   categories:
+    - title: 'Security'
+      labels:
+        - 'Security'
+
     - title: 'Major Core & Rule Engine'
       labels:
         - 'Major Core'

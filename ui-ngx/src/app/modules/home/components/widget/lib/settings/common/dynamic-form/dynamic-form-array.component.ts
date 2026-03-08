@@ -31,22 +31,23 @@ import { defaultFormPropertyValue, FormProperty } from '@shared/models/dynamic-f
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 
 @Component({
-  selector: 'tb-dynamic-form-array',
-  templateUrl: './dynamic-form-array.component.html',
-  styleUrls: ['./dynamic-form-array.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DynamicFormArrayComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => DynamicFormArrayComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-dynamic-form-array',
+    templateUrl: './dynamic-form-array.component.html',
+    styleUrls: ['./dynamic-form-array.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DynamicFormArrayComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => DynamicFormArrayComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class DynamicFormArrayComponent implements ControlValueAccessor, OnInit, Validator {
 

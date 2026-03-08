@@ -37,10 +37,8 @@
         <mat-option [value]="2">HSLA</mat-option>
       </mat-select>
       <div class="color-input" [ngSwitch]="presentations[presentationControl.value]">
-        <rgba-input-component *ngSwitchCase="'rgba'" label
-                              [(color)]="control.value"></rgba-input-component>
-        <hsla-input-component *ngSwitchCase="'hsla'" label
-                              [(color)]="control.value"></hsla-input-component>
+        <tb-rgba-input *ngSwitchCase="'rgba'" labelVisible [(color)]="control.value"></tb-rgba-input>
+        <tb-hsla-input *ngSwitchCase="'hsla'" labelVisible [(color)]="control.value"></tb-hsla-input>
         <tb-hex-input *ngSwitchCase="'hex'" [(color)]="control.value"></tb-hex-input>
       </div>
     </div>

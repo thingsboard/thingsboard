@@ -29,10 +29,11 @@ export interface EditAttributeValuePanelData {
 }
 
 @Component({
-  selector: 'tb-edit-attribute-value-panel',
-  templateUrl: './edit-attribute-value-panel.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: EditAttributeValuePanelComponent}],
-  styleUrls: ['./edit-attribute-value-panel.component.scss']
+    selector: 'tb-edit-attribute-value-panel',
+    templateUrl: './edit-attribute-value-panel.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: EditAttributeValuePanelComponent }],
+    styleUrls: ['./edit-attribute-value-panel.component.scss'],
+    standalone: false
 })
 export class EditAttributeValuePanelComponent extends PageComponent implements OnInit, ErrorStateMatcher {
 

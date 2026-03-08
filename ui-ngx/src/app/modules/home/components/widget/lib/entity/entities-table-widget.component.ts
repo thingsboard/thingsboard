@@ -123,9 +123,10 @@ interface EntitiesTableWidgetSettings extends TableWidgetSettings {
 }
 
 @Component({
-  selector: 'tb-entities-table-widget',
-  templateUrl: './entities-table-widget.component.html',
-  styleUrls: ['./entities-table-widget.component.scss', './../table-widget.scss']
+    selector: 'tb-entities-table-widget',
+    templateUrl: './entities-table-widget.component.html',
+    styleUrls: ['./entities-table-widget.component.scss', './../table-widget.scss'],
+    standalone: false
 })
 export class EntitiesTableWidgetComponent extends PageComponent implements OnInit, AfterViewInit, OnDestroy {
 

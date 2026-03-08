@@ -26,9 +26,10 @@ export interface AliasesEntitySelectPanelData {
 }
 
 @Component({
-  selector: 'tb-aliases-entity-select-panel',
-  templateUrl: './aliases-entity-select-panel.component.html',
-  styleUrls: ['./aliases-entity-select-panel.component.scss']
+    selector: 'tb-aliases-entity-select-panel',
+    templateUrl: './aliases-entity-select-panel.component.html',
+    styleUrls: ['./aliases-entity-select-panel.component.scss'],
+    standalone: false
 })
 export class AliasesEntitySelectPanelComponent {
 

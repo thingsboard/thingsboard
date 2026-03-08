@@ -19,9 +19,10 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@shared/models/rule-node.models';
 
 @Component({
-  selector: 'tb-action-node-custom-table-config',
-  templateUrl: './save-to-custom-table-config.component.html',
-  styleUrls: []
+    selector: 'tb-action-node-custom-table-config',
+    templateUrl: './save-to-custom-table-config.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class SaveToCustomTableConfigComponent extends RuleNodeConfigurationComponent {
 

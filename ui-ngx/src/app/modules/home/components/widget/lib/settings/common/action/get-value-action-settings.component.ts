@@ -38,17 +38,18 @@ import { IAliasController } from '@core/api/widget-api.models';
 import { TargetDevice, widgetType } from '@shared/models/widget.models';
 
 @Component({
-  selector: 'tb-get-value-action-settings',
-  templateUrl: './action-settings-button.component.html',
-  styleUrls: ['./action-settings-button.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => GetValueActionSettingsComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-get-value-action-settings',
+    templateUrl: './action-settings-button.component.html',
+    styleUrls: ['./action-settings-button.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => GetValueActionSettingsComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class GetValueActionSettingsComponent implements OnInit, ControlValueAccessor {
 

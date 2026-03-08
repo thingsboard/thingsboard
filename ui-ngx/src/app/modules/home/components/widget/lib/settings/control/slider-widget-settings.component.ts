@@ -31,9 +31,10 @@ import { formatValue } from '@core/utils';
 import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Component({
-  selector: 'tb-slider-widget-settings',
-  templateUrl: './slider-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-slider-widget-settings',
+    templateUrl: './slider-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class SliderWidgetSettingsComponent extends WidgetSettingsComponent {
 

@@ -107,11 +107,10 @@ public final class TbMsg implements Serializable {
                 .build();
     }
 
-    public TbMsg copyWithNewCtx() {
+    public TbMsgBuilder copyWithNewCtx() {
         return copy()
                 .ctx(ctx.copy())
-                .callback(TbMsgCallback.EMPTY)
-                .build();
+                .callback(TbMsgCallback.EMPTY);
     }
 
     private TbMsg(String queueName, UUID id, long ts, TbMsgType internalType, String type, EntityId originator, CustomerId customerId, TbMsgMetaData metaData, TbMsgDataType dataType, String data,
@@ -261,6 +260,10 @@ public final class TbMsg implements Serializable {
 
     public void pushToStack(RuleChainId ruleChainId, RuleNodeId ruleNodeId) {
         ctx.push(ruleChainId, ruleNodeId);
+    }
+
+    public boolean isAlreadyInStack(RuleChainId ruleChainId, RuleNodeId ruleNodeId) {
+        return ctx.isAlreadyInStack(ruleChainId, ruleNodeId);
     }
 
     public TbMsgProcessingStackItem popFormStack() {

@@ -30,9 +30,10 @@ export interface DashboardInfoDialogData {
 }
 
 @Component({
-  selector: 'tb-import-dashboard-file-dialog',
-  templateUrl: './import-dashboard-file-dialog.component.html',
-  styleUrls: []
+    selector: 'tb-import-dashboard-file-dialog',
+    templateUrl: './import-dashboard-file-dialog.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class ImportDashboardFileDialogComponent extends DialogComponent<ImportDashboardFileDialogComponent> implements OnInit {
 

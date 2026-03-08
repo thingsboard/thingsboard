@@ -41,9 +41,10 @@ import {
 import { ValueCardLayout } from '@home/components/widget/lib/cards/value-card-widget.models';
 
 @Component({
-  selector: 'tb-segmented-button-widget-settings',
-  templateUrl: './segmented-button-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-segmented-button-widget-settings',
+    templateUrl: './segmented-button-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class SegmentedButtonWidgetSettingsComponent extends WidgetSettingsComponent {
 

@@ -63,6 +63,18 @@ public final class TbMsgProcessingCtx implements Serializable {
         stack.add(new TbMsgProcessingStackItem(ruleChainId, ruleNodeId));
     }
 
+    public boolean isAlreadyInStack(RuleChainId ruleChainId, RuleNodeId ruleNodeId) {
+        if (stack == null || stack.isEmpty()) {
+            return false;
+        }
+        for (TbMsgProcessingStackItem item : stack) {
+            if (ruleChainId.equals(item.getRuleChainId()) && ruleNodeId.equals(item.getRuleNodeId())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public TbMsgProcessingStackItem pop() {
         if (stack == null || stack.isEmpty()) {
             return null;

@@ -31,10 +31,11 @@ import {
 import { ComplexFilterPredicateDialogData } from '@home/components/filter/filter-component.models';
 
 @Component({
-  selector: 'tb-complex-filter-predicate-dialog',
-  templateUrl: './complex-filter-predicate-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: ComplexFilterPredicateDialogComponent}],
-  styleUrls: []
+    selector: 'tb-complex-filter-predicate-dialog',
+    templateUrl: './complex-filter-predicate-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: ComplexFilterPredicateDialogComponent }],
+    styleUrls: [],
+    standalone: false
 })
 export class ComplexFilterPredicateDialogComponent extends
   DialogComponent<ComplexFilterPredicateDialogComponent, ComplexFilterPredicateInfo>

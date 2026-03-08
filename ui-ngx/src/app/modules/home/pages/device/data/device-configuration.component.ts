@@ -24,14 +24,15 @@ import { deepClone } from '@core/utils';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-device-configuration',
-  templateUrl: './device-configuration.component.html',
-  styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => DeviceConfigurationComponent),
-    multi: true
-  }]
+    selector: 'tb-device-configuration',
+    templateUrl: './device-configuration.component.html',
+    styleUrls: [],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DeviceConfigurationComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class DeviceConfigurationComponent implements ControlValueAccessor, OnInit {
 

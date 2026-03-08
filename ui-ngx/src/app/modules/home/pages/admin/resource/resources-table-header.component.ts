@@ -22,9 +22,10 @@ import { Resource, ResourceInfo, ResourceType, ResourceTypeTranslationMap } from
 import { PageLink } from '@shared/models/page/page-link';
 
 @Component({
-  selector: 'tb-resources-table-header',
-  templateUrl: './resources-table-header.component.html',
-  styleUrls: []
+    selector: 'tb-resources-table-header',
+    templateUrl: './resources-table-header.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class ResourcesTableHeaderComponent extends EntityTableHeaderComponent<Resource, PageLink, ResourceInfo> {
 

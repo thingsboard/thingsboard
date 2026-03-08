@@ -47,19 +47,20 @@ import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-con
 import { FormProperty } from '@shared/models/dynamic-form.models';
 
 @Component({
-  selector: 'tb-widget-settings',
-  templateUrl: './widget-settings.component.html',
-  styleUrls: ['./widget-settings.component.scss'],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => WidgetSettingsComponent),
-    multi: true
-  },
-  {
-    provide: NG_VALIDATORS,
-    useExisting: forwardRef(() => WidgetSettingsComponent),
-    multi: true
-  }]
+    selector: 'tb-widget-settings',
+    templateUrl: './widget-settings.component.html',
+    styleUrls: ['./widget-settings.component.scss'],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => WidgetSettingsComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => WidgetSettingsComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class WidgetSettingsComponent implements ControlValueAccessor, OnDestroy, OnChanges, Validator {
 

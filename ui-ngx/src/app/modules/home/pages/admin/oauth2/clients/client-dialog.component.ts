@@ -27,10 +27,11 @@ import { ClientComponent } from '@home/pages/admin/oauth2/clients/client.compone
 import { ErrorStateMatcher } from '@angular/material/core';
 
 @Component({
-  selector: 'tb-client-dialog',
-  templateUrl: './client-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: ClientDialogComponent}],
-  styleUrls: []
+    selector: 'tb-client-dialog',
+    templateUrl: './client-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: ClientDialogComponent }],
+    styleUrls: [],
+    standalone: false
 })
 export class ClientDialogComponent extends DialogComponent<ClientDialogComponent, OAuth2Client> implements OnDestroy, AfterViewInit {
 

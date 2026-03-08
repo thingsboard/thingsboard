@@ -53,9 +53,10 @@ export interface ManageDashboardStatesDialogResult {
 }
 
 @Component({
-  selector: 'tb-manage-dashboard-states-dialog',
-  templateUrl: './manage-dashboard-states-dialog.component.html',
-  styleUrls: ['./manage-dashboard-states-dialog.component.scss']
+    selector: 'tb-manage-dashboard-states-dialog',
+    templateUrl: './manage-dashboard-states-dialog.component.html',
+    styleUrls: ['./manage-dashboard-states-dialog.component.scss'],
+    standalone: false
 })
 export class ManageDashboardStatesDialogComponent
   extends DialogComponent<ManageDashboardStatesDialogComponent, ManageDashboardStatesDialogResult>

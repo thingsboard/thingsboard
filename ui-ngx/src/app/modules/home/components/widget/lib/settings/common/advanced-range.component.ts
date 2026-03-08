@@ -32,16 +32,17 @@ import { Datasource } from '@shared/models/widget.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-advanced-range',
-  templateUrl: './advanced-range.component.html',
-  styleUrls: ['./advanced-range.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => AdvancedRangeComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-advanced-range',
+    templateUrl: './advanced-range.component.html',
+    styleUrls: ['./advanced-range.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => AdvancedRangeComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class AdvancedRangeComponent extends PageComponent implements OnInit, ControlValueAccessor {
 

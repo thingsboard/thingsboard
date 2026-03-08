@@ -21,9 +21,10 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 
 @Component({
-  selector: 'tb-update-image-attribute-widget-settings',
-  templateUrl: './update-image-attribute-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-update-image-attribute-widget-settings',
+    templateUrl: './update-image-attribute-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class UpdateImageAttributeWidgetSettingsComponent extends WidgetSettingsComponent {
 

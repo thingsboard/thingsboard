@@ -21,10 +21,11 @@ import { TbPopoverComponent } from '@shared/components/popover.component';
 import { ApiKeyService } from '@core/http/api-key.service';
 
 @Component({
-  selector: 'tb-edit-api-key-description-panel',
-  templateUrl: './edit-api-key-description-panel.component.html',
-  styleUrls: ['./edit-api-key-description-panel.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-edit-api-key-description-panel',
+    templateUrl: './edit-api-key-description-panel.component.html',
+    styleUrls: ['./edit-api-key-description-panel.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class EditApiKeyDescriptionPanelComponent implements OnInit {
 

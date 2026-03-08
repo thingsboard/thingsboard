@@ -20,7 +20,7 @@
     <div class="min-w-40 xs:min-w-fit">{{ 'alarm-rule.condition' | translate }}</div>
     <button type="button"
             class="tb-alarm-rule-condition-button"
-            mat-stroked-button [color]="conditionSet() || this.filtersArgumentsValid ? 'primary' : 'warn'"
+            mat-stroked-button [color]="conditionSet() || filtersArgumentsValid ? 'primary' : 'warn'"
             (click)="openFilterDialog($event)">
       <div class="flex items-center justify-between gap-2">
         <tb-alarm-rule-filter-text [alarmRuleExpression]="alarmRuleConditionFormGroup.get('expression').value"
@@ -32,7 +32,7 @@
                                    required
                                    addFilterPrompt="{{ 'alarm-rule.enter-alarm-rule-condition-prompt' | translate }}">
         </tb-alarm-rule-filter-text>
-        <mat-icon [color]="disabled ? '' : (conditionSet() && this.filtersArgumentsValid ? 'primary' : 'warn')"
+        <mat-icon [color]="disabled ? '' : (conditionSet() && filtersArgumentsValid ? 'primary' : 'warn')"
                   class="tb-mat-20 tb-alarm-rule-schedule-edit-icon">
           {{ disabled ? 'visibility' : (conditionSet() ? 'edit' : 'add') }}
         </mat-icon>

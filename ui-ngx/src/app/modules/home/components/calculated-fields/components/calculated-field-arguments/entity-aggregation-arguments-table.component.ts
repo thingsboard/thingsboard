@@ -26,21 +26,22 @@ import {
 import { ArgumentEntityType } from '@shared/models/calculated-field.models';
 
 @Component({
-  selector: 'tb-entity-aggregation-arguments-table',
-  templateUrl: './calculated-field-arguments-table.component.html',
-  styleUrls: [`calculated-field-arguments-table.component.scss`],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => EntityAggregationArgumentsTableComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => EntityAggregationArgumentsTableComponent),
-      multi: true
-    }
-  ],
+    selector: 'tb-entity-aggregation-arguments-table',
+    templateUrl: './calculated-field-arguments-table.component.html',
+    styleUrls: [`calculated-field-arguments-table.component.scss`],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => EntityAggregationArgumentsTableComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => EntityAggregationArgumentsTableComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class EntityAggregationArgumentsTableComponent extends CalculatedFieldArgumentsTableComponent {
 

@@ -31,14 +31,15 @@ import { deepClone, isDefinedAndNotNull } from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({
-  selector: 'tb-alarm-schedule-info',
-  templateUrl: './alarm-schedule-info.component.html',
-  styleUrls: ['./alarm-schedule-info.component.scss'],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => AlarmScheduleInfoComponent),
-    multi: true
-  }]
+    selector: 'tb-alarm-schedule-info',
+    templateUrl: './alarm-schedule-info.component.html',
+    styleUrls: ['./alarm-schedule-info.component.scss'],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => AlarmScheduleInfoComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class AlarmScheduleInfoComponent implements ControlValueAccessor, OnInit {
 

@@ -29,14 +29,15 @@ import { NotificationService } from '@core/http/notification.service';
 import { isEqual } from '@core/utils';
 
 @Component({
-  selector: 'tb-slack-conversation-autocomplete',
-  templateUrl: './slack-conversation-autocomplete.component.html',
-  styleUrls: ['./slack-conversation-autocomplete.component.scss'],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => SlackConversationAutocompleteComponent),
-    multi: true
-  }]
+    selector: 'tb-slack-conversation-autocomplete',
+    templateUrl: './slack-conversation-autocomplete.component.html',
+    styleUrls: ['./slack-conversation-autocomplete.component.scss'],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => SlackConversationAutocompleteComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class SlackConversationAutocompleteComponent implements ControlValueAccessor, OnInit, OnChanges {
 

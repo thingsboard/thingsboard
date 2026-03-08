@@ -34,9 +34,10 @@ import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.m
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 @Component({
-  selector: 'tb-auto-commit-settings',
-  templateUrl: './auto-commit-settings.component.html',
-  styleUrls: ['./auto-commit-settings.component.scss', './../../pages/admin/settings-card.scss']
+    selector: 'tb-auto-commit-settings',
+    templateUrl: './auto-commit-settings.component.html',
+    styleUrls: ['./auto-commit-settings.component.scss', './../../pages/admin/settings-card.scss'],
+    standalone: false
 })
 export class AutoCommitSettingsComponent extends PageComponent implements OnInit {
 

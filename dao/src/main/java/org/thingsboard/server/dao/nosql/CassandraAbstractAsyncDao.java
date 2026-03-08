@@ -37,6 +37,9 @@ public abstract class CassandraAbstractAsyncDao extends CassandraAbstractDao {
     @Value("${cassandra.query.result_processing_threads:50}")
     private int threadPoolSize;
 
+    @Value("${cassandra.query.max_result_set_size_in_bytes:52428800}")
+    protected long maxResultSetSizeBytes;
+
     @PostConstruct
     public void startExecutor() {
         readResultsProcessingExecutor = ThingsBoardExecutors.newWorkStealingPool(threadPoolSize, "cassandra-callback");

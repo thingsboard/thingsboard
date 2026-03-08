@@ -51,16 +51,17 @@ export interface DeviceFilterConfigData {
 
 // @dynamic
 @Component({
-  selector: 'tb-device-info-filter',
-  templateUrl: './device-info-filter.component.html',
-  styleUrls: ['./device-info-filter.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DeviceInfoFilterComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-device-info-filter',
+    templateUrl: './device-info-filter.component.html',
+    styleUrls: ['./device-info-filter.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DeviceInfoFilterComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class DeviceInfoFilterComponent implements OnInit, ControlValueAccessor {
 

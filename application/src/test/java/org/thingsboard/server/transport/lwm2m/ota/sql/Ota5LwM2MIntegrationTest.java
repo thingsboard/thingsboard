@@ -103,8 +103,10 @@ public class Ota5LwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
 
         expectedStatuses = Arrays.asList(QUEUED, INITIATED, DOWNLOADING, DOWNLOADED, UPDATING, UPDATED);
         List<TsKvEntry> ts = await("await on timeseries for FW")
-                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .atMost(60, TimeUnit.SECONDS)             // Increase the timeout to 60 sec
+                .pollInterval(1, TimeUnit.SECONDS)      //  Poll once per second
                 .until(() -> getFwSwStateTelemetryFromAPI(device.getId().getId(), "fw_state"), this::predicateForStatuses);
+
         log.warn("Object5: Got the ts: {}", ts);
     }
 }

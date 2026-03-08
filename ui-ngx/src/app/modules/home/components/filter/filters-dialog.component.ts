@@ -52,10 +52,11 @@ export interface FiltersDialogData {
 }
 
 @Component({
-  selector: 'tb-filters-dialog',
-  templateUrl: './filters-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: FiltersDialogComponent}],
-  styleUrls: ['./filters-dialog.component.scss']
+    selector: 'tb-filters-dialog',
+    templateUrl: './filters-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: FiltersDialogComponent }],
+    styleUrls: ['./filters-dialog.component.scss'],
+    standalone: false
 })
 export class FiltersDialogComponent extends DialogComponent<FiltersDialogComponent, Filters>
   implements ErrorStateMatcher {

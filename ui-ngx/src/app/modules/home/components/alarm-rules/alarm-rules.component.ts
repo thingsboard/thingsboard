@@ -51,9 +51,10 @@ import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { EntityService } from '@core/http/entity.service';
 
 @Component({
-  selector: 'tb-alarm-rules',
-  templateUrl: './alarm-rules.component.html',
-  styleUrls: ['./alarm-rule-dialog.component.scss']
+    selector: 'tb-alarm-rules',
+    templateUrl: './alarm-rules.component.html',
+    styleUrls: ['./alarm-rule-dialog.component.scss'],
+    standalone: false
 })
 export class AlarmRulesComponent extends EntityComponent<CalculatedFieldsTableEntity> {
 

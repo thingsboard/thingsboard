@@ -20,7 +20,7 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  --mdc-outlined-text-field-outline-color: rgba(0,0,0,0.12);
+  --mat-form-field-outlined-outline-color: rgba(0,0,0,0.12);
   @media #{$mat-lt-md} {
     width: 90vw;
   }

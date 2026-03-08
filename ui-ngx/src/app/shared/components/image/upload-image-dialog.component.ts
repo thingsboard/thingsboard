@@ -54,10 +54,11 @@ export interface UploadImageDialogResult {
 }
 
 @Component({
-  selector: 'tb-upload-image-dialog',
-  templateUrl: './upload-image-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: UploadImageDialogComponent}],
-  styleUrls: []
+    selector: 'tb-upload-image-dialog',
+    templateUrl: './upload-image-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: UploadImageDialogComponent }],
+    styleUrls: [],
+    standalone: false
 })
 export class UploadImageDialogComponent extends
   DialogComponent<UploadImageDialogComponent, UploadImageDialogResult> implements OnInit, ErrorStateMatcher {

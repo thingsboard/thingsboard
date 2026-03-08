@@ -65,16 +65,17 @@ export class ColorSettingsComponentService {
 }
 
 @Component({
-  selector: 'tb-color-settings',
-  templateUrl: './color-settings.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ColorSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-color-settings',
+    templateUrl: './color-settings.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ColorSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ColorSettingsComponent implements OnInit, ControlValueAccessor, OnDestroy {
 

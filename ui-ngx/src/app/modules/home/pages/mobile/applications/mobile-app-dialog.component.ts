@@ -33,10 +33,11 @@ export interface MobileAppDialogData {
 }
 
 @Component({
-  selector: 'tb-mobile-app-dialog',
-  templateUrl: './mobile-app-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: MobileAppDialogComponent}],
-  styleUrls: []
+    selector: 'tb-mobile-app-dialog',
+    templateUrl: './mobile-app-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: MobileAppDialogComponent }],
+    styleUrls: [],
+    standalone: false
 })
 export class MobileAppDialogComponent extends DialogComponent<MobileAppDialogComponent, MobileApp> implements OnDestroy, AfterViewInit, ErrorStateMatcher {
 

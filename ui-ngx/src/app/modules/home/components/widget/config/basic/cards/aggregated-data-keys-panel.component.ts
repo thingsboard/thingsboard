@@ -40,17 +40,18 @@ import { aggregatedValueCardDefaultKeySettings } from '@home/components/widget/l
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-aggregated-data-keys-panel',
-  templateUrl: './aggregated-data-keys-panel.component.html',
-  styleUrls: ['./aggregated-data-keys-panel.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => AggregatedDataKeysPanelComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-aggregated-data-keys-panel',
+    templateUrl: './aggregated-data-keys-panel.component.html',
+    styleUrls: ['./aggregated-data-keys-panel.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => AggregatedDataKeysPanelComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class AggregatedDataKeysPanelComponent implements ControlValueAccessor, OnInit, OnChanges {
 

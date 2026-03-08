@@ -31,11 +31,13 @@ import {
   barChartWithLabelsDefaultSettings
 } from '@home/components/widget/lib/chart/bar-chart-with-labels-widget.models';
 import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
+import { updateLatestDataKeys } from '@home/components/widget/lib/chart/time-series-chart.models';
 
 @Component({
-  selector: 'tb-bar-chart-with-labels-widget-settings',
-  templateUrl: './bar-chart-with-labels-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-bar-chart-with-labels-widget-settings',
+    templateUrl: './bar-chart-with-labels-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class BarChartWithLabelsWidgetSettingsComponent extends WidgetSettingsComponent {
 
@@ -120,6 +122,11 @@ export class BarChartWithLabelsWidgetSettingsComponent extends WidgetSettingsCom
       background: [settings.background, []],
       padding: [settings.padding, []]
     });
+  }
+
+  protected onSettingsChanged(updated: WidgetSettings) {
+    updateLatestDataKeys([updated.yAxis], this.datasource, this.dataKeyCallbacks);
+    super.onSettingsChanged(updated);
   }
 
   protected validatorTriggers(): string[] {

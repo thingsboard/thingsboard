@@ -37,11 +37,12 @@ interface MarkerShapeInfo {
 }
 
 @Component({
-  selector: 'tb-marker-shapes',
-  templateUrl: './marker-shapes.component.html',
-  providers: [],
-  styleUrls: ['./marker-shapes.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-marker-shapes',
+    templateUrl: './marker-shapes.component.html',
+    providers: [],
+    styleUrls: ['./marker-shapes.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class MarkerShapesComponent extends PageComponent implements OnInit {
 

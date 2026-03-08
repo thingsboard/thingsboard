@@ -21,7 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.rule.engine.TestDbCallbackExecutor;
+import org.thingsboard.common.util.DirectListeningExecutor;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -53,7 +53,7 @@ class TbCheckAlarmStatusNodeTest {
     private static final TenantId TENANT_ID = new TenantId(UUID.randomUUID());
     private static final DeviceId DEVICE_ID = new DeviceId(UUID.randomUUID());
     private static final AlarmId ALARM_ID = new AlarmId(UUID.randomUUID());
-    private static final TestDbCallbackExecutor DB_EXECUTOR = new TestDbCallbackExecutor();
+    private static final DirectListeningExecutor DB_EXECUTOR = DirectListeningExecutor.INSTANCE;
 
     private TbCheckAlarmStatusNode node;
 

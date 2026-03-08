@@ -43,17 +43,18 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { tap } from 'rxjs/operators';
 
 @Component({
-  selector: 'tb-background-settings',
-  templateUrl: './background-settings.component.html',
-  styleUrls: ['./background-settings.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => BackgroundSettingsComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-background-settings',
+    templateUrl: './background-settings.component.html',
+    styleUrls: ['./background-settings.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => BackgroundSettingsComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class BackgroundSettingsComponent implements OnInit, ControlValueAccessor {
 

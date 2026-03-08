@@ -23,10 +23,11 @@ import { RuleChainType } from '@app/shared/models/rule-chain.models';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({
-  // eslint-disable-next-line @angular-eslint/component-selector
-  selector: 'rule-node',
-  templateUrl: './rulenode.component.html',
-  styleUrls: ['./rulenode.component.scss']
+    // eslint-disable-next-line @angular-eslint/component-selector
+    selector: 'rule-node',
+    templateUrl: './rulenode.component.html',
+    styleUrls: ['./rulenode.component.scss'],
+    standalone: false
 })
 export class RuleNodeComponent extends FcNodeComponent implements OnInit {
 

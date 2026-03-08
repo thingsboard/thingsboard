@@ -34,21 +34,22 @@ import { FormControlsFrom } from "@shared/models/tenant.model";
 import { isDefinedAndNotNull } from "@core/utils";
 
 @Component({
-  selector: 'tb-alarm-rule-filter-predicate-value',
-  templateUrl: './alarm-rule-filter-predicate-value.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => AlarmRuleFilterPredicateValueComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => AlarmRuleFilterPredicateValueComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-alarm-rule-filter-predicate-value',
+    templateUrl: './alarm-rule-filter-predicate-value.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => AlarmRuleFilterPredicateValueComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => AlarmRuleFilterPredicateValueComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class AlarmRuleFilterPredicateValueComponent implements ControlValueAccessor, Validator, OnInit, OnChanges {
 
