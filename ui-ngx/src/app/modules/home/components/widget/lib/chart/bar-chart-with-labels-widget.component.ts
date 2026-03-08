@@ -43,10 +43,11 @@ import { DataKey } from '@shared/models/widget.models';
 import { WidgetComponent } from '@home/components/widget/widget.component';
 
 @Component({
-  selector: 'tb-bar-chart-with-labels-widget',
-  templateUrl: './bar-chart-with-labels-widget.component.html',
-  styleUrls: ['./bar-chart-with-labels-widget.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-bar-chart-with-labels-widget',
+    templateUrl: './bar-chart-with-labels-widget.component.html',
+    styleUrls: ['./bar-chart-with-labels-widget.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class BarChartWithLabelsWidgetComponent implements OnInit, OnDestroy, AfterViewInit {
 

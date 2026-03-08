@@ -21,9 +21,10 @@ import { baseDetailsPageByEntityType, EntityType } from '@app/shared/public-api'
 import { isEqual, isNotEmptyStr, isObject } from '@core/utils';
 
 @Component({
-  selector: 'tb-entity-chips',
-  templateUrl: './entity-chips.component.html',
-  styleUrls: ['./entity-chips.component.scss']
+    selector: 'tb-entity-chips',
+    templateUrl: './entity-chips.component.html',
+    styleUrls: ['./entity-chips.component.scss'],
+    standalone: false
 })
 export class EntityChipsComponent implements OnChanges {
 

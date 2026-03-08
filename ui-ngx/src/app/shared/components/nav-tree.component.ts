@@ -59,10 +59,11 @@ export type NodeSelectedCallback = (node: NavTreeNode, event: Event) => void;
 export type NodesInsertedCallback = (nodes: string[], parent: string) => void;
 
 @Component({
-  selector: 'tb-nav-tree',
-  templateUrl: './nav-tree.component.html',
-  styleUrls: ['./nav-tree.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-nav-tree',
+    templateUrl: './nav-tree.component.html',
+    styleUrls: ['./nav-tree.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class NavTreeComponent implements OnInit {
 

@@ -35,10 +35,11 @@ import { WidgetActionCallbacks } from '@home/components/widget/action/manage-wid
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-scada-symbol-behavior-panel',
-  templateUrl: './scada-symbol-behavior-panel.component.html',
-  styleUrls: ['./scada-symbol-behavior-panel.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-scada-symbol-behavior-panel',
+    templateUrl: './scada-symbol-behavior-panel.component.html',
+    styleUrls: ['./scada-symbol-behavior-panel.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class ScadaSymbolBehaviorPanelComponent implements OnInit {
 

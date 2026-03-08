@@ -31,10 +31,11 @@ import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
 
 @Component({
-  selector: 'tb-add-entity-dialog',
-  templateUrl: './add-entity-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: AddEntityDialogComponent}],
-  styleUrls: ['./add-entity-dialog.component.scss']
+    selector: 'tb-add-entity-dialog',
+    templateUrl: './add-entity-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: AddEntityDialogComponent }],
+    styleUrls: ['./add-entity-dialog.component.scss'],
+    standalone: false
 })
 export class AddEntityDialogComponent extends
   DialogComponent<AddEntityDialogComponent, BaseData<HasId>> implements OnInit, ErrorStateMatcher {

@@ -46,14 +46,15 @@ import { TbFunction } from '@shared/models/js-function.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-mobile-action-editor',
-  templateUrl: './mobile-action-editor.component.html',
-  styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => MobileActionEditorComponent),
-    multi: true
-  }]
+    selector: 'tb-mobile-action-editor',
+    templateUrl: './mobile-action-editor.component.html',
+    styleUrls: [],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => MobileActionEditorComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class MobileActionEditorComponent implements ControlValueAccessor, OnInit {
 

@@ -27,17 +27,18 @@ import { DataKey, DatasourceType } from '@shared/models/widget.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-comparison-keys-table',
-  templateUrl: './comparison-keys-table.component.html',
-  styleUrls: ['./comparison-keys-table.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ComparisonKeysTableComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-comparison-keys-table',
+    templateUrl: './comparison-keys-table.component.html',
+    styleUrls: ['./comparison-keys-table.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ComparisonKeysTableComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class ComparisonKeysTableComponent implements ControlValueAccessor, OnInit {
 

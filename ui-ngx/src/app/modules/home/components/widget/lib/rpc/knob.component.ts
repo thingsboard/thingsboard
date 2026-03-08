@@ -30,9 +30,10 @@ import { BasicActionWidgetComponent, ValueSetter } from '@home/components/widget
 import GenericOptions = CanvasGauges.GenericOptions;
 
 @Component({
-  selector: 'tb-knob',
-  templateUrl: './knob.component.html',
-  styleUrls: ['./knob.component.scss']
+    selector: 'tb-knob',
+    templateUrl: './knob.component.html',
+    styleUrls: ['./knob.component.scss'],
+    standalone: false
 })
 export class KnobComponent extends BasicActionWidgetComponent implements OnInit, OnDestroy {
 

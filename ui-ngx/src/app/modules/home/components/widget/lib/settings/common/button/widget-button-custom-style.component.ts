@@ -40,17 +40,18 @@ import {
 import { deepClone } from '@core/utils';
 
 @Component({
-  selector: 'tb-widget-button-custom-style',
-  templateUrl: './widget-button-custom-style.component.html',
-  styleUrls: ['./widget-button-custom-style.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => WidgetButtonCustomStyleComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-widget-button-custom-style',
+    templateUrl: './widget-button-custom-style.component.html',
+    styleUrls: ['./widget-button-custom-style.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => WidgetButtonCustomStyleComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class WidgetButtonCustomStyleComponent implements OnInit, OnChanges, ControlValueAccessor {
 

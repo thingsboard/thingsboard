@@ -29,14 +29,15 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-twilio-sms-provider-configuration',
-  templateUrl: './twilio-sms-provider-configuration.component.html',
-  styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => TwilioSmsProviderConfigurationComponent),
-    multi: true
-  }]
+    selector: 'tb-twilio-sms-provider-configuration',
+    templateUrl: './twilio-sms-provider-configuration.component.html',
+    styleUrls: [],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TwilioSmsProviderConfigurationComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class TwilioSmsProviderConfigurationComponent implements ControlValueAccessor, OnInit {
 

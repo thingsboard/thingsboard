@@ -28,14 +28,15 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatFormFieldAppearance } from '@angular/material/form-field';
 
 @Component({
-  selector: 'tb-entity-select',
-  templateUrl: './entity-select.component.html',
-  styleUrls: ['./entity-select.component.scss'],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => EntitySelectComponent),
-    multi: true
-  }]
+    selector: 'tb-entity-select',
+    templateUrl: './entity-select.component.html',
+    styleUrls: ['./entity-select.component.scss'],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => EntitySelectComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class EntitySelectComponent implements ControlValueAccessor, OnInit, AfterViewInit {
 

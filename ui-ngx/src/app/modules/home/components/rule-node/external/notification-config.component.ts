@@ -21,9 +21,10 @@ import { NotificationType } from '@shared/models/notification.models';
 import { EntityType } from '@shared/models/entity-type.models';
 
 @Component({
-  selector: 'tb-external-node-notification-config',
-  templateUrl: './notification-config.component.html',
-  styleUrls: []
+    selector: 'tb-external-node-notification-config',
+    templateUrl: './notification-config.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class NotificationConfigComponent extends RuleNodeConfigurationComponent {
 

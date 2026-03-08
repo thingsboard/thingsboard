@@ -38,17 +38,18 @@ interface TimeUnitInputModel {
 }
 
 @Component({
-  selector: 'tb-time-unit-input',
-  templateUrl: './time-unit-input.component.html',
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => TimeUnitInputComponent),
-    multi: true
-  },{
-    provide: NG_VALIDATORS,
-    useExisting: forwardRef(() => TimeUnitInputComponent),
-    multi: true
-  }]
+    selector: 'tb-time-unit-input',
+    templateUrl: './time-unit-input.component.html',
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TimeUnitInputComponent),
+            multi: true
+        }, {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => TimeUnitInputComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class TimeUnitInputComponent implements ControlValueAccessor, Validator, OnInit {
 

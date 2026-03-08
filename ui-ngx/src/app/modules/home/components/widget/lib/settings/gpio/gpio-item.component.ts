@@ -55,16 +55,17 @@ export const gpioItemValidator = (hasColor: boolean): ValidatorFn => (control: A
 };
 
 @Component({
-  selector: 'tb-gpio-item',
-  templateUrl: './gpio-item.component.html',
-  styleUrls: ['./gpio-item.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => GpioItemComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-gpio-item',
+    templateUrl: './gpio-item.component.html',
+    styleUrls: ['./gpio-item.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => GpioItemComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class GpioItemComponent extends PageComponent implements OnInit, ControlValueAccessor {
 

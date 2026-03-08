@@ -21,9 +21,10 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 
 @Component({
-  selector: 'tb-markdown-widget-settings',
-  templateUrl: './markdown-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-markdown-widget-settings',
+    templateUrl: './markdown-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class MarkdownWidgetSettingsComponent extends WidgetSettingsComponent {
 

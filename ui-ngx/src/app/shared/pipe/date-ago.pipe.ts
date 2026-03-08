@@ -29,7 +29,8 @@ const intervals = {
 };
 
 @Pipe({
-  name: 'dateAgo'
+    name: 'dateAgo',
+    standalone: false
 })
 export class DateAgoPipe implements PipeTransform {
 

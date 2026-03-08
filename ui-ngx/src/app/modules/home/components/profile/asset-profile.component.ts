@@ -31,9 +31,10 @@ import { AssetProfile } from '@shared/models/asset.models';
 import { RuleChainType } from '@shared/models/rule-chain.models';
 
 @Component({
-  selector: 'tb-asset-profile',
-  templateUrl: './asset-profile.component.html',
-  styleUrls: []
+    selector: 'tb-asset-profile',
+    templateUrl: './asset-profile.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class AssetProfileComponent extends EntityComponent<AssetProfile> {
 

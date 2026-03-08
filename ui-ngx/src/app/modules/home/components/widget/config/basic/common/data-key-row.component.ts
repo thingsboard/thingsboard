@@ -76,17 +76,18 @@ export const dataKeyRowValidator = (control: AbstractControl): ValidationErrors 
 };
 
 @Component({
-  selector: 'tb-data-key-row',
-  templateUrl: './data-key-row.component.html',
-  styleUrls: ['./data-key-row.component.scss', '../../../lib/settings/common/key/data-keys.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DataKeyRowComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-data-key-row',
+    templateUrl: './data-key-row.component.html',
+    styleUrls: ['./data-key-row.component.scss', '../../../lib/settings/common/key/data-keys.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DataKeyRowComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class DataKeyRowComponent implements ControlValueAccessor, OnInit, OnChanges {
 

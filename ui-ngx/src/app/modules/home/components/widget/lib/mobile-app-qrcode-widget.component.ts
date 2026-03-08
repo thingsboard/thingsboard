@@ -30,9 +30,10 @@ import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
 
 @Component({
-  selector: 'tb-mobile-app-qrcode-widget',
-  templateUrl: './mobile-app-qrcode-widget.component.html',
-  styleUrls: ['./mobile-app-qrcode-widget.component.scss']
+    selector: 'tb-mobile-app-qrcode-widget',
+    templateUrl: './mobile-app-qrcode-widget.component.html',
+    styleUrls: ['./mobile-app-qrcode-widget.component.scss'],
+    standalone: false
 })
 export class MobileAppQrcodeWidgetComponent extends PageComponent implements OnInit, OnDestroy {
 

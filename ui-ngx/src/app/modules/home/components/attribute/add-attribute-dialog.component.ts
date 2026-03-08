@@ -33,10 +33,11 @@ export interface AddAttributeDialogData {
 }
 
 @Component({
-  selector: 'tb-add-attribute-dialog',
-  templateUrl: './add-attribute-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: AddAttributeDialogComponent}],
-  styleUrls: []
+    selector: 'tb-add-attribute-dialog',
+    templateUrl: './add-attribute-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: AddAttributeDialogComponent }],
+    styleUrls: [],
+    standalone: false
 })
 export class AddAttributeDialogComponent extends DialogComponent<AddAttributeDialogComponent, boolean>
   implements OnInit, ErrorStateMatcher {

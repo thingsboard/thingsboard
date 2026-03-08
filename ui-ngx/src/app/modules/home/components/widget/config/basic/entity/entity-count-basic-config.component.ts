@@ -28,9 +28,10 @@ import { UtilsService } from '@core/services/utils.service';
 import { countDefaultSettings, CountWidgetSettings } from '@home/components/widget/lib/count/count-widget.models';
 
 @Component({
-  selector: 'tb-entity-count-basic-config',
-  templateUrl: './entity-count-basic-config.component.html',
-  styleUrls: ['../basic-config.scss']
+    selector: 'tb-entity-count-basic-config',
+    templateUrl: './entity-count-basic-config.component.html',
+    styleUrls: ['../basic-config.scss'],
+    standalone: false
 })
 export class EntityCountBasicConfigComponent extends BasicWidgetConfigComponent {
 

@@ -42,9 +42,10 @@ import { UserFilterDialogComponent, UserFilterDialogData } from '@home/component
 import { MatDialog } from '@angular/material/dialog';
 
 @Component({
-  selector: 'tb-filters-edit',
-  templateUrl: './filters-edit.component.html',
-  styleUrls: ['./filters-edit.component.scss']
+    selector: 'tb-filters-edit',
+    templateUrl: './filters-edit.component.html',
+    styleUrls: ['./filters-edit.component.scss'],
+    standalone: false
 })
 export class FiltersEditComponent implements OnInit, OnDestroy {
 

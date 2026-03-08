@@ -29,14 +29,15 @@ import { ComponentPortal } from '@angular/cdk/portal';
 import { POSITION_MAP } from '@shared/models/overlay.models';
 
 @Component({
-  selector: 'tb-rule-chain-select',
-  templateUrl: './rule-chain-select.component.html',
-  styleUrls: ['./rule-chain-select.component.scss'],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => RuleChainSelectComponent),
-    multi: true
-  }]
+    selector: 'tb-rule-chain-select',
+    templateUrl: './rule-chain-select.component.html',
+    styleUrls: ['./rule-chain-select.component.scss'],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => RuleChainSelectComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class RuleChainSelectComponent implements ControlValueAccessor {
 

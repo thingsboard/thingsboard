@@ -25,9 +25,10 @@ import { RuleChain } from '@shared/models/rule-chain.models';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 
 @Component({
-  selector: 'tb-rulechain',
-  templateUrl: './rulechain.component.html',
-  styleUrls: ['./rulechain.component.scss']
+    selector: 'tb-rulechain',
+    templateUrl: './rulechain.component.html',
+    styleUrls: ['./rulechain.component.scss'],
+    standalone: false
 })
 export class RuleChainComponent extends EntityComponent<RuleChain> {
 

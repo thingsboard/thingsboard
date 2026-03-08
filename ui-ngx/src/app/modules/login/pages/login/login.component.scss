@@ -71,7 +71,7 @@
 
       a.login-with-button {
         color: rgba(black, 0.87);
-        background-color: map-get($tb-dark-theme-background, raised-button);
+        background-color: map-get($tb-dark-mat-indigo, 50);
 
         &:hover {
           border-bottom: 0;

@@ -31,16 +31,17 @@ import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { isEqual } from '@core/utils';
 
 @Component({
-  selector: 'tb-entity-keys-list',
-  templateUrl: './entity-keys-list.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => EntityKeysListComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-entity-keys-list',
+    templateUrl: './entity-keys-list.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => EntityKeysListComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class EntityKeysListComponent implements ControlValueAccessor, OnInit, AfterViewInit {
 

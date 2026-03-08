@@ -37,11 +37,12 @@ import { Datasource } from '@shared/models/widget.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-color-settings-panel',
-  templateUrl: './color-settings-panel.component.html',
-  providers: [],
-  styleUrls: ['./color-settings-panel.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-color-settings-panel',
+    templateUrl: './color-settings-panel.component.html',
+    providers: [],
+    styleUrls: ['./color-settings-panel.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class ColorSettingsPanelComponent extends PageComponent implements OnInit {
 

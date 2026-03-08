@@ -39,17 +39,18 @@ import { Observable, of } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-entity-alias-input',
-  templateUrl: './entity-alias-input.component.html',
-  styleUrls: ['./entity-alias-input.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => EntityAliasInputComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-entity-alias-input',
+    templateUrl: './entity-alias-input.component.html',
+    styleUrls: ['./entity-alias-input.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => EntityAliasInputComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class EntityAliasInputComponent implements ControlValueAccessor, OnInit {
 

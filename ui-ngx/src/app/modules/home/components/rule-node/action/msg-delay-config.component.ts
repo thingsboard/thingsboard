@@ -19,9 +19,10 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@shared/models/rule-node.models';
 
 @Component({
-  selector: 'tb-action-node-msg-delay-config',
-  templateUrl: './msg-delay-config.component.html',
-  styleUrls: []
+    selector: 'tb-action-node-msg-delay-config',
+    templateUrl: './msg-delay-config.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class MsgDelayConfigComponent extends RuleNodeConfigurationComponent {
 

@@ -32,21 +32,22 @@ import { MapSettingsContext } from '@home/components/widget/lib/settings/common/
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 
 @Component({
-  selector: 'tb-image-map-source-settings',
-  templateUrl: './image-map-source-settings.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ImageMapSourceSettingsComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => ImageMapSourceSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-image-map-source-settings',
+    templateUrl: './image-map-source-settings.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ImageMapSourceSettingsComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => ImageMapSourceSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ImageMapSourceSettingsComponent implements OnInit, ControlValueAccessor, Validator {
 

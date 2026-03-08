@@ -69,16 +69,17 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 // @dynamic
 @Component({
-  selector: 'tb-timewindow',
-  templateUrl: './timewindow.component.html',
-  styleUrls: ['./timewindow.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => TimewindowComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-timewindow',
+    templateUrl: './timewindow.component.html',
+    styleUrls: ['./timewindow.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TimewindowComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class TimewindowComponent implements ControlValueAccessor, OnInit, OnChanges {
 

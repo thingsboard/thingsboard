@@ -36,14 +36,15 @@ import { MatFormFieldAppearance } from '@angular/material/form-field';
 import { EntityService } from '@core/http/entity.service';
 
 @Component({
-  selector: 'tb-entity-subtype-autocomplete',
-  templateUrl: './entity-subtype-autocomplete.component.html',
-  styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => EntitySubTypeAutocompleteComponent),
-    multi: true
-  }]
+    selector: 'tb-entity-subtype-autocomplete',
+    templateUrl: './entity-subtype-autocomplete.component.html',
+    styleUrls: [],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => EntitySubTypeAutocompleteComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class EntitySubTypeAutocompleteComponent implements ControlValueAccessor, OnInit, AfterViewInit, OnDestroy {
 

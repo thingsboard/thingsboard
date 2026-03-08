@@ -26,9 +26,10 @@ import {
 } from '@home/components/widget/lib/cards/aggregated-value-card.models';
 
 @Component({
-  selector: 'tb-aggregated-value-card-key-settings',
-  templateUrl: './aggregated-value-card-key-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-aggregated-value-card-key-settings',
+    templateUrl: './aggregated-value-card-key-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class AggregatedValueCardKeySettingsComponent extends WidgetSettingsComponent {
 

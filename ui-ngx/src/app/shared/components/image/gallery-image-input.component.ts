@@ -45,16 +45,17 @@ export enum ImageLinkType {
 }
 
 @Component({
-  selector: 'tb-gallery-image-input',
-  templateUrl: './gallery-image-input.component.html',
-  styleUrls: ['./gallery-image-input.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => GalleryImageInputComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-gallery-image-input',
+    templateUrl: './gallery-image-input.component.html',
+    styleUrls: ['./gallery-image-input.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => GalleryImageInputComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class GalleryImageInputComponent extends PageComponent implements OnInit, OnDestroy, ControlValueAccessor {
 

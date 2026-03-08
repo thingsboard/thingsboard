@@ -32,9 +32,10 @@ import {
 } from '@home/components/widget/config/basic/chart/latest-chart-basic-config.component';
 
 @Component({
-  selector: 'tb-doughnut-basic-config',
-  templateUrl: './latest-chart-basic-config.component.html',
-  styleUrls: ['../basic-config.scss']
+    selector: 'tb-doughnut-basic-config',
+    templateUrl: './latest-chart-basic-config.component.html',
+    styleUrls: ['../basic-config.scss'],
+    standalone: false
 })
 export class DoughnutBasicConfigComponent extends LatestChartBasicConfigComponent<DoughnutWidgetSettings> {
 

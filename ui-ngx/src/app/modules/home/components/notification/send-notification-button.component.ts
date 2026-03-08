@@ -30,8 +30,9 @@ import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 
 @Component({
-  selector: 'tb-send-notification-button',
-  templateUrl: './send-notification-button.component.html',
+    selector: 'tb-send-notification-button',
+    templateUrl: './send-notification-button.component.html',
+    standalone: false
 })
 export class SendNotificationButtonComponent {
 

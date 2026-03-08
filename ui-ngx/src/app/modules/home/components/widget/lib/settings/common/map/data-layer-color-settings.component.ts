@@ -27,16 +27,17 @@ import { MapSettingsContext } from '@home/components/widget/lib/settings/common/
 import { DatasourceType } from '@shared/models/widget.models';
 
 @Component({
-  selector: 'tb-data-layer-color-settings',
-  templateUrl: './data-layer-color-settings.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DataLayerColorSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-data-layer-color-settings',
+    templateUrl: './data-layer-color-settings.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DataLayerColorSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class DataLayerColorSettingsComponent implements ControlValueAccessor {
 

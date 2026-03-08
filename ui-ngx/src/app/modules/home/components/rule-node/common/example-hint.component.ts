@@ -17,9 +17,10 @@
 import { Component, Input } from '@angular/core';
 
 @Component({
-  selector: 'tb-example-hint',
-  templateUrl: './example-hint.component.html',
-  styleUrls: []
+    selector: 'tb-example-hint',
+    templateUrl: './example-hint.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class ExampleHintComponent {
   @Input() hintText: string;

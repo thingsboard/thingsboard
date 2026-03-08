@@ -39,10 +39,10 @@
         <mat-form-field class="mat-block flex-1">
           <mat-label translate>widgets.persistent-table.method</mat-label>
           <input matInput formControlName="method" required>
-          <mat-error *ngIf="this.persistentFormGroup.get('method').hasError('required')">
+          <mat-error *ngIf="persistentFormGroup.get('method').hasError('required')">
             {{'widgets.persistent-table.method-error' | translate}}
           </mat-error>
-          <mat-error *ngIf="this.persistentFormGroup.get('method').hasError('pattern')">
+          <mat-error *ngIf="persistentFormGroup.get('method').hasError('pattern')">
             {{'widgets.persistent-table.white-space-error' | translate}}
           </mat-error>
         </mat-form-field>

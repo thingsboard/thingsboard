@@ -89,7 +89,7 @@
                         labelText="{{ 'admin.oauth2.clients' | translate }}"
                         placeholderText="{{ 'admin.oauth2.add-client' | translate }}">
           <button mat-button color="primary" matSuffix
-                  [disabled]="this.oauthForms.get('oauth2ClientIds').disabled"
+                  [disabled]="oauthForms.get('oauth2ClientIds').disabled"
                   (click)="createClient($event)">
             <span style="white-space: nowrap">{{ 'admin.oauth2.create-new' | translate }}</span>
           </button>

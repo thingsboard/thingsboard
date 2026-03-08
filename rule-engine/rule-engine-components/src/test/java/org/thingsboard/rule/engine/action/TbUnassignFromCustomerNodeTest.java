@@ -28,7 +28,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
-import org.thingsboard.rule.engine.TestDbCallbackExecutor;
+import org.thingsboard.common.util.DirectListeningExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -100,7 +100,7 @@ class TbUnassignFromCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
 
     private final TenantId TENANT_ID = new TenantId(UUID.fromString("06fcc15f-2677-436d-a1cb-7754bd0bcccf"));
 
-    private final ListeningExecutor DB_EXECUTOR = new TestDbCallbackExecutor();
+    private final ListeningExecutor DB_EXECUTOR = DirectListeningExecutor.INSTANCE;
 
     private static Stream<Arguments> givenUnsupportedOriginatorType_whenOnMsg_thenVerifyExceptionThrown() {
         return unsupportedEntityTypes.stream().flatMap(type -> Stream.of(Arguments.of(type)));

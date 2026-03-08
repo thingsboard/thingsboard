@@ -22,9 +22,10 @@ import { AppState } from '@core/core.state';
 import { buildPageStepSizeValues } from '@home/components/widget/lib/table-widget.models';
 
 @Component({
-  selector: 'tb-timeseries-table-widget-settings',
-  templateUrl: './timeseries-table-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-timeseries-table-widget-settings',
+    templateUrl: './timeseries-table-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class TimeseriesTableWidgetSettingsComponent extends WidgetSettingsComponent {
 

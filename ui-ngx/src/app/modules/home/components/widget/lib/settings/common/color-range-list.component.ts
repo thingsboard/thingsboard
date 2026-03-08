@@ -53,17 +53,18 @@ export function advancedRangeValidator(control: AbstractControl): ValidationErro
 }
 
 @Component({
-  selector: 'tb-color-range-list',
-  templateUrl: './color-range-list.component.html',
-  styleUrls: ['color-settings-panel.component.scss', 'color-range-list.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ColorRangeListComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-color-range-list',
+    templateUrl: './color-range-list.component.html',
+    styleUrls: ['color-settings-panel.component.scss', 'color-range-list.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ColorRangeListComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class ColorRangeListComponent implements OnInit, ControlValueAccessor, OnDestroy {
 

@@ -34,9 +34,10 @@ export interface EmbedDashboardDialogData {
 }
 
 @Component({
-  selector: 'tb-embed-dashboard-dialog',
-  templateUrl: './embed-dashboard-dialog.component.html',
-  styleUrls: ['./embed-dashboard-dialog.component.scss']
+    selector: 'tb-embed-dashboard-dialog',
+    templateUrl: './embed-dashboard-dialog.component.html',
+    styleUrls: ['./embed-dashboard-dialog.component.scss'],
+    standalone: false
 })
 export class EmbedDashboardDialogComponent extends DialogComponent<EmbedDashboardDialogComponent>
   implements OnInit {

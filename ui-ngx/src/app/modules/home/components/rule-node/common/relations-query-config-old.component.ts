@@ -22,16 +22,17 @@ import { RelationsQuery } from '../rule-node-config.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-relations-query-config-old',
-  templateUrl: './relations-query-config-old.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => RelationsQueryConfigOldComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-relations-query-config-old',
+    templateUrl: './relations-query-config-old.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => RelationsQueryConfigOldComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class RelationsQueryConfigOldComponent extends PageComponent implements ControlValueAccessor, OnInit {
 

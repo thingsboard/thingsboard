@@ -74,10 +74,11 @@ const horizontalBatteryDimensions = {
 };
 
 @Component({
-  selector: 'tb-battery-level-widget',
-  templateUrl: './battery-level-widget.component.html',
-  styleUrls: ['./battery-level-widget.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-battery-level-widget',
+    templateUrl: './battery-level-widget.component.html',
+    styleUrls: ['./battery-level-widget.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterViewInit {
 
