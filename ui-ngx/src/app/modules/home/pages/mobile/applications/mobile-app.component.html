@@ -153,6 +153,9 @@
         <mat-error *ngIf="entityForm.get('storeInfo.storeLink').hasError('pattern')">
           {{ 'mobile.invalid-store-link' | translate }}
         </mat-error>
+        <mat-error *ngIf="entityForm.get('storeInfo.storeLink').hasError('invalidStoreLinkForStatus')">
+          {{ 'mobile.store-link-not-allowed' | translate }}
+        </mat-error>
       </mat-form-field>
       <mat-form-field appearance="outline" *ngIf="entityForm.get('platformType').value === PlatformType.ANDROID">
         <mat-label translate>mobile.sha256-certificate-fingerprints</mat-label>
