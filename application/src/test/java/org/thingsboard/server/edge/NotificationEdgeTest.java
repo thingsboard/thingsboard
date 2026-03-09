@@ -57,7 +57,7 @@ public class NotificationEdgeTest extends AbstractEdgeTest {
 
     @Test
     public void testNotificationTemplate() throws Exception {
-        // create notification template
+        // create a notification template
         edgeImitator.expectMessageAmount(1);
         NotificationDeliveryMethod[] deliveryMethods = new NotificationDeliveryMethod[]{
                 NotificationDeliveryMethod.WEB
@@ -104,7 +104,7 @@ public class NotificationEdgeTest extends AbstractEdgeTest {
 
     @Test
     public void testNotificationTarget() throws Exception {
-        // create notification target
+        // create a notification target
         edgeImitator.expectMessageAmount(1);
         NotificationTarget target = createNotificationTarget();
         Assert.assertTrue(edgeImitator.waitForMessages());
@@ -144,7 +144,7 @@ public class NotificationEdgeTest extends AbstractEdgeTest {
 
     @Test
     public void testNotificationRule() throws Exception {
-        // create notification template for notification rule
+        // create a notification template for the notification rule
         edgeImitator.expectMessageAmount(1);
         NotificationDeliveryMethod[] deliveryMethods = new NotificationDeliveryMethod[]{
                 NotificationDeliveryMethod.WEB, NotificationDeliveryMethod.EMAIL
@@ -266,6 +266,7 @@ public class NotificationEdgeTest extends AbstractEdgeTest {
         notificationRule.setTriggerConfig(triggerConfig);
 
         EscalatedNotificationRuleRecipientsConfig recipientsConfig = new EscalatedNotificationRuleRecipientsConfig();
+        recipientsConfig.setTriggerType(NotificationRuleTriggerType.ALARM);
         Map<Integer, List<UUID>> escalationTable = new HashMap<>();
         escalationTable.put(Integer.valueOf("1"), new ArrayList<>());
         recipientsConfig.setEscalationTable(escalationTable);
