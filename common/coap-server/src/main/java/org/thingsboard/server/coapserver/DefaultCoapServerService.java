@@ -160,11 +160,15 @@ public class DefaultCoapServerService implements CoapServerService, SmartInitial
         DtlsConnectorConfig dtlsConnectorConfig = dtlsSettings.dtlsConnectorConfig(networkConfig);
         networkConfig.set(CoapConfig.COAP_SECURE_PORT, dtlsConnectorConfig.getAddress().getPort());
         dtlsCoapEndpointBuilder.setConfiguration(networkConfig);
-        dtlsConnector = new DTLSConnector(dtlsConnectorConfig);
-        dtlsCoapEndpointBuilder.setConnector(dtlsConnector);
-        dtlsCoapEndpoint = dtlsCoapEndpointBuilder.build();
-        server.addEndpoint(dtlsCoapEndpoint);
-        tbDtlsCertificateVerifier = (TbCoapDtlsCertificateVerifier) dtlsConnectorConfig.getAdvancedCertificateVerifier();
+        DTLSConnector newConnector = new DTLSConnector(dtlsConnectorConfig);
+        dtlsCoapEndpointBuilder.setConnector(newConnector);
+        CoapEndpoint newEndpoint = dtlsCoapEndpointBuilder.build();
+        server.addEndpoint(newEndpoint);
+        TbCoapDtlsCertificateVerifier newVerifier = (TbCoapDtlsCertificateVerifier) dtlsConnectorConfig.getAdvancedCertificateVerifier();
+
+        dtlsConnector = newConnector;
+        dtlsCoapEndpoint = newEndpoint;
+        tbDtlsCertificateVerifier = newVerifier;
     }
 
     private synchronized void recreateDtlsEndpoint() throws IOException {
@@ -174,9 +178,24 @@ public class DefaultCoapServerService implements CoapServerService, SmartInitial
         Configuration networkConfig = createNetworkConfiguration();
 
         log.info("Creating new DTLS endpoint with updated certificates...");
-        createDtlsEndpoint(networkConfig);
-        dtlsCoapEndpoint.start();
+
+        CoapEndpoint.Builder dtlsCoapEndpointBuilder = new CoapEndpoint.Builder();
+        TbCoapDtlsSettings dtlsSettings = coapServerContext.getDtlsSettings();
+        DtlsConnectorConfig dtlsConnectorConfig = dtlsSettings.dtlsConnectorConfig(networkConfig);
+        networkConfig.set(CoapConfig.COAP_SECURE_PORT, dtlsConnectorConfig.getAddress().getPort());
+        dtlsCoapEndpointBuilder.setConfiguration(networkConfig);
+        DTLSConnector newConnector = new DTLSConnector(dtlsConnectorConfig);
+        dtlsCoapEndpointBuilder.setConnector(newConnector);
+        CoapEndpoint newEndpoint = dtlsCoapEndpointBuilder.build();
+
+        server.addEndpoint(newEndpoint);
+        newEndpoint.start();
         log.info("New DTLS endpoint started successfully.");
+
+        // Only swap instance fields after a successful start
+        dtlsConnector = newConnector;
+        dtlsCoapEndpoint = newEndpoint;
+        tbDtlsCertificateVerifier = (TbCoapDtlsCertificateVerifier) dtlsConnectorConfig.getAdvancedCertificateVerifier();
 
         if (oldDtlsEndpoint != null) {
             log.info("Stopping old DTLS endpoint...");

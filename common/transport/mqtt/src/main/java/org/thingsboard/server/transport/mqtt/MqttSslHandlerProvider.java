@@ -79,14 +79,17 @@ public class MqttSslHandlerProvider implements SmartInitializingSingleton {
     }
 
     public SslHandler getSslHandler() {
-        if (sslContext == null) {
+        SSLContext ctx = sslContext;
+        if (ctx == null) {
             synchronized (this) {
-                if (sslContext == null) {
-                    sslContext = createSslContext();
+                ctx = sslContext;
+                if (ctx == null) {
+                    ctx = createSslContext();
+                    sslContext = ctx;
                 }
             }
         }
-        SSLEngine sslEngine = sslContext.createSSLEngine();
+        SSLEngine sslEngine = ctx.createSSLEngine();
         sslEngine.setUseClientMode(false);
         sslEngine.setNeedClientAuth(false);
         sslEngine.setWantClientAuth(true);

@@ -59,8 +59,12 @@ public class CertificateReloadManager implements SmartInitializingSingleton, Dis
     private volatile ScheduledExecutorService scheduler;
 
     public void registerWatcher(String name, Path certPath, Runnable reloadCallback) {
-        watchers.put(name, new CertificateWatcher(certPath, reloadCallback));
-        log.info("Registered certificate watcher for: {}", name);
+        registerWatcher(name, List.of(certPath), reloadCallback);
+    }
+
+    public void registerWatcher(String name, List<Path> certPaths, Runnable reloadCallback) {
+        watchers.put(name, new CertificateWatcher(certPaths, reloadCallback));
+        log.info("Registered certificate watcher for: {} (watching {} file(s))", name, certPaths.size());
     }
 
     private void checkCertificates() {
@@ -101,14 +105,19 @@ public class CertificateReloadManager implements SmartInitializingSingleton, Dis
                         continue;
                     }
 
+                    List<Path> existingPaths = filePaths.stream()
+                            .filter(p -> p != null && Files.exists(p))
+                            .toList();
+
                     for (Path filePath : filePaths) {
-                        if (filePath != null && Files.exists(filePath)) {
-                            String watcherKey = config.getName() + " - " + filePath.getFileName();
-                            registerWatcher(watcherKey, filePath, config::onCertificateFileChanged);
-                            log.info("Registered certificate watcher: {} -> {}", config.getName(), filePath);
-                        } else {
+                        if (filePath == null || !Files.exists(filePath)) {
                             log.warn("Certificate file does not exist: {} (from {})", filePath, config.getName());
                         }
+                    }
+
+                    if (!existingPaths.isEmpty()) {
+                        registerWatcher(config.getName(), existingPaths, config::onCertificateFileChanged);
+                        log.info("Registered certificate watcher: {} -> {}", config.getName(), existingPaths);
                     }
 
                 } catch (Exception e) {
@@ -146,37 +155,68 @@ public class CertificateReloadManager implements SmartInitializingSingleton, Dis
     }
 
     static class CertificateWatcher {
-        private final Path path;
+        private final List<Path> paths;
         private final Runnable reloadCallback;
-        private long lastModified;
-        private String lastChecksum;
+        private final Map<Path, Long> lastModifiedMap;
+        private final Map<Path, String> lastChecksumMap;
         private int consecutiveFailures;
-        private String failedChecksum;
+        private String failedCombinedChecksum;
 
-        CertificateWatcher(Path path, Runnable reloadCallback) {
-            this.path = path;
+        CertificateWatcher(List<Path> paths, Runnable reloadCallback) {
+            this.paths = paths;
             this.reloadCallback = reloadCallback;
-            this.lastModified = getLastModifiedTime();
-            this.lastChecksum = calculateChecksum();
+            this.lastModifiedMap = new ConcurrentHashMap<>();
+            this.lastChecksumMap = new ConcurrentHashMap<>();
+            for (Path path : paths) {
+                lastModifiedMap.put(path, getLastModifiedTime(path));
+                lastChecksumMap.put(path, calculateChecksum(path));
+            }
             this.consecutiveFailures = 0;
         }
 
         synchronized void checkAndReload(String name) {
-            long currentModified = getLastModifiedTime();
-            if (currentModified == lastModified) {
+            boolean anyModifiedChanged = false;
+            for (Path path : paths) {
+                long currentModified = getLastModifiedTime(path);
+                Long lastModified = lastModifiedMap.getOrDefault(path, 0L);
+                if (currentModified != lastModified) {
+                    anyModifiedChanged = true;
+                    break;
+                }
+            }
+            if (!anyModifiedChanged) {
                 return;
             }
 
-            String currentChecksum = calculateChecksum();
-            if (currentChecksum.equals(lastChecksum)) {
-                lastModified = currentModified;
+            // Compute combined checksum of all files
+            Map<Path, String> currentChecksums = new ConcurrentHashMap<>();
+            StringBuilder combined = new StringBuilder();
+            for (Path path : paths) {
+                String checksum = calculateChecksum(path);
+                currentChecksums.put(path, checksum);
+                combined.append(checksum);
+            }
+            String combinedChecksum = combined.toString();
+
+            // Build old combined checksum for comparison
+            StringBuilder oldCombined = new StringBuilder();
+            for (Path path : paths) {
+                oldCombined.append(lastChecksumMap.getOrDefault(path, ""));
+            }
+            String oldCombinedChecksum = oldCombined.toString();
+
+            if (combinedChecksum.equals(oldCombinedChecksum)) {
+                // Content unchanged, just update modification times
+                for (Path path : paths) {
+                    lastModifiedMap.put(path, getLastModifiedTime(path));
+                }
                 return;
             }
 
-            if (!currentChecksum.equals(failedChecksum) && consecutiveFailures > 0) {
+            if (!combinedChecksum.equals(failedCombinedChecksum) && consecutiveFailures > 0) {
                 // File content changed since last failure — reset and retry
                 consecutiveFailures = 0;
-                failedChecksum = null;
+                failedCombinedChecksum = null;
             }
 
             if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
@@ -186,19 +226,21 @@ public class CertificateReloadManager implements SmartInitializingSingleton, Dis
             try {
                 log.info("Certificate change detected for: {}. Triggering reload...", name);
                 reloadCallback.run();
-                lastModified = currentModified;
-                lastChecksum = currentChecksum;
+                for (Path path : paths) {
+                    lastModifiedMap.put(path, getLastModifiedTime(path));
+                    lastChecksumMap.put(path, currentChecksums.get(path));
+                }
                 consecutiveFailures = 0;
-                failedChecksum = null;
+                failedCombinedChecksum = null;
             } catch (Exception e) {
                 consecutiveFailures++;
-                failedChecksum = currentChecksum;
+                failedCombinedChecksum = combinedChecksum;
                 log.error("Failed to reload certificate for {} (attempt {}/{}): {}",
                         name, consecutiveFailures, MAX_CONSECUTIVE_FAILURES, e.getMessage(), e);
             }
         }
 
-        private long getLastModifiedTime() {
+        private long getLastModifiedTime(Path path) {
             try {
                 if (!Files.exists(path)) {
                     return 0;
@@ -209,7 +251,7 @@ public class CertificateReloadManager implements SmartInitializingSingleton, Dis
             }
         }
 
-        private String calculateChecksum() {
+        private String calculateChecksum(Path path) {
             try {
                 if (!Files.exists(path)) {
                     return "";
