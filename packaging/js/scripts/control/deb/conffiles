@@ -1,0 +1,4 @@
+${pkg.installFolder}/conf/${pkg.name}.conf
+${pkg.installFolder}/conf/custom-environment-variables.yml
+${pkg.installFolder}/conf/default.yml
+${pkg.installFolder}/conf/logger.js

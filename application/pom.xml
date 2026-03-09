@@ -41,6 +41,7 @@
         <pkg.name>thingsboard</pkg.name>
         <pkg.win.dist>${project.build.directory}/windows</pkg.win.dist>
         <pkg.copyInstallScripts>true</pkg.copyInstallScripts>
+        <pkg.install.scripts.phase>process-resources</pkg.install.scripts.phase>
         <pkg.implementationTitle>ThingsBoard</pkg.implementationTitle>
         <pkg.mainClass>org.thingsboard.server.ThingsboardServerApplication</pkg.mainClass>
     </properties>
@@ -484,10 +485,6 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.thingsboard</groupId>
-                <artifactId>gradle-maven-plugin</artifactId>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

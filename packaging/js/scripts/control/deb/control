@@ -1,0 +1,6 @@
+Section: net
+Priority: optional
+Architecture: amd64
+Maintainer: ThingsBoard Authors <info@thingsboard.io>
+Description: ThingsBoard ${pkg.name}
+ Open-source IoT Platform service.
