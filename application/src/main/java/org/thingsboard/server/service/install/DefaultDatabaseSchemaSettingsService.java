@@ -31,7 +31,8 @@ public class DefaultDatabaseSchemaSettingsService implements DatabaseSchemaSetti
     // map of versions from which the upgrade to the current version is possible
     // key - supported version prefix, value - display name
     private static final Map<String, String> SUPPORTED_VERSIONS_FOR_UPGRADE = Map.of(
-            "4.2.1", "4.2.1.x"
+            "4.2.1", "4.2.1.x",
+            "4.2.2", "4.2.2.x"
     );
 
     private final ProjectInfo projectInfo;
