@@ -786,7 +786,7 @@ public class DefaultTransportService extends TransportActivityManager implements
 
         TransportProtos.SessionCloseNotificationProto notification = TransportProtos.SessionCloseNotificationProto.newBuilder().setMessage("session timeout!").build();
 
-        ScheduledFuture executorFuture = scheduler.schedule(() -> {
+        ScheduledFuture<?> executorFuture = scheduler.schedule(() -> {
             listener.onRemoteSessionCloseCommand(sessionId, notification);
             deregisterSession(sessionInfo);
         }, timeout, TimeUnit.MILLISECONDS);
@@ -1181,15 +1181,17 @@ public class DefaultTransportService extends TransportActivityManager implements
         @Override
         public void onSuccess(TbQueueMsgMetadata metadata) {
             stats.incrementSuccessful();
-            if (callback != null)
+            if (callback != null) {
                 callback.onSuccess(metadata);
+            }
         }
 
         @Override
         public void onFailure(Throwable t) {
             stats.incrementFailed();
-            if (callback != null)
+            if (callback != null) {
                 callback.onFailure(t);
+            }
         }
 
     }
