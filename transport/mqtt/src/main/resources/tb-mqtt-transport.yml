@@ -96,9 +96,9 @@ redis:
     password: "${REDIS_SENTINEL_PASSWORD:}"
     # if set false will be used pool config build from values of the pool config section
     useDefaultPoolConfig: "${REDIS_USE_DEFAULT_POOL_CONFIG:true}"
-  # db index
+  # Redis logical database index to select after connecting.
   db: "${REDIS_DB:0}"
-  # db password
+  # Password for Redis authentication (leave empty if not required).
   password: "${REDIS_PASSWORD:}"
   # Redis username for ACL authentication (Redis 6.0+). Leave empty for legacy password-only auth
   username: "${REDIS_USERNAME:}"

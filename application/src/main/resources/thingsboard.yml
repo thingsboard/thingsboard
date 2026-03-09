@@ -136,7 +136,7 @@ zk:
   recalculate_delay: "${ZOOKEEPER_RECALCULATE_DELAY_MS:0}"
 
 # Cluster parameters
-# Controls inter-node communication statistics within a ThingsBoard cluster.
+# Controls cluster statistics — tracks the number of messages exchanged between cluster nodes.
 cluster:
   stats:
     # Enable/Disable the cluster statistics. Calculates the number of messages sent between cluster nodes based on each type
@@ -772,9 +772,9 @@ redis:
     password: "${REDIS_SENTINEL_PASSWORD:}"
     # If set false will be used pool config build from values of the pool config section
     useDefaultPoolConfig: "${REDIS_USE_DEFAULT_POOL_CONFIG:true}"
-  # db index
+  # Redis logical database index to select after connecting.
   db: "${REDIS_DB:0}"
-  # db password
+  # Password for Redis authentication (leave empty if not required).
   password: "${REDIS_PASSWORD:}"
   # Redis username for ACL authentication (Redis 6.0+). Leave empty for legacy password-only auth
   username: "${REDIS_USERNAME:}"
@@ -2107,7 +2107,7 @@ mobileApp:
   # Link to App Store for Thingsboard Live mobile application
   appStoreLink: "${TB_MOBILE_APP_APP_STORE_LINK:https://apps.apple.com/us/app/thingsboard-live/id1594355695}"
 
-# MQTT client settings
+# MQTT client parameters
 # Configures MQTT client retransmission behavior including max attempts, initial delay, and jitter factor.
 mqtt:
   # MQTT client configuration parameters
