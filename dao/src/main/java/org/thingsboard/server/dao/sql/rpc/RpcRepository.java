@@ -21,6 +21,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.dao.model.sql.RpcEntity;
 
@@ -34,6 +35,7 @@ public interface RpcRepository extends JpaRepository<RpcEntity, UUID> {
 
     Page<RpcEntity> findAllByTenantId(UUID tenantId, Pageable pageable);
 
+    @Transactional
     @Modifying
     @Query(value = "DELETE FROM rpc WHERE id IN " +
             "(SELECT id FROM rpc WHERE tenant_id = :tenantId AND created_time < :expirationTime LIMIT :batchSize)",

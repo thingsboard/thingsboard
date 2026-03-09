@@ -62,17 +62,15 @@ public class NotificationsCleanUpService extends AbstractCleanUpService {
     public void cleanUp() {
         long expTime = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(ttlInSec);
         long partitionDurationMs = TimeUnit.HOURS.toMillis(partitionSizeInHours);
-        if (!isSystemTenantPartitionMine()) {
+        if (isSystemTenantPartitionMine()) {
+            partitioningRepository.dropPartitionsBefore(NOTIFICATION_TABLE_NAME, expTime, partitionDurationMs);
+        } else {
             partitioningRepository.cleanupPartitionsCache(NOTIFICATION_TABLE_NAME, expTime, partitionDurationMs);
-            return;
         }
 
-        long lastRemovedNotificationTs = partitioningRepository.dropPartitionsBefore(NOTIFICATION_TABLE_NAME, expTime, partitionDurationMs);
-        if (lastRemovedNotificationTs > 0) {
-            long gap = TimeUnit.MINUTES.toMillis(10);
-            long requestExpTime = lastRemovedNotificationTs - TimeUnit.SECONDS.toMillis(NotificationRequestConfig.MAX_SENDING_DELAY) - gap;
-            cleanUpNotificationRequests(requestExpTime);
-        }
+        long gap = TimeUnit.MINUTES.toMillis(10);
+        long requestExpTime = expTime - TimeUnit.SECONDS.toMillis(NotificationRequestConfig.MAX_SENDING_DELAY) - gap;
+        cleanUpNotificationRequests(requestExpTime);
     }
 
     private void cleanUpNotificationRequests(long expirationTime) {
@@ -80,13 +78,15 @@ public class NotificationsCleanUpService extends AbstractCleanUpService {
         int totalRemoved = 0;
         int tenantsProcessed = 0;
 
-        // Clean up SYSADMIN's notification requests:
-        try {
-            totalRemoved += cleanUpByTenant(TenantId.SYS_TENANT_ID, expirationTime);
-        } catch (Exception e) {
-            log.warn("Failed to clean up notification requests for sysadmin {}", TenantId.SYS_TENANT_ID, e);
+        // Clean up SYSADMIN's notification requests on the system node only
+        if (isSystemTenantPartitionMine()) {
+            try {
+                totalRemoved += cleanUpByTenant(TenantId.SYS_TENANT_ID, expirationTime);
+            } catch (Exception e) {
+                log.warn("Failed to clean up notification requests for sysadmin {}", TenantId.SYS_TENANT_ID, e);
+            }
         }
-        // Clean up notification requests for tenants
+        // Each node cleans up notification requests for its own tenants
         PageDataIterable<TenantId> tenants = new PageDataIterable<>(tenantService::findTenantsIds, 10_000);
         for (TenantId tenantId : tenants) {
             try {
