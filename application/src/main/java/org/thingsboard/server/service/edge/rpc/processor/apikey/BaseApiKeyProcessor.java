@@ -44,7 +44,7 @@ public abstract class BaseApiKeyProcessor extends BaseEdgeProcessor {
             }
 
             apiKey.setId(apiKeyId);
-            edgeCtx.getApiKeyService().saveApiKey(tenantId, apiKey);
+            edgeCtx.getApiKeyService().saveApiKey(tenantId, apiKey, apiKey.getValue(), false);
         } catch (Exception e) {
             log.error("[{}] Failed to process apiKey update msg [{}]", tenantId, apiKeyUpdateMsg, e);
             throw e;

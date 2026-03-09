@@ -76,39 +76,25 @@ public class ApiKeyServiceImpl extends AbstractCachedEntityService<ApiKeyCacheKe
 
     @Override
     public ApiKey saveApiKey(TenantId tenantId, ApiKeyInfo apiKeyInfo) {
+        return saveApiKey(tenantId, apiKeyInfo, null, true);
+    }
+
+    @Override
+    public ApiKey saveApiKey(TenantId tenantId, ApiKeyInfo apiKeyInfo, String value, boolean doValidate) {
         log.trace("Executing saveApiKey [{}]", apiKeyInfo);
         try {
             var apiKey = new ApiKey(apiKeyInfo);
-            var old = apiKeyValidator.validate(apiKey, ApiKeyInfo::getTenantId);
-            if (old == null) {
-                String value = generateApiKeySecret();
+            ApiKey old = doValidate ? apiKeyValidator.validate(apiKey, ApiKeyInfo::getTenantId) :
+                    (apiKey.getId() != null ? apiKeyDao.findById(tenantId, apiKey.getUuidId()) : null);
+            if (value != null) {
                 apiKey.setValue(value);
+            } else if (old == null) {
+                apiKey.setValue(generateApiKeySecret());
             } else {
                 apiKey.setValue(old.getValue());
             }
             var savedApiKey = apiKeyDao.save(tenantId, apiKey);
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entityId(savedApiKey.getId()).entity(savedApiKey).created(apiKey.getId() == null).build());
-            if (old != null && old.isEnabled() != apiKey.isEnabled()) {
-                publishEvictEvent(new ApiKeyEvictEvent(apiKey.getValue()));
-            }
-            return savedApiKey;
-        } catch (Exception e) {
-            checkConstraintViolation(e, "api_key_value_unq_key", "API Key with such value already exists!");
-            throw e;
-        }
-    }
-
-    @Override
-    public ApiKey saveApiKey(TenantId tenantId, ApiKey apiKey) {
-        log.trace("Executing saveApiKey with value [{}]", apiKey);
-        try {
-            ApiKey old = apiKey.getId() != null ? apiKeyDao.findById(tenantId, apiKey.getUuidId()) : null;
-            if (old != null && apiKey.getValue() == null) {
-                apiKey.setValue(old.getValue());
-            }
-            var savedApiKey = apiKeyDao.save(tenantId, apiKey);
-            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entityId(savedApiKey.getId())
-                    .entity(savedApiKey).created(old == null).build());
             if (old != null && old.isEnabled() != apiKey.isEnabled()) {
                 publishEvictEvent(new ApiKeyEvictEvent(apiKey.getValue()));
             }

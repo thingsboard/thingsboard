@@ -30,7 +30,7 @@ public interface ApiKeyService extends EntityDaoService {
 
     ApiKey saveApiKey(TenantId tenantId, ApiKeyInfo apiKey);
 
-    ApiKey saveApiKey(TenantId tenantId, ApiKey apiKey);
+    ApiKey saveApiKey(TenantId tenantId, ApiKeyInfo apiKeyInfo, String value, boolean doValidate);
 
     void deleteApiKey(TenantId tenantId, ApiKey apiKey, boolean force);
 
