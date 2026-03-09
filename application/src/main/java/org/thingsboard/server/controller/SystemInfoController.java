@@ -76,6 +76,9 @@ public class SystemInfoController extends BaseController {
     @Value("${debug.settings.default_duration:15}")
     private int defaultDebugDurationMinutes;
 
+    @Value("${iot-hub.base-url:https://iot-hub.thingsboard.io}")
+    private String iotHubBaseUrl;
+
     @Autowired(required = false)
     private BuildProperties buildProperties;
 
@@ -164,6 +167,7 @@ public class SystemInfoController extends BaseController {
             systemParams.setMaxDataPointsPerRollingArg(tenantProfileConfiguration.getMaxDataPointsPerRollingArg());
             systemParams.setTrendzSettings(trendzSettingsService.findTrendzSettings(currentUser.getTenantId()));
         }
+        systemParams.setIotHubBaseUrl(iotHubBaseUrl);
         systemParams.setMobileQrEnabled(Optional.ofNullable(qrCodeSettingService.findQrCodeSettings(TenantId.SYS_TENANT_ID))
                 .map(QrCodeSettings::getQrCodeConfig).map(QRCodeConfig::isShowOnHomePage)
                 .orElse(false));

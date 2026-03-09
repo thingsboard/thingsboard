@@ -1,0 +1,188 @@
+<!--
+
+    Copyright © 2016-2026 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div mat-dialog-content class="tb-iot-hub-detail-dialog">
+  <!-- Header (sticky) -->
+  <div class="dlg-header">
+    <div class="dlg-header-top">
+      @if (item.type === ItemType.CALCULATED_FIELD || item.type === ItemType.RULE_CHAIN) {
+        <div class="dlg-icon" [style.background]="item.color || '#6366f1'">
+          <tb-icon>{{ getCompactIcon() }}</tb-icon>
+        </div>
+      }
+      <div class="dlg-header-info">
+        <div class="dlg-title-row">
+          <span class="dlg-title">{{ item.name }}</span>
+          <span class="dlg-version">v{{ item.version }}</span>
+          @if (getSubtypeLabel(); as subtypeLabel) {
+            <span class="dlg-type-badge" [ngClass]="getSubtypeColorClass()">{{ subtypeLabel }}</span>
+          }
+        </div>
+        <div class="dlg-subtitle">
+          <span>{{ typeTranslations.get(item.type) | translate }}</span>
+          <span class="dlg-sep">&middot;</span>
+          <span>{{ 'iot-hub.by-creator' | translate:{ name: '' } }}</span>
+          <span class="dlg-creator-link" (click)="navigateToCreator()">{{ item.creatorDisplayName }}</span>
+          @if (item.publishedTime) {
+            <span class="dlg-sep">&middot;</span>
+            <span>{{ item.publishedTime | date:'mediumDate' }}</span>
+          }
+        </div>
+      </div>
+      <button mat-icon-button class="dlg-close" (click)="close()" type="button">
+        <tb-icon>close</tb-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Scrollable body -->
+  <div class="dlg-body">
+    <!-- Widget: image + description side by side -->
+    @if (item.type === ItemType.WIDGET) {
+      <div class="dlg-hero-split">
+        <div class="dlg-hero-image">
+          @if (getPreviewUrl(); as url) {
+            <img [src]="url" alt="">
+          } @else {
+            <div class="tb-iot-hub-preview-placeholder">
+              <tb-icon>widgets</tb-icon>
+            </div>
+          }
+        </div>
+        @if (item.description) {
+          <div class="dlg-hero-desc">{{ item.description }}</div>
+        }
+      </div>
+    }
+
+    <!-- Dashboard: full-width image + description below -->
+    @if (item.type === ItemType.DASHBOARD) {
+      <div class="dlg-hero-full">
+        <div class="dlg-hero-full-image">
+          @if (getPreviewUrl(); as url) {
+            <img [src]="url" alt="">
+          } @else {
+            <div class="tb-iot-hub-preview-placeholder">
+              <tb-icon>dashboard</tb-icon>
+            </div>
+          }
+        </div>
+        @if (item.description) {
+          <div class="dlg-hero-full-desc">{{ item.description }}</div>
+        }
+      </div>
+    }
+
+    <!-- Stats bar -->
+    <div class="dlg-stats-bar">
+      <span class="dlg-stat">
+        <tb-icon>download</tb-icon>
+        <strong>{{ item.totalInstallCount | shortNumber }}</strong> {{ 'iot-hub.installs' | translate }}
+      </span>
+      <span class="dlg-stat">
+        <tb-icon>{{ getTypeIcon() }}</tb-icon>
+        {{ typeTranslations.get(item.type) | translate }}
+      </span>
+      @if (item.peOnly) {
+        <span class="dlg-pe-label">PE</span>
+      }
+    </div>
+
+    <!-- Device preview -->
+    @if (item.type === ItemType.DEVICE) {
+      <div class="dlg-device-preview">
+        @if (getPreviewUrl(); as url) {
+          <img [src]="url" alt="">
+        } @else {
+          <div class="tb-iot-hub-preview-placeholder">
+            <tb-icon>memory</tb-icon>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- CF/RC: description block -->
+    @if (item.description && item.type !== ItemType.WIDGET && item.type !== ItemType.DASHBOARD) {
+      <div class="dlg-desc-block">{{ item.description }}</div>
+    }
+
+    <!-- Node chips (Rule Chain) -->
+    @if (item.type === ItemType.RULE_CHAIN && getNodes().length) {
+      <div class="dlg-node-chips">
+        @for (node of getNodes(); track node.name) {
+          <span class="dlg-node-chip" [ngClass]="'dlg-node-' + node.type.toLowerCase()" [title]="getNodeLabel(node)">{{ node.name }}</span>
+        }
+        @if (getNodeCount() > getNodes().length) {
+          <span class="dlg-node-more">+{{ getNodeCount() - getNodes().length }} {{ 'iot-hub.more' | translate }}</span>
+        }
+      </div>
+    }
+
+    <!-- Categories & Use Cases -->
+    @if (item.categories?.length || item.useCases?.length) {
+      <div class="dlg-meta-section">
+        @if (item.categories?.length) {
+          <div class="dlg-meta-group">
+            <span class="dlg-meta-label">{{ 'iot-hub.categories' | translate }}</span>
+            <div class="dlg-meta-chips">
+              @for (cat of item.categories; track cat) {
+                <span class="dlg-meta-chip dlg-meta-chip-category">{{ getCategoryLabel(cat) }}</span>
+              }
+            </div>
+          </div>
+        }
+        @if (item.useCases?.length) {
+          <div class="dlg-meta-group">
+            <span class="dlg-meta-label">{{ 'iot-hub.use-cases' | translate }}</span>
+            <div class="dlg-meta-chips">
+              @for (uc of item.useCases; track uc) {
+                <span class="dlg-meta-chip dlg-meta-chip-usecase">{{ getUseCaseLabel(uc) }}</span>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Readme / Changelog -->
+    @if (readmeContent || item.changelog) {
+      <div class="dlg-content">
+        @if (readmeContent) {
+          <tb-markdown [data]="readmeContent"></tb-markdown>
+        }
+        @if (item.changelog) {
+          <h3>{{ 'iot-hub.changelog' | translate }}</h3>
+          <tb-markdown [data]="item.changelog"></tb-markdown>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Footer -->
+  <div class="dlg-footer">
+    <button class="dlg-install-btn" (click)="install()">
+      {{ 'iot-hub.install-item-type' | translate:{ type: getTypeLabel() } }}
+    </button>
+    <div class="dlg-creator-info">
+      <span>{{ 'iot-hub.created-by' | translate:{ name: item.creatorDisplayName } }}</span>
+      <span class="dlg-sep">&middot;</span>
+      <span class="dlg-become-creator" (click)="openSignup()">
+        {{ 'iot-hub.become-a-creator' | translate }}
+      </span>
+    </div>
+  </div>
+</div>

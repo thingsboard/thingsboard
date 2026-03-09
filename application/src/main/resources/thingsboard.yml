@@ -2061,3 +2061,5 @@ mqtt:
       # The actual delay is randomized within a range defined by multiplying the base delay by a factor between (1 - jitter_factor) and (1 + jitter_factor).
       # For example, a jitter_factor of 0.15 means the actual delay may vary by up to ±15% of the base delay.
       jitter_factor: "${TB_MQTT_CLIENT_RETRANSMISSION_JITTER_FACTOR:0.15}"
+iot-hub:
+  base-url: "${IOT_HUB_BASE_URL:https://iot-hub.thingsboard.io}" # IoT Hub base URL for fetching published items, resources, etc.

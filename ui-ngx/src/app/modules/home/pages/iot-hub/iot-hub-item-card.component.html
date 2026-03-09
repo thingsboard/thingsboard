@@ -1,0 +1,107 @@
+<!--
+
+    Copyright © 2016-2026 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-iot-hub-item-card" [class.tb-iot-hub-card-compact]="isCompactLayout()" (click)="onCardClick()">
+  @if (!isCompactLayout()) {
+    <div class="tb-iot-hub-card-preview" [class]="getPreviewClass()">
+      @if (getPreviewUrl(); as previewUrl) {
+        <img [src]="previewUrl" alt="" class="tb-iot-hub-preview-image">
+      } @else {
+        <div class="tb-iot-hub-preview-placeholder" [style.background]="getCustomIconColor() ? getCustomIconColor() + '22' : null">
+          <tb-icon [style.color]="getCustomIconColor()">{{ getPlaceholderIcon() }}</tb-icon>
+        </div>
+      }
+      @if (item.peOnly) {
+        <span class="tb-iot-hub-pe-badge">PE</span>
+      }
+    </div>
+  }
+  <div class="tb-iot-hub-card-content">
+    @if (isCompactLayout()) {
+      <div class="tb-iot-hub-card-cf-header">
+        <div class="tb-iot-hub-card-cf-icon" [style.background]="item.color || '#6366f1'">
+          <tb-icon>{{ getPlaceholderIcon() }}</tb-icon>
+        </div>
+        <div class="tb-iot-hub-card-cf-title-area">
+          <div class="tb-iot-hub-card-name-row">
+            <h3 class="tb-iot-hub-card-name">{{ item.name }}</h3>
+            <span class="tb-iot-hub-card-version">v{{ item.version }}</span>
+          </div>
+          @if (getSubtypeLabel(); as subtypeLabel) {
+            <span class="tb-iot-hub-card-cf-type">{{ subtypeLabel }}</span>
+          }
+        </div>
+        @if (item.peOnly) {
+          <span class="tb-iot-hub-pe-badge tb-iot-hub-pe-badge-inline">PE</span>
+        }
+      </div>
+    } @else {
+      <div class="tb-iot-hub-card-name-row">
+        <h3 class="tb-iot-hub-card-name">{{ item.name }}</h3>
+        <span class="tb-iot-hub-card-version">v{{ item.version }}</span>
+      </div>
+      @if (item.type === ItemType.WIDGET && getSubtypeLabel(); as subtypeLabel) {
+        <span class="tb-iot-hub-card-widget-type-label">{{ subtypeLabel }}</span>
+      }
+    }
+    @if (item.description) {
+      <p class="tb-iot-hub-card-description">{{ item.description }}</p>
+    }
+    @if (getNodes(); as nodes) {
+      @if (nodes.length) {
+        <div class="tb-iot-hub-card-nodes">
+          @for (node of nodes | slice:0:maxVisibleNodes; track node.name) {
+            <span class="tb-iot-hub-card-node-chip" [ngClass]="getNodeColorClass(node)" [title]="getNodeLabel(node)">{{ node.name }}</span>
+          }
+          @if (getNodeCount() > maxVisibleNodes) {
+            <span class="tb-iot-hub-card-node-more">+{{ getNodeCount() - maxVisibleNodes }}</span>
+          }
+        </div>
+      }
+    }
+    @if (getCategoryLabels().length || getFirstUseCaseLabel()) {
+      <div class="tb-iot-hub-card-categories">
+        @if (getCategoryLabels(); as labels) {
+          @if (labels.length) {
+            <span class="tb-iot-hub-card-category-chip">{{ labels[0] }}</span>
+          }
+        }
+        @if (getFirstUseCaseLabel(); as useCaseLabel) {
+          <span class="tb-iot-hub-card-use-case-chip">{{ useCaseLabel }}</span>
+        }
+      </div>
+    }
+    <div class="tb-iot-hub-card-footer">
+      @if (showCreator) {
+        <tb-icon class="tb-iot-hub-card-author-icon">person</tb-icon><span class="tb-iot-hub-card-creator" (click)="onCreatorClick($event)">{{ item.creatorDisplayName }}</span>
+        @if (item.publishedTime) {
+          <span class="tb-iot-hub-card-dot">&middot;</span>
+        }
+      }
+      @if (item.publishedTime) {
+        <span class="tb-iot-hub-card-published">{{ formatPublishedTime(item.publishedTime) }}</span>
+      }
+      <span class="tb-iot-hub-card-stats">
+        <span class="tb-iot-hub-card-stat">
+          <tb-icon>download</tb-icon>
+          {{ item.totalInstallCount | shortNumber }}
+        </span>
+        <button class="tb-iot-hub-card-install-btn" (click)="onInstallClick($event)">Install</button>
+      </span>
+    </div>
+  </div>
+</div>

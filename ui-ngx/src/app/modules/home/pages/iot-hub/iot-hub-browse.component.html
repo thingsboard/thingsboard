@@ -1,0 +1,215 @@
+<!--
+
+    Copyright © 2016-2026 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-iot-hub-browse-container" [class.embedded]="embedded">
+  <!-- Page header -->
+  @if (!embedded) {
+    <div class="tb-iot-hub-browse-header">
+      <h1>{{ getTitle() | translate }}</h1>
+      <p>{{ getSubtitle() | translate }}</p>
+    </div>
+  }
+
+  <!-- Type tabs -->
+  <nav mat-tab-nav-bar class="tb-iot-hub-type-tabs" [tabPanel]="tabPanel">
+    <a mat-tab-link
+       [active]="activeType === ItemType.WIDGET"
+       (click)="onTypeTabChange(ItemType.WIDGET)">
+      {{ 'item.type-widget' | translate }}s
+    </a>
+    <a mat-tab-link
+       [active]="activeType === ItemType.DASHBOARD"
+       (click)="onTypeTabChange(ItemType.DASHBOARD)">
+      {{ 'item.type-dashboard' | translate }}s
+    </a>
+    <a mat-tab-link
+       [active]="activeType === ItemType.CALCULATED_FIELD"
+       (click)="onTypeTabChange(ItemType.CALCULATED_FIELD)">
+      {{ 'item.type-calculated-field' | translate }}s
+    </a>
+    <a mat-tab-link
+       [active]="activeType === ItemType.RULE_CHAIN"
+       (click)="onTypeTabChange(ItemType.RULE_CHAIN)">
+      {{ 'item.type-rule-chain' | translate }}s
+    </a>
+    <a mat-tab-link
+       [active]="activeType === ItemType.DEVICE"
+       (click)="onTypeTabChange(ItemType.DEVICE)">
+      {{ 'item.type-device' | translate }}s
+    </a>
+  </nav>
+  <mat-tab-nav-panel #tabPanel></mat-tab-nav-panel>
+
+  <!-- Search + sort row -->
+  <div class="tb-iot-hub-search-row">
+    <mat-form-field appearance="outline" class="tb-iot-hub-search-field">
+      <mat-icon matPrefix>search</mat-icon>
+      <input matInput
+             [placeholder]="getSearchPlaceholder() | translate"
+             [value]="textSearch"
+             (input)="onSearchChange($any($event.target).value)">
+      @if (textSearch) {
+        <button matSuffix mat-icon-button (click)="onSearchChange('')">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="tb-iot-hub-sort-field">
+      <mat-select [value]="selectedSortIndex" (selectionChange)="onSortChange($event.value)">
+        @for (option of sortOptions; track option.value; let i = $index) {
+          <mat-option [value]="i">{{ option.label | translate }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <!-- Filter dropdowns row -->
+  <div class="tb-iot-hub-filter-row">
+    @if (getSubtypeMap(); as subtypeMap) {
+      <mat-form-field appearance="outline" class="tb-iot-hub-filter-select">
+        <mat-select [value]="getActiveSubtypesArray()" multiple
+                    [placeholder]="'iot-hub.type-filter-label' | translate"
+                    (selectionChange)="onSubtypesChange($event.value)">
+          @for (entry of subtypeMap | keyvalue; track entry.key) {
+            <mat-option [value]="entry.key">{{ entry.value | translate }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    }
+    @if (categories.size > 0) {
+      <mat-form-field appearance="outline" class="tb-iot-hub-filter-select">
+        <mat-select [value]="getActiveCategoriesArray()" multiple
+                    [placeholder]="'iot-hub.category' | translate"
+                    (selectionChange)="onCategoriesChange($event.value)">
+          @for (entry of categories | keyvalue; track entry.key) {
+            <mat-option [value]="entry.key">{{ entry.value | translate }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    }
+    <mat-form-field appearance="outline" class="tb-iot-hub-filter-select">
+      <mat-select [value]="getActiveUseCasesArray()" multiple
+                  [placeholder]="'iot-hub.use-case' | translate"
+                  (selectionChange)="onUseCasesChange($event.value)">
+        @for (entry of useCases | keyvalue; track entry.key) {
+          <mat-option [value]="entry.key">{{ entry.value | translate }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <!-- Active filter chips -->
+  @if (hasActiveDropdownFilters()) {
+    <div class="tb-iot-hub-active-filters">
+      @for (key of getActiveSubtypesArray(); track key) {
+        <span class="tb-iot-hub-active-chip" (click)="onSubtypeToggle(key)">
+          {{ getSubtypeLabel(key) }}
+          <mat-icon>close</mat-icon>
+        </span>
+      }
+      @for (key of getActiveCategoriesArray(); track key) {
+        <span class="tb-iot-hub-active-chip" (click)="onCategoryToggle(key)">
+          {{ getCategoryLabel(key) }}
+          <mat-icon>close</mat-icon>
+        </span>
+      }
+      @for (key of getActiveUseCasesArray(); track key) {
+        <span class="tb-iot-hub-active-chip" (click)="onUseCaseToggle(key)">
+          {{ getUseCaseLabel(key) }}
+          <mat-icon>close</mat-icon>
+        </span>
+      }
+      <button class="tb-iot-hub-clear-filters" (click)="clearAllFilters()">
+        {{ 'iot-hub.clear-all-filters' | translate }}
+      </button>
+    </div>
+  }
+
+  <!-- Results count -->
+  @if (!isLoading && !hasError) {
+    <div class="tb-iot-hub-results-count">
+      {{ 'iot-hub.results-count' | translate:{ count: totalElements } }}
+    </div>
+  }
+
+  <!-- Loading -->
+  @if (isLoading) {
+    <div class="tb-iot-hub-loading">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  }
+
+  <!-- Error -->
+  @if (hasError && !isLoading) {
+    <div class="tb-iot-hub-empty-state">
+      <mat-icon class="tb-iot-hub-empty-icon">error_outline</mat-icon>
+      <h3>{{ 'iot-hub.unable-to-load' | translate }}</h3>
+      <p>{{ 'iot-hub.unable-to-load-text' | translate }}</p>
+      <button mat-raised-button color="primary" (click)="loadItems()">
+        {{ 'iot-hub.retry' | translate }}
+      </button>
+    </div>
+  }
+
+  <!-- Empty state -->
+  @if (!isLoading && !hasError && items.length === 0) {
+    <div class="tb-iot-hub-empty-state">
+      <mat-icon class="tb-iot-hub-empty-icon">search_off</mat-icon>
+      <h3>{{ 'iot-hub.no-items-found' | translate }}</h3>
+      <p>{{ 'iot-hub.no-items-found-text' | translate }}</p>
+      @if (hasActiveFilters()) {
+        <button mat-raised-button color="primary" (click)="clearAllFilters()">
+          {{ 'iot-hub.clear-all-filters' | translate }}
+        </button>
+      }
+    </div>
+  }
+
+  <!-- Card grid -->
+  @if (!isLoading && !hasError && items.length > 0) {
+    <div class="tb-iot-hub-card-grid">
+      @for (item of items; track item.id) {
+        <tb-iot-hub-item-card
+          [item]="item"
+          [showTypeChip]="false"
+          [showCreator]="!creatorId"
+          (cardClick)="openItemDetail($event)"
+          (creatorClick)="navigateToCreator($event)"
+          (installClick)="installItem($event)">
+        </tb-iot-hub-item-card>
+      }
+    </div>
+
+    <!-- Pagination -->
+    <mat-paginator
+      [length]="totalElements"
+      [pageSize]="pageSize"
+      [pageIndex]="pageIndex"
+      [pageSizeOptions]="[12, 24, 48]"
+      (page)="onPageChange($event)">
+    </mat-paginator>
+  }
+
+  <!-- Footer -->
+  @if (!creatorId) {
+    <div class="tb-iot-hub-browse-footer">
+      <a class="tb-iot-hub-become-creator" href="https://iothub.thingsboard.io/signup" target="_blank">
+        {{ 'iot-hub.become-a-creator' | translate }}
+      </a>
+    </div>
+  }
+</div>

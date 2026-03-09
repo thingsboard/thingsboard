@@ -1,0 +1,82 @@
+<!--
+
+    Copyright © 2016-2026 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-iot-hub-creator-profile-container">
+  <button mat-button class="tb-iot-hub-back-btn" (click)="goBack()">
+    <mat-icon>arrow_back</mat-icon>
+    {{ 'iot-hub.back-to-iot-hub' | translate }}
+  </button>
+
+  @if (creator) {
+    <!-- Creator header -->
+    <mat-card class="tb-iot-hub-creator-header" appearance="outlined">
+      <mat-card-content>
+        <div class="tb-iot-hub-creator-info">
+          <div class="tb-iot-hub-creator-avatar">
+            @if (getAvatarUrl(); as avatarUrl) {
+              <img [src]="avatarUrl" alt="">
+            } @else {
+              <mat-icon>account_circle</mat-icon>
+            }
+          </div>
+          <div class="tb-iot-hub-creator-details">
+            <h2>{{ creator.displayName }}</h2>
+            @if (creator.description) {
+              <p class="tb-iot-hub-creator-desc">{{ creator.description }}</p>
+            }
+            @if (creator.website) {
+              <a class="tb-iot-hub-creator-link" [href]="creator.website" target="_blank">
+                {{ creator.website }}
+              </a>
+            }
+            @if (creator.contactEmail) {
+              <div class="tb-iot-hub-creator-email">{{ creator.contactEmail }}</div>
+            }
+            <div class="tb-iot-hub-social-links">
+              @if (creator.githubUrl) {
+                <a [href]="creator.githubUrl" target="_blank" mat-icon-button matTooltip="GitHub">
+                  <mat-icon>code</mat-icon>
+                </a>
+              }
+              @if (creator.linkedinUrl) {
+                <a [href]="creator.linkedinUrl" target="_blank" mat-icon-button matTooltip="LinkedIn">
+                  <mat-icon>work</mat-icon>
+                </a>
+              }
+              @if (creator.twitterUrl) {
+                <a [href]="creator.twitterUrl" target="_blank" mat-icon-button matTooltip="Twitter/X">
+                  <mat-icon>chat</mat-icon>
+                </a>
+              }
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Published items -->
+    <div class="tb-iot-hub-creator-items-header">
+      <h3>{{ 'iot-hub.published-items' | translate }} ({{ creator.publishedCount }})</h3>
+    </div>
+
+    <tb-iot-hub-browse
+      #browseComponent
+      [creatorId]="creatorId"
+      [embedded]="true">
+    </tb-iot-hub-browse>
+  }
+</div>
