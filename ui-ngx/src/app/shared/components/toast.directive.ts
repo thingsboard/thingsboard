@@ -28,7 +28,13 @@ import {
   ViewChild,
   ViewContainerRef
 } from '@angular/core';
-import { MAT_SNACK_BAR_DATA, MatSnackBar, MatSnackBarConfig, MatSnackBarRef } from '@angular/material/snack-bar';
+import {
+  MAT_SNACK_BAR_DATA,
+  MatSnackBar,
+  MatSnackBarConfig,
+  MatSnackBarRef,
+  MatSnackBarVerticalPosition
+} from '@angular/material/snack-bar';
 import { NotificationMessage } from '@app/core/notification/notification.models';
 import { Subscription } from 'rxjs';
 import { ToastNotificationService } from '@core/services/toast-notification.service';
@@ -127,6 +133,8 @@ export class ToastDirective implements AfterViewInit, OnDestroy {
       }
       if (verticalPosition === 'top') {
         panelClass.push('top');
+      } else if (verticalPosition === 'center') {
+        panelClass.push('v-center');
       } else {
         panelClass.push('bottom');
       }
@@ -184,7 +192,7 @@ export class ToastDirective implements AfterViewInit, OnDestroy {
       };
       const config: MatSnackBarConfig = {
         horizontalPosition: notificationMessage.horizontalPosition || 'left',
-        verticalPosition: !isGtSm ? 'bottom' : (notificationMessage.verticalPosition || 'top'),
+        verticalPosition: (!isGtSm && notificationMessage.verticalPosition === 'center' ? 'bottom' : (notificationMessage.verticalPosition || 'top')) as MatSnackBarVerticalPosition,
         viewContainerRef: this.viewContainerRef,
         duration: notificationMessage.duration,
         panelClass: notificationMessage.panelClass,
