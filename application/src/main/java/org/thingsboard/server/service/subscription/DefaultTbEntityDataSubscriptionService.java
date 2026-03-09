@@ -245,7 +245,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                     public void onFailure(Throwable t) {
                         log.warn("[{}][{}] Failed to process command", finalCtx.getSessionId(), finalCtx.getCmdId(), t);
                         if (t instanceof ResultSetSizeLimitExceededException) {
-                            finalCtx.sendWsMsg(new EntityDataUpdate(finalCtx.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR.getCode(), t.getMessage()));
+                            sendError(finalCtx, t);
                         }
                     }
                 }, wsCallBackExecutor);
@@ -270,7 +270,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                         public void onFailure(Throwable t) {
                             log.warn("[{}][{}] Failed to process timeseries command", ctx.getSessionId(), ctx.getCmdId(), t);
                             if (t instanceof ResultSetSizeLimitExceededException) {
-                                ctx.sendWsMsg(new EntityDataUpdate(ctx.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR.getCode(), t.getMessage()));
+                                sendError(ctx, t);
                             }
                         }
                     }, wsCallBackExecutor);
@@ -281,6 +281,10 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         } catch (RuntimeException e) {
             handleWsCmdRuntimeException(ctx.getSessionId(), e, cmd);
         }
+    }
+
+    private void sendError(TbEntityDataSubCtx ctx, Throwable t) {
+        ctx.sendWsMsg(new EntityDataUpdate(ctx.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR.getCode(), t.getMessage()));
     }
 
     private void checkAndSendInitialData(@Nullable TbEntityDataSubCtx theCtx) {
