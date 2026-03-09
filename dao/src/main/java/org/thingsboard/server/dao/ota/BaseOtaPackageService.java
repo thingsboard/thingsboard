@@ -234,10 +234,10 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
         try {
             Integer result = otaPackageDao.unlinkLargeObject(oid);
             if (result != 1) {
-                log.error("[{}][{}] Failed to delete large object (OID: {}). Result code: {}", tenantId, otaPackageId, oid, result);
+                log.warn("[{}][{}] Failed to delete large object (OID: {}). Result code: {}", tenantId, otaPackageId, oid, result);
             }
         } catch (Exception e) {
-            log.error("[{}][{}] Failed to delete large object (OID: {})", tenantId, otaPackageId, oid, e);
+            log.warn("[{}][{}] Failed to delete large object (OID: {})", tenantId, otaPackageId, oid, e);
         }
     }
 
