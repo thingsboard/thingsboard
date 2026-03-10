@@ -28,9 +28,12 @@ import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.bouncycastle.openssl.jcajce.JcePEMEncryptorBuilder;
+import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.transport.config.ssl.PemSslCredentials;
 import org.thingsboard.server.gen.edge.v1.EdgeRpcServiceGrpc;
@@ -45,6 +48,7 @@ import java.security.KeyPairGenerator;
 import java.security.PrivateKey;
 import java.security.Security;
 import java.security.cert.X509Certificate;
+import java.security.spec.ECGenParameterSpec;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -61,12 +65,40 @@ import static org.awaitility.Awaitility.await;
  * 2. Combined PEM file (cert + key)
  * 3. Encrypted private key + key_password
  * 4. Error when combined PEM has no private key and private_key is empty
+ * 5. ECDSA P-384 key support
  */
 class EdgeGrpcSslTest {
 
     static {
         if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
             Security.addProvider(new BouncyCastleProvider());
+        }
+    }
+
+    enum KeyType {
+        RSA_2048("RSA", 2048, null, "SHA256withRSA"),
+        EC_P384("EC", 384, "secp384r1", "SHA384withECDSA");
+
+        final String algorithm;
+        final int size;
+        final String curve;
+        final String sigAlg;
+
+        KeyType(String algorithm, int size, String curve, String sigAlg) {
+            this.algorithm = algorithm;
+            this.size = size;
+            this.curve = curve;
+            this.sigAlg = sigAlg;
+        }
+
+        KeyPair generateKeyPair() throws Exception {
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance(algorithm);
+            if (curve != null) {
+                kpg.initialize(new ECGenParameterSpec(curve));
+            } else {
+                kpg.initialize(size);
+            }
+            return kpg.generateKeyPair();
         }
     }
 
@@ -87,10 +119,11 @@ class EdgeGrpcSslTest {
         }
     }
 
-    @Test
-    void separateCertAndKeyFiles() throws Exception {
-        KeyPair kp = generateKeyPair();
-        X509Certificate cert = generateSelfSignedCert(kp);
+    @ParameterizedTest(name = "separateCertAndKeyFiles_{0}")
+    @EnumSource(KeyType.class)
+    void separateCertAndKeyFiles(KeyType keyType) throws Exception {
+        KeyPair kp = keyType.generateKeyPair();
+        X509Certificate cert = generateSelfSignedCert(kp, keyType.sigAlg);
 
         Path certFile = writeTempPem("cert", cert);
         Path keyFile = writeTempPem("key", kp.getPrivate());
@@ -99,10 +132,11 @@ class EdgeGrpcSslTest {
         assertTlsConnectivity(cert);
     }
 
-    @Test
-    void combinedPemFile() throws Exception {
-        KeyPair kp = generateKeyPair();
-        X509Certificate cert = generateSelfSignedCert(kp);
+    @ParameterizedTest(name = "combinedPemFile_{0}")
+    @EnumSource(KeyType.class)
+    void combinedPemFile(KeyType keyType) throws Exception {
+        KeyPair kp = keyType.generateKeyPair();
+        X509Certificate cert = generateSelfSignedCert(kp, keyType.sigAlg);
 
         Path combinedFile = writeTempPem("combined", cert, kp.getPrivate());
 
@@ -112,8 +146,8 @@ class EdgeGrpcSslTest {
 
     @Test
     void encryptedPrivateKey() throws Exception {
-        KeyPair kp = generateKeyPair();
-        X509Certificate cert = generateSelfSignedCert(kp);
+        KeyPair kp = KeyType.RSA_2048.generateKeyPair();
+        X509Certificate cert = generateSelfSignedCert(kp, KeyType.RSA_2048.sigAlg);
         String password = "test-password";
 
         Path combinedFile = writeTempPemEncrypted("enc-combined", password, cert, kp.getPrivate());
@@ -124,8 +158,8 @@ class EdgeGrpcSslTest {
 
     @Test
     void combinedPemWithoutKey_throwsException() throws Exception {
-        KeyPair kp = generateKeyPair();
-        X509Certificate cert = generateSelfSignedCert(kp);
+        KeyPair kp = KeyType.RSA_2048.generateKeyPair();
+        X509Certificate cert = generateSelfSignedCert(kp, KeyType.RSA_2048.sigAlg);
 
         Path certOnlyFile = writeTempPem("cert-only", cert);
 
@@ -176,13 +210,7 @@ class EdgeGrpcSslTest {
 
     // --- Cert/key generation ---
 
-    private KeyPair generateKeyPair() throws Exception {
-        KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
-        kpg.initialize(2048);
-        return kpg.generateKeyPair();
-    }
-
-    private X509Certificate generateSelfSignedCert(KeyPair kp) throws Exception {
+    private X509Certificate generateSelfSignedCert(KeyPair kp, String sigAlg) throws Exception {
         X500Name subject = new X500Name("CN=localhost");
         Date now = new Date();
         return new JcaX509CertificateConverter().getCertificate(
@@ -190,7 +218,7 @@ class EdgeGrpcSslTest {
                         subject, BigInteger.ONE, now,
                         new Date(now.getTime() + TimeUnit.DAYS.toMillis(1)),
                         subject, kp.getPublic())
-                        .build(new JcaContentSignerBuilder("SHA256withRSA").build(kp.getPrivate())));
+                        .build(new JcaContentSignerBuilder(sigAlg).build(kp.getPrivate())));
     }
 
     // --- PEM file helpers ---
@@ -208,7 +236,7 @@ class EdgeGrpcSslTest {
         tempFiles.add(p);
         try (JcaPEMWriter w = new JcaPEMWriter(Files.newBufferedWriter(p))) {
             for (Object o : objects) {
-                w.writeObject(o);
+                w.writeObject(toPkcs8IfKey(o));
             }
         }
         return p;
@@ -230,5 +258,12 @@ class EdgeGrpcSslTest {
             }
         }
         return p;
+    }
+
+    private Object toPkcs8IfKey(Object o) {
+        if (o instanceof PrivateKey pk) {
+            return new PemObject("PRIVATE KEY", pk.getEncoded());
+        }
+        return o;
     }
 }
