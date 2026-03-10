@@ -23,5 +23,7 @@ public interface IotHubService {
 
     InstallItemVersionResult installItemVersion(SecurityUser user, String versionId);
 
+    UpdateItemVersionResult updateItemVersion(SecurityUser user, UUID itemId, String versionId);
+
     void deleteInstalledItem(SecurityUser user, UUID itemId);
 }

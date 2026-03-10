@@ -21,6 +21,7 @@ import { Authority } from '@shared/models/authority.enum';
 import { TbIotHubBrowseComponent } from './iot-hub-browse.component';
 import { TbIotHubCreatorProfileComponent } from './iot-hub-creator-profile.component';
 import { TbIotHubInstalledItemsComponent } from './iot-hub-installed-items.component';
+import { iotHubInstalledItemInfosResolver } from './iot-hub-installed-item-infos.resolver';
 
 const routes: Routes = [
   {
@@ -39,6 +40,9 @@ const routes: Routes = [
         data: {
           auth: [Authority.TENANT_ADMIN],
           title: 'iot-hub.browse'
+        },
+        resolve: {
+          installedItemInfos: iotHubInstalledItemInfosResolver
         }
       },
       {
@@ -51,6 +55,9 @@ const routes: Routes = [
             label: 'iot-hub.installed-items',
             icon: 'inventory_2'
           }
+        },
+        resolve: {
+          installedItemInfos: iotHubInstalledItemInfosResolver
         }
       },
       {

@@ -38,6 +38,7 @@ import java.util.UUID;
 import org.thingsboard.server.dao.iot_hub.IotHubInstalledItemService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.iot_hub.InstallItemVersionResult;
+import org.thingsboard.server.service.iot_hub.UpdateItemVersionResult;
 import org.thingsboard.server.service.iot_hub.IotHubService;
 
 @Hidden
@@ -56,6 +57,14 @@ public class IotHubController extends BaseController {
     @ResponseBody
     public InstallItemVersionResult installItemVersion(@PathVariable String versionId) throws ThingsboardException {
         return iotHubService.installItemVersion(getCurrentUser(), versionId);
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @PostMapping("/installedItems/{itemId}/update/{versionId}")
+    @ResponseBody
+    public UpdateItemVersionResult updateItemVersion(@PathVariable UUID itemId,
+                                                     @PathVariable String versionId) throws ThingsboardException {
+        return iotHubService.updateItemVersion(getCurrentUser(), itemId, versionId);
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")

@@ -386,9 +386,14 @@
   flex-shrink: 0;
 }
 
-.dlg-install-btn {
+.dlg-footer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
   width: 100%;
-  max-width: 400px;
+}
+
+.dlg-install-btn {
   padding: 12px 24px;
   border: none;
   border-radius: 8px;
@@ -401,6 +406,23 @@
 
   &:hover {
     background: #264466;
+  }
+}
+
+.dlg-update-btn {
+  padding: 12px 24px;
+  border: 1px solid #e65100;
+  border-radius: 8px;
+  background: transparent;
+  color: #e65100;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    background: #e65100;
+    color: #fff;
   }
 }
 

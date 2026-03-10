@@ -47,9 +47,28 @@ export type IotHubInstalledItemDescriptor =
   | RuleChainInstalledItemDescriptor
   | DeviceInstalledItemDescriptor;
 
+export interface InstallItemVersionResult {
+  success: boolean;
+  errorMessage: string;
+  descriptor: IotHubInstalledItemDescriptor;
+}
+
+export interface UpdateItemVersionResult {
+  success: boolean;
+  errorMessage: string;
+  descriptor: IotHubInstalledItemDescriptor;
+}
+
 export interface IotHubInstalledItemInfo {
   itemId: string;
   itemVersionId: string;
+}
+
+export interface ItemUpdateInfo {
+  itemId: string;
+  hasUpdate: boolean;
+  latestVersion: string;
+  latestItemVersionId: string;
 }
 
 export interface IotHubInstalledItem extends BaseData<{id: string}> {

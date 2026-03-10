@@ -22,6 +22,18 @@
   </a>
   <div class="tb-iot-hub-installed-items-header">
     <h2>{{ 'iot-hub.installed-items' | translate }}</h2>
+    @if (!updatesChecked) {
+      <button mat-flat-button color="primary"
+              [disabled]="isCheckingUpdates"
+              (click)="checkForUpdates()">
+        @if (isCheckingUpdates) {
+          <mat-spinner diameter="18" class="tb-iot-hub-inline-spinner"></mat-spinner>
+        } @else {
+          <mat-icon>update</mat-icon>
+        }
+        {{ 'iot-hub.check-for-updates' | translate }}
+      </button>
+    }
   </div>
 
   <div class="tb-iot-hub-installed-search-row">
@@ -64,7 +76,34 @@
 
       <ng-container matColumnDef="createdTime">
         <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'iot-hub.installed-date' | translate }}</th>
-        <td mat-cell *matCellDef="let item">{{ item.createdTime | date:'medium' }}</td>
+        <td mat-cell *matCellDef="let item">{{ item.createdTime | date:'mediumDate' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="updates">
+        <th mat-header-cell *matHeaderCellDef>{{ updatesChecked ? ('iot-hub.updates' | translate) : '' }}</th>
+        <td mat-cell *matCellDef="let item">
+          @if (updatesChecked) {
+            @if (getUpdateInfo(item); as updateInfo) {
+              @if (updateInfo.hasUpdate) {
+                <button mat-stroked-button class="tb-iot-hub-update-button"
+                        [matTooltip]="'iot-hub.view-item-details' | translate"
+                        matTooltipPosition="above"
+                        (click)="viewUpdateDetails(updateInfo, item)">
+                  <mat-icon>info_outline</mat-icon>
+                  {{ updateInfo.latestVersion }}
+                </button>
+                <button mat-stroked-button color="primary" class="tb-iot-hub-update-button"
+                        (click)="updateItem(item, updateInfo)">
+                  {{ 'iot-hub.update' | translate }}
+                </button>
+              } @else {
+                <span class="tb-iot-hub-up-to-date">{{ 'iot-hub.up-to-date' | translate }}</span>
+              }
+            } @else {
+              <span class="tb-iot-hub-up-to-date">{{ 'iot-hub.up-to-date' | translate }}</span>
+            }
+          }
+        </td>
       </ng-container>
 
       <ng-container matColumnDef="actions">

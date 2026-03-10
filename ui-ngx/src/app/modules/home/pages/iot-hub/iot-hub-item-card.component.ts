@@ -19,6 +19,7 @@ import { MpItemVersionView, cfTypeTranslations, cfTypeIcons, ruleChainTypeTransl
 import { ItemType, itemTypeTranslations, getCategoriesForType, useCaseTranslations } from '@shared/models/iot-hub/iot-hub-item.models';
 import { TranslateService } from '@ngx-translate/core';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
+import { IotHubInstalledItemInfo } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 
 @Component({
   selector: 'tb-iot-hub-item-card',
@@ -36,9 +37,11 @@ export class TbIotHubItemCardComponent {
   @Input() showCreator = true;
   @Input() showTypeChip = true;
   @Input() installed = false;
+  @Input() installedItemInfo: IotHubInstalledItemInfo | null = null;
   @Output() cardClick = new EventEmitter<MpItemVersionView>();
   @Output() creatorClick = new EventEmitter<string>();
   @Output() installClick = new EventEmitter<MpItemVersionView>();
+  @Output() updateClick = new EventEmitter<MpItemVersionView>();
 
   typeTranslations = itemTypeTranslations;
 
@@ -187,9 +190,19 @@ export class TbIotHubItemCardComponent {
     this.cardClick.emit(this.item);
   }
 
+  hasUpdate(): boolean {
+    return this.installed && this.installedItemInfo != null
+      && this.installedItemInfo.itemVersionId !== this.item.id;
+  }
+
   onInstallClick(event: MouseEvent): void {
     event.stopPropagation();
     this.installClick.emit(this.item);
+  }
+
+  onUpdateClick(event: MouseEvent): void {
+    event.stopPropagation();
+    this.updateClick.emit(this.item);
   }
 
   onCreatorClick(event: MouseEvent): void {

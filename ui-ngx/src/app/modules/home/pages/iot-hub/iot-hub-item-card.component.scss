@@ -358,4 +358,22 @@
     font-weight: 600;
     white-space: nowrap;
   }
+
+  .tb-iot-hub-card-update-btn {
+    padding: 5px 14px;
+    border-radius: 6px;
+    border: 1px solid #e65100;
+    background: transparent;
+    color: #e65100;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s;
+
+    &:hover {
+      background: #e65100;
+      color: #fff;
+    }
+  }
 }

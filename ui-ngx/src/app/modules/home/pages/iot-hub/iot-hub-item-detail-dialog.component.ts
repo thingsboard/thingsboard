@@ -25,6 +25,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { EntityType } from '@shared/models/entity-type.models';
 import { getEntityDetailsPageURL } from '@core/utils';
 import { TbIotHubInstallDialogComponent, IotHubInstallDialogData } from './iot-hub-install-dialog.component';
+import { TbIotHubUpdateDialogComponent, IotHubUpdateDialogData } from './iot-hub-update-dialog.component';
 
 export interface IotHubItemDetailDialogData {
   item: MpItemVersionView;
@@ -46,6 +47,7 @@ export class TbIotHubItemDetailDialogComponent {
   typeTranslations = itemTypeTranslations;
   readmeContent: string = '';
   installedDescriptor?: IotHubInstalledItemDescriptor;
+  installedItemInfo?: IotHubInstalledItemInfo;
 
   private static readonly ITEM_TYPE_TO_ENTITY_TYPE: Record<string, EntityType> = {
     'WIDGET': EntityType.WIDGET_TYPE,
@@ -67,6 +69,7 @@ export class TbIotHubItemDetailDialogComponent {
   ) {
     this.item = data.item;
     this.installedDescriptor = data.installedDescriptor;
+    this.installedItemInfo = data.installedItemInfo;
     if (!this.installedDescriptor && data.installedItemInfo) {
       this.data.iotHubApiService.getInstalledItemByItemId(data.installedItemInfo.itemId, {ignoreLoading: true}).subscribe(
         installedItem => this.installedDescriptor = installedItem?.descriptor
@@ -229,6 +232,11 @@ export class TbIotHubItemDetailDialogComponent {
     return this.item.dataDescriptor?.nodeCount || 0;
   }
 
+  hasUpdate(): boolean {
+    return this.installedItemInfo != null
+      && this.installedItemInfo.itemVersionId !== this.item.id;
+  }
+
   install(): void {
     const dialogRef = this.dialog.open(TbIotHubInstallDialogComponent, {
       panelClass: ['tb-dialog'],
@@ -240,6 +248,25 @@ export class TbIotHubItemDetailDialogComponent {
     dialogRef.afterClosed().subscribe(result => {
       if (result === 'installed') {
         this.dialogRef.close('installed');
+      }
+    });
+  }
+
+  updateItem(): void {
+    const dialogRef = this.dialog.open(TbIotHubUpdateDialogComponent, {
+      panelClass: ['tb-dialog'],
+      data: {
+        itemId: this.item.itemId,
+        itemName: this.item.name,
+        itemType: this.item.type,
+        version: this.item.version,
+        versionId: this.item.id,
+        iotHubApiService: this.data.iotHubApiService
+      } as IotHubUpdateDialogData
+    });
+    dialogRef.afterClosed().subscribe(result => {
+      if (result === 'updated') {
+        this.dialogRef.close('updated');
       }
     });
   }

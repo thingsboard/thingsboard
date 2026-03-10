@@ -22,7 +22,7 @@ import { PageData } from '@shared/models/page/page-data';
 import { PageLink } from '@shared/models/page/page-link';
 import { MpItemVersionQuery, MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
 import { CreatorView } from '@shared/models/iot-hub/iot-hub-creator.models';
-import { IotHubInstalledItem, IotHubInstalledItemInfo } from '@shared/models/iot-hub/iot-hub-installed-item.models';
+import { IotHubInstalledItem, IotHubInstalledItemInfo, InstallItemVersionResult, UpdateItemVersionResult, ItemUpdateInfo } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { InterceptorHttpParams } from '@core/interceptors/interceptor-http-params';
 import { InterceptorConfig } from '@core/interceptors/interceptor-config';
 import { AppState } from '@core/core.state';
@@ -112,9 +112,17 @@ export class IotHubApiService {
     );
   }
 
-  public installItemVersion(versionId: string, config?: IotHubRequestConfig): Observable<any> {
-    return this.http.post<any>(
+  public installItemVersion(versionId: string, config?: IotHubRequestConfig): Observable<InstallItemVersionResult> {
+    return this.http.post<InstallItemVersionResult>(
       `/api/iot-hub/versions/${versionId}/install`,
+      null,
+      { params: this.buildParams(config) }
+    );
+  }
+
+  public updateItemVersion(itemId: string, versionId: string, config?: IotHubRequestConfig): Observable<UpdateItemVersionResult> {
+    return this.http.post<UpdateItemVersionResult>(
+      `/api/iot-hub/installedItems/${itemId}/update/${versionId}`,
       null,
       { params: this.buildParams(config) }
     );
@@ -144,6 +152,14 @@ export class IotHubApiService {
   public deleteInstalledItem(itemId: string, config?: IotHubRequestConfig): Observable<void> {
     return this.http.delete<void>(
       `/api/iot-hub/installedItems/${itemId}`,
+      { params: this.buildParams(config) }
+    );
+  }
+
+  public checkForUpdates(infos: IotHubInstalledItemInfo[], config?: IotHubRequestConfig): Observable<ItemUpdateInfo[]> {
+    return this.http.post<ItemUpdateInfo[]>(
+      `${this.baseUrl}/api/versions/checkForUpdates`,
+      infos,
       { params: this.buildParams(config) }
     );
   }

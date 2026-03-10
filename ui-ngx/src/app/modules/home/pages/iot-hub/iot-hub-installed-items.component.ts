@@ -15,7 +15,7 @@
 ///
 
 import { Component, OnInit, AfterViewInit, ViewChild } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSort } from '@angular/material/sort';
 import { MatPaginator } from '@angular/material/paginator';
@@ -29,11 +29,12 @@ import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
-import { IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
+import { IotHubInstalledItem, IotHubInstalledItemInfo, ItemUpdateInfo } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { ItemType, itemTypeTranslations } from '@shared/models/iot-hub/iot-hub-item.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { getEntityDetailsPageURL } from '@core/utils';
 import { TbIotHubItemDetailDialogComponent, IotHubItemDetailDialogData } from './iot-hub-item-detail-dialog.component';
+import { TbIotHubUpdateDialogComponent, IotHubUpdateDialogData } from './iot-hub-update-dialog.component';
 
 @Component({
   selector: 'tb-iot-hub-installed-items',
@@ -43,13 +44,18 @@ import { TbIotHubItemDetailDialogComponent, IotHubItemDetailDialogData } from '.
 })
 export class TbIotHubInstalledItemsComponent implements OnInit, AfterViewInit {
 
-  displayedColumns: string[] = ['itemName', 'itemType', 'version', 'createdTime', 'actions'];
+  displayedColumns: string[] = ['itemName', 'itemType', 'version', 'createdTime', 'updates', 'actions'];
   dataSource: IotHubInstalledItem[] = [];
   totalElements = 0;
   pageSize = 10;
   pageIndex = 0;
   isLoading = false;
   textSearch = '';
+
+  installedItemInfos: IotHubInstalledItemInfo[] = [];
+  updateInfoMap = new Map<string, ItemUpdateInfo>();
+  updatesChecked = false;
+  isCheckingUpdates = false;
 
   private searchSubject = new Subject<string>();
 
@@ -70,10 +76,12 @@ export class TbIotHubInstalledItemsComponent implements OnInit, AfterViewInit {
     private translate: TranslateService,
     private store: Store<AppState>,
     private router: Router,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
+    this.installedItemInfos = this.route.snapshot.data['installedItemInfos'] || [];
     this.searchSubject.pipe(
       debounceTime(300)
     ).subscribe(() => {
@@ -185,6 +193,58 @@ export class TbIotHubInstalledItemsComponent implements OnInit, AfterViewInit {
         this.router.navigateByUrl(url);
       }
     }
+  }
+
+  checkForUpdates(): void {
+    this.isCheckingUpdates = true;
+    this.iotHubApiService.checkForUpdates(this.installedItemInfos, { ignoreLoading: true }).subscribe({
+      next: (updates) => {
+        this.updateInfoMap.clear();
+        updates.forEach(info => this.updateInfoMap.set(info.itemId, info));
+        this.updatesChecked = true;
+        this.isCheckingUpdates = false;
+      },
+      error: () => {
+        this.isCheckingUpdates = false;
+      }
+    });
+  }
+
+  viewUpdateDetails(updateInfo: ItemUpdateInfo, installedItem: IotHubInstalledItem): void {
+    this.iotHubApiService.getVersionInfo(updateInfo.latestItemVersionId, {ignoreLoading: true}).subscribe(versionView => {
+      this.dialog.open(TbIotHubItemDetailDialogComponent, {
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        data: {
+          item: versionView,
+          iotHubApiService: this.iotHubApiService,
+          installedDescriptor: installedItem.descriptor,
+          installedItemInfo: { itemId: installedItem.itemId, itemVersionId: installedItem.itemVersionId }
+        } as IotHubItemDetailDialogData
+      });
+    });
+  }
+
+  updateItem(item: IotHubInstalledItem, updateInfo: ItemUpdateInfo): void {
+    const dialogRef = this.dialog.open(TbIotHubUpdateDialogComponent, {
+      panelClass: ['tb-dialog'],
+      data: {
+        itemId: item.itemId,
+        itemName: item.itemName,
+        itemType: item.itemType as ItemType,
+        version: updateInfo.latestVersion,
+        versionId: updateInfo.latestItemVersionId,
+        iotHubApiService: this.iotHubApiService
+      } as IotHubUpdateDialogData
+    });
+    dialogRef.afterClosed().subscribe(result => {
+      if (result === 'updated') {
+        this.loadData();
+      }
+    });
+  }
+
+  getUpdateInfo(item: IotHubInstalledItem): ItemUpdateInfo | undefined {
+    return this.updateInfoMap.get(item.itemId);
   }
 
   private loadData(): void {

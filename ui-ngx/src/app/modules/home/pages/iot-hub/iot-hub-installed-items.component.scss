@@ -57,6 +57,9 @@
 }
 
 .tb-iot-hub-installed-items-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: 24px;
 
   h2 {
@@ -65,6 +68,11 @@
     margin: 0;
     color: rgba(0, 0, 0, 0.87);
   }
+}
+
+.tb-iot-hub-inline-spinner {
+  display: inline-block;
+  margin-right: 8px;
 }
 
 .tb-iot-hub-installed-search-row {
@@ -174,7 +182,33 @@
     width: 100%;
   }
 
+  .mat-column-itemName {
+    width: 100%;
+  }
+
+  .mat-column-itemType,
+  .mat-column-version {
+    width: 100px;
+    min-width: 100px;
+    max-width: 100px;
+  }
+
+  .mat-column-createdTime {
+    width: 100px;
+    min-width: 100px;
+    max-width: 100px;
+  }
+
+  .mat-column-updates {
+    width: 200px;
+    min-width: 200px;
+    max-width: 200px;
+  }
+
   .mat-column-actions {
+    width: 144px;
+    min-width: 144px;
+    max-width: 144px;
     text-align: right;
     white-space: nowrap;
   }
@@ -192,6 +226,23 @@
   &.tb-type-calc-field { background: #fff3e0; color: #e65100; }
   &.tb-type-rule-chain { background: #f3e5f5; color: #7b1fa2; }
   &.tb-type-device { background: #eceff1; color: #455a64; }
+}
+
+.tb-iot-hub-up-to-date {
+  color: #2e7d32;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.tb-iot-hub-update-button {
+  font-size: 12px;
+  line-height: 28px;
+  height: 28px;
+  padding: 0 12px;
+
+  & + .tb-iot-hub-update-button {
+    margin-left: 8px;
+  }
 }
 
 .tb-iot-hub-installed-empty {

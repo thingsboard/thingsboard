@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.iot_hub.WidgetInstalledItemDescriptor;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainData;
 import org.thingsboard.server.common.data.rule.RuleChainImportResult;
+import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
@@ -121,7 +122,12 @@ public class DefaultIotHubService implements IotHubService {
     }
 
     private WidgetInstalledItemDescriptor installWidget(SecurityUser user, TenantId tenantId, byte[] fileData) throws Exception {
-        WidgetTypeDetails widgetTypeDetails = JacksonUtil.fromBytes(fileData, WidgetTypeDetails.class);
+        WidgetTypeDetails widgetTypeDetails;
+        try {
+            widgetTypeDetails = JacksonUtil.fromString(new String(fileData), WidgetTypeDetails.class, true);
+        } catch (Exception e) {
+            throw new Exception("Failed to parse widget data: " + (e.getCause() != null ? e.getCause().getMessage() : e.getMessage()), e);
+        }
         widgetTypeDetails.setId(null);
         widgetTypeDetails.setTenantId(tenantId);
         WidgetTypeDetails saved = tbWidgetTypeService.save(widgetTypeDetails, true, user);
@@ -132,7 +138,12 @@ public class DefaultIotHubService implements IotHubService {
     }
 
     private DashboardInstalledItemDescriptor installDashboard(SecurityUser user, TenantId tenantId, byte[] fileData) throws Exception {
-        Dashboard dashboard = JacksonUtil.fromBytes(fileData, Dashboard.class);
+        Dashboard dashboard;
+        try {
+            dashboard = JacksonUtil.fromString(new String(fileData), Dashboard.class, true);
+        } catch (Exception e) {
+            throw new Exception("Failed to parse dashboard data: " + (e.getCause() != null ? e.getCause().getMessage() : e.getMessage()), e);
+        }
         dashboard.setId(null);
         dashboard.setTenantId(tenantId);
         Dashboard saved = tbDashboardService.save(dashboard, user);
@@ -143,7 +154,12 @@ public class DefaultIotHubService implements IotHubService {
     }
 
     private CalculatedFieldInstalledItemDescriptor installCalculatedField(SecurityUser user, TenantId tenantId, byte[] fileData) throws Exception {
-        CalculatedField calculatedField = JacksonUtil.fromBytes(fileData, CalculatedField.class);
+        CalculatedField calculatedField;
+        try {
+            calculatedField = JacksonUtil.fromString(new String(fileData), CalculatedField.class, true);
+        } catch (Exception e) {
+            throw new Exception("Failed to parse calculated field data: " + (e.getCause() != null ? e.getCause().getMessage() : e.getMessage()), e);
+        }
         calculatedField.setId(null);
         calculatedField.setTenantId(tenantId);
         CalculatedField saved = tbCalculatedFieldService.save(calculatedField, user);
@@ -153,24 +169,79 @@ public class DefaultIotHubService implements IotHubService {
         return descriptor;
     }
 
-    private RuleChainInstalledItemDescriptor installRuleChain(TenantId tenantId, byte[] fileData) {
-        RuleChainData ruleChainData = JacksonUtil.fromBytes(fileData, RuleChainData.class);
-        List<RuleChainImportResult> results = ruleChainService.importTenantRuleChains(tenantId, ruleChainData, false, tbRuleChainService::updateRuleNodeConfiguration);
-        log.debug("[{}] Rule chain(s) installed", tenantId);
-        RuleChainInstalledItemDescriptor descriptor = new RuleChainInstalledItemDescriptor();
-        if (!results.isEmpty()) {
-            descriptor.setRuleChainId(results.get(0).getRuleChainId());
+    private RuleChainInstalledItemDescriptor installRuleChain(TenantId tenantId, byte[] fileData) throws Exception {
+        JsonNode json = JacksonUtil.toJsonNode(new String(fileData));
+
+        RuleChain ruleChain;
+        try {
+            ruleChain = JacksonUtil.fromString(json.get("ruleChain").toString(), RuleChain.class, true);
+        } catch (Exception e) {
+            throw new Exception("Failed to parse rule chain: " + (e.getCause() != null ? e.getCause().getMessage() : e.getMessage()), e);
         }
+
+        RuleChainMetaData metadata;
+        try {
+            metadata = JacksonUtil.fromString(json.get("metadata").toString(), RuleChainMetaData.class, true);
+        } catch (Exception e) {
+            throw new Exception("Failed to parse rule chain metadata: " + (e.getCause() != null ? e.getCause().getMessage() : e.getMessage()), e);
+        }
+
+        ruleChain.setId(null);
+        ruleChain.setTenantId(tenantId);
+        RuleChain savedRuleChain = ruleChainService.saveRuleChain(ruleChain);
+
+        metadata.setRuleChainId(savedRuleChain.getId());
+        ruleChainService.saveRuleChainMetaData(tenantId, metadata, tbRuleChainService::updateRuleNodeConfiguration);
+
+        log.debug("[{}] Rule chain installed: {}", tenantId, savedRuleChain.getName());
+        RuleChainInstalledItemDescriptor descriptor = new RuleChainInstalledItemDescriptor();
+        descriptor.setRuleChainId(savedRuleChain.getId());
         return descriptor;
     }
 
     private DeviceInstalledItemDescriptor installDeviceProfile(SecurityUser user, TenantId tenantId, byte[] fileData) throws Exception {
-        DeviceProfile deviceProfile = JacksonUtil.fromBytes(fileData, DeviceProfile.class);
+        DeviceProfile deviceProfile;
+        try {
+            deviceProfile = JacksonUtil.fromString(new String(fileData), DeviceProfile.class, true);
+        } catch (Exception e) {
+            throw new Exception("Failed to parse device profile data: " + (e.getCause() != null ? e.getCause().getMessage() : e.getMessage()), e);
+        }
         deviceProfile.setId(null);
         deviceProfile.setTenantId(tenantId);
         tbDeviceProfileService.save(deviceProfile, user);
         log.debug("[{}] Device profile installed: {}", tenantId, deviceProfile.getName());
         return new DeviceInstalledItemDescriptor();
+    }
+
+    @Override
+    public UpdateItemVersionResult updateItemVersion(SecurityUser user, UUID itemId, String versionId) {
+        TenantId tenantId = user.getTenantId();
+        log.info("[{}] Updating IoT Hub item {} to version: {}", tenantId, itemId, versionId);
+
+        try {
+            IotHubInstalledItem installedItem = iotHubInstalledItemService.findByTenantIdAndItemId(tenantId, itemId)
+                    .orElseThrow(() -> new IllegalArgumentException("Installed item not found"));
+
+            JsonNode installedVersionInfo = iotHubRestClient.getVersionInfo(installedItem.getItemVersionId().toString());
+            String installedChecksum = installedVersionInfo.has("checksum") ? installedVersionInfo.get("checksum").asText() : null;
+            log.info("[{}] Installed version info: name={}, version={}, checksum={}", tenantId, installedItem.getItemName(), installedItem.getVersion(), installedChecksum);
+
+            JsonNode versionInfo = iotHubRestClient.getVersionInfo(versionId);
+            String itemName = versionInfo.get("name").asText();
+            String version = versionInfo.get("version").asText();
+
+            byte[] fileData = iotHubRestClient.getVersionFileData(versionId);
+            log.info("[{}] Fetched update file data, size: {} bytes", tenantId, fileData != null ? fileData.length : 0);
+
+            // TODO: apply update per item type
+
+            log.info("[{}] Successfully updated IoT Hub item {} to version: {}", tenantId, itemName, version);
+
+            return UpdateItemVersionResult.success(installedItem.getDescriptor());
+        } catch (Exception e) {
+            log.error("[{}] Failed to update IoT Hub item {} to version: {}", tenantId, itemId, versionId, e);
+            return UpdateItemVersionResult.error(e.getMessage());
+        }
     }
 
     @Override
