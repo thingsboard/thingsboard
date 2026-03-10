@@ -19,7 +19,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import io.grpc.Server;
+import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
+import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
+import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
 import io.grpc.stub.StreamObserver;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
@@ -37,7 +40,8 @@ import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
-import org.thingsboard.server.common.data.ResourceUtils;
+import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.transport.config.ssl.PemSslCredentials;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -67,7 +71,6 @@ import org.thingsboard.server.service.edge.EdgeContextComponent;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -110,8 +113,10 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private boolean sslEnabled;
     @Value("${edges.rpc.ssl.cert}")
     private String certFileResource;
-    @Value("${edges.rpc.ssl.private_key}")
+    @Value("${edges.rpc.ssl.private_key:}")
     private String privateKeyResource;
+    @Value("${edges.rpc.ssl.key_password:}")
+    private String keyPassword;
     @Value("${edges.state.persistToTelemetry:false}")
     private boolean persistToTelemetry;
     @Value("${edges.rpc.client_max_keep_alive_time_sec:1}")
@@ -176,9 +181,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                 .addService(this);
         if (sslEnabled) {
             try {
-                InputStream certFileIs = ResourceUtils.getInputStream(this, certFileResource);
-                InputStream privateKeyFileIs = ResourceUtils.getInputStream(this, privateKeyResource);
-                builder.useTransportSecurity(certFileIs, privateKeyFileIs);
+                setupSsl(builder);
             } catch (Exception e) {
                 log.error("Unable to set up SSL context. Reason: " + e.getMessage(), e);
                 throw new RuntimeException("Unable to set up SSL context!", e);
@@ -197,6 +200,18 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         this.executorService = ThingsBoardExecutors.newSingleThreadScheduledExecutor("edge-service");
         this.executorService.scheduleAtFixedRate(this::cleanupZombieSessions, 60, 60, TimeUnit.SECONDS);
         log.info("Edge RPC service initialized!");
+    }
+
+    private void setupSsl(NettyServerBuilder builder) throws Exception {
+        PemSslCredentials credentials = new PemSslCredentials();
+        credentials.setCertFile(certFileResource);
+        credentials.setKeyFile(StringUtils.isEmpty(privateKeyResource) ? null : privateKeyResource);
+        credentials.setKeyPassword(keyPassword);
+        credentials.init(false);
+
+        SslContext sslContext = GrpcSslContexts.configure(
+                SslContextBuilder.forServer(credentials.createKeyManagerFactory())).build();
+        builder.sslContext(sslContext);
     }
 
     @PreDestroy
