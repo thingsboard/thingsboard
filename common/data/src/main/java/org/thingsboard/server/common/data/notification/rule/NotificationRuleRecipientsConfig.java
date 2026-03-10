@@ -22,7 +22,6 @@ import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
 
@@ -50,7 +49,7 @@ import java.util.UUID;
                 @DiscriminatorMapping(value = "RESOURCES_SHORTAGE", schema = DefaultNotificationRuleRecipientsConfig.ResourceShortageRecipientsConfig.class)
         })
 @JsonIgnoreProperties
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "triggerType", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "triggerType", include = JsonTypeInfo.As.EXISTING_PROPERTY)
 @JsonSubTypes({
         @Type(name = "ALARM", value = EscalatedNotificationRuleRecipientsConfig.class),
         @Type(name = "ENTITY_ACTION", value = DefaultNotificationRuleRecipientsConfig.EntityActionRecipientsConfig.class),
@@ -70,8 +69,7 @@ import java.util.UUID;
 @Data
 public abstract class NotificationRuleRecipientsConfig implements Serializable {
 
-    @NotNull
-    private NotificationRuleTriggerType triggerType;
+    public abstract NotificationRuleTriggerType getTriggerType();
 
     @JsonIgnore
     public abstract Map<Integer, List<UUID>> getTargetsTable();

@@ -65,6 +65,7 @@ import java.util.Map;
         @Type(name = "DEVICE_PROFILE", value = EntityExportData.DeviceProfileExportData.class),
         @Type(name = "ENTITY_VIEW", value = EntityExportData.EntityViewExportData.class),
         @Type(name = "NOTIFICATION_TEMPLATE", value = EntityExportData.NotificationTemplateExportData.class),
+        @Type(name = "NOTIFICATION_TARGET", value = EntityExportData.NotificationTargetExportData.class),
         @Type(name = "NOTIFICATION_RULE", value = EntityExportData.NotificationRuleExportData.class),
         @Type(name = "AI_MODEL", value = EntityExportData.AiModelExportData.class)
 })
@@ -92,7 +93,7 @@ import java.util.Map;
         }
 )
 @Data
-public class EntityExportData<E extends ExportableEntity<? extends EntityId>> {
+public abstract class EntityExportData<E extends ExportableEntity<? extends EntityId>> {
 
     public static final Comparator<EntityRelation> relationsComparator = Comparator
             .comparing(EntityRelation::getFrom, Comparator.comparing(EntityId::getId))
@@ -109,9 +110,10 @@ public class EntityExportData<E extends ExportableEntity<? extends EntityId>> {
     @JsonTbEntity
     @Schema(implementation = ExportableEntity.class)
     private E entity;
+
     @JsonProperty(index = 1)
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-    private EntityType entityType;
+    public abstract EntityType getEntityType();
 
     @JsonProperty(index = 100)
     @ArraySchema(schema = @Schema(implementation = EntityRelation.class))
@@ -123,6 +125,28 @@ public class EntityExportData<E extends ExportableEntity<? extends EntityId>> {
     @JsonIgnoreProperties({"id", "entityId", "createdTime", "version"})
     @ArraySchema(schema = @Schema(implementation = CalculatedField.class))
     private List<CalculatedField> calculatedFields;
+
+    public static EntityExportData<?> newInstance(EntityType entityType) {
+        return switch (entityType) {
+            case DEVICE -> new DeviceExportData();
+            case RULE_CHAIN -> new RuleChainExportData();
+            case WIDGET_TYPE -> new WidgetTypeExportData();
+            case WIDGETS_BUNDLE -> new WidgetsBundleExportData();
+            case OTA_PACKAGE -> new OtaPackageExportData();
+            case CUSTOMER -> new CustomerExportData();
+            case TB_RESOURCE -> new TbResourceExportData();
+            case DASHBOARD -> new DashboardExportData();
+            case ASSET_PROFILE -> new AssetProfileExportData();
+            case ASSET -> new AssetExportData();
+            case DEVICE_PROFILE -> new DeviceProfileExportData();
+            case ENTITY_VIEW -> new EntityViewExportData();
+            case NOTIFICATION_TEMPLATE -> new NotificationTemplateExportData();
+            case NOTIFICATION_TARGET -> new NotificationTargetExportData();
+            case NOTIFICATION_RULE -> new NotificationRuleExportData();
+            case AI_MODEL -> new AiModelExportData();
+            default -> throw new IllegalArgumentException("Unsupported entity type: " + entityType);
+        };
+    }
 
     public EntityExportData<E> sort() {
         if (relations != null && !relations.isEmpty()) {
@@ -163,26 +187,91 @@ public class EntityExportData<E extends ExportableEntity<? extends EntityId>> {
     }
 
     @Schema
-    public static class CustomerExportData extends EntityExportData<Customer> {}
+    public static class CustomerExportData extends EntityExportData<Customer> {
+        @Override
+        public EntityType getEntityType() {
+            return EntityType.CUSTOMER;
+        }
+    }
+
     @Schema
-    public static class TbResourceExportData extends EntityExportData<TbResource> {}
+    public static class TbResourceExportData extends EntityExportData<TbResource> {
+        @Override
+        public EntityType getEntityType() {
+            return EntityType.TB_RESOURCE;
+        }
+    }
+
     @Schema
-    public static class DashboardExportData extends EntityExportData<Dashboard> {}
+    public static class DashboardExportData extends EntityExportData<Dashboard> {
+        @Override
+        public EntityType getEntityType() {
+            return EntityType.DASHBOARD;
+        }
+    }
+
     @Schema
-    public static class AssetProfileExportData extends EntityExportData<AssetProfile> {}
+    public static class AssetProfileExportData extends EntityExportData<AssetProfile> {
+        @Override
+        public EntityType getEntityType() {
+            return EntityType.ASSET_PROFILE;
+        }
+    }
+
     @Schema
-    public static class AssetExportData extends EntityExportData<Asset> {}
+    public static class AssetExportData extends EntityExportData<Asset> {
+        @Override
+        public EntityType getEntityType() {
+            return EntityType.ASSET;
+        }
+    }
+
     @Schema
-    public static class DeviceProfileExportData extends EntityExportData<DeviceProfile> {}
+    public static class DeviceProfileExportData extends EntityExportData<DeviceProfile> {
+        @Override
+        public EntityType getEntityType() {
+            return EntityType.DEVICE_PROFILE;
+        }
+    }
+
     @Schema
-    public static class EntityViewExportData extends EntityExportData<EntityView> {}
+    public static class EntityViewExportData extends EntityExportData<EntityView> {
+        @Override
+        public EntityType getEntityType() {
+            return EntityType.ENTITY_VIEW;
+        }
+    }
+
     @Schema
-    public static class NotificationTemplateExportData extends EntityExportData<NotificationTemplate> {}
+    public static class NotificationTemplateExportData extends EntityExportData<NotificationTemplate> {
+        @Override
+        public EntityType getEntityType() {
+            return EntityType.NOTIFICATION_TEMPLATE;
+        }
+    }
+
     @Schema
-    public static class NotificationTargetExportData extends EntityExportData<NotificationTarget> {}
+    public static class NotificationTargetExportData extends EntityExportData<NotificationTarget> {
+        @Override
+        public EntityType getEntityType() {
+            return EntityType.NOTIFICATION_TARGET;
+        }
+    }
+
     @Schema
-    public static class NotificationRuleExportData extends EntityExportData<NotificationRule> {}
+    public static class NotificationRuleExportData extends EntityExportData<NotificationRule> {
+        @Override
+        public EntityType getEntityType() {
+            return EntityType.NOTIFICATION_RULE;
+        }
+    }
+
     @Schema
-    public static class AiModelExportData extends EntityExportData<AiModel> {}
+    public static class AiModelExportData extends EntityExportData<AiModel> {
+        @Override
+        public EntityType getEntityType() {
+            return EntityType.AI_MODEL;
+        }
+    }
 
 }
