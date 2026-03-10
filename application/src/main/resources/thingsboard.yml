@@ -1487,12 +1487,16 @@ edges:
     ssl:
       # Enable/disable SSL support
       enabled: "${EDGES_RPC_SSL_ENABLED:false}"
-      # Path to the server certificate PEM file. May contain the full chain and optionally the private key (combined PEM).
-      # For a combined PEM file containing both the certificate chain and the private key, leave private_key empty.
+      # Path to the server certificate file (holds server certificate or certificate chain, may include server private key).
+      # Accepts an absolute filesystem path (e.g. /etc/thingsboard/certChainFile.pem),
+      # a relative path resolved against the working directory first then the classpath,
+      # or a classpath resource with the explicit "classpath:" prefix (e.g. classpath:conf/certChainFile.pem).
       cert: "${EDGES_RPC_SSL_CERT:certChainFile.pem}"
-      # Path to the private key PEM file. Optional when the key is already included in the cert file (combined PEM).
+      # Path to the server certificate private key file. Optional if the private key is already present in the cert file above.
+      # Supports the same path resolution as 'cert': absolute, relative/classpath, or "classpath:" prefix.
+      # Leave empty when using a combined PEM cert that already contains the private key.
       private_key: "${EDGES_RPC_SSL_PRIVATE_KEY:privateKeyFile.pem}"
-      # Password for encrypted private keys. Optional, only needed for password-protected keys.
+      # Server certificate private key password (optional). Leave empty if the key is not encrypted.
       key_password: "${EDGES_RPC_SSL_KEY_PASSWORD:}"
     # Maximum size (in bytes) of inbound messages the cloud can handle from the edge. By default, it can handle messages up to 4 Megabytes
     max_inbound_message_size: "${EDGES_RPC_MAX_INBOUND_MESSAGE_SIZE:4194304}"

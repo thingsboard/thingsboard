@@ -202,6 +202,21 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         log.info("Edge RPC service initialized!");
     }
 
+    /**
+     * Configures TLS for the Edge gRPC server.
+     * <p>
+     * Delegates PEM parsing and key management to {@link PemSslCredentials} — the same
+     * class used by MQTT, CoAP, and LwM2M transports — which supports:
+     * <ul>
+     *   <li>Separate certificate and private key files (classic two-file setup)</li>
+     *   <li>Combined PEM: certificate chain + private key in a single {@code cert} file
+     *       ({@code private_key} left empty)</li>
+     *   <li>Encrypted private keys (password supplied via {@code key_password})</li>
+     * </ul>
+     * Path resolution (for both {@code cert} and {@code private_key}) is handled by
+     * {@link org.thingsboard.server.common.data.ResourceUtils#getInputStream ResourceUtils}:
+     * absolute path → relative / working-dir → classpath → {@code classpath:} prefix.
+     */
     void setupSsl(NettyServerBuilder builder) throws Exception {
         PemSslCredentials credentials = new PemSslCredentials();
         credentials.setCertFile(certFileResource);
