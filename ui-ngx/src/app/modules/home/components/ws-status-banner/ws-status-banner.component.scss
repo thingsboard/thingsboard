@@ -21,8 +21,14 @@
 
 .tb-ws-reconnect-pill {
   position: fixed;
-  top: 16px;
+  // Clear the 64 px primary toolbar + 16 px breathing room
+  top: 80px;
+  // On narrow screens the sidenav collapses to "over" mode — stay near the edge.
+  // On wide screens (≥ 960 px) the sidenav is pinned at 250 px, so offset past it.
   left: 16px;
+  @media screen and (min-width: 960px) {
+    left: 266px; // 250px sidenav + 16px gap
+  }
   z-index: 1000;
 
   display: flex;
