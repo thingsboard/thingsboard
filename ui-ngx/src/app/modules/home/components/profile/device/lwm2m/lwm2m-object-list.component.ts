@@ -35,6 +35,7 @@ import { isDefined, isDefinedAndNotNull, isObject, isString } from '@core/utils'
 import { PageLink } from '@shared/models/page/page-link';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { MatFormFieldAppearance } from '@angular/material/form-field';
 
 @Component({
     selector: 'tb-profile-lwm2m-object-list',
@@ -73,6 +74,9 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
     this.requiredValue = coerceBooleanProperty(value);
     this.updateValidators();
   }
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   @Output()
   addList = new EventEmitter<any>();

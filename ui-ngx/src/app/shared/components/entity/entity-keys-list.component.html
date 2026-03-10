@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="keysListFormGroup" class="mat-block tb-chip-list">
+<mat-form-field [formGroup]="keysListFormGroup" class="mat-block tb-chip-list" [appearance]="appearance">
   <mat-chip-grid #chipList>
     <mat-chip-row
       *ngFor="let key of modelValue"

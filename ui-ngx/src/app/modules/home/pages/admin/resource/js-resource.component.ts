@@ -173,4 +173,6 @@ export class JsResourceComponent extends EntityComponent<Resource> implements On
       this.entityForm.get('content').enable({ emitEvent: false });
     }
   }
+
+  protected readonly resourceType = ResourceType;
 }

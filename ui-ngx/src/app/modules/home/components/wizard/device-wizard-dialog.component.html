@@ -25,8 +25,11 @@
     <mat-icon class="material-icons">close</mat-icon>
   </button>
 </mat-toolbar>
-<mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
-</mat-progress-bar>
+@if (isLoading$ | async) {
+  <mat-progress-bar color="warn" mode="indeterminate"></mat-progress-bar>
+} @else {
+  <div style="height: 4px;"></div>
+}
 <div mat-dialog-content>
   <mat-horizontal-stepper #addDeviceWizardStepper
                           [linear]="true"
@@ -38,29 +41,30 @@
     </ng-template>
     <mat-step [stepControl]="deviceWizardFormGroup">
       <form [formGroup]="deviceWizardFormGroup" style="padding-bottom: 16px;">
-        <ng-template matStepLabel>{{ 'device.wizard.device-details' | translate}}</ng-template>
-        <fieldset [disabled]="isLoading$ | async">
-          <mat-form-field class="mat-block">
+        <ng-template matStepLabel>{{ 'device.wizard.device-details' | translate }}</ng-template>
+        <fieldset [disabled]="isLoading$ | async" class="flex flex-col gap-1">
+          <mat-form-field class="mat-block" appearance="outline">
             <mat-label translate>device.name</mat-label>
             <input matInput formControlName="name" required>
-            <mat-error *ngIf="deviceWizardFormGroup.get('name').hasError('required')">
-              {{ 'device.name-required' | translate }}
-            </mat-error>
-            <mat-error *ngIf="deviceWizardFormGroup.get('name').hasError('maxlength')">
-              {{ 'device.name-max-length' | translate }}
-            </mat-error>
+            @if (deviceWizardFormGroup.get('name').hasError('required')) {
+              <mat-error>{{ 'device.name-required' | translate }}</mat-error>
+            }
+            @if (deviceWizardFormGroup.get('name').hasError('maxlength')) {
+              <mat-error>{{ 'device.name-max-length' | translate }}</mat-error>
+            }
           </mat-form-field>
-          <mat-form-field class="mat-block">
+          <mat-form-field class="mat-block" appearance="outline">
             <mat-label translate>device.label</mat-label>
             <input matInput formControlName="label">
-            <mat-error *ngIf="deviceWizardFormGroup.get('label').hasError('maxlength')">
-              {{ 'device.label-max-length' | translate }}
-            </mat-error>
+            @if (deviceWizardFormGroup.get('label').hasError('maxlength')) {
+              <mat-error>{{ 'device.label-max-length' | translate }}</mat-error>
+            }
           </mat-form-field>
           <tb-device-profile-autocomplete
             required
             addNewProfile
             selectDefaultProfile
+            appearance="outline"
             formControlName="deviceProfileId"
             (deviceProfileChanged)="deviceProfileChanged($event)">
           </tb-device-profile-autocomplete>
@@ -68,18 +72,20 @@
             <mat-slide-toggle formControlName="gateway" style="min-width: 165px">
               {{ 'device.is-gateway' | translate }}
             </mat-slide-toggle>
-            <mat-slide-toggle *ngIf="deviceWizardFormGroup.get('gateway').value"
-                              formControlName="overwriteActivityTime">
-              {{ 'device.overwrite-activity-time' | translate }}
-            </mat-slide-toggle>
+            @if (deviceWizardFormGroup.get('gateway').value) {
+              <mat-slide-toggle formControlName="overwriteActivityTime">
+                {{ 'device.overwrite-activity-time' | translate }}
+              </mat-slide-toggle>
+            }
           </div>
           <tb-entity-autocomplete
             useFullEntityId
             formControlName="customerId"
             labelText="device.assign-to-customer"
+            appearance="outline"
             [entityType]="entityType.CUSTOMER">
           </tb-entity-autocomplete>
-          <mat-form-field class="mat-block" subscriptSizing="dynamic">
+          <mat-form-field class="mat-block" appearance="outline" subscriptSizing="dynamic">
             <mat-label translate>device.description</mat-label>
             <textarea matInput formControlName="description" rows="1"></textarea>
           </mat-form-field>
@@ -100,15 +106,18 @@
 </div>
 <div mat-dialog-actions class="tb-dialog-actions">
   <div class="dialog-actions-row">
-    <button mat-stroked-button *ngIf="selectedIndex > 0"
-            [disabled]="(isLoading$ | async)"
-            (click)="previousStep()">{{ 'action.back' | translate }}</button>
+    @if (selectedIndex > 0) {
+      <button mat-stroked-button
+              [disabled]="(isLoading$ | async)"
+              (click)="previousStep()">{{ 'action.back' | translate }}</button>
+    }
     <span class="flex-1"></span>
-    <button mat-stroked-button
-            color="primary"
-            *ngIf="showNext"
-            [disabled]="(isLoading$ | async)"
-            (click)="nextStep()">{{ 'action.next-with-label' | translate:{label: (getFormLabel(selectedIndex+1) | translate)} }}</button>
+    @if (showNext) {
+      <button mat-stroked-button
+              color="primary"
+              [disabled]="(isLoading$ | async)"
+              (click)="nextStep()">{{ 'action.next-with-label' | translate:{label: (getFormLabel(selectedIndex+1) | translate)} }}</button>
+    }
   </div>
   <mat-divider style="width: 100%"></mat-divider>
   <div class="dialog-actions-row">
