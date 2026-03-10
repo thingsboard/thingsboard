@@ -31,7 +31,6 @@ import org.bouncycastle.openssl.jcajce.JcePEMEncryptorBuilder;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.util.TestSocketUtils;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.transport.config.ssl.PemSslCredentials;
 import org.thingsboard.server.gen.edge.v1.EdgeRpcServiceGrpc;
@@ -53,6 +52,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
 
 /**
  * Tests for Edge gRPC SSL setup using PemSslCredentials.
@@ -145,8 +145,7 @@ class EdgeGrpcSslTest {
         SslContext sslContext = GrpcSslContexts.configure(
                 SslContextBuilder.forServer(credentials.createKeyManagerFactory())).build();
 
-        int port = TestSocketUtils.findAvailableTcpPort();
-        return NettyServerBuilder.forPort(port)
+        return NettyServerBuilder.forPort(0)
                 .sslContext(sslContext)
                 .addService(new EdgeRpcServiceGrpc.EdgeRpcServiceImplBase() {})
                 .build()
@@ -163,22 +162,16 @@ class EdgeGrpcSslTest {
                 .sslContext(clientSsl)
                 .build();
 
-        // Trigger connection and wait for READY state
-        channel.getState(true);
-        long deadline = System.currentTimeMillis() + 5_000;
-        while (System.currentTimeMillis() < deadline) {
-            var state = channel.getState(false);
-            if (state == io.grpc.ConnectivityState.READY) {
-                break;
-            }
-            if (state == io.grpc.ConnectivityState.TRANSIENT_FAILURE) {
-                throw new AssertionError("TLS handshake failed: channel in TRANSIENT_FAILURE");
-            }
-            Thread.sleep(50);
-        }
-        assertThat(channel.getState(false))
-                .as("Client should connect via TLS")
-                .isEqualTo(io.grpc.ConnectivityState.READY);
+        channel.getState(true); // trigger connection attempt
+        await().atMost(5, TimeUnit.SECONDS)
+                .pollInterval(50, TimeUnit.MILLISECONDS)
+                .untilAsserted(() -> {
+                    var state = channel.getState(false);
+                    if (state == io.grpc.ConnectivityState.TRANSIENT_FAILURE) {
+                        throw new AssertionError("TLS handshake failed: channel in TRANSIENT_FAILURE");
+                    }
+                    assertThat(state).isEqualTo(io.grpc.ConnectivityState.READY);
+                });
     }
 
     // --- Cert/key generation ---
