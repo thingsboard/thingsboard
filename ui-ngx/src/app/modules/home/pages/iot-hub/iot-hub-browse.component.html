@@ -19,8 +19,14 @@
   <!-- Page header -->
   @if (!embedded) {
     <div class="tb-iot-hub-browse-header">
-      <h1>{{ getTitle() | translate }}</h1>
-      <p>{{ getSubtitle() | translate }}</p>
+      <div>
+        <h1>{{ getTitle() | translate }}</h1>
+        <p>{{ getSubtitle() | translate }}</p>
+      </div>
+      <button mat-stroked-button color="primary" (click)="navigateToInstalledItems()">
+        <mat-icon>inventory_2</mat-icon>
+        {{ 'iot-hub.installed-items' | translate }}
+      </button>
     </div>
   }
 
@@ -187,6 +193,7 @@
           [item]="item"
           [showTypeChip]="false"
           [showCreator]="!creatorId"
+          [installed]="isInstalled(item)"
           (cardClick)="openItemDetail($event)"
           (creatorClick)="navigateToCreator($event)"
           (installClick)="installItem($event)">

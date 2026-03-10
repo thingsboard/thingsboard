@@ -97,14 +97,23 @@ export class TbIotHubInstallDialogComponent {
     this.state = 'installing';
     const versionId = this.item.id as string;
     this.data.iotHubApiService.installItemVersion(versionId, { ignoreLoading: true }).subscribe({
-      next: () => {
-        this.state = 'success';
-        this.store.dispatch(new ActionNotificationShow({
-          message: this.translate.instant('iot-hub.install-success', { name: this.item.name }),
-          type: 'success',
-          duration: 3000
-        }));
-        setTimeout(() => this.dialogRef.close(true), 1500);
+      next: (result) => {
+        if (result.success) {
+          this.state = 'success';
+          this.store.dispatch(new ActionNotificationShow({
+            message: this.translate.instant('iot-hub.install-success', { name: this.item.name }),
+            type: 'success',
+            duration: 3000
+          }));
+          setTimeout(() => this.dialogRef.close('installed'), 1500);
+        } else {
+          this.state = 'confirm';
+          this.store.dispatch(new ActionNotificationShow({
+            message: result.errorMessage || this.translate.instant('iot-hub.install-error', { name: this.item.name }),
+            type: 'error',
+            duration: 5000
+          }));
+        }
       },
       error: () => {
         this.state = 'confirm';

@@ -1,0 +1,202 @@
+/**
+ * Copyright © 2016-2026 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 16px 24px;
+  overflow: auto;
+}
+
+.tb-iot-hub-installed-items-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+  background: white;
+  padding: 24px;
+  border-radius: 4px;
+  box-shadow: 0 0 1px rgba(0, 0, 0, 0.14), 0 1px 1px rgba(0, 0, 0, 0.12);
+}
+
+.tb-iot-hub-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.54);
+  cursor: pointer;
+  text-decoration: none;
+  border-bottom: none;
+  margin-bottom: 12px;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover {
+    color: rgba(0, 0, 0, 0.87);
+    text-decoration: none;
+    border-bottom: none;
+  }
+}
+
+.tb-iot-hub-installed-items-header {
+  margin-bottom: 24px;
+
+  h2 {
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0;
+    color: rgba(0, 0, 0, 0.87);
+  }
+}
+
+.tb-iot-hub-installed-search-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  align-items: center;
+}
+
+.tb-iot-hub-installed-search-field {
+  flex: 1;
+
+  ::ng-deep {
+    .mat-mdc-text-field-wrapper {
+      height: 42px;
+      padding: 0 12px;
+    }
+
+    .mat-mdc-form-field-flex {
+      height: 42px;
+      align-items: center;
+    }
+
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: #d5dbe3;
+    }
+
+    .mdc-notched-outline__leading {
+      border-radius: 8px 0 0 8px;
+    }
+
+    .mdc-notched-outline__trailing {
+      border-radius: 0 8px 8px 0;
+    }
+
+    .mat-mdc-form-field-infix {
+      padding-top: 0;
+      padding-bottom: 0;
+      min-height: unset;
+    }
+
+    .mdc-notched-outline__notch {
+      display: none;
+    }
+
+    .mat-mdc-floating-label {
+      display: none;
+    }
+
+    .mat-mdc-form-field-subscript-wrapper {
+      display: none;
+    }
+
+    input.mat-mdc-input-element {
+      font-size: 14px;
+      color: #3e4a59;
+
+      &::placeholder {
+        color: #8b95a2;
+        opacity: 1;
+      }
+    }
+
+    .mat-icon {
+      color: #8b95a2;
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+
+    .mat-mdc-form-field-icon-prefix {
+      padding: 0 8px 0 0;
+
+      > .mat-icon {
+        padding: 0;
+      }
+    }
+
+    .mat-mdc-form-field-icon-suffix {
+      padding: 0;
+
+      .mat-mdc-icon-button {
+        width: 32px;
+        height: 32px;
+        padding: 4px;
+      }
+    }
+  }
+
+  &.mat-focused ::ng-deep {
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: #8b95a2;
+      border-width: 1px;
+    }
+  }
+}
+
+.tb-iot-hub-installed-table-container {
+  border-radius: 4px;
+  overflow: hidden;
+
+  table {
+    width: 100%;
+  }
+
+  .mat-column-actions {
+    text-align: right;
+    white-space: nowrap;
+  }
+}
+
+.tb-iot-hub-type-chip {
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+
+  &.tb-type-widget { background: #e3f2fd; color: #1565c0; }
+  &.tb-type-dashboard { background: #e8f5e9; color: #2e7d32; }
+  &.tb-type-calc-field { background: #fff3e0; color: #e65100; }
+  &.tb-type-rule-chain { background: #f3e5f5; color: #7b1fa2; }
+  &.tb-type-device { background: #eceff1; color: #455a64; }
+}
+
+.tb-iot-hub-installed-empty {
+  padding: 48px 24px;
+  text-align: center;
+  color: rgba(0, 0, 0, 0.54);
+  font-size: 14px;
+}

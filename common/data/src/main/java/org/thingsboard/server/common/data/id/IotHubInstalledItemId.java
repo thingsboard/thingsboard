@@ -13,15 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.iot_hub;
+package org.thingsboard.server.common.data.id;
 
-import org.thingsboard.server.service.security.model.SecurityUser;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.UUID;
 
-public interface IotHubService {
+public class IotHubInstalledItemId extends UUIDBased {
 
-    InstallItemVersionResult installItemVersion(SecurityUser user, String versionId);
+    @JsonCreator
+    public IotHubInstalledItemId(@JsonProperty("id") UUID id) {
+        super(id);
+    }
 
-    void deleteInstalledItem(SecurityUser user, UUID itemId);
+    public static IotHubInstalledItemId fromString(String id) {
+        return new IotHubInstalledItemId(UUID.fromString(id));
+    }
+
 }

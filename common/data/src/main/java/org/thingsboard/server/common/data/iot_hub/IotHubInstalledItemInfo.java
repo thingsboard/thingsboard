@@ -13,15 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.iot_hub;
+package org.thingsboard.server.common.data.iot_hub;
 
-import org.thingsboard.server.service.security.model.SecurityUser;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.UUID;
 
-public interface IotHubService {
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class IotHubInstalledItemInfo {
 
-    InstallItemVersionResult installItemVersion(SecurityUser user, String versionId);
+    private UUID itemId;
+    private UUID itemVersionId;
 
-    void deleteInstalledItem(SecurityUser user, UUID itemId);
 }

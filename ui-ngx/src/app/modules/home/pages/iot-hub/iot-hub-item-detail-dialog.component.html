@@ -174,9 +174,15 @@
 
   <!-- Footer -->
   <div class="dlg-footer">
-    <button class="dlg-install-btn" (click)="install()">
-      {{ 'iot-hub.install-item-type' | translate:{ type: getTypeLabel() } }}
-    </button>
+    @if (installedDescriptor) {
+      <button class="dlg-install-btn" (click)="openEntityDetails()">
+        {{ 'iot-hub.open-item-type-details' | translate:{ type: getTypeLabel() } }}
+      </button>
+    } @else {
+      <button class="dlg-install-btn" (click)="install()">
+        {{ 'iot-hub.install-item-type' | translate:{ type: getTypeLabel() } }}
+      </button>
+    }
     <div class="dlg-creator-info">
       <span>{{ 'iot-hub.created-by' | translate:{ name: item.creatorDisplayName } }}</span>
       <span class="dlg-sep">&middot;</span>

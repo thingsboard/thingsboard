@@ -35,6 +35,7 @@ export class TbIotHubItemCardComponent {
   @Input() item: MpItemVersionView;
   @Input() showCreator = true;
   @Input() showTypeChip = true;
+  @Input() installed = false;
   @Output() cardClick = new EventEmitter<MpItemVersionView>();
   @Output() creatorClick = new EventEmitter<string>();
   @Output() installClick = new EventEmitter<MpItemVersionView>();

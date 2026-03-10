@@ -1,0 +1,116 @@
+<!--
+
+    Copyright © 2016-2026 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-iot-hub-installed-items-container">
+  <a class="tb-iot-hub-back-link" (click)="navigateToMarketplace()">
+    <mat-icon>arrow_back</mat-icon>
+    {{ 'iot-hub.back-to-marketplace' | translate }}
+  </a>
+  <div class="tb-iot-hub-installed-items-header">
+    <h2>{{ 'iot-hub.installed-items' | translate }}</h2>
+  </div>
+
+  <div class="tb-iot-hub-installed-search-row">
+    <mat-form-field appearance="outline" class="tb-iot-hub-installed-search-field">
+      <mat-icon matPrefix>search</mat-icon>
+      <input matInput
+             [placeholder]="'iot-hub.search-installed-items' | translate"
+             [value]="textSearch"
+             (input)="onSearchChange($any($event.target).value)">
+      @if (textSearch) {
+        <button matSuffix mat-icon-button (click)="onSearchChange('')">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </mat-form-field>
+  </div>
+
+  <div class="tb-iot-hub-installed-table-container">
+    @if (isLoading) {
+      <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    }
+
+    <table mat-table [dataSource]="dataSource" matSort>
+      <ng-container matColumnDef="itemName">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'iot-hub.item-name' | translate }}</th>
+        <td mat-cell *matCellDef="let item">{{ item.itemName }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="itemType">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'iot-hub.item-type' | translate }}</th>
+        <td mat-cell *matCellDef="let item">
+          <span class="tb-iot-hub-type-chip" [ngClass]="getItemTypeChipClass(item.itemType)">{{ getItemTypeLabel(item.itemType) }}</span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="version">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'iot-hub.item-version' | translate }}</th>
+        <td mat-cell *matCellDef="let item">{{ item.version }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="createdTime">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'iot-hub.installed-date' | translate }}</th>
+        <td mat-cell *matCellDef="let item">{{ item.createdTime | date:'medium' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let item">
+          <button mat-icon-button
+                  [matTooltip]="'iot-hub.view-item-details' | translate"
+                  matTooltipPosition="above"
+                  (click)="viewItemDetails(item); $event.stopPropagation()">
+            <mat-icon>info_outline</mat-icon>
+          </button>
+          @if (getEntityId(item)) {
+            <button mat-icon-button color="primary"
+                    [matTooltip]="'iot-hub.open-installed-entity' | translate"
+                    matTooltipPosition="above"
+                    (click)="openEntity(item); $event.stopPropagation()">
+              <mat-icon>open_in_new</mat-icon>
+            </button>
+          }
+          <button mat-icon-button color="warn"
+                  [matTooltip]="'action.delete' | translate"
+                  matTooltipPosition="above"
+                  (click)="deleteItem(item); $event.stopPropagation()">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+      <tr class="mat-row" *matNoDataRow>
+        <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+          <div class="tb-iot-hub-installed-empty">
+            {{ 'iot-hub.no-installed-items' | translate }}
+          </div>
+        </td>
+      </tr>
+    </table>
+
+    <mat-paginator
+      [length]="totalElements"
+      [pageSize]="pageSize"
+      [pageIndex]="pageIndex"
+      [pageSizeOptions]="[10, 20, 50]"
+      (page)="onPageChange($event)">
+    </mat-paginator>
+  </div>
+</div>

@@ -19,13 +19,18 @@ import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dial
 import { Router } from '@angular/router';
 import { MpItemVersionView, cfTypeTranslations, cfTypeIcons, ruleChainTypeTranslations, widgetTypeTranslations, nodeComponentTypeTranslations, NodeInfo } from '@shared/models/iot-hub/iot-hub-version.models';
 import { ItemType, itemTypeTranslations, getCategoriesForType, useCaseTranslations } from '@shared/models/iot-hub/iot-hub-item.models';
+import { IotHubInstalledItemDescriptor, IotHubInstalledItemInfo } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { TranslateService } from '@ngx-translate/core';
+import { EntityType } from '@shared/models/entity-type.models';
+import { getEntityDetailsPageURL } from '@core/utils';
 import { TbIotHubInstallDialogComponent, IotHubInstallDialogData } from './iot-hub-install-dialog.component';
 
 export interface IotHubItemDetailDialogData {
   item: MpItemVersionView;
   iotHubApiService: IotHubApiService;
+  installedDescriptor?: IotHubInstalledItemDescriptor;
+  installedItemInfo?: IotHubInstalledItemInfo;
 }
 
 @Component({
@@ -40,6 +45,15 @@ export class TbIotHubItemDetailDialogComponent {
   item: MpItemVersionView;
   typeTranslations = itemTypeTranslations;
   readmeContent: string = '';
+  installedDescriptor?: IotHubInstalledItemDescriptor;
+
+  private static readonly ITEM_TYPE_TO_ENTITY_TYPE: Record<string, EntityType> = {
+    'WIDGET': EntityType.WIDGET_TYPE,
+    'DASHBOARD': EntityType.DASHBOARD,
+    'CALCULATED_FIELD': EntityType.CALCULATED_FIELD,
+    'RULE_CHAIN': EntityType.RULE_CHAIN,
+    'DEVICE': EntityType.DEVICE_PROFILE
+  };
 
   private categoryMap: Map<string, string>;
   private useCaseMap = useCaseTranslations;
@@ -52,6 +66,12 @@ export class TbIotHubItemDetailDialogComponent {
     private translate: TranslateService
   ) {
     this.item = data.item;
+    this.installedDescriptor = data.installedDescriptor;
+    if (!this.installedDescriptor && data.installedItemInfo) {
+      this.data.iotHubApiService.getInstalledItemByItemId(data.installedItemInfo.itemId, {ignoreLoading: true}).subscribe(
+        installedItem => this.installedDescriptor = installedItem?.descriptor
+      );
+    }
     this.categoryMap = getCategoriesForType(this.item.type);
     this.loadReadme();
   }
@@ -210,12 +230,17 @@ export class TbIotHubItemDetailDialogComponent {
   }
 
   install(): void {
-    this.dialog.open(TbIotHubInstallDialogComponent, {
+    const dialogRef = this.dialog.open(TbIotHubInstallDialogComponent, {
       panelClass: ['tb-dialog'],
       data: {
         item: this.item,
         iotHubApiService: this.data.iotHubApiService
       } as IotHubInstallDialogData
+    });
+    dialogRef.afterClosed().subscribe(result => {
+      if (result === 'installed') {
+        this.dialogRef.close('installed');
+      }
     });
   }
 
@@ -226,6 +251,28 @@ export class TbIotHubItemDetailDialogComponent {
   navigateToCreator(): void {
     this.dialogRef.close();
     this.router.navigate(['/iot-hub/creator', this.item.creatorId]);
+  }
+
+  openEntityDetails(): void {
+    const descriptor = this.installedDescriptor;
+    if (!descriptor) {
+      return;
+    }
+    let entityId: string | null = null;
+    switch (descriptor.type) {
+      case 'WIDGET': entityId = descriptor.widgetTypeId?.id; break;
+      case 'DASHBOARD': entityId = descriptor.dashboardId?.id; break;
+      case 'CALCULATED_FIELD': entityId = descriptor.calculatedFieldId?.id; break;
+      case 'RULE_CHAIN': entityId = descriptor.ruleChainId?.id; break;
+    }
+    const entityType = TbIotHubItemDetailDialogComponent.ITEM_TYPE_TO_ENTITY_TYPE[this.item.type];
+    if (entityType && entityId) {
+      const url = getEntityDetailsPageURL(entityId, entityType);
+      if (url) {
+        this.dialogRef.close();
+        this.router.navigateByUrl(url);
+      }
+    }
   }
 
   close(): void {

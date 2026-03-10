@@ -19,8 +19,10 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';
+import { PageLink } from '@shared/models/page/page-link';
 import { MpItemVersionQuery, MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
 import { CreatorView } from '@shared/models/iot-hub/iot-hub-creator.models';
+import { IotHubInstalledItem, IotHubInstalledItemInfo } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { InterceptorHttpParams } from '@core/interceptors/interceptor-http-params';
 import { InterceptorConfig } from '@core/interceptors/interceptor-config';
 import { AppState } from '@core/core.state';
@@ -81,6 +83,13 @@ export class IotHubApiService {
     );
   }
 
+  public getVersionInfo(versionId: string, config?: IotHubRequestConfig): Observable<MpItemVersionView> {
+    return this.http.get<MpItemVersionView>(
+      `${this.baseUrl}/api/versions/${versionId}`,
+      { params: this.buildParams(config) }
+    );
+  }
+
   public getVersionReadme(versionId: string, config?: IotHubRequestConfig): Observable<string> {
     return this.http.get(`${this.baseUrl}/api/versions/${versionId}/readme`, {
       params: this.buildParams(config),
@@ -107,6 +116,34 @@ export class IotHubApiService {
     return this.http.post<any>(
       `/api/iot-hub/versions/${versionId}/install`,
       null,
+      { params: this.buildParams(config) }
+    );
+  }
+
+  public getInstalledItemByItemId(itemId: string, config?: IotHubRequestConfig): Observable<IotHubInstalledItem> {
+    return this.http.get<IotHubInstalledItem>(
+      `/api/iot-hub/installedItems/byItemId/${itemId}`,
+      { params: this.buildParams(config) }
+    );
+  }
+
+  public getInstalledItemInfos(config?: IotHubRequestConfig): Observable<IotHubInstalledItemInfo[]> {
+    return this.http.get<IotHubInstalledItemInfo[]>(
+      `/api/iot-hub/installedItems/info`,
+      { params: this.buildParams(config) }
+    );
+  }
+
+  public getInstalledItems(pageLink: PageLink, config?: IotHubRequestConfig): Observable<PageData<IotHubInstalledItem>> {
+    return this.http.get<PageData<IotHubInstalledItem>>(
+      `/api/iot-hub/installedItems${pageLink.toQuery()}`,
+      { params: this.buildParams(config) }
+    );
+  }
+
+  public deleteInstalledItem(itemId: string, config?: IotHubRequestConfig): Observable<void> {
+    return this.http.delete<void>(
+      `/api/iot-hub/installedItems/${itemId}`,
       { params: this.buildParams(config) }
     );
   }

@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.iot_hub;
+package org.thingsboard.server.common.data.iot_hub;
 
-import org.thingsboard.server.service.security.model.SecurityUser;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.RuleChainId;
 
-import java.util.UUID;
+@Data
+public class RuleChainInstalledItemDescriptor implements IotHubInstalledItemDescriptor {
 
-public interface IotHubService {
+    private RuleChainId ruleChainId;
 
-    InstallItemVersionResult installItemVersion(SecurityUser user, String versionId);
-
-    void deleteInstalledItem(SecurityUser user, UUID itemId);
 }

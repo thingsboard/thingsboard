@@ -47,6 +47,9 @@
 }
 
 .tb-iot-hub-browse-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: 24px;
 
   h1 {

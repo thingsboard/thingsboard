@@ -23,6 +23,7 @@ import { TbIotHubCreatorProfileComponent } from './iot-hub-creator-profile.compo
 import { TbIotHubItemDetailDialogComponent } from './iot-hub-item-detail-dialog.component';
 import { TbIotHubInstallDialogComponent } from './iot-hub-install-dialog.component';
 import { TbIotHubItemCardComponent } from './iot-hub-item-card.component';
+import { TbIotHubInstalledItemsComponent } from './iot-hub-installed-items.component';
 
 @NgModule({
   declarations: [
@@ -30,7 +31,8 @@ import { TbIotHubItemCardComponent } from './iot-hub-item-card.component';
     TbIotHubCreatorProfileComponent,
     TbIotHubItemDetailDialogComponent,
     TbIotHubInstallDialogComponent,
-    TbIotHubItemCardComponent
+    TbIotHubItemCardComponent,
+    TbIotHubInstalledItemsComponent
   ],
   imports: [
     CommonModule,

@@ -976,3 +976,16 @@ CREATE TABLE IF NOT EXISTS ai_model (
     CONSTRAINT ai_model_name_unq_key        UNIQUE (tenant_id, name),
     CONSTRAINT ai_model_external_id_unq_key UNIQUE (tenant_id, external_id)
 );
+
+CREATE TABLE IF NOT EXISTS iot_hub_installed_item (
+    id              UUID          NOT NULL PRIMARY KEY,
+    created_time    BIGINT        NOT NULL,
+    tenant_id       UUID          NOT NULL,
+    item_id         UUID          NOT NULL,
+    item_version_id UUID          NOT NULL,
+    item_name       VARCHAR       NOT NULL,
+    item_type       VARCHAR       NOT NULL,
+    version         VARCHAR       NOT NULL,
+    descriptor      JSONB         NOT NULL,
+    CONSTRAINT iot_hub_installed_item_item_id_unq_key UNIQUE (tenant_id, item_id)
+);
