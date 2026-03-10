@@ -170,8 +170,9 @@ public class AuditLogControllerTest extends AbstractControllerTest {
             savedDevice = doPost("/api/device", savedDevice, Device.class);
         }
 
+        Device finalSavedDevice = savedDevice;
         Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() ->
-                assertThat(getAuditLogs(SMALL_PAGE_SIZE, "/api/audit/logs/entity/DEVICE/" + savedDevice.getId().getId() + "?")).hasSize(11 + 1));
+                assertThat(getAuditLogs(SMALL_PAGE_SIZE, "/api/audit/logs/entity/DEVICE/" + finalSavedDevice.getId().getId() + "?")).hasSize(11 + 1));
     }
 
     @Test
@@ -187,8 +188,9 @@ public class AuditLogControllerTest extends AbstractControllerTest {
         tenantProfile.setName(tenantProfile.getName() + "(old)");
         tenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
 
+        TenantProfile finalTenantProfile = tenantProfile;
         Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() ->
-                assertThat(getAuditLogs(SMALL_PAGE_SIZE, "/api/audit/logs/entity/" + tenantProfile.getId().getEntityType() + "/" + tenantProfile.getId().getId() + "?"))
+                assertThat(getAuditLogs(SMALL_PAGE_SIZE, "/api/audit/logs/entity/" + finalTenantProfile.getId().getEntityType() + "/" + finalTenantProfile.getId().getId() + "?"))
                         .as("Audit logs count by Tenant Profile entity").hasSize(2));
 
         //cleanup
