@@ -79,10 +79,11 @@
       <mat-progress-bar color="warn" style="z-index: 10; margin-bottom: -4px; width: 100%;" mode="indeterminate"
                         *ngIf="!hideLoadingBar && (isLoading$ | async)">
       </mat-progress-bar>
-      <tb-ws-status-banner></tb-ws-status-banner>
       <div tb-toast class="tb-main-content flex flex-1 flex-col">
         <router-outlet (activate)="activeComponentChanged($event)"></router-outlet>
       </div>
     </div>
   </mat-sidenav-content>
 </mat-sidenav-container>
+<!-- Fixed-position overlay — must be outside the scrollable content flow -->
+<tb-ws-status-banner></tb-ws-status-banner>

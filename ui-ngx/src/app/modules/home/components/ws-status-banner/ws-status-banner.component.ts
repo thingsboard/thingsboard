@@ -20,6 +20,10 @@ import { takeUntil } from 'rxjs/operators';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { TelemetryWebsocketService } from '@core/ws/telemetry-websocket.service';
 
+// Only surface the banner for reconnect delays at or above this threshold.
+// Short 2 s first-retry attempts are silent — no reason to alarm the user.
+const MIN_VISIBLE_DELAY_MS = 4000;
+
 @Component({
   selector: 'tb-ws-status-banner',
   templateUrl: './ws-status-banner.component.html',
@@ -27,13 +31,13 @@ import { TelemetryWebsocketService } from '@core/ws/telemetry-websocket.service'
   standalone: false,
   changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [
-    trigger('slideInOut', [
+    trigger('fadeSlide', [
       transition(':enter', [
-        style({ height: 0, opacity: 0 }),
-        animate('200ms ease-out', style({ height: '*', opacity: 1 }))
+        style({ opacity: 0, transform: 'translateY(-8px)' }),
+        animate('220ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))
       ]),
       transition(':leave', [
-        animate('200ms ease-in', style({ height: 0, opacity: 0 }))
+        animate('180ms ease-in', style({ opacity: 0, transform: 'translateY(-8px)' }))
       ])
     ])
   ]
@@ -56,7 +60,7 @@ export class WsStatusBannerComponent implements OnDestroy {
     this.telemetryWsService.reconnectStatus$
       .pipe(takeUntil(this.destroy$))
       .subscribe(delayMs => {
-        if (delayMs === null) {
+        if (delayMs === null || delayMs < MIN_VISIBLE_DELAY_MS) {
           this.isVisible = false;
           this.countdownSub?.unsubscribe();
         } else {

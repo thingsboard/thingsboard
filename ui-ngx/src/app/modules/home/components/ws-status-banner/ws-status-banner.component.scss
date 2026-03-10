@@ -15,56 +15,86 @@
 ///
 
 :host {
-  display: block;
-  overflow: hidden;
+  // Host is invisible and out of the document flow — the pill is positioned fixed.
+  display: contents;
 }
 
-.tb-ws-reconnect-banner {
-  background-color: #fff3e0;
-  border-bottom: 1px solid #ffcc80;
-  overflow: hidden;
+.tb-ws-reconnect-pill {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 1000;
 
-  .tb-ws-reconnect-banner-content {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    padding: 6px 16px;
-    gap: 8px;
-    min-height: 40px;
-  }
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 4px 10px 14px;
+
+  background: rgba(38, 50, 56, 0.82);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.28);
+  max-width: 280px;
 
   .tb-ws-reconnect-icon {
-    color: #e65100;
+    color: rgba(255, 255, 255, 0.7);
     font-size: 18px;
     width: 18px;
     height: 18px;
     flex-shrink: 0;
   }
 
-  .tb-ws-reconnect-text {
+  .tb-ws-reconnect-body {
     flex: 1;
-    font-size: 13px;
-    color: #bf360c;
-    font-weight: 500;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow: hidden;
   }
 
-  .tb-ws-reconnect-btn {
-    color: #e65100;
+  .tb-ws-reconnect-title {
     font-size: 12px;
-    line-height: 28px;
-    min-height: 28px;
-    padding: 0 8px;
-    flex-shrink: 0;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    white-space: nowrap;
+  }
 
-    mat-icon {
-      font-size: 16px;
-      width: 16px;
-      height: 16px;
-      margin-right: 4px;
-    }
+  .tb-ws-reconnect-subtitle {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.55);
+    white-space: nowrap;
   }
 
   .tb-ws-reconnect-progress {
+    margin-top: 4px;
     height: 2px;
+    border-radius: 1px;
+
+    // Tint the progress bar to match the pill palette
+    ::ng-deep .mdc-linear-progress__buffer-bar {
+      background-color: rgba(255, 255, 255, 0.15);
+    }
+    ::ng-deep .mdc-linear-progress__bar-inner {
+      border-color: rgba(255, 255, 255, 0.55);
+    }
+  }
+
+  .tb-ws-reconnect-btn {
+    color: rgba(255, 255, 255, 0.6);
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+
+    &:hover {
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
   }
 }

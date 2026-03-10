@@ -15,18 +15,14 @@
     limitations under the License.
 
 -->
-<div *ngIf="isVisible" class="tb-ws-reconnect-banner" [@slideInOut]>
-  <div class="tb-ws-reconnect-banner-content">
-    <mat-icon class="tb-ws-reconnect-icon">wifi_off</mat-icon>
-    <span class="tb-ws-reconnect-text">
-      {{ 'websocket.disconnected' | translate }}
-      &nbsp;·&nbsp;
-      {{ 'websocket.reconnecting-in' | translate: { seconds: countdown } }}
-    </span>
-    <button mat-button class="tb-ws-reconnect-btn" (click)="retryNow()">
-      <mat-icon>refresh</mat-icon>
-      {{ 'websocket.retry-now' | translate }}
-    </button>
+<div *ngIf="isVisible" class="tb-ws-reconnect-pill" [@fadeSlide]>
+  <mat-icon class="tb-ws-reconnect-icon">wifi_off</mat-icon>
+  <div class="tb-ws-reconnect-body">
+    <span class="tb-ws-reconnect-title">{{ 'websocket.disconnected' | translate }}</span>
+    <span class="tb-ws-reconnect-subtitle">{{ 'websocket.reconnecting-in' | translate: { seconds: countdown } }}</span>
+    <mat-progress-bar mode="determinate" [value]="progressValue" class="tb-ws-reconnect-progress"></mat-progress-bar>
   </div>
-  <mat-progress-bar mode="determinate" [value]="progressValue" color="warn" class="tb-ws-reconnect-progress"></mat-progress-bar>
+  <button mat-icon-button class="tb-ws-reconnect-btn" (click)="retryNow()" [matTooltip]="'websocket.retry-now' | translate">
+    <mat-icon>refresh</mat-icon>
+  </button>
 </div>
