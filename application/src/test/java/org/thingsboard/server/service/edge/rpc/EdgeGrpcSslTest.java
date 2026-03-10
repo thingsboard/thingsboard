@@ -121,9 +121,9 @@ class EdgeGrpcSslTest {
         }
     }
 
-    @ParameterizedTest(name = "separateCertAndKeyFiles_{0}")
+    @ParameterizedTest(name = "separateCertAndKey_{0}")
     @EnumSource(KeyType.class)
-    void separateCertAndKeyFiles(KeyType keyType) throws Exception {
+    void separateCertAndKey(KeyType keyType) throws Exception {
         KeyPair kp = keyType.generateKeyPair();
         X509Certificate cert = generateSelfSignedCert(kp, keyType.sigAlg);
 
@@ -134,9 +134,9 @@ class EdgeGrpcSslTest {
         assertTlsConnectivity(cert);
     }
 
-    @ParameterizedTest(name = "combinedPemFile_{0}")
+    @ParameterizedTest(name = "combinedPemWithCertAndKey_{0}")
     @EnumSource(KeyType.class)
-    void combinedPemFile(KeyType keyType) throws Exception {
+    void combinedPemWithCertAndKey(KeyType keyType) throws Exception {
         KeyPair kp = keyType.generateKeyPair();
         X509Certificate cert = generateSelfSignedCert(kp, keyType.sigAlg);
 
@@ -162,9 +162,9 @@ class EdgeGrpcSslTest {
         assertTlsConnectivity(cert);
     }
 
-    @ParameterizedTest(name = "combinedPemWithoutKey_{0}")
+    @ParameterizedTest(name = "combinedPemWithCertOnly_throwsException_{0}")
     @EnumSource(KeyType.class)
-    void combinedPemWithoutKey_throwsException(KeyType keyType) throws Exception {
+    void combinedPemWithCertOnly_throwsException(KeyType keyType) throws Exception {
         KeyPair kp = keyType.generateKeyPair();
         X509Certificate cert = generateSelfSignedCert(kp, keyType.sigAlg);
 
