@@ -188,12 +188,16 @@ public class AuditLogControllerTest extends AbstractControllerTest {
         tenantProfile.setName(tenantProfile.getName() + "(old)");
         tenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
 
-        List<AuditLog> loadedAuditLogs = getAuditLogs(5, "/api/audit/logs/entity/" +tenantProfile.getId().getEntityType()+ "/" + tenantProfile.getId().getId() + "?");
-
-        Assert.assertEquals("Audit logs count by Tenant Profile entity", 2, loadedAuditLogs.size());
+        final TenantProfile savedTenantProfile = tenantProfile;
+        String auditLogUrl = "/api/audit/logs/entity/" + savedTenantProfile.getId().getEntityType() + "/" + savedTenantProfile.getId().getId() + "?";
+        Awaitility.await("Audit logs count by Tenant Profile entity")
+                .atMost(10, TimeUnit.SECONDS)
+                .untilAsserted(() ->
+                        Assert.assertEquals("Audit logs count by Tenant Profile entity",
+                                2, getAuditLogs(5, auditLogUrl).size()));
 
         //cleanup
-        doDelete("/api/tenantProfile/" + tenantProfile.getId().getId().toString());
+        doDelete("/api/tenantProfile/" + savedTenantProfile.getId().getId().toString());
     }
 
     @Test
