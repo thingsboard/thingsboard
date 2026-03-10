@@ -1491,7 +1491,7 @@ edges:
       # For a combined PEM file containing both the certificate chain and the private key, leave private_key empty.
       cert: "${EDGES_RPC_SSL_CERT:certChainFile.pem}"
       # Path to the private key PEM file. Optional when the key is already included in the cert file (combined PEM).
-      private_key: "${EDGES_RPC_SSL_PRIVATE_KEY:}"
+      private_key: "${EDGES_RPC_SSL_PRIVATE_KEY:privateKeyFile.pem}"
       # Password for encrypted private keys. Optional, only needed for password-protected keys.
       key_password: "${EDGES_RPC_SSL_KEY_PASSWORD:}"
     # Maximum size (in bytes) of inbound messages the cloud can handle from the edge. By default, it can handle messages up to 4 Megabytes

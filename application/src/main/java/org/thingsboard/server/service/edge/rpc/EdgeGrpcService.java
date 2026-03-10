@@ -113,7 +113,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private boolean sslEnabled;
     @Value("${edges.rpc.ssl.cert}")
     private String certFileResource;
-    @Value("${edges.rpc.ssl.private_key:}")
+    @Value("${edges.rpc.ssl.private_key}")
     private String privateKeyResource;
     @Value("${edges.rpc.ssl.key_password:}")
     private String keyPassword;
