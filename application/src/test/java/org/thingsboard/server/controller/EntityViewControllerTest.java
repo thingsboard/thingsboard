@@ -97,6 +97,12 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 @ContextConfiguration(classes = {EntityViewControllerTest.Config.class})
 @DaoSqlTest
 public class EntityViewControllerTest extends AbstractControllerTest {
+    // Must NOT be imported from AbstractMqttIntegrationTest. That field is a static final initialized
+    // once per JVM. Other test classes (e.g. MqttGatewayRateLimitsTest, DeviceEdgeTest) share the same
+    // constant but produce a different Spring context cache key, so Spring creates a separate
+    // ApplicationContext for each of them. Every context starts its own MqttTransportService and tries
+    // to bind the same port, causing BindException when tests run in the same Surefire JVM fork.
+    // Declaring the port here gives this context its own independently allocated port.
     static final int MQTT_PORT = TestSocketUtils.findAvailableTcpPort();
     static final String MQTT_URL = "tcp://localhost:" + MQTT_PORT;
 
