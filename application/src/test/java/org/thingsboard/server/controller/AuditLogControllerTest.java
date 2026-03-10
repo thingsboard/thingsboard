@@ -113,17 +113,14 @@ public class AuditLogControllerTest extends AbstractControllerTest {
             doPost("/api/device", device, Device.class);
         }
 
-        List<AuditLog> loadedAuditLogs = getAuditLogs(5, "/api/audit/logs?");
+        Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() ->
+                assertThat(getAuditLogs(5, "/api/audit/logs?")).hasSize(11 + 1));
 
-        Assert.assertEquals(11 + 1, loadedAuditLogs.size());
+        Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() ->
+                assertThat(getAuditLogs(5, "/api/audit/logs/customer/" + ModelConstants.NULL_UUID + "?")).hasSize(11 + 1));
 
-        loadedAuditLogs = getAuditLogs(5, "/api/audit/logs/customer/" + ModelConstants.NULL_UUID + "?");
-
-        Assert.assertEquals(11 + 1, loadedAuditLogs.size());
-
-        loadedAuditLogs = getAuditLogs(5, "/api/audit/logs/user/" + tenantAdmin.getId().getId().toString() + "?");
-
-        Assert.assertEquals(11 + 1, loadedAuditLogs.size());
+        Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() ->
+                assertThat(getAuditLogs(5, "/api/audit/logs/user/" + tenantAdmin.getId().getId().toString() + "?")).hasSize(11 + 1));
     }
 
     @Test
@@ -138,7 +135,7 @@ public class AuditLogControllerTest extends AbstractControllerTest {
         }
 
         int expectedSize = loadedAuditLogsBefore.size() + 3;
-        Awaitility.await().atMost(10, TimeUnit.SECONDS).untilAsserted(() ->
+        Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() ->
                 Assert.assertEquals("Have X audit log before this test + New tenant profiles in the test",
                         expectedSize, getAuditLogs(100, "/api/audit/logs?").size()));
     }
@@ -170,9 +167,8 @@ public class AuditLogControllerTest extends AbstractControllerTest {
             savedDevice = doPost("/api/device", savedDevice, Device.class);
         }
 
-        List<AuditLog> loadedAuditLogs = getAuditLogs(5, "/api/audit/logs/entity/DEVICE/" + savedDevice.getId().getId() + "?");
-
-        Assert.assertEquals(11 + 1, loadedAuditLogs.size());
+        Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() ->
+                assertThat(getAuditLogs(5, "/api/audit/logs/entity/DEVICE/" + savedDevice.getId().getId() + "?")).hasSize(11 + 1));
     }
 
     @Test
@@ -188,9 +184,9 @@ public class AuditLogControllerTest extends AbstractControllerTest {
         tenantProfile.setName(tenantProfile.getName() + "(old)");
         tenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
 
-        List<AuditLog> loadedAuditLogs = getAuditLogs(5, "/api/audit/logs/entity/" +tenantProfile.getId().getEntityType()+ "/" + tenantProfile.getId().getId() + "?");
-
-        Assert.assertEquals("Audit logs count by Tenant Profile entity", 2, loadedAuditLogs.size());
+        Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() ->
+                assertThat(getAuditLogs(5, "/api/audit/logs/entity/" + tenantProfile.getId().getEntityType() + "/" + tenantProfile.getId().getId() + "?"))
+                        .as("Audit logs count by Tenant Profile entity").hasSize(2));
 
         //cleanup
         doDelete("/api/tenantProfile/" + tenantProfile.getId().getId().toString());
