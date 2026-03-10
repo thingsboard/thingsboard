@@ -62,6 +62,9 @@ import static org.mockito.Mockito.verify;
 @DaoSqlTest
 public class AuditLogControllerTest extends AbstractControllerTest {
 
+    // Small enough to force multiple pages, verifying pagination loop correctness
+    private static final int PAGE_SIZE = 5;
+
     private Tenant savedTenant;
     private User tenantAdmin;
 
@@ -114,13 +117,13 @@ public class AuditLogControllerTest extends AbstractControllerTest {
         }
 
         Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() ->
-                assertThat(getAuditLogs(5, "/api/audit/logs?")).hasSize(11 + 1));
+                assertThat(getAuditLogs(PAGE_SIZE, "/api/audit/logs?")).hasSize(11 + 1));
 
         Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() ->
-                assertThat(getAuditLogs(5, "/api/audit/logs/customer/" + ModelConstants.NULL_UUID + "?")).hasSize(11 + 1));
+                assertThat(getAuditLogs(PAGE_SIZE, "/api/audit/logs/customer/" + ModelConstants.NULL_UUID + "?")).hasSize(11 + 1));
 
         Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() ->
-                assertThat(getAuditLogs(5, "/api/audit/logs/user/" + tenantAdmin.getId().getId().toString() + "?")).hasSize(11 + 1));
+                assertThat(getAuditLogs(PAGE_SIZE, "/api/audit/logs/user/" + tenantAdmin.getId().getId().toString() + "?")).hasSize(11 + 1));
     }
 
     @Test
@@ -168,7 +171,7 @@ public class AuditLogControllerTest extends AbstractControllerTest {
         }
 
         Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() ->
-                assertThat(getAuditLogs(5, "/api/audit/logs/entity/DEVICE/" + savedDevice.getId().getId() + "?")).hasSize(11 + 1));
+                assertThat(getAuditLogs(PAGE_SIZE, "/api/audit/logs/entity/DEVICE/" + savedDevice.getId().getId() + "?")).hasSize(11 + 1));
     }
 
     @Test
@@ -185,7 +188,7 @@ public class AuditLogControllerTest extends AbstractControllerTest {
         tenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
 
         Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() ->
-                assertThat(getAuditLogs(5, "/api/audit/logs/entity/" + tenantProfile.getId().getEntityType() + "/" + tenantProfile.getId().getId() + "?"))
+                assertThat(getAuditLogs(PAGE_SIZE, "/api/audit/logs/entity/" + tenantProfile.getId().getEntityType() + "/" + tenantProfile.getId().getId() + "?"))
                         .as("Audit logs count by Tenant Profile entity").hasSize(2));
 
         //cleanup
