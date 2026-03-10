@@ -26,6 +26,7 @@ import { SideMenuComponent } from '@modules/home/menu/side-menu.component';
 import { GithubBadgeComponent } from '@home/components/github-badge/github-badge.component';
 import { NotificationBellComponent } from '@home/components/notification/notification-bell.component';
 import { ShowNotificationPopoverComponent } from '@home/components/notification/show-notification-popover.component';
+import { WsStatusBannerComponent } from '@home/components/ws-status-banner/ws-status-banner.component';
 
 @NgModule({
   declarations:
@@ -36,7 +37,8 @@ import { ShowNotificationPopoverComponent } from '@home/components/notification/
       SideMenuComponent,
       GithubBadgeComponent,
       NotificationBellComponent,
-      ShowNotificationPopoverComponent
+      ShowNotificationPopoverComponent,
+      WsStatusBannerComponent
     ],
   imports: [
     CommonModule,

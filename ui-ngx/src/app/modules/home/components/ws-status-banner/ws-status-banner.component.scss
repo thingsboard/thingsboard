@@ -1,0 +1,70 @@
+///
+/// Copyright © 2016-2026 The Thingsboard Authors
+///
+/// Licensed under the Apache License, Version 2.0 (the "License");
+/// you may not use this file except in compliance with the License.
+/// You may obtain a copy of the License at
+///
+///     http://www.apache.org/licenses/LICENSE-2.0
+///
+/// Unless required by applicable law or agreed to in writing, software
+/// distributed under the License is distributed on an "AS IS" BASIS,
+/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/// See the License for the specific language governing permissions and
+/// limitations under the License.
+///
+
+:host {
+  display: block;
+  overflow: hidden;
+}
+
+.tb-ws-reconnect-banner {
+  background-color: #fff3e0;
+  border-bottom: 1px solid #ffcc80;
+  overflow: hidden;
+
+  .tb-ws-reconnect-banner-content {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 6px 16px;
+    gap: 8px;
+    min-height: 40px;
+  }
+
+  .tb-ws-reconnect-icon {
+    color: #e65100;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+
+  .tb-ws-reconnect-text {
+    flex: 1;
+    font-size: 13px;
+    color: #bf360c;
+    font-weight: 500;
+  }
+
+  .tb-ws-reconnect-btn {
+    color: #e65100;
+    font-size: 12px;
+    line-height: 28px;
+    min-height: 28px;
+    padding: 0 8px;
+    flex-shrink: 0;
+
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      margin-right: 4px;
+    }
+  }
+
+  .tb-ws-reconnect-progress {
+    height: 2px;
+  }
+}

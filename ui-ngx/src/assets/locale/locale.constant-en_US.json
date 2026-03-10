@@ -9589,5 +9589,10 @@
             "zh_CN": "中文 (中国)",
             "zh_TW": "中文 (台灣)"
         }
+    },
+    "websocket": {
+        "disconnected": "WebSocket disconnected",
+        "reconnecting-in": "Reconnecting in {{seconds}}s…",
+        "retry-now": "Retry now"
     }
 }

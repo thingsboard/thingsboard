@@ -29,6 +29,7 @@ import {
   WebsocketDataMsg
 } from '@shared/models/telemetry/telemetry.models';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
+import { Subject } from 'rxjs';
 import Timeout = NodeJS.Timeout;
 
 const RECONNECT_INTERVAL = 2000;
@@ -61,6 +62,10 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
   dataStream: WebSocketSubject<CmdWrapper | CmdUpdateMsg | AuthWsCmd>;
 
   errorName = 'WebSocket Error';
+
+  /** Emits the reconnect delay in ms when a reconnect is scheduled; emits null when the connection is productive. */
+  private readonly reconnectStatusSubject = new Subject<number | null>();
+  readonly reconnectStatus$ = this.reconnectStatusSubject.asObservable();
 
   // Exponential backoff: tracks the number of consecutive failed reconnect attempts.
   // Reset only after a productive connection (i.e. at least one message received).
@@ -105,6 +110,16 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
   abstract unsubscribe(subscriber: T);
 
   abstract processOnMessage(message: WebsocketDataMsg);
+
+  /** Cancel the pending reconnect timer and attempt to connect immediately. */
+  reconnectNow() {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    this.reconnectStatusSubject.next(null);
+    this.tryOpenSocket();
+  }
 
   protected nextCmdId(): number {
     this.lastCmdId++;
@@ -236,9 +251,10 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
     } else {
       this.processOnMessage(message as WebsocketDataMsg);
     }
-    // Connection is productive — reset backoff and allow future error notifications.
+    // Connection is productive — reset backoff, hide status banner, allow future error notifications.
     this.reconnectAttempts = 0;
     this.reconnectErrorShown = false;
+    this.reconnectStatusSubject.next(null);
     this.checkToClose();
   }
 
@@ -284,6 +300,7 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
       // Exponential backoff: 2 s, 4 s, 8 s … capped at MAX_RECONNECT_INTERVAL (60 s).
       const delay = Math.min(RECONNECT_INTERVAL * Math.pow(2, this.reconnectAttempts), MAX_RECONNECT_INTERVAL);
       this.reconnectAttempts = Math.min(this.reconnectAttempts + 1, 10);
+      this.reconnectStatusSubject.next(delay);
       this.reconnectTimer = setTimeout(() => this.tryOpenSocket(), delay);
     }
   }
