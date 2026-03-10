@@ -680,9 +680,14 @@ public class SwaggerConfiguration {
         // Map backing field names to their JSON property names (respects @JsonProperty)
         Map<String, String> fieldToJsonName = new LinkedHashMap<>();
         LinkedHashSet<String> getterOnlyNames = new LinkedHashSet<>();
+        LinkedHashSet<String> writeOnlyNames = new LinkedHashSet<>();
         for (var prop : beanDesc.findProperties()) {
             if (prop.getField() != null) {
-                fieldToJsonName.put(prop.getField().getName(), prop.getName());
+                if (prop.couldSerialize()) {
+                    fieldToJsonName.put(prop.getField().getName(), prop.getName());
+                } else {
+                    writeOnlyNames.add(prop.getName());
+                }
             } else {
                 getterOnlyNames.add(prop.getName());
             }
@@ -704,6 +709,8 @@ public class SwaggerConfiguration {
 
         // Append getter-only properties (no backing field) at the end
         ordered.addAll(getterOnlyNames);
+        // Append write-only properties (e.g. deprecated setter-only fields) last
+        ordered.addAll(writeOnlyNames);
         return ordered;
     }
 
