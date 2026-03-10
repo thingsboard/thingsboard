@@ -77,6 +77,8 @@ class EdgeGrpcSslTest {
 
     enum KeyType {
         RSA_2048("RSA", 2048, null, "SHA256withRSA"),
+        RSA_4096("RSA", 4096, null, "SHA256withRSA"),
+        EC_P256("EC", 256, "secp256r1", "SHA256withECDSA"),
         EC_P384("EC", 384, "secp384r1", "SHA384withECDSA");
 
         final String algorithm;
@@ -144,10 +146,14 @@ class EdgeGrpcSslTest {
         assertTlsConnectivity(cert);
     }
 
-    @Test
-    void encryptedPrivateKey() throws Exception {
-        KeyPair kp = KeyType.RSA_2048.generateKeyPair();
-        X509Certificate cert = generateSelfSignedCert(kp, KeyType.RSA_2048.sigAlg);
+    // RSA-only: BouncyCastle writes encrypted EC keys in traditional PEM format (BEGIN EC PRIVATE KEY),
+    // which after decryption produces a PEMKeyPair without public key info — causing PemSslCredentials
+    // to fail with "Cannot invoke SubjectPublicKeyInfo.getEncoded() because getPublicKeyInfo() is null".
+    @ParameterizedTest(name = "encryptedPrivateKey_{0}")
+    @EnumSource(value = KeyType.class, names = {"RSA_2048", "RSA_4096"})
+    void encryptedPrivateKey(KeyType keyType) throws Exception {
+        KeyPair kp = keyType.generateKeyPair();
+        X509Certificate cert = generateSelfSignedCert(kp, keyType.sigAlg);
         String password = "test-password";
 
         Path combinedFile = writeTempPemEncrypted("enc-combined", password, cert, kp.getPrivate());
@@ -156,10 +162,11 @@ class EdgeGrpcSslTest {
         assertTlsConnectivity(cert);
     }
 
-    @Test
-    void combinedPemWithoutKey_throwsException() throws Exception {
-        KeyPair kp = KeyType.RSA_2048.generateKeyPair();
-        X509Certificate cert = generateSelfSignedCert(kp, KeyType.RSA_2048.sigAlg);
+    @ParameterizedTest(name = "combinedPemWithoutKey_{0}")
+    @EnumSource(KeyType.class)
+    void combinedPemWithoutKey_throwsException(KeyType keyType) throws Exception {
+        KeyPair kp = keyType.generateKeyPair();
+        X509Certificate cert = generateSelfSignedCert(kp, keyType.sigAlg);
 
         Path certOnlyFile = writeTempPem("cert-only", cert);
 
