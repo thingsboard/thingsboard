@@ -32,6 +32,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.thingsboard.server.controller.AbstractWebTest;
 import org.thingsboard.server.gen.edge.v1.EdgeRpcServiceGrpc;
 
 import java.io.ByteArrayInputStream;
@@ -199,7 +200,7 @@ class EdgeGrpcSslTest {
                 .build();
 
         channel.getState(true); // trigger connection attempt
-        await().atMost(5, TimeUnit.SECONDS)
+        await().atMost(AbstractWebTest.TIMEOUT, TimeUnit.SECONDS)
                 .pollInterval(50, TimeUnit.MILLISECONDS)
                 .untilAsserted(() -> {
                     var state = channel.getState(false);
