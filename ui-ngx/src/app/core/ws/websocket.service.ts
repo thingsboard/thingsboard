@@ -32,8 +32,13 @@ import { ActionNotificationShow } from '@core/notification/notification.actions'
 import Timeout = NodeJS.Timeout;
 
 const RECONNECT_INTERVAL = 2000;
+const MAX_RECONNECT_INTERVAL = 60000;
 const WS_IDLE_TIMEOUT = 90000;
 const MAX_PUBLISH_COMMANDS = 10;
+
+// WebSocket close code 1008 (Policy Violation) is used by the server
+// for session limit errors: "Max tenant/customer/regular/public user sessions limit reached"
+const WS_SESSION_LIMIT_CLOSE_CODE = 1008;
 
 export abstract class WebsocketService<T extends WsSubscriber> implements WsService<T> {
 
@@ -56,6 +61,15 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
   dataStream: WebSocketSubject<CmdWrapper | CmdUpdateMsg | AuthWsCmd>;
 
   errorName = 'WebSocket Error';
+
+  // Exponential backoff: tracks the number of consecutive failed reconnect attempts.
+  // Reset only after a productive connection (i.e. at least one message received).
+  // This prevents the open→immediately-closed cycle from resetting the counter.
+  private reconnectAttempts = 0;
+
+  // Suppress duplicate close-event notifications while retrying.
+  // Set on first close with an error code; cleared after receiving a successful message.
+  private reconnectErrorShown = false;
 
   protected constructor(protected store: Store<AppState>,
                         protected authService: AuthService,
@@ -126,6 +140,8 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
     this.subscribersCount = 0;
     this.cmdWrapper.clear();
     if (close) {
+      this.reconnectAttempts = 0;
+      this.reconnectErrorShown = false;
       this.closeSocket();
     }
   }
@@ -220,6 +236,9 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
     } else {
       this.processOnMessage(message as WebsocketDataMsg);
     }
+    // Connection is productive — reset backoff and allow future error notifications.
+    this.reconnectAttempts = 0;
+    this.reconnectErrorShown = false;
     this.checkToClose();
   }
 
@@ -231,8 +250,14 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
   }
 
   private onClose(closeEvent: CloseEvent) {
-    if (closeEvent && closeEvent.code > 1001 && closeEvent.code !== 1006
-      && closeEvent.code !== 1011 && closeEvent.code !== 1012 && closeEvent.code !== 4500) {
+    const isSessionLimitClose = closeEvent?.code === WS_SESSION_LIMIT_CLOSE_CODE && !!closeEvent?.reason;
+
+    // Show error notification only once per reconnect cycle to prevent notification spam.
+    // reconnectErrorShown is cleared only after a productive connection (onMessage).
+    if (!this.reconnectErrorShown && closeEvent && closeEvent.code > 1001
+      && closeEvent.code !== 1006 && closeEvent.code !== 1011
+      && closeEvent.code !== 1012 && closeEvent.code !== 4500) {
+      this.reconnectErrorShown = true;
       this.showWsError(closeEvent.code, closeEvent.reason);
     }
     this.isOpening = false;
@@ -247,11 +272,19 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
         );
         this.reset(false);
         this.isReconnect = true;
+        // For session-limit closes, jump immediately to maximum backoff so the client
+        // does not storm the server while it is still over the limit.
+        if (isSessionLimitClose) {
+          this.reconnectAttempts = Math.ceil(Math.log2(MAX_RECONNECT_INTERVAL / RECONNECT_INTERVAL));
+        }
       }
       if (this.reconnectTimer) {
         clearTimeout(this.reconnectTimer);
       }
-      this.reconnectTimer = setTimeout(() => this.tryOpenSocket(), RECONNECT_INTERVAL);
+      // Exponential backoff: 2 s, 4 s, 8 s … capped at MAX_RECONNECT_INTERVAL (60 s).
+      const delay = Math.min(RECONNECT_INTERVAL * Math.pow(2, this.reconnectAttempts), MAX_RECONNECT_INTERVAL);
+      this.reconnectAttempts = Math.min(this.reconnectAttempts + 1, 10);
+      this.reconnectTimer = setTimeout(() => this.tryOpenSocket(), delay);
     }
   }
 
