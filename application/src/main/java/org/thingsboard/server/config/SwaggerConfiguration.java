@@ -76,6 +76,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
@@ -406,6 +407,10 @@ public class SwaggerConfiguration {
                     }
                 });
 
+                // Deduplicate allOf child schemas: remove properties that are already defined
+                // in the referenced parent schema to avoid duplication (e.g. EntityId children)
+                schemas.values().forEach(schema -> deduplicateAllOfProperties(schema, schemas));
+
                 // Fix polymorphic request/response bodies: replace inline oneOf with base type $ref
                 paths.values().stream()
                         .flatMap(pathItem -> pathItem.readOperationsMap().values().stream())
@@ -674,6 +679,55 @@ public class SwaggerConfiguration {
         MediaType mediaType = new MediaType().schema(errorResponseSchema).examples(examples);
         Content content = new Content().addMediaType(org.springframework.http.MediaType.APPLICATION_JSON_VALUE, mediaType);
         return new ApiResponse().description(description).content(content);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void deduplicateAllOfProperties(Schema<?> schema, Map<String, Schema> allSchemas) {
+        if (schema.getAllOf() == null) {
+            return;
+        }
+
+        // Collect properties defined in any $ref'd parent within the allOf
+        Set<String> parentProperties = new LinkedHashSet<>();
+        for (Schema<?> allOfElement : schema.getAllOf()) {
+            String ref = allOfElement.get$ref();
+            if (ref != null) {
+                String refName = ref.substring(ref.lastIndexOf('/') + 1);
+                Schema<?> parent = allSchemas.get(refName);
+                if (parent != null && parent.getProperties() != null) {
+                    parentProperties.addAll(parent.getProperties().keySet());
+                }
+            }
+        }
+
+        if (parentProperties.isEmpty()) {
+            return;
+        }
+
+        // Strip those properties from inline (non-$ref) allOf elements
+        schema.getAllOf().removeIf(allOfElement -> {
+            if (allOfElement.get$ref() != null) {
+                return false;
+            }
+            if (allOfElement.getProperties() != null) {
+                parentProperties.forEach(prop -> allOfElement.getProperties().remove(prop));
+                if (allOfElement.getProperties().isEmpty()) {
+                    allOfElement.setProperties(null);
+                }
+            }
+            // Remove the inline element entirely if it has nothing left
+            return allOfElement.getProperties() == null
+                    && allOfElement.getRequired() == null
+                    && allOfElement.getType() == null;
+        });
+
+        // Remove required entries at the schema level that are already required by the parent
+        if (schema.getRequired() != null) {
+            schema.getRequired().removeAll(parentProperties);
+            if (schema.getRequired().isEmpty()) {
+                schema.setRequired(null);
+            }
+        }
     }
 
     private static List<String> resolvePropertyOrder(Class<?> cls, com.fasterxml.jackson.databind.BeanDescription beanDesc) {

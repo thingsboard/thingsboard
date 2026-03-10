@@ -27,8 +27,8 @@ import java.util.UUID;
 
 @Schema(description = "Default notification rule recipients configuration", allOf = NotificationRuleRecipientsConfig.class)
 @Data
-@EqualsAndHashCode(callSuper = true)
-public abstract class DefaultNotificationRuleRecipientsConfig extends NotificationRuleRecipientsConfig {
+@EqualsAndHashCode
+public abstract class DefaultNotificationRuleRecipientsConfig implements NotificationRuleRecipientsConfig {
 
     @NotEmpty
     private List<UUID> targets;
