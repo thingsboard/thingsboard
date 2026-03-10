@@ -20,22 +20,18 @@ import io.grpc.Server;
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
-import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
-import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.bouncycastle.openssl.jcajce.JcePEMEncryptorBuilder;
-import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+import org.bouncycastle.util.io.pem.PemObject;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.transport.config.ssl.PemSslCredentials;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.server.gen.edge.v1.EdgeRpcServiceGrpc;
 
 import java.io.ByteArrayInputStream;
@@ -59,13 +55,15 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
 /**
- * Tests for Edge gRPC SSL setup using PemSslCredentials.
- * Covers all test plan scenarios:
- * 1. Separate cert and key files (existing behavior)
- * 2. Combined PEM file (cert + key)
- * 3. Encrypted private key + key_password
- * 4. Error when combined PEM has no private key and private_key is empty
- * 5. ECDSA P-384 key support
+ * Tests for Edge gRPC SSL setup using the production {@link EdgeGrpcService#setupSsl} method.
+ * <p>
+ * Covers:
+ * 1. Separate cert and key PEM inputs
+ * 2. Combined PEM (cert + key in one file)
+ * 3. Encrypted private key with password
+ * 4. Missing key in combined PEM → error
+ * <p>
+ * Each scenario is parameterized across key types: RSA-2048, RSA-4096, EC P-256, EC P-384.
  */
 class EdgeGrpcSslTest {
 
@@ -174,28 +172,25 @@ class EdgeGrpcSslTest {
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
-    // --- Helpers that mirror EdgeGrpcService.setupSsl() ---
+    // --- Server startup using production EdgeGrpcService.setupSsl() ---
 
     private Server startServer(String certFileResource, String privateKeyResource, String keyPassword) throws Exception {
-        PemSslCredentials credentials = new PemSslCredentials();
-        credentials.setCertFile(certFileResource);
-        credentials.setKeyFile(StringUtils.isEmpty(privateKeyResource) ? null : privateKeyResource);
-        credentials.setKeyPassword(keyPassword);
-        credentials.init(false);
+        EdgeGrpcService edgeGrpcService = new EdgeGrpcService();
+        ReflectionTestUtils.setField(edgeGrpcService, "certFileResource", certFileResource);
+        ReflectionTestUtils.setField(edgeGrpcService, "privateKeyResource", privateKeyResource);
+        ReflectionTestUtils.setField(edgeGrpcService, "keyPassword", keyPassword != null ? keyPassword : "");
 
-        SslContext sslContext = GrpcSslContexts.configure(
-                SslContextBuilder.forServer(credentials.createKeyManagerFactory())).build();
+        NettyServerBuilder builder = NettyServerBuilder.forPort(0)
+                .addService(new EdgeRpcServiceGrpc.EdgeRpcServiceImplBase() {});
 
-        return NettyServerBuilder.forPort(0)
-                .sslContext(sslContext)
-                .addService(new EdgeRpcServiceGrpc.EdgeRpcServiceImplBase() {})
-                .build()
-                .start();
+        edgeGrpcService.setupSsl(builder);
+
+        return builder.build().start();
     }
 
     private void assertTlsConnectivity(X509Certificate trustedCert) throws Exception {
         String certPem = toPem(trustedCert);
-        SslContext clientSsl = GrpcSslContexts.forClient()
+        var clientSsl = GrpcSslContexts.forClient()
                 .trustManager(new ByteArrayInputStream(certPem.getBytes(StandardCharsets.UTF_8)))
                 .build();
 

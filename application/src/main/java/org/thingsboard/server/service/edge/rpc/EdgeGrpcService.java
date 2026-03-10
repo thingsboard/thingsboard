@@ -202,7 +202,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         log.info("Edge RPC service initialized!");
     }
 
-    private void setupSsl(NettyServerBuilder builder) throws Exception {
+    void setupSsl(NettyServerBuilder builder) throws Exception {
         PemSslCredentials credentials = new PemSslCredentials();
         credentials.setCertFile(certFileResource);
         credentials.setKeyFile(StringUtils.isEmpty(privateKeyResource) ? null : privateKeyResource);
