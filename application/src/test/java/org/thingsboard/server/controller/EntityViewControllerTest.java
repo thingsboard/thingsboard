@@ -41,6 +41,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.util.TestSocketUtils;
 import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Customer;
@@ -87,8 +88,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
-import static org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest.MQTT_PORT;
-import static org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest.MQTT_URL;
 
 @TestPropertySource(properties = {
         "transport.mqtt.enabled=true",
@@ -98,6 +97,9 @@ import static org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest.
 @ContextConfiguration(classes = {EntityViewControllerTest.Config.class})
 @DaoSqlTest
 public class EntityViewControllerTest extends AbstractControllerTest {
+    static final int MQTT_PORT = TestSocketUtils.findAvailableTcpPort();
+    static final String MQTT_URL = "tcp://localhost:" + MQTT_PORT;
+
     @DynamicPropertySource
     static void props(DynamicPropertyRegistry registry) {
         log.warn("transport.mqtt.bind_port = {}", MQTT_PORT);
