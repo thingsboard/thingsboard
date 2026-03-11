@@ -191,6 +191,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
                 AtomicReference<Device> device = new AtomicReference<>();
                 await(alias + "find device [" + deviceName + "] after created")
                         .atMost(200, TimeUnit.SECONDS)
+                        .ignoreExceptions()
                         .until(() -> {
                             device.set(doGet("/api/tenant/devices?deviceName=" + deviceName, Device.class));
                             return device.get() != null;
@@ -236,6 +237,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
             AtomicReference<Device> device = new AtomicReference<>();
             await(alias + "find device [" + deviceName + "] after created")
                     .atMost(200, TimeUnit.SECONDS)
+                    .ignoreExceptions()
                     .until(() -> {
                         device.set(doGet("/api/tenant/devices?deviceName=" + deviceName, Device.class));
                         return device.get() != null;

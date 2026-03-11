@@ -47,8 +47,6 @@
             <mat-error>
               @if (entityForm.get('name').hasError('required')) {
                 {{ 'common.hint.title-required' | translate }}
-              } @else if (entityForm.get('name').hasError('pattern')) {
-                {{ 'common.hint.title-pattern' | translate }}
               } @else if (entityForm.get('name').hasError('maxlength')) {
                 {{ 'common.hint.title-max-length' | translate }}
               }

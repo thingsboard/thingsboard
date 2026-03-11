@@ -193,7 +193,7 @@ public class FwLwM2MDevice extends BaseInstanceEnabler implements Destroyable {
             } catch (Exception e) {
                 log.error("Error during firmware update", e);
             }
-        }, 0, TimeUnit.SECONDS); // start immediately, without further delay
+        }, 1, TimeUnit.SECONDS); // delay 1 sec to allow CoAP Execute response to be delivered before client stops
     }
 
     protected void setLeshanClient(LeshanClient leshanClient) {
