@@ -357,8 +357,12 @@ public class SwaggerConfiguration {
                                         allOfElement.setProperties(reordered);
                                     }
                                 }
-                            } catch (Exception ignored) {
-                                log.trace("Failed to resolve property order for {}", cls.getName(), ignored);
+                            } catch (Exception e) {
+                                log.debug("Failed to resolve property order for {}: {}", cls.getName(), e.getMessage());
+                                // Fallback: at minimum sort alphabetically for determinism
+                                if (hasProps) {
+                                    schema.setProperties(new LinkedHashMap<>(new TreeMap<>(schema.getProperties())));
+                                }
                             }
                         }
                     }
@@ -473,6 +477,12 @@ public class SwaggerConfiguration {
                                         .forEach(response -> replaceInlineOneOfInContent(response.getContent(), schemas));
                             }
                         });
+
+                // Final safety net: ensure all schema properties are in deterministic order.
+                // The ModelConverter sorts properties during resolution, but springdoc may
+                // modify schemas afterwards (e.g. polymorphism handling, discriminator injection).
+                // This pass catches any properties that were added/reordered post-converter.
+                schemas.values().forEach(this::ensureDeterministicPropertyOrder);
             }
 
             // Set JsonNode schema last so model scanning cannot overwrite it
@@ -821,6 +831,28 @@ public class SwaggerConfiguration {
             List<String> required = new ArrayList<>(schema.getRequired());
             required.removeAll(toStrip);
             schema.setRequired(required.isEmpty() ? null : required);
+        }
+    }
+
+    /**
+     * Ensures all properties in a schema (top-level and inside allOf inline elements)
+     * are in deterministic alphabetical order. Acts as a safety net for schemas that
+     * were modified after the ModelConverter's sorting pass (e.g. by springdoc's
+     * polymorphism handling or discriminator injection for interfaces).
+     */
+    @SuppressWarnings("unchecked")
+    private void ensureDeterministicPropertyOrder(Schema<?> schema) {
+        if (schema.getProperties() != null && schema.getProperties().size() > 1) {
+            schema.setProperties(new LinkedHashMap<>(new TreeMap<>(schema.getProperties())));
+        }
+        if (schema.getAllOf() != null) {
+            for (Schema allOfElement : (List<Schema>) schema.getAllOf()) {
+                if (allOfElement.get$ref() == null
+                        && allOfElement.getProperties() != null
+                        && allOfElement.getProperties().size() > 1) {
+                    allOfElement.setProperties(new LinkedHashMap<>(new TreeMap<>(allOfElement.getProperties())));
+                }
+            }
         }
     }
 
