@@ -140,7 +140,7 @@ public class Customer extends ContactBased<CustomerId> implements HasTenantId, E
         return super.getEmail();
     }
 
-    @Schema(description = "Additional parameters of the device",implementation = com.fasterxml.jackson.databind.JsonNode.class)
+    @Schema(description = "Additional parameters of the customer",implementation = com.fasterxml.jackson.databind.JsonNode.class)
     @Override
     public JsonNode getAdditionalInfo() {
         return super.getAdditionalInfo();
