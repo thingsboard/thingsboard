@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.config;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -817,6 +818,22 @@ public class SwaggerConfiguration {
     }
 
     private static List<String> resolvePropertyOrder(Class<?> cls, com.fasterxml.jackson.databind.BeanDescription beanDesc) {
+        // If an explicit @JsonPropertyOrder is present on the class or any directly implemented
+        // interface, honour it directly. Walk up the hierarchy so annotations on superclasses
+        // and their interfaces are also found.
+        for (Class<?> c = cls; c != null && c != Object.class; c = c.getSuperclass()) {
+            JsonPropertyOrder propOrder = c.getAnnotation(JsonPropertyOrder.class);
+            if (propOrder != null && !propOrder.alphabetic() && propOrder.value().length > 0) {
+                return Arrays.asList(propOrder.value());
+            }
+            for (Class<?> iface : c.getInterfaces()) {
+                propOrder = iface.getAnnotation(JsonPropertyOrder.class);
+                if (propOrder != null && !propOrder.alphabetic() && propOrder.value().length > 0) {
+                    return Arrays.asList(propOrder.value());
+                }
+            }
+        }
+
         // Map backing field names to their JSON property names (respects @JsonProperty)
         Map<String, String> fieldToJsonName = new LinkedHashMap<>();
         LinkedHashSet<String> getterOnlyNames = new LinkedHashSet<>();
