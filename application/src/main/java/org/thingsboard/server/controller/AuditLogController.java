@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.security.permission.Operation;
 
 import java.util.Arrays;
 import java.util.List;
@@ -96,10 +97,14 @@ public class AuditLogController extends BaseController {
             @Parameter(description = AUDIT_LOG_QUERY_ACTION_TYPES_DESCRIPTION)
             @RequestParam(name = "actionTypes", required = false) String actionTypesStr) throws ThingsboardException {
         checkParameter("CustomerId", strCustomerId);
+        CustomerId customerId = new CustomerId(toUUID(strCustomerId));
+        if (!customerId.isNullUid()) {
+            checkCustomerId(customerId, Operation.READ);
+        }
         TenantId tenantId = getCurrentUser().getTenantId();
         TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, getStartTime(startTime), getEndTime(endTime));
         List<ActionType> actionTypes = parseActionTypesStr(actionTypesStr);
-        return checkNotNull(auditLogService.findAuditLogsByTenantIdAndCustomerId(tenantId, new CustomerId(UUID.fromString(strCustomerId)), actionTypes, pageLink));
+        return checkNotNull(auditLogService.findAuditLogsByTenantIdAndCustomerId(tenantId, customerId, actionTypes, pageLink));
     }
 
     @ApiOperation(value = "Get audit logs by user id (getAuditLogsByUserId)",
