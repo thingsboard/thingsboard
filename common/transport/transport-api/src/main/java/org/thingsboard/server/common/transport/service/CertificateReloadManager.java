@@ -32,6 +32,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -165,8 +166,8 @@ public class CertificateReloadManager implements SmartInitializingSingleton, Dis
         CertificateWatcher(List<Path> paths, Runnable reloadCallback) {
             this.paths = paths;
             this.reloadCallback = reloadCallback;
-            this.lastModifiedMap = new ConcurrentHashMap<>();
-            this.lastChecksumMap = new ConcurrentHashMap<>();
+            this.lastModifiedMap = new HashMap<>();
+            this.lastChecksumMap = new HashMap<>();
             for (Path path : paths) {
                 lastModifiedMap.put(path, getLastModifiedTime(path));
                 lastChecksumMap.put(path, calculateChecksum(path));
@@ -189,7 +190,7 @@ public class CertificateReloadManager implements SmartInitializingSingleton, Dis
             }
 
             // Compute combined checksum of all files
-            Map<Path, String> currentChecksums = new ConcurrentHashMap<>();
+            Map<Path, String> currentChecksums = new HashMap<>();
             StringBuilder combined = new StringBuilder();
             for (Path path : paths) {
                 String checksum = calculateChecksum(path);

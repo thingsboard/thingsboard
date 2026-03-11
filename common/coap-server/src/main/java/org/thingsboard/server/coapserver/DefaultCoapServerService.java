@@ -154,21 +154,29 @@ public class DefaultCoapServerService implements CoapServerService, SmartInitial
         return networkConfig;
     }
 
-    private void createDtlsEndpoint(Configuration networkConfig) throws UnknownHostException {
-        CoapEndpoint.Builder dtlsCoapEndpointBuilder = new CoapEndpoint.Builder();
+    private DtlsConnectorConfig buildDtlsConnectorConfig(Configuration networkConfig) throws UnknownHostException {
         TbCoapDtlsSettings dtlsSettings = coapServerContext.getDtlsSettings();
         DtlsConnectorConfig dtlsConnectorConfig = dtlsSettings.dtlsConnectorConfig(networkConfig);
         networkConfig.set(CoapConfig.COAP_SECURE_PORT, dtlsConnectorConfig.getAddress().getPort());
+        return dtlsConnectorConfig;
+    }
+
+    private CoapEndpoint buildDtlsEndpoint(Configuration networkConfig, DTLSConnector connector) {
+        CoapEndpoint.Builder dtlsCoapEndpointBuilder = new CoapEndpoint.Builder();
         dtlsCoapEndpointBuilder.setConfiguration(networkConfig);
+        dtlsCoapEndpointBuilder.setConnector(connector);
+        return dtlsCoapEndpointBuilder.build();
+    }
+
+    private void createDtlsEndpoint(Configuration networkConfig) throws UnknownHostException {
+        DtlsConnectorConfig dtlsConnectorConfig = buildDtlsConnectorConfig(networkConfig);
         DTLSConnector newConnector = new DTLSConnector(dtlsConnectorConfig);
-        dtlsCoapEndpointBuilder.setConnector(newConnector);
-        CoapEndpoint newEndpoint = dtlsCoapEndpointBuilder.build();
+        CoapEndpoint newEndpoint = buildDtlsEndpoint(networkConfig, newConnector);
         server.addEndpoint(newEndpoint);
-        TbCoapDtlsCertificateVerifier newVerifier = (TbCoapDtlsCertificateVerifier) dtlsConnectorConfig.getAdvancedCertificateVerifier();
 
         dtlsConnector = newConnector;
         dtlsCoapEndpoint = newEndpoint;
-        tbDtlsCertificateVerifier = newVerifier;
+        tbDtlsCertificateVerifier = (TbCoapDtlsCertificateVerifier) dtlsConnectorConfig.getAdvancedCertificateVerifier();
     }
 
     private synchronized void recreateDtlsEndpoint() throws IOException {
@@ -179,14 +187,9 @@ public class DefaultCoapServerService implements CoapServerService, SmartInitial
 
         log.info("Creating new DTLS endpoint with updated certificates...");
 
-        CoapEndpoint.Builder dtlsCoapEndpointBuilder = new CoapEndpoint.Builder();
-        TbCoapDtlsSettings dtlsSettings = coapServerContext.getDtlsSettings();
-        DtlsConnectorConfig dtlsConnectorConfig = dtlsSettings.dtlsConnectorConfig(networkConfig);
-        networkConfig.set(CoapConfig.COAP_SECURE_PORT, dtlsConnectorConfig.getAddress().getPort());
-        dtlsCoapEndpointBuilder.setConfiguration(networkConfig);
+        DtlsConnectorConfig dtlsConnectorConfig = buildDtlsConnectorConfig(networkConfig);
         DTLSConnector newConnector = new DTLSConnector(dtlsConnectorConfig);
-        dtlsCoapEndpointBuilder.setConnector(newConnector);
-        CoapEndpoint newEndpoint = dtlsCoapEndpointBuilder.build();
+        CoapEndpoint newEndpoint = buildDtlsEndpoint(networkConfig, newConnector);
 
         server.addEndpoint(newEndpoint);
         newEndpoint.start();
@@ -200,12 +203,11 @@ public class DefaultCoapServerService implements CoapServerService, SmartInitial
         if (oldDtlsEndpoint != null) {
             log.info("Stopping old DTLS endpoint...");
             oldDtlsEndpoint.stop();
-            server.getEndpoints().remove(oldDtlsEndpoint);
             if (oldDtlsConnector != null) {
                 oldDtlsConnector.destroy();
             }
             oldDtlsEndpoint.destroy();
-            log.info("Old DTLS endpoint stopped and removed.");
+            log.info("Old DTLS endpoint stopped and destroyed.");
         }
     }
 

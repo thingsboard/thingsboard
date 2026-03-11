@@ -237,13 +237,21 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService, Smar
         LeshanServer newServer = getLhServer();
         newServer.start();
 
-        this.server = newServer;
-        this.context.setServer(newServer);
-        this.serverListener = new LwM2mServerListener(handler);
-        newServer.getRegistrationService().addListener(this.serverListener.registrationListener);
-        newServer.getPresenceService().addListener(this.serverListener.presenceListener);
-        newServer.getObservationService().addListener(this.serverListener.observationListener);
-        newServer.getSendService().addListener(this.serverListener.sendListener);
+        try {
+            LwM2mServerListener newListener = new LwM2mServerListener(handler);
+            newServer.getRegistrationService().addListener(newListener.registrationListener);
+            newServer.getPresenceService().addListener(newListener.presenceListener);
+            newServer.getObservationService().addListener(newListener.observationListener);
+            newServer.getSendService().addListener(newListener.sendListener);
+
+            this.server = newServer;
+            this.context.setServer(newServer);
+            this.serverListener = newListener;
+        } catch (Exception e) {
+            log.error("Failed to register listeners on new LwM2M server, rolling back", e);
+            newServer.destroy();
+            throw e;
+        }
         log.info("New LwM2M server started successfully.");
 
         if (oldServer != null) {

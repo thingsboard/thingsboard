@@ -28,12 +28,9 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -95,26 +92,22 @@ public class CoapDtlsCertificateReloadTest {
     }
 
     @Test
-    public void givenReloadCallbackInvoked_whenDtlsEndpointExists_thenShouldStopOldEndpoint() {
+    public void givenReloadCallbackInvoked_whenNewEndpointCreationFails_thenOldEndpointIsPreserved() {
         when(mockCoapServerContext.getDtlsSettings()).thenReturn(mockDtlsSettings);
 
         ReflectionTestUtils.setField(coapServerService, "server", mockCoapServer);
         ReflectionTestUtils.setField(coapServerService, "dtlsCoapEndpoint", mockDtlsEndpoint);
         ReflectionTestUtils.setField(coapServerService, "dtlsConnector", mockDtlsConnector);
 
-        when(mockCoapServer.getEndpoints()).thenReturn(mock(List.class));
-
         ArgumentCaptor<Runnable> callbackCaptor = ArgumentCaptor.forClass(Runnable.class);
         ReflectionTestUtils.invokeMethod(coapServerService, "afterSingletonsInstantiated");
         verify(mockDtlsSettings).registerReloadCallback(callbackCaptor.capture());
 
         Runnable reloadCallback = callbackCaptor.getValue();
-        // Invoking the callback will try to recreateDtlsEndpoint which calls createDtlsEndpoint
-        // internally. Since dtlsSettings.dtlsConnectorConfig() isn't mocked, the callback will
-        // throw. We verify the old endpoint cleanup still happens by checking old state was captured.
-        assertThat(reloadCallback).isNotNull();
+        // dtlsSettings.dtlsConnectorConfig() isn't mocked, so the callback will throw.
+        // The old endpoint should not be stopped/destroyed when creation of the new one fails.
+        reloadCallback.run();
 
-        // Verify old endpoint stop/destroy happens after create-then-swap logic
         verify(mockDtlsEndpoint, never()).stop();
         verify(mockDtlsConnector, never()).destroy();
     }
