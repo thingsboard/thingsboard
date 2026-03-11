@@ -811,16 +811,17 @@ public class SwaggerConfiguration {
                 filtered.keySet().removeAll(toStrip);
                 allOfElement.setProperties(filtered.isEmpty() ? null : filtered);
             }
-            // Also strip inherited properties from this inline element's required list
-            if (allOfElement.getRequired() != null) {
-                List<String> req = new ArrayList<>(allOfElement.getRequired());
-                req.removeAll(toStrip);
-                allOfElement.setRequired(req.isEmpty() ? null : req);
-            }
             return allOfElement.getProperties() == null
                     && allOfElement.getRequired() == null
                     && allOfElement.getType() == null;
         });
+
+        // Remove stripped properties from the schema's required list
+        if (schema.getRequired() != null) {
+            List<String> required = new ArrayList<>(schema.getRequired());
+            required.removeAll(toStrip);
+            schema.setRequired(required.isEmpty() ? null : required);
+        }
     }
 
     /**
