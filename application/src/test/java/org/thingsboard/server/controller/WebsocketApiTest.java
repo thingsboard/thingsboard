@@ -19,13 +19,16 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
@@ -60,7 +63,9 @@ import org.thingsboard.server.common.data.query.NumericFilterPredicate;
 import org.thingsboard.server.common.data.query.SingleEntityFilter;
 import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.dao.nosql.ResultSetSizeLimitExceededException;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.service.subscription.SubscriptionErrorCode;
 import org.thingsboard.server.service.subscription.TbAttributeSubscriptionScope;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
@@ -94,6 +99,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class WebsocketApiTest extends AbstractControllerTest {
     @Autowired
     private TelemetrySubscriptionService tsService;
+
+    @SpyBean
+    private TimeseriesService timeseriesService;
 
     Device device;
     DeviceTypeFilter dtf;
@@ -727,6 +735,41 @@ public class WebsocketApiTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testShouldSendWsUpdateMessageWhenTelemetryWasDeleted() throws Exception {
+        long now = System.currentTimeMillis() - 100;
+        TsKvEntry dataPoint = new BasicTsKvEntry(now, new LongDataEntry("temperature", 42L));
+        List<TsKvEntry> tsData = List.of(dataPoint);
+        sendTelemetry(device, tsData);
+
+        List<EntityKey> keys = List.of(new EntityKey(EntityKeyType.TIME_SERIES, "temperature"));
+        EntityDataUpdate update = getWsClient().subscribeLatestUpdate(keys, dtf);
+
+        Assert.assertEquals(1, update.getCmdId());
+        PageData<EntityData> pageData = update.getData();
+        Assert.assertNotNull(pageData);
+        Assert.assertEquals(1, pageData.getData().size());
+        Assert.assertEquals(device.getId(), pageData.getData().get(0).getEntityId());
+        Assert.assertNotNull(pageData.getData().get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("temperature"));
+        Assert.assertEquals(now, pageData.getData().get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("temperature").getTs());
+        Assert.assertEquals("42", pageData.getData().get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("temperature").getValue());
+
+        // delete telemetry
+        getWsClient().registerWaitForUpdate();
+        doDeleteAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/timeseries/delete?keys=temperature&deleteAllDataForKeys=true", String.class);
+        update = getWsClient().parseDataReply(getWsClient().waitForUpdate());
+
+        Assert.assertEquals(1, update.getCmdId());
+
+        List<EntityData> listData = update.getUpdate();
+        Assert.assertNotNull(listData);
+        Assert.assertEquals(1, listData.size());
+        Assert.assertEquals(device.getId(), listData.get(0).getEntityId());
+        Assert.assertNotNull(listData.get(0).getLatest().get(EntityKeyType.TIME_SERIES));
+        TsValue tsValue = listData.get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("temperature");
+        Assert.assertEquals(new TsValue(0, ""), tsValue);
+    }
+
+    @Test
     public void testEntityDataLatestAttrWsCmd() throws Exception {
         long now = System.currentTimeMillis();
         List<EntityKey> keys = List.of(new EntityKey(EntityKeyType.SERVER_ATTRIBUTE, "serverAttributeKey"));
@@ -963,6 +1006,34 @@ public class WebsocketApiTest extends AbstractControllerTest {
         Assert.assertEquals(1, update.getCmdId());
         Assert.assertEquals(1, update.getCount());
 
+    }
+
+    @Test
+    public void testHistoryCmdSendsWsErrorOnResultSetSizeLimitExceeded() throws Exception {
+        ResultSetSizeLimitExceededException exception = new ResultSetSizeLimitExceededException(100L, 200L);
+        Mockito.doReturn(Futures.immediateFailedFuture(exception))
+                .when(timeseriesService).findAllByQueries(Mockito.any(), Mockito.any(), Mockito.any());
+
+        List<String> keys = List.of("temperature");
+        long now = System.currentTimeMillis();
+
+        EntityDataUpdate errorUpdate = getWsClient().sendHistoryCmd(keys, now, TimeUnit.HOURS.toMillis(1), dtf);
+        assertThat(errorUpdate.getErrorCode()).isEqualTo(SubscriptionErrorCode.INTERNAL_ERROR.getCode());
+        assertThat(errorUpdate.getErrorMsg()).isEqualTo(exception.getMessage());
+    }
+
+    @Test
+    public void testTimeSeriesCmdSendsWsErrorOnResultSetSizeLimitExceeded() throws Exception {
+        ResultSetSizeLimitExceededException exception = new ResultSetSizeLimitExceededException(100L, 200L);
+        Mockito.doReturn(Futures.immediateFailedFuture(exception))
+                .when(timeseriesService).findAllByQueries(Mockito.any(), Mockito.any(), Mockito.any());
+
+        List<String> keys = List.of("temperature");
+        long now = System.currentTimeMillis();
+
+        EntityDataUpdate errorUpdate = getWsClient().subscribeTsUpdate(keys, now, TimeUnit.HOURS.toMillis(1), dtf);
+        assertThat(errorUpdate.getErrorCode()).isEqualTo(SubscriptionErrorCode.INTERNAL_ERROR.getCode());
+        assertThat(errorUpdate.getErrorMsg()).isEqualTo(exception.getMessage());
     }
 
     private void sendTelemetry(Device device, List<TsKvEntry> tsData) throws InterruptedException {
