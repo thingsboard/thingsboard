@@ -19,9 +19,10 @@
 -- This script cleans up orphaned PostgreSQL large objects that are no longer referenced by the ota_package table.
 -- These orphaned objects accumulate when OTA packages are deleted or updated and can consume significant disk space.
 -- Note: only the ota_package.data column uses PostgreSQL large objects (OID type) in ThingsBoard.
--- If PostgreSQL extensions or external applications sharing this database also use large objects,
--- those will be unaffected as long as they are referenced by their respective tables.
--- This script only removes objects not referenced by ota_package.data.
+-- This script removes all large objects not referenced by ota_package.data.
+--
+-- This runs as a single transaction, which is acceptable for typical installations (up to tens of thousands
+-- of orphaned objects). For installations with millions of orphaned objects, WAL pressure may be a concern.
 
 DO
 $$
