@@ -122,7 +122,7 @@ public abstract class AbstractControllerTest extends AbstractNotifyEntityTest {
     }
 
     protected TbTestWebSocketClient buildAndConnectWebSocketClientWithApiKeyHeader(String apiKey) throws URISyntaxException, InterruptedException {
-        TbTestWebSocketClient wsClient = new TbTestWebSocketClient(new URI(WS_URL + wsPort + "/api/ws"), Map.of("X-API-Key", apiKey));
+        TbTestWebSocketClient wsClient = new TbTestWebSocketClient(new URI(WS_URL + wsPort + "/api/ws"), Map.of("X-Authorization", "ApiKey " + apiKey));
         assertThat(wsClient.connectBlocking(TIMEOUT, TimeUnit.SECONDS)).isTrue();
         return wsClient;
     }

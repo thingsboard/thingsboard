@@ -86,7 +86,7 @@ public class ApiKeyWebSocketApiTest extends WebSocketApiTest {
     @Test
     public void testInvalidApiKeyHeader_connectionRejected() throws Exception {
         TbTestWebSocketClient client = new TbTestWebSocketClient(
-                new URI(WS_URL + wsPort + "/api/ws"), Map.of("X-API-Key", "invalid-key"));
+                new URI(WS_URL + wsPort + "/api/ws"), Map.of("X-Authorization", "ApiKey invalid-key"));
         try {
             boolean connected = client.connectBlocking(TIMEOUT, TimeUnit.SECONDS);
             assertThat(connected).isFalse();
@@ -98,7 +98,7 @@ public class ApiKeyWebSocketApiTest extends WebSocketApiTest {
     @Test
     public void testEmptyApiKeyHeader_connectionRejected() throws Exception {
         TbTestWebSocketClient client = new TbTestWebSocketClient(
-                new URI(WS_URL + wsPort + "/api/ws"), Map.of("X-API-Key", ""));
+                new URI(WS_URL + wsPort + "/api/ws"), Map.of("X-Authorization", "ApiKey "));
         try {
             boolean connected = client.connectBlocking(TIMEOUT, TimeUnit.SECONDS);
             assertThat(connected).isFalse();

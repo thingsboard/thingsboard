@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
@@ -35,14 +36,13 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ApiKeyHandshakeInterceptor implements HandshakeInterceptor {
 
-    public static final String API_KEY_HEADER = "X-API-Key";
     public static final String API_KEY_SECURITY_CTX_ATTR = "apiKeySecurityCtx";
 
     private final ApiKeyAuthenticationProvider apiKeyAuthenticationProvider;
 
     @Override
     public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler, Map<String, Object> attributes) {
-        String apiKey = request.getHeaders().getFirst(API_KEY_HEADER);
+        String apiKey = extractApiKey(request);
         if (apiKey != null) {
             if (apiKey.isEmpty()) {
                 log.debug("Empty API key provided during WS handshake");
@@ -52,13 +52,24 @@ public class ApiKeyHandshakeInterceptor implements HandshakeInterceptor {
             try {
                 SecurityUser securityUser = apiKeyAuthenticationProvider.authenticate(apiKey);
                 attributes.put(API_KEY_SECURITY_CTX_ATTR, securityUser);
-            } catch (Exception e) {
-                log.debug("API key authentication failed during WS handshake: {}", e.getMessage());
+            } catch (AuthenticationException e) {
+                log.warn("API key authentication failed during WS handshake: {}", e.getMessage());
                 response.setStatusCode(HttpStatus.UNAUTHORIZED);
                 return false;
             }
         }
         return true;
+    }
+
+    private String extractApiKey(ServerHttpRequest request) {
+        String header = request.getHeaders().getFirst(ThingsboardSecurityConfiguration.AUTHORIZATION_HEADER);
+        if (header == null) {
+            header = request.getHeaders().getFirst(ThingsboardSecurityConfiguration.AUTHORIZATION_HEADER_V2);
+        }
+        if (header != null && header.startsWith(ThingsboardSecurityConfiguration.API_KEY_HEADER_PREFIX)) {
+            return header.substring(ThingsboardSecurityConfiguration.API_KEY_HEADER_PREFIX.length());
+        }
+        return null;
     }
 
     @Override
