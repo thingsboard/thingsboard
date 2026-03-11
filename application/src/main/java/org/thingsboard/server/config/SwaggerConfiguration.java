@@ -446,11 +446,10 @@ public class SwaggerConfiguration {
                 });
 
                 // Deduplicate allOf child schemas: remove properties that are already defined
-                // in the referenced parent schema to avoid duplication (e.g. EntityId children)
-                schemas.values().forEach(schema -> deduplicateAllOfProperties(schema, schemas));
-
-                // Clean up internal marker extension used by deduplicateAllOfProperties
+                // in the referenced parent schema to avoid duplication (e.g. EntityId children),
+                // then clean up the internal marker extension used during deduplication.
                 schemas.values().forEach(schema -> {
+                    deduplicateAllOfProperties(schema, schemas);
                     if (schema.getExtensions() != null) {
                         schema.getExtensions().remove("x-tb-own-props");
                         if (schema.getExtensions().isEmpty()) {
@@ -845,6 +844,26 @@ public class SwaggerConfiguration {
         return own;
     }
 
+    /**
+     * Resolves the property ordering for a schema class.
+     *
+     * <p>Returns a list of JSON property names in the order they should appear in the
+     * OpenAPI schema. The caller uses this list to reorder the schema's property map;
+     * any properties <b>not</b> present in the returned list are appended alphabetically
+     * by the caller's {@code TreeMap} fallback, guaranteeing a stable, deterministic order.
+     *
+     * <p><b>Resolution strategy (first match wins):</b>
+     * <ol>
+     *   <li>If {@code @JsonPropertyOrder} with an explicit {@code value()} is found on the
+     *       class or any interface in its ancestry, that list is returned as-is. Note: if the
+     *       annotation lists only a subset of fields, those fields are ordered first and the
+     *       remaining properties fall through to the caller's alphabetical fallback — consistent
+     *       with Jackson's own behaviour for partial {@code @JsonPropertyOrder}.</li>
+     *   <li>Otherwise, field-backed properties are returned in declaration order (superclass
+     *       fields first). Getter-only properties are intentionally excluded to avoid
+     *       non-deterministic ordering across restarts.</li>
+     * </ol>
+     */
     private static List<String> resolvePropertyOrder(Class<?> cls, com.fasterxml.jackson.databind.BeanDescription beanDesc) {
         // If an explicit @JsonPropertyOrder is present on the class or any interface in its
         // ancestry, honour it directly. Walk up the class hierarchy; for each class also walk
