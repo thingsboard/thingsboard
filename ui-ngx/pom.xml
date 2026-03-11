@@ -66,10 +66,21 @@
                             <goal>yarn</goal>
                         </goals>
                         <configuration>
-                            <arguments>install --non-interactive --network-concurrency 4 --network-timeout 100000 --mutex network</arguments>
+                            <arguments>install --non-interactive --check-files --network-concurrency 4 --network-timeout 100000 --mutex network</arguments>
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-clean-plugin</artifactId>
+                <configuration>
+                    <filesets>
+                        <fileset>
+                            <directory>${basedir}/node_modules</directory>
+                        </fileset>
+                    </filesets>
+                </configuration>
             </plugin>
         </plugins>
     </build>

@@ -119,10 +119,6 @@
             }
           </mat-select>
         </mat-form-field>
-        <mat-form-field class="mat-block" appearance="outline">
-          <mat-label translate>user.description</mat-label>
-          <textarea matInput formControlName="description" rows="2"></textarea>
-        </mat-form-field>
         <section class="tb-default-dashboard flex flex-1 flex-col" *ngIf="entity?.id">
           <section class="flex flex-1 flex-col items-baseline gt-sm:flex-row">
             <tb-dashboard-autocomplete
@@ -155,6 +151,10 @@
             </mat-checkbox>
           </section>
         </section>
+        <mat-form-field class="mat-block" appearance="outline">
+          <mat-label translate>user.description</mat-label>
+          <textarea matInput formControlName="description" cdkTextareaAutosize cdkAutosizeMinRows="1" rows="1"></textarea>
+        </mat-form-field>
       </div>
     </fieldset>
   </form>

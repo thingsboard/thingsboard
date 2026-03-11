@@ -83,11 +83,8 @@
           {{ 'customer.title-max-length' | translate }}
         </mat-error>
       </mat-form-field>
+      <tb-contact [parentForm]="entityForm" [isEdit]="isEdit"></tb-contact>
       <div formGroupName="additionalInfo" class="flex flex-col">
-        <mat-form-field class="mat-block">
-          <mat-label translate>customer.description</mat-label>
-          <textarea matInput formControlName="description" rows="2"></textarea>
-        </mat-form-field>
         <section class="tb-default-dashboard flex flex-1 flex-col" *ngIf="entity?.id">
           <section class="flex flex-1 flex-col gt-sm:flex-row">
             <tb-dashboard-autocomplete
@@ -103,8 +100,11 @@
             </mat-checkbox>
           </section>
         </section>
+        <mat-form-field class="mat-block">
+          <mat-label translate>customer.description</mat-label>
+          <textarea matInput formControlName="description" cdkTextareaAutosize cdkAutosizeMinRows="1" rows="1"></textarea>
+        </mat-form-field>
       </div>
-      <tb-contact [parentForm]="entityForm" [isEdit]="isEdit"></tb-contact>
     </fieldset>
   </form>
 </div>
