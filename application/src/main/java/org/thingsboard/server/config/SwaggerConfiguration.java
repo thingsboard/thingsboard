@@ -812,17 +812,16 @@ public class SwaggerConfiguration {
                 filtered.keySet().removeAll(toStrip);
                 allOfElement.setProperties(filtered.isEmpty() ? null : filtered);
             }
+            // Also strip inherited properties from this inline element's required list
+            if (allOfElement.getRequired() != null) {
+                List<String> req = new ArrayList<>(allOfElement.getRequired());
+                req.removeAll(toStrip);
+                allOfElement.setRequired(req.isEmpty() ? null : req);
+            }
             return allOfElement.getProperties() == null
                     && allOfElement.getRequired() == null
                     && allOfElement.getType() == null;
         });
-
-        // Remove stripped properties from the schema's required list
-        if (schema.getRequired() != null) {
-            List<String> required = new ArrayList<>(schema.getRequired());
-            required.removeAll(toStrip);
-            schema.setRequired(required.isEmpty() ? null : required);
-        }
     }
 
     /**
@@ -870,12 +869,9 @@ public class SwaggerConfiguration {
 
         // Map backing field names to their JSON property names (respects @JsonProperty)
         Map<String, String> fieldToJsonName = new LinkedHashMap<>();
-        LinkedHashSet<String> getterOnlyNames = new LinkedHashSet<>();
         for (var prop : beanDesc.findProperties()) {
             if (prop.getField() != null && prop.couldSerialize()) {
                 fieldToJsonName.put(prop.getField().getName(), prop.getName());
-            } else if (prop.getField() == null) {
-                getterOnlyNames.add(prop.getName());
             }
         }
 
@@ -889,25 +885,6 @@ public class SwaggerConfiguration {
             for (Field f : c.getDeclaredFields()) {
                 if (Modifier.isStatic(f.getModifiers())) continue;
                 String jsonName = fieldToJsonName.get(f.getName());
-                // Handle boolean fields with "is" prefix (e.g. field "isEnabled" → JSON "enabled").
-                // Jackson derives the JSON property name from the public getter, not the field name.
-                // Depending on whether Jackson merges the field+getter or not, there are three cases:
-                //   1. jsonName == null:           field invisible, getter-only property in getterOnlyNames
-                //   2. jsonName == fieldName:      Jackson did NOT merge; field → "isEnabled" property,
-                //                                  getter → "enabled" property separately in getterOnlyNames
-                //   3. jsonName == strippedName:   Jackson merged field+getter → already correct
-                // Cases 1 and 2 both need to pull the stripped name from getterOnlyNames so that the
-                // declaration order is preserved instead of leaving it to the alphabetical fallback.
-                if (jsonName == null || jsonName.equals(f.getName())) {
-                    String fn = f.getName();
-                    if ((f.getType() == boolean.class || f.getType() == Boolean.class)
-                            && fn.startsWith("is") && fn.length() > 2 && Character.isUpperCase(fn.charAt(2))) {
-                        String stripped = Character.toLowerCase(fn.charAt(2)) + fn.substring(3);
-                        if (getterOnlyNames.remove(stripped)) {
-                            jsonName = stripped;
-                        }
-                    }
-                }
                 if (jsonName != null) ordered.add(jsonName);
             }
         }
