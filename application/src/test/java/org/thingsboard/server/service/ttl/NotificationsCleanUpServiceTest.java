@@ -125,15 +125,20 @@ public class NotificationsCleanUpServiceTest {
     }
 
     @Test
-    public void testNoPartitionsDropped_skipsRequestCleanup() {
+    public void testNoPartitionsDropped_stillCleansUpRequests() {
         TopicPartitionInfo myPartition = TopicPartitionInfo.builder().topic("tb_core").myPartition(true).build();
         when(partitionService.resolve(any(), any(), any())).thenReturn(myPartition);
         when(partitioningRepository.dropPartitionsBefore(anyString(), anyLong(), anyLong()))
                 .thenReturn(0L);
 
+        when(notificationRequestDao.removeByTenantIdAndCreatedTimeBeforeBatch(eq(TenantId.SYS_TENANT_ID), anyLong(), eq(BATCH_SIZE)))
+                .thenReturn(0);
+        when(tenantService.findTenantsIds(any()))
+                .thenReturn(new PageData<>(List.of(), 0, 0, false));
+
         cleanUpService.cleanUp();
 
-        verify(notificationRequestDao, never()).removeByTenantIdAndCreatedTimeBeforeBatch(any(), anyLong(), anyInt());
+        verify(notificationRequestDao).removeByTenantIdAndCreatedTimeBeforeBatch(eq(TenantId.SYS_TENANT_ID), anyLong(), eq(BATCH_SIZE));
     }
 
 }
