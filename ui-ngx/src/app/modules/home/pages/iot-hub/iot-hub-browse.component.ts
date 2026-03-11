@@ -27,13 +27,11 @@ import {
 } from '@shared/models/iot-hub/iot-hub-item.models';
 import { cfTypeTranslations, widgetTypeTranslations, ruleChainTypeTranslations } from '@shared/models/iot-hub/iot-hub-version.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
-import { IotHubInstalledItemInfo } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { MatDialog } from '@angular/material/dialog';
 import { TranslateService } from '@ngx-translate/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { TbIotHubItemDetailDialogComponent, IotHubItemDetailDialogData } from './iot-hub-item-detail-dialog.component';
 import { TbIotHubInstallDialogComponent, IotHubInstallDialogData } from './iot-hub-install-dialog.component';
-import { TbIotHubUpdateDialogComponent, IotHubUpdateDialogData } from './iot-hub-update-dialog.component';
 
 interface SortOption {
   value: string;
@@ -91,8 +89,6 @@ export class TbIotHubBrowseComponent implements OnInit, OnDestroy {
   widgetTypes: Map<string, string> = widgetTypeTranslations;
   ruleChainTypes: Map<string, string> = ruleChainTypeTranslations;
 
-  installedItemsMap = new Map<string, IotHubInstalledItemInfo>();
-
   private searchSubject = new Subject<string>();
   private destroy$ = new Subject<void>();
 
@@ -100,8 +96,7 @@ export class TbIotHubBrowseComponent implements OnInit, OnDestroy {
     private iotHubApiService: IotHubApiService,
     private dialog: MatDialog,
     private translate: TranslateService,
-    private router: Router,
-    private route: ActivatedRoute
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -113,7 +108,6 @@ export class TbIotHubBrowseComponent implements OnInit, OnDestroy {
       this.loadItems();
     });
     this.updateCategories();
-    this.initInstalledItemInfos();
     this.loadItems();
   }
 
@@ -328,65 +322,27 @@ export class TbIotHubBrowseComponent implements OnInit, OnDestroy {
     }
   }
 
-  isInstalled(item: MpItemVersionView): boolean {
-    return this.installedItemsMap.has(item.itemId);
-  }
-
   openItemDetail(item: MpItemVersionView): void {
-    const installedInfo = this.installedItemsMap.get(item.itemId);
-    const dialogRef = this.dialog.open(TbIotHubItemDetailDialogComponent, {
+    this.dialog.open(TbIotHubItemDetailDialogComponent, {
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       autoFocus: false,
       data: {
         item,
-        iotHubApiService: this.iotHubApiService,
-        installedItemInfo: installedInfo
+        iotHubApiService: this.iotHubApiService
       } as IotHubItemDetailDialogData
-    });
-    dialogRef.afterClosed().subscribe(result => {
-      if (result === 'installed' || result === 'updated') {
-        this.loadInstalledItemInfos();
-      }
     });
   }
 
   installItem(item: MpItemVersionView): void {
-    const dialogRef = this.dialog.open(TbIotHubInstallDialogComponent, {
+    this.dialog.open(TbIotHubInstallDialogComponent, {
       panelClass: ['tb-dialog'],
       data: {
         item,
         iotHubApiService: this.iotHubApiService
       } as IotHubInstallDialogData
     });
-    dialogRef.afterClosed().subscribe(result => {
-      if (result === 'installed') {
-        this.loadInstalledItemInfos();
-      }
-    });
   }
 
-  updateItem(item: MpItemVersionView): void {
-    const installedInfo = this.installedItemsMap.get(item.itemId);
-    if (!installedInfo) {
-      return;
-    }
-    const dialogRef = this.dialog.open(TbIotHubUpdateDialogComponent, {
-      panelClass: ['tb-dialog'],
-      data: {
-        itemId: item.itemId,
-        itemName: item.name,
-        itemType: item.type,
-        version: item.version,
-        versionId: item.id,
-        iotHubApiService: this.iotHubApiService
-      } as IotHubUpdateDialogData
-    });
-    dialogRef.afterClosed().subscribe(result => {
-      if (result === 'updated') {
-        this.loadInstalledItemInfos();
-      }
-    });
-  }
 
   navigateToCreator(creatorId: string): void {
     this.router.navigate(['/iot-hub/creator', creatorId]);
@@ -394,19 +350,6 @@ export class TbIotHubBrowseComponent implements OnInit, OnDestroy {
 
   navigateToInstalledItems(): void {
     this.router.navigate(['/iot-hub/installed']);
-  }
-
-  private initInstalledItemInfos(): void {
-    const infos: IotHubInstalledItemInfo[] = this.route.snapshot.data['installedItemInfos'] || [];
-    this.installedItemsMap.clear();
-    infos.forEach(info => this.installedItemsMap.set(info.itemId, info));
-  }
-
-  private loadInstalledItemInfos(): void {
-    this.iotHubApiService.getInstalledItemInfos({ignoreLoading: true}).subscribe(infos => {
-      this.installedItemsMap.clear();
-      infos.forEach(info => this.installedItemsMap.set(info.itemId, info));
-    });
   }
 
   private updateCategories(): void {

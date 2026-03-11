@@ -100,15 +100,7 @@
           <tb-icon>download</tb-icon>
           {{ item.totalInstallCount | shortNumber }}
         </span>
-        @if (installed) {
-          @if (hasUpdate()) {
-            <button class="tb-iot-hub-card-update-btn" (click)="onUpdateClick($event)">{{ 'iot-hub.update' | translate }}</button>
-          } @else {
-            <span class="tb-iot-hub-card-installed-label">{{ 'iot-hub.installed' | translate }}</span>
-          }
-        } @else {
-          <button class="tb-iot-hub-card-install-btn" (click)="onInstallClick($event)">{{ 'iot-hub.install' | translate }}</button>
-        }
+        <button class="tb-iot-hub-card-install-btn" (click)="onInstallClick($event)">{{ 'iot-hub.install' | translate }}</button>
       </span>
     </div>
   </div>

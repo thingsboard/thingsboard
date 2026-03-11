@@ -15,15 +15,15 @@
  */
 package org.thingsboard.server.service.iot_hub;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import org.thingsboard.server.common.data.id.IotHubInstalledItemId;
 import org.thingsboard.server.service.security.model.SecurityUser;
-
-import java.util.UUID;
 
 public interface IotHubService {
 
-    InstallItemVersionResult installItemVersion(SecurityUser user, String versionId);
+    InstallItemVersionResult installItemVersion(SecurityUser user, String versionId, JsonNode data);
 
-    UpdateItemVersionResult updateItemVersion(SecurityUser user, UUID itemId, String versionId);
+    UpdateItemVersionResult updateItemVersion(SecurityUser user, IotHubInstalledItemId installedItemId, String versionId, boolean force);
 
-    void deleteInstalledItem(SecurityUser user, UUID itemId);
+    void deleteInstalledItem(SecurityUser user, IotHubInstalledItemId installedItemId);
 }

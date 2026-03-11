@@ -193,12 +193,9 @@
           [item]="item"
           [showTypeChip]="false"
           [showCreator]="!creatorId"
-          [installed]="isInstalled(item)"
-          [installedItemInfo]="installedItemsMap.get(item.itemId) || null"
           (cardClick)="openItemDetail($event)"
           (creatorClick)="navigateToCreator($event)"
-          (installClick)="installItem($event)"
-          (updateClick)="updateItem($event)">
+          (installClick)="installItem($event)">
         </tb-iot-hub-item-card>
       }
     </div>

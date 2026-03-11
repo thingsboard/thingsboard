@@ -15,7 +15,7 @@
 ///
 
 import { Component, OnInit, AfterViewInit, ViewChild } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSort } from '@angular/material/sort';
 import { MatPaginator } from '@angular/material/paginator';
@@ -26,10 +26,10 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { Subject } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
+import { debounceTime, switchMap } from 'rxjs/operators';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
-import { IotHubInstalledItem, IotHubInstalledItemInfo, ItemUpdateInfo } from '@shared/models/iot-hub/iot-hub-installed-item.models';
+import { IotHubInstalledItem, ItemPublishedVersionInfo } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { ItemType, itemTypeTranslations } from '@shared/models/iot-hub/iot-hub-item.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { getEntityDetailsPageURL } from '@core/utils';
@@ -52,8 +52,7 @@ export class TbIotHubInstalledItemsComponent implements OnInit, AfterViewInit {
   isLoading = false;
   textSearch = '';
 
-  installedItemInfos: IotHubInstalledItemInfo[] = [];
-  updateInfoMap = new Map<string, ItemUpdateInfo>();
+  publishedVersionMap = new Map<string, ItemPublishedVersionInfo>();
   updatesChecked = false;
   isCheckingUpdates = false;
 
@@ -62,26 +61,16 @@ export class TbIotHubInstalledItemsComponent implements OnInit, AfterViewInit {
   @ViewChild(MatSort, {static: true}) sort: MatSort;
   @ViewChild(MatPaginator, {static: true}) paginator: MatPaginator;
 
-  private static readonly ITEM_TYPE_TO_ENTITY_TYPE: Record<string, EntityType> = {
-    'WIDGET': EntityType.WIDGET_TYPE,
-    'DASHBOARD': EntityType.DASHBOARD,
-    'CALCULATED_FIELD': EntityType.CALCULATED_FIELD,
-    'RULE_CHAIN': EntityType.RULE_CHAIN,
-    'DEVICE': EntityType.DEVICE_PROFILE
-  };
-
   constructor(
     private iotHubApiService: IotHubApiService,
     private dialogService: DialogService,
     private translate: TranslateService,
     private store: Store<AppState>,
     private router: Router,
-    private dialog: MatDialog,
-    private route: ActivatedRoute
+    private dialog: MatDialog
   ) {}
 
   ngOnInit(): void {
-    this.installedItemInfos = this.route.snapshot.data['installedItemInfos'] || [];
     this.searchSubject.pipe(
       debounceTime(300)
     ).subscribe(() => {
@@ -123,7 +112,7 @@ export class TbIotHubInstalledItemsComponent implements OnInit, AfterViewInit {
       this.translate.instant('action.yes')
     ).subscribe(result => {
       if (result) {
-        this.iotHubApiService.deleteInstalledItem(item.itemId).subscribe({
+        this.iotHubApiService.deleteInstalledItem(item.id.id).subscribe({
           next: () => {
             this.store.dispatch(new ActionNotificationShow({
               message: this.translate.instant('iot-hub.installed-item-deleted', {name: item.itemName}),
@@ -167,7 +156,7 @@ export class TbIotHubInstalledItemsComponent implements OnInit, AfterViewInit {
         data: {
           item: versionView,
           iotHubApiService: this.iotHubApiService,
-          installedDescriptor: item.descriptor
+          installedItem: item
         } as IotHubItemDetailDialogData
       });
     });
@@ -178,14 +167,25 @@ export class TbIotHubInstalledItemsComponent implements OnInit, AfterViewInit {
     switch (descriptor.type) {
       case 'WIDGET': return descriptor.widgetTypeId?.id;
       case 'DASHBOARD': return descriptor.dashboardId?.id;
-      case 'CALCULATED_FIELD': return descriptor.calculatedFieldId?.id;
+      case 'CALCULATED_FIELD': return descriptor.entityId?.id;
       case 'RULE_CHAIN': return descriptor.ruleChainId?.id;
       default: return null;
     }
   }
 
+  getEntityType(item: IotHubInstalledItem): EntityType | null {
+    const descriptor = item.descriptor;
+    switch (descriptor.type) {
+      case 'WIDGET': return EntityType.WIDGET_TYPE;
+      case 'DASHBOARD': return EntityType.DASHBOARD;
+      case 'CALCULATED_FIELD': return descriptor.entityId?.entityType as EntityType;
+      case 'RULE_CHAIN': return EntityType.RULE_CHAIN;
+      default: return null;
+    }
+  }
+
   openEntity(item: IotHubInstalledItem): void {
-    const entityType = TbIotHubInstalledItemsComponent.ITEM_TYPE_TO_ENTITY_TYPE[item.itemType];
+    const entityType = this.getEntityType(item);
     const entityId = this.getEntityId(item);
     if (entityType && entityId) {
       const url = getEntityDetailsPageURL(entityId, entityType);
@@ -197,10 +197,12 @@ export class TbIotHubInstalledItemsComponent implements OnInit, AfterViewInit {
 
   checkForUpdates(): void {
     this.isCheckingUpdates = true;
-    this.iotHubApiService.checkForUpdates(this.installedItemInfos, { ignoreLoading: true }).subscribe({
-      next: (updates) => {
-        this.updateInfoMap.clear();
-        updates.forEach(info => this.updateInfoMap.set(info.itemId, info));
+    this.iotHubApiService.getInstalledItemIds({ ignoreLoading: true }).pipe(
+      switchMap(itemIds => this.iotHubApiService.getItemsPublishedVersions(itemIds, { ignoreLoading: true }))
+    ).subscribe({
+      next: (infos) => {
+        this.publishedVersionMap.clear();
+        infos.forEach(info => this.publishedVersionMap.set(info.itemId, info));
         this.updatesChecked = true;
         this.isCheckingUpdates = false;
       },
@@ -210,29 +212,28 @@ export class TbIotHubInstalledItemsComponent implements OnInit, AfterViewInit {
     });
   }
 
-  viewUpdateDetails(updateInfo: ItemUpdateInfo, installedItem: IotHubInstalledItem): void {
-    this.iotHubApiService.getVersionInfo(updateInfo.latestItemVersionId, {ignoreLoading: true}).subscribe(versionView => {
+  viewUpdateDetails(publishedInfo: ItemPublishedVersionInfo, installedItem: IotHubInstalledItem): void {
+    this.iotHubApiService.getVersionInfo(publishedInfo.publishedVersionId, {ignoreLoading: true}).subscribe(versionView => {
       this.dialog.open(TbIotHubItemDetailDialogComponent, {
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
         data: {
           item: versionView,
           iotHubApiService: this.iotHubApiService,
-          installedDescriptor: installedItem.descriptor,
-          installedItemInfo: { itemId: installedItem.itemId, itemVersionId: installedItem.itemVersionId }
+          installedItem
         } as IotHubItemDetailDialogData
       });
     });
   }
 
-  updateItem(item: IotHubInstalledItem, updateInfo: ItemUpdateInfo): void {
+  updateItem(item: IotHubInstalledItem, publishedInfo: ItemPublishedVersionInfo): void {
     const dialogRef = this.dialog.open(TbIotHubUpdateDialogComponent, {
       panelClass: ['tb-dialog'],
       data: {
-        itemId: item.itemId,
+        installedItemId: item.id.id,
         itemName: item.itemName,
         itemType: item.itemType as ItemType,
-        version: updateInfo.latestVersion,
-        versionId: updateInfo.latestItemVersionId,
+        version: publishedInfo.publishedVersion,
+        versionId: publishedInfo.publishedVersionId,
         iotHubApiService: this.iotHubApiService
       } as IotHubUpdateDialogData
     });
@@ -243,8 +244,8 @@ export class TbIotHubInstalledItemsComponent implements OnInit, AfterViewInit {
     });
   }
 
-  getUpdateInfo(item: IotHubInstalledItem): ItemUpdateInfo | undefined {
-    return this.updateInfoMap.get(item.itemId);
+  getPublishedVersionInfo(item: IotHubInstalledItem): ItemPublishedVersionInfo | undefined {
+    return this.publishedVersionMap.get(item.itemId);
   }
 
   private loadData(): void {

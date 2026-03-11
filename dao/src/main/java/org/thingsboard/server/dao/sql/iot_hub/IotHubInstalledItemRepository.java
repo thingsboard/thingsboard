@@ -22,20 +22,15 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
-import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItemInfo;
 import org.thingsboard.server.dao.model.sql.IotHubInstalledItemEntity;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 interface IotHubInstalledItemRepository extends JpaRepository<IotHubInstalledItemEntity, UUID> {
 
-    Optional<IotHubInstalledItemEntity> findByTenantIdAndItemId(UUID tenantId, UUID itemId);
-
-    @Query("SELECT new org.thingsboard.server.common.data.iot_hub.IotHubInstalledItemInfo(item.itemId, item.itemVersionId) " +
-            "FROM IotHubInstalledItemEntity item WHERE item.tenantId = :tenantId")
-    List<IotHubInstalledItemInfo> findInstalledItemInfosByTenantId(@Param("tenantId") UUID tenantId);
+    @Query("SELECT DISTINCT item.itemId FROM IotHubInstalledItemEntity item WHERE item.tenantId = :tenantId")
+    List<UUID> findInstalledItemIdsByTenantId(@Param("tenantId") UUID tenantId);
 
     @Query("""
             SELECT item FROM IotHubInstalledItemEntity item
@@ -46,11 +41,6 @@ interface IotHubInstalledItemRepository extends JpaRepository<IotHubInstalledIte
                 OR ilike(item.version, CONCAT('%', :textSearch, '%')) = true)
             """)
     Page<IotHubInstalledItemEntity> findByTenantId(@Param("tenantId") UUID tenantId, @Param("textSearch") String textSearch, Pageable pageable);
-
-    @Transactional
-    @Modifying
-    @Query("DELETE FROM IotHubInstalledItemEntity item WHERE item.tenantId = :tenantId AND item.itemId = :itemId")
-    int deleteByTenantIdAndItemId(@Param("tenantId") UUID tenantId, @Param("itemId") UUID itemId);
 
     @Transactional
     @Modifying

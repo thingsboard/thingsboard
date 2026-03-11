@@ -175,18 +175,17 @@
   <!-- Footer -->
   <div class="dlg-footer">
     <div class="dlg-footer-actions">
-      @if (installedDescriptor) {
+      @if (isSameVersion()) {
         <button class="dlg-install-btn" (click)="openEntityDetails()">
           {{ 'iot-hub.open-item-type-details' | translate:{ type: getTypeLabel() } }}
+        </button>
+      } @else if (hasUpdate()) {
+        <button class="dlg-update-btn" (click)="updateItem()">
+          {{ 'iot-hub.update' | translate }}
         </button>
       } @else {
         <button class="dlg-install-btn" (click)="install()">
           {{ 'iot-hub.install-item-type' | translate:{ type: getTypeLabel() } }}
-        </button>
-      }
-      @if (hasUpdate()) {
-        <button class="dlg-update-btn" (click)="updateItem()">
-          {{ 'iot-hub.update' | translate }}
         </button>
       }
     </div>

@@ -17,79 +17,62 @@
 import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Router } from '@angular/router';
-import { MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
 import { ItemType, itemTypeTranslations } from '@shared/models/iot-hub/iot-hub-item.models';
 import { IotHubInstalledItemDescriptor } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
+import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityType } from '@shared/models/entity-type.models';
-import { EntityId } from '@shared/models/id/entity-id';
 import { getEntityDetailsPageURL } from '@core/utils';
 
-export interface IotHubInstallDialogData {
-  item: MpItemVersionView;
+export interface IotHubUpdateDialogData {
+  installedItemId: string;
+  itemName: string;
+  itemType: ItemType;
+  version: string;
+  versionId: string;
   iotHubApiService: IotHubApiService;
 }
 
-export type InstallState = 'select-entity' | 'confirm' | 'installing' | 'success' | 'error';
+export type UpdateState = 'confirm' | 'updating' | 'success' | 'error';
 
 @Component({
-  selector: 'tb-iot-hub-install-dialog',
+  selector: 'tb-iot-hub-update-dialog',
   standalone: false,
   template: `
     @switch (state) {
       @case ('confirm') {
-        <h2 mat-dialog-title>{{ 'iot-hub.install-item-title' | translate }}</h2>
+        <h2 mat-dialog-title>{{ 'iot-hub.update-item-title' | translate }}</h2>
         <mat-dialog-content>
-          <p>{{ 'iot-hub.install-confirm' | translate:{ name: item.name, version: item.version } }}</p>
+          <p>{{ 'iot-hub.update-confirm' | translate:{ name: data.itemName, version: data.version } }}</p>
           <p class="tb-iot-hub-install-meta">{{ 'iot-hub.install-type' | translate:{ type: getTypeLabel() } }}</p>
-          <p class="tb-iot-hub-install-meta">{{ 'iot-hub.install-creator' | translate:{ creator: item.creatorDisplayName } }}</p>
         </mat-dialog-content>
         <mat-dialog-actions align="end">
           <button mat-button (click)="cancel()">{{ 'action.cancel' | translate }}</button>
-          <button mat-raised-button color="primary" (click)="install()">{{ 'iot-hub.install' | translate }}</button>
+          <button mat-raised-button color="primary" (click)="update()">{{ 'iot-hub.update' | translate }}</button>
         </mat-dialog-actions>
       }
-      @case ('select-entity') {
-        <h2 mat-dialog-title>{{ 'iot-hub.install-item-title' | translate }}</h2>
+      @case ('updating') {
+        <h2 mat-dialog-title>{{ 'iot-hub.update-item-title' | translate }}</h2>
         <mat-dialog-content>
-          <p>{{ 'iot-hub.select-entity-for-cf' | translate:{ name: item.name } }}</p>
-          <tb-entity-select
-            [(ngModel)]="selectedEntityId"
-            [allowedEntityTypes]="cfEntityTypes"
-            [defaultEntityType]="defaultCfEntityType"
-            [filterAllowedEntityTypes]="false"
-            appearance="outline"
-            required>
-          </tb-entity-select>
-        </mat-dialog-content>
-        <mat-dialog-actions align="end">
-          <button mat-button (click)="cancel()">{{ 'action.cancel' | translate }}</button>
-          <button mat-raised-button color="primary" [disabled]="!selectedEntityId" (click)="doInstall()">{{ 'iot-hub.install' | translate }}</button>
-        </mat-dialog-actions>
-      }
-      @case ('installing') {
-        <h2 mat-dialog-title>{{ 'iot-hub.install-item-title' | translate }}</h2>
-        <mat-dialog-content>
-          <p>{{ 'iot-hub.install-confirm' | translate:{ name: item.name, version: item.version } }}</p>
+          <p>{{ 'iot-hub.update-confirm' | translate:{ name: data.itemName, version: data.version } }}</p>
           <p class="tb-iot-hub-install-meta">{{ 'iot-hub.install-type' | translate:{ type: getTypeLabel() } }}</p>
-          <p class="tb-iot-hub-install-meta">{{ 'iot-hub.install-creator' | translate:{ creator: item.creatorDisplayName } }}</p>
         </mat-dialog-content>
         <mat-dialog-actions align="end">
           <button mat-button disabled>{{ 'action.cancel' | translate }}</button>
           <button mat-raised-button color="primary" disabled>
             <mat-spinner diameter="18" class="tb-iot-hub-inline-spinner"></mat-spinner>
-            {{ 'iot-hub.installing' | translate }}
+            {{ 'iot-hub.updating' | translate }}
           </button>
         </mat-dialog-actions>
       }
       @case ('success') {
         <h2 mat-dialog-title>
           <mat-icon class="tb-iot-hub-result-icon tb-iot-hub-success-icon">check_circle</mat-icon>
-          {{ 'iot-hub.install-success-title' | translate }}
+          {{ 'iot-hub.update-success-title' | translate }}
         </h2>
         <mat-dialog-content>
-          <p>{{ 'iot-hub.install-success-message' | translate:{ name: item.name, version: item.version } }}</p>
+          <p>{{ 'iot-hub.update-success-message' | translate:{ name: data.itemName, version: data.version } }}</p>
         </mat-dialog-content>
         <mat-dialog-actions align="end">
           <button mat-button (click)="close()">{{ 'action.close' | translate }}</button>
@@ -103,10 +86,10 @@ export type InstallState = 'select-entity' | 'confirm' | 'installing' | 'success
       @case ('error') {
         <h2 mat-dialog-title>
           <mat-icon class="tb-iot-hub-result-icon tb-iot-hub-error-icon">error</mat-icon>
-          {{ 'iot-hub.install-error-title' | translate }}
+          {{ 'iot-hub.update-error-title' | translate }}
         </h2>
         <mat-dialog-content>
-          <p>{{ 'iot-hub.install-error-message' | translate:{ name: item.name } }}</p>
+          <p>{{ 'iot-hub.update-error-message' | translate:{ name: data.itemName } }}</p>
           <div class="tb-iot-hub-error-details">{{ errorMessage }}</div>
         </mat-dialog-content>
         <mat-dialog-actions align="end">
@@ -150,7 +133,7 @@ export type InstallState = 'select-entity' | 'confirm' | 'installing' | 'success
     }
   `]
 })
-export class TbIotHubInstallDialogComponent {
+export class TbIotHubUpdateDialogComponent {
 
   private static readonly ITEM_TYPE_TO_ENTITY_TYPE: Record<string, EntityType> = {
     'WIDGET': EntityType.WIDGET_TYPE,
@@ -160,68 +143,64 @@ export class TbIotHubInstallDialogComponent {
     'DEVICE': EntityType.DEVICE_PROFILE
   };
 
-  item: MpItemVersionView;
   typeTranslations = itemTypeTranslations;
-  state: InstallState = 'confirm';
+  state: UpdateState = 'confirm';
   errorMessage = '';
   entityDetailsUrl: string | null = null;
 
-  selectedEntityId: EntityId | null = null;
-  cfEntityTypes: EntityType[] = [EntityType.DEVICE, EntityType.ASSET, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE];
-  defaultCfEntityType = EntityType.DEVICE_PROFILE;
-
   constructor(
-    @Inject(MAT_DIALOG_DATA) public data: IotHubInstallDialogData,
-    private dialogRef: MatDialogRef<TbIotHubInstallDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: IotHubUpdateDialogData,
+    private dialogRef: MatDialogRef<TbIotHubUpdateDialogComponent>,
+    private dialogService: DialogService,
     private router: Router,
     private translate: TranslateService
-  ) {
-    this.item = data.item;
-  }
+  ) {}
 
   getTypeLabel(): string {
-    const key = this.typeTranslations.get(this.item.type);
+    const key = this.typeTranslations.get(this.data.itemType);
     return key ? this.translate.instant(key) : '';
   }
 
-  install(): void {
-    if (this.item.type === ItemType.CALCULATED_FIELD) {
-      this.state = 'select-entity';
-      return;
-    }
-    this.doInstall();
-  }
-
-  doInstall(): void {
-    this.state = 'installing';
-    const versionId = this.item.id as string;
-    const data = this.selectedEntityId ? { entityId: this.selectedEntityId } : undefined;
-    this.data.iotHubApiService.installItemVersion(versionId, { ignoreLoading: true }, data).subscribe({
+  update(force = false): void {
+    this.state = 'updating';
+    this.data.iotHubApiService.updateItemVersion(this.data.installedItemId, this.data.versionId, { ignoreLoading: true }, force).subscribe({
       next: (result) => {
         if (result.success) {
           this.state = 'success';
           this.entityDetailsUrl = this.resolveEntityDetailsUrl(result.descriptor);
+        } else if (result.entityModified) {
+          this.state = 'confirm';
+          this.dialogService.confirm(
+            this.translate.instant('iot-hub.entity-modified-title'),
+            this.translate.instant('iot-hub.entity-modified-text', { type: this.getTypeLabel() }),
+            this.translate.instant('action.no'),
+            this.translate.instant('action.yes')
+          ).subscribe(confirmed => {
+            if (confirmed) {
+              this.update(true);
+            }
+          });
         } else {
           this.state = 'error';
-          this.errorMessage = result.errorMessage || this.translate.instant('iot-hub.install-error', { name: this.item.name });
+          this.errorMessage = result.errorMessage || this.translate.instant('iot-hub.update-error', { name: this.data.itemName });
         }
       },
       error: (err) => {
         this.state = 'error';
-        this.errorMessage = err?.error?.message || err?.message || this.translate.instant('iot-hub.install-error', { name: this.item.name });
+        this.errorMessage = err?.error?.message || err?.message || this.translate.instant('iot-hub.update-error', { name: this.data.itemName });
       }
     });
   }
 
   openEntityDetails(): void {
     if (this.entityDetailsUrl) {
-      this.dialogRef.close('installed');
+      this.dialogRef.close('updated');
       this.router.navigateByUrl(this.entityDetailsUrl);
     }
   }
 
   close(): void {
-    this.dialogRef.close(this.state === 'success' ? 'installed' : false);
+    this.dialogRef.close(this.state === 'success' ? 'updated' : false);
   }
 
   cancel(): void {
@@ -232,7 +211,7 @@ export class TbIotHubInstallDialogComponent {
     if (!descriptor) {
       return null;
     }
-    const entityType = TbIotHubInstallDialogComponent.ITEM_TYPE_TO_ENTITY_TYPE[this.item.type];
+    const entityType = TbIotHubUpdateDialogComponent.ITEM_TYPE_TO_ENTITY_TYPE[this.data.itemType];
     if (!entityType) {
       return null;
     }

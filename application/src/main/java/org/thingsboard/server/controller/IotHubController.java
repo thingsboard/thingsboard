@@ -19,22 +19,24 @@ import io.swagger.v3.oas.annotations.Hidden;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItem;
-import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItemInfo;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 
 import java.util.List;
 import java.util.UUID;
+import org.thingsboard.server.common.data.id.IotHubInstalledItemId;
 import org.thingsboard.server.dao.iot_hub.IotHubInstalledItemService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.iot_hub.InstallItemVersionResult;
@@ -55,16 +57,18 @@ public class IotHubController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @PostMapping("/versions/{versionId}/install")
     @ResponseBody
-    public InstallItemVersionResult installItemVersion(@PathVariable String versionId) throws ThingsboardException {
-        return iotHubService.installItemVersion(getCurrentUser(), versionId);
+    public InstallItemVersionResult installItemVersion(@PathVariable String versionId,
+                                                         @RequestBody(required = false) JsonNode data) throws ThingsboardException {
+        return iotHubService.installItemVersion(getCurrentUser(), versionId, data);
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @PostMapping("/installedItems/{itemId}/update/{versionId}")
+    @PostMapping("/installedItems/{installedItemId}/update/{versionId}")
     @ResponseBody
-    public UpdateItemVersionResult updateItemVersion(@PathVariable UUID itemId,
-                                                     @PathVariable String versionId) throws ThingsboardException {
-        return iotHubService.updateItemVersion(getCurrentUser(), itemId, versionId);
+    public UpdateItemVersionResult updateItemVersion(@PathVariable UUID installedItemId,
+                                                     @PathVariable String versionId,
+                                                     @RequestParam(required = false, defaultValue = "false") boolean force) throws ThingsboardException {
+        return iotHubService.updateItemVersion(getCurrentUser(), new IotHubInstalledItemId(installedItemId), versionId, force);
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
@@ -80,23 +84,16 @@ public class IotHubController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @GetMapping("/installedItems/byItemId/{itemId}")
+    @GetMapping("/installedItems/itemIds")
     @ResponseBody
-    public IotHubInstalledItem getInstalledItemByItemId(@PathVariable UUID itemId) throws ThingsboardException {
-        return iotHubInstalledItemService.findByTenantIdAndItemId(getTenantId(), itemId).orElse(null);
+    public List<UUID> getInstalledItemIds() throws ThingsboardException {
+        return iotHubInstalledItemService.findInstalledItemIdsByTenantId(getTenantId());
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @GetMapping("/installedItems/info")
+    @DeleteMapping("/installedItems/{installedItemId}")
     @ResponseBody
-    public List<IotHubInstalledItemInfo> getInstalledItemInfos() throws ThingsboardException {
-        return iotHubInstalledItemService.findInstalledItemInfosByTenantId(getTenantId());
-    }
-
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @DeleteMapping("/installedItems/{itemId}")
-    @ResponseBody
-    public void deleteInstalledItem(@PathVariable UUID itemId) throws ThingsboardException {
-        iotHubService.deleteInstalledItem(getCurrentUser(), itemId);
+    public void deleteInstalledItem(@PathVariable UUID installedItemId) throws ThingsboardException {
+        iotHubService.deleteInstalledItem(getCurrentUser(), new IotHubInstalledItemId(installedItemId));
     }
 }

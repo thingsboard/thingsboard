@@ -15,27 +15,26 @@
  */
 package org.thingsboard.server.dao.iot_hub;
 
+import org.thingsboard.server.common.data.id.IotHubInstalledItemId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItem;
-import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItemInfo;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 public interface IotHubInstalledItemService {
 
     IotHubInstalledItem save(TenantId tenantId, IotHubInstalledItem item);
 
-    Optional<IotHubInstalledItem> findByTenantIdAndItemId(TenantId tenantId, UUID itemId);
+    IotHubInstalledItem findById(TenantId tenantId, IotHubInstalledItemId id);
 
     PageData<IotHubInstalledItem> findByTenantId(TenantId tenantId, PageLink pageLink);
 
-    List<IotHubInstalledItemInfo> findInstalledItemInfosByTenantId(TenantId tenantId);
+    List<UUID> findInstalledItemIdsByTenantId(TenantId tenantId);
 
-    boolean deleteByTenantIdAndItemId(TenantId tenantId, UUID itemId);
+    void deleteById(TenantId tenantId, IotHubInstalledItemId id);
 
     void deleteByTenantId(TenantId tenantId);
 

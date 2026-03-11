@@ -186,7 +186,12 @@
     width: 100%;
   }
 
-  .mat-column-itemType,
+  .mat-column-itemType {
+    width: 150px;
+    min-width: 150px;
+    max-width: 150px;
+  }
+
   .mat-column-version {
     width: 100px;
     min-width: 100px;

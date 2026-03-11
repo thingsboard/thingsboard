@@ -29,6 +29,7 @@ export interface DashboardInstalledItemDescriptor {
 export interface CalculatedFieldInstalledItemDescriptor {
   type: 'CALCULATED_FIELD';
   calculatedFieldId: { id: string };
+  entityId: { entityType: string; id: string };
 }
 
 export interface RuleChainInstalledItemDescriptor {
@@ -55,20 +56,15 @@ export interface InstallItemVersionResult {
 
 export interface UpdateItemVersionResult {
   success: boolean;
+  entityModified: boolean;
   errorMessage: string;
   descriptor: IotHubInstalledItemDescriptor;
 }
 
-export interface IotHubInstalledItemInfo {
+export interface ItemPublishedVersionInfo {
   itemId: string;
-  itemVersionId: string;
-}
-
-export interface ItemUpdateInfo {
-  itemId: string;
-  hasUpdate: boolean;
-  latestVersion: string;
-  latestItemVersionId: string;
+  publishedVersionId: string;
+  publishedVersion: string;
 }
 
 export interface IotHubInstalledItem extends BaseData<{id: string}> {

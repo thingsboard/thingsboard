@@ -83,17 +83,17 @@
         <th mat-header-cell *matHeaderCellDef>{{ updatesChecked ? ('iot-hub.updates' | translate) : '' }}</th>
         <td mat-cell *matCellDef="let item">
           @if (updatesChecked) {
-            @if (getUpdateInfo(item); as updateInfo) {
-              @if (updateInfo.hasUpdate) {
+            @if (getPublishedVersionInfo(item); as publishedInfo) {
+              @if (publishedInfo.publishedVersionId !== item.itemVersionId) {
                 <button mat-stroked-button class="tb-iot-hub-update-button"
                         [matTooltip]="'iot-hub.view-item-details' | translate"
                         matTooltipPosition="above"
-                        (click)="viewUpdateDetails(updateInfo, item)">
+                        (click)="viewUpdateDetails(publishedInfo, item)">
                   <mat-icon>info_outline</mat-icon>
-                  {{ updateInfo.latestVersion }}
+                  {{ publishedInfo.publishedVersion }}
                 </button>
                 <button mat-stroked-button color="primary" class="tb-iot-hub-update-button"
-                        (click)="updateItem(item, updateInfo)">
+                        (click)="updateItem(item, publishedInfo)">
                   {{ 'iot-hub.update' | translate }}
                 </button>
               } @else {

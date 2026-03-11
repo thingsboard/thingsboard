@@ -17,10 +17,12 @@ package org.thingsboard.server.common.data.iot_hub;
 
 import lombok.Data;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
+import org.thingsboard.server.common.data.id.EntityId;
 
 @Data
 public class CalculatedFieldInstalledItemDescriptor implements IotHubInstalledItemDescriptor {
 
     private CalculatedFieldId calculatedFieldId;
+    private EntityId entityId;
 
 }

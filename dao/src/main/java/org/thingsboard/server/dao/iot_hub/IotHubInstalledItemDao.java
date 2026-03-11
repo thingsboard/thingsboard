@@ -17,24 +17,18 @@ package org.thingsboard.server.dao.iot_hub;
 
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItem;
-import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItemInfo;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 public interface IotHubInstalledItemDao extends Dao<IotHubInstalledItem> {
 
-    Optional<IotHubInstalledItem> findByTenantIdAndItemId(TenantId tenantId, UUID itemId);
-
     PageData<IotHubInstalledItem> findByTenantId(TenantId tenantId, PageLink pageLink);
 
-    List<IotHubInstalledItemInfo> findInstalledItemInfosByTenantId(TenantId tenantId);
-
-    boolean deleteByTenantIdAndItemId(TenantId tenantId, UUID itemId);
+    List<UUID> findInstalledItemIdsByTenantId(TenantId tenantId);
 
     void deleteByTenantId(TenantId tenantId);
 

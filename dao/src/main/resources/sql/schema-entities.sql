@@ -986,6 +986,5 @@ CREATE TABLE IF NOT EXISTS iot_hub_installed_item (
     item_name       VARCHAR       NOT NULL,
     item_type       VARCHAR       NOT NULL,
     version         VARCHAR       NOT NULL,
-    descriptor      JSONB         NOT NULL,
-    CONSTRAINT iot_hub_installed_item_item_id_unq_key UNIQUE (tenant_id, item_id)
+    descriptor      JSONB         NOT NULL
 );

@@ -18,14 +18,13 @@ package org.thingsboard.server.dao.iot_hub;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.id.IotHubInstalledItemId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItem;
-import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItemInfo;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -42,8 +41,8 @@ class IotHubInstalledItemServiceImpl implements IotHubInstalledItemService {
     }
 
     @Override
-    public Optional<IotHubInstalledItem> findByTenantIdAndItemId(TenantId tenantId, UUID itemId) {
-        return iotHubInstalledItemDao.findByTenantIdAndItemId(tenantId, itemId);
+    public IotHubInstalledItem findById(TenantId tenantId, IotHubInstalledItemId id) {
+        return iotHubInstalledItemDao.findById(tenantId, id.getId());
     }
 
     @Override
@@ -52,13 +51,13 @@ class IotHubInstalledItemServiceImpl implements IotHubInstalledItemService {
     }
 
     @Override
-    public List<IotHubInstalledItemInfo> findInstalledItemInfosByTenantId(TenantId tenantId) {
-        return iotHubInstalledItemDao.findInstalledItemInfosByTenantId(tenantId);
+    public List<UUID> findInstalledItemIdsByTenantId(TenantId tenantId) {
+        return iotHubInstalledItemDao.findInstalledItemIdsByTenantId(tenantId);
     }
 
     @Override
-    public boolean deleteByTenantIdAndItemId(TenantId tenantId, UUID itemId) {
-        return iotHubInstalledItemDao.deleteByTenantIdAndItemId(tenantId, itemId);
+    public void deleteById(TenantId tenantId, IotHubInstalledItemId id) {
+        iotHubInstalledItemDao.removeById(tenantId, id.getId());
     }
 
     @Override

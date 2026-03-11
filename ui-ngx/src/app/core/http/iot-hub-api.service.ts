@@ -22,7 +22,7 @@ import { PageData } from '@shared/models/page/page-data';
 import { PageLink } from '@shared/models/page/page-link';
 import { MpItemVersionQuery, MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
 import { CreatorView } from '@shared/models/iot-hub/iot-hub-creator.models';
-import { IotHubInstalledItem, IotHubInstalledItemInfo, InstallItemVersionResult, UpdateItemVersionResult, ItemUpdateInfo } from '@shared/models/iot-hub/iot-hub-installed-item.models';
+import { IotHubInstalledItem, InstallItemVersionResult, UpdateItemVersionResult, ItemPublishedVersionInfo } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { InterceptorHttpParams } from '@core/interceptors/interceptor-http-params';
 import { InterceptorConfig } from '@core/interceptors/interceptor-config';
 import { AppState } from '@core/core.state';
@@ -112,32 +112,29 @@ export class IotHubApiService {
     );
   }
 
-  public installItemVersion(versionId: string, config?: IotHubRequestConfig): Observable<InstallItemVersionResult> {
+  public installItemVersion(versionId: string, config?: IotHubRequestConfig, data?: any): Observable<InstallItemVersionResult> {
     return this.http.post<InstallItemVersionResult>(
       `/api/iot-hub/versions/${versionId}/install`,
-      null,
+      data || null,
       { params: this.buildParams(config) }
     );
   }
 
-  public updateItemVersion(itemId: string, versionId: string, config?: IotHubRequestConfig): Observable<UpdateItemVersionResult> {
+  public updateItemVersion(installedItemId: string, versionId: string, config?: IotHubRequestConfig, force?: boolean): Observable<UpdateItemVersionResult> {
+    let params = this.buildParams(config);
+    if (force) {
+      params = params.set('force', 'true');
+    }
     return this.http.post<UpdateItemVersionResult>(
-      `/api/iot-hub/installedItems/${itemId}/update/${versionId}`,
+      `/api/iot-hub/installedItems/${installedItemId}/update/${versionId}`,
       null,
-      { params: this.buildParams(config) }
+      { params }
     );
   }
 
-  public getInstalledItemByItemId(itemId: string, config?: IotHubRequestConfig): Observable<IotHubInstalledItem> {
-    return this.http.get<IotHubInstalledItem>(
-      `/api/iot-hub/installedItems/byItemId/${itemId}`,
-      { params: this.buildParams(config) }
-    );
-  }
-
-  public getInstalledItemInfos(config?: IotHubRequestConfig): Observable<IotHubInstalledItemInfo[]> {
-    return this.http.get<IotHubInstalledItemInfo[]>(
-      `/api/iot-hub/installedItems/info`,
+  public getInstalledItemIds(config?: IotHubRequestConfig): Observable<string[]> {
+    return this.http.get<string[]>(
+      `/api/iot-hub/installedItems/itemIds`,
       { params: this.buildParams(config) }
     );
   }
@@ -149,17 +146,17 @@ export class IotHubApiService {
     );
   }
 
-  public deleteInstalledItem(itemId: string, config?: IotHubRequestConfig): Observable<void> {
+  public deleteInstalledItem(installedItemId: string, config?: IotHubRequestConfig): Observable<void> {
     return this.http.delete<void>(
-      `/api/iot-hub/installedItems/${itemId}`,
+      `/api/iot-hub/installedItems/${installedItemId}`,
       { params: this.buildParams(config) }
     );
   }
 
-  public checkForUpdates(infos: IotHubInstalledItemInfo[], config?: IotHubRequestConfig): Observable<ItemUpdateInfo[]> {
-    return this.http.post<ItemUpdateInfo[]>(
-      `${this.baseUrl}/api/versions/checkForUpdates`,
-      infos,
+  public getItemsPublishedVersions(itemIds: string[], config?: IotHubRequestConfig): Observable<ItemPublishedVersionInfo[]> {
+    return this.http.post<ItemPublishedVersionInfo[]>(
+      `${this.baseUrl}/api/versions/publishedVersions`,
+      itemIds,
       { params: this.buildParams(config) }
     );
   }

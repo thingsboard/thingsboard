@@ -23,7 +23,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItem;
-import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItemInfo;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
@@ -34,7 +33,6 @@ import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @SqlDao
@@ -43,11 +41,6 @@ import java.util.UUID;
 class JpaIotHubInstalledItemDao extends JpaAbstractDao<IotHubInstalledItemEntity, IotHubInstalledItem> implements IotHubInstalledItemDao {
 
     private final IotHubInstalledItemRepository repository;
-
-    @Override
-    public Optional<IotHubInstalledItem> findByTenantIdAndItemId(TenantId tenantId, UUID itemId) {
-        return repository.findByTenantIdAndItemId(tenantId.getId(), itemId).map(DaoUtil::getData);
-    }
 
     @Override
     public PageData<IotHubInstalledItem> findByTenantId(TenantId tenantId, PageLink pageLink) {
@@ -59,13 +52,8 @@ class JpaIotHubInstalledItemDao extends JpaAbstractDao<IotHubInstalledItemEntity
     }
 
     @Override
-    public boolean deleteByTenantIdAndItemId(TenantId tenantId, UUID itemId) {
-        return repository.deleteByTenantIdAndItemId(tenantId.getId(), itemId) > 0;
-    }
-
-    @Override
-    public List<IotHubInstalledItemInfo> findInstalledItemInfosByTenantId(TenantId tenantId) {
-        return repository.findInstalledItemInfosByTenantId(tenantId.getId());
+    public List<UUID> findInstalledItemIdsByTenantId(TenantId tenantId) {
+        return repository.findInstalledItemIdsByTenantId(tenantId.getId());
     }
 
     @Override
