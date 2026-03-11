@@ -69,9 +69,11 @@ import org.thingsboard.server.service.security.auth.rest.LoginResponse;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -727,6 +729,37 @@ public class SwaggerConfiguration {
         return new ApiResponse().description(description).content(content);
     }
 
+    /**
+     * Recursively collects all property names reachable from {@code schemaName}, walking the
+     * ancestor chain through allOf $ref entries (to handle multi-level inheritance).
+     * {@code visited} prevents infinite loops in case of circular references.
+     */
+    @SuppressWarnings("unchecked")
+    private void collectAllProperties(String schemaName, Map<String, Schema> allSchemas,
+                                      Set<String> result, Set<String> visited) {
+        if (!visited.add(schemaName)) {
+            return;
+        }
+        Schema<?> schema = allSchemas.get(schemaName);
+        if (schema == null) {
+            return;
+        }
+        if (schema.getProperties() != null) {
+            result.addAll(schema.getProperties().keySet());
+        }
+        if (schema.getAllOf() != null) {
+            for (Schema<?> allOfElement : schema.getAllOf()) {
+                String ref = allOfElement.get$ref();
+                if (ref != null) {
+                    String refName = ref.substring(ref.lastIndexOf('/') + 1);
+                    collectAllProperties(refName, allSchemas, result, visited);
+                } else if (allOfElement.getProperties() != null) {
+                    result.addAll(allOfElement.getProperties().keySet());
+                }
+            }
+        }
+    }
+
     @SuppressWarnings("unchecked")
     private void deduplicateAllOfProperties(Schema<?> schema, Map<String, Schema> allSchemas) {
         if (schema.getAllOf() == null) {
@@ -744,16 +777,14 @@ public class SwaggerConfiguration {
             }
         }
 
-        // Collect properties defined in any $ref'd parent within the allOf
+        // Collect properties defined in any $ref'd parent within the allOf, recursively
+        // walking the ancestor chain (each parent may itself use allOf to extend a grandparent).
         Set<String> parentProperties = new LinkedHashSet<>();
         for (Schema<?> allOfElement : schema.getAllOf()) {
             String ref = allOfElement.get$ref();
             if (ref != null) {
                 String refName = ref.substring(ref.lastIndexOf('/') + 1);
-                Schema<?> parent = allSchemas.get(refName);
-                if (parent != null && parent.getProperties() != null) {
-                    parentProperties.addAll(parent.getProperties().keySet());
-                }
+                collectAllProperties(refName, allSchemas, parentProperties, new LinkedHashSet<>());
             }
         }
 
@@ -777,10 +808,9 @@ public class SwaggerConfiguration {
                 return false;
             }
             if (allOfElement.getProperties() != null) {
-                allOfElement.getProperties().keySet().removeAll(toStrip);
-                if (allOfElement.getProperties().isEmpty()) {
-                    allOfElement.setProperties(null);
-                }
+                Map<String, Schema> filtered = new LinkedHashMap<>(allOfElement.getProperties());
+                filtered.keySet().removeAll(toStrip);
+                allOfElement.setProperties(filtered.isEmpty() ? null : filtered);
             }
             return allOfElement.getProperties() == null
                     && allOfElement.getRequired() == null
@@ -789,10 +819,9 @@ public class SwaggerConfiguration {
 
         // Remove stripped properties from the schema's required list
         if (schema.getRequired() != null) {
-            schema.getRequired().removeAll(toStrip);
-            if (schema.getRequired().isEmpty()) {
-                schema.setRequired(null);
-            }
+            List<String> required = new ArrayList<>(schema.getRequired());
+            required.removeAll(toStrip);
+            schema.setRequired(required.isEmpty() ? null : required);
         }
     }
 
@@ -818,19 +847,24 @@ public class SwaggerConfiguration {
     }
 
     private static List<String> resolvePropertyOrder(Class<?> cls, com.fasterxml.jackson.databind.BeanDescription beanDesc) {
-        // If an explicit @JsonPropertyOrder is present on the class or any directly implemented
-        // interface, honour it directly. Walk up the hierarchy so annotations on superclasses
-        // and their interfaces are also found.
+        // If an explicit @JsonPropertyOrder is present on the class or any interface in its
+        // ancestry, honour it directly. Walk up the class hierarchy; for each class also walk
+        // the full interface hierarchy (including super-interfaces) via BFS.
         for (Class<?> c = cls; c != null && c != Object.class; c = c.getSuperclass()) {
             JsonPropertyOrder propOrder = c.getAnnotation(JsonPropertyOrder.class);
             if (propOrder != null && !propOrder.alphabetic() && propOrder.value().length > 0) {
                 return Arrays.asList(propOrder.value());
             }
-            for (Class<?> iface : c.getInterfaces()) {
+            Deque<Class<?>> ifaceQueue = new ArrayDeque<>(Arrays.asList(c.getInterfaces()));
+            Set<Class<?>> visitedIfaces = new LinkedHashSet<>();
+            while (!ifaceQueue.isEmpty()) {
+                Class<?> iface = ifaceQueue.poll();
+                if (!visitedIfaces.add(iface)) continue;
                 propOrder = iface.getAnnotation(JsonPropertyOrder.class);
                 if (propOrder != null && !propOrder.alphabetic() && propOrder.value().length > 0) {
                     return Arrays.asList(propOrder.value());
                 }
+                ifaceQueue.addAll(Arrays.asList(iface.getInterfaces()));
             }
         }
 

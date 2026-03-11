@@ -70,6 +70,7 @@ public class DefaultEntityExportService<I extends EntityId, E extends Exportable
 
     @Override
     public final D getExportData(EntitiesExportCtx<?> ctx, I entityId) throws ThingsboardException {
+        @SuppressWarnings("unchecked")
         D exportData = (D) EntityExportData.newInstance(entityId.getEntityType());
 
         E entity = exportableEntitiesService.findEntityByTenantIdAndId(ctx.getTenantId(), entityId);
