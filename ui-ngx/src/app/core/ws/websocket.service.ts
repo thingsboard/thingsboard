@@ -29,9 +29,11 @@ import {
   WebsocketDataMsg
 } from '@shared/models/telemetry/telemetry.models';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
+import { NotificationType } from '@core/notification/notification.models';
 import Timeout = NodeJS.Timeout;
 
 const RECONNECT_INTERVAL = 2000;
+const MAX_RECONNECT_INTERVAL = 60000;
 const WS_IDLE_TIMEOUT = 90000;
 const MAX_PUBLISH_COMMANDS = 10;
 
@@ -56,6 +58,15 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
   dataStream: WebSocketSubject<CmdWrapper | CmdUpdateMsg | AuthWsCmd>;
 
   errorName = 'WebSocket Error';
+
+  // Exponential backoff: tracks the number of consecutive failed reconnect attempts.
+  // Reset only after a productive connection (i.e. at least one message received).
+  // This prevents the open→immediately-closed cycle from resetting the counter.
+  private reconnectAttempts = 0;
+
+  // Suppress duplicate close-event notifications while retrying.
+  // Set on first close with an error code; cleared after receiving a successful message.
+  private reconnectErrorShown = false;
 
   protected constructor(protected store: Store<AppState>,
                         protected authService: AuthService,
@@ -126,6 +137,8 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
     this.subscribersCount = 0;
     this.cmdWrapper.clear();
     if (close) {
+      this.reconnectAttempts = 0;
+      this.reconnectErrorShown = false;
       this.closeSocket();
     }
   }
@@ -221,6 +234,10 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
       this.processOnMessage(message as WebsocketDataMsg);
     }
     this.checkToClose();
+    if (this.reconnectAttempts) {
+      this.reconnectAttempts = 0;
+      this.reconnectErrorShown = false;
+    }
   }
 
   private onError(errorEvent) {
@@ -231,8 +248,11 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
   }
 
   private onClose(closeEvent: CloseEvent) {
-    if (closeEvent && closeEvent.code > 1001 && closeEvent.code !== 1006
+    // Show error notification only once per reconnect cycle to prevent notification spam.
+    // reconnectErrorShown is cleared only after a productive connection (onMessage).
+    if (!this.reconnectErrorShown && closeEvent && closeEvent.code > 1001 && closeEvent.code !== 1006
       && closeEvent.code !== 1011 && closeEvent.code !== 1012 && closeEvent.code !== 4500) {
+      this.reconnectErrorShown = true;
       this.showWsError(closeEvent.code, closeEvent.reason);
     }
     this.isOpening = false;
@@ -251,18 +271,28 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
       if (this.reconnectTimer) {
         clearTimeout(this.reconnectTimer);
       }
-      this.reconnectTimer = setTimeout(() => this.tryOpenSocket(), RECONNECT_INTERVAL);
+      const delay = Math.min(RECONNECT_INTERVAL * Math.pow(2, this.reconnectAttempts), MAX_RECONNECT_INTERVAL);
+      this.reconnectAttempts = Math.min(this.reconnectAttempts + 1, 10);
+      this.reconnectTimer = setTimeout(() => this.tryOpenSocket(), delay);
     }
   }
 
   private showWsError(errorCode: number, errorMsg: string) {
     let message = errorMsg;
-    if (!message) {
-      message += `${this.errorName}: error code - ${errorCode}.`;
+    let notificationType: NotificationType = 'error';
+
+    if (errorCode === 1008 || (errorMsg && errorMsg.includes('limit reached'))) {
+      message = 'Too many active sessions. Please close unused browser tabs or sign out from other devices';
+      notificationType = 'warn';
+    } else if (errorCode === 1009) {
+      message = 'Too much data to display. Please refresh the page or narrow your request.';
+      notificationType = 'warn';
+    } else if (!message) {
+      message = `${this.errorName}: error code - ${errorCode}.`;
     }
-    this.store.dispatch(new ActionNotificationShow(
-      {
-        message, type: 'error'
-      }));
+
+    this.store.dispatch(new ActionNotificationShow({
+      message, type: notificationType
+    }));
   }
 }
