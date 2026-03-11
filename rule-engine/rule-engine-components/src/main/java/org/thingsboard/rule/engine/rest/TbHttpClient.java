@@ -287,8 +287,9 @@ public class TbHttpClient {
 
     private Object getRequestBody(TbMsg msg) {
         if (StringUtils.isNotEmpty(config.getRequestBodyTemplate())) {
-            String processedTemplate = TbNodeUtils.processPattern(config.getRequestBodyTemplate(), msg);
-            return config.isParseToPlainText() ? processedTemplate : JacksonUtil.toJsonNode(processedTemplate);
+            boolean plainText = config.isParseToPlainText();
+            String processedTemplate = TbNodeUtils.processPattern(config.getRequestBodyTemplate(), msg, !plainText);
+            return plainText ? processedTemplate : JacksonUtil.toJsonNode(processedTemplate);
         }
         return getData(msg, config.isParseToPlainText());
     }

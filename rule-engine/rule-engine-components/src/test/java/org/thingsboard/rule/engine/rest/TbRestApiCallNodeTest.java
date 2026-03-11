@@ -258,6 +258,35 @@ public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     @Test
+    public void postRequestWithBodyTemplateEscapesJsonSpecialChars() throws IOException, InterruptedException {
+        final CountDownLatch latch = new CountDownLatch(1);
+        final String path = "/api/token";
+        final String[] capturedBody = new String[1];
+        setupServerWithBodyCapture(capturedBody, latch);
+
+        TbRestApiCallNodeConfiguration config = new TbRestApiCallNodeConfiguration().defaultConfiguration();
+        config.setRequestMethod("POST");
+        config.setRequestBodyTemplate("{\"name\":\"${userName}\",\"desc\":\"$[description]\"}");
+        config.setRestEndpointUrlPattern(String.format("http://localhost:%d%s", server.getLocalPort(), path));
+        initWithConfig(config);
+
+        metaData.putValue("userName", "John \"Doe\"");
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(originator)
+                .copyMetaData(metaData)
+                .dataType(TbMsgDataType.JSON)
+                .data("{\"description\":\"line1\\nline2\"}")
+                .ruleChainId(ruleChainId)
+                .ruleNodeId(ruleNodeId)
+                .build();
+        restNode.onMsg(ctx, msg);
+
+        assertTrue(latch.await(10, TimeUnit.SECONDS), "Server handled request");
+        assertEquals("{\"name\":\"John \"Doe\"\",\"desc\":\"line1\\nline2\"}", capturedBody[0]);
+    }
+
+    @Test
     public void postRequestWithEmptyBodyTemplateUsesMessageData() throws IOException, InterruptedException {
         final CountDownLatch latch = new CountDownLatch(1);
         final String path = "/api/data";
