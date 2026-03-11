@@ -13,6 +13,7 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 --
+
 -- CALCULATED FIELD ADDITIONAL INFO ADDITION START
 
 ALTER TABLE calculated_field ADD COLUMN IF NOT EXISTS additional_info varchar;
