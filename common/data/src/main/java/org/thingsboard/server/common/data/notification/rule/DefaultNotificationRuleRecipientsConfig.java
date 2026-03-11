@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-@Schema(description = "Default notification rule recipients configuration", allOf = NotificationRuleRecipientsConfig.class)
+@Schema(description = "Default notification rule recipients configuration")
 @Data
 @EqualsAndHashCode
 public abstract class DefaultNotificationRuleRecipientsConfig implements NotificationRuleRecipientsConfig {
