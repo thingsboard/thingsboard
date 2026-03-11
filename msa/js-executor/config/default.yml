@@ -35,7 +35,7 @@ kafka:
     servers: "localhost:9092"
   replication_factor: "1" # Number of replicas for each Kafka topic partition
   acks: "1" # -1 = all; 0 = no acknowledgments; 1 = only waits for the leader to acknowledge
-  batch_size: "128" # Maximum number of bytes the producer batches per partition before sending
+  batch_size: "128" # Maximum number of messages to accumulate before triggering a batch send
   linger_ms: "5" # Time in milliseconds the producer waits before sending a batch, allowing more messages to accumulate
   partitions_consumed_concurrently: "1" # (EXPERIMENTAL) increase this value if you are planning to handle more than one partition (scale up, scale down) - this will decrease the latency
   requestTimeout: "30000" # Time in milliseconds to wait for a response to a Kafka request before timing out
