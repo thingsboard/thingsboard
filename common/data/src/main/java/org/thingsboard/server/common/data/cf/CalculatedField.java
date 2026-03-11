@@ -17,15 +17,15 @@ package org.thingsboard.server.common.data.cf;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.HasAdditionalInfo;
 import org.thingsboard.server.common.data.HasDebugSettings;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
@@ -39,7 +39,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
-import java.io.Serial;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Map;
@@ -48,10 +47,7 @@ import java.util.Set;
 @Schema
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class CalculatedField extends BaseData<CalculatedFieldId> implements HasName, HasTenantId, HasVersion, HasDebugSettings {
-
-    @Serial
-    private static final long serialVersionUID = 4491966747773381420L;
+public class CalculatedField extends BaseData<CalculatedFieldId> implements HasName, HasTenantId, HasVersion, HasDebugSettings, HasAdditionalInfo {
 
     public static final Map<EntityType, Set<CalculatedFieldType>> SUPPORTED_ENTITIES = Map.of(
             EntityType.DEVICE, CalculatedFieldType.all,
@@ -90,26 +86,15 @@ public class CalculatedField extends BaseData<CalculatedFieldId> implements HasN
     @Valid
     @NotNull
     private CalculatedFieldConfiguration configuration;
-    @Getter
-    @Setter
     private Long version;
+    @NoXss
+    @Schema(description = "Additional parameters of the calculated field")
+    private JsonNode additionalInfo;
 
-    public CalculatedField() {
-        super();
-    }
+    public CalculatedField() {}
 
     public CalculatedField(CalculatedFieldId id) {
         super(id);
-    }
-
-    public CalculatedField(TenantId tenantId, EntityId entityId, CalculatedFieldType type, String name, int configurationVersion, CalculatedFieldConfiguration configuration, Long version) {
-        this.tenantId = tenantId;
-        this.entityId = entityId;
-        this.type = type;
-        this.name = name;
-        this.configurationVersion = configurationVersion;
-        this.configuration = configuration;
-        this.version = version;
     }
 
     public CalculatedField(CalculatedField calculatedField) {
@@ -123,6 +108,7 @@ public class CalculatedField extends BaseData<CalculatedFieldId> implements HasN
         this.configurationVersion = calculatedField.configurationVersion;
         this.configuration = calculatedField.configuration;
         this.version = calculatedField.version;
+        this.additionalInfo = calculatedField.additionalInfo;
     }
 
     @Schema(description = "JSON object with the Calculated Field Id. Referencing non-existing Calculated Field Id will cause error.")
@@ -159,6 +145,7 @@ public class CalculatedField extends BaseData<CalculatedFieldId> implements HasN
                 .append(", name='").append(name)
                 .append(", configurationVersion=").append(configurationVersion)
                 .append(", configuration=").append(configuration)
+                .append(", additionalInfo=").append(additionalInfo)
                 .append(", version=").append(version)
                 .append(", createdTime=").append(createdTime)
                 .append(", id=").append(id).append(']')

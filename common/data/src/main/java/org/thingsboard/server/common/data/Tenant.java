@@ -164,7 +164,7 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId, HasTi
         return super.getEmail();
     }
 
-    @Schema(description = "Additional parameters of the device", implementation = com.fasterxml.jackson.databind.JsonNode.class)
+    @Schema(description = "Additional parameters of the tenant", implementation = com.fasterxml.jackson.databind.JsonNode.class)
     @Override
     public JsonNode getAdditionalInfo() {
         return super.getAdditionalInfo();

@@ -116,7 +116,7 @@ public class EntityView extends BaseDataWithAdditionalInfo<EntityViewId>
         return super.getCreatedTime();
     }
 
-    @Schema(description = "Additional parameters of the device", implementation = com.fasterxml.jackson.databind.JsonNode.class)
+    @Schema(description = "Additional parameters of the entity view", implementation = com.fasterxml.jackson.databind.JsonNode.class)
     @Override
     public JsonNode getAdditionalInfo() {
         return super.getAdditionalInfo();
