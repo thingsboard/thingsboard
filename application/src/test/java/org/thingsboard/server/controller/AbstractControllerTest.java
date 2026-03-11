@@ -32,7 +32,6 @@ import org.springframework.web.socket.config.annotation.EnableWebSocket;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -118,12 +117,6 @@ public abstract class AbstractControllerTest extends AbstractNotifyEntityTest {
         TbTestWebSocketClient wsClient = new TbTestWebSocketClient(new URI(WS_URL + wsPort + "/api/ws"));
         assertThat(wsClient.connectBlocking(TIMEOUT, TimeUnit.SECONDS)).isTrue();
         wsClient.authenticateWithApiKey(apiKey);
-        return wsClient;
-    }
-
-    protected TbTestWebSocketClient buildAndConnectWebSocketClientWithApiKeyHeader(String apiKey) throws URISyntaxException, InterruptedException {
-        TbTestWebSocketClient wsClient = new TbTestWebSocketClient(new URI(WS_URL + wsPort + "/api/ws"), Map.of("X-Authorization", "ApiKey " + apiKey));
-        assertThat(wsClient.connectBlocking(TIMEOUT, TimeUnit.SECONDS)).isTrue();
         return wsClient;
     }
 

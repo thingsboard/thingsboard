@@ -44,7 +44,6 @@ import java.net.URI;
 import java.nio.channels.NotYetConnectedException;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -64,9 +63,6 @@ public class TbTestWebSocketClient extends WebSocketClient {
         super(serverUri);
     }
 
-    public TbTestWebSocketClient(URI serverUri, Map<String, String> httpHeaders) {
-        super(serverUri, httpHeaders);
-    }
 
     @Override
     public void onOpen(ServerHandshake serverHandshake) {

@@ -48,7 +48,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.limit.LimitedApi;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
-import org.thingsboard.server.config.ApiKeyHandshakeInterceptor;
 import org.thingsboard.server.config.WebSocketConfiguration;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -336,16 +335,11 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
         }
 
         SecurityUser securityCtx = null;
-        Object apiKeyCtx = session.getAttributes().get(ApiKeyHandshakeInterceptor.API_KEY_SECURITY_CTX_ATTR);
-        if (apiKeyCtx instanceof SecurityUser) {
-            securityCtx = (SecurityUser) apiKeyCtx;
-        } else {
-            String query = session.getUri().getQuery();
-            if (query != null) {
-                String token = extractQueryParam(query, "token");
-                if (StringUtils.isNotEmpty(token)) {
-                    securityCtx = authenticationProvider.authenticate(token);
-                }
+        String query = session.getUri().getQuery();
+        if (query != null) {
+            String token = extractQueryParam(query, "token");
+            if (StringUtils.isNotEmpty(token)) {
+                securityCtx = authenticationProvider.authenticate(token);
             }
         }
         return WebSocketSessionRef.builder()

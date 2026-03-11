@@ -40,7 +40,6 @@ public class WebSocketConfiguration implements WebSocketConfigurer {
     private static final String WS_API_MAPPING = "/api/ws/**";
 
     private final WebSocketHandler wsHandler;
-    private final ApiKeyHandshakeInterceptor apiKeyHandshakeInterceptor;
 
     @Value("${server.ws.max_text_message_buffer_size:32768}")
     private int maxTextMessageBufferSize;
@@ -62,7 +61,6 @@ public class WebSocketConfiguration implements WebSocketConfigurer {
             throw new RuntimeException("TbWebSocketHandler expected but " + wsHandler + " provided");
         }
         registry.addHandler(wsHandler, WS_API_MAPPING)
-                .addInterceptors(apiKeyHandshakeInterceptor)
                 .setAllowedOriginPatterns("*");
     }
 
