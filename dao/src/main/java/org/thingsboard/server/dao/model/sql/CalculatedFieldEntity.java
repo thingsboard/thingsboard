@@ -36,6 +36,7 @@ import org.thingsboard.server.dao.util.mapping.JsonConverter;
 
 import java.util.UUID;
 
+import static org.thingsboard.server.dao.model.ModelConstants.CALCULATED_FIELD_ADDITIONAL_INFO;
 import static org.thingsboard.server.dao.model.ModelConstants.CALCULATED_FIELD_CONFIGURATION;
 import static org.thingsboard.server.dao.model.ModelConstants.CALCULATED_FIELD_CONFIGURATION_VERSION;
 import static org.thingsboard.server.dao.model.ModelConstants.CALCULATED_FIELD_ENTITY_ID;
@@ -81,9 +82,11 @@ public class CalculatedFieldEntity extends BaseVersionedEntity<CalculatedField> 
     @Column(name = DEBUG_SETTINGS)
     private String debugSettings;
 
-    public CalculatedFieldEntity() {
-        super();
-    }
+    @Convert(converter = JsonConverter.class)
+    @Column(name = CALCULATED_FIELD_ADDITIONAL_INFO)
+    private JsonNode additionalInfo;
+
+    public CalculatedFieldEntity() {}
 
     public CalculatedFieldEntity(CalculatedField calculatedField) {
         this.setUuid(calculatedField.getUuidId());
@@ -97,6 +100,7 @@ public class CalculatedFieldEntity extends BaseVersionedEntity<CalculatedField> 
         this.configuration = JacksonUtil.valueToTree(calculatedField.getConfiguration());
         this.version = calculatedField.getVersion();
         this.debugSettings = JacksonUtil.toString(calculatedField.getDebugSettings());
+        this.additionalInfo = calculatedField.getAdditionalInfo();
     }
 
     @Override
@@ -111,6 +115,7 @@ public class CalculatedFieldEntity extends BaseVersionedEntity<CalculatedField> 
         calculatedField.setConfiguration(JacksonUtil.treeToValue(configuration, CalculatedFieldConfiguration.class));
         calculatedField.setVersion(version);
         calculatedField.setDebugSettings(JacksonUtil.fromString(debugSettings, DebugSettings.class));
+        calculatedField.setAdditionalInfo(additionalInfo);
         return calculatedField;
     }
 
