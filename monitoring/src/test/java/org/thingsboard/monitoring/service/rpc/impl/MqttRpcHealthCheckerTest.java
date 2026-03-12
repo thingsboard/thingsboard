@@ -39,6 +39,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -70,9 +71,8 @@ class MqttRpcHealthCheckerTest {
         ReflectionTestUtils.setField(checker, "reporter", mock(MonitoringReporter.class));
         ReflectionTestUtils.setField(checker, "stopWatch", mock(TbStopWatch.class));
 
-        when(connectToken.getException()).thenReturn(null);
-        when(mqttClient.connectWithResult(any())).thenReturn(connectToken);
-        when(mqttClient.isConnected()).thenReturn(false);
+        lenient().when(connectToken.getException()).thenReturn(null);
+        lenient().when(mqttClient.connectWithResult(any())).thenReturn(connectToken);
     }
 
     @Test
