@@ -106,6 +106,9 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     private RuleChainDao ruleChainDao;
 
     @Autowired
+    private RuleChainDetailsDao ruleChainDetailsDao;
+
+    @Autowired
     private RuleNodeDao ruleNodeDao;
 
     @Autowired
@@ -319,7 +322,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         }
         RuleChainDetails ruleChainDetails = new RuleChainDetails(ruleChain);
         ruleChainDetails.setNotes(ruleChainMetaData.getNotes());
-        ruleChainDetails = ruleChainDao.saveDetails(ruleChainDetails);
+        ruleChainDetails = ruleChainDetailsDao.save(tenantId, ruleChainDetails);
         eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entity(ruleChainDetails)
                 .entityId(ruleChainDetails.getId()).broadcastEvent(publishSaveEvent).build());
         return RuleChainUpdateResult.successful(updatedRuleNodes);
@@ -344,7 +347,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     @Override
     public RuleChainMetaData loadRuleChainMetaData(TenantId tenantId, RuleChainId ruleChainId) {
         Validator.validateId(ruleChainId, "Incorrect rule chain id.");
-        RuleChainDetails ruleChainDetails = ruleChainDao.findDetailsById(ruleChainId.getId());
+        RuleChainDetails ruleChainDetails = ruleChainDetailsDao.findById(tenantId, ruleChainId.getId());
         if (ruleChainDetails == null) {
             return null;
         }

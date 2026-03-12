@@ -18,6 +18,7 @@ package org.thingsboard.server.common.data.rule;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import lombok.ToString;
 
 /**
  * Represents a sticky note on the rule chain canvas.
@@ -43,6 +44,7 @@ public class RuleChainNote {
     @Schema(description = "Height of the note, in pixels")
     private int height;
 
+    @ToString.Exclude
     @Schema(description = "Markdown or HTML content of the note")
     private String content;
 
@@ -58,6 +60,7 @@ public class RuleChainNote {
     @Schema(description = "Whether to apply the default markdown stylesheet to the note content")
     private Boolean applyDefaultMarkdownStyle;
 
+    @ToString.Exclude
     @Schema(description = "Custom CSS styles applied to the note content")
     private String markdownCss;
 
