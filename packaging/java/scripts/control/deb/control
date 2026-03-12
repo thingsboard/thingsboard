@@ -1,0 +1,7 @@
+Section: net
+Priority: optional
+Architecture: all
+Maintainer: ThingsBoard Authors <info@thingsboard.io>
+Depends: openjdk-17-jre | java17-runtime | oracle-java17-installer | openjdk-17-jre-headless | openjdk-21-jre | java21-runtime | oracle-java21-installer | openjdk-21-jre-headless | openjdk-25-jre | java25-runtime | oracle-java25-installer | openjdk-25-jre-headless
+Description: ThingsBoard ${pkg.name}
+ Open-source IoT Platform service.

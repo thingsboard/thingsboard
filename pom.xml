@@ -31,9 +31,36 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <main.dir>${basedir}</main.dir>
-        <pkg.disabled>true</pkg.disabled>
         <pkg.process-resources.phase>none</pkg.process-resources.phase>
         <pkg.package.phase>none</pkg.package.phase>
+        <!-- Set to true to skip spring-boot:repackage (the boot jar, i.e. the *-boot.jar artifact).
+             The boot jar is the mandatory input to jdeb build-deb; skipping it also prevents
+             the .deb from being produced. Any msa/* module that depends on a .deb artifact
+             (e.g. msa/tb-node depends on application:deb) will FAIL when the boot jar and
+             consequently the .deb are missing. Each packaging module overrides this to false. -->
+        <pkg.skip.bootjar>false</pkg.skip.bootjar>
+        <!-- Set to true to skip jdeb build-deb and suppress the Maven attach-artifact goal
+             that registers the .deb with the reactor. msa/* docker modules copy the .deb
+             directly from the upstream module's target/ directory (not from .m2), and their
+             copy execution is bound to ${pkg.deb.phase}, so they are silently skipped too. -->
+        <pkg.skip.deb>false</pkg.skip.deb>
+        <!-- Set to true to skip de.dentrassi.maven:rpm build-rpm. No Maven reactor module
+             depends on the RPM artifact, so this flag can be toggled freely without breaking
+             downstream modules. -->
+        <pkg.skip.rpm>false</pkg.skip.rpm>
+        <!-- Set to true to skip the maven-assembly-plugin Windows ZIP archive. No Maven reactor
+             module depends on the ZIP artifact, so this flag can be toggled freely without
+             breaking downstream modules. -->
+        <pkg.skip.zip>false</pkg.skip.zip>
+        <!-- Internal: resolved phase for the build-helper attach-deb execution. Overridden to
+             "none" by the skip-deb profile when pkg.skip.deb=true so the goal is silently
+             skipped instead of failing on a non-existent .deb file. Packaging modules inherit
+             "package" via pkg.package.phase; msa/* docker modules set it explicitly in msa/pom.xml. -->
+        <pkg.deb.phase>${pkg.package.phase}</pkg.deb.phase>
+        <!-- Controls whether install scripts (install.sh, upgrade.sh, logback.xml) are staged
+             into target/bin/install/. Defaults to "none" so most modules skip this. Override
+             to "process-resources" in modules that need install scripts (application, edqs). -->
+        <pkg.install.scripts.phase>none</pkg.install.scripts.phase>
         <pkg.user>thingsboard</pkg.user>
         <pkg.implementationTitle>${project.name}</pkg.implementationTitle>
         <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
@@ -71,8 +98,10 @@
         <paho.client.version>1.2.5</paho.client.version>
         <paho.mqttv5.client.version>1.2.5</paho.mqttv5.client.version>
         <os-maven-plugin.version>1.7.1</os-maven-plugin.version>
-        <surefire.version>3.5.4</surefire.version>
-        <jar-plugin.version>3.4.0</jar-plugin.version>
+        <maven-surefire-plugin.version>3.5.4</maven-surefire-plugin.version>
+        <maven-jar-plugin.version>3.4.0</maven-jar-plugin.version>
+        <maven-install-plugin.version>3.1.4</maven-install-plugin.version>
+        <maven-deploy-plugin.version>3.1.4</maven-deploy-plugin.version>
         <springdoc-swagger.version>2.8.8TB</springdoc-swagger.version>
         <swagger-annotations.version>2.2.30</swagger-annotations.version>
         <spatial4j.version>0.8</spatial4j.version>
@@ -183,6 +212,22 @@
             </properties>
         </profile>
 
+        <!-- Activated by -Dpkg.skip.deb=true. Sets the attach-artifact lifecycle phase to "none"
+             so the build-helper goal that registers the .deb with the Maven reactor is silently
+             skipped. Without this, the goal would fail because the .deb file does not exist. -->
+        <profile>
+            <id>skip-deb</id>
+            <activation>
+                <property>
+                    <name>pkg.skip.deb</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <properties>
+                <pkg.deb.phase>none</pkg.deb.phase>
+            </properties>
+        </profile>
+
         <profile>
             <id>packaging</id>
             <activation>
@@ -239,6 +284,52 @@
                                         </resources>
                                         <filters>
                                             <filter>${main.dir}/packaging/${pkg.type}/filters/unix.properties</filter>
+                                        </filters>
+                                    </configuration>
+                                </execution>
+                                <!-- copy-conf-deb: pkgName.conf with DEB platform token replaced -->
+                                <execution>
+                                    <id>copy-conf-deb</id>
+                                    <phase>${pkg.process-resources.phase}</phase>
+                                    <goals>
+                                        <goal>copy-resources</goal>
+                                    </goals>
+                                    <configuration>
+                                        <outputDirectory>${project.build.directory}/conf-deb</outputDirectory>
+                                        <resources>
+                                            <resource>
+                                                <directory>src/main/conf</directory>
+                                                <includes>
+                                                    <include>${pkg.name}.conf</include>
+                                                </includes>
+                                                <filtering>true</filtering>
+                                            </resource>
+                                        </resources>
+                                        <filters>
+                                            <filter>${main.dir}/packaging/${pkg.type}/filters/deb.properties</filter>
+                                        </filters>
+                                    </configuration>
+                                </execution>
+                                <!-- copy-conf-rpm: pkgName.conf with RPM platform token replaced -->
+                                <execution>
+                                    <id>copy-conf-rpm</id>
+                                    <phase>${pkg.process-resources.phase}</phase>
+                                    <goals>
+                                        <goal>copy-resources</goal>
+                                    </goals>
+                                    <configuration>
+                                        <outputDirectory>${project.build.directory}/conf-rpm</outputDirectory>
+                                        <resources>
+                                            <resource>
+                                                <directory>src/main/conf</directory>
+                                                <includes>
+                                                    <include>${pkg.name}.conf</include>
+                                                </includes>
+                                                <filtering>true</filtering>
+                                            </resource>
+                                        </resources>
+                                        <filters>
+                                            <filter>${main.dir}/packaging/${pkg.type}/filters/rpm.properties</filter>
                                         </filters>
                                     </configuration>
                                 </execution>
@@ -339,7 +430,7 @@
                                 </execution>
                                 <execution>
                                     <id>copy-install</id>
-                                    <phase>${pkg.process-resources.phase}</phase>
+                                    <phase>${pkg.install.scripts.phase}</phase>
                                     <goals>
                                         <goal>copy-resources</goal>
                                     </goals>
@@ -488,7 +579,12 @@
                             <groupId>org.springframework.boot</groupId>
                             <artifactId>spring-boot-maven-plugin</artifactId>
                             <configuration>
-                                <skip>${pkg.disabled}</skip>
+                                <!-- Note: pkg.skip.bootjar and pkg.skip.deb are independent flags.
+                                     Passing only -Dpkg.skip.deb=true still builds the boot jar here
+                                     because jdeb build-deb depends on it as its primary input.
+                                     Use -Dpkg.skip.bootjar=true to skip the boot jar entirely
+                                     (which also skips build-deb — see pkg.skip.* table in TEST_FAST.md). -->
+                                <skip>${pkg.skip.bootjar}</skip>
                                 <mainClass>${pkg.mainClass}</mainClass>
                                 <classifier>boot</classifier>
                                 <layout>ZIP</layout>
@@ -510,38 +606,248 @@
                                 </execution>
                             </executions>
                         </plugin>
+                        <!-- jdeb: DEB packaging for Java services -->
                         <plugin>
-                            <groupId>org.thingsboard</groupId>
-                            <artifactId>gradle-maven-plugin</artifactId>
-                            <configuration>
-                                <gradleProjectDirectory>${main.dir}/packaging/${pkg.type}</gradleProjectDirectory>
-                                <tasks>
-                                    <task>build</task>
-                                    <task>buildDeb</task>
-                                    <task>buildRpm</task>
-                                </tasks>
-                                <args>
-                                    <arg>-PpackagingDir=${main.dir}/packaging</arg>
-                                    <arg>-PprojectBuildDir=${basedir}/target</arg>
-                                    <arg>-PprojectVersion=${project.version}</arg>
-                                    <arg>
-                                        -PmainJar=${project.build.directory}/${project.build.finalName}-boot.${project.packaging}
-                                    </arg>
-                                    <arg>-PpkgName=${pkg.name}</arg>
-                                    <arg>-PpkgUser=${pkg.user}</arg>
-                                    <arg>-PpkgInstallFolder=${pkg.installFolder}</arg>
-                                    <arg>-PpkgCopyInstallScripts=${pkg.copyInstallScripts}</arg>
-                                    <arg>-PpkgLogFolder=${pkg.unixLogFolder}</arg>
-                                    <arg>--warning-mode</arg>
-                                    <arg>all</arg>
-                                </args>
-                            </configuration>
+                            <groupId>org.vafer</groupId>
+                            <artifactId>jdeb</artifactId>
+                            <version>1.10</version>
                             <executions>
                                 <execution>
+                                    <id>build-deb</id>
                                     <phase>${pkg.package.phase}</phase>
                                     <goals>
-                                        <goal>invoke</goal>
+                                        <goal>jdeb</goal>
                                     </goals>
+                                    <configuration>
+                                        <skip>${pkg.skip.deb}</skip>
+                                        <deb>${project.build.directory}/${pkg.name}.deb</deb>
+                                        <controlDir>${project.build.directory}/control/deb</controlDir>
+                                        <verbose>false</verbose>
+                                        <dataSet>
+                                            <!-- Main JAR (renamed, mode 500) -->
+                                            <data>
+                                                <type>file</type>
+                                                <src>${project.build.directory}/${project.build.finalName}-boot.${project.packaging}</src>
+                                                <dst>${pkg.installFolder}/bin/${pkg.name}.jar</dst>
+                                                <mapper>
+                                                    <type>perm</type>
+                                                    <filemode>0500</filemode>
+                                                    <user>${pkg.user}</user>
+                                                    <group>${pkg.user}</group>
+                                                </mapper>
+                                            </data>
+                                            <!-- Conf files (all except pkgName.conf which needs platform token) -->
+                                            <data>
+                                                <type>directory</type>
+                                                <src>${project.build.directory}/conf</src>
+                                                <excludes>${pkg.name}.conf</excludes>
+                                                <mapper>
+                                                    <type>perm</type>
+                                                    <prefix>${pkg.installFolder}/conf</prefix>
+                                                    <filemode>0754</filemode>
+                                                    <user>${pkg.user}</user>
+                                                    <group>${pkg.user}</group>
+                                                </mapper>
+                                            </data>
+                                            <!-- pkgName.conf with DEB platform token replaced -->
+                                            <data>
+                                                <type>file</type>
+                                                <src>${project.build.directory}/conf-deb/${pkg.name}.conf</src>
+                                                <dst>${pkg.installFolder}/conf/${pkg.name}.conf</dst>
+                                                <mapper>
+                                                    <type>perm</type>
+                                                    <filemode>0754</filemode>
+                                                    <user>${pkg.user}</user>
+                                                    <group>${pkg.user}</group>
+                                                </mapper>
+                                            </data>
+                                            <!-- Install scripts (optional; populated only when pkg.install.scripts.phase=process-resources) -->
+                                            <data>
+                                                <type>directory</type>
+                                                <src>${project.build.directory}/bin/install</src>
+                                                <optional>true</optional>
+                                                <mapper>
+                                                    <type>perm</type>
+                                                    <prefix>${pkg.installFolder}/bin/install</prefix>
+                                                    <filemode>0775</filemode>
+                                                    <user>${pkg.user}</user>
+                                                    <group>${pkg.user}</group>
+                                                </mapper>
+                                            </data>
+                                            <!-- Data files (optional; only present in application module) -->
+                                            <data>
+                                                <type>directory</type>
+                                                <src>${project.build.directory}/data</src>
+                                                <optional>true</optional>
+                                                <mapper>
+                                                    <type>perm</type>
+                                                    <prefix>${pkg.installFolder}/data</prefix>
+                                                    <filemode>0754</filemode>
+                                                    <user>${pkg.user}</user>
+                                                    <group>${pkg.user}</group>
+                                                </mapper>
+                                            </data>
+                                            <!-- Extensions (optional; populated at runtime for some deployments) -->
+                                            <data>
+                                                <type>directory</type>
+                                                <src>${project.build.directory}/extensions</src>
+                                                <optional>true</optional>
+                                                <mapper>
+                                                    <type>perm</type>
+                                                    <prefix>${pkg.installFolder}/extensions</prefix>
+                                                    <user>${pkg.user}</user>
+                                                    <group>${pkg.user}</group>
+                                                </mapper>
+                                            </data>
+                                            <!-- Systemd service file -->
+                                            <data>
+                                                <type>file</type>
+                                                <src>${project.build.directory}/control/template.service</src>
+                                                <dst>/lib/systemd/system/${pkg.name}.service</dst>
+                                                <mapper>
+                                                    <type>perm</type>
+                                                    <filemode>0644</filemode>
+                                                    <user>root</user>
+                                                    <group>root</group>
+                                                </mapper>
+                                            </data>
+                                            <!-- Symlink: bin/pkgName.yml -> conf/pkgName.yml -->
+                                            <data>
+                                                <type>link</type>
+                                                <linkName>${pkg.installFolder}/bin/${pkg.name}.yml</linkName>
+                                                <linkTarget>${pkg.installFolder}/conf/${pkg.name}.yml</linkTarget>
+                                                <symlink>true</symlink>
+                                            </data>
+                                            <!-- Symlink: /etc/pkgName/conf -> installFolder/conf -->
+                                            <data>
+                                                <type>link</type>
+                                                <linkName>/etc/${pkg.name}/conf</linkName>
+                                                <linkTarget>${pkg.installFolder}/conf</linkTarget>
+                                                <symlink>true</symlink>
+                                            </data>
+                                        </dataSet>
+                                    </configuration>
+                                </execution>
+                            </executions>
+                        </plugin>
+                        <!-- de.dentrassi.maven:rpm: RPM packaging for Java services -->
+                        <plugin>
+                            <groupId>de.dentrassi.maven</groupId>
+                            <artifactId>rpm</artifactId>
+                            <version>0.9.1</version>
+                            <executions>
+                                <execution>
+                                    <id>build-rpm</id>
+                                    <phase>${pkg.package.phase}</phase>
+                                    <goals>
+                                        <goal>rpm</goal>
+                                    </goals>
+                                    <configuration>
+                                        <skip>${pkg.skip.rpm}</skip>
+                                        <packageName>${pkg.name}</packageName>
+                                        <version>${pkg.rpm.version}</version>
+                                        <release>1</release>
+                                        <architecture>noarch</architecture>
+                                        <targetFileName>${pkg.name}.rpm</targetFileName>
+                                        <requires>
+                                            <require>(java-17 or java-17-headless or jre-17 or jre-17-headless or java-21 or java-21-headless or jre-21 or jre-21-headless or java-25 or java-25-headless or jre-25 or jre-25-headless)</require>
+                                        </requires>
+                                        <beforeInstallation>
+                                            <scriptFile>${project.build.directory}/control/rpm/preinst</scriptFile>
+                                        </beforeInstallation>
+                                        <afterInstallation>
+                                            <scriptFile>${project.build.directory}/control/rpm/postinst</scriptFile>
+                                        </afterInstallation>
+                                        <beforeRemoval>
+                                            <scriptFile>${project.build.directory}/control/rpm/prerm</scriptFile>
+                                        </beforeRemoval>
+                                        <afterRemoval>
+                                            <scriptFile>${project.build.directory}/control/rpm/postrm</scriptFile>
+                                        </afterRemoval>
+                                        <entries>
+                                            <!-- Main JAR -->
+                                            <entry>
+                                                <name>${pkg.installFolder}/bin/${pkg.name}.jar</name>
+                                                <file>${project.build.directory}/${project.build.finalName}-boot.${project.packaging}</file>
+                                                <mode>0500</mode>
+                                                <user>${pkg.user}</user>
+                                                <group>${pkg.user}</group>
+                                            </entry>
+                                            <!-- Conf files (except pkgName.conf) -->
+                                            <entry>
+                                                <name>${pkg.installFolder}/conf</name>
+                                                <collect>
+                                                    <from>${project.build.directory}/conf</from>
+                                                    <excludes>
+                                                        <exclude>${pkg.name}.conf</exclude>
+                                                    </excludes>
+                                                </collect>
+                                                <configuration>noreplace</configuration>
+                                                <mode>0754</mode>
+                                                <user>${pkg.user}</user>
+                                                <group>${pkg.user}</group>
+                                            </entry>
+                                            <!-- pkgName.conf with RPM platform token -->
+                                            <entry>
+                                                <name>${pkg.installFolder}/conf/${pkg.name}.conf</name>
+                                                <file>${project.build.directory}/conf-rpm/${pkg.name}.conf</file>
+                                                <configuration>noreplace</configuration>
+                                                <mode>0754</mode>
+                                                <user>${pkg.user}</user>
+                                                <group>${pkg.user}</group>
+                                            </entry>
+                                            <!-- Install scripts (optional) -->
+                                            <entry>
+                                                <name>${pkg.installFolder}/bin/install</name>
+                                                <collect>
+                                                    <from>${project.build.directory}/bin/install</from>
+                                                </collect>
+                                                <optional>true</optional>
+                                                <mode>0775</mode>
+                                                <user>${pkg.user}</user>
+                                                <group>${pkg.user}</group>
+                                            </entry>
+                                            <!-- Data files (optional) -->
+                                            <entry>
+                                                <name>${pkg.installFolder}/data</name>
+                                                <collect>
+                                                    <from>${project.build.directory}/data</from>
+                                                </collect>
+                                                <optional>true</optional>
+                                                <mode>0754</mode>
+                                                <user>${pkg.user}</user>
+                                                <group>${pkg.user}</group>
+                                            </entry>
+                                            <!-- Extensions (optional) -->
+                                            <entry>
+                                                <name>${pkg.installFolder}/extensions</name>
+                                                <collect>
+                                                    <from>${project.build.directory}/extensions</from>
+                                                </collect>
+                                                <optional>true</optional>
+                                                <user>${pkg.user}</user>
+                                                <group>${pkg.user}</group>
+                                            </entry>
+                                            <!-- Systemd service file -->
+                                            <entry>
+                                                <name>/usr/lib/systemd/system/${pkg.name}.service</name>
+                                                <file>${project.build.directory}/control/template.service</file>
+                                                <mode>0644</mode>
+                                                <user>root</user>
+                                                <group>root</group>
+                                            </entry>
+                                            <!-- Symlink: bin/pkgName.yml -> conf/pkgName.yml -->
+                                            <entry>
+                                                <name>${pkg.installFolder}/bin/${pkg.name}.yml</name>
+                                                <linkTo>${pkg.installFolder}/conf/${pkg.name}.yml</linkTo>
+                                            </entry>
+                                            <!-- Symlink: /etc/pkgName/conf -> installFolder/conf -->
+                                            <entry>
+                                                <name>/etc/${pkg.name}/conf</name>
+                                                <linkTo>${pkg.installFolder}/conf</linkTo>
+                                            </entry>
+                                        </entries>
+                                    </configuration>
                                 </execution>
                             </executions>
                         </plugin>
@@ -549,6 +855,7 @@
                             <groupId>org.apache.maven.plugins</groupId>
                             <artifactId>maven-assembly-plugin</artifactId>
                             <configuration>
+                                <skipAssembly>${pkg.skip.zip}</skipAssembly>
                                 <finalName>${pkg.name}</finalName>
                                 <descriptors>
                                     <descriptor>${main.dir}/packaging/${pkg.type}/assembly/windows.xml</descriptor>
@@ -565,23 +872,39 @@
                             </executions>
                         </plugin>
                         <plugin>
-                            <groupId>org.apache.maven.plugins</groupId>
-                            <artifactId>maven-install-plugin</artifactId>
-                            <configuration>
-                                <file>${project.build.directory}/${pkg.name}.deb</file>
-                                <artifactId>${project.artifactId}</artifactId>
-                                <groupId>${project.groupId}</groupId>
-                                <version>${project.version}</version>
-                                <classifier>deb</classifier>
-                                <packaging>deb</packaging>
-                            </configuration>
+                            <groupId>org.codehaus.mojo</groupId>
+                            <artifactId>build-helper-maven-plugin</artifactId>
                             <executions>
+                                <!-- Compute RPM-safe version (RPM does not allow dashes in version strings) -->
                                 <execution>
-                                    <id>install-deb</id>
-                                    <phase>${pkg.package.phase}</phase>
+                                    <id>rpm-safe-version</id>
+                                    <phase>${pkg.process-resources.phase}</phase>
                                     <goals>
-                                        <goal>install-file</goal>
+                                        <goal>regex-property</goal>
                                     </goals>
+                                    <configuration>
+                                        <name>pkg.rpm.version</name>
+                                        <value>${project.version}</value>
+                                        <regex>-</regex>
+                                        <replacement></replacement>
+                                        <failIfNoMatch>false</failIfNoMatch>
+                                    </configuration>
+                                </execution>
+                                <execution>
+                                    <id>attach-deb</id>
+                                    <phase>${pkg.deb.phase}</phase>
+                                    <goals>
+                                        <goal>attach-artifact</goal>
+                                    </goals>
+                                    <configuration>
+                                        <artifacts>
+                                            <artifact>
+                                                <file>${project.build.directory}/${pkg.name}.deb</file>
+                                                <type>deb</type>
+                                                <classifier>deb</classifier>
+                                            </artifact>
+                                        </artifacts>
+                                    </configuration>
                                 </execution>
                             </executions>
                         </plugin>
@@ -648,9 +971,14 @@
                     <version>${spring-boot.version}</version>
                 </plugin>
                 <plugin>
-                    <groupId>org.thingsboard</groupId>
-                    <artifactId>gradle-maven-plugin</artifactId>
-                    <version>1.0.12</version>
+                    <groupId>org.vafer</groupId>
+                    <artifactId>jdeb</artifactId>
+                    <version>1.10</version>
+                </plugin>
+                <plugin>
+                    <groupId>de.dentrassi.maven</groupId>
+                    <artifactId>rpm</artifactId>
+                    <version>0.9.1</version>
                 </plugin>
                 <plugin>
                     <groupId>com.github.eirslett</groupId>
@@ -660,7 +988,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>${surefire.version}</version>
+                    <version>${maven-surefire-plugin.version}</version>
                     <configuration>
                         <argLine>
                             -XX:+UseStringDeduplication -XX:MaxGCPauseMillis=200
@@ -673,12 +1001,17 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-install-plugin</artifactId>
-                    <version>3.0.0-M1</version>
+                    <version>${maven-install-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-deploy-plugin</artifactId>
-                    <version>3.0.0-M1</version>
+                    <version>${maven-deploy-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-enforcer-plugin</artifactId>
+                    <version>3.5.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
@@ -801,7 +1134,6 @@
                             <exclude>**/.eslintrc</exclude>
                             <exclude>**/.babelrc</exclude>
                             <exclude>**/.jshintrc</exclude>
-                            <exclude>**/.gradle/**</exclude>
                             <exclude>**/nightwatch</exclude>
                             <exclude>**/README</exclude>
                             <exclude>**/LICENSE</exclude>
@@ -847,7 +1179,6 @@
                             <jsx>SLASHSTAR_STYLE</jsx>
                             <tsx>SLASHSTAR_STYLE</tsx>
                             <conf>SCRIPT_STYLE</conf>
-                            <gradle>JAVADOC_STYLE</gradle>
                         </mapping>
                     </configuration>
                     <executions>

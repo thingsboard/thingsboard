@@ -33,12 +33,13 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <main.dir>${basedir}/..</main.dir>
         <pkg.type>java</pkg.type>
-        <pkg.disabled>false</pkg.disabled>
+        <pkg.skip.bootjar>false</pkg.skip.bootjar>
         <pkg.process-resources.phase>process-resources</pkg.process-resources.phase>
         <pkg.package.phase>package</pkg.package.phase>
         <pkg.name>tb-edqs</pkg.name>
         <pkg.win.dist>${project.build.directory}/windows</pkg.win.dist>
         <pkg.copyInstallScripts>true</pkg.copyInstallScripts>
+        <pkg.install.scripts.phase>process-resources</pkg.install.scripts.phase>
         <pkg.implementationTitle>ThingsBoard Entity Data Query Service</pkg.implementationTitle>
         <pkg.mainClass>org.thingsboard.server.edqs.ThingsboardEdqsApplication</pkg.mainClass>
     </properties>
@@ -172,16 +173,8 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
             <plugin>
-                <groupId>org.thingsboard</groupId>
-                <artifactId>gradle-maven-plugin</artifactId>
-            </plugin>
-            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-install-plugin</artifactId>
             </plugin>
             <plugin>
                 <groupId>org.xolstice.maven.plugins</groupId>

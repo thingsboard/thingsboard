@@ -1,0 +1,4 @@
+${pkg.installFolder}/conf/${pkg.name}.conf
+${pkg.installFolder}/conf/${pkg.name}.yml
+${pkg.installFolder}/conf/logback.xml
+${pkg.installFolder}/conf/actor-system.conf

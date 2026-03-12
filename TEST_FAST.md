@@ -6,7 +6,9 @@ export MAVEN_OPTS="-Xmx1024m"
 export NODE_OPTIONS="--max_old_space_size=4096"
 export SUREFIRE_JAVA_OPTS="-Xmx1200m -Xss256k -XX:+ExitOnOutOfMemoryError"
 
-mvn clean install -T6 -DskipTests
+# Compile and install all modules, skip packaging artifacts not needed for tests
+mvn clean install -T6 -DskipTests -Dpkg.skip.bootjar=true -Dpkg.skip.deb=true -Dpkg.skip.rpm=true -Dpkg.skip.zip=true
+
 mvn test -pl='!application,!dao,!ui-ngx,!msa/js-executor,!msa/web-ui' -T4
 mvn test -pl dao -Dparallel=packages -DforkCount=4
 
@@ -30,6 +32,15 @@ mvn test -pl application -Dtest='
 !**/*TestSuite.java
 ' -DforkCount=6 -Dparallel=packages -Dsurefire.rerunFailingTestsCount=2 -Dsurefire.failOnFlakeCount=5
 ```
+
+## pkg.skip.* flags reference
+
+| Flag                       | Skips                                     | Safe to skip for tests?                                      |
+|----------------------------|-------------------------------------------|--------------------------------------------------------------|
+| `-Dpkg.skip.bootjar=true`  | `spring-boot:repackage` (`*-boot.jar`)    | Yes — tests use the regular `.jar`, not the fat boot jar     |
+| `-Dpkg.skip.deb=true`      | jdeb `build-deb` + Maven `attach-artifact` | Yes — MSA docker modules copy the DEB from `target/` directly |
+| `-Dpkg.skip.rpm=true`      | `de.dentrassi.maven:rpm` `build-rpm`      | Yes — no test depends on the RPM                             |
+| `-Dpkg.skip.zip=true`      | `maven-assembly-plugin` Windows ZIP       | Yes — no test depends on the ZIP                             |
 
 ## Testcontainers compatibility with the Docker API workaround
 
