@@ -161,10 +161,14 @@ public class JobManagerTest extends AbstractControllerTest {
         int tasksCount = 200;
         JobId jobId = submitJob(DummyJobConfiguration.builder()
                 .successfulTasksCount(tasksCount)
-                .taskProcessingTimeMs(50)
+                .taskProcessingTimeMs(500) // long enough for the await below to fire before cancel propagation completes
                 .build()).getId();
 
-        Thread.sleep(500);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Job job = findJobById(jobId);
+            assertThat(job.getStatus()).isEqualTo(JobStatus.RUNNING);
+            assertThat(job.getResult().getSuccessfulCount()).isGreaterThan(0);
+        });
         cancelJob(jobId);
         await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
             Job job = findJobById(jobId);
@@ -518,12 +522,12 @@ public class JobManagerTest extends AbstractControllerTest {
         });
     }
 
-    private Job submitJob(DummyJobConfiguration configuration) {
+    protected Job submitJob(DummyJobConfiguration configuration) {
         return submitJob(configuration, "test-job");
     }
 
     @SneakyThrows
-    private Job submitJob(DummyJobConfiguration configuration, String key) {
+    protected Job submitJob(DummyJobConfiguration configuration, String key) {
         return jobManager.submitJob(Job.builder()
                 .tenantId(tenantId)
                 .type(JobType.DUMMY)
