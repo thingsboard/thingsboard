@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.notification.template;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -30,8 +31,11 @@ import java.util.UUID;
 @ToString(callSuper = true)
 public class MicrosoftTeamsDeliveryMethodNotificationTemplate extends DeliveryMethodNotificationTemplate implements HasSubject {
 
+    @Schema
     private String subject;
+    @Schema
     private String themeColor;
+    @Schema
     private Button button;
 
     private final List<TemplatableValue> templatableValues = List.of(
@@ -82,6 +86,7 @@ public class MicrosoftTeamsDeliveryMethodNotificationTemplate extends DeliveryMe
             this.setEntityIdInState = other.setEntityIdInState;
         }
 
+        @Schema
         public enum LinkType {
             LINK, DASHBOARD
         }

@@ -73,6 +73,7 @@ public class CalculatedFieldEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(DEFAULT_CF_NAME, calculatedFieldFromMsg.getName());
         Assert.assertEquals(savedDevice.getId(), calculatedFieldFromMsg.getEntityId());
         Assert.assertEquals(config, calculatedFieldFromMsg.getConfiguration());
+        Assert.assertEquals(calculatedField.getAdditionalInfo(), calculatedFieldFromMsg.getAdditionalInfo());
 
         edgeImitator.expectMessageAmount(1);
         savedCalculatedField.setName(UPDATED_CF_NAME);
@@ -147,7 +148,7 @@ public class CalculatedFieldEdgeTest extends AbstractEdgeTest {
         CalculatedFieldUpdateMsg calculatedFieldUpdateMsg = (CalculatedFieldUpdateMsg) latestMessage;
         CalculatedField calculatedFieldFromEdge = JacksonUtil.fromString(calculatedFieldUpdateMsg.getEntity(), CalculatedField.class, true);
         Assert.assertNotNull(calculatedFieldFromEdge);
-        Assert.assertEquals(savedCalculatedField, calculatedFieldFromEdge);
+        compareHasVersionEntities(savedCalculatedField, calculatedFieldFromEdge);
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, calculatedFieldUpdateMsg.getMsgType());
     }
 
@@ -229,6 +230,7 @@ public class CalculatedFieldEdgeTest extends AbstractEdgeTest {
         config.setOutput(output);
 
         calculatedField.setConfiguration(config);
+        calculatedField.setAdditionalInfo(JacksonUtil.newObjectNode());
 
         return calculatedField;
     }
@@ -260,6 +262,7 @@ public class CalculatedFieldEdgeTest extends AbstractEdgeTest {
         CalculatedField calculatedField = doGet("/api/calculatedField/" + uuid, CalculatedField.class);
         Assert.assertNotNull(calculatedField);
         Assert.assertEquals(resourceTitle, calculatedField.getName());
+        Assert.assertEquals(JacksonUtil.newObjectNode(), calculatedField.getAdditionalInfo());
     }
 
 }

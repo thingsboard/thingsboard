@@ -39,7 +39,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.rule.engine.TestDbCallbackExecutor;
+import org.thingsboard.common.util.DirectListeningExecutor;
 import org.thingsboard.rule.engine.ai.TbResponseFormat.TbJsonResponseFormat;
 import org.thingsboard.rule.engine.ai.TbResponseFormat.TbJsonSchemaResponseFormat;
 import org.thingsboard.rule.engine.ai.TbResponseFormat.TbTextResponseFormat;
@@ -164,7 +164,7 @@ class TbAiNodeTest {
         lenient().when(ctxMock.getTenantId()).thenReturn(tenantId);
         lenient().when(ctxMock.getAiModelService()).thenReturn(aiModelServiceMock);
         lenient().when(ctxMock.getAiChatModelService()).thenReturn(aiChatModelServiceMock);
-        lenient().when(ctxMock.getDbCallbackExecutor()).thenReturn(new TestDbCallbackExecutor());
+        lenient().when(ctxMock.getDbCallbackExecutor()).thenReturn(DirectListeningExecutor.INSTANCE);
         lenient().when(ctxMock.getTbResourceDataCache()).thenReturn(tbResourceDataCacheMock);
         lenient().when(ctxMock.getResourceService()).thenReturn(resourceServiceMock);
     }

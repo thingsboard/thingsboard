@@ -17,9 +17,11 @@ package org.thingsboard.server.config;
 
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.v3.core.converter.AnnotatedType;
 import io.swagger.v3.core.converter.ModelConverter;
 import io.swagger.v3.core.converter.ModelConverters;
+import io.swagger.v3.core.jackson.ModelResolver;
 import io.swagger.v3.core.util.Json;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
@@ -31,6 +33,7 @@ import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.media.Content;
+import io.swagger.v3.oas.models.media.IntegerSchema;
 import io.swagger.v3.oas.models.media.MediaType;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.parameters.RequestBody;
@@ -39,10 +42,10 @@ import io.swagger.v3.oas.models.responses.ApiResponses;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.tags.Tag;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springdoc.core.customizers.OperationCustomizer;
-import org.springdoc.core.customizers.RouterOperationCustomizer;
 import org.springdoc.core.discoverer.SpringDocParameterNameDiscoverer;
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springdoc.core.properties.SpringDocConfigProperties;
@@ -54,26 +57,27 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
-import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.exception.ThingsboardCredentialsExpiredResponse;
 import org.thingsboard.server.exception.ThingsboardErrorResponse;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
 import org.thingsboard.server.service.security.auth.rest.LoginResponse;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -83,11 +87,16 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @Profile("!test")
 public class SwaggerConfiguration {
 
+    @PostConstruct
+    public void configureModelResolver() {
+        ModelResolver.enumsAsRef = true;
+    }
+
     public static final String LOGIN_ENDPOINT = "/api/auth/login";
     public static final String REFRESH_TOKEN_ENDPOINT = "/api/auth/token";
 
-    private static final String LOGIN_PASSWORD_SCHEME = "HTTP login form";
-    private static final String API_KEY_SCHEME = "API key form";
+    private static final String LOGIN_PASSWORD_SCHEME = "HttpLoginForm";
+    private static final String API_KEY_SCHEME = "ApiKeyForm";
 
     private static final ApiResponses loginResponses = loginResponses();
     private static final ApiResponses defaultErrorResponses = defaultErrorResponses(false);
@@ -157,9 +166,9 @@ public class SwaggerConfiguration {
                 .in(SecurityScheme.In.HEADER)
                 .description("""
                         Enter the API key value with 'ApiKey' prefix in format: **ApiKey <your_api_key_value>**
-                        
+                                                
                         Example: **ApiKey tb_5te51SkLRYpjGrujUGwqkjFvooWBlQpVe2An2Dr3w13wjfxDW**
-                        
+                                                
                         <br>**NOTE**: Use only ONE authentication method at a time. If both are authorized, JWT auth takes the priority.<br>
                         """);
 
@@ -213,11 +222,12 @@ public class SwaggerConfiguration {
     private void addLoginOperation(OpenAPI openAPI) {
         var operation = new Operation();
         operation.summary("Login method to get user JWT token data");
+        operation.operationId("login");
         operation.description("""
                 Login method used to authenticate user and get JWT token data.
-                
+                                
                 Value of the response **token** field can be used as **X-Authorization** header value:
-                
+                                
                 `X-Authorization: Bearer $JWT_TOKEN_VALUE`.""");
 
         var requestBody = new RequestBody().description("Login request")
@@ -235,11 +245,12 @@ public class SwaggerConfiguration {
     private void addRefreshTokenOperation(OpenAPI openAPI) {
         var operation = new Operation();
         operation.summary("Refresh user JWT token data");
+        operation.operationId("refreshToken");
         operation.description("""
                 Method to refresh JWT token. Provide a valid refresh token to get a new JWT token.
-                
+                                
                 The response contains a new token that can be used for authorization.
-                
+                                
                 `X-Authorization: Bearer $JWT_TOKEN_VALUE`""");
 
         var requestBody = new RequestBody().description("Refresh token request")
@@ -260,7 +271,6 @@ public class SwaggerConfiguration {
         return GroupedOpenApi.builder()
                 .group(groupName)
                 .pathsToMatch(apiPath)
-                .addRouterOperationCustomizer(routerOperationCustomizer(localSpringDocParameterNameDiscoverer))
                 .addOperationCustomizer(operationCustomizer())
                 .addOpenApiCustomizer(customOpenApiCustomizer())
                 .build();
@@ -270,9 +280,21 @@ public class SwaggerConfiguration {
     @Lazy(false)
     ModelConverter mapAwareConverter() {
         return (type, context, chain) -> {
+            JavaType javaType = Json.mapper().constructType(type.getType());
+            if (javaType != null) {
+                Class<?> cls = javaType.getRawClass();
+                Schema<?> atomicSchema = switch (cls.getName()) {
+                    case "java.util.concurrent.atomic.AtomicInteger" -> new IntegerSchema().format("int32");
+                    case "java.util.concurrent.atomic.AtomicLong" -> new IntegerSchema().format("int64");
+                    case "com.google.common.util.concurrent.AtomicDouble" -> new IntegerSchema().format("double");
+                    default -> null;
+                };
+                if (atomicSchema != null) {
+                    return atomicSchema;
+                }
+            }
             if (chain.hasNext()) {
                 Schema schema = chain.next().resolve(type, context, chain);
-                JavaType javaType = Json.mapper().constructType(type.getType());
                 if (javaType != null) {
                     Class<?> cls = javaType.getRawClass();
                     if (Map.class.isAssignableFrom(cls)) {
@@ -281,6 +303,24 @@ public class SwaggerConfiguration {
                             if (schema.getProperties().isEmpty()) {
                                 schema.setProperties(null);
                             }
+                        }
+                    } else if (schema != null && schema.getProperties() != null && !schema.getProperties().isEmpty()) {
+                        try {
+                            var beanDesc = Json.mapper().getSerializationConfig().introspect(javaType);
+                            var orderedNames = resolvePropertyOrder(cls, beanDesc);
+                            if (!orderedNames.isEmpty()) {
+                                @SuppressWarnings("unchecked")
+                                Map<String, Schema> current = schema.getProperties();
+                                var reordered = new LinkedHashMap<String, Schema>();
+                                for (String name : orderedNames) {
+                                    Schema prop = current.get(name);
+                                    if (prop != null) reordered.put(name, prop);
+                                }
+                                current.forEach((k, v) -> reordered.putIfAbsent(k, v));
+                                schema.setProperties(reordered);
+                            }
+                        } catch (Exception ignored) {
+                            log.trace("Failed to resolve property order for {}", cls.getName(), ignored);
                         }
                     }
                 }
@@ -292,45 +332,18 @@ public class SwaggerConfiguration {
     }
 
     private void addDefaultSchemas(OpenAPI openAPI) {
-        var jsonNodeSchema = ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(JsonNode.class)).schema;
-        jsonNodeSchema.setType("any");
-        //noinspection unchecked
-        jsonNodeSchema.setExamples(List.of(JacksonUtil.newObjectNode()));
-        jsonNodeSchema.setDescription("A value representing the any type (object or primitive)");
+        Schema<?> errorCodeSchema = new Schema<>()
+                .type("integer")
+                .description("Platform error code")
+                ._enum(Arrays.stream(ThingsboardErrorCode.values())
+                        .map(ThingsboardErrorCode::getErrorCode)
+                        .collect(Collectors.toList()));
         openAPI.getComponents()
-                .addSchemas("JsonNode", jsonNodeSchema)
                 .addSchemas("LoginRequest", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(LoginRequest.class)).schema)
                 .addSchemas("LoginResponse", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(LoginResponse.class)).schema)
                 .addSchemas("ThingsboardErrorResponse", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(ThingsboardErrorResponse.class)).schema)
-                .addSchemas("ThingsboardCredentialsExpiredResponse", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(ThingsboardCredentialsExpiredResponse.class)).schema);
-    }
-
-    private RouterOperationCustomizer routerOperationCustomizer(SpringDocParameterNameDiscoverer localSpringDocParameterNameDiscoverer) {
-        return (routerOperation, handlerMethod) -> {
-            String[] pNames = localSpringDocParameterNameDiscoverer.getParameterNames(handlerMethod.getMethod());
-            String[] reflectionParametersNames = Arrays.stream(handlerMethod.getMethod().getParameters()).map(java.lang.reflect.Parameter::getName).toArray(String[]::new);
-            if (pNames == null || Arrays.stream(pNames).anyMatch(Objects::isNull)) {
-                pNames = reflectionParametersNames;
-            }
-            MethodParameter[] parameters = handlerMethod.getMethodParameters();
-            List<String> requestParams = new ArrayList<>();
-            for (var i = 0; i < parameters.length; i++) {
-                var methodParameter = parameters[i];
-                RequestParam requestParam = methodParameter.getParameterAnnotation(RequestParam.class);
-                if (requestParam != null) {
-                    String pName = StringUtils.isNotBlank(requestParam.value()) ? requestParam.value() :
-                            pNames[i];
-                    if (StringUtils.isNotBlank(pName)) {
-                        requestParams.add(pName);
-                    }
-                }
-            }
-            if (!requestParams.isEmpty()) {
-                var path = routerOperation.getPath() + "{?" + String.join(",", requestParams) + "}";
-                routerOperation.setPath(path);
-            }
-            return routerOperation;
-        };
+                .addSchemas("ThingsboardCredentialsExpiredResponse", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(ThingsboardCredentialsExpiredResponse.class)).schema)
+                .addSchemas("ThingsboardErrorCode", errorCodeSchema);
     }
 
     private OperationCustomizer operationCustomizer() {
@@ -370,22 +383,159 @@ public class SwaggerConfiguration {
             });
             sortedPaths.setExtensions(paths.getExtensions());
             openAPI.setPaths(sortedPaths);
+
+            if (openAPI.getComponents() != null && openAPI.getComponents().getSchemas() != null) {
+                Map<String, Schema> schemas = openAPI.getComponents().getSchemas();
+
+                // Fix all schemas: if they have additionalProperties but no type, set type to object
+                schemas.forEach((schemaName, schema) -> {
+                    if (schema.getAdditionalProperties() != null && schema.getType() == null) {
+                        schema.setType("object");
+                        log.debug("Added type 'object' to schema: {}", schemaName);
+                    }
+                });
+
+                // Fix polymorphic properties: replace inline oneOf with base type $ref
+                schemas.values().forEach(schema -> {
+                    replaceInlineOneOfProperties(schema, schemas);
+                    if (schema.getAllOf() != null) {
+                        List<Schema> allOf = schema.getAllOf();
+                        for (Schema allOfElement : allOf) {
+                            replaceInlineOneOfProperties(allOfElement, schemas);
+                        }
+                    }
+                });
+
+                // Fix polymorphic request/response bodies: replace inline oneOf with base type $ref
+                paths.values().stream()
+                        .flatMap(pathItem -> pathItem.readOperationsMap().values().stream())
+                        .forEach(operation -> {
+                            // Request bodies
+                            if (operation.getRequestBody() != null && operation.getRequestBody().getContent() != null) {
+                                replaceInlineOneOfInContent(operation.getRequestBody().getContent(), schemas);
+                            }
+                            // Response bodies
+                            if (operation.getResponses() != null) {
+                                operation.getResponses().values().stream()
+                                        .filter(response -> response.getContent() != null)
+                                        .forEach(response -> replaceInlineOneOfInContent(response.getContent(), schemas));
+                            }
+                        });
+            }
+
+            // Set JsonNode schema last so model scanning cannot overwrite it
+            openAPI.getComponents().addSchemas("JsonNode", new Schema<>()
+                    .description("A value representing the any type (object or primitive)")
+                    .example(JacksonUtil.newObjectNode()));
+
             var sortedSchemas = new TreeMap<>(openAPI.getComponents().getSchemas());
             openAPI.getComponents().setSchemas(new LinkedHashMap<>(sortedSchemas));
         };
     }
 
     private SecurityRequirement createSecurityRequirement(String schemeName) {
-        return new SecurityRequirement().addList(schemeName, Arrays.asList(
-                Authority.SYS_ADMIN.name(),
-                Authority.TENANT_ADMIN.name(),
-                Authority.CUSTOMER_USER.name()
-        ));
+        return new SecurityRequirement().addList(schemeName, List.of());
     }
 
     private Tag extractTagFromPath(Map.Entry<String, PathItem> entry) {
         var tagName = tagItemFromPathItem(entry.getValue());
         return tagName != null ? tagFromTagItem(tagName) : null;
+    }
+
+    private String findBaseTypeForOneOf(Map<String, Schema> schemas, List<Schema> oneOfSchemas) {
+        if (oneOfSchemas.isEmpty()) {
+            return null;
+        }
+
+        for (Schema oneOfSchema : oneOfSchemas) {
+            String ref = oneOfSchema.get$ref();
+            if (ref == null) {
+                continue;
+            }
+            String refName = ref.substring(ref.lastIndexOf('/') + 1);
+
+            // Check if this entry is itself a base type with discriminator
+            Schema<?> candidate = schemas.get(refName);
+            if (candidate != null && candidate.getDiscriminator() != null
+                    && candidate.getDiscriminator().getMapping() != null) {
+                return refName;
+            }
+
+            // Check if this subtype is in another schema's discriminator mapping
+            String baseType = schemas.entrySet().stream()
+                    .filter(entry -> {
+                        Schema<?> schema = entry.getValue();
+                        if (schema.getDiscriminator() != null && schema.getDiscriminator().getMapping() != null) {
+                            return schema.getDiscriminator().getMapping().values().stream()
+                                    .anyMatch(r -> r.endsWith("/" + refName));
+                        }
+                        return false;
+                    })
+                    .map(Map.Entry::getKey)
+                    .findFirst()
+                    .orElse(null);
+
+            if (baseType != null) {
+                return baseType;
+            }
+        }
+        return null;
+    }
+
+
+    private void replaceInlineOneOfInContent(Content content, Map<String, Schema> schemas) {
+        content.values().forEach(mediaType -> {
+            Schema<?> schema = mediaType.getSchema();
+            if (schema != null && schema.getOneOf() != null && !schema.getOneOf().isEmpty()) {
+                String baseType = findBaseTypeForOneOf(schemas, schema.getOneOf());
+                if (baseType != null) {
+                    Schema<?> refSchema = new Schema<>();
+                    refSchema.set$ref("#/components/schemas/" + baseType);
+                    mediaType.setSchema(refSchema);
+                    log.debug("Replaced oneOf in content with $ref to {}", baseType);
+                }
+            }
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    private void replaceInlineOneOfProperties(Schema<?> schema, Map<String, Schema> allSchemas) {
+        if (schema == null || schema.getProperties() == null) {
+            return;
+        }
+        schema.getProperties().forEach((propName, propSchema) -> {
+            if (propSchema instanceof Schema) {
+                Schema<?> prop = (Schema<?>) propSchema;
+
+                // Check if additionalProperties has oneOf (polymorphic map values)
+                if (prop.getAdditionalProperties() instanceof Schema) {
+                    Schema<?> additionalProps = (Schema<?>) prop.getAdditionalProperties();
+                    if (additionalProps.getOneOf() != null && !additionalProps.getOneOf().isEmpty()) {
+                        String baseType = findBaseTypeForOneOf(allSchemas, additionalProps.getOneOf());
+                        if (baseType != null) {
+                            Schema<?> refSchema = new Schema<>();
+                            refSchema.set$ref("#/components/schemas/" + baseType);
+                            prop.setAdditionalProperties(refSchema);
+                            log.debug("Replaced oneOf in additionalProperties with $ref to {} in property {}", baseType, propName);
+                        }
+                    }
+                }
+
+                // If property has oneOf, try to find the base discriminated type
+                if (prop.getOneOf() != null && !prop.getOneOf().isEmpty()) {
+                    String baseType = findBaseTypeForOneOf(allSchemas, prop.getOneOf());
+                    if (baseType != null) {
+                        Schema<?> refSchema = new Schema<>();
+                        refSchema.set$ref("#/components/schemas/" + baseType);
+                        if (prop.getDescription() != null) {
+                            refSchema.setDescription(prop.getDescription());
+                        }
+                        schema.getProperties().put(propName, refSchema);
+                        log.debug("Replaced oneOf with $ref to {} in property {}", baseType, propName);
+                    }
+                }
+            }
+        });
     }
 
     private String tagItemFromPathItem(PathItem item) {
@@ -480,28 +630,34 @@ public class SwaggerConfiguration {
     private static ApiResponses loginErrorResponses() {
         ApiResponses apiResponses = new ApiResponses();
 
-        apiResponses.addApiResponse("401", errorResponse("Unauthorized",
-                Map.of(
-                        "bad-credentials", errorExample("Bad credentials",
-                                ThingsboardErrorResponse.of("Invalid username or password", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED)),
-                        "token-expired", errorExample("JWT token expired",
-                                ThingsboardErrorResponse.of("Token has expired", ThingsboardErrorCode.JWT_TOKEN_EXPIRED, HttpStatus.UNAUTHORIZED)),
-                        "account-disabled", errorExample("Disabled account",
-                                ThingsboardErrorResponse.of("User account is not active", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED)),
-                        "account-locked", errorExample("Locked account",
-                                ThingsboardErrorResponse.of("User account is locked due to security policy", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED)),
-                        "authentication-failed", errorExample("General authentication error",
-                                ThingsboardErrorResponse.of("Authentication failed", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED))
-                )
+        Map<String, Example> unauthorizedExamples = new LinkedHashMap<>();
+
+        unauthorizedExamples.put("bad-credentials", errorExample("Bad credentials",
+                ThingsboardErrorResponse.of("Invalid username or password", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED)));
+
+        unauthorizedExamples.put("token-expired", errorExample("JWT token expired",
+                ThingsboardErrorResponse.of("Token has expired", ThingsboardErrorCode.JWT_TOKEN_EXPIRED, HttpStatus.UNAUTHORIZED)));
+
+        unauthorizedExamples.put("account-disabled", errorExample("Disabled account",
+                ThingsboardErrorResponse.of("User account is not active", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED)));
+
+        unauthorizedExamples.put("account-locked", errorExample("Locked account",
+                ThingsboardErrorResponse.of("User account is locked due to security policy", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED)));
+
+        unauthorizedExamples.put("authentication-failed", errorExample("General authentication error",
+                ThingsboardErrorResponse.of("Authentication failed", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED)));
+
+        unauthorizedExamples.put("credentials-expired", errorExample("Expired credentials",
+                ThingsboardCredentialsExpiredResponse.of("User password expired!", "udgDQOpS1Q4ZFEL8qHF9s8cSKQ7d1h")));
+
+        Schema<? extends ThingsboardErrorResponse> unauthorizedSchema = new Schema<>();
+        unauthorizedSchema.oneOf(List.of(
+                new Schema<ThingsboardErrorResponse>().$ref("#/components/schemas/ThingsboardErrorResponse"),
+                new Schema<ThingsboardCredentialsExpiredResponse>().$ref("#/components/schemas/ThingsboardCredentialsExpiredResponse")
         ));
-        var credentialsExpiredSchema = new Schema<ThingsboardCredentialsExpiredResponse>().$ref("#/components/schemas/ThingsboardCredentialsExpiredResponse");
-        apiResponses.addApiResponse("401 ", errorResponse("Unauthorized (**Expired credentials**)",
-                Map.of(
-                        "credentials-expired", errorExample("Expired credentials",
-                                ThingsboardCredentialsExpiredResponse.of("User password expired!", StringUtils.randomAlphanumeric(30)))
-                ),
-                credentialsExpiredSchema
-        ));
+
+        apiResponses.addApiResponse("401", errorResponse("Unauthorized", unauthorizedExamples, unauthorizedSchema));
+
         return apiResponses;
     }
 
@@ -520,10 +676,43 @@ public class SwaggerConfiguration {
         return new ApiResponse().description(description).content(content);
     }
 
+    private static List<String> resolvePropertyOrder(Class<?> cls, com.fasterxml.jackson.databind.BeanDescription beanDesc) {
+        // Map backing field names to their JSON property names (respects @JsonProperty)
+        Map<String, String> fieldToJsonName = new LinkedHashMap<>();
+        LinkedHashSet<String> getterOnlyNames = new LinkedHashSet<>();
+        for (var prop : beanDesc.findProperties()) {
+            if (prop.getField() != null) {
+                fieldToJsonName.put(prop.getField().getName(), prop.getName());
+            } else {
+                getterOnlyNames.add(prop.getName());
+            }
+        }
+
+        // Walk class hierarchy (superclass first) to get field declaration order
+        List<Class<?>> hierarchy = new ArrayList<>();
+        for (Class<?> c = cls; c != null && c != Object.class; c = c.getSuperclass()) {
+            hierarchy.add(0, c);
+        }
+        List<String> ordered = new ArrayList<>();
+        for (Class<?> c : hierarchy) {
+            for (Field f : c.getDeclaredFields()) {
+                if (Modifier.isStatic(f.getModifiers())) continue;
+                String jsonName = fieldToJsonName.get(f.getName());
+                if (jsonName != null) ordered.add(jsonName);
+            }
+        }
+
+        // Append getter-only properties (no backing field) at the end
+        ordered.addAll(getterOnlyNames);
+        return ordered;
+    }
+
     private static Example errorExample(String summary, ThingsboardErrorResponse example) {
+        var node = (ObjectNode) JacksonUtil.valueToTree(example);
+        node.put("timestamp", 1609459200000L);
         return new Example()
                 .summary(summary)
-                .value(example);
+                .value(node);
     }
 
 }

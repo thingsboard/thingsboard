@@ -106,6 +106,8 @@ export class AlarmRulesTableConfig extends EntityTableConfig<AlarmRuleTableEntit
       this.entityComponent = AlarmRulesComponent;
       this.entityTabsComponent = AlarmRulesTabsComponent;
       this.rowPointer = true;
+    } else {
+      this.addAsTextButton = false;
     }
     this.tableTitle = this.pageMode ? '' : this.translate.instant('alarm-rule.alarm-rules');
     this.detailsPanelEnabled = this.pageMode;
@@ -117,7 +119,7 @@ export class AlarmRulesTableConfig extends EntityTableConfig<AlarmRuleTableEntit
       type: 'alarm-rule.alarm-rule',
       typePlural: 'alarm-rule.alarm-rules',
       list: 'alarm-rule.list',
-      add: 'action.add',
+      add: 'alarm-rule.add',
       details: 'alarm-rule.details',
       noEntities: 'alarm-rule.no-found',
       search: 'action.search',

@@ -94,6 +94,8 @@ import org.thingsboard.server.common.data.asset.AssetSearchQuery;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldInfo;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.domain.Domain;
 import org.thingsboard.server.common.data.domain.DomainInfo;
@@ -169,6 +171,7 @@ import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.common.data.query.AvailableEntityKeys;
+import org.thingsboard.server.common.data.query.AvailableEntityKeysV2;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
@@ -1895,6 +1898,10 @@ public class RestClient implements Closeable {
                 }).getBody();
     }
 
+    /**
+     * @deprecated Use {@link #findAvailableEntityKeysV2(EntityDataQuery, boolean, boolean, Set, boolean)} instead.
+     */
+    @Deprecated(forRemoval = true)
     public AvailableEntityKeys findAvailableEntityKeysByQuery(EntityDataQuery query, boolean includeTimeseries, boolean includeAttributes, AttributeScope scope) {
         var uri = UriComponentsBuilder.fromUriString(baseURL)
                 .path("/api/entitiesQuery/find/keys")
@@ -1904,6 +1911,22 @@ public class RestClient implements Closeable {
                 .build()
                 .toUri();
         return restTemplate.exchange(uri, HttpMethod.POST, new HttpEntity<>(query), new ParameterizedTypeReference<AvailableEntityKeys>() {}).getBody();
+    }
+
+    @SneakyThrows(URISyntaxException.class)
+    public AvailableEntityKeysV2 findAvailableEntityKeysV2(
+            EntityDataQuery query, boolean includeTimeseries, boolean includeAttributes, Set<AttributeScope> scopes, boolean includeSamples
+    ) {
+        var builder = new URIBuilder(baseURL).appendPath("/api/v2/entitiesQuery/find/keys")
+                .addParameter("includeTimeseries", String.valueOf(includeTimeseries))
+                .addParameter("includeAttributes", String.valueOf(includeAttributes))
+                .addParameter("includeSamples", String.valueOf(includeSamples));
+        if (scopes != null) {
+            for (AttributeScope scope : scopes) {
+                builder.addParameter("scopes", scope.name());
+            }
+        }
+        return restTemplate.exchange(builder.build(), HttpMethod.POST, new HttpEntity<>(query), new ParameterizedTypeReference<AvailableEntityKeysV2>() {}).getBody();
     }
 
     public PageData<AlarmData> findAlarmDataByQuery(AlarmDataQuery query) {
@@ -4366,6 +4389,46 @@ public class RestClient implements Closeable {
                 new ParameterizedTypeReference<PageData<CalculatedField>>() {
                 }, params).getBody();
 
+    }
+
+    @SneakyThrows(URISyntaxException.class)
+    public PageData<CalculatedFieldInfo> getCalculatedFields(PageLink pageLink,
+                                                             Set<CalculatedFieldType> types,
+                                                             EntityType entityType,
+                                                             Set<UUID> entities,
+                                                             Set<String> names) {
+        var urlBuilder = new URIBuilder(baseURL).appendPath("/api/calculatedFields");
+        urlBuilder.addParameter("pageSize", String.valueOf(pageLink.getPageSize()));
+        urlBuilder.addParameter("page", String.valueOf(pageLink.getPage()));
+        if (!isEmpty(pageLink.getTextSearch())) {
+            urlBuilder.addParameter("textSearch", pageLink.getTextSearch());
+        }
+        if (pageLink.getSortOrder() != null) {
+            urlBuilder.addParameter("sortProperty", pageLink.getSortOrder().getProperty());
+            urlBuilder.addParameter("sortOrder", pageLink.getSortOrder().getDirection().name());
+        }
+        if (!CollectionUtils.isEmpty(types)) {
+            for (CalculatedFieldType type : types) {
+                urlBuilder.addParameter("types", type.name());
+            }
+        }
+        if (entityType != null) {
+            urlBuilder.addParameter("entityType", entityType.name());
+        }
+        if (!CollectionUtils.isEmpty(entities)) {
+            for (UUID entity : entities) {
+                urlBuilder.addParameter("entities", entity.toString());
+            }
+        }
+        if (!CollectionUtils.isEmpty(names)) {
+            for (String name : names) {
+                urlBuilder.addParameter("name", name);
+            }
+        }
+        return restTemplate.exchange(
+                urlBuilder.build(),
+                HttpMethod.GET, HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<CalculatedFieldInfo>>() {}).getBody();
     }
 
     public void deleteCalculatedField(CalculatedFieldId calculatedFieldId) {

@@ -16,6 +16,9 @@
 package org.thingsboard.server.dao.entity;
 
 import com.google.common.util.concurrent.FluentFuture;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -55,6 +58,7 @@ import org.thingsboard.server.common.msg.edqs.EdqsService;
 import org.thingsboard.server.common.stats.EdqsStatsService;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.sql.JpaExecutorService;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -104,6 +108,9 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     @Autowired
     private EdqsStatsService edqsStatsService;
 
+    @Autowired
+    private JpaExecutorService jpaExecutorService;
+
     @Override
     public long countEntitiesByQuery(TenantId tenantId, CustomerId customerId, EntityCountQuery query) {
         log.trace("Executing countEntitiesByQuery, tenantId [{}], customerId [{}], query [{}]", tenantId, customerId, query);
@@ -142,22 +149,55 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
             EdqsResponse response = processEdqsRequest(tenantId, customerId, request);
             result = response.getEntityDataQueryResult();
         } else {
-            if (!isValidForOptimization(query)) {
-                result = entityQueryDao.findEntityDataByQuery(tenantId, customerId, query);
-            } else {
-                // 1 step - find entity data by filter and sort columns
-                PageData<EntityData> entityDataByQuery = findEntityIdsByFilterAndSorterColumns(tenantId, customerId, query);
-                if (entityDataByQuery == null || entityDataByQuery.getData().isEmpty()) {
-                    result = entityDataByQuery;
-                } else {
-                    // 2 step - find entity data by entity ids from the 1st step
-                    List<EntityData> entities = fetchEntityDataByIdsFromInitialQuery(tenantId, customerId, query, entityDataByQuery.getData());
-                    result = new PageData<>(entities, entityDataByQuery.getTotalPages(), entityDataByQuery.getTotalElements(), entityDataByQuery.hasNext());
-                }
-            }
+            result = findEntityDataByQueryInternal(tenantId, customerId, query);
         }
         edqsStatsService.reportEntityDataQuery(tenantId, query, System.nanoTime() - startNs);
         return result;
+    }
+
+    @Override
+    public ListenableFuture<PageData<EntityData>> findEntityDataByQueryAsync(TenantId tenantId, CustomerId customerId, EntityDataQuery query) {
+        log.trace("Executing findEntityDataByQueryAsync, tenantId [{}], customerId [{}], query [{}]", tenantId, customerId, query);
+
+        try {
+            validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+            validateId(customerId, id -> INCORRECT_CUSTOMER_ID + id);
+            validateEntityDataQuery(query);
+        } catch (Exception e) {
+            return Futures.immediateFailedFuture(e);
+        }
+
+        if (edqsService.isApiEnabled() && validForEdqs(query) && !tenantId.isSysTenantId()) {
+            EdqsRequest request = EdqsRequest.builder()
+                    .entityDataQuery(query)
+                    .build();
+            long startNs = System.nanoTime();
+            return Futures.transform(processEdqsRequestAsync(tenantId, customerId, request), response -> {
+                edqsStatsService.reportEntityDataQuery(tenantId, query, System.nanoTime() - startNs);
+                return response.getEntityDataQueryResult();
+            }, MoreExecutors.directExecutor());
+        }
+
+        return jpaExecutorService.submit(() -> {
+            long startNs = System.nanoTime();
+            PageData<EntityData> result = findEntityDataByQueryInternal(tenantId, customerId, query);
+            edqsStatsService.reportEntityDataQuery(tenantId, query, System.nanoTime() - startNs);
+            return result;
+        });
+    }
+
+    private PageData<EntityData> findEntityDataByQueryInternal(TenantId tenantId, CustomerId customerId, EntityDataQuery query) {
+        if (!isValidForOptimization(query)) {
+            return entityQueryDao.findEntityDataByQuery(tenantId, customerId, query);
+        }
+        // 1 step - find entity data by filter and sort columns
+        PageData<EntityData> entityDataByQuery = findEntityIdsByFilterAndSorterColumns(tenantId, customerId, query);
+        if (entityDataByQuery == null || entityDataByQuery.getData().isEmpty()) {
+            return entityDataByQuery;
+        }
+        // 2 step - find entity data by entity ids from the 1st step
+        List<EntityData> entities = fetchEntityDataByIdsFromInitialQuery(tenantId, customerId, query, entityDataByQuery.getData());
+        return new PageData<>(entities, entityDataByQuery.getTotalPages(), entityDataByQuery.getTotalElements(), entityDataByQuery.hasNext());
     }
 
     private boolean validForEdqs(EntityCountQuery query) { // for compatibility with PE
@@ -165,18 +205,22 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     }
 
     private EdqsResponse processEdqsRequest(TenantId tenantId, CustomerId customerId, EdqsRequest request) {
-        EdqsResponse response;
         try {
-            log.debug("[{}] Sending request to EDQS: {}", tenantId, request);
-            response = edqsApiService.processRequest(tenantId, customerId, request).get();
+            return processEdqsRequestAsync(tenantId, customerId, request).get();
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
-        log.debug("[{}] Received response from EDQS: {}", tenantId, response);
-        if (response.getError() != null) {
-            throw new RuntimeException(response.getError());
-        }
-        return response;
+    }
+
+    private ListenableFuture<EdqsResponse> processEdqsRequestAsync(TenantId tenantId, CustomerId customerId, EdqsRequest request) {
+        log.debug("[{}] Sending request to EDQS: {}", tenantId, request);
+        return Futures.transform(edqsApiService.processRequest(tenantId, customerId, request), response -> {
+            log.debug("[{}] Received response from EDQS: {}", tenantId, response);
+            if (response.getError() != null) {
+                throw new RuntimeException(response.getError());
+            }
+            return response;
+        }, MoreExecutors.directExecutor());
     }
 
     @Override

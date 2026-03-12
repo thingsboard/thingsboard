@@ -41,6 +41,7 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.HasVersion;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbResource;
@@ -48,6 +49,7 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.ai.AiModel;
+import org.thingsboard.server.common.data.pat.ApiKey;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.asset.Asset;
@@ -60,6 +62,7 @@ import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.AiModelId;
+import org.thingsboard.server.common.data.id.ApiKeyId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
@@ -97,6 +100,7 @@ import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.gen.edge.v1.AiModelUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.ApiKeyUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AlarmCommentUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AlarmUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
@@ -193,6 +197,10 @@ public class EdgeMsgConstructorUtils {
             )
     );
 
+    private static void resetVersion(HasVersion entity) {
+        entity.setVersion(null);
+    }
+
     public static AlarmUpdateMsg constructAlarmUpdatedMsg(UpdateMsgType msgType, Alarm alarm) {
         return AlarmUpdateMsg.newBuilder().setMsgType(msgType)
                 .setEntity(JacksonUtil.toString(alarm))
@@ -205,6 +213,7 @@ public class EdgeMsgConstructorUtils {
     }
 
     public static AssetUpdateMsg constructAssetUpdatedMsg(UpdateMsgType msgType, Asset asset) {
+        resetVersion(asset);
         return AssetUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(asset))
                 .setIdMSB(asset.getUuidId().getMostSignificantBits())
                 .setIdLSB(asset.getUuidId().getLeastSignificantBits()).build();
@@ -218,6 +227,7 @@ public class EdgeMsgConstructorUtils {
     }
 
     public static AssetProfileUpdateMsg constructAssetProfileUpdatedMsg(UpdateMsgType msgType, AssetProfile assetProfile) {
+        resetVersion(assetProfile);
         return AssetProfileUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(assetProfile))
                 .setIdMSB(assetProfile.getId().getId().getMostSignificantBits())
                 .setIdLSB(assetProfile.getId().getId().getLeastSignificantBits()).build();
@@ -231,6 +241,7 @@ public class EdgeMsgConstructorUtils {
     }
 
     public static CustomerUpdateMsg constructCustomerUpdatedMsg(UpdateMsgType msgType, Customer customer) {
+        resetVersion(customer);
         return CustomerUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(customer))
                 .setIdMSB(customer.getId().getId().getMostSignificantBits())
                 .setIdLSB(customer.getId().getId().getLeastSignificantBits()).build();
@@ -244,6 +255,7 @@ public class EdgeMsgConstructorUtils {
     }
 
     public static DashboardUpdateMsg constructDashboardUpdatedMsg(UpdateMsgType msgType, Dashboard dashboard) {
+        resetVersion(dashboard);
         return DashboardUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(dashboard))
                 .setIdMSB(dashboard.getId().getId().getMostSignificantBits())
                 .setIdLSB(dashboard.getId().getId().getLeastSignificantBits()).build();
@@ -257,6 +269,7 @@ public class EdgeMsgConstructorUtils {
     }
 
     public static DeviceUpdateMsg constructDeviceUpdatedMsg(UpdateMsgType msgType, Device device) {
+        resetVersion(device);
         return DeviceUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(device))
                 .setIdMSB(device.getId().getId().getMostSignificantBits())
                 .setIdLSB(device.getId().getId().getLeastSignificantBits()).build();
@@ -270,10 +283,12 @@ public class EdgeMsgConstructorUtils {
     }
 
     public static DeviceCredentialsUpdateMsg constructDeviceCredentialsUpdatedMsg(DeviceCredentials deviceCredentials) {
+        resetVersion(deviceCredentials);
         return DeviceCredentialsUpdateMsg.newBuilder().setEntity(JacksonUtil.toString(deviceCredentials)).build();
     }
 
     public static DeviceProfileUpdateMsg constructDeviceProfileUpdatedMsg(UpdateMsgType msgType, DeviceProfile deviceProfile, EdgeVersion edgeVersion) {
+        resetVersion(deviceProfile);
         String entity = getEntityAndFixLwm2mBootstrapShortServerId(deviceProfile, edgeVersion);
         return DeviceProfileUpdateMsg.newBuilder().setMsgType(msgType).setEntity(entity)
                 .setIdMSB(deviceProfile.getId().getId().getMostSignificantBits())
@@ -387,6 +402,7 @@ public class EdgeMsgConstructorUtils {
     }
 
     public static EntityViewUpdateMsg constructEntityViewUpdatedMsg(UpdateMsgType msgType, EntityView entityView) {
+        resetVersion(entityView);
         return EntityViewUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(entityView))
                 .setIdMSB(entityView.getId().getId().getMostSignificantBits())
                 .setIdLSB(entityView.getId().getId().getLeastSignificantBits()).build();
@@ -486,6 +502,7 @@ public class EdgeMsgConstructorUtils {
     }
 
     public static RelationUpdateMsg constructRelationUpdatedMsg(UpdateMsgType msgType, EntityRelation entityRelation) {
+        resetVersion(entityRelation);
         return RelationUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(entityRelation)).build();
     }
 
@@ -503,6 +520,7 @@ public class EdgeMsgConstructorUtils {
     }
 
     public static RuleChainUpdateMsg constructRuleChainUpdatedMsg(UpdateMsgType msgType, RuleChain ruleChain, boolean isRoot) {
+        resetVersion(ruleChain);
         boolean isTemplateRoot = ruleChain.isRoot();
         ruleChain.setRoot(isRoot);
         RuleChainUpdateMsg result = RuleChainUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(ruleChain))
@@ -520,6 +538,7 @@ public class EdgeMsgConstructorUtils {
     }
 
     public static RuleChainMetadataUpdateMsg constructRuleChainMetadataUpdatedMsg(UpdateMsgType msgType, RuleChainMetaData ruleChainMetaData, EdgeVersion edgeVersion) {
+        resetVersion(ruleChainMetaData);
         String metaData = sanitizeMetadataForLegacyEdgeVersion(ruleChainMetaData, edgeVersion);
 
         return RuleChainMetadataUpdateMsg.newBuilder()
@@ -640,6 +659,7 @@ public class EdgeMsgConstructorUtils {
     }
 
     public static TenantUpdateMsg constructTenantUpdateMsg(UpdateMsgType msgType, Tenant tenant) {
+        resetVersion(tenant);
         return TenantUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(tenant)).build();
     }
 
@@ -648,6 +668,7 @@ public class EdgeMsgConstructorUtils {
     }
 
     public static UserUpdateMsg constructUserUpdatedMsg(UpdateMsgType msgType, User user) {
+        resetVersion(user);
         return UserUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(user))
                 .setIdMSB(user.getId().getId().getMostSignificantBits())
                 .setIdLSB(user.getId().getId().getLeastSignificantBits()).build();
@@ -665,6 +686,7 @@ public class EdgeMsgConstructorUtils {
     }
 
     public static WidgetsBundleUpdateMsg constructWidgetsBundleUpdateMsg(UpdateMsgType msgType, WidgetsBundle widgetsBundle, List<String> widgets) {
+        resetVersion(widgetsBundle);
         return WidgetsBundleUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(widgetsBundle))
                 .setWidgets(JacksonUtil.toString(widgets))
                 .setIdMSB(widgetsBundle.getId().getId().getMostSignificantBits())
@@ -680,6 +702,7 @@ public class EdgeMsgConstructorUtils {
     }
 
     public static WidgetTypeUpdateMsg constructWidgetTypeUpdateMsg(UpdateMsgType msgType, WidgetTypeDetails widgetTypeDetails) {
+        resetVersion(widgetTypeDetails);
         return WidgetTypeUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(widgetTypeDetails))
                 .setIdMSB(widgetTypeDetails.getId().getId().getMostSignificantBits())
                 .setIdLSB(widgetTypeDetails.getId().getId().getLeastSignificantBits()).build();
@@ -694,6 +717,7 @@ public class EdgeMsgConstructorUtils {
     }
 
     public static CalculatedFieldUpdateMsg constructCalculatedFieldUpdatedMsg(UpdateMsgType msgType, CalculatedField calculatedField) {
+        resetVersion(calculatedField);
         return CalculatedFieldUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(calculatedField))
                 .setIdMSB(calculatedField.getId().getId().getMostSignificantBits())
                 .setIdLSB(calculatedField.getId().getId().getLeastSignificantBits()).build();
@@ -707,6 +731,7 @@ public class EdgeMsgConstructorUtils {
     }
 
     public static AiModelUpdateMsg constructAiModelUpdatedMsg(UpdateMsgType msgType, AiModel aiModel) {
+        resetVersion(aiModel);
         return AiModelUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(aiModel))
                 .setIdMSB(aiModel.getId().getId().getMostSignificantBits())
                 .setIdLSB(aiModel.getId().getId().getLeastSignificantBits()).build();
@@ -717,6 +742,19 @@ public class EdgeMsgConstructorUtils {
                 .setMsgType(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE)
                 .setIdMSB(aiModelId.getId().getMostSignificantBits())
                 .setIdLSB(aiModelId.getId().getLeastSignificantBits()).build();
+    }
+
+    public static ApiKeyUpdateMsg constructApiKeyUpdatedMsg(UpdateMsgType msgType, ApiKey apiKey) {
+        return ApiKeyUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(apiKey))
+                .setIdMSB(apiKey.getId().getId().getMostSignificantBits())
+                .setIdLSB(apiKey.getId().getId().getLeastSignificantBits()).build();
+    }
+
+    public static ApiKeyUpdateMsg constructApiKeyDeleteMsg(ApiKeyId apiKeyId) {
+        return ApiKeyUpdateMsg.newBuilder()
+                .setMsgType(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE)
+                .setIdMSB(apiKeyId.getId().getMostSignificantBits())
+                .setIdLSB(apiKeyId.getId().getLeastSignificantBits()).build();
     }
 
     public static List<EdgeEvent> mergeAndFilterDownlinkDuplicates(List<EdgeEvent> edgeEvents) {

@@ -35,7 +35,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'corretto' # https://github.com/actions/setup-java?tab=readme-ov-file#supported-distributions
-          java-version: '21'
+          java-version: '25'
           cache: 'maven' # https://github.com/actions/setup-java?tab=readme-ov-file#caching-sbt-dependencies
 
       - name: License header format

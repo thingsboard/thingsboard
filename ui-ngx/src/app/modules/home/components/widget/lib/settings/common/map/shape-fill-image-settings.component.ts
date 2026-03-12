@@ -82,11 +82,12 @@ export class ShapeFillImageSettingsComponent implements ControlValueAccessor {
         renderer: this.renderer,
         componentType: ShapeFillImageSettingsPanelComponent,
         hostView: this.viewContainerRef,
-        preferredPlacement: 'left',
+        preferredPlacement: 'leftOnly',
         context: {
           shapeFillImageSettings: this.modelValue,
         },
-        isModal: true
+        isModal: true,
+        overlayStyle: {padding: '10px'}
       }).tbComponentRef.instance.shapeFillImageSettingsApplied.subscribe((shapeFillImageSettings) => {
         this.modelValue = shapeFillImageSettings;
         this.propagateChange(this.modelValue);

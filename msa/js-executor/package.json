@@ -39,7 +39,10 @@
     "fs-extra": "^11.3.1",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
-    "typescript": "5.9.2"
+    "typescript": "~5.9.3"
+  },
+  "resolutions": {
+    "@yao-pkg/pkg/tar": ">=7.5.8"
   },
   "pkg": {
     "assets": [

@@ -78,6 +78,10 @@ server:
     max_entities_per_data_subscription: "${TB_SERVER_WS_MAX_ENTITIES_PER_DATA_SUBSCRIPTION:10000}"
     # Maximum number of alarms returned for single alarm subscription. For example, no more than 10,000 alarms on the alarm widget
     max_entities_per_alarm_subscription: "${TB_SERVER_WS_MAX_ENTITIES_PER_ALARM_SUBSCRIPTION:10000}"
+    # Maximum size (bytes) of incoming WS text message
+    max_text_message_buffer_size: "${TB_SERVER_WS_MAX_TEXT_MESSAGE_BUFFER_SIZE:32768}"
+    # Maximum size (bytes) of incoming WS binary message
+    max_binary_message_buffer_size: "${TB_SERVER_WS_MAX_BINARY_MESSAGE_BUFFER_SIZE:32768}"
     # Maximum queue size of the websocket updates per session. This restriction prevents infinite updates of WS
     max_queue_messages_per_session: "${TB_SERVER_WS_DEFAULT_QUEUE_MESSAGES_PER_SESSION:1000}"
     # Maximum time between WS session opening and sending auth command
@@ -197,6 +201,8 @@ usage:
       enabled_per_customer: "${USAGE_STATS_REPORT_PER_CUSTOMER_ENABLED:false}"
       # Statistics reporting interval, set to send summarized data every 10 seconds by default
       interval: "${USAGE_STATS_REPORT_INTERVAL:60}"
+      # Reporting interval for urgent keys (e.g. SMS, Email) that require quicker usage state updates
+      urgent_interval: "${USAGE_STATS_REPORT_URGENT_INTERVAL:10}"
       # Amount of statistic messages in pack
       pack_size: "${USAGE_STATS_REPORT_PACK_SIZE:1024}"
     check:
@@ -339,6 +345,8 @@ cassandra:
     set_null_values_enabled: "${CASSANDRA_QUERY_SET_NULL_VALUES_ENABLED:true}"
     # log one of cassandra queries with specified frequency (0 - logging is disabled)
     print_queries_freq: "${CASSANDRA_QUERY_PRINT_FREQ:0}"
+    # Maximum total size in bytes of a Cassandra query result set across all pages. Default is 50MB. 0 means unlimited
+    max_result_set_size_in_bytes: "${CASSANDRA_QUERY_MAX_RESULT_SET_SIZE_IN_BYTES:52428800}"
     tenant_rate_limits:
       # Whether to print rate-limited tenant names when printing Cassandra query queue statistic
       print_tenant_names: "${CASSANDRA_QUERY_TENANT_RATE_LIMITS_PRINT_TENANT_NAMES:false}"
@@ -424,10 +432,11 @@ sql:
       edge_events_ttl: "${SQL_TTL_EDGE_EVENTS_TTL:2628000}" # Number of seconds. The current value corresponds to one month
     alarms:
       checking_interval: "${SQL_ALARMS_TTL_CHECKING_INTERVAL:7200000}" # Number of milliseconds. The current value corresponds to two hours
-      removal_batch_size: "${SQL_ALARMS_TTL_REMOVAL_BATCH_SIZE:3000}" # To delete outdated alarms not all at once but in batches
+      removal_batch_size: "${SQL_ALARMS_TTL_REMOVAL_BATCH_SIZE:3000}" # Batch size for records removal
     rpc:
       enabled: "${SQL_TTL_RPC_ENABLED:true}" # Enable/disable TTL (Time To Live) for rpc call records
       checking_interval: "${SQL_RPC_TTL_CHECKING_INTERVAL:7200000}" # Number of milliseconds. The current value corresponds to two hours
+      removal_batch_size: "${SQL_RPC_TTL_REMOVAL_BATCH_SIZE:10000}" # Batch size for records removal
     audit_logs:
       enabled: "${SQL_TTL_AUDIT_LOGS_ENABLED:true}" # Enable/disable TTL (Time To Live) for audit log records
       ttl: "${SQL_TTL_AUDIT_LOGS_SECS:0}" # Disabled by default. The accuracy of the cleanup depends on the sql.audit_logs.partition_size
@@ -436,6 +445,7 @@ sql:
       enabled: "${SQL_TTL_NOTIFICATIONS_ENABLED:true}" # Enable/disable TTL (Time To Live) for notification center records
       ttl: "${SQL_TTL_NOTIFICATIONS_SECS:2592000}" # Default value - 30 days
       checking_interval_ms: "${SQL_TTL_NOTIFICATIONS_CHECKING_INTERVAL_MS:86400000}" # Default value - 1 day
+      removal_batch_size: "${SQL_TTL_NOTIFICATIONS_REMOVAL_BATCH_SIZE:10000}" # Batch size for records removal
     api_keys:
       enabled: "${SQL_TTL_API_KEYS_ENABLED:true}" # Enable/disable TTL (Time To Live) for expired api keys records
       checking_interval_ms: "${SQL_TTL_API_KEYS_CHECKING_INTERVAL_MS:86400000}" # Default value - 1 day
@@ -507,6 +517,12 @@ actors:
       # Force acknowledgment of the incoming message for external rule nodes to decrease processing latency.
       # Enqueue the result of external node processing as a separate message to the rule engine.
       force_ack: "${ACTORS_RULE_EXTERNAL_NODE_FORCE_ACK:false}"
+      # Enable Server-Side Request Forgery (SSRF) protection for external HTTP rule nodes (rest api call).
+      # When enabled, requests to private/internal network addresses are blocked.
+      ssrf_protection_enabled: "${SSRF_PROTECTION_ENABLED:false}"
+      # Comma-separated list of additional blocked destinations (IPs, CIDR subnets, or hostnames).
+      # Example: "198.51.100.0/24,metadata.tencentyun.com,rancher-metadata"
+      ssrf_additional_blocked_hosts: "${SSRF_ADDITIONAL_BLOCKED_HOSTS:}"
   rpc:
     # Maximum number of persistent RPC call retries in case of failed request delivery.
     max_retries: "${ACTORS_RPC_MAX_RETRIES:5}"
@@ -1493,10 +1509,17 @@ edges:
     ssl:
       # Enable/disable SSL support
       enabled: "${EDGES_RPC_SSL_ENABLED:false}"
-      # Cert file to be used during TLS connectivity to the cloud
+      # Path to the server certificate file (holds server certificate or certificate chain, may include server private key).
+      # Accepts an absolute filesystem path (e.g. /etc/thingsboard/certChainFile.pem),
+      # a relative path resolved against the working directory first then the classpath,
+      # or a classpath resource with the explicit "classpath:" prefix (e.g. classpath:conf/certChainFile.pem).
       cert: "${EDGES_RPC_SSL_CERT:certChainFile.pem}"
-      # Private key file associated with the Cert certificate. This key is used in the encryption process during a secure connection
+      # Path to the server certificate private key file. Optional if the private key is already present in the cert file above.
+      # Supports the same path resolution as 'cert': absolute, relative/classpath, or "classpath:" prefix.
+      # Leave empty when using a combined PEM cert that already contains the private key.
       private_key: "${EDGES_RPC_SSL_PRIVATE_KEY:privateKeyFile.pem}"
+      # Server certificate private key password (optional). Leave empty if the key is not encrypted.
+      key_password: "${EDGES_RPC_SSL_KEY_PASSWORD:}"
     # Maximum size (in bytes) of inbound messages the cloud can handle from the edge. By default, it can handle messages up to 4 Megabytes
     max_inbound_message_size: "${EDGES_RPC_MAX_INBOUND_MESSAGE_SIZE:4194304}"
     # Maximum length of telemetry (time-series and attributes) message the cloud sends to the edge. By default, there is no limitation.
@@ -2039,7 +2062,7 @@ management:
     web:
       exposure:
         # Expose metrics endpoint (use value 'prometheus' to enable prometheus metrics).
-        include: '${METRICS_ENDPOINTS_EXPOSE:info}'
+        include: "${METRICS_ENDPOINTS_EXPOSE:info}"
   health:
     elasticsearch:
       # Enable the org.springframework.boot.actuate.elasticsearch.ElasticsearchRestClientHealthIndicator.doHealthCheck

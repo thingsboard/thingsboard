@@ -55,9 +55,6 @@ import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.StringUtils.isBlank;
 
-/**
- * @author Andrew Shvayka
- */
 @Service
 @Slf4j
 public class BaseTimeseriesService implements TimeseriesService {
@@ -159,6 +156,16 @@ public class BaseTimeseriesService implements TimeseriesService {
     @Override
     public ListenableFuture<List<String>> findAllKeysByEntityIdsAsync(TenantId tenantId, List<EntityId> entityIds) {
         return timeseriesLatestDao.findAllKeysByEntityIdsAsync(tenantId, entityIds);
+    }
+
+    @Override
+    public List<TsKvEntry> findLatestByEntityIds(TenantId tenantId, List<EntityId> entityIds) {
+        return timeseriesLatestDao.findLatestByEntityIds(tenantId, entityIds);
+    }
+
+    @Override
+    public ListenableFuture<List<TsKvEntry>> findLatestByEntityIdsAsync(TenantId tenantId, List<EntityId> entityIds) {
+        return timeseriesLatestDao.findLatestByEntityIdsAsync(tenantId, entityIds);
     }
 
     @Override

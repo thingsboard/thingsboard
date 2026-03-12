@@ -417,7 +417,7 @@ public class AdminController extends BaseController {
             "provider sends authorization code to specified redirect uri.)")
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @GetMapping(value = "/mail/oauth2/authorize", produces = "application/text")
-    public String getAuthorizationUrl(HttpServletRequest request, HttpServletResponse response) throws ThingsboardException {
+    public String getMailOAuth2AuthorizationUrl(HttpServletRequest request, HttpServletResponse response) throws ThingsboardException {
         String state = StringUtils.generateSafeToken();
         if (request.getParameter(PREV_URI_PATH_PARAMETER) != null) {
             CookieUtils.addCookie(response, PREV_URI_COOKIE_NAME, request.getParameter(PREV_URI_PATH_PARAMETER), 180);
@@ -442,7 +442,7 @@ public class AdminController extends BaseController {
     }
 
     @GetMapping(value = "/mail/oauth2/code", params = {"code", "state"})
-    public void codeProcessingUrl(
+    public void handleMailOAuth2Callback(
             @RequestParam(value = "code") String code, @RequestParam(value = "state") String state,
             HttpServletRequest request, HttpServletResponse response) throws ThingsboardException, IOException {
         Optional<Cookie> prevUrlOpt = CookieUtils.getCookie(request, PREV_URI_COOKIE_NAME);

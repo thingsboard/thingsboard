@@ -17,8 +17,11 @@ package org.thingsboard.server.common.data.alarm.rule.condition.schedule;
 
 import lombok.Data;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.io.Serializable;
 
+@Schema(name = "AlarmRuleCustomTimeScheduleItem")
 @Data
 public class CustomTimeScheduleItem implements Serializable {
 

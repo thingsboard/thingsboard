@@ -15,10 +15,12 @@
  */
 package org.thingsboard.server.common.data.sync.ie;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 
+@Schema
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class WidgetTypeExportData extends EntityExportData<WidgetTypeDetails> {

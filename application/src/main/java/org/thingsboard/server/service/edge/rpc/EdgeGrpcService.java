@@ -19,7 +19,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import io.grpc.Server;
+import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
+import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
+import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
 import io.grpc.stub.StreamObserver;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
@@ -37,7 +40,8 @@ import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
-import org.thingsboard.server.common.data.ResourceUtils;
+import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.transport.config.ssl.PemSslCredentials;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -67,7 +71,6 @@ import org.thingsboard.server.service.edge.EdgeContextComponent;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -112,6 +115,8 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private String certFileResource;
     @Value("${edges.rpc.ssl.private_key}")
     private String privateKeyResource;
+    @Value("${edges.rpc.ssl.key_password:}")
+    private String keyPassword;
     @Value("${edges.state.persistToTelemetry:false}")
     private boolean persistToTelemetry;
     @Value("${edges.rpc.client_max_keep_alive_time_sec:1}")
@@ -134,9 +139,6 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     @Autowired
     @Lazy
     private EdgeContextComponent ctx;
-
-    @Autowired
-    private TelemetrySubscriptionService tsSubService;
 
     @Autowired
     private TbClusterService clusterService;
@@ -176,9 +178,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                 .addService(this);
         if (sslEnabled) {
             try {
-                InputStream certFileIs = ResourceUtils.getInputStream(this, certFileResource);
-                InputStream privateKeyFileIs = ResourceUtils.getInputStream(this, privateKeyResource);
-                builder.useTransportSecurity(certFileIs, privateKeyFileIs);
+                setupSsl(builder);
             } catch (Exception e) {
                 log.error("Unable to set up SSL context. Reason: " + e.getMessage(), e);
                 throw new RuntimeException("Unable to set up SSL context!", e);
@@ -197,6 +197,33 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         this.executorService = ThingsBoardExecutors.newSingleThreadScheduledExecutor("edge-service");
         this.executorService.scheduleAtFixedRate(this::cleanupZombieSessions, 60, 60, TimeUnit.SECONDS);
         log.info("Edge RPC service initialized!");
+    }
+
+    /**
+     * Configures TLS for the Edge gRPC server.
+     * <p>
+     * Delegates PEM parsing and key management to {@link PemSslCredentials} — the same
+     * class used by MQTT, CoAP, and LwM2M transports — which supports:
+     * <ul>
+     *   <li>Separate certificate and private key files (classic two-file setup)</li>
+     *   <li>Combined PEM: certificate chain + private key in a single {@code cert} file
+     *       ({@code private_key} left empty)</li>
+     *   <li>Encrypted private keys (password supplied via {@code key_password})</li>
+     * </ul>
+     * Path resolution (for both {@code cert} and {@code private_key}) is handled by
+     * {@link org.thingsboard.server.common.data.ResourceUtils#getInputStream ResourceUtils}:
+     * absolute path → relative / working-dir → classpath → {@code classpath:} prefix.
+     */
+    void setupSsl(NettyServerBuilder builder) throws Exception {
+        PemSslCredentials credentials = new PemSslCredentials();
+        credentials.setCertFile(certFileResource);
+        credentials.setKeyFile(StringUtils.isEmpty(privateKeyResource) ? null : privateKeyResource);
+        credentials.setKeyPassword(keyPassword);
+        credentials.init(false);
+
+        SslContext sslContext = GrpcSslContexts.configure(
+                SslContextBuilder.forServer(credentials.createKeyManagerFactory())).build();
+        builder.sslContext(sslContext);
     }
 
     @PreDestroy
@@ -553,14 +580,14 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private void save(TenantId tenantId, EdgeId edgeId, String key, long value) {
         log.debug("[{}][{}] Updating long edge telemetry [{}] [{}]", tenantId, edgeId, key, value);
         if (persistToTelemetry) {
-            tsSubService.saveTimeseries(TimeseriesSaveRequest.builder()
+            ctx.getTsSubService().saveTimeseries(TimeseriesSaveRequest.builder()
                     .tenantId(tenantId)
                     .entityId(edgeId)
                     .entry(new LongDataEntry(key, value))
                     .callback(new AttributeSaveCallback(tenantId, edgeId, key, value))
                     .build());
         } else {
-            tsSubService.saveAttributes(AttributesSaveRequest.builder()
+            ctx.getTsSubService().saveAttributes(AttributesSaveRequest.builder()
                     .tenantId(tenantId)
                     .entityId(edgeId)
                     .scope(AttributeScope.SERVER_SCOPE)
@@ -573,14 +600,14 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private void save(TenantId tenantId, EdgeId edgeId, String key, boolean value) {
         log.debug("[{}][{}] Updating boolean edge telemetry [{}] [{}]", tenantId, edgeId, key, value);
         if (persistToTelemetry) {
-            tsSubService.saveTimeseries(TimeseriesSaveRequest.builder()
+            ctx.getTsSubService().saveTimeseries(TimeseriesSaveRequest.builder()
                     .tenantId(tenantId)
                     .entityId(edgeId)
                     .entry(new BooleanDataEntry(key, value))
                     .callback(new AttributeSaveCallback(tenantId, edgeId, key, value))
                     .build());
         } else {
-            tsSubService.saveAttributes(AttributesSaveRequest.builder()
+            ctx.getTsSubService().saveAttributes(AttributesSaveRequest.builder()
                     .tenantId(tenantId)
                     .entityId(edgeId)
                     .scope(AttributeScope.SERVER_SCOPE)
@@ -588,32 +615,6 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                     .callback(new AttributeSaveCallback(tenantId, edgeId, key, value))
                     .build());
         }
-    }
-
-    private static class AttributeSaveCallback implements FutureCallback<Void> {
-
-        private final TenantId tenantId;
-        private final EdgeId edgeId;
-        private final String key;
-        private final Object value;
-
-        AttributeSaveCallback(TenantId tenantId, EdgeId edgeId, String key, Object value) {
-            this.tenantId = tenantId;
-            this.edgeId = edgeId;
-            this.key = key;
-            this.value = value;
-        }
-
-        @Override
-        public void onSuccess(@Nullable Void result) {
-            log.trace("[{}][{}] Successfully updated attribute [{}] with value [{}]", tenantId, edgeId, key, value);
-        }
-
-        @Override
-        public void onFailure(Throwable t) {
-            log.warn("[{}][{}] Failed to update attribute [{}] with value [{}]", tenantId, edgeId, key, value, t);
-        }
-
     }
 
     private void pushRuleEngineMessage(TenantId tenantId, Edge edge, long ts, TbMsgType msgType) {

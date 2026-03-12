@@ -14,49 +14,16 @@
 /// limitations under the License.
 ///
 
-import {
-  Overlay,
-  ScrollStrategyOptions,
-  OverlayKeyboardDispatcher, OverlayOutsideClickDispatcher, OverlayPositionBuilder
-} from '@angular/cdk/overlay';
-import { ComponentFactoryResolver, Inject, Injectable, Injector, NgZone, DOCUMENT } from '@angular/core';
+import { Overlay } from '@angular/cdk/overlay';
+import { inject, Injectable } from '@angular/core';
 import { DynamicOverlayContainer } from './dynamic-overlay-container';
-import { Location } from '@angular/common';
-import { Directionality } from '@angular/cdk/bidi';
 
 @Injectable()
 export class DynamicOverlay extends Overlay {
 
-  private _dynamicOverlayContainer: DynamicOverlayContainer;
+  private _dynamicOverlayContainer = inject(DynamicOverlayContainer);
 
-  constructor( scrollStrategies: ScrollStrategyOptions,
-               _overlayContainer: DynamicOverlayContainer,
-               _componentFactoryResolver: ComponentFactoryResolver,
-               _positionBuilder: OverlayPositionBuilder,
-               _keyboardDispatcher: OverlayKeyboardDispatcher,
-               _injector: Injector,
-               _ngZone: NgZone,
-               @Inject(DOCUMENT) document: Document,
-               _directionality: Directionality,
-               _location: Location,
-               _outsideClickDispatcher: OverlayOutsideClickDispatcher) {
-
-    super( scrollStrategies,
-      _overlayContainer,
-      _componentFactoryResolver,
-      _positionBuilder,
-      _keyboardDispatcher,
-      _injector,
-      _ngZone,
-      document,
-      _directionality,
-      _location,
-      _outsideClickDispatcher);
-
-    this._dynamicOverlayContainer = _overlayContainer;
-  }
-
-  public setContainerElement(containerElement:HTMLElement ): void {
-    this._dynamicOverlayContainer.setContainerElement( containerElement );
+  public setContainerElement(containerElement: HTMLElement): void {
+    this._dynamicOverlayContainer.setContainerElement(containerElement);
   }
 }

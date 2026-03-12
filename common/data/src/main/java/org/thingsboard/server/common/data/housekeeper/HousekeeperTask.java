@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -44,6 +45,9 @@ import java.io.Serializable;
 @Data
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class HousekeeperTask implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = -2585974110832225152L;
 
     private TenantId tenantId;
     private EntityId entityId;

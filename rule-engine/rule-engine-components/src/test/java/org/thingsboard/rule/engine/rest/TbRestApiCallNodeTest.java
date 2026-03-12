@@ -65,6 +65,7 @@ import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -226,18 +227,7 @@ public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
                     assertTrue(request.containsHeader("Foo"), "Custom header included");
                     assertEquals("Bar", request.getFirstHeader("Foo").getValue(), "Custom header value");
                     response.setStatusCode(200);
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            try {
-                                Thread.sleep(1000L);
-                            } catch (InterruptedException e) {
-                                // ignore
-                            } finally {
-                                latch.countDown();
-                            }
-                        }
-                    }).start();
+                    latch.countDown();
                 } catch (Exception e) {
                     System.out.println("Exception handling request: " + e.toString());
                     e.printStackTrace();
@@ -269,7 +259,7 @@ public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         ArgumentCaptor<TbMsgMetaData> metadataCaptor = ArgumentCaptor.forClass(TbMsgMetaData.class);
         ArgumentCaptor<String> dataCaptor = ArgumentCaptor.forClass(String.class);
-        verify(ctx).transformMsg(msgCaptor.capture(), metadataCaptor.capture(), dataCaptor.capture());
+        verify(ctx, timeout(10_000)).transformMsg(msgCaptor.capture(), metadataCaptor.capture(), dataCaptor.capture());
 
         assertNotSame(metaData, metadataCaptor.getValue());
         assertEquals(TbMsg.EMPTY_JSON_OBJECT, dataCaptor.getValue());
@@ -295,18 +285,7 @@ public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
                     assertTrue(request.containsHeader("Foo"), "Custom header included");
                     assertEquals("Bar", request.getFirstHeader("Foo").getValue(), "Custom header value");
                     response.setStatusCode(200);
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            try {
-                                Thread.sleep(1000L);
-                            } catch (InterruptedException e) {
-                                // ignore
-                            } finally {
-                                latch.countDown();
-                            }
-                        }
-                    }).start();
+                    latch.countDown();
                 } catch (Exception e) {
                     System.out.println("Exception handling request: " + e.toString());
                     e.printStackTrace();
@@ -338,7 +317,7 @@ public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         ArgumentCaptor<TbMsgMetaData> metadataCaptor = ArgumentCaptor.forClass(TbMsgMetaData.class);
         ArgumentCaptor<String> dataCaptor = ArgumentCaptor.forClass(String.class);
-        verify(ctx).transformMsg(msgCaptor.capture(), metadataCaptor.capture(), dataCaptor.capture());
+        verify(ctx, timeout(10_000)).transformMsg(msgCaptor.capture(), metadataCaptor.capture(), dataCaptor.capture());
 
         assertNotSame(metaData, metadataCaptor.getValue());
         assertEquals(TbMsg.EMPTY_JSON_OBJECT, dataCaptor.getValue());

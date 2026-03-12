@@ -16,16 +16,20 @@
 package org.thingsboard.server.common.data.device.profile;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.transport.snmp.config.SnmpCommunicationConfig;
 
 import java.util.List;
 
+@Schema
 @Data
 public class SnmpDeviceProfileTransportConfiguration implements DeviceProfileTransportConfiguration {
     private Integer timeoutMs;
     private Integer retries;
+    @ArraySchema(schema = @Schema(implementation = SnmpCommunicationConfig.class))
     private List<SnmpCommunicationConfig> communicationConfigs;
 
     @Override

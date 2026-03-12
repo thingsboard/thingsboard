@@ -239,6 +239,9 @@ import { DateExpirationPipe } from '@shared/pipe/date-expiration.pipe';
 import { EntityLimitExceededDialogComponent } from '@shared/components/dialog/entity-limit-exceeded-dialog.component';
 import { DynamicMatDialogModule } from '@shared/components/dialog/dynamic/dynamic-dialog.module';
 import { MAT_BUTTON_TOGGLE_DEFAULT_OPTIONS } from '@angular/material/button-toggle';
+import { RgbaInputComponent } from '@shared/components/color-picker/rgba-input.component';
+import { HslaInputComponent } from '@shared/components/color-picker/hsla-input.component';
+import { InputChangeDirective } from '@shared/components/color-picker/input-change.directive';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -466,7 +469,10 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     MqttVersionSelectComponent,
     PasswordRequirementsTooltipComponent,
     TimeUnitInputComponent,
-    StringPatternAutocompleteComponent
+    StringPatternAutocompleteComponent,
+    RgbaInputComponent,
+    HslaInputComponent,
+    InputChangeDirective
   ],
   imports: [
     CommonModule,

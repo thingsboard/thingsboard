@@ -16,11 +16,13 @@
 package org.thingsboard.server.common.data.device.profile.lwm2m;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.eclipse.leshan.core.LwM2m;
 
 import java.io.Serializable;
 
+@Schema
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ObjectAttributes implements Serializable {

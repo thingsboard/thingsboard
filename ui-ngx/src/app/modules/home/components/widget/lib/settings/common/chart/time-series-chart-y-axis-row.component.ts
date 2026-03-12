@@ -29,7 +29,7 @@ import {
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import {
-  AxisPosition,
+  AxisPosition, normalizeAxisLimit,
   timeSeriesAxisPositionTranslations,
   TimeSeriesChartYAxisSettings
 } from '@home/components/widget/lib/chart/time-series-chart.models';
@@ -136,8 +136,8 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
 
   writeValue(value: TimeSeriesChartYAxisSettings): void {
     this.modelValue = value;
-    const min = this.normalizeLimit(value.min);
-    const max = this.normalizeLimit(value.max);
+    const min = normalizeAxisLimit(value.min);
+    const max = normalizeAxisLimit(value.max);
 
     this.axisFormGroup.patchValue({
       label: value.label,
@@ -251,28 +251,5 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
       entityKey: [null, []],
       entityKeyType: [null, []]
     });
-  }
-
-  private normalizeLimit(limit: any) {
-    const base = {
-      type: ValueSourceType.constant,
-      value: null,
-      latestKey: null,
-      latestKeyType: null,
-      entityAlias: null,
-      entityKey: null,
-      entityKeyType: null
-    };
-
-    if (limit == null) return base;
-
-    if (typeof limit === 'number' || typeof limit === 'string') {
-      return { ...base, type: ValueSourceType.constant, value: Number(limit) };
-    }
-
-    return {
-      ...base,
-      ...limit,
-    };
   }
 }
