@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, SecurityContext } from '@angular/core';
 import {
   ActionButtonLinkType,
   Notification,
@@ -33,6 +33,7 @@ import tinycolor from 'tinycolor2';
 import { StateObject } from '@core/api/widget-api.models';
 import { objToBase64URI } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { DomSanitizer } from '@angular/platform-browser';
 
 @Component({
     selector: 'tb-notification',
@@ -71,7 +72,8 @@ export class NotificationComponent implements OnInit {
 
   constructor(
     private utils: UtilsService,
-    private router: Router
+    private router: Router,
+    private sanitizer: DomSanitizer
   ) {
   }
 
@@ -79,11 +81,10 @@ export class NotificationComponent implements OnInit {
     this.showIcon = this.notification.additionalConfig?.icon?.enabled;
     this.showButton = this.notification.additionalConfig?.actionButtonConfig?.enabled;
     this.hideMarkAsReadButton = this.notification.status === NotificationStatus.READ;
-    this.title = this.utils.customTranslation(this.notification.subject, this.notification.subject);
-    this.message = this.utils.customTranslation(this.notification.text, this.notification.text);
+    this.title = this.sanitizer.sanitize(SecurityContext.HTML, this.utils.customTranslation(this.notification.subject));
+    this.message = this.sanitizer.sanitize(SecurityContext.HTML, this.utils.customTranslation(this.notification.text));
     if (this.showButton) {
-      this.buttonLabel = this.utils.customTranslation(this.notification.additionalConfig.actionButtonConfig.text,
-                                                      this.notification.additionalConfig.actionButtonConfig.text);
+      this.buttonLabel = this.utils.customTranslation(this.notification.additionalConfig.actionButtonConfig.text);
     }
   }
 
