@@ -72,7 +72,6 @@ class MqttRpcHealthCheckerTest {
 
         when(connectToken.getException()).thenReturn(null);
         when(mqttClient.connectWithResult(any())).thenReturn(connectToken);
-        when(mqttClient.isConnected()).thenReturn(false);
     }
 
     @Test
