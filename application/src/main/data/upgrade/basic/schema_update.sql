@@ -14,6 +14,12 @@
 -- limitations under the License.
 --
 
+-- CALCULATED FIELD ADDITIONAL INFO ADDITION START
+
+ALTER TABLE calculated_field ADD COLUMN IF NOT EXISTS additional_info varchar;
+
+-- CALCULATED FIELD ADDITIONAL INFO ADDITION END
+
 -- CLEANUP ORPHANED OTA PACKAGE LARGE OBJECTS START
 
 -- This script cleans up orphaned PostgreSQL large objects that are no longer referenced by the ota_package table.
