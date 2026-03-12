@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.awaitility.Awaitility;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -60,6 +61,9 @@ import static org.mockito.Mockito.verify;
 @Slf4j
 @DaoSqlTest
 public class AuditLogControllerTest extends AbstractControllerTest {
+
+    // Small enough to force multiple pages, verifying pagination loop correctness
+    private static final int SMALL_PAGE_SIZE = 5;
 
     private Tenant savedTenant;
     private User tenantAdmin;
@@ -112,17 +116,14 @@ public class AuditLogControllerTest extends AbstractControllerTest {
             doPost("/api/device", device, Device.class);
         }
 
-        List<AuditLog> loadedAuditLogs = getAuditLogs(5, "/api/audit/logs?");
+        Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() ->
+                assertThat(getAuditLogs(SMALL_PAGE_SIZE, "/api/audit/logs?")).hasSize(11 + 1));
 
-        Assert.assertEquals(11 + 1, loadedAuditLogs.size());
+        Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() ->
+                assertThat(getAuditLogs(SMALL_PAGE_SIZE, "/api/audit/logs/customer/" + ModelConstants.NULL_UUID + "?")).hasSize(11 + 1));
 
-        loadedAuditLogs = getAuditLogs(5, "/api/audit/logs/customer/" + ModelConstants.NULL_UUID + "?");
-
-        Assert.assertEquals(11 + 1, loadedAuditLogs.size());
-
-        loadedAuditLogs = getAuditLogs(5, "/api/audit/logs/user/" + tenantAdmin.getId().getId().toString() + "?");
-
-        Assert.assertEquals(11 + 1, loadedAuditLogs.size());
+        Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() ->
+                assertThat(getAuditLogs(SMALL_PAGE_SIZE, "/api/audit/logs/user/" + tenantAdmin.getId().getId().toString() + "?")).hasSize(11 + 1));
     }
 
     @Test
@@ -136,9 +137,10 @@ public class AuditLogControllerTest extends AbstractControllerTest {
             doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
         }
 
-        List<AuditLog> loadedAuditLogs = getAuditLogs(100, "/api/audit/logs?");
-
-        Assert.assertEquals("Have X audit log before this test + New tenant profiles in the test", loadedAuditLogsBefore.size() + 3, loadedAuditLogs.size());
+        int expectedSize = loadedAuditLogsBefore.size() + 3;
+        Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() ->
+                Assert.assertEquals("Have X audit log before this test + New tenant profiles in the test",
+                        expectedSize, getAuditLogs(100, "/api/audit/logs?").size()));
     }
 
     private List<AuditLog> getAuditLogs(int pageSize, String urlTemplate) throws Exception {
@@ -168,9 +170,9 @@ public class AuditLogControllerTest extends AbstractControllerTest {
             savedDevice = doPost("/api/device", savedDevice, Device.class);
         }
 
-        List<AuditLog> loadedAuditLogs = getAuditLogs(5, "/api/audit/logs/entity/DEVICE/" + savedDevice.getId().getId() + "?");
-
-        Assert.assertEquals(11 + 1, loadedAuditLogs.size());
+        Device finalSavedDevice = savedDevice;
+        Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() ->
+                assertThat(getAuditLogs(SMALL_PAGE_SIZE, "/api/audit/logs/entity/DEVICE/" + finalSavedDevice.getId().getId() + "?")).hasSize(11 + 1));
     }
 
     @Test
@@ -186,9 +188,10 @@ public class AuditLogControllerTest extends AbstractControllerTest {
         tenantProfile.setName(tenantProfile.getName() + "(old)");
         tenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
 
-        List<AuditLog> loadedAuditLogs = getAuditLogs(5, "/api/audit/logs/entity/" +tenantProfile.getId().getEntityType()+ "/" + tenantProfile.getId().getId() + "?");
-
-        Assert.assertEquals("Audit logs count by Tenant Profile entity", 2, loadedAuditLogs.size());
+        TenantProfile finalTenantProfile = tenantProfile;
+        Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() ->
+                assertThat(getAuditLogs(SMALL_PAGE_SIZE, "/api/audit/logs/entity/" + finalTenantProfile.getId().getEntityType() + "/" + finalTenantProfile.getId().getId() + "?"))
+                        .as("Audit logs count by Tenant Profile entity").hasSize(2));
 
         //cleanup
         doDelete("/api/tenantProfile/" + tenantProfile.getId().getId().toString());

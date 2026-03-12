@@ -24,12 +24,13 @@ import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.dao.Dao;
 
 public interface RpcDao extends Dao<Rpc> {
+
     PageData<Rpc> findAllByDeviceId(TenantId tenantId, DeviceId deviceId, PageLink pageLink);
 
     PageData<Rpc> findAllByDeviceIdAndStatus(TenantId tenantId, DeviceId deviceId, RpcStatus rpcStatus, PageLink pageLink);
 
     PageData<Rpc> findAllRpcByTenantId(TenantId tenantId, PageLink pageLink);
 
-    int deleteOutdatedRpcByTenantId(TenantId tenantId, Long expirationTime);
+    int deleteOutdatedRpcByTenantIdBatch(TenantId tenantId, Long expirationTime, int batchSize);
 
 }

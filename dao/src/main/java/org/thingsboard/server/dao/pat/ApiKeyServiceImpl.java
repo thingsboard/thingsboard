@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.common.data.id.ApiKeyId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
@@ -34,9 +35,11 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.pat.ApiKey;
 import org.thingsboard.server.common.data.pat.ApiKeyInfo;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
+import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.service.validator.ApiKeyDataValidator;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -73,13 +76,20 @@ public class ApiKeyServiceImpl extends AbstractCachedEntityService<ApiKeyCacheKe
 
     @Override
     public ApiKey saveApiKey(TenantId tenantId, ApiKeyInfo apiKeyInfo) {
+        return saveApiKey(tenantId, apiKeyInfo, null, true);
+    }
+
+    @Override
+    public ApiKey saveApiKey(TenantId tenantId, ApiKeyInfo apiKeyInfo, String value, boolean doValidate) {
         log.trace("Executing saveApiKey [{}]", apiKeyInfo);
         try {
             var apiKey = new ApiKey(apiKeyInfo);
-            var old = apiKeyValidator.validate(apiKey, ApiKeyInfo::getTenantId);
-            if (old == null) {
-                String value = generateApiKeySecret();
+            ApiKey old = doValidate ? apiKeyValidator.validate(apiKey, ApiKeyInfo::getTenantId) :
+                    (apiKey.getId() != null ? apiKeyDao.findById(tenantId, apiKey.getUuidId()) : null);
+            if (value != null) {
                 apiKey.setValue(value);
+            } else if (old == null) {
+                apiKey.setValue(generateApiKeySecret());
             } else {
                 apiKey.setValue(old.getValue());
             }
@@ -110,6 +120,13 @@ public class ApiKeyServiceImpl extends AbstractCachedEntityService<ApiKeyCacheKe
     }
 
     @Override
+    public List<ApiKey> findApiKeysByUserId(TenantId tenantId, UserId userId) {
+        log.trace("Executing findApiKeysByUserId [{}][{}]", tenantId, userId);
+        validateId(userId, id -> INCORRECT_USER_ID + id);
+        return apiKeyDao.findByTenantIdAndUserId(tenantId, userId);
+    }
+
+    @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findApiKeyById(tenantId, new ApiKeyId(entityId.getId())));
     }
@@ -126,6 +143,20 @@ public class ApiKeyServiceImpl extends AbstractCachedEntityService<ApiKeyCacheKe
         validateId(apiKeyId, id -> INCORRECT_API_KEY_ID + id);
         apiKeyDao.removeById(tenantId, apiKeyId);
         publishEvictEvent(new ApiKeyEvictEvent(apiKey.getValue()));
+        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(apiKey.getId()).build());
+    }
+
+    @Override
+    public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
+        ApiKey apiKey = findApiKeyById(tenantId, new ApiKeyId(id.getId()));
+        if (apiKey == null) {
+            if (force) {
+                return;
+            } else {
+                throw new DataValidationException("Unable to delete non-existent API key.");
+            }
+        }
+        deleteApiKey(tenantId, apiKey, force);
     }
 
     @Override
@@ -142,6 +173,13 @@ public class ApiKeyServiceImpl extends AbstractCachedEntityService<ApiKeyCacheKe
         validateId(userId, id -> INCORRECT_USER_ID + id);
         Set<String> values = apiKeyDao.deleteByUserId(tenantId, userId);
         values.forEach(value -> publishEvictEvent(new ApiKeyEvictEvent(value)));
+    }
+
+    @Override
+    public PageData<ApiKey> findApiKeysByTenantId(TenantId tenantId, PageLink pageLink) {
+        log.trace("Executing findApiKeysByTenantId [{}]", tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        return apiKeyDao.findByTenantId(tenantId, pageLink);
     }
 
     @Override

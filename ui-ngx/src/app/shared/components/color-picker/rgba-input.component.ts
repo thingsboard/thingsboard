@@ -41,7 +41,7 @@ export class RgbaInputComponent {
   @Input()
   public suffixValue = '%';
 
-  public get value() {
+  public get value(): ReturnType<Color['getRgba']> {
     return this.color.getRgba();
   }
 

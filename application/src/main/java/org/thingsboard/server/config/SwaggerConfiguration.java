@@ -61,15 +61,18 @@ import org.springframework.http.HttpStatus;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
-import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.exception.ThingsboardCredentialsExpiredResponse;
 import org.thingsboard.server.exception.ThingsboardErrorResponse;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
 import org.thingsboard.server.service.security.auth.rest.LoginResponse;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -300,6 +303,24 @@ public class SwaggerConfiguration {
                             if (schema.getProperties().isEmpty()) {
                                 schema.setProperties(null);
                             }
+                        }
+                    } else if (schema != null && schema.getProperties() != null && !schema.getProperties().isEmpty()) {
+                        try {
+                            var beanDesc = Json.mapper().getSerializationConfig().introspect(javaType);
+                            var orderedNames = resolvePropertyOrder(cls, beanDesc);
+                            if (!orderedNames.isEmpty()) {
+                                @SuppressWarnings("unchecked")
+                                Map<String, Schema> current = schema.getProperties();
+                                var reordered = new LinkedHashMap<String, Schema>();
+                                for (String name : orderedNames) {
+                                    Schema prop = current.get(name);
+                                    if (prop != null) reordered.put(name, prop);
+                                }
+                                current.forEach((k, v) -> reordered.putIfAbsent(k, v));
+                                schema.setProperties(reordered);
+                            }
+                        } catch (Exception ignored) {
+                            log.trace("Failed to resolve property order for {}", cls.getName(), ignored);
                         }
                     }
                 }
@@ -627,7 +648,7 @@ public class SwaggerConfiguration {
                 ThingsboardErrorResponse.of("Authentication failed", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED)));
 
         unauthorizedExamples.put("credentials-expired", errorExample("Expired credentials",
-                ThingsboardCredentialsExpiredResponse.of("User password expired!", StringUtils.randomAlphanumeric(30))));
+                ThingsboardCredentialsExpiredResponse.of("User password expired!", "udgDQOpS1Q4ZFEL8qHF9s8cSKQ7d1h")));
 
         Schema<? extends ThingsboardErrorResponse> unauthorizedSchema = new Schema<>();
         unauthorizedSchema.oneOf(List.of(
@@ -653,6 +674,37 @@ public class SwaggerConfiguration {
         MediaType mediaType = new MediaType().schema(errorResponseSchema).examples(examples);
         Content content = new Content().addMediaType(org.springframework.http.MediaType.APPLICATION_JSON_VALUE, mediaType);
         return new ApiResponse().description(description).content(content);
+    }
+
+    private static List<String> resolvePropertyOrder(Class<?> cls, com.fasterxml.jackson.databind.BeanDescription beanDesc) {
+        // Map backing field names to their JSON property names (respects @JsonProperty)
+        Map<String, String> fieldToJsonName = new LinkedHashMap<>();
+        LinkedHashSet<String> getterOnlyNames = new LinkedHashSet<>();
+        for (var prop : beanDesc.findProperties()) {
+            if (prop.getField() != null) {
+                fieldToJsonName.put(prop.getField().getName(), prop.getName());
+            } else {
+                getterOnlyNames.add(prop.getName());
+            }
+        }
+
+        // Walk class hierarchy (superclass first) to get field declaration order
+        List<Class<?>> hierarchy = new ArrayList<>();
+        for (Class<?> c = cls; c != null && c != Object.class; c = c.getSuperclass()) {
+            hierarchy.add(0, c);
+        }
+        List<String> ordered = new ArrayList<>();
+        for (Class<?> c : hierarchy) {
+            for (Field f : c.getDeclaredFields()) {
+                if (Modifier.isStatic(f.getModifiers())) continue;
+                String jsonName = fieldToJsonName.get(f.getName());
+                if (jsonName != null) ordered.add(jsonName);
+            }
+        }
+
+        // Append getter-only properties (no backing field) at the end
+        ordered.addAll(getterOnlyNames);
+        return ordered;
     }
 
     private static Example errorExample(String summary, ThingsboardErrorResponse example) {
