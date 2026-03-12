@@ -49,6 +49,7 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.ai.AiModel;
+import org.thingsboard.server.common.data.pat.ApiKey;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.asset.Asset;
@@ -61,6 +62,7 @@ import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.AiModelId;
+import org.thingsboard.server.common.data.id.ApiKeyId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
@@ -98,6 +100,7 @@ import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.gen.edge.v1.AiModelUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.ApiKeyUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AlarmCommentUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AlarmUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
@@ -739,6 +742,19 @@ public class EdgeMsgConstructorUtils {
                 .setMsgType(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE)
                 .setIdMSB(aiModelId.getId().getMostSignificantBits())
                 .setIdLSB(aiModelId.getId().getLeastSignificantBits()).build();
+    }
+
+    public static ApiKeyUpdateMsg constructApiKeyUpdatedMsg(UpdateMsgType msgType, ApiKey apiKey) {
+        return ApiKeyUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(apiKey))
+                .setIdMSB(apiKey.getId().getId().getMostSignificantBits())
+                .setIdLSB(apiKey.getId().getId().getLeastSignificantBits()).build();
+    }
+
+    public static ApiKeyUpdateMsg constructApiKeyDeleteMsg(ApiKeyId apiKeyId) {
+        return ApiKeyUpdateMsg.newBuilder()
+                .setMsgType(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE)
+                .setIdMSB(apiKeyId.getId().getMostSignificantBits())
+                .setIdLSB(apiKeyId.getId().getLeastSignificantBits()).build();
     }
 
     public static List<EdgeEvent> mergeAndFilterDownlinkDuplicates(List<EdgeEvent> edgeEvents) {

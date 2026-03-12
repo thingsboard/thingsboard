@@ -23,11 +23,16 @@ import lombok.ToString;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.TenantId;
 
+import java.io.Serial;
+
 @Data
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 public class TenantEntitiesDeletionHousekeeperTask extends HousekeeperTask {
+
+    @Serial
+    private static final long serialVersionUID = -8033108795318393447L;
 
     private EntityType entityType;
 

@@ -78,6 +78,16 @@ public class JpaOtaPackageDao extends JpaAbstractDao<OtaPackageEntity, OtaPackag
     }
 
     @Override
+    public Long getDataOidById(UUID id) {
+        return otaPackageRepository.getDataOidById(id);
+    }
+
+    @Override
+    public Integer unlinkLargeObject(Long dataOid) {
+        return otaPackageRepository.unlinkLargeObject(dataOid);
+    }
+
+    @Override
     public OtaPackageId getExternalIdByInternal(OtaPackageId internalId) {
         return DaoUtil.toEntityId(otaPackageRepository.getExternalIdById(internalId.getId()), OtaPackageId::new);
     }
