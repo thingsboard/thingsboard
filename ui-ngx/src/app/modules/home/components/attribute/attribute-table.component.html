@@ -93,7 +93,8 @@
                 (click)="deleteTelemetry($event)">
           <mat-icon>delete</mat-icon>
         </button>
-        <button mat-raised-button color="accent"
+        <button [class.!hidden]="isSysAdmin"
+                mat-raised-button color="accent"
                 class="button-widget-action"
                 [disabled]="isLoading$ | async"
                 matTooltip="{{ 'attribute.show-on-widget' | translate }}"
