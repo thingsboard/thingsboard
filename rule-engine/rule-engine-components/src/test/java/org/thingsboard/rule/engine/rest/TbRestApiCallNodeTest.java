@@ -283,7 +283,7 @@ public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
         restNode.onMsg(ctx, msg);
 
         assertTrue(latch.await(10, TimeUnit.SECONDS), "Server handled request");
-        assertEquals("{\"name\":\"John \"Doe\"\",\"desc\":\"line1\\nline2\"}", capturedBody[0]);
+        assertEquals("{\"name\":\"John \\\"Doe\\\"\",\"desc\":\"line1\\nline2\"}", capturedBody[0]);
     }
 
     @Test
