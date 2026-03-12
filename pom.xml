@@ -534,7 +534,7 @@
                                     <arg>-PpkgCopyInstallScripts=${pkg.copyInstallScripts}</arg>
                                     <arg>-PpkgLogFolder=${pkg.unixLogFolder}</arg>
                                     <arg>--warning-mode</arg>
-                                    <arg>all</arg>
+                                    <arg>summary</arg>
                                 </args>
                             </configuration>
                             <executions>
