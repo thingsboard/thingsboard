@@ -29,7 +29,7 @@ server:
   port: "${HTTP_BIND_PORT:8083}"
 
 # ZooKeeper connection parameters. Used for service discovery.
-# Defines connection, session, retry settings and the node directory path for Zookeeper-based cluster coordination.
+# Defines connection, session, retry settings and the node directory path for ZooKeeper-based cluster coordination.
 zk:
   # Enable/disable ZooKeeper discovery service.
   enabled: "${ZOOKEEPER_ENABLED:false}"
