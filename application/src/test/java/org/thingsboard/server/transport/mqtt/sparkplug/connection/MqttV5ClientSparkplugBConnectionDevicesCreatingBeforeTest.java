@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.mqtt.sparkplug.timeseries;
+package org.thingsboard.server.transport.mqtt.sparkplug.connection;
 
 import org.eclipse.paho.mqttv5.common.MqttException;
 import org.junit.After;
@@ -22,35 +22,24 @@ import org.junit.Test;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 /**
- * Created by nickAS21 on 12.01.23
+ * Created by nickAS21 on 16.02.26
  */
 @DaoSqlTest
-public class MqttV5ClientSparkplugBTelemetryTest extends AbstractMqttV5ClientSparkplugTelemetryTest {
+public class MqttV5ClientSparkplugBConnectionDevicesCreatingBeforeTest extends AbstractMqttV5ClientSparkplugConnectionTest {
 
     @Before
     public void beforeTest() throws Exception {
-        beforeSparkplugTest(false);
+        beforeSparkplugTest(true);
     }
 
     @After
-    public void afterTest () throws MqttException {
+    public void afterTest() throws MqttException {
         if (client.isConnected()) {
-            client.disconnect();        }
+            client.disconnect();
+        }
     }
 
     @Test
-    public void testClientWithCorrectAccessTokenPublishNBIRTH() throws Exception {
-        processClientWithCorrectAccessTokenPublishNBIRTH();
-    }
-
-    @Test
-    public void testClientWithCorrectAccessTokenPushNodeMetricBuildPrimitiveSimple() throws Exception {
-        processClientWithCorrectAccessTokenPushNodeMetricBuildPrimitiveSimple();
-    }
-
-    @Test
-    public void testClientWithCorrectAccessTokenPushNodeMetricBuildPArraysPrimitiveSimple() throws Exception {
-        processClientWithCorrectAccessTokenPushNodeMetricBuildArraysPrimitiveSimple();
-    }
-
-}
+    public void testClientWithCorrectAccessTokenWithNDEATHTwoDevicesCreatingBeforeFirstNameDeviceIdSecondNameFull() throws Exception {
+        connectClientWithCorrectAccessTokenWithNDEATHDevicesCreatingBefore_Test(2);
+    }}
