@@ -536,6 +536,7 @@
                                     <arg>--warning-mode</arg>
                                     <arg>all</arg>
                                     <arg>--no-problems-report</arg>
+                                    <arg>--no-daemon</arg>
                                 </args>
                             </configuration>
                             <executions>
