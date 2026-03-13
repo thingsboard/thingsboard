@@ -1095,6 +1095,7 @@
     "expression": "Expressie",
     "no-found": "Geen berekende velden gevonden",
     "list": "{ count, plural, =1 {Eén berekend veld} other {Lijst van # berekende velden} }",
+    "add": "Berekend veld toevoegen",
     "selected-fields": "{ count, plural, =1 {1 berekend veld} other {# berekende velden} } geselecteerd",
     "type": {
       "simple": "Eenvoudig",

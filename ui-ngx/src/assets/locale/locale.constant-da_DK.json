@@ -1095,6 +1095,7 @@
     "expression": "Udtryk",
     "no-found": "Ingen beregnede felter fundet",
     "list": "{ count, plural, =1 {Et beregnet felt} other {Liste over # beregnede felter} }",
+    "add": "Tilføj beregnet felt",
     "selected-fields": "{ count, plural, =1 {1 beregnet felt} other {# beregnede felter} } valgt",
     "type": {
       "simple": "Simpel",
