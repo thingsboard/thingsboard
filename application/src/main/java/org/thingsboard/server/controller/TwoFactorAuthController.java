@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -166,6 +167,7 @@ public class TwoFactorAuthController extends BaseController {
     @Builder
     public static class TwoFaProviderInfo {
         private TwoFaProviderType type;
+        @JsonProperty("default")
         private boolean isDefault;
         private String contact;
         private Integer minVerificationCodeSendPeriod;
