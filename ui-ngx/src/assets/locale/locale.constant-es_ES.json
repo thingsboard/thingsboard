@@ -545,13 +545,7 @@
     "slack-settings": "Configuración de Slack",
     "mobile-settings": "Configuración móvil",
     "firebase-service-account-file": "Archivo JSON de credenciales de cuenta de servicio de Firebase",
-    "select-firebase-service-account-file": "Arrastra y suelta tu archivo de credenciales de cuenta de servicio de Firebase o ",
-    "trendz": "Trendz",
-    "trendz-settings": "Configuración de Trendz",
-    "trendz-url": "URL de Trendz",
-    "trendz-url-required": "La URL de Trendz es obligatoria",
-    "trendz-api-key": "Clave API de Trendz",
-    "trendz-enable": "Habilitar Trendz"
+    "select-firebase-service-account-file": "Arrastra y suelta tu archivo de credenciales de cuenta de servicio de Firebase o "
   },
   "alarm": {
     "alarm": "Alarma",
@@ -794,7 +788,7 @@
     "no-assets-matching": "No se encontraron activos que coincidan con '{{entity}}'.",
     "asset-required": "Se requiere un activo",
     "name-starts-with": "Expresión del nombre del activo",
-    "help-text": "Usa '%' según sea necesario: '%nombre_activo_contiene%', '%nombre_activo_termina', 'activo_empieza_con'.",
+    "help-text": "Usa '%' según sea necesario: '%asset_name_contains%', '%asset_name_ends', 'asset_starts_with%'.",
     "search": "Buscar activos",
     "import": "Importar activos",
     "asset-file": "Archivo de activos",
@@ -898,9 +892,9 @@
     "processing-timeouts": "Tiempos de espera de procesamiento de ${entityName}",
     "rule-chain": "Cadena de reglas",
     "rule-engine": "Motor de reglas",
-    "rule-engine-daily-activity": "Actividad diaria del motor de reglas",
     "rule-engine-executions": "Ejecuciones del motor de reglas",
     "rule-engine-hourly-activity": "Actividad por hora del motor de reglas",
+    "rule-engine-daily-activity": "Actividad diaria del motor de reglas",
     "rule-engine-monthly-activity": "Actividad mensual del motor de reglas",
     "rule-engine-statistics": "Estadísticas del motor de reglas",
     "rule-node": "Nodo de regla",
@@ -917,11 +911,9 @@
     "transport": "Transporte",
     "transport-daily-activity": "Actividad diaria de transporte",
     "transport-data-points": "Puntos de datos de transporte",
-    "transport-hourly-activity": "Actividad por hora de transporte",
-    "transport-messages": "Mensajes de transporte",
-    "transport-monthly-activity": "Actividad mensual de transporte",
     "view-details": "Ver detalles",
-    "view-statistics": "Ver estadísticas"
+    "view-statistics": "Ver estadísticas",
+    "transport-messages": "Mensajes de transporte"
   },
   "api-limit": {
     "cassandra-write-queries-core": "Consultas de escritura en Cassandra desde la API REST",
@@ -1038,7 +1030,6 @@
     "argument-customer": "Customer",
     "argument-tenant": "Tenant actual",
     "argument-type": "Tipo de argumento",
-    "see-debug-events": "Ver eventos de depuración",
     "attribute": "Atributo",
     "copy-argument-name": "Copiar nombre del argumento",
     "timeseries-key": "Clave de serie temporal",
@@ -1071,7 +1062,7 @@
     "test-with-this-message": "Probar con este mensaje",
     "use-latest-timestamp": "Usar la última marca de tiempo",
     "hint": {
-      "arguments-simple-with-rolling": "Un campo calculado de tipo simple no debe contener claves con tipo de serie temporal con agregación.",
+      "arguments-simple-with-rolling": "Un campo calculado de tipo simple no debe contener claves con el tipo de serie temporal móvil.",
       "arguments-empty": "Los argumentos no deben estar vacíos.",
       "expression-required": "Se requiere una expresión.",
       "expression-invalid": "La expresión no es válida.",
@@ -1086,7 +1077,7 @@
       "decimals-range": "Los decimales por defecto deben ser un número entre 0 y 15.",
       "expression": "La expresión por defecto muestra cómo transformar una temperatura de Fahrenheit a Celsius.",
       "arguments-entity-not-found": "No se encontró la entidad de destino del argumento.",
-      "use-latest-timestamp": "Si está habilitado, el valor calculado se almacenará utilizando la marca de tiempo más reciente de la telemetría de los argumentos, en lugar del tiempo del servidor."
+      "use-latest-timestamp": "Si está activado, el valor calculado se guardará usando la marca de tiempo más reciente de la telemetría de los argumentos, en lugar de la hora del servidor."
     }
   },
   "ai-models": {
@@ -1111,13 +1102,15 @@
       "mistral-ai": "Mistral AI",
       "anthropic": "Anthropic",
       "amazon-bedrock": "Amazon Bedrock",
-      "github-models": "Modelos de GitHub"
+      "github-models": "GitHub Models",
+      "ollama": "Ollama"
     },
     "name-required": "Se requiere un nombre.",
     "name-max-length": "El nombre debe tener 255 caracteres o menos.",
     "provider": "Proveedor",
-    "api-key": "Clave API",
-    "api-key-required": "Se requiere la clave API.",
+    "api-key": "Clave de API",
+    "api-key-required": "La clave de API es obligatoria.",
+    "api-key-open-ai-required": "La clave de API es obligatoria cuando se usa la API oficial de OpenAI.",
     "project-id": "ID del proyecto",
     "project-id-required": "Se requiere el ID del proyecto",
     "location": "Ubicación",
@@ -1153,18 +1146,35 @@
     "presence-penalty-hint": "Aplica una penalización fija a la probabilidad de un token si ya ha aparecido en el texto.",
     "frequency-penalty": "Penalización por frecuencia",
     "frequency-penalty-hint": "Aplica una penalización a la probabilidad de un token que aumenta en función de su frecuencia en el texto.",
-    "max-output-tokens": "Número máximo de tokens de salida",
-    "max-output-tokens-min": "Debe ser mayor que 0.",
-    "max-output-tokens-hint": "Define el número máximo de tokens que el modelo puede generar en una sola respuesta.",
+    "max-output-tokens": "Máximo de tokens de salida",
+    "max-output-tokens-hint": "Establece el número máximo de tokens que el \nmodelo puede generar en una única respuesta.",
+    "context-length": "Longitud del contexto",
+    "context-length-hint": "Define el tamaño de la ventana de contexto en tokens. Este valor establece el límite total de memoria del modelo, incluyendo tanto la entrada del usuario como la respuesta generada.",
     "endpoint": "Endpoint",
-    "endpoint-required": "Se requiere el endpoint.",
+    "endpoint-required": "El endpoint es obligatorio.",
+    "baseurl": "URL base",
+    "baseurl-required": "La URL base es obligatoria.",
     "service-version": "Versión del servicio",
     "check-connectivity": "Verificar conectividad",
     "check-connectivity-success": "La solicitud de prueba fue exitosa",
     "check-connectivity-failed": "La solicitud de prueba falló",
     "no-model-matching": "No se encontraron modelos que coincidan con '{{entity}}'.",
     "model-required": "Se requiere un modelo.",
-    "no-model-text": "No se encontraron modelos."
+    "no-model-text": "No se encontraron modelos.",
+    "authentication": "Autenticación",
+    "authentication-basic-hint": "Usa la autenticación HTTP Basic estándar. El nombre de usuario y la contraseña se combinarán, se codificarán en Base64 y se enviarán en una cabecera \"Authorization\" con cada solicitud al servidor Ollama.",
+    "authentication-token-hint": "Usa la autenticación mediante token Bearer. El token proporcionado se enviará directamente en una cabecera \"Authorization\" con cada solicitud al servidor Ollama.",
+    "authentication-type": {
+      "none": "Ninguna",
+      "basic": "Basic",
+      "token": "Token"
+    },
+    "username": "Nombre de usuario",
+    "username-required": "El nombre de usuario es obligatorio.",
+    "password": "Contraseña",
+    "password-required": "La contraseña es obligatoria.",
+    "token": "Token",
+    "token-required": "El token es obligatorio."
   },
   "confirm-on-exit": {
     "message": "Tienes cambios sin guardar. ¿Estás seguro de que deseas salir de esta página?",
@@ -1174,6 +1184,7 @@
   "contact": {
     "country": "País",
     "country-required": "Se requiere el país.",
+    "country-object-required": "Selecciona un país válido de la lista.",
     "city": "Ciudad",
     "state": "Estado / Provincia",
     "postal-code": "Código postal",
@@ -1634,7 +1645,7 @@
     "remove-alias": "Eliminar alias de dispositivo",
     "add-alias": "Agregar alias de dispositivo",
     "name-starts-with": "Expresión del nombre del dispositivo",
-    "help-text": "Usa '%' según sea necesario: '%device_name_contains%', '%device_name_ends', 'device_starts_with'.",
+    "help-text": "Usa '%' según sea necesario: '%device_name_contains%', '%device_name_ends', 'device_starts_with%'.",
     "device-list": "Lista de dispositivos",
     "use-device-name-filter": "Usar filtro",
     "device-list-empty": "No se seleccionaron dispositivos.",
@@ -1761,7 +1772,6 @@
     "unable-delete-device-alias-text": "No se puede eliminar el alias del dispositivo '{{deviceAlias}}' porque lo utilizan los siguientes widget(s):<br/>{{widgetsList}}",
     "is-gateway": "Es un gateway",
     "overwrite-activity-time": "Sobrescribir tiempo de actividad del dispositivo conectado",
-    "device-filter": "Filtro de dispositivo",
     "device-filter-title": "Filtro de dispositivo",
     "filter-title": "Filtro",
     "device-state": "Estado del dispositivo",
@@ -2237,7 +2247,7 @@
         "tqs": "TQS: conexiones TCP y SMS activas; TCP en modo en cola, SMS en modo estándar (no admitido desde LWM2M 1.1)",
         "sq": "SQ: Conexión SMS en modo en cola (no admitido desde LWM2M 1.1)"
       },
-      "binding-tooltip": "Esta es la lista en el recurso \"binding\" del objeto del servidor LwM2M - /1/x/7.\nIndica los modos de asociación admitidos en el Cliente LwM2M.\nEste valor DEBERÍA ser igual al valor en el recurso “Supported Binding and Modes” en el Objeto de Dispositivo (/3/0/16).\nAunque se admiten múltiples transportes, solo uno puede usarse durante toda la sesión de transporte.\nPor ejemplo, si se admiten UDP y SMS, el Cliente y el Servidor LwM2M pueden elegir comunicarse a través de UDP o SMS durante toda la sesión de transporte.",
+      "binding-tooltip": "Esta es la lista en el recurso \"binding\" del objeto de servidor LwM2M - /1/x/7.\nIndica los modos de vinculación admitidos en el cliente LwM2M.\nEste valor DEBERÍA ser el mismo que el valor del recurso \"Supported Binding and Modes\" en el objeto de dispositivo (/3/0/16).\nAunque se admiten varios transportes, solo se puede usar un enlace de transporte durante toda la sesión de transporte.\nPor ejemplo, cuando se admiten tanto UDP como SMS, el cliente LwM2M y el servidor LwM2M pueden elegir comunicarse por UDP o por SMS durante toda la sesión de transporte.",
       "bootstrap-server": "Servidor Bootstrap",
       "lwm2m-server": "Servidor LwM2M",
       "include-bootstrap-server": "Incluir actualizaciones del servidor Bootstrap",
@@ -2303,9 +2313,9 @@
       },
       "observe-strategy": {
         "observe-strategy": "Estrategia de observación",
-        "single": "Individual",
+        "single": "Única",
         "single-description": "Una solicitud Observe por recurso (mayor precisión, más tráfico de red)",
-        "composite-all": "Compuesta - todos",
+        "composite-all": "Compuesta para todo",
         "composite-all-description": "Todos los recursos se observan con una única solicitud Composite Observe (más eficiente, menos flexible)",
         "composite-by-object": "Compuesta por objetos",
         "composite-by-object-description": "Los recursos se agrupan por tipo de objeto y se observan usando solicitudes Composite Observe separadas (enfoque equilibrado)"
@@ -2545,7 +2555,7 @@
     "no-entities-text": "No se encontraron entidades",
     "no-entity-types-matching": "No se encontraron tipos de entidad que coincidan con '{{entityType}}'.",
     "name-starts-with": "Expresión de nombre",
-    "help-text": "Use '%' según sea necesario: '%entity_name_contains%', '%entity_name_ends', 'entity_starts_with'.",
+    "help-text": "Usa '%' según sea necesario: '%entity_name_contains%', '%entity_name_ends', 'entity_starts_with%'.",
     "use-entity-name-filter": "Usar filtro",
     "entity-list-empty": "No hay entidades seleccionadas.",
     "entity-type-list-required": "Se debe seleccionar al menos un tipo de entidad.",
@@ -2737,7 +2747,7 @@
     "remove-alias": "Eliminar alias de vista de entidad",
     "add-alias": "Agregar alias de vista de entidad",
     "name-starts-with": "Expresión del nombre de la vista de entidad",
-    "help-text": "Use '%' según sea necesario: '%entity-view_name_contains%', '%entity-view_name_ends', 'entity-view_starts_with'.",
+    "help-text": "Usa '%' según sea necesario: '%entity-view_name_contains%', '%entity-view_name_ends', 'entity-view_starts_with%'.",
     "entity-view-list": "Lista de vistas de entidad",
     "use-entity-view-name-filter": "Usar filtro",
     "entity-view-list-empty": "No se seleccionaron vistas de entidad.",
@@ -3779,7 +3789,6 @@
     "password-link-sent-message": "Enlace de restablecimiento enviado",
     "email": "Correo electrónico",
     "invalid-email-format": "Formato de correo electrónico inválido.",
-    "login-with": "Iniciar sesión con {{name}}",
     "or": "o",
     "error": "Error de inicio de sesión",
     "verify-your-identity": "Verifica tu identidad",
@@ -4166,7 +4175,7 @@
       "api-usage-limit": "Límite de uso de API",
       "device-activity": "Actividad del dispositivo",
       "entities-limit": "Límite de entidades",
-      "entity-action": "Acción sobre entidad",
+      "entity-action": "Acción de entidad",
       "general": "General",
       "rule-engine-lifecycle-event": "Evento del ciclo de vida del motor de reglas",
       "rule-node": "Nodo de regla",
@@ -4478,7 +4487,8 @@
       "jks": "JKS",
       "js-module": "Módulo JS",
       "lwm2m-model": "Modelo LWM2M",
-      "pkcs-12": "PKCS #12"
+      "pkcs-12": "PKCS #12",
+      "general": "General"
     },
     "resource-sub-type": "Subtipo",
     "sub-type": {
@@ -4486,7 +4496,12 @@
       "scada-symbol": "Símbolo Scada",
       "extension": "Extensión",
       "module": "Módulo"
-    }
+    },
+    "resource-is-in-use": "El recurso se usa en otras entidades",
+    "resources-are-in-use": "Los recursos se usan en otras entidades",
+    "resource-is-in-use-text": "El recurso <b>'{{title}}'</b> no se eliminó porque lo usan las siguientes entidades:",
+    "resources-are-in-use-text": "No se han eliminado todos los recursos porque los usan otras entidades.</br>Puedes ver las entidades referenciadas haciendo clic en el botón <b>Referencias</b> de la fila del recurso correspondiente.</br>Si aun así quieres eliminar estos recursos, selecciónalos en la tabla de abajo y haz clic en el botón <b>Eliminar seleccionados</b>.",
+    "delete-resource-in-use-text": "Si aun así quieres eliminar el recurso, haz clic en el botón <b>Eliminar de todos modos</b>."
   },
   "javascript": {
     "add": "Agregar recurso JavaScript",
@@ -5385,8 +5400,7 @@
       },
       "time-series": "Serie temporal",
       "latest": "Últimos valores",
-      "web-sockets": "WebSockets",
-      "calculated-fields": "Campos calculados"
+      "web-sockets": "WebSockets"
     },
     "save-attribute": {
       "processing-settings": "Configuraciones de procesamiento",
@@ -5436,11 +5450,11 @@
       "prompt-settings": "Configuración del prompt",
       "prompt-settings-hint": "El prompt del sistema (opcional) define el rol general y las restricciones de la IA, mientras que el prompt del usuario define la tarea específica a realizar. Ambos campos admiten plantillas.",
       "system-prompt": "Prompt del sistema",
-      "system-prompt-max-length": "El prompt del sistema debe tener 500.000 caracteres o menos.",
+      "system-prompt-max-length": "El prompt del sistema debe tener 10.000 caracteres o menos.",
       "system-prompt-blank": "El prompt del sistema no debe estar vacío.",
       "user-prompt": "Prompt del usuario",
       "user-prompt-required": "Se requiere el prompt del usuario.",
-      "user-prompt-max-length": "El prompt del usuario debe tener 500.000 caracteres o menos.",
+      "user-prompt-max-length": "El prompt del usuario debe tener 10.000 caracteres o menos.",
       "user-prompt-blank": "El prompt del usuario no debe estar vacío.",
       "response-format": "Formato de respuesta",
       "response-text": "Texto",
@@ -5457,7 +5471,8 @@
       "timeout-required": "Se requiere un tiempo de espera",
       "timeout-validation": "Debe ser de entre 1 segundo y 10 minutos.",
       "force-acknowledgement": "Forzar acuse de recibo",
-      "force-acknowledgement-hint": "Si está habilitado, el mensaje entrante se reconoce inmediatamente. La respuesta del modelo se coloca en cola como un mensaje nuevo y separado."
+      "force-acknowledgement-hint": "Si está habilitado, el mensaje entrante se reconoce inmediatamente. La respuesta del modelo se coloca en cola como un mensaje nuevo y separado.",
+      "ai-resources": "Recursos de IA"
     }
   },
   "timezone": {
@@ -5990,6 +6005,7 @@
     "show-date-time-interval": "Mostrar intervalo de fecha y hora",
     "show-date-time-interval-hint": "Mostrar intervalo de fecha y hora según la agregación de datos.",
     "hide-zero-tooltip-values": "Ocultar valores cero",
+    "show-stack-total": "Mostrar el valor total en modo apilado",
     "background-color": "Color de fondo",
     "background-blur": "Desenfoque de fondo"
   },
@@ -6631,7 +6647,7 @@
     "export-relations": "Exportar relaciones",
     "export-attributes": "Exportar atributos",
     "export-credentials": "Exportar credenciales",
-    "export-calculated-fields": "Exportar campos calculados",
+    "export-calculated-fields": "Exportar campos calculados \ny reglas de alarma",
     "entity-versions": "Versiones de entidad",
     "versions": "Versiones",
     "created-time": "Fecha de creación",
@@ -6703,7 +6719,7 @@
     "management": "Gestión de widgets",
     "editor": "Editor de widgets",
     "confirm-to-exit-editor-html": "Tienes configuraciones del widget sin guardar.<br>¿Estás seguro de que deseas salir de esta página?",
-    "widget-type-not-found": "Problema al cargar la configuración del widget.<br>Probablemente se haya eliminado el tipo de widget asociado.",
+    "widget-type-not-found": "Problema al cargar la configuración del widget.<br>Probablemente se haya\n    eliminado el tipo de widget asociado.",
     "widget-type-load-error": "El widget no se cargó debido a los siguientes errores:",
     "remove": "Eliminar widget",
     "delete": "Eliminar widget",
@@ -7448,7 +7464,7 @@
         "scale": "Escala",
         "scale-min": "mín",
         "scale-max": "máx",
-        "scale-auto": "Auto"
+        "scale-auto": "Automático"
       },
       "bar": {
         "show-border": "Mostrar borde",
@@ -8482,7 +8498,7 @@
           "finish-circle-hint": "Círculo: haz clic para finalizar el dibujo"
         },
         "select-entity": "Seleccionar entidad",
-        "select-entity-hint": "Sugerencia: después de seleccionar, haz clic en el mapa para establecer la posición"
+        "select-entity-hint": "Sugerencia: después de la selección haz clic en el mapa para establecer la posición"
       },
       "select-entity": "Seleccionar entidad",
       "select-entity-hint": "Sugerencia: después de seleccionar, haz clic en el mapa para establecer la posición",

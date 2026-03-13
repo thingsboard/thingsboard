@@ -545,13 +545,7 @@
     "slack-settings": "Impostazioni di Slack",
     "mobile-settings": "Impostazioni mobile",
     "firebase-service-account-file": "File JSON delle credenziali dell'account di servizio Firebase",
-    "select-firebase-service-account-file": "Trascina e rilascia il file delle credenziali dell'account di servizio Firebase oppure",
-    "trendz": "Trendz",
-    "trendz-settings": "Impostazioni di Trendz",
-    "trendz-url": "URL di Trendz",
-    "trendz-url-required": "L'URL di Trendz è obbligatorio",
-    "trendz-api-key": "Chiave API di Trendz",
-    "trendz-enable": "Abilita Trendz"
+    "select-firebase-service-account-file": "Trascina e rilascia il file delle credenziali dell'account di servizio Firebase oppure"
   },
   "alarm": {
     "alarm": "Allarme",
@@ -794,7 +788,7 @@
     "no-assets-matching": "Nessun asset corrispondente a '{{entity}}' trovato.",
     "asset-required": "L'asset è obbligatorio",
     "name-starts-with": "Espressione nome asset",
-    "help-text": "Usa '%' secondo necessità: '%asset_name_contains%', '%asset_name_ends', 'asset_starts_with'.",
+    "help-text": "Usa '%' secondo necessità: '%asset_name_contains%', '%asset_name_ends', 'asset_starts_with%'.",
     "search": "Cerca asset",
     "import": "Importa asset",
     "asset-file": "File asset",
@@ -898,9 +892,9 @@
     "processing-timeouts": "Timeout di elaborazione ${entityName}",
     "rule-chain": "Catena di regole",
     "rule-engine": "Motore di regole",
-    "rule-engine-daily-activity": "Attività giornaliera motore di regole",
     "rule-engine-executions": "Esecuzioni motore di regole",
     "rule-engine-hourly-activity": "Attività oraria motore di regole",
+    "rule-engine-daily-activity": "Attività giornaliera motore di regole",
     "rule-engine-monthly-activity": "Attività mensile motore di regole",
     "rule-engine-statistics": "Statistiche motore di regole",
     "rule-node": "Nodo regola",
@@ -917,11 +911,9 @@
     "transport": "Trasporto",
     "transport-daily-activity": "Attività giornaliera del trasporto",
     "transport-data-points": "Punti dati del trasporto",
-    "transport-hourly-activity": "Attività oraria del trasporto",
-    "transport-messages": "Messaggi del trasporto",
-    "transport-monthly-activity": "Attività mensile del trasporto",
     "view-details": "Visualizza dettagli",
-    "view-statistics": "Visualizza statistiche"
+    "view-statistics": "Visualizza statistiche",
+    "transport-messages": "Messaggi di trasporto"
   },
   "api-limit": {
     "cassandra-write-queries-core": "Query di scrittura Cassandra tramite Rest API",
@@ -1038,7 +1030,6 @@
     "argument-customer": "Cliente",
     "argument-tenant": "Tenant corrente",
     "argument-type": "Tipo di argomento",
-    "see-debug-events": "Vedi eventi di debug",
     "attribute": "Attributo",
     "copy-argument-name": "Copia nome argomento",
     "timeseries-key": "Chiave serie temporale",
@@ -1071,10 +1062,10 @@
     "test-with-this-message": "Testa con questo messaggio",
     "use-latest-timestamp": "Usa il timestamp più recente",
     "hint": {
-      "arguments-simple-with-rolling": "Il campo calcolato di tipo semplice non deve contenere chiavi con tipo rolling delle serie temporali.",
-      "arguments-empty": "Gli argomenti non devono essere vuoti.",
-      "expression-required": "Espressione obbligatoria.",
-      "expression-invalid": "Espressione non valida",
+      "arguments-simple-with-rolling": "Un campo calcolato di tipo semplice non dovrebbe contenere chiavi con tipo di serie temporale rolling.",
+      "arguments-empty": "Almeno un argomento deve essere specificato.",
+      "expression-required": "L'espressione è obbligatoria.",
+      "expression-invalid": "L'espressione non è valida.",
       "expression-max-length": "La lunghezza dell'espressione deve essere inferiore a 255 caratteri.",
       "argument-name-required": "Il nome dell'argomento è obbligatorio.",
       "argument-name-pattern": "Il nome dell'argomento non è valido.",
@@ -1083,10 +1074,10 @@
       "argument-name-forbidden": "Il nome dell'argomento è riservato e non può essere utilizzato.",
       "argument-type-required": "Il tipo di argomento è obbligatorio.",
       "max-args": "Numero massimo di argomenti raggiunto.",
-      "decimals-range": "Per impostazione predefinita, i decimali devono essere un numero compreso tra 0 e 15.",
+      "decimals-range": "I decimali di default devono essere un numero compreso tra 0 e 15.",
       "expression": "L'espressione predefinita dimostra come trasformare una temperatura da Fahrenheit a Celsius.",
       "arguments-entity-not-found": "Entità di destinazione dell'argomento non trovata.",
-      "use-latest-timestamp": "Se abilitato, il valore calcolato verrà salvato utilizzando il timestamp più recente dalla telemetria degli argomenti, invece dell'orario del server."
+      "use-latest-timestamp": "Se abilitato, il valore calcolato verrà memorizzato utilizzando il timestamp più recente dalla telemetria degli argomenti, invece del tempo del server."
     }
   },
   "ai-models": {
@@ -1193,6 +1184,7 @@
   "contact": {
     "country": "Paese",
     "country-required": "Il paese è obbligatorio.",
+    "country-object-required": "Seleziona un paese valido dalla lista.",
     "city": "Città",
     "state": "Stato / Provincia",
     "postal-code": "CAP / Codice postale",
@@ -1653,7 +1645,7 @@
     "remove-alias": "Rimuovi alias del dispositivo",
     "add-alias": "Aggiungi alias del dispositivo",
     "name-starts-with": "Espressione nome dispositivo",
-    "help-text": "Usa '%' secondo necessità: '%device_name_contains%', '%device_name_ends', 'device_starts_with'.",
+    "help-text": "Usa '%' secondo necessità: '%device_name_contains%', '%device_name_ends', 'device_starts_with%'.",
     "device-list": "Elenco dispositivi",
     "use-device-name-filter": "Usa filtro",
     "device-list-empty": "Nessun dispositivo selezionato.",
@@ -1780,7 +1772,6 @@
     "unable-delete-device-alias-text": "L'alias del dispositivo '{{deviceAlias}}' non può essere eliminato poiché è utilizzato dai seguenti widget:<br/>{{widgetsList}}",
     "is-gateway": "È un gateway",
     "overwrite-activity-time": "Sovrascrivi tempo di attività per il dispositivo connesso",
-    "device-filter": "Filtro dispositivo",
     "device-filter-title": "Filtro dispositivo",
     "filter-title": "Filtro",
     "device-state": "Stato dispositivo",
@@ -2234,7 +2225,7 @@
       "short-id-required": "ID server breve obbligatorio.",
       "short-id-range": "L'ID server breve deve essere compreso tra {{ min }} e {{ max }}.",
       "short-id-pattern": "L'ID server breve deve essere un numero intero positivo.",
-      "lifetime": "Durata registrazione client",
+      "lifetime": "Durata della registrazione del client",
       "lifetime-required": "Durata registrazione client obbligatoria.",
       "lifetime-pattern": "La durata della registrazione deve essere un numero intero positivo.",
       "default-min-period": "Periodo minimo tra due notifiche (s)",
@@ -2564,7 +2555,7 @@
     "no-entities-text": "Nessuna entità trovata",
     "no-entity-types-matching": "Nessun tipo entità corrispondente a '{{entityType}}' trovato.",
     "name-starts-with": "Espressione nome",
-    "help-text": "Usa '%' secondo necessità: '%nome_entità_contiene%', '%nome_entità_finisce', 'entità_inizia_con'.",
+    "help-text": "Usa '%' secondo necessità: '%entity_name_contains%', '%entity_name_ends', 'entity_starts_with%'.",
     "use-entity-name-filter": "Usa filtro",
     "entity-list-empty": "Nessuna entità selezionata.",
     "entity-type-list-required": "È richiesto almeno un tipo di entità.",
@@ -2756,7 +2747,7 @@
     "remove-alias": "Rimuovi alias vista entità",
     "add-alias": "Aggiungi alias vista entità",
     "name-starts-with": "Espressione nome vista entità",
-    "help-text": "Usa '%' se necessario: '%entity-view_name_contains%', '%entity-view_name_ends', 'entity-view_starts_with'.",
+    "help-text": "Usa '%' secondo necessità: '%entity-view_name_contains%', '%entity-view_name_ends', 'entity-view_starts_with%'.",
     "entity-view-list": "Elenco viste entità",
     "use-entity-view-name-filter": "Usa filtro",
     "entity-view-list-empty": "Nessuna vista entità selezionata.",
@@ -3798,7 +3789,6 @@
     "password-link-sent-message": "Link di reimpostazione inviato",
     "email": "Email",
     "invalid-email-format": "Formato email non valido.",
-    "login-with": "Accedi con {{name}}",
     "or": "oppure",
     "error": "Errore di accesso",
     "verify-your-identity": "Verifica la tua identità",
@@ -5410,8 +5400,7 @@
       },
       "time-series": "Serie temporale",
       "latest": "Ultimi valori",
-      "web-sockets": "WebSockets",
-      "calculated-fields": "Campi calcolati"
+      "web-sockets": "WebSockets"
     },
     "save-attribute": {
       "processing-settings": "Impostazioni di elaborazione",
@@ -6658,7 +6647,7 @@
     "export-relations": "Esporta relazioni",
     "export-attributes": "Esporta attributi",
     "export-credentials": "Esporta credenziali",
-    "export-calculated-fields": "Esporta campi calcolati",
+    "export-calculated-fields": "Esporta campi calcolati \ne regole allarme",
     "entity-versions": "Versioni entità",
     "versions": "Versioni",
     "created-time": "Ora di creazione",
@@ -8509,7 +8498,7 @@
           "finish-circle-hint": "Cerchio: clicca per terminare il disegno"
         },
         "select-entity": "Seleziona entità",
-        "select-entity-hint": "Suggerimento: dopo la selezione, clicca sulla mappa per impostare la posizione"
+        "select-entity-hint": "Suggerimento: dopo la selezione clicca sulla mappa per impostare la posizione"
       },
       "select-entity": "Seleziona entità",
       "select-entity-hint": "Suggerimento: dopo la selezione clicca sulla mappa per impostare la posizione",
