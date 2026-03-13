@@ -17,14 +17,11 @@ package org.thingsboard.server.common.data.notification.rule;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotNull;
-import lombok.Data;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
 
 import java.io.Serializable;
@@ -51,7 +48,7 @@ import java.util.UUID;
                 @DiscriminatorMapping(value = "RESOURCES_SHORTAGE", schema = DefaultNotificationRuleRecipientsConfig.ResourceShortageRecipientsConfig.class)
         })
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "triggerType", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "triggerType", include = JsonTypeInfo.As.EXISTING_PROPERTY)
 @JsonSubTypes({
         @Type(name = "ALARM", value = EscalatedNotificationRuleRecipientsConfig.class),
         @Type(name = "ENTITY_ACTION", value = DefaultNotificationRuleRecipientsConfig.EntityActionRecipientsConfig.class),
@@ -68,14 +65,11 @@ import java.util.UUID;
         @Type(name = "TASK_PROCESSING_FAILURE", value = DefaultNotificationRuleRecipientsConfig.TaskProcessingFailureRecipientsConfig.class),
         @Type(name = "RESOURCES_SHORTAGE", value = DefaultNotificationRuleRecipientsConfig.ResourceShortageRecipientsConfig.class)
 })
-@Data
-public abstract class NotificationRuleRecipientsConfig implements Serializable {
+public interface NotificationRuleRecipientsConfig extends Serializable {
 
-    @NotNull
-    @JsonProperty("triggerType")
-    private NotificationRuleTriggerType triggerType;
+    NotificationRuleTriggerType getTriggerType();
 
     @JsonIgnore
-    public abstract Map<Integer, List<UUID>> getTargetsTable();
+    Map<Integer, List<UUID>> getTargetsTable();
 
 }

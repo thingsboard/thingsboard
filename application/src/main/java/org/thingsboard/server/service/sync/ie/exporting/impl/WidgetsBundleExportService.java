@@ -46,11 +46,6 @@ public class WidgetsBundleExportService extends BaseEntityExportService<WidgetsB
     }
 
     @Override
-    protected WidgetsBundleExportData newExportData() {
-        return new WidgetsBundleExportData();
-    }
-
-    @Override
     public Set<EntityType> getSupportedEntityTypes() {
         return Set.of(EntityType.WIDGETS_BUNDLE);
     }

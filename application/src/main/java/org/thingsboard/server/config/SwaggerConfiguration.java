@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.config;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -47,6 +48,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springdoc.core.customizers.OperationCustomizer;
 import org.springdoc.core.discoverer.SpringDocParameterNameDiscoverer;
+import org.springdoc.core.utils.SpringDocUtils;
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springdoc.core.properties.SpringDocConfigProperties;
 import org.springdoc.core.properties.SwaggerUiConfigProperties;
@@ -68,14 +70,18 @@ import org.thingsboard.server.service.security.auth.rest.LoginResponse;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.nio.ByteBuffer;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
@@ -90,6 +96,8 @@ public class SwaggerConfiguration {
     @PostConstruct
     public void configureModelResolver() {
         ModelResolver.enumsAsRef = true;
+        SpringDocUtils.getConfig().replaceWithSchema(ByteBuffer.class,
+                new Schema<String>().type("string").format("byte"));
     }
 
     public static final String LOGIN_ENDPOINT = "/api/auth/login";
@@ -304,23 +312,62 @@ public class SwaggerConfiguration {
                                 schema.setProperties(null);
                             }
                         }
-                    } else if (schema != null && schema.getProperties() != null && !schema.getProperties().isEmpty()) {
-                        try {
-                            var beanDesc = Json.mapper().getSerializationConfig().introspect(javaType);
-                            var orderedNames = resolvePropertyOrder(cls, beanDesc);
-                            if (!orderedNames.isEmpty()) {
-                                @SuppressWarnings("unchecked")
-                                Map<String, Schema> current = schema.getProperties();
-                                var reordered = new LinkedHashMap<String, Schema>();
-                                for (String name : orderedNames) {
-                                    Schema prop = current.get(name);
-                                    if (prop != null) reordered.put(name, prop);
+                    } else if (schema != null) {
+                        boolean hasAllOf = schema.getAllOf() != null;
+                        boolean hasProps = schema.getProperties() != null && !schema.getProperties().isEmpty();
+                        if (hasAllOf || hasProps) {
+                            try {
+                                var beanDesc = Json.mapper().getSerializationConfig().introspect(javaType);
+                                var orderedNames = resolvePropertyOrder(cls, beanDesc);
+                                // Reorder top-level properties if present.
+                                // When orderedNames is empty (e.g. for interfaces where Jackson
+                                // returns no properties from beanDesc), fall through to the
+                                // TreeMap fallback which sorts remaining properties alphabetically.
+                                if (hasProps) {
+                                    @SuppressWarnings("unchecked")
+                                    Map<String, Schema> current = schema.getProperties();
+                                    var reordered = new LinkedHashMap<String, Schema>();
+                                    for (String name : orderedNames) {
+                                        Schema prop = current.get(name);
+                                        if (prop != null) reordered.put(name, prop);
+                                    }
+                                    // Any properties not covered by orderedNames are appended
+                                    // alphabetically to guarantee a deterministic stable order.
+                                    new TreeMap<>(current).forEach((k, v) -> reordered.putIfAbsent(k, v));
+                                    schema.setProperties(reordered);
                                 }
-                                current.forEach((k, v) -> reordered.putIfAbsent(k, v));
-                                schema.setProperties(reordered);
+                                // Also reorder properties inside allOf inline elements, and mark
+                                // which properties are declared in cls itself (not inherited from
+                                // a superclass) so deduplicateAllOfProperties can strip inherited
+                                // ones without touching own-class properties.
+                                if (hasAllOf) {
+                                    Set<String> ownProps = computeOwnPropNames(cls, beanDesc);
+                                    if (!ownProps.isEmpty()) {
+                                        schema.addExtension("x-tb-own-props", List.copyOf(ownProps));
+                                    }
+                                    @SuppressWarnings("unchecked")
+                                    List<Schema> allOfList = schema.getAllOf();
+                                    for (Schema allOfElement : allOfList) {
+                                        if (allOfElement.get$ref() != null) continue;
+                                        @SuppressWarnings("unchecked")
+                                        Map<String, Schema> inlineProps = allOfElement.getProperties();
+                                        if (inlineProps == null || inlineProps.isEmpty()) continue;
+                                        var reordered = new LinkedHashMap<String, Schema>();
+                                        for (String name : orderedNames) {
+                                            Schema prop = inlineProps.get(name);
+                                            if (prop != null) reordered.put(name, prop);
+                                        }
+                                        new TreeMap<>(inlineProps).forEach((k, v) -> reordered.putIfAbsent(k, v));
+                                        allOfElement.setProperties(reordered);
+                                    }
+                                }
+                            } catch (Exception e) {
+                                log.debug("Failed to resolve property order for {}: {}", cls.getName(), e.getMessage());
+                                // Fallback: at minimum sort alphabetically for determinism
+                                if (hasProps) {
+                                    schema.setProperties(new LinkedHashMap<>(new TreeMap<>(schema.getProperties())));
+                                }
                             }
-                        } catch (Exception ignored) {
-                            log.trace("Failed to resolve property order for {}", cls.getName(), ignored);
                         }
                     }
                 }
@@ -402,6 +449,19 @@ public class SwaggerConfiguration {
                         List<Schema> allOf = schema.getAllOf();
                         for (Schema allOfElement : allOf) {
                             replaceInlineOneOfProperties(allOfElement, schemas);
+                        }
+                    }
+                });
+
+                // Deduplicate allOf child schemas: remove properties that are already defined
+                // in the referenced parent schema to avoid duplication (e.g. EntityId children),
+                // then clean up the internal marker extension used during deduplication.
+                schemas.values().forEach(schema -> {
+                    deduplicateAllOfProperties(schema, schemas);
+                    if (schema.getExtensions() != null) {
+                        schema.getExtensions().remove("x-tb-own-props");
+                        if (schema.getExtensions().isEmpty()) {
+                            schema.setExtensions(null);
                         }
                     }
                 });
@@ -530,6 +590,9 @@ public class SwaggerConfiguration {
                         if (prop.getDescription() != null) {
                             refSchema.setDescription(prop.getDescription());
                         }
+                        if (prop.getReadOnly() != null) {
+                            refSchema.setReadOnly(prop.getReadOnly());
+                        }
                         schema.getProperties().put(propName, refSchema);
                         log.debug("Replaced oneOf with $ref to {} in property {}", baseType, propName);
                     }
@@ -540,7 +603,7 @@ public class SwaggerConfiguration {
 
     private String tagItemFromPathItem(PathItem item) {
         var operations = item.readOperationsMap().values();
-        var operation = operations.stream().findAny();
+        var operation = operations.stream().findFirst();
         if (operation.isPresent()) {
             var tags = operation.get().getTags();
             if (tags != null && !tags.isEmpty()) {
@@ -676,15 +739,170 @@ public class SwaggerConfiguration {
         return new ApiResponse().description(description).content(content);
     }
 
+    /**
+     * Recursively collects all property names reachable from {@code schemaName}, walking the
+     * ancestor chain through allOf $ref entries (to handle multi-level inheritance).
+     * {@code visited} prevents infinite loops in case of circular references.
+     */
+    @SuppressWarnings("unchecked")
+    private void collectAllProperties(String schemaName, Map<String, Schema> allSchemas,
+                                      Set<String> result, Set<String> visited) {
+        if (!visited.add(schemaName)) {
+            return;
+        }
+        Schema<?> schema = allSchemas.get(schemaName);
+        if (schema == null) {
+            return;
+        }
+        if (schema.getProperties() != null) {
+            result.addAll(schema.getProperties().keySet());
+        }
+        if (schema.getAllOf() != null) {
+            for (Schema<?> allOfElement : schema.getAllOf()) {
+                String ref = allOfElement.get$ref();
+                if (ref != null) {
+                    String refName = ref.substring(ref.lastIndexOf('/') + 1);
+                    collectAllProperties(refName, allSchemas, result, visited);
+                } else if (allOfElement.getProperties() != null) {
+                    result.addAll(allOfElement.getProperties().keySet());
+                }
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void deduplicateAllOfProperties(Schema<?> schema, Map<String, Schema> allSchemas) {
+        if (schema.getAllOf() == null) {
+            return;
+        }
+
+        // Properties declared in the class's own fields (not inherited from a superclass).
+        // These must NOT be stripped from the inline even if they also appear in a parent
+        // schema (e.g. a field that also has a corresponding interface getter in the parent).
+        Set<String> ownProps = new LinkedHashSet<>();
+        if (schema.getExtensions() != null
+                && schema.getExtensions().get("x-tb-own-props") instanceof List<?> list) {
+            for (Object v : list) {
+                if (v instanceof String s) ownProps.add(s);
+            }
+        }
+
+        // Collect properties defined in any $ref'd parent within the allOf, recursively
+        // walking the ancestor chain (each parent may itself use allOf to extend a grandparent).
+        Set<String> parentProperties = new LinkedHashSet<>();
+        for (Schema<?> allOfElement : schema.getAllOf()) {
+            String ref = allOfElement.get$ref();
+            if (ref != null) {
+                String refName = ref.substring(ref.lastIndexOf('/') + 1);
+                collectAllProperties(refName, allSchemas, parentProperties, new LinkedHashSet<>());
+            }
+        }
+
+        if (parentProperties.isEmpty()) {
+            return;
+        }
+
+        // Properties to strip: in parent schema AND not declared as own-class fields.
+        // This removes inherited properties (from superclasses or pure interface getters)
+        // while keeping properties the class declares as its own fields.
+        Set<String> toStrip = new LinkedHashSet<>(parentProperties);
+        toStrip.removeAll(ownProps);
+
+        if (toStrip.isEmpty()) {
+            return;
+        }
+
+        // Strip from inline (non-$ref) allOf elements
+        schema.getAllOf().removeIf(allOfElement -> {
+            if (allOfElement.get$ref() != null) {
+                return false;
+            }
+            if (allOfElement.getProperties() != null) {
+                Map<String, Schema> filtered = new LinkedHashMap<>(allOfElement.getProperties());
+                filtered.keySet().removeAll(toStrip);
+                allOfElement.setProperties(filtered.isEmpty() ? null : filtered);
+            }
+            return allOfElement.getProperties() == null
+                    && allOfElement.getRequired() == null
+                    && allOfElement.getType() == null;
+        });
+
+        // Remove stripped properties from the schema's required list
+        if (schema.getRequired() != null) {
+            List<String> required = new ArrayList<>(schema.getRequired());
+            required.removeAll(toStrip);
+            schema.setRequired(required.isEmpty() ? null : required);
+        }
+    }
+
+    /**
+     * Returns the JSON property names that are backed by fields declared directly in {@code cls}
+     * (not inherited from a superclass). Used to distinguish "own" from "inherited" properties
+     * when deduplicating allOf inline elements.
+     */
+    private static Set<String> computeOwnPropNames(Class<?> cls, com.fasterxml.jackson.databind.BeanDescription beanDesc) {
+        Map<String, String> allFieldToJson = new LinkedHashMap<>();
+        for (var prop : beanDesc.findProperties()) {
+            if (prop.getField() != null && prop.couldSerialize()) {
+                allFieldToJson.put(prop.getField().getName(), prop.getName());
+            }
+        }
+        Set<String> own = new LinkedHashSet<>();
+        for (Field f : cls.getDeclaredFields()) {
+            if (Modifier.isStatic(f.getModifiers())) continue;
+            String jsonName = allFieldToJson.get(f.getName());
+            if (jsonName != null) own.add(jsonName);
+        }
+        return own;
+    }
+
+    /**
+     * Resolves the property ordering for a schema class.
+     *
+     * <p>Returns a list of JSON property names in the order they should appear in the
+     * OpenAPI schema. The caller uses this list to reorder the schema's property map;
+     * any properties <b>not</b> present in the returned list are appended alphabetically
+     * by the caller's {@code TreeMap} fallback, guaranteeing a stable, deterministic order.
+     *
+     * <p><b>Resolution strategy (first match wins):</b>
+     * <ol>
+     *   <li>If {@code @JsonPropertyOrder} with an explicit {@code value()} is found on the
+     *       class or any interface in its ancestry, that list is returned as-is. Note: if the
+     *       annotation lists only a subset of fields, those fields are ordered first and the
+     *       remaining properties fall through to the caller's alphabetical fallback — consistent
+     *       with Jackson's own behaviour for partial {@code @JsonPropertyOrder}.</li>
+     *   <li>Otherwise, field-backed properties are returned in declaration order (superclass
+     *       fields first). Getter-only properties are intentionally excluded to avoid
+     *       non-deterministic ordering across restarts.</li>
+     * </ol>
+     */
     private static List<String> resolvePropertyOrder(Class<?> cls, com.fasterxml.jackson.databind.BeanDescription beanDesc) {
+        // If an explicit @JsonPropertyOrder is present on the class or any interface in its
+        // ancestry, honour it directly. Walk up the class hierarchy; for each class also walk
+        // the full interface hierarchy (including super-interfaces) via BFS.
+        for (Class<?> c = cls; c != null && c != Object.class; c = c.getSuperclass()) {
+            JsonPropertyOrder propOrder = c.getAnnotation(JsonPropertyOrder.class);
+            if (propOrder != null && !propOrder.alphabetic() && propOrder.value().length > 0) {
+                return Arrays.asList(propOrder.value());
+            }
+            Deque<Class<?>> ifaceQueue = new ArrayDeque<>(Arrays.asList(c.getInterfaces()));
+            Set<Class<?>> visitedIfaces = new LinkedHashSet<>();
+            while (!ifaceQueue.isEmpty()) {
+                Class<?> iface = ifaceQueue.poll();
+                if (!visitedIfaces.add(iface)) continue;
+                propOrder = iface.getAnnotation(JsonPropertyOrder.class);
+                if (propOrder != null && !propOrder.alphabetic() && propOrder.value().length > 0) {
+                    return Arrays.asList(propOrder.value());
+                }
+                ifaceQueue.addAll(Arrays.asList(iface.getInterfaces()));
+            }
+        }
+
         // Map backing field names to their JSON property names (respects @JsonProperty)
         Map<String, String> fieldToJsonName = new LinkedHashMap<>();
-        LinkedHashSet<String> getterOnlyNames = new LinkedHashSet<>();
         for (var prop : beanDesc.findProperties()) {
-            if (prop.getField() != null) {
+            if (prop.getField() != null && prop.couldSerialize()) {
                 fieldToJsonName.put(prop.getField().getName(), prop.getName());
-            } else {
-                getterOnlyNames.add(prop.getName());
             }
         }
 
@@ -702,8 +920,12 @@ public class SwaggerConfiguration {
             }
         }
 
-        // Append getter-only properties (no backing field) at the end
-        ordered.addAll(getterOnlyNames);
+        // Return only field-backed properties in declaration order.
+        // Getter-only properties (no backing field) are intentionally excluded: their set can vary
+        // between restarts (e.g. Optional-typed getters depend on Jackson module registration order),
+        // so including them here would make their position non-deterministic when some are in orderedNames
+        // and others are only in the schema map. The converter's TreeMap fallback handles ALL
+        // non-field-backed properties together in one alphabetical pass, guaranteeing stable order.
         return ordered;
     }
 
