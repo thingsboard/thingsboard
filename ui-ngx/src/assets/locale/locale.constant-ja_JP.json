@@ -1095,6 +1095,7 @@
     "expression": "式",
     "no-found": "計算フィールドが見つかりません",
     "list": "{ count, plural, =1 {計算フィールド} other {計算フィールド一覧（# 件）} }",
+    "add": "計算フィールドを追加",
     "selected-fields": "{ count, plural, =1 {1 件の計算フィールド} other {# 件の計算フィールド} } を選択",
     "type": {
       "simple": "シンプル",

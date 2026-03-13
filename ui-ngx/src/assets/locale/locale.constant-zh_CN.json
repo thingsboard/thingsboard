@@ -1095,6 +1095,7 @@
     "expression": "表达式",
     "no-found": "未找到计算字段",
     "list": "{ count, plural, =1 {一个计算字段} other {# 个计算字段列表} }",
+    "add": "添加计算字段",
     "selected-fields": "{ count, plural, =1 {1 个计算字段} other {# 个计算字段} }已选择",
     "type": {
       "simple": "简单",

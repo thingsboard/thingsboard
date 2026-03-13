@@ -1095,6 +1095,7 @@
     "expression": "Uttrykk",
     "no-found": "Ingen beregnede felt funnet",
     "list": "{ count, plural, =1 {Ett beregnet felt} other {Liste med # beregnede felt} }",
+    "add": "Legg til beregnet felt",
     "selected-fields": "{ count, plural, =1 {1 beregnet felt} other {# beregnede felt} } valgt",
     "type": {
       "simple": "Enkel",

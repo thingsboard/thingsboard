@@ -1095,6 +1095,7 @@
     "expression": "Espressione",
     "no-found": "Nessun campo calcolato trovato",
     "list": "{ count, plural, =1 {Un campo calcolato} other {Elenco di # campi calcolati} }",
+    "add": "Aggiungi campo calcolato",
     "selected-fields": "{ count, plural, =1 {1 campo calcolato} other {# campi calcolati} } selezionato/i",
     "type": {
       "simple": "Semplice",

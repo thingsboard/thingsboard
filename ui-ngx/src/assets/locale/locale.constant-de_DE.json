@@ -1095,6 +1095,7 @@
     "expression": "Ausdruck",
     "no-found": "Keine berechneten Felder gefunden",
     "list": "{ count, plural, =1 {Ein berechnetes Feld} other {Liste von # berechneten Feldern} }",
+    "add": "Berechnetes Feld hinzufügen",
     "selected-fields": "{ count, plural, =1 {1 berechnetes Feld} other {# berechnete Felder} } ausgewählt",
     "type": {
       "simple": "Einfach",
