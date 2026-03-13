@@ -64,9 +64,10 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
   // This prevents the open→immediately-closed cycle from resetting the counter.
   private reconnectAttempts = 0;
 
-  // Suppress duplicate close-event notifications while retrying.
-  // Set on first close with an error code; cleared after receiving a successful message.
-  private reconnectErrorShown = false;
+  // Stores the last close-event error code shown to the user during a reconnect cycle.
+  // Only suppresses duplicate notifications for the same error code; a new error code is still shown.
+  // Cleared after receiving a successful message.
+  private lastShownCloseCode: number | null = null;
 
   protected constructor(protected store: Store<AppState>,
                         protected authService: AuthService,
@@ -138,7 +139,7 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
     this.cmdWrapper.clear();
     if (close) {
       this.reconnectAttempts = 0;
-      this.reconnectErrorShown = false;
+      this.lastShownCloseCode = null;
       this.closeSocket();
     }
   }
@@ -236,7 +237,7 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
     this.checkToClose();
     if (this.reconnectAttempts) {
       this.reconnectAttempts = 0;
-      this.reconnectErrorShown = false;
+      this.lastShownCloseCode = null;
     }
   }
 
@@ -248,11 +249,13 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
   }
 
   private onClose(closeEvent: CloseEvent) {
-    // Show error notification only once per reconnect cycle to prevent notification spam.
-    // reconnectErrorShown is cleared only after a productive connection (onMessage).
-    if (!this.reconnectErrorShown && closeEvent && closeEvent.code > 1001 && closeEvent.code !== 1006
-      && closeEvent.code !== 1011 && closeEvent.code !== 1012 && closeEvent.code !== 4500) {
-      this.reconnectErrorShown = true;
+    // Show error notification only when the error code changes to prevent notification spam,
+    // while still surfacing new, potentially actionable errors during a reconnect cycle.
+    // lastShownCloseCode is cleared only after a productive connection (onMessage).
+    if (closeEvent && closeEvent.code > 1001 && closeEvent.code !== 1006
+      && closeEvent.code !== 1011 && closeEvent.code !== 1012 && closeEvent.code !== 4500
+      && this.lastShownCloseCode !== closeEvent.code) {
+      this.lastShownCloseCode = closeEvent.code;
       this.showWsError(closeEvent.code, closeEvent.reason);
     }
     this.isOpening = false;
