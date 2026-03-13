@@ -586,6 +586,9 @@ public class SwaggerConfiguration {
                         if (prop.getDescription() != null) {
                             refSchema.setDescription(prop.getDescription());
                         }
+                        if (prop.getReadOnly() != null) {
+                            refSchema.setReadOnly(prop.getReadOnly());
+                        }
                         schema.getProperties().put(propName, refSchema);
                         log.debug("Replaced oneOf with $ref to {} in property {}", baseType, propName);
                     }
@@ -596,7 +599,7 @@ public class SwaggerConfiguration {
 
     private String tagItemFromPathItem(PathItem item) {
         var operations = item.readOperationsMap().values();
-        var operation = operations.stream().findAny();
+        var operation = operations.stream().findFirst();
         if (operation.isPresent()) {
             var tags = operation.get().getTags();
             if (tags != null && !tags.isEmpty()) {

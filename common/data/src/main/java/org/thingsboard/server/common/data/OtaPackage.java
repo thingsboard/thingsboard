@@ -31,7 +31,7 @@ public class OtaPackage extends OtaPackageInfo {
     @Serial
     private static final long serialVersionUID = 3091601761339422546L;
 
-    @Schema(description = "OTA Package data.", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(description = "OTA Package data.", accessMode = Schema.AccessMode.READ_ONLY, type = "string", format = "byte")
     private transient ByteBuffer data;
 
     public OtaPackage() {
