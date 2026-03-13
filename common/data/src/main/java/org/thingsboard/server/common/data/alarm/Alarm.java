@@ -84,6 +84,7 @@ public class Alarm extends BaseData<AlarmId> implements HasName, HasTenantId, Ha
     @Schema(description = "Timestamp of the alarm assignment, in milliseconds", example = "1634115928465")
     private long assignTs;
     @Schema(description = "JSON object with alarm details")
+    @JsonProperty
     private transient JsonNode details;
     @Schema(description = "Propagation flag to specify if alarm should be propagated to parent entities of alarm originator", example = "true")
     private boolean propagate;
