@@ -45,6 +45,7 @@ import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.device.data.PowerMode;
+import org.thingsboard.server.common.data.exception.TenantNotFoundException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -931,6 +932,7 @@ public class DefaultTransportService extends TransportActivityManager implements
                     TenantId tenantId = TenantId.fromUUID(entityUuid);
                     rateLimitService.remove(tenantId);
                     partitionService.removeTenant(tenantId);
+                    onTenantDeleted(tenantId);
                 } else if (EntityType.DEVICE.equals(entityType)) {
                     rateLimitService.remove(new DeviceId(entityUuid));
                     onDeviceDeleted(new DeviceId(entityUuid));
@@ -966,6 +968,18 @@ public class DefaultTransportService extends TransportActivityManager implements
         }
     }
 
+    public void onTenantDeleted(TenantId tenantId) {
+        sessions.forEach((id, md) -> {
+            TenantId sessionTenantId = getTenantId(md.getSessionInfo());
+            if (sessionTenantId.equals(tenantId)) {
+                DeviceId sessionDeviceId = getDeviceId(md.getSessionInfo());
+                transportCallbackExecutor.submit(() -> {
+                    md.getListener().onTenantDeleted(sessionDeviceId);
+                });
+                eventPublisher.publishEvent(new DeviceDeletedEvent(sessionDeviceId));
+            }
+        });
+    }
 
     public void onProfileUpdate(DeviceProfile deviceProfile) {
         long deviceProfileIdMSB = deviceProfile.getId().getId().getMostSignificantBits();
@@ -1107,6 +1121,12 @@ public class DefaultTransportService extends TransportActivityManager implements
         TopicPartitionInfo tpi;
         try {
             tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
+        } catch (TenantNotFoundException e) {
+            log.warn("Ignoring message delivery because Tenant with ID [{}] not found, routingKey [{}], msg [{}].", tenantId, routingKey, msg);
+            if (callback != null) {
+                callback.onError(e);
+            }
+            return;
         } catch (Exception e) {
             log.warn("Failed to send message to core. Tenant with ID [{}], routingKey [{}], msg [{}]. Message delivery aborted.", tenantId, routingKey, msg, e);
             if (callback != null) {

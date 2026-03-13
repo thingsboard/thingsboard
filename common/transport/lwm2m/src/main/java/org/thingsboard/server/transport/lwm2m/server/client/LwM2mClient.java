@@ -45,6 +45,8 @@ import org.thingsboard.server.common.data.device.data.PowerMode;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
+import org.thingsboard.server.common.transport.session.SessionCloseReason;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 import org.thingsboard.server.transport.lwm2m.config.TbLwM2mVersion;
@@ -141,6 +143,10 @@ public class LwM2mClient {
 
     @Getter
     private Map<Integer, Version> supportedClientObjects;
+
+    @Getter
+    @Setter
+    private SessionCloseReason sessionCloseReason;
 
     public Object clone() throws CloneNotSupportedException {
         return super.clone();
@@ -443,6 +449,10 @@ public class LwM2mClient {
 
     public LwM2m.Version getSupportedObjectVersion(Integer objectid) {
         return this.supportedClientObjects != null ? this.supportedClientObjects.get(objectid) : null;
+    }
+
+    public boolean shouldNotifyCore() {
+        return sessionCloseReason == null || sessionCloseReason != SessionCloseReason.TENANT_DELETED;
     }
 
     private void setSupportedClientObjects(){
