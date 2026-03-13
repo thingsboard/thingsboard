@@ -54,6 +54,16 @@ kafka:
       mechanism: "TB_QUEUE_KAFKA_CONFLUENT_SASL_MECHANISM"
     username: "TB_QUEUE_KAFKA_CONFLUENT_USERNAME"
     password: "TB_QUEUE_KAFKA_CONFLUENT_PASSWORD"
+    # Optional: OAUTH Setting
+    oauth:
+      # Optional: Oauth Client ID
+      client_id: "TB_QUEUE_KAFKA_CONFLUENT_OAUTH_CLIENT_ID"
+      # Optional: Oauth Client Secret
+      client_secret: "TB_QUEUE_KAFKA_CONFLUENT_OAUTH_CLIENT_SECRET"
+      # Optional: Oauth Endpoint URL to get the token from
+      endpoint_url: "TB_QUEUE_KAFKA_CONFLUENT_OAUTH_ENDPOINT_URL"
+      # Optional: threshold to renew current token before it expires (ms)
+      refresh_threshold: "TB_QUEUE_KAFKA_CONFLUENT_OAUTH_REFRESH_THRESHOLD"
 
 logger:
   level: "LOGGER_LEVEL"
