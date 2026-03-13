@@ -48,6 +48,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springdoc.core.customizers.OperationCustomizer;
 import org.springdoc.core.discoverer.SpringDocParameterNameDiscoverer;
+import org.springdoc.core.utils.SpringDocUtils;
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springdoc.core.properties.SpringDocConfigProperties;
 import org.springdoc.core.properties.SwaggerUiConfigProperties;
@@ -69,6 +70,7 @@ import org.thingsboard.server.service.security.auth.rest.LoginResponse;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -94,6 +96,8 @@ public class SwaggerConfiguration {
     @PostConstruct
     public void configureModelResolver() {
         ModelResolver.enumsAsRef = true;
+        SpringDocUtils.getConfig().replaceWithSchema(ByteBuffer.class,
+                new Schema<String>().type("string").format("byte"));
     }
 
     public static final String LOGIN_ENDPOINT = "/api/auth/login";
