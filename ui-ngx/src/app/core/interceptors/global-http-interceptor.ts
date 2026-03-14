@@ -28,7 +28,7 @@ import { ActionLoadFinish, ActionLoadStart } from './load.actions';
 import { ActionNotificationShow } from '@app/core/notification/notification.actions';
 import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
-import { parseHttpErrorMessage } from '@core/utils';
+import { isObject, parseHttpErrorMessage } from '@core/utils';
 import { getInterceptorConfig } from './interceptor.util';
 import { DomSanitizer } from '@angular/platform-browser';
 
@@ -132,6 +132,12 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
       } else if (errorResponse.status === 504) {
         if (!ignoreErrors) {
           this.showError('Request timeout');
+        }
+      } else if((errorResponse.status === 503 || errorResponse.status === 502) && !ignoreErrors) {
+        if(isObject(errorResponse.error) && errorResponse.error.message) {
+          this.showError(errorResponse.error.message);
+        } else {
+          this.showError(errorResponse.status === 503 ? 'Service Unavailable' : 'Bad Gateway');
         }
       } else {
         unhandled = true;
