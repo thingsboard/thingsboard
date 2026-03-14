@@ -930,6 +930,7 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
       onDataUpdated: () => {
         try {
           if (this.displayWidgetInstance()) {
+            this.displayNoData = false;
             if (this.widgetInstanceInited) {
               this.widgetTypeInstance.onDataUpdated();
               setTimeout(() => {
@@ -944,6 +945,7 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
       onLatestDataUpdated: () => {
         try {
           if (this.displayWidgetInstance()) {
+            this.displayNoData = false;
             if (this.widgetInstanceInited) {
               this.widgetTypeInstance.onLatestDataUpdated();
             } else {
