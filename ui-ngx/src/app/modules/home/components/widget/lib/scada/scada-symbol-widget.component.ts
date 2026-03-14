@@ -127,11 +127,11 @@ export class ScadaSymbolWidgetComponent implements OnInit, AfterViewInit, OnDest
   }
 
   onScadaSymbolObjectError(error: string) {
-    this.ctx.showErrorToast(error, 'bottom', 'center', this.ctx.toastTargetId, true);
+    this.ctx.showErrorToast(error, 'center', 'right', this.ctx.toastTargetId, true);
   }
 
   onScadaSymbolObjectMessage(message: string) {
-    this.ctx.showSuccessToast(message, 3000, 'bottom', 'center', this.ctx.toastTargetId, true);
+    this.ctx.showSuccessToast(message, 3000, 'center', 'right', this.ctx.toastTargetId, true);
   }
 
   private initObject(rootElement: HTMLElement,

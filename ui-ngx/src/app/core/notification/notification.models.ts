@@ -22,7 +22,7 @@ export interface NotificationState {
 
 export declare type NotificationType = 'info' | 'warn' | 'success' | 'error';
 export declare type NotificationHorizontalPosition = 'start' | 'center' | 'end' | 'left' | 'right';
-export declare type NotificationVerticalPosition = 'top' | 'bottom';
+export declare type NotificationVerticalPosition = 'top' | 'bottom' | 'center';
 
 export class NotificationMessage {
   message: string;
