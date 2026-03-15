@@ -44,3 +44,19 @@ DROP INDEX IF EXISTS idx_widgets_bundle_external_id;
 -- DROP INDEXES THAT DUPLICATE UNIQUE CONSTRAINT END
 
 ALTER TABLE mobile_app ADD COLUMN IF NOT EXISTS title varchar(255);
+
+-- IOT HUB INSTALLED ITEM START
+
+CREATE TABLE IF NOT EXISTS iot_hub_installed_item (
+    id              UUID          NOT NULL PRIMARY KEY,
+    created_time    BIGINT        NOT NULL,
+    tenant_id       UUID          NOT NULL,
+    item_id         UUID          NOT NULL,
+    item_version_id UUID          NOT NULL,
+    item_name       VARCHAR       NOT NULL,
+    item_type       VARCHAR       NOT NULL,
+    version         VARCHAR       NOT NULL,
+    descriptor      JSONB         NOT NULL
+);
+
+-- IOT HUB INSTALLED ITEM END
