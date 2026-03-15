@@ -1,0 +1,95 @@
+name: CI-CD ThingsBoard Images
+
+on:
+  push:
+    branches: ["dev-iot-platform-r4.3"]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  SERVICE_NAME: thingsboard
+  COMPONENTS: tb-node tb-web-ui tb-js-executor tb-mqtt-transport tb-http-transport tb-coap-transport
+  DEPLOYMENT_REPO: iot-platform-demo2/thingsboardthing-k3s
+
+jobs:
+  build_and_push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    outputs:
+      image_repo_prefix: ${{ steps.image_meta.outputs.image_repo_prefix }}
+      image_tag: ${{ steps.image_meta.outputs.image_tag }}
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute image metadata
+        id: image_meta
+        run: |
+          IMAGE_REPO_PREFIX=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          echo "image_repo_prefix=$IMAGE_REPO_PREFIX" >> "$GITHUB_OUTPUT"
+          echo "image_tag=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+
+      - name: Build images
+        env:
+          TB_DOCKER_REPO: ${{ steps.image_meta.outputs.image_repo_prefix }}
+          TB_IMAGE_TAG: ${{ steps.image_meta.outputs.image_tag }}
+        run: |
+          chmod +x ./.github/scripts/build-images.sh
+          ./.github/scripts/build-images.sh --clean
+
+      - name: Push images
+        env:
+          TB_DOCKER_REPO: ${{ steps.image_meta.outputs.image_repo_prefix }}
+          TB_IMAGE_TAG: ${{ steps.image_meta.outputs.image_tag }}
+        run: |
+          for component in $COMPONENTS; do
+            docker push "$TB_DOCKER_REPO/$component:latest"
+            docker push "$TB_DOCKER_REPO/$component:$TB_IMAGE_TAG"
+          done
+
+  update_deployment_repo:
+    runs-on: ubuntu-latest
+    needs: build_and_push
+
+    steps:
+      - name: Checkout deployment repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.DEPLOYMENT_REPO }}
+          token: ${{ secrets.ORG_PAT }}
+          path: deployment-repo
+
+      - name: Patch deployment environment
+        env:
+          IMAGE_REPO_PREFIX: ${{ needs.build_and_push.outputs.image_repo_prefix }}
+          IMAGE_TAG: ${{ needs.build_and_push.outputs.image_tag }}
+        run: |
+          sed -i "s|^TB_DOCKER_REPO=.*|TB_DOCKER_REPO=${IMAGE_REPO_PREFIX}|g" deployment-repo/.env
+          sed -i "s|^TB_IMAGE_TAG=.*|TB_IMAGE_TAG=${IMAGE_TAG}|g" deployment-repo/.env
+
+      - name: Commit & Push
+        run: |
+          cd deployment-repo
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add .env
+          git commit -m "Update ${SERVICE_NAME} images to ${{ needs.build_and_push.outputs.image_tag }}" || echo "No changes"
+          git push https://x-access-token:${{ secrets.ORG_PAT }}@github.com/${DEPLOYMENT_REPO}.git
