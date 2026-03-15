@@ -6,6 +6,7 @@ on:
   workflow_dispatch:
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   REGISTRY: ghcr.io
   SERVICE_NAME: thingsboard
   COMPONENTS: tb-node tb-web-ui tb-js-executor tb-mqtt-transport tb-http-transport tb-coap-transport

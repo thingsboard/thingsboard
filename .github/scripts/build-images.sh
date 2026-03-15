@@ -33,7 +33,7 @@ TB_SOURCE_VERSION=${TB_SOURCE_VERSION:-$(awk '
 TB_IMAGE_TAG=${TB_IMAGE_TAG:-${TB_SOURCE_VERSION}-custom}
 TB_MAVEN_PROJECTS=${TB_MAVEN_PROJECTS:-msa/tb-node,msa/web-ui,msa/js-executor,msa/transport/mqtt,msa/transport/http,msa/transport/coap}
 
-MAVEN_GOALS=(package)
+MAVEN_GOALS=(install)
 IMAGES=(
     tb-node
     tb-web-ui
@@ -74,7 +74,7 @@ tag_images() {
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --clean)
-            MAVEN_GOALS=(clean package)
+            MAVEN_GOALS=(clean install)
         ;;
         *)
             echo "Unknown option: $1" >&2
