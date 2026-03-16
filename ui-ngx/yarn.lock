@@ -262,23 +262,12 @@
     rxjs "7.8.2"
     source-map "0.7.6"
 
-"@angular-devkit/schematics@20.3.20":
+"@angular-devkit/schematics@20.3.20", "@angular-devkit/schematics@>= 20.0.0 < 21.0.0":
   version "20.3.20"
   resolved "https://registry.yarnpkg.com/@angular-devkit/schematics/-/schematics-20.3.20.tgz#d7d2cc74134823305b9451a1920130daecdf8c61"
   integrity sha512-+NNHQhQHcgQWZopStZ6os30YuP99lRzNS4wOnkJmoROy40SZct8lPnl2QW50a9Vc0AtaHx1a1NUZ+ohbf6fXqw==
   dependencies:
     "@angular-devkit/core" "20.3.20"
-    jsonc-parser "3.3.1"
-    magic-string "0.30.17"
-    ora "8.2.0"
-    rxjs "7.8.2"
-
-"@angular-devkit/schematics@>= 20.0.0 < 21.0.0":
-  version "20.3.18"
-  resolved "https://registry.yarnpkg.com/@angular-devkit/schematics/-/schematics-20.3.18.tgz#da5f9a84b2df9f13049974b6cd582475a3355d28"
-  integrity sha512-GRMEGl3YTL/qhQhaxYXLbSQxUTPTYMQ65IlxLQRq5+UKPomN9KVxxVdADXqs7Ss1uQcetr+jc+taVgxOqsAoxg==
-  dependencies:
-    "@angular-devkit/core" "20.3.18"
     jsonc-parser "3.3.1"
     magic-string "0.30.17"
     ora "8.2.0"
@@ -7771,7 +7760,7 @@ minimatch@^10.0.3, minimatch@^10.1.1:
   dependencies:
     brace-expansion "^5.0.2"
 
-minimatch@^3.1.5, minimatch@^3.1.2:
+minimatch@^3.1.2, minimatch@^3.1.5:
   version "3.1.5"
   resolved "https://registry.yarnpkg.com/minimatch/-/minimatch-3.1.5.tgz#580c88f8d5445f2bd6aa8f3cadefa0de79fbd69e"
   integrity sha512-VgjWUsnnT6n+NUk6eZq77zeFdpW2LWDzP6zFGrCbHXiYNul5Dzqk2HHQ5uFH2DNW5Xbp8+jVzaeNt94ssEEl4w==
