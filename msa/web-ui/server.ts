@@ -60,6 +60,39 @@ let connections: Socket[] = [];
         const app = express();
         server = http.createServer(app);
 
+        // Build security headers map once at startup
+        const securityHeaders: Record<string, string> = {};
+        if (config.has('security.headers')) {
+            const hc: any = config.get('security.headers');
+            if (hc['x-content-type-options']?.enabled !== false) {
+                securityHeaders['X-Content-Type-Options'] = 'nosniff';
+            }
+            if (hc['referrer-policy']?.enabled !== false) {
+                securityHeaders['Referrer-Policy'] = hc['referrer-policy']?.value || 'strict-origin-when-cross-origin';
+            }
+            if (hc['x-frame-options']?.enabled) {
+                securityHeaders['X-Frame-Options'] = hc['x-frame-options']?.value || 'SAMEORIGIN';
+            }
+            if (hc['content-security-policy']?.enabled && hc['content-security-policy']?.value) {
+                const name = hc['content-security-policy']?.reportOnly
+                    ? 'Content-Security-Policy-Report-Only' : 'Content-Security-Policy';
+                securityHeaders[name] = hc['content-security-policy'].value;
+            }
+        } else {
+            // Defaults when no security.headers config block exists
+            securityHeaders['X-Content-Type-Options'] = 'nosniff';
+            securityHeaders['Referrer-Policy'] = 'strict-origin-when-cross-origin';
+        }
+        logger.info('Security headers: %s', JSON.stringify(securityHeaders));
+
+        // Apply security headers to all responses
+        app.use((_req, res, next) => {
+            for (const [name, value] of Object.entries(securityHeaders)) {
+                res.setHeader(name, value);
+            }
+            next();
+        });
+
         let apiProxy: httpProxy;
         if (useApiProxy) {
             apiProxy = httpProxy.createProxyServer({
