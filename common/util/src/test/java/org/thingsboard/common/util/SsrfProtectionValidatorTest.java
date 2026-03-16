@@ -20,10 +20,12 @@ import org.junit.jupiter.api.parallel.ResourceLock;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.net.InetAddress;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -333,6 +335,94 @@ public class SsrfProtectionValidatorTest {
         } finally {
             SsrfProtectionValidator.setAdditionalBlockedHosts(Collections.emptyList());
         }
+    }
+
+    // --- Allow-list tests ---
+
+    @Test
+    void testAllowListCidrAllowsPrivateAddress() {
+        try {
+            SsrfProtectionValidator.setAllowedHosts(List.of("192.168.1.0/24"));
+            // 192.168.1.1 is normally blocked (site-local), but allow-listed
+            assertThatNoException().isThrownBy(() -> SsrfProtectionValidator.validateUri(URI.create("http://192.168.1.1"), true));
+            // Other private ranges remain blocked
+            assertThatThrownBy(() -> SsrfProtectionValidator.validateUri(URI.create("http://10.0.0.1"), true))
+                    .isInstanceOf(RuntimeException.class)
+                    .hasMessageContaining("URI is invalid");
+        } finally {
+            SsrfProtectionValidator.setAllowedHosts(Collections.emptyList());
+        }
+    }
+
+    @Test
+    void testAllowListHostnameBypassesSuffixCheck() {
+        try {
+            SsrfProtectionValidator.setAllowedHosts(List.of("my-device.local"));
+            // .local suffix is normally blocked, but allow-listed hostname passes
+            assertThatNoException().isThrownBy(() -> SsrfProtectionValidator.validateUri(URI.create("http://my-device.local/api"), true));
+            // Other .local hostnames remain blocked
+            assertThatThrownBy(() -> SsrfProtectionValidator.validateUri(URI.create("http://other-device.local/api"), true))
+                    .isInstanceOf(RuntimeException.class)
+                    .hasMessageContaining("URI is invalid");
+        } finally {
+            SsrfProtectionValidator.setAllowedHosts(Collections.emptyList());
+        }
+    }
+
+    @Test
+    void testAllowListPrecedenceOverBlockList() {
+        try {
+            // Block 8.8.8.0/24 via additional-blocked, but allow 8.8.8.8 via allow-list
+            SsrfProtectionValidator.setAdditionalBlockedHosts(List.of("8.8.8.0/24"));
+            SsrfProtectionValidator.setAllowedHosts(List.of("8.8.8.8"));
+            // Allow-list should win
+            assertThatNoException().isThrownBy(() -> SsrfProtectionValidator.validateUri(URI.create("https://8.8.8.8"), true));
+            // Adjacent IP still blocked
+            assertThatThrownBy(() -> SsrfProtectionValidator.validateUri(URI.create("https://8.8.8.9"), true))
+                    .isInstanceOf(RuntimeException.class)
+                    .hasMessageContaining("URI is invalid");
+        } finally {
+            SsrfProtectionValidator.setAdditionalBlockedHosts(Collections.emptyList());
+            SsrfProtectionValidator.setAllowedHosts(Collections.emptyList());
+        }
+    }
+
+    @Test
+    void testIsBlockedAddressPublicApi() throws Exception {
+        InetAddress loopback = InetAddress.getByName("127.0.0.1");
+        assertThat(SsrfProtectionValidator.isBlockedAddress(loopback)).isTrue();
+
+        InetAddress publicIp = InetAddress.getByName("8.8.8.8");
+        assertThat(SsrfProtectionValidator.isBlockedAddress(publicIp)).isFalse();
+
+        // Allow-listed private address
+        try {
+            SsrfProtectionValidator.setAllowedHosts(List.of("10.0.0.0/8"));
+            InetAddress privateIp = InetAddress.getByName("10.1.2.3");
+            assertThat(SsrfProtectionValidator.isBlockedAddress(privateIp)).isFalse();
+        } finally {
+            SsrfProtectionValidator.setAllowedHosts(Collections.emptyList());
+        }
+    }
+
+    @Test
+    void testIsEnabledAccessor() {
+        boolean original = SsrfProtectionValidator.isEnabled();
+        try {
+            SsrfProtectionValidator.setEnabled(true);
+            assertThat(SsrfProtectionValidator.isEnabled()).isTrue();
+            SsrfProtectionValidator.setEnabled(false);
+            assertThat(SsrfProtectionValidator.isEnabled()).isFalse();
+        } finally {
+            SsrfProtectionValidator.setEnabled(original);
+        }
+    }
+
+    @Test
+    void testSetAllowedHostsEmptyAndNull() {
+        // Should not throw
+        SsrfProtectionValidator.setAllowedHosts(Collections.emptyList());
+        SsrfProtectionValidator.setAllowedHosts(null);
     }
 
 }

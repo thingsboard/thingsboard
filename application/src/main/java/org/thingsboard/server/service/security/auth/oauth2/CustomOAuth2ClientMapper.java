@@ -23,11 +23,14 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.SsrfProtectionValidator;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.oauth2.OAuth2CustomMapperConfig;
 import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
 import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.dao.oauth2.OAuth2User;
+
+import java.net.URI;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
@@ -62,6 +65,12 @@ public class CustomOAuth2ClientMapper extends AbstractOAuth2ClientMapper impleme
         } catch (JsonProcessingException e) {
             log.error("Can't convert principal to JSON string", e);
             throw new RuntimeException("Can't convert principal to JSON string", e);
+        }
+        try {
+            SsrfProtectionValidator.validateUri(new URI(custom.getUrl()));
+        } catch (Exception e) {
+            log.error("SSRF validation failed for custom mapper URL '{}'", custom.getUrl(), e);
+            throw new RuntimeException("Unable to login. Please contact your Administrator!");
         }
         try {
             return restTemplate.postForEntity(custom.getUrl(), request, OAuth2User.class).getBody();

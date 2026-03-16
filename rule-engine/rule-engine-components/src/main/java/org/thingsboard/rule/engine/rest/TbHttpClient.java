@@ -103,6 +103,8 @@ public class TbHttpClient {
                     .build();
 
             HttpClient httpClient = HttpClient.create(connectionProvider)
+                    .resolver(SsrfSafeAddressResolverGroup.INSTANCE)
+                    .followRedirect(false)
                     .runOn(getSharedOrCreateEventLoopGroup(eventLoopGroupShared))
                     .doOnConnected(c ->
                             c.addHandlerLast(new ReadTimeoutHandler(config.getReadTimeoutMs(), TimeUnit.MILLISECONDS)));

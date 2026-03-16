@@ -509,6 +509,10 @@ actors:
       # Comma-separated list of additional blocked destinations (IPs, CIDR subnets, or hostnames).
       # Example: "198.51.100.0/24,metadata.tencentyun.com,rancher-metadata"
       ssrf_additional_blocked_hosts: "${SSRF_ADDITIONAL_BLOCKED_HOSTS:}"
+      # Comma-separated list of allowed destinations that bypass SSRF blocking (IPs, CIDR subnets, or hostnames).
+      # Use this when your rule chains need to reach devices on private networks (e.g., 192.168.1.0/24).
+      # Example: "192.168.1.0/24,10.0.0.0/8,my-internal-service.corp"
+      ssrf_allowed_hosts: "${SSRF_ALLOWED_HOSTS:}"
   rpc:
     # Maximum number of persistent RPC call retries in case of failed request delivery.
     max_retries: "${ACTORS_RPC_MAX_RETRIES:5}"
