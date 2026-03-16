@@ -63,7 +63,7 @@
         <leshan.version>2.0.0-M15</leshan.version>
         <mail.version>2.0.1</mail.version>
         <curator.version>5.6.0</curator.version>
-        <zookeeper.version>3.9.3</zookeeper.version>
+        <zookeeper.version>3.9.5</zookeeper.version> <!-- to fix CVE-2026-24308 and CVE-2026-24281. TODO: remove override when fixed in curator-client -->
         <protobuf.version>3.25.5</protobuf.version> <!-- A Major v4 does not support by the pubsub yet-->
         <grpc.version>1.76.0</grpc.version>
         <tbel.version>1.2.9</tbel.version>
@@ -122,6 +122,7 @@
         <perfmark-api.version>0.27.0</perfmark-api.version>
         <threetenbp.version>1.7.0</threetenbp.version>
         <!--         TEST SCOPE         -->
+        <assertj.version>3.27.7</assertj.version> <!-- to fix CVE-2026-24400 (XXE). TODO: remove when fixed in spring-boot-dependencies -->
         <dbunit.version>2.7.3</dbunit.version>
         <java-websocket.version>1.5.6</java-websocket.version>
         <mock-server.version>5.15.0</mock-server.version>
@@ -930,6 +931,15 @@
                 <scope>import</scope>
             </dependency>
             <!-- End of Jackson version override -->
+
+            <!-- Temporary assertj-core version override -->
+            <dependency>
+                <groupId>org.assertj</groupId>
+                <artifactId>assertj-core</artifactId>
+                <version>${assertj.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <!-- End of assertj-core version override -->
 
             <dependency>
                 <groupId>org.springframework.boot</groupId>

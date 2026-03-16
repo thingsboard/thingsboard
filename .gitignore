@@ -38,3 +38,4 @@ rebuild-docker.sh
 .run/**
 .run
 .claude
+.planning
