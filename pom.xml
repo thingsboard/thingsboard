@@ -63,7 +63,7 @@
         <leshan.version>2.0.0-M15</leshan.version>
         <mail.version>2.0.1</mail.version>
         <curator.version>5.6.0</curator.version>
-        <zookeeper.version>3.9.3</zookeeper.version>
+        <zookeeper.version>3.9.5</zookeeper.version> <!-- to fix CVE-2026-24308 and CVE-2026-24281. TODO: remove override when fixed in curator-client -->
         <protobuf.version>3.25.5</protobuf.version> <!-- A Major v4 does not support by the pubsub yet-->
         <grpc.version>1.76.0</grpc.version>
         <tbel.version>1.2.9</tbel.version>
