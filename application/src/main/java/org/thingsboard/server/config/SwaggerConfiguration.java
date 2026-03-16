@@ -112,7 +112,7 @@ public class SwaggerConfiguration {
     private static final ApiResponses defaultPostErrorResponses = defaultErrorResponses(true);
 
     // Populated by mapAwareConverter, consumed by customOpenApiCustomizer.
-    // Keyed by Class.getSimpleName() which matches swagger-core's default schema naming.
+    // Keyed by the schema name that swagger-core generates (see resolveSchemaName).
     private final Map<String, List<String>> schemaPropertyOrders = new ConcurrentHashMap<>();
     private final Map<String, Set<String>> schemaOwnProps = new ConcurrentHashMap<>();
 
@@ -325,10 +325,11 @@ public class SwaggerConfiguration {
                         // (including ones where the ModelConverter only sees a $ref).
                         try {
                             var beanDesc = Json.mapper().getSerializationConfig().introspect(javaType);
-                            schemaPropertyOrders.put(cls.getSimpleName(), resolvePropertyOrder(cls, beanDesc));
+                            String schemaName = resolveSchemaName(javaType);
+                            schemaPropertyOrders.put(schemaName, resolvePropertyOrder(cls, beanDesc));
                             Set<String> ownProps = computeOwnPropNames(cls, beanDesc);
                             if (!ownProps.isEmpty()) {
-                                schemaOwnProps.put(cls.getSimpleName(), ownProps);
+                                schemaOwnProps.put(schemaName, ownProps);
                             }
                         } catch (Exception e) {
                             log.debug("Failed to resolve property order for {}: {}", cls.getName(), e.getMessage());
@@ -788,6 +789,26 @@ public class SwaggerConfiguration {
             required.removeAll(toStrip);
             schema.setRequired(required.isEmpty() ? null : required);
         }
+    }
+
+    /**
+     * Computes the schema name that swagger-core will use for the given JavaType.
+     * For simple types, this is just the class simple name (e.g. {@code Device}).
+     * For parameterized types, type parameter names are appended
+     * (e.g. {@code PageData<Device>} becomes {@code PageDataDevice}).
+     * This matches the naming convention used by swagger-core's {@code TypeNameResolver}.
+     */
+    private static String resolveSchemaName(JavaType javaType) {
+        StringBuilder sb = new StringBuilder(javaType.getRawClass().getSimpleName());
+        if (javaType.hasGenericTypes()) {
+            for (int i = 0; i < javaType.containedTypeCount(); i++) {
+                JavaType param = javaType.containedType(i);
+                if (param != null) {
+                    sb.append(param.getRawClass().getSimpleName());
+                }
+            }
+        }
+        return sb.toString();
     }
 
     /**
