@@ -19,6 +19,10 @@ name: CI-CD ThingsBoard Images
 on:
   push:
     branches: ["dev-iot-platform-r4.3"]
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - "documentation/**"
   workflow_dispatch:
 
 env:

@@ -221,7 +221,7 @@ ui:
   # Help parameters
   help:
     # Base URL for UI help assets
-    base-url: "${UI_HELP_BASE_URL:https://raw.githubusercontent.com/thingsboard/thingsboard-ui-help/release-4.3}"
+    base-url: "${UI_HELP_BASE_URL:https://raw.githubusercontent.com}"
 
 # Database telemetry parameters
 database:
@@ -1547,7 +1547,7 @@ edges:
 # Spring doc common parameters
 springdoc:
   # If false swagger API docs will be unavailable
-  api-docs.enabled: "${SWAGGER_ENABLED:true}"
+  api-docs.enabled: "${SWAGGER_ENABLED:false}"
   # Swagger default produces media-type
   default-produces-media-type: "${SWAGGER_DEFAULT_PRODUCES_MEDIA_TYPE:application/json}"
 
@@ -1560,25 +1560,25 @@ swagger:
   # Nonsecurity API path match pattern of swagger UI links
   non_security_path_regex: "${SWAGGER_NON_SECURITY_PATH_REGEX:/api/(?:noauth|v1)/.*}"
   # The title on the API doc UI page
-  title: "${SWAGGER_TITLE:ThingsBoard REST API}"
+  title: "${SWAGGER_TITLE:IoT Platform REST API}"
   # The description on the API doc UI page
-  description: "${SWAGGER_DESCRIPTION: ThingsBoard open-source IoT platform REST API documentation.}"
+  description: "${SWAGGER_DESCRIPTION: IoT platform REST API documentation.}"
   contact:
     # The contact name on the API doc UI page
-    name: "${SWAGGER_CONTACT_NAME:ThingsBoard team}"
+    name: "${SWAGGER_CONTACT_NAME:NewGen team}"
     # The contact URL on the API doc UI page
-    url: "${SWAGGER_CONTACT_URL:https://thingsboard.io}"
+    url: "${SWAGGER_CONTACT_URL:https://newgen.iot-platform.io.vn}"
     # The contact email on the API doc UI page
-    email: "${SWAGGER_CONTACT_EMAIL:info@thingsboard.io}"
+    email: "${SWAGGER_CONTACT_EMAIL:https://support@newgen.iot-platform.io.vn}"
   license:
     # The license title on the API doc UI page
     title: "${SWAGGER_LICENSE_TITLE:Apache License Version 2.0}"
     # Link to the license body on the API doc UI page
-    url: "${SWAGGER_LICENSE_URL:https://github.com/thingsboard/thingsboard/blob/master/LICENSE}"
+    url: "${SWAGGER_LICENSE_URL:https://www.apache.org/licenses/LICENSE-2.0.txt}"
   # The version of the API doc to display. Default to the package version.
   version: "${SWAGGER_VERSION:}"
   # The group name (definition) on the API doc UI page.
-  group_name: "${SWAGGER_GROUP_NAME:thingsboard}"
+  group_name: "${SWAGGER_GROUP_NAME:iot-platform}"
   # Control the initial display state of API operations and tags (none or list)
   doc_expansion: "${SWAGGER_DOC_EXPANSION:list}"
 
