@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 .calculated-field-dialog-container {
   width: 869px;
   max-width: 100%;
   display: grid;
   grid-template-rows: min-content minmax(auto, 1fr) min-content;
-  --mdc-outlined-text-field-outline-color: rgba(0,0,0,0.12);
-  --mdc-outlined-text-field-container-shape: 6px;
+  --mat-form-field-outlined-outline-color: rgba(0,0,0,0.12);
+  --mat-form-field-outlined-container-shape: 6px;
   --mat-form-field-trailing-icon-color: rgba(0, 0, 0, 0.56);
 }
 

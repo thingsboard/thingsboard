@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -22,7 +23,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -133,7 +133,7 @@ public class TenantController extends BaseController {
 
     @ApiOperation(value = "Get Tenants (getTenants)", notes = "Returns a page of tenants registered in the platform. " + PAGE_DATA_PARAMETERS + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @GetMapping(value = "/tenants", params = {"pageSize", "page"})
+    @GetMapping(value = "/tenants")
     public PageData<Tenant> getTenants(
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
@@ -152,7 +152,7 @@ public class TenantController extends BaseController {
     @ApiOperation(value = "Get Tenants Info (getTenants)", notes = "Returns a page of tenant info objects registered in the platform. "
             + TENANT_INFO_DESCRIPTION + PAGE_DATA_PARAMETERS + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @GetMapping(value = "/tenantInfos", params = {"pageSize", "page"})
+    @GetMapping(value = "/tenantInfos")
     public PageData<TenantInfo> getTenantInfos(
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
@@ -169,9 +169,10 @@ public class TenantController extends BaseController {
         return checkNotNull(tenantService.findTenantInfos(pageLink));
     }
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
+    @Hidden
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @GetMapping(value = "/tenants", params = {"tenantIds"})
-    public List<Tenant> getTenantsByIds(
+    public List<Tenant> getTenantsByIdsV1(
             @Parameter(description = "A list of tenant ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")))
             @RequestParam("tenantIds") Set<UUID> tenantUUIDs) throws ThingsboardException {
         TenantId tenantId = getCurrentUser().getTenantId();
@@ -179,7 +180,27 @@ public class TenantController extends BaseController {
         for (UUID tenantIdUUID : tenantUUIDs) {
             tenantIds.add(TenantId.fromUUID(tenantIdUUID));
         }
-        return tenantService.findTenantsByIds(tenantId, tenantIds);
+        List<Tenant> tenants = tenantService.findTenantsByIds(tenantId, tenantIds);
+        return filterTenantsByReadPermission(tenants);
+    }
+
+    @ApiOperation(value = "Get Tenants list (getTenantsByIds)")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @GetMapping(value = "/tenants/list")
+    public List<Tenant> getTenantsByIds(
+            @Parameter(description = "A list of tenant ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")))
+            @RequestParam("tenantIds") Set<UUID> tenantUUIDs) throws ThingsboardException {
+        return getTenantsByIdsV1(tenantUUIDs);
+    }
+
+    private List<Tenant> filterTenantsByReadPermission(List<Tenant> tenants) {
+        return tenants.stream().filter(tenant -> {
+            try {
+                return accessControlService.hasPermission(getCurrentUser(), Resource.TENANT, Operation.READ, tenant.getId(), tenant);
+            } catch (ThingsboardException e) {
+                return false;
+            }
+        }).toList();
     }
 
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates.ENTITY_ID_LATITUDE_ARGUMENT_KEY;
@@ -101,6 +102,19 @@ public class GeofencingCalculatedFieldConfigurationTest {
         assertThat(allowedZonesArgument.getRefDynamicSourceConfiguration()).isNull();
         assertThat(allowedZonesArgument.getRefEntityId()).isNull();
         assertThat(allowedZonesArgument.getRefEntityKey()).isEqualTo(new ReferencedEntityKey("perimeter", ArgumentType.ATTRIBUTE, AttributeScope.SERVER_SCOPE));
+    }
+
+    @Test
+    void validateShouldThrowWhenScheduledUpdateEnabledButIntervalNotSet() {
+        var cfg = new GeofencingCalculatedFieldConfiguration();
+        cfg.setEntityCoordinates(mock(EntityCoordinates.class));
+        cfg.setZoneGroups(Map.of("zone", mock(ZoneGroupConfiguration.class)));
+        cfg.setScheduledUpdateEnabled(true);
+        cfg.setScheduledUpdateInterval(null);
+
+        assertThatThrownBy(cfg::validate)
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Refresh interval is required when periodic zone group refresh is enabled.");
     }
 
 }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ import {
 import { ImportExportService } from '@shared/import-export/import-export.service';
 import { TableColumnsAssignmentComponent } from '@shared/import-export/table-columns-assignment.component';
 import { Ace } from 'ace-builds';
-import { getAce } from '@shared/models/ace/ace.models';
+import { getAce, updateEditorSize } from '@shared/models/ace/ace.models';
 
 export interface ImportDialogCsvData {
   entityType: EntityType;
@@ -48,10 +48,11 @@ export interface ImportDialogCsvData {
 }
 
 @Component({
-  selector: 'tb-import-csv-dialog',
-  templateUrl: './import-dialog-csv.component.html',
-  providers: [],
-  styleUrls: ['./import-dialog-csv.component.scss']
+    selector: 'tb-import-csv-dialog',
+    templateUrl: './import-dialog-csv.component.html',
+    providers: [],
+    styleUrls: ['./import-dialog-csv.component.scss'],
+    standalone: false
 })
 export class ImportDialogCsvComponent extends DialogComponent<ImportDialogCsvComponent, boolean>
   implements AfterViewInit, OnDestroy {
@@ -283,21 +284,9 @@ export class ImportDialogCsvComponent extends DialogComponent<ImportDialogCsvCom
         this.aceEditor = ace.edit(editorElement, editorOptions);
         this.aceEditor.session.setUseWrapMode(false);
         this.aceEditor.setValue(content, -1);
-        this.updateEditorSize(editorElement, content, this.aceEditor);
+        updateEditorSize(editorElement, content, this.aceEditor, this.renderer, {setMinHeight: true, ignoreWidth: true});
       }
     );
-  }
-
-  private updateEditorSize(editorElement: any, content: string, editor: Ace.Editor) {
-    let newHeight = 200;
-    if (content && content.length > 0) {
-      const lines = content.split('\n');
-      newHeight = 16 * lines.length + 24;
-    }
-    const minHeight = Math.min(200, newHeight);
-    this.renderer.setStyle(editorElement, 'minHeight', minHeight.toString() + 'px');
-    this.renderer.setStyle(editorElement, 'height', newHeight.toString() + 'px');
-    editor.resize();
   }
 
 }

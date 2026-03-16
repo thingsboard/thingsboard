@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -50,10 +50,11 @@ const horizontalLayoutPadding = 48;
 const verticalLayoutPadding = 36;
 
 @Component({
-  selector: 'tb-single-switch-widget',
-  templateUrl: './single-switch-widget.component.html',
-  styleUrls: ['../action/action-widget.scss', './single-switch-widget.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-single-switch-widget',
+    templateUrl: './single-switch-widget.component.html',
+    styleUrls: ['../action/action-widget.scss', './single-switch-widget.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class SingleSwitchWidgetComponent extends
   BasicActionWidgetComponent implements OnInit, AfterViewInit, OnDestroy {

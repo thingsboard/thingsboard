@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -468,6 +468,7 @@ public abstract class AbstractMqttV5ClientSparkplugAttributesTest extends Abstra
         AtomicReference<List<String>> actualKeys = new AtomicReference<>();
         await(alias + SparkplugMessageType.NBIRTH.name())
                 .atMost(40, TimeUnit.SECONDS)
+                .ignoreExceptions()
                 .until(() -> {
                     actualKeys.set(doGetAsyncTyped(urlTemplate, new TypeReference<>() {
                     }));
@@ -483,6 +484,7 @@ public abstract class AbstractMqttV5ClientSparkplugAttributesTest extends Abstra
         AtomicReference<List<String>> actualKeys = new AtomicReference<>();
         await(alias + SparkplugMessageType.DBIRTH.name())
                 .atMost(40, TimeUnit.SECONDS)
+                .ignoreExceptions()
                 .until(() -> {
                     actualKeys.set(doGetAsyncTyped(urlTemplate, new TypeReference<>() {
                     }));

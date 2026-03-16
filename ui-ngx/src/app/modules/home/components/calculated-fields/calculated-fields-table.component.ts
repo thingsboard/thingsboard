@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -36,13 +36,15 @@ import { ImportExportService } from '@shared/import-export/import-export.service
 import { EntityDebugSettingsService } from '@home/components/entity/debug/entity-debug-settings.service';
 import { DatePipe } from '@angular/common';
 import { UtilsService } from "@core/services/utils.service";
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
-  selector: 'tb-calculated-fields-table',
-  templateUrl: './calculated-fields-table.component.html',
-  styleUrls: ['./calculated-fields-table.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [EntityDebugSettingsService]
+    selector: 'tb-calculated-fields-table',
+    templateUrl: './calculated-fields-table.component.html',
+    styleUrls: ['./calculated-fields-table.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    providers: [EntityDebugSettingsService],
+    standalone: false
 })
 export class CalculatedFieldsTableComponent {
 
@@ -55,6 +57,8 @@ export class CalculatedFieldsTableComponent {
 
   calculatedFieldsTableConfig: CalculatedFieldsTableConfig;
 
+  pageMode: boolean = false;
+
   constructor(private calculatedFieldsService: CalculatedFieldsService,
               private translate: TranslateService,
               private dialog: MatDialog,
@@ -65,10 +69,13 @@ export class CalculatedFieldsTableComponent {
               private importExportService: ImportExportService,
               private entityDebugSettingsService: EntityDebugSettingsService,
               private utilsService: UtilsService,
-              private destroyRef: DestroyRef) {
-
+              private destroyRef: DestroyRef,
+              private route: ActivatedRoute,
+              private router: Router
+  ) {
+    this.pageMode = !!this.route.snapshot.data.isPage;
     effect(() => {
-      if (this.active()) {
+      if (this.active() || this.pageMode) {
         this.calculatedFieldsTableConfig = new CalculatedFieldsTableConfig(
           this.calculatedFieldsService,
           this.translate,
@@ -83,6 +90,8 @@ export class CalculatedFieldsTableComponent {
           this.importExportService,
           this.entityDebugSettingsService,
           this.utilsService,
+          this.router,
+          this.pageMode,
         );
         this.cd.markForCheck();
       }

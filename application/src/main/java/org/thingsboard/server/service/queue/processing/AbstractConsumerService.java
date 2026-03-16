@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -134,13 +134,13 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
     protected void processNotifications(List<TbProtoQueueMsg<N>> msgs, TbQueueConsumer<TbProtoQueueMsg<N>> consumer) throws Exception {
         List<IdMsgPair<N>> orderedMsgList = msgs.stream().map(msg -> new IdMsgPair<>(UUID.randomUUID(), msg)).toList();
         ConcurrentMap<UUID, TbProtoQueueMsg<N>> pendingMap = orderedMsgList.stream().collect(
-                Collectors.toConcurrentMap(IdMsgPair::getUuid, IdMsgPair::getMsg));
+                Collectors.toConcurrentMap(IdMsgPair::uuid, IdMsgPair::msg));
         CountDownLatch processingTimeoutLatch = new CountDownLatch(1);
         TbPackProcessingContext<TbProtoQueueMsg<N>> ctx = new TbPackProcessingContext<>(
                 processingTimeoutLatch, pendingMap, new ConcurrentHashMap<>());
         orderedMsgList.forEach(element -> {
-            UUID id = element.getUuid();
-            TbProtoQueueMsg<N> msg = element.getMsg();
+            UUID id = element.uuid();
+            TbProtoQueueMsg<N> msg = element.msg();
             log.trace("[{}] Creating notification callback for message: {}", id, msg.getValue());
             TbCallback callback = new TbPackCallback<>(id, ctx);
             try {

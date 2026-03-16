@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -48,11 +48,12 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-widget-button-toggle-custom-style-panel',
-  templateUrl: './widget-button-toggle-custom-style-panel.component.html',
-  providers: [],
-  styleUrls: ['./widget-button-toggle-custom-style-panel.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-widget-button-toggle-custom-style-panel',
+    templateUrl: './widget-button-toggle-custom-style-panel.component.html',
+    providers: [],
+    styleUrls: ['./widget-button-toggle-custom-style-panel.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class WidgetButtonToggleCustomStylePanelComponent extends PageComponent implements OnInit {
 

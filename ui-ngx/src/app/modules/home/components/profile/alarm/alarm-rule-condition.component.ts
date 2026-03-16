@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -38,21 +38,22 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { dynamicValueSourceTypeTranslationMap } from '@shared/models/query/query.models';
 
 @Component({
-  selector: 'tb-alarm-rule-condition',
-  templateUrl: './alarm-rule-condition.component.html',
-  styleUrls: ['./alarm-rule-condition.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => AlarmRuleConditionComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => AlarmRuleConditionComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-alarm-rule-condition',
+    templateUrl: './alarm-rule-condition.component.html',
+    styleUrls: ['./alarm-rule-condition.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => AlarmRuleConditionComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => AlarmRuleConditionComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class AlarmRuleConditionComponent implements ControlValueAccessor, OnInit, Validator {
 

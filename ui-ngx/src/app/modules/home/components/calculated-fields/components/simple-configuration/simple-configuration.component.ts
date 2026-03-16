@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { booleanAttribute, Component, forwardRef, Input, OnChanges, SimpleChanges } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -46,20 +46,21 @@ import { map } from 'rxjs/operators';
 type SimpeConfiguration = CalculatedFieldSimpleConfiguration | CalculatedFieldScriptConfiguration;
 
 @Component({
-  selector: 'tb-simple-configuration',
-  templateUrl: './simple-configuration.component.html',
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => SimpleConfigurationComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => SimpleConfigurationComponent),
-      multi: true
-    }
-  ],
+    selector: 'tb-simple-configuration',
+    templateUrl: './simple-configuration.component.html',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => SimpleConfigurationComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => SimpleConfigurationComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class SimpleConfigurationComponent implements ControlValueAccessor, Validator, OnChanges {
 
@@ -80,6 +81,8 @@ export class SimpleConfigurationComponent implements ControlValueAccessor, Valid
 
   @Input({required: true})
   testScript: () => Observable<string>;
+
+  @Input({transform: booleanAttribute}) isEditValue = true;
 
   simpleConfiguration = this.fb.group({
     arguments: this.fb.control({}),
@@ -104,6 +107,8 @@ export class SimpleConfigurationComponent implements ControlValueAccessor, Valid
     map(argumentsObj => getCalculatedFieldArgumentsHighlights(argumentsObj))
   );
 
+  disabled = false;
+
   private propagateChange: (config: SimpeConfiguration) => void = () => { };
 
   constructor(private fb: FormBuilder) {
@@ -127,7 +132,7 @@ export class SimpleConfigurationComponent implements ControlValueAccessor, Valid
     for (const propName of Object.keys(changes)) {
       const change = changes[propName];
       if (change.currentValue !== change.previousValue) {
-        if (propName === 'isScript') {
+        if (propName === 'isScript' && !this.disabled) {
           this.updatedFormWithScript();
           if (!change.firstChange) {
             this.simpleConfiguration.updateValueAndValidity();
@@ -149,9 +154,9 @@ export class SimpleConfigurationComponent implements ControlValueAccessor, Valid
       formValue.expressionSIMPLE = formValue.expression;
     }
     this.simpleConfiguration.patchValue(formValue, {emitEvent: false});
-    this.updatedFormWithScript();
     setTimeout(() => {
       this.simpleConfiguration.get('arguments').updateValueAndValidity({onlySelf: true});
+      this.simpleConfiguration.get('output').updateValueAndValidity({onlySelf: true});
     });
   }
 
@@ -163,6 +168,7 @@ export class SimpleConfigurationComponent implements ControlValueAccessor, Valid
   }
 
   setDisabledState(isDisabled: boolean): void {
+    this.disabled = isDisabled;
     if (isDisabled) {
       this.simpleConfiguration.disable({emitEvent: false});
     } else {
@@ -195,7 +201,7 @@ export class SimpleConfigurationComponent implements ControlValueAccessor, Valid
   }
 
   private toggleScopeByOutputType(): void {
-    if (this.isScript || this.simpleConfiguration.get('output').value.type === OutputType.Attribute) {
+    if (this.isScript || this.simpleConfiguration.get('output').value.type === OutputType.Attribute || this.disabled) {
       this.simpleConfiguration.get('useLatestTs').disable({emitEvent: false});
     } else {
       this.simpleConfiguration.get('useLatestTs').enable({emitEvent: false});

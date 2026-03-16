@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -38,9 +38,10 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-repository-settings',
-  templateUrl: './repository-settings.component.html',
-  styleUrls: ['./repository-settings.component.scss', './../../pages/admin/settings-card.scss']
+    selector: 'tb-repository-settings',
+    templateUrl: './repository-settings.component.html',
+    styleUrls: ['./repository-settings.component.scss', './../../pages/admin/settings-card.scss'],
+    standalone: false
 })
 export class RepositorySettingsComponent extends PageComponent implements OnInit {
 

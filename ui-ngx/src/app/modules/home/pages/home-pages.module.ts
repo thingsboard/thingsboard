@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import { UserModule } from '@modules/home/pages/user/user.module';
 import { DeviceModule } from '@modules/home/pages/device/device.module';
 import { AssetModule } from '@modules/home/pages/asset/asset.module';
 import { EntityViewModule } from '@modules/home/pages/entity-view/entity-view.module';
+import { CalculatedFieldPageModule } from '@home/pages/calculated-fields/calculated-field-page.module';
 import { RuleChainModule } from '@modules/home/pages/rulechain/rulechain.module';
 import { WidgetLibraryModule } from '@modules/home/pages/widget/widget-library.module';
 import { DashboardModule } from '@modules/home/pages/dashboard/dashboard.module';
@@ -69,6 +70,7 @@ import { AiModelModule } from '@home/pages/ai-model/ai-model.module';
     EdgeModule,
     EntityViewModule,
     CustomerModule,
+    CalculatedFieldPageModule,
     RuleChainModule,
     WidgetLibraryModule,
     DashboardModule,

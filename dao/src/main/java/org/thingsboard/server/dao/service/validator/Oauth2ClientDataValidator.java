@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import org.thingsboard.server.common.data.oauth2.OAuth2CustomMapperConfig;
 import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
 import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.oauth2.TenantNameStrategyType;
-import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 
 @Component
@@ -35,12 +35,17 @@ public class Oauth2ClientDataValidator extends DataValidator<OAuth2Client> {
     @Override
     protected void validateDataImpl(TenantId tenantId, OAuth2Client oAuth2Client) {
         OAuth2MapperConfig mapperConfig = oAuth2Client.getMapperConfig();
-        if (mapperConfig.getType() == MapperType.BASIC) {
+        MapperType type = mapperConfig.getType();
+        if (type == MapperType.BASIC || type == MapperType.GITHUB || type == MapperType.APPLE) {
             OAuth2BasicMapperConfig basicConfig = mapperConfig.getBasic();
             if (basicConfig == null) {
                 throw new DataValidationException("Basic config should be specified!");
             }
-            if (StringUtils.isEmpty(basicConfig.getEmailAttributeKey())) {
+            if (type == MapperType.GITHUB) {
+                if (!StringUtils.isEmpty(basicConfig.getEmailAttributeKey())) {
+                    throw new DataValidationException("Email attribute key cannot be configured for GITHUB mapper type!");
+                }
+            } else if (StringUtils.isEmpty(basicConfig.getEmailAttributeKey())) {
                 throw new DataValidationException("Email attribute key should be specified!");
             }
             if (basicConfig.getTenantNameStrategy() == null) {
@@ -51,23 +56,7 @@ public class Oauth2ClientDataValidator extends DataValidator<OAuth2Client> {
                 throw new DataValidationException("Tenant name pattern should be specified!");
             }
         }
-        if (mapperConfig.getType() == MapperType.GITHUB) {
-            OAuth2BasicMapperConfig basicConfig = mapperConfig.getBasic();
-            if (basicConfig == null) {
-                throw new DataValidationException("Basic config should be specified!");
-            }
-            if (!StringUtils.isEmpty(basicConfig.getEmailAttributeKey())) {
-                throw new DataValidationException("Email attribute key cannot be configured for GITHUB mapper type!");
-            }
-            if (basicConfig.getTenantNameStrategy() == null) {
-                throw new DataValidationException("Tenant name strategy should be specified!");
-            }
-            if (basicConfig.getTenantNameStrategy() == TenantNameStrategyType.CUSTOM
-                    && StringUtils.isEmpty(basicConfig.getTenantNamePattern())) {
-                throw new DataValidationException("Tenant name pattern should be specified!");
-            }
-        }
-        if (mapperConfig.getType() == MapperType.CUSTOM) {
+        if (type == MapperType.CUSTOM) {
             OAuth2CustomMapperConfig customConfig = mapperConfig.getCustom();
             if (customConfig == null) {
                 throw new DataValidationException("Custom config should be specified!");

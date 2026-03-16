@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -146,7 +146,7 @@ public abstract class BaseEdgeProcessor implements EdgeProcessor {
                  UPDATED_COMMENT, DELETED -> true;
             default -> switch (type) {
                 case ALARM, ALARM_COMMENT, RULE_CHAIN, RULE_CHAIN_METADATA, USER, CUSTOMER, TENANT, TENANT_PROFILE,
-                     WIDGETS_BUNDLE, WIDGET_TYPE, ADMIN_SETTINGS, OTA_PACKAGE, QUEUE, RELATION, CALCULATED_FIELD, AI_MODEL, NOTIFICATION_TEMPLATE,
+                     WIDGETS_BUNDLE, WIDGET_TYPE, ADMIN_SETTINGS, OTA_PACKAGE, QUEUE, RELATION, CALCULATED_FIELD, AI_MODEL, API_KEY, NOTIFICATION_TEMPLATE,
                      NOTIFICATION_TARGET, NOTIFICATION_RULE -> true;
                 default -> false;
             };
@@ -412,6 +412,9 @@ public abstract class BaseEdgeProcessor implements EdgeProcessor {
     }
 
     protected boolean isSaveRequired(HasVersion current, HasVersion updated) {
+        if (current != null) {
+            current.setVersion(null);
+        }
         updated.setVersion(null);
         return !updated.equals(current);
     }

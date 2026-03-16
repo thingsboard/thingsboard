@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -56,17 +56,18 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { getSourceTbUnitSymbol, TbUnit } from '@shared/models/unit.models';
 
 @Component({
-  selector: 'tb-aggregated-data-key-row',
-  templateUrl: './aggregated-data-key-row.component.html',
-  styleUrls: ['./aggregated-data-key-row.component.scss', '../../../lib/settings/common/key/data-keys.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => AggregatedDataKeyRowComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-aggregated-data-key-row',
+    templateUrl: './aggregated-data-key-row.component.html',
+    styleUrls: ['./aggregated-data-key-row.component.scss', '../../../lib/settings/common/key/data-keys.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => AggregatedDataKeyRowComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class AggregatedDataKeyRowComponent implements ControlValueAccessor, OnInit, OnChanges {
 

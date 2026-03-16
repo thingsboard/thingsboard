@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -19,32 +19,33 @@ import { animate, state, style, transition, trigger } from '@angular/animations'
 import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
-  selector: 'tb-error',
-  template: `
+    selector: 'tb-error',
+    template: `
     <div [@animation]="state" [style.margin-top]="noMargin ? '0' : '0.5rem'" style="font-size: .75rem">
       <mat-error>
         {{message}}
       </mat-error>
     </div>
   `,
-  styles: [`
+    styles: [`
     :host {
         height: 24px;
     }
   `],
-  animations: [
-    trigger('animation', [
-      state('show', style({
-        opacity: 1,
-        transform: 'translateY(0)'
-      })),
-      state('hide',   style({
-        opacity: 0,
-        transform: 'translateY(-1rem)'
-      })),
-      transition('* <=> *', animate('200ms ease-out'))
-    ]),
-  ]
+    animations: [
+        trigger('animation', [
+            state('show', style({
+                opacity: 1,
+                transform: 'translateY(0)'
+            })),
+            state('hide', style({
+                opacity: 0,
+                transform: 'translateY(-1rem)'
+            })),
+            transition('* <=> *', animate('200ms ease-out'))
+        ]),
+    ],
+    standalone: false
 })
 export class TbErrorComponent {
   errorValue: string;

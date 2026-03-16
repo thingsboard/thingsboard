@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -43,15 +43,16 @@ import { MatButton } from '@angular/material/button';
 import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
-  selector: 'tb-template-autocomplete',
-  templateUrl: './template-autocomplete.component.html',
-  styleUrls: ['./template-autocomplete.component.scss'],
-  encapsulation: ViewEncapsulation.None,
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => TemplateAutocompleteComponent),
-    multi: true
-  }]
+    selector: 'tb-template-autocomplete',
+    templateUrl: './template-autocomplete.component.html',
+    styleUrls: ['./template-autocomplete.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TemplateAutocompleteComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class TemplateAutocompleteComponent implements ControlValueAccessor, OnInit {
 

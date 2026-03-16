@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.actors.calculatedField.CalculatedFieldReevaluateMsg;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.TbelAlarmConditionExpression;
 import org.thingsboard.server.common.data.cf.CalculatedField;
@@ -38,6 +39,7 @@ import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ExpressionBasedCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.HasUseLatestTsConfig;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.PropagationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
@@ -54,11 +56,9 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.dao.relation.RelationService;
-import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.dao.util.TimeUtils;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldTelemetryMsgProto;
 import org.thingsboard.server.service.cf.CalculatedFieldProcessingService;
@@ -127,8 +127,11 @@ public class CalculatedFieldCtx implements Closeable {
     private List<String> relatedEntityArgumentNames;
 
     private long scheduledUpdateIntervalMillis;
-    private long cfCheckReevaluationInterval;
-    private long alarmReevaluationInterval;
+    private long cfCheckReevaluationIntervalMillis;
+    private long alarmReevaluationIntervalMillis;
+    private long maxRelatedEntitiesPerCfArgument;
+    private long minScheduledUpdateIntervalMillis;
+    private long minDeduplicationIntervalMillis;
 
     private Argument propagationArgument;
     private boolean applyExpressionForResolvedArguments;
@@ -185,7 +188,6 @@ public class CalculatedFieldCtx implements Closeable {
                     .collect(Collectors.toList());
             if (argBasedConfig instanceof ExpressionBasedCalculatedFieldConfiguration expressionBasedConfig) {
                 this.expression = expressionBasedConfig.getExpression();
-                this.useLatestTs = CalculatedFieldType.SIMPLE.equals(calculatedField.getType()) && ((SimpleCalculatedFieldConfiguration) argBasedConfig).isUseLatestTs();
             }
             if (calculatedField.getConfiguration() instanceof GeofencingCalculatedFieldConfiguration geofencingConfig) {
                 geofencingConfig.getZoneGroups().forEach((zoneGroupName, config) -> {
@@ -207,8 +209,8 @@ public class CalculatedFieldCtx implements Closeable {
         if (calculatedField.getConfiguration() instanceof ScheduledUpdateSupportedCalculatedFieldConfiguration scheduledConfig) {
             this.scheduledUpdateIntervalMillis = scheduledConfig.isScheduledUpdateEnabled() ? TimeUnit.SECONDS.toMillis(scheduledConfig.getScheduledUpdateInterval()) : DISABLED_INTERVAL_VALUE;
         }
-        if (calculatedField.getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration aggConfig) {
-            this.useLatestTs = aggConfig.isUseLatestTs();
+        if (calculatedField.getConfiguration() instanceof HasUseLatestTsConfig hasUseLatestTsConfig) {
+            this.useLatestTs = hasUseLatestTsConfig.isUseLatestTs();
         }
         this.systemContext = systemContext;
         this.tbelInvokeService = systemContext.getTbelInvokeService();
@@ -246,8 +248,7 @@ public class CalculatedFieldCtx implements Closeable {
         boolean requiresScheduledReevaluation = calculatedField.getConfiguration().requiresScheduledReevaluation();
         if (calculatedField.getConfiguration() instanceof AlarmCalculatedFieldConfiguration) {
             if (requiresScheduledReevaluation) {
-                long reevaluationIntervalMillis = TimeUnit.SECONDS.toMillis(alarmReevaluationInterval);
-                if (now - lastReevaluationTs >= reevaluationIntervalMillis) {
+                if (now - lastReevaluationTs >= alarmReevaluationIntervalMillis) {
                     lastReevaluationTs = now;
                     return true;
                 }
@@ -302,12 +303,20 @@ public class CalculatedFieldCtx implements Closeable {
     }
 
     public void setTenantProfileProperties() {
-        ApiLimitService apiLimitService = systemContext.getApiLimitService();
-        this.maxStateSize = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxStateSizeInKBytes) * 1024;
-        this.maxSingleValueArgumentSize = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxSingleValueArgumentSizeInKBytes) * 1024;
-        this.intermediateAggregationIntervalMillis = TimeUnit.SECONDS.toMillis(apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getIntermediateAggregationIntervalInSecForCF));
-        this.cfCheckReevaluationInterval = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getCfReevaluationCheckInterval);
-        this.alarmReevaluationInterval = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getAlarmsReevaluationInterval);
+        TenantProfile tenantProfile = systemContext.getTenantProfileCache().get(tenantId);
+        if (tenantProfile == null) {
+            throw new IllegalStateException("Tenant Profile not found for tenant: " + tenantId);
+        }
+        tenantProfile.getProfileConfiguration().ifPresent(config -> {
+            this.maxStateSize = config.getMaxStateSizeInKBytes() * 1024L;
+            this.maxSingleValueArgumentSize = config.getMaxSingleValueArgumentSizeInKBytes() * 1024L;
+            this.intermediateAggregationIntervalMillis = TimeUnit.SECONDS.toMillis(config.getIntermediateAggregationIntervalInSecForCF());
+            this.cfCheckReevaluationIntervalMillis = TimeUnit.SECONDS.toMillis(config.getCfReevaluationCheckInterval());
+            this.alarmReevaluationIntervalMillis = TimeUnit.SECONDS.toMillis(config.getAlarmsReevaluationInterval());
+            this.maxRelatedEntitiesPerCfArgument = config.getMaxRelatedEntitiesToReturnPerCfArgument();
+            this.minScheduledUpdateIntervalMillis = TimeUnit.SECONDS.toMillis(config.getMinAllowedScheduledUpdateIntervalInSecForCF());
+            this.minDeduplicationIntervalMillis = TimeUnit.SECONDS.toMillis(config.getMinAllowedDeduplicationIntervalInSecForCF());
+        });
     }
 
     public double evaluateSimpleExpression(Expression expression, CalculatedFieldState state) {
@@ -378,7 +387,7 @@ public class CalculatedFieldCtx implements Closeable {
             tbelExpressions.put(expression, engine);
         } catch (Exception e) {
             initialized = false;
-            throw new RuntimeException("Failed to init calculated field ctx. Invalid expression syntax.", e);
+            throw new RuntimeException("Failed to initialize CF context. The script expression is invalid. Please check for syntax errors or unsupported functions.", e);
         }
     }
 
@@ -395,7 +404,7 @@ public class CalculatedFieldCtx implements Closeable {
             simpleExpressions.put(expression, compiledExpression);
         } else {
             initialized = false;
-            throw new RuntimeException("Failed to init calculated field ctx. Invalid expression syntax.");
+            throw new RuntimeException("Failed to initialize CF context. The expression has invalid syntax or unknown variables. Ensure all mathematical operators are correct.");
         }
     }
 
@@ -717,6 +726,9 @@ public class CalculatedFieldCtx implements Closeable {
                 return true;
             }
         }
+        if (cfType == CalculatedFieldType.PROPAGATION && !propagationArgument.equals(other.propagationArgument)) {
+            return true;
+        }
         if (hasGeofencingZoneGroupConfigurationChanges(other)) {
             return true;
         }
@@ -757,6 +769,10 @@ public class CalculatedFieldCtx implements Closeable {
         return scheduledUpdateIntervalMillis == DISABLED_INTERVAL_VALUE;
     }
 
+    public boolean hasRelatedEntities() {
+        return cfHasRelationPathQuerySource;
+    }
+
     public boolean shouldFetchRelatedEntities(CalculatedFieldState state) {
         if (!cfHasRelationPathQuerySource) {
             return false;
@@ -770,7 +786,7 @@ public class CalculatedFieldCtx implements Closeable {
         if (scheduledRefreshSupported.getLastScheduledRefreshTs() == DEFAULT_LAST_UPDATE_TS) {
             return true;
         }
-        return scheduledRefreshSupported.getLastScheduledRefreshTs() < System.currentTimeMillis() - scheduledUpdateIntervalMillis;
+        return scheduledRefreshSupported.getLastScheduledRefreshTs() < System.currentTimeMillis() - Math.max(scheduledUpdateIntervalMillis, minScheduledUpdateIntervalMillis);
     }
 
     @Override
@@ -788,7 +804,7 @@ public class CalculatedFieldCtx implements Closeable {
     }
 
     public String getSizeExceedsLimitMessage() {
-        return "Failed to init CF state. State size exceeds limit of " + (maxStateSize / 1024) + "Kb!";
+        return "State size exceeds limit of " + (maxStateSize / 1024) + "Kb!";
     }
 
     public boolean hasCurrentOwnerSourceArguments() {

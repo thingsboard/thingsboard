@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -42,21 +42,22 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { takeUntil } from 'rxjs/operators';
 
 @Component({
-  selector: 'tb-key-filter-list',
-  templateUrl: './key-filter-list.component.html',
-  styleUrls: ['./key-filter-list.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => KeyFilterListComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => KeyFilterListComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-key-filter-list',
+    templateUrl: './key-filter-list.component.html',
+    styleUrls: ['./key-filter-list.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => KeyFilterListComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => KeyFilterListComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class KeyFilterListComponent implements ControlValueAccessor, Validator, OnInit, OnDestroy {
 

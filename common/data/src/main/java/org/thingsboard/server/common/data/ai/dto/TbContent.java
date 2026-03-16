@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,18 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import dev.langchain4j.data.message.Content;
 import dev.langchain4j.data.message.TextContent;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 
 import static org.thingsboard.server.common.data.ai.dto.TbContent.TbTextContent;
 
+@Schema(
+        discriminatorProperty = "contentType",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "TEXT", schema = TbTextContent.class)
+        }
+)
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         include = JsonTypeInfo.As.PROPERTY,
@@ -46,7 +53,8 @@ public sealed interface TbContent permits TbTextContent {
     }
 
     @Schema(
-            description = "Text-based content part of a user's prompt"
+            description = "Text-based content part of a user's prompt",
+            allOf = TbContent.class
     )
     record TbTextContent(
             @NotBlank

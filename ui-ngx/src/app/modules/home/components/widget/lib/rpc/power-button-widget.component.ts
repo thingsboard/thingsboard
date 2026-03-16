@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -42,10 +42,11 @@ import { SVG, Svg } from '@svgdotjs/svg.js';
 import { MatIconRegistry } from '@angular/material/icon';
 
 @Component({
-  selector: 'tb-power-button-widget',
-  templateUrl: './power-button-widget.component.html',
-  styleUrls: ['../action/action-widget.scss', './power-button-widget.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-power-button-widget',
+    templateUrl: './power-button-widget.component.html',
+    styleUrls: ['../action/action-widget.scss', './power-button-widget.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class PowerButtonWidgetComponent extends
   BasicActionWidgetComponent implements OnInit, AfterViewInit, OnDestroy {

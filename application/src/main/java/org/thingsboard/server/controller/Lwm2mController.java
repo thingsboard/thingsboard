@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,11 +69,11 @@ public class Lwm2mController extends BaseController {
             return lwM2MService.getServerSecurityInfo(bootstrapServer);
     }
 
-    @ApiOperation(hidden = true, value = "Save device with credentials (Deprecated)")
+    @ApiOperation(hidden = true, value = "Save LwM2M device with credentials (saveLwm2mDeviceWithCredentials) (Deprecated)")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/lwm2m/device-credentials", method = RequestMethod.POST)
     @ResponseBody
-    public Device saveDeviceWithCredentials(@RequestBody Map<Class<?>, Object> deviceWithDeviceCredentials) throws ThingsboardException {
+    public Device saveLwm2mDeviceWithCredentials(@RequestBody Map<Class<?>, Object> deviceWithDeviceCredentials) throws ThingsboardException {
         Device device = checkNotNull(JacksonUtil.convertValue(deviceWithDeviceCredentials.get(Device.class), Device.class));
         DeviceCredentials credentials = checkNotNull(JacksonUtil.convertValue(deviceWithDeviceCredentials.get(DeviceCredentials.class), DeviceCredentials.class));
         return deviceController.saveDeviceWithCredentials(new SaveDeviceWithCredentialsRequest(device, credentials), DEFAULT.policy(), DEFAULT.separator(), DEFAULT.uniquifyStrategy());

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,6 +83,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
         alarmFieldColumnMap.put(ASSIGNEE_FIRST_NAME_KEY, ModelConstants.ALARM_ASSIGNEE_FIRST_NAME_PROPERTY);
         alarmFieldColumnMap.put(ASSIGNEE_LAST_NAME_KEY, ModelConstants.ALARM_ASSIGNEE_LAST_NAME_PROPERTY);
         alarmFieldColumnMap.put(ASSIGNEE_EMAIL_KEY, ModelConstants.ALARM_ASSIGNEE_EMAIL_PROPERTY);
+        alarmFieldColumnMap.put("originatorDisplayName", ModelConstants.ALARM_ORIGINATOR_DISPLAY_NAME_PROPERTY);
     }
 
     private static final String FIELDS_SELECTION = "select a.id as id," +
@@ -106,6 +107,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             " a.type as type, " +
             " a.originator_name as originator_name, " +
             " a.originator_label as originator_label, " +
+            " coalesce(a.originator_label, a.originator_name) as originator_display_name, " +
             " a.assignee_first_name as assignee_first_name, " +
             " a.assignee_last_name as assignee_last_name, " +
             " a.assignee_email as assignee_email, " +

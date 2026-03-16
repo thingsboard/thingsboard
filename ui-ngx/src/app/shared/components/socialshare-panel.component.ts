@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,9 +18,10 @@ import { Component, Input, OnInit } from '@angular/core';
 import { isLocalUrl } from '@core/utils';
 
 @Component({
-  selector: 'tb-social-share-panel',
-  templateUrl: './socialshare-panel.component.html',
-  styleUrls: ['./socialshare-panel.component.scss']
+    selector: 'tb-social-share-panel',
+    templateUrl: './socialshare-panel.component.html',
+    styleUrls: ['./socialshare-panel.component.scss'],
+    standalone: false
 })
 export class SocialSharePanelComponent implements OnInit {
 

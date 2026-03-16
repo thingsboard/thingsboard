@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -43,22 +43,23 @@ import {
 } from '@home/pages/scada-symbol/metadata-components/scada-symbol-metadata-tag-function-panel.component';
 
 @Component({
-  selector: 'tb-scada-symbol-metadata-tag',
-  templateUrl: './scada-symbol-metadata-tag.component.html',
-  styleUrls: ['./scada-symbol-metadata-tag.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ScadaSymbolMetadataTagComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => ScadaSymbolMetadataTagComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-scada-symbol-metadata-tag',
+    templateUrl: './scada-symbol-metadata-tag.component.html',
+    styleUrls: ['./scada-symbol-metadata-tag.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ScadaSymbolMetadataTagComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => ScadaSymbolMetadataTagComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class ScadaSymbolMetadataTagComponent implements ControlValueAccessor, OnInit, Validator {
 

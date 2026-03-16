@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -45,13 +45,17 @@ import {
   barChartWithLabelsDefaultSettings,
   BarChartWithLabelsWidgetSettings
 } from '@home/components/widget/lib/chart/bar-chart-with-labels-widget.models';
-import { TimeSeriesChartType } from '@home/components/widget/lib/chart/time-series-chart.models';
+import {
+  TimeSeriesChartType,
+  updateLatestDataKeys
+} from '@home/components/widget/lib/chart/time-series-chart.models';
 import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Component({
-  selector: 'tb-bar-chart-with-labels-basic-config',
-  templateUrl: './bar-chart-with-labels-basic-config.component.html',
-  styleUrls: ['../basic-config.scss']
+    selector: 'tb-bar-chart-with-labels-basic-config',
+    templateUrl: './bar-chart-with-labels-basic-config.component.html',
+    styleUrls: ['../basic-config.scss'],
+    standalone: false
 })
 export class BarChartWithLabelsBasicConfigComponent extends BasicWidgetConfigComponent {
 
@@ -75,7 +79,7 @@ export class BarChartWithLabelsBasicConfigComponent extends BasicWidgetConfigCom
   tooltipDatePreviewFn = this._tooltipDatePreviewFn.bind(this);
 
   predefinedValues = widgetTitleAutocompleteValues;
-  
+
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,
               private $injector: Injector,
@@ -164,6 +168,11 @@ export class BarChartWithLabelsBasicConfigComponent extends BasicWidgetConfigCom
 
       actions: [configData.config.actions || {}, []]
     });
+  }
+
+  protected onConfigChanged(widgetConfig: WidgetConfigComponentData) {
+    updateLatestDataKeys([widgetConfig.config.settings.yAxis], this.datasource, this.callbacks);
+    super.onConfigChanged(widgetConfig);
   }
 
   protected prepareOutputConfig(config: any): WidgetConfigComponentData {

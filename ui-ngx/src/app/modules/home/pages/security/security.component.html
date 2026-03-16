@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@
               <mat-label translate>profile.current-password</mat-label>
               <input matInput type="password" name="current-password" formControlName="currentPassword" autocomplete="current-password"/>
               <tb-toggle-password [class.!hidden]="!changePassword.get('currentPassword').dirty && !changePassword.get('currentPassword').touched" matSuffix></tb-toggle-password>
-              <mat-error *ngIf="changePassword.get('currentPassword').hasError('passwordsNotMatch')">
+              <mat-error *ngIf="changePassword.get('currentPassword').hasError('differencePassword')">
                 {{ 'security.password-requirement.incorrect-password-try-again' | translate }}
               </mat-error>
             </mat-form-field>

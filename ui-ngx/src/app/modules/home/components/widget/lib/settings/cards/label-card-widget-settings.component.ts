@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -22,9 +22,10 @@ import { AppState } from '@core/core.state';
 import { labelCardWidgetDefaultSettings } from '@home/components/widget/lib/cards/label-card-widget.models';
 
 @Component({
-  selector: 'tb-label-card-widget-settings',
-  templateUrl: './label-card-widget-settings.component.html',
-  styleUrls: []
+    selector: 'tb-label-card-widget-settings',
+    templateUrl: './label-card-widget-settings.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class LabelCardWidgetSettingsComponent extends WidgetSettingsComponent {
 

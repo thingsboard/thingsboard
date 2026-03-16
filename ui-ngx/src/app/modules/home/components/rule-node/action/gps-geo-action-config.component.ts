@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -28,9 +28,10 @@ import {
 } from '../rule-node-config.models';
 
 @Component({
-  selector: 'tb-action-node-gps-geofencing-config',
-  templateUrl: './gps-geo-action-config.component.html',
-  styleUrls: ['./gps-geo-action-config.component.scss']
+    selector: 'tb-action-node-gps-geofencing-config',
+    templateUrl: './gps-geo-action-config.component.html',
+    styleUrls: ['./gps-geo-action-config.component.scss'],
+    standalone: false
 })
 export class GpsGeoActionConfigComponent extends RuleNodeConfigurationComponent {
 

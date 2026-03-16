@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -231,7 +231,12 @@ public class Device extends BaseDataWithAdditionalInfo<DeviceId> implements HasL
         this.softwareId = softwareId;
     }
 
-    @Schema(description = "Additional parameters of the device",implementation = com.fasterxml.jackson.databind.JsonNode.class)
+    @Schema(description = "Additional parameters of the device. " +
+            "May include: 'gateway' (boolean, whether the device is a gateway), " +
+            "'description' (string), " +
+            "'lastConnectedGateway' (string, UUID of the last gateway that connected this device).",
+            implementation = com.fasterxml.jackson.databind.JsonNode.class,
+            example = "{\"gateway\":false,\"description\":\"Temperature sensor\",\"lastConnectedGateway\":\"784f394c-42b6-435a-983c-b7beff2784f9\"}")
     @Override
     public JsonNode getAdditionalInfo() {
         return super.getAdditionalInfo();

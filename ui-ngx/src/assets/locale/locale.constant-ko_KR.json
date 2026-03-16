@@ -11,7 +11,7 @@
         "permission-denied-text": "이 작업을 수행할 권한이 없습니다!"
     },
     "action": {
-        "activate": "활설화",
+        "activate": "활성화",
         "suspend": "비활성화",
         "save": "저장",
         "saveAs": "다른 이름으로 저장",

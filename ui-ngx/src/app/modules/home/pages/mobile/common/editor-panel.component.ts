@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -20,10 +20,11 @@ import { TbPopoverComponent } from '@shared/components/popover.component';
 import { EditorOptions } from 'tinymce';
 
 @Component({
-  selector: 'tb-release-notes-panel',
-  templateUrl: './editor-panel.component.html',
-  styleUrls: ['./editor-panel.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-release-notes-panel',
+    templateUrl: './editor-panel.component.html',
+    styleUrls: ['./editor-panel.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class EditorPanelComponent implements OnInit {
 
@@ -47,7 +48,7 @@ export class EditorPanelComponent implements OnInit {
   tinyMceOptions: Partial<EditorOptions> = {
     base_url: '/assets/tinymce',
     suffix: '.min',
-    plugins: ['link', 'table', 'image', 'imagetools', 'lists', 'fullscreen'],
+    plugins: ['link', 'table', 'image', 'lists', 'fullscreen'],
     menubar: 'edit insert view format',
     toolbar: ['fontfamily fontsize | bold italic underline strikethrough forecolor backcolor',
       'alignleft aligncenter alignright alignjustify | bullist | link table image | fullscreen'],

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import org.thingsboard.server.common.data.EntityType;
 
 import java.util.UUID;
 
-@Schema
+@Schema(allOf = EntityId.class)
 public class AlarmId extends UUIDBased implements EntityId {
 
     private static final long serialVersionUID = 1L;
@@ -36,7 +36,7 @@ public class AlarmId extends UUIDBased implements EntityId {
         return new AlarmId(UUID.fromString(alarmId));
     }
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "string", example = "ALARM", allowableValues = "ALARM")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, accessMode = Schema.AccessMode.READ_ONLY, description = "string", example = "ALARM", allowableValues = "ALARM")
     @Override
     public EntityType getEntityType() {
         return EntityType.ALARM;

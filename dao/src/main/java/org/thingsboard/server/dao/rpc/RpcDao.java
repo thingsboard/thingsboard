@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +24,13 @@ import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.dao.Dao;
 
 public interface RpcDao extends Dao<Rpc> {
+
     PageData<Rpc> findAllByDeviceId(TenantId tenantId, DeviceId deviceId, PageLink pageLink);
 
     PageData<Rpc> findAllByDeviceIdAndStatus(TenantId tenantId, DeviceId deviceId, RpcStatus rpcStatus, PageLink pageLink);
 
     PageData<Rpc> findAllRpcByTenantId(TenantId tenantId, PageLink pageLink);
 
-    int deleteOutdatedRpcByTenantId(TenantId tenantId, Long expirationTime);
+    int deleteOutdatedRpcByTenantIdBatch(TenantId tenantId, Long expirationTime, int batchSize);
 
 }

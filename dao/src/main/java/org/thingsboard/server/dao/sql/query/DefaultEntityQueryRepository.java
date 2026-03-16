@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -540,7 +540,8 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
     }
 
     private String buildPermissionQuery(SqlQueryContext ctx, EntityFilter entityFilter) {
-        if (ctx.isIgnorePermissionCheck()) {
+        if (ctx.isIgnorePermissionCheck() || (ctx.getTenantId().isSysTenantId() &&
+                (ctx.getEntityType() == EntityType.TENANT || ctx.getEntityType() == EntityType.TENANT_PROFILE))) {
             return "1=1";
         }
         switch (entityFilter.getType()) {

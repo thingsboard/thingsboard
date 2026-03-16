@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -42,9 +42,10 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 let defaultMarkdownStyle: string;
 
 @Component({
-  selector: 'tb-markdown',
-  templateUrl: './markdown.component.html',
-  styleUrls: ['./markdown.component.scss']
+    selector: 'tb-markdown',
+    templateUrl: './markdown.component.html',
+    styleUrls: ['./markdown.component.scss'],
+    standalone: false
 })
 export class TbMarkdownComponent implements OnChanges {
 
@@ -113,7 +114,7 @@ export class TbMarkdownComponent implements OnChanges {
   }
 
   private render(markdown: string) {
-    const compiled = this.markdownService.parse(markdown, { decodeHtml: false });
+    const compiled = this.markdownService.parse(markdown, { decodeHtml: false, disableSanitizer: true });
     let markdownClass = 'tb-markdown-view';
     if (this.markdownClass) {
       markdownClass += ` ${this.markdownClass}`;

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,12 +15,12 @@
     limitations under the License.
 
 -->
-<div #valueCardPanel class="tb-value-card-panel" [class]="this.layout" [style.padding]="padding" [style]="backgroundStyle$ | async">
+<div #valueCardPanel class="tb-value-card-panel" [class]="layout" [style.padding]="padding" [style]="backgroundStyle$ | async">
   <div class="tb-value-card-overlay" [style]="overlayStyle"></div>
   <div class="tb-value-card-title-panel">
     <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
   </div>
-  <div #valueCardContent class="tb-value-card-content" [class]="this.layout">
+  <div #valueCardContent class="tb-value-card-content" [class]="layout">
     <ng-container [ngSwitch]="layout">
       <ng-template [ngSwitchCase]="valueCardLayout.square">
         <ng-container *ngTemplateOutlet="iconWithLabelTpl"></ng-container>

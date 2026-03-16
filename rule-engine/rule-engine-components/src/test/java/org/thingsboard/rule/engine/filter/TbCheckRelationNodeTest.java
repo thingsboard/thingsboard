@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.mockito.ArgumentCaptor;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
-import org.thingsboard.rule.engine.TestDbCallbackExecutor;
+import org.thingsboard.common.util.DirectListeningExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -65,7 +65,7 @@ class TbCheckRelationNodeTest extends AbstractRuleNodeUpgradeTest {
 
     private final TenantId TENANT_ID = new TenantId(UUID.randomUUID());
     private final DeviceId ORIGINATOR_ID = new DeviceId(UUID.randomUUID());
-    private final TestDbCallbackExecutor DB_EXECUTOR = new TestDbCallbackExecutor();
+    private final DirectListeningExecutor DB_EXECUTOR = DirectListeningExecutor.INSTANCE;
     private final TbMsg EMPTY_POST_ATTRIBUTES_MSG = TbMsg.newMsg()
             .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
             .originator(ORIGINATOR_ID)

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input } from '@angular/core';
+import { booleanAttribute, Component, forwardRef, Input } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -59,20 +59,21 @@ enum TimeCategory {
 }
 
 @Component({
-  selector: 'tb-entity-aggregation-component',
-  templateUrl: './entity-aggregation-component.component.html',
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => EntityAggregationComponentComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => EntityAggregationComponentComponent),
-      multi: true
-    }
-  ],
+    selector: 'tb-entity-aggregation-component',
+    templateUrl: './entity-aggregation-component.component.html',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => EntityAggregationComponentComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => EntityAggregationComponentComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class EntityAggregationComponentComponent implements ControlValueAccessor, Validator {
 
@@ -86,6 +87,8 @@ export class EntityAggregationComponentComponent implements ControlValueAccessor
   entityName: string;
 
   @Input() testScript: (expression?: string) => Observable<string>;
+
+  @Input({transform: booleanAttribute}) isEditValue = true;
 
   readonly minAllowedAggregationIntervalInSecForCF = getCurrentAuthState(this.store).minAllowedAggregationIntervalInSecForCF;
   readonly intermediateAggregationIntervalInSecForCF = getCurrentAuthState(this.store).intermediateAggregationIntervalInSecForCF;
@@ -182,10 +185,12 @@ export class EntityAggregationComponentComponent implements ControlValueAccessor
       interval: {...value.interval, allowOffsetSec: isDefinedAndNotNull(value?.interval?.offsetSec)}
     }
     this.entityAggregationConfiguration.patchValue(data, {emitEvent: false});
-    this.checkAggIntervalType(this.entityAggregationConfiguration.get('interval.type').value);
-    this.checkIntervalDuration(this.entityAggregationConfiguration.get('interval.allowOffsetSec').value);
-    this.checkWatermark(this.entityAggregationConfiguration.get('allowWatermark').value);
-    this.checkProduceIntermediate();
+    if (this.entityAggregationConfiguration.enabled) {
+      this.checkAggIntervalType(this.entityAggregationConfiguration.get('interval.type').value);
+      this.checkIntervalDuration(this.entityAggregationConfiguration.get('interval.allowOffsetSec').value);
+      this.checkWatermark(this.entityAggregationConfiguration.get('allowWatermark').value);
+      this.checkProduceIntermediate();
+    }
     this.updatedOffsetHint();
     setTimeout(() => {
       this.entityAggregationConfiguration.get('arguments').updateValueAndValidity({onlySelf: true});

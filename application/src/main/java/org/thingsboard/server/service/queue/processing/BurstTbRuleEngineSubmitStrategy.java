@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ public class BurstTbRuleEngineSubmitStrategy extends AbstractTbRuleEngineSubmitS
         if (log.isDebugEnabled()) {
             log.debug("[{}] submitting [{}] messages to rule engine", queueName, orderedMsgList.size());
         }
-        orderedMsgList.forEach(pair -> msgConsumer.accept(pair.uuid, pair.msg));
+        orderedMsgList.forEach(pair -> msgConsumer.accept(pair.uuid(), pair.msg()));
     }
 
     @Override

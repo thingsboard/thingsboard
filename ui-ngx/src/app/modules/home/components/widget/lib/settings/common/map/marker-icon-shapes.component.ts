@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -42,11 +42,12 @@ interface MarkerIconContainerInfo {
 }
 
 @Component({
-  selector: 'tb-marker-icon-shapes',
-  templateUrl: './marker-icon-shapes.component.html',
-  providers: [],
-  styleUrls: ['./marker-icon-shapes.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-marker-icon-shapes',
+    templateUrl: './marker-icon-shapes.component.html',
+    providers: [],
+    styleUrls: ['./marker-icon-shapes.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class MarkerIconShapesComponent extends PageComponent implements OnInit {
 

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -24,9 +24,10 @@ import {
 } from '@home/components/widget/lib/settings/gauge/analogue-gauge-widget-settings.component';
 
 @Component({
-  selector: 'tb-analogue-radial-gauge-widget-settings',
-  templateUrl: './analogue-gauge-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-analogue-radial-gauge-widget-settings',
+    templateUrl: './analogue-gauge-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class AnalogueRadialGaugeWidgetSettingsComponent extends AnalogueGaugeWidgetSettingsComponent {
 

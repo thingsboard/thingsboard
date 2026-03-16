@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -38,10 +38,11 @@ const modulesValidator: ValidatorFn = control => {
 };
 
 @Component({
-  selector: 'tb-js-func-modules',
-  templateUrl: './js-func-modules.component.html',
-  styleUrls: ['./js-func-modules.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-js-func-modules',
+    templateUrl: './js-func-modules.component.html',
+    styleUrls: ['./js-func-modules.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class JsFuncModulesComponent implements OnInit {
 

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.gen.edge.v1.EdgeUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RequestMsg;
@@ -100,8 +101,15 @@ public abstract class AbstractEdgeGrpcSessionManager extends EdgeGrpcSessionDele
     @Override
     public void onConfigurationUpdate(Edge edge) {
         EdgeSessionState state = getState();
+        CustomerId stateCustomerId = null;
         if (state != null) {
+            stateCustomerId = state.getEdge().getCustomerId();
             state.setEdge(edge);
+        }
+        if (stateCustomerId != null && !stateCustomerId.equals(edge.getCustomerId())) {
+            // do not send edge configuration message on customer update
+            // message send by separate flow from assign_to or unassing_from customer
+            return;
         }
         EdgeUpdateMsg edgeConfig = EdgeUpdateMsg.newBuilder()
                 .setConfiguration(EdgeMsgConstructorUtils.constructEdgeConfiguration(edge)).build();

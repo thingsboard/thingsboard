@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ public class OAuth2EdgeEventFetcher extends BasePageableEdgeEventFetcher<DomainI
 
     @Override
     EdgeEvent constructEdgeEvent(TenantId tenantId, Edge edge, DomainInfo domainInfo) {
-        return EdgeUtils.constructEdgeEvent(TenantId.SYS_TENANT_ID, edge.getId(), EdgeEventType.DOMAIN,
+        return EdgeUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.DOMAIN,
                 EdgeEventActionType.ADDED, domainInfo.getId(), null);
     }
 

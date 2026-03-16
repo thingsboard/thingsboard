@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 .tb-data-keys {
   .mat-mdc-form-field.tb-keys-field {
     width: 100%;
@@ -127,13 +126,13 @@
   }
   .tb-dragging-chip-image-fill {
     background-color: rgba(0,0,0,0.3);
-    border-radius: var(--mdc-chip-container-shape-radius, 16px 16px 16px 16px);
+    border-radius: var(--mat-chip-container-shape-radius, 16px 16px 16px 16px);
     display: none;
     pointer-events: none;
   }
   .tb-dragging-chip-image {
-    background-color: var(--mdc-chip-elevated-container-color, transparent);
-    border-radius: var(--mdc-chip-container-shape-radius, 16px 16px 16px 16px);
+    background-color: var(--mat-chip-elevated-container-color, transparent);
+    border-radius: var(--mat-chip-container-shape-radius, 16px 16px 16px 16px);
     overflow: hidden;
     height: 32px;
     line-height: 20px;

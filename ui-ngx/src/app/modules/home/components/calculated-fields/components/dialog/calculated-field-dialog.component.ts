@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,26 +18,30 @@ import { Component, DestroyRef, Inject, ViewEncapsulation } from '@angular/core'
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@shared/components/dialog.component';
 import {
   CalculatedField,
   CalculatedFieldConfiguration,
+  calculatedFieldsEntityTypeList,
   CalculatedFieldTestScriptFn,
   CalculatedFieldType,
-  CalculatedFieldTypeTranslations,
-  OutputStrategyType
+  calculatedFieldTypes,
+  CalculatedFieldTypeTranslations
 } from '@shared/models/calculated-field.models';
-import { oneSpaceInsideRegex } from '@shared/models/regex.constants';
 import { EntityType } from '@shared/models/entity-type.models';
-import { pairwise, switchMap } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { Observable } from 'rxjs';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AdditionalDebugActionConfig } from '@home/components/entity/debug/entity-debug-settings.model';
-import { deepTrim, isDefined } from '@core/utils';
+import { deepTrim } from '@core/utils';
+import { BaseData } from '@shared/models/base-data';
+import { CalculatedFieldFormService } from '@core/services/calculated-field-form.service';
+import { FormGroup } from '@angular/forms';
+import { AssetInfo } from '@shared/models/asset.models';
+import { DeviceInfo } from '@shared/models/device.models';
+import { NULL_UUID } from '@shared/models/id/has-uuid';
 
 export interface CalculatedFieldDialogData {
   value?: CalculatedField;
@@ -49,31 +53,35 @@ export interface CalculatedFieldDialogData {
   additionalDebugActionConfig: AdditionalDebugActionConfig<(calculatedField: CalculatedField) => void>;
   getTestScriptDialogFn: CalculatedFieldTestScriptFn;
   isDirty?: boolean;
+  disabledSelectType?: boolean;
 }
 
 @Component({
-  selector: 'tb-calculated-field-dialog',
-  templateUrl: './calculated-field-dialog.component.html',
-  styleUrls: ['./calculated-field-dialog.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-calculated-field-dialog',
+    templateUrl: './calculated-field-dialog.component.html',
+    styleUrls: ['./calculated-field-dialog.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFieldDialogComponent, CalculatedField> {
 
-  fieldFormGroup = this.fb.group({
-    name: ['', [Validators.required, Validators.pattern(oneSpaceInsideRegex), Validators.maxLength(255)]],
-    type: [CalculatedFieldType.SIMPLE],
-    debugSettings: [],
-    configuration: this.fb.control<CalculatedFieldConfiguration>({} as CalculatedFieldConfiguration),
-  });
+  fieldFormGroup: FormGroup;
 
   additionalDebugActionConfig = this.data.value?.id ? {
     ...this.data.additionalDebugActionConfig,
     action: () => this.data.additionalDebugActionConfig.action({ id: this.data.value.id, ...this.fromGroupValue }),
   } : null;
 
+  entityName = this.data.entityName;
+  ownerId = this.data.ownerId;
+
+  disabledConfiguration = false;
+  isLoading = false;
+
   readonly EntityType = EntityType;
+  readonly calculatedFieldsEntityTypeList = calculatedFieldsEntityTypeList;
   readonly CalculatedFieldType = CalculatedFieldType;
-  readonly fieldTypes = Object.values(CalculatedFieldType).filter(type => type !== CalculatedFieldType.ALARM) as CalculatedFieldType[];
+  readonly fieldTypes = calculatedFieldTypes;
   readonly CalculatedFieldTypeTranslations = CalculatedFieldTypeTranslations;
 
   constructor(protected store: Store<AppState>,
@@ -82,15 +90,37 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
               protected dialogRef: MatDialogRef<CalculatedFieldDialogComponent, CalculatedField>,
               private calculatedFieldsService: CalculatedFieldsService,
               private destroyRef: DestroyRef,
-              private fb: FormBuilder) {
+              private cfFormService: CalculatedFieldFormService) {
     super(store, router, dialogRef);
-    this.observeIsLoading();
-    this.observeType();
+    this.fieldFormGroup = this.cfFormService.buildForm();
+    this.cfFormService.setupTypeChange(this.fieldFormGroup, this.destroyRef);
     this.applyDialogData();
+
+    if (this.data.isDirty) {
+      this.fieldFormGroup.markAsDirty();
+    }
+
+    if (!this.data.entityId) {
+      this.fieldFormGroup.get('entityId').valueChanges.pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe((entityId) => {
+        this.disabledConfiguration = !entityId;
+        if (this.disabledConfiguration) {
+          this.fieldFormGroup.get('configuration').disable({emitEvent: false});
+        } else {
+          this.fieldFormGroup.get('configuration').enable({emitEvent: false});
+          this.fieldFormGroup.get('configuration').updateValueAndValidity({emitEvent: false});
+        }
+      });
+    }
+
+    if (this.data.disabledSelectType) {
+      this.fieldFormGroup.get('type').disable({emitEvent: false});
+    }
   }
 
   get fromGroupValue(): CalculatedField {
-    return deepTrim(this.fieldFormGroup.value as CalculatedField);
+    return deepTrim(this.fieldFormGroup.getRawValue() as CalculatedField);
   }
 
   cancel(): void {
@@ -99,60 +129,51 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
 
   add(): void {
     if (this.fieldFormGroup.valid) {
+      this.isLoading = true;
       this.calculatedFieldsService.saveCalculatedField({ entityId: this.data.entityId, ...(this.data.value ?? {}),  ...this.fromGroupValue})
         .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe(calculatedField => this.dialogRef.close(calculatedField));
+        .subscribe({
+          next: calculatedField => this.dialogRef.close(calculatedField),
+          error: () => this.isLoading = false
+        });
+    } else {
+      this.fieldFormGroup.get('name').markAsTouched();
     }
   }
 
   onTestScript(expression?: string): Observable<string> {
-    const calculatedFieldId = this.data.value?.id?.id;
-    if (calculatedFieldId) {
-      return this.calculatedFieldsService.getLatestCalculatedFieldDebugEvent(calculatedFieldId, {ignoreLoading: true})
-        .pipe(
-          switchMap(event => {
-            const args = event?.arguments ? JSON.parse(event.arguments) : null;
-            return this.data.getTestScriptDialogFn(this.fromGroupValue, args, false, expression);
-          }),
-          takeUntilDestroyed(this.destroyRef)
-        )
+    return this.cfFormService.testScript(
+      this.data.value?.id?.id,
+      this.fromGroupValue,
+      this.data.getTestScriptDialogFn,
+      this.destroyRef,
+      expression
+    );
+  }
+
+  changeEntity(entity: BaseData<EntityId>): void {
+    this.entityName = entity.name;
+    if (this.isAssignedToCustomer(entity as AssetInfo | DeviceInfo)) {
+      this.ownerId = (entity as AssetInfo | DeviceInfo).customerId;
     }
-    return this.data.getTestScriptDialogFn(this.fromGroupValue, null, false, expression);
+  }
+
+  get entityId(): EntityId {
+    return this.data.entityId || this.fieldFormGroup.get('entityId').value;
   }
 
   private applyDialogData(): void {
-    const { configuration = {} as CalculatedFieldConfiguration, type = CalculatedFieldType.SIMPLE, debugSettings = { failuresEnabled: true, allEnabled: true }, ...value } = this.data.value ?? {};
-    if (configuration.type !== CalculatedFieldType.ALARM) {
-      if (isDefined(configuration?.output) && !configuration?.output?.strategy) {
-          configuration.output.strategy = {type: OutputStrategyType.RULE_CHAIN};
-      }
-    }
-    this.fieldFormGroup.patchValue({ configuration, type, debugSettings, ...value }, {emitEvent: false});
+    const { configuration = {} as CalculatedFieldConfiguration, type = CalculatedFieldType.SIMPLE, debugSettings = { failuresEnabled: true, allEnabled: true }, entityId = this.data.entityId, ...value } = this.data.value ?? {};
+    const preparedConfig = this.cfFormService.prepareConfig(configuration);
+    this.fieldFormGroup.patchValue({ configuration: preparedConfig, type, debugSettings, entityId, ...value }, {emitEvent: false});
     setTimeout(() => this.fieldFormGroup.get('type').updateValueAndValidity({onlySelf: true}));
+    if (!this.data.entityId) {
+      this.fieldFormGroup.get('configuration').disable({emitEvent: false});
+      this.disabledConfiguration = true;
+    }
   }
 
-  private observeIsLoading(): void {
-    this.isLoading$.pipe(takeUntilDestroyed()).subscribe(loading => {
-      if (loading) {
-        this.fieldFormGroup.disable({emitEvent: false});
-      } else {
-        this.fieldFormGroup.enable({emitEvent: false});
-        if (this.data.isDirty) {
-          this.fieldFormGroup.markAsDirty();
-        }
-      }
-    });
-  }
-
-  private observeType(): void {
-    this.fieldFormGroup.get('type').valueChanges.pipe(
-      pairwise(),
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe(([prevType, nextType]) => {
-      if (![CalculatedFieldType.SIMPLE, CalculatedFieldType.SCRIPT].includes(prevType) ||
-          ![CalculatedFieldType.SIMPLE, CalculatedFieldType.SCRIPT].includes(nextType)) {
-        this.fieldFormGroup.get('configuration').setValue(({} as CalculatedFieldConfiguration), {emitEvent: false});
-      }
-    });
+  private isAssignedToCustomer(entity: AssetInfo | DeviceInfo): boolean {
+    return entity && entity.customerId && entity.customerId.id !== NULL_UUID;
   }
 }

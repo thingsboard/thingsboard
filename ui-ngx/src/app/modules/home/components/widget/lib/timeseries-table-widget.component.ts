@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -158,9 +158,10 @@ interface TimeseriesTableSource {
 }
 
 @Component({
-  selector: 'tb-timeseries-table-widget',
-  templateUrl: './timeseries-table-widget.component.html',
-  styleUrls: ['./timeseries-table-widget.component.scss', './table-widget.scss']
+    selector: 'tb-timeseries-table-widget',
+    templateUrl: './timeseries-table-widget.component.html',
+    styleUrls: ['./timeseries-table-widget.component.scss', './table-widget.scss'],
+    standalone: false
 })
 export class TimeseriesTableWidgetComponent extends PageComponent implements OnInit, AfterViewInit, OnDestroy {
 

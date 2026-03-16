@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,12 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionValue;
 
 import java.util.concurrent.TimeUnit;
 
+@Schema(name = "AlarmRuleNoDataFilterPredicate")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -35,6 +37,7 @@ public class NoDataFilterPredicate implements KeyFilterPredicate {
     @NotNull
     private AlarmConditionValue<Long> duration;
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, ref = "#/components/schemas/AlarmRuleFilterPredicateType")
     @Override
     public FilterPredicateType getType() {
         return FilterPredicateType.NO_DATA;

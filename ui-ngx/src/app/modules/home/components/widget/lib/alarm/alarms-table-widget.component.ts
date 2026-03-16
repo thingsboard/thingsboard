@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -158,9 +158,10 @@ interface AlarmWidgetActionDescriptor extends TableCellButtonActionDescriptor {
 }
 
 @Component({
-  selector: 'tb-alarms-table-widget',
-  templateUrl: './alarms-table-widget.component.html',
-  styleUrls: ['./alarms-table-widget.component.scss', './../table-widget.scss']
+    selector: 'tb-alarms-table-widget',
+    templateUrl: './alarms-table-widget.component.html',
+    styleUrls: ['./alarms-table-widget.component.scss', './../table-widget.scss'],
+    standalone: false
 })
 export class AlarmsTableWidgetComponent extends PageComponent implements OnInit, OnDestroy, AfterViewInit {
 
@@ -968,7 +969,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       (AlarmDetailsDialogComponent,
         {
           disableClose: true,
-          panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+          panelClass: ['tb-dialog', 'tb-fullscreen-dialog', this.ctx.stateController.dashboardCtrl.dashboardCtx.dashboardCssClass, this.ctx.widgetCssClass],
           data: {
             alarmId: alarm.id.id,
             allowAcknowledgment: this.allowAcknowledgment,

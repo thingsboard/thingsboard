@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -213,7 +213,7 @@ public class DeviceApiController implements TbTransportService {
         return responseWriter;
     }
 
-    @Operation(summary = "Save claiming information (claimDevice)",
+    @Operation(summary = "Save claiming information (saveClaimingInfo)",
             description = "Saves the information required for user to claim the device. " +
                     "See more info about claiming in the corresponding 'Claiming devices' platform documentation."
                     + "\n Example of the request payload: "
@@ -224,7 +224,7 @@ public class DeviceApiController implements TbTransportService {
                     "In case the secretKey is not specified, the empty string as a default value is used. In case the durationMs is not specified, the system parameter device.claim.duration is used.\n\n"
                     + REQUIRE_ACCESS_TOKEN)
     @RequestMapping(value = "/{deviceToken}/claim", method = RequestMethod.POST)
-    public DeferredResult<ResponseEntity> claimDevice(
+    public DeferredResult<ResponseEntity> saveClaimingInfo(
             @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true , schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
             @PathVariable("deviceToken") String deviceToken,
             @RequestBody(required = false) String json) {

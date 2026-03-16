@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -34,9 +34,10 @@ import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.m
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 @Component({
-  selector: 'tb-auto-commit-settings',
-  templateUrl: './auto-commit-settings.component.html',
-  styleUrls: ['./auto-commit-settings.component.scss', './../../pages/admin/settings-card.scss']
+    selector: 'tb-auto-commit-settings',
+    templateUrl: './auto-commit-settings.component.html',
+    styleUrls: ['./auto-commit-settings.component.scss', './../../pages/admin/settings-card.scss'],
+    standalone: false
 })
 export class AutoCommitSettingsComponent extends PageComponent implements OnInit {
 

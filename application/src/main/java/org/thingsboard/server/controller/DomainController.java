@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,12 +81,12 @@ public class DomainController extends BaseController {
         return tbDomainService.save(domain, getOAuth2ClientIds(ids), getCurrentUser());
     }
 
-    @ApiOperation(value = "Update oauth2 clients (updateOauth2Clients)",
+    @ApiOperation(value = "Update oauth2 clients (updateDomainOauth2Clients)",
             notes = "Update oauth2 clients for the specified domain. ")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @PutMapping(value = "/domain/{id}/oauth2Clients")
-    public void updateOauth2Clients(@PathVariable UUID id,
-                                    @RequestBody UUID[] clientIds) throws ThingsboardException {
+    public void updateDomainOauth2Clients(@PathVariable UUID id,
+                                          @RequestBody UUID[] clientIds) throws ThingsboardException {
         DomainId domainId = new DomainId(id);
         Domain domain = checkDomainId(domainId, Operation.WRITE);
         List<OAuth2ClientId> oAuth2ClientIds = getOAuth2ClientIds(clientIds);

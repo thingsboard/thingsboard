@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -23,10 +23,11 @@ import { ActivatedRoute } from '@angular/router';
 import { HomeDashboard } from '@shared/models/dashboard.models';
 
 @Component({
-  selector: 'tb-home-links',
-  templateUrl: './home-links.component.html',
-  styleUrls: ['./home-links.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'tb-home-links',
+    templateUrl: './home-links.component.html',
+    styleUrls: ['./home-links.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class HomeLinksComponent implements OnInit {
 

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import { AlarmCommentId } from '@shared/models/id/alarm-comment-id';
 import { UserId } from '@shared/models/id/user-id';
 import { AlarmFilter } from '@shared/models/query/query.models';
 import { HasTenantId } from '@shared/models/entity.models';
-import { isNotEmptyStr } from '@core/utils';
+import { isDefinedAndNotNull, isNotEmptyStr } from '@core/utils';
 
 export enum AlarmsMode {
   ALL,
@@ -88,11 +88,21 @@ export const alarmSearchStatusTranslations = new Map<AlarmSearchStatus, string>(
 
 export const alarmSeverityColors = new Map<AlarmSeverity, string>(
   [
-    [AlarmSeverity.CRITICAL, 'red'],
-    [AlarmSeverity.MAJOR, 'orange'],
-    [AlarmSeverity.MINOR, '#ffca3d'],
-    [AlarmSeverity.WARNING, '#abab00'],
-    [AlarmSeverity.INDETERMINATE, 'green']
+    [AlarmSeverity.CRITICAL, 'var(--tb-alarm-severity-critical, rgb(209, 39, 48))'],
+    [AlarmSeverity.MAJOR, 'var(--tb-alarm-severity-major, rgb(246, 103, 22))'],
+    [AlarmSeverity.MINOR, 'var(--tb-alarm-severity-minor, rgb(250, 164, 5))'],
+    [AlarmSeverity.WARNING, 'var(--tb-alarm-severity-warning, rgb(242, 218, 5))'],
+    [AlarmSeverity.INDETERMINATE, 'var(--tb-alarm-severity-indeterminate, rgba(0, 0, 0, 0.38))']
+  ]
+);
+
+export const alarmSeverityBackgroundColors = new Map<AlarmSeverity, string>(
+  [
+    [AlarmSeverity.CRITICAL, `var(--tb-alarm-severity-critical-bg, rgba(209, 39, 48, 0.06))`],
+    [AlarmSeverity.MAJOR, 'var(--tb-alarm-severity-major-bg, rgba(246, 103, 22, 0.06))'],
+    [AlarmSeverity.MINOR, 'var(--tb-alarm-severity-minor-bg, rgba(250, 164, 5, 0.06))'],
+    [AlarmSeverity.WARNING, 'var(--tb-alarm-severity-warning-bg, rgba(242, 218, 5, 0.06))'],
+    [AlarmSeverity.INDETERMINATE, 'var(--tb-alarm-severity-indeterminate-bg, rgba(0, 0, 0, 0.06))']
   ]
 );
 
@@ -381,18 +391,20 @@ export class AlarmQueryV2 {
 
 export const getUserDisplayName = (alarmAssignee: AlarmAssignee |  AlarmCommentInfo) => {
   let displayName = '';
-  if (isNotEmptyStr(alarmAssignee.firstName) || isNotEmptyStr(alarmAssignee.lastName)) {
-    if (alarmAssignee.firstName) {
-      displayName += alarmAssignee.firstName;
-    }
-    if (alarmAssignee.lastName) {
-      if (displayName.length > 0) {
-        displayName += ' ';
+  if (isDefinedAndNotNull(alarmAssignee)) {
+   if (isNotEmptyStr(alarmAssignee.firstName) || isNotEmptyStr(alarmAssignee.lastName)) {
+      if (alarmAssignee.firstName) {
+       displayName += alarmAssignee.firstName;
       }
-      displayName += alarmAssignee.lastName;
+      if (alarmAssignee.lastName) {
+        if (displayName.length > 0) {
+          displayName += ' ';
+        }
+        displayName += alarmAssignee.lastName;
+      }
+    }   else {
+      displayName = alarmAssignee.email;
     }
-  } else {
-    displayName = alarmAssignee.email;
   }
   return displayName;
 };

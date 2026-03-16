@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -37,21 +37,22 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { takeUntil } from 'rxjs/operators';
 
 @Component({
-  selector: 'tb-device-profile-alarms',
-  templateUrl: './device-profile-alarms.component.html',
-  styleUrls: ['./device-profile-alarms.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DeviceProfileAlarmsComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => DeviceProfileAlarmsComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-device-profile-alarms',
+    templateUrl: './device-profile-alarms.component.html',
+    styleUrls: ['./device-profile-alarms.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DeviceProfileAlarmsComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => DeviceProfileAlarmsComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class DeviceProfileAlarmsComponent implements ControlValueAccessor, OnInit, Validator, OnDestroy {
 

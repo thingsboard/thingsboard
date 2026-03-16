@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -23,9 +23,10 @@ import { DialogComponent } from '@app/shared/components/dialog.component';
 import { DashboardLayoutId } from '@app/shared/models/dashboard.models';
 
 @Component({
-  selector: 'tb-select-target-layout-dialog',
-  templateUrl: './select-target-layout-dialog.component.html',
-  styleUrls: ['./layout-button.scss']
+    selector: 'tb-select-target-layout-dialog',
+    templateUrl: './select-target-layout-dialog.component.html',
+    styleUrls: ['./layout-button.scss'],
+    standalone: false
 })
 export class SelectTargetLayoutDialogComponent extends DialogComponent<SelectTargetLayoutDialogComponent, DashboardLayoutId>
   implements OnInit {
