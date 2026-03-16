@@ -167,9 +167,10 @@ public class KafkaBasedEdgeGrpcSessionManager extends AbstractEdgeGrpcSessionMan
             try {
                 isHighPriorityProcessing = true;
                 session.processHighPriorityEvents();
-                isHighPriorityProcessing = false;
             } catch (Exception e) {
                 log.warn("[{}] Failed to process edge events for edge [{}]!", tenantId, edgeId, e);
+            } finally {
+                isHighPriorityProcessing = false;
             }
         }, NO_INITIAL_DELAY_VALUE, ctx.getEdgeEventStorageSettings().getNoRecordsSleepInterval(), TimeUnit.MILLISECONDS);
         highPriorityProcessingFutureRef.set(highPriorityProcessingTask);

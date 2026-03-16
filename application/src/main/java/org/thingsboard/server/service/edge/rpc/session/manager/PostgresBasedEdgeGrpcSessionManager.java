@@ -168,7 +168,7 @@ public class PostgresBasedEdgeGrpcSessionManager extends AbstractEdgeGrpcSession
     private void markHasEvents(boolean newEventsPresent) {
         newEventsLock.lock();
         try {
-            if (!hasNewEvents) {
+            if (hasNewEvents != newEventsPresent) {
                 log.trace("[{}] set session new events flag to {} [{}]", getState().getTenantId(), newEventsPresent, getState().getEdgeId());
                 hasNewEvents = newEventsPresent;
             }

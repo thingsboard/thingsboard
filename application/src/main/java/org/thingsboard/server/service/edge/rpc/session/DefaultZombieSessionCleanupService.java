@@ -18,8 +18,10 @@ package org.thingsboard.server.service.edge.rpc.session;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.rpc.EdgeSessionState;
 import org.thingsboard.server.service.edge.rpc.session.manager.EdgeGrpcSessionManager;
 import org.thingsboard.server.service.edge.rpc.session.manager.KafkaBasedEdgeGrpcSessionManager;
@@ -35,6 +37,8 @@ import java.util.function.Function;
 
 @Service
 @Slf4j
+@ConditionalOnProperty(prefix = "edges", value = "enabled", havingValue = "true")
+@TbCoreComponent
 public class DefaultZombieSessionCleanupService implements ZombieSessionCleanupService {
 
     @Autowired

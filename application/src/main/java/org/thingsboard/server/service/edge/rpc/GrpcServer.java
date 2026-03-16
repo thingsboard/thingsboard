@@ -24,11 +24,13 @@ import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.transport.config.ssl.PemSslCredentials;
 import org.thingsboard.server.gen.edge.v1.EdgeRpcServiceGrpc.EdgeRpcServiceImplBase;
 import org.thingsboard.server.queue.util.AfterStartUp;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -36,6 +38,8 @@ import java.util.concurrent.TimeUnit;
 @Component
 @Slf4j
 @RequiredArgsConstructor
+@ConditionalOnProperty(prefix = "edges", value = "enabled", havingValue = "true")
+@TbCoreComponent
 public class GrpcServer {
 
     @Value("${edges.rpc.port}")

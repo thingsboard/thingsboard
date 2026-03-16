@@ -19,6 +19,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.notification.rule.trigger.EdgeCommunicationFailureTrigger;
@@ -51,6 +52,7 @@ import org.thingsboard.server.gen.edge.v1.UserCredentialsRequestMsg;
 import org.thingsboard.server.gen.edge.v1.UserCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.WidgetBundleTypesRequestMsg;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
 
 import java.util.ArrayList;
@@ -59,6 +61,8 @@ import java.util.List;
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@ConditionalOnProperty(prefix = "edges", value = "enabled", havingValue = "true")
+@TbCoreComponent
 public class EdgeUplinkMessageDispatcher {
 
     private final EdgeContextComponent ctx;

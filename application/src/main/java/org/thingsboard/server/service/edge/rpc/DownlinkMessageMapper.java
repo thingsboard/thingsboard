@@ -17,12 +17,15 @@ package org.thingsboard.server.service.edge.rpc;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
+import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 
 import java.util.ArrayList;
@@ -31,13 +34,16 @@ import java.util.List;
 @Component
 @Slf4j
 @RequiredArgsConstructor
+@ConditionalOnProperty(prefix = "edges", value = "enabled", havingValue = "true")
+@TbCoreComponent
 public class DownlinkMessageMapper {
 
     private final EdgeContextComponent ctx;
 
     public List<DownlinkMsg> convertToDownlinkMsgsPack(EdgeSessionState state, List<EdgeEvent> edgeEvents) {
         List<DownlinkMsg> result = new ArrayList<>();
-        for (EdgeEvent edgeEvent : edgeEvents) {
+        List<EdgeEvent> filtered = EdgeMsgConstructorUtils.mergeAndFilterDownlinkDuplicates(edgeEvents);
+        for (EdgeEvent edgeEvent : filtered) {
             log.trace("[{}][{}] converting edge event to downlink msg [{}]", state.getTenantId(), state.getEdgeId(), edgeEvent);
             DownlinkMsg downlinkMsg = null;
             try {

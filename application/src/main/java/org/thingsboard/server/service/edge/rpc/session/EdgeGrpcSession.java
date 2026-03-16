@@ -58,7 +58,6 @@ import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 import org.thingsboard.server.gen.edge.v1.UplinkResponseMsg;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
 import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
-import org.thingsboard.server.service.edge.rpc.AttributeSaveCallback;
 import org.thingsboard.server.service.edge.rpc.DownlinkMessageMapper;
 import org.thingsboard.server.service.edge.rpc.EdgeSessionState;
 import org.thingsboard.server.service.edge.rpc.EdgeSyncCursor;
@@ -604,7 +603,7 @@ public class EdgeGrpcSession implements EdgeSession {
                 .entityId(getEdgeId())
                 .scope(AttributeScope.SERVER_SCOPE)
                 .entry(new BooleanDataEntry(DataConstants.EDGE_SYNC_IN_PROGRESS_ATTR_KEY, value))
-                .callback(new AttributeSaveCallback(getTenantId(), getEdgeId(), DataConstants.EDGE_SYNC_IN_PROGRESS_ATTR_KEY, value))
+                .callback(new EdgeAttributeSaveCallback(getTenantId(), getEdgeId(), DataConstants.EDGE_SYNC_IN_PROGRESS_ATTR_KEY, value))
                 .build());
     }
 

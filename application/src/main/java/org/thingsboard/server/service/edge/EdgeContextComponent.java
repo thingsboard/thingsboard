@@ -99,15 +99,13 @@ import java.util.concurrent.ScheduledExecutorService;
 @TbCoreComponent
 public class EdgeContextComponent {
 
-    @Value("${edges.scheduler_pool_size}")
-    private int schedulerPoolSize;
-
     private final Map<EdgeEventType, EdgeProcessor> processorMap = new EnumMap<>(EdgeEventType.class);
 
     private ScheduledExecutorService edgeEventProcessingExecutorService;
 
     @Autowired
-    public EdgeContextComponent(List<EdgeProcessor> processors) {
+    public EdgeContextComponent(List<EdgeProcessor> processors,
+                                @Value("${edges.scheduler_pool_size}") int schedulerPoolSize) {
         processors.forEach(processor -> {
             EdgeEventType eventType = processor.getEdgeEventType();
             if (eventType != null) {
