@@ -81,7 +81,7 @@ public final class SsrfSafeAddressResolverGroup extends AddressResolverGroup<Ine
                     return;
                 }
                 InetSocketAddress resolved = future.getNow();
-                if (SsrfProtectionValidator.isEnabled() && isBlocked(resolved)) {
+                if (SsrfProtectionValidator.isEnabled() && isBlocked(resolved) && !isOriginalHostAllowed(address)) {
                     promise.tryFailure(new RuntimeException(
                             "SSRF protection: resolved address " + resolved.getAddress().getHostAddress() + " is blocked"));
                 } else {
@@ -104,7 +104,7 @@ public final class SsrfSafeAddressResolverGroup extends AddressResolverGroup<Ine
                     return;
                 }
                 List<InetSocketAddress> resolved = future.getNow();
-                if (!SsrfProtectionValidator.isEnabled()) {
+                if (!SsrfProtectionValidator.isEnabled() || isOriginalHostAllowed(address)) {
                     promise.trySuccess(resolved);
                     return;
                 }
@@ -130,6 +130,14 @@ public final class SsrfSafeAddressResolverGroup extends AddressResolverGroup<Ine
         private static boolean isBlocked(InetSocketAddress socketAddress) {
             InetAddress addr = socketAddress.getAddress();
             return addr != null && SsrfProtectionValidator.isBlockedAddress(addr);
+        }
+
+        private static boolean isOriginalHostAllowed(SocketAddress address) {
+            if (address instanceof InetSocketAddress isa) {
+                String host = isa.getHostString();
+                return host != null && SsrfProtectionValidator.isHostnameAllowed(host);
+            }
+            return false;
         }
     }
 }

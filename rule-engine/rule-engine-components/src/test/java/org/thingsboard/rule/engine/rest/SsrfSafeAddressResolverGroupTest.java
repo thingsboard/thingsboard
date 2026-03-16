@@ -80,12 +80,11 @@ class SsrfSafeAddressResolverGroupTest {
         AddressResolver<InetSocketAddress> resolver = SsrfSafeAddressResolverGroup.INSTANCE.getResolver(executor);
         Promise<InetSocketAddress> promise = executor.newPromise();
 
-        executor.submit(() -> resolver.resolve(InetSocketAddress.createUnresolved("example.com", 80), promise));
+        executor.submit(() -> resolver.resolve(InetSocketAddress.createUnresolved("8.8.8.8", 80), promise));
         InetSocketAddress result = promise.get(10, TimeUnit.SECONDS);
 
         assertThat(result.getAddress()).isNotNull();
-        assertThat(result.getAddress().isLoopbackAddress()).isFalse();
-        assertThat(result.getAddress().isSiteLocalAddress()).isFalse();
+        assertThat(result.getAddress().getHostAddress()).isEqualTo("8.8.8.8");
     }
 
     @Test

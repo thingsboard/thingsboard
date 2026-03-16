@@ -24,7 +24,6 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import org.thingsboard.common.util.SsrfProtectionValidator;
 import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
 import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.dao.oauth2.OAuth2Configuration;
@@ -32,7 +31,6 @@ import org.thingsboard.server.dao.oauth2.OAuth2User;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
@@ -64,12 +62,6 @@ public class GithubOAuth2ClientMapper extends AbstractOAuth2ClientMapper impleme
         restTemplateBuilder = restTemplateBuilder.defaultHeader(AUTHORIZATION, "token " + oauth2Token);
 
         RestTemplate restTemplate = restTemplateBuilder.build();
-        try {
-            SsrfProtectionValidator.validateUri(new URI(emailUrl));
-        } catch (Exception e) {
-            log.error("SSRF validation failed for GitHub email URL '{}'", emailUrl, e);
-            throw new RuntimeException("Unable to login. Please contact your Administrator!");
-        }
         GithubEmailsResponse githubEmailsResponse;
         try {
             githubEmailsResponse = restTemplate.getForEntity(emailUrl, GithubEmailsResponse.class).getBody();
