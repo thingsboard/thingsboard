@@ -1,11 +1,14 @@
-<svg width="1200" height="320" viewBox="0 0 1200 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+<svg width="2000" height="600" viewBox="0 0 2000 600" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="1"/>
-      <stop offset="100%" stop-color="#D9D9D9" stop-opacity="1"/>
+    <linearGradient id="lux" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="50%" stop-color="#E6F0FF"/>
+      <stop offset="100%" stop-color="#AFCBFF"/>
     </linearGradient>
-    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="3" result="blur"/>
+
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
       <feMerge>
         <feMergeNode in="blur"/>
         <feMergeNode in="SourceGraphic"/>
@@ -13,28 +16,44 @@
     </filter>
   </defs>
 
-  <!-- Transparent background -->
+  <!-- icon -->
+  <g transform="translate(80,120)" filter="url(#glow)">
+    <polygon points="200,0 360,90 360,270 200,360 40,270 40,90"
+             stroke="url(#lux)" stroke-width="16" fill="none"/>
+             
+    <circle cx="200" cy="180" r="60"
+            stroke="url(#lux)" stroke-width="14" fill="none"/>
 
-  <!-- Symbol -->
-  <g transform="translate(40,40)" filter="url(#softGlow)">
-    <path d="M40 120L110 40H190L120 120L190 200H110L40 120Z" fill="none" stroke="url(#accent)" stroke-width="16" stroke-linejoin="round"/>
-    <path d="M86 120H230" stroke="url(#accent)" stroke-width="16" stroke-linecap="round"/>
+    <line x1="360" y1="180" x2="480" y2="180" stroke="url(#lux)" stroke-width="14"/>
+    <line x1="0" y1="180" x2="40" y2="180" stroke="url(#lux)" stroke-width="14"/>
+    <line x1="200" y1="360" x2="200" y2="470" stroke="url(#lux)" stroke-width="14"/>
+    <line x1="200" y1="0" x2="200" y2="-70" stroke="url(#lux)" stroke-width="14"/>
+
+    <circle cx="480" cy="180" r="10" fill="white"/>
+    <circle cx="0" cy="180" r="10" fill="white"/>
+    <circle cx="200" cy="470" r="10" fill="white"/>
+    <circle cx="200" cy="-70" r="10" fill="white"/>
   </g>
 
-  <!-- Title -->
-  <g transform="translate(290,75)">
-    <text x="0" y="120"
-      font-family="Arial, Helvetica, sans-serif"
-      font-size="128"
-      font-weight="700"
-      letter-spacing="6"
-      fill="#FFFFFF">NEWGEN</text>
-    <rect x="4" y="145" width="520" height="10" rx="5" fill="#FFFFFF" opacity="0.9"/>
-    <text x="6" y="205"
-      font-family="Arial, Helvetica, sans-serif"
-      font-size="32"
-      font-weight="500"
-      letter-spacing="8"
-      fill="#FFFFFF" opacity="0.82">NEXT GENERATION</text>
+  <!-- title -->
+  <g transform="translate(700,260)">
+    <text x="0" y="0"
+      font-family="Orbitron, Eurostile, Arial, sans-serif"
+      font-size="200"
+      font-weight="800"
+      letter-spacing="14"
+      fill="url(#lux)">NEWGEN</text>
+
+    <!-- luxury underline -->
+    <line x1="10" y1="50" x2="1050" y2="50"
+      stroke="url(#lux)" stroke-width="10"/>
+
+    <text x="20" y="130"
+      font-family="Orbitron, Arial, sans-serif"
+      font-size="48"
+      letter-spacing="16"
+      fill="#FFFFFF"
+      opacity="0.85">ADVANCED TECHNOLOGY</text>
   </g>
+
 </svg>
