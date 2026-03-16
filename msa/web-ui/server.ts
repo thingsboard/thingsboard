@@ -61,22 +61,22 @@ let connections: Socket[] = [];
         server = http.createServer(app);
 
         // Build security headers map once at startup.
-        // Headers enabled by default use '!== false' so they stay on unless explicitly disabled.
-        // Headers disabled by default use simple truthiness checks.
+        // node-config passes env var overrides as strings, so enabled can be boolean or string.
+        const isEnabled = (val: any) => val === true || val === 'true';
         const securityHeaders: Record<string, string> = {};
         const hc: any = config.get('security.headers');
-        if (hc['x-content-type-options']?.enabled !== false) {
+        if (isEnabled(hc['x-content-type-options']?.enabled)) {
             securityHeaders['X-Content-Type-Options'] = 'nosniff';
         }
-        if (hc['referrer-policy']?.enabled !== false) {
+        if (isEnabled(hc['referrer-policy']?.enabled)) {
             securityHeaders['Referrer-Policy'] = hc['referrer-policy']?.value || 'strict-origin-when-cross-origin';
         }
-        if (hc['x-frame-options']?.enabled) {
+        if (isEnabled(hc['x-frame-options']?.enabled)) {
             securityHeaders['X-Frame-Options'] = hc['x-frame-options']?.value || 'SAMEORIGIN';
         }
-        if (hc['content-security-policy']?.enabled && hc['content-security-policy']?.value) {
+        if (isEnabled(hc['content-security-policy']?.enabled) && hc['content-security-policy']?.value) {
             const csp = hc['content-security-policy'];
-            const name = csp['report-only']
+            const name = isEnabled(csp['report-only'])
                 ? 'Content-Security-Policy-Report-Only' : 'Content-Security-Policy';
             securityHeaders[name] = csp.value;
         }
