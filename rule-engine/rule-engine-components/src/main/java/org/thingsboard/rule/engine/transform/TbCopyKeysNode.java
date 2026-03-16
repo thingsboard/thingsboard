@@ -48,7 +48,7 @@ import java.util.stream.Collectors;
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
         configDirective = "tbTransformationNodeCopyKeysConfig",
         icon = "content_copy",
-        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/transformation/copy-key-value-pairs/"
+        docUrl = "https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/nodes/transformation/copy-key-value-pairs/"
 )
 public class TbCopyKeysNode extends TbAbstractTransformNodeWithTbMsgSource {
 

@@ -131,7 +131,7 @@
           <div *ngIf="commands.mqtt.sparkplug; else mqttCommands" class="tb-form-panel stroked">
             <ng-container
               *ngTemplateOutlet="seeDocumentation; context:
-              {doc: {text: 'device.connectivity.sparkplug-command', href: 'https://thingsboard.io/docs/reference/mqtt-sparkplug-api/'}}">
+              {doc: {text: 'device.connectivity.sparkplug-command', href: 'https://newgen.iot-platform.io.vn/docs/reference/mqtt-sparkplug-api/'}}">
             </ng-container>
           </div>
           <ng-template #mqttCommands>
@@ -149,7 +149,7 @@
                       <div class="tb-install-instruction-text">
                         <ng-container *ngTemplateOutlet="seeDocumentation; context:
                         {doc: {text: 'device.connectivity.install-mqtt-windows',
-                        href: 'https://thingsboard.io/docs/reference/mqtt-api/?connectdevice=mqtt-windows#mqtt-connect'}}">
+                        href: 'https://newgen.iot-platform.io.vn/docs/reference/mqtt-api/?connectdevice=mqtt-windows#mqtt-connect'}}">
                         </ng-container>
                       </div>
                     </div>
@@ -157,7 +157,7 @@
                       *ngTemplateOutlet="executeCommand; context: {cmd: {
                               noSecLabel: 'MQTT', noSec: commands.mqtt.mqtt,
                               secLabel: 'MQTTs', sec: commands.mqtt.mqtts,
-                              doc: {text: 'device.connectivity.mqtts-x509-command', href: 'https://thingsboard.io/docs/user-guide/mqtt-over-ssl/'}}}">
+                              doc: {text: 'device.connectivity.mqtts-x509-command', href: 'https://newgen.iot-platform.io.vn/docs/user-guide/mqtt-over-ssl/'}}}">
                     </ng-container>
                   </div>
                 </ng-template>
@@ -178,7 +178,7 @@
                       *ngTemplateOutlet="executeCommand; context: {cmd: {
                               noSecLabel: 'MQTT', noSec: commands.mqtt.mqtt,
                               secLabel: 'MQTTs', sec: commands.mqtt.mqtts,
-                              doc: {text: 'device.connectivity.mqtts-x509-command', href: 'https://thingsboard.io/docs/user-guide/mqtt-over-ssl/'}}}">
+                              doc: {text: 'device.connectivity.mqtts-x509-command', href: 'https://newgen.iot-platform.io.vn/docs/user-guide/mqtt-over-ssl/'}}}">
                     </ng-container>
                   </div>
                 </ng-template>
@@ -199,7 +199,7 @@
                       *ngTemplateOutlet="executeCommand; context: {cmd: {
                               noSecLabel: 'MQTT', noSec: commands.mqtt.mqtt,
                               secLabel: 'MQTTs', sec: commands.mqtt.mqtts,
-                              doc: {text: 'device.connectivity.mqtts-x509-command', href: 'https://thingsboard.io/docs/user-guide/mqtt-over-ssl/'}}}">
+                              doc: {text: 'device.connectivity.mqtts-x509-command', href: 'https://newgen.iot-platform.io.vn/docs/user-guide/mqtt-over-ssl/'}}}">
                     </ng-container>
                   </div>
                 </ng-template>
@@ -215,7 +215,7 @@
                       *ngTemplateOutlet="executeCommand; context: {cmd: {
                               noSecLabel: 'MQTT', noSec: commands.mqtt.docker.mqtt,
                               secLabel: 'MQTTs', sec: commands.mqtt.docker.mqtts,
-                              doc: {text: 'device.connectivity.mqtts-x509-command', href: 'https://thingsboard.io/docs/user-guide/mqtt-over-ssl/'}}}">
+                              doc: {text: 'device.connectivity.mqtts-x509-command', href: 'https://newgen.iot-platform.io.vn/docs/user-guide/mqtt-over-ssl/'}}}">
                     </ng-container>
                   </div>
                 </ng-template>
@@ -238,7 +238,7 @@
                     <div class="tb-install-instruction-text">
                       <ng-container *ngTemplateOutlet="seeDocumentation; context:
                         {doc: {text: 'device.connectivity.install-coap-client',
-                        href: 'https://thingsboard.io/docs/user-guide/ssl/coap-access-token/'}}">
+                        href: 'https://newgen.iot-platform.io.vn/docs/user-guide/ssl/coap-access-token/'}}">
                       </ng-container>
                     </div>
                   </div>
@@ -246,7 +246,7 @@
                     *ngTemplateOutlet="executeCommand; context: {cmd: {
                               noSecLabel: 'CoAP', noSec: commands.coap.coap,
                               secLabel: 'CoAPs', sec: commands.coap.coaps,
-                              doc: {text: 'device.connectivity.coaps-x509-command', href: 'https://thingsboard.io/docs/user-guide/ssl/coap-x509-certificates/'}}}">
+                              doc: {text: 'device.connectivity.coaps-x509-command', href: 'https://newgen.iot-platform.io.vn/docs/user-guide/ssl/coap-x509-certificates/'}}}">
                   </ng-container>
                 </div>
               </ng-template>
@@ -262,7 +262,7 @@
                     *ngTemplateOutlet="executeCommand; context: {cmd: {
                               noSecLabel: 'CoAP', noSec: commands.coap.docker.coap,
                               secLabel: 'CoAPs', sec: commands.coap.docker.coaps,
-                              doc: {text: 'device.connectivity.coaps-x509-command', href: 'https://thingsboard.io/docs/user-guide/ssl/coap-x509-certificates/'}}}">
+                              doc: {text: 'device.connectivity.coaps-x509-command', href: 'https://newgen.iot-platform.io.vn/docs/user-guide/ssl/coap-x509-certificates/'}}}">
                   </ng-container>
                 </div>
               </ng-template>
@@ -273,7 +273,7 @@
           <div class="tb-form-panel stroked">
             <ng-container
               *ngTemplateOutlet="seeDocumentation; context:
-                {doc: {text: 'device.connectivity.snmp-command', href: 'https://thingsboard.io/docs/reference/snmp-api/'}}">
+                {doc: {text: 'device.connectivity.snmp-command', href: 'https://newgen.iot-platform.io.vn/docs/reference/snmp-api/'}}">
             </ng-container>
           </div>
         </ng-template>
@@ -281,7 +281,7 @@
           <div class="tb-form-panel stroked">
             <ng-container
               *ngTemplateOutlet="seeDocumentation; context:
-                {doc: {text: 'device.connectivity.lwm2m-command', href: 'https://thingsboard.io/docs/reference/lwm2m-api/'}}">
+                {doc: {text: 'device.connectivity.lwm2m-command', href: 'https://newgen.iot-platform.io.vn/docs/reference/lwm2m-api/'}}">
             </ng-container>
           </div>
         </ng-template>

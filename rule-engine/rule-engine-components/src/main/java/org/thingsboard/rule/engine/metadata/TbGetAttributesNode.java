@@ -40,7 +40,7 @@ import org.thingsboard.server.common.msg.TbMsg;
                 "For example to filter messages based on the threshold value stored in the attributes.<br><br>" +
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
         configDirective = "tbEnrichmentNodeOriginatorAttributesConfig",
-        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/enrichment/originator-attributes/"
+        docUrl = "https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/nodes/enrichment/originator-attributes/"
 )
 public class TbGetAttributesNode extends TbAbstractGetAttributesNode<TbGetAttributesNodeConfiguration, EntityId> {
 

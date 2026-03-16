@@ -41,7 +41,7 @@ import org.thingsboard.server.common.msg.TbMsg;
         configDirective = "tbActionNodeAssignToCustomerConfig",
         icon = "add_circle",
         version = 1,
-        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/action/assign-to-customer/"
+        docUrl = "https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/nodes/action/assign-to-customer/"
 )
 public class TbAssignToCustomerNode extends TbAbstractCustomerActionNode<TbAssignToCustomerNodeConfiguration> {
 

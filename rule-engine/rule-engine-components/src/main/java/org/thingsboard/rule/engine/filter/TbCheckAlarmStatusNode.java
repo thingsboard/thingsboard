@@ -44,7 +44,7 @@ import java.util.Objects;
         nodeDetails = "Checks the alarm status to match one of the specified statuses.<br><br>" +
                 "Output connections: <code>True</code>, <code>False</code>, <code>Failure</code>.",
         configDirective = "tbFilterNodeCheckAlarmStatusConfig",
-        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/filter/alarm-status-filter/"
+        docUrl = "https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/nodes/filter/alarm-status-filter/"
 )
 public class TbCheckAlarmStatusNode implements TbNode {
 

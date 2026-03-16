@@ -43,7 +43,7 @@ import java.util.concurrent.ExecutionException;
         nodeDetails = "Will send notification to the specified targets using the template",
         configDirective = "tbExternalNodeNotificationConfig",
         icon = "notifications",
-        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/external/send-notification/"
+        docUrl = "https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/nodes/external/send-notification/"
 )
 public class TbNotificationNode extends TbAbstractExternalNode {
 

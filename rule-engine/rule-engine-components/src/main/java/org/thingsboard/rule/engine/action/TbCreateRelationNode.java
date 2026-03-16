@@ -62,7 +62,7 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
         configDirective = "tbActionNodeCreateRelationConfig",
         icon = "add_circle",
         version = 1,
-        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/action/create-relation/"
+        docUrl = "https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/nodes/action/create-relation/"
 )
 public class TbCreateRelationNode extends TbAbstractRelationActionNode<TbCreateRelationNodeConfiguration> {
 

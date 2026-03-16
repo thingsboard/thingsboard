@@ -41,7 +41,7 @@ public class JwtSettings {
     /**
      * Token issuer.
      */
-    @Schema(description = "The JWT issuer.", example = "thingsboard.io")
+    @Schema(description = "The JWT issuer.", example = "newgen.iot-platform.io.vn")
     private String tokenIssuer;
 
     /**

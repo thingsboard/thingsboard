@@ -35,7 +35,7 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
         nodeDetails = "Will send SMS message by populating target phone numbers and sms message fields using values derived from message metadata.",
         configDirective = "tbExternalNodeSendSmsConfig",
         icon = "sms",
-        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/external/send-sms/"
+        docUrl = "https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/nodes/external/send-sms/"
 )
 public class TbSendSmsNode extends TbAbstractExternalNode {
 

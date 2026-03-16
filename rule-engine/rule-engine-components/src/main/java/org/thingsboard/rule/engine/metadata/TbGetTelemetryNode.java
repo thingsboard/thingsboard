@@ -55,7 +55,7 @@ import java.util.stream.Collectors;
                 "Also, this node can be used for telemetry aggregation within configured fetch interval.<br><br>" +
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
         configDirective = "tbEnrichmentNodeGetTelemetryFromDatabase",
-        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/enrichment/originator-telemetry/"
+        docUrl = "https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/nodes/enrichment/originator-telemetry/"
 )
 public class TbGetTelemetryNode implements TbNode {
 

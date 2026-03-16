@@ -50,7 +50,7 @@ import static org.thingsboard.server.common.data.DataConstants.SCOPE;
                 "fields or alarm rules independently, ensuring that derived data can be computed and utilized in real time without storing the original message in the database.",
         configDirective = "tbNodeEmptyConfig",
         icon = "published_with_changes",
-        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/action/calculated-fields/"
+        docUrl = "https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/nodes/action/calculated-fields/"
 )
 public class TbCalculatedFieldsNode implements TbNode {
 

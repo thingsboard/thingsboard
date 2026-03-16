@@ -1199,7 +1199,7 @@ public class ControllerConstants {
             " * 'LWM2M';\n" +
             " * 'COAP';\n" +
             " * 'SNMP'." + NEW_LINE + "Default type supports basic MQTT, HTTP, CoAP and LwM2M transports. " +
-            "Please refer to the [docs](https://thingsboard.io/docs/user-guide/device-profiles/#transport-configuration) for more details about other types.\n" +
+            "Please refer to the [docs](https://newgen.iot-platform.io.vn/docs/user-guide/device-profiles/#transport-configuration) for more details about other types.\n" +
             "\nSee another example of COAP transport configuration below:" + NEW_LINE + COAP_TRANSPORT_CONFIGURATION_EXAMPLE;
 
     protected static final String ALARM_FILTER_KEY = "## Alarm Filter Key" + NEW_LINE +
@@ -1616,7 +1616,7 @@ public class ControllerConstants {
             " * 'DISABLED';\n" +
             " * 'ALLOW_CREATE_NEW_DEVICES';\n" +
             " * 'CHECK_PRE_PROVISIONED_DEVICES'." + NEW_LINE +
-            "Please refer to the [docs](https://thingsboard.io/docs/user-guide/device-provisioning/) for more details." + NEW_LINE;
+            "Please refer to the [docs](https://newgen.iot-platform.io.vn/docs/user-guide/device-provisioning/) for more details." + NEW_LINE;
 
     protected static final String DEVICE_PROFILE_DATA = DEVICE_PROFILE_DATA_DEFINITION + ALARM_SCHEDULE + ALARM_CONDITION_TYPE +
             KEY_FILTERS_DESCRIPTION + PROVISION_CONFIGURATION + TRANSPORT_CONFIGURATION;

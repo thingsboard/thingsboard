@@ -42,7 +42,7 @@ import java.util.List;
                 "All fields in resulting object are optional and will be taken from original message if not specified.<br><br>" +
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
         configDirective = "tbTransformationNodeScriptConfig",
-        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/transformation/script/"
+        docUrl = "https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/nodes/transformation/script/"
 )
 public class TbTransformMsgNode extends TbAbstractTransformNode<TbTransformMsgNodeConfiguration> {
 

@@ -56,7 +56,7 @@ import org.thingsboard.server.common.msg.TbMsg;
                 "Available radius units: METER, KILOMETER, FOOT, MILE, NAUTICAL_MILE;<br><br>" +
                 "Output connections: <code>True</code>, <code>False</code>, <code>Failure</code>",
         configDirective = "tbFilterNodeGpsGeofencingConfig",
-        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/filter/gps-geofencing-filter/"
+        docUrl = "https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/nodes/filter/gps-geofencing-filter/"
 )
 public class TbGpsGeofencingFilterNode extends AbstractGeofencingNode<TbGpsGeofencingFilterNodeConfiguration> {
 

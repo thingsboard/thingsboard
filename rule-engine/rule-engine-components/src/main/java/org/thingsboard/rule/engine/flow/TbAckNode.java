@@ -30,7 +30,7 @@ import org.thingsboard.server.common.msg.TbMsg;
         nodeDescription = "Acknowledges the incoming message",
         nodeDetails = "After acknowledgement, the message is pushed to related rule nodes. Useful if you don't care what happens to this message next.",
         configDirective = "tbNodeEmptyConfig",
-        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/flow/acknowledge/"
+        docUrl = "https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/nodes/flow/acknowledge/"
 )
 public class TbAckNode implements TbNode {
 

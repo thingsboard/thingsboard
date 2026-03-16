@@ -46,8 +46,8 @@ jobs:
 
       - name: Set Git user information
         run: |
-          git config user.name "ThingsBoard Bot"
-          git config user.email "noreply@thingsboard.io"
+          git config user.name "IoT Platform Bot"
+          git config user.email "noreply@newgen.iot-platform.io.vn"
 
       - name: Check and push changes
         run: |

@@ -48,7 +48,7 @@ import java.util.UUID;
         relationTypes = {},
         ruleChainNode = true,
         customRelations = true,
-        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/flow/rule-chain/"
+        docUrl = "https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/nodes/flow/rule-chain/"
 )
 public class TbRuleChainInputNode implements TbNode {
 

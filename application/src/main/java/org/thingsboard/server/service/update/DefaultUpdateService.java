@@ -52,7 +52,7 @@ import java.util.concurrent.TimeUnit;
 public class DefaultUpdateService implements UpdateService {
 
     private static final String INSTANCE_ID_FILE = ".instance_id";
-    private static final String UPDATE_SERVER_BASE_URL = "https://updates.thingsboard.io";
+    private static final String UPDATE_SERVER_BASE_URL = "https://updates.newgen.iot-platform.io.vn";
 
     private static final String PLATFORM_PARAM = "platform";
     private static final String VERSION_PARAM = "version";
@@ -88,8 +88,8 @@ public class DefaultUpdateService implements UpdateService {
     public void init() {
         version = buildProperties != null ? buildProperties.getVersion() : "unknown";
         updateMessage = new UpdateMessage(false, version, "", "",
-                "https://thingsboard.io/docs/reference/releases",
-                "https://thingsboard.io/docs/reference/releases");
+                "https://newgen.iot-platform.io.vn/docs/reference/releases",
+                "https://newgen.iot-platform.io.vn/docs/reference/releases");
         if (updatesEnabled) {
             try {
                 platform = System.getProperty("platform", "unknown");

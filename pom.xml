@@ -24,7 +24,7 @@
     <packaging>pom</packaging>
 
     <name>Thingsboard</name>
-    <url>https://thingsboard.io</url>
+    <url>https://newgen.iot-platform.io.vn</url>
     <inceptionYear>2016</inceptionYear>
 
     <properties>

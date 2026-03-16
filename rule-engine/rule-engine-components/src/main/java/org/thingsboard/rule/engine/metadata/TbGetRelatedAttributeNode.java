@@ -41,7 +41,7 @@ import java.util.Arrays;
                 "Useful when you need to retrieve data from an entity that has a relation to the message originator and use them for further message processing.<br><br>" +
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
         configDirective = "tbEnrichmentNodeRelatedAttributesConfig",
-        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/enrichment/related-entity-data/"
+        docUrl = "https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/nodes/enrichment/related-entity-data/"
 )
 public class TbGetRelatedAttributeNode extends TbAbstractGetEntityDataNode<EntityId> {
 

@@ -44,7 +44,7 @@ import java.util.concurrent.TimeUnit;
                 "does not guarantee that message will be processed even if the \"retry failures and timeouts\" processing strategy will be chosen.",
         icon = "pause",
         configDirective = "tbActionNodeMsgDelayConfig",
-        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/action/delay/"
+        docUrl = "https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/nodes/action/delay/"
 )
 public class TbMsgDelayNode implements TbNode {
 

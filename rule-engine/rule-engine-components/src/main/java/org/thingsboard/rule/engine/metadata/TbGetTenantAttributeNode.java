@@ -38,7 +38,7 @@ import org.thingsboard.server.common.data.util.TbPair;
                 "that is stored as tenant attributes or telemetry data and use it for further message processing.<br><br>" +
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
         configDirective = "tbEnrichmentNodeTenantAttributesConfig",
-        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/enrichment/tenant-attributes/"
+        docUrl = "https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/nodes/enrichment/tenant-attributes/"
 )
 public class TbGetTenantAttributeNode extends TbAbstractGetEntityDataNode<TenantId> {
 

@@ -49,7 +49,7 @@ import java.util.UUID;
         nodeDetails = "Expects messages with any message type. Will forward message body to the device.",
         configDirective = "tbActionNodeRpcReplyConfig",
         icon = "call_merge",
-        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/action/rpc-call-reply/"
+        docUrl = "https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/nodes/action/rpc-call-reply/"
 )
 public class TbSendRPCReplyNode implements TbNode {
 

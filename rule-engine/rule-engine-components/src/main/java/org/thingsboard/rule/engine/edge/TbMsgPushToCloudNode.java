@@ -47,7 +47,7 @@ import java.util.UUID;
         configDirective = "tbActionNodePushToCloudConfig",
         icon = "cloud_upload",
         ruleChainTypes = RuleChainType.EDGE,
-        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/action/push-to-cloud/"
+        docUrl = "https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/nodes/action/push-to-cloud/"
 )
 public class TbMsgPushToCloudNode extends AbstractTbMsgPushNode<TbMsgPushToCloudNodeConfiguration, Object, Object> {
 

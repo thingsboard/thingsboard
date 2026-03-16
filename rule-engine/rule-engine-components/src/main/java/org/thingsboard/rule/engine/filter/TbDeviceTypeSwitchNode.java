@@ -35,7 +35,7 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
         nodeDetails = "Route incoming messages based on the name of the device profile. The device profile name is case-sensitive<br><br>" +
                 "Output connections: <i>Device profile name</i> or <code>Failure</code>",
         configDirective = "tbNodeEmptyConfig",
-        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/filter/device-profile-switch/"
+        docUrl = "https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/nodes/filter/device-profile-switch/"
 )
 public class TbDeviceTypeSwitchNode extends TbAbstractTypeSwitchNode {
 

@@ -35,7 +35,7 @@ import org.thingsboard.server.common.msg.TbMsg;
         nodeDetails = "Checks that the entity type of the incoming message originator matches one of the values specified in the filter.<br><br>" +
                 "Output connections: <code>True</code>, <code>False</code>, <code>Failure</code>",
         configDirective = "tbFilterNodeOriginatorTypeConfig",
-        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/filter/entity-type-filter/"
+        docUrl = "https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/nodes/filter/entity-type-filter/"
 )
 public class TbOriginatorTypeFilterNode implements TbNode {
 

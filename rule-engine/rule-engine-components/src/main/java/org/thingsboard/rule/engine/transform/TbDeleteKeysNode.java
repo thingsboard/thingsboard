@@ -48,7 +48,7 @@ import java.util.stream.Collectors;
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
         configDirective = "tbTransformationNodeDeleteKeysConfig",
         icon = "remove_circle",
-        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/transformation/delete-key-value-pairs/"
+        docUrl = "https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/nodes/transformation/delete-key-value-pairs/"
 )
 public class TbDeleteKeysNode extends TbAbstractTransformNodeWithTbMsgSource {
 

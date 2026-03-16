@@ -49,7 +49,7 @@ import java.util.concurrent.TimeUnit;
                 "If the RPC call request is originated by REST API call from user, will forward the response to user immediately.",
         configDirective = "tbActionNodeRpcRequestConfig",
         icon = "call_made",
-        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/action/rpc-call-request/"
+        docUrl = "https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/nodes/action/rpc-call-request/"
 )
 public class TbSendRPCRequestNode implements TbNode {
 

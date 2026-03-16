@@ -47,7 +47,7 @@ import java.time.Clock;
         nodeDescription = "Publish messages to the Azure IoT Hub",
         nodeDetails = "Will publish message payload to the Azure IoT Hub with QoS <b>AT_LEAST_ONCE</b>.",
         configDirective = "tbExternalNodeAzureIotHubConfig",
-        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/external/azure-iot-hub/"
+        docUrl = "https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/nodes/external/azure-iot-hub/"
 )
 public class TbAzureIotHubNode extends TbMqttNode {
 

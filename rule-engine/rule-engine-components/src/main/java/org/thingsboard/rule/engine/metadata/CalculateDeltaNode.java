@@ -53,7 +53,7 @@ import java.util.Map;
         nodeDetails = "Useful for metering use cases, when you need to calculate consumption based on pulse counter reading.<br><br>" +
                 "Output connections: <code>Success</code>, <code>Other</code> or <code>Failure</code>.",
         configDirective = "tbEnrichmentNodeCalculateDeltaConfig",
-        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/enrichment/calculate-delta/"
+        docUrl = "https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/nodes/enrichment/calculate-delta/"
 )
 public class CalculateDeltaNode implements TbNode {
 

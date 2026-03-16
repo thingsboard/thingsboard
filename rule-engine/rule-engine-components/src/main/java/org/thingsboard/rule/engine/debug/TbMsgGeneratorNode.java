@@ -64,7 +64,7 @@ import static org.thingsboard.server.common.data.DataConstants.QUEUE_NAME;
         inEnabled = false,
         configDirective = "tbActionNodeGeneratorConfig",
         icon = "repeat",
-        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/action/generator/"
+        docUrl = "https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/nodes/action/generator/"
 )
 public class TbMsgGeneratorNode implements TbNode {
 

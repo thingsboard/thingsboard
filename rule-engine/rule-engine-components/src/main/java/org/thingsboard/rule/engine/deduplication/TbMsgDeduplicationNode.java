@@ -62,7 +62,7 @@ import static org.thingsboard.server.common.data.DataConstants.QUEUE_NAME;
                 "Where each element represents object with <strong><i>msg</i></strong> and <strong><i>metadata</i></strong> inner properties.</li></ul>",
         icon = "content_copy",
         configDirective = "tbTransformationNodeDeduplicationConfig",
-        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/transformation/deduplication/"
+        docUrl = "https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/nodes/transformation/deduplication/"
 )
 public class TbMsgDeduplicationNode implements TbNode {
 

@@ -45,7 +45,7 @@ import java.util.Set;
                 "Message type can be accessed via <code>msgType</code> property.<br><br>" +
                 "Output connections: <i>Custom connection(s) defined by switch node</i> or <code>Failure</code>",
         configDirective = "tbFilterNodeSwitchConfig",
-        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/filter/switch/"
+        docUrl = "https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/nodes/filter/switch/"
 )
 public class TbJsSwitchNode implements TbNode {
 

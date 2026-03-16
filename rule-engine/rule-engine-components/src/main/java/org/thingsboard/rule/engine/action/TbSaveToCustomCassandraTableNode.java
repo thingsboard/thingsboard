@@ -66,7 +66,7 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
         configDirective = "tbActionNodeCustomTableConfig",
         icon = "file_upload",
         ruleChainTypes = RuleChainType.CORE,
-        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/action/save-to-custom-table/"
+        docUrl = "https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/nodes/action/save-to-custom-table/"
 )
 public class TbSaveToCustomCassandraTableNode implements TbNode {
 

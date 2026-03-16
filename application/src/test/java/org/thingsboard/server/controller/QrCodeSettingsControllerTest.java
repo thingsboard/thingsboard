@@ -195,7 +195,7 @@ public class QrCodeSettingsControllerTest extends AbstractControllerTest {
         String appHost = parsedDeepLink.group(1);
         String secret = parsedDeepLink.group(2);
         String ttl = parsedDeepLink.group(3);
-        assertThat(appHost).isEqualTo("demo.thingsboard.io");
+        assertThat(appHost).isEqualTo("demo.newgen.iot-platform.io.vn");
         assertThat(ttl).isEqualTo(String.valueOf(mobileSecretKeyTtl));
 
         JwtPair jwtPair = doGet("/api/noauth/qr/" + secret, JwtPair.class);

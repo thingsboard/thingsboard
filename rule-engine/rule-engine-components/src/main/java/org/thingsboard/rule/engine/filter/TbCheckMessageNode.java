@@ -39,7 +39,7 @@ import java.util.Map;
                 "Uncheck the 'Check that all selected fields are present' if the presence of at least one field is sufficient.<br><br>" +
                 "Output connections: <code>True</code>, <code>False</code>, <code>Failure</code>",
         configDirective = "tbFilterNodeCheckMessageConfig",
-        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/filter/check-fields-presence/"
+        docUrl = "https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/nodes/filter/check-fields-presence/"
 )
 public class TbCheckMessageNode implements TbNode {
 

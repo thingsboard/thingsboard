@@ -33,7 +33,7 @@ import org.thingsboard.server.common.msg.TbMsg;
                 " etc. via corresponding chain, otherwise <b>Other</b> chain is used.<br><br>" +
                 "Output connections: <i>Message type connection</i>, <code>Other</code> - if message type is custom or <code>Failure</code>",
         configDirective = "tbNodeEmptyConfig",
-        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/filter/message-type-switch/"
+        docUrl = "https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/nodes/filter/message-type-switch/"
 )
 public class TbMsgTypeSwitchNode implements TbNode {
 

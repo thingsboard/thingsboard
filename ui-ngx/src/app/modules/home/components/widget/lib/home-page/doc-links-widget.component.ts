@@ -40,22 +40,22 @@ const defaultDocLinksMap = new Map<Authority, DocumentationLinks>(
         {
           icon: 'rocket',
           name: 'Getting started',
-          link: 'https://thingsboard.io/docs/getting-started-guides/helloworld/'
+          link: 'https://newgen.iot-platform.io.vn/docs/getting-started-guides/helloworld/'
         },
         {
           icon: 'title',
           name: 'Tenant profiles',
-          link: 'https://thingsboard.io/docs/user-guide/tenant-profiles/'
+          link: 'https://newgen.iot-platform.io.vn/docs/user-guide/tenant-profiles/'
         },
         {
           icon: 'insert_chart',
           name: 'API',
-          link: 'https://thingsboard.io/docs/api/'
+          link: 'https://newgen.iot-platform.io.vn/docs/api/'
         },
         {
           icon: 'now_widgets',
           name: 'Widgets Library',
-          link: 'https://thingsboard.io/docs/user-guide/ui/widget-library/'
+          link: 'https://newgen.iot-platform.io.vn/docs/user-guide/ui/widget-library/'
         }
       ]
     }],
@@ -64,22 +64,22 @@ const defaultDocLinksMap = new Map<Authority, DocumentationLinks>(
         {
           icon: 'rocket',
           name: 'Getting started',
-          link: 'https://thingsboard.io/docs/getting-started-guides/helloworld/'
+          link: 'https://newgen.iot-platform.io.vn/docs/getting-started-guides/helloworld/'
         },
         {
           icon: 'settings_ethernet',
           name: 'Rule engine',
-          link: 'https://thingsboard.io/docs/user-guide/rule-engine-2-0/re-getting-started/'
+          link: 'https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/re-getting-started/'
         },
         {
           icon: 'insert_chart',
           name: 'API',
-          link: 'https://thingsboard.io/docs/api/'
+          link: 'https://newgen.iot-platform.io.vn/docs/api/'
         },
         {
           icon: 'devices',
           name: 'Device profiles',
-          link: 'https://thingsboard.io/docs/user-guide/device-profiles/'
+          link: 'https://newgen.iot-platform.io.vn/docs/user-guide/device-profiles/'
         }
       ]
     }],
@@ -88,7 +88,7 @@ const defaultDocLinksMap = new Map<Authority, DocumentationLinks>(
         {
           icon: 'rocket',
           name: 'Getting started',
-          link: 'https://thingsboard.io/docs/getting-started-guides/helloworld/'
+          link: 'https://newgen.iot-platform.io.vn/docs/getting-started-guides/helloworld/'
         }
       ]
     }]

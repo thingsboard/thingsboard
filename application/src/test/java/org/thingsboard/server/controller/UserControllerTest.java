@@ -326,7 +326,7 @@ public class UserControllerTest extends AbstractControllerTest {
         User tenantAdmin2 = new User();
         tenantAdmin2.setAuthority(Authority.TENANT_ADMIN);
         tenantAdmin2.setTenantId(tenantId);
-        tenantAdmin2.setEmail("tenant2@thingsboard.io");
+        tenantAdmin2.setEmail("tenant2@newgen.iot-platform.io.vn");
         tenantAdmin2 = doPost("/api/user", tenantAdmin2, User.class);
 
         // delete second tenant admin - ok

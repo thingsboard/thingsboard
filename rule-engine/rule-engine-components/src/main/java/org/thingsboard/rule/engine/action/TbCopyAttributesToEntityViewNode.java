@@ -61,7 +61,7 @@ import static org.thingsboard.server.common.data.msg.TbNodeConnectionType.SUCCES
                 "Changes message originator to related entity view and produces new messages according to count of updated entity views",
         configDirective = "tbNodeEmptyConfig",
         icon = "content_copy",
-        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/action/copy-to-view/"
+        docUrl = "https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/nodes/action/copy-to-view/"
 )
 public class TbCopyAttributesToEntityViewNode implements TbNode {
 

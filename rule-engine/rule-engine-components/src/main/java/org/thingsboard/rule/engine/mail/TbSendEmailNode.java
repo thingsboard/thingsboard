@@ -46,7 +46,7 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
                 "with <code>to Email</code> Node using <code>Successful</code> chain.",
         configDirective = "tbExternalNodeSendEmailConfig",
         icon = "send",
-        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/external/send-email/"
+        docUrl = "https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/nodes/external/send-email/"
 )
 public class TbSendEmailNode extends TbAbstractExternalNode {
 

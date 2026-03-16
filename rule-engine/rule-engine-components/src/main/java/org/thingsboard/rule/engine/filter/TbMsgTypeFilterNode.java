@@ -34,7 +34,7 @@ import org.thingsboard.server.common.msg.TbMsg;
         nodeDetails = "If incoming message type is expected - send Message via <b>True</b> chain, otherwise <b>False</b> chain is used.<br><br>" +
                 "Output connections: <code>True</code>, <code>False</code>, <code>Failure</code>",
         configDirective = "tbFilterNodeMessageTypeConfig",
-        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/filter/message-type-filter/"
+        docUrl = "https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/nodes/filter/message-type-filter/"
 )
 public class TbMsgTypeFilterNode implements TbNode {
 

@@ -60,7 +60,7 @@ import java.util.concurrent.TimeUnit;
         nodeDetails = "Create and clear alarms based on alarm rules defined in device profile. The output relation type is either " +
                       "'Alarm Created', 'Alarm Updated', 'Alarm Severity Updated' and 'Alarm Cleared' or simply 'Success' if no alarms were affected.",
         configDirective = "tbActionNodeDeviceProfileConfig",
-        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/action/device-profile/"
+        docUrl = "https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/nodes/action/device-profile/"
 )
 @Deprecated
 public class TbDeviceProfileNode implements TbNode {

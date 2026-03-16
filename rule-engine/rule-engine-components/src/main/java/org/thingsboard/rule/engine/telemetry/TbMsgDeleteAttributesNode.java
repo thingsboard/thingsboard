@@ -45,7 +45,7 @@ import static org.thingsboard.server.common.data.DataConstants.SCOPE;
                 " send the incoming message via <b>Success</b> chain, otherwise, <b>Failure</b> chain is used.",
         configDirective = "tbActionNodeDeleteAttributesConfig",
         icon = "remove_circle",
-        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/action/delete-attributes/"
+        docUrl = "https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/nodes/action/delete-attributes/"
 )
 public class TbMsgDeleteAttributesNode implements TbNode {
 

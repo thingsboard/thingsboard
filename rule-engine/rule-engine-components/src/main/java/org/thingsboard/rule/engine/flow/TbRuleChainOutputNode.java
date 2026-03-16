@@ -33,7 +33,7 @@ import org.thingsboard.server.common.msg.TbMsg;
                 "The output rule node name corresponds to the relation type of the output message, and it is used to forward messages to other rule nodes in the caller rule chain. ",
         configDirective = "tbFlowNodeRuleChainOutputConfig",
         outEnabled = false,
-        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/flow/output/"
+        docUrl = "https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/nodes/flow/output/"
 )
 public class TbRuleChainOutputNode implements TbNode {
 

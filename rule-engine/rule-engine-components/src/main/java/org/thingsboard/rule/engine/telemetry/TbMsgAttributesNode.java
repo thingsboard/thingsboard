@@ -104,7 +104,7 @@ import static org.thingsboard.server.dao.util.KvUtils.filterChangedAttr;
                 """,
         configDirective = "tbActionNodeAttributesConfig",
         icon = "file_upload",
-        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/action/save-attributes/"
+        docUrl = "https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/nodes/action/save-attributes/"
 )
 public class TbMsgAttributesNode implements TbNode {
 

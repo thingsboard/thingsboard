@@ -62,7 +62,7 @@ import static org.thingsboard.rule.engine.util.GpsGeofencingEvents.OUTSIDE;
                 "<br><br>" +
                 "Output connections: <code>Entered</code>, <code>Left</code>, <code>Inside</code>, <code>Outside</code>, <code>Success</code>",
         configDirective = "tbActionNodeGpsGeofencingConfig",
-        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/action/gps-geofencing-events/"
+        docUrl = "https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/nodes/action/gps-geofencing-events/"
 )
 public class TbGpsGeofencingActionNode extends AbstractGeofencingNode<TbGpsGeofencingActionNodeConfiguration> {
 

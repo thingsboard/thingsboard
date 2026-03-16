@@ -30,7 +30,7 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
         nodeDetails = "Routes messages to chain according to the entity type ('Device', 'Asset', etc.).<br><br>" +
                 "Output connections: <i>Message originator type</i> or <code>Failure</code>",
         configDirective = "tbNodeEmptyConfig",
-        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/filter/entity-type-switch/"
+        docUrl = "https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/nodes/filter/entity-type-switch/"
 )
 public class TbOriginatorTypeSwitchNode extends TbAbstractTypeSwitchNode {
 

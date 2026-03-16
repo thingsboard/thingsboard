@@ -42,7 +42,7 @@ import java.util.concurrent.ExecutionException;
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
         icon = "content_copy",
         configDirective = "tbNodeEmptyConfig",
-        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/transformation/split-array-msg/"
+        docUrl = "https://newgen.iot-platform.io.vn/docs/user-guide/rule-engine-2-0/nodes/transformation/split-array-msg/"
 )
 public class TbSplitArrayMsgNode implements TbNode {
 
