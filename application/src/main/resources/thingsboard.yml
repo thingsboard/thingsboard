@@ -181,6 +181,7 @@ security:
     # X-Content-Type-Options header prevents browsers from MIME-sniffing the Content-Type.
     # Safe to enable. Only disable if you intentionally serve resources with mismatched Content-Type.
     x-content-type-options:
+      # Enable/disable X-Content-Type-Options header. Prevents browsers from MIME-sniffing the Content-Type
       enabled: "${SECURITY_HEADERS_X_CONTENT_TYPE_OPTIONS_ENABLED:true}"
     # Referrer-Policy header controls how much referrer info the browser sends with requests.
     # The default 'strict-origin-when-cross-origin' matches the browser's built-in default,
@@ -188,7 +189,9 @@ security:
     # Valid values: no-referrer, no-referrer-when-downgrade, origin, origin-when-cross-origin,
     #              same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
     referrer-policy:
+      # Enable/disable Referrer-Policy header
       enabled: "${SECURITY_HEADERS_REFERRER_POLICY_ENABLED:true}"
+      # Referrer-Policy header value
       value: "${SECURITY_HEADERS_REFERRER_POLICY_VALUE:strict-origin-when-cross-origin}"
     # X-Frame-Options header protects against clickjacking attacks by preventing the page
     # from being loaded in iframes on other domains.
@@ -197,6 +200,7 @@ security:
     # WARNING: Enabling with DENY will block ALL iframe embedding including dashboards
     # embedded on external sites. Use SAMEORIGIN to allow same-domain iframes only.
     x-frame-options:
+      # Enable/disable X-Frame-Options header. Protects against clickjacking attacks
       enabled: "${SECURITY_HEADERS_X_FRAME_OPTIONS_ENABLED:false}"
       # Valid values: DENY, SAMEORIGIN
       value: "${SECURITY_HEADERS_X_FRAME_OPTIONS_VALUE:SAMEORIGIN}"
@@ -213,6 +217,7 @@ security:
     # Use 'report-only: true' first to test the impact before enforcing.
     # Example value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; frame-ancestors 'self'"
     content-security-policy:
+      # Enable/disable Content-Security-Policy header. Mitigates XSS and data injection attacks
       enabled: "${SECURITY_HEADERS_CONTENT_SECURITY_POLICY_ENABLED:false}"
       # Full CSP directive string
       value: "${SECURITY_HEADERS_CONTENT_SECURITY_POLICY_VALUE:}"
