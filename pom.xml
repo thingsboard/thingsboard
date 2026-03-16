@@ -31,9 +31,33 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <main.dir>${basedir}</main.dir>
-        <pkg.disabled>true</pkg.disabled>
         <pkg.process-resources.phase>none</pkg.process-resources.phase>
         <pkg.package.phase>none</pkg.package.phase>
+        <!-- Use -Dpkg.skip=true to skip all packaging at once (bootjar + deb + rpm + zip).
+             Individual flags below can be set independently for finer control. -->
+        <!-- Set to true to skip spring-boot:repackage (the boot jar, i.e. the *-boot.jar artifact).
+             The boot jar is the mandatory input to Gradle buildDeb; skipping it also prevents
+             the .deb from being produced. Any msa/* module that depends on a .deb artifact
+             (e.g. msa/tb-node depends on application:deb) will FAIL when the boot jar and
+             consequently the .deb are missing. Each packaging module overrides this to false. -->
+        <pkg.skip.bootjar>false</pkg.skip.bootjar>
+        <!-- Set to true to skip Gradle buildDeb and suppress the Maven attach-artifact goal
+             that registers the .deb with the reactor. msa/* docker modules copy the .deb
+             directly from the upstream module's target/ directory (not from .m2), and their
+             copy execution is bound to ${pkg.deb.phase}, so they are silently skipped too. -->
+        <pkg.skip.deb>false</pkg.skip.deb>
+        <!-- Set to true to skip Gradle buildRpm. No Maven reactor module depends on the RPM
+             artifact, so this flag can be toggled freely without breaking downstream modules. -->
+        <pkg.skip.rpm>false</pkg.skip.rpm>
+        <!-- Set to true to skip the maven-assembly-plugin Windows ZIP archive. No Maven reactor
+             module depends on the ZIP artifact, so this flag can be toggled freely without
+             breaking downstream modules. -->
+        <pkg.skip.zip>false</pkg.skip.zip>
+        <!-- Internal: resolved phase for the build-helper attach-deb execution. Overridden to
+             "none" by the skip-deb profile when pkg.skip.deb=true so the goal is silently
+             skipped instead of failing on a non-existent .deb file. Packaging modules inherit
+             "package" via pkg.package.phase; msa/* docker modules set it explicitly in msa/pom.xml. -->
+        <pkg.deb.phase>${pkg.package.phase}</pkg.deb.phase>
         <pkg.user>thingsboard</pkg.user>
         <pkg.implementationTitle>${project.name}</pkg.implementationTitle>
         <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
@@ -70,6 +94,9 @@
         <os-maven-plugin.version>1.7.1</os-maven-plugin.version>
         <surefire.version>3.5.4</surefire.version>
         <jar-plugin.version>3.5.0</jar-plugin.version>
+        <maven-surefire-plugin.version>3.5.4</maven-surefire-plugin.version>
+        <maven-install-plugin.version>3.1.4</maven-install-plugin.version>
+        <maven-deploy-plugin.version>3.1.4</maven-deploy-plugin.version>
         <springdoc-swagger.version>2.8.8TB</springdoc-swagger.version>
         <swagger-annotations.version>2.2.30</swagger-annotations.version>
         <spatial4j.version>0.8</spatial4j.version>
@@ -176,6 +203,43 @@
             <properties>
                 <downloadSources>true</downloadSources>
                 <downloadJavadocs>true</downloadJavadocs>
+            </properties>
+        </profile>
+
+        <!-- Activated by -Dpkg.skip.deb=true. Sets the attach-artifact lifecycle phase to "none"
+             so the build-helper goal that registers the .deb with the Maven reactor is silently
+             skipped. Without this, the goal would fail because the .deb file does not exist. -->
+        <profile>
+            <id>skip-deb</id>
+            <activation>
+                <property>
+                    <name>pkg.skip.deb</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <properties>
+                <pkg.deb.phase>none</pkg.deb.phase>
+            </properties>
+        </profile>
+
+        <!-- Activated by -Dpkg.skip=true. Convenience alias that sets all four skip flags at
+             once. Also sets pkg.deb.phase=none directly because Maven profile activation is
+             evaluated against CLI/system properties only — a property set inside another profile
+             cannot trigger a second profile, so skip-deb would not fire automatically. -->
+        <profile>
+            <id>skip-pkg</id>
+            <activation>
+                <property>
+                    <name>pkg.skip</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <properties>
+                <pkg.skip.bootjar>true</pkg.skip.bootjar>
+                <pkg.skip.deb>true</pkg.skip.deb>
+                <pkg.skip.rpm>true</pkg.skip.rpm>
+                <pkg.skip.zip>true</pkg.skip.zip>
+                <pkg.deb.phase>none</pkg.deb.phase>
             </properties>
         </profile>
 
@@ -484,7 +548,12 @@
                             <groupId>org.springframework.boot</groupId>
                             <artifactId>spring-boot-maven-plugin</artifactId>
                             <configuration>
-                                <skip>${pkg.disabled}</skip>
+                                <!-- Note: pkg.skip.bootjar and pkg.skip.deb are independent flags.
+                                     Passing only -Dpkg.skip.deb=true still builds the boot jar here
+                                     because Gradle's buildDeb task depends on it as its primary input.
+                                     Use -Dpkg.skip.bootjar=true to skip the boot jar entirely
+                                     (which also breaks buildDeb — see pkg.skip.* table in TEST_FAST.md). -->
+                                <skip>${pkg.skip.bootjar}</skip>
                                 <mainClass>${pkg.mainClass}</mainClass>
                                 <classifier>boot</classifier>
                                 <layout>ZIP</layout>
@@ -528,6 +597,8 @@
                                     <arg>-PpkgInstallFolder=${pkg.installFolder}</arg>
                                     <arg>-PpkgCopyInstallScripts=${pkg.copyInstallScripts}</arg>
                                     <arg>-PpkgLogFolder=${pkg.unixLogFolder}</arg>
+                                    <arg>-PskipDeb=${pkg.skip.deb}</arg>
+                                    <arg>-PskipRpm=${pkg.skip.rpm}</arg>
                                     <arg>--project-cache-dir</arg>
                                     <arg>${project.build.directory}/.gradle</arg>
                                     <arg>--warning-mode</arg>
@@ -547,6 +618,7 @@
                             <groupId>org.apache.maven.plugins</groupId>
                             <artifactId>maven-assembly-plugin</artifactId>
                             <configuration>
+                                <skipAssembly>${pkg.skip.zip}</skipAssembly>
                                 <finalName>${pkg.name}</finalName>
                                 <descriptors>
                                     <descriptor>${main.dir}/packaging/${pkg.type}/assembly/windows.xml</descriptor>
@@ -563,23 +635,24 @@
                             </executions>
                         </plugin>
                         <plugin>
-                            <groupId>org.apache.maven.plugins</groupId>
-                            <artifactId>maven-install-plugin</artifactId>
-                            <configuration>
-                                <file>${project.build.directory}/${pkg.name}.deb</file>
-                                <artifactId>${project.artifactId}</artifactId>
-                                <groupId>${project.groupId}</groupId>
-                                <version>${project.version}</version>
-                                <classifier>deb</classifier>
-                                <packaging>deb</packaging>
-                            </configuration>
+                            <groupId>org.codehaus.mojo</groupId>
+                            <artifactId>build-helper-maven-plugin</artifactId>
                             <executions>
                                 <execution>
-                                    <id>install-deb</id>
-                                    <phase>${pkg.package.phase}</phase>
+                                    <id>attach-deb</id>
+                                    <phase>${pkg.deb.phase}</phase>
                                     <goals>
-                                        <goal>install-file</goal>
+                                        <goal>attach-artifact</goal>
                                     </goals>
+                                    <configuration>
+                                        <artifacts>
+                                            <artifact>
+                                                <file>${project.build.directory}/${pkg.name}.deb</file>
+                                                <type>deb</type>
+                                                <classifier>deb</classifier>
+                                            </artifact>
+                                        </artifacts>
+                                    </configuration>
                                 </execution>
                             </executions>
                         </plugin>
@@ -658,7 +731,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>${surefire.version}</version>
+                    <version>${maven-surefire-plugin.version}</version>
                     <configuration>
                         <argLine>
                             -XX:+UseStringDeduplication -XX:MaxGCPauseMillis=200
@@ -671,12 +744,17 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-install-plugin</artifactId>
-                    <version>3.0.0-M1</version>
+                    <version>${maven-install-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-deploy-plugin</artifactId>
-                    <version>3.0.0-M1</version>
+                    <version>${maven-deploy-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-enforcer-plugin</artifactId>
+                    <version>3.5.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
