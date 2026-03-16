@@ -1547,7 +1547,7 @@ edges:
 # Spring doc common parameters
 springdoc:
   # If false swagger API docs will be unavailable
-  api-docs.enabled: "${SWAGGER_ENABLED:false}"
+  api-docs.enabled: "${SWAGGER_ENABLED:true}"
   # Swagger default produces media-type
   default-produces-media-type: "${SWAGGER_DEFAULT_PRODUCES_MEDIA_TYPE:application/json}"
 
