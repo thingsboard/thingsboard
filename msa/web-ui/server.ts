@@ -60,7 +60,9 @@ let connections: Socket[] = [];
         const app = express();
         server = http.createServer(app);
 
-        // Build security headers map once at startup
+        // Build security headers map once at startup.
+        // Headers enabled by default use '!== false' so they stay on unless explicitly disabled.
+        // Headers disabled by default use simple truthiness checks.
         const securityHeaders: Record<string, string> = {};
         if (config.has('security.headers')) {
             const hc: any = config.get('security.headers');
@@ -74,9 +76,10 @@ let connections: Socket[] = [];
                 securityHeaders['X-Frame-Options'] = hc['x-frame-options']?.value || 'SAMEORIGIN';
             }
             if (hc['content-security-policy']?.enabled && hc['content-security-policy']?.value) {
-                const name = hc['content-security-policy']?.reportOnly
+                const csp = hc['content-security-policy'];
+                const name = csp['report-only']
                     ? 'Content-Security-Policy-Report-Only' : 'Content-Security-Policy';
-                securityHeaders[name] = hc['content-security-policy'].value;
+                securityHeaders[name] = csp.value;
             }
         } else {
             // Defaults when no security.headers config block exists

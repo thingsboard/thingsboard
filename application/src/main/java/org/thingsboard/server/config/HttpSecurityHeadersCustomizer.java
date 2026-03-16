@@ -16,11 +16,13 @@
 package org.thingsboard.server.config;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.web.header.writers.StaticHeadersWriter;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class HttpSecurityHeadersCustomizer {
@@ -41,6 +43,9 @@ public class HttpSecurityHeadersCustomizer {
             if ("DENY".equalsIgnoreCase(value)) {
                 headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::deny);
             } else {
+                if (!"SAMEORIGIN".equalsIgnoreCase(value)) {
+                    log.warn("Unrecognized X-Frame-Options value '{}', falling back to SAMEORIGIN. Valid values: DENY, SAMEORIGIN", value);
+                }
                 headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin);
             }
         }

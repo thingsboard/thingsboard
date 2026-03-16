@@ -38,7 +38,7 @@ security:
     content-security-policy:
       enabled: false
       value: ""
-      reportOnly: false
+      report-only: false
 logger:
   level: "info"
   path: "logs"
