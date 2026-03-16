@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package org.thingsboard.server.controller;
 import lombok.extern.slf4j.Slf4j;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
+import org.springframework.boot.info.BuildProperties;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EdgeUtils;
@@ -58,6 +60,9 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
 
     @SpyBean
     protected AuditLogService auditLogService;
+
+    @MockBean
+    BuildProperties buildProperties;
 
     protected final String msgErrorPermission = "You don't have permission to perform this operation!";
     protected final String msgErrorShouldBeSpecified = "should be specified";

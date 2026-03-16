@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ export const auditLogsRoutes: Routes = [
     path: 'auditLogs',
     component: AuditLogTableComponent,
     data: {
-      auth: [Authority.TENANT_ADMIN],
+      auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN],
       title: 'audit-log.audit-logs',
       breadcrumb: {
         menuId: MenuId.audit_log

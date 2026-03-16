@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -25,9 +25,10 @@ import { Authority } from '@shared/models/authority.enum';
 import { of } from 'rxjs';
 
 @Component({
-  selector: 'tb-version-info',
-  templateUrl: './version-info.component.html',
-  styleUrls: ['./home-page-widget.scss', './version-info.component.scss']
+    selector: 'tb-version-info',
+    templateUrl: './version-info.component.html',
+    styleUrls: ['./home-page-widget.scss', './version-info.component.scss'],
+    standalone: false
 })
 export class VersionInfoComponent extends PageComponent implements OnInit {
 

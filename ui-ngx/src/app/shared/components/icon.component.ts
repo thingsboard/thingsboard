@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,15 +14,15 @@
 /// limitations under the License.
 ///
 
-import { CanColor, mixinColor } from '@angular/material/core';
+import { ThemePalette } from '@angular/material/core';
 import {
   AfterContentInit,
   AfterViewChecked,
   ChangeDetectionStrategy,
   Component,
   ElementRef,
-  ErrorHandler,
-  Inject,
+  ErrorHandler, inject,
+  Inject, Input,
   OnDestroy,
   Renderer2,
   ViewChild,
@@ -36,12 +36,6 @@ import { ContentObserver } from '@angular/cdk/observers';
 import { isTbImage } from '@shared/models/resource.models';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
-
-const _TbIconBase = mixinColor(
-  class {
-    constructor(public _elementRef: ElementRef) {}
-  },
-);
 
 const funcIriAttributes = [
   'clip-path',
@@ -63,29 +57,41 @@ const funcIriAttributeSelector = funcIriAttributes.map(attr => `[${attr}]`).join
 const funcIriPattern = /^url\(['"]?#(.*?)['"]?\)$/;
 
 @Component({
-  template: '<span style="display: none;" #iconNameContent><ng-content></ng-content></span>',
-  selector: 'tb-icon',
-  exportAs: 'tbIcon',
-  styleUrls: [],
-  // eslint-disable-next-line @angular-eslint/no-inputs-metadata-property
-  inputs: ['color'],
-  // eslint-disable-next-line @angular-eslint/no-host-metadata-property
-  host: {
-    role: 'img',
-    class: 'mat-icon notranslate',
-    '[attr.data-mat-icon-type]': '_useSvgIcon ? "svg" : (_useImageIcon ? null : "font")',
-    '[attr.data-mat-icon-name]': '_svgName',
-    '[attr.data-mat-icon-namespace]': '_svgNamespace',
-    '[class.mat-icon-no-color]': 'color !== "primary" && color !== "accent" && color !== "warn"',
-  },
-  encapsulation: ViewEncapsulation.None,
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    template: '<span style="display: none;" #iconNameContent><ng-content></ng-content></span>',
+    selector: 'tb-icon',
+    exportAs: 'tbIcon',
+    styleUrls: [],
+    // eslint-disable-next-line @angular-eslint/no-host-metadata-property
+    host: {
+        role: 'img',
+        class: 'mat-icon notranslate',
+        '[class]': 'color ? "mat-" + color : ""',
+        '[attr.data-mat-icon-type]': '_useSvgIcon ? "svg" : (_useImageIcon ? null : "font")',
+        '[attr.data-mat-icon-name]': '_svgName',
+        '[attr.data-mat-icon-namespace]': '_svgNamespace',
+        '[class.mat-icon-no-color]': 'color !== "primary" && color !== "accent" && color !== "warn"',
+    },
+    encapsulation: ViewEncapsulation.None,
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
-export class TbIconComponent extends _TbIconBase
-                             implements AfterContentInit, AfterViewChecked, CanColor, OnDestroy {
+export class TbIconComponent implements AfterContentInit, AfterViewChecked, OnDestroy {
 
   @ViewChild('iconNameContent', {static: true})
   _iconNameContent: ElementRef;
+
+  readonly _elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  private _defaultColor: ThemePalette;
+
+  @Input()
+  get color() {
+    return this._color || this._defaultColor;
+  }
+  set color(value: string | null | undefined) {
+    this._color = value;
+  }
+  private _color: string | null | undefined;
 
   private icon: string;
 
@@ -111,15 +117,13 @@ export class TbIconComponent extends _TbIconBase
 
   private _currentIconFetch = Subscription.EMPTY;
 
-  constructor(elementRef: ElementRef<HTMLElement>,
-              private contentObserver: ContentObserver,
+  constructor(private contentObserver: ContentObserver,
               private renderer: Renderer2,
               private _iconRegistry: MatIconRegistry,
               private imagePipe: ImagePipe,
               private sanitizer: DomSanitizer,
               @Inject(MAT_ICON_LOCATION) private _location: MatIconLocation,
               private readonly _errorHandler: ErrorHandler) {
-    super(elementRef);
   }
 
   ngAfterContentInit(): void {

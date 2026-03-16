@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@import '../../../../../scss/constants';
+
 :host {
+  display: grid;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100vh;
+  grid-template-rows: min-content minmax(auto, 1fr) min-content;
+
+  @media #{$mat-gt-xs} {
+    .mat-mdc-dialog-content {
+      max-height: 80vh;
+    }
+  }
+
   .tb-event-content {
-    width: 100%;
     min-width: 400px;
-    height: 100%;
-    min-height: 50px;
+    &.border {
+      border: 1px solid #c0c0c0;
+    }
+    @media #{$mat-xs} {
+      min-width: 100%;
+    }
   }
 }

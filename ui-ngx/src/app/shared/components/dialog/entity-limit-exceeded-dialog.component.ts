@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -34,10 +34,11 @@ export interface EntityLimitExceededDialogData {
 
 // @dynamic
 @Component({
-  selector: 'tb-entity-limit-exceeded-dialog',
-  templateUrl: './entity-limit-exceeded-dialog.component.html',
-  styleUrls: ['./entity-limit-exceeded-dialog.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-entity-limit-exceeded-dialog',
+    templateUrl: './entity-limit-exceeded-dialog.component.html',
+    styleUrls: ['./entity-limit-exceeded-dialog.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class EntityLimitExceededDialogComponent extends DialogComponent<EntityLimitExceededDialogComponent> {
 

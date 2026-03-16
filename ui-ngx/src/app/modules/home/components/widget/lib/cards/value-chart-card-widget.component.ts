@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -62,10 +62,11 @@ const layoutHeight = 56;
 const valueRelativeWidth = 0.35;
 
 @Component({
-  selector: 'tb-value-chart-card-widget',
-  templateUrl: './value-chart-card-widget.component.html',
-  styleUrls: ['./value-chart-card-widget.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-value-chart-card-widget',
+    templateUrl: './value-chart-card-widget.component.html',
+    styleUrls: ['./value-chart-card-widget.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class ValueChartCardWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
 

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,13 @@ import org.thingsboard.server.common.data.pat.ApiKey;
 import org.thingsboard.server.common.data.pat.ApiKeyInfo;
 import org.thingsboard.server.dao.entity.EntityDaoService;
 
+import java.util.List;
+
 public interface ApiKeyService extends EntityDaoService {
 
     ApiKey saveApiKey(TenantId tenantId, ApiKeyInfo apiKey);
+
+    ApiKey saveApiKey(TenantId tenantId, ApiKeyInfo apiKeyInfo, String value, boolean doValidate);
 
     void deleteApiKey(TenantId tenantId, ApiKey apiKey, boolean force);
 
@@ -37,5 +41,9 @@ public interface ApiKeyService extends EntityDaoService {
     ApiKey findApiKeyById(TenantId tenantId, ApiKeyId apiKeyId);
 
     PageData<ApiKeyInfo> findApiKeysByUserId(TenantId tenantId, UserId userId, PageLink pageLink);
+
+    List<ApiKey> findApiKeysByUserId(TenantId tenantId, UserId userId);
+
+    PageData<ApiKey> findApiKeysByTenantId(TenantId tenantId, PageLink pageLink);
 
 }

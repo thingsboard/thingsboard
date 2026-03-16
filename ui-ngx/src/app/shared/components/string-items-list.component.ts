@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -37,17 +37,18 @@ export interface StringItemsOption {
   value: any;
 }
 @Component({
-  selector: 'tb-string-items-list',
-  templateUrl: './string-items-list.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => StringItemsListComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-string-items-list',
+    templateUrl: './string-items-list.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => StringItemsListComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class StringItemsListComponent implements ControlValueAccessor, OnInit {
 
@@ -210,8 +211,8 @@ export class StringItemsListComponent implements ControlValueAccessor, OnInit {
 
   addOnBlur(event: FocusEvent) {
     const target: HTMLElement = event.relatedTarget as HTMLElement;
-    if (target && target.tagName !== 'MAT-OPTION') {
-      this.addItem(this.stringItemInput.nativeElement.value ?? '')
+    if ((target && target.tagName !== 'MAT-OPTION') || this.allowUserValue) {
+      this.addItem(this.stringItemInput.nativeElement.value ?? '');
     }
     this.onTouched();
   }

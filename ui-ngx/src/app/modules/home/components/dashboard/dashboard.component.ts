@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -58,15 +58,15 @@ import { distinct, take } from 'rxjs/operators';
 import { UtilsService } from '@core/services/utils.service';
 import { WidgetComponentAction, WidgetComponentActionType } from '@home/components/widget/widget-container.component';
 import { TbPopoverComponent } from '@shared/components/popover.component';
-import { displayGrids } from 'angular-gridster2/lib/gridsterConfig.interface';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { TbContextMenuEvent } from '@shared/models/jquery-event.models';
 
 @Component({
-  selector: 'tb-dashboard',
-  templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'tb-dashboard',
+    templateUrl: './dashboard.component.html',
+    styleUrls: ['./dashboard.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class DashboardComponent extends PageComponent implements IDashboardComponent, DoCheck, OnInit, OnDestroy, AfterViewInit, OnChanges {
 
@@ -101,7 +101,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
   outerMargin: boolean;
 
   @Input()
-  displayGrid: displayGrids = 'onDrag&Resize';
+  displayGrid: 'always' | 'onDrag&Resize' | 'none' = 'onDrag&Resize';
 
   @Input()
   gridType: GridType;

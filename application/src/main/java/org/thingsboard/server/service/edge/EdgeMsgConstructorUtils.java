@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,14 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.edge.rpc.EdgeVersionComparator;
 import org.thingsboard.rule.engine.action.TbSaveToCustomCassandraTableNode;
+import org.thingsboard.rule.engine.ai.TbAiNode;
 import org.thingsboard.rule.engine.aws.lambda.TbAwsLambdaNode;
 import org.thingsboard.rule.engine.rest.TbSendRestApiCallReplyNode;
 import org.thingsboard.rule.engine.telemetry.TbCalculatedFieldsNode;
@@ -38,6 +41,7 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.HasVersion;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbResource;
@@ -45,15 +49,20 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.ai.AiModel;
+import org.thingsboard.server.common.data.pat.ApiKey;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.domain.DomainInfo;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.AiModelId;
+import org.thingsboard.server.common.data.id.ApiKeyId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
@@ -76,6 +85,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
@@ -88,7 +98,9 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.gen.edge.v1.AiModelUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.ApiKeyUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AlarmCommentUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AlarmUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
@@ -127,11 +139,16 @@ import org.thingsboard.server.gen.edge.v1.WidgetTypeUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.WidgetsBundleUpdateMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class EdgeMsgConstructorUtils {
@@ -156,6 +173,14 @@ public class EdgeMsgConstructorUtils {
     );
 
     public static final Map<EdgeVersion, Set<String>> EXCLUDED_NODES_BY_EDGE_VERSION = Map.of(
+            EdgeVersion.V_4_1_0,
+            Set.of(
+                    TbAiNode.class.getName()
+            ),
+            EdgeVersion.V_4_0_0,
+            Set.of(
+                    TbAiNode.class.getName()
+            ),
             EdgeVersion.V_3_9_0,
             Set.of(
                     TbCalculatedFieldsNode.class.getName()
@@ -172,6 +197,10 @@ public class EdgeMsgConstructorUtils {
             )
     );
 
+    private static void resetVersion(HasVersion entity) {
+        entity.setVersion(null);
+    }
+
     public static AlarmUpdateMsg constructAlarmUpdatedMsg(UpdateMsgType msgType, Alarm alarm) {
         return AlarmUpdateMsg.newBuilder().setMsgType(msgType)
                 .setEntity(JacksonUtil.toString(alarm))
@@ -184,6 +213,7 @@ public class EdgeMsgConstructorUtils {
     }
 
     public static AssetUpdateMsg constructAssetUpdatedMsg(UpdateMsgType msgType, Asset asset) {
+        resetVersion(asset);
         return AssetUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(asset))
                 .setIdMSB(asset.getUuidId().getMostSignificantBits())
                 .setIdLSB(asset.getUuidId().getLeastSignificantBits()).build();
@@ -197,6 +227,7 @@ public class EdgeMsgConstructorUtils {
     }
 
     public static AssetProfileUpdateMsg constructAssetProfileUpdatedMsg(UpdateMsgType msgType, AssetProfile assetProfile) {
+        resetVersion(assetProfile);
         return AssetProfileUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(assetProfile))
                 .setIdMSB(assetProfile.getId().getId().getMostSignificantBits())
                 .setIdLSB(assetProfile.getId().getId().getLeastSignificantBits()).build();
@@ -210,6 +241,7 @@ public class EdgeMsgConstructorUtils {
     }
 
     public static CustomerUpdateMsg constructCustomerUpdatedMsg(UpdateMsgType msgType, Customer customer) {
+        resetVersion(customer);
         return CustomerUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(customer))
                 .setIdMSB(customer.getId().getId().getMostSignificantBits())
                 .setIdLSB(customer.getId().getId().getLeastSignificantBits()).build();
@@ -223,6 +255,7 @@ public class EdgeMsgConstructorUtils {
     }
 
     public static DashboardUpdateMsg constructDashboardUpdatedMsg(UpdateMsgType msgType, Dashboard dashboard) {
+        resetVersion(dashboard);
         return DashboardUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(dashboard))
                 .setIdMSB(dashboard.getId().getId().getMostSignificantBits())
                 .setIdLSB(dashboard.getId().getId().getLeastSignificantBits()).build();
@@ -236,6 +269,7 @@ public class EdgeMsgConstructorUtils {
     }
 
     public static DeviceUpdateMsg constructDeviceUpdatedMsg(UpdateMsgType msgType, Device device) {
+        resetVersion(device);
         return DeviceUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(device))
                 .setIdMSB(device.getId().getId().getMostSignificantBits())
                 .setIdLSB(device.getId().getId().getLeastSignificantBits()).build();
@@ -249,13 +283,43 @@ public class EdgeMsgConstructorUtils {
     }
 
     public static DeviceCredentialsUpdateMsg constructDeviceCredentialsUpdatedMsg(DeviceCredentials deviceCredentials) {
+        resetVersion(deviceCredentials);
         return DeviceCredentialsUpdateMsg.newBuilder().setEntity(JacksonUtil.toString(deviceCredentials)).build();
     }
 
-    public static DeviceProfileUpdateMsg constructDeviceProfileUpdatedMsg(UpdateMsgType msgType, DeviceProfile deviceProfile) {
-        return DeviceProfileUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(deviceProfile))
+    public static DeviceProfileUpdateMsg constructDeviceProfileUpdatedMsg(UpdateMsgType msgType, DeviceProfile deviceProfile, EdgeVersion edgeVersion) {
+        resetVersion(deviceProfile);
+        String entity = getEntityAndFixLwm2mBootstrapShortServerId(deviceProfile, edgeVersion);
+        return DeviceProfileUpdateMsg.newBuilder().setMsgType(msgType).setEntity(entity)
                 .setIdMSB(deviceProfile.getId().getId().getMostSignificantBits())
                 .setIdLSB(deviceProfile.getId().getId().getLeastSignificantBits()).build();
+    }
+
+    public static String getEntityAndFixLwm2mBootstrapShortServerId(DeviceProfile deviceProfile, EdgeVersion edgeVersion) {
+        DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
+        if (!(transportConfiguration instanceof Lwm2mDeviceProfileTransportConfiguration) || EdgeVersionComparator.INSTANCE.compare(edgeVersion, EdgeVersion.V_4_3_0) >= 0) {
+            return JacksonUtil.toString(deviceProfile);
+        }
+        JsonNode jsonNode = JacksonUtil.valueToTree(deviceProfile);
+        JsonNode profileDataNode = jsonNode.get("profileData");
+        if (profileDataNode != null && profileDataNode.has("transportConfiguration")) {
+            JsonNode transportConfigNode = profileDataNode.get("transportConfiguration");
+            JsonNode bootstrapNode = transportConfigNode.get("bootstrap");
+            if (bootstrapNode != null && bootstrapNode.isArray()) {
+                for (JsonNode bootstrapServerNode : bootstrapNode) {
+                    if (bootstrapServerNode.isObject()) {
+                        ObjectNode serverObjectNode = (ObjectNode) bootstrapServerNode;
+                        JsonNode isBootstrapNode = serverObjectNode.get("bootstrapServerIs");
+                        boolean isBootstrapServer = isBootstrapNode != null && isBootstrapNode.asBoolean(false);
+                        JsonNode shortServerIdNode = serverObjectNode.get("shortServerId");
+                        if (isBootstrapServer && (shortServerIdNode == null || shortServerIdNode.isNull())) {
+                            serverObjectNode.put("shortServerId", 0);
+                        }
+                    }
+                }
+            }
+        }
+        return JacksonUtil.toString(jsonNode);
     }
 
     public static DeviceProfileUpdateMsg constructDeviceProfileDeleteMsg(DeviceProfileId deviceProfileId) {
@@ -338,6 +402,7 @@ public class EdgeMsgConstructorUtils {
     }
 
     public static EntityViewUpdateMsg constructEntityViewUpdatedMsg(UpdateMsgType msgType, EntityView entityView) {
+        resetVersion(entityView);
         return EntityViewUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(entityView))
                 .setIdMSB(entityView.getId().getId().getMostSignificantBits())
                 .setIdLSB(entityView.getId().getId().getLeastSignificantBits()).build();
@@ -437,6 +502,7 @@ public class EdgeMsgConstructorUtils {
     }
 
     public static RelationUpdateMsg constructRelationUpdatedMsg(UpdateMsgType msgType, EntityRelation entityRelation) {
+        resetVersion(entityRelation);
         return RelationUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(entityRelation)).build();
     }
 
@@ -454,6 +520,7 @@ public class EdgeMsgConstructorUtils {
     }
 
     public static RuleChainUpdateMsg constructRuleChainUpdatedMsg(UpdateMsgType msgType, RuleChain ruleChain, boolean isRoot) {
+        resetVersion(ruleChain);
         boolean isTemplateRoot = ruleChain.isRoot();
         ruleChain.setRoot(isRoot);
         RuleChainUpdateMsg result = RuleChainUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(ruleChain))
@@ -471,6 +538,7 @@ public class EdgeMsgConstructorUtils {
     }
 
     public static RuleChainMetadataUpdateMsg constructRuleChainMetadataUpdatedMsg(UpdateMsgType msgType, RuleChainMetaData ruleChainMetaData, EdgeVersion edgeVersion) {
+        resetVersion(ruleChainMetaData);
         String metaData = sanitizeMetadataForLegacyEdgeVersion(ruleChainMetaData, edgeVersion);
 
         return RuleChainMetadataUpdateMsg.newBuilder()
@@ -521,7 +589,7 @@ public class EdgeMsgConstructorUtils {
                 .setEntityIdMSB(entityId.getId().getMostSignificantBits())
                 .setEntityIdLSB(entityId.getId().getLeastSignificantBits())
                 .setEntityType(entityId.getEntityType().name());
-        long ts = getTs(entityData.getAsJsonObject());
+        long ts = extractTs(entityData.getAsJsonObject());
         switch (actionType) {
             case TIMESERIES_UPDATED:
                 try {
@@ -574,8 +642,8 @@ public class EdgeMsgConstructorUtils {
         return builder.build();
     }
 
-    private static long getTs(JsonObject data) {
-        if (data.get("ts") != null && !data.get("ts").isJsonNull()) {
+    private static long extractTs(JsonObject data) {
+        if (data.has("ts") && data.get("ts").isJsonPrimitive()) {
             return data.getAsJsonPrimitive("ts").getAsLong();
         }
         return System.currentTimeMillis();
@@ -591,6 +659,7 @@ public class EdgeMsgConstructorUtils {
     }
 
     public static TenantUpdateMsg constructTenantUpdateMsg(UpdateMsgType msgType, Tenant tenant) {
+        resetVersion(tenant);
         return TenantUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(tenant)).build();
     }
 
@@ -599,6 +668,7 @@ public class EdgeMsgConstructorUtils {
     }
 
     public static UserUpdateMsg constructUserUpdatedMsg(UpdateMsgType msgType, User user) {
+        resetVersion(user);
         return UserUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(user))
                 .setIdMSB(user.getId().getId().getMostSignificantBits())
                 .setIdLSB(user.getId().getId().getLeastSignificantBits()).build();
@@ -616,6 +686,7 @@ public class EdgeMsgConstructorUtils {
     }
 
     public static WidgetsBundleUpdateMsg constructWidgetsBundleUpdateMsg(UpdateMsgType msgType, WidgetsBundle widgetsBundle, List<String> widgets) {
+        resetVersion(widgetsBundle);
         return WidgetsBundleUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(widgetsBundle))
                 .setWidgets(JacksonUtil.toString(widgets))
                 .setIdMSB(widgetsBundle.getId().getId().getMostSignificantBits())
@@ -631,6 +702,7 @@ public class EdgeMsgConstructorUtils {
     }
 
     public static WidgetTypeUpdateMsg constructWidgetTypeUpdateMsg(UpdateMsgType msgType, WidgetTypeDetails widgetTypeDetails) {
+        resetVersion(widgetTypeDetails);
         return WidgetTypeUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(widgetTypeDetails))
                 .setIdMSB(widgetTypeDetails.getId().getId().getMostSignificantBits())
                 .setIdLSB(widgetTypeDetails.getId().getId().getLeastSignificantBits()).build();
@@ -645,6 +717,7 @@ public class EdgeMsgConstructorUtils {
     }
 
     public static CalculatedFieldUpdateMsg constructCalculatedFieldUpdatedMsg(UpdateMsgType msgType, CalculatedField calculatedField) {
+        resetVersion(calculatedField);
         return CalculatedFieldUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(calculatedField))
                 .setIdMSB(calculatedField.getId().getId().getMostSignificantBits())
                 .setIdLSB(calculatedField.getId().getId().getLeastSignificantBits()).build();
@@ -658,6 +731,7 @@ public class EdgeMsgConstructorUtils {
     }
 
     public static AiModelUpdateMsg constructAiModelUpdatedMsg(UpdateMsgType msgType, AiModel aiModel) {
+        resetVersion(aiModel);
         return AiModelUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(aiModel))
                 .setIdMSB(aiModel.getId().getId().getMostSignificantBits())
                 .setIdLSB(aiModel.getId().getId().getLeastSignificantBits()).build();
@@ -668,6 +742,148 @@ public class EdgeMsgConstructorUtils {
                 .setMsgType(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE)
                 .setIdMSB(aiModelId.getId().getMostSignificantBits())
                 .setIdLSB(aiModelId.getId().getLeastSignificantBits()).build();
+    }
+
+    public static ApiKeyUpdateMsg constructApiKeyUpdatedMsg(UpdateMsgType msgType, ApiKey apiKey) {
+        return ApiKeyUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(apiKey))
+                .setIdMSB(apiKey.getId().getId().getMostSignificantBits())
+                .setIdLSB(apiKey.getId().getId().getLeastSignificantBits()).build();
+    }
+
+    public static ApiKeyUpdateMsg constructApiKeyDeleteMsg(ApiKeyId apiKeyId) {
+        return ApiKeyUpdateMsg.newBuilder()
+                .setMsgType(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE)
+                .setIdMSB(apiKeyId.getId().getMostSignificantBits())
+                .setIdLSB(apiKeyId.getId().getLeastSignificantBits()).build();
+    }
+
+    public static List<EdgeEvent> mergeAndFilterDownlinkDuplicates(List<EdgeEvent> edgeEvents) {
+        try {
+            edgeEvents = removeDownlinkDuplicates(edgeEvents);
+
+            List<AttrUpdateMsg> attrUpdateMsgs = new ArrayList<>();
+            for (EdgeEvent edgeEvent : edgeEvents) {
+                if (EdgeEventActionType.ATTRIBUTES_UPDATED.equals(edgeEvent.getAction())) {
+                    attrUpdateMsgs.add(new AttrUpdateMsg(edgeEvent.getEntityId(), edgeEvent.getBody()));
+                }
+            }
+            Map<UUID, Map<String, Long>> latestTsByEntityAndKey = computeLatestTsByEntityAndKey(attrUpdateMsgs);
+
+            List<EdgeEvent> result = new ArrayList<>();
+            for (EdgeEvent edgeEvent : edgeEvents) {
+                if (!EdgeEventActionType.ATTRIBUTES_UPDATED.equals(edgeEvent.getAction())) {
+                    result.add(edgeEvent);
+                    continue;
+                }
+
+                Map<String, Long> latestByKey = latestTsByEntityAndKey.get(edgeEvent.getEntityId());
+                JsonNode filteredBody = filterAttributesBody(edgeEvent.getBody(), latestByKey);
+                if (filteredBody == null) {
+                    continue;
+                }
+
+                result.add(createFilteredEdgeEvent(edgeEvent, filteredBody));
+            }
+
+            result.sort(Comparator.comparingLong(EdgeEvent::getSeqId));
+            return result;
+        } catch (Exception e) {
+            log.info("Can't merge downlink duplicates. Sending downlinks without merge. Original edgeEvents [{}]", edgeEvents, e);
+            return edgeEvents;
+        }
+    }
+
+    private static AttrsTs extractAttributes(JsonNode body) {
+        if (body == null) {
+            return new AttrsTs(0L, List.of());
+        }
+        String bodyStr = JacksonUtil.toString(body);
+        var jsonObject = JsonParser.parseString(bodyStr).getAsJsonObject();
+        if (!jsonObject.has("ts")) {
+            return new AttrsTs(0L, List.of());
+        }
+        long ts = jsonObject.get("ts").getAsLong();
+        var kv = jsonObject.getAsJsonObject("kv");
+        List<AttributeKvEntry> attrs = JsonConverter.convertToAttributes(
+                JsonUtils.getJsonObject(
+                        JsonConverter.convertToAttributesProto(kv).getKvList()
+                ), ts);
+        return new AttrsTs(ts, attrs);
+    }
+
+    private static JsonNode filterAttributesBody(JsonNode body, Map<String, Long> latestByKey) {
+        if (body == null) {
+            return null;
+        }
+        String bodyStr = JacksonUtil.toString(body);
+        JsonObject jsonObject = JsonParser.parseString(bodyStr).getAsJsonObject();
+        if (jsonObject.has("ts") && latestByKey != null && !latestByKey.isEmpty()) {
+            long ts = jsonObject.get("ts").getAsLong();
+            JsonObject kv = jsonObject.getAsJsonObject("kv");
+            for (Iterator<Map.Entry<String, JsonElement>> it = kv.entrySet().iterator(); it.hasNext(); ) {
+                Map.Entry<String, JsonElement> e = it.next();
+                Long latestTs = latestByKey.get(e.getKey());
+                if (latestTs == null || !latestTs.equals(ts)) {
+                    it.remove();
+                }
+            }
+            if (kv.isEmpty()) {
+                return null;
+            }
+        }
+        return JacksonUtil.toJsonNode(jsonObject.toString());
+    }
+
+    private static Map<UUID, Map<String, Long>> computeLatestTsByEntityAndKey(List<AttrUpdateMsg> attrUpdateMsgs) {
+        Map<UUID, Map<String, Long>> latestTsByEntityAndKey = new HashMap<>();
+        for (AttrUpdateMsg attrUpdateMsg : attrUpdateMsgs) {
+            UUID entityId = attrUpdateMsg.entityId();
+            AttrsTs attrsTs = extractAttributes(attrUpdateMsg.body());
+            Map<String, Long> map = latestTsByEntityAndKey.computeIfAbsent(entityId, id -> new HashMap<>());
+            long ts = attrsTs.ts();
+            for (AttributeKvEntry attr : attrsTs.attrs()) {
+                map.merge(attr.getKey(), ts, Math::max);
+            }
+        }
+        return latestTsByEntityAndKey;
+    }
+
+    private static EdgeEvent createFilteredEdgeEvent(EdgeEvent edgeEvent, JsonNode filteredBody) {
+        EdgeEvent filtered = new EdgeEvent();
+        filtered.setSeqId(edgeEvent.getSeqId());
+        filtered.setTenantId(edgeEvent.getTenantId());
+        filtered.setEdgeId(edgeEvent.getEdgeId());
+        filtered.setAction(edgeEvent.getAction());
+        filtered.setEntityId(edgeEvent.getEntityId());
+        filtered.setUid(edgeEvent.getUid());
+        filtered.setType(edgeEvent.getType());
+        filtered.setBody(filteredBody);
+        return filtered;
+    }
+
+    private static List<EdgeEvent> removeDownlinkDuplicates(List<EdgeEvent> edgeEvents) {
+        Set<EventKey> seen = new HashSet<>();
+        return edgeEvents.stream()
+                .filter(e -> seen.add(new EventKey(
+                        e.getTenantId(),
+                        e.getAction(),
+                        e.getEntityId(),
+                        e.getType().name(),
+                        (e.getBody() != null ? e.getBody().toString() : "null"))))
+                .collect(Collectors.toList());
+    }
+
+    private record EventKey(TenantId tenantId,
+                            EdgeEventActionType action,
+                            UUID entityId,
+                            String type,
+                            String body) {
+    }
+
+    private record AttrsTs(long ts, List<AttributeKvEntry> attrs) {
+    }
+
+    private record AttrUpdateMsg(UUID entityId, JsonNode body) {
     }
 
 }

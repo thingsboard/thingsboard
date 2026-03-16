@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -303,7 +303,7 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
     public void deleteDeviceProfileByTitle(String deviceProfileTitle) {
         DeviceProfile deviceProfile = getDeviceProfileByName(deviceProfileTitle);
         if (deviceProfile != null) {
-            testRestClient.deleteDeviseProfile(deviceProfile.getId());
+            testRestClient.deleteDeviceProfile(deviceProfile.getId());
         }
     }
 

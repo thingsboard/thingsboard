@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,14 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.notification.rule.trigger.EdgeCommunicationFailureTrigger;
 import org.thingsboard.server.gen.edge.v1.AiModelUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AlarmCommentUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AlarmUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.ApiKeyUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AttributesRequestMsg;
@@ -50,6 +52,7 @@ import org.thingsboard.server.gen.edge.v1.UserCredentialsRequestMsg;
 import org.thingsboard.server.gen.edge.v1.UserCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.WidgetBundleTypesRequestMsg;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
 
 import java.util.ArrayList;
@@ -58,6 +61,8 @@ import java.util.List;
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@ConditionalOnProperty(prefix = "edges", value = "enabled", havingValue = "true")
+@TbCoreComponent
 public class EdgeUplinkMessageDispatcher {
 
     private final EdgeContextComponent ctx;
@@ -206,6 +211,16 @@ public class EdgeUplinkMessageDispatcher {
                     state.lockSequenceDependency();
                     try {
                         result.add(ctx.getUserProcessor().processUserCredentialsMsgFromEdge(edge.getTenantId(), edge, userCredentialsUpdateMsg));
+                    } finally {
+                        state.unlockSequenceDependency();
+                    }
+                }
+            }
+            if (uplinkMsg.getApiKeyUpdateMsgCount() > 0) {
+                for (ApiKeyUpdateMsg apiKeyUpdateMsg : uplinkMsg.getApiKeyUpdateMsgList()) {
+                    state.lockSequenceDependency();
+                    try {
+                        result.add(ctx.getApiKeyProcessor().processApiKeyMsgFromEdge(edge.getTenantId(), edge, apiKeyUpdateMsg));
                     } finally {
                         state.unlockSequenceDependency();
                     }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -22,7 +22,14 @@ import {
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
-import { DebugEventType, Event, EventBody, EventType, FilterEventBody } from '@shared/models/event.models';
+import {
+  DebugEventType,
+  Event as DebugEvent,
+  Event,
+  EventBody,
+  EventType,
+  FilterEventBody
+} from '@shared/models/event.models';
 import { TimePageLink } from '@shared/models/page/page-link';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
@@ -95,7 +102,8 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
               private store: Store<AppState>,
               public testButtonLabel?: string,
               private debugEventSelected?: EventEmitter<EventBody>,
-              public hideClearEventAction = false) {
+              public hideClearEventAction = false,
+              public disableDebugEventAction = false) {
     super();
     this.loadDataOnInit = false;
     this.tableTitle = '';
@@ -453,7 +461,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
           this.cellActionDescriptors.push({
             name: this.translate.instant('rulenode.test-with-this-message', {test: this.translate.instant(this.testButtonLabel)}),
             icon: 'bug_report',
-            isEnabled: (entity) => entity.body.type === 'IN' || entity.body.error !== undefined,
+            isEnabled: (entity) => (entity.body.type === 'IN' || entity.body.error !== undefined) && !this.disableDebugEventAction,
             onAction: ($event, entity) => {
               this.debugEventSelected.next(entity.body);
             }
@@ -464,7 +472,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
         this.cellActionDescriptors.push({
           name: this.translate.instant('calculated-fields.test-with-this-message'),
           icon: 'bug_report',
-          isEnabled: () => true,
+          isEnabled: (event) => !this.disableDebugEventAction && !!(event as DebugEvent).body.arguments,
           onAction: (_, entity) => this.debugEventSelected.next(entity.body)
         });
         break;

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,10 @@ package org.thingsboard.server.service.edge.rpc.session;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.rpc.EdgeSessionState;
 import org.thingsboard.server.service.edge.rpc.session.manager.EdgeGrpcSessionManager;
 
@@ -30,6 +32,8 @@ import java.util.function.Consumer;
 @Data
 @Slf4j
 @Component
+@ConditionalOnProperty(prefix = "edges", value = "enabled", havingValue = "true")
+@TbCoreComponent
 public class EdgeSessionsHolder {
 
     private final ConcurrentMap<EdgeId, EdgeGrpcSessionManager> sessions = new ConcurrentHashMap<>();
@@ -66,6 +70,7 @@ public class EdgeSessionsHolder {
     public void remove(EdgeGrpcSessionManager session) {
         if (session == null) {
             log.warn("Can't remove session from holder because it's null");
+            return;
         }
         EdgeSessionState sessionState = session.getState();
         removeByEdgeId(sessionState.getEdge().getId()); // todo: react to warnings

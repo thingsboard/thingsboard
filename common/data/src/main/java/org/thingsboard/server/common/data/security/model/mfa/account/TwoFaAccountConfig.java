@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderType;
 
@@ -35,6 +37,16 @@ import java.io.Serializable;
         @Type(name = "EMAIL", value = EmailTwoFaAccountConfig.class),
         @Type(name = "BACKUP_CODE", value = BackupCodeTwoFaAccountConfig.class)
 })
+@Schema(
+        description = "Base configuration for two-factor authentication accounts",
+        discriminatorProperty = "providerType",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "TOTP", schema = TotpTwoFaAccountConfig.class),
+                @DiscriminatorMapping(value = "SMS", schema = SmsTwoFaAccountConfig.class),
+                @DiscriminatorMapping(value = "EMAIL", schema = EmailTwoFaAccountConfig.class),
+                @DiscriminatorMapping(value = "BACKUP_CODE", schema = BackupCodeTwoFaAccountConfig.class)
+        }
+)
 @Data
 public abstract class TwoFaAccountConfig implements Serializable {
 

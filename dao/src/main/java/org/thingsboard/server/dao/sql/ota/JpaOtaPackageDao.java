@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,6 +75,16 @@ public class JpaOtaPackageDao extends JpaAbstractDao<OtaPackageEntity, OtaPackag
     @Override
     public OtaPackage findByTenantIdAndExternalId(UUID tenantId, UUID externalId) {
         return DaoUtil.getData(otaPackageRepository.findByTenantIdAndExternalId(tenantId, externalId));
+    }
+
+    @Override
+    public Long getDataOidById(UUID id) {
+        return otaPackageRepository.getDataOidById(id);
+    }
+
+    @Override
+    public Integer unlinkLargeObject(Long dataOid) {
+        return otaPackageRepository.unlinkLargeObject(dataOid);
     }
 
     @Override

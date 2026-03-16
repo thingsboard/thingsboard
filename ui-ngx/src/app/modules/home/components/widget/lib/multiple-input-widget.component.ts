@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -134,9 +134,10 @@ interface MultipleInputWidgetSource {
 }
 
 @Component({
-  selector: 'tb-multiple-input-widget ',
-  templateUrl: './multiple-input-widget.component.html',
-  styleUrls: ['./multiple-input-widget.component.scss']
+    selector: 'tb-multiple-input-widget ',
+    templateUrl: './multiple-input-widget.component.html',
+    styleUrls: ['./multiple-input-widget.component.scss'],
+    standalone: false
 })
 export class MultipleInputWidgetComponent extends PageComponent implements OnInit, OnDestroy {
 
@@ -572,7 +573,7 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
 
   public radioButtonSelectedColor(radioColor: string) {
     if (isDefinedAndNotNull(radioColor)) {
-      return `--mdc-radio-selected-icon-color: ${radioColor}; --mdc-radio-selected-focus-icon-color: ${radioColor}; --mdc-radio-selected-hover-icon-color: ${radioColor}; --mdc-radio-selected-pressed-icon-color: ${radioColor}; --mat-radio-checked-ripple-color: ${radioColor};`
+      return `--mat-radio-selected-icon-color: ${radioColor}; --mat-radio-selected-focus-icon-color: ${radioColor}; --mat-radio-selected-hover-icon-color: ${radioColor}; --mat-radio-selected-pressed-icon-color: ${radioColor}; --mat-radio-checked-ripple-color: ${radioColor};`
     }
   }
 

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,32 +16,44 @@
 
 import { Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
-import { ChangeDetectorRef, Component, DestroyRef, ElementRef, forwardRef, Input, OnInit, TemplateRef, ViewChild, ViewContainerRef } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  ElementRef,
+  forwardRef,
+  Input,
+  OnInit,
+  TemplateRef,
+  ViewChild,
+  ViewContainerRef
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
+import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { isDefined, isDefinedAndNotNull } from '@app/core/utils';
 import { StringItemsOption } from '@app/shared/components/string-items-list.component';
 import {
   ActionType,
   actionTypeTranslations,
-  auditLogFilterEquals,
   AuditLogFilter,
+  auditLogFilterEquals,
   POSITION_MAP,
 } from '@app/shared/public-api';
 import { TranslateService } from '@ngx-translate/core';
 
 // @dynamic
 @Component({
-  selector: 'tb-audit-log-filter',
-  templateUrl: './audit-log-filter.component.html',
-  styleUrls: ['./audit-log-filter.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => AuditLogFilterComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-audit-log-filter',
+    templateUrl: './audit-log-filter.component.html',
+    styleUrls: ['./audit-log-filter.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => AuditLogFilterComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class AuditLogFilterComponent implements OnInit, ControlValueAccessor {
 
@@ -56,9 +68,9 @@ export class AuditLogFilterComponent implements OnInit, ControlValueAccessor {
 
   actionTypeTranslations = actionTypeTranslations;
 
-  buttonDisplayValue = this.translate.instant('audit-log.filter');
+  buttonDisplayValue = this.translate.instant('audit-log.audit-log-filter-title');
 
-  auditLogFilterForm: UntypedFormGroup;
+  auditLogFilterForm: FormGroup;
 
   auditLogOverlayRef: OverlayRef;
 
@@ -68,7 +80,7 @@ export class AuditLogFilterComponent implements OnInit, ControlValueAccessor {
 
   private propagateChange = (_: any) => {};
 
-  constructor(private fb: UntypedFormBuilder,
+  constructor(private fb: FormBuilder,
               private translate: TranslateService,
               private overlay: Overlay,
               private nativeElement: ElementRef,
@@ -93,7 +105,7 @@ export class AuditLogFilterComponent implements OnInit, ControlValueAccessor {
     this.propagateChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(_fn: any): void {
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -152,11 +164,13 @@ export class AuditLogFilterComponent implements OnInit, ControlValueAccessor {
 
   cancel() {
     this.updateAuditLogFilterForm(this.auditLogFilter);
+    this.auditLogFilterForm.markAsPristine();
     this.auditLogOverlayRef.dispose();
   }
 
   update() {
     this.auditLogFilterUpdated(this.auditLogFilterForm.value);
+    this.auditLogFilterForm.markAsPristine();
     this.auditLogOverlayRef.dispose();
   }
 

@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2025 The Thingsboard Authors
+# Copyright © 2016-2026 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,19 +25,19 @@ app:
   # Application version
   version: "@project.version@"
 
-# Zookeeper connection parameters
+# ZooKeeper connection parameters
 zk:
-  # Enable/disable zookeeper discovery service.
+  # Enable/disable ZooKeeper discovery service.
   enabled: "${ZOOKEEPER_ENABLED:true}"
-  # Zookeeper connect string
+  # ZooKeeper connect string
   url: "${ZOOKEEPER_URL:localhost:2181}"
-  # Zookeeper retry interval in milliseconds
+  # ZooKeeper retry interval in milliseconds
   retry_interval_ms: "${ZOOKEEPER_RETRY_INTERVAL_MS:3000}"
-  # Zookeeper connection timeout in milliseconds
+  # ZooKeeper connection timeout in milliseconds
   connection_timeout_ms: "${ZOOKEEPER_CONNECTION_TIMEOUT_MS:3000}"
-  # Zookeeper session timeout in milliseconds
+  # ZooKeeper session timeout in milliseconds
   session_timeout_ms: "${ZOOKEEPER_SESSION_TIMEOUT_MS:3000}"
-  # Name of the directory in zookeeper 'filesystem'
+  # Name of the directory in ZooKeeper 'filesystem'
   zk_dir: "${ZOOKEEPER_NODES_DIR:/thingsboard}"
   # The recalculate_delay property is recommended in a microservices architecture setup for rule-engine services.
   # This property provides a pause to ensure that when a rule-engine service is restarted, other nodes don't immediately attempt to recalculate their partitions.
@@ -210,7 +210,7 @@ management:
     web:
       exposure:
         # Expose metrics endpoint (use value 'prometheus' to enable prometheus metrics).
-        include: '${METRICS_ENDPOINTS_EXPOSE:info}'
+        include: "${METRICS_ENDPOINTS_EXPOSE:info}"
   health:
     elasticsearch:
       # Enable the org.springframework.boot.actuate.elasticsearch.ElasticsearchRestClientHealthIndicator.doHealthCheck

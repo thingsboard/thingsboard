@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.alarm.rule.condition.expression;
 
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -25,9 +26,12 @@ import org.thingsboard.server.common.data.alarm.rule.condition.expression.predic
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate.KeyFilterPredicate;
 import org.thingsboard.server.common.data.query.EntityKeyValueType;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.io.Serializable;
 import java.util.List;
 
+@Schema(name = "AlarmRuleConditionFilter")
 @Data
 public class AlarmConditionFilter implements Serializable {
 
@@ -36,6 +40,7 @@ public class AlarmConditionFilter implements Serializable {
     @NotNull
     private EntityKeyValueType valueType;
     private ComplexOperation operation;
+    @ArraySchema(schema = @Schema(ref = "#/components/schemas/AlarmRuleKeyFilterPredicate"))
     @Valid
     @NotEmpty
     private List<KeyFilterPredicate> predicates;

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -34,10 +34,11 @@ export interface ImportDialogData {
 }
 
 @Component({
-  selector: 'tb-import-dialog',
-  templateUrl: './import-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: ImportDialogComponent}],
-  styleUrls: []
+    selector: 'tb-import-dialog',
+    templateUrl: './import-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: ImportDialogComponent }],
+    styleUrls: [],
+    standalone: false
 })
 export class ImportDialogComponent extends DialogComponent<ImportDialogComponent>
   implements OnInit, ErrorStateMatcher {

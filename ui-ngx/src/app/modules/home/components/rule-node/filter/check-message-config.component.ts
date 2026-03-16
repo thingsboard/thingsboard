@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -20,9 +20,10 @@ import { FormBuilder, FormGroup, ValidationErrors, ValidatorFn, Validators } fro
 import { RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@app/shared/models/rule-node.models';
 
 @Component({
-  selector: 'tb-filter-node-check-message-config',
-  templateUrl: './check-message-config.component.html',
-  styleUrls: []
+    selector: 'tb-filter-node-check-message-config',
+    templateUrl: './check-message-config.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class CheckMessageConfigComponent extends RuleNodeConfigurationComponent {
 

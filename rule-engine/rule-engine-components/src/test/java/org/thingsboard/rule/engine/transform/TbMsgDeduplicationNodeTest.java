@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,8 @@ import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.TbMsgProcessingCtx;
+import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -78,6 +80,8 @@ import static org.mockito.Mockito.when;
 public class TbMsgDeduplicationNodeTest extends AbstractRuleNodeUpgradeTest {
 
     private TbContext ctx;
+
+    private static final int RULE_NODE_EXEC_COUNTER = 5;
 
     private final ScheduledExecutorService executorService = ThingsBoardExecutors.newSingleThreadScheduledExecutor("de-duplication-node-test");
     private final int deduplicationInterval = 1;
@@ -204,6 +208,8 @@ public class TbMsgDeduplicationNodeTest extends AbstractRuleNodeUpgradeTest {
         Assertions.assertEquals(firstMsg.getData(), actualMsg.getData());
         Assertions.assertEquals(firstMsg.getMetaData(), actualMsg.getMetaData());
         Assertions.assertEquals(firstMsg.getType(), actualMsg.getType());
+        Assertions.assertEquals(RULE_NODE_EXEC_COUNTER, actualMsg.getAndIncrementRuleNodeCounter());
+        Assertions.assertSame(TbMsgCallback.EMPTY, actualMsg.getCallback());
 
         if (queueName == null) {
             Assertions.assertEquals(firstMsg.getQueueName(), actualMsg.getQueueName());
@@ -257,6 +263,8 @@ public class TbMsgDeduplicationNodeTest extends AbstractRuleNodeUpgradeTest {
         Assertions.assertEquals(msgWithLatestTs.getData(), actualMsg.getData());
         Assertions.assertEquals(msgWithLatestTs.getMetaData(), actualMsg.getMetaData());
         Assertions.assertEquals(msgWithLatestTs.getType(), actualMsg.getType());
+        Assertions.assertEquals(RULE_NODE_EXEC_COUNTER, actualMsg.getAndIncrementRuleNodeCounter());
+        Assertions.assertSame(TbMsgCallback.EMPTY, actualMsg.getCallback());
     }
 
     @Test
@@ -402,6 +410,8 @@ public class TbMsgDeduplicationNodeTest extends AbstractRuleNodeUpgradeTest {
         Assertions.assertEquals(msgWithLatestTsInFirstPack.getData(), actualMsg.getData());
         Assertions.assertEquals(msgWithLatestTsInFirstPack.getMetaData(), actualMsg.getMetaData());
         Assertions.assertEquals(msgWithLatestTsInFirstPack.getType(), actualMsg.getType());
+        Assertions.assertEquals(RULE_NODE_EXEC_COUNTER, actualMsg.getAndIncrementRuleNodeCounter());
+        Assertions.assertSame(TbMsgCallback.EMPTY, actualMsg.getCallback());
 
         // verify that newMsg is called but content of messages is the same as in the last msg for the second pack.
         actualMsg = resultMsgs.get(1);
@@ -411,6 +421,8 @@ public class TbMsgDeduplicationNodeTest extends AbstractRuleNodeUpgradeTest {
         Assertions.assertEquals(msgWithLatestTsInSecondPack.getData(), actualMsg.getData());
         Assertions.assertEquals(msgWithLatestTsInSecondPack.getMetaData(), actualMsg.getMetaData());
         Assertions.assertEquals(msgWithLatestTsInSecondPack.getType(), actualMsg.getType());
+        Assertions.assertEquals(RULE_NODE_EXEC_COUNTER, actualMsg.getAndIncrementRuleNodeCounter());
+        Assertions.assertSame(TbMsgCallback.EMPTY, actualMsg.getCallback());
     }
 
     @Test
@@ -539,6 +551,7 @@ public class TbMsgDeduplicationNodeTest extends AbstractRuleNodeUpgradeTest {
                 .originator(deviceId)
                 .copyMetaData(metaData)
                 .data(JacksonUtil.toString(dataNode))
+                .ctx(new TbMsgProcessingCtx(RULE_NODE_EXEC_COUNTER))
                 .build();
     }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.common.util.DebugModeUtil;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.script.api.tbel.TbUtils;
 import org.thingsboard.script.api.tbel.TbelCfArg;
 import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
@@ -41,6 +40,7 @@ import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.BaseCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
+import org.thingsboard.common.util.NumberUtils;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -67,6 +67,8 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
     private EntityAggregationDebugArgumentsTracker debugTracker;
 
     private CalculatedFieldProcessingService cfProcessingService;
+
+    private long now;
 
     public EntityAggregationCalculatedFieldState(EntityId entityId) {
         super(entityId);
@@ -100,7 +102,7 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
     @Override
     public ListenableFuture<CalculatedFieldResult> performCalculation(Map<String, ArgumentEntry> updatedArgs, CalculatedFieldCtx ctx) throws Exception {
         createIntervalIfNotExist();
-        long now = System.currentTimeMillis();
+        now = System.currentTimeMillis();
 
         if (DebugModeUtil.isDebugFailuresAvailable(ctx.getCalculatedField())) {
             if (debugTracker == null) {
@@ -114,7 +116,7 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
         Map<AggIntervalEntry, Map<String, ArgumentEntry>> results = new HashMap<>();
         List<AggIntervalEntry> expiredIntervals = new ArrayList<>();
         getIntervals().forEach((intervalEntry, argIntervalStatuses) -> {
-            processInterval(now, intervalEntry, argIntervalStatuses, expiredIntervals, results);
+            processInterval(intervalEntry, argIntervalStatuses, expiredIntervals, results);
         });
         removeExpiredIntervals(expiredIntervals);
 
@@ -154,8 +156,10 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
     }
 
     private void fillMissingIntervals() {
+        long now = System.currentTimeMillis();
         ZoneId zoneId = interval.getZoneId();
         long currentIntervalEndTs = interval.getCurrentIntervalEndTs();
+        long watermarkThresholdTs = now - watermarkDuration;
 
         Map<AggIntervalEntry, Map<String, AggIntervalEntryStatus>> intervals = getIntervals();
         AggIntervalEntry lastIntervalEntry = intervals.keySet().stream().max(Comparator.comparing(AggIntervalEntry::getEndTs)).orElse(null);
@@ -169,6 +173,13 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
         while (nextEnd.toInstant().toEpochMilli() <= currentIntervalEndTs) {
             long nextStartTs = nextStart.toInstant().toEpochMilli();
             long nextEndTs = nextEnd.toInstant().toEpochMilli();
+
+            if (nextEndTs < watermarkThresholdTs) {
+                nextStart = nextEnd;
+                nextEnd = interval.getNextIntervalStart(nextStart);
+                continue;
+            }
+
             AggIntervalEntry missing = new AggIntervalEntry(nextStartTs, nextEndTs);
 
             arguments.forEach((argName, argumentEntry) -> {
@@ -193,8 +204,7 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
         return intervals;
     }
 
-    private void processInterval(long now,
-                                 AggIntervalEntry intervalEntry,
+    private void processInterval(AggIntervalEntry intervalEntry,
                                  Map<String, AggIntervalEntryStatus> args,
                                  List<AggIntervalEntry> expiredIntervals,
                                  Map<AggIntervalEntry, Map<String, ArgumentEntry>> results) {
@@ -205,7 +215,7 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
             handleExpiredInterval(intervalEntry, args, results);
             expiredIntervals.add(intervalEntry);
         } else if (now - startTs >= intervalEntry.getIntervalDuration()) {
-            handleActiveInterval(ctx.getCfCheckReevaluationInterval(), intervalEntry, args, results);
+            handleActiveInterval(ctx.getCfCheckReevaluationIntervalMillis(), intervalEntry, args, results);
             if (watermarkDuration == 0) {
                 expiredIntervals.add(intervalEntry);
             }
@@ -235,11 +245,11 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
         args.forEach((argName, argEntryIntervalStatus) -> {
             if (argEntryIntervalStatus.intervalPassed(cfCheckInterval)) {
                 if (argEntryIntervalStatus.argsUpdated()) {
-                    argEntryIntervalStatus.setLastMetricsEvalTs(System.currentTimeMillis());
+                    argEntryIntervalStatus.setLastMetricsEvalTs(now);
                     argEntryIntervalStatus.setLastArgsRefreshTs(DEFAULT_LAST_UPDATE_TS);
                     processArgument(intervalEntry, argName, false, results);
                 } else if (argEntryIntervalStatus.getLastMetricsEvalTs() == DEFAULT_LAST_UPDATE_TS) {
-                    argEntryIntervalStatus.setLastMetricsEvalTs(System.currentTimeMillis());
+                    argEntryIntervalStatus.setLastMetricsEvalTs(now);
                     processArgument(intervalEntry, argName, true, results);
                 }
             }
@@ -281,14 +291,14 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
                 ArgumentEntry argumentEntry = entry.getValue();
                 if (!argumentEntry.isEmpty()) {
                     Object resultValue = argumentEntry.getValue() instanceof Number number
-                            ? TbUtils.roundResult(number.doubleValue(), precision)
+                            ? NumberUtils.roundResult(number.doubleValue(), precision)
                             : argumentEntry.getValue();
                     metricsNode.put(metricName, JacksonUtil.toString(resultValue));
                 }
             }
             if (!metricsNode.isEmpty()) {
                 ObjectNode resultNode = JacksonUtil.newObjectNode();
-                resultNode.put("ts", interval.getEndTs() - 1);
+                resultNode.put("ts", interval.getStartTs());
                 resultNode.set("values", metricsNode);
                 result.add(resultNode);
 

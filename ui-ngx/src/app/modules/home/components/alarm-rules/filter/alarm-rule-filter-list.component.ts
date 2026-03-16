@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -30,7 +30,8 @@ import { Observable } from 'rxjs';
 import {
   ComplexOperation,
   complexOperationTranslationMap,
-  EntityKeyValueType
+  EntityKeyValueType,
+  entityKeyValueTypesMap
 } from '@shared/models/query/query.models';
 import { MatDialog } from '@angular/material/dialog';
 import { deepClone } from '@core/utils';
@@ -38,30 +39,27 @@ import {
   AlarmRuleFilterDialogComponent,
   AlarmRuleFilterDialogData
 } from "@home/components/alarm-rules/filter/alarm-rule-filter-dialog.component";
-import {
-  AlarmRuleFilter,
-  areFilterAndPredicateArgumentsValid,
-  FilterPredicateTypeTranslationMap
-} from "@shared/models/alarm-rule.models";
+import { AlarmRuleFilter, areFilterAndPredicateArgumentsValid } from "@shared/models/alarm-rule.models";
 import { CalculatedFieldArgument } from "@shared/models/calculated-field.models";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
-  selector: 'tb-alarm-rule-filter-list',
-  templateUrl: './alarm-rule-filter-list.component.html',
-  styleUrls: ['./alarm-rule-filter-list.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => AlarmRuleFilterListComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => AlarmRuleFilterListComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-alarm-rule-filter-list',
+    templateUrl: './alarm-rule-filter-list.component.html',
+    styleUrls: ['./alarm-rule-filter-list.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => AlarmRuleFilterListComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => AlarmRuleFilterListComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class AlarmRuleFilterListComponent implements ControlValueAccessor, Validator {
 
@@ -70,6 +68,9 @@ export class AlarmRuleFilterListComponent implements ControlValueAccessor, Valid
 
   @Input()
   operation: ComplexOperation = ComplexOperation.AND;
+
+  @Input()
+  readonly = false;
 
   filterListFormGroup = this.fb.group({
     filters: this.fb.array([])
@@ -80,7 +81,8 @@ export class AlarmRuleFilterListComponent implements ControlValueAccessor, Valid
   areFilterAndPredicateArgumentsValid = areFilterAndPredicateArgumentsValid;
 
   complexOperationTranslationMap = complexOperationTranslationMap;
-  FilterPredicateTypeTranslationMap = FilterPredicateTypeTranslationMap
+  entityKeyValueTypes = entityKeyValueTypesMap;
+  entityKeyValueTypeEnum = EntityKeyValueType;
 
   private propagateChange = (v: any) => { };
 
@@ -143,17 +145,17 @@ export class AlarmRuleFilterListComponent implements ControlValueAccessor, Valid
     });
   }
 
-  public editFilter(index: number) {
+  public editFilter(index: number, readonly = false) {
     const filter: AlarmRuleFilter =
       (this.filterListFormGroup.get('filters') as FormArray).at(index).value;
-    this.openFilterDialog(filter).subscribe(result => {
+    this.openFilterDialog(filter, readonly).subscribe(result => {
       if (result) {
         (this.filterListFormGroup.get('filters') as FormArray).at(index).patchValue(result);
       }
     });
   }
 
-  private openFilterDialog(filter?: AlarmRuleFilter): Observable<AlarmRuleFilter> {
+  private openFilterDialog(filter?: AlarmRuleFilter, readonly = false): Observable<AlarmRuleFilter> {
     const isAdd = !filter;
     if (isAdd) {
       filter = {
@@ -171,7 +173,8 @@ export class AlarmRuleFilterListComponent implements ControlValueAccessor, Valid
         filter: filter ? deepClone(filter) : null,
         isAdd,
         arguments: this.arguments,
-        usedArguments: this.getUsedArguments
+        usedArguments: this.getUsedArguments,
+        readonly
       }
     }).afterClosed();
   }

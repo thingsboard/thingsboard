@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -41,9 +41,10 @@ import { deepClone } from '@core/utils';
 import { AliasFilterType } from '@shared/models/alias.models';
 
 @Component({
-  selector: 'tb-aliases-entity-select',
-  templateUrl: './aliases-entity-select.component.html',
-  styleUrls: ['./aliases-entity-select.component.scss']
+    selector: 'tb-aliases-entity-select',
+    templateUrl: './aliases-entity-select.component.html',
+    styleUrls: ['./aliases-entity-select.component.scss'],
+    standalone: false
 })
 export class AliasesEntitySelectComponent implements OnInit, OnDestroy {
 

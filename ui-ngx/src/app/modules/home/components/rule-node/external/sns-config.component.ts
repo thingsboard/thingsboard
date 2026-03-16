@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -19,9 +19,10 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@shared/models/rule-node.models';
 
 @Component({
-  selector: 'tb-external-node-sns-config',
-  templateUrl: './sns-config.component.html',
-  styleUrls: []
+    selector: 'tb-external-node-sns-config',
+    templateUrl: './sns-config.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class SnsConfigComponent extends RuleNodeConfigurationComponent {
 

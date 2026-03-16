@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Inject, Injectable, NgZone, Renderer2 } from '@angular/core';
+import { Inject, Injectable, NgZone, Renderer2, DOCUMENT } from '@angular/core';
 import { WINDOW } from '@core/services/window.service';
 import { ExceptionData, parseException } from '@app/shared/models/error.models';
 import {
@@ -45,7 +45,7 @@ import { publishReplay, refCount } from 'rxjs/operators';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
 import { AttributeData, LatestTelemetry, TelemetryType } from '@shared/models/telemetry/telemetry.models';
 import { EntityId } from '@shared/models/id/entity-id';
-import { DatePipe, DOCUMENT } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { entityTypeTranslations } from '@shared/models/entity-type.models';
 import cssjs from '@core/css/css';
 import { isNotEmptyTbFunction } from '@shared/models/js-function.models';
@@ -454,11 +454,11 @@ export class UtilsService {
     return base64toObj(b64Encoded);
   }
 
-  public applyCssToElement(renderer: Renderer2, element: any, cssClassPrefix: string, css: string): string {
+  public applyCssToElement(renderer: Renderer2, element: any, cssClassPrefix: string, css: string, addTbDefaultClass: boolean = false): string {
     const cssParser = new cssjs();
     cssParser.testMode = false;
     const cssClass = `${cssClassPrefix}-${guid()}`;
-    cssParser.cssPreviewNamespace = cssClass;
+    cssParser.cssPreviewNamespace = addTbDefaultClass ? 'tb-default .' + cssClass : cssClass;
     cssParser.createStyleElement(cssClass, css);
     renderer.addClass(element, cssClass);
     return cssClass;

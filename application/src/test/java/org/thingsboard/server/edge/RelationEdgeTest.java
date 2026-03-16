@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ public class RelationEdgeTest extends AbstractEdgeTest {
         RelationUpdateMsg relationUpdateMsg = (RelationUpdateMsg) latestMessage;
         EntityRelation entityRelation = JacksonUtil.fromString(relationUpdateMsg.getEntity(), EntityRelation.class, true);
         Assert.assertNotNull(entityRelation);
-        Assert.assertEquals(relation, entityRelation);
+        compareHasVersionEntities(relation, entityRelation);
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, relationUpdateMsg.getMsgType());
 
         // delete relation
@@ -76,7 +76,7 @@ public class RelationEdgeTest extends AbstractEdgeTest {
         relationUpdateMsg = (RelationUpdateMsg) latestMessage;
         entityRelation = JacksonUtil.fromString(relationUpdateMsg.getEntity(), EntityRelation.class, true);
         Assert.assertNotNull(entityRelation);
-        Assert.assertEquals(deletedRelation, entityRelation);
+        compareHasVersionEntities(deletedRelation, entityRelation);
         Assert.assertEquals(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE, relationUpdateMsg.getMsgType());
     }
 
@@ -155,7 +155,7 @@ public class RelationEdgeTest extends AbstractEdgeTest {
         RelationUpdateMsg relationUpdateMsg = (RelationUpdateMsg) latestMessage;
         EntityRelation entityRelation = JacksonUtil.fromString(relationUpdateMsg.getEntity(), EntityRelation.class, true);
         Assert.assertNotNull(entityRelation);
-        Assert.assertEquals(deviceToAssetRelation, entityRelation);
+        compareHasVersionEntities(deviceToAssetRelation, entityRelation);
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, relationUpdateMsg.getMsgType());
     }
 
@@ -177,7 +177,7 @@ public class RelationEdgeTest extends AbstractEdgeTest {
         RelationUpdateMsg relationUpdateMsg = (RelationUpdateMsg) latestMessage;
         EntityRelation entityRelation = JacksonUtil.fromString(relationUpdateMsg.getEntity(), EntityRelation.class, true);
         Assert.assertNotNull(entityRelation);
-        Assert.assertEquals(relation, entityRelation);
+        compareHasVersionEntities(relation, entityRelation);
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, relationUpdateMsg.getMsgType());
 
         // delete relation
@@ -196,7 +196,7 @@ public class RelationEdgeTest extends AbstractEdgeTest {
         relationUpdateMsg = (RelationUpdateMsg) latestMessage;
         entityRelation = JacksonUtil.fromString(relationUpdateMsg.getEntity(), EntityRelation.class, true);
         Assert.assertNotNull(entityRelation);
-        Assert.assertEquals(deletedRelation, entityRelation);
+        compareHasVersionEntities(deletedRelation, entityRelation);
         Assert.assertEquals(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE, relationUpdateMsg.getMsgType());
     }
 

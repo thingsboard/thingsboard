@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,6 @@ public class AlarmInfo extends Alarm {
     @Schema(description = "Alarm originator label", example = "Thermostat label")
     private String originatorLabel;
 
-    @Getter
     @Setter
     @Schema(description = "Originator display name", example = "Thermostat")
     private String originatorDisplayName;
@@ -59,10 +58,15 @@ public class AlarmInfo extends Alarm {
         super(alarm);
     }
 
+    public String getOriginatorDisplayName() {
+        return originatorDisplayName != null ? originatorDisplayName : (originatorLabel != null ? originatorLabel : originatorName);
+    }
+
     public AlarmInfo(AlarmInfo alarmInfo) {
         super(alarmInfo);
         this.originatorName = alarmInfo.getOriginatorName();
         this.originatorLabel = alarmInfo.getOriginatorLabel();
+        this.originatorDisplayName = alarmInfo.getOriginatorDisplayName();
         this.assignee = alarmInfo.getAssignee();
     }
 

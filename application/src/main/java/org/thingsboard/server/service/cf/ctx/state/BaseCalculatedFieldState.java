@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.actors.TbActorRef;
+import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
@@ -48,7 +49,6 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
 
     protected Map<String, ArgumentEntry> arguments = new HashMap<>();
     protected boolean sizeExceedsLimit;
-    protected long latestTimestamp = DEFAULT_LAST_UPDATE_TS;
     protected ReadinessStatus readinessStatus;
 
     @Setter
@@ -87,13 +87,13 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
                 validateNewEntry(key, newEntry);
                 if (existingEntry instanceof RelatedEntitiesArgumentEntry ||
                     existingEntry instanceof EntityAggregationArgumentEntry) {
-                    updateEntry(existingEntry, newEntry);
+                    updateEntry(existingEntry, newEntry, ctx);
                 } else {
                     arguments.put(key, newEntry);
                 }
                 entryUpdated = true;
             } else {
-                entryUpdated = updateEntry(existingEntry, newEntry);
+                entryUpdated = updateEntry(existingEntry, newEntry, ctx);
             }
 
             if (entryUpdated) {
@@ -112,8 +112,8 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
         return updatedArguments;
     }
 
-    protected boolean updateEntry(ArgumentEntry existingEntry, ArgumentEntry newEntry) {
-        return existingEntry.updateEntry(newEntry);
+    protected boolean updateEntry(ArgumentEntry existingEntry, ArgumentEntry newEntry, CalculatedFieldCtx ctx) {
+        return existingEntry.updateEntry(newEntry, ctx);
     }
 
     @Override
@@ -121,7 +121,6 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
         requiredArguments = null;
         arguments.clear();
         sizeExceedsLimit = false;
-        latestTimestamp = DEFAULT_LAST_UPDATE_TS;
     }
 
     @Override
@@ -144,8 +143,8 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
     protected void validateNewEntry(String key, ArgumentEntry newEntry) {
     }
 
-    protected ObjectNode toSimpleResult(boolean useLatestTs, ObjectNode valuesNode) {
-        if (!useLatestTs) {
+    protected ObjectNode toResultNode(ObjectNode valuesNode) {
+        if (ctx.getOutput().getType() == OutputType.ATTRIBUTES || !ctx.isUseLatestTs()) {
             return valuesNode;
         }
         long latestTs = getLatestTimestamp();
@@ -203,7 +202,9 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
     @Override
     public JsonNode getArgumentsJson() {
         return JacksonUtil.valueToTree(arguments.entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().jsonValue())));
+                .filter(entry -> !entry.getValue().isEmpty())
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().jsonValue()))
+        );
     }
 
 }

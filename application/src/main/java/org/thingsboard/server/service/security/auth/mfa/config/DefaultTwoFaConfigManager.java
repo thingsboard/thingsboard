@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,11 +29,11 @@ import org.thingsboard.server.common.data.security.model.mfa.account.AccountTwoF
 import org.thingsboard.server.common.data.security.model.mfa.account.TwoFaAccountConfig;
 import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderConfig;
 import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderType;
-import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.ConstraintValidator;
 import org.thingsboard.server.dao.settings.AdminSettingsDao;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.user.UserAuthSettingsDao;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
 
 import java.util.Comparator;

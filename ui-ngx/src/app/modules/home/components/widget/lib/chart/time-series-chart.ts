@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import {
   createTimeSeriesYAxis,
   defaultTimeSeriesChartYAxisSettings,
   generateChartData,
-  LineSeriesStepType,
+  LineSeriesStepType, normalizeAxisLimit,
   parseThresholdData,
   TimeSeriesChartAxis,
   TimeSeriesChartDataItem,
@@ -581,6 +581,8 @@ export class TbTimeSeriesChart {
     yAxisSettingsList.sort((a1, a2) => a1.order - a2.order);
     const axisLimitDatasources: Datasource[] = [];
     for (const yAxisSettings of yAxisSettingsList) {
+      yAxisSettings.min = normalizeAxisLimit(yAxisSettings.min);
+      yAxisSettings.max = normalizeAxisLimit(yAxisSettings.max);
       const axisSettings = mergeDeep<TimeSeriesChartYAxisSettings>({} as TimeSeriesChartYAxisSettings,
         defaultTimeSeriesChartYAxisSettings, yAxisSettings);
       const units = isNotEmptyTbUnits(axisSettings.units) ? axisSettings.units : this.ctx.units;
@@ -659,7 +661,7 @@ export class TbTimeSeriesChart {
           }
         }
       } else if (limit.type === ValueSourceType.constant) {
-        const value = unitConvertor ? unitConvertor(limit.value) : limit.value;
+        const value = unitConvertor && isDefinedAndNotNull(limit.value) ? unitConvertor(limit.value) : limit.value;
         if (limitType === 'min') {
           yAxis.option.min = value;
         } else {

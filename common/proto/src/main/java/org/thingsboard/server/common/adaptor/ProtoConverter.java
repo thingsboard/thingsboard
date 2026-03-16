@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -156,11 +156,7 @@ public class ProtoConverter {
                 case BOOLEAN_V:
                 case LONG_V:
                 case DOUBLE_V:
-                    break;
                 case STRING_V:
-                    if (StringUtils.isEmpty(keyValueProto.getStringV())) {
-                        throw new IllegalArgumentException("Value is empty for key: " + key + "!");
-                    }
                     break;
                 case JSON_V:
                     try {

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,15 +128,15 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
     private void processMsgs(List<TbProtoQueueMsg<ToEdgeMsg>> msgs, TbQueueConsumer<TbProtoQueueMsg<ToEdgeMsg>> consumer, Object consumerKey, QueueConfig edgeQueueConfig) throws InterruptedException {
         List<IdMsgPair<ToEdgeMsg>> orderedMsgList = msgs.stream().map(msg -> new IdMsgPair<>(UUID.randomUUID(), msg)).toList();
         ConcurrentMap<UUID, TbProtoQueueMsg<ToEdgeMsg>> pendingMap = orderedMsgList.stream().collect(
-                Collectors.toConcurrentMap(IdMsgPair::getUuid, IdMsgPair::getMsg));
+                Collectors.toConcurrentMap(IdMsgPair::uuid, IdMsgPair::msg));
         CountDownLatch processingTimeoutLatch = new CountDownLatch(1);
         TbPackProcessingContext<TbProtoQueueMsg<ToEdgeMsg>> ctx = new TbPackProcessingContext<>(
                 processingTimeoutLatch, pendingMap, new ConcurrentHashMap<>());
         PendingMsgHolder<ToEdgeMsg> pendingMsgHolder = new PendingMsgHolder<>();
         Future<?> submitFuture = consumersExecutor.submit(() -> {
             orderedMsgList.forEach((element) -> {
-                UUID id = element.getUuid();
-                TbProtoQueueMsg<ToEdgeMsg> msg = element.getMsg();
+                UUID id = element.uuid();
+                TbProtoQueueMsg<ToEdgeMsg> msg = element.msg();
                 TbCallback callback = new TbPackCallback<>(id, ctx);
                 try {
                     ToEdgeMsg toEdgeMsg = msg.getValue();

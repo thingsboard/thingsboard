@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,6 +70,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractPartitionBasedCo
     private final TbRuleEngineConsumerContext ctx;
     private final QueueService queueService;
     private final TbRuleEngineDeviceRpcService tbDeviceRpcService;
+    private final TbMsgPackProcessingContextFactory packProcessingContextFactory;
 
     private final ConcurrentMap<QueueKey, TbRuleEngineQueueConsumerManager> consumers = new ConcurrentHashMap<>();
 
@@ -85,11 +86,13 @@ public class DefaultTbRuleEngineConsumerService extends AbstractPartitionBasedCo
                                               PartitionService partitionService,
                                               ApplicationEventPublisher eventPublisher,
                                               JwtSettingsService jwtSettingsService,
-                                              CalculatedFieldCache calculatedFieldCache) {
+                                              CalculatedFieldCache calculatedFieldCache,
+                                              TbMsgPackProcessingContextFactory packProcessingContextFactory) {
         super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, tbResourceDataCache, calculatedFieldCache, apiUsageStateService, partitionService, eventPublisher, jwtSettingsService);
         this.ctx = ctx;
         this.tbDeviceRpcService = tbDeviceRpcService;
         this.queueService = queueService;
+        this.packProcessingContextFactory = packProcessingContextFactory;
     }
 
     @Override
@@ -255,6 +258,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractPartitionBasedCo
                 .consumerExecutor(consumersExecutor)
                 .scheduler(scheduler)
                 .taskExecutor(mgmtExecutor)
+                .packProcessingContextFactory(packProcessingContextFactory)
                 .build();
         consumers.put(queueKey, consumer);
         consumer.init(queue);

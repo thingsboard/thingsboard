@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.thingsboard.script.api.tbel.DefaultTbelInvokeService;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
@@ -45,8 +46,9 @@ import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationPathLevel;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.stats.DefaultStatsFactory;
-import org.thingsboard.server.dao.usagerecord.ApiLimitService;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.service.cf.CalculatedFieldProcessingService;
 import org.thingsboard.server.service.cf.PropagationCalculatedFieldResult;
 import org.thingsboard.server.service.cf.TelemetryCalculatedFieldResult;
@@ -106,7 +108,10 @@ public class PropagationCalculatedFieldStateTest {
     private TbelInvokeService tbelInvokeService;
 
     @MockitoBean
-    private ApiLimitService apiLimitService;
+    private TenantProfile tenantProfile;
+
+    @MockitoBean
+    private TbTenantProfileCache tenantProfileCache;
 
     @MockitoBean
     private ActorSystemContext actorSystemContext;
@@ -117,9 +122,10 @@ public class PropagationCalculatedFieldStateTest {
     @BeforeEach
     void setUp() {
         when(actorSystemContext.getTbelInvokeService()).thenReturn(tbelInvokeService);
-        when(actorSystemContext.getApiLimitService()).thenReturn(apiLimitService);
         when(actorSystemContext.getCalculatedFieldProcessingService()).thenReturn(cfProcessingService);
-        when(apiLimitService.getLimit(any(), any())).thenReturn(1000L);
+        when(actorSystemContext.getTenantProfileCache()).thenReturn(tenantProfileCache);
+        when(tenantProfileCache.get(any(TenantId.class))).thenReturn(tenantProfile);
+        when(tenantProfile.getProfileConfiguration()).thenReturn(Optional.of(new DefaultTenantProfileConfiguration()));
     }
 
     void initCtxAndState(boolean applyExpressionToResolvedArguments) {
@@ -317,7 +323,49 @@ public class PropagationCalculatedFieldStateTest {
     }
 
     @Test
-    void testPropapagationStateInitWithRestoredSetToTrue() {
+    void testPropagationStateInitRestoredTrueNoDbChanges_noReevaluation() {
+        initCtxAndState(false);
+
+        // existing state already matches DB snapshot
+        Map<String, ArgumentEntry> initArgs = Map.of(
+                TEMPERATURE_ARGUMENT_NAME, temperatureArgumentEntry,
+                HUMIDITY_ARGUMENT_NAME, humidityArgumentEntry,
+                PROPAGATION_CONFIG_ARGUMENT, propagationArgEntry
+        );
+        state.update(initArgs, ctx);
+
+        // DB returns the same set
+        when(cfProcessingService.fetchPropagationArgumentFromDb(any(), any())).thenReturn(Optional.of(propagationArgEntry));
+
+        state.init(true);
+
+        verify(cfProcessingService).fetchPropagationArgumentFromDb(ctx, state.getEntityId());
+        verify(ctx, never()).scheduleReevaluation(anyLong(), any());
+    }
+
+    @Test
+    void testPropagationStateInitRestoredTrueOnlyRemovals_noReevaluation() {
+        initCtxAndState(false);
+
+        Map<String, ArgumentEntry> initArgs = Map.of(
+                TEMPERATURE_ARGUMENT_NAME, temperatureArgumentEntry,
+                HUMIDITY_ARGUMENT_NAME, humidityArgumentEntry,
+                PROPAGATION_CONFIG_ARGUMENT, propagationArgEntry
+        );
+        state.update(initArgs, ctx);
+
+        // DB snapshot contains only ASSET_ID_1 (ASSET_ID_2 should be removed)
+        var fromDb = new PropagationArgumentEntry(List.of(ASSET_ID_1));
+        when(cfProcessingService.fetchPropagationArgumentFromDb(any(), any())).thenReturn(Optional.of(fromDb));
+
+        state.init(true);
+
+        verify(cfProcessingService).fetchPropagationArgumentFromDb(ctx, state.getEntityId());
+        verify(ctx, never()).scheduleReevaluation(anyLong(), any());
+    }
+
+    @Test
+    void testPropagationStateIsNotReadyInitRestoredTrueAddedEntities_scheduleReevaluation() {
         initCtxAndState(false);
         Map<String, ArgumentEntry> initArgs = Map.of(
                 TEMPERATURE_ARGUMENT_NAME, temperatureArgumentEntry,
@@ -333,6 +381,75 @@ public class PropagationCalculatedFieldStateTest {
 
         verify(cfProcessingService).fetchPropagationArgumentFromDb(ctx, state.getEntityId());
         verify(ctx).scheduleReevaluation(0L, state.getActorCtx());
+    }
+
+    @Test
+    void testPropagationStateInitRestoredTrueAddedEntities_scheduleReevaluation() {
+        initCtxAndState(false);
+
+        // existing missing ASSET_ID_2
+        var existing = new PropagationArgumentEntry(List.of(ASSET_ID_1));
+        Map<String, ArgumentEntry> initArgs = Map.of(
+                TEMPERATURE_ARGUMENT_NAME, temperatureArgumentEntry,
+                HUMIDITY_ARGUMENT_NAME, humidityArgumentEntry,
+                PROPAGATION_CONFIG_ARGUMENT, existing
+        );
+        state.update(initArgs, ctx);
+        assertThat(state.isReady()).isTrue();
+
+        // DB snapshot contains both (ASSET_ID_2 should be "added")
+        var fromDb = new PropagationArgumentEntry(List.of(ASSET_ID_1, ASSET_ID_2));
+        when(cfProcessingService.fetchPropagationArgumentFromDb(any(), any())).thenReturn(Optional.of(fromDb));
+
+        state.init(true);
+
+        verify(cfProcessingService).fetchPropagationArgumentFromDb(ctx, state.getEntityId());
+        verify(ctx).scheduleReevaluation(0L, state.getActorCtx());
+    }
+
+    @Test
+    void testPropagationStateInitRestoredTrueDbEmpty_clearsState_noReevaluation() {
+        initCtxAndState(false);
+
+        // existing has something
+        Map<String, ArgumentEntry> initArgs = Map.of(
+                TEMPERATURE_ARGUMENT_NAME, temperatureArgumentEntry,
+                HUMIDITY_ARGUMENT_NAME, humidityArgumentEntry,
+                PROPAGATION_CONFIG_ARGUMENT, propagationArgEntry
+        );
+        state.update(initArgs, ctx);
+
+        // DB snapshot empty -> clear
+        var fromDb = new PropagationArgumentEntry(Collections.emptyList());
+        when(cfProcessingService.fetchPropagationArgumentFromDb(any(), any())).thenReturn(Optional.of(fromDb));
+
+        state.init(true);
+
+        verify(cfProcessingService).fetchPropagationArgumentFromDb(ctx, state.getEntityId());
+        verify(ctx, never()).scheduleReevaluation(anyLong(), any());
+    }
+
+    @Test
+    void testPropagationStateInitRestoredTrueBothEmpty_noReevaluation() {
+        initCtxAndState(false);
+
+        // Existing propagation argument is empty
+        Map<String, ArgumentEntry> initArgs = Map.of(
+                TEMPERATURE_ARGUMENT_NAME, temperatureArgumentEntry,
+                HUMIDITY_ARGUMENT_NAME, humidityArgumentEntry,
+                PROPAGATION_CONFIG_ARGUMENT, new PropagationArgumentEntry(Collections.emptyList())
+        );
+        state.update(initArgs, ctx);
+        assertThat(state.isReady()).isFalse();
+
+        // DB snapshot is also empty
+        var fromDb = new PropagationArgumentEntry(Collections.emptyList());
+        when(cfProcessingService.fetchPropagationArgumentFromDb(any(), any())).thenReturn(Optional.of(fromDb));
+
+        state.init(true);
+
+        verify(cfProcessingService).fetchPropagationArgumentFromDb(ctx, state.getEntityId());
+        verify(ctx, never()).scheduleReevaluation(anyLong(), any());
     }
 
     private CalculatedField getCalculatedField(boolean applyExpressionToResolvedArguments) {

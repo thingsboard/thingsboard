@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.data.util.Pair;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EdgeUtils;
@@ -35,6 +36,7 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.limit.LimitedApi;
 import org.thingsboard.server.common.data.notification.rule.trigger.EdgeCommunicationFailureTrigger;
@@ -136,6 +138,7 @@ public class EdgeGrpcSession implements EdgeSession {
                             startSyncProcess(fullSync);
                         } else {
                             state.finishSync();
+                            saveSyncInProgressAsAttribute(false);
                         }
                     }
                     if (requestMsg.getMsgType().equals(RequestMsgType.UPLINK_RPC_MESSAGE)) {
@@ -180,6 +183,7 @@ public class EdgeGrpcSession implements EdgeSession {
     @Override
     public void startSyncProcess(boolean fullSync) {
         if (state.tryStartSync()) {
+            saveSyncInProgressAsAttribute(true);
             log.info("[{}][{}][{}] Staring edge sync process", getTenantId(), getEdgeId(), getSessionId());
             interruptGeneralProcessingOnSync();
             doSync(new EdgeSyncCursor(ctx, state.getEdge(), fullSync));
@@ -388,6 +392,7 @@ public class EdgeGrpcSession implements EdgeSession {
 
     private void markSyncCompletedSendEdgeEventUpdate() {
         state.finishSync();
+        saveSyncInProgressAsAttribute(false);
         ctx.getClusterService().onEdgeEventUpdate(new EdgeEventUpdateMsg(getTenantId(), getEdgeId()));
     }
 
@@ -590,6 +595,16 @@ public class EdgeGrpcSession implements EdgeSession {
     private void processSaveEdgeVersionAsAttribute(String edgeVersion) {
         AttributeKvEntry attributeKvEntry = new BaseAttributeKvEntry(new StringDataEntry(DataConstants.EDGE_VERSION_ATTR_KEY, edgeVersion), System.currentTimeMillis());
         ctx.getAttributesService().save(getTenantId(), getEdgeId(), AttributeScope.SERVER_SCOPE, attributeKvEntry);
+    }
+
+    private void saveSyncInProgressAsAttribute(Boolean value) {
+        ctx.getTsSubService().saveAttributes(AttributesSaveRequest.builder()
+                .tenantId(getTenantId())
+                .entityId(getEdgeId())
+                .scope(AttributeScope.SERVER_SCOPE)
+                .entry(new BooleanDataEntry(DataConstants.EDGE_SYNC_IN_PROGRESS_ATTR_KEY, value))
+                .callback(new EdgeAttributeSaveCallback(getTenantId(), getEdgeId(), DataConstants.EDGE_SYNC_IN_PROGRESS_ATTR_KEY, value))
+                .build());
     }
 
     private TenantId getTenantId() {

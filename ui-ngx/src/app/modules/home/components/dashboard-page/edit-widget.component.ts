@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -31,9 +31,10 @@ import { DataKeySettingsFunction } from '@home/components/widget/lib/settings/co
 import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
-  selector: 'tb-edit-widget',
-  templateUrl: './edit-widget.component.html',
-  styleUrls: ['./edit-widget.component.scss']
+    selector: 'tb-edit-widget',
+    templateUrl: './edit-widget.component.html',
+    styleUrls: ['./edit-widget.component.scss'],
+    standalone: false
 })
 export class EditWidgetComponent extends PageComponent implements OnInit, OnChanges {
 

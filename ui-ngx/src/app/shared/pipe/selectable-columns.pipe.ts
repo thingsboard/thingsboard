@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,7 +17,10 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { DisplayColumn } from '@home/components/widget/lib/table-widget.models';
 
-@Pipe({ name: 'selectableColumns' })
+@Pipe({
+    name: 'selectableColumns',
+    standalone: false
+})
 export class SelectableColumnsPipe implements PipeTransform {
   transform(allColumns: DisplayColumn[]): DisplayColumn[] {
     return allColumns.filter(column => column.selectable);

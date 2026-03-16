@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,5 +51,14 @@ public interface TimeseriesLatestDao {
     List<String> findAllKeysByEntityIds(TenantId tenantId, List<EntityId> entityIds);
 
     ListenableFuture<List<String>> findAllKeysByEntityIdsAsync(TenantId tenantId, List<EntityId> entityIds);
+
+    /**
+     * For each unique timeseries key across the given entities, returns the single most recent {@link TsKvEntry}
+     * (i.e. the entry with the highest timestamp). If the same key exists on multiple entities,
+     * only the freshest value is kept. Useful for discovering available keys together with a representative sample value.
+     */
+    List<TsKvEntry> findLatestByEntityIds(TenantId tenantId, List<EntityId> entityIds);
+
+    ListenableFuture<List<TsKvEntry>> findLatestByEntityIdsAsync(TenantId tenantId, List<EntityId> entityIds);
 
 }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ import {
   UntypedFormGroup,
   Validators
 } from '@angular/forms';
-import { MatButton } from '@angular/material/button';
+import { MatIconButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -60,17 +60,18 @@ import {
 } from '@home/components/widget/lib/settings/common/map/map-layer-settings-panel.component';
 
 @Component({
-  selector: 'tb-map-layer-row',
-  templateUrl: './map-layer-row.component.html',
-  styleUrls: ['./map-layer-row.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => MapLayerRowComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-map-layer-row',
+    templateUrl: './map-layer-row.component.html',
+    styleUrls: ['./map-layer-row.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => MapLayerRowComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class MapLayerRowComponent implements ControlValueAccessor, OnInit {
 
@@ -172,7 +173,7 @@ export class MapLayerRowComponent implements ControlValueAccessor, OnInit {
     return this.translate.instant(translationKey);
   }
 
-  editLayer($event: Event, matButton: MatButton) {
+  editLayer($event: Event, matButton: MatIconButton) {
     if ($event) {
       $event.stopPropagation();
     }

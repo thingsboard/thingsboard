@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.SsrfProtectionValidator;
 import org.thingsboard.rule.engine.api.DeviceStateManager;
 import org.thingsboard.rule.engine.api.JobManager;
 import org.thingsboard.rule.engine.api.MailService;
@@ -42,6 +43,7 @@ import org.thingsboard.rule.engine.api.notification.SlackService;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
 import org.thingsboard.script.api.js.JsInvokeService;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
+import org.thingsboard.server.actors.calculatedField.CalculatedFieldException;
 import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.actors.tenant.DebugTbRateLimits;
 import org.thingsboard.server.cache.limits.RateLimitService;
@@ -143,6 +145,7 @@ import org.thingsboard.server.utils.DebugModeRateLimitsConfig;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -613,9 +616,17 @@ public class ActorSystemContext {
     @Getter
     private boolean localCacheType;
 
+    @Value("${actors.rule.external.ssrf_protection_enabled:false}")
+    private boolean ssrfProtectionEnabled;
+
+    @Value("${actors.rule.external.ssrf_additional_blocked_hosts:}")
+    private List<String> ssrfAdditionalBlockedHosts;
+
     @PostConstruct
     public void init() {
         this.localCacheType = "caffeine".equals(cacheType);
+        SsrfProtectionValidator.setEnabled(ssrfProtectionEnabled);
+        SsrfProtectionValidator.setAdditionalBlockedHosts(ssrfAdditionalBlockedHosts);
     }
 
     @Value("${actors.tenant.create_components_on_init:true}")
@@ -831,6 +842,18 @@ public class ActorSystemContext {
         Futures.addCallback(future, RULE_CHAIN_DEBUG_EVENT_ERROR_CALLBACK, MoreExecutors.directExecutor());
     }
 
+    public void persistCalculatedFieldDebugError(CalculatedFieldException cfe) {
+        String message;
+        if (cfe.getErrorMessage() != null) {
+            message = cfe.getErrorMessage();
+        } else if (cfe.getCause() != null) {
+            message = cfe.getCause().getMessage();
+        } else {
+            message = "N/A";
+        }
+        persistCalculatedFieldDebugEvent(cfe.getCtx().getTenantId(), cfe.getCtx().getCfId(), cfe.getEventEntity(), cfe.getArguments(), cfe.getMsgId(), cfe.getMsgType(), null, message);
+    }
+
     public void persistCalculatedFieldDebugEvent(TenantId tenantId, CalculatedFieldId calculatedFieldId, EntityId entityId, JsonNode arguments, UUID tbMsgId, String tbMsgType, String result, String errorMessage) {
         if (checkLimits(tenantId)) {
             try {
@@ -846,7 +869,7 @@ public class ActorSystemContext {
                 if (tbMsgType != null) {
                     eventBuilder.msgType(tbMsgType);
                 }
-                if (arguments != null) {
+                if (arguments != null && !arguments.isEmpty()) {
                     eventBuilder.arguments(JacksonUtil.toString(arguments));
                 }
                 if (result != null) {

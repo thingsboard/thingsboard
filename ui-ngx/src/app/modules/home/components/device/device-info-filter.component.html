@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -35,6 +35,13 @@
     <div class="tb-panel-actions flex flex-row items-center justify-end">
       <button type="button"
               mat-button
+              color="primary"
+              (click)="reset()">
+        {{ 'action.reset' | translate }}
+      </button>
+      <span class="flex-1"></span>
+      <button type="button"
+              mat-button
               (click)="cancel()">
         {{ 'action.cancel' | translate }}
       </button>
@@ -48,28 +55,28 @@
   </form>
 </ng-template>
 <ng-template #deviceFilter>
-  <div class="flex flex-col gap-4" style="min-width: 280px;" [formGroup]="deviceInfoFilterForm">
-    <tb-device-profile-autocomplete
-      subscriptSizing="dynamic"
-      formControlName="deviceProfileId"
-      [displayAllOnEmpty]="true"
-      (deviceProfileChanged)="deviceProfileChanged($event)"
-      [editProfileEnabled]="false"
-      [addNewProfile]="false">
-    </tb-device-profile-autocomplete>
-    <mat-form-field>
-      <mat-label translate>device.device-state</mat-label>
-      <mat-select formControlName="active">
-        <mat-option value="">
-          {{ 'device.any' | translate }}
-        </mat-option>
-        <mat-option [value]="true">
-          {{ 'device.active' | translate }}
-        </mat-option>
-        <mat-option [value]="false">
-          {{ 'device.inactive' | translate }}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
+  <div class="tb-device-filter-config-component tb-form-panel no-padding no-border" [formGroup]="deviceInfoFilterForm">
+    <div class="tb-form-row column-xs">
+      <div class="fixed-title-width" translate>device-profile.device-profile</div>
+      <tb-device-profile-autocomplete
+          class="flex-1"
+          formControlName="deviceProfileId"
+          [inlineField]="true"
+          [displayAllOnEmpty]="true"
+          (deviceProfileChanged)="deviceProfileChanged($event)"
+          [editProfileEnabled]="false"
+          [addNewProfile]="false">
+      </tb-device-profile-autocomplete>
+    </div>
+    <div class="tb-form-row column-xs">
+      <div class="fixed-title-width" translate>device.device-state</div>
+      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="active" placeholder="{{ 'device.any' | translate }}">
+          <mat-option>{{ 'device.any' | translate }}</mat-option>
+          <mat-option [value]="true">{{ 'device.active' | translate }}</mat-option>
+          <mat-option [value]="false">{{ 'device.inactive' | translate }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
   </div>
 </ng-template>

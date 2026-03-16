@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,10 +115,15 @@ public class JacksonUtil {
 
     @Contract("null, _ -> null") // so that IDE doesn't show NPE warning when input is not null
     public static <T> T fromString(String string, Class<T> clazz) {
+        return fromString(string, clazz, "The given string value cannot be transformed to Json object: " + string);
+    }
+
+    @Contract("null, _, _ -> null") // so that IDE doesn't show NPE warning when input is not null
+    public static <T> T fromString(String string, Class<T> clazz, String errorMsg) {
         try {
             return string != null ? OBJECT_MAPPER.readValue(string, clazz) : null;
         } catch (IOException e) {
-            throw new IllegalArgumentException("The given string value cannot be transformed to Json object: " + string, e);
+            throw new IllegalArgumentException(errorMsg, e);
         }
     }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -132,15 +133,23 @@ public class OAuth2Controller extends BaseController {
         return oAuth2ClientService.findOAuth2ClientInfosByTenantId(getTenantId(), pageLink);
     }
 
-    @ApiOperation(value = "Get OAuth2 Client infos By Ids (findTenantOAuth2ClientInfosByIds)",
-            notes = "Fetch OAuth2 Client info objects based on the provided ids. " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @Hidden
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @GetMapping(value = "/oauth2/client/infos", params = {"clientIds"})
-    public List<OAuth2ClientInfo> findTenantOAuth2ClientInfosByIds(
-            @Parameter(description = "A list of oauth2 ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+    public List<OAuth2ClientInfo> findTenantOAuth2ClientInfosByIdsV1(
             @RequestParam("clientIds") UUID[] clientIds) throws ThingsboardException {
         List<OAuth2ClientId> oAuth2ClientIds = getOAuth2ClientIds(clientIds);
         return oAuth2ClientService.findOAuth2ClientInfosByIds(getTenantId(), oAuth2ClientIds);
+    }
+
+    @ApiOperation(value = "Get OAuth2 Client infos By Ids (findTenantOAuth2ClientInfosByIds)",
+            notes = "Fetch OAuth2 Client info objects based on the provided ids. " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @GetMapping(value = "/oauth2/client/list")
+    public List<OAuth2ClientInfo> findTenantOAuth2ClientInfosByIds(
+            @Parameter(description = "A list of oauth2 ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+            @RequestParam("clientIds") UUID[] clientIds) throws ThingsboardException {
+        return findTenantOAuth2ClientInfosByIdsV1(clientIds);
     }
 
     @ApiOperation(value = "Get OAuth2 Client by id (getOAuth2ClientById)", notes = SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.EntityType;
 
 import java.util.UUID;
 
+@Schema(allOf = EntityId.class)
 public class RuleNodeId extends UUIDBased implements EntityId {
 
     @JsonCreator
@@ -29,7 +30,7 @@ public class RuleNodeId extends UUIDBased implements EntityId {
         super(id);
     }
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "string", example = "RULE_NODE", allowableValues = "RULE_NODE")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, accessMode = Schema.AccessMode.READ_ONLY, description = "string", example = "RULE_NODE", allowableValues = "RULE_NODE")
     @Override
     public EntityType getEntityType() {
         return EntityType.RULE_NODE;

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -28,10 +28,11 @@ import { MenuSection, menuSectionMap } from '@core/services/menu.models';
 import { MenuService } from '@core/services/menu.service';
 
 @Component({
-  selector: 'tb-breadcrumb',
-  templateUrl: './breadcrumb.component.html',
-  styleUrls: ['./breadcrumb.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'tb-breadcrumb',
+    templateUrl: './breadcrumb.component.html',
+    styleUrls: ['./breadcrumb.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class BreadcrumbComponent implements OnInit, OnDestroy {
 

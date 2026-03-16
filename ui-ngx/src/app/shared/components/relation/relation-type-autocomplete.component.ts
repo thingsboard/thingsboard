@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -27,14 +27,15 @@ import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-
 import { coerceArray, coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
-  selector: 'tb-relation-type-autocomplete',
-  templateUrl: './relation-type-autocomplete.component.html',
-  styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => RelationTypeAutocompleteComponent),
-    multi: true
-  }]
+    selector: 'tb-relation-type-autocomplete',
+    templateUrl: './relation-type-autocomplete.component.html',
+    styleUrls: [],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => RelationTypeAutocompleteComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class RelationTypeAutocompleteComponent implements ControlValueAccessor, OnInit, AfterViewInit, OnDestroy {
 

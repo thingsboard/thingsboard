@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -37,14 +37,15 @@ import { emptyPageData } from '@shared/models/page/page-data';
 import { getEntityDetailsPageURL } from '@core/utils';
 
 @Component({
-  selector: 'tb-tenant-profile-autocomplete',
-  templateUrl: './tenant-profile-autocomplete.component.html',
-  styleUrls: ['./tenant-profile-autocomplete.component.scss'],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => TenantProfileAutocompleteComponent),
-    multi: true
-  }]
+    selector: 'tb-tenant-profile-autocomplete',
+    templateUrl: './tenant-profile-autocomplete.component.html',
+    styleUrls: ['./tenant-profile-autocomplete.component.scss'],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TenantProfileAutocompleteComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class TenantProfileAutocompleteComponent implements ControlValueAccessor, OnInit {
 
@@ -218,6 +219,7 @@ export class TenantProfileAutocompleteComponent implements ControlValueAccessor,
 
   createTenantProfile($event: Event, profileName: string) {
     $event.preventDefault();
+    $event.stopPropagation();
     const tenantProfile: TenantProfile = {
       name: profileName
     };

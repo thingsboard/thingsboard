@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2025 The Thingsboard Authors
+# Copyright © 2016-2026 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,6 +15,21 @@
 #
 
 FROM ${docker.base.image}
+
+# For SVG renderer Debian Trixie slim fonts should be installed explicitly
+RUN echo "Previously installed font libraries:" \
+ && (dpkg -l | grep -E 'font|dejavu|harfbuzz' || echo "  (none)") \
+ && apt-get update \
+ && apt-get install -y --no-install-recommends \
+      libharfbuzz0b fontconfig fonts-dejavu-core \
+ && rm -rf /var/lib/apt/lists/* \
+ && echo "Current fonts libraries:" \
+ && (dpkg -l | grep -E 'font|dejavu|harfbuzz') \
+ && echo "Font config list:" \
+ && fc-list && test -n "$(fc-list)" \
+ && (fc-list | grep -i dejavu) \
+ && echo "Harfbuzz library test with ldconfig:" \
+ && (ldconfig -p | grep harfbuzz)
 
 COPY logback.xml start-tb-node.sh ${pkg.name}.deb /tmp/
 

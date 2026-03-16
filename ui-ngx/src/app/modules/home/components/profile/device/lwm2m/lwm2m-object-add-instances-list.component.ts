@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -29,19 +29,21 @@ import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 import { MatChipInputEvent } from '@angular/material/chips';
 
 @Component({
-  selector: 'tb-profile-lwm2m-object-add-instances-list',
-  templateUrl: './lwm2m-object-add-instances-list.component.html',
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => Lwm2mObjectAddInstancesListComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => Lwm2mObjectAddInstancesListComponent),
-      multi: true
-    }]
+    selector: 'tb-profile-lwm2m-object-add-instances-list',
+    templateUrl: './lwm2m-object-add-instances-list.component.html',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => Lwm2mObjectAddInstancesListComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => Lwm2mObjectAddInstancesListComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class Lwm2mObjectAddInstancesListComponent implements ControlValueAccessor, Validator {
 

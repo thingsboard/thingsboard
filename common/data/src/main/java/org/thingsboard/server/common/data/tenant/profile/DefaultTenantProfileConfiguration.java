@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.thingsboard.server.common.data.tenant.profile;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -172,12 +173,13 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private long maxCalculatedFieldsPerEntity = 5;
     @Schema(example = "10")
     private long maxArgumentsPerCF = 10;
-    @Schema(example = "60")
-    private int minAllowedScheduledUpdateIntervalInSecForCF = 60;
-    @Builder.Default
     @Schema(example = "10")
+    @PositiveOrZero
+    private int minAllowedScheduledUpdateIntervalInSecForCF = 10;
+    @Builder.Default
+    @Schema(example = "2")
     @Positive
-    private int maxRelationLevelPerCfArgument = 10;
+    private int maxRelationLevelPerCfArgument = 2;
     @Builder.Default
     @Schema(example = "100")
     @Positive

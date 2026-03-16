@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -53,10 +53,11 @@ export interface CfAlarmRuleConditionDialogData {
 }
 
 @Component({
-  selector: 'tb-cf-alarm-rule-condition-dialog',
-  templateUrl: './cf-alarm-rule-condition-dialog.component.html',
-  providers: [],
-  styleUrls: ['./cf-alarm-rules-dialog.component.scss'],
+    selector: 'tb-cf-alarm-rule-condition-dialog',
+    templateUrl: './cf-alarm-rule-condition-dialog.component.html',
+    providers: [],
+    styleUrls: ['./cf-alarm-rules-dialog.component.scss'],
+    standalone: false
 })
 export class CfAlarmRuleConditionDialogComponent extends DialogComponent<CfAlarmRuleConditionDialogComponent, AlarmRuleCondition> {
 
@@ -184,16 +185,22 @@ export class CfAlarmRuleConditionDialogComponent extends DialogComponent<CfAlarm
       takeUntilDestroyed()
     ).subscribe((mode) => {
       this.updateStaticValueValidator(AlarmRuleConditionType.DURATION, mode);
+      this.updateSpecText(this.conditionFormGroup.get('type').value);
     });
     this.repeatingDynamicModeControl.valueChanges.pipe(
       takeUntilDestroyed()
     ).subscribe((mode) => {
       this.updateStaticValueValidator(AlarmRuleConditionType.REPEATING, mode);
+      this.updateSpecText(this.conditionFormGroup.get('type').value);
     });
 
     this.updateValidators(this.conditionFormGroup.get('type').value ?? AlarmRuleConditionType.SIMPLE);
     this.updateSpecText(this.conditionFormGroup.get('type').value ?? AlarmRuleConditionType.SIMPLE);
     this.updateExpressionTypeValidator(this.condition?.expression?.type ?? 'SIMPLE');
+
+    if (this.readonly) {
+      this.conditionFormGroup.disable({emitEvent: false});
+    }
   }
 
   updateStaticValueValidator(type: AlarmRuleConditionType, dynamicValue: boolean) {
@@ -221,6 +228,11 @@ export class CfAlarmRuleConditionDialogComponent extends DialogComponent<CfAlarm
     this.isNoData = this.hasNoData(filters);
     if (this.isNoData && this.conditionFormGroup.get('type').value !== AlarmRuleConditionType.SIMPLE) {
       this.conditionFormGroup.get('type').patchValue(AlarmRuleConditionType.SIMPLE);
+    }
+    if (this.isNoData) {
+      this.conditionFormGroup.get('type').disable({emitEvent: false});
+    } else {
+      this.conditionFormGroup.get('type').enable({emitEvent: false});
     }
   }
 
@@ -289,20 +301,20 @@ export class CfAlarmRuleConditionDialogComponent extends DialogComponent<CfAlarm
             duringText = this.translate.instant('timewindow.days', {days: value.staticValue});
             break;
         }
-        if (value.dynamicValueArgument) {
+        if (this.durationDynamicModeControl.value) {
           this.specText = this.translate.instant('alarm-rule.condition-during-dynamic', {
-            attribute: `${value.dynamicValueArgument}`
+            attribute: `${value.dynamicValueArgument ?? ''}`
           }) + ' ' + this.translate.instant(this.timeUnitTranslations.get(this.conditionFormGroup.get('unit').value)).toLowerCase();
         } else {
           this.specText = this.translate.instant('alarm-rule.condition-during', {
-            during: duringText
+            during: duringText.trim()
           });
         }
         break;
       case AlarmRuleConditionType.REPEATING:
-        if (count.dynamicValueArgument) {
+        if (this.repeatingDynamicModeControl.value) {
           this.specText = this.translate.instant('alarm-rule.condition-repeat-times-dynamic', {
-            attribute: `${count.dynamicValueArgument}`
+            attribute: `${count.dynamicValueArgument ?? ''}`
           });
         } else {
           this.specText = this.translate.instant('alarm-rule.condition-repeat-times',

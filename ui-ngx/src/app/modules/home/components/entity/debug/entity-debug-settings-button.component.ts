@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -39,23 +39,22 @@ import { AdditionalDebugActionConfig } from '@home/components/entity/debug/entit
 import { EntityType } from '@shared/models/entity-type.models';
 
 @Component({
-  selector: 'tb-entity-debug-settings-button',
-  templateUrl: './entity-debug-settings-button.component.html',
-  standalone: true,
-  imports: [
-    CommonModule,
-    SharedModule,
-    DurationLeftPipe,
-  ],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => EntityDebugSettingsButtonComponent),
-      multi: true
-    },
-    EntityDebugSettingsService
-  ],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'tb-entity-debug-settings-button',
+    templateUrl: './entity-debug-settings-button.component.html',
+    imports: [
+        CommonModule,
+        SharedModule,
+        DurationLeftPipe,
+    ],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => EntityDebugSettingsButtonComponent),
+            multi: true
+        },
+        EntityDebugSettingsService
+    ],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EntityDebugSettingsButtonComponent implements ControlValueAccessor {
 

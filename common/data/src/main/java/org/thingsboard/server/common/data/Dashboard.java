@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @EqualsAndHashCode(callSuper = true)
-@JsonPropertyOrder({"title", "image", "mobileHide", "mobileOrder", "configuration", "name", "resources"})
+@JsonPropertyOrder({"id", "createdTime", "tenantId", "title", "name", "image", "mobileHide", "mobileOrder", "assignedCustomers", "configuration", "resources", "version"})
 public class Dashboard extends DashboardInfo implements ExportableEntity<DashboardId> {
 
     private static final long serialVersionUID = 872682138346187503L;
@@ -70,7 +70,7 @@ public class Dashboard extends DashboardInfo implements ExportableEntity<Dashboa
     @Schema(description = "JSON object with main configuration of the dashboard: layouts, widgets, aliases, etc. " +
                           "The JSON structure of the dashboard configuration is quite complex. " +
                           "The easiest way to learn it is to export existing dashboard to JSON."
-            , implementation = com.fasterxml.jackson.databind.JsonNode.class)
+            , implementation = JsonNode.class)
     public JsonNode getConfiguration() {
         return configuration;
     }

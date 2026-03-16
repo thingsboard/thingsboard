@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -30,10 +30,11 @@ import {
 import { TbBarsChart } from '@home/components/widget/lib/chart/bars-chart';
 
 @Component({
-  selector: 'tb-bar-chart-widget',
-  templateUrl: './latest-chart-widget.component.html',
-  styleUrls: [],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-bar-chart-widget',
+    templateUrl: './latest-chart-widget.component.html',
+    styleUrls: [],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class BarChartWidgetComponent implements OnInit {
 

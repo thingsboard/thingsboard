@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,12 @@ import static org.thingsboard.server.dao.model.ModelConstants.VERSION_COLUMN;
         @NamedNativeQuery(
                 name = SearchTsKvLatestRepository.FIND_ALL_BY_ENTITY_ID,
                 query = SearchTsKvLatestRepository.FIND_ALL_BY_ENTITY_ID_QUERY,
+                resultSetMapping = "tsKvLatestFindMapping",
+                resultClass = TsKvLatestEntity.class
+        ),
+        @NamedNativeQuery(
+                name = SearchTsKvLatestRepository.FIND_LATEST_BY_ENTITY_IDS,
+                query = SearchTsKvLatestRepository.FIND_LATEST_BY_ENTITY_IDS_QUERY,
                 resultSetMapping = "tsKvLatestFindMapping",
                 resultClass = TsKvLatestEntity.class
         )

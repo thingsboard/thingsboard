@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@
     <mat-form-field appearance="outline">
       <mat-label translate>layout.breakpoint</mat-label>
       <mat-select formControlName="newBreakpointId" [hideSingleSelectionIndicator]="false">
-        <mat-select-trigger>{{ getName(this.addBreakpointFormGroup.get('newBreakpointId').value) }}</mat-select-trigger>
+        <mat-select-trigger>{{ getName(addBreakpointFormGroup.get('newBreakpointId').value) }}</mat-select-trigger>
         <mat-option *ngFor="let breakpoint of allowBreakpointIds" [value]="breakpoint" style="min-height:56px;">
           <mat-icon><tb-icon>{{ getIcon(breakpoint) }}</tb-icon></mat-icon>
           <div>{{ getName(breakpoint) }}</div>
@@ -40,7 +40,7 @@
     <mat-form-field appearance="outline" subscriptSizing="dynamic">
       <mat-label translate>layout.copy-from</mat-label>
       <mat-select formControlName="copyFrom" [hideSingleSelectionIndicator]="false">
-        <mat-select-trigger>{{ getName(this.addBreakpointFormGroup.get('copyFrom').value) }}</mat-select-trigger>
+        <mat-select-trigger>{{ getName(addBreakpointFormGroup.get('copyFrom').value) }}</mat-select-trigger>
         <mat-option *ngFor="let breakpoint of selectedBreakpointIds" [value]="breakpoint" style="min-height:56px;">
           <mat-icon><tb-icon>{{ getIcon(breakpoint) }}</tb-icon></mat-icon>
           <div>{{ getName(breakpoint) }}</div>

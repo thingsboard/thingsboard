@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -59,9 +59,10 @@ import {
 import { passwordsMatchValidator, passwordStrengthValidator } from '@shared/models/password.models';
 
 @Component({
-  selector: 'tb-security',
-  templateUrl: './security.component.html',
-  styleUrls: ['./security.component.scss']
+    selector: 'tb-security',
+    templateUrl: './security.component.html',
+    styleUrls: ['./security.component.scss'],
+    standalone: false
 })
 export class SecurityComponent extends PageComponent implements OnInit, OnDestroy {
 
@@ -333,22 +334,24 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
   onChangePassword(form: FormGroupDirective): void {
     if (this.changePassword.valid) {
       this.authService.changePassword(this.changePassword.get('currentPassword').value,
-        this.changePassword.get('newPassword').value, {ignoreErrors: true}).subscribe(() => {
-          this.discardChanges(form);
-        },
-        (error) => {
-          if (error.status === 400 && error.error.message === 'Current password doesn\'t match!') {
-            this.changePassword.get('currentPassword').setErrors({differencePassword: true});
-          } else if (error.status === 400 && error.error.message.startsWith('Password must')) {
-            this.loadPasswordPolicy();
-          } else if (error.status === 400 && error.error.message.startsWith('Password was already used')) {
-            this.changePassword.get('newPassword').setErrors({alreadyUsed: error.error.message});
-          } else {
-            this.store.dispatch(new ActionNotificationShow({
-              message: error.error.message,
-              type: 'error',
-              target: 'changePassword'
-            }));
+        this.changePassword.get('newPassword').value, {ignoreErrors: true}).subscribe({
+          next: () => {
+            this.discardChanges(form);
+          },
+          error: (error) => {
+            if (error.status === 400 && error.error.message === 'Current password doesn\'t match!') {
+              this.changePassword.get('currentPassword').setErrors({ differencePassword: true });
+            } else if (error.status === 400 && error.error.message.startsWith('Password must')) {
+              this.loadPasswordPolicy();
+            } else if (error.status === 400 && error.error.message.startsWith('Password was already used')) {
+              this.changePassword.get('newPassword').setErrors({ alreadyUsed: error.error.message });
+            } else {
+              this.store.dispatch(new ActionNotificationShow({
+                message: error.error.message,
+                type: 'error',
+                target: 'changePassword'
+              }));
+            }
           }
         });
     } else {
