@@ -64,27 +64,21 @@ let connections: Socket[] = [];
         // Headers enabled by default use '!== false' so they stay on unless explicitly disabled.
         // Headers disabled by default use simple truthiness checks.
         const securityHeaders: Record<string, string> = {};
-        if (config.has('security.headers')) {
-            const hc: any = config.get('security.headers');
-            if (hc['x-content-type-options']?.enabled !== false) {
-                securityHeaders['X-Content-Type-Options'] = 'nosniff';
-            }
-            if (hc['referrer-policy']?.enabled !== false) {
-                securityHeaders['Referrer-Policy'] = hc['referrer-policy']?.value || 'strict-origin-when-cross-origin';
-            }
-            if (hc['x-frame-options']?.enabled) {
-                securityHeaders['X-Frame-Options'] = hc['x-frame-options']?.value || 'SAMEORIGIN';
-            }
-            if (hc['content-security-policy']?.enabled && hc['content-security-policy']?.value) {
-                const csp = hc['content-security-policy'];
-                const name = csp['report-only']
-                    ? 'Content-Security-Policy-Report-Only' : 'Content-Security-Policy';
-                securityHeaders[name] = csp.value;
-            }
-        } else {
-            // Defaults when no security.headers config block exists
+        const hc: any = config.get('security.headers');
+        if (hc['x-content-type-options']?.enabled !== false) {
             securityHeaders['X-Content-Type-Options'] = 'nosniff';
-            securityHeaders['Referrer-Policy'] = 'strict-origin-when-cross-origin';
+        }
+        if (hc['referrer-policy']?.enabled !== false) {
+            securityHeaders['Referrer-Policy'] = hc['referrer-policy']?.value || 'strict-origin-when-cross-origin';
+        }
+        if (hc['x-frame-options']?.enabled) {
+            securityHeaders['X-Frame-Options'] = hc['x-frame-options']?.value || 'SAMEORIGIN';
+        }
+        if (hc['content-security-policy']?.enabled && hc['content-security-policy']?.value) {
+            const csp = hc['content-security-policy'];
+            const name = csp['report-only']
+                ? 'Content-Security-Policy-Report-Only' : 'Content-Security-Policy';
+            securityHeaders[name] = csp.value;
         }
         logger.info('Security headers: %s', JSON.stringify(securityHeaders));
 
