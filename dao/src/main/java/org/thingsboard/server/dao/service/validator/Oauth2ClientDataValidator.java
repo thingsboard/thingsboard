@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.service.validator;
 
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.SsrfProtectionValidator;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.MapperType;
@@ -27,6 +28,8 @@ import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.oauth2.TenantNameStrategyType;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
+
+import java.net.URI;
 
 @Component
 @AllArgsConstructor
@@ -63,6 +66,11 @@ public class Oauth2ClientDataValidator extends DataValidator<OAuth2Client> {
             }
             if (StringUtils.isEmpty(customConfig.getUrl())) {
                 throw new DataValidationException("Custom mapper URL should be specified!");
+            }
+            try {
+                SsrfProtectionValidator.validateUri(new URI(customConfig.getUrl()));
+            } catch (Exception e) {
+                throw new DataValidationException("Custom mapper URL is not allowed: " + e.getMessage());
             }
         }
     }
