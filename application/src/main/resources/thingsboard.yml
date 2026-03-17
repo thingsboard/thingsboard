@@ -182,6 +182,57 @@ security:
     path: "${SECURITY_JAVA_CACERTS_PATH:${java.home}/lib/security/cacerts}"
     # The password of the cacerts keystore file
     password: "${SECURITY_JAVA_CACERTS_PASSWORD:changeit}"
+  # HTTP security response headers configuration.
+  # These headers are set on responses from the ThingsBoard backend (tb-node).
+  # In microservice deployments, the web-ui (Express.js) has its own header configuration
+  # under msa/web-ui/config/ using the same environment variable names.
+  headers:
+    # X-Content-Type-Options header prevents browsers from MIME-sniffing the Content-Type.
+    # Safe to enable. Only disable if you intentionally serve resources with mismatched Content-Type.
+    x-content-type-options:
+      # Enable/disable X-Content-Type-Options header. Prevents browsers from MIME-sniffing the Content-Type
+      enabled: "${SECURITY_HEADERS_X_CONTENT_TYPE_OPTIONS_ENABLED:true}"
+    # Referrer-Policy header controls how much referrer info the browser sends with requests.
+    # The default 'strict-origin-when-cross-origin' matches the browser's built-in default,
+    # so enabling this does not change existing behavior — it just makes the policy explicit.
+    # Valid values: no-referrer, no-referrer-when-downgrade, origin, origin-when-cross-origin,
+    #              same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+    referrer-policy:
+      # Enable/disable Referrer-Policy header
+      enabled: "${SECURITY_HEADERS_REFERRER_POLICY_ENABLED:true}"
+      # Referrer-Policy header value
+      value: "${SECURITY_HEADERS_REFERRER_POLICY_VALUE:strict-origin-when-cross-origin}"
+    # X-Frame-Options header protects against clickjacking attacks by preventing the page
+    # from being loaded in iframes on other domains.
+    # Disabled by default because ThingsBoard supports multi-domain deployments where
+    # the platform may be embedded in iframes on customer domains.
+    # WARNING: Enabling with DENY will block ALL iframe embedding including dashboards
+    # embedded on external sites. Use SAMEORIGIN to allow same-domain iframes only.
+    x-frame-options:
+      # Enable/disable X-Frame-Options header. Protects against clickjacking attacks
+      enabled: "${SECURITY_HEADERS_X_FRAME_OPTIONS_ENABLED:false}"
+      # Valid values: DENY, SAMEORIGIN
+      value: "${SECURITY_HEADERS_X_FRAME_OPTIONS_VALUE:SAMEORIGIN}"
+    # Content-Security-Policy header mitigates XSS and data injection attacks by restricting
+    # which resources the browser is allowed to load.
+    # Disabled by default because ThingsBoard supports multi-domain deployments and
+    # because custom HTML Card widgets may use inline scripts, inline styles, and
+    # external resources that a restrictive CSP would block.
+    # WARNING when enabling: A strict CSP (e.g. script-src 'self') will break:
+    #   - HTML Card widgets with inline JavaScript
+    #   - Custom widget types with inline scripts/styles
+    #   - Widgets loading external resources (images, fonts, scripts)
+    #   - Dashboard embedding via iframes (if frame-ancestors is restrictive)
+    # Use 'report-only: true' first to test the impact before enforcing.
+    # Example value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; frame-ancestors 'self'"
+    content-security-policy:
+      # Enable/disable Content-Security-Policy header. Mitigates XSS and data injection attacks
+      enabled: "${SECURITY_HEADERS_CONTENT_SECURITY_POLICY_ENABLED:false}"
+      # Full CSP directive string
+      value: "${SECURITY_HEADERS_CONTENT_SECURITY_POLICY_VALUE:}"
+      # If true, uses Content-Security-Policy-Report-Only header instead — the browser
+      # reports violations but does not enforce them. Use for testing before enforcing.
+      report-only: "${SECURITY_HEADERS_CONTENT_SECURITY_POLICY_REPORT_ONLY:false}"
 
 # Mail settings parameters
 mail:
@@ -521,6 +572,10 @@ actors:
       # Comma-separated list of additional blocked destinations (IPs, CIDR subnets, or hostnames).
       # Example: "198.51.100.0/24,metadata.tencentyun.com,rancher-metadata"
       ssrf_additional_blocked_hosts: "${SSRF_ADDITIONAL_BLOCKED_HOSTS:}"
+      # Comma-separated list of allowed destinations that bypass SSRF blocking (IPs, CIDR subnets, or hostnames).
+      # Use this when your rule chains need to reach devices on private networks (e.g., 192.168.1.0/24).
+      # Example: "192.168.1.0/24,10.0.0.0/8,my-internal-service.corp"
+      ssrf_allowed_hosts: "${SSRF_ALLOWED_HOSTS:}"
   rpc:
     # Maximum number of persistent RPC call retries in case of failed request delivery.
     max_retries: "${ACTORS_RPC_MAX_RETRIES:5}"
@@ -806,21 +861,28 @@ updates:
   # Enable/disable checks for the new version
   enabled: "${UPDATES_ENABLED:true}"
 
-# Spring CORS configuration parameters
+# Spring CORS configuration parameters.
+# Controls the Access-Control-Allow-Origin and Access-Control-Allow-Credentials response headers.
+# WARNING: The default configuration allows cross-origin requests from ANY domain with credentials.
+# This means any website can make API requests on behalf of an authenticated user if the token
+# is accessible (e.g., via XSS). For production deployments, restrict to your domain(s):
+#   TB_CORS_ALLOWED_ORIGIN_PATTERNS=https://your-domain.com
+# For multi-domain deployments, list all allowed domains comma-separated:
+#   TB_CORS_ALLOWED_ORIGIN_PATTERNS=https://domain1.com,https://domain2.com
 spring.mvc.cors:
   mappings:
     # Intercept path
     "[/api/**]":
       #Comma-separated list of origins to allow. '*' allows all origins. When not set, CORS support is disabled.
-      allowed-origin-patterns: "*"
+      allowed-origin-patterns: "${TB_CORS_ALLOWED_ORIGIN_PATTERNS:*}"
       #Comma-separated list of methods to allow. '*' allows all methods.
-      allowed-methods: "*"
+      allowed-methods: "${TB_CORS_ALLOWED_METHODS:*}"
       #Comma-separated list of headers to allow in a request. '*' allows all headers.
-      allowed-headers: "*"
+      allowed-headers: "${TB_CORS_ALLOWED_HEADERS:*}"
       #How long, in seconds, the response from a pre-flight request can be cached by clients.
-      max-age: "1800"
+      max-age: "${TB_CORS_MAX_AGE:1800}"
       #Set whether credentials are supported. When not set, credentials are not supported.
-      allow-credentials: "true"
+      allow-credentials: "${TB_CORS_ALLOW_CREDENTIALS:true}"
 
 # General spring parameters
 spring.main.allow-circular-references: "true" # Spring Boot configuration property that controls whether circular dependencies between beans are allowed.
