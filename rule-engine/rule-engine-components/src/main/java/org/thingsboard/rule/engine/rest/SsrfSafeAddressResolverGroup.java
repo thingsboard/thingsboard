@@ -83,7 +83,7 @@ public final class SsrfSafeAddressResolverGroup extends AddressResolverGroup<Ine
                 InetSocketAddress resolved = future.getNow();
                 if (SsrfProtectionValidator.isEnabled() && isBlocked(resolved) && !isOriginalHostAllowed(address)) {
                     promise.tryFailure(new RuntimeException(
-                            "SSRF protection: resolved address " + resolved.getAddress().getHostAddress() + " is blocked"));
+                            "URI is invalid: host '" + resolved.getAddress().getHostAddress() + "' is not allowed"));
                 } else {
                     promise.trySuccess(resolved);
                 }
@@ -114,7 +114,7 @@ public final class SsrfSafeAddressResolverGroup extends AddressResolverGroup<Ine
                 if (safe.isEmpty()) {
                     String host = address instanceof InetSocketAddress isa ? isa.getHostString() : address.toString();
                     promise.tryFailure(new RuntimeException(
-                            "SSRF protection: all resolved addresses for " + host + " are blocked"));
+                            "URI is invalid: host '" + host + "' is not allowed"));
                 } else {
                     promise.trySuccess(safe);
                 }

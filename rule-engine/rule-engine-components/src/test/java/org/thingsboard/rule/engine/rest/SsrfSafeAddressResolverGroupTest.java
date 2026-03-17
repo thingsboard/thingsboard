@@ -18,7 +18,6 @@ package org.thingsboard.rule.engine.rest;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.resolver.AddressResolver;
 import io.netty.util.concurrent.EventExecutor;
-import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.Promise;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -100,7 +99,7 @@ class SsrfSafeAddressResolverGroupTest {
         assertThatThrownBy(() -> promise.get(10, TimeUnit.SECONDS))
                 .isInstanceOf(ExecutionException.class)
                 .hasRootCauseInstanceOf(RuntimeException.class)
-                .rootCause().hasMessageContaining("SSRF protection");
+                .rootCause().hasMessageContaining("is not allowed");
     }
 
     @Test
@@ -116,7 +115,7 @@ class SsrfSafeAddressResolverGroupTest {
         assertThatThrownBy(() -> promise.get(10, TimeUnit.SECONDS))
                 .isInstanceOf(ExecutionException.class)
                 .hasRootCauseInstanceOf(RuntimeException.class)
-                .rootCause().hasMessageContaining("SSRF protection");
+                .rootCause().hasMessageContaining("is not allowed");
     }
 
     @Test
@@ -146,4 +145,5 @@ class SsrfSafeAddressResolverGroupTest {
 
         assertThat(results).isNotEmpty();
     }
+
 }
