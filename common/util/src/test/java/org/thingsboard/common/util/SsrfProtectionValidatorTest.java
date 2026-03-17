@@ -425,4 +425,156 @@ public class SsrfProtectionValidatorTest {
         SsrfProtectionValidator.setAllowedHosts(null);
     }
 
+    @Test
+    void testIsHostnameAllowed() {
+        try {
+            SsrfProtectionValidator.setAllowedHosts(List.of("my-device.local", "Internal-Server.Corp"));
+            assertThat(SsrfProtectionValidator.isHostnameAllowed("my-device.local")).isTrue();
+            assertThat(SsrfProtectionValidator.isHostnameAllowed("MY-DEVICE.LOCAL")).isTrue(); // case-insensitive
+            assertThat(SsrfProtectionValidator.isHostnameAllowed("internal-server.corp")).isTrue();
+            assertThat(SsrfProtectionValidator.isHostnameAllowed("other-device.local")).isFalse();
+            assertThat(SsrfProtectionValidator.isHostnameAllowed("example.com")).isFalse();
+        } finally {
+            SsrfProtectionValidator.setAllowedHosts(Collections.emptyList());
+        }
+    }
+
+    @Test
+    void testIsHostnameAllowedEmptyList() {
+        SsrfProtectionValidator.setAllowedHosts(Collections.emptyList());
+        assertThat(SsrfProtectionValidator.isHostnameAllowed("anything")).isFalse();
+    }
+
+    @Test
+    void testValidateUriUsesStaticEnabledFlag() {
+        boolean original = SsrfProtectionValidator.isEnabled();
+        try {
+            // When enabled, loopback is blocked via the public one-arg overload
+            SsrfProtectionValidator.setEnabled(true);
+            assertThatThrownBy(() -> SsrfProtectionValidator.validateUri(URI.create("http://127.0.0.1")))
+                    .isInstanceOf(RuntimeException.class)
+                    .hasMessageContaining("URI is invalid");
+
+            // When disabled, loopback passes
+            SsrfProtectionValidator.setEnabled(false);
+            assertThatNoException().isThrownBy(() -> SsrfProtectionValidator.validateUri(URI.create("http://127.0.0.1")));
+        } finally {
+            SsrfProtectionValidator.setEnabled(original);
+        }
+    }
+
+    @Test
+    void testAllowListHostnameCaseInsensitive() {
+        try {
+            SsrfProtectionValidator.setAllowedHosts(List.of("My-Device.LOCAL"));
+            assertThatNoException().isThrownBy(() -> SsrfProtectionValidator.validateUri(URI.create("http://my-device.local/api"), true));
+            assertThatNoException().isThrownBy(() -> SsrfProtectionValidator.validateUri(URI.create("http://MY-DEVICE.LOCAL/api"), true));
+        } finally {
+            SsrfProtectionValidator.setAllowedHosts(Collections.emptyList());
+        }
+    }
+
+    @Test
+    void testAllowListOverridesCloudMetadataRange() {
+        try {
+            // 169.254.169.254 is link-local (blocked by default), allow-list should override
+            SsrfProtectionValidator.setAllowedHosts(List.of("169.254.169.254"));
+            assertThatNoException().isThrownBy(() -> SsrfProtectionValidator.validateUri(URI.create("http://169.254.169.254/latest/meta-data/"), true));
+            // Other link-local still blocked
+            assertThatThrownBy(() -> SsrfProtectionValidator.validateUri(URI.create("http://169.254.1.1"), true))
+                    .isInstanceOf(RuntimeException.class)
+                    .hasMessageContaining("URI is invalid");
+        } finally {
+            SsrfProtectionValidator.setAllowedHosts(Collections.emptyList());
+        }
+    }
+
+    @Test
+    void testAllowListOverridesLoopback() {
+        try {
+            SsrfProtectionValidator.setAllowedHosts(List.of("127.0.0.0/8"));
+            assertThatNoException().isThrownBy(() -> SsrfProtectionValidator.validateUri(URI.create("http://127.0.0.1"), true));
+            assertThatNoException().isThrownBy(() -> SsrfProtectionValidator.validateUri(URI.create("http://127.1.2.3"), true));
+        } finally {
+            SsrfProtectionValidator.setAllowedHosts(Collections.emptyList());
+        }
+    }
+
+    @Test
+    void testAllowListCidrBoundary() {
+        try {
+            SsrfProtectionValidator.setAllowedHosts(List.of("192.168.1.0/24"));
+            // Last address in range
+            assertThatNoException().isThrownBy(() -> SsrfProtectionValidator.validateUri(URI.create("http://192.168.1.255"), true));
+            // First address outside range
+            assertThatThrownBy(() -> SsrfProtectionValidator.validateUri(URI.create("http://192.168.2.0"), true))
+                    .isInstanceOf(RuntimeException.class)
+                    .hasMessageContaining("URI is invalid");
+            // Different subnet entirely
+            assertThatThrownBy(() -> SsrfProtectionValidator.validateUri(URI.create("http://192.168.0.1"), true))
+                    .isInstanceOf(RuntimeException.class)
+                    .hasMessageContaining("URI is invalid");
+        } finally {
+            SsrfProtectionValidator.setAllowedHosts(Collections.emptyList());
+        }
+    }
+
+    @Test
+    void testBlockedIpv6UniqueLocal() throws Exception {
+        // fc00::/7 covers fc00:: through fdff::
+        InetAddress fc00 = InetAddress.getByName("fc00::1");
+        assertThat(SsrfProtectionValidator.isBlockedAddress(fc00)).isTrue();
+
+        InetAddress fdAddr = InetAddress.getByName("fd12:3456:789a::1");
+        assertThat(SsrfProtectionValidator.isBlockedAddress(fdAddr)).isTrue();
+
+        // fe00:: is NOT in fc00::/7 (it's in fe80::/10 link-local, but fe00:: without the 80 bits is different)
+        // 2001:db8:: is a public documentation prefix, not blocked
+        InetAddress publicV6 = InetAddress.getByName("2001:db8::1");
+        assertThat(SsrfProtectionValidator.isBlockedAddress(publicV6)).isFalse();
+    }
+
+    @Test
+    void testParseHostEntriesWithWhitespaceAndBlanks() {
+        try {
+            SsrfProtectionValidator.setAllowedHosts(List.of("  192.168.1.0/24  ", "", "  ", "my-host.corp"));
+            // Trimmed CIDR works
+            assertThatNoException().isThrownBy(() -> SsrfProtectionValidator.validateUri(URI.create("http://192.168.1.1"), true));
+            // Trimmed hostname works
+            assertThat(SsrfProtectionValidator.isHostnameAllowed("my-host.corp")).isTrue();
+        } finally {
+            SsrfProtectionValidator.setAllowedHosts(Collections.emptyList());
+        }
+    }
+
+    @Test
+    void testSetAllowedHostsReplacePrevious() {
+        try {
+            SsrfProtectionValidator.setAllowedHosts(List.of("192.168.1.0/24"));
+            assertThatNoException().isThrownBy(() -> SsrfProtectionValidator.validateUri(URI.create("http://192.168.1.1"), true));
+
+            // Replace with different range
+            SsrfProtectionValidator.setAllowedHosts(List.of("10.0.0.0/8"));
+            // Old range no longer allowed
+            assertThatThrownBy(() -> SsrfProtectionValidator.validateUri(URI.create("http://192.168.1.1"), true))
+                    .isInstanceOf(RuntimeException.class)
+                    .hasMessageContaining("URI is invalid");
+            // New range allowed
+            assertThatNoException().isThrownBy(() -> SsrfProtectionValidator.validateUri(URI.create("http://10.1.2.3"), true));
+        } finally {
+            SsrfProtectionValidator.setAllowedHosts(Collections.emptyList());
+        }
+    }
+
+    @Test
+    void testAllowListHostnameBypassesBlockedHostname() {
+        try {
+            // "localhost" is in BLOCKED_HOSTNAMES; allow-listing it should let it through
+            SsrfProtectionValidator.setAllowedHosts(List.of("localhost"));
+            assertThatNoException().isThrownBy(() -> SsrfProtectionValidator.validateUri(URI.create("http://localhost/path"), true));
+        } finally {
+            SsrfProtectionValidator.setAllowedHosts(Collections.emptyList());
+        }
+    }
+
 }
