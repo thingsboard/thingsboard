@@ -171,7 +171,8 @@ class EdgeGrpcSslTest {
         Path certOnlyFile = writeTempPem("cert-only", cert);
 
         assertThatThrownBy(() -> startServer(certOnlyFile.toString(), "", null))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(RuntimeException.class)
+                .hasCauseInstanceOf(IllegalArgumentException.class);
     }
 
     // --- Server startup using production EdgeGrpcService.setupSsl() ---
