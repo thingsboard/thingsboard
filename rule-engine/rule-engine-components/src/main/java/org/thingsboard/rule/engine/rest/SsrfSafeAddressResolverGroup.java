@@ -26,14 +26,18 @@ import org.thingsboard.common.util.SsrfProtectionValidator;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Set;
 
 /**
  * Custom Netty {@link AddressResolverGroup} that validates every resolved IP address
  * against the SSRF block-list at connection time. This eliminates the DNS rebinding
  * TOCTOU gap where a hostname resolves to a safe IP during validation but to a
  * private/metadata IP when the actual connection is made.
+ * <p>
+ * Only wired into {@link TbHttpClient} when SSRF protection is enabled.
  */
 public final class SsrfSafeAddressResolverGroup extends AddressResolverGroup<InetSocketAddress> {
 
@@ -76,16 +80,22 @@ public final class SsrfSafeAddressResolverGroup extends AddressResolverGroup<Ine
         @Override
         public Future<InetSocketAddress> resolve(SocketAddress address, Promise<InetSocketAddress> promise) {
             delegate.resolve(address).addListener((Future<InetSocketAddress> future) -> {
-                if (!future.isSuccess()) {
-                    promise.tryFailure(future.cause());
-                    return;
-                }
-                InetSocketAddress resolved = future.getNow();
-                if (SsrfProtectionValidator.isEnabled() && isBlocked(resolved) && !isOriginalHostAllowed(address)) {
-                    promise.tryFailure(new RuntimeException(
-                            "URI is invalid: host '" + resolved.getAddress().getHostAddress() + "' is not allowed"));
-                } else {
-                    promise.trySuccess(resolved);
+                try {
+                    if (!future.isSuccess()) {
+                        promise.tryFailure(future.cause());
+                        return;
+                    }
+                    InetSocketAddress resolved = future.getNow();
+                    if (isOriginalHostAllowed(address)) {
+                        promise.trySuccess(resolved);
+                    } else if (isBlocked(resolved)) {
+                        promise.tryFailure(new RuntimeException(
+                                "URI is invalid: host '" + getHostString(address) + "' is not allowed"));
+                    } else {
+                        promise.trySuccess(resolved);
+                    }
+                } catch (Exception e) {
+                    promise.tryFailure(e);
                 }
             });
             return promise;
@@ -99,24 +109,41 @@ public final class SsrfSafeAddressResolverGroup extends AddressResolverGroup<Ine
         @Override
         public Future<List<InetSocketAddress>> resolveAll(SocketAddress address, Promise<List<InetSocketAddress>> promise) {
             delegate.resolveAll(address).addListener((Future<List<InetSocketAddress>> future) -> {
-                if (!future.isSuccess()) {
-                    promise.tryFailure(future.cause());
-                    return;
-                }
-                List<InetSocketAddress> resolved = future.getNow();
-                if (!SsrfProtectionValidator.isEnabled() || isOriginalHostAllowed(address)) {
-                    promise.trySuccess(resolved);
-                    return;
-                }
-                List<InetSocketAddress> safe = resolved.stream()
-                        .filter(addr -> !isBlocked(addr))
-                        .collect(Collectors.toList());
-                if (safe.isEmpty()) {
-                    String host = address instanceof InetSocketAddress isa ? isa.getHostString() : address.toString();
-                    promise.tryFailure(new RuntimeException(
-                            "URI is invalid: host '" + host + "' is not allowed"));
-                } else {
-                    promise.trySuccess(safe);
+                try {
+                    if (!future.isSuccess()) {
+                        promise.tryFailure(future.cause());
+                        return;
+                    }
+                    List<InetSocketAddress> resolved = future.getNow();
+                    if (isOriginalHostAllowed(address)) {
+                        promise.trySuccess(resolved);
+                        return;
+                    }
+                    Set<InetSocketAddress> blocked = null;
+                    for (InetSocketAddress addr : resolved) {
+                        if (isBlocked(addr)) {
+                            if (blocked == null) {
+                                blocked = new HashSet<>(2);
+                            }
+                            blocked.add(addr);
+                        }
+                    }
+                    if (blocked == null) {
+                        promise.trySuccess(resolved);
+                    } else if (blocked.size() == resolved.size()) {
+                        promise.tryFailure(new RuntimeException(
+                                "URI is invalid: host '" + getHostString(address) + "' is not allowed"));
+                    } else {
+                        List<InetSocketAddress> safe = new ArrayList<>(resolved.size() - blocked.size());
+                        for (InetSocketAddress addr : resolved) {
+                            if (!blocked.contains(addr)) {
+                                safe.add(addr);
+                            }
+                        }
+                        promise.trySuccess(safe);
+                    }
+                } catch (Exception e) {
+                    promise.tryFailure(e);
                 }
             });
             return promise;
@@ -138,6 +165,10 @@ public final class SsrfSafeAddressResolverGroup extends AddressResolverGroup<Ine
                 return host != null && SsrfProtectionValidator.isHostnameAllowed(host);
             }
             return false;
+        }
+
+        private static String getHostString(SocketAddress address) {
+            return address instanceof InetSocketAddress isa ? isa.getHostString() : address.toString();
         }
     }
 }

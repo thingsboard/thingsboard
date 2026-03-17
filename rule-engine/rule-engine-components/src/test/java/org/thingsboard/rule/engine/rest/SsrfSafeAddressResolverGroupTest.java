@@ -133,17 +133,29 @@ class SsrfSafeAddressResolverGroupTest {
     }
 
     @Test
-    void resolveAllReturnsAllWhenSsrfDisabled() throws Exception {
-        SsrfProtectionValidator.setEnabled(false);
-
+    void resolveAllPublicIpSucceeds() throws Exception {
         EventExecutor executor = eventLoopGroup.next();
         AddressResolver<InetSocketAddress> resolver = SsrfSafeAddressResolverGroup.INSTANCE.getResolver(executor);
         Promise<List<InetSocketAddress>> promise = executor.newPromise();
 
-        executor.submit(() -> resolver.resolveAll(InetSocketAddress.createUnresolved("127.0.0.1", 80), promise));
+        executor.submit(() -> resolver.resolveAll(InetSocketAddress.createUnresolved("8.8.8.8", 80), promise));
         List<InetSocketAddress> results = promise.get(10, TimeUnit.SECONDS);
 
         assertThat(results).isNotEmpty();
+        assertThat(results.get(0).getAddress().getHostAddress()).isEqualTo("8.8.8.8");
+    }
+
+    @Test
+    void resolveAllPrivateIpFailsWhenSsrfEnabled() {
+        assertThatThrownBy(() -> {
+            EventExecutor executor = eventLoopGroup.next();
+            AddressResolver<InetSocketAddress> resolver = SsrfSafeAddressResolverGroup.INSTANCE.getResolver(executor);
+            Promise<List<InetSocketAddress>> promise = executor.newPromise();
+            executor.submit(() -> resolver.resolveAll(InetSocketAddress.createUnresolved("127.0.0.1", 80), promise));
+            promise.get(10, TimeUnit.SECONDS);
+        }).isInstanceOf(ExecutionException.class)
+                .hasRootCauseInstanceOf(RuntimeException.class)
+                .rootCause().hasMessageContaining("is not allowed");
     }
 
 }
