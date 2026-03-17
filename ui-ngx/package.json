@@ -8,6 +8,9 @@
     "build:prod": "node --max_old_space_size=4096 ./node_modules/@angular/cli/bin/ng build --configuration production",
     "build:types": "node generate-types.js",
     "build:icon-metadata": "node generate-icon-metadata.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "lint": "ng lint",
     "prepare": "patch-package"
   },
@@ -93,6 +96,8 @@
     "zone.js": "~0.15.1"
   },
   "devDependencies": {
+    "@analogjs/vite-plugin-angular": "^2.3.1",
+    "@analogjs/vitest-angular": "^2.3.1",
     "@angular-builders/custom-esbuild": "20.0.0",
     "@angular-devkit/build-angular": "20.3.18",
     "@angular-devkit/core": "20.3.18",
@@ -126,6 +131,7 @@
     "eslint-plugin-jsdoc": "^62.4.1",
     "eslint-plugin-prefer-arrow": "^1.2.3",
     "eslint-plugin-tailwindcss": "^3.18.2",
+    "jsdom": "^29.0.0",
     "ngrx-store-freeze": "^0.2.4",
     "patch-package": "^8.0.1",
     "postcss": "^8.5.6",
@@ -133,7 +139,8 @@
     "tailwindcss": "^3.4.19",
     "ts-node": "^10.9.2",
     "typescript": "~5.9.3",
-    "typescript-eslint": "^8.54.0"
+    "typescript-eslint": "^8.54.0",
+    "vitest": "^4.1.0"
   },
   "resolutions": {
     "ace-builds": "1.43.6",

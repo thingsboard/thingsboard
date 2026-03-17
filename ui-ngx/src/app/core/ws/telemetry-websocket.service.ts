@@ -15,6 +15,7 @@
 ///
 
 import { Inject, Injectable, NgZone } from '@angular/core';
+import { DomSanitizer } from '@angular/platform-browser';
 import {
   AlarmCountCmd,
   AlarmCountUnsubscribeCmd,
@@ -57,6 +58,7 @@ import { AppState } from '@core/core.state';
 import { AuthService } from '@core/auth/auth.service';
 import { WINDOW } from '@core/services/window.service';
 import { WebsocketService } from '@core/ws/websocket.service';
+import { sanitizeWsMessage } from '@core/services/sanitize.utils';
 
 // @dynamic
 @Injectable({
@@ -69,7 +71,8 @@ export class TelemetryWebsocketService extends WebsocketService<TelemetrySubscri
   constructor(protected store: Store<AppState>,
               protected authService: AuthService,
               protected ngZone: NgZone,
-              @Inject(WINDOW) protected window: Window) {
+              @Inject(WINDOW) protected window: Window,
+              private sanitizer: DomSanitizer) {
     super(store, authService, ngZone, 'api/ws', new TelemetryPluginCmdsWrapper(), window);
   }
 
@@ -147,6 +150,7 @@ export class TelemetryWebsocketService extends WebsocketService<TelemetrySubscri
   }
 
   processOnMessage(message: WebsocketDataMsg) {
+    sanitizeWsMessage(this.sanitizer, message);
     let subscriber: TelemetrySubscriber | NotificationSubscriber;
     if ('cmdId' in message && message.cmdId) {
       subscriber = this.subscribersMap.get(message.cmdId);
