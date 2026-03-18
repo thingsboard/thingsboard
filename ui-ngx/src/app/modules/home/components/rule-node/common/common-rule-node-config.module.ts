@@ -33,6 +33,7 @@ import { RelationsQueryConfigOldComponent } from './relations-query-config-old.c
 import { SelectAttributesComponent } from './select-attributes.component';
 import { AlarmStatusSelectComponent } from './alarm-status-select.component';
 import { ExampleHintComponent } from './example-hint.component';
+import { KvListConfigComponent } from '@home/components/rule-node/common/kv-list-config.component';
 
 @NgModule({
   declarations: [
@@ -51,6 +52,7 @@ import { ExampleHintComponent } from './example-hint.component';
     SelectAttributesComponent,
     AlarmStatusSelectComponent,
     ExampleHintComponent,
+    KvListConfigComponent
   ],
   imports: [
     CommonModule,
@@ -73,6 +75,7 @@ import { ExampleHintComponent } from './example-hint.component';
     SelectAttributesComponent,
     AlarmStatusSelectComponent,
     ExampleHintComponent,
+    KvListConfigComponent
   ]
 })
 
