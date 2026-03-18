@@ -159,61 +159,69 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>com.spotify</groupId>
-                <artifactId>dockerfile-maven-plugin</artifactId>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
                 <executions>
                     <execution>
                         <id>build-docker-tb-postgres-image</id>
                         <phase>pre-integration-test</phase>
-                        <goals>
-                            <goal>build</goal>
-                        </goals>
+                        <goals><goal>exec</goal></goals>
                         <configuration>
                             <skip>${dockerfile.skip}</skip>
-                            <repository>${docker.repo}/${tb-postgres.docker.name}</repository>
-                            <verbose>true</verbose>
-                            <googleContainerRegistryEnabled>false</googleContainerRegistryEnabled>
-                            <contextDirectory>${project.build.directory}/docker-postgres</contextDirectory>
-                            <noCache>true</noCache>
+                            <executable>docker</executable>
+                            <workingDirectory>${project.build.directory}/docker-postgres</workingDirectory>
+                            <arguments>
+                                <argument>build</argument>
+                                <argument>--no-cache</argument>
+                                <argument>-t</argument>
+                                <argument>${docker.repo}/${tb-postgres.docker.name}:latest</argument>
+                                <argument>.</argument>
+                            </arguments>
                         </configuration>
                     </execution>
                     <execution>
                         <id>tag-docker-tb-postgres-image</id>
                         <phase>pre-integration-test</phase>
-                        <goals>
-                            <goal>tag</goal>
-                        </goals>
+                        <goals><goal>exec</goal></goals>
                         <configuration>
                             <skip>${dockerfile.skip}</skip>
-                            <repository>${docker.repo}/${tb-postgres.docker.name}</repository>
-                            <tag>${project.version}</tag>
+                            <executable>docker</executable>
+                            <arguments>
+                                <argument>tag</argument>
+                                <argument>${docker.repo}/${tb-postgres.docker.name}:latest</argument>
+                                <argument>${docker.repo}/${tb-postgres.docker.name}:${project.version}</argument>
+                            </arguments>
                         </configuration>
                     </execution>
                     <execution>
                         <id>build-docker-tb-cassandra-image</id>
                         <phase>pre-integration-test</phase>
-                        <goals>
-                            <goal>build</goal>
-                        </goals>
+                        <goals><goal>exec</goal></goals>
                         <configuration>
                             <skip>${dockerfile.skip}</skip>
-                            <repository>${docker.repo}/${tb-cassandra.docker.name}</repository>
-                            <verbose>true</verbose>
-                            <googleContainerRegistryEnabled>false</googleContainerRegistryEnabled>
-                            <contextDirectory>${project.build.directory}/docker-cassandra</contextDirectory>
-                            <noCache>true</noCache>
+                            <executable>docker</executable>
+                            <workingDirectory>${project.build.directory}/docker-cassandra</workingDirectory>
+                            <arguments>
+                                <argument>build</argument>
+                                <argument>--no-cache</argument>
+                                <argument>-t</argument>
+                                <argument>${docker.repo}/${tb-cassandra.docker.name}:latest</argument>
+                                <argument>.</argument>
+                            </arguments>
                         </configuration>
                     </execution>
                     <execution>
                         <id>tag-docker-tb-cassandra-image</id>
                         <phase>pre-integration-test</phase>
-                        <goals>
-                            <goal>tag</goal>
-                        </goals>
+                        <goals><goal>exec</goal></goals>
                         <configuration>
                             <skip>${dockerfile.skip}</skip>
-                            <repository>${docker.repo}/${tb-cassandra.docker.name}</repository>
-                            <tag>${project.version}</tag>
+                            <executable>docker</executable>
+                            <arguments>
+                                <argument>tag</argument>
+                                <argument>${docker.repo}/${tb-cassandra.docker.name}:latest</argument>
+                                <argument>${docker.repo}/${tb-cassandra.docker.name}:${project.version}</argument>
+                            </arguments>
                         </configuration>
                     </execution>
                 </executions>
@@ -231,51 +239,55 @@
             <build>
                 <plugins>
                     <plugin>
-                        <groupId>com.spotify</groupId>
-                        <artifactId>dockerfile-maven-plugin</artifactId>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
                         <executions>
                             <execution>
                                 <id>push-latest-docker-tb-postgres-image</id>
                                 <phase>pre-integration-test</phase>
-                                <goals>
-                                    <goal>push</goal>
-                                </goals>
+                                <goals><goal>exec</goal></goals>
                                 <configuration>
-                                    <tag>latest</tag>
-                                    <repository>${docker.repo}/${tb-postgres.docker.name}</repository>
+                                    <executable>docker</executable>
+                                    <arguments>
+                                        <argument>push</argument>
+                                        <argument>${docker.repo}/${tb-postgres.docker.name}:latest</argument>
+                                    </arguments>
                                 </configuration>
                             </execution>
                             <execution>
                                 <id>push-version-docker-tb-postgres-image</id>
                                 <phase>pre-integration-test</phase>
-                                <goals>
-                                    <goal>push</goal>
-                                </goals>
+                                <goals><goal>exec</goal></goals>
                                 <configuration>
-                                    <tag>${project.version}</tag>
-                                    <repository>${docker.repo}/${tb-postgres.docker.name}</repository>
+                                    <executable>docker</executable>
+                                    <arguments>
+                                        <argument>push</argument>
+                                        <argument>${docker.repo}/${tb-postgres.docker.name}:${project.version}</argument>
+                                    </arguments>
                                 </configuration>
                             </execution>
                             <execution>
                                 <id>push-latest-docker-tb-cassandra-image</id>
                                 <phase>pre-integration-test</phase>
-                                <goals>
-                                    <goal>push</goal>
-                                </goals>
+                                <goals><goal>exec</goal></goals>
                                 <configuration>
-                                    <tag>latest</tag>
-                                    <repository>${docker.repo}/${tb-cassandra.docker.name}</repository>
+                                    <executable>docker</executable>
+                                    <arguments>
+                                        <argument>push</argument>
+                                        <argument>${docker.repo}/${tb-cassandra.docker.name}:latest</argument>
+                                    </arguments>
                                 </configuration>
                             </execution>
                             <execution>
                                 <id>push-version-docker-tb-cassandra-image</id>
                                 <phase>pre-integration-test</phase>
-                                <goals>
-                                    <goal>push</goal>
-                                </goals>
+                                <goals><goal>exec</goal></goals>
                                 <configuration>
-                                    <tag>${project.version}</tag>
-                                    <repository>${docker.repo}/${tb-cassandra.docker.name}</repository>
+                                    <executable>docker</executable>
+                                    <arguments>
+                                        <argument>push</argument>
+                                        <argument>${docker.repo}/${tb-cassandra.docker.name}:${project.version}</argument>
+                                    </arguments>
                                 </configuration>
                             </execution>
                         </executions>
