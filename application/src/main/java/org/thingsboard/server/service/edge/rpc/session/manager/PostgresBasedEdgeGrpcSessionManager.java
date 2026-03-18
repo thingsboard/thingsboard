@@ -46,7 +46,6 @@ public class PostgresBasedEdgeGrpcSessionManager extends AbstractEdgeGrpcSession
 
     private final EdgeSessionsHolder edgeSessions;
 
-    // todo: verify handled properly
     private final Lock newEventsLock = new ReentrantLock();
     private final AtomicReference<ScheduledFuture<?>> edgeEventCheckFutureRef = new AtomicReference<>();
     private PostgresGeneralEdgeEventsDispatcher generalEdgeEventsDispatcher;
