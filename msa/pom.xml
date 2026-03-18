@@ -39,7 +39,7 @@
         <docker.base.image>thingsboard/openjdk17:bookworm-slim</docker.base.image>
         <dockerfile.skip>true</dockerfile.skip>
         <blackBoxTests.skip>true</blackBoxTests.skip>
-        <dockerfile-maven.version>1.4.13</dockerfile-maven.version>
+        <exec-maven-plugin.version>3.5.1</exec-maven-plugin.version>
         <docker.push-arm-amd-image.phase>none</docker.push-arm-amd-image.phase>
     </properties>
 
@@ -248,19 +248,12 @@
         </profile>
     </profiles>
     <build>
-        <extensions>
-            <extension>
-                <groupId>com.spotify</groupId>
-                <artifactId>dockerfile-maven-extension</artifactId>
-                <version>${dockerfile-maven.version}</version>
-            </extension>
-        </extensions>
         <pluginManagement>
             <plugins>
                 <plugin>
-                    <groupId>com.spotify</groupId>
-                    <artifactId>dockerfile-maven-plugin</artifactId>
-                    <version>${dockerfile-maven.version}</version>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>exec-maven-plugin</artifactId>
+                    <version>${exec-maven-plugin.version}</version>
                 </plugin>
             </plugins>
         </pluginManagement>
