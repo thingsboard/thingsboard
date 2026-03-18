@@ -24,6 +24,8 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.rpc.EdgeSessionState;
 import org.thingsboard.server.service.edge.rpc.session.manager.EdgeGrpcSessionManager;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -40,8 +42,10 @@ public class EdgeSessionsHolder {
     private final ConcurrentMap<UUID, EdgeGrpcSessionManager> sessionsById = new ConcurrentHashMap<>();
 
     public void forEach(Consumer<EdgeGrpcSessionManager> consumer) {
-        sessions.values().forEach(consumer);
-        sessionsById.values().forEach(consumer);
+        Set<EdgeGrpcSessionManager> unique = new HashSet<>(sessions.values());
+        unique.addAll(sessionsById.values());
+
+        unique.forEach(consumer);
     }
 
     public void put(EdgeGrpcSessionManager session) {
@@ -73,7 +77,7 @@ public class EdgeSessionsHolder {
             return;
         }
         EdgeSessionState sessionState = session.getState();
-        removeByEdgeId(sessionState.getEdge().getId()); // todo: react to warnings
+        removeByEdgeId(sessionState.getEdgeId());
         removeBySessionId(sessionState.getSessionId());
     }
 }

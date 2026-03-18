@@ -85,7 +85,7 @@ public class GrpcServer {
             server.start();
         } catch (IOException e) {
             log.error("Failed to start Edge RPC server!", e);
-            throw new RuntimeException("Failed to start Edge RPC server!");
+            throw new RuntimeException("Failed to start Edge RPC server!", e);
         }
         log.info("Edge RPC server initialized!");
     }

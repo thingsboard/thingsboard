@@ -334,7 +334,7 @@ public class EdgeGrpcSession implements EdgeSession {
                 log.debug("[{}][{}][{}] Msg processing failed! Msg Id: [{}], Error msg: {}", getTenantId(), getEdgeId(), getSessionId(), msg.getDownlinkMsgId(), msg.getErrorMsg());
                 DownlinkMsg downlinkMsg = state.getPendingMsgsMap().get(msg.getDownlinkMsgId());
                 // if NOT timeseries or attributes failures - ack failed downlink
-                if (downlinkMsg.getEntityDataCount() == 0) {
+                if (downlinkMsg != null && downlinkMsg.getEntityDataCount() == 0) {
                     state.getPendingMsgsMap().remove(msg.getDownlinkMsgId());
                 }
             }

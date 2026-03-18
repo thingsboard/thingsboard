@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.edge.rpc.session;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,6 +51,10 @@ public class DefaultZombieSessionCleanupService implements ZombieSessionCleanupS
     public DefaultZombieSessionCleanupService() {
         this.zombieSessions = new ConcurrentLinkedQueue<>();
         this.zombieSessionsExecutorService = ThingsBoardExecutors.newSingleThreadScheduledExecutor("zombie-sessions");
+    }
+
+    @PostConstruct
+    public void init() {
         this.zombieSessionsExecutorService.scheduleAtFixedRate(this::cleanupZombieSessions, 30, 60, TimeUnit.SECONDS);
     }
 
@@ -86,7 +91,7 @@ public class DefaultZombieSessionCleanupService implements ZombieSessionCleanupS
                 }
             });
         } catch (Exception e) {
-            log.warn("Failed to cleanup kafka sessions", e);
+            log.warn("Failed to cleanup zombie sessions", e);
         }
     }
 

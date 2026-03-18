@@ -101,11 +101,12 @@ public abstract class AbstractEdgeGrpcSessionManager extends EdgeGrpcSessionDele
     @Override
     public void onConfigurationUpdate(Edge edge) {
         EdgeSessionState state = getState();
-        CustomerId stateCustomerId = null;
-        if (state != null) {
-            stateCustomerId = state.getEdge().getCustomerId();
-            state.setEdge(edge);
+        if (state == null) {
+            log.warn("Session state is null, skipping configuration update for edge [{}]", edge.getId());
+            return;
         }
+        CustomerId stateCustomerId = state.getEdge().getCustomerId();
+        state.setEdge(edge);
         if (stateCustomerId != null && !stateCustomerId.equals(edge.getCustomerId())) {
             // do not send edge configuration message on customer update
             // message send by separate flow from assign_to or unassing_from customer
@@ -128,13 +129,21 @@ public abstract class AbstractEdgeGrpcSessionManager extends EdgeGrpcSessionDele
 
         try (finalSession) {
             if (!destroy()) {
-                log.warn("[{}][{}] Session destroy failed for edge [{}] with session id [{}]. Adding to zombie queue for later cleanup.",
-                        state.getTenantId(), state.getEdgeId(), state.getEdge().getName(), state.getSessionId());
+                if (state != null) {
+                    log.warn("[{}][{}] Session destroy failed for edge [{}] with session id [{}]. Adding to zombie queue for later cleanup.",
+                            state.getTenantId(), state.getEdgeId(), state.getEdge().getName(), state.getSessionId());
+                } else {
+                    log.warn("Session destroy failed (state is null). Adding to zombie queue for later cleanup.");
+                }
                 zombieSessionCleanupService.add(this);
             }
         } catch (Exception e) {
-            log.warn("[{}][{}] Exception during session destroy for edge [{}] with session id [{}]",
-                    state.getTenantId(), state.getEdgeId(), state.getEdge().getName(), state.getSessionId(), e);
+            if (state != null) {
+                log.warn("[{}][{}] Exception during session destroy for edge [{}] with session id [{}]",
+                        state.getTenantId(), state.getEdgeId(), state.getEdge().getName(), state.getSessionId(), e);
+            } else {
+                log.warn("Exception during session destroy (state is null)", e);
+            }
         }
     }
 }

@@ -221,8 +221,10 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         EdgeGrpcSessionManager current = sessions.getByEdgeId(edgeId);
         if (current != null && current.getState().getSessionId().equals(sessionId)) {
             EdgeGrpcSessionManager toRemove = sessions.removeByEdgeId(edgeId);
-            toRemove.onEdgeDisconnect();
-            toRemove.destroyAndMarkAsZombieIfFailed();
+            if (toRemove != null) {
+                toRemove.onEdgeDisconnect();
+                toRemove.destroyAndMarkAsZombieIfFailed();
+            }
             sessions.removeBySessionId(sessionId);
             save(tenantId, edgeId, ACTIVITY_STATE, false);
             long lastDisconnectTs = System.currentTimeMillis();
@@ -382,9 +384,9 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         }
     }
 
-    private void shutdownExecutorSafely(ExecutorService sendDownlinkExecutorService) {
-        if (sendDownlinkExecutorService != null && !sendDownlinkExecutorService.isShutdown()) {
-            sendDownlinkExecutorService.shutdown();
+    private void shutdownExecutorSafely(ExecutorService e) {
+        if (e != null && !e.isShutdown()) {
+            e.shutdown();
         }
     }
 }
