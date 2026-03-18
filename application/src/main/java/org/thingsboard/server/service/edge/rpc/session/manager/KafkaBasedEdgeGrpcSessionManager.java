@@ -292,10 +292,11 @@ public class KafkaBasedEdgeGrpcSessionManager extends AbstractEdgeGrpcSessionMan
         EdgeSessionState state = getState();
         try {
             if (!consumerExecutor.awaitTermination(10, java.util.concurrent.TimeUnit.SECONDS)) {
-                consumerExecutor.shutdownNow(); // todo: verify it is acceptable
+                consumerExecutor.shutdownNow();
             }
         } catch (InterruptedException ie) {
             log.warn("[{}][{}] Interrupted while awaiting consumer executor termination", state.getTenantId(), state.getEdgeId());
+            Thread.currentThread().interrupt();
         }
     }
 }
