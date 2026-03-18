@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.service.edge.rpc.EdgeSessionState;
 import org.thingsboard.server.service.edge.rpc.processor.PostgresGeneralEdgeEventsDispatcher;
 import org.thingsboard.server.service.edge.rpc.session.EdgeSessionsHolder;
 
@@ -148,8 +149,8 @@ public class PostgresBasedEdgeGrpcSessionManager extends AbstractEdgeGrpcSession
     }
 
     private void cancelScheduleEdgeEventsCheck() {
-        EdgeId edgeId = getState().getEdgeId();
-        log.trace("[{}] cancelling edge event check for edge", edgeId);
+        EdgeSessionState state = getState();
+        log.trace("[{}] cancelling edge event check for edge", state != null ? state.getEdgeId() : "unknown");
 
         ScheduledFuture<?> sf = edgeEventCheckFutureRef.getAndSet(null);
         if (sf != null && !sf.isCancelled() && !sf.isDone()) {
@@ -169,7 +170,10 @@ public class PostgresBasedEdgeGrpcSessionManager extends AbstractEdgeGrpcSession
         newEventsLock.lock();
         try {
             if (hasNewEvents != newEventsPresent) {
-                log.trace("[{}] set session new events flag to {} [{}]", getState().getTenantId(), newEventsPresent, getState().getEdgeId());
+                EdgeSessionState state = getState();
+                if (state != null) {
+                    log.trace("[{}] set session new events flag to {} [{}]", state.getTenantId(), newEventsPresent, state.getEdgeId());
+                }
                 hasNewEvents = newEventsPresent;
             }
         } finally {
