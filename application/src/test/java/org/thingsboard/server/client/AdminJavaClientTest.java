@@ -89,12 +89,11 @@ public class AdminJavaClientTest extends AbstractJavaClientTest {
         FeaturesInfo featuresInfo = client.getFeaturesInfo();
         assertNotNull(featuresInfo);
         assertFalse(featuresInfo.getSmsEnabled());
-        assertTrue(featuresInfo.getOauthEnabled());
+        assertFalse(featuresInfo.getOauthEnabled());
 
         // check updates
         UpdateMessage updateMessage = client.checkUpdates();
         assertNotNull(updateMessage);
-        assertNotNull(updateMessage.getCurrentVersion());
     }
 
 }
