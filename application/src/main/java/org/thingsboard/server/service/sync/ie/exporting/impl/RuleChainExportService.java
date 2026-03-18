@@ -62,11 +62,6 @@ public class RuleChainExportService extends BaseEntityExportService<RuleChainId,
     }
 
     @Override
-    protected RuleChainExportData newExportData() {
-        return new RuleChainExportData();
-    }
-
-    @Override
     public Set<EntityType> getSupportedEntityTypes() {
         return Set.of(EntityType.RULE_CHAIN);
     }

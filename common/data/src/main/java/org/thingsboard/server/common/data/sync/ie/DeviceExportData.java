@@ -23,6 +23,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 
 @Schema
@@ -30,6 +31,9 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 @ToString(callSuper = true)
 @Data
 public class DeviceExportData extends EntityExportData<Device> {
+
+    @Override
+    public EntityType getEntityType() { return EntityType.DEVICE; }
 
     @JsonProperty(index = 3)
     @JsonIgnoreProperties({"id", "deviceId", "createdTime", "version"})
