@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.EntityType;
 
 import java.util.UUID;
 
+@Schema(allOf = EntityId.class)
 public class TenantProfileId extends UUIDBased implements EntityId {
 
     private static final long serialVersionUID = 1L;
@@ -35,7 +36,7 @@ public class TenantProfileId extends UUIDBased implements EntityId {
         return new TenantProfileId(UUID.fromString(tenantProfileId));
     }
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "string", example = "TENANT_PROFILE", allowableValues = "TENANT_PROFILE")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, accessMode = Schema.AccessMode.READ_ONLY, description = "string", example = "TENANT_PROFILE", allowableValues = "TENANT_PROFILE")
     @Override
     public EntityType getEntityType() {
         return EntityType.TENANT_PROFILE;

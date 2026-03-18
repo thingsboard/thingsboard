@@ -14,46 +14,56 @@
 # limitations under the License.
 #
 
-queue_type: "kafka"
-request_topic: "js_eval.requests"
-queue_prefix: ""
-http_port: "8888" # /livenessProbe
+# Queue configuration
+# Defines the messaging queue backend used to dispatch JS evaluation requests to the executor and receive results.
+queue_type: "kafka" # Queue type used for JS evaluation requests: kafka or in-memory
+request_topic: "js_eval.requests" # Kafka topic name for incoming JS evaluation requests
+queue_prefix: "" # Optional prefix applied to all queue/topic names; useful for environment isolation
+http_port: "8888" # HTTP port exposing the /livenessProbe health check endpoint
 
+# JavaScript execution configuration
+# Controls response polling behavior and output size limits for individual JS script executions.
 js:
-  response_poll_interval: "25"
-  max_result_size: "300000"
+  response_poll_interval: "25" # Interval in milliseconds to poll for JS execution responses
+  max_result_size: "300000" # Maximum allowed size in bytes of a JS execution result
 
+# Kafka configuration
+# Connection, producer, and topic settings for the Kafka message broker used as the JS evaluation queue.
 kafka:
   bootstrap:
     # Kafka Bootstrap Servers
     servers: "localhost:9092"
-  replication_factor: "1"
+  replication_factor: "1" # Number of replicas for each Kafka topic partition
   acks: "1" # -1 = all; 0 = no acknowledgments; 1 = only waits for the leader to acknowledge
-  batch_size: "128" # for producer
-  linger_ms: "5" # for producer
+  batch_size: "128" # Maximum number of messages to accumulate before triggering a batch send
+  linger_ms: "5" # Time in milliseconds the producer waits before sending a batch, allowing more messages to accumulate
   partitions_consumed_concurrently: "1" # (EXPERIMENTAL) increase this value if you are planning to handle more than one partition (scale up, scale down) - this will decrease the latency
-  requestTimeout: "30000" # The default value in kafkajs is: 30000
-  connectionTimeout: "1000" # The default value in kafkajs is: 1000
-  compression: "none" # gzip or uncompressed
-  topic_properties: "retention.ms:604800000;segment.bytes:52428800;retention.bytes:104857600;partitions:100;min.insync.replicas:1"
-  use_confluent_cloud: false
-  client_id: "kafkajs" #inject pod name to easy identify the client using /opt/kafka/bin/kafka-consumer-groups.sh
+  requestTimeout: "30000" # Time in milliseconds to wait for a response to a Kafka request before timing out
+  connectionTimeout: "1000" # Time in milliseconds to wait when establishing a connection to a Kafka broker
+  compression: "none" # Message compression codec for the producer: none, gzip
+  topic_properties: "retention.ms:604800000;segment.bytes:52428800;retention.bytes:104857600;partitions:100;min.insync.replicas:1" # Semicolon-separated Kafka topic configuration properties applied on topic creation
+  use_confluent_cloud: false # Set to true to enable Confluent Cloud-specific configuration (SSL + SASL)
+  client_id: "kafkajs" # Kafka client identifier; inject the pod name to easily identify the client via kafka-consumer-groups.sh
   ssl:
-    enabled: false
+    enabled: false # Enable SSL/TLS for Kafka broker connections
   confluent:
     sasl:
-      mechanism: "PLAIN"
+      mechanism: "PLAIN" # SASL mechanism for Confluent Cloud authentication: PLAIN, SCRAM-SHA-256, or SCRAM-SHA-512
 
+# Logging configuration
+# Controls log verbosity, output directory, and log file naming pattern for the JS executor service.
 logger:
-  level: "info"
-  path: "logs"
-  filename: "tb-js-executor-%DATE%.log"
+  level: "info" # Log level: trace, debug, info, warn, or error
+  path: "logs" # Directory path where log files are written
+  filename: "tb-js-executor-%DATE%.log" # Log file name pattern; %DATE% is replaced with the current date
 
+# JavaScript execution and monitoring configuration
+# Sandboxing, script caching, and observability settings for the JS script runtime.
 script:
-  use_sandbox: "true"
-  memory_usage_trace_frequency: "1000"
-  script_body_trace_frequency: "10000"
-  stat_print_frequency: "10000"
-  max_active_scripts: "1000"
-  slow_query_log_ms: "5.000000" #millis
-  slow_query_log_body: "false"
+  use_sandbox: "true" # Run scripts inside an isolated sandbox to prevent access to Node.js internals
+  memory_usage_trace_frequency: "1000" # Log memory usage every N script executions
+  script_body_trace_frequency: "10000" # Log the script body every N script executions
+  stat_print_frequency: "10000" # Print execution statistics every N script executions
+  max_active_scripts: "1000" # Maximum number of compiled scripts kept in the cache
+  slow_query_log_ms: "5.000000" # Execution time threshold in milliseconds above which a script is considered slow and logged
+  slow_query_log_body: "false" # Log the script body when execution time exceeds slow_query_log_ms threshold

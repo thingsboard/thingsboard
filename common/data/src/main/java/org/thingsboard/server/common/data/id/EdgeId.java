@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.EntityType;
 import java.io.Serial;
 import java.util.UUID;
 
+@Schema(allOf = EntityId.class)
 public class EdgeId extends UUIDBased implements EntityId {
 
     @Serial
@@ -43,7 +44,7 @@ public class EdgeId extends UUIDBased implements EntityId {
         return new EdgeId(UUID.fromString(edgeId));
     }
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "string", example = "EDGE", allowableValues = "EDGE")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, accessMode = Schema.AccessMode.READ_ONLY, description = "string", example = "EDGE", allowableValues = "EDGE")
     @Override
     public EntityType getEntityType() {
         return EntityType.EDGE;

@@ -22,6 +22,7 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 
 import java.util.ArrayList;
@@ -31,6 +32,9 @@ import java.util.List;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class WidgetsBundleExportData extends EntityExportData<WidgetsBundle> {
+
+    @Override
+    public EntityType getEntityType() { return EntityType.WIDGETS_BUNDLE; }
 
     @ArraySchema(arraySchema = @Schema(description = "List of widgets in the bundle"), schema = @Schema(implementation = JsonNode.class))
     @JsonProperty(index = 3)
