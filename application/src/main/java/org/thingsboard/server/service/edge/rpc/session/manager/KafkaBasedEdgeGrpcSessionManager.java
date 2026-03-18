@@ -35,7 +35,7 @@ import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.kafka.KafkaAdmin;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.util.TbKafkaComponent;
-import org.thingsboard.server.service.edge.rpc.DownlinkMessageMapper;
+
 import org.thingsboard.server.service.edge.rpc.EdgeSessionState;
 import org.thingsboard.server.service.edge.rpc.processor.PostgresGeneralEdgeEventsDispatcher;
 import org.thingsboard.server.service.edge.rpc.session.EdgeSessionsHolder;
@@ -61,7 +61,6 @@ public class KafkaBasedEdgeGrpcSessionManager extends AbstractEdgeGrpcSessionMan
     private static final int NO_INITIAL_DELAY_VALUE = 0;
 
     private final TbCoreQueueFactory tbCoreQueueFactory;
-    private final DownlinkMessageMapper downlinkMessageMapper;
     private final TopicService topicService;
     private final KafkaAdmin kafkaAdmin;
     private final EdgeSessionsHolder sessions;
@@ -252,12 +251,14 @@ public class KafkaBasedEdgeGrpcSessionManager extends AbstractEdgeGrpcSessionMan
     }
 
     private void cancelMigrationAndProcessingInit() {
-        log.trace("[{}] cancelling edge migration & processing init for edge", getState().getEdgeId());
+        EdgeSessionState state = getState();
+        log.trace("[{}] cancelling edge migration & processing init for edge", state != null ? state.getEdgeId() : "unknown");
         cancelFuture(initMigrationAndProcessingFutureRef);
     }
 
     private void cancelHighPriorityProcessing() {
-        log.trace("[{}] cancelling high priority processing task for edge", getState().getEdgeId());
+        EdgeSessionState state = getState();
+        log.trace("[{}] cancelling high priority processing task for edge", state != null ? state.getEdgeId() : "unknown");
         cancelFuture(highPriorityProcessingFutureRef);
     }
 
