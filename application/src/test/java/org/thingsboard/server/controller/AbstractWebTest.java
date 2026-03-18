@@ -1061,7 +1061,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
             assertThat(findRelationsByTo(entityTo)).hasSize(1);
 
             doDelete(urlDelete)
-                    .andExpect(status().isInternalServerError());
+                    .andExpect(status().isBadRequest());
 
             assertThat(findRelationsByTo(entityTo)).hasSize(1);
         } finally {

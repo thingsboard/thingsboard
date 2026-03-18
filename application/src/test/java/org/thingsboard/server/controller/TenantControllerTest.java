@@ -43,6 +43,7 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.TenantNotFoundException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -866,6 +867,26 @@ public class TenantControllerTest extends AbstractControllerTest {
         TenantId tenantId = cntTime == 1 ? tenant.getId() : (TenantId) createEntityId_NULL_UUID(tenant);
         testBroadcastEntityStateChangeEventTime(tenantId, tenantId, cntTime);
         Mockito.reset(tbClusterService);
+    }
+
+    @Test
+    public void testSaveTenantWithNonExistentTenantProfileId() throws Exception {
+        loginSysAdmin();
+        Tenant tenant = new Tenant();
+        tenant.setTitle("My tenant");
+        tenant.setTenantProfileId(new TenantProfileId(UUID.randomUUID()));
+
+        String responseBody = doPost("/api/tenant", tenant)
+                .andExpect(status().isBadRequest())
+                .andReturn().getResponse().getContentAsString();
+
+        // Verify sanitized message format
+        assertThat(responseBody).contains("Constraint violation: fk_tenant_profile");
+        // Verify raw SQL details are not returned
+        assertThat(responseBody).doesNotContain("could not execute statement");
+        assertThat(responseBody).doesNotContain("insert or update on table");
+        assertThat(responseBody).doesNotContain("tenant_profile_id");
+        assertThat(responseBody).doesNotContain("is not present in table");
     }
 
     private void testBroadcastEntityStateChangeEventNeverTenant() {
