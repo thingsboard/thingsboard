@@ -215,7 +215,7 @@ security:
     #   - Widgets loading external resources (images, fonts, scripts)
     #   - Dashboard embedding via iframes (if frame-ancestors is restrictive)
     # Use 'report-only: true' first to test the impact before enforcing.
-    # Example value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; frame-ancestors 'self'"
+    # Example value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; frame-ancestors 'self'"
     content-security-policy:
       # Enable/disable Content-Security-Policy header. Mitigates XSS and data injection attacks
       enabled: "${SECURITY_HEADERS_CONTENT_SECURITY_POLICY_ENABLED:false}"
