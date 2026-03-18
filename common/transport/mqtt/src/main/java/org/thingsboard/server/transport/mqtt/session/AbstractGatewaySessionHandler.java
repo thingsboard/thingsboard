@@ -227,7 +227,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
         deregisterSession(deviceName);
     }
 
-    public String getNodeId() {
+   public String getNodeId() {
         return context.getNodeId();
     }
 
@@ -802,12 +802,14 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
     }
 
     private void deregisterSession(String deviceName, MqttDeviceAwareSessionContext deviceSessionCtx) {
-        if (this.deviceSessionCtx.isSparkplug()) {
+        if (this.deviceSessionCtx.isSparkplug() && deviceSessionCtx.shouldNotifyCore()) {
             sendSparkplugStateOnTelemetry(deviceSessionCtx.getSessionInfo(),
                     deviceSessionCtx.getDeviceInfo().getDeviceName(), OFFLINE, new Date().getTime());
         }
         transportService.deregisterSession(deviceSessionCtx.getSessionInfo());
-        transportService.process(deviceSessionCtx.getSessionInfo(), SESSION_EVENT_MSG_CLOSED, null);
+        if (deviceSessionCtx.shouldNotifyCore()) {
+            transportService.process(deviceSessionCtx.getSessionInfo(), SESSION_EVENT_MSG_CLOSED, null);
+        }
         log.debug("[{}][{}][{}] Removed device [{}] from the gateway session", gateway.getTenantId(), gateway.getDeviceId(), sessionId, deviceName);
     }
 
