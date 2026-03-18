@@ -38,6 +38,7 @@
         <pkg.implementationTitle>${project.name}</pkg.implementationTitle>
         <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
+        <thingsboard.client.version>4.4.0-SNAPSHOT</thingsboard.client.version>
         <spring-boot.version>3.4.13</spring-boot.version>
         <tomcat.version>10.1.52</tomcat.version> <!-- to fix CVE-2026-24734 and CVE-2025-66614. TODO: remove when fixed in spring-boot-dependencies -->
         <jackson.version>2.18.6</jackson.version> <!-- to fix CWE-770. TODO: remove when fixed in spring-boot-dependencies -->
@@ -1132,6 +1133,12 @@
                 <groupId>org.thingsboard</groupId>
                 <artifactId>rest-client</artifactId>
                 <version>${project.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.client</groupId>
+                <artifactId>thingsboard-ce-client</artifactId>
+                <version>${thingsboard.client.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
