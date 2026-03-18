@@ -83,6 +83,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
@@ -109,6 +110,11 @@ public class SwaggerConfiguration {
     private static final ApiResponses loginResponses = loginResponses();
     private static final ApiResponses defaultErrorResponses = defaultErrorResponses(false);
     private static final ApiResponses defaultPostErrorResponses = defaultErrorResponses(true);
+
+    // Populated by mapAwareConverter, consumed by customOpenApiCustomizer.
+    // Keyed by the schema name that swagger-core generates (see resolveSchemaName).
+    private final Map<String, List<String>> schemaPropertyOrders = new ConcurrentHashMap<>();
+    private final Map<String, Set<String>> schemaOwnProps = new ConcurrentHashMap<>();
 
     @Value("${swagger.api_path:/api/**}")
     private String apiPath;
@@ -312,62 +318,21 @@ public class SwaggerConfiguration {
                                 schema.setProperties(null);
                             }
                         }
-                    } else if (schema != null) {
-                        boolean hasAllOf = schema.getAllOf() != null;
-                        boolean hasProps = schema.getProperties() != null && !schema.getProperties().isEmpty();
-                        if (hasAllOf || hasProps) {
-                            try {
-                                var beanDesc = Json.mapper().getSerializationConfig().introspect(javaType);
-                                var orderedNames = resolvePropertyOrder(cls, beanDesc);
-                                // Reorder top-level properties if present.
-                                // When orderedNames is empty (e.g. for interfaces where Jackson
-                                // returns no properties from beanDesc), fall through to the
-                                // TreeMap fallback which sorts remaining properties alphabetically.
-                                if (hasProps) {
-                                    @SuppressWarnings("unchecked")
-                                    Map<String, Schema> current = schema.getProperties();
-                                    var reordered = new LinkedHashMap<String, Schema>();
-                                    for (String name : orderedNames) {
-                                        Schema prop = current.get(name);
-                                        if (prop != null) reordered.put(name, prop);
-                                    }
-                                    // Any properties not covered by orderedNames are appended
-                                    // alphabetically to guarantee a deterministic stable order.
-                                    new TreeMap<>(current).forEach((k, v) -> reordered.putIfAbsent(k, v));
-                                    schema.setProperties(reordered);
-                                }
-                                // Also reorder properties inside allOf inline elements, and mark
-                                // which properties are declared in cls itself (not inherited from
-                                // a superclass) so deduplicateAllOfProperties can strip inherited
-                                // ones without touching own-class properties.
-                                if (hasAllOf) {
-                                    Set<String> ownProps = computeOwnPropNames(cls, beanDesc);
-                                    if (!ownProps.isEmpty()) {
-                                        schema.addExtension("x-tb-own-props", List.copyOf(ownProps));
-                                    }
-                                    @SuppressWarnings("unchecked")
-                                    List<Schema> allOfList = schema.getAllOf();
-                                    for (Schema allOfElement : allOfList) {
-                                        if (allOfElement.get$ref() != null) continue;
-                                        @SuppressWarnings("unchecked")
-                                        Map<String, Schema> inlineProps = allOfElement.getProperties();
-                                        if (inlineProps == null || inlineProps.isEmpty()) continue;
-                                        var reordered = new LinkedHashMap<String, Schema>();
-                                        for (String name : orderedNames) {
-                                            Schema prop = inlineProps.get(name);
-                                            if (prop != null) reordered.put(name, prop);
-                                        }
-                                        new TreeMap<>(inlineProps).forEach((k, v) -> reordered.putIfAbsent(k, v));
-                                        allOfElement.setProperties(reordered);
-                                    }
-                                }
-                            } catch (Exception e) {
-                                log.debug("Failed to resolve property order for {}: {}", cls.getName(), e.getMessage());
-                                // Fallback: at minimum sort alphabetically for determinism
-                                if (hasProps) {
-                                    schema.setProperties(new LinkedHashMap<>(new TreeMap<>(schema.getProperties())));
-                                }
+                    } else {
+                        // Precompute property order and own-prop names for this class.
+                        // The actual reordering happens later in the OpenApiCustomizer,
+                        // which has access to the final state of all component schemas
+                        // (including ones where the ModelConverter only sees a $ref).
+                        try {
+                            var beanDesc = Json.mapper().getSerializationConfig().introspect(javaType);
+                            String schemaName = resolveSchemaName(javaType);
+                            schemaPropertyOrders.put(schemaName, resolvePropertyOrder(cls, beanDesc));
+                            Set<String> ownProps = computeOwnPropNames(cls, beanDesc);
+                            if (!ownProps.isEmpty()) {
+                                schemaOwnProps.put(schemaName, ownProps);
                             }
+                        } catch (Exception e) {
+                            log.debug("Failed to resolve property order for {}: {}", cls.getName(), e.getMessage());
                         }
                     }
                 }
@@ -454,16 +419,18 @@ public class SwaggerConfiguration {
                 });
 
                 // Deduplicate allOf child schemas: remove properties that are already defined
-                // in the referenced parent schema to avoid duplication (e.g. EntityId children),
-                // then clean up the internal marker extension used during deduplication.
-                schemas.values().forEach(schema -> {
-                    deduplicateAllOfProperties(schema, schemas);
-                    if (schema.getExtensions() != null) {
-                        schema.getExtensions().remove("x-tb-own-props");
-                        if (schema.getExtensions().isEmpty()) {
-                            schema.setExtensions(null);
-                        }
-                    }
+                // in the referenced parent schema to avoid duplication (e.g. EntityId children).
+                schemas.forEach((schemaName, schema) -> {
+                    Set<String> ownProps = schemaOwnProps.getOrDefault(schemaName, Set.of());
+                    deduplicateAllOfProperties(schema, schemas, ownProps);
+                });
+
+                // Reorder properties for all component schemas. This runs after all
+                // schemas are finalized so it covers schemas the ModelConverter only
+                // saw as a $ref (e.g. interface-based discriminator types like EntityId).
+                schemas.forEach((schemaName, schema) -> {
+                    List<String> propOrder = schemaPropertyOrders.getOrDefault(schemaName, List.of());
+                    reorderSchemaProperties(schema, propOrder);
                 });
 
                 // Fix polymorphic request/response bodies: replace inline oneOf with base type $ref
@@ -771,20 +738,9 @@ public class SwaggerConfiguration {
     }
 
     @SuppressWarnings("unchecked")
-    private void deduplicateAllOfProperties(Schema<?> schema, Map<String, Schema> allSchemas) {
+    private void deduplicateAllOfProperties(Schema<?> schema, Map<String, Schema> allSchemas, Set<String> ownProps) {
         if (schema.getAllOf() == null) {
             return;
-        }
-
-        // Properties declared in the class's own fields (not inherited from a superclass).
-        // These must NOT be stripped from the inline even if they also appear in a parent
-        // schema (e.g. a field that also has a corresponding interface getter in the parent).
-        Set<String> ownProps = new LinkedHashSet<>();
-        if (schema.getExtensions() != null
-                && schema.getExtensions().get("x-tb-own-props") instanceof List<?> list) {
-            for (Object v : list) {
-                if (v instanceof String s) ownProps.add(s);
-            }
         }
 
         // Collect properties defined in any $ref'd parent within the allOf, recursively
@@ -836,6 +792,26 @@ public class SwaggerConfiguration {
     }
 
     /**
+     * Computes the schema name that swagger-core will use for the given JavaType.
+     * For simple types, this is just the class simple name (e.g. {@code Device}).
+     * For parameterized types, type parameter names are appended
+     * (e.g. {@code PageData<Device>} becomes {@code PageDataDevice}).
+     * This matches the naming convention used by swagger-core's {@code TypeNameResolver}.
+     */
+    private static String resolveSchemaName(JavaType javaType) {
+        StringBuilder sb = new StringBuilder(javaType.getRawClass().getSimpleName());
+        if (javaType.hasGenericTypes()) {
+            for (int i = 0; i < javaType.containedTypeCount(); i++) {
+                JavaType param = javaType.containedType(i);
+                if (param != null) {
+                    sb.append(param.getRawClass().getSimpleName());
+                }
+            }
+        }
+        return sb.toString();
+    }
+
+    /**
      * Returns the JSON property names that are backed by fields declared directly in {@code cls}
      * (not inherited from a superclass). Used to distinguish "own" from "inherited" properties
      * when deduplicating allOf inline elements.
@@ -854,6 +830,33 @@ public class SwaggerConfiguration {
             if (jsonName != null) own.add(jsonName);
         }
         return own;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void reorderSchemaProperties(Schema<?> schema, List<String> propOrder) {
+        if (schema.getProperties() != null && schema.getProperties().size() > 1) {
+            schema.setProperties(reorderProperties(schema.getProperties(), propOrder));
+        }
+        if (schema.getAllOf() != null) {
+            for (Schema<?> allOfElement : schema.getAllOf()) {
+                if (allOfElement.get$ref() != null) continue;
+                if (allOfElement.getProperties() != null && allOfElement.getProperties().size() > 1) {
+                    allOfElement.setProperties(reorderProperties(allOfElement.getProperties(), propOrder));
+                }
+            }
+        }
+    }
+
+    private static LinkedHashMap<String, Schema> reorderProperties(Map<String, Schema> current, List<String> propOrder) {
+        var reordered = new LinkedHashMap<String, Schema>();
+        for (String name : propOrder) {
+            Schema prop = current.get(name);
+            if (prop != null) reordered.put(name, prop);
+        }
+        // Any properties not covered by propOrder are appended
+        // alphabetically to guarantee a deterministic stable order.
+        new TreeMap<>(current).forEach((k, v) -> reordered.putIfAbsent(k, v));
+        return reordered;
     }
 
     /**
