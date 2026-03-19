@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.profile;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
@@ -23,9 +24,12 @@ import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
 
+import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
@@ -140,6 +144,32 @@ public class DefaultTbAssetProfileCache implements TbAssetProfileCache {
         ConcurrentMap<EntityId, BiConsumer<AssetId, AssetProfile>> assetListeners = assetProfileListeners.get(tenantId);
         if (assetListeners != null) {
             assetListeners.remove(listenerId);
+        }
+    }
+
+    @EventListener(ComponentLifecycleMsg.class)
+    public void onComponentLifecycleEvent(ComponentLifecycleMsg event) {
+        switch (event.getEntityId().getEntityType()) {
+            case TENANT:
+                if (event.getEvent() == ComponentLifecycleEvent.DELETED) {
+                    TenantId tenantId = event.getTenantId();
+                    var removedProfileIds = new HashSet<AssetProfileId>();
+                    assetProfilesMap.forEach((assetProfileId, assetProfile) -> {
+                        if (assetProfile.getTenantId().equals(tenantId)) {
+                            assetProfilesMap.remove(assetProfileId);
+                            removedProfileIds.add(assetProfileId);
+                            log.debug("[{}] evict asset profile from cache: {}", assetProfileId, assetProfile);
+                        }
+                    });
+                    assetsMap.forEach((assetId, assetProfileId) -> {
+                        if (removedProfileIds.contains(assetProfileId)) {
+                            assetsMap.remove(assetId);
+                        }
+                    });
+                    profileListeners.remove(tenantId);
+                    assetProfileListeners.remove(tenantId);
+                }
+                break;
         }
     }
 

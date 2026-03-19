@@ -19,11 +19,14 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ConcurrentReferenceHashMap;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -35,6 +38,7 @@ import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -181,6 +185,49 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
         log.debug("[{}] evict calculated field ctx from cache: {}", calculatedFieldId, oldCalculatedField);
         entityIdCalculatedFieldLinks.forEach((entityId, calculatedFieldLinks) -> calculatedFieldLinks.removeIf(link -> link.getCalculatedFieldId().equals(calculatedFieldId)));
         log.debug("[{}] evict calculated field links from cached links by entity id: {}", calculatedFieldId, oldCalculatedField);
+    }
+
+    @EventListener(ComponentLifecycleMsg.class)
+    public void onComponentLifecycleEvent(ComponentLifecycleMsg event) {
+        if (event.getEvent() != ComponentLifecycleEvent.DELETED) {
+            return;
+        }
+        switch (event.getEntityId().getEntityType()) {
+            case TENANT:
+                TenantId tenantId = event.getTenantId();
+                var removedCfIds = new HashSet<CalculatedFieldId>();
+                calculatedFields.forEach((cfId, cf) -> {
+                    if (cf.getTenantId().equals(tenantId)) {
+                        calculatedFields.remove(cfId);
+                        calculatedFieldLinks.remove(cfId);
+                        calculatedFieldsCtx.remove(cfId);
+                        removedCfIds.add(cfId);
+                        log.debug("[{}] evict calculated field from cache on tenant deletion: {}", cfId, cf);
+                    }
+                });
+                entityIdCalculatedFields.values().forEach(list -> list.removeIf(cf -> removedCfIds.contains(cf.getId())));
+                entityIdCalculatedFieldLinks.values().forEach(list -> list.removeIf(link -> removedCfIds.contains(link.getCalculatedFieldId())));
+                break;
+            case DEVICE:
+            case ASSET:
+            case DEVICE_PROFILE:
+            case ASSET_PROFILE:
+                EntityId entityId = event.getEntityId();
+                List<CalculatedField> cfs = entityIdCalculatedFields.remove(entityId);
+                if (cfs != null) {
+                    var cfIds = new HashSet<CalculatedFieldId>();
+                    cfs.forEach(cf -> {
+                        calculatedFields.remove(cf.getId());
+                        calculatedFieldLinks.remove(cf.getId());
+                        calculatedFieldsCtx.remove(cf.getId());
+                        cfIds.add(cf.getId());
+                        log.debug("[{}] evict calculated field from cache on entity deletion: {}", cf.getId(), cf);
+                    });
+                    entityIdCalculatedFieldLinks.values().forEach(list -> list.removeIf(link -> cfIds.contains(link.getCalculatedFieldId())));
+                }
+                entityIdCalculatedFieldLinks.remove(entityId);
+                break;
+        }
     }
 
     private Lock getFetchLock(CalculatedFieldId id) {
