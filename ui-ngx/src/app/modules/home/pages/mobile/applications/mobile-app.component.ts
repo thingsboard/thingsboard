@@ -109,7 +109,7 @@ export class MobileAppComponent extends EntityComponent<MobileApp> {
           .addValidators(Validators.required);
         form.get('storeInfo.appId').addValidators(Validators.required);
       } else {
-        form.get('storeInfo.storeLink').clearValidators();
+        form.get('storeInfo.storeLink').removeValidators(Validators.required);
         form.get('storeInfo.sha256CertFingerprints').removeValidators(Validators.required);
         form.get('storeInfo.appId').removeValidators(Validators.required);
       }

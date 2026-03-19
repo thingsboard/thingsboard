@@ -238,18 +238,6 @@
     "@angular-devkit/architect" "0.2003.20"
     rxjs "7.8.2"
 
-"@angular-devkit/core@20.3.18":
-  version "20.3.18"
-  resolved "https://registry.yarnpkg.com/@angular-devkit/core/-/core-20.3.18.tgz#a079775ba6a31583a0d57813b374a6c8c997f252"
-  integrity sha512-zGWMjMqE8qXYr8baYCs43k9HlKz9J4Gh3Yx+7XE0uS0Y1LXzzALevSoUw7GIPdSvOriQJAEgtWE6QKssqSGltQ==
-  dependencies:
-    ajv "8.18.0"
-    ajv-formats "3.0.1"
-    jsonc-parser "3.3.1"
-    picomatch "4.0.3"
-    rxjs "7.8.2"
-    source-map "0.7.6"
-
 "@angular-devkit/core@20.3.20", "@angular-devkit/core@>= 20.0.0 < 21.0.0", "@angular-devkit/core@^20.0.0":
   version "20.3.20"
   resolved "https://registry.yarnpkg.com/@angular-devkit/core/-/core-20.3.20.tgz#62278795afb05ff1c2f442387e5c3e996ac304bf"
