@@ -34,6 +34,7 @@ export interface SysParamsState {
   ruleChainDebugPerTenantLimitsConfiguration?: string;
   calculatedFieldDebugPerTenantLimitsConfiguration?: string;
   trendzSettings: TrendzSettings;
+  iotHubBaseUrl: string;
 }
 
 export interface SysParams extends SysParamsState {
