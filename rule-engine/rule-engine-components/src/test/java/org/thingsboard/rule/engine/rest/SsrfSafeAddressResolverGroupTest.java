@@ -37,7 +37,7 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@ResourceLock("SsrfSafeAddressResolverGroupTest")
+@ResourceLock("SsrfProtectionValidator") // to avoid race conditions when modifying SsrfProtectionValidator's static configuration
 class SsrfSafeAddressResolverGroupTest {
 
     private static NioEventLoopGroup eventLoopGroup;
