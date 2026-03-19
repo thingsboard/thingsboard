@@ -29,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@ResourceLock("SsrfProtectionValidatorTest") // some tests mutate static additional-blocked-hosts
+@ResourceLock("SsrfProtectionValidator") // to avoid race conditions when modifying SsrfProtectionValidator's static configuration
 public class SsrfProtectionValidatorTest {
 
     @ParameterizedTest

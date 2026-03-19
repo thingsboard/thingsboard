@@ -215,12 +215,15 @@ security:
     #   - Widgets loading external resources (images, fonts, scripts)
     #   - Dashboard embedding via iframes (if frame-ancestors is restrictive)
     # Use 'report-only: true' first to test the impact before enforcing.
-    # Example value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; frame-ancestors 'self'"
+    # The default value covers core ThingsBoard functionality including OpenStreetMap, ArcGIS maps,
+    # solution template previews, WebSocket telemetry, and chart Web Workers.
+    # NOTE: Google Maps requires adding Google domains to script-src, which is not included by default.
+    # To add Google Maps support, append to script-src: https://maps.googleapis.com https://maps.gstatic.com
     content-security-policy:
       # Enable/disable Content-Security-Policy header. Mitigates XSS and data injection attacks
       enabled: "${SECURITY_HEADERS_CONTENT_SECURITY_POLICY_ENABLED:false}"
-      # Full CSP directive string
-      value: "${SECURITY_HEADERS_CONTENT_SECURITY_POLICY_VALUE:}"
+      # Full CSP directive string. The default value is a working policy for most ThingsBoard deployments
+      value: "${SECURITY_HEADERS_CONTENT_SECURITY_POLICY_VALUE:default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://img.thingsboard.io https://tile.openstreetmap.org https://*.tile.openstreetmap.org https://*.arcgis.com; font-src 'self' data:; connect-src 'self' ws: wss: https://*.arcgis.com https://*.arcgisonline.com; worker-src 'self' blob:; frame-ancestors 'self'}"
       # If true, uses Content-Security-Policy-Report-Only header instead — the browser
       # reports violations but does not enforce them. Use for testing before enforcing.
       report-only: "${SECURITY_HEADERS_CONTENT_SECURITY_POLICY_REPORT_ONLY:false}"
