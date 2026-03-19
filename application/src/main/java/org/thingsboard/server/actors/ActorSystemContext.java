@@ -30,6 +30,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.SsrfProtectionConfig;
 import org.thingsboard.common.util.SsrfProtectionValidator;
 import org.thingsboard.rule.engine.api.DeviceStateManager;
 import org.thingsboard.rule.engine.api.JobManager;
@@ -618,9 +619,14 @@ public class ActorSystemContext {
     @Value("${actors.rule.external.ssrf_allowed_hosts:}")
     private List<String> ssrfAllowedHosts;
 
+    @Getter
+    private SsrfProtectionConfig ssrfProtectionConfig;
+
     @PostConstruct
     public void init() {
         this.localCacheType = "caffeine".equals(cacheType);
+        this.ssrfProtectionConfig = SsrfProtectionConfig.of(ssrfProtectionEnabled, ssrfAllowedHosts, ssrfAdditionalBlockedHosts);
+        // Populate legacy global state for callers not yet migrated (e.g. Oauth2ClientDataValidator)
         SsrfProtectionValidator.setEnabled(ssrfProtectionEnabled);
         SsrfProtectionValidator.setAdditionalBlockedHosts(ssrfAdditionalBlockedHosts);
         SsrfProtectionValidator.setAllowedHosts(ssrfAllowedHosts);

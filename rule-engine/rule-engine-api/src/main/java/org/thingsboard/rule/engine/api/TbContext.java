@@ -17,6 +17,7 @@ package org.thingsboard.rule.engine.api;
 
 import io.netty.channel.EventLoopGroup;
 import org.thingsboard.common.util.ExecutorProvider;
+import org.thingsboard.common.util.SsrfProtectionConfig;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.notification.SlackService;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
@@ -391,6 +392,8 @@ public interface TbContext {
     String getServiceId();
 
     EventLoopGroup getSharedEventLoop();
+
+    SsrfProtectionConfig getSsrfProtectionConfig();
 
     CassandraCluster getCassandraCluster();
 

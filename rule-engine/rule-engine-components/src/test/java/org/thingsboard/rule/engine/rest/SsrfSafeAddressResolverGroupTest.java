@@ -20,16 +20,13 @@ import io.netty.resolver.AddressResolver;
 import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.Promise;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.parallel.ResourceLock;
+import org.thingsboard.common.util.SsrfProtectionConfig;
 import org.thingsboard.common.util.SsrfProtectionValidator;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -37,10 +34,11 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@ResourceLock("SsrfSafeAddressResolverGroupTest")
 class SsrfSafeAddressResolverGroupTest {
 
     private static NioEventLoopGroup eventLoopGroup;
+
+    private static final SsrfProtectionConfig ENABLED_CONFIG = SsrfProtectionConfig.of(true, List.of(), List.of());
 
     @BeforeAll
     static void setUp() {
@@ -50,33 +48,20 @@ class SsrfSafeAddressResolverGroupTest {
     @AfterAll
     static void tearDown() {
         eventLoopGroup.shutdownGracefully(0, 5, TimeUnit.SECONDS);
-        SsrfProtectionValidator.setEnabled(false);
-        SsrfProtectionValidator.setAllowedHosts(Collections.emptyList());
-    }
-
-    @BeforeEach
-    void enableSsrf() {
-        SsrfProtectionValidator.setEnabled(true);
-        SsrfProtectionValidator.setAllowedHosts(Collections.emptyList());
-    }
-
-    @AfterEach
-    void resetState() {
-        SsrfProtectionValidator.setAllowedHosts(Collections.emptyList());
-        SsrfProtectionValidator.setEnabled(false);
     }
 
     @Test
     void isBlockedAddressWorksForLoopback() throws Exception {
-        assertThat(SsrfProtectionValidator.isBlockedAddress(InetAddress.getByName("127.0.0.1"))).isTrue();
-        assertThat(SsrfProtectionValidator.isBlockedAddress(InetAddress.getByName("192.168.1.1"))).isTrue();
-        assertThat(SsrfProtectionValidator.isBlockedAddress(InetAddress.getByName("8.8.8.8"))).isFalse();
+        assertThat(SsrfProtectionValidator.isBlockedAddress(InetAddress.getByName("127.0.0.1"), ENABLED_CONFIG)).isTrue();
+        assertThat(SsrfProtectionValidator.isBlockedAddress(InetAddress.getByName("192.168.1.1"), ENABLED_CONFIG)).isTrue();
+        assertThat(SsrfProtectionValidator.isBlockedAddress(InetAddress.getByName("8.8.8.8"), ENABLED_CONFIG)).isFalse();
     }
 
     @Test
     void resolvePublicIpSucceeds() throws Exception {
+        SsrfSafeAddressResolverGroup resolverGroup = new SsrfSafeAddressResolverGroup(ENABLED_CONFIG);
         EventExecutor executor = eventLoopGroup.next();
-        AddressResolver<InetSocketAddress> resolver = SsrfSafeAddressResolverGroup.INSTANCE.getResolver(executor);
+        AddressResolver<InetSocketAddress> resolver = resolverGroup.getResolver(executor);
         Promise<InetSocketAddress> promise = executor.newPromise();
 
         executor.submit(() -> resolver.resolve(InetSocketAddress.createUnresolved("8.8.8.8", 80), promise));
@@ -88,10 +73,9 @@ class SsrfSafeAddressResolverGroupTest {
 
     @Test
     void resolveLoopbackFailsWhenSsrfEnabled() throws Exception {
-        assertThat(SsrfProtectionValidator.isEnabled()).isTrue();
-
+        SsrfSafeAddressResolverGroup resolverGroup = new SsrfSafeAddressResolverGroup(ENABLED_CONFIG);
         EventExecutor executor = eventLoopGroup.next();
-        AddressResolver<InetSocketAddress> resolver = SsrfSafeAddressResolverGroup.INSTANCE.getResolver(executor);
+        AddressResolver<InetSocketAddress> resolver = resolverGroup.getResolver(executor);
         Promise<InetSocketAddress> promise = executor.newPromise();
 
         executor.submit(() -> resolver.resolve(InetSocketAddress.createUnresolved("127.0.0.1", 80), promise));
@@ -104,10 +88,9 @@ class SsrfSafeAddressResolverGroupTest {
 
     @Test
     void resolvePrivateIpFailsWhenSsrfEnabled() throws Exception {
-        assertThat(SsrfProtectionValidator.isEnabled()).isTrue();
-
+        SsrfSafeAddressResolverGroup resolverGroup = new SsrfSafeAddressResolverGroup(ENABLED_CONFIG);
         EventExecutor executor = eventLoopGroup.next();
-        AddressResolver<InetSocketAddress> resolver = SsrfSafeAddressResolverGroup.INSTANCE.getResolver(executor);
+        AddressResolver<InetSocketAddress> resolver = resolverGroup.getResolver(executor);
         Promise<InetSocketAddress> promise = executor.newPromise();
 
         executor.submit(() -> resolver.resolve(InetSocketAddress.createUnresolved("192.168.1.1", 80), promise));
@@ -120,10 +103,11 @@ class SsrfSafeAddressResolverGroupTest {
 
     @Test
     void resolveAllowedPrivateIpSucceeds() throws Exception {
-        SsrfProtectionValidator.setAllowedHosts(List.of("192.168.1.0/24"));
+        SsrfProtectionConfig configWithAllowed = SsrfProtectionConfig.of(true, List.of("192.168.1.0/24"), List.of());
+        SsrfSafeAddressResolverGroup resolverGroup = new SsrfSafeAddressResolverGroup(configWithAllowed);
 
         EventExecutor executor = eventLoopGroup.next();
-        AddressResolver<InetSocketAddress> resolver = SsrfSafeAddressResolverGroup.INSTANCE.getResolver(executor);
+        AddressResolver<InetSocketAddress> resolver = resolverGroup.getResolver(executor);
         Promise<InetSocketAddress> promise = executor.newPromise();
 
         executor.submit(() -> resolver.resolve(InetSocketAddress.createUnresolved("192.168.1.1", 80), promise));
@@ -134,8 +118,9 @@ class SsrfSafeAddressResolverGroupTest {
 
     @Test
     void resolveAllPublicIpSucceeds() throws Exception {
+        SsrfSafeAddressResolverGroup resolverGroup = new SsrfSafeAddressResolverGroup(ENABLED_CONFIG);
         EventExecutor executor = eventLoopGroup.next();
-        AddressResolver<InetSocketAddress> resolver = SsrfSafeAddressResolverGroup.INSTANCE.getResolver(executor);
+        AddressResolver<InetSocketAddress> resolver = resolverGroup.getResolver(executor);
         Promise<List<InetSocketAddress>> promise = executor.newPromise();
 
         executor.submit(() -> resolver.resolveAll(InetSocketAddress.createUnresolved("8.8.8.8", 80), promise));
@@ -147,9 +132,10 @@ class SsrfSafeAddressResolverGroupTest {
 
     @Test
     void resolveAllPrivateIpFailsWhenSsrfEnabled() {
+        SsrfSafeAddressResolverGroup resolverGroup = new SsrfSafeAddressResolverGroup(ENABLED_CONFIG);
         assertThatThrownBy(() -> {
             EventExecutor executor = eventLoopGroup.next();
-            AddressResolver<InetSocketAddress> resolver = SsrfSafeAddressResolverGroup.INSTANCE.getResolver(executor);
+            AddressResolver<InetSocketAddress> resolver = resolverGroup.getResolver(executor);
             Promise<List<InetSocketAddress>> promise = executor.newPromise();
             executor.submit(() -> resolver.resolveAll(InetSocketAddress.createUnresolved("127.0.0.1", 80), promise));
             promise.get(10, TimeUnit.SECONDS);
