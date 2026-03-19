@@ -433,7 +433,7 @@ export function noDataMessage(noDataDisplayMessage: string, defaultMessage: stri
   return translate.instant(defaultMessage);
 }
 
-export function constructTableCssString(widgetConfig: WidgetConfig): string {
+export function constructTableCssString(widgetConfig: WidgetConfig, isTabsEnabled = false): string {
   const origColor = widgetConfig.color || 'rgba(0, 0, 0, 0.87)';
   const origBackgroundColor = widgetConfig.backgroundColor || 'rgb(255, 255, 255)';
   const currentEntityColor = 'rgba(221, 221, 221, 0.65)';
@@ -452,7 +452,7 @@ export function constructTableCssString(widgetConfig: WidgetConfig): string {
   const mdDarkDisabled2 = defaultColor.setAlpha(0.38).toRgbString();
   const mdDarkDivider = defaultColor.setAlpha(0.12).toRgbString();
 
-  const cssString = ` {
+  let cssString = ` {
     --mat-toolbar-container-text-color: ${mdDark};
     --mat-table-header-headline-color: ${mdDarkSecondary};
     --mat-table-row-item-label-text-color: ${mdDark};
@@ -476,8 +476,10 @@ export function constructTableCssString(widgetConfig: WidgetConfig): string {
     --tb-selected-color: ${selectedColor};
     --tb-selected-sticky-color: ${selectedStickyColor};
   }
-  ` + (widgetConfig?.isTabsEnabled && `
-    .tb-table-widget .mat-mdc-tab-group {
+  `;
+  if (isTabsEnabled) {
+    cssString += `
+    .mat-mdc-tab-group {
       --mat-tab-inactive-label-text-color: ${mdDarkSecondary};
       --mat-tab-pagination-icon-color: ${mdDark};
       --mat-tab-pagination-disabled-icon-color: ${mdDarkDisabled2};
@@ -486,7 +488,7 @@ export function constructTableCssString(widgetConfig: WidgetConfig): string {
       --mat-tab-inactive-hover-label-text-color: ${mdDarkSecondary};
     }
     `
-  );
+  }
   return cssString ;
 }
 
