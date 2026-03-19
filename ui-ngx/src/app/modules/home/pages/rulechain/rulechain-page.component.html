@@ -84,7 +84,7 @@
           </div>
         </mat-drawer>
         <mat-drawer class="tb-details-drawer"
-                    [opened]="isEditingRuleNode || isEditingRuleNodeLink"
+                    [opened]="isEditingRuleNode || isEditingRuleNodeLink || isEditingNote"
                     (closed)="onDetailsDrawerClosed()"
                     mode="over"
                     position="end">
@@ -158,6 +158,20 @@
               [sourceRuleChainId]="editingRuleNodeSourceRuleChainId">
             </tb-rule-node-link>
           </tb-details-panel>
+          <tb-details-panel *ngIf="editingNote" class="flex-1"
+                            headerTitle="{{ 'rulechain.note' | translate }}"
+                            headerSubtitle="{{ 'rulechain.note-details' | translate }}"
+                            [isReadOnly]="false"
+                            [isAlwaysEdit]="true"
+                            (closeDetails)="onEditNoteClosed()"
+                            (toggleDetailsEditMode)="onRevertNoteEdit()"
+                            (applyDetails)="saveNote()"
+                            [theForm]="tbRuleNote.noteForm">
+            <tb-rule-note-editor #tbRuleNote
+                          [note]="editingNote"
+                          class="mt-3 flex-1">
+            </tb-rule-note-editor>
+          </tb-details-panel>
         </mat-drawer>
         <mat-drawer-content class="tb-rulechain-graph-content">
           <button color="primary"
@@ -168,16 +182,25 @@
                   matTooltipPosition="above">
             <mat-icon class="tb-library-node-btn-icon" [class.tb-library-node-btn-icon-toggled]="drawer.opened">chevron_right</mat-icon>
           </button>
-          <button #versionControlButton
-                  *ngIf="!isImport"
-                  color="primary"
-                  type="button"
-                  mat-mini-fab class="version-control-button"
-                  (click)="toggleVersionControl($event, versionControlButton)"
-                  matTooltip="{{'version-control.version-control' | translate}}"
-                  matTooltipPosition="above">
-            <mat-icon>history</mat-icon>
-          </button>
+          @if (!isImport) {
+            <button color="primary"
+                    type="button"
+                    mat-mini-fab class="add-note-button"
+                    (click)="addNote()"
+                    matTooltip="{{'rulechain.add-note' | translate}}"
+                    matTooltipPosition="above">
+              <mat-icon>sticky_note_2</mat-icon>
+            </button>
+            <button #versionControlButton
+                    color="primary"
+                    type="button"
+                    mat-mini-fab class="version-control-button"
+                    (click)="toggleVersionControl($event, versionControlButton)"
+                    matTooltip="{{'version-control.version-control' | translate}}"
+                    matTooltipPosition="above">
+              <mat-icon>history</mat-icon>
+            </button>
+          }
           <button type="button"
                   mat-icon-button class="tb-fullscreen-button tb-mat-40"
                   (click)="isFullscreen = !isFullscreen"
@@ -198,9 +221,11 @@
                   <div class="tb-context-menu-header {{contextInfo.headerClass}}">
                     <mat-icon *ngIf="!contextInfo.iconUrl">{{contextInfo.icon}}</mat-icon>
                     <img *ngIf="contextInfo.iconUrl" [src]="contextInfo.iconUrl"/>
-                    <div class="flex-1">
+                    <div class="flex-1 self-center">
                       <div class="tb-context-menu-title">{{contextInfo.title}}</div>
-                      <div class="tb-context-menu-subtitle">{{contextInfo.subtitle}}</div>
+                      @if (contextInfo.subtitle) {
+                        <div class="tb-context-menu-subtitle">{{contextInfo.subtitle}}</div>
+                      }
                     </div>
                   </div>
                   <div *ngFor="let menuItem of contextInfo.menuItems">
