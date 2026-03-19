@@ -21,6 +21,7 @@ import io.netty.resolver.DefaultAddressResolverGroup;
 import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.Promise;
+import org.thingsboard.common.util.SsrfProtectionConfig;
 import org.thingsboard.common.util.SsrfProtectionValidator;
 
 import java.net.InetAddress;
@@ -37,29 +38,32 @@ import java.util.Set;
  * TOCTOU gap where a hostname resolves to a safe IP during validation but to a
  * private/metadata IP when the actual connection is made.
  * <p>
- * Only wired into {@link TbHttpClient} when SSRF protection is enabled.
+ * Created per {@link TbHttpClient} instance with the applicable {@link SsrfProtectionConfig}.
  */
 public final class SsrfSafeAddressResolverGroup extends AddressResolverGroup<InetSocketAddress> {
 
-    public static final SsrfSafeAddressResolverGroup INSTANCE = new SsrfSafeAddressResolverGroup();
+    private final SsrfProtectionConfig config;
 
-    private SsrfSafeAddressResolverGroup() {
+    public SsrfSafeAddressResolverGroup(SsrfProtectionConfig config) {
+        this.config = config;
     }
 
     @Override
     protected AddressResolver<InetSocketAddress> newResolver(EventExecutor executor) throws Exception {
         AddressResolver<InetSocketAddress> delegate = DefaultAddressResolverGroup.INSTANCE.getResolver(executor);
-        return new SsrfValidatingResolver(executor, delegate);
+        return new SsrfValidatingResolver(executor, delegate, config);
     }
 
     private static final class SsrfValidatingResolver implements AddressResolver<InetSocketAddress> {
 
         private final EventExecutor executor;
         private final AddressResolver<InetSocketAddress> delegate;
+        private final SsrfProtectionConfig config;
 
-        SsrfValidatingResolver(EventExecutor executor, AddressResolver<InetSocketAddress> delegate) {
+        SsrfValidatingResolver(EventExecutor executor, AddressResolver<InetSocketAddress> delegate, SsrfProtectionConfig config) {
             this.executor = executor;
             this.delegate = delegate;
+            this.config = config;
         }
 
         @Override
@@ -154,15 +158,15 @@ public final class SsrfSafeAddressResolverGroup extends AddressResolverGroup<Ine
             delegate.close();
         }
 
-        private static boolean isBlocked(InetSocketAddress socketAddress) {
+        private boolean isBlocked(InetSocketAddress socketAddress) {
             InetAddress addr = socketAddress.getAddress();
-            return addr != null && SsrfProtectionValidator.isBlockedAddress(addr);
+            return addr != null && SsrfProtectionValidator.isBlockedAddress(addr, config);
         }
 
-        private static boolean isOriginalHostAllowed(SocketAddress address) {
+        private boolean isOriginalHostAllowed(SocketAddress address) {
             if (address instanceof InetSocketAddress isa) {
                 String host = isa.getHostString();
-                return host != null && SsrfProtectionValidator.isHostnameAllowed(host);
+                return host != null && SsrfProtectionValidator.isHostnameAllowed(host, config);
             }
             return false;
         }

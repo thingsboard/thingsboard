@@ -18,6 +18,7 @@ package org.thingsboard.server.actors.ruleChain;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.netty.channel.EventLoopGroup;
+import org.thingsboard.common.util.SsrfProtectionConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.Arrays;
 import org.thingsboard.common.util.DebugModeUtil;
@@ -829,6 +830,11 @@ public class DefaultTbContext implements TbContext {
     @Override
     public EventLoopGroup getSharedEventLoop() {
         return mainCtx.getSharedEventLoopGroupService().getSharedEventLoopGroup();
+    }
+
+    @Override
+    public SsrfProtectionConfig getSsrfProtectionConfig() {
+        return mainCtx.getSsrfProtectionConfig();
     }
 
     @Override

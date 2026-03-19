@@ -58,7 +58,7 @@ public class TbRestApiCallNode extends TbAbstractExternalNode {
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         super.init(ctx);
         TbRestApiCallNodeConfiguration config = TbNodeUtils.convert(configuration, TbRestApiCallNodeConfiguration.class);
-        httpClient = new TbHttpClient(config, ctx.getSharedEventLoop());
+        httpClient = new TbHttpClient(config, ctx.getSharedEventLoop(), ctx.getSsrfProtectionConfig());
     }
 
     @Override

@@ -26,6 +26,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.mockserver.integration.ClientAndServer;
 import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.thingsboard.common.util.SsrfProtectionConfig;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -63,6 +65,7 @@ public class TbHttpClientTest {
     public void setUp() throws Exception {
         client = mock(TbHttpClient.class);
         when(client.getSharedOrCreateEventLoopGroup(any())).thenCallRealMethod();
+        ReflectionTestUtils.setField(client, "ssrfConfig", SsrfProtectionConfig.DISABLED);
     }
 
     @AfterEach
@@ -138,7 +141,7 @@ public class TbHttpClientTest {
         config.setRestEndpointUrlPattern(endpointUrl);
         config.setUseSimpleClientHttpFactory(true);
 
-        var httpClient = new TbHttpClient(config, eventLoop);
+        var httpClient = new TbHttpClient(config, eventLoop, SsrfProtectionConfig.DISABLED);
 
         var msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)

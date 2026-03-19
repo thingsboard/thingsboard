@@ -32,6 +32,7 @@ import org.springframework.web.reactive.function.client.WebClient.RequestBodySpe
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.SsrfProtectionConfig;
 import org.thingsboard.common.util.SsrfProtectionValidator;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
@@ -85,14 +86,16 @@ public class TbHttpClient {
     public static final String MAX_IN_MEMORY_BUFFER_SIZE_IN_KB = "tb.http.maxInMemoryBufferSizeInKb";
 
     private final TbRestApiCallNodeConfiguration config;
+    private final SsrfProtectionConfig ssrfConfig;
 
     private EventLoopGroup eventLoopGroup;
     private WebClient webClient;
     private Semaphore semaphore;
 
-    TbHttpClient(TbRestApiCallNodeConfiguration config, EventLoopGroup eventLoopGroupShared) throws TbNodeException {
+    TbHttpClient(TbRestApiCallNodeConfiguration config, EventLoopGroup eventLoopGroupShared, SsrfProtectionConfig ssrfConfig) throws TbNodeException {
         try {
             this.config = config;
+            this.ssrfConfig = ssrfConfig;
             if (config.getMaxParallelRequestsCount() > 0) {
                 semaphore = new Semaphore(config.getMaxParallelRequestsCount());
             }
@@ -139,8 +142,8 @@ public class TbHttpClient {
                 httpClient = httpClient.secure(t -> t.sslContext(sslContext));
             }
 
-            if (SsrfProtectionValidator.isEnabled()) {
-                httpClient = httpClient.resolver(SsrfSafeAddressResolverGroup.INSTANCE);
+            if (ssrfConfig.isEnabled()) {
+                httpClient = httpClient.resolver(new SsrfSafeAddressResolverGroup(ssrfConfig));
             }
 
             validateMaxInMemoryBufferSize(config);
@@ -287,7 +290,7 @@ public class TbHttpClient {
             throw new RuntimeException("Url string is invalid!");
         }
 
-        SsrfProtectionValidator.validateUri(uri);
+        SsrfProtectionValidator.validateUri(uri, ssrfConfig);
 
         return uri;
     }

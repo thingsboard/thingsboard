@@ -32,13 +32,15 @@ import java.util.Set;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class SsrfProtectionValidator {
 
-    private static volatile boolean enabled;
     private static final Set<String> ALLOWED_SCHEMES = Set.of("http", "https");
     private static final Set<String> BLOCKED_HOSTNAMES = Set.of("localhost");
     private static final Set<String> BLOCKED_HOSTNAME_SUFFIXES = Set.of(".internal", ".local");
 
     private static volatile AdditionalBlockedHosts additionalBlocked = AdditionalBlockedHosts.EMPTY;
     private static volatile AllowedHosts allowedHosts = AllowedHosts.EMPTY;
+
+    // --- Global state (deprecated, kept for backward compatibility) ---
+    private static volatile boolean enabled;
 
     // Well-known cloud metadata endpoints not covered by the JDK checks (isLoopback, isSiteLocal, isLinkLocal)
     private static final List<CidrRange> CLOUD_METADATA_RANGES = List.of(
@@ -47,6 +49,72 @@ public class SsrfProtectionValidator {
             CidrRange.of("168.63.129.16", 32)  // Azure WireServer
     );
 
+    // =====================================================================
+    // Config-based API (preferred)
+    // =====================================================================
+
+    public static void validateUri(URI uri, SsrfProtectionConfig config) {
+        if (!config.isEnabled()) {
+            return;
+        }
+        String scheme = uri.getScheme();
+        if (scheme == null || !ALLOWED_SCHEMES.contains(scheme.toLowerCase())) {
+            throw new RuntimeException("URI is invalid: only HTTP and HTTPS schemes are allowed, got: " + scheme);
+        }
+        String host = uri.getHost();
+        if (host == null || host.isEmpty()) {
+            throw new RuntimeException("URI is invalid: hostname is missing");
+        }
+        String hostLower = host.toLowerCase();
+        if (config.getAllowedHostnames().contains(hostLower)) {
+            return;
+        }
+        if (BLOCKED_HOSTNAMES.contains(hostLower) || config.getAdditionalBlockedHostnames().contains(hostLower)) {
+            throwBlockedHost(host);
+        }
+        for (String suffix : BLOCKED_HOSTNAME_SUFFIXES) {
+            if (hostLower.endsWith(suffix)) {
+                throwBlockedHost(host);
+            }
+        }
+        if ("[::1]".equals(host) || "::1".equals(host)) {
+            throwBlockedHost(host);
+        }
+        validateResolvedAddresses(host, config);
+    }
+
+    public static boolean isBlockedAddress(InetAddress address, SsrfProtectionConfig config) {
+        for (CidrRange cidr : config.getAllowedCidrRanges()) {
+            if (cidr.contains(address)) {
+                return false;
+            }
+        }
+        if (isIntrinsicallyBlocked(address)) {
+            return true;
+        }
+        for (CidrRange cidr : CLOUD_METADATA_RANGES) {
+            if (cidr.contains(address)) {
+                return true;
+            }
+        }
+        for (CidrRange cidr : config.getAdditionalBlockedCidrRanges()) {
+            if (cidr.contains(address)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean isHostnameAllowed(String hostname, SsrfProtectionConfig config) {
+        return config.getAllowedHostnames().contains(hostname.toLowerCase());
+    }
+
+    // =====================================================================
+    // Legacy static-state API (deprecated)
+    // =====================================================================
+
+    /** @deprecated Use {@link #validateUri(URI, SsrfProtectionConfig)} instead. */
+    @Deprecated
     public static void validateUri(URI uri) {
         validateUri(uri, enabled);
     }
@@ -106,6 +174,8 @@ public class SsrfProtectionValidator {
         }
     }
 
+    /** @deprecated Use {@link #isBlockedAddress(InetAddress, SsrfProtectionConfig)} instead. */
+    @Deprecated
     public static boolean isBlockedAddress(InetAddress address) {
         // Check allow-list first: allowed addresses bypass all block checks
         AllowedHosts currentAllowed = allowedHosts;
@@ -158,14 +228,48 @@ public class SsrfProtectionValidator {
         throw new RuntimeException("URI is invalid: host '" + host + "' is not allowed");
     }
 
+    private static boolean isIntrinsicallyBlocked(InetAddress address) {
+        if (address.isLoopbackAddress()) return true;
+        if (address.isSiteLocalAddress()) return true;
+        if (address.isLinkLocalAddress()) return true;
+        if (address.isAnyLocalAddress()) return true;
+        byte[] addr = address.getAddress();
+        if (addr.length == 16) {
+            int firstByte = addr[0] & 0xFF;
+            if (firstByte == 0xFC || firstByte == 0xFD) return true;
+        }
+        return false;
+    }
+
+    private static void validateResolvedAddresses(String host, SsrfProtectionConfig config) {
+        InetAddress[] addresses;
+        try {
+            addresses = InetAddress.getAllByName(host);
+        } catch (UnknownHostException e) {
+            throw new RuntimeException("URI is invalid: unable to resolve hostname '" + host + "'", e);
+        }
+        for (InetAddress address : addresses) {
+            if (isBlockedAddress(address, config)) {
+                log.debug("Blocked request to host '{}' resolved to '{}'", host, address.getHostAddress());
+                throwBlockedHost(host);
+            }
+        }
+    }
+
+    /** @deprecated Use {@link SsrfProtectionConfig} instead of global state. */
+    @Deprecated
     public static boolean isEnabled() {
         return enabled;
     }
 
+    /** @deprecated Use {@link SsrfProtectionConfig#of(boolean, List, List)} instead. */
+    @Deprecated
     public static void setEnabled(boolean enabled) {
         SsrfProtectionValidator.enabled = enabled;
     }
 
+    /** @deprecated Use {@link SsrfProtectionConfig#of(boolean, List, List)} instead. */
+    @Deprecated
     public static void setAdditionalBlockedHosts(List<String> entries) {
         ParsedHostEntries parsed = parseHostEntries(entries);
         additionalBlocked = new AdditionalBlockedHosts(parsed.cidrRanges, parsed.hostnames);
@@ -174,6 +278,8 @@ public class SsrfProtectionValidator {
         }
     }
 
+    /** @deprecated Use {@link SsrfProtectionConfig#of(boolean, List, List)} instead. */
+    @Deprecated
     public static void setAllowedHosts(List<String> entries) {
         ParsedHostEntries parsed = parseHostEntries(entries);
         allowedHosts = new AllowedHosts(parsed.cidrRanges, parsed.hostnames);
@@ -182,6 +288,8 @@ public class SsrfProtectionValidator {
         }
     }
 
+    /** @deprecated Use {@link #isHostnameAllowed(String, SsrfProtectionConfig)} instead. */
+    @Deprecated
     public static boolean isHostnameAllowed(String hostname) {
         return allowedHosts.hostnames.contains(hostname.toLowerCase());
     }
@@ -229,9 +337,9 @@ public class SsrfProtectionValidator {
         static final AllowedHosts EMPTY = new AllowedHosts(Collections.emptyList(), Collections.emptySet());
     }
 
-    record CidrRange(byte[] network, int prefixLength) {
+    public record CidrRange(byte[] network, int prefixLength) {
 
-        static CidrRange of(String ip, int prefixLength) {
+        public static CidrRange of(String ip, int prefixLength) {
             try {
                 byte[] addr = InetAddress.getByName(ip).getAddress();
                 if (prefixLength < 0 || prefixLength > addr.length * 8) {
@@ -243,7 +351,7 @@ public class SsrfProtectionValidator {
             }
         }
 
-        static CidrRange parse(String entry) throws UnknownHostException {
+        public static CidrRange parse(String entry) throws UnknownHostException {
             int slashIndex = entry.indexOf('/');
             if (slashIndex >= 0) {
                 String ip = entry.substring(0, slashIndex);
@@ -259,7 +367,7 @@ public class SsrfProtectionValidator {
             }
         }
 
-        boolean contains(InetAddress address) {
+        public boolean contains(InetAddress address) {
             byte[] addr = address.getAddress();
             if (addr.length != network.length) {
                 return false;
