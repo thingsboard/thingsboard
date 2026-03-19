@@ -30,6 +30,7 @@ import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
@@ -154,18 +155,18 @@ public class DefaultTbDeviceProfileCache implements TbDeviceProfileCache {
                 if (event.getEvent() == ComponentLifecycleEvent.DELETED) {
                     TenantId tenantId = event.getTenantId();
                     var removedProfileIds = new HashSet<DeviceProfileId>();
-                    deviceProfilesMap.forEach((deviceProfileId, deviceProfile) -> {
-                        if (deviceProfile.getTenantId().equals(tenantId)) {
-                            deviceProfilesMap.remove(deviceProfileId);
-                            removedProfileIds.add(deviceProfileId);
-                            log.debug("[{}] evict device profile from cache: {}", deviceProfileId, deviceProfile);
+                    for (Map.Entry<DeviceProfileId, DeviceProfile> entry : deviceProfilesMap.entrySet()) {
+                        if (entry.getValue().getTenantId().equals(tenantId)) {
+                            deviceProfilesMap.remove(entry.getKey());
+                            removedProfileIds.add(entry.getKey());
+                            log.debug("[{}] evict device profile from cache: {}", entry.getKey(), entry.getValue());
                         }
-                    });
-                    devicesMap.forEach((deviceId, deviceProfileId) -> {
-                        if (removedProfileIds.contains(deviceProfileId)) {
-                            devicesMap.remove(deviceId);
+                    }
+                    for (Map.Entry<DeviceId, DeviceProfileId> entry : devicesMap.entrySet()) {
+                        if (removedProfileIds.contains(entry.getValue())) {
+                            devicesMap.remove(entry.getKey());
                         }
-                    });
+                    }
                     profileListeners.remove(tenantId);
                     deviceProfileListeners.remove(tenantId);
                 }

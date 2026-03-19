@@ -40,6 +40,7 @@ import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -196,17 +197,42 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
             case TENANT:
                 TenantId tenantId = event.getTenantId();
                 var removedCfIds = new HashSet<CalculatedFieldId>();
-                calculatedFields.forEach((cfId, cf) -> {
+                var removedCfEntityIds = new HashSet<EntityId>();
+                var removedLinkEntityIds = new HashSet<EntityId>();
+                for (Map.Entry<CalculatedFieldId, CalculatedField> entry : calculatedFields.entrySet()) {
+                    CalculatedFieldId cfId = entry.getKey();
+                    CalculatedField cf = entry.getValue();
                     if (cf.getTenantId().equals(tenantId)) {
                         calculatedFields.remove(cfId);
-                        calculatedFieldLinks.remove(cfId);
+                        List<CalculatedFieldLink> links = calculatedFieldLinks.remove(cfId);
+                        if (links != null) {
+                            links.forEach(link -> removedLinkEntityIds.add(link.getEntityId()));
+                        }
                         calculatedFieldsCtx.remove(cfId);
                         removedCfIds.add(cfId);
+                        removedCfEntityIds.add(cf.getEntityId());
                         log.debug("[{}] evict calculated field from cache on tenant deletion: {}", cfId, cf);
                     }
+                }
+                removedCfEntityIds.forEach(entityId -> {
+                    List<CalculatedField> cfs = entityIdCalculatedFields.get(entityId);
+                    if (cfs != null) {
+                        cfs.removeIf(cf -> removedCfIds.contains(cf.getId()));
+                        if (cfs.isEmpty()) {
+                            entityIdCalculatedFields.remove(entityId);
+                        }
+                    }
                 });
-                entityIdCalculatedFields.values().forEach(list -> list.removeIf(cf -> removedCfIds.contains(cf.getId())));
-                entityIdCalculatedFieldLinks.values().forEach(list -> list.removeIf(link -> removedCfIds.contains(link.getCalculatedFieldId())));
+                removedLinkEntityIds.forEach(entityId -> {
+                    List<CalculatedFieldLink> entityLinks = entityIdCalculatedFieldLinks.get(entityId);
+                    if (entityLinks != null) {
+                        entityLinks.removeIf(link -> removedCfIds.contains(link.getCalculatedFieldId()));
+                        if (entityLinks.isEmpty()) {
+                            entityIdCalculatedFieldLinks.remove(entityId);
+                        }
+                    }
+                });
+                removedCfIds.forEach(calculatedFieldFetchLocks::remove);
                 break;
             case DEVICE:
             case ASSET:
@@ -224,6 +250,7 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
                         log.debug("[{}] evict calculated field from cache on entity deletion: {}", cf.getId(), cf);
                     });
                     entityIdCalculatedFieldLinks.values().forEach(list -> list.removeIf(link -> cfIds.contains(link.getCalculatedFieldId())));
+                    cfIds.forEach(calculatedFieldFetchLocks::remove);
                 }
                 entityIdCalculatedFieldLinks.remove(entityId);
                 break;
