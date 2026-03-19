@@ -208,7 +208,7 @@ export class StringItemsListComponent implements ControlValueAccessor, OnInit {
   }
 
   onOptionSelected(event: MatAutocompleteSelectedEvent): void {
-    if (event.option.value) {
+    if (event.option.value != null) {
       this.add(event.option.value);
     } else {
       this.clear();
