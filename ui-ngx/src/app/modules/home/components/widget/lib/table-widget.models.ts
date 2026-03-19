@@ -451,13 +451,9 @@ export function constructTableCssString(widgetConfig: WidgetConfig): string {
   const mdDarkDisabled = defaultColor.setAlpha(0.26).toRgbString();
   const mdDarkDisabled2 = defaultColor.setAlpha(0.38).toRgbString();
   const mdDarkDivider = defaultColor.setAlpha(0.12).toRgbString();
-  
+
   const cssString = ` {
     --mat-toolbar-container-text-color: ${mdDark};
-    --mat-tab-active-label-text-color: ${mdDark};
-    --mat-tab-inactive-label-text-color: ${mdDark};
-    --mat-tab-pagination-icon-color: ${mdDark};
-    --mat-tab-pagination-disabled-icon-color: ${mdDarkDisabled2};
     --mat-table-header-headline-color: ${mdDarkSecondary};
     --mat-table-row-item-label-text-color: ${mdDark};
     --mat-icon-color: ${mdDarkSecondary};
@@ -480,8 +476,18 @@ export function constructTableCssString(widgetConfig: WidgetConfig): string {
     --tb-selected-color: ${selectedColor};
     --tb-selected-sticky-color: ${selectedStickyColor};
   }
-  `;
-  return cssString;
+  ` + (widgetConfig?.isTabsEnabled && `
+    .tb-table-widget .mat-mdc-tab-group {
+      --mat-tab-inactive-label-text-color: ${mdDarkSecondary};
+      --mat-tab-pagination-icon-color: ${mdDark};
+      --mat-tab-pagination-disabled-icon-color: ${mdDarkDisabled2};
+      --mat-tab-inactive-ripple-color: ${mdDarkSecondary};
+      --mat-tab-inactive-focus-label-text-color: ${mdDarkSecondary};
+      --mat-tab-inactive-hover-label-text-color: ${mdDarkSecondary};
+    }
+    `
+  );
+  return cssString ;
 }
 
 export function getHeaderTitle(dataKey: DataKey, keySettings: TableWidgetDataKeySettings | undefined, utils: UtilsService) {

@@ -379,7 +379,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
 
     this.noDataDisplayMessageText =
       noDataMessage(this.widgetConfig.noDataDisplayMessage, 'widget.no-data-found', this.utils, this.translate);
-
+    this.widgetConfig.isTabsEnabled = true;
     let cssString = constructTableCssString(this.widgetConfig);
 
     const origBackgroundColor = this.widgetConfig.backgroundColor || 'rgb(255, 255, 255)';
