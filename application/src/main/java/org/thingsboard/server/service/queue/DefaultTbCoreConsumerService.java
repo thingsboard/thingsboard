@@ -179,9 +179,8 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                                         TbImageService imageService,
                                         TbResourceDataCache tbResourceDataCache,
                                         RuleEngineCallService ruleEngineCallService,
-                                        CalculatedFieldCache calculatedFieldCache,
                                         EdqsService edqsService) {
-        super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, tbResourceDataCache, calculatedFieldCache, apiUsageStateService, partitionService,
+        super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, tbResourceDataCache, apiUsageStateService, partitionService,
                 eventPublisher, jwtSettingsService);
         this.stateService = stateService;
         this.localSubscriptionService = localSubscriptionService;
