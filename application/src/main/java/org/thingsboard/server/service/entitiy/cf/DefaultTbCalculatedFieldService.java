@@ -84,7 +84,7 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
             calculatedFieldService.deleteCalculatedField(tenantId, calculatedFieldId);
             logEntityActionService.logEntityAction(tenantId, calculatedFieldId, calculatedField, actionType, user, calculatedFieldId.toString());
         } catch (Exception e) {
-            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.CALCULATED_FIELD), actionType, user, e, calculatedFieldId.toString());
+            logEntityActionService.logEntityAction(tenantId, getOrEmptyId(calculatedFieldId, EntityType.CALCULATED_FIELD), actionType, user, e, calculatedFieldId.toString());
             throw e;
         }
     }
