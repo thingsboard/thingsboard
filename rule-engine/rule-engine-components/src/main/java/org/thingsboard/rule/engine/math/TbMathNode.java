@@ -16,13 +16,14 @@
 package org.thingsboard.rule.engine.math;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
-import org.springframework.util.ConcurrentReferenceHashMap;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.RuleNode;
@@ -45,9 +46,9 @@ import org.thingsboard.server.common.msg.TbMsg;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -80,7 +81,10 @@ import static org.thingsboard.rule.engine.math.TbMathArgumentType.CONSTANT;
 )
 public class TbMathNode implements TbNode {
 
-    private static final ConcurrentMap<EntityId, SemaphoreWithTbMsgQueue> locks = new ConcurrentReferenceHashMap<>(16, ConcurrentReferenceHashMap.ReferenceType.WEAK);
+    private static final LoadingCache<EntityId, SemaphoreWithTbMsgQueue> queues = Caffeine.newBuilder()
+            .expireAfterAccess(Duration.ofDays(1L))
+            .build(SemaphoreWithTbMsgQueue::new);
+
     private final ThreadLocal<Expression> customExpression = new ThreadLocal<>();
     private TbMathNodeConfiguration config;
     private boolean msgBodyToJsonConversionRequired;
@@ -106,8 +110,8 @@ public class TbMathNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        locks.computeIfAbsent(msg.getOriginator(), SemaphoreWithTbMsgQueue::new)
-                .addToQueueAndTryProcess(msg, ctx, this::processMsgAsync);
+        var processingQueue = queues.get(msg.getOriginator());
+        processingQueue.addToQueueAndTryProcess(msg, ctx, this::processMsgAsync);
     }
 
     ListenableFuture<TbMsg> processMsgAsync(TbContext ctx, TbMsg msg) {
