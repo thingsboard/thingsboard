@@ -51,7 +51,6 @@ import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.provider.TbRuleEngineQueueFactory;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
-import org.thingsboard.server.service.cf.CalculatedFieldCache;
 import org.thingsboard.server.service.cf.CalculatedFieldStateService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
@@ -91,9 +90,8 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractPartitionBa
                                                    PartitionService partitionService,
                                                    ApplicationEventPublisher eventPublisher,
                                                    JwtSettingsService jwtSettingsService,
-                                                   CalculatedFieldCache calculatedFieldCache,
                                                    CalculatedFieldStateService stateService) {
-        super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, tbResourceDataCache, calculatedFieldCache, apiUsageStateService, partitionService,
+        super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, tbResourceDataCache, apiUsageStateService, partitionService,
                 eventPublisher, jwtSettingsService);
         this.queueFactory = tbQueueFactory;
         this.stateService = stateService;

@@ -46,7 +46,6 @@ import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
-import org.thingsboard.server.service.cf.CalculatedFieldCache;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.queue.TbPackCallback;
@@ -74,7 +73,6 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
     protected final TbDeviceProfileCache deviceProfileCache;
     protected final TbAssetProfileCache assetProfileCache;
     protected final TbResourceDataCache tbResourceDataCache;
-    protected final CalculatedFieldCache calculatedFieldCache;
     protected final TbApiUsageStateService apiUsageStateService;
     protected final PartitionService partitionService;
     protected final ApplicationEventPublisher eventPublisher;
