@@ -29,6 +29,7 @@ import { MatChipInputEvent, MatChipGrid } from '@angular/material/chips';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { isEqual } from '@core/utils';
+import { MatFormFieldAppearance } from '@angular/material/form-field';
 
 @Component({
     selector: 'tb-entity-keys-list',
@@ -64,6 +65,9 @@ export class EntityKeysListComponent implements ControlValueAccessor, OnInit, Af
 
   @Input()
   dataKeyType: DataKeyType;
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   private requiredValue: boolean;
   get required(): boolean {

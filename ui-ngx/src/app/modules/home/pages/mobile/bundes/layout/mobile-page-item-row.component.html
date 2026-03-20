@@ -34,58 +34,67 @@
       <div class="tb-mobile-page-item-input-block xs:!hidden">
         <mat-form-field class="tb-suffix-absolute flex" appearance="outline" subscriptSizing="dynamic">
           <input matInput [required]="isCustomMenuItem" formControlName="label" placeholder="{{ itemNamePlaceholder }}">
-          <mat-icon matSuffix
-                    matTooltipPosition="above"
-                    matTooltipClass="tb-error-tooltip"
-                    matTooltip="{{ 'mobile.page-name-required' | translate }}"
-                    *ngIf="mobilePageRowForm.get('label').hasError('required') && mobilePageRowForm.get('label').touched"
-                    class="tb-error">
-            warning
-          </mat-icon>
-          <mat-icon matSuffix
-                    matTooltipPosition="above"
-                    matTooltipClass="tb-error-tooltip"
-                    matTooltip="{{ 'mobile.page-name-cannot-contain-only-spaces' | translate }}"
-                    *ngIf="mobilePageRowForm.get('label').hasError('pattern') && mobilePageRowForm.get('label').touched"
-                    class="tb-error">
-            warning
-          </mat-icon>
-          <mat-icon matSuffix
-                    matTooltipPosition="above"
-                    matTooltipClass="tb-error-tooltip"
-                    matTooltip="{{ 'mobile.page-name-max-length' | translate }}"
-                    *ngIf="mobilePageRowForm.get('label').hasError('maxlength') && mobilePageRowForm.get('label').touched"
-                    class="tb-error">
-            warning
-          </mat-icon>
+          @if (mobilePageRowForm.get('label').hasError('required') && mobilePageRowForm.get('label').touched) {
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      matTooltip="{{ 'mobile.page-name-required' | translate }}"
+                      class="tb-error">
+              warning
+            </mat-icon>
+          }
+          @if (mobilePageRowForm.get('label').hasError('pattern') && mobilePageRowForm.get('label').touched) {
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      matTooltip="{{ 'mobile.page-name-cannot-contain-only-spaces' | translate }}"
+                      class="tb-error">
+              warning
+            </mat-icon>
+          }
+          @if (mobilePageRowForm.get('label').hasError('maxlength') && mobilePageRowForm.get('label').touched) {
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      matTooltip="{{ 'mobile.page-name-max-length' | translate }}"
+                      class="tb-error">
+              warning
+            </mat-icon>
+          }
         </mat-form-field>
-        <mat-form-field *ngIf="isCustomMenuItem"
-                        class="tb-mobile-page-item-info flex" appearance="outline" subscriptSizing="dynamic">
-          <input matInput readonly [placeholder]="itemInfo">
-        </mat-form-field>
+        @if (isCustomMenuItem) {
+          <mat-form-field class="tb-mobile-page-item-info flex" appearance="outline" subscriptSizing="dynamic">
+            <input matInput readonly [placeholder]="itemInfo">
+          </mat-form-field>
+        }
       </div>
     </div>
-    <button *ngIf="!disabled"
-            type="button"
-            mat-icon-button
-            #editButton
-            (click)="edit($event, editButton)"
-            matTooltip="{{ 'mobile.edit-page' | translate }}"
-            matTooltipPosition="above">
-      <mat-icon>edit</mat-icon>
-    </button>
-    <button mat-icon-button *ngIf="!disabled && isDefaultMenuItem"
-            [disabled]="!isCleanupEnabled"
-            matTooltip="{{ 'mobile.reset-to-page-default' | translate }}"
-            matTooltipPosition="above"
-            (click)="cleanup()">
-      <tb-icon>mdi:broom</tb-icon>
-    </button>
-    <button mat-icon-button *ngIf="!disabled && isCustomMenuItem"
-            matTooltip="{{ 'mobile.delete-page' | translate }}"
-            matTooltipPosition="above"
-            (click)="delete()">
-      <mat-icon>delete</mat-icon>
-    </button>
+    @if (!disabled) {
+      <button type="button"
+              mat-icon-button
+              #editButton
+              (click)="edit($event, editButton)"
+              matTooltip="{{ 'mobile.edit-page' | translate }}"
+              matTooltipPosition="above">
+        <mat-icon>edit</mat-icon>
+      </button>
+      @if (isDefaultMenuItem) {
+        <button mat-icon-button
+                [disabled]="!isCleanupEnabled"
+                matTooltip="{{ 'mobile.reset-to-page-default' | translate }}"
+                matTooltipPosition="above"
+                (click)="cleanup()">
+          <tb-icon>mdi:broom</tb-icon>
+        </button>
+      }
+      @if (isCustomMenuItem) {
+        <button mat-icon-button
+                matTooltip="{{ 'mobile.delete-page' | translate }}"
+                matTooltipPosition="above"
+                (click)="delete()">
+          <mat-icon>delete</mat-icon>
+        </button>
+      }
+    }
   </div>
 </div>

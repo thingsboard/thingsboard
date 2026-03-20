@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="lwm2mListFormGroup" class="mat-block">
+<mat-form-field [formGroup]="lwm2mListFormGroup" class="mat-block" [appearance]="appearance">
   <mat-label translate>device-profile.lwm2m.object-list</mat-label>
   <mat-chip-grid #chipList formControlName="objectsList" [required]="required">
     <mat-chip-row
