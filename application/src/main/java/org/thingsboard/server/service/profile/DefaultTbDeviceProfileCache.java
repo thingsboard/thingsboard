@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.profile;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -23,9 +24,13 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 
+import java.util.HashSet;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
@@ -140,6 +145,32 @@ public class DefaultTbDeviceProfileCache implements TbDeviceProfileCache {
         ConcurrentMap<EntityId, BiConsumer<DeviceId, DeviceProfile>> deviceListeners = deviceProfileListeners.get(tenantId);
         if (deviceListeners != null) {
             deviceListeners.remove(listenerId);
+        }
+    }
+
+    @EventListener(ComponentLifecycleMsg.class)
+    public void onComponentLifecycleEvent(ComponentLifecycleMsg event) {
+        switch (event.getEntityId().getEntityType()) {
+            case TENANT:
+                if (event.getEvent() == ComponentLifecycleEvent.DELETED) {
+                    TenantId tenantId = event.getTenantId();
+                    var removedProfileIds = new HashSet<DeviceProfileId>();
+                    for (Map.Entry<DeviceProfileId, DeviceProfile> entry : deviceProfilesMap.entrySet()) {
+                        if (entry.getValue().getTenantId().equals(tenantId)) {
+                            deviceProfilesMap.remove(entry.getKey());
+                            removedProfileIds.add(entry.getKey());
+                            log.debug("[{}] evict device profile from cache: {}", entry.getKey(), entry.getValue());
+                        }
+                    }
+                    for (Map.Entry<DeviceId, DeviceProfileId> entry : devicesMap.entrySet()) {
+                        if (removedProfileIds.contains(entry.getValue())) {
+                            devicesMap.remove(entry.getKey());
+                        }
+                    }
+                    profileListeners.remove(tenantId);
+                    deviceProfileListeners.remove(tenantId);
+                }
+                break;
         }
     }
 
