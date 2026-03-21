@@ -15,6 +15,7 @@
 | Alias | Maps to |
 |-------|---------|
 | `@app/*` | `src/app/*` |
+| `@env/*` | `src/environments/*` |
 | `@core/*` | `src/app/core/*` |
 | `@modules/*` | `src/app/modules/*` |
 | `@home/*` | `src/app/modules/home/*` |
@@ -167,7 +168,7 @@ Source paths below are relative to `src/app/modules/` (not `home/pages/`).
 | `/resources/widgets-library/widget-types/:widgetTypeId` | `widget/` | custom (WidgetEditorComponent) | — |
 | `/resources/images` | `admin/` | custom (ImageGalleryComponent) | — |
 | `/resources/scada-symbols` | `admin/` | custom (ImageGalleryComponent) | — |
-| `/resources/scada-symbols/:type/:key` | `admin/` | custom (ScadaSymbolComponent) | — |
+| `/resources/scada-symbols/:type/:key` | `scada-symbol/` | custom (ScadaSymbolComponent) | — |
 | `/resources/resources-library` | `admin/` | entity-table | `ResourcesLibraryTableConfigResolver` |
 | `/resources/resources-library/:entityId` | `admin/` | entity-details | `ResourcesLibraryTableConfigResolver` |
 | `/resources/javascript-library` | `admin/` | entity-table | `JsLibraryTableConfigResolver` |
@@ -277,15 +278,15 @@ Most pages follow a 3-file pattern per entity type inside `pages/<entity>/`:
 | `EntityViewsTableConfigResolver` | ENTITY_VIEW | `entity-view/` | `EntityViewComponent` | `EntityViewTabsComponent` |
 | `CustomersTableConfigResolver` | CUSTOMER | `customer/` | `CustomerComponent` | `CustomerTabsComponent` |
 | `UsersTableConfigResolver` | USER | `user/` | `UserComponent` | `UserTabsComponent` |
-| `DashboardsTableConfigResolver` | DASHBOARD | `dashboard/` | — | — |
+| `DashboardsTableConfigResolver` | DASHBOARD | `dashboard/` | `DashboardFormComponent` | `DashboardTabsComponent` |
 | `EdgesTableConfigResolver` | EDGE | `edge/` | `EdgeComponent` | `EdgeTabsComponent` |
 | `RuleChainsTableConfigResolver` | RULE_CHAIN | `rulechain/` | `RuleChainComponent` | `RuleChainTabsComponent` |
-| `OtaUpdateTableConfigResolve` | OTA_PACKAGE | `ota-update/` | — | — |
-| `CalculatedFieldsTableConfigResolver` | CALCULATED_FIELD | `calculated-fields/` | — | — |
+| `OtaUpdateTableConfigResolve` | OTA_PACKAGE | `ota-update/` | `OtaUpdateComponent` | `OtaUpdateTabsComponent` |
+| `CalculatedFieldsTableConfigResolver` | CALCULATED_FIELD | `calculated-fields/` (config in `home/components/calculated-fields/`) | `CalculatedFieldComponent` | `CalculatedFieldsTabsComponent` |
 | `WidgetTypesTableConfigResolver` | WIDGETS_BUNDLE | `widget/` | `WidgetTypeComponent` | `WidgetTypeTabsComponent` |
 | `WidgetsBundlesTableConfigResolver` | WIDGETS_BUNDLE | `widget/` | `WidgetsBundleComponent` | `WidgetsBundleTabsComponent` |
-| `ResourcesLibraryTableConfigResolver` | TB_RESOURCE | `admin/` | — | — |
-| `JsLibraryTableConfigResolver` | TB_RESOURCE | `admin/` | — | — |
+| `ResourcesLibraryTableConfigResolver` | TB_RESOURCE | `admin/` | `ResourcesLibraryComponent` | `ResourceLibraryTabsComponent` |
+| `JsLibraryTableConfigResolver` | TB_RESOURCE | `admin/` | `JsResourceComponent` | `ResourceTabsComponent` |
 | `QueuesTableConfigResolver` | QUEUE | `admin/queue/` | `QueueComponent` | — |
 | `AiModelsTableConfigResolver` | AI_MODEL | `ai-model/` | — | — |
 | `ClientsTableConfigResolver` | OAUTH2_CLIENT | `admin/oauth2/clients/` | `ClientComponent` | — |
@@ -740,3 +741,6 @@ All services are in `src/app/core/http/`.
 | Trendz Settings | `trendz-settings.service.ts` | `TrendzSettingsService` |
 | Usage Info | `usage-info.service.ts` | `UsageInfoService` |
 | Component Descriptor | `component-descriptor.service.ts` | `ComponentDescriptorService` |
+| GitHub | `git-hub.service.ts` | `GitHubService` |
+| Mobile Application | `mobile-application.service.ts` | `MobileApplicationService` |
+| UI Settings | `ui-settings.service.ts` | `UiSettingsService` |
