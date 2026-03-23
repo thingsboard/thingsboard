@@ -213,4 +213,8 @@ export class DeviceProfileProvisionConfigurationComponent implements ControlValu
       this.provisionConfigurationFormGroup.get('provisionDeviceKey').reset({value: null, disabled: true}, {emitEvent: false});
     }
   }
+
+  getDeviceProvisionType(type: string): string {
+    return this.deviceProvisionTypeTranslateMap.get(type as DeviceProvisionType);
+  }
 }
