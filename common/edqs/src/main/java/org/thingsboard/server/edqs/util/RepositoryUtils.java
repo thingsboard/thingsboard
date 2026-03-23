@@ -139,6 +139,7 @@ public class RepositoryUtils {
         }
         query.entityFilter(oldQuery.getEntityFilter());
         query.keyFilters(toKeyFilters(oldQuery.getKeyFilters()));
+        query.keyFiltersOperation(oldQuery.getKeyFiltersOperationOrDefault());
         query.entityFields(toNewKeys(oldQuery.getEntityFields()));
         query.latestValues(toNewKeys(oldQuery.getLatestValues()));
         return query.build();
@@ -149,6 +150,7 @@ public class RepositoryUtils {
                 .entityFilter(oldQuery.getEntityFilter())
                 .hasKeyFilters(CollectionsUtil.isNotEmpty(oldQuery.getKeyFilters()))
                 .keyFilters(toKeyFilters(oldQuery.getKeyFilters()))
+                .keyFiltersOperation(oldQuery.getKeyFiltersOperationOrDefault())
                 .build();
     }
 
