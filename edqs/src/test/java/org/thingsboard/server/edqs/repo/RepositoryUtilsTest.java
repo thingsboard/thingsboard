@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.edqs.repo;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -44,6 +45,7 @@ import org.thingsboard.server.edqs.query.DataKey;
 import org.thingsboard.server.edqs.query.EdqsFilter;
 import org.thingsboard.server.edqs.util.RepositoryUtils;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -467,6 +469,120 @@ public class RepositoryUtilsTest {
         complexFilterPredicate.setOperation(complexOperation);
         complexFilterPredicate.setPredicates(List.of(filterPredicate, filterPredicate2));
         return complexFilterPredicate;
+    }
+
+    // --- OR operation tests for checkKeyFilters ---
+
+    @Test
+    public void testCheckKeyFiltersWithOrOperation() {
+        // Entity with temperature=60; filters: temperature>50 (match) and humidity>80 (no data)
+        DeviceData deviceData = new DeviceData(UUID.randomUUID());
+        deviceData.setCustomerId(UUID.randomUUID());
+        deviceData.setFields(DeviceFields.builder().name("orDevice1").build());
+        deviceData.putTs(5, new DoubleDataPoint(System.currentTimeMillis(), 60.0));
+
+        EdqsFilter tempGt50 = getTemperatureFilter(NumericOperation.GREATER, 50);
+        EdqsFilter humidityGt80 = getHumidityFilter(NumericOperation.GREATER, 80);
+
+        // OR: temperature>50 matches, short-circuits to true
+        assertThat(RepositoryUtils.checkKeyFilters(deviceData, List.of(tempGt50, humidityGt80), ComplexOperation.OR)).isTrue();
+    }
+
+    @Test
+    public void testCheckKeyFiltersWithOrOperationNoMatch() {
+        // Entity with temperature=30; filters: temperature>50 (no match) and temperature<10 (no match)
+        DeviceData deviceData = new DeviceData(UUID.randomUUID());
+        deviceData.setCustomerId(UUID.randomUUID());
+        deviceData.setFields(DeviceFields.builder().name("orDevice2").build());
+        deviceData.putTs(5, new DoubleDataPoint(System.currentTimeMillis(), 30.0));
+
+        EdqsFilter tempGt50 = getTemperatureFilter(NumericOperation.GREATER, 50);
+        EdqsFilter tempLt10 = getTemperatureFilter(NumericOperation.LESS, 10);
+
+        // OR: neither filter matches
+        assertThat(RepositoryUtils.checkKeyFilters(deviceData, List.of(tempGt50, tempLt10), ComplexOperation.OR)).isFalse();
+    }
+
+    @Test
+    public void testCheckKeyFiltersWithOrOperationSameKey() {
+        // Entity with temperature=5; filters: temperature>50 (no match) and temperature<10 (match)
+        DeviceData deviceData = new DeviceData(UUID.randomUUID());
+        deviceData.setCustomerId(UUID.randomUUID());
+        deviceData.setFields(DeviceFields.builder().name("orDevice3").build());
+        deviceData.putTs(5, new DoubleDataPoint(System.currentTimeMillis(), 5.0));
+
+        EdqsFilter tempGt50 = getTemperatureFilter(NumericOperation.GREATER, 50);
+        EdqsFilter tempLt10 = getTemperatureFilter(NumericOperation.LESS, 10);
+
+        // OR on same key: second filter matches
+        assertThat(RepositoryUtils.checkKeyFilters(deviceData, List.of(tempGt50, tempLt10), ComplexOperation.OR)).isTrue();
+    }
+
+    @Test
+    public void testCheckKeyFiltersWithAndOperationUnchanged() {
+        // Entity with temperature=60 and humidity=90
+        DeviceData deviceData = new DeviceData(UUID.randomUUID());
+        deviceData.setCustomerId(UUID.randomUUID());
+        deviceData.setFields(DeviceFields.builder().name("andDevice1").build());
+        deviceData.putTs(5, new DoubleDataPoint(System.currentTimeMillis(), 60.0));
+        deviceData.putTs(6, new LongDataPoint(System.currentTimeMillis(), 90));
+
+        EdqsFilter tempGt50 = getTemperatureFilter(NumericOperation.GREATER, 50);
+        EdqsFilter humidityGt80 = getHumidityFilter(NumericOperation.GREATER, 80);
+
+        // AND: both match
+        assertThat(RepositoryUtils.checkKeyFilters(deviceData, List.of(tempGt50, humidityGt80), ComplexOperation.AND)).isTrue();
+
+        // Now with humidity=70 -- humidity>80 fails
+        DeviceData deviceData2 = new DeviceData(UUID.randomUUID());
+        deviceData2.setCustomerId(UUID.randomUUID());
+        deviceData2.setFields(DeviceFields.builder().name("andDevice2").build());
+        deviceData2.putTs(5, new DoubleDataPoint(System.currentTimeMillis(), 60.0));
+        deviceData2.putTs(6, new LongDataPoint(System.currentTimeMillis(), 70));
+
+        // AND: humidity>80 fails
+        assertThat(RepositoryUtils.checkKeyFilters(deviceData2, List.of(tempGt50, humidityGt80), ComplexOperation.AND)).isFalse();
+    }
+
+    @Test
+    public void testCheckKeyFiltersWithNullOperationDefaultsToAnd() {
+        // Entity with temperature=60 and humidity=90
+        DeviceData deviceData = new DeviceData(UUID.randomUUID());
+        deviceData.setCustomerId(UUID.randomUUID());
+        deviceData.setFields(DeviceFields.builder().name("nullOpDevice").build());
+        deviceData.putTs(5, new DoubleDataPoint(System.currentTimeMillis(), 60.0));
+        deviceData.putTs(6, new LongDataPoint(System.currentTimeMillis(), 90));
+
+        EdqsFilter tempGt50 = getTemperatureFilter(NumericOperation.GREATER, 50);
+        EdqsFilter humidityGt80 = getHumidityFilter(NumericOperation.GREATER, 80);
+
+        // null operation should behave like AND
+        boolean nullResult = RepositoryUtils.checkKeyFilters(deviceData, List.of(tempGt50, humidityGt80), null);
+        boolean andResult = RepositoryUtils.checkKeyFilters(deviceData, List.of(tempGt50, humidityGt80), ComplexOperation.AND);
+        assertThat(nullResult).isEqualTo(andResult);
+        assertThat(nullResult).isTrue();
+
+        // Entity with temperature=60 and humidity=70 -- humidity>80 fails
+        DeviceData deviceData2 = new DeviceData(UUID.randomUUID());
+        deviceData2.setCustomerId(UUID.randomUUID());
+        deviceData2.setFields(DeviceFields.builder().name("nullOpDevice2").build());
+        deviceData2.putTs(5, new DoubleDataPoint(System.currentTimeMillis(), 60.0));
+        deviceData2.putTs(6, new LongDataPoint(System.currentTimeMillis(), 70));
+
+        boolean nullResult2 = RepositoryUtils.checkKeyFilters(deviceData2, List.of(tempGt50, humidityGt80), null);
+        boolean andResult2 = RepositoryUtils.checkKeyFilters(deviceData2, List.of(tempGt50, humidityGt80), ComplexOperation.AND);
+        assertThat(nullResult2).isEqualTo(andResult2);
+        assertThat(nullResult2).isFalse();
+    }
+
+    @Test
+    public void testCheckKeyFiltersWithOrEmptyFilters() {
+        DeviceData deviceData = new DeviceData(UUID.randomUUID());
+        deviceData.setCustomerId(UUID.randomUUID());
+        deviceData.setFields(DeviceFields.builder().name("emptyFilterDevice").build());
+
+        // OR with empty filters = include all (matches SQL behavior)
+        assertThat(RepositoryUtils.checkKeyFilters(deviceData, Collections.emptyList(), ComplexOperation.OR)).isTrue();
     }
 
 }
