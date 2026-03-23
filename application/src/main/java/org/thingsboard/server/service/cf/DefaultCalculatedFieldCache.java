@@ -59,6 +59,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
@@ -285,7 +286,14 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
 
     @Override
     public void evictOwner(EntityId owner) {
-        ownerEntities.remove(owner);
+        Set<EntityId> removedEntities = ownerEntities.remove(owner);
+        if (removedEntities != null) {
+            Set<EntityId> removedCustomers = removedEntities
+                    .stream()
+                    .filter(entityId -> entityId.getEntityType() == EntityType.CUSTOMER)
+                    .collect(Collectors.toSet());
+            removedCustomers.forEach(this::evictOwner);
+        }
     }
 
     private Set<EntityId> getOwnedEntities(TenantId tenantId, EntityId ownerId) {
