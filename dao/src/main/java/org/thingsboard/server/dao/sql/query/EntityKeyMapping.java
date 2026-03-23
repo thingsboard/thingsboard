@@ -292,16 +292,14 @@ public class EntityKeyMapping {
             String keyAlias;
             if (entityKey.getType().equals(EntityKeyType.ENTITY_FIELD) && getEntityKeyColumn() != null) {
                 if (outerContext) {
-                    // In the outer query (OR relocation), entity field columns are available
-                    // as bare column names from the inner subquery SELECT.
-                    // buildSimplePredicateQuery does: alias + "." + entityKeyColumn when entityKeyColumn != null.
-                    // To produce just the bare column name, temporarily null out entityKeyColumn
-                    // so buildSimplePredicateQuery uses alias directly as the field.
-                    String bareColumn = getEntityKeyColumn();
+                    // In the middle layer (OR relocation), entity field columns are available
+                    // by their alias name from the inner subquery SELECT (e.g., "alias2" from
+                    // "cast(e.name as varchar) as alias2"). Temporarily null out entityKeyColumn
+                    // so buildSimplePredicateQuery uses the alias directly as the field.
                     String savedColumn = this.entityKeyColumn;
                     this.entityKeyColumn = null;
                     List<String> predicates = keyFilters.stream()
-                            .map(keyFilter -> this.buildKeyQuery(ctx, bareColumn, keyFilter, filterType))
+                            .map(keyFilter -> this.buildKeyQuery(ctx, alias, keyFilter, filterType))
                             .collect(Collectors.toList());
                     this.entityKeyColumn = savedColumn;
                     return predicates.stream();

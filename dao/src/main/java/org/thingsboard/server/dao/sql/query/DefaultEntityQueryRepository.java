@@ -386,11 +386,16 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             String entityWhereClause = DefaultEntityQueryRepository.this.buildEntityWhere(ctx, query.getEntityFilter(), innerEntityFieldsFilters);
             String latestJoinsCnt = EntityKeyMapping.buildLatestJoins(ctx, query.getEntityFilter(), entityType, allLatestMappings, true, isOr);
 
-            // Under OR: combine ALL filter mappings (entity fields + aliases) in outer WHERE with OR joiner
+            // Under OR: combine ALL filter mappings (entity fields + aliases) with OR joiner
+            // Place at the middle layer (after JOINs) where alias table references are visible.
+            // Under AND: place at the outer result layer (existing behavior).
             String aliasWhereQuery;
             if (isOr) {
                 String combinedFilterQuery = EntityKeyMapping.buildQuery(ctx, filterMapping, query.getEntityFilter().getType(), ComplexOperation.OR);
-                aliasWhereQuery = combinedFilterQuery.isEmpty() ? "" : " where (" + combinedFilterQuery + ")";
+                if (!combinedFilterQuery.isEmpty()) {
+                    latestJoinsCnt += " where (" + combinedFilterQuery + ")";
+                }
+                aliasWhereQuery = "";
             } else {
                 aliasWhereQuery = DefaultEntityQueryRepository.this.buildAliasWhereQuery(ctx, query.getEntityFilter(), selectionMapping, "");
             }
@@ -481,18 +486,23 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             String latestJoinsCnt = EntityKeyMapping.buildLatestJoins(ctx, query.getEntityFilter(), entityType, allLatestMappings, true, isOr);
             String latestJoinsData = EntityKeyMapping.buildLatestJoins(ctx, query.getEntityFilter(), entityType, allLatestMappings, false, isOr);
 
-            // Under OR: combine ALL filter mappings (entity fields + aliases) in outer WHERE with OR joiner
+            // Under OR: combine ALL filter mappings (entity fields + aliases) with OR joiner
+            // Place at the middle layer (after JOINs) where alias table references are visible.
+            // Under AND: place at the outer result layer (existing behavior).
             String aliasWhereQuery;
             if (isOr) {
                 String combinedFilterQuery = EntityKeyMapping.buildQuery(ctx, filterMapping, query.getEntityFilter().getType(), ComplexOperation.OR);
-                String searchTextQuery = buildTextSearchQuery(ctx, selectionMapping, pageLink.getTextSearch());
-                aliasWhereQuery = "";
+                String middleWhere = "";
                 if (!combinedFilterQuery.isEmpty()) {
-                    aliasWhereQuery = " where (" + combinedFilterQuery + ")";
+                    middleWhere = " where (" + combinedFilterQuery + ")";
                 }
+                String searchTextQuery = buildTextSearchQuery(ctx, selectionMapping, pageLink.getTextSearch());
                 if (!searchTextQuery.isEmpty()) {
-                    aliasWhereQuery += (aliasWhereQuery.isEmpty() ? " where " : " and ") + "(" + searchTextQuery + ") ";
+                    middleWhere += (middleWhere.isEmpty() ? " where " : " and ") + "(" + searchTextQuery + ") ";
                 }
+                latestJoinsCnt += middleWhere;
+                latestJoinsData += middleWhere;
+                aliasWhereQuery = "";
             } else {
                 aliasWhereQuery = DefaultEntityQueryRepository.this.buildAliasWhereQuery(ctx, query.getEntityFilter(), selectionMapping, pageLink.getTextSearch());
             }

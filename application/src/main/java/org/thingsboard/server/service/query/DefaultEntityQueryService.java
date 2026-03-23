@@ -107,13 +107,13 @@ public class DefaultEntityQueryService implements EntityQueryService {
     private AttributesService attributesService;
 
     @Override
-    public long countEntitiesByQuery(SecurityUser securityUser, EntityCountQuery query) throws ThingsboardException {
+    public long countEntitiesByQuery(SecurityUser securityUser, EntityCountQuery query) {
         validateKeyFiltersOperation(query);
         return entityService.countEntitiesByQuery(securityUser.getTenantId(), securityUser.getCustomerId(), query);
     }
 
     @Override
-    public PageData<EntityData> findEntityDataByQuery(SecurityUser securityUser, EntityDataQuery query) throws ThingsboardException {
+    public PageData<EntityData> findEntityDataByQuery(SecurityUser securityUser, EntityDataQuery query) {
         validateKeyFiltersOperation(query);
         if (query.getKeyFilters() != null) {
             resolveDynamicValuesInPredicates(
@@ -183,7 +183,7 @@ public class DefaultEntityQueryService implements EntityQueryService {
     }
 
     @Override
-    public PageData<AlarmData> findAlarmDataByQuery(SecurityUser securityUser, AlarmDataQuery query) throws ThingsboardException {
+    public PageData<AlarmData> findAlarmDataByQuery(SecurityUser securityUser, AlarmDataQuery query) {
         validateKeyFiltersOperation(query);
         EntityDataQuery entityDataQuery = this.buildEntityDataQuery(query);
         PageData<EntityData> entities = entityService.findEntityDataByQuery(securityUser.getTenantId(),
@@ -210,7 +210,7 @@ public class DefaultEntityQueryService implements EntityQueryService {
     }
 
     @Override
-    public long countAlarmsByQuery(SecurityUser securityUser, AlarmCountQuery query) throws ThingsboardException {
+    public long countAlarmsByQuery(SecurityUser securityUser, AlarmCountQuery query) {
         validateKeyFiltersOperation(query);
         if (query.getEntityFilter() != null) {
             EntityDataQuery entityDataQuery = this.buildEntityDataQuery(query);
@@ -244,9 +244,9 @@ public class DefaultEntityQueryService implements EntityQueryService {
         return new EntityDataQuery(query.getEntityFilter(), edpl, query.getEntityFields(), query.getLatestValues(), query.getKeyFilters(), query.getKeyFiltersOperationOrDefault());
     }
 
-    private void validateKeyFiltersOperation(EntityCountQuery query) throws ThingsboardException {
+    private void validateKeyFiltersOperation(EntityCountQuery query) {
         if (!keyFiltersOrConditionsEnabled && query.getKeyFiltersOperation() == ComplexOperation.OR) {
-            throw new ThingsboardException("OR conditions between key filters are disabled", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+            throw new IllegalArgumentException("OR conditions between key filters are disabled");
         }
     }
 

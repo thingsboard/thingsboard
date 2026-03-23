@@ -409,7 +409,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
                         .collect(Collectors.toList());
             }
         }
-        EntityDataQuery entityQuery = new EntityDataQuery(query.getEntityFilter(), query.getPageLink(), entityFields, latestValues, query.getKeyFilters());
+        EntityDataQuery entityQuery = new EntityDataQuery(query.getEntityFilter(), query.getPageLink(), entityFields, latestValues, query.getKeyFilters(), query.getKeyFiltersOperation());
         return this.entityQueryDao.findEntityDataByQuery(tenantId, customerId, entityQuery);
     }
 
