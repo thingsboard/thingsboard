@@ -17,6 +17,7 @@ package org.thingsboard.server.service.query;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmCountQuery;
@@ -33,13 +34,13 @@ import java.util.Set;
 
 public interface EntityQueryService {
 
-    long countEntitiesByQuery(SecurityUser securityUser, EntityCountQuery query);
+    long countEntitiesByQuery(SecurityUser securityUser, EntityCountQuery query) throws ThingsboardException;
 
-    PageData<EntityData> findEntityDataByQuery(SecurityUser securityUser, EntityDataQuery query);
+    PageData<EntityData> findEntityDataByQuery(SecurityUser securityUser, EntityDataQuery query) throws ThingsboardException;
 
-    PageData<AlarmData> findAlarmDataByQuery(SecurityUser securityUser, AlarmDataQuery query);
+    PageData<AlarmData> findAlarmDataByQuery(SecurityUser securityUser, AlarmDataQuery query) throws ThingsboardException;
 
-    long countAlarmsByQuery(SecurityUser securityUser, AlarmCountQuery query);
+    long countAlarmsByQuery(SecurityUser securityUser, AlarmCountQuery query) throws ThingsboardException;
 
     ListenableFuture<AvailableEntityKeys> getKeysByQuery(SecurityUser securityUser, TenantId tenantId, EntityDataQuery query,
                                                          boolean isTimeseries, boolean isAttributes, AttributeScope scope);

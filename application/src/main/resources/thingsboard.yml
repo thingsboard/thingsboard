@@ -469,6 +469,10 @@ sql:
   log_tenant_stats: "${SQL_LOG_TENANT_STATS:true}"
   # Interval in milliseconds for printing the latest statistic information about the tenant
   log_tenant_stats_interval_ms: "${SQL_LOG_TENANT_STATS_INTERVAL_MS:60000}"
+  query:
+    key-filters-or-conditions:
+      # Enable/disable OR conditions between key filters in entity data queries
+      enabled: "${SQL_QUERY_KEY_FILTERS_OR_CONDITIONS_ENABLED:true}"
   postgres:
     # Specify partitioning size for timestamp key-value storage. Example: DAYS, MONTHS, YEARS, INDEFINITE.
     ts_key_value_partitioning: "${SQL_POSTGRES_TS_KV_PARTITIONING:MONTHS}"

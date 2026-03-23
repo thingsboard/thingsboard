@@ -44,6 +44,7 @@ import org.thingsboard.server.common.data.query.AvailableEntityKeysV2;
 import org.thingsboard.server.common.data.query.AvailableEntityKeysV2.KeyInfo;
 import org.thingsboard.server.common.data.query.AvailableEntityKeysV2.KeySample;
 import org.thingsboard.server.common.data.query.ComplexFilterPredicate;
+import org.thingsboard.server.common.data.query.ComplexOperation;
 import org.thingsboard.server.common.data.query.DynamicValue;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityData;
@@ -93,6 +94,9 @@ public class DefaultEntityQueryService implements EntityQueryService {
     @Value("${server.ws.max_entities_per_alarm_subscription:1000}")
     private int maxEntitiesPerAlarmSubscription;
 
+    @Value("${sql.query.key-filters-or-conditions.enabled:true}")
+    private boolean keyFiltersOrConditionsEnabled;
+
     @Autowired
     private DbCallbackExecutorService dbCallbackExecutor;
 
@@ -103,12 +107,14 @@ public class DefaultEntityQueryService implements EntityQueryService {
     private AttributesService attributesService;
 
     @Override
-    public long countEntitiesByQuery(SecurityUser securityUser, EntityCountQuery query) {
+    public long countEntitiesByQuery(SecurityUser securityUser, EntityCountQuery query) throws ThingsboardException {
+        validateKeyFiltersOperation(query);
         return entityService.countEntitiesByQuery(securityUser.getTenantId(), securityUser.getCustomerId(), query);
     }
 
     @Override
-    public PageData<EntityData> findEntityDataByQuery(SecurityUser securityUser, EntityDataQuery query) {
+    public PageData<EntityData> findEntityDataByQuery(SecurityUser securityUser, EntityDataQuery query) throws ThingsboardException {
+        validateKeyFiltersOperation(query);
         if (query.getKeyFilters() != null) {
             resolveDynamicValuesInPredicates(
                     query.getKeyFilters().stream()
@@ -177,7 +183,8 @@ public class DefaultEntityQueryService implements EntityQueryService {
     }
 
     @Override
-    public PageData<AlarmData> findAlarmDataByQuery(SecurityUser securityUser, AlarmDataQuery query) {
+    public PageData<AlarmData> findAlarmDataByQuery(SecurityUser securityUser, AlarmDataQuery query) throws ThingsboardException {
+        validateKeyFiltersOperation(query);
         EntityDataQuery entityDataQuery = this.buildEntityDataQuery(query);
         PageData<EntityData> entities = entityService.findEntityDataByQuery(securityUser.getTenantId(),
                 securityUser.getCustomerId(), entityDataQuery);
@@ -203,7 +210,8 @@ public class DefaultEntityQueryService implements EntityQueryService {
     }
 
     @Override
-    public long countAlarmsByQuery(SecurityUser securityUser, AlarmCountQuery query) {
+    public long countAlarmsByQuery(SecurityUser securityUser, AlarmCountQuery query) throws ThingsboardException {
+        validateKeyFiltersOperation(query);
         if (query.getEntityFilter() != null) {
             EntityDataQuery entityDataQuery = this.buildEntityDataQuery(query);
             PageData<EntityData> entities = entityService.findEntityDataByQuery(securityUser.getTenantId(),
@@ -234,6 +242,12 @@ public class DefaultEntityQueryService implements EntityQueryService {
         }
         EntityDataPageLink edpl = new EntityDataPageLink(maxEntitiesPerAlarmSubscription, 0, null, entitiesSortOrder);
         return new EntityDataQuery(query.getEntityFilter(), edpl, query.getEntityFields(), query.getLatestValues(), query.getKeyFilters(), query.getKeyFiltersOperationOrDefault());
+    }
+
+    private void validateKeyFiltersOperation(EntityCountQuery query) throws ThingsboardException {
+        if (!keyFiltersOrConditionsEnabled && query.getKeyFiltersOperation() == ComplexOperation.OR) {
+            throw new ThingsboardException("OR conditions between key filters are disabled", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        }
     }
 
     @Override
