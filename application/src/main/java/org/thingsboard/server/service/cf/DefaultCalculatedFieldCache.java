@@ -313,9 +313,9 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
                 }
                 break;
             case CUSTOMER:
-                if (event.getEvent().equals(ComponentLifecycleEvent.CREATED)) {
+                if (event.getEvent() == ComponentLifecycleEvent.CREATED) {
                     addOwnerEntity(event.getTenantId(), event.getEntityId());
-                } else if (event.getEvent().equals(ComponentLifecycleEvent.UPDATED) && event.isOwnerChanged()) {
+                } else if (event.getEvent() == ComponentLifecycleEvent.UPDATED && event.isOwnerChanged()) {
                     updateOwnerEntity(event.getTenantId(), event.getEntityId());
                 } else if (event.getEvent() == ComponentLifecycleEvent.DELETED) {
                     evictOwner(event.getEntityId());
@@ -323,17 +323,17 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
                 }
                 break;
             case DEVICE, ASSET:
-                if (event.getEvent().equals(ComponentLifecycleEvent.CREATED)) {
+                if (event.getEvent() == ComponentLifecycleEvent.CREATED) {
                     addOwnerEntity(event.getTenantId(), event.getEntityId());
-                } else if (event.getEvent().equals(ComponentLifecycleEvent.UPDATED) && event.isOwnerChanged()) {
+                } else if (event.getEvent() == ComponentLifecycleEvent.UPDATED && event.isOwnerChanged()) {
                     updateOwnerEntity(event.getTenantId(), event.getEntityId());
-                } else if (event.getEvent().equals(ComponentLifecycleEvent.DELETED)) {
+                } else if (event.getEvent() == ComponentLifecycleEvent.DELETED) {
                     evictOwnerEntity(event.getEntityId());
                     evictEntityCfs(event.getEntityId());
                 }
                 break;
             case DEVICE_PROFILE, ASSET_PROFILE:
-                if (event.getEvent().equals(ComponentLifecycleEvent.DELETED)) {
+                if (event.getEvent() == ComponentLifecycleEvent.DELETED) {
                     evictEntityCfs(event.getEntityId());
                 }
                 break;
