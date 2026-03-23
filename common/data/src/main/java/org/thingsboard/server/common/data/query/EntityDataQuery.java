@@ -34,9 +34,13 @@ public class EntityDataQuery extends AbstractDataQuery<EntityDataPageLink> {
         super(entityFilter, pageLink, entityFields, latestValues, keyFilters);
     }
 
+    public EntityDataQuery(EntityFilter entityFilter, EntityDataPageLink pageLink, List<EntityKey> entityFields, List<EntityKey> latestValues, List<KeyFilter> keyFilters, ComplexOperation keyFiltersOperation) {
+        super(entityFilter, pageLink, entityFields, latestValues, keyFilters, keyFiltersOperation);
+    }
+
     @JsonIgnore
     public EntityDataQuery next() {
-        return new EntityDataQuery(getEntityFilter(), getPageLink().nextPageLink(), entityFields, latestValues, keyFilters);
+        return new EntityDataQuery(getEntityFilter(), getPageLink().nextPageLink(), entityFields, latestValues, keyFilters, getKeyFiltersOperation());
     }
 
 }

@@ -34,6 +34,9 @@ public class EntityCountQuery {
     @Getter
     protected List<KeyFilter> keyFilters;
 
+    @Getter
+    private ComplexOperation keyFiltersOperation;
+
     public EntityCountQuery() {
     }
 
@@ -44,5 +47,15 @@ public class EntityCountQuery {
     public EntityCountQuery(EntityFilter entityFilter, List<KeyFilter> keyFilters) {
         this.entityFilter = entityFilter;
         this.keyFilters = keyFilters;
+    }
+
+    public EntityCountQuery(EntityFilter entityFilter, List<KeyFilter> keyFilters, ComplexOperation keyFiltersOperation) {
+        this.entityFilter = entityFilter;
+        this.keyFilters = keyFilters;
+        this.keyFiltersOperation = keyFiltersOperation;
+    }
+
+    public ComplexOperation getKeyFiltersOperationOrDefault() {
+        return keyFiltersOperation != null ? keyFiltersOperation : ComplexOperation.AND;
     }
 }
