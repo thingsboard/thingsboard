@@ -60,8 +60,8 @@ import java.util.stream.Stream;
 import static org.apache.commons.lang3.StringUtils.containsIgnoreCase;
 import static org.thingsboard.server.common.data.StringUtils.equalsAny;
 import static org.thingsboard.server.common.data.StringUtils.splitByCommaWithoutQuotes;
-import static org.thingsboard.server.common.data.query.ComplexFilterPredicate.ComplexOperation.AND;
-import static org.thingsboard.server.common.data.query.ComplexFilterPredicate.ComplexOperation.OR;
+import static org.thingsboard.server.common.data.query.ComplexOperation.AND;
+import static org.thingsboard.server.common.data.query.ComplexOperation.OR;
 
 @Slf4j
 public class RepositoryUtils {
