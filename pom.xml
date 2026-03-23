@@ -38,6 +38,7 @@
         <pkg.implementationTitle>${project.name}</pkg.implementationTitle>
         <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
+        <thingsboard.client.version>4.4.0-SNAPSHOT</thingsboard.client.version>
         <spring-boot.version>3.5.12</spring-boot.version>
         <javax.xml.bind-api.version>2.4.0-b180830.0359</javax.xml.bind-api.version>
         <jjwt.version>0.12.5</jjwt.version>
@@ -1090,6 +1091,12 @@
                 <groupId>org.thingsboard</groupId>
                 <artifactId>rest-client</artifactId>
                 <version>${project.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.client</groupId>
+                <artifactId>thingsboard-ce-client</artifactId>
+                <version>${thingsboard.client.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
