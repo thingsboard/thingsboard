@@ -40,7 +40,6 @@
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
         <spring-boot.version>3.5.12</spring-boot.version>
         <javax.xml.bind-api.version>2.4.0-b180830.0359</javax.xml.bind-api.version>
-        <jedis.version>5.1.5</jedis.version>
         <jjwt.version>0.12.5</jjwt.version>
         <rat.version>0.10</rat.version> <!-- unused -->
         <cassandra.version>4.17.0</cassandra.version>
@@ -89,7 +88,6 @@
         <lz4.version>1.10.1</lz4.version> <!-- to fix CVE-2025-12183 and CVE-2025-66566 introduced through kafka-clients 3.9.1 TODO: remove when kafka-clients is bumped -->
         <bucket4j.version>8.10.1</bucket4j.version>
         <antlr.version>3.5.3</antlr.version>
-        <snakeyaml.version>2.2</snakeyaml.version>
         <aws.sdk.version>1.12.701</aws.sdk.version>
         <pubsub.client.version>1.128.1</pubsub.client.version>
 
@@ -1190,11 +1188,6 @@
                 <version>${jjwt.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.yaml</groupId>
-                <artifactId>snakeyaml</artifactId>
-                <version>${snakeyaml.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>antlr</groupId>
                 <artifactId>antlr</artifactId>
                 <version>${antlr.version}</version>
@@ -1544,11 +1537,6 @@
                 <groupId>org.bouncycastle</groupId>
                 <artifactId>bcprov-ext-jdk18on</artifactId>
                 <version>${bouncycastle.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>redis.clients</groupId>
-                <artifactId>jedis</artifactId>
-                <version>${jedis.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.sun.winsw</groupId>
