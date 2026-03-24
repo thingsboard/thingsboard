@@ -379,8 +379,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
 
     this.noDataDisplayMessageText =
       noDataMessage(this.widgetConfig.noDataDisplayMessage, 'widget.no-data-found', this.utils, this.translate);
-
-    let cssString = constructTableCssString(this.widgetConfig);
+    let cssString = constructTableCssString(this.widgetConfig, true);
 
     const origBackgroundColor = this.widgetConfig.backgroundColor || 'rgb(255, 255, 255)';
     cssString += '.tb-table-widget mat-toolbar.mat-mdc-table-toolbar:not([color=primary]) {\n' +
