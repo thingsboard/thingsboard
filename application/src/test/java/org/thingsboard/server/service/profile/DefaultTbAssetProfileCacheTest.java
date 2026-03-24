@@ -70,7 +70,6 @@ public class DefaultTbAssetProfileCacheTest {
         // After deletion tenant1 profile should be reloaded from service on next get
         when(assetProfileService.findAssetProfileById(any(), any())).thenReturn(null);
         assertThat(cache.get(tenant1, profileId1)).isNull();
-        // tenant2 profile should still be served from cache (no extra service call)
         verify(assetProfileService, times(1)).findAssetProfileById(tenant2, profileId2);
     }
 
