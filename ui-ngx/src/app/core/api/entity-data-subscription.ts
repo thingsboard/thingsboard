@@ -34,6 +34,7 @@ import {
 import {
   AlarmFilter,
   ComparisonTsValue,
+  ComplexOperation,
   EntityData,
   EntityDataPageLink,
   EntityFilter,
@@ -112,6 +113,7 @@ export interface EntityDataSubscriptionOptions {
   pageLink?: EntityDataPageLink;
   keyFilters?: Array<KeyFilter>;
   additionalKeyFilters?: Array<KeyFilter>;
+  keyFiltersOperation?: ComplexOperation;
   subscriptionTimewindow?: SubscriptionTimewindow;
   latestTsOffset?: number;
 }

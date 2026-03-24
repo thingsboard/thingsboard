@@ -23,6 +23,7 @@ import { DatasourceType } from '@shared/models/widget.models';
 import {
   AlarmData,
   AlarmDataPageLink,
+  ComplexOperation,
   EntityFilter,
   EntityKey,
   EntityKeyType,
@@ -47,6 +48,7 @@ export interface AlarmDataSubscriptionOptions {
   pageLink?: AlarmDataPageLink;
   keyFilters?: Array<KeyFilter>;
   additionalKeyFilters?: Array<KeyFilter>;
+  keyFiltersOperation?: ComplexOperation;
   subscriptionTimewindow?: SubscriptionTimewindow;
 }
 
