@@ -585,4 +585,49 @@ public class RepositoryUtilsTest {
         assertThat(RepositoryUtils.checkKeyFilters(deviceData, Collections.emptyList(), ComplexOperation.OR)).isTrue();
     }
 
+    @Test
+    public void testCheckKeyFiltersWithOrStringEntityFieldFilters() {
+        // Entity with name="loranet device 123"
+        DeviceData deviceData = new DeviceData(UUID.randomUUID());
+        deviceData.setCustomerId(UUID.randomUUID());
+        deviceData.setFields(DeviceFields.builder().name("loranet device 123").build());
+
+        // Filter 1: name STARTS_WITH "mqtt" (no match)
+        EdqsFilter nameStartsMqtt = getStringEntityFieldFilter("name", StringOperation.STARTS_WITH, "mqtt");
+        // Filter 2: name CONTAINS "lora" (match)
+        EdqsFilter nameContainsLora = getStringEntityFieldFilter("name", StringOperation.CONTAINS, "lora");
+
+        // OR: second filter matches
+        assertThat(RepositoryUtils.checkKeyFilters(deviceData, List.of(nameStartsMqtt, nameContainsLora), ComplexOperation.OR)).isTrue();
+
+        // AND: first filter fails
+        assertThat(RepositoryUtils.checkKeyFilters(deviceData, List.of(nameStartsMqtt, nameContainsLora), ComplexOperation.AND)).isFalse();
+    }
+
+    @Test
+    public void testCheckKeyFiltersWithOrEntityFieldNullStringSpecialCase() {
+        // Entity with name=null — tests the special case where null string + entity field = match
+        DeviceData deviceData = new DeviceData(UUID.randomUUID());
+        deviceData.setCustomerId(UUID.randomUUID());
+        deviceData.setFields(DeviceFields.builder().name(null).build());
+
+        // Filter on entity field "label" which is not set (null)
+        EdqsFilter labelFilter = getStringEntityFieldFilter("label", StringOperation.STARTS_WITH, "test");
+        // Filter on timeseries (non-entity-field) that doesn't exist
+        EdqsFilter tempFilter = getTemperatureFilter(NumericOperation.GREATER, 50);
+
+        // Entity field with null string = match (special case in evaluateSingleFilter)
+        assertThat(RepositoryUtils.checkKeyFilters(deviceData, List.of(labelFilter), ComplexOperation.OR)).isTrue();
+        assertThat(RepositoryUtils.checkKeyFilters(deviceData, List.of(labelFilter), ComplexOperation.AND)).isTrue();
+
+        // Non-entity-field with missing data = no match
+        assertThat(RepositoryUtils.checkKeyFilters(deviceData, List.of(tempFilter), ComplexOperation.OR)).isFalse();
+
+        // OR: entity field null match + missing timeseries = true (first matches)
+        assertThat(RepositoryUtils.checkKeyFilters(deviceData, List.of(labelFilter, tempFilter), ComplexOperation.OR)).isTrue();
+
+        // AND: entity field null match + missing timeseries = false (second fails)
+        assertThat(RepositoryUtils.checkKeyFilters(deviceData, List.of(labelFilter, tempFilter), ComplexOperation.AND)).isFalse();
+    }
+
 }

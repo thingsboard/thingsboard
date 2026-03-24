@@ -297,12 +297,15 @@ public class EntityKeyMapping {
                     // "cast(e.name as varchar) as alias2"). Temporarily null out entityKeyColumn
                     // so buildSimplePredicateQuery uses the alias directly as the field.
                     String savedColumn = this.entityKeyColumn;
-                    this.entityKeyColumn = null;
-                    List<String> predicates = keyFilters.stream()
-                            .map(keyFilter -> this.buildKeyQuery(ctx, alias, keyFilter, filterType))
-                            .collect(Collectors.toList());
-                    this.entityKeyColumn = savedColumn;
-                    return predicates.stream();
+                    try {
+                        this.entityKeyColumn = null;
+                        List<String> predicates = keyFilters.stream()
+                                .map(keyFilter -> this.buildKeyQuery(ctx, alias, keyFilter, filterType))
+                                .collect(Collectors.toList());
+                        return predicates.stream();
+                    } finally {
+                        this.entityKeyColumn = savedColumn;
+                    }
                 } else {
                     keyAlias = "e";
                 }

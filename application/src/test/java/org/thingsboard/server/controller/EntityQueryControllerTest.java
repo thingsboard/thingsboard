@@ -28,6 +28,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.ResultActions;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
@@ -62,6 +63,7 @@ import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.common.data.query.AliasEntityId;
 import org.thingsboard.server.common.data.query.AvailableEntityKeysV2;
 import org.thingsboard.server.common.data.query.AvailableEntityKeysV2.KeyInfo;
+import org.thingsboard.server.common.data.query.ComplexFilterPredicate;
 import org.thingsboard.server.common.data.query.ComplexOperation;
 import org.thingsboard.server.common.data.query.DeviceTypeFilter;
 import org.thingsboard.server.common.data.query.DynamicValue;
@@ -94,7 +96,6 @@ import org.thingsboard.server.dao.entity.BaseEntityService;
 import org.thingsboard.server.dao.queue.QueueStatsService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.edqs.util.EdqsRocksDb;
-import org.thingsboard.server.service.query.DefaultEntityQueryService;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -126,8 +127,6 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
     @Autowired
     private QueueStatsService queueStatsService;
-    @Autowired
-    private DefaultEntityQueryService entityQueryService;
     @Autowired
     private BaseEntityService baseEntityService;
 
@@ -1762,8 +1761,6 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         String payloadC = "{\"temperature\":30}";
         doPost("/api/plugins/telemetry/" + deviceC.getId() + "/" + DataConstants.SHARED_SCOPE, payloadC, String.class, status().isOk());
 
-        Thread.sleep(1000);
-
         DeviceTypeFilter filter = new DeviceTypeFilter();
         filter.setDeviceTypes(List.of("orTestType"));
         filter.setDeviceNameFilter("");
@@ -1790,7 +1787,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
         // OR: deviceA (60>50) and deviceB (5<10) match => count=2
         EntityCountQuery orQuery = new EntityCountQuery(filter, keyFilters, ComplexOperation.OR);
-        countByQueryAndCheck(orQuery, 2);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> countByQueryAndCheck(orQuery, 2));
 
         // AND: no device has temperature both >50 AND <10 => count=0
         EntityCountQuery andQuery = new EntityCountQuery(filter, keyFilters, ComplexOperation.AND);
@@ -1819,8 +1816,6 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         deviceZ.setType("orDataType");
         deviceZ = doPost("/api/device", deviceZ, Device.class);
         // deviceZ has neither matching attribute
-
-        Thread.sleep(1000);
 
         DeviceTypeFilter filter = new DeviceTypeFilter();
         filter.setDeviceTypes(List.of("orDataType"));
@@ -1854,6 +1849,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
         // OR: deviceX matches status=active, deviceY matches humidity>70
         EntityDataQuery orQuery = new EntityDataQuery(filter, pageLink, entityFields, null, keyFilters, ComplexOperation.OR);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> findByQueryAndCheck(orQuery, 2));
         PageData<EntityData> result = findByQueryAndCheck(orQuery, 2);
         List<String> names = result.getData().stream()
                 .map(e -> e.getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue())
@@ -1877,8 +1873,6 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         deviceB = doPost("/api/device", deviceB, Device.class);
         doPost("/api/plugins/telemetry/" + deviceB.getId() + "/" + DataConstants.SHARED_SCOPE,
                 "{\"temperature\":5}", String.class, status().isOk());
-
-        Thread.sleep(1000);
 
         DeviceTypeFilter filter = new DeviceTypeFilter();
         filter.setDeviceTypes(List.of("orSameKeyType"));
@@ -1912,6 +1906,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
         // OR on same key: deviceA (60>50) and deviceB (5<10) should both be returned
         EntityDataQuery orQuery = new EntityDataQuery(filter, pageLink, entityFields, null, keyFilters, ComplexOperation.OR);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> findByQueryAndCheck(orQuery, 2));
         PageData<EntityData> result = findByQueryAndCheck(orQuery, 2);
         List<String> names = result.getData().stream()
                 .map(e -> e.getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue())
@@ -1936,8 +1931,6 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         doPost("/api/plugins/telemetry/" + deviceB.getId() + "/" + DataConstants.SHARED_SCOPE,
                 "{\"temperature\":5}", String.class, status().isOk());
 
-        Thread.sleep(1000);
-
         DeviceTypeFilter filter = new DeviceTypeFilter();
         filter.setDeviceTypes(List.of("backCompatType"));
         filter.setDeviceNameFilter("");
@@ -1961,6 +1954,10 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         tempLt10.setPredicate(lt10);
 
         List<KeyFilter> keyFilters = List.of(tempGt50, tempLt10);
+
+        // Await attribute propagation: verify with an OR query that should find 2 when propagated
+        EntityCountQuery orCheckQuery = new EntityCountQuery(filter, keyFilters, ComplexOperation.OR);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> countByQueryAndCheck(orCheckQuery, 2));
 
         // Query without keyFiltersOperation (null) -- should behave as AND
         EntityCountQuery nullOpQuery = new EntityCountQuery(filter, keyFilters);
@@ -1999,8 +1996,6 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         doPost("/api/plugins/telemetry/" + deviceMid.getId() + "/" + DataConstants.SHARED_SCOPE,
                 "{\"temperature\":30}", String.class, status().isOk());
 
-        Thread.sleep(500);
-
         // Create alarms for each device
         Alarm alarmHot = new Alarm();
         alarmHot.setOriginator(deviceHot.getId());
@@ -2019,8 +2014,6 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         alarmMid.setType("normalTemp");
         alarmMid.setSeverity(AlarmSeverity.WARNING);
         doPost("/api/alarm", alarmMid, Alarm.class);
-
-        Thread.sleep(500);
 
         // Filter 1: temperature > 50
         KeyFilter tempGt50 = new KeyFilter();
@@ -2055,6 +2048,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
         // OR query: should return alarms for deviceHot (60>50) and deviceCold (5<10) = 2 alarms
         AlarmDataQuery orAlarmQuery = new AlarmDataQuery(entityFilter, pageLink, null, null, keyFilters, alarmFields, ComplexOperation.OR);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> findAlarmsByQueryAndCheck(orAlarmQuery, 2));
         PageData<AlarmData> alarmResult = findAlarmsByQueryAndCheck(orAlarmQuery, 2);
         List<String> alarmTypes = alarmResult.getData().stream().map(AlarmData::getType).collect(Collectors.toList());
         assertThat(alarmTypes).containsExactlyInAnyOrder("highTemp", "lowTemp");
@@ -2089,8 +2083,6 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         doPost("/api/plugins/telemetry/" + deviceMid.getId() + "/" + DataConstants.SHARED_SCOPE,
                 "{\"temperature\":30}", String.class, status().isOk());
 
-        Thread.sleep(500);
-
         // Create 2 alarms for deviceHot, 1 for deviceCold, 1 for deviceMid
         Alarm alarm1 = new Alarm();
         alarm1.setOriginator(deviceHot.getId());
@@ -2116,8 +2108,6 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         alarm4.setSeverity(AlarmSeverity.WARNING);
         doPost("/api/alarm", alarm4, Alarm.class);
 
-        Thread.sleep(500);
-
         KeyFilter tempGt50 = new KeyFilter();
         tempGt50.setKey(new EntityKey(EntityKeyType.ATTRIBUTE, "temperature"));
         tempGt50.setValueType(EntityKeyValueType.NUMERIC);
@@ -2142,7 +2132,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
         // OR: deviceHot (2 alarms) + deviceCold (1 alarm) match => 3 alarms total
         AlarmCountQuery orQuery = new AlarmCountQuery(entityFilter, keyFilters, ComplexOperation.OR);
-        countAlarmsByQueryAndCheck(orQuery, 3);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> countAlarmsByQueryAndCheck(orQuery, 3));
 
         // AND: no device matches both filters => 0
         AlarmCountQuery andQuery = new AlarmCountQuery(entityFilter, keyFilters, ComplexOperation.AND);
@@ -2173,8 +2163,6 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         doPost("/api/plugins/telemetry/" + deviceC.getId() + "/" + DataConstants.SHARED_SCOPE,
                 "{\"temperature\":10}", String.class, status().isOk());
 
-        Thread.sleep(1000);
-
         DeviceTypeFilter filter = new DeviceTypeFilter();
         filter.setDeviceTypes(List.of("orMixedType"));
         filter.setDeviceNameFilter("");
@@ -2201,7 +2189,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
         // OR: deviceA matches name contains "Alpha", deviceB matches temp>50 => count=2
         EntityCountQuery orQuery = new EntityCountQuery(filter, keyFilters, ComplexOperation.OR);
-        countByQueryAndCheck(orQuery, 2);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> countByQueryAndCheck(orQuery, 2));
 
         // AND: only deviceA has name "Alpha" AND temp is 10 (not >50) => count=0
         EntityCountQuery andQuery = new EntityCountQuery(filter, keyFilters, ComplexOperation.AND);
@@ -2231,8 +2219,6 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         doPost("/api/plugins/telemetry/" + deviceC.getId() + "/" + DataConstants.SHARED_SCOPE,
                 "{\"color\":\"green\"}", String.class, status().isOk());
 
-        Thread.sleep(1000);
-
         DeviceTypeFilter filter = new DeviceTypeFilter();
         filter.setDeviceTypes(List.of("orStrType"));
         filter.setDeviceNameFilter("");
@@ -2259,7 +2245,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
         // OR: deviceA (red) and deviceB (blue) match => count=2
         EntityCountQuery orQuery = new EntityCountQuery(filter, keyFilters, ComplexOperation.OR);
-        countByQueryAndCheck(orQuery, 2);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> countByQueryAndCheck(orQuery, 2));
 
         // AND: no device is both red AND blue => count=0
         EntityCountQuery andQuery = new EntityCountQuery(filter, keyFilters, ComplexOperation.AND);
@@ -2282,8 +2268,6 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         doPost("/api/plugins/telemetry/" + deviceB.getId() + "/" + DataConstants.SHARED_SCOPE,
                 "{\"temperature\":30}", String.class, status().isOk());
 
-        Thread.sleep(1000);
-
         DeviceTypeFilter filter = new DeviceTypeFilter();
         filter.setDeviceTypes(List.of("orSingleType"));
         filter.setDeviceNameFilter("");
@@ -2300,6 +2284,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
         // Single filter with OR should behave identically to AND
         EntityCountQuery orQuery = new EntityCountQuery(filter, keyFilters, ComplexOperation.OR);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> countByQueryAndCheck(orQuery, 1));
         Long orResult = countByQueryAndCheck(orQuery, 1);
 
         EntityCountQuery andQuery = new EntityCountQuery(filter, keyFilters, ComplexOperation.AND);
@@ -2338,8 +2323,6 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         doPost("/api/plugins/telemetry/" + deviceD.getId() + "/" + DataConstants.SHARED_SCOPE,
                 "{\"temperature\":20,\"humidity\":50,\"pressure\":1000}", String.class, status().isOk());
 
-        Thread.sleep(1000);
-
         DeviceTypeFilter filter = new DeviceTypeFilter();
         filter.setDeviceTypes(List.of("or3fType"));
         filter.setDeviceNameFilter("");
@@ -2375,7 +2358,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
         // OR: A matches temp>50, B matches hum>80, C matches press>1040, D matches none => 3
         EntityCountQuery orQuery = new EntityCountQuery(filter, keyFilters, ComplexOperation.OR);
-        countByQueryAndCheck(orQuery, 3);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> countByQueryAndCheck(orQuery, 3));
 
         // AND: no device matches all three => 0
         EntityCountQuery andQuery = new EntityCountQuery(filter, keyFilters, ComplexOperation.AND);
@@ -2385,18 +2368,16 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
     @Test
     public void testFindEntityDataWithOrPagination() throws Exception {
         // Create 5 devices, 4 match OR filters (1,2: temp>50; 3,4: temp<10; 5: no match)
+        // Device 1: temp=61, Device 2: temp=62, Device 3: temp=2, Device 4: temp=1, Device 5: temp=25
         for (int i = 1; i <= 5; i++) {
             Device device = new Device();
             device.setName(String.format("OrPageDevice%02d", i));
             device.setType("orPageType");
             device = doPost("/api/device", device, Device.class);
-            // Devices 1,2: temperature > 50. Device 3,4: temperature < 10. Device 5: no match (25).
             int temp = (i <= 2) ? 60 + i : (i <= 4) ? 5 - i : 25;
             doPost("/api/plugins/telemetry/" + device.getId() + "/" + DataConstants.SHARED_SCOPE,
                     "{\"temperature\":" + temp + "}", String.class, status().isOk());
         }
-
-        Thread.sleep(1000);
 
         DeviceTypeFilter filter = new DeviceTypeFilter();
         filter.setDeviceTypes(List.of("orPageType"));
@@ -2428,6 +2409,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         // Page 1: pageSize=2, totalElements=4, data.size()=2
         EntityDataPageLink pageLink1 = new EntityDataPageLink(2, 0, null, sortOrder);
         EntityDataQuery orQuery1 = new EntityDataQuery(filter, pageLink1, entityFields, null, keyFilters, ComplexOperation.OR);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> findByQueryAndCheck(orQuery1, 4));
         PageData<EntityData> page1 = findByQueryAndCheck(orQuery1, 4);
         Assert.assertEquals(2, page1.getData().size());
         Assert.assertTrue(page1.hasNext());
@@ -2463,11 +2445,20 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         doPost("/api/plugins/telemetry/" + deviceB.getId() + "/" + DataConstants.SHARED_SCOPE,
                 "{\"temperature\":40}", String.class, status().isOk());
 
-        Thread.sleep(1000);
-
         DeviceTypeFilter filter = new DeviceTypeFilter();
         filter.setDeviceTypes(List.of("orZeroType"));
         filter.setDeviceNameFilter("");
+
+        // Await attribute propagation: verify devices are queryable by a filter that matches
+        KeyFilter tempGt20 = new KeyFilter();
+        tempGt20.setKey(new EntityKey(EntityKeyType.ATTRIBUTE, "temperature"));
+        tempGt20.setValueType(EntityKeyValueType.NUMERIC);
+        NumericFilterPredicate gt20 = new NumericFilterPredicate();
+        gt20.setValue(FilterPredicateValue.fromDouble(20));
+        gt20.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
+        tempGt20.setPredicate(gt20);
+        EntityCountQuery propagationCheck = new EntityCountQuery(filter, List.of(tempGt20), ComplexOperation.OR);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> countByQueryAndCheck(propagationCheck, 2));
 
         // Filter 1: temperature > 50 (no match)
         KeyFilter tempGt50 = new KeyFilter();
@@ -2498,7 +2489,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
     public void testOrKeyFiltersOperationRejectedWhenDisabled() throws Exception {
         loginTenantAdmin();
 
-        baseEntityService.setKeyFiltersOrConditionsEnabled(false);
+        ReflectionTestUtils.setField(baseEntityService, "keyFiltersOrConditionsEnabled", false);
         try {
             DeviceTypeFilter filter = new DeviceTypeFilter();
             filter.setDeviceTypes(List.of("default"));
@@ -2519,8 +2510,212 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
             EntityCountQuery explicitAndQuery = new EntityCountQuery(filter, Collections.emptyList(), ComplexOperation.AND);
             doPost("/api/entitiesQuery/count", explicitAndQuery).andExpect(status().isOk());
         } finally {
-            baseEntityService.setKeyFiltersOrConditionsEnabled(true);
+            ReflectionTestUtils.setField(baseEntityService, "keyFiltersOrConditionsEnabled", true);
         }
+    }
+
+    @Test
+    public void testFindEntityDataWithOrAndTextSearch() throws Exception {
+        // Create 3 devices: 2 match OR filters, but only 1 also matches textSearch
+        Device deviceA = new Device();
+        deviceA.setName("OrTextAlpha");
+        deviceA.setType("orTextType");
+        deviceA = doPost("/api/device", deviceA, Device.class);
+        doPost("/api/plugins/telemetry/" + deviceA.getId() + "/" + DataConstants.SHARED_SCOPE,
+                "{\"temperature\":60}", String.class, status().isOk());
+
+        Device deviceB = new Device();
+        deviceB.setName("OrTextBeta");
+        deviceB.setType("orTextType");
+        deviceB = doPost("/api/device", deviceB, Device.class);
+        doPost("/api/plugins/telemetry/" + deviceB.getId() + "/" + DataConstants.SHARED_SCOPE,
+                "{\"temperature\":5}", String.class, status().isOk());
+
+        Device deviceC = new Device();
+        deviceC.setName("OrTextGamma");
+        deviceC.setType("orTextType");
+        deviceC = doPost("/api/device", deviceC, Device.class);
+        doPost("/api/plugins/telemetry/" + deviceC.getId() + "/" + DataConstants.SHARED_SCOPE,
+                "{\"temperature\":30}", String.class, status().isOk());
+
+        DeviceTypeFilter filter = new DeviceTypeFilter();
+        filter.setDeviceTypes(List.of("orTextType"));
+        filter.setDeviceNameFilter("");
+
+        // Filter 1: temperature > 50 (matches deviceA)
+        KeyFilter tempGt50 = new KeyFilter();
+        tempGt50.setKey(new EntityKey(EntityKeyType.ATTRIBUTE, "temperature"));
+        tempGt50.setValueType(EntityKeyValueType.NUMERIC);
+        NumericFilterPredicate gt50 = new NumericFilterPredicate();
+        gt50.setValue(FilterPredicateValue.fromDouble(50));
+        gt50.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
+        tempGt50.setPredicate(gt50);
+
+        // Filter 2: temperature < 10 (matches deviceB)
+        KeyFilter tempLt10 = new KeyFilter();
+        tempLt10.setKey(new EntityKey(EntityKeyType.ATTRIBUTE, "temperature"));
+        tempLt10.setValueType(EntityKeyValueType.NUMERIC);
+        NumericFilterPredicate lt10 = new NumericFilterPredicate();
+        lt10.setValue(FilterPredicateValue.fromDouble(10));
+        lt10.setOperation(NumericFilterPredicate.NumericOperation.LESS);
+        tempLt10.setPredicate(lt10);
+
+        List<KeyFilter> keyFilters = List.of(tempGt50, tempLt10);
+
+        EntityDataSortOrder sortOrder = new EntityDataSortOrder(
+                new EntityKey(EntityKeyType.ENTITY_FIELD, "name"), EntityDataSortOrder.Direction.ASC
+        );
+        List<EntityKey> entityFields = Collections.singletonList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name"));
+
+        // OR without textSearch: deviceA and deviceB match => 2
+        EntityDataPageLink pageLinkNoText = new EntityDataPageLink(10, 0, null, sortOrder);
+        EntityDataQuery orQueryNoText = new EntityDataQuery(filter, pageLinkNoText, entityFields, null, keyFilters, ComplexOperation.OR);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> findByQueryAndCheck(orQueryNoText, 2));
+
+        // OR with textSearch="Alpha": only deviceA matches both OR filter AND text search
+        EntityDataPageLink pageLinkWithText = new EntityDataPageLink(10, 0, "Alpha", sortOrder);
+        EntityDataQuery orQueryWithText = new EntityDataQuery(filter, pageLinkWithText, entityFields, null, keyFilters, ComplexOperation.OR);
+        PageData<EntityData> result = findByQueryAndCheck(orQueryWithText, 1);
+        String name = result.getData().get(0).getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue();
+        assertThat(name).isEqualTo("OrTextAlpha");
+
+        // OR with textSearch="Beta": only deviceB matches both OR filter AND text search
+        EntityDataPageLink pageLinkBeta = new EntityDataPageLink(10, 0, "Beta", sortOrder);
+        EntityDataQuery orQueryBeta = new EntityDataQuery(filter, pageLinkBeta, entityFields, null, keyFilters, ComplexOperation.OR);
+        PageData<EntityData> resultBeta = findByQueryAndCheck(orQueryBeta, 1);
+        String nameBeta = resultBeta.getData().get(0).getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue();
+        assertThat(nameBeta).isEqualTo("OrTextBeta");
+
+        // OR with textSearch="Gamma": deviceC doesn't match any OR filter => 0
+        EntityDataPageLink pageLinkGamma = new EntityDataPageLink(10, 0, "Gamma", sortOrder);
+        EntityDataQuery orQueryGamma = new EntityDataQuery(filter, pageLinkGamma, entityFields, null, keyFilters, ComplexOperation.OR);
+        findByQueryAndCheck(orQueryGamma, 0);
+    }
+
+    @Test
+    public void testCountEntitiesWithOrTimeSeriesKeyFilters() throws Exception {
+        // Create devices and post time-series telemetry (not attributes)
+        Device deviceA = new Device();
+        deviceA.setName("OrTsDeviceA");
+        deviceA.setType("orTsType");
+        deviceA = doPost("/api/device", deviceA, Device.class);
+        JsonNode tsPayloadA = JacksonUtil.toJsonNode("{\"temperature\": 60}");
+        doPost("/api/plugins/telemetry/" + EntityType.DEVICE.name() + "/" + deviceA.getUuidId() + "/timeseries/SERVER_SCOPE", tsPayloadA)
+                .andExpect(status().isOk());
+
+        Device deviceB = new Device();
+        deviceB.setName("OrTsDeviceB");
+        deviceB.setType("orTsType");
+        deviceB = doPost("/api/device", deviceB, Device.class);
+        JsonNode tsPayloadB = JacksonUtil.toJsonNode("{\"temperature\": 5}");
+        doPost("/api/plugins/telemetry/" + EntityType.DEVICE.name() + "/" + deviceB.getUuidId() + "/timeseries/SERVER_SCOPE", tsPayloadB)
+                .andExpect(status().isOk());
+
+        Device deviceC = new Device();
+        deviceC.setName("OrTsDeviceC");
+        deviceC.setType("orTsType");
+        deviceC = doPost("/api/device", deviceC, Device.class);
+        JsonNode tsPayloadC = JacksonUtil.toJsonNode("{\"temperature\": 30}");
+        doPost("/api/plugins/telemetry/" + EntityType.DEVICE.name() + "/" + deviceC.getUuidId() + "/timeseries/SERVER_SCOPE", tsPayloadC)
+                .andExpect(status().isOk());
+
+        DeviceTypeFilter filter = new DeviceTypeFilter();
+        filter.setDeviceTypes(List.of("orTsType"));
+        filter.setDeviceNameFilter("");
+
+        // Filter 1: TIME_SERIES temperature > 50
+        KeyFilter tempGt50 = new KeyFilter();
+        tempGt50.setKey(new EntityKey(EntityKeyType.TIME_SERIES, "temperature"));
+        tempGt50.setValueType(EntityKeyValueType.NUMERIC);
+        NumericFilterPredicate gt50 = new NumericFilterPredicate();
+        gt50.setValue(FilterPredicateValue.fromDouble(50));
+        gt50.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
+        tempGt50.setPredicate(gt50);
+
+        // Filter 2: TIME_SERIES temperature < 10
+        KeyFilter tempLt10 = new KeyFilter();
+        tempLt10.setKey(new EntityKey(EntityKeyType.TIME_SERIES, "temperature"));
+        tempLt10.setValueType(EntityKeyValueType.NUMERIC);
+        NumericFilterPredicate lt10 = new NumericFilterPredicate();
+        lt10.setValue(FilterPredicateValue.fromDouble(10));
+        lt10.setOperation(NumericFilterPredicate.NumericOperation.LESS);
+        tempLt10.setPredicate(lt10);
+
+        List<KeyFilter> keyFilters = List.of(tempGt50, tempLt10);
+
+        // OR: deviceA (60>50) and deviceB (5<10) match => count=2
+        EntityCountQuery orQuery = new EntityCountQuery(filter, keyFilters, ComplexOperation.OR);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> countByQueryAndCheck(orQuery, 2));
+
+        // AND: no device has ts temperature both >50 AND <10 => count=0
+        EntityCountQuery andQuery = new EntityCountQuery(filter, keyFilters, ComplexOperation.AND);
+        countByQueryAndCheck(andQuery, 0);
+    }
+
+    @Test
+    public void testCountEntitiesWithOrComplexFilterPredicate() throws Exception {
+        // Tests key-level ComplexFilterPredicate combined with query-level OR
+        Device deviceA = new Device();
+        deviceA.setName("OrCplxDeviceA");
+        deviceA.setType("orCplxType");
+        deviceA = doPost("/api/device", deviceA, Device.class);
+        doPost("/api/plugins/telemetry/" + deviceA.getId() + "/" + DataConstants.SHARED_SCOPE,
+                "{\"temperature\":65,\"humidity\":50}", String.class, status().isOk());
+
+        Device deviceB = new Device();
+        deviceB.setName("OrCplxDeviceB");
+        deviceB.setType("orCplxType");
+        deviceB = doPost("/api/device", deviceB, Device.class);
+        doPost("/api/plugins/telemetry/" + deviceB.getId() + "/" + DataConstants.SHARED_SCOPE,
+                "{\"temperature\":25,\"humidity\":90}", String.class, status().isOk());
+
+        Device deviceC = new Device();
+        deviceC.setName("OrCplxDeviceC");
+        deviceC.setType("orCplxType");
+        deviceC = doPost("/api/device", deviceC, Device.class);
+        doPost("/api/plugins/telemetry/" + deviceC.getId() + "/" + DataConstants.SHARED_SCOPE,
+                "{\"temperature\":25,\"humidity\":50}", String.class, status().isOk());
+
+        DeviceTypeFilter filter = new DeviceTypeFilter();
+        filter.setDeviceTypes(List.of("orCplxType"));
+        filter.setDeviceNameFilter("");
+
+        // Key filter 1: temperature > 50 AND temperature < 70 (complex predicate within key filter)
+        // Matches deviceA (65) only
+        NumericFilterPredicate gt50 = new NumericFilterPredicate();
+        gt50.setValue(FilterPredicateValue.fromDouble(50));
+        gt50.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
+        NumericFilterPredicate lt70 = new NumericFilterPredicate();
+        lt70.setValue(FilterPredicateValue.fromDouble(70));
+        lt70.setOperation(NumericFilterPredicate.NumericOperation.LESS);
+        ComplexFilterPredicate complexTempPred = new ComplexFilterPredicate();
+        complexTempPred.setOperation(ComplexOperation.AND);
+        complexTempPred.setPredicates(List.of(gt50, lt70));
+
+        KeyFilter tempComplexFilter = new KeyFilter();
+        tempComplexFilter.setKey(new EntityKey(EntityKeyType.ATTRIBUTE, "temperature"));
+        tempComplexFilter.setValueType(EntityKeyValueType.NUMERIC);
+        tempComplexFilter.setPredicate(complexTempPred);
+
+        // Key filter 2: humidity > 80 (simple predicate)
+        // Matches deviceB (90) only
+        KeyFilter humFilter = new KeyFilter();
+        humFilter.setKey(new EntityKey(EntityKeyType.ATTRIBUTE, "humidity"));
+        humFilter.setValueType(EntityKeyValueType.NUMERIC);
+        NumericFilterPredicate humGt80 = new NumericFilterPredicate();
+        humGt80.setValue(FilterPredicateValue.fromDouble(80));
+        humGt80.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
+        humFilter.setPredicate(humGt80);
+
+        List<KeyFilter> keyFilters = List.of(tempComplexFilter, humFilter);
+
+        // Query-level OR: deviceA matches key filter 1, deviceB matches key filter 2 => 2
+        EntityCountQuery orQuery = new EntityCountQuery(filter, keyFilters, ComplexOperation.OR);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> countByQueryAndCheck(orQuery, 2));
+
+        // Query-level AND: no device matches both key filters => 0
+        EntityCountQuery andQuery = new EntityCountQuery(filter, keyFilters, ComplexOperation.AND);
+        countByQueryAndCheck(andQuery, 0);
     }
 
 }
