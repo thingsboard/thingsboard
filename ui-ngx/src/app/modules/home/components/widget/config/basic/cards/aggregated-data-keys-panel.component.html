@@ -28,17 +28,23 @@
       <div class="tb-form-table-header-cell tb-arrow-header" translate>widgets.aggregated-value-card.arrow</div>
       <div class="tb-form-table-header-cell tb-actions-header"></div>
     </div>
-    <div *ngIf="keysFormArray().controls.length; else noKeys" class="tb-form-table-body">
-      <div *ngFor="let keyControl of keysFormArray().controls; trackBy: trackByKey; let $index = index;">
-        <tb-aggregated-data-key-row class="flex-1"
-                         [formControl]="keyControl"
-                         [index]="$index"
-                         [datasourceType]="datasourceType"
-                         [keyName]="keyName"
-                         (keyRemoved)="removeKey($index)">
-        </tb-aggregated-data-key-row>
+    @if (keysFormArray().controls.length) {
+      <div class="tb-form-table-body">
+        @for (keyControl of keysFormArray().controls; track trackByKey($index, keyControl)) {
+          <div>
+            <tb-aggregated-data-key-row class="flex-1"
+                                        [formControl]="keyControl"
+                                        [index]="$index"
+                                        [datasourceType]="datasourceType"
+                                        [keyName]="keyName"
+                                        (keyRemoved)="removeKey($index)">
+            </tb-aggregated-data-key-row>
+          </div>
+        }
       </div>
-    </div>
+    } @else {
+      <span class="tb-prompt flex items-center justify-center">{{ 'widgets.aggregated-value-card.no-values' | translate }}</span>
+    }
   </div>
   <div>
     <button type="button" mat-stroked-button color="primary" (click)="addKey()">
@@ -46,6 +52,3 @@
     </button>
   </div>
 </div>
-<ng-template #noKeys>
-  <span class="tb-prompt flex items-center justify-center">{{ 'widgets.aggregated-value-card.no-values' | translate }}</span>
-</ng-template>

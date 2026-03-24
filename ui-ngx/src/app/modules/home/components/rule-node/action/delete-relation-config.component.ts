@@ -28,7 +28,7 @@ import { RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@app/shar
 })
 export class DeleteRelationConfigComponent extends RuleNodeConfigurationComponent {
 
-  directionTypes = Object.keys(EntitySearchDirection);
+  directionTypes = Object.values(EntitySearchDirection);
 
   directionTypeTranslations  = new Map<EntitySearchDirection, string>(
     [
@@ -98,5 +98,9 @@ export class DeleteRelationConfigComponent extends RuleNodeConfigurationComponen
   protected prepareOutputConfig(configuration: RuleNodeConfiguration): RuleNodeConfiguration {
     configuration.entityNamePattern = configuration.entityNamePattern ? configuration.entityNamePattern.trim() : null;
     return configuration;
+  }
+
+  getDirectionTypeTranslations(type: string) {
+    return this.directionTypeTranslations.get(type as EntitySearchDirection);
   }
 }

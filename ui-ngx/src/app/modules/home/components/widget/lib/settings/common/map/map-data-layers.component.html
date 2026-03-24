@@ -19,43 +19,59 @@
   <div class="tb-form-table tb-map-data-layers">
     <div class="tb-form-table-header no-padding-right">
       <div class="tb-form-table-header-cell tb-source-header" translate>widgets.maps.data-layer.source</div>
-      <div *ngIf="['trips', 'markers'].includes(dataLayerType)" class="tb-form-table-header-cell tb-x-pos-header">
-        {{ (mapType === MapType.geoMap ? 'widgets.maps.data-layer.marker.latitude-key' : 'widgets.maps.data-layer.marker.x-pos-key') | translate }}
-      </div>
-      <div *ngIf="['trips', 'markers'].includes(dataLayerType)" class="tb-form-table-header-cell tb-y-pos-header">
-        {{ (mapType === MapType.geoMap ? 'widgets.maps.data-layer.marker.longitude-key' : 'widgets.maps.data-layer.marker.y-pos-key') | translate }}
-      </div>
-      <div *ngIf="dataLayerType === 'polygons'" class="tb-form-table-header-cell tb-key-header" translate>widgets.maps.data-layer.polygon.polygon-key</div>
-      <div *ngIf="dataLayerType === 'circles'" class="tb-form-table-header-cell tb-key-header" translate>widgets.maps.data-layer.circle.circle-key</div>
-      <div *ngIf="dataLayerType === 'polylines'" class="tb-form-table-header-cell tb-key-header" translate>widgets.maps.data-layer.polyline.polyline-key</div>
+      @if (['trips', 'markers'].includes(dataLayerType)) {
+        <div class="tb-form-table-header-cell tb-x-pos-header">
+          {{ (mapType === MapType.geoMap ? 'widgets.maps.data-layer.marker.latitude-key' : 'widgets.maps.data-layer.marker.x-pos-key') | translate }}
+        </div>
+      }
+      @if (['trips', 'markers'].includes(dataLayerType)) {
+        <div class="tb-form-table-header-cell tb-y-pos-header">
+          {{ (mapType === MapType.geoMap ? 'widgets.maps.data-layer.marker.longitude-key' : 'widgets.maps.data-layer.marker.y-pos-key') | translate }}
+        </div>
+      }
+      @if (dataLayerType === 'polygons') {
+        <div class="tb-form-table-header-cell tb-key-header" translate>widgets.maps.data-layer.polygon.polygon-key</div>
+      }
+      @if (dataLayerType === 'circles') {
+        <div class="tb-form-table-header-cell tb-key-header" translate>widgets.maps.data-layer.circle.circle-key</div>
+      }
+      @if (dataLayerType === 'polylines') {
+        <div class="tb-form-table-header-cell tb-key-header" translate>widgets.maps.data-layer.polyline.polyline-key</div>
+      }
       <div class="tb-form-table-header-cell tb-actions-header"></div>
     </div>
-    <div *ngIf="dataLayersFormArray().controls.length; else noDataLayers" class="tb-form-table-body tb-drop-list max-h-64 overflow-y-auto"
-         cdkDropList cdkDropListOrientation="vertical"
-         [cdkDropListDisabled]="!dragEnabled"
-         (cdkDropListDropped)="layerDrop($event)">
-      <div cdkDrag [cdkDragDisabled]="!dragEnabled"
-           class="tb-draggable-form-table-row" 
-           *ngFor="let dataLayerControl of dataLayersFormArray().controls; trackBy: trackByDataLayer; let $index = index;">
-        <tb-map-data-layer-row class="flex-1"
-                               [mapType]="mapType"
-                               [dataLayerType]="dataLayerType"
-                               [context]="context"
-                               [formControl]="dataLayerControl"
-                               (dataLayerRemoved)="removeDataLayer($index)">
-        </tb-map-data-layer-row>
-        <div class="tb-form-table-row-cell-buttons">
-          <button [class.tb-hidden]="!dragEnabled"
-                  mat-icon-button
-                  type="button"
-                  cdkDragHandle
-                  matTooltip="{{ 'action.drag' | translate }}"
-                  matTooltipPosition="above">
-            <mat-icon>drag_indicator</mat-icon>
-          </button>
-        </div>
+    @if (dataLayersFormArray().controls.length) {
+      <div class="tb-form-table-body tb-drop-list max-h-64 overflow-y-auto"
+           cdkDropList cdkDropListOrientation="vertical"
+           [cdkDropListDisabled]="!dragEnabled"
+           (cdkDropListDropped)="layerDrop($event)">
+        @for (dataLayerControl of dataLayersFormArray().controls; track trackByDataLayer($index, dataLayerControl)) {
+          <div cdkDrag [cdkDragDisabled]="!dragEnabled"
+               class="tb-draggable-form-table-row"
+               >
+            <tb-map-data-layer-row class="flex-1"
+                                   [mapType]="mapType"
+                                   [dataLayerType]="dataLayerType"
+                                   [context]="context"
+                                   [formControl]="dataLayerControl"
+                                   (dataLayerRemoved)="removeDataLayer($index)">
+            </tb-map-data-layer-row>
+            <div class="tb-form-table-row-cell-buttons">
+              <button [class.tb-hidden]="!dragEnabled"
+                      mat-icon-button
+                      type="button"
+                      cdkDragHandle
+                      matTooltip="{{ 'action.drag' | translate }}"
+                      matTooltipPosition="above">
+                <mat-icon>drag_indicator</mat-icon>
+              </button>
+            </div>
+          </div>
+        }
       </div>
-    </div>
+    } @else {
+      <span class="tb-prompt flex items-center justify-center">{{ noDataLayersText | translate }}</span>
+    }
   </div>
   <div>
     <button type="button" mat-stroked-button color="primary" (click)="addDataLayer()">
@@ -63,6 +79,3 @@
     </button>
   </div>
 </div>
-<ng-template #noDataLayers>
-  <span class="tb-prompt flex items-center justify-center">{{ noDataLayersText | translate }}</span>
-</ng-template>

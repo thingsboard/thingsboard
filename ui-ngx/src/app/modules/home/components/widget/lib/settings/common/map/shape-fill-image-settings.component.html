@@ -21,9 +21,10 @@
         [disabled]="disabled"
         #matButton
         (click)="openImageSettingsPopup($event, matButton)">
-  <tb-icon matButtonIcon *ngIf="modelValue?.type === ShapeFillImageType.function; else imagePreview">mdi:function-variant</tb-icon>
+  @if (modelValue?.type === ShapeFillImageType.function) {
+    <tb-icon matButtonIcon>mdi:function-variant</tb-icon>
+  } @else {
+    <img width="24px" height="24px" [style.transform]="modelValue?.angle ? ('rotate('+modelValue.angle+'deg)') : ''" [style.opacity]="modelValue?.opacity"
+         style="object-fit: contain;" [src]="modelValue?.image | image : {preview: true} | async" [class.disabled]="disabled"/>
+  }
 </button>
-<ng-template #imagePreview>
-  <img width="24px" height="24px" [style.transform]="modelValue?.angle ? ('rotate('+modelValue.angle+'deg)') : ''" [style.opacity]="modelValue?.opacity"
-       style="object-fit: contain;" [src]="modelValue?.image | image : {preview: true} | async" [class.disabled]="disabled"/>
-</ng-template>

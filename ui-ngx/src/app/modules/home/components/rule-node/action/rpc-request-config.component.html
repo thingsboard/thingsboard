@@ -19,11 +19,15 @@
   <mat-form-field class="mat-block flex-1">
     <mat-label translate>rule-node-config.timeout-sec</mat-label>
     <input type="number" min="0" step="1" matInput formControlName="timeoutInSeconds" required>
-    <mat-error *ngIf="rpcRequestConfigForm.get('timeoutInSeconds').hasError('required')">
-      {{ 'rule-node-config.timeout-required' | translate }}
-    </mat-error>
-    <mat-error *ngIf="rpcRequestConfigForm.get('timeoutInSeconds').hasError('min')">
-      {{ 'rule-node-config.min-timeout-message' | translate }}
-    </mat-error>
+    @if (rpcRequestConfigForm.get('timeoutInSeconds').hasError('required')) {
+      <mat-error>
+        {{ 'rule-node-config.timeout-required' | translate }}
+      </mat-error>
+    }
+    @if (rpcRequestConfigForm.get('timeoutInSeconds').hasError('min')) {
+      <mat-error>
+        {{ 'rule-node-config.min-timeout-message' | translate }}
+      </mat-error>
+    }
   </mat-form-field>
 </section>

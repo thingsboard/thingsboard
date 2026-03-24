@@ -119,6 +119,10 @@ export class GpioControlWidgetSettingsComponent extends WidgetSettingsComponent 
     return this.gpioControlWidgetSettingsForm.get('gpioList') as UntypedFormArray;
   }
 
+  get typedSelectOptions() {
+    return this.gpioListFormArray().controls as (AbstractControl & { new?: boolean })[];
+  }
+
   public trackByGpioItem(index: number, gpioItemControl: AbstractControl): any {
     return gpioItemControl;
   }

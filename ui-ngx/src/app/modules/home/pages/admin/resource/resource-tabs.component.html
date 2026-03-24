@@ -15,13 +15,17 @@
     limitations under the License.
 
 -->
-<mat-tab *ngIf="entity && entity.tenantId.id !== NULL_UUID && authUser.authority === authorities.TENANT_ADMIN && !isEdit" #auditLogsTab="matTab"
-         label="{{ 'audit-log.audit-logs' | translate }}">
-  <tb-audit-log-table detailsMode="true" [active]="auditLogsTab.isActive" [auditLogMode]="auditLogModes.ENTITY" [entityId]="entity.id"></tb-audit-log-table>
-</mat-tab>
-<mat-tab *ngIf="entity && entity.tenantId.id !== NULL_UUID && authUser.authority === authorities.TENANT_ADMIN && !isEdit"
-         label="{{ 'version-control.version-control' | translate }}" #versionControlTab="matTab">
-  <tb-version-control detailsMode="true" singleEntityMode="true"
-                      (versionRestored)="entitiesTableConfig.updateData()"
-                      [active]="versionControlTab.isActive" [entityId]="entity.id" [entityName]="entity.name" [externalEntityId]="entity.externalId || entity.id"></tb-version-control>
-</mat-tab>
+@if (entity && entity.tenantId.id !== NULL_UUID && authUser.authority === authorities.TENANT_ADMIN && !isEdit) {
+  <mat-tab #auditLogsTab="matTab"
+           label="{{ 'audit-log.audit-logs' | translate }}">
+    <tb-audit-log-table detailsMode="true" [active]="auditLogsTab.isActive" [auditLogMode]="auditLogModes.ENTITY" [entityId]="entity.id"></tb-audit-log-table>
+  </mat-tab>
+}
+@if (entity && entity.tenantId.id !== NULL_UUID && authUser.authority === authorities.TENANT_ADMIN && !isEdit) {
+  <mat-tab
+    label="{{ 'version-control.version-control' | translate }}" #versionControlTab="matTab">
+    <tb-version-control detailsMode="true" singleEntityMode="true"
+                        (versionRestored)="entitiesTableConfig.updateData()"
+    [active]="versionControlTab.isActive" [entityId]="entity.id" [entityName]="entity.name" [externalEntityId]="entity.externalId || entity.id"></tb-version-control>
+  </mat-tab>
+}

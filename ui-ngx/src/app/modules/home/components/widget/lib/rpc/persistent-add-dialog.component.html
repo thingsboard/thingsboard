@@ -25,9 +25,13 @@
       <mat-icon class="material-icons">close</mat-icon>
     </button>
   </mat-toolbar>
-  <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
-  </mat-progress-bar>
-  <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
+  @if (isLoading$ | async) {
+    <mat-progress-bar color="warn" mode="indeterminate">
+    </mat-progress-bar>
+  }
+  @if (!(isLoading$ | async)) {
+    <div style="height: 4px;"></div>
+  }
   <div mat-dialog-content class="add-dialog">
     <fieldset [disabled]="isLoading$ | async">
       <div class="flex flex-row gap-1.5">
@@ -39,12 +43,16 @@
         <mat-form-field class="mat-block flex-1">
           <mat-label translate>widgets.persistent-table.method</mat-label>
           <input matInput formControlName="method" required>
-          <mat-error *ngIf="persistentFormGroup.get('method').hasError('required')">
-            {{'widgets.persistent-table.method-error' | translate}}
-          </mat-error>
-          <mat-error *ngIf="persistentFormGroup.get('method').hasError('pattern')">
-            {{'widgets.persistent-table.white-space-error' | translate}}
-          </mat-error>
+          @if (persistentFormGroup.get('method').hasError('required')) {
+            <mat-error>
+              {{'widgets.persistent-table.method-error' | translate}}
+            </mat-error>
+          }
+          @if (persistentFormGroup.get('method').hasError('pattern')) {
+            <mat-error>
+              {{'widgets.persistent-table.white-space-error' | translate}}
+            </mat-error>
+          }
         </mat-form-field>
         <mat-form-field class="mat-block flex-1">
           <mat-label translate>widgets.persistent-table.retries</mat-label>
@@ -71,7 +79,9 @@
       </mat-expansion-panel>
     </fieldset>
   </div>
-  <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
+  @if (!(isLoading$ | async)) {
+    <div style="height: 4px;"></div>
+  }
   <div mat-dialog-actions class="flex flex-row">
     <button mat-button color="primary"
             type="button"

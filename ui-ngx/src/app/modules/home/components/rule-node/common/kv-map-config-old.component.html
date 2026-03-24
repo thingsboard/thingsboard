@@ -22,34 +22,42 @@
     <span [class.!hidden]="disabled" style="width: 52px;" innerHTML="&nbsp"></span>
   </div>
   <div class="body">
-    <div class="row flex flex-row items-center justify-start gap-2"
-         formArrayName="keyVals"
-         *ngFor="let keyValControl of keyValsFormArray().controls; let $index = index">
-      <mat-form-field class="cell mat-block flex-1">
-        <input [formControl]="keyValControl.get('key')" matInput required
-               placeholder="{{ keyText | translate }}"/>
-        <mat-error *ngIf="keyValControl.get('key').hasError('required')">
-          {{ keyRequiredText | translate }}
-        </mat-error>
-      </mat-form-field>
-      <mat-form-field class="cell mat-block flex-1">
-        <input [formControl]="keyValControl.get('value')" matInput required
-               placeholder="{{ valText | translate }}"/>
-        <mat-error *ngIf="keyValControl.get('value').hasError('required')">
-          {{ valRequiredText | translate }}
-        </mat-error>
-      </mat-form-field>
-      <button mat-icon-button color="primary"
-              [class.!hidden]="disabled"
-              type="button"
-              (click)="removeKeyVal($index)"
-              [disabled]="isLoading$ | async"
-              matTooltip="{{ 'rule-node-config.key-val.remove-entry' | translate }}"
-              matTooltipPosition="above">
-        <mat-icon>close</mat-icon>
-      </button>
-    </div>
-    <div *ngIf="hintText" class="tb-hint" [innerHTML]="hintText | translate | safe: 'html'"></div>
+    @for (keyValControl of keyValsFormArray().controls; track keyValControl) {
+      <div class="row flex flex-row items-center justify-start gap-2"
+           formArrayName="keyVals"
+           >
+        <mat-form-field class="cell mat-block flex-1">
+          <input [formControl]="keyValControl.get('key')" matInput required
+                 placeholder="{{ keyText | translate }}"/>
+          @if (keyValControl.get('key').hasError('required')) {
+            <mat-error>
+              {{ keyRequiredText | translate }}
+            </mat-error>
+          }
+        </mat-form-field>
+        <mat-form-field class="cell mat-block flex-1">
+          <input [formControl]="keyValControl.get('value')" matInput required
+                 placeholder="{{ valText | translate }}"/>
+          @if (keyValControl.get('value').hasError('required')) {
+            <mat-error>
+              {{ valRequiredText | translate }}
+            </mat-error>
+          }
+        </mat-form-field>
+        <button mat-icon-button color="primary"
+                [class.!hidden]="disabled"
+                type="button"
+                (click)="removeKeyVal($index)"
+                [disabled]="isLoading$ | async"
+                matTooltip="{{ 'rule-node-config.key-val.remove-entry' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    }
+    @if (hintText) {
+      <div class="tb-hint" [innerHTML]="hintText | translate | safe: 'html'"></div>
+    }
   </div>
   <tb-error [error]="ngControl.hasError('kvMapRequired') || ngControl.hasError('uniqueKeyValuePair') ?
                      (ngControl.hasError('kvMapRequired') ? translate.instant(requiredText) :

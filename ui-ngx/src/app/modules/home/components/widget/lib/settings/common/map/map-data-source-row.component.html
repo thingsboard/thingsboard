@@ -19,29 +19,33 @@
   <div class="tb-source-field">
     <mat-form-field class="tb-ds-type-field tb-inline-field" appearance="outline" subscriptSizing="dynamic">
       <mat-select formControlName="dsType">
-        <mat-option *ngFor="let type of datasourceTypes" [value]="type">
-          {{ datasourceTypesTranslations.get(type) | translate }}
-        </mat-option>
+        @for (type of datasourceTypes; track type) {
+          <mat-option [value]="type">
+            {{ datasourceTypesTranslations.get(type) | translate }}
+          </mat-option>
+        }
       </mat-select>
     </mat-form-field>
-    <tb-entity-autocomplete
-      class="tb-device-field"
-      *ngIf="dataSourceFormGroup.get('dsType').value === DatasourceType.device"
-      required
-      inlineField
-      placeholder="{{ 'device.select-device' | translate }}"
-      [entityType]="EntityType.DEVICE"
-      formControlName="dsDeviceId">
-    </tb-entity-autocomplete>
-    <tb-entity-alias-select
-      class="tb-entity-alias-field"
-      *ngIf="dataSourceFormGroup.get('dsType').value === DatasourceType.entity"
-      inlineField
-      tbRequired
-      [aliasController]="context.aliasController"
-      formControlName="dsEntityAliasId"
-      [callbacks]="context.callbacks">
-    </tb-entity-alias-select>
+    @if (dataSourceFormGroup.get('dsType').value === DatasourceType.device) {
+      <tb-entity-autocomplete
+        class="tb-device-field"
+        required
+        inlineField
+        placeholder="{{ 'device.select-device' | translate }}"
+        [entityType]="EntityType.DEVICE"
+        formControlName="dsDeviceId">
+      </tb-entity-autocomplete>
+    }
+    @if (dataSourceFormGroup.get('dsType').value === DatasourceType.entity) {
+      <tb-entity-alias-select
+        class="tb-entity-alias-field"
+        inlineField
+        tbRequired
+        [aliasController]="context.aliasController"
+        formControlName="dsEntityAliasId"
+        [callbacks]="context.callbacks">
+      </tb-entity-alias-select>
+    }
   </div>
   <tb-filter-select
     class="tb-filter-field"

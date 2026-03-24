@@ -30,7 +30,7 @@
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
                                     [widgetType]="widgetType"
-                                    formControlName="initialState"></tb-get-value-action-settings>
+      formControlName="initialState"></tb-get-value-action-settings>
     </div>
     <div class="tb-form-row space-between">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.power-button.power-on-hint' | translate}}" translate>widgets.power-button.power-on</div>
@@ -39,7 +39,7 @@
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
                                     [widgetType]="widgetType"
-                                    formControlName="onUpdateState"></tb-set-value-action-settings>
+      formControlName="onUpdateState"></tb-set-value-action-settings>
     </div>
     <div class="tb-form-row space-between">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.power-button.power-off-hint' | translate}}" translate>widgets.power-button.power-off</div>
@@ -48,7 +48,7 @@
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
                                     [widgetType]="widgetType"
-                                    formControlName="offUpdateState"></tb-set-value-action-settings>
+      formControlName="offUpdateState"></tb-set-value-action-settings>
     </div>
     <div class="tb-form-row">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.disabled-state-hint' | translate}}" translate>widgets.rpc-state.disabled-state</div>
@@ -59,7 +59,7 @@
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
                                     [widgetType]="widgetType"
-                                    formControlName="disabledState"></tb-get-value-action-settings>
+      formControlName="disabledState"></tb-get-value-action-settings>
     </div>
   </div>
   <div class="tb-form-panel">
@@ -70,12 +70,14 @@
                                       'lt-sm': 1,
                                       'lt-md': 2
                                     }}"
-                           label="{{ 'widgets.power-button.layout' | translate }}" formControlName="layout">
-      <tb-image-cards-select-option *ngFor="let layout of powerButtonLayouts"
-                                    [value]="layout"
-                                    [image]="powerButtonLayoutImageMap.get(layout)">
-        {{ powerButtonLayoutTranslationMap.get(layout) | translate }}
-      </tb-image-cards-select-option>
+      label="{{ 'widgets.power-button.layout' | translate }}" formControlName="layout">
+      @for (layout of powerButtonLayouts; track layout) {
+        <tb-image-cards-select-option
+          [value]="layout"
+          [image]="powerButtonLayoutImageMap.get(layout)">
+          {{ powerButtonLayoutTranslationMap.get(layout) | translate }}
+        </tb-image-cards-select-option>
+      }
     </tb-image-cards-select>
     <div class="tb-form-row column-xs">
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showTitle">

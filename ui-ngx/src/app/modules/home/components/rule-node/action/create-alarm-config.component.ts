@@ -42,7 +42,7 @@ export class CreateAlarmConfigComponent extends RuleNodeConfigurationComponent {
   @ViewChild('jsFuncComponent', {static: false}) jsFuncComponent: JsFuncComponent;
   @ViewChild('tbelFuncComponent', {static: false}) tbelFuncComponent: JsFuncComponent;
 
-  alarmSeverities = Object.keys(AlarmSeverity);
+  alarmSeverities = Object.values(AlarmSeverity);
   alarmSeverityTranslationMap = alarmSeverityTranslations;
   createAlarmConfigForm: UntypedFormGroup;
 

@@ -16,12 +16,14 @@
 
 -->
 <section [formGroup]="deviceState">
-    <mat-form-field class="mat-block" subscriptSizing="dynamic">
-        <mat-label>{{ 'rule-node-config.select-device-connectivity-event' | translate }}</mat-label>
-        <mat-select formControlName="event">
-            <mat-option *ngFor="let eventOption of eventOptions" [value]="eventOption">
-                {{ messageTypeNames.get(eventOption) }}
-            </mat-option>
-        </mat-select>
-    </mat-form-field>
+  <mat-form-field class="mat-block" subscriptSizing="dynamic">
+    <mat-label>{{ 'rule-node-config.select-device-connectivity-event' | translate }}</mat-label>
+    <mat-select formControlName="event">
+      @for (eventOption of eventOptions; track eventOption) {
+        <mat-option [value]="eventOption">
+          {{ messageTypeNames.get(eventOption) }}
+        </mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
 </section>

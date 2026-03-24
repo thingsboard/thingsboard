@@ -28,6 +28,7 @@ import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
 import { emptyPageData } from '@shared/models/page/page-data';
 import {
+  NotificationDeliveryMethod,
   NotificationDeliveryMethodInfoMap,
   NotificationTemplate,
   NotificationType
@@ -267,5 +268,9 @@ export class TemplateAutocompleteComponent implements ControlValueAccessor, OnIn
     this.selectTemplateFormGroup.get('templateName').patchValue('', {emitEvent: false});
     this.updateView(null);
     this.dirty = true;
+  }
+
+  getNotificationDeliveryMethodInfoMap(key: string) {
+    return this.notificationDeliveryMethodInfoMap.get(key as NotificationDeliveryMethod);
   }
 }

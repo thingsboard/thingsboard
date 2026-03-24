@@ -93,90 +93,92 @@
       }
     </ng-container>
     <ng-container [formGroup]="refDynamicSourceFormGroup">
-      <div class="tb-form-panel stroked" *ngIf="entityType === ArgumentEntityType.RelationQuery">
-        <mat-expansion-panel class="tb-settings" expanded>
-          <mat-expansion-panel-header>
-            <span class="tb-form-panel-title tb-required">{{ 'calculated-fields.entity-zone-relationship' | translate }}</span>
-          </mat-expansion-panel-header>
-          <div class="tb-form-table">
-            <div class="tb-form-table-header">
-              <div class="tb-form-table-header-cell tb-actions-header"></div>
-              <div class="tb-form-table-header-cell" translate>calculated-fields.level</div>
-              <div class="tb-form-table-header-cell flex-1" translate>calculated-fields.direction-level</div>
-              <div class="tb-form-table-header-cell tb-required flex-1" translate>calculated-fields.relation-type</div>
-              <div class="tb-form-table-header-cell tb-actions-header"></div>
+      @if (entityType === ArgumentEntityType.RelationQuery) {
+        <div class="tb-form-panel stroked">
+          <mat-expansion-panel class="tb-settings" expanded>
+            <mat-expansion-panel-header>
+              <span class="tb-form-panel-title tb-required">{{ 'calculated-fields.entity-zone-relationship' | translate }}</span>
+            </mat-expansion-panel-header>
+            <div class="tb-form-table">
+              <div class="tb-form-table-header">
+                <div class="tb-form-table-header-cell tb-actions-header"></div>
+                <div class="tb-form-table-header-cell" translate>calculated-fields.level</div>
+                <div class="tb-form-table-header-cell flex-1" translate>calculated-fields.direction-level</div>
+                <div class="tb-form-table-header-cell tb-required flex-1" translate>calculated-fields.relation-type</div>
+                <div class="tb-form-table-header-cell tb-actions-header"></div>
+              </div>
+              @if (levelsFormArray()?.controls?.length) {
+                <div class="tb-form-table-body tb-drop-list"
+                     cdkDropList cdkDropListOrientation="vertical"
+                     [cdkDropListDisabled]="!dragEnabled"
+                     (cdkDropListDropped)="keyDrop($event)">
+                  @for (keyControl of levelsFormArray().controls; track trackByKey; ) {
+                    <div cdkDrag [cdkDragDisabled]="!dragEnabled" class="tb-draggable-form-table-row">
+                      <div class="tb-form-table-row-cell-buttons">
+                        <button mat-icon-button
+                                type="button"
+                                cdkDragHandle
+                                class="lt-lg:!hidden"
+                                [class.tb-hidden]="!dragEnabled"
+                                matTooltip="{{ 'action.drag' | translate }}"
+                                matTooltipPosition="above">
+                          <mat-icon>drag_indicator</mat-icon>
+                        </button>
+                      </div>
+                      <div class="tb-form-row no-border flex-1" [formGroup]="keyControl">
+                        <div class="level-text">{{ $index + 1 }}</div>
+                        <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+                          <mat-select formControlName="direction">
+                            @for (direction of GeofencingDirectionList; track direction) {
+                              <mat-option [value]="direction">{{ GeofencingDirectionLevelTranslations.get(direction) | translate }}</mat-option>
+                            }
+                          </mat-select>
+                        </mat-form-field>
+                        <tb-string-autocomplete [fetchOptionsFn]="fetchOptions.bind(this)"
+                                                additionalClass="tb-suffix-show-on-hover"
+                                                class="flex-1"
+                                                appearance="outline"
+                                                panelWidth=""
+                                                required
+                                                [errorText]="'calculated-fields.hint.relation-type-required' | translate"
+                                                formControlName="relationType">
+                        </tb-string-autocomplete>
+                      </div>
+                      <div class="tb-form-table-row-cell-buttons">
+                        <button type="button"
+                                mat-icon-button
+                                (click)="removeKey($index)"
+                                [disabled]="readonly"
+                                matTooltip="{{ 'calculated-fields.delete-level' | translate }}"
+                                matTooltipPosition="above">
+                          <mat-icon>delete</mat-icon>
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <span class="tb-prompt flex items-center justify-center">{{ 'calculated-fields.no-level' | translate }}</span>
+              }
+              @if (levelsFormArray().errors) {
+                <tb-error noMargin error="{{ 'calculated-fields.levels-required' | translate }}" style="padding-left: 12px;"></tb-error>
+              }
             </div>
-            @if (levelsFormArray()?.controls?.length) {
-              <div class="tb-form-table-body tb-drop-list"
-                   cdkDropList cdkDropListOrientation="vertical"
-                   [cdkDropListDisabled]="!dragEnabled"
-                   (cdkDropListDropped)="keyDrop($event)">
-                @for (keyControl of levelsFormArray().controls; track trackByKey; ) {
-                  <div cdkDrag [cdkDragDisabled]="!dragEnabled" class="tb-draggable-form-table-row">
-                    <div class="tb-form-table-row-cell-buttons">
-                      <button mat-icon-button
-                              type="button"
-                              cdkDragHandle
-                              class="lt-lg:!hidden"
-                              [class.tb-hidden]="!dragEnabled"
-                              matTooltip="{{ 'action.drag' | translate }}"
-                              matTooltipPosition="above">
-                        <mat-icon>drag_indicator</mat-icon>
-                      </button>
-                    </div>
-                    <div class="tb-form-row no-border flex-1" [formGroup]="keyControl">
-                      <div class="level-text">{{ $index + 1 }}</div>
-                      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
-                        <mat-select formControlName="direction">
-                          @for (direction of GeofencingDirectionList; track direction) {
-                            <mat-option [value]="direction">{{ GeofencingDirectionLevelTranslations.get(direction) | translate }}</mat-option>
-                          }
-                        </mat-select>
-                      </mat-form-field>
-                      <tb-string-autocomplete [fetchOptionsFn]="fetchOptions.bind(this)"
-                                              additionalClass="tb-suffix-show-on-hover"
-                                              class="flex-1"
-                                              appearance="outline"
-                                              panelWidth=""
-                                              required
-                                              [errorText]="'calculated-fields.hint.relation-type-required' | translate"
-                                              formControlName="relationType">
-                      </tb-string-autocomplete>
-                    </div>
-                    <div class="tb-form-table-row-cell-buttons">
-                      <button type="button"
-                              mat-icon-button
-                              (click)="removeKey($index)"
-                              [disabled]="readonly"
-                              matTooltip="{{ 'calculated-fields.delete-level' | translate }}"
-                              matTooltipPosition="above">
-                        <mat-icon>delete</mat-icon>
-                      </button>
-                    </div>
-                  </div>
-                }
-              </div>
-            } @else {
-              <span class="tb-prompt flex items-center justify-center">{{ 'calculated-fields.no-level' | translate }}</span>
-            }
-            @if (levelsFormArray().errors) {
-              <tb-error noMargin error="{{ 'calculated-fields.levels-required' | translate }}" style="padding-left: 12px;"></tb-error>
-            }
-          </div>
-          <div>
-            @if (maxRelationLevelPerCfArgument && levelsFormArray().length >= maxRelationLevelPerCfArgument) {
-              <div class="tb-form-hint tb-primary-fill max-args-warning flex items-center gap-2">
-                <mat-icon>warning</mat-icon>
-                <span>{{ 'calculated-fields.max-allowed-levels-error' | translate }}</span>
-              </div>
-            } @else {
-              <button type="button" mat-stroked-button color="primary" (click)="addKey()" [disabled]="readonly">
-                {{ 'calculated-fields.add-level' | translate }}
-              </button>
-            }
-          </div>
-        </mat-expansion-panel>
-      </div>
+            <div>
+              @if (maxRelationLevelPerCfArgument && levelsFormArray().length >= maxRelationLevelPerCfArgument) {
+                <div class="tb-form-hint tb-primary-fill max-args-warning flex items-center gap-2">
+                  <mat-icon>warning</mat-icon>
+                  <span>{{ 'calculated-fields.max-allowed-levels-error' | translate }}</span>
+                </div>
+              } @else {
+                <button type="button" mat-stroked-button color="primary" (click)="addKey()" [disabled]="readonly">
+                  {{ 'calculated-fields.add-level' | translate }}
+                </button>
+              }
+            </div>
+          </mat-expansion-panel>
+        </div>
+      }
     </ng-container>
     <ng-container>
       @if (entityFilter.singleEntity?.id || entityType === ArgumentEntityType.RelationQuery || entityType === ArgumentEntityType.Current || entityType === ArgumentEntityType.Owner) {

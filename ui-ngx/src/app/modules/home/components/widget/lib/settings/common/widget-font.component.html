@@ -75,12 +75,13 @@
       icon="format_color_fill"
       label="{{ 'widgets.widget-font.color' | translate }}" openOnInput colorClearButton>
     </tb-color-input>
-    <tb-color-input
-      *ngIf="hasShadowColor"
-      class="flex-1"
-      formControlName="shadowColor"
-      icon="format_color_fill"
-      label="{{ 'widgets.widget-font.shadow-color' | translate }}" openOnInput colorClearButton>
-    </tb-color-input>
+    @if (hasShadowColor) {
+      <tb-color-input
+        class="flex-1"
+        formControlName="shadowColor"
+        icon="format_color_fill"
+        label="{{ 'widgets.widget-font.shadow-color' | translate }}" openOnInput colorClearButton>
+      </tb-color-input>
+    }
   </section>
 </section>

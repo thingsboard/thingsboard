@@ -18,16 +18,20 @@
 <div class="tb-threshold-settings-panel" [formGroup]="thresholdSettingsFormGroup">
   <div class="tb-threshold-settings-title">{{ panelTitle | translate }}</div>
   <div class="tb-threshold-settings-panel-content">
-    <div *ngIf="!hideYAxis" class="tb-form-row space-between column-xs">
-      <div translate>widgets.time-series-chart.axis.y-axis</div>
-      <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
-        <mat-select formControlName="yAxisId">
-          <mat-option *ngFor="let yAxis of yAxisIds" [value]="yAxis">
-            {{ yAxis }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-    </div>
+    @if (!hideYAxis) {
+      <div class="tb-form-row space-between column-xs">
+        <div translate>widgets.time-series-chart.axis.y-axis</div>
+        <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
+          <mat-select formControlName="yAxisId">
+            @for (yAxis of yAxisIds; track yAxis) {
+              <mat-option [value]="yAxis">
+                {{ yAxis }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+    }
     <div class="tb-form-row space-between">
       <div translate>widget-config.units-short</div>
       <tb-unit-input
@@ -48,9 +52,11 @@
       <div class="flex lt-md:flex-1 flex-row items-center justify-start gap-2">
         <mat-form-field class="medium-width lt-md:flex-1" appearance="outline" subscriptSizing="dynamic">
           <mat-select formControlName="labelPosition">
-            <mat-option *ngFor="let position of timeSeriesThresholdLabelPositions" [value]="position">
-              {{ timeSeriesThresholdLabelPositionTranslations.get(position) | translate }}
-            </mat-option>
+            @for (position of timeSeriesThresholdLabelPositions; track position) {
+              <mat-option [value]="position">
+                {{ timeSeriesThresholdLabelPositionTranslations.get(position) | translate }}
+              </mat-option>
+            }
           </mat-select>
         </mat-form-field>
         <tb-font-settings formControlName="labelFont"
@@ -87,9 +93,11 @@
         <div translate>widgets.time-series-chart.line-type</div>
         <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
           <mat-select formControlName="lineType">
-            <mat-option *ngFor="let lineType of chartLineTypes" [value]="lineType">
-              {{ chartLineTypeTranslations.get(lineType) | translate }}
-            </mat-option>
+            @for (lineType of chartLineTypes; track lineType) {
+              <mat-option [value]="lineType">
+                {{ chartLineTypeTranslations.get(lineType) | translate }}
+              </mat-option>
+            }
           </mat-select>
         </mat-form-field>
       </div>
@@ -104,9 +112,11 @@
         <div class="tb-flex row flex-end">
           <mat-form-field class="medium-width lt-md:flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="startSymbol">
-              <mat-option *ngFor="let shape of chartShapes" [value]="shape">
-                {{ chartShapeTranslations.get(shape) | translate }}
-              </mat-option>
+              @for (shape of chartShapes; track shape) {
+                <mat-option [value]="shape">
+                  {{ chartShapeTranslations.get(shape) | translate }}
+                </mat-option>
+              }
             </mat-select>
           </mat-form-field>
           <div class="tb-small-label" translate>widgets.time-series-chart.threshold.symbol-size</div>
@@ -121,9 +131,11 @@
         <div class="tb-flex row flex-end">
           <mat-form-field class="medium-width lt-md:flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="endSymbol">
-              <mat-option *ngFor="let shape of chartShapes" [value]="shape">
-                {{ chartShapeTranslations.get(shape) | translate }}
-              </mat-option>
+              @for (shape of chartShapes; track shape) {
+                <mat-option [value]="shape">
+                  {{ chartShapeTranslations.get(shape) | translate }}
+                </mat-option>
+              }
             </mat-select>
           </mat-form-field>
           <div class="tb-small-label" translate>widgets.time-series-chart.threshold.symbol-size</div>

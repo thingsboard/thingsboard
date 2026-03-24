@@ -15,44 +15,50 @@
     limitations under the License.
 
 -->
-<div class="tb-details-buttons xs:flex xs:flex-col" *ngIf="!standalone">
-  <button mat-raised-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'open')"
-          [class.!hidden]="isEdit">
-    {{'widgets-bundle.open-widgets-bundle' | translate }}
-  </button>
-  <button mat-raised-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'openDetails')"
-          [class.!hidden]="isEdit || isDetailsPage">
-    {{'common.open-details-page' | translate }}
-  </button>
-  <button mat-raised-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'export')"
-          [class.!hidden]="isEdit">
-    {{'widgets-bundle.export' | translate }}
-  </button>
-  <button mat-raised-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'delete')"
-          [class.!hidden]="hideDelete() || isEdit">
-    {{'widgets-bundle.delete' | translate }}
-  </button>
-</div>
+@if (!standalone) {
+  <div class="tb-details-buttons xs:flex xs:flex-col">
+    <button mat-raised-button color="primary"
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'open')"
+            [class.!hidden]="isEdit">
+      {{'widgets-bundle.open-widgets-bundle' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'openDetails')"
+            [class.!hidden]="isEdit || isDetailsPage">
+      {{'common.open-details-page' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'export')"
+            [class.!hidden]="isEdit">
+      {{'widgets-bundle.export' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'delete')"
+            [class.!hidden]="hideDelete() || isEdit">
+      {{'widgets-bundle.delete' | translate }}
+    </button>
+  </div>
+}
 <div class="mat-padding flex flex-col">
   <form [formGroup]="entityForm">
     <fieldset [disabled]="(isLoading$ | async) || !isEdit">
       <mat-form-field class="mat-block">
         <mat-label translate>widgets-bundle.title</mat-label>
         <input matInput formControlName="title" required>
-        <mat-error *ngIf="entityForm.get('title').hasError('required')">
-          {{ 'widgets-bundle.title-required' | translate }}
-        </mat-error>
-        <mat-error *ngIf="entityForm.get('title').hasError('maxlength')">
-          {{ 'widgets-bundle.title-max-length' | translate }}
-        </mat-error>
+        @if (entityForm.get('title').hasError('required')) {
+          <mat-error>
+            {{ 'widgets-bundle.title-required' | translate }}
+          </mat-error>
+        }
+        @if (entityForm.get('title').hasError('maxlength')) {
+          <mat-error>
+            {{ 'widgets-bundle.title-max-length' | translate }}
+          </mat-error>
+        }
       </mat-form-field>
       <tb-gallery-image-input class="flex-1"
                               label="{{'widgets-bundle.image-preview' | translate}}"

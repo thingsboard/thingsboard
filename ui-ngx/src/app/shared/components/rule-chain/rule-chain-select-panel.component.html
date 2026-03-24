@@ -25,19 +25,25 @@
   <mat-autocomplete class="tb-autocomplete tb-rule-chain-search"
                     #ruleChainAutocomplete="matAutocomplete"
                     (optionSelected)="selected($event)">
-    <mat-option *ngFor="let ruleChain of filteredRuleChains | async"
-                [class.tb-selected-option]="ruleChainId === ruleChain.id.id"
-                [value]="ruleChain">
-      <mat-icon *ngIf="ruleChainId === ruleChain.id.id">check</mat-icon>
-      <span [innerHTML]="ruleChain.name | highlight:searchText:true"></span>
-    </mat-option>
-    <mat-option *ngIf="!(filteredRuleChains | async)?.length" [value]="null" class="tb-not-found">
-      <div class="tb-not-found-content" (click)="$event.stopPropagation()">
-        <span>
-          {{ 'rulechain.no-rulechains-matching' | translate : {entity: searchText} }}
-        </span>
-      </div>
-    </mat-option>
+    @for (ruleChain of filteredRuleChains | async; track ruleChain) {
+      <mat-option
+        [class.tb-selected-option]="ruleChainId === ruleChain.id.id"
+        [value]="ruleChain">
+        @if (ruleChainId === ruleChain.id.id) {
+          <mat-icon>check</mat-icon>
+        }
+        <span [innerHTML]="ruleChain.name | highlight:searchText:true"></span>
+      </mat-option>
+    }
+    @if (!(filteredRuleChains | async)?.length) {
+      <mat-option [value]="null" class="tb-not-found">
+        <div class="tb-not-found-content" (click)="$event.stopPropagation()">
+          <span>
+            {{ 'rulechain.no-rulechains-matching' | translate : {entity: searchText} }}
+          </span>
+        </div>
+      </mat-option>
+    }
   </mat-autocomplete>
 </mat-form-field>
 

@@ -19,13 +19,17 @@
   <div class="tb-font-settings-title" translate>widgets.widget-font.font-settings</div>
   <div class="tb-form-row no-border no-padding">
     <div class="fixed-title-width" translate>widgets.widget-font.size</div>
-    <div *ngIf="!autoScale" class="flex flex-1 flex-row items-center justify-start gap-3">
-      <mat-form-field appearance="outline" class="number flex-1" subscriptSizing="dynamic">
-        <input matInput type="number" min="0" formControlName="size" placeholder="{{ 'widget-config.set' | translate }}">
-      </mat-form-field>
-      <tb-css-unit-select class="flex-1" formControlName="sizeUnit"></tb-css-unit-select>
-    </div>
-    <div *ngIf="autoScale" class="tb-font-settings-auto" translate>widgets.widget-font.auto</div>
+    @if (!autoScale) {
+      <div class="flex flex-1 flex-row items-center justify-start gap-3">
+        <mat-form-field appearance="outline" class="number flex-1" subscriptSizing="dynamic">
+          <input matInput type="number" min="0" formControlName="size" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+        <tb-css-unit-select class="flex-1" formControlName="sizeUnit"></tb-css-unit-select>
+      </div>
+    }
+    @if (autoScale) {
+      <div class="tb-font-settings-auto" translate>widgets.widget-font.auto</div>
+    }
   </div>
   <div class="tb-form-row no-border no-padding">
     <div class="fixed-title-width" translate>widgets.widget-font.font-family</div>
@@ -33,19 +37,23 @@
       <input matInput #familyInput
              formControlName="family" placeholder="{{ 'widget-config.set' | translate }}"
              [matAutocomplete]="familyAutocomplete">
-      <button *ngIf="fontFormGroup.get('family').value"
-              type="button"
-              matSuffix mat-icon-button aria-label="Clear"
-              (click)="clearFamily()">
-        <mat-icon class="material-icons">close</mat-icon>
-      </button>
+      @if (fontFormGroup.get('family').value) {
+        <button
+          type="button"
+          matSuffix mat-icon-button aria-label="Clear"
+          (click)="clearFamily()">
+          <mat-icon class="material-icons">close</mat-icon>
+        </button>
+      }
       <mat-autocomplete
         #familyAutocomplete="matAutocomplete"
         class="tb-autocomplete"
         panelWidth="fit-content">
-        <mat-option *ngFor="let family of filteredFontFamilies | async" [value]="family">
-          <span [innerHTML]="family | highlight:familySearchText:true:'ig'"></span>
-        </mat-option>
+        @for (family of filteredFontFamilies | async; track family) {
+          <mat-option [value]="family">
+            <span [innerHTML]="family | highlight:familySearchText:true:'ig'"></span>
+          </mat-option>
+        }
       </mat-autocomplete>
     </mat-form-field>
   </div>
@@ -55,9 +63,11 @@
       <mat-select formControlName="weight" placeholder="{{ 'widget-config.set' | translate }}">
         <mat-option [value]="null">
         </mat-option>
-        <mat-option *ngFor="let weight of fontWeightsList" [value]="weight">
-          {{ fontWeightTranslationsMap.has(weight) ? (fontWeightTranslationsMap.get(weight) | translate) : weight }}
-        </mat-option>
+        @for (weight of fontWeightsList; track weight) {
+          <mat-option [value]="weight">
+            {{ fontWeightTranslationsMap.has(weight) ? (fontWeightTranslationsMap.get(weight) | translate) : weight }}
+          </mat-option>
+        }
       </mat-select>
     </mat-form-field>
   </div>
@@ -67,33 +77,45 @@
       <mat-select formControlName="style" placeholder="{{ 'widget-config.set' | translate }}">
         <mat-option [value]="null">
         </mat-option>
-        <mat-option *ngFor="let style of fontStylesList" [value]="style">
-          {{ fontStyleTranslationsMap.get(style) | translate }}
-        </mat-option>
+        @for (style of fontStylesList; track style) {
+          <mat-option [value]="style">
+            {{ fontStyleTranslationsMap.get(style) | translate }}
+          </mat-option>
+        }
       </mat-select>
     </mat-form-field>
   </div>
-  <div class="tb-form-row no-border no-padding" *ngIf="!disabledLineHeight">
-    <div class="fixed-title-width" translate>widgets.widget-font.line-height</div>
-    <mat-form-field *ngIf="!autoScale" class="flex-1" appearance="outline" subscriptSizing="dynamic">
-      <input matInput formControlName="lineHeight" placeholder="{{ 'widget-config.set' | translate }}">
-    </mat-form-field>
-    <div *ngIf="autoScale" class="tb-font-settings-auto" translate>widgets.widget-font.auto</div>
-  </div>
+  @if (!disabledLineHeight) {
+    <div class="tb-form-row no-border no-padding">
+      <div class="fixed-title-width" translate>widgets.widget-font.line-height</div>
+      @if (!autoScale) {
+        <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+          <input matInput formControlName="lineHeight" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+      }
+      @if (autoScale) {
+        <div class="tb-font-settings-auto" translate>widgets.widget-font.auto</div>
+      }
+    </div>
+  }
   <mat-divider></mat-divider>
   <div class="tb-form-row no-border no-padding font-preview">
     <div class="fixed-title-width" translate>widgets.widget-font.preview</div>
     <div class="preview-text flex-1" [style]="previewStyle" [innerHTML]="previewText | safe:'html'"></div>
   </div>
   <div class="tb-font-settings-panel-buttons">
-    <button *ngIf="clearButton"
-            mat-button
-            type="button"
-            (click)="clearFont()"
-            [disabled]="clearDisabled()">
-      {{ 'action.clear' | translate }}
-    </button>
-    <span *ngIf="clearButton" class="flex-1"></span>
+    @if (clearButton) {
+      <button
+        mat-button
+        type="button"
+        (click)="clearFont()"
+        [disabled]="clearDisabled()">
+        {{ 'action.clear' | translate }}
+      </button>
+    }
+    @if (clearButton) {
+      <span class="flex-1"></span>
+    }
     <button mat-button
             color="primary"
             type="button"

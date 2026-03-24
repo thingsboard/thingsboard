@@ -19,23 +19,30 @@
   <div class="flex flex-col">
     <div class="flex flex-row items-center justify-between">
       <div class="tb-form-panel-title">{{ (singleDatasource ? (isAlarmSource ? 'widget-config.alarm-source' : 'widget-config.datasource') : 'widget-config.datasources') | translate }}</div>
-      <div class="flex flex-1 flex-row items-center justify-center" *ngIf="timeseriesKeyError">
-        <mat-error >{{ 'widget-config.timeseries-key-error' | translate }}</mat-error>
-      </div>
-      <tb-toggle-select *ngIf="basicMode && !hideDatasourcesMode" [ngModel]="datasourcesMode" (ngModelChange)="datasourcesModeChange($event)"
-                        [ngModelOptions]="{ standalone: true }">
-        <tb-toggle-option [value]="datasourceType.device">{{ 'device.device' | translate }}</tb-toggle-option>
-        <tb-toggle-option [value]="datasourceType.entity">{{ 'entity.entity-alias' | translate }}</tb-toggle-option>
-      </tb-toggle-select>
+      @if (timeseriesKeyError) {
+        <div class="flex flex-1 flex-row items-center justify-center">
+          <mat-error >{{ 'widget-config.timeseries-key-error' | translate }}</mat-error>
+        </div>
+      }
+      @if (basicMode && !hideDatasourcesMode) {
+        <tb-toggle-select [ngModel]="datasourcesMode" (ngModelChange)="datasourcesModeChange($event)"
+                          [ngModelOptions]="{ standalone: true }">
+          <tb-toggle-option [value]="datasourceType.device">{{ 'device.device' | translate }}</tb-toggle-option>
+          <tb-toggle-option [value]="datasourceType.entity">{{ 'entity.entity-alias' | translate }}</tb-toggle-option>
+        </tb-toggle-select>
+      }
     </div>
-    <div *ngIf="maxDatasources > 1"
-         class="tb-form-panel-hint">{{ 'widget-config.maximum-datasources' | translate:{count: maxDatasources} }}</div>
+    @if (maxDatasources > 1) {
+      <div
+      class="tb-form-panel-hint">{{ 'widget-config.maximum-datasources' | translate:{count: maxDatasources} }}</div>
+    }
   </div>
-  <div *ngIf="datasourcesFormArray.length === 0; else datasourcesTemplate">
-                <span translate
-                      class="tb-prompt flex items-center justify-center">datasource.add-datasource-prompt</span>
-  </div>
-  <ng-template #datasourcesTemplate>
+  @if (datasourcesFormArray.length === 0) {
+    <div>
+      <span translate
+      class="tb-prompt flex items-center justify-center">datasource.add-datasource-prompt</span>
+    </div>
+  } @else {
     <div style="overflow: auto;">
       <mat-list class="tb-drop-list"
                 cdkDropList
@@ -43,50 +50,60 @@
                 (cdkDropListDropped)="onDatasourceDrop($event)"
                 [cdkDropListDisabled]="dragDisabled"
                 formArrayName="datasources">
-        <mat-list-item *ngFor="let datasourceControl of datasourcesControls; trackBy: trackByDatasource; let $index = index;"
-                       class="tb-datasource-list-item tb-draggable" cdkDrag
-                       [cdkDragDisabled]="dragDisabled">
-          <div class="tb-datasource-row">
-            <div *ngIf="!singleDatasource" class="tb-datasource-index-container">
-              <div class="tb-datasource-index">{{$index + 1}}</div>
-            </div>
-            <div class="tb-datasource-params">
-              <div class="tb-datasource-item">
-                <tb-datasource [formControl]="datasourceControl">
-                </tb-datasource>
-                <div *ngIf="!singleDatasource && !disabled" class="tb-datasource-buttons">
-                  <button class="tb-box-button" type="button"
-                          mat-icon-button
-                          (click)="removeDatasource($index)"
-                          matTooltip="{{ 'widget-config.remove-datasource' | translate }}"
-                          matTooltipPosition="above">
-                    <mat-icon>delete</mat-icon>
-                  </button>
-                  <button *ngIf="!dragDisabled"
+        @for (datasourceControl of datasourcesControls; track trackByDatasource($index, datasourceControl)) {
+          <mat-list-item
+            class="tb-datasource-list-item tb-draggable" cdkDrag
+            [cdkDragDisabled]="dragDisabled">
+            <div class="tb-datasource-row">
+              @if (!singleDatasource) {
+                <div class="tb-datasource-index-container">
+                  <div class="tb-datasource-index">{{$index + 1}}</div>
+                </div>
+              }
+              <div class="tb-datasource-params">
+                <div class="tb-datasource-item">
+                  <tb-datasource [formControl]="datasourceControl">
+                  </tb-datasource>
+                  @if (!singleDatasource && !disabled) {
+                    <div class="tb-datasource-buttons">
+                      <button class="tb-box-button" type="button"
+                              mat-icon-button
+                              (click)="removeDatasource($index)"
+                              matTooltip="{{ 'widget-config.remove-datasource' | translate }}"
+                              matTooltipPosition="above">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                      @if (!dragDisabled) {
+                        <button
                           class="tb-box-button"
                           mat-icon-button
                           type="button"
                           cdkDragHandle
                           matTooltip="{{ 'action.drag' | translate }}"
                           matTooltipPosition="above">
-                    <mat-icon>drag_indicator</mat-icon>
-                  </button>
+                          <mat-icon>drag_indicator</mat-icon>
+                        </button>
+                      }
+                    </div>
+                  }
                 </div>
+                <tb-error class="tb-datasource-error" [error]="datasourceError[$index] ? datasourceError[$index] : ''"></tb-error>
               </div>
-              <tb-error class="tb-datasource-error" [error]="datasourceError[$index] ? datasourceError[$index] : ''"></tb-error>
             </div>
-          </div>
-        </mat-list-item>
+          </mat-list-item>
+        }
       </mat-list>
     </div>
-  </ng-template>
-  <div *ngIf="showAddDatasource">
-    <button type="button"
-            mat-stroked-button color="primary"
-            (click)="addDatasource()"
-            matTooltip="{{ 'widget-config.add-datasource' | translate }}"
-            matTooltipPosition="above">
-      <span translate>widget-config.add-datasource</span>
-    </button>
-  </div>
+  }
+  @if (showAddDatasource) {
+    <div>
+      <button type="button"
+              mat-stroked-button color="primary"
+              (click)="addDatasource()"
+              matTooltip="{{ 'widget-config.add-datasource' | translate }}"
+              matTooltipPosition="above">
+        <span translate>widget-config.add-datasource</span>
+      </button>
+    </div>
+  }
 </div>

@@ -23,48 +23,52 @@
       </mat-slide-toggle>
     </div>
   </div>
-  <div class="tb-form-panel no-border no-padding" *ngIf="!mobileAppQRCodeWidgetSettingsForm.get('useSystemSettings').value">
-    <div class="tb-form-panel" formGroupName="qrCodeConfig">
-      <div class="tb-form-panel-title" translate>widget-config.card-style</div>
-      <div class="tb-form-hint tb-primary-fill">{{ 'widgets.mobile-app-qr-code.configuration-hint' | translate }}</div>
-      <div class="tb-form-panel stroked no-padding no-gap">
-        <div class="tb-form-row space-between no-border no-padding-bottom column-xs">
-          <mat-slide-toggle class="mat-slide fixed-title-width-230" formControlName="badgeEnabled"
-                            (click)="$event.stopPropagation()">
-            {{ 'admin.mobile-app.badges' | translate }}
-          </mat-slide-toggle>
-          <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
-            <mat-select formControlName="badgePosition" appearance="outline" subscriptSizing="dynamic">
-              <mat-option *ngFor="let badgePosition of badgePositionTranslationsMap | keyvalue" [value]="badgePosition.key">
-                {{ badgePosition.value | translate }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
-      </div>
-      <div class="tb-form-panel stroked no-padding no-gap">
-        <div class="tb-form-row space-between no-border no-padding-bottom column-xs">
-          <mat-slide-toggle class="mat-slide fixed-title-width-230" formControlName="qrCodeLabelEnabled" (click)="$event.stopPropagation()">
-            {{ 'admin.mobile-app.label' | translate }}
-          </mat-slide-toggle>
-          <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
-            <input matInput formControlName="qrCodeLabel" placeholder="{{'admin.mobile-app.set' | translate}}">
-          </mat-form-field>
-        </div>
-      </div>
-    </div>
+  @if (!mobileAppQRCodeWidgetSettingsForm.get('useSystemSettings').value) {
     <div class="tb-form-panel no-border no-padding">
+      <div class="tb-form-panel" formGroupName="qrCodeConfig">
+        <div class="tb-form-panel-title" translate>widget-config.card-style</div>
+        <div class="tb-form-hint tb-primary-fill">{{ 'widgets.mobile-app-qr-code.configuration-hint' | translate }}</div>
+        <div class="tb-form-panel stroked no-padding no-gap">
+          <div class="tb-form-row space-between no-border no-padding-bottom column-xs">
+            <mat-slide-toggle class="mat-slide fixed-title-width-230" formControlName="badgeEnabled"
+                              (click)="$event.stopPropagation()">
+              {{ 'admin.mobile-app.badges' | translate }}
+            </mat-slide-toggle>
+            <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+              <mat-select formControlName="badgePosition" appearance="outline" subscriptSizing="dynamic">
+                @for (badgePosition of badgePositionTranslationsMap | keyvalue; track badgePosition) {
+                  <mat-option [value]="badgePosition.key">
+                    {{ badgePosition.value | translate }}
+                  </mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </div>
+        </div>
+        <div class="tb-form-panel stroked no-padding no-gap">
+          <div class="tb-form-row space-between no-border no-padding-bottom column-xs">
+            <mat-slide-toggle class="mat-slide fixed-title-width-230" formControlName="qrCodeLabelEnabled" (click)="$event.stopPropagation()">
+              {{ 'admin.mobile-app.label' | translate }}
+            </mat-slide-toggle>
+            <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+              <input matInput formControlName="qrCodeLabel" placeholder="{{'admin.mobile-app.set' | translate}}">
+            </mat-form-field>
+          </div>
+        </div>
+      </div>
+      <div class="tb-form-panel no-border no-padding">
+        <div class="tb-form-row space-between">
+          <div>{{ 'widgets.background.background' | translate }}</div>
+          <tb-background-settings formControlName="background">
+          </tb-background-settings>
+        </div>
+      </div>
       <div class="tb-form-row space-between">
-        <div>{{ 'widgets.background.background' | translate }}</div>
-        <tb-background-settings formControlName="background">
-        </tb-background-settings>
+        <div>{{ 'widget-config.card-padding' | translate }}</div>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <input matInput formControlName="padding" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
       </div>
     </div>
-    <div class="tb-form-row space-between">
-      <div>{{ 'widget-config.card-padding' | translate }}</div>
-      <mat-form-field appearance="outline" subscriptSizing="dynamic">
-        <input matInput formControlName="padding" placeholder="{{ 'widget-config.set' | translate }}">
-      </mat-form-field>
-    </div>
-  </div>
+  }
 </section>

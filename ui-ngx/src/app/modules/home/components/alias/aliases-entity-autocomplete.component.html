@@ -22,23 +22,29 @@
          formControlName="entityInfo"
          [required]="required"
          [matAutocomplete]="entityInfoAutocomplete">
-  <button *ngIf="selectEntityInfoFormGroup.get('entityInfo').value && !disabled"
-          type="button"
-          matSuffix mat-icon-button aria-label="Clear"
-          (click)="clear()">
-    <mat-icon class="material-icons">close</mat-icon>
-  </button>
+  @if (selectEntityInfoFormGroup.get('entityInfo').value && !disabled) {
+    <button
+      type="button"
+      matSuffix mat-icon-button aria-label="Clear"
+      (click)="clear()">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  }
   <mat-autocomplete
     class="tb-autocomplete"
     #entityInfoAutocomplete="matAutocomplete"
     [displayWith]="displayEntityInfoFn">
-    <mat-option *ngFor="let entityInfo of filteredEntityInfos | async" [value]="entityInfo">
-      <span [innerHTML]="entityInfo.name | highlight:searchText"></span>
-    </mat-option>
-    <mat-option *ngIf="!(filteredEntityInfos | async)?.length" [value]="null">
-      <span>
+    @for (entityInfo of filteredEntityInfos | async; track entityInfo) {
+      <mat-option [value]="entityInfo">
+        <span [innerHTML]="entityInfo.name | highlight:searchText"></span>
+      </mat-option>
+    }
+    @if (!(filteredEntityInfos | async)?.length) {
+      <mat-option [value]="null">
+        <span>
           {{ translate.get('entity.no-entities-matching', {entity: searchText}) | async }}
-      </span>
-    </mat-option>
+        </span>
+      </mat-option>
+    }
   </mat-autocomplete>
 </mat-form-field>

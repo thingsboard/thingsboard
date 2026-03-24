@@ -33,27 +33,29 @@
          cdkDropList cdkDropListOrientation="vertical"
          [cdkDropListDisabled]="!dragEnabled"
          (cdkDropListDropped)="axisDrop($event)">
-      <div cdkDrag [cdkDragDisabled]="!dragEnabled"
-           class="tb-draggable-form-table-row"
-           *ngFor="let axisControl of axesFormArray().controls; trackBy: trackByAxis; let $index = index;">
-        <tb-time-series-chart-y-axis-row class="flex-1"
-                                            [formControl]="axisControl"
-                                            [advanced]="advanced"
-                                            [supportsUnitConversion]="supportsUnitConversion"
-                                            (axisRemoved)="removeAxis($index)">
-        </tb-time-series-chart-y-axis-row>
-        <div class="tb-form-table-row-cell-buttons">
-          <button class="lt-lg:!hidden"
-                  [class.tb-hidden]="!dragEnabled"
-                  mat-icon-button
-                  type="button"
-                  cdkDragHandle
-                  matTooltip="{{ 'action.drag' | translate }}"
-                  matTooltipPosition="above">
-            <mat-icon>drag_indicator</mat-icon>
-          </button>
+      @for (axisControl of axesFormArray().controls; track trackByAxis($index, axisControl)) {
+        <div cdkDrag [cdkDragDisabled]="!dragEnabled"
+             class="tb-draggable-form-table-row"
+             >
+          <tb-time-series-chart-y-axis-row class="flex-1"
+                                           [formControl]="axisControl"
+                                           [advanced]="advanced"
+                                           [supportsUnitConversion]="supportsUnitConversion"
+                                           (axisRemoved)="removeAxis($index)">
+          </tb-time-series-chart-y-axis-row>
+          <div class="tb-form-table-row-cell-buttons">
+            <button class="lt-lg:!hidden"
+                    [class.tb-hidden]="!dragEnabled"
+                    mat-icon-button
+                    type="button"
+                    cdkDragHandle
+                    matTooltip="{{ 'action.drag' | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon>drag_indicator</mat-icon>
+            </button>
+          </div>
         </div>
-      </div>
+      }
     </div>
   </div>
   <div>

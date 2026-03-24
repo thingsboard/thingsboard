@@ -16,94 +16,96 @@
 
 -->
 <ng-container  [formGroup]="colorRangeListFormGroup">
-  <div class="flex flex-row items-center justify-start" *ngIf="advancedMode; else basicMode">
-    <div class="tb-form-panel-title flex-1" translate>widgets.color.settings-type</div>
-    <tb-toggle-select formControlName="advancedMode" class="flex-1">
-      <tb-toggle-option [value]="false">
-        {{ 'widgets.color.basic-mode' | translate }}
-      </tb-toggle-option>
-      <tb-toggle-option [value]="true">
-        {{ 'widgets.color.advanced-mode' | translate}}
-      </tb-toggle-option>
-    </tb-toggle-select>
-  </div>
-
-  <ng-template #basicMode>
+  @if (advancedMode) {
     <div class="flex flex-row items-center justify-start">
-      <div *ngIf="panelTitle" class="tb-form-panel-title flex-1">{{ panelTitle }}</div>
+      <div class="tb-form-panel-title flex-1" translate>widgets.color.settings-type</div>
+      <tb-toggle-select formControlName="advancedMode" class="flex-1">
+        <tb-toggle-option [value]="false">
+          {{ 'widgets.color.basic-mode' | translate }}
+        </tb-toggle-option>
+        <tb-toggle-option [value]="true">
+          {{ 'widgets.color.advanced-mode' | translate}}
+        </tb-toggle-option>
+      </tb-toggle-select>
     </div>
-  </ng-template>
+  } @else {
+    <div class="flex flex-row items-center justify-start">
+      @if (panelTitle) {
+        <div class="tb-form-panel-title flex-1">{{ panelTitle }}</div>
+      }
+    </div>
+  }
 
-  <div class="tb-color-ranges" [ngSwitch]="colorRangeListFormGroup.get('advancedMode').value">
-    <ng-template [ngSwitchCase]="false">
-      <div class="tb-control-list tb-drop-list" cdkDropList cdkDropListOrientation="vertical"
-           (cdkDropListDropped)="rangeDrop($event, 'range')">
-        <div cdkDrag class="tb-draggable tb-advanced-range-drag"
-             [formGroup]="rangeFormGroup"
-             *ngFor="let rangeFormGroup of rangeListFormGroups; trackBy: trackByRange; let $index = index; last as isLast;"
-             [class.pb-2]="!isLast">
-          <div class="flex flex-1 flex-row items-center justify-start">
-            <div class="tb-form-row range-container">
-              <div class="tb-value-range-text" translate>widgets.color.from</div>
-              <mat-form-field appearance="outline" class="center number flex-1" subscriptSizing="dynamic">
-                <input matInput type="number" formControlName="from" placeholder="{{ 'widget-config.set' | translate }}">
-              </mat-form-field>
 
-              <div class="tb-value-range-text tb-value-range-text-to" translate>widgets.color.to</div>
-              <mat-form-field appearance="outline" class="center number flex-1" subscriptSizing="dynamic">
-                <input matInput type="number" formControlName="to" placeholder="{{ 'widget-config.set' | translate }}">
-              </mat-form-field>
-
-              <tb-color-input asBoxInput
-                              formControlName="color">
-              </tb-color-input>
+  <div class="tb-color-ranges">
+    @switch (colorRangeListFormGroup.get('advancedMode').value) {
+      @case (false) {
+        <div class="tb-control-list tb-drop-list" cdkDropList cdkDropListOrientation="vertical"
+             (cdkDropListDropped)="rangeDrop($event, 'range')">
+          @for (rangeFormGroup of rangeListFormGroups; track trackByRange($index, rangeFormGroup); let isLast = $last) {
+            <div cdkDrag class="tb-draggable tb-advanced-range-drag"
+                 [formGroup]="rangeFormGroup"
+                 [class.pb-2]="!isLast">
+              <div class="flex flex-1 flex-row items-center justify-start">
+                <div class="tb-form-row range-container">
+                  <div class="tb-value-range-text" translate>widgets.color.from</div>
+                  <mat-form-field appearance="outline" class="center number flex-1" subscriptSizing="dynamic">
+                    <input matInput type="number" formControlName="from" placeholder="{{ 'widget-config.set' | translate }}">
+                  </mat-form-field>
+                  <div class="tb-value-range-text tb-value-range-text-to" translate>widgets.color.to</div>
+                  <mat-form-field appearance="outline" class="center number flex-1" subscriptSizing="dynamic">
+                    <input matInput type="number" formControlName="to" placeholder="{{ 'widget-config.set' | translate }}">
+                  </mat-form-field>
+                  <tb-color-input asBoxInput
+                                  formControlName="color">
+                  </tb-color-input>
+                </div>
+                <button type="button"
+                        mat-icon-button
+                        class="tb-box-button"
+                        (click)="removeRange($index)"
+                        matTooltip="{{ 'action.remove' | translate }}"
+                        matTooltipPosition="above">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+              <button class="tb-box-button"
+                      mat-icon-button
+                      type="button"
+                      cdkDragHandle
+                      matTooltip="{{ 'action.drag' | translate }}"
+                      matTooltipPosition="above">
+                <mat-icon>drag_indicator</mat-icon>
+              </button>
             </div>
-            <button type="button"
-                    mat-icon-button
-                    class="tb-box-button"
-                    (click)="removeRange($index)"
-                    matTooltip="{{ 'action.remove' | translate }}"
-                    matTooltipPosition="above">
-              <mat-icon>delete</mat-icon>
-            </button>
-          </div>
-          <button class="tb-box-button"
-                  mat-icon-button
-                  type="button"
-                  cdkDragHandle
-                  matTooltip="{{ 'action.drag' | translate }}"
-                  matTooltipPosition="above">
-            <mat-icon>drag_indicator</mat-icon>
-          </button>
+          }
         </div>
-      </div>
-    </ng-template>
-    <ng-template [ngSwitchCase]="true">
-
-      <div class="tb-control-list tb-drop-list" cdkDropList cdkDropListOrientation="vertical"
-           (cdkDropListDropped)="rangeDrop($event, 'rangeAdvanced')">
-        <div cdkDrag class="tb-draggable tb-advanced-range-drag"
-             *ngFor="let advancedRangeControl of advancedRangeControls; trackBy: trackByAdvancedRange;let $index = index; last as isLast;"
-             [class.pb-2]="!isLast">
-          <tb-advanced-range [formControl]="advancedRangeControl"
-                             [aliasController]="aliasController"
-                             [dataKeyCallbacks]="dataKeyCallbacks"
-                             [datasource]="datasource"
-                             (removeAdvancedRange)="removeAdvancedRange($index)">
-          </tb-advanced-range>
-          <button class="tb-box-button"
-                  mat-icon-button
-                  type="button"
-                  cdkDragHandle
-                  matTooltip="{{ 'action.drag' | translate }}"
-                  matTooltipPosition="above">
-            <mat-icon>drag_indicator</mat-icon>
-          </button>
+      }
+      @case (true) {
+        <div class="tb-control-list tb-drop-list" cdkDropList cdkDropListOrientation="vertical"
+             (cdkDropListDropped)="rangeDrop($event, 'rangeAdvanced')">
+          @for (advancedRangeControl of advancedRangeControls; track trackByAdvancedRange($index, advancedRangeControl); let isLast = $last) {
+            <div cdkDrag class="tb-draggable tb-advanced-range-drag"
+                 [class.pb-2]="!isLast">
+              <tb-advanced-range [formControl]="advancedRangeControl"
+                                 [aliasController]="aliasController"
+                                 [dataKeyCallbacks]="dataKeyCallbacks"
+                                 [datasource]="datasource"
+                                 (removeAdvancedRange)="removeAdvancedRange($index)">
+              </tb-advanced-range>
+              <button class="tb-box-button"
+                      mat-icon-button
+                      type="button"
+                      cdkDragHandle
+                      matTooltip="{{ 'action.drag' | translate }}"
+                      matTooltipPosition="above">
+                <mat-icon>drag_indicator</mat-icon>
+              </button>
+            </div>
+          }
         </div>
-      </div>
-
-    </ng-template>
-
+      }
+    }
   </div>
   <div class="tb-add-color-range">
     <button mat-stroked-button

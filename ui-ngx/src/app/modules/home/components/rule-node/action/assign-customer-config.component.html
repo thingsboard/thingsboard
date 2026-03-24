@@ -20,10 +20,12 @@
     <mat-form-field class="mat-block" subscriptSizing="dynamic">
       <mat-label translate>rule-node-config.customer-name-pattern</mat-label>
       <input required matInput formControlName="customerNamePattern">
-      <mat-error *ngIf="assignCustomerConfigForm.get('customerNamePattern').hasError('required') ||
-                        assignCustomerConfigForm.get('customerNamePattern').hasError('pattern')">
-        {{ 'rule-node-config.customer-name-pattern-required' | translate }}
-      </mat-error>
+      @if (assignCustomerConfigForm.get('customerNamePattern').hasError('required') ||
+        assignCustomerConfigForm.get('customerNamePattern').hasError('pattern')) {
+        <mat-error>
+          {{ 'rule-node-config.customer-name-pattern-required' | translate }}
+        </mat-error>
+      }
       <mat-hint translate>rule-node-config.customer-name-pattern-hint</mat-hint>
     </mat-form-field>
     <div class="tb-form-row">

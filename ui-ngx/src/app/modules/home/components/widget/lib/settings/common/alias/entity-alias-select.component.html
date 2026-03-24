@@ -21,7 +21,9 @@
                 class="mat-block"
                 [appearance]="inlineField ? 'outline' : appearance"
                 [subscriptSizing]="inlineField ? 'dynamic' : subscriptSizing">
-  <mat-label *ngIf="showLabel && !inlineField">{{ 'entity.entity-alias' | translate }}</mat-label>
+  @if (showLabel && !inlineField) {
+    <mat-label>{{ 'entity.entity-alias' | translate }}</mat-label>
+  }
   <input matInput type="text" placeholder="{{ (!showLabel || inlineField) ? ('entity.entity-alias' | translate) : ''}}"
          #entityAliasInput
          formControlName="entityAlias"
@@ -31,59 +33,73 @@
          (keypress)="entityAliasEnter($event)"
          [matAutocomplete]="entityAliasAutocomplete">
   <div matSuffix class="mat-mdc-form-field-icon-suffix flex flex-row">
-    <button *ngIf="selectEntityAliasFormGroup.get('entityAlias').value"
-            type="button"
-            mat-icon-button aria-label="Clear"
-            (click)="clear()">
-      <mat-icon class="material-icons">close</mat-icon>
-    </button>
-    <button *ngIf="selectEntityAliasFormGroup.get('entityAlias').value?.id"
-            type="button"
-            mat-icon-button aria-label="Edit"
-            matTooltip="{{ 'entity.edit-alias' | translate }}"
-            matTooltipPosition="above"
-            (click)="editEntityAlias($event)">
-      <mat-icon class="material-icons">edit</mat-icon>
-    </button>
-    <mat-icon matTooltipPosition="above"
-              matTooltipClass="tb-error-tooltip"
-              [matTooltip]="'entity.alias-required' | translate"
-              *ngIf="inlineField && !modelValue && tbRequired
-                            && selectEntityAliasFormGroup.get('entityAlias').touched"
-              class="tb-error">
-      warning
-    </mat-icon>
+    @if (selectEntityAliasFormGroup.get('entityAlias').value) {
+      <button
+        type="button"
+        mat-icon-button aria-label="Clear"
+        (click)="clear()">
+        <mat-icon class="material-icons">close</mat-icon>
+      </button>
+    }
+    @if (selectEntityAliasFormGroup.get('entityAlias').value?.id) {
+      <button
+        type="button"
+        mat-icon-button aria-label="Edit"
+        matTooltip="{{ 'entity.edit-alias' | translate }}"
+        matTooltipPosition="above"
+        (click)="editEntityAlias($event)">
+        <mat-icon class="material-icons">edit</mat-icon>
+      </button>
+    }
+    @if (inlineField && !modelValue && tbRequired
+      && selectEntityAliasFormGroup.get('entityAlias').touched) {
+      <mat-icon matTooltipPosition="above"
+                matTooltipClass="tb-error-tooltip"
+                [matTooltip]="'entity.alias-required' | translate"
+                class="tb-error">
+        warning
+      </mat-icon>
+    }
   </div>
-  <button *ngIf="!inlineField && !selectEntityAliasFormGroup.get('entityAlias').value && !disabled"
-          style="margin-right: 8px;"
-          type="button"
-          matSuffix mat-button color="primary"
-          (click)="createEntityAlias($event, searchText, false)">
-    {{ 'entity.create-new' | translate }}
-  </button>
+  @if (!inlineField && !selectEntityAliasFormGroup.get('entityAlias').value && !disabled) {
+    <button
+      style="margin-right: 8px;"
+      type="button"
+      matSuffix mat-button color="primary"
+      (click)="createEntityAlias($event, searchText, false)">
+      {{ 'entity.create-new' | translate }}
+    </button>
+  }
   <mat-autocomplete class="tb-autocomplete"
                     #entityAliasAutocomplete="matAutocomplete"
                     [displayWith]="displayEntityAliasFn">
-    <mat-option *ngFor="let entityAlias of filteredEntityAliases | async" [value]="entityAlias">
-      <span [innerHTML]="entityAlias.alias | highlight:searchText:true:'ig'"></span>
-    </mat-option>
-    <mat-option *ngIf="!(filteredEntityAliases | async)?.length" [value]="null" class="tb-not-found">
-      <div class="tb-not-found-content" (click)="$event.stopPropagation()">
-        <div *ngIf="!textIsNotEmpty(searchText); else searchNotEmpty">
-          <span translate>entity.no-aliases-found</span>
-        </div>
-        <ng-template #searchNotEmpty>
+    @for (entityAlias of filteredEntityAliases | async; track entityAlias) {
+      <mat-option [value]="entityAlias">
+        <span [innerHTML]="entityAlias.alias | highlight:searchText:true:'ig'"></span>
+      </mat-option>
+    }
+    @if (!(filteredEntityAliases | async)?.length) {
+      <mat-option [value]="null" class="tb-not-found">
+        <div class="tb-not-found-content" (click)="$event.stopPropagation()">
+          @if (!textIsNotEmpty(searchText)) {
+            <div>
+              <span translate>entity.no-aliases-found</span>
+            </div>
+          } @else {
+            <span>
+              {{ 'entity.no-alias-matching' | translate : {alias: (searchText | truncate: true: 6: &apos;...&apos;)} }}
+            </span>
+          }
           <span>
-            {{ 'entity.no-alias-matching' | translate : {alias: (searchText | truncate: true: 6: &apos;...&apos;)} }}
+            <a translate (click)="createEntityAlias($event, searchText)">entity.create-new-alias</a>
           </span>
-        </ng-template>
-        <span>
-          <a translate (click)="createEntityAlias($event, searchText)">entity.create-new-alias</a>
-        </span>
-      </div>
-    </mat-option>
+        </div>
+      </mat-option>
+    }
   </mat-autocomplete>
-  <mat-error *ngIf="!inlineField && !modelValue && tbRequired">
-    {{ 'entity.alias-required' | translate }}
-  </mat-error>
+  @if (!inlineField && !modelValue && tbRequired) {
+    <mat-error>
+      {{ 'entity.alias-required' | translate }}
+    </mat-error>
+  }
 </mat-form-field>

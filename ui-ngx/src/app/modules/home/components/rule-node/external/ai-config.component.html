@@ -50,25 +50,35 @@
         <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
           <mat-label translate>rule-node-config.ai.system-prompt</mat-label>
           <textarea matInput rows="4" formControlName="systemPrompt"></textarea>
-          <mat-error *ngIf="aiConfigForm.get('systemPrompt').hasError('maxlength')">
-            {{ 'rule-node-config.ai.system-prompt-max-length' | translate }}
-          </mat-error>
-          <mat-error *ngIf="aiConfigForm.get('systemPrompt').hasError('pattern')">
-            {{ 'rule-node-config.ai.system-prompt-blank' | translate }}
-          </mat-error>
+          @if (aiConfigForm.get('systemPrompt').hasError('maxlength')) {
+            <mat-error>
+              {{ 'rule-node-config.ai.system-prompt-max-length' | translate }}
+            </mat-error>
+          }
+          @if (aiConfigForm.get('systemPrompt').hasError('pattern')) {
+            <mat-error>
+              {{ 'rule-node-config.ai.system-prompt-blank' | translate }}
+            </mat-error>
+          }
         </mat-form-field>
         <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
           <mat-label translate>rule-node-config.ai.user-prompt</mat-label>
           <textarea required matInput rows="4" formControlName="userPrompt"></textarea>
-          <mat-error *ngIf="aiConfigForm.get('userPrompt').hasError('required')">
-            {{ 'rule-node-config.ai.user-prompt-required' | translate }}
-          </mat-error>
-          <mat-error *ngIf="aiConfigForm.get('userPrompt').hasError('maxlength')">
-            {{ 'rule-node-config.ai.user-prompt-max-length' | translate }}
-          </mat-error>
-          <mat-error *ngIf="aiConfigForm.get('userPrompt').hasError('pattern')">
-            {{ 'rule-node-config.ai.user-prompt-blank' | translate }}
-          </mat-error>
+          @if (aiConfigForm.get('userPrompt').hasError('required')) {
+            <mat-error>
+              {{ 'rule-node-config.ai.user-prompt-required' | translate }}
+            </mat-error>
+          }
+          @if (aiConfigForm.get('userPrompt').hasError('maxlength')) {
+            <mat-error>
+              {{ 'rule-node-config.ai.user-prompt-max-length' | translate }}
+            </mat-error>
+          }
+          @if (aiConfigForm.get('userPrompt').hasError('pattern')) {
+            <mat-error>
+              {{ 'rule-node-config.ai.user-prompt-blank' | translate }}
+            </mat-error>
+          }
         </mat-form-field>
         <tb-entity-list
           class="flex-1"

@@ -31,7 +31,7 @@
       <div #value
            class="tb-value-stepper-value"
            [style.color]="(disabledState$ | async) === true ? disabledColor : valueStyleColor"
-           [style]="valueStyle">{{ valueText }}</div>
+      [style]="valueStyle">{{ valueText }}</div>
     </div>
     <div [class.!hidden]="!showRightButton"
          #rightButton
@@ -39,5 +39,7 @@
          [class.tb-button-pointer]="!rightDisabledState && (loading$ | async) === false">
     </div>
   </div>
-  <mat-progress-bar class="tb-action-widget-progress" style="height: 4px;" color="accent" mode="indeterminate" *ngIf="loading$ | async"></mat-progress-bar>
+  @if (loading$ | async) {
+    <mat-progress-bar class="tb-action-widget-progress" style="height: 4px;" color="accent" mode="indeterminate"></mat-progress-bar>
+  }
 </div>

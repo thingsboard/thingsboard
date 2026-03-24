@@ -27,10 +27,12 @@
               matTooltip="{{ 'rule-node-config.custom-table-hint' | translate }}">
       help
     </mat-icon>
-    <mat-error *ngIf="saveToCustomTableConfigForm.get('tableName').hasError('required') ||
-                      saveToCustomTableConfigForm.get('tableName').hasError('pattern')">
-      {{ 'rule-node-config.custom-table-name-required' | translate }}
-    </mat-error>
+    @if (saveToCustomTableConfigForm.get('tableName').hasError('required') ||
+      saveToCustomTableConfigForm.get('tableName').hasError('pattern')) {
+      <mat-error>
+        {{ 'rule-node-config.custom-table-name-required' | translate }}
+      </mat-error>
+    }
   </mat-form-field>
   <tb-kv-map-config
     required
@@ -47,11 +49,15 @@
     <mat-label translate>rule-node-config.default-ttl</mat-label>
     <input type="number" min="0" step="1" matInput formControlName="defaultTtl" required>
     <mat-hint translate>rule-node-config.default-ttl-zero-hint</mat-hint>
-    <mat-error *ngIf="saveToCustomTableConfigForm.get('defaultTtl').hasError('min')">
-      {{ 'rule-node-config.min-default-ttl-message' | translate }}
-    </mat-error>
-    <mat-error *ngIf="saveToCustomTableConfigForm.get('defaultTtl').hasError('required')">
-      {{ 'rule-node-config.default-ttl-required' | translate }}
-    </mat-error>
+    @if (saveToCustomTableConfigForm.get('defaultTtl').hasError('min')) {
+      <mat-error>
+        {{ 'rule-node-config.min-default-ttl-message' | translate }}
+      </mat-error>
+    }
+    @if (saveToCustomTableConfigForm.get('defaultTtl').hasError('required')) {
+      <mat-error>
+        {{ 'rule-node-config.default-ttl-required' | translate }}
+      </mat-error>
+    }
   </mat-form-field>
 </section>

@@ -17,7 +17,7 @@
 -->
 <div class="tb-form-panel no-padding no-border" [formGroup]="attributeControlGroup">
   <tb-example-hint [hintText]="'rule-node-config.kv-map-pattern-hint'"
-                   [popupHelpLink]="popupHelpLink"></tb-example-hint>
+  [popupHelpLink]="popupHelpLink"></tb-example-hint>
   <tb-string-items-list subscriptSizing="dynamic" class="mat-block" editable
                         (focusout)="onTouched()"
                         [placeholder]="'rule-node-config.add-attribute-key' | translate"
@@ -42,18 +42,19 @@
                         [label]="'rule-node-config.latest-telemetry' | translate" formControlName="latestTsKeyNames">
     <ng-container matSuffix *ngTemplateOutlet="helpIcon"></ng-container>
   </tb-string-items-list>
-  <div tb-hint-tooltip-icon="{{ 'rule-node-config.fetch-latest-telemetry-with-timestamp-tooltip' | translate:
+  @if (attributeControlGroup.get('latestTsKeyNames').value?.length > 0) {
+<div tb-hint-tooltip-icon="{{ 'rule-node-config.fetch-latest-telemetry-with-timestamp-tooltip' | translate:
                          { latestTsKeyName:  attributeControlGroup.get('latestTsKeyNames').value[0]} }}"
-       *ngIf="attributeControlGroup.get('latestTsKeyNames').value?.length > 0"
-       class="tb-form-row no-border no-padding">
-    <mat-slide-toggle class="mat-slide" formControlName="getLatestValueWithTs">
-      {{ 'rule-node-config.fetch-latest-telemetry-with-timestamp' | translate }}
-    </mat-slide-toggle>
-  </div>
+      class="tb-form-row no-border no-padding">
+      <mat-slide-toggle class="mat-slide" formControlName="getLatestValueWithTs">
+        {{ 'rule-node-config.fetch-latest-telemetry-with-timestamp' | translate }}
+      </mat-slide-toggle>
+    </div>
+  }
 </div>
 
 <ng-template #helpIcon>
   <mat-icon class="help-icon m-2 cursor-pointer" aria-hidden="false" aria-label="help-icon"
             color="primary"
-            matTooltip="{{ 'rule-node-config.chip-help' | translate: { inputName: 'rule-node-config.field-name' | translate } }}">help</mat-icon>
+  matTooltip="{{ 'rule-node-config.chip-help' | translate: { inputName: 'rule-node-config.field-name' | translate } }}">help</mat-icon>
 </ng-template>

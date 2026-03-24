@@ -20,29 +20,37 @@
     <mat-form-field class="mat-block flex-1">
       <mat-label>{{ 'rule-node-config.input-value-key' | translate }}</mat-label>
       <input matInput formControlName="inputValueKey">
-      <mat-error *ngIf="calculateDeltaConfigForm.get('inputValueKey').hasError('required') ||
-      calculateDeltaConfigForm.get('inputValueKey').hasError('pattern')">
-        {{ 'rule-node-config.input-value-key-required' | translate }}
-      </mat-error>
+      @if (calculateDeltaConfigForm.get('inputValueKey').hasError('required') ||
+        calculateDeltaConfigForm.get('inputValueKey').hasError('pattern')) {
+        <mat-error>
+          {{ 'rule-node-config.input-value-key-required' | translate }}
+        </mat-error>
+      }
     </mat-form-field>
     <mat-form-field class="mat-block flex-1">
       <mat-label>{{ 'rule-node-config.output-value-key' | translate }}</mat-label>
       <input matInput formControlName="outputValueKey">
-      <mat-error *ngIf="calculateDeltaConfigForm.get('outputValueKey').hasError('required') ||
-      calculateDeltaConfigForm.get('outputValueKey').hasError('pattern')">
-        {{ 'rule-node-config.output-value-key-required' | translate }}
-      </mat-error>
+      @if (calculateDeltaConfigForm.get('outputValueKey').hasError('required') ||
+        calculateDeltaConfigForm.get('outputValueKey').hasError('pattern')) {
+        <mat-error>
+          {{ 'rule-node-config.output-value-key-required' | translate }}
+        </mat-error>
+      }
     </mat-form-field>
   </div>
   <mat-form-field class="mat-block flex-1">
     <mat-label>{{ 'rule-node-config.number-of-digits-after-floating-point' | translate }}</mat-label>
     <input type="number" min="0" max="15" step="1" matInput formControlName="round">
-    <mat-error *ngIf="calculateDeltaConfigForm.get('round').hasError('min')">
-      {{ 'rule-node-config.number-of-digits-after-floating-point-range' | translate }}
-    </mat-error>
-    <mat-error *ngIf="calculateDeltaConfigForm.get('round').hasError('max')">
-      {{ 'rule-node-config.number-of-digits-after-floating-point-range' | translate }}
-    </mat-error>
+    @if (calculateDeltaConfigForm.get('round').hasError('min')) {
+      <mat-error>
+        {{ 'rule-node-config.number-of-digits-after-floating-point-range' | translate }}
+      </mat-error>
+    }
+    @if (calculateDeltaConfigForm.get('round').hasError('max')) {
+      <mat-error>
+        {{ 'rule-node-config.number-of-digits-after-floating-point-range' | translate }}
+      </mat-error>
+    }
   </mat-form-field>
   <div class="tb-form-panel no-padding no-border">
     <div tb-hint-tooltip-icon="{{ 'rule-node-config.failure-if-delta-negative-tooltip' | translate }}"
@@ -54,7 +62,7 @@
     <div tb-hint-tooltip-icon="{{ 'rule-node-config.use-caching-tooltip' | translate :
                        { inputValueKey: calculateDeltaConfigForm.get('inputValueKey').valid ?
                                 calculateDeltaConfigForm.get('inputValueKey').value : 'rule-node-config.input-value-key' | translate } }}"
-         class="tb-form-row same-padding">
+      class="tb-form-row same-padding">
       <mat-slide-toggle class="mat-slide margin" formControlName="useCache">
         {{ 'rule-node-config.use-caching' | translate }}
       </mat-slide-toggle>
@@ -64,26 +72,30 @@
                            { periodValueKey: (calculateDeltaConfigForm.get('periodValueKey').valid &&
                            calculateDeltaConfigForm.get('addPeriodBetweenMsgs').value) ? calculateDeltaConfigForm.get('periodValueKey').value :
                            'periodInMs' } }}"
-           class="tb-form-row no-border no-padding">
+        class="tb-form-row no-border no-padding">
         <mat-slide-toggle class="mat-slide" formControlName="addPeriodBetweenMsgs">
           {{ 'rule-node-config.add-time-difference-between-readings' | translate:
           { inputValueKey: calculateDeltaConfigForm.get('inputValueKey').valid ?
-                     calculateDeltaConfigForm.get('inputValueKey').value : 'rule-node-config.input-value-key' | translate } }}
+          calculateDeltaConfigForm.get('inputValueKey').value : 'rule-node-config.input-value-key' | translate } }}
         </mat-slide-toggle>
       </div>
-      <mat-form-field class="mat-block" *ngIf="calculateDeltaConfigForm.get('addPeriodBetweenMsgs').value">
-        <mat-label>{{ 'rule-node-config.period-value-key' | translate }}</mat-label>
-        <input required matInput formControlName="periodValueKey">
-        <mat-error *ngIf="calculateDeltaConfigForm.get('periodValueKey').hasError('required')">
-          {{ 'rule-node-config.period-value-key-required' | translate }}
-        </mat-error>
-      </mat-form-field>
+      @if (calculateDeltaConfigForm.get('addPeriodBetweenMsgs').value) {
+        <mat-form-field class="mat-block">
+          <mat-label>{{ 'rule-node-config.period-value-key' | translate }}</mat-label>
+          <input required matInput formControlName="periodValueKey">
+          @if (calculateDeltaConfigForm.get('periodValueKey').hasError('required')) {
+            <mat-error>
+              {{ 'rule-node-config.period-value-key-required' | translate }}
+            </mat-error>
+          }
+        </mat-form-field>
+      }
     </div>
     <div tb-hint-tooltip-icon="{{ calculateDeltaConfigForm.get('addPeriodBetweenMsgs').value ? ('rule-node-config.exclude-zero-deltas-time-difference-hint'  | translate :{
             outputValueKey: calculateDeltaConfigForm.get('outputValueKey').valid ? calculateDeltaConfigForm.get('outputValueKey').value : 'rule-node-config.output-value-key' | translate,
             periodValueKey: calculateDeltaConfigForm.get('periodValueKey').valid ? calculateDeltaConfigForm.get('periodValueKey').value : 'rule-node-config.period-value-key' | translate
             }) : ('rule-node-config.exclude-zero-deltas-hint' | translate :{ outputValueKey: calculateDeltaConfigForm.get('outputValueKey').valid ? calculateDeltaConfigForm.get('outputValueKey').value : 'rule-node-config.output-value-key' | translate }) }}"
-         class="tb-form-row same-padding">
+      class="tb-form-row same-padding">
       <mat-slide-toggle class="mat-slide margin" formControlName="excludeZeroDeltas">
         {{ 'rule-node-config.exclude-zero-deltas' | translate }}
       </mat-slide-toggle>

@@ -25,16 +25,20 @@
       <mat-icon class="material-icons">close</mat-icon>
     </button>
   </mat-toolbar>
-  <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
-  </mat-progress-bar>
+  @if (isLoading$ | async) {
+    <mat-progress-bar color="warn" mode="indeterminate">
+    </mat-progress-bar>
+  }
   <div mat-dialog-content>
     <fieldset [disabled]="isLoading$ | async" class="flex flex-col">
       <mat-form-field class="mat-block">
         <mat-label translate>dashboard.state</mat-label>
         <mat-select required formControlName="stateId">
-          <mat-option *ngFor="let stateItem of states | keyvalue" [value]="stateItem.key">
-            {{ stateItem.value.name }}
-          </mat-option>
+          @for (stateItem of states | keyvalue; track stateItem) {
+            <mat-option [value]="stateItem.key">
+              {{ stateItem.value.name }}
+            </mat-option>
+          }
         </mat-select>
       </mat-form-field>
     </fieldset>

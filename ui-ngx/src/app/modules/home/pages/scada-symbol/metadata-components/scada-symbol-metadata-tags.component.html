@@ -22,18 +22,23 @@
       <div class="tb-form-table-header-cell tb-state-render-function-header" translate>scada.state-render-function</div>
       <div class="tb-form-table-header-cell tb-on-click-action-header" translate>scada.tag.on-click-action</div>
     </div>
-    <div *ngIf="tagsFormArray().controls.length; else noTags" class="tb-form-table-body">
-      <div *ngFor="let tagControl of tagsFormArray().controls; trackBy: trackByTag; let $index = index; let $last = last">
-        <tb-scada-symbol-metadata-tag class="flex-1"
-                                      [elementStateRenderFunctionCompleter]="elementStateRenderFunctionCompleter"
-                                      [clickActionFunctionCompleter]="clickActionFunctionCompleter"
-                                      [formControl]="tagControl">
-        </tb-scada-symbol-metadata-tag>
-        <mat-divider *ngIf="!$last"></mat-divider>
+    @if (tagsFormArray().controls.length) {
+      <div class="tb-form-table-body">
+        @for (tagControl of tagsFormArray().controls; track trackByTag($index, tagControl)) {
+          <div>
+            <tb-scada-symbol-metadata-tag class="flex-1"
+                                          [elementStateRenderFunctionCompleter]="elementStateRenderFunctionCompleter"
+                                          [clickActionFunctionCompleter]="clickActionFunctionCompleter"
+                                          [formControl]="tagControl">
+            </tb-scada-symbol-metadata-tag>
+            @if (!$last) {
+              <mat-divider></mat-divider>
+            }
+          </div>
+        }
       </div>
-    </div>
+    } @else {
+      <span class="tb-prompt flex items-center justify-center">{{ 'scada.tag.no-tags' | translate }}</span>
+    }
   </div>
 </div>
-<ng-template #noTags>
-  <span class="tb-prompt flex items-center justify-center">{{ 'scada.tag.no-tags' | translate }}</span>
-</ng-template>

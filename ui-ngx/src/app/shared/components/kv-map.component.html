@@ -17,32 +17,34 @@
 -->
 <section class="tb-kv-map flex flex-col" [formGroup]="kvListFormGroup">
   <label translate class="tb-title">{{ titleText }}</label>
-  <div class="flex flex-row items-center justify-start gap-2"
-       formArrayName="keyVals"
-       *ngFor="let keyValControl of keyValsFormArray().controls; let $index = index">
-    <mat-form-field class="mat-block flex-1" subscriptSizing="{{ subscriptSizing }}">
-      <input [formControl]="keyValControl.get('key')" matInput required
-             placeholder="{{ (keyPlaceholderText ? keyPlaceholderText : 'key-val.key') | translate }}"/>
-    </mat-form-field>
-    <mat-form-field class="mat-block flex-1" subscriptSizing="{{ subscriptSizing }}">
-      <input [formControl]="keyValControl.get('value')" matInput [required]="isValueRequired"
-             placeholder="{{ (valuePlaceholderText ? valuePlaceholderText : 'key-val.value') | translate }}"/>
-    </mat-form-field>
-    <button mat-icon-button color="primary"
-            [class.!hidden]="disabled"
-            type="button"
-            (click)="removeKeyVal($index)"
-            [disabled]="isLoading$ | async"
-            matTooltip="{{ 'key-val.remove-entry' | translate }}"
-            matTooltipPosition="above">
-      <mat-icon>close</mat-icon>
-    </button>
-  </div>
+  @for (keyValControl of keyValsFormArray().controls; track keyValControl) {
+    <div class="flex flex-row items-center justify-start gap-2"
+         formArrayName="keyVals"
+         >
+      <mat-form-field class="mat-block flex-1" subscriptSizing="{{ subscriptSizing }}">
+        <input [formControl]="keyValControl.get('key')" matInput required
+               placeholder="{{ (keyPlaceholderText ? keyPlaceholderText : 'key-val.key') | translate }}"/>
+      </mat-form-field>
+      <mat-form-field class="mat-block flex-1" subscriptSizing="{{ subscriptSizing }}">
+        <input [formControl]="keyValControl.get('value')" matInput [required]="isValueRequired"
+               placeholder="{{ (valuePlaceholderText ? valuePlaceholderText : 'key-val.value') | translate }}"/>
+      </mat-form-field>
+      <button mat-icon-button color="primary"
+              [class.!hidden]="disabled"
+              type="button"
+              (click)="removeKeyVal($index)"
+              [disabled]="isLoading$ | async"
+              matTooltip="{{ 'key-val.remove-entry' | translate }}"
+              matTooltipPosition="above">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  }
   <span [class]="{
           'disabled': disabled,
           '!hidden': keyValsFormArray().length
         }"
-        class="no-data-found flex items-center justify-center" translate>{{noDataText ? noDataText : 'key-val.no-data'}}</span>
+  class="no-data-found flex items-center justify-center" translate>{{noDataText ? noDataText : 'key-val.no-data'}}</span>
   <div style="margin-top: 8px;">
     <button mat-button mat-raised-button color="primary"
             [class.!hidden]="disabled"

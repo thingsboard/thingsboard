@@ -16,10 +16,12 @@
 
 -->
 <ng-container [formGroup]="radialGaugeWidgetConfigForm">
-  <tb-timewindow-config-panel *ngIf="displayTimewindowConfig"
-                              [onlyHistoryTimewindow]="onlyHistoryTimewindow()"
-                              formControlName="timewindowConfig">
-  </tb-timewindow-config-panel>
+  @if (displayTimewindowConfig) {
+    <tb-timewindow-config-panel
+      [onlyHistoryTimewindow]="onlyHistoryTimewindow()"
+      formControlName="timewindowConfig">
+    </tb-timewindow-config-panel>
+  }
   <tb-datasources
     [configMode]="basicMode"
     hideDataKeyLabel
@@ -129,30 +131,32 @@
       </tb-color-range-settings>
     </div>
 
-    <div class="tb-form-panel" *ngIf="gaugeType === 'linear'">
-      <div class="tb-form-panel-title" translate>widgets.gauge.progress-bar</div>
-      <div class="tb-form-row space-between">
-        <div translate>widgets.gauge.progress-bar-color-start</div>
-        <tb-color-input asBoxInput
-                        colorClearButton
-                        formControlName="colorBarProgress">
-        </tb-color-input>
+    @if (gaugeType === 'linear') {
+      <div class="tb-form-panel">
+        <div class="tb-form-panel-title" translate>widgets.gauge.progress-bar</div>
+        <div class="tb-form-row space-between">
+          <div translate>widgets.gauge.progress-bar-color-start</div>
+          <tb-color-input asBoxInput
+                          colorClearButton
+                          formControlName="colorBarProgress">
+          </tb-color-input>
+        </div>
+        <div class="tb-form-row space-between">
+          <div translate>widgets.gauge.progress-bar-color-end</div>
+          <tb-color-input asBoxInput
+                          colorClearButton
+                          formControlName="colorBarProgressEnd">
+          </tb-color-input>
+        </div>
+        <div class="tb-form-row space-between">
+          <div translate>widgets.gauge.bar-stroke-color</div>
+          <tb-color-input asBoxInput
+                          colorClearButton
+                          formControlName="colorBarStroke">
+          </tb-color-input>
+        </div>
       </div>
-      <div class="tb-form-row space-between">
-        <div translate>widgets.gauge.progress-bar-color-end</div>
-        <tb-color-input asBoxInput
-                        colorClearButton
-                        formControlName="colorBarProgressEnd">
-        </tb-color-input>
-      </div>
-      <div class="tb-form-row space-between">
-        <div translate>widgets.gauge.bar-stroke-color</div>
-        <tb-color-input asBoxInput
-                        colorClearButton
-                        formControlName="colorBarStroke">
-        </tb-color-input>
-      </div>
-    </div>
+    }
 
   </div>
   <div class="tb-form-panel">

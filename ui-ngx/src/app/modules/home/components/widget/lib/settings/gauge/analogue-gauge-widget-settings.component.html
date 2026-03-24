@@ -16,14 +16,14 @@
 
 -->
 <ng-container [formGroup]="analogueGaugeWidgetSettingsForm">
-  <ng-container [ngSwitch]="gaugeType">
-    <ng-container *ngSwitchCase="'radial'">
+  @switch (gaugeType) {
+    @case ('radial') {
       <ng-container *ngTemplateOutlet="radialGauge; context: ctx "></ng-container>
-    </ng-container>
-    <ng-container *ngSwitchCase="'linear'">
+    }
+    @case ('linear') {
       <ng-container *ngTemplateOutlet="linearGauge; context: ctx "></ng-container>
-    </ng-container>
-  </ng-container>
+    }
+  }
 
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widgets.gauge.ticks-settings</div>

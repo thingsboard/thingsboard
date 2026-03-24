@@ -15,44 +15,56 @@
     limitations under the License.
 
 -->
-<button *ngIf="asButton && panelMode && !strokedButton && !flatButton"
-        [disabled]="timewindowDisabled"
-        type="button"
-        mat-raised-button color="primary"
-        (click)="toggleTimewindow($event)">
-  <mat-icon class="material-icons">query_builder</mat-icon>
-  <span>{{displayValue()}}</span>
-</button>
-<button *ngIf="asButton && panelMode && strokedButton"
-        [disabled]="timewindowDisabled"
-        type="button"
-        mat-stroked-button color="primary"
-        (click)="toggleTimewindow($event)">
-  <mat-icon class="material-icons">query_builder</mat-icon>
-  <span>{{displayValue()}}</span>
-</button>
-<button *ngIf="asButton && panelMode && flatButton"
-        [disabled]="timewindowDisabled"
-        type="button"
-        mat-button
-        (click)="toggleTimewindow($event)">
-  <mat-icon class="material-icons">query_builder</mat-icon>
-  <span>{{displayValue()}}</span>
-</button>
-<section *ngIf="!asButton && panelMode"
-         class="tb-timewindow"
-         [class]="{'no-padding': noPadding}"
-         matTooltip="{{ 'timewindow.edit' | translate }}"
-         [matTooltipPosition]="tooltipPosition"
-         [matTooltipDisabled]="timewindowDisabled"
-         [style]="timewindowComponentStyle"
-         (click)="toggleTimewindow($event)">
-  <tb-icon *ngIf="computedTimewindowStyle.showIcon && computedTimewindowStyle.iconPosition === 'left'"
-           [style]="timewindowIconStyle">{{ computedTimewindowStyle.icon }}</tb-icon>
-  <div class="tb-timewindow-label" [class.!hidden]="hideLabel">
-    {{innerValue?.displayValue}} <span [class.!hidden]="!(innerValue?.displayTimezoneAbbr !== '')">| <span class="timezone-abbr">{{innerValue?.displayTimezoneAbbr}}</span></span>
-  </div>
-  <tb-icon *ngIf="computedTimewindowStyle.showIcon && computedTimewindowStyle.iconPosition === 'right'"
-           [style]="timewindowIconStyle">{{ computedTimewindowStyle.icon }}</tb-icon>
-</section>
+@if (asButton && panelMode && !strokedButton && !flatButton) {
+  <button
+    [disabled]="timewindowDisabled"
+    type="button"
+    mat-raised-button color="primary"
+    (click)="toggleTimewindow($event)">
+    <mat-icon class="material-icons">query_builder</mat-icon>
+    <span>{{displayValue()}}</span>
+  </button>
+}
+@if (asButton && panelMode && strokedButton) {
+  <button
+    [disabled]="timewindowDisabled"
+    type="button"
+    mat-stroked-button color="primary"
+    (click)="toggleTimewindow($event)">
+    <mat-icon class="material-icons">query_builder</mat-icon>
+    <span>{{displayValue()}}</span>
+  </button>
+}
+@if (asButton && panelMode && flatButton) {
+  <button
+    [disabled]="timewindowDisabled"
+    type="button"
+    mat-button
+    (click)="toggleTimewindow($event)">
+    <mat-icon class="material-icons">query_builder</mat-icon>
+    <span>{{displayValue()}}</span>
+  </button>
+}
+@if (!asButton && panelMode) {
+  <section
+    class="tb-timewindow"
+    [class]="{'no-padding': noPadding}"
+    matTooltip="{{ 'timewindow.edit' | translate }}"
+    [matTooltipPosition]="tooltipPosition"
+    [matTooltipDisabled]="timewindowDisabled"
+    [style]="timewindowComponentStyle"
+    (click)="toggleTimewindow($event)">
+    @if (computedTimewindowStyle.showIcon && computedTimewindowStyle.iconPosition === 'left') {
+      <tb-icon
+      [style]="timewindowIconStyle">{{ computedTimewindowStyle.icon }}</tb-icon>
+    }
+    <div class="tb-timewindow-label" [class.!hidden]="hideLabel">
+      {{innerValue?.displayValue}} <span [class.!hidden]="!(innerValue?.displayTimezoneAbbr !== '')">| <span class="timezone-abbr">{{innerValue?.displayTimezoneAbbr}}</span></span>
+    </div>
+    @if (computedTimewindowStyle.showIcon && computedTimewindowStyle.iconPosition === 'right') {
+      <tb-icon
+      [style]="timewindowIconStyle">{{ computedTimewindowStyle.icon }}</tb-icon>
+    }
+  </section>
+}
 <ng-container #panelContainer></ng-container>

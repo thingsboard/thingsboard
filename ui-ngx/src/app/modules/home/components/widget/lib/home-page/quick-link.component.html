@@ -15,52 +15,69 @@
     limitations under the License.
 
 -->
-<div class="flex flex-row" *ngIf="addMode || editMode; else quickLinkTemplate">
-  <div class="tb-edit-link flex flex-1 flex-col" [class.edit-mode]="editMode" [formGroup]="editQuickLinkFormGroup">
-    <mat-form-field class="mat-block flex-1">
-      <mat-label translate>widgets.quick-links.quick-link</mat-label>
-      <input matInput type="text"
-             #linkInput
-             formControlName="link"
-             (focusin)="onFocus()"
-             required
-             [matAutocomplete]="linkAutocomplete">
-      <tb-icon matPrefix *ngIf="quickLink" color="primary">{{ quickLink.icon }}</tb-icon>
-      <button *ngIf="editQuickLinkFormGroup.get('link').value && !disabled"
-              type="button"
-              matSuffix mat-icon-button aria-label="Clear"
-              (click)="clear()">
-        <tb-icon>close</tb-icon>
-      </button>
-      <mat-autocomplete
-        class="tb-autocomplete tb-quick-links"
-        #linkAutocomplete="matAutocomplete"
-        [displayWith]="displayLinkFn">
-        <mat-option *ngFor="let link of filteredLinks | async" [value]="link">
-          <tb-icon>{{ link.icon }}</tb-icon>
-          <span [innerHTML]="link.name | highlight:searchText"></span>
-        </mat-option>
-        <mat-option *ngIf="!(filteredLinks | async)?.length" [value]="null">
-          <span>
-              {{ translate.get('widgets.quick-links.no-links-matching', {name: searchText}) | async }}
-          </span>
-        </mat-option>
-      </mat-autocomplete>
-      <mat-error *ngIf="editQuickLinkFormGroup.get('link').hasError('required')">
-        {{ 'widgets.quick-links.quick-link-required' | translate }}
-      </mat-error>
-    </mat-form-field>
-    <div *ngIf="addMode" class="flex flex-row items-stretch justify-end gap-2">
-      <button *ngIf="!addOnly" mat-button color="primary" (click)="cancelAdd()">{{ 'action.cancel' | translate }}</button>
-      <button mat-raised-button color="primary" (click)="add()">{{ 'action.add' | translate }}</button>
+@if (addMode || editMode) {
+  <div class="flex flex-row">
+    <div class="tb-edit-link flex flex-1 flex-col" [class.edit-mode]="editMode" [formGroup]="editQuickLinkFormGroup">
+      <mat-form-field class="mat-block flex-1">
+        <mat-label translate>widgets.quick-links.quick-link</mat-label>
+        <input matInput type="text"
+               #linkInput
+               formControlName="link"
+               (focusin)="onFocus()"
+               required
+               [matAutocomplete]="linkAutocomplete">
+        @if (quickLink) {
+          <tb-icon matPrefix color="primary">{{ quickLink.icon }}</tb-icon>
+        }
+        @if (editQuickLinkFormGroup.get('link').value && !disabled) {
+          <button
+            type="button"
+            matSuffix mat-icon-button aria-label="Clear"
+            (click)="clear()">
+            <tb-icon>close</tb-icon>
+          </button>
+        }
+        <mat-autocomplete
+          class="tb-autocomplete tb-quick-links"
+          #linkAutocomplete="matAutocomplete"
+          [displayWith]="displayLinkFn">
+          @for (link of filteredLinks | async; track link) {
+            <mat-option [value]="link">
+              <tb-icon>{{ link.icon }}</tb-icon>
+              <span [innerHTML]="link.name | highlight:searchText"></span>
+            </mat-option>
+          }
+          @if (!(filteredLinks | async)?.length) {
+            <mat-option [value]="null">
+              <span>
+                {{ translate.get('widgets.quick-links.no-links-matching', {name: searchText}) | async }}
+              </span>
+            </mat-option>
+          }
+        </mat-autocomplete>
+        @if (editQuickLinkFormGroup.get('link').hasError('required')) {
+          <mat-error>
+            {{ 'widgets.quick-links.quick-link-required' | translate }}
+          </mat-error>
+        }
+      </mat-form-field>
+      @if (addMode) {
+        <div class="flex flex-row items-stretch justify-end gap-2">
+          @if (!addOnly) {
+            <button mat-button color="primary" (click)="cancelAdd()">{{ 'action.cancel' | translate }}</button>
+          }
+          <button mat-raised-button color="primary" (click)="add()">{{ 'action.add' | translate }}</button>
+        </div>
+      }
     </div>
+    @if (editMode) {
+      <div class="tb-edit-buttons flex flex-row">
+        <button mat-icon-button (click)="apply()"><tb-icon>check</tb-icon></button>
+        <button mat-icon-button (click)="cancelEdit()"><tb-icon>close</tb-icon></button>
+      </div>
+    }
   </div>
-  <div *ngIf="editMode" class="tb-edit-buttons flex flex-row">
-    <button mat-icon-button (click)="apply()"><tb-icon>check</tb-icon></button>
-    <button mat-icon-button (click)="cancelEdit()"><tb-icon>close</tb-icon></button>
-  </div>
-</div>
-<ng-template #quickLinkTemplate>
+} @else {
   <div class="flex flex-row">
     <div class="tb-link flex-1">
       <div class="tb-link-container">
@@ -85,4 +102,4 @@
       </button>
     </div>
   </div>
-</ng-template>
+}

@@ -17,10 +17,12 @@
 -->
 <ng-container #markdownContainer>
 </ng-container>
-<div *ngIf="error && !fallbackToPlainMarkdown" style="color: #f00; font-size: 14px;
+@if (error && !fallbackToPlainMarkdown) {
+<div style="color: #f00; font-size: 14px;
                                                       line-height: 28px;
                                                       background: #efefef;">
-  {{error}}
-</div>
+    {{error}}
+  </div>
+}
 <div #fallbackElement [class.!hidden]="!usePlainMarkdown && !(error && fallbackToPlainMarkdown)" class="tb-markdown-view" [class]="markdownClass" [style]="style">
 </div>

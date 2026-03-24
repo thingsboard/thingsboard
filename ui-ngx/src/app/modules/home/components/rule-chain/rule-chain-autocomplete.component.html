@@ -24,41 +24,52 @@
          [required]="required"
          [matAutocomplete]="ruleChainAutocomplete"
          [class.!hidden]="disabled && selectRuleChainFormGroup.get('ruleChainId').value">
-  <a *ngIf="selectRuleChainFormGroup.get('ruleChainId').value && disabled" aria-label="Open device profile" [routerLink]=ruleChainURL>
-    {{ displayRuleChainFn(selectRuleChainFormGroup.get('ruleChainId').value) }}
-  </a>
-  <button *ngIf="selectRuleChainFormGroup.get('ruleChainId').value && !disabled"
-          type="button"
-          matSuffix mat-icon-button aria-label="Clear"
-          (click)="clear()">
-    <mat-icon class="material-icons">close</mat-icon>
-  </button>
+  @if (selectRuleChainFormGroup.get('ruleChainId').value && disabled) {
+    <a aria-label="Open device profile" [routerLink]=ruleChainURL>
+      {{ displayRuleChainFn(selectRuleChainFormGroup.get('ruleChainId').value) }}
+    </a>
+  }
+  @if (selectRuleChainFormGroup.get('ruleChainId').value && !disabled) {
+    <button
+      type="button"
+      matSuffix mat-icon-button aria-label="Clear"
+      (click)="clear()">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  }
   <mat-autocomplete class="tb-autocomplete"
                     #ruleChainAutocomplete="matAutocomplete"
                     [displayWith]="displayRuleChainFn">
-    <mat-option *ngFor="let ruleChain of filteredRuleChains | async" [value]="ruleChain">
-      <span [innerHTML]="ruleChain.name | highlight:searchText"></span>
-    </mat-option>
-    <mat-option *ngIf="!(filteredRuleChains | async)?.length" [value]="null" class="tb-not-found">
-      <div class="tb-not-found-content" (click)="$event.stopPropagation()">
-        <div *ngIf="!textIsNotEmpty(searchText); else searchNotEmpty">
-          <span translate>rulechain.no-rulechains-text</span>
-        </div>
-        <ng-template #searchNotEmpty>
-          <span>
+    @for (ruleChain of filteredRuleChains | async; track ruleChain) {
+      <mat-option [value]="ruleChain">
+        <span [innerHTML]="ruleChain.name | highlight:searchText"></span>
+      </mat-option>
+    }
+    @if (!(filteredRuleChains | async)?.length) {
+      <mat-option [value]="null" class="tb-not-found">
+        <div class="tb-not-found-content" (click)="$event.stopPropagation()">
+          @if (!textIsNotEmpty(searchText)) {
+            <div>
+              <span translate>rulechain.no-rulechains-text</span>
+            </div>
+          } @else {
+            <span>
               {{ translate.get('rulechain.no-rulechains-matching',
-            {entity: truncate.transform(searchText, true, 6, &apos;...&apos;)}) | async }}
+              {entity: truncate.transform(searchText, true, 6, &apos;...&apos;)}) | async }}
+            </span>
+          }
+          <span>
+            <a translate (click)="createDefaultRuleChain($event, searchText)">rulechain.create-new-rulechain</a>
           </span>
-        </ng-template>
-        <span>
-          <a translate (click)="createDefaultRuleChain($event, searchText)">rulechain.create-new-rulechain</a>
-        </span>
-      </div>
-    </mat-option>
+        </div>
+      </mat-option>
+    }
   </mat-autocomplete>
-  <mat-error *ngIf="selectRuleChainFormGroup.get('ruleChainId').hasError('required')">
-    {{ 'rulechain.rulechain-required' | translate }}
-  </mat-error>
+  @if (selectRuleChainFormGroup.get('ruleChainId').hasError('required')) {
+    <mat-error>
+      {{ 'rulechain.rulechain-required' | translate }}
+    </mat-error>
+  }
   <mat-hint>
     <ng-content select="[tb-hint]"></ng-content>
   </mat-hint>

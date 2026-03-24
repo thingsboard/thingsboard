@@ -24,13 +24,15 @@
         </div>
       </mat-panel-title>
       <span class="flex-1"></span>
-      <button *ngIf="!disabled" mat-icon-button style="min-width: 40px;"
-              type="button"
-              (click)="removeLabel.emit()"
-              matTooltip="{{ 'action.remove' | translate }}"
-              matTooltipPosition="above">
-        <mat-icon>delete</mat-icon>
-      </button>
+      @if (!disabled) {
+        <button mat-icon-button style="min-width: 40px;"
+                type="button"
+                (click)="removeLabel.emit()"
+                matTooltip="{{ 'action.remove' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>delete</mat-icon>
+        </button>
+      }
     </div>
   </mat-expansion-panel-header>
   <ng-template matExpansionPanelContent>
@@ -40,9 +42,11 @@
         <mat-form-field style="padding-bottom: 16px;">
           <mat-label translate>widgets.label-widget.label-pattern</mat-label>
           <input required matInput formControlName="pattern">
-          <mat-error *ngIf="labelWidgetLabelFormGroup.get('pattern').hasError('required')">
-            {{ 'widgets.label-widget.label-pattern-required' | translate }}
-          </mat-error>
+          @if (labelWidgetLabelFormGroup.get('pattern').hasError('required')) {
+            <mat-error>
+              {{ 'widgets.label-widget.label-pattern-required' | translate }}
+            </mat-error>
+          }
           <mat-hint [innerHTML]="'widgets.label-widget.label-pattern-hint' | translate | safe: 'html'"></mat-hint>
         </mat-form-field>
         <fieldset class="fields-group">

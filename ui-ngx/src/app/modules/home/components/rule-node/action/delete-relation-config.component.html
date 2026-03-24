@@ -22,9 +22,11 @@
       <mat-form-field class="mat-block" hideRequiredMarker>
         <mat-label translate>relation.direction</mat-label>
         <mat-select required matInput formControlName="direction">
-          <mat-option *ngFor="let type of directionTypes" [value]="type">
-            {{ directionTypeTranslations.get(type) | translate }}
-          </mat-option>
+          @for (type of directionTypes; track type) {
+            <mat-option [value]="type">
+              {{ directionTypeTranslations.get(type) | translate }}
+            </mat-option>
+          }
         </mat-select>
       </mat-form-field>
       <tb-relation-type-autocomplete
@@ -40,23 +42,29 @@
         {{ 'rule-node-config.delete-relation-with-specific-entity' | translate }}
       </mat-slide-toggle>
     </div>
-    <div *ngIf="deleteRelationConfigForm.get('deleteForSingleEntity').value">
-      <div class="flex flex-row gap-2.5">
-        <tb-entity-type-select
-          class="flex-1"
-          showLabel
-          required
-          [allowedEntityTypes]="allowedEntityTypes"
-          formControlName="entityType">
-        </tb-entity-type-select>
-        <mat-form-field *ngIf="deleteRelationConfigForm.get('entityType').value && deleteRelationConfigForm.get('entityType').value !== entityType.TENANT"
-                        class="mat-block flex-1">
-          <mat-label>{{ entityTypeNamePatternTranslation.get(deleteRelationConfigForm.get('entityType').value) | translate }}</mat-label>
-          <input required matInput formControlName="entityNamePattern">
-        </mat-form-field>
+    @if (deleteRelationConfigForm.get('deleteForSingleEntity').value) {
+      <div>
+        <div class="flex flex-row gap-2.5">
+          <tb-entity-type-select
+            class="flex-1"
+            showLabel
+            required
+            [allowedEntityTypes]="allowedEntityTypes"
+            formControlName="entityType">
+          </tb-entity-type-select>
+          @if (deleteRelationConfigForm.get('entityType').value && deleteRelationConfigForm.get('entityType').value !== entityType.TENANT) {
+            <mat-form-field
+              class="mat-block flex-1">
+              <mat-label>{{ entityTypeNamePatternTranslation.get(deleteRelationConfigForm.get('entityType').value) | translate }}</mat-label>
+              <input required matInput formControlName="entityNamePattern">
+            </mat-form-field>
+          }
+        </div>
+        @if (deleteRelationConfigForm.get('entityType').value && deleteRelationConfigForm.get('entityType').value !== entityType.TENANT) {
+          <tb-example-hint
+          [hintText]="'rule-node-config.kv-map-single-pattern-hint'"></tb-example-hint>
+        }
       </div>
-      <tb-example-hint *ngIf="deleteRelationConfigForm.get('entityType').value && deleteRelationConfigForm.get('entityType').value !== entityType.TENANT"
-                       [hintText]="'rule-node-config.kv-map-single-pattern-hint'"></tb-example-hint>
-    </div>
+    }
   </div>
 </section>

@@ -22,22 +22,30 @@
       <mat-form-field class="flex">
         <mat-label translate>rule-node-config.message-count</mat-label>
         <input required type="number" min="0" step="1" matInput formControlName="msgCount">
-        <mat-error *ngIf="generatorConfigForm.get('msgCount').hasError('required')">
-          {{ 'rule-node-config.message-count-required' | translate }}
-        </mat-error>
-        <mat-error *ngIf="generatorConfigForm.get('msgCount').hasError('min')">
-          {{ 'rule-node-config.min-message-count-message' | translate }}
-        </mat-error>
+        @if (generatorConfigForm.get('msgCount').hasError('required')) {
+          <mat-error>
+            {{ 'rule-node-config.message-count-required' | translate }}
+          </mat-error>
+        }
+        @if (generatorConfigForm.get('msgCount').hasError('min')) {
+          <mat-error>
+            {{ 'rule-node-config.min-message-count-message' | translate }}
+          </mat-error>
+        }
       </mat-form-field>
       <mat-form-field class="flex">
         <mat-label translate>rule-node-config.generation-frequency-seconds</mat-label>
         <input required type="number" min="1" step="1" matInput formControlName="periodInSeconds">
-        <mat-error *ngIf="generatorConfigForm.get('periodInSeconds').hasError('required')">
-          {{ 'rule-node-config.generation-frequency-required' | translate }}
-        </mat-error>
-        <mat-error *ngIf="generatorConfigForm.get('periodInSeconds').hasError('min')">
-          {{ 'rule-node-config.min-generation-frequency-message' | translate }}
-        </mat-error>
+        @if (generatorConfigForm.get('periodInSeconds').hasError('required')) {
+          <mat-error>
+            {{ 'rule-node-config.generation-frequency-required' | translate }}
+          </mat-error>
+        }
+        @if (generatorConfigForm.get('periodInSeconds').hasError('min')) {
+          <mat-error>
+            {{ 'rule-node-config.min-generation-frequency-message' | translate }}
+          </mat-error>
+        }
       </mat-form-field>
     </div>
   </div>
@@ -57,56 +65,62 @@
       <mat-expansion-panel-header>
         <mat-panel-title translate>rule-node-config.generator-function</mat-panel-title>
       </mat-expansion-panel-header>
-      <tb-js-func *ngIf="generatorConfigForm.get('scriptLang').value === scriptLanguage.JS"
-                  #jsFuncComponent
-                  formControlName="jsScript"
-                  functionName="Generate"
-                  [functionArgs]="['prevMsg', 'prevMetadata', 'prevMsgType']"
-                  helpId="rulenode/generator_node_script_fn"
-                  noValidate="true">
-        <tb-toggle-select toolbarPrefixButton formControlName="scriptLang" appearance="fill" *ngIf="tbelEnabled">
-          <tb-toggle-option [value]="scriptLanguage.TBEL">
-            {{ 'rule-node-config.script-lang-tbel' | translate }}
-          </tb-toggle-option>
-          <tb-toggle-option [value]="scriptLanguage.JS">
-            {{ 'rule-node-config.script-lang-js' | translate }}
-          </tb-toggle-option>
-        </tb-toggle-select>
-        <button toolbarSuffixButton
-                mat-icon-button
-                matTooltip="{{ testScriptLabel | translate }}"
-                matTooltipPosition="above"
-                class="tb-mat-32"
-                (click)="testScript()">
-          <mat-icon class="material-icons" color="primary">bug_report</mat-icon>
-        </button>
-      </tb-js-func>
-      <tb-js-func *ngIf="generatorConfigForm.get('scriptLang').value === scriptLanguage.TBEL"
-                  #tbelFuncComponent
-                  formControlName="tbelScript"
-                  functionName="Generate"
-                  [functionArgs]="['prevMsg', 'prevMetadata', 'prevMsgType']"
-                  [disableUndefinedCheck]="true"
-                  [scriptLanguage]="scriptLanguage.TBEL"
-                  helpId="rulenode/tbel/generator_node_script_fn"
-                  noValidate="true">
-        <tb-toggle-select toolbarPrefixButton formControlName="scriptLang" appearance="fill">
-          <tb-toggle-option [value]="scriptLanguage.TBEL">
-            {{ 'rule-node-config.script-lang-tbel' | translate }}
-          </tb-toggle-option>
-          <tb-toggle-option [value]="scriptLanguage.JS">
-            {{ 'rule-node-config.script-lang-js' | translate }}
-          </tb-toggle-option>
-        </tb-toggle-select>
-        <button toolbarSuffixButton
-                mat-icon-button
-                matTooltip="{{ testScriptLabel | translate }}"
-                matTooltipPosition="above"
-                class="tb-mat-32"
-                (click)="testScript()">
-          <mat-icon class="material-icons" color="primary">bug_report</mat-icon>
-        </button>
-      </tb-js-func>
+      @if (generatorConfigForm.get('scriptLang').value === scriptLanguage.JS) {
+        <tb-js-func
+          #jsFuncComponent
+          formControlName="jsScript"
+          functionName="Generate"
+          [functionArgs]="['prevMsg', 'prevMetadata', 'prevMsgType']"
+          helpId="rulenode/generator_node_script_fn"
+          noValidate="true">
+          @if (tbelEnabled) {
+            <tb-toggle-select toolbarPrefixButton formControlName="scriptLang" appearance="fill">
+              <tb-toggle-option [value]="scriptLanguage.TBEL">
+                {{ 'rule-node-config.script-lang-tbel' | translate }}
+              </tb-toggle-option>
+              <tb-toggle-option [value]="scriptLanguage.JS">
+                {{ 'rule-node-config.script-lang-js' | translate }}
+              </tb-toggle-option>
+            </tb-toggle-select>
+          }
+          <button toolbarSuffixButton
+                  mat-icon-button
+                  matTooltip="{{ testScriptLabel | translate }}"
+                  matTooltipPosition="above"
+                  class="tb-mat-32"
+                  (click)="testScript()">
+            <mat-icon class="material-icons" color="primary">bug_report</mat-icon>
+          </button>
+        </tb-js-func>
+      }
+      @if (generatorConfigForm.get('scriptLang').value === scriptLanguage.TBEL) {
+        <tb-js-func
+          #tbelFuncComponent
+          formControlName="tbelScript"
+          functionName="Generate"
+          [functionArgs]="['prevMsg', 'prevMetadata', 'prevMsgType']"
+          [disableUndefinedCheck]="true"
+          [scriptLanguage]="scriptLanguage.TBEL"
+          helpId="rulenode/tbel/generator_node_script_fn"
+          noValidate="true">
+          <tb-toggle-select toolbarPrefixButton formControlName="scriptLang" appearance="fill">
+            <tb-toggle-option [value]="scriptLanguage.TBEL">
+              {{ 'rule-node-config.script-lang-tbel' | translate }}
+            </tb-toggle-option>
+            <tb-toggle-option [value]="scriptLanguage.JS">
+              {{ 'rule-node-config.script-lang-js' | translate }}
+            </tb-toggle-option>
+          </tb-toggle-select>
+          <button toolbarSuffixButton
+                  mat-icon-button
+                  matTooltip="{{ testScriptLabel | translate }}"
+                  matTooltipPosition="above"
+                  class="tb-mat-32"
+                  (click)="testScript()">
+            <mat-icon class="material-icons" color="primary">bug_report</mat-icon>
+          </button>
+        </tb-js-func>
+      }
       <div class="flex flex-row" style="padding-bottom: 16px;">
         <button mat-button mat-raised-button color="primary" (click)="testScript()">
           {{ testScriptLabel | translate }}

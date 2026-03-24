@@ -15,12 +15,14 @@
     limitations under the License.
 
 -->
-<div class="tb-details-buttons" *ngIf="!isAdd && ruleNode.component?.configurationDescriptor?.nodeDefinition?.ruleChainNode">
-  <button mat-raised-button color="primary"
-          (click)="openRuleChain($event)">
-    {{'rulechain.open-rulechain' | translate }}
-  </button>
-</div>
+@if (!isAdd && ruleNode.component?.configurationDescriptor?.nodeDefinition?.ruleChainNode) {
+  <div class="tb-details-buttons">
+    <button mat-raised-button color="primary"
+            (click)="openRuleChain($event)">
+      {{'rulechain.open-rulechain' | translate }}
+    </button>
+  </div>
+}
 <form [formGroup]="ruleNodeFormGroup" class="mat-padding">
   <section class="title-row align-center flex">
     <mat-form-field class="mat-block flex-1" appearance="outline">
@@ -43,7 +45,7 @@
         class="mr-2"
         formControlName="debugSettings"
         [entityType]="entityType.RULE_NODE"
-      />
+        />
       @if (isSingleton()) {
         <button mat-stroked-button
                 class="tb-rounded-btn flex-1"

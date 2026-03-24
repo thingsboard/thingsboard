@@ -23,9 +23,11 @@
   <mat-form-field class="mat-block">
     <mat-label translate>widgets.maps.default-map-type</mat-label>
     <mat-select required formControlName="gmDefaultMapType">
-      <mat-option *ngFor="let type of googleMapTypes" [value]="type">
-        {{googleMapTypeTranslations.get(type) | translate}}
-      </mat-option>
+      @for (type of googleMapTypes; track type) {
+        <mat-option [value]="type">
+          {{googleMapTypeTranslations.get(type) | translate}}
+        </mat-option>
+      }
     </mat-select>
   </mat-form-field>
 </section>

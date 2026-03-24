@@ -16,10 +16,12 @@
 
 -->
 <ng-container [formGroup]="windSpeedDirectionWidgetConfigForm">
-  <tb-timewindow-config-panel *ngIf="displayTimewindowConfig"
-                              [onlyHistoryTimewindow]="onlyHistoryTimewindow()"
-                              formControlName="timewindowConfig">
-  </tb-timewindow-config-panel>
+  @if (displayTimewindowConfig) {
+    <tb-timewindow-config-panel
+      [onlyHistoryTimewindow]="onlyHistoryTimewindow()"
+      formControlName="timewindowConfig">
+    </tb-timewindow-config-panel>
+  }
   <tb-datasources
     [configMode]="basicMode"
     hideDataKeys
@@ -42,15 +44,19 @@
                          hideDataKeyDecimals
                          hideDataKeyUnits>
         </tb-data-key-row>
-        <tb-font-settings *ngIf="!windSpeedDirectionWidgetConfigForm.get('centerValueKey').value"
-                          formControlName="centerValueFont"
-                          [autoScale]="true"
-                          [initialPreviewStyle]="{ color: windSpeedDirectionWidgetConfigForm.get('centerValueColor').value?.color }"
-                          [previewText]="centerValuePreviewFn">
-        </tb-font-settings>
-        <tb-color-settings *ngIf="!windSpeedDirectionWidgetConfigForm.get('centerValueKey').value"
-                           formControlName="centerValueColor" settingsKey="{{'widgets.wind-speed-direction.wind-direction' | translate }}">
-        </tb-color-settings>
+        @if (!windSpeedDirectionWidgetConfigForm.get('centerValueKey').value) {
+          <tb-font-settings
+            formControlName="centerValueFont"
+            [autoScale]="true"
+            [initialPreviewStyle]="{ color: windSpeedDirectionWidgetConfigForm.get('centerValueColor').value?.color }"
+            [previewText]="centerValuePreviewFn">
+          </tb-font-settings>
+        }
+        @if (!windSpeedDirectionWidgetConfigForm.get('centerValueKey').value) {
+          <tb-color-settings
+            formControlName="centerValueColor" settingsKey="{{'widgets.wind-speed-direction.wind-direction' | translate }}">
+          </tb-color-settings>
+        }
       </div>
     </div>
     <div class="tb-form-row column-xs">
@@ -64,15 +70,19 @@
                          hideDataKeyLabel
                          hideDataKeyColor>
         </tb-data-key-row>
-        <tb-font-settings *ngIf="windSpeedDirectionWidgetConfigForm.get('centerValueKey').value"
-                          formControlName="centerValueFont"
-                          [autoScale]="true"
-                          [initialPreviewStyle]="{ color: windSpeedDirectionWidgetConfigForm.get('centerValueColor').value?.color }"
-                          [previewText]="centerValuePreviewFn">
-        </tb-font-settings>
-        <tb-color-settings *ngIf="windSpeedDirectionWidgetConfigForm.get('centerValueKey').value"
-                           formControlName="centerValueColor" settingsKey="{{'widgets.wind-speed-direction.center-value' | translate }}">
-        </tb-color-settings>
+        @if (windSpeedDirectionWidgetConfigForm.get('centerValueKey').value) {
+          <tb-font-settings
+            formControlName="centerValueFont"
+            [autoScale]="true"
+            [initialPreviewStyle]="{ color: windSpeedDirectionWidgetConfigForm.get('centerValueColor').value?.color }"
+            [previewText]="centerValuePreviewFn">
+          </tb-font-settings>
+        }
+        @if (windSpeedDirectionWidgetConfigForm.get('centerValueKey').value) {
+          <tb-color-settings
+            formControlName="centerValueColor" settingsKey="{{'widgets.wind-speed-direction.center-value' | translate }}">
+          </tb-color-settings>
+        }
       </div>
     </div>
   </div>
@@ -83,12 +93,14 @@
                                     breakpoints: {
                                       'lt-md': 2
                                     }}"
-                           label="{{ 'widgets.wind-speed-direction.layout' | translate }}" formControlName="layout">
-      <tb-image-cards-select-option *ngFor="let layout of windSpeedDirectionLayouts"
-                                    [value]="layout"
-                                    [image]="windSpeedDirectionLayoutImageMap.get(layout)">
-        {{ windSpeedDirectionLayoutTranslationMap.get(layout) | translate }}
-      </tb-image-cards-select-option>
+      label="{{ 'widgets.wind-speed-direction.layout' | translate }}" formControlName="layout">
+      @for (layout of windSpeedDirectionLayouts; track layout) {
+        <tb-image-cards-select-option
+          [value]="layout"
+          [image]="windSpeedDirectionLayoutImageMap.get(layout)">
+          {{ windSpeedDirectionLayoutTranslationMap.get(layout) | translate }}
+        </tb-image-cards-select-option>
+      }
     </tb-image-cards-select>
     <div class="tb-form-row column-xs">
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showTitle">

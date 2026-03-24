@@ -23,24 +23,32 @@
          (focusin)="onFocus()"
          [required]="required"
          [matAutocomplete]="subTypeAutocomplete">
-  <button *ngIf="subTypeFormGroup.get('subType').value && !disabled"
-          type="button"
-          matSuffix mat-icon-button aria-label="Clear"
-          (click)="clear()">
-    <mat-icon class="material-icons">close</mat-icon>
-  </button>
+  @if (subTypeFormGroup.get('subType').value && !disabled) {
+    <button
+      type="button"
+      matSuffix mat-icon-button aria-label="Clear"
+      (click)="clear()">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  }
   <mat-autocomplete
     class="tb-autocomplete"
     #subTypeAutocomplete="matAutocomplete"
     [displayWith]="displaySubTypeFn">
-    <mat-option *ngFor="let subType of filteredSubTypes | async" [value]="subType">
-      <span [innerHTML]="subType | highlight:searchText"></span>
-    </mat-option>
+    @for (subType of filteredSubTypes | async; track subType) {
+      <mat-option [value]="subType">
+        <span [innerHTML]="subType | highlight:searchText"></span>
+      </mat-option>
+    }
   </mat-autocomplete>
-  <mat-error *ngIf="subTypeFormGroup.get('subType').hasError('required')">
-    {{ entitySubtypeRequiredText | translate }}
-  </mat-error>
-  <mat-error *ngIf="subTypeFormGroup.get('subType').hasError('maxlength')">
-    {{ entitySubtypeMaxLength | translate }}
-  </mat-error>
+  @if (subTypeFormGroup.get('subType').hasError('required')) {
+    <mat-error>
+      {{ entitySubtypeRequiredText | translate }}
+    </mat-error>
+  }
+  @if (subTypeFormGroup.get('subType').hasError('maxlength')) {
+    <mat-error>
+      {{ entitySubtypeMaxLength | translate }}
+    </mat-error>
+  }
 </mat-form-field>

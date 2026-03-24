@@ -16,18 +16,22 @@
 
 -->
 <div class="mat-content mat-padding flex flex-col">
-  <div *ngFor="let filter of filtersInfo | keyvalue; let last = last">
-    <div class="flex flex-row items-center justify-start">
-      <mat-label class="flex-1">{{filter.value.filter}}</mat-label>
-      <button mat-icon-button color="primary"
-              style="min-width: 40px;"
-              type="button"
-              (click)="editFilter(filter.key, filter.value)"
-              matTooltip="{{ 'filter.edit' | translate }}"
-              matTooltipPosition="above">
-        <mat-icon>edit</mat-icon>
-      </button>
+  @for (filter of filtersInfo | keyvalue; track filter; let last = $last) {
+    <div>
+      <div class="flex flex-row items-center justify-start">
+        <mat-label class="flex-1">{{filter.value.filter}}</mat-label>
+        <button mat-icon-button color="primary"
+                style="min-width: 40px;"
+                type="button"
+                (click)="editFilter(filter.key, filter.value)"
+                matTooltip="{{ 'filter.edit' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>edit</mat-icon>
+        </button>
+      </div>
+      @if (!last) {
+        <mat-divider></mat-divider>
+      }
     </div>
-    <mat-divider *ngIf="!last"></mat-divider>
-  </div>
+  }
 </div>

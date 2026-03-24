@@ -76,7 +76,7 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
   actionConfig: ActionConfig[];
   commonActionConfig: ActionConfig[];
 
-  provisionTypes: string[] = Object.keys(ProvisionType);
+  provisionTypes = Object.values(ProvisionType);
   provisionTypeTranslationMap = provisionTypeTranslationMap;
 
   private requiredValue: boolean;

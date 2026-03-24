@@ -18,10 +18,10 @@
 <div class="tb-marker-icon-shapes-panel">
   <div class="tb-marker-icon-shapes-title" translate>widgets.maps.data-layer.marker.marker-icon</div>
   <tb-material-icons [selectedIcon]="icon" [iconClearButton]="false" [showTitle]="false"
-                     [popover]="popover" (iconSelected)="selectIcon($event)"></tb-material-icons>
+  [popover]="popover" (iconSelected)="selectIcon($event)"></tb-material-icons>
   <div class="tb-marker-icon-shapes-title" translate>widgets.maps.data-layer.marker.marker-appearance</div>
   <div class="flex flex-row flex-wrap gap-3">
-    <ng-container *ngFor="let containerInfo of iconContainers">
+    @for (containerInfo of iconContainers; track containerInfo) {
       @if (containerInfo.iconContainer === iconContainer) {
         <button class="tb-select-shape-button"
                 mat-raised-button
@@ -39,7 +39,7 @@
           </div>
         </button>
       }
-    </ng-container>
+    }
   </div>
   <div class="tb-marker-icon-shapes-panel-buttons">
     <span class="flex-1"></span>

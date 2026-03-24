@@ -24,34 +24,38 @@
     </tb-color-range-list>
   </div>
   <div class="tb-color-settings-panel-buttons">
-      <button *ngIf="settingsComponents?.length"
-              #copySettingsButton
-              mat-stroked-button
-              color="primary"
-              type="button"
-              [matMenuTriggerFor]="settingsSourcesMenu" [matMenuTriggerData]="{menuWidth: copySettingsButton._elementRef.nativeElement.clientWidth}">
+    @if (settingsComponents?.length) {
+      <button
+        #copySettingsButton
+        mat-stroked-button
+        color="primary"
+        type="button"
+        [matMenuTriggerFor]="settingsSourcesMenu" [matMenuTriggerData]="{menuWidth: copySettingsButton._elementRef.nativeElement.clientWidth}">
         {{ 'widgets.color.copy-color-settings-from' | translate }}
       </button>
-      <mat-menu #settingsSourcesMenu="matMenu">
-        <ng-template matMenuContent let-menuWidth="menuWidth">
-          <div [style.min-width.px]="menuWidth">
-            <button mat-menu-item *ngFor="let comp of settingsComponents" (click)="copyColorSettings(comp)">{{ comp.settingsKey }}</button>
-          </div>
-        </ng-template>
-      </mat-menu>
-      <span class="flex-1"></span>
-      <button mat-button
-              color="primary"
-              type="button"
-              (click)="cancel()">
-        {{ 'action.cancel' | translate }}
-      </button>
-      <button mat-raised-button
-              color="primary"
-              type="button"
-              (click)="applyColorRangeSettings()"
-              [disabled]="colorRangeFormGroup.invalid || !colorRangeFormGroup.dirty">
-        {{ 'action.apply' | translate }}
-      </button>
+    }
+    <mat-menu #settingsSourcesMenu="matMenu">
+      <ng-template matMenuContent let-menuWidth="menuWidth">
+        <div [style.min-width.px]="menuWidth">
+          @for (comp of settingsComponents; track comp) {
+            <button mat-menu-item (click)="copyColorSettings(comp)">{{ comp.settingsKey }}</button>
+          }
+        </div>
+      </ng-template>
+    </mat-menu>
+    <span class="flex-1"></span>
+    <button mat-button
+            color="primary"
+            type="button"
+            (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button
+            color="primary"
+            type="button"
+            (click)="applyColorRangeSettings()"
+            [disabled]="colorRangeFormGroup.invalid || !colorRangeFormGroup.dirty">
+      {{ 'action.apply' | translate }}
+    </button>
   </div>
 </div>

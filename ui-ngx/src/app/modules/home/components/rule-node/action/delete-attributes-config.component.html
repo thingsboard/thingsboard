@@ -24,9 +24,11 @@
         <mat-label>{{ 'rule-node-config.attributes-scope' | translate }}</mat-label>
         <mat-select required
                     class="tb-entity-type-select" matInput formControlName="scope">
-          <mat-option *ngFor="let scope of attributeScopes" [value]="scope">
-            {{ telemetryTypeTranslationsMap.get(scope) | translate }}
-          </mat-option>
+          @for (scope of attributeScopes; track scope) {
+            <mat-option [value]="scope">
+              {{ telemetryTypeTranslationsMap.get(scope) | translate }}
+            </mat-option>
+          }
         </mat-select>
       </mat-form-field>
       <mat-form-field class="flex">
@@ -50,19 +52,22 @@
   <mat-form-field class="mat-block" subscriptSizing="dynamic">
     <mat-label>{{ 'rule-node-config.attributes-keys' | translate }}</mat-label>
     <mat-chip-grid formControlName="keys" #attributeChipList>
-      <mat-chip-row
-        *ngFor="let key of deleteAttributesConfigForm.get('keys').value;"
-        (removed)="removeKey(key)">
-        {{key}}
-        <mat-icon matChipRemove>close</mat-icon>
-      </mat-chip-row>
+      @for (key of deleteAttributesConfigForm.get('keys').value; track key) {
+        <mat-chip-row
+          (removed)="removeKey(key)">
+          {{key}}
+          <mat-icon matChipRemove>close</mat-icon>
+        </mat-chip-row>
+      }
       <input matInput type="text"
              [matChipInputFor]="attributeChipList"
              [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
              (matChipInputTokenEnd)="addKey($event)"
              [matChipInputAddOnBlur]="true">
     </mat-chip-grid>
-    <mat-error *ngIf="deleteAttributesConfigForm.get('keys').hasError('required')">{{ 'rule-node-config.attributes-keys-required' | translate }}</mat-error>
+    @if (deleteAttributesConfigForm.get('keys').hasError('required')) {
+      <mat-error>{{ 'rule-node-config.attributes-keys-required' | translate }}</mat-error>
+    }
     <mat-hint translate>rule-node-config.general-pattern-hint</mat-hint>
   </mat-form-field>
 
@@ -77,13 +82,14 @@
           {{ 'rule-node-config.send-attributes-deleted-notification' | translate }}
         </mat-slide-toggle>
       </div>
-      <div tb-hint-tooltip-icon="{{ 'rule-node-config.notify-device-on-delete-hint' | translate }}"
-           *ngIf="deleteAttributesConfigForm.get('scope').value === attributeScopeMap.SHARED_SCOPE"
-           class="tb-form-row no-border no-padding">
-        <mat-slide-toggle class="mat-slide" formControlName="notifyDevice">
-          {{ 'rule-node-config.notify-device' | translate }}
-        </mat-slide-toggle>
-      </div>
+      @if (deleteAttributesConfigForm.get('scope').value === attributeScopeMap.SHARED_SCOPE) {
+        <div tb-hint-tooltip-icon="{{ 'rule-node-config.notify-device-on-delete-hint' | translate }}"
+             class="tb-form-row no-border no-padding">
+          <mat-slide-toggle class="mat-slide" formControlName="notifyDevice">
+            {{ 'rule-node-config.notify-device' | translate }}
+          </mat-slide-toggle>
+        </div>
+      }
     </mat-expansion-panel>
   </section>
 </section>

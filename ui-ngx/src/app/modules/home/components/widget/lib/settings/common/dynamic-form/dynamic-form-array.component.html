@@ -23,52 +23,59 @@
       </mat-panel-title>
     </mat-expansion-panel-header>
     <ng-template matExpansionPanelContent>
-      <div *ngIf="propertiesFormArray().controls.length; else noProperties" class="tb-dynamic-form-array-body tb-drop-list"
-           cdkDropList cdkDropListOrientation="vertical"
-           [cdkDropListDisabled]="!dragEnabled"
-           (cdkDropListDropped)="propertyDrop($event)">
-        <div cdkDrag [cdkDragDisabled]="!dragEnabled"
-             class="tb-draggable tb-dynamic-form-array-row"
-             *ngFor="let propertyControl of propertiesFormArray().controls; trackBy: trackByProperty; let $index = index;">
-          <div class="tb-dynamic-form-item-index-container">
-            <div class="tb-dynamic-form-item-index">{{$index + 1}}</div>
-          </div>
-          <tb-dynamic-form class="flex-1"
-                           [properties]="[itemProperty]"
-                           [formControl]="propertyControl"
-                           isArrayItem noPadding noBorder>
-          </tb-dynamic-form>
-          <div class="tb-dynamic-form-array-buttons">
-            <button mat-icon-button
-                    *ngIf="!disabled"
-                    type="button"
-                    (click)="removeProperty($index)"
-                    matTooltip="{{ 'action.delete' | translate }}"
-                    matTooltipPosition="above">
-              <mat-icon>delete</mat-icon>
-            </button>
-            <button mat-icon-button
-                    *ngIf="!disabled"
-                    type="button"
-                    cdkDragHandle
-                    [class.tb-hidden]="!dragEnabled"
-                    matTooltip="{{ 'action.drag' | translate }}"
-                    matTooltipPosition="above">
-              <mat-icon>drag_indicator</mat-icon>
-            </button>
-          </div>
+      @if (propertiesFormArray().controls.length) {
+        <div class="tb-dynamic-form-array-body tb-drop-list"
+             cdkDropList cdkDropListOrientation="vertical"
+             [cdkDropListDisabled]="!dragEnabled"
+             (cdkDropListDropped)="propertyDrop($event)">
+          @for (propertyControl of propertiesFormArray().controls; track trackByProperty($index, propertyControl)) {
+            <div cdkDrag [cdkDragDisabled]="!dragEnabled"
+                 class="tb-draggable tb-dynamic-form-array-row"
+                 >
+              <div class="tb-dynamic-form-item-index-container">
+                <div class="tb-dynamic-form-item-index">{{$index + 1}}</div>
+              </div>
+              <tb-dynamic-form class="flex-1"
+                               [properties]="[itemProperty]"
+                               [formControl]="propertyControl"
+                               isArrayItem noPadding noBorder>
+              </tb-dynamic-form>
+              <div class="tb-dynamic-form-array-buttons">
+                @if (!disabled) {
+                  <button mat-icon-button
+                          type="button"
+                          (click)="removeProperty($index)"
+                          matTooltip="{{ 'action.delete' | translate }}"
+                          matTooltipPosition="above">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                }
+                @if (!disabled) {
+                  <button mat-icon-button
+                          type="button"
+                          cdkDragHandle
+                          [class.tb-hidden]="!dragEnabled"
+                          matTooltip="{{ 'action.drag' | translate }}"
+                          matTooltipPosition="above">
+                    <mat-icon>drag_indicator</mat-icon>
+                  </button>
+                }
+              </div>
+            </div>
+          }
         </div>
-      </div>
-      <div *ngIf="!disabled || !propertiesFormArray().controls.length" [class.invisible]="disabled">
-        <button type="button" mat-stroked-button color="primary" (click)="addProperty()">
-          <mat-icon>add</mat-icon>
-          {{ 'action.add' | translate }}
-        </button>
-      </div>
+      } @else {
+        <span class="tb-prompt flex items-center justify-center">{{ 'dynamic-form.property.no-items' | translate }}</span>
+      }
+      @if (!disabled || !propertiesFormArray().controls.length) {
+        <div [class.invisible]="disabled">
+          <button type="button" mat-stroked-button color="primary" (click)="addProperty()">
+            <mat-icon>add</mat-icon>
+            {{ 'action.add' | translate }}
+          </button>
+        </div>
+      }
     </ng-template>
   </mat-expansion-panel>
 </div>
 
-<ng-template #noProperties>
-  <span class="tb-prompt flex items-center justify-center">{{ 'dynamic-form.property.no-items' | translate }}</span>
-</ng-template>

@@ -24,9 +24,11 @@
         <mat-label>{{ 'rule-node-config.attributes-scope' | translate }}</mat-label>
         <mat-select required
                     class="tb-entity-type-select" matInput formControlName="scope">
-          <mat-option *ngFor="let scope of attributeScopes" [value]="scope">
-            {{ telemetryTypeTranslationsMap.get(scope) | translate }}
-          </mat-option>
+          @for (scope of attributeScopes; track scope) {
+            <mat-option [value]="scope">
+              {{ telemetryTypeTranslationsMap.get(scope) | translate }}
+            </mat-option>
+          }
         </mat-select>
       </mat-form-field>
       <mat-form-field class="flex">

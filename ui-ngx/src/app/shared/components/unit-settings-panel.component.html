@@ -22,9 +22,9 @@
       <div class="min-w-44"
            [class.tb-disabled-label]="unitSettingForm.get('from').disabled"
            tb-hint-tooltip-icon="{{ 'unit.unit-settings.source-unit-hint' | translate }}"
-           translate>unit.unit-settings.source-unit</div>
+      translate>unit.unit-settings.source-unit</div>
       <tb-unit-input class="flex-1" [required]="required" formControlName="from"
-                     [measure]="measure" [tagFilter]="tagFilter"></tb-unit-input>
+      [measure]="measure" [tagFilter]="tagFilter"></tb-unit-input>
     </div>
     <div class="tb-form-panel stroked">
       <mat-slide-toggle class="mat-slide" formControlName="convertUnit">
@@ -36,7 +36,7 @@
         <div class="min-w-44"
              [class.tb-disabled-label]="unitSettingForm.get('METRIC').disabled"
              tb-hint-tooltip-icon="{{ 'unit.unit-settings.target-metric-unit-hint' | translate }}"
-             translate>unit.unit-settings.target-metric-unit</div>
+        translate>unit.unit-settings.target-metric-unit</div>
         <tb-unit-input class="flex-1"
                        onlySystemUnits="true"
                        formControlName="METRIC"
@@ -49,7 +49,7 @@
         <div class="min-w-44"
              [class.tb-disabled-label]="unitSettingForm.get('IMPERIAL').disabled"
              tb-hint-tooltip-icon="{{ 'unit.unit-settings.target-imperial-unit-hint' | translate }}"
-             translate>unit.unit-settings.target-imperial-unit</div>
+        translate>unit.unit-settings.target-imperial-unit</div>
         <tb-unit-input class="flex-1"
                        onlySystemUnits="true"
                        formControlName="IMPERIAL"
@@ -62,7 +62,7 @@
         <div class="min-w-44"
              [class.tb-disabled-label]="unitSettingForm.get('HYBRID').disabled"
              tb-hint-tooltip-icon="{{ 'unit.unit-settings.target-hybrid-unit-hint' | translate }}"
-             translate>unit.unit-settings.target-hybrid-unit</div>
+        translate>unit.unit-settings.target-hybrid-unit</div>
         <tb-unit-input class="flex-1"
                        onlySystemUnits="true"
                        [tagFilter]="tagFilter"
@@ -73,14 +73,15 @@
     </div>
   </div>
   <div class="tb-convert-settings-panel-buttons">
-    <button mat-button
-            color="primary"
-            type="button"
-            *ngIf="!disabled"
-            (click)="clearUnit()"
-            [disabled]="!(!!unitSettingForm.value.from || unitSettingForm.value.convertUnit)">
-      {{ 'action.clear' | translate }}
-    </button>
+    @if (!disabled) {
+      <button mat-button
+              color="primary"
+              type="button"
+              (click)="clearUnit()"
+              [disabled]="!(!!unitSettingForm.value.from || unitSettingForm.value.convertUnit)">
+        {{ 'action.clear' | translate }}
+      </button>
+    }
     <span class="flex-1"></span>
     <button mat-button
             color="primary"
@@ -88,13 +89,14 @@
             (click)="cancel()">
       {{ (disabled ? 'action.close': 'action.cancel') | translate }}
     </button>
-    <button mat-raised-button
-            color="primary"
-            type="button"
-            *ngIf="!disabled"
-            (click)="applyUnitSettings()"
-            [disabled]="unitSettingForm.invalid || unitSettingForm.pristine">
-      {{ 'action.apply' | translate }}
-    </button>
+    @if (!disabled) {
+      <button mat-raised-button
+              color="primary"
+              type="button"
+              (click)="applyUnitSettings()"
+              [disabled]="unitSettingForm.invalid || unitSettingForm.pristine">
+        {{ 'action.apply' | translate }}
+      </button>
+    }
   </div>
 </div>

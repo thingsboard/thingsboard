@@ -20,9 +20,11 @@
     <mat-form-field class="mat-block max-w-50% flex-full" subscriptSizing="dynamic" style="min-width: 100px;" hideRequiredMarker>
       <mat-label translate>relation.direction</mat-label>
       <mat-select required formControlName="direction">
-        <mat-option *ngFor="let type of directionTypes" [value]="type">
-          {{ directionTypeTranslations.get(type) | translate }} <span translate>rule-node-config.relations-query-config-direction-suffix</span>
-        </mat-option>
+        @for (type of directionTypes; track type) {
+          <mat-option [value]="type">
+            {{ directionTypeTranslations.get(type) | translate }} <span translate>rule-node-config.relations-query-config-direction-suffix</span>
+          </mat-option>
+        }
       </mat-select>
     </mat-form-field>
     <mat-form-field floatLabel="always" class="mat-block max-w-50% flex-full">
@@ -34,21 +36,26 @@
              min="1"
              placeholder="{{ 'rule-node-config.unlimited-level' | translate }}"
              formControlName="maxLevel">
-      <mat-error *ngIf="deviceRelationsQueryFormGroup.get('maxLevel').hasError('min')">
-        {{ 'rule-node-config.max-relation-level-error' | translate }}
-      </mat-error>
-      <mat-error *ngIf="deviceRelationsQueryFormGroup.get('maxLevel').invalid">
-        {{ 'rule-node-config.max-relation-level-invalid' | translate }}
-      </mat-error>
+      @if (deviceRelationsQueryFormGroup.get('maxLevel').hasError('min')) {
+        <mat-error>
+          {{ 'rule-node-config.max-relation-level-error' | translate }}
+        </mat-error>
+      }
+      @if (deviceRelationsQueryFormGroup.get('maxLevel').invalid) {
+        <mat-error>
+          {{ 'rule-node-config.max-relation-level-invalid' | translate }}
+        </mat-error>
+      }
     </mat-form-field>
   </div>
-  <div tb-hint-tooltip-icon="{{ 'rule-node-config.last-level-device-relation-tooltip' | translate }}"
-       *ngIf="deviceRelationsQueryFormGroup.get('maxLevel').value > 1"
-       class="tb-form-row no-border no-padding last-level-slide-toggle">
-    <mat-slide-toggle class="mat-slide" formControlName="fetchLastLevelOnly">
-      {{ 'alias.last-level-relation' | translate }}
-    </mat-slide-toggle>
-  </div>
+  @if (deviceRelationsQueryFormGroup.get('maxLevel').value > 1) {
+    <div tb-hint-tooltip-icon="{{ 'rule-node-config.last-level-device-relation-tooltip' | translate }}"
+         class="tb-form-row no-border no-padding last-level-slide-toggle">
+      <mat-slide-toggle class="mat-slide" formControlName="fetchLastLevelOnly">
+        {{ 'alias.last-level-relation' | translate }}
+      </mat-slide-toggle>
+    </div>
+  }
   <tb-relation-type-autocomplete
     class="flex-1"
     formControlName="relationType">
@@ -61,6 +68,6 @@
     [filledInputPlaceholder]="'rule-node-config.add-device-profile' | translate"
     formControlName="deviceTypes">
     <mat-icon matSuffix class="help-icon m-2 cursor-pointer" aria-hidden="false" aria-label="help-icon" color="primary"
-              matTooltip="{{ 'rule-node-config.chip-help' | translate: { inputName: 'rule-node-config.device-profile' | translate } }}">help</mat-icon>
+    matTooltip="{{ 'rule-node-config.chip-help' | translate: { inputName: 'rule-node-config.device-profile' | translate } }}">help</mat-icon>
   </tb-entity-subtype-list>
 </section>

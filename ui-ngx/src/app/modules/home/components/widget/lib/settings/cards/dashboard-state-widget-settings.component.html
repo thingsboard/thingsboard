@@ -23,18 +23,22 @@
              #dashboardStateInput
              formControlName="stateId"
              [matAutocomplete]="dashboardStateAutocomplete">
-      <button *ngIf="dashboardStateWidgetSettingsForm.get('stateId').value"
-              type="button"
-              matSuffix mat-icon-button aria-label="Clear"
-              (click)="clearDashboardState()">
-        <mat-icon class="material-icons">close</mat-icon>
-      </button>
+      @if (dashboardStateWidgetSettingsForm.get('stateId').value) {
+        <button
+          type="button"
+          matSuffix mat-icon-button aria-label="Clear"
+          (click)="clearDashboardState()">
+          <mat-icon class="material-icons">close</mat-icon>
+        </button>
+      }
       <mat-autocomplete
         class="tb-autocomplete"
         #dashboardStateAutocomplete="matAutocomplete">
-        <mat-option *ngFor="let state of filteredDashboardStates | async" [value]="state">
-          <span [innerHTML]="state | highlight:dashboardStateSearchText"></span>
-        </mat-option>
+        @for (state of filteredDashboardStates | async; track state) {
+          <mat-option [value]="state">
+            <span [innerHTML]="state | highlight:dashboardStateSearchText"></span>
+          </mat-option>
+        }
       </mat-autocomplete>
     </mat-form-field>
     <mat-expansion-panel class="tb-settings">

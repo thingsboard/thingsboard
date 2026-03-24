@@ -20,10 +20,12 @@
     <div class="tb-form-row no-border no-padding space-between">
       <div>{{ titleText | translate }}</div>
       <tb-toggle-select formControlName="type">
-        <tb-toggle-option *ngFor="let type of chartFillTypes" [value]="type">{{ chartFillTypeTranslationMap.get(type) | translate }}</tb-toggle-option>
+        @for (type of chartFillTypes; track type) {
+          <tb-toggle-option [value]="type">{{ chartFillTypeTranslationMap.get(type) | translate }}</tb-toggle-option>
+        }
       </tb-toggle-select>
     </div>
-    <ng-container *ngIf="fillSettingsFormGroup.get('type').value === ChartFillType.opacity">
+    @if (fillSettingsFormGroup.get('type').value === ChartFillType.opacity) {
       <div class="tb-form-row space-between column-xs">
         <div translate>widgets.chart.opacity</div>
         <mat-form-field class="medium-width number" appearance="outline" subscriptSizing="dynamic">
@@ -31,23 +33,25 @@
                  step="0.1" placeholder="{{ 'widget-config.set' | translate }}"/>
         </mat-form-field>
       </div>
-    </ng-container>
-    <ng-container *ngIf="fillSettingsFormGroup.get('type').value === ChartFillType.gradient" formGroupName="gradient">
-      <div class="tb-form-row space-between column-xs">
-        <div translate>widgets.chart.gradient-stops</div>
-        <div class="flex flex-row items-center justify-start gap-2">
-          <div class="tb-small-label" translate>widgets.chart.gradient-start</div>
-          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
-            <input matInput formControlName="start" min="0" max="100" step="1"
-                   type="number" placeholder="{{ 'widget-config.set' | translate }}">
-          </mat-form-field>
-          <div class="tb-small-label" translate>widgets.chart.gradient-end</div>
-          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
-            <input matInput formControlName="end" min="0" max="100" step="1"
-                   type="number" placeholder="{{ 'widget-config.set' | translate }}">
-          </mat-form-field>
+    }
+    @if (fillSettingsFormGroup.get('type').value === ChartFillType.gradient) {
+      <ng-container formGroupName="gradient">
+        <div class="tb-form-row space-between column-xs">
+          <div translate>widgets.chart.gradient-stops</div>
+          <div class="flex flex-row items-center justify-start gap-2">
+            <div class="tb-small-label" translate>widgets.chart.gradient-start</div>
+            <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+              <input matInput formControlName="start" min="0" max="100" step="1"
+                     type="number" placeholder="{{ 'widget-config.set' | translate }}">
+            </mat-form-field>
+            <div class="tb-small-label" translate>widgets.chart.gradient-end</div>
+            <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+              <input matInput formControlName="end" min="0" max="100" step="1"
+                     type="number" placeholder="{{ 'widget-config.set' | translate }}">
+            </mat-form-field>
+          </div>
         </div>
-      </div>
-    </ng-container>
+      </ng-container>
+    }
   </div>
 </ng-container>

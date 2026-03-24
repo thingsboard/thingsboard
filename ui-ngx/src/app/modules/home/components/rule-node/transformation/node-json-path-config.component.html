@@ -20,6 +20,8 @@
     <mat-label>{{ 'rule-node-config.json-path-expression' | translate }}</mat-label>
     <input matInput formControlName="jsonPath" required/>
     <mat-hint>{{ 'rule-node-config.json-path-expression-hint' | translate }}</mat-hint>
-    <mat-error *ngIf="jsonPathConfigForm.get('jsonPath').hasError('required')">{{ 'rule-node-config.json-path-expression-required' | translate }}</mat-error>
+    @if (jsonPathConfigForm.get('jsonPath').hasError('required')) {
+      <mat-error>{{ 'rule-node-config.json-path-expression-required' | translate }}</mat-error>
+    }
   </mat-form-field>
 </section>

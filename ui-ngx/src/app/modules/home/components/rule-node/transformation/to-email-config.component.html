@@ -28,17 +28,19 @@
         <mat-hint align="end">
           <div class="input-bottom-double-hint">
             <div class="see-example"
-                hintMode
-                tb-help-popup="{{'rulenode/to_email_node_fields_templatization'}}"
-                tb-help-popup-placement="right"
-                trigger-style="letter-spacing:0.25px; font-size:12px;"
-                [tb-help-popup-style]="{maxWidth: '820px'}"
-                trigger-text="{{ 'rule-node-config.key-val.see-examples' | translate }}"></div>
+                 hintMode
+                 tb-help-popup="{{'rulenode/to_email_node_fields_templatization'}}"
+                 tb-help-popup-placement="right"
+                 trigger-style="letter-spacing:0.25px; font-size:12px;"
+                 [tb-help-popup-style]="{maxWidth: '820px'}"
+            trigger-text="{{ 'rule-node-config.key-val.see-examples' | translate }}"></div>
           </div>
         </mat-hint>
-        <mat-error *ngIf="toEmailConfigForm.get('fromTemplate').hasError('required')">
-          {{ 'rule-node-config.from-template-required' | translate }}
-        </mat-error>
+        @if (toEmailConfigForm.get('fromTemplate').hasError('required')) {
+          <mat-error>
+            {{ 'rule-node-config.from-template-required' | translate }}
+          </mat-error>
+        }
       </mat-form-field>
     </div>
   </div>
@@ -46,7 +48,7 @@
     <div class="tb-form-panel no-padding no-border">
       <div class="tb-form-panel-title" translate>rule-node-config.recipients</div>
       <tb-example-hint [hintText]="'rule-node-config.recipients-block-main-hint'"
-                        popupHelpLink="rulenode/to_email_node_fields_templatization">
+                       popupHelpLink="rulenode/to_email_node_fields_templatization">
       </tb-example-hint>
     </div>
     <div class="tb-form-row no-border no-padding tb-standard-fields">
@@ -57,10 +59,12 @@
                   class="tb-enable-vertical-resize"
                   formControlName="toTemplate"
                   cdkTextareaAutosize
-                  cdkAutosizeMinRows="1"></textarea>
-        <mat-error *ngIf="toEmailConfigForm.get('toTemplate').hasError('required')">
-          {{ 'rule-node-config.to-template-required' | translate }}
-        </mat-error>
+        cdkAutosizeMinRows="1"></textarea>
+        @if (toEmailConfigForm.get('toTemplate').hasError('required')) {
+          <mat-error>
+            {{ 'rule-node-config.to-template-required' | translate }}
+          </mat-error>
+        }
       </mat-form-field>
       <mat-form-field class="flex">
         <mat-label translate>rule-node-config.cc-template</mat-label>
@@ -68,7 +72,7 @@
                   formControlName="ccTemplate"
                   class="tb-enable-vertical-resize"
                   cdkTextareaAutosize
-                  cdkAutosizeMinRows="1"></textarea>
+        cdkAutosizeMinRows="1"></textarea>
       </mat-form-field>
       <mat-form-field class="flex">
         <mat-label translate>rule-node-config.bcc-template</mat-label>
@@ -76,14 +80,14 @@
                   formControlName="bccTemplate"
                   class="tb-enable-vertical-resize"
                   cdkTextareaAutosize
-                  cdkAutosizeMinRows="1"></textarea>
+        cdkAutosizeMinRows="1"></textarea>
       </mat-form-field>
     </div>
   </div>
   <div class="tb-form-panel stroked">
     <div class="tb-form-panel-title" translate>rule-node-config.message-subject-and-content</div>
     <tb-example-hint [hintText]="'rule-node-config.kv-map-pattern-hint'"
-                      popupHelpLink="rulenode/to_email_node_fields_templatization">
+                     popupHelpLink="rulenode/to_email_node_fields_templatization">
     </tb-example-hint>
     <section>
       <mat-form-field class="mat-block">
@@ -93,47 +97,57 @@
                   formControlName="subjectTemplate"
                   class="tb-enable-vertical-resize"
                   cdkTextareaAutosize
-                  cdkAutosizeMinRows="1"></textarea>
-        <mat-error *ngIf="toEmailConfigForm.get('subjectTemplate').hasError('required')">
-          {{ 'rule-node-config.subject-template-required' | translate }}
-        </mat-error>
+        cdkAutosizeMinRows="1"></textarea>
+        @if (toEmailConfigForm.get('subjectTemplate').hasError('required')) {
+          <mat-error>
+            {{ 'rule-node-config.subject-template-required' | translate }}
+          </mat-error>
+        }
       </mat-form-field>
       <mat-form-field class="mat-block">
         <mat-label translate>rule-node-config.mail-body-type</mat-label>
         <mat-select formControlName="mailBodyType">
           <mat-select-trigger>
-            <span *ngIf="toEmailConfigForm.get('mailBodyType').value">
-              {{ getBodyTypeName() | translate }}
-            </span>
+            @if (toEmailConfigForm.get('mailBodyType').value) {
+              <span>
+                {{ getBodyTypeName() | translate }}
+              </span>
+            }
           </mat-select-trigger>
-          <mat-option *ngFor="let type of mailBodyTypes" [value]="type.value">
-            <span matListItemTitle>
-              {{ type.name | translate }}
-            </span>
-            <br>
-            <small matListItemMeta style="color: inherit">
-              {{ type.description | translate }}
-            </small>
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-      <mat-form-field class="mat-block" *ngIf="toEmailConfigForm.get('mailBodyType').value === 'dynamic'">
-        <mat-label translate>rule-node-config.body-type-template</mat-label>
-        <input required matInput formControlName="isHtmlTemplate">
-        <mat-hint translate>rule-node-config.mail-body-types.after-template-evaluation-hint</mat-hint>
-      </mat-form-field>
-      <mat-form-field class="mat-block">
-        <mat-label translate>rule-node-config.body-template</mat-label>
-        <textarea required
-                  matInput
-                  formControlName="bodyTemplate"
-                  class="tb-enable-vertical-resize"
-                  cdkTextareaAutosize
-                  cdkAutosizeMinRows="2"></textarea>
-        <mat-error *ngIf="toEmailConfigForm.get('bodyTemplate').hasError('required')">
-          {{ 'rule-node-config.body-template-required' | translate }}
-        </mat-error>
-      </mat-form-field>
-    </section>
-  </div>
-</section>
+          @for (type of mailBodyTypes; track type) {
+            <mat-option [value]="type.value">
+              <span matListItemTitle>
+                {{ type.name | translate }}
+              </span>
+              <br>
+                <small matListItemMeta style="color: inherit">
+                  {{ type.description | translate }}
+                </small>
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        @if (toEmailConfigForm.get('mailBodyType').value === 'dynamic') {
+          <mat-form-field class="mat-block">
+            <mat-label translate>rule-node-config.body-type-template</mat-label>
+            <input required matInput formControlName="isHtmlTemplate">
+            <mat-hint translate>rule-node-config.mail-body-types.after-template-evaluation-hint</mat-hint>
+          </mat-form-field>
+        }
+        <mat-form-field class="mat-block">
+          <mat-label translate>rule-node-config.body-template</mat-label>
+          <textarea required
+                    matInput
+                    formControlName="bodyTemplate"
+                    class="tb-enable-vertical-resize"
+                    cdkTextareaAutosize
+          cdkAutosizeMinRows="2"></textarea>
+          @if (toEmailConfigForm.get('bodyTemplate').hasError('required')) {
+            <mat-error>
+              {{ 'rule-node-config.body-template-required' | translate }}
+            </mat-error>
+          }
+        </mat-form-field>
+      </section>
+    </div>
+  </section>

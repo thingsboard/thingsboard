@@ -18,9 +18,11 @@
 <div class="flex flex-1 flex-row items-start justify-start gap-2" [formGroup]="numericFilterPredicateFormGroup">
   <mat-form-field hideRequiredMarker class="mat-block max-w-30% flex-full">
     <mat-select required formControlName="operation" placeholder="{{'filter.operation.operation' | translate}}">
-      <mat-option *ngFor="let operation of numericOperations" [value]="operation">
-        {{numericOperationTranslations.get(numericOperationEnum[operation]) | translate}}
-      </mat-option>
+      @for (operation of numericOperations; track operation) {
+        <mat-option [value]="operation">
+          {{numericOperationTranslations.get(numericOperationEnum[operation]) | translate}}
+        </mat-option>
+      }
     </mat-select>
   </mat-form-field>
   <tb-filter-predicate-value [allowUserDynamicSource]="allowUserDynamicSource"

@@ -19,110 +19,137 @@
   <mat-checkbox formControlName="useMessageAlarmData">
     {{ 'rule-node-config.use-message-alarm-data' | translate }}
   </mat-checkbox>
-  <mat-checkbox formControlName="overwriteAlarmDetails" *ngIf="createAlarmConfigForm.get('useMessageAlarmData').value === true">
-    {{ 'rule-node-config.overwrite-alarm-details' | translate }}
-  </mat-checkbox>
-  <section class="flex flex-col" *ngIf="createAlarmConfigForm.get('useMessageAlarmData').value === false ||
-                                    createAlarmConfigForm.get('overwriteAlarmDetails').value === true">
-    <tb-script-lang formControlName="scriptLang" *ngIf="tbelEnabled"></tb-script-lang>
-    <tb-js-func *ngIf="createAlarmConfigForm.get('scriptLang').value === scriptLanguage.JS"
-                #jsFuncComponent
-                formControlName="alarmDetailsBuildJs"
-                functionName="Details"
-                [functionArgs]="['msg', 'metadata', 'msgType']"
-                helpId="rulenode/create_alarm_node_script_fn"
-                noValidate="true">
-      <button toolbarSuffixButton
-              mat-icon-button
-              matTooltip="{{ testScriptLabel | translate }}"
-              matTooltipPosition="above"
-              class="tb-mat-32"
-              (click)="testScript()">
-        <mat-icon class="material-icons" color="primary">bug_report</mat-icon>
-      </button>
-    </tb-js-func>
-    <tb-js-func *ngIf="createAlarmConfigForm.get('scriptLang').value === scriptLanguage.TBEL"
-                #tbelFuncComponent
-                formControlName="alarmDetailsBuildTbel"
-                functionName="Details"
-                [functionArgs]="['msg', 'metadata', 'msgType']"
-                [disableUndefinedCheck]="true"
-                [scriptLanguage]="scriptLanguage.TBEL"
-                helpId="rulenode/tbel/create_alarm_node_script_fn"
-                noValidate="true">
-      <button toolbarSuffixButton
-              mat-icon-button
-              matTooltip="{{ testScriptLabel | translate }}"
-              matTooltipPosition="above"
-              class="tb-mat-32"
-              (click)="testScript()">
-        <mat-icon class="material-icons" color="primary">bug_report</mat-icon>
-      </button>
-    </tb-js-func>
-    <div class="flex flex-row" style="padding-bottom: 16px;">
-      <button mat-button mat-raised-button color="primary" (click)="testScript()">
-        {{ testScriptLabel | translate }}
-      </button>
-    </div>
-  </section>
-  <section class="flex flex-col" *ngIf="createAlarmConfigForm.get('useMessageAlarmData').value === false">
-    <mat-form-field class="flex-1" subscriptSizing="dynamic">
-      <mat-label translate>rule-node-config.alarm-type</mat-label>
-      <input required matInput formControlName="alarmType">
-      <mat-error *ngIf="createAlarmConfigForm.get('alarmType').hasError('required')">
-        {{ 'rule-node-config.alarm-type-required' | translate }}
-      </mat-error>
-      <mat-hint translate>rule-node-config.general-pattern-hint</mat-hint>
-    </mat-form-field>
-    <mat-checkbox formControlName="dynamicSeverity">
-      {{ 'rule-node-config.use-alarm-severity-pattern' | translate }}
+  @if (createAlarmConfigForm.get('useMessageAlarmData').value === true) {
+    <mat-checkbox formControlName="overwriteAlarmDetails">
+      {{ 'rule-node-config.overwrite-alarm-details' | translate }}
     </mat-checkbox>
-    <mat-form-field class="flex-1" *ngIf="!createAlarmConfigForm.get('dynamicSeverity').value">
-      <mat-label translate>rule-node-config.alarm-severity</mat-label>
-      <mat-select formControlName="severity" required>
-        <mat-option *ngFor="let severity of alarmSeverities" [value]="severity">
-          {{ alarmSeverityTranslationMap.get(severity) | translate }}
-        </mat-option>
-      </mat-select>
-      <mat-error *ngIf="createAlarmConfigForm.get('severity').hasError('required')">
-        {{ 'rule-node-config.alarm-severity-required' | translate }}
-      </mat-error>
-    </mat-form-field>
-    <mat-form-field class="flex-1" *ngIf="createAlarmConfigForm.get('dynamicSeverity').value" subscriptSizing="dynamic">
-      <mat-label translate>rule-node-config.alarm-severity-pattern</mat-label>
-      <input matInput formControlName="severity" required>
-      <mat-error *ngIf="createAlarmConfigForm.get('severity').hasError('required')">
-        {{ 'rule-node-config.alarm-severity-required' | translate }}
-      </mat-error>
-      <mat-hint [innerHTML]="'rule-node-config.alarm-severity-pattern-hint' | translate | safe: 'html'"></mat-hint>
-    </mat-form-field>
-    <mat-checkbox formControlName="propagate">
-      {{ 'rule-node-config.propagate' | translate }}
-    </mat-checkbox>
-    <section *ngIf="createAlarmConfigForm.get('propagate').value === true">
-      <mat-form-field floatLabel="always" class="mat-block" subscriptSizing="dynamic">
-        <mat-label translate>rule-node-config.relation-types-list</mat-label>
-        <mat-chip-grid #relationTypesChipList>
-          <mat-chip-row
-            *ngFor="let key of createAlarmConfigForm.get('relationTypes').value;"
-            (removed)="removeKey(key, 'relationTypes')">
-            {{key}}
-            <mat-icon matChipRemove>close</mat-icon>
-          </mat-chip-row>
-          <input matInput type="text" placeholder="{{'rule-node-config.relation-types-list' | translate}}"
-                 [matChipInputFor]="relationTypesChipList"
-                 [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
-                 (matChipInputTokenEnd)="addKey($event, 'relationTypes')"
-                 [matChipInputAddOnBlur]="true">
-        </mat-chip-grid>
-        <mat-hint translate>rule-node-config.relation-types-list-hint</mat-hint>
-      </mat-form-field>
+  }
+  @if (createAlarmConfigForm.get('useMessageAlarmData').value === false ||
+    createAlarmConfigForm.get('overwriteAlarmDetails').value === true) {
+    <section class="flex flex-col">
+      @if (tbelEnabled) {
+        <tb-script-lang formControlName="scriptLang"></tb-script-lang>
+      }
+      @if (createAlarmConfigForm.get('scriptLang').value === scriptLanguage.JS) {
+        <tb-js-func
+          #jsFuncComponent
+          formControlName="alarmDetailsBuildJs"
+          functionName="Details"
+          [functionArgs]="['msg', 'metadata', 'msgType']"
+          helpId="rulenode/create_alarm_node_script_fn"
+          [noValidate]="true">
+          <button toolbarSuffixButton
+                  mat-icon-button
+                  matTooltip="{{ testScriptLabel | translate }}"
+                  matTooltipPosition="above"
+                  class="tb-mat-32"
+                  (click)="testScript()">
+            <mat-icon class="material-icons" color="primary">bug_report</mat-icon>
+          </button>
+        </tb-js-func>
+      }
+      @if (createAlarmConfigForm.get('scriptLang').value === scriptLanguage.TBEL) {
+        <tb-js-func
+          #tbelFuncComponent
+          formControlName="alarmDetailsBuildTbel"
+          functionName="Details"
+          [functionArgs]="['msg', 'metadata', 'msgType']"
+          [disableUndefinedCheck]="true"
+          [scriptLanguage]="scriptLanguage.TBEL"
+          helpId="rulenode/tbel/create_alarm_node_script_fn"
+          [noValidate]="true">
+          <button toolbarSuffixButton
+                  mat-icon-button
+                  matTooltip="{{ testScriptLabel | translate }}"
+                  matTooltipPosition="above"
+                  class="tb-mat-32"
+                  (click)="testScript()">
+            <mat-icon class="material-icons" color="primary">bug_report</mat-icon>
+          </button>
+        </tb-js-func>
+      }
+      <div class="flex flex-row" style="padding-bottom: 16px;">
+        <button mat-button mat-raised-button color="primary" (click)="testScript()">
+          {{ testScriptLabel | translate }}
+        </button>
+      </div>
     </section>
-    <mat-checkbox formControlName="propagateToOwner">
-      {{ 'rule-node-config.propagate-to-owner' | translate }}
-    </mat-checkbox>
-    <mat-checkbox formControlName="propagateToTenant">
-      {{ 'rule-node-config.propagate-to-tenant' | translate }}
-    </mat-checkbox>
-  </section>
+  }
+  @if (createAlarmConfigForm.get('useMessageAlarmData').value === false) {
+    <section class="flex flex-col">
+      <mat-form-field class="flex-1" subscriptSizing="dynamic">
+        <mat-label translate>rule-node-config.alarm-type</mat-label>
+        <input required matInput formControlName="alarmType">
+        @if (createAlarmConfigForm.get('alarmType').hasError('required')) {
+          <mat-error>
+            {{ 'rule-node-config.alarm-type-required' | translate }}
+          </mat-error>
+        }
+        <mat-hint translate>rule-node-config.general-pattern-hint</mat-hint>
+      </mat-form-field>
+      <mat-checkbox formControlName="dynamicSeverity">
+        {{ 'rule-node-config.use-alarm-severity-pattern' | translate }}
+      </mat-checkbox>
+      @if (!createAlarmConfigForm.get('dynamicSeverity').value) {
+        <mat-form-field class="flex-1">
+          <mat-label translate>rule-node-config.alarm-severity</mat-label>
+          <mat-select formControlName="severity" required>
+            @for (severity of alarmSeverities; track severity) {
+              <mat-option [value]="severity">
+                {{ alarmSeverityTranslationMap.get(severity) | translate }}
+              </mat-option>
+            }
+          </mat-select>
+          @if (createAlarmConfigForm.get('severity').hasError('required')) {
+            <mat-error>
+              {{ 'rule-node-config.alarm-severity-required' | translate }}
+            </mat-error>
+          }
+        </mat-form-field>
+      }
+      @if (createAlarmConfigForm.get('dynamicSeverity').value) {
+        <mat-form-field class="flex-1" subscriptSizing="dynamic">
+          <mat-label translate>rule-node-config.alarm-severity-pattern</mat-label>
+          <input matInput formControlName="severity" required>
+          @if (createAlarmConfigForm.get('severity').hasError('required')) {
+            <mat-error>
+              {{ 'rule-node-config.alarm-severity-required' | translate }}
+            </mat-error>
+          }
+          <mat-hint [innerHTML]="'rule-node-config.alarm-severity-pattern-hint' | translate | safe: 'html'"></mat-hint>
+        </mat-form-field>
+      }
+      <mat-checkbox formControlName="propagate">
+        {{ 'rule-node-config.propagate' | translate }}
+      </mat-checkbox>
+      @if (createAlarmConfigForm.get('propagate').value === true) {
+        <section>
+          <mat-form-field floatLabel="always" class="mat-block" subscriptSizing="dynamic">
+            <mat-label translate>rule-node-config.relation-types-list</mat-label>
+            <mat-chip-grid #relationTypesChipList>
+              @for (key of createAlarmConfigForm.get('relationTypes').value; track key) {
+                <mat-chip-row
+                  (removed)="removeKey(key, 'relationTypes')">
+                  {{key}}
+                  <mat-icon matChipRemove>close</mat-icon>
+                </mat-chip-row>
+              }
+              <input matInput type="text" placeholder="{{'rule-node-config.relation-types-list' | translate}}"
+                     [matChipInputFor]="relationTypesChipList"
+                     [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+                     (matChipInputTokenEnd)="addKey($event, 'relationTypes')"
+                     [matChipInputAddOnBlur]="true">
+            </mat-chip-grid>
+            <mat-hint translate>rule-node-config.relation-types-list-hint</mat-hint>
+          </mat-form-field>
+        </section>
+      }
+      <mat-checkbox formControlName="propagateToOwner">
+        {{ 'rule-node-config.propagate-to-owner' | translate }}
+      </mat-checkbox>
+      <mat-checkbox formControlName="propagateToTenant">
+        {{ 'rule-node-config.propagate-to-tenant' | translate }}
+      </mat-checkbox>
+    </section>
+  }
 </section>

@@ -24,43 +24,53 @@
     <mat-slide-toggle class="mat-slide" formControlName="enableSelection">
       {{ 'widgets.chart.enable-selection-mode' | translate }}
     </mat-slide-toggle>
-    <mat-slide-toggle *ngIf="chartType === 'graph'" class="mat-slide" formControlName="smoothLines">
-      {{ 'widgets.chart.display-smooth-lines' | translate }}
-    </mat-slide-toggle>
-    <div *ngIf="chartType === 'graph'" class="tb-form-row space-between">
-      <div translate>widgets.chart.line-shadow-size</div>
-      <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
-        <input matInput formControlName="shadowSize" type="number" min="0" placeholder="{{ 'widget-config.set' | translate }}">
-      </mat-form-field>
-    </div>
-    <div *ngIf="chartType === 'bar'" class="tb-form-row space-between">
-      <div translate>widgets.chart.default-bar-width</div>
-      <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
-        <input matInput formControlName="defaultBarWidth" type="number" min="0" placeholder="{{ 'widget-config.set' | translate }}">
-      </mat-form-field>
-    </div>
-    <div *ngIf="chartType === 'bar'" class="tb-form-row space-between">
-      <div>{{ 'widgets.chart.bar-alignment' | translate }}</div>
-      <mat-form-field appearance="outline" subscriptSizing="dynamic">
-        <mat-select formControlName="barAlignment">
-          <mat-option [value]="'left'">
-            {{ 'widgets.chart.bar-alignment-left' | translate }}
-          </mat-option>
-          <mat-option [value]="'right'">
-            {{ 'widgets.chart.bar-alignment-right' | translate }}
-          </mat-option>
-          <mat-option [value]="'center'">
-            {{ 'widgets.chart.bar-alignment-center' | translate }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-    </div>
-    <div *ngIf="chartType === 'graph' || chartType === 'bar'" class="tb-form-row space-between">
-      <div translate>widgets.chart.thresholds-line-width</div>
-      <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
-        <input matInput formControlName="thresholdsLineWidth" type="number" min="0" placeholder="{{ 'widget-config.set' | translate }}">
-      </mat-form-field>
-    </div>
+    @if (chartType === 'graph') {
+      <mat-slide-toggle class="mat-slide" formControlName="smoothLines">
+        {{ 'widgets.chart.display-smooth-lines' | translate }}
+      </mat-slide-toggle>
+    }
+    @if (chartType === 'graph') {
+      <div class="tb-form-row space-between">
+        <div translate>widgets.chart.line-shadow-size</div>
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+          <input matInput formControlName="shadowSize" type="number" min="0" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+      </div>
+    }
+    @if (chartType === 'bar') {
+      <div class="tb-form-row space-between">
+        <div translate>widgets.chart.default-bar-width</div>
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+          <input matInput formControlName="defaultBarWidth" type="number" min="0" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+      </div>
+    }
+    @if (chartType === 'bar') {
+      <div class="tb-form-row space-between">
+        <div>{{ 'widgets.chart.bar-alignment' | translate }}</div>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-select formControlName="barAlignment">
+            <mat-option [value]="'left'">
+              {{ 'widgets.chart.bar-alignment-left' | translate }}
+            </mat-option>
+            <mat-option [value]="'right'">
+              {{ 'widgets.chart.bar-alignment-right' | translate }}
+            </mat-option>
+            <mat-option [value]="'center'">
+              {{ 'widgets.chart.bar-alignment-center' | translate }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+    }
+    @if (chartType === 'graph' || chartType === 'bar') {
+      <div class="tb-form-row space-between">
+        <div translate>widgets.chart.thresholds-line-width</div>
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+          <input matInput formControlName="thresholdsLineWidth" type="number" min="0" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+      </div>
+    }
     <div class="tb-form-row space-between">
       <div>{{ 'widgets.chart.default-font' | translate }}</div>
       <div class="flex flex-row items-center justify-start gap-2">
@@ -74,25 +84,27 @@
       </div>
     </div>
   </div>
-  <div *ngIf="chartType === 'graph' || chartType === 'bar'" class="tb-form-panel tb-slide-toggle">
-    <div class="tb-form-panel-title" translate>widget-config.legend</div>
-    <mat-expansion-panel class="tb-settings" [expanded]="flotSettingsFormGroup.get('showLegend').value">
-      <mat-expansion-panel-header class="flex flex-row flex-wrap">
-        <mat-panel-title>
-          <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="showLegend" (click)="$event.stopPropagation()">
-            {{ 'widget-config.legend' | translate }}
-          </mat-slide-toggle>
-        </mat-panel-title>
-        <mat-panel-description class="flex max-w-40% flex-full items-center justify-end xs:!hidden" translate>
-          widget-config.advanced-settings
-        </mat-panel-description>
-      </mat-expansion-panel-header>
-      <ng-template matExpansionPanelContent>
-        <tb-legend-config formControlName="legendConfig">
-        </tb-legend-config>
-      </ng-template>
-    </mat-expansion-panel>
-  </div>
+  @if (chartType === 'graph' || chartType === 'bar') {
+    <div class="tb-form-panel tb-slide-toggle">
+      <div class="tb-form-panel-title" translate>widget-config.legend</div>
+      <mat-expansion-panel class="tb-settings" [expanded]="flotSettingsFormGroup.get('showLegend').value">
+        <mat-expansion-panel-header class="flex flex-row flex-wrap">
+          <mat-panel-title>
+            <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="showLegend" (click)="$event.stopPropagation()">
+              {{ 'widget-config.legend' | translate }}
+            </mat-slide-toggle>
+          </mat-panel-title>
+          <mat-panel-description class="flex max-w-40% flex-full items-center justify-end xs:!hidden" translate>
+            widget-config.advanced-settings
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+        <ng-template matExpansionPanelContent>
+          <tb-legend-config formControlName="legendConfig">
+          </tb-legend-config>
+        </ng-template>
+      </mat-expansion-panel>
+    </div>
+  }
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widgets.chart.axis</div>
     <div class="tb-form-panel stroked" formGroupName="yaxis">
@@ -267,124 +279,131 @@
       </ng-template>
     </mat-expansion-panel>
   </div>
-  <div *ngIf="chartType === 'graph' || chartType === 'bar'" class="tb-form-panel tb-slide-toggle">
-    <div class="tb-form-panel-title" translate>widgets.chart.comparison-settings</div>
-    <mat-expansion-panel class="tb-settings" [expanded]="flotSettingsFormGroup.get('comparisonEnabled').value">
-      <mat-expansion-panel-header class="flex flex-row flex-wrap">
-        <mat-panel-title>
-          <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="comparisonEnabled" (click)="$event.stopPropagation()">
-            {{ 'widgets.chart.enable-comparison' | translate }}
-          </mat-slide-toggle>
-        </mat-panel-title>
-        <mat-panel-description class="flex max-w-40% flex-full items-center justify-end xs:!hidden" translate>
-          widget-config.advanced-settings
-        </mat-panel-description>
-      </mat-expansion-panel-header>
-      <ng-template matExpansionPanelContent>
-        <div class="tb-form-row space-between">
-          <div>{{ 'widgets.chart.time-for-comparison' | translate }}</div>
-          <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
-            <mat-select formControlName="timeForComparison">
-              <mat-option [value]="'previousInterval'">
-                {{ 'widgets.chart.time-for-comparison-previous-interval' | translate }}
-              </mat-option>
-              <mat-option [value]="'days'">
-                {{ 'widgets.chart.time-for-comparison-days' | translate }}
-              </mat-option>
-              <mat-option [value]="'weeks'">
-                {{ 'widgets.chart.time-for-comparison-weeks' | translate }}
-              </mat-option>
-              <mat-option [value]="'months'">
-                {{ 'widgets.chart.time-for-comparison-months' | translate }}
-              </mat-option>
-              <mat-option [value]="'years'">
-                {{ 'widgets.chart.time-for-comparison-years' | translate }}
-              </mat-option>
-              <mat-option [value]="'customInterval'">
-                {{ 'widgets.chart.time-for-comparison-custom-interval' | translate }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
-        <div [class.!hidden]="flotSettingsFormGroup.get('timeForComparison').value !== 'customInterval'" class="tb-form-row space-between">
-          <div translate>widgets.chart.custom-interval-value</div>
-          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
-            <input matInput formControlName="comparisonCustomIntervalValue" type="number" min="0" placeholder="{{ 'widget-config.set' | translate }}">
-          </mat-form-field>
-        </div>
-        <div class="tb-form-panel stroked" formGroupName="xaxisSecond">
-          <div class="tb-form-panel-title" translate>widgets.chart.comparison-x-axis-settings</div>
-          <div class="tb-form-row">
-            <div class="fixed-title-width" translate>widgets.chart.axis-title</div>
-            <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
-              <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
-            </mat-form-field>
-          </div>
-          <div class="tb-form-row">
-            <mat-slide-toggle class="mat-slide" formControlName="showLabels">
-              {{ 'widgets.chart.show-tick-labels' | translate }}
+  @if (chartType === 'graph' || chartType === 'bar') {
+    <div class="tb-form-panel tb-slide-toggle">
+      <div class="tb-form-panel-title" translate>widgets.chart.comparison-settings</div>
+      <mat-expansion-panel class="tb-settings" [expanded]="flotSettingsFormGroup.get('comparisonEnabled').value">
+        <mat-expansion-panel-header class="flex flex-row flex-wrap">
+          <mat-panel-title>
+            <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="comparisonEnabled" (click)="$event.stopPropagation()">
+              {{ 'widgets.chart.enable-comparison' | translate }}
             </mat-slide-toggle>
-          </div>
+          </mat-panel-title>
+          <mat-panel-description class="flex max-w-40% flex-full items-center justify-end xs:!hidden" translate>
+            widget-config.advanced-settings
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+        <ng-template matExpansionPanelContent>
           <div class="tb-form-row space-between">
-            <div>{{ 'widgets.chart.axis-position' | translate }}</div>
+            <div>{{ 'widgets.chart.time-for-comparison' | translate }}</div>
             <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
-              <mat-select formControlName="axisPosition">
-                <mat-option [value]="'top'">
-                  {{ 'widgets.chart.axis-position-top' | translate }}
+              <mat-select formControlName="timeForComparison">
+                <mat-option [value]="'previousInterval'">
+                  {{ 'widgets.chart.time-for-comparison-previous-interval' | translate }}
                 </mat-option>
-                <mat-option [value]="'bottom'">
-                  {{ 'widgets.chart.axis-position-bottom' | translate }}
+                <mat-option [value]="'days'">
+                  {{ 'widgets.chart.time-for-comparison-days' | translate }}
+                </mat-option>
+                <mat-option [value]="'weeks'">
+                  {{ 'widgets.chart.time-for-comparison-weeks' | translate }}
+                </mat-option>
+                <mat-option [value]="'months'">
+                  {{ 'widgets.chart.time-for-comparison-months' | translate }}
+                </mat-option>
+                <mat-option [value]="'years'">
+                  {{ 'widgets.chart.time-for-comparison-years' | translate }}
+                </mat-option>
+                <mat-option [value]="'customInterval'">
+                  {{ 'widgets.chart.time-for-comparison-custom-interval' | translate }}
                 </mat-option>
               </mat-select>
             </mat-form-field>
           </div>
-        </div>
-      </ng-template>
-    </mat-expansion-panel>
-  </div>
-  <div *ngIf="chartType === 'graph' || chartType === 'bar'" class="tb-form-panel tb-slide-toggle">
-    <div class="tb-form-panel-title" translate>widgets.chart.custom-legend-settings</div>
-    <mat-expansion-panel class="tb-settings" [expanded]="flotSettingsFormGroup.get('customLegendEnabled').value">
-      <mat-expansion-panel-header class="flex flex-row flex-wrap">
-        <mat-panel-title>
-          <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="customLegendEnabled" (click)="$event.stopPropagation()">
-            {{ 'widgets.chart.enable-custom-legend' | translate }}
-          </mat-slide-toggle>
-        </mat-panel-title>
-        <mat-panel-description class="flex max-w-40% flex-full items-center justify-end xs:!hidden" translate>
-          widget-config.advanced-settings
-        </mat-panel-description>
-      </mat-expansion-panel-header>
-      <ng-template matExpansionPanelContent>
-        <div class="tb-form-panel stroked">
-          <div class="tb-form-panel-title" translate>widgets.chart.label-keys-list</div>
-          <div class="flex flex-col">
-            <div class="tb-control-list tb-drop-list" cdkDropList cdkDropListOrientation="vertical"
-                 (cdkDropListDropped)="labelDataKeyDrop($event)">
-              <div cdkDrag class="tb-draggable flex flex-col" *ngFor="let labelDataKeyControl of dataKeysListForLabelsFormArray().controls; trackBy: trackByLabelDataKey;
-                 let $index = index; last as isLast;"
-                   [class.pb-2]="!isLast">
-                <tb-label-data-key [formControl]="labelDataKeyControl"
-                                   [expanded]="labelDataKeyControl.new"
-                                   (removeLabelDataKey)="removeLabelDataKey($index)">
-                </tb-label-data-key>
-              </div>
+          <div [class.!hidden]="flotSettingsFormGroup.get('timeForComparison').value !== 'customInterval'" class="tb-form-row space-between">
+            <div translate>widgets.chart.custom-interval-value</div>
+            <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+              <input matInput formControlName="comparisonCustomIntervalValue" type="number" min="0" placeholder="{{ 'widget-config.set' | translate }}">
+            </mat-form-field>
+          </div>
+          <div class="tb-form-panel stroked" formGroupName="xaxisSecond">
+            <div class="tb-form-panel-title" translate>widgets.chart.comparison-x-axis-settings</div>
+            <div class="tb-form-row">
+              <div class="fixed-title-width" translate>widgets.chart.axis-title</div>
+              <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+                <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
+              </mat-form-field>
             </div>
-            <div *ngIf="!dataKeysListForLabelsFormArray().controls.length">
-            <span translate
-                  class="tb-prompt flex items-center justify-center">widgets.chart.no-label-keys</span>
+            <div class="tb-form-row">
+              <mat-slide-toggle class="mat-slide" formControlName="showLabels">
+                {{ 'widgets.chart.show-tick-labels' | translate }}
+              </mat-slide-toggle>
             </div>
-            <div style="padding-top: 16px;">
-              <button mat-raised-button color="primary"
-                      type="button"
-                      [disabled]="!flotSettingsFormGroup.get('customLegendEnabled').value"
-                      (click)="addLabelDataKey()">
-                <span translate>widgets.chart.add-label-key</span>
-              </button>
+            <div class="tb-form-row space-between">
+              <div>{{ 'widgets.chart.axis-position' | translate }}</div>
+              <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
+                <mat-select formControlName="axisPosition">
+                  <mat-option [value]="'top'">
+                    {{ 'widgets.chart.axis-position-top' | translate }}
+                  </mat-option>
+                  <mat-option [value]="'bottom'">
+                    {{ 'widgets.chart.axis-position-bottom' | translate }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
             </div>
           </div>
-        </div>
-      </ng-template>
-    </mat-expansion-panel>
-  </div>
+        </ng-template>
+      </mat-expansion-panel>
+    </div>
+  }
+  @if (chartType === 'graph' || chartType === 'bar') {
+    <div class="tb-form-panel tb-slide-toggle">
+      <div class="tb-form-panel-title" translate>widgets.chart.custom-legend-settings</div>
+      <mat-expansion-panel class="tb-settings" [expanded]="flotSettingsFormGroup.get('customLegendEnabled').value">
+        <mat-expansion-panel-header class="flex flex-row flex-wrap">
+          <mat-panel-title>
+            <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="customLegendEnabled" (click)="$event.stopPropagation()">
+              {{ 'widgets.chart.enable-custom-legend' | translate }}
+            </mat-slide-toggle>
+          </mat-panel-title>
+          <mat-panel-description class="flex max-w-40% flex-full items-center justify-end xs:!hidden" translate>
+            widget-config.advanced-settings
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+        <ng-template matExpansionPanelContent>
+          <div class="tb-form-panel stroked">
+            <div class="tb-form-panel-title" translate>widgets.chart.label-keys-list</div>
+            <div class="flex flex-col">
+              <div class="tb-control-list tb-drop-list" cdkDropList cdkDropListOrientation="vertical"
+                   (cdkDropListDropped)="labelDataKeyDrop($event)">
+                @for (labelDataKeyControl of typedSelectOptions; track trackByLabelDataKey($index, labelDataKeyControl); let isLast = $last) {
+                  <div cdkDrag class="tb-draggable flex flex-col"
+                       [class.pb-2]="!isLast">
+                    <tb-label-data-key [formControl]="labelDataKeyControl"
+                                       [expanded]="labelDataKeyControl.new"
+                                       (removeLabelDataKey)="removeLabelDataKey($index)">
+                    </tb-label-data-key>
+                  </div>
+                }
+              </div>
+              @if (!dataKeysListForLabelsFormArray().controls.length) {
+                <div>
+                  <span translate
+                  class="tb-prompt flex items-center justify-center">widgets.chart.no-label-keys</span>
+                </div>
+              }
+              <div style="padding-top: 16px;">
+                <button mat-raised-button color="primary"
+                        type="button"
+                        [disabled]="!flotSettingsFormGroup.get('customLegendEnabled').value"
+                        (click)="addLabelDataKey()">
+                  <span translate>widgets.chart.add-label-key</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </ng-template>
+      </mat-expansion-panel>
+    </div>
+  }
 </ng-container>
