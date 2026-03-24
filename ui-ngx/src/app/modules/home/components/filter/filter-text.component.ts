@@ -17,7 +17,7 @@
 import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import { ControlValueAccessor, UntypedFormBuilder, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
-import { KeyFilter, keyFiltersToText } from '@shared/models/query/query.models';
+import { ComplexOperation, KeyFilter, keyFiltersToText } from '@shared/models/query/query.models';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
@@ -58,6 +58,9 @@ export class FilterTextComponent implements ControlValueAccessor, OnInit {
   @Input()
   nowrap = false;
 
+  @Input()
+  operation: ComplexOperation = ComplexOperation.AND;
+
   requiredClass = false;
 
   public filterText: string;
@@ -91,7 +94,7 @@ export class FilterTextComponent implements ControlValueAccessor, OnInit {
   private updateFilterText(value: Array<KeyFilter>) {
     this.requiredClass = false;
     if (value && value.length) {
-      this.filterText = keyFiltersToText(this.translate, this.datePipe, value);
+      this.filterText = keyFiltersToText(this.translate, this.datePipe, value, this.operation);
     } else {
       if (this.required && !this.disabled) {
         this.filterText = this.addFilterPrompt;

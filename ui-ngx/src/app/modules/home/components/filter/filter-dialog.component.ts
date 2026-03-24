@@ -32,7 +32,8 @@ import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import { Filter, Filters } from '@shared/models/query/query.models';
+import { ComplexOperation, complexOperationTranslationMap, Filter, Filters } from '@shared/models/query/query.models';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
 
 export interface FilterDialogData {
   isAdd: boolean;
@@ -58,6 +59,10 @@ export class FilterDialogComponent extends DialogComponent<FilterDialogComponent
   filterFormGroup: UntypedFormGroup;
 
   submitted = false;
+
+  ComplexOperation = ComplexOperation;
+  complexOperationTranslationMap = complexOperationTranslationMap;
+  allowKeyFiltersOrConditions: boolean;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -87,11 +92,13 @@ export class FilterDialogComponent extends DialogComponent<FilterDialogComponent
     } else {
       this.filter = data.filter;
     }
+    this.allowKeyFiltersOrConditions = getCurrentAuthState(this.store).allowKeyFiltersOrConditions !== false;
 
     this.filterFormGroup = this.fb.group({
       filter: [this.filter.filter, [this.validateDuplicateFilterName(), Validators.required]],
       editable: [this.filter.editable],
-      keyFilters: [this.filter.keyFilters, Validators.required]
+      keyFilters: [this.filter.keyFilters, Validators.required],
+      keyFiltersOperation: [this.filter.keyFiltersOperation ?? ComplexOperation.AND]
     });
   }
 
@@ -130,6 +137,7 @@ export class FilterDialogComponent extends DialogComponent<FilterDialogComponent
     this.filter.filter = this.filterFormGroup.get('filter').value.trim();
     this.filter.editable = this.filterFormGroup.get('editable').value;
     this.filter.keyFilters = this.filterFormGroup.get('keyFilters').value;
+    this.filter.keyFiltersOperation = this.filterFormGroup.get('keyFiltersOperation').value;
     if (this.isAdd) {
       this.filter.id = this.utils.guid();
     }

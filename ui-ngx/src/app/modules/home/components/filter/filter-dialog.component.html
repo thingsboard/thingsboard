@@ -48,8 +48,19 @@
             </mat-slide-toggle>
           </section>
         </div>
+        <div class="flex flex-row items-center justify-between" style="margin-top: 8px;">
+          <div class="tb-form-panel-title" translate>filter.key-filters</div>
+          <tb-toggle-select formControlName="keyFiltersOperation"
+                            [disabled]="!allowKeyFiltersOrConditions"
+                            [matTooltip]="!allowKeyFiltersOrConditions ? ('filter.or-conditions-disabled' | translate) : ''"
+                            selectMediaBreakpoint="xs">
+            <tb-toggle-option [value]="ComplexOperation.AND">{{ complexOperationTranslationMap.get(ComplexOperation.AND) | translate }}</tb-toggle-option>
+            <tb-toggle-option [value]="ComplexOperation.OR">{{ complexOperationTranslationMap.get(ComplexOperation.OR) | translate }}</tb-toggle-option>
+          </tb-toggle-select>
+        </div>
         <tb-key-filter-list
-          formControlName="keyFilters">
+          formControlName="keyFilters"
+          [operation]="filterFormGroup.get('keyFiltersOperation').value">
         </tb-key-filter-list>
       </div>
     </fieldset>
