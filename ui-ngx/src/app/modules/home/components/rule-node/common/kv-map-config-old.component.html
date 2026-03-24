@@ -16,13 +16,18 @@
 
 -->
 <section class="tb-kv-map-config flex flex-col" [formGroup]="kvListFormGroup">
-  <div class="header flex flex-1 flex-row gap-2">
-    <span class="cell tb-required flex-1">{{ keyText | translate }}</span>
-    <span class="cell tb-required flex-1">{{ valText | translate }}</span>
-    <span [class.!hidden]="disabled" style="width: 52px;" innerHTML="&nbsp"></span>
-  </div>
+  @if (description) {
+    <div class="tb-form-hint tb-primary-fill mb-4" [innerHTML]="description | translate | safe: 'html'"></div>
+  }
+  @if (keyValsFormArray().controls.length || !emptyText) {
+    <div class="header flex flex-1 flex-row gap-2" >
+      <span class="cell tb-required flex-1">{{ keyText | translate }}</span>
+      <span class="cell tb-required flex-1">{{ valText | translate }}</span>
+      <span [class.!hidden]="disabled" style="width: 52px;" innerHTML="&nbsp"></span>
+    </div>
+  }
   <div class="body">
-    @for (keyValControl of keyValsFormArray().controls; track keyValControl) {
+    @for (keyValControl of keyValsFormArray().controls; track $index) {
       <div class="row flex flex-row items-center justify-start gap-2"
            formArrayName="keyVals"
            >
@@ -54,6 +59,10 @@
           <mat-icon>close</mat-icon>
         </button>
       </div>
+    } @empty {
+      @if (emptyText) {
+        <div class="tb-prompt h-10 flex items-center justify-center">{{emptyText | translate}}</div>
+      }
     }
     @if (hintText) {
       <div class="tb-hint" [innerHTML]="hintText | translate | safe: 'html'"></div>

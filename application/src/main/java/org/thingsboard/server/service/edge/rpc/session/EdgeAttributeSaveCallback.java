@@ -13,23 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.edge.rpc;
+package org.thingsboard.server.service.edge.rpc.session;
 
 import com.google.common.util.concurrent.FutureCallback;
 import jakarta.annotation.Nullable;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 @Slf4j
-@AllArgsConstructor
-public class AttributeSaveCallback implements FutureCallback<Void> {
+public class EdgeAttributeSaveCallback implements FutureCallback<Void> {
 
     private final TenantId tenantId;
     private final EdgeId edgeId;
     private final String key;
     private final Object value;
+
+    public EdgeAttributeSaveCallback(TenantId tenantId, EdgeId edgeId, String key, Object value) {
+        this.tenantId = tenantId;
+        this.edgeId = edgeId;
+        this.key = key;
+        this.value = value;
+    }
 
     @Override
     public void onSuccess(@Nullable Void result) {
@@ -40,4 +45,5 @@ public class AttributeSaveCallback implements FutureCallback<Void> {
     public void onFailure(Throwable t) {
         log.warn("[{}][{}] Failed to update attribute [{}] with value [{}]", tenantId, edgeId, key, value, t);
     }
+
 }
