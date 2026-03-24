@@ -100,16 +100,12 @@ export class FilterDialogComponent extends DialogComponent<FilterDialogComponent
       keyFilters: [this.filter.keyFilters, Validators.required],
       keyFiltersOperation: [this.filter.keyFiltersOperation ?? ComplexOperation.AND]
     });
-    if (!this.allowKeyFiltersOrConditions && this.filter.keyFiltersOperation === ComplexOperation.OR) {
-      this.filterFormGroup.get('keyFiltersOperation').setValue(ComplexOperation.AND);
-      this.filterFormGroup.markAsDirty();
-    }
     if (!this.allowKeyFiltersOrConditions) {
-      this.filterFormGroup.get('keyFiltersOperation').valueChanges.subscribe(value => {
-        if (value === ComplexOperation.OR) {
-          this.filterFormGroup.get('keyFiltersOperation').setValue(ComplexOperation.AND);
-        }
-      });
+      if (this.filter.keyFiltersOperation === ComplexOperation.OR) {
+        this.filterFormGroup.get('keyFiltersOperation').setValue(ComplexOperation.AND);
+        this.filterFormGroup.markAsDirty();
+      }
+      this.filterFormGroup.get('keyFiltersOperation').disable();
     }
   }
 
