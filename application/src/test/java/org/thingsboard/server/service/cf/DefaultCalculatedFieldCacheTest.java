@@ -302,25 +302,6 @@ public class DefaultCalculatedFieldCacheTest {
         assertThat(cache.getCalculatedField(cf.getId())).isEqualTo(updatedCf);
     }
 
-    // --- Helpers ---
-
-    private void stubDeviceOwner(TenantId tenantId, DeviceId deviceId, EntityId ownerId) {
-        Device device = new Device();
-        device.setId(deviceId);
-        device.setTenantId(tenantId);
-        if (ownerId instanceof CustomerId customerId) {
-            device.setCustomerId(customerId);
-        }
-        // If ownerId is a TenantId, leaving customerId null means getOwnerId() returns tenantId
-        when(deviceService.findDeviceById(tenantId, deviceId)).thenReturn(device);
-        // Stubs for getOwnedEntities iteration (empty pages — device is added explicitly)
-        when(deviceService.findDeviceInfosByFilter(any(), any())).thenReturn(PageData.emptyPageData());
-        when(assetService.findAssetsByTenantIdAndCustomerId(any(), any(), any())).thenReturn(PageData.emptyPageData());
-        if (ownerId instanceof TenantId) {
-            when(customerService.findCustomersByTenantId(any(), any())).thenReturn(PageData.emptyPageData());
-        }
-    }
-
     private CalculatedField addCfToCache(TenantId tenantId, EntityId entityId) {
         CalculatedFieldId cfId = new CalculatedFieldId(UUID.randomUUID());
         CalculatedField cf = buildCalculatedField(cfId, tenantId, entityId, simpleCfConfig());

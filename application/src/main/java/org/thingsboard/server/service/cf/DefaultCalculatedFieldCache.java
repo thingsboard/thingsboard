@@ -228,7 +228,9 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
                 links.forEach(link -> removedLinkEntityIds.add(link.getEntityId()));
             }
             calculatedFieldsCtx.remove(cfId);
-            removedCfEntityIds.add(cf.getEntityId());
+            if (cf != null) {
+                removedCfEntityIds.add(cf.getEntityId());
+            }
         });
         removedCfEntityIds.forEach(entityId -> {
             entityIdCalculatedFields.compute(entityId, (k, cfs) -> {
