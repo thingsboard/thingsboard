@@ -122,6 +122,7 @@ export class AlarmDataSubscription {
         entityFilter: this.alarmDataSubscriptionOptions.entityFilter,
         pageLink: deepClone(this.alarmDataSubscriptionOptions.pageLink),
         keyFilters,
+        keyFiltersOperation: this.alarmDataSubscriptionOptions.keyFiltersOperation,
         alarmFields,
         entityFields,
         latestValues

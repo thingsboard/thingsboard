@@ -372,6 +372,7 @@ export class EntityDataSubscription {
             entityFilter: this.entityDataSubscriptionOptions.entityFilter,
             pageLink: this.entityDataSubscriptionOptions.pageLink,
             keyFilters,
+            keyFiltersOperation: this.entityDataSubscriptionOptions.keyFiltersOperation,
             entityFields,
             latestValues: this.latestValues
           };
@@ -496,7 +497,8 @@ export class EntityDataSubscription {
           }
           this.countCommand.query = {
             entityFilter: this.entityDataSubscriptionOptions.entityFilter,
-            keyFilters
+            keyFilters,
+            keyFiltersOperation: this.entityDataSubscriptionOptions.keyFiltersOperation
           };
           this.subscriber.subscriptionCommands.push(this.countCommand);
 
@@ -571,7 +573,8 @@ export class EntityDataSubscription {
           }
           this.alarmCountCommand.query = {
             entityFilter: this.entityDataSubscriptionOptions.entityFilter,
-            keyFilters
+            keyFilters,
+            keyFiltersOperation: this.entityDataSubscriptionOptions.keyFiltersOperation
           };
           if (this.entityDataSubscriptionOptions.alarmFilter) {
             this.alarmCountCommand.query = {...this.alarmCountCommand.query, ...this.entityDataSubscriptionOptions.alarmFilter};
