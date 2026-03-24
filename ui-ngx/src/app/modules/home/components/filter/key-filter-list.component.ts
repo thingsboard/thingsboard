@@ -30,6 +30,8 @@ import {
 } from '@angular/forms';
 import { Observable, Subject } from 'rxjs';
 import {
+  ComplexOperation,
+  complexOperationTranslationMap,
   EntityKeyType,
   entityKeyTypeTranslationMap,
   KeyFilterInfo,
@@ -70,6 +72,10 @@ export class KeyFilterListComponent implements ControlValueAccessor, Validator, 
   @Input() telemetryKeysOnly = false;
 
   @Input() entityId: EntityId;
+
+  @Input() operation: ComplexOperation = ComplexOperation.AND;
+
+  complexOperationTranslationMap = complexOperationTranslationMap;
 
   keyFilterListFormGroup: UntypedFormGroup;
 
