@@ -23,7 +23,7 @@ import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { baseDetailsPageByEntityType, EntityType } from '@shared/models/entity-type.models';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
-import { serverErrorCodesTranslations } from '@shared/models/constants';
+import { httpStatusMessageMap, serverErrorCodesTranslations } from '@shared/models/constants';
 import { SubscriptionEntityInfo } from '@core/api/widget-api.models';
 import {
   CompiledTbFunction,
@@ -910,11 +910,13 @@ export function parseHttpErrorMessage(errorResponse: HttpErrorResponse,
   } else {
     error = errorResponse.error;
   }
-  if (error && !error.message) {
-    errorMessage = prepareMessageFromData(error);
-  } else if (error && error.message) {
+  if (error && error.message) {
     errorMessage = error.message;
     timeout = error.timeout ? error.timeout : 0;
+  } else if (isProxyError(errorResponse)) {
+    errorMessage = httpStatusMessageMap.get(errorResponse.status);
+  } else if (error) {
+    errorMessage = prepareMessageFromData(error);
   } else {
     errorMessage = `Unhandled error code ${error ? error.status : '\'Unknown\''}`;
   }
@@ -949,6 +951,14 @@ function prepareMessageFromData(data): string {
   } else {
     return data;
   }
+}
+
+function isProxyError(errorResponse: HttpErrorResponse): boolean {
+  if (!httpStatusMessageMap.has(errorResponse.status)) {
+    return false;
+  }
+  const error = errorResponse.error;
+  return !error || typeof error === 'string' || (typeof error === 'object' && !error.message);
 }
 
 export const genNextLabel = (name: string, datasources: Datasource[]): string => {
