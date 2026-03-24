@@ -29,14 +29,14 @@ import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 
-import java.util.HashSet;
-import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -154,19 +154,12 @@ public class DefaultTbDeviceProfileCache implements TbDeviceProfileCache {
             case TENANT:
                 if (event.getEvent() == ComponentLifecycleEvent.DELETED) {
                     TenantId tenantId = event.getTenantId();
-                    var removedProfileIds = new HashSet<DeviceProfileId>();
-                    for (Map.Entry<DeviceProfileId, DeviceProfile> entry : deviceProfilesMap.entrySet()) {
-                        if (entry.getValue().getTenantId().equals(tenantId)) {
-                            deviceProfilesMap.remove(entry.getKey());
-                            removedProfileIds.add(entry.getKey());
-                            log.debug("[{}] evict device profile from cache: {}", entry.getKey(), entry.getValue());
-                        }
-                    }
-                    for (Map.Entry<DeviceId, DeviceProfileId> entry : devicesMap.entrySet()) {
-                        if (removedProfileIds.contains(entry.getValue())) {
-                            devicesMap.remove(entry.getKey());
-                        }
-                    }
+                    Set<DeviceProfileId> toRemove = deviceProfilesMap.values().stream()
+                            .filter(deviceProfile -> deviceProfile.getTenantId().equals(tenantId))
+                            .map(DeviceProfile::getId)
+                            .collect(Collectors.toSet());
+                    deviceProfilesMap.keySet().removeAll(toRemove);
+                    devicesMap.entrySet().removeIf(entry -> toRemove.contains(entry.getValue()));
                     profileListeners.remove(tenantId);
                     deviceProfileListeners.remove(tenantId);
                 }

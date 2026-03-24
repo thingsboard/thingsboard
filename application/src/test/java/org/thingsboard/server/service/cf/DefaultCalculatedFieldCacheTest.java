@@ -26,9 +26,11 @@ import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -149,6 +151,112 @@ public class DefaultCalculatedFieldCacheTest {
 
         assertThat(cache.getCalculatedField(cf.getId())).isNull();
         assertThat(cache.getCalculatedFieldsByEntityId(asset)).isEmpty();
+    }
+
+    // --- DeviceProfile/AssetProfile deletion tests ---
+
+    @Test
+    public void onComponentLifecycleEvent_deviceProfileDeleted_evictsCfsForThatProfile() {
+        TenantId tenant = new TenantId(UUID.randomUUID());
+        DeviceProfileId profileId = new DeviceProfileId(UUID.randomUUID());
+        CalculatedField cf = addCfToCache(tenant, profileId);
+
+        cache.onComponentLifecycleEvent(new ComponentLifecycleMsg(tenant, profileId, ComponentLifecycleEvent.DELETED));
+
+        assertThat(cache.getCalculatedField(cf.getId())).isNull();
+        assertThat(cache.getCalculatedFieldsByEntityId(profileId)).isEmpty();
+    }
+
+    @Test
+    public void onComponentLifecycleEvent_deviceProfileDeleted_removesLinksForLinkedEntities() {
+        TenantId tenant = new TenantId(UUID.randomUUID());
+        DeviceProfileId profileId = new DeviceProfileId(UUID.randomUUID());
+        DeviceId linkedDevice = new DeviceId(UUID.randomUUID());
+        addCfToCache(tenant, profileId, linkedDevice);
+
+        cache.onComponentLifecycleEvent(new ComponentLifecycleMsg(tenant, profileId, ComponentLifecycleEvent.DELETED));
+
+        assertThat(cache.getCalculatedFieldLinksByEntityId(linkedDevice)).isEmpty();
+    }
+
+    @Test
+    public void onComponentLifecycleEvent_deviceProfileDeleted_doesNotEvictOtherProfilesCfs() {
+        TenantId tenant = new TenantId(UUID.randomUUID());
+        DeviceProfileId profile1 = new DeviceProfileId(UUID.randomUUID());
+        DeviceProfileId profile2 = new DeviceProfileId(UUID.randomUUID());
+        CalculatedField cf1 = addCfToCache(tenant, profile1);
+        CalculatedField cf2 = addCfToCache(tenant, profile2);
+
+        cache.onComponentLifecycleEvent(new ComponentLifecycleMsg(tenant, profile1, ComponentLifecycleEvent.DELETED));
+
+        assertThat(cache.getCalculatedField(cf1.getId())).isNull();
+        assertThat(cache.getCalculatedFieldsByEntityId(profile1)).isEmpty();
+        assertThat(cache.getCalculatedField(cf2.getId())).isEqualTo(cf2);
+        assertThat(cache.getCalculatedFieldsByEntityId(profile2)).containsExactly(cf2);
+    }
+
+    @Test
+    public void onComponentLifecycleEvent_deviceProfileUpdated_doesNotEvictCfs() {
+        TenantId tenant = new TenantId(UUID.randomUUID());
+        DeviceProfileId profileId = new DeviceProfileId(UUID.randomUUID());
+        CalculatedField cf = addCfToCache(tenant, profileId);
+
+        cache.onComponentLifecycleEvent(new ComponentLifecycleMsg(tenant, profileId, ComponentLifecycleEvent.UPDATED));
+
+        assertThat(cache.getCalculatedField(cf.getId())).isEqualTo(cf);
+        assertThat(cache.getCalculatedFieldsByEntityId(profileId)).containsExactly(cf);
+    }
+
+    @Test
+    public void onComponentLifecycleEvent_assetProfileDeleted_evictsCfsForThatProfile() {
+        TenantId tenant = new TenantId(UUID.randomUUID());
+        AssetProfileId profileId = new AssetProfileId(UUID.randomUUID());
+        CalculatedField cf = addCfToCache(tenant, profileId);
+
+        cache.onComponentLifecycleEvent(new ComponentLifecycleMsg(tenant, profileId, ComponentLifecycleEvent.DELETED));
+
+        assertThat(cache.getCalculatedField(cf.getId())).isNull();
+        assertThat(cache.getCalculatedFieldsByEntityId(profileId)).isEmpty();
+    }
+
+    @Test
+    public void onComponentLifecycleEvent_assetProfileDeleted_removesLinksForLinkedEntities() {
+        TenantId tenant = new TenantId(UUID.randomUUID());
+        AssetProfileId profileId = new AssetProfileId(UUID.randomUUID());
+        AssetId linkedAsset = new AssetId(UUID.randomUUID());
+        addCfToCache(tenant, profileId, linkedAsset);
+
+        cache.onComponentLifecycleEvent(new ComponentLifecycleMsg(tenant, profileId, ComponentLifecycleEvent.DELETED));
+
+        assertThat(cache.getCalculatedFieldLinksByEntityId(linkedAsset)).isEmpty();
+    }
+
+    @Test
+    public void onComponentLifecycleEvent_assetProfileDeleted_doesNotEvictOtherProfilesCfs() {
+        TenantId tenant = new TenantId(UUID.randomUUID());
+        AssetProfileId profile1 = new AssetProfileId(UUID.randomUUID());
+        AssetProfileId profile2 = new AssetProfileId(UUID.randomUUID());
+        CalculatedField cf1 = addCfToCache(tenant, profile1);
+        CalculatedField cf2 = addCfToCache(tenant, profile2);
+
+        cache.onComponentLifecycleEvent(new ComponentLifecycleMsg(tenant, profile1, ComponentLifecycleEvent.DELETED));
+
+        assertThat(cache.getCalculatedField(cf1.getId())).isNull();
+        assertThat(cache.getCalculatedFieldsByEntityId(profile1)).isEmpty();
+        assertThat(cache.getCalculatedField(cf2.getId())).isEqualTo(cf2);
+        assertThat(cache.getCalculatedFieldsByEntityId(profile2)).containsExactly(cf2);
+    }
+
+    @Test
+    public void onComponentLifecycleEvent_assetProfileUpdated_doesNotEvictCfs() {
+        TenantId tenant = new TenantId(UUID.randomUUID());
+        AssetProfileId profileId = new AssetProfileId(UUID.randomUUID());
+        CalculatedField cf = addCfToCache(tenant, profileId);
+
+        cache.onComponentLifecycleEvent(new ComponentLifecycleMsg(tenant, profileId, ComponentLifecycleEvent.UPDATED));
+
+        assertThat(cache.getCalculatedField(cf.getId())).isEqualTo(cf);
+        assertThat(cache.getCalculatedFieldsByEntityId(profileId)).containsExactly(cf);
     }
 
     // --- CalculatedField lifecycle tests ---

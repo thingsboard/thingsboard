@@ -25,13 +25,13 @@ import org.springframework.util.ConcurrentReferenceHashMap;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
-import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
-import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageDataIterable;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.queue.util.AfterStartUp;
@@ -46,6 +46,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -214,41 +215,38 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
     }
 
     private void evictTenantCfs(TenantId tenantId) {
-        var removedCfIds = new HashSet<CalculatedFieldId>();
         var removedCfEntityIds = new HashSet<EntityId>();
         var removedLinkEntityIds = new HashSet<EntityId>();
-        for (Map.Entry<CalculatedFieldId, CalculatedField> entry : calculatedFields.entrySet()) {
-            CalculatedFieldId cfId = entry.getKey();
-            CalculatedField cf = entry.getValue();
-            if (cf.getTenantId().equals(tenantId)) {
-                calculatedFields.remove(cfId);
-                List<CalculatedFieldLink> links = calculatedFieldLinks.remove(cfId);
-                if (links != null) {
-                    links.forEach(link -> removedLinkEntityIds.add(link.getEntityId()));
-                }
-                calculatedFieldsCtx.remove(cfId);
-                removedCfIds.add(cfId);
-                removedCfEntityIds.add(cf.getEntityId());
-                log.debug("[{}] evict calculated field from cache on tenant deletion: {}", cfId, cf);
+        var toRemove = calculatedFields.entrySet().stream()
+                .filter(e -> e.getValue().getTenantId().equals(tenantId))
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toSet());
+        toRemove.forEach(cfId -> {
+            CalculatedField cf = calculatedFields.remove(cfId);
+            List<CalculatedFieldLink> links = calculatedFieldLinks.remove(cfId);
+            if (links != null) {
+                links.forEach(link -> removedLinkEntityIds.add(link.getEntityId()));
             }
-        }
+            calculatedFieldsCtx.remove(cfId);
+            removedCfEntityIds.add(cf.getEntityId());
+        });
         removedCfEntityIds.forEach(entityId -> {
-            List<CalculatedField> cfs = entityIdCalculatedFields.get(entityId);
-            if (cfs != null) {
-                cfs.removeIf(cf -> removedCfIds.contains(cf.getId()));
-                if (cfs.isEmpty()) {
-                    entityIdCalculatedFields.remove(entityId);
+            entityIdCalculatedFields.compute(entityId, (k, cfs) -> {
+                if (cfs != null) {
+                    cfs.removeIf(cf -> toRemove.contains(cf.getId()));
+                    return cfs.isEmpty() ? null : cfs;
                 }
-            }
+                return null;
+            });
         });
         removedLinkEntityIds.forEach(entityId -> {
-            List<CalculatedFieldLink> entityLinks = entityIdCalculatedFieldLinks.get(entityId);
-            if (entityLinks != null) {
-                entityLinks.removeIf(link -> removedCfIds.contains(link.getCalculatedFieldId()));
-                if (entityLinks.isEmpty()) {
-                    entityIdCalculatedFieldLinks.remove(entityId);
+            entityIdCalculatedFieldLinks.compute(entityId, ((entityId1, links) -> {
+                if (links != null) {
+                    links.removeIf(link -> toRemove.contains(link.getCalculatedFieldId()));
+                    return links.isEmpty() ? null : links;
                 }
-            }
+                return null;
+            }));
         });
     }
 
