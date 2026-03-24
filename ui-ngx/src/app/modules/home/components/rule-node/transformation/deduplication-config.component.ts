@@ -77,8 +77,4 @@ export class DeduplicationConfigComponent extends RuleNodeConfigurationComponent
   protected validatorTriggers(): string[] {
     return ['strategy'];
   }
-
-  getDeduplicationStrategiesTranslations(strategy: string) {
-    return this.deduplicationStrategiesTranslations.get(strategy as FetchMode);
-  }
 }

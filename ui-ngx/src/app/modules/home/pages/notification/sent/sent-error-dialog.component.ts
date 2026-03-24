@@ -50,7 +50,8 @@ export class SentErrorDialogComponent extends DialogComponent<SentErrorDialogCom
     super(store, router, dialogRef);
 
     this.errorStats = data.notificationRequest.stats.errors;
-    this.errorStatEntries = (Object.entries(this.errorStats) as Array<[NotificationDeliveryMethod, { [k: string]: string }]>).map(([key, value]) => ({ key, value }));  }
+    this.errorStatEntries = (Object.entries(this.errorStats) as Array<[NotificationDeliveryMethod, { [k: string]: string }]>).map(([key, value]) => ({ key, value }));
+  }
 
   cancel(): void {
     this.dialogRef.close(null);

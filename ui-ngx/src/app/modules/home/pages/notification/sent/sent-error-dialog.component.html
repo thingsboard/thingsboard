@@ -29,7 +29,7 @@
     <div>
       <h6>{{ NotificationDeliveryMethodInfoMap.get(errorStat.key).name | translate }}</h6>
       <table class="tb-table-list">
-        @for (error of errorStatEntries; track error) {
+        @for (error of (errorStat.value | keyvalue); track error) {
           <tr>
             <td>
               <mat-chip>{{ error.key }}</mat-chip>

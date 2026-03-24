@@ -99,8 +99,4 @@ export class DeleteRelationConfigComponent extends RuleNodeConfigurationComponen
     configuration.entityNamePattern = configuration.entityNamePattern ? configuration.entityNamePattern.trim() : null;
     return configuration;
   }
-
-  getDirectionTypeTranslations(type: string) {
-    return this.directionTypeTranslations.get(type as EntitySearchDirection);
-  }
 }

@@ -105,8 +105,4 @@ export class CreateRelationConfigComponent extends RuleNodeConfigurationComponen
     configuration.entityTypePattern = configuration.entityTypePattern ? configuration.entityTypePattern.trim() : null;
     return configuration;
   }
-
-  getDirectionTypeTranslations(type: string) {
-    return this.directionTypeTranslations.get(type as EntitySearchDirection);
-  }
 }
