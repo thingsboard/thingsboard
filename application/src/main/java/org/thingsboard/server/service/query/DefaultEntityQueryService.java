@@ -18,7 +18,7 @@ package org.thingsboard.server.service.query;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import lombok.Setter;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,7 +45,6 @@ import org.thingsboard.server.common.data.query.AvailableEntityKeysV2;
 import org.thingsboard.server.common.data.query.AvailableEntityKeysV2.KeyInfo;
 import org.thingsboard.server.common.data.query.AvailableEntityKeysV2.KeySample;
 import org.thingsboard.server.common.data.query.ComplexFilterPredicate;
-import org.thingsboard.server.common.data.query.ComplexOperation;
 import org.thingsboard.server.common.data.query.DynamicValue;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityData;
@@ -95,10 +94,6 @@ public class DefaultEntityQueryService implements EntityQueryService {
     @Value("${server.ws.max_entities_per_alarm_subscription:1000}")
     private int maxEntitiesPerAlarmSubscription;
 
-    @Setter
-    @Value("${sql.query.key-filters-or-conditions.enabled:true}")
-    private boolean keyFiltersOrConditionsEnabled;
-
     @Autowired
     private DbCallbackExecutorService dbCallbackExecutor;
 
@@ -110,13 +105,13 @@ public class DefaultEntityQueryService implements EntityQueryService {
 
     @Override
     public long countEntitiesByQuery(SecurityUser securityUser, EntityCountQuery query) {
-        validateKeyFiltersOperation(query);
+
         return entityService.countEntitiesByQuery(securityUser.getTenantId(), securityUser.getCustomerId(), query);
     }
 
     @Override
     public PageData<EntityData> findEntityDataByQuery(SecurityUser securityUser, EntityDataQuery query) {
-        validateKeyFiltersOperation(query);
+
         if (query.getKeyFilters() != null) {
             resolveDynamicValuesInPredicates(
                     query.getKeyFilters().stream()
@@ -186,7 +181,7 @@ public class DefaultEntityQueryService implements EntityQueryService {
 
     @Override
     public PageData<AlarmData> findAlarmDataByQuery(SecurityUser securityUser, AlarmDataQuery query) {
-        validateKeyFiltersOperation(query);
+
         EntityDataQuery entityDataQuery = this.buildEntityDataQuery(query);
         PageData<EntityData> entities = entityService.findEntityDataByQuery(securityUser.getTenantId(),
                 securityUser.getCustomerId(), entityDataQuery);
@@ -213,7 +208,7 @@ public class DefaultEntityQueryService implements EntityQueryService {
 
     @Override
     public long countAlarmsByQuery(SecurityUser securityUser, AlarmCountQuery query) {
-        validateKeyFiltersOperation(query);
+
         if (query.getEntityFilter() != null) {
             EntityDataQuery entityDataQuery = this.buildEntityDataQuery(query);
             PageData<EntityData> entities = entityService.findEntityDataByQuery(securityUser.getTenantId(),
@@ -246,11 +241,7 @@ public class DefaultEntityQueryService implements EntityQueryService {
         return new EntityDataQuery(query.getEntityFilter(), edpl, query.getEntityFields(), query.getLatestValues(), query.getKeyFilters(), query.getKeyFiltersOperationOrDefault());
     }
 
-    private void validateKeyFiltersOperation(EntityCountQuery query) {
-        if (!keyFiltersOrConditionsEnabled && query.getKeyFiltersOperation() == ComplexOperation.OR) {
-            throw new IllegalArgumentException("OR conditions between key filters are disabled");
-        }
-    }
+
 
     @Override
     public ListenableFuture<AvailableEntityKeys> getKeysByQuery(SecurityUser securityUser, TenantId tenantId, EntityDataQuery query,

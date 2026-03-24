@@ -94,12 +94,21 @@ export class FilterDialogComponent extends DialogComponent<FilterDialogComponent
     }
     this.allowKeyFiltersOrConditions = getCurrentAuthState(this.store).allowKeyFiltersOrConditions !== false;
 
+    const initialOperation = !this.allowKeyFiltersOrConditions ? ComplexOperation.AND
+      : (this.filter.keyFiltersOperation ?? ComplexOperation.AND);
     this.filterFormGroup = this.fb.group({
       filter: [this.filter.filter, [this.validateDuplicateFilterName(), Validators.required]],
       editable: [this.filter.editable],
       keyFilters: [this.filter.keyFilters, Validators.required],
-      keyFiltersOperation: [this.filter.keyFiltersOperation ?? ComplexOperation.AND]
+      keyFiltersOperation: [initialOperation]
     });
+    if (!this.allowKeyFiltersOrConditions) {
+      this.filterFormGroup.get('keyFiltersOperation').valueChanges.subscribe(value => {
+        if (value === ComplexOperation.OR) {
+          this.filterFormGroup.get('keyFiltersOperation').setValue(ComplexOperation.AND, {emitEvent: false});
+        }
+      });
+    }
   }
 
   validateDuplicateFilterName(): ValidatorFn {

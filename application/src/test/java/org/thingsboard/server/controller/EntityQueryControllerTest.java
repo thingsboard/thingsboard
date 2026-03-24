@@ -90,6 +90,7 @@ import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
+import org.thingsboard.server.dao.entity.BaseEntityService;
 import org.thingsboard.server.dao.queue.QueueStatsService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.edqs.util.EdqsRocksDb;
@@ -127,6 +128,8 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
     private QueueStatsService queueStatsService;
     @Autowired
     private DefaultEntityQueryService entityQueryService;
+    @Autowired
+    private BaseEntityService baseEntityService;
 
     @MockitoBean
     private EdqsRocksDb edqsRocksDb;
@@ -2495,7 +2498,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
     public void testOrKeyFiltersOperationRejectedWhenDisabled() throws Exception {
         loginTenantAdmin();
 
-        entityQueryService.setKeyFiltersOrConditionsEnabled(false);
+        baseEntityService.setKeyFiltersOrConditionsEnabled(false);
         try {
             DeviceTypeFilter filter = new DeviceTypeFilter();
             filter.setDeviceTypes(List.of("default"));
@@ -2516,7 +2519,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
             EntityCountQuery explicitAndQuery = new EntityCountQuery(filter, Collections.emptyList(), ComplexOperation.AND);
             doPost("/api/entitiesQuery/count", explicitAndQuery).andExpect(status().isOk());
         } finally {
-            entityQueryService.setKeyFiltersOrConditionsEnabled(true);
+            baseEntityService.setKeyFiltersOrConditionsEnabled(true);
         }
     }
 

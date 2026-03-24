@@ -51,7 +51,6 @@
         <div class="flex flex-row items-center justify-between" style="margin-top: 8px;">
           <div class="tb-form-panel-title" translate>filter.key-filters</div>
           <tb-toggle-select formControlName="keyFiltersOperation"
-                            [disabled]="!allowKeyFiltersOrConditions"
                             [matTooltip]="!allowKeyFiltersOrConditions ? ('filter.or-conditions-disabled' | translate) : ''"
                             selectMediaBreakpoint="xs">
             <tb-toggle-option [value]="ComplexOperation.AND">{{ complexOperationTranslationMap.get(ComplexOperation.AND) | translate }}</tb-toggle-option>
