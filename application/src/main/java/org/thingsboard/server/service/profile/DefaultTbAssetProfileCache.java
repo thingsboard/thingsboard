@@ -29,14 +29,14 @@ import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
 
-import java.util.HashSet;
-import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -154,19 +154,12 @@ public class DefaultTbAssetProfileCache implements TbAssetProfileCache {
             case TENANT:
                 if (event.getEvent() == ComponentLifecycleEvent.DELETED) {
                     TenantId tenantId = event.getTenantId();
-                    var removedProfileIds = new HashSet<AssetProfileId>();
-                    for (Map.Entry<AssetProfileId, AssetProfile> entry : assetProfilesMap.entrySet()) {
-                        if (entry.getValue().getTenantId().equals(tenantId)) {
-                            assetProfilesMap.remove(entry.getKey());
-                            removedProfileIds.add(entry.getKey());
-                            log.debug("[{}] evict asset profile from cache: {}", entry.getKey(), entry.getValue());
-                        }
-                    }
-                    for (Map.Entry<AssetId, AssetProfileId> entry : assetsMap.entrySet()) {
-                        if (removedProfileIds.contains(entry.getValue())) {
-                            assetsMap.remove(entry.getKey());
-                        }
-                    }
+                    Set<AssetProfileId> toRemove = assetProfilesMap.values().stream()
+                            .filter(assetProfile -> assetProfile.getTenantId().equals(tenantId))
+                            .map(AssetProfile::getId)
+                            .collect(Collectors.toSet());
+                    assetProfilesMap.keySet().removeAll(toRemove);
+                    assetsMap.entrySet().removeIf(entry -> toRemove.contains(entry.getValue()));
                     profileListeners.remove(tenantId);
                     assetProfileListeners.remove(tenantId);
                 }

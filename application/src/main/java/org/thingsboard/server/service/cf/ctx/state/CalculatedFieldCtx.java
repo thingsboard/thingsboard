@@ -305,7 +305,7 @@ public class CalculatedFieldCtx implements Closeable {
     public void setTenantProfileProperties() {
         TenantProfile tenantProfile = systemContext.getTenantProfileCache().get(tenantId);
         if (tenantProfile == null) {
-            log.warn("Tenant Profile not found for tenant: {}. Using default values for CF configuration.", tenantId);
+            log.warn("[{}][{}][{}] Tenant Profile not found for tenant: {}. CF limits and thresholds will not be updated.", tenantId, entityId, cfId, tenantId);
             return;
         }
         tenantProfile.getProfileConfiguration().ifPresent(config -> {
