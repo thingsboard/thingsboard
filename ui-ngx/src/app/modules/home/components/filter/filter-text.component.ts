@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, forwardRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { ControlValueAccessor, UntypedFormBuilder, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { ComplexOperation, KeyFilter, keyFiltersToText } from '@shared/models/query/query.models';
@@ -35,7 +35,7 @@ import { coerceBooleanProperty } from '@angular/cdk/coercion';
     ],
     standalone: false
 })
-export class FilterTextComponent implements ControlValueAccessor, OnInit {
+export class FilterTextComponent implements ControlValueAccessor, OnInit, OnChanges {
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -65,6 +65,7 @@ export class FilterTextComponent implements ControlValueAccessor, OnInit {
 
   public filterText: string;
 
+  private currentValue: Array<KeyFilter>;
   private propagateChange = (v: any) => { };
 
   constructor(private dialog: MatDialog,
@@ -83,11 +84,18 @@ export class FilterTextComponent implements ControlValueAccessor, OnInit {
   ngOnInit() {
   }
 
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes.operation && !changes.operation.firstChange) {
+      this.updateFilterText(this.currentValue);
+    }
+  }
+
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
   }
 
   writeValue(value: Array<KeyFilter>): void {
+    this.currentValue = value;
     this.updateFilterText(value);
   }
 

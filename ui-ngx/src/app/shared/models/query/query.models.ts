@@ -950,7 +950,8 @@ export const getFilterId = (filters: Filters, filterInfo: FilterInfo): string =>
 }
 
 const isFilterEqual = (filter1: FilterInfo, filter2: FilterInfo): boolean => {
-  return isEqual(filter1.keyFilters, filter2.keyFilters);
+  return isEqual(filter1.keyFilters, filter2.keyFilters) &&
+    filter1.keyFiltersOperation === filter2.keyFiltersOperation;
 }
 
 const createFilterName = (filters: Filters, filter: string): string => {
