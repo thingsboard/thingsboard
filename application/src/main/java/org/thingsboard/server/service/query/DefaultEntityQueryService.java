@@ -18,6 +18,7 @@ package org.thingsboard.server.service.query;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -94,6 +95,7 @@ public class DefaultEntityQueryService implements EntityQueryService {
     @Value("${server.ws.max_entities_per_alarm_subscription:1000}")
     private int maxEntitiesPerAlarmSubscription;
 
+    @Setter
     @Value("${sql.query.key-filters-or-conditions.enabled:true}")
     private boolean keyFiltersOrConditionsEnabled;
 

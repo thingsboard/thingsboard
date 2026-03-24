@@ -78,7 +78,6 @@ import org.thingsboard.server.common.data.query.EntityListFilter;
 import org.thingsboard.server.common.data.query.EntityTypeFilter;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.query.KeyFilter;
-import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
 import org.thingsboard.server.common.data.query.NumericFilterPredicate;
 import org.thingsboard.server.common.data.query.RelationsQueryFilter;
 import org.thingsboard.server.common.data.query.SingleEntityFilter;
@@ -94,6 +93,7 @@ import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.dao.queue.QueueStatsService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.edqs.util.EdqsRocksDb;
+import org.thingsboard.server.service.query.DefaultEntityQueryService;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -125,6 +125,8 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
     @Autowired
     private QueueStatsService queueStatsService;
+    @Autowired
+    private DefaultEntityQueryService entityQueryService;
 
     @MockitoBean
     private EdqsRocksDb edqsRocksDb;
@@ -1345,7 +1347,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
         //assign dashboard
         doPost("/api/customer/" + savedCustomer.getId().getId().toString()
-                + "/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
+               + "/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
 
         // check entity data query by customer
         User customerUser = new User();
@@ -2487,6 +2489,35 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         // OR with no matches: neither filter matches any device => count=0
         EntityCountQuery orQuery = new EntityCountQuery(filter, keyFilters, ComplexOperation.OR);
         countByQueryAndCheck(orQuery, 0);
+    }
+
+    @Test
+    public void testOrKeyFiltersOperationRejectedWhenDisabled() throws Exception {
+        loginTenantAdmin();
+
+        entityQueryService.setKeyFiltersOrConditionsEnabled(false);
+        try {
+            DeviceTypeFilter filter = new DeviceTypeFilter();
+            filter.setDeviceTypes(List.of("default"));
+            filter.setDeviceNameFilter("");
+
+            // POST a query with OR operation -- should be rejected with 400
+            EntityCountQuery orQuery = new EntityCountQuery(filter, Collections.emptyList(), ComplexOperation.OR);
+            String errorMessage = getErrorMessage(
+                    doPost("/api/entitiesQuery/count", orQuery).andExpect(status().isBadRequest())
+            );
+            assertThat(errorMessage).contains("OR conditions between key filters are disabled");
+
+            // POST a query without keyFiltersOperation (null/AND) -- should still succeed
+            EntityCountQuery andQuery = new EntityCountQuery(filter, Collections.emptyList());
+            doPost("/api/entitiesQuery/count", andQuery).andExpect(status().isOk());
+
+            // POST a query with explicit AND -- should also succeed
+            EntityCountQuery explicitAndQuery = new EntityCountQuery(filter, Collections.emptyList(), ComplexOperation.AND);
+            doPost("/api/entitiesQuery/count", explicitAndQuery).andExpect(status().isOk());
+        } finally {
+            entityQueryService.setKeyFiltersOrConditionsEnabled(true);
+        }
     }
 
 }
