@@ -154,6 +154,7 @@ public class DefaultCoapServerService implements CoapServerService, SmartInitial
         return networkConfig;
     }
 
+    // Note: this method has a side effect — it sets COAP_SECURE_PORT on the provided networkConfig.
     private DtlsConnectorConfig buildDtlsConnectorConfig(Configuration networkConfig) throws UnknownHostException {
         TbCoapDtlsSettings dtlsSettings = coapServerContext.getDtlsSettings();
         DtlsConnectorConfig dtlsConnectorConfig = dtlsSettings.dtlsConnectorConfig(networkConfig);
@@ -195,7 +196,9 @@ public class DefaultCoapServerService implements CoapServerService, SmartInitial
         DTLSConnector newConnector = createDtlsConnector(dtlsConnectorConfig);
         CoapEndpoint newEndpoint = buildDtlsEndpoint(networkConfig, newConnector);
 
-        // Stop the old endpoint first to release the port before starting the new one
+        // Californium binds the DTLS port at connector construction time, so we must stop the old
+        // endpoint first to release the port. This creates a brief window where the port is unbound;
+        // if the new endpoint fails to start, we attempt to restore the old one (see rollback below).
         if (oldDtlsEndpoint != null) {
             log.info("Stopping old DTLS endpoint to release the port...");
             server.getEndpoints().remove(oldDtlsEndpoint);

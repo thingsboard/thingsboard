@@ -247,6 +247,8 @@ public class CertificateReloadManager implements SmartInitializingSingleton, Dis
             } catch (Exception e) {
                 consecutiveFailures++;
                 failedCombinedChecksum = combinedChecksum;
+                // Deliberately NOT updating the lastModifiedMap here, so the next poll cycle retries
+                // (mtime mismatch passes the early gate, checksum matches failedCombinedChecksum).
                 log.error("Failed to reload certificate for {} (attempt {}/{}): {}",
                         name, consecutiveFailures, MAX_CONSECUTIVE_FAILURES, e.getMessage(), e);
             }

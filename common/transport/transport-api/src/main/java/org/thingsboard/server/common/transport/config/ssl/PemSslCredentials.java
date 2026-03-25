@@ -30,10 +30,10 @@ import org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder;
 import org.thingsboard.server.common.data.ResourceUtils;
 import org.thingsboard.server.common.data.StringUtils;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
@@ -145,22 +145,18 @@ public class PemSslCredentials extends AbstractSslCredentials {
     @Override
     public List<Path> getCertificateFilePaths() {
         List<Path> paths = new ArrayList<>();
-
-        if (!StringUtils.isEmpty(certFile) && !certFile.startsWith(ResourceUtils.CLASSPATH_URL_PREFIX)) {
-            File certFileObj = new File(certFile);
-            if (certFileObj.exists()) {
-                paths.add(certFileObj.toPath().toAbsolutePath());
-            }
-        }
-
-        if (!StringUtils.isEmpty(keyFile) && !keyFile.startsWith(ResourceUtils.CLASSPATH_URL_PREFIX)) {
-            File keyFileObj = new File(keyFile);
-            if (keyFileObj.exists()) {
-                paths.add(keyFileObj.toPath().toAbsolutePath());
-            }
-        }
-
+        addIfFileSystemPath(paths, certFile);
+        addIfFileSystemPath(paths, keyFile);
         return paths;
+    }
+
+    private static void addIfFileSystemPath(List<Path> paths, String filePath) {
+        if (!StringUtils.isEmpty(filePath) && !filePath.startsWith(ResourceUtils.CLASSPATH_URL_PREFIX)) {
+            Path resolved = Path.of(filePath).toAbsolutePath();
+            if (Files.exists(resolved)) {
+                paths.add(resolved);
+            }
+        }
     }
 
 }
