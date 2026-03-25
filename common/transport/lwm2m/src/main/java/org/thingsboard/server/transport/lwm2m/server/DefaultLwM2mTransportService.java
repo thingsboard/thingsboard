@@ -235,33 +235,10 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService, Smar
 
         log.info("Creating new LwM2M server with updated certificates...");
         LeshanServer newServer = getLhServer();
-        try {
-            newServer.start();
-        } catch (Exception e) {
-            log.error("Failed to start new LwM2M server, rolling back", e);
-            newServer.destroy();
-            throw e;
-        }
 
-        try {
-            LwM2mServerListener newListener = new LwM2mServerListener(handler);
-            newServer.getRegistrationService().addListener(newListener.registrationListener);
-            newServer.getPresenceService().addListener(newListener.presenceListener);
-            newServer.getObservationService().addListener(newListener.observationListener);
-            newServer.getSendService().addListener(newListener.sendListener);
-
-            this.server = newServer;
-            this.context.setServer(newServer);
-            this.serverListener = newListener;
-        } catch (Exception e) {
-            log.error("Failed to register listeners on new LwM2M server, rolling back", e);
-            newServer.destroy();
-            throw e;
-        }
-        log.info("New LwM2M server started successfully.");
-
+        // Stop old server first to release the ports before starting the new one
         if (oldServer != null) {
-            log.info("Stopping old LwM2M server...");
+            log.info("Stopping old LwM2M server to release ports...");
             if (oldListener != null) {
                 oldServer.getRegistrationService().removeListener(oldListener.registrationListener);
                 oldServer.getPresenceService().removeListener(oldListener.presenceListener);
@@ -269,8 +246,42 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService, Smar
                 oldServer.getSendService().removeListener(oldListener.sendListener);
             }
             oldServer.destroy();
-            log.info("Old LwM2M server stopped.");
         }
+
+        try {
+            newServer.start();
+        } catch (Exception e) {
+            log.error("Failed to start new LwM2M server", e);
+            newServer.destroy();
+            // Attempt to restore the old server
+            try {
+                LeshanServer restoredServer = getLhServer();
+                restoredServer.start();
+                LwM2mServerListener restoredListener = new LwM2mServerListener(handler);
+                restoredServer.getRegistrationService().addListener(restoredListener.registrationListener);
+                restoredServer.getPresenceService().addListener(restoredListener.presenceListener);
+                restoredServer.getObservationService().addListener(restoredListener.observationListener);
+                restoredServer.getSendService().addListener(restoredListener.sendListener);
+                this.server = restoredServer;
+                this.context.setServer(restoredServer);
+                this.serverListener = restoredListener;
+                log.info("Restored LwM2M server with previous configuration.");
+            } catch (Exception restoreEx) {
+                log.error("Failed to restore old LwM2M server", restoreEx);
+            }
+            throw e;
+        }
+
+        LwM2mServerListener newListener = new LwM2mServerListener(handler);
+        newServer.getRegistrationService().addListener(newListener.registrationListener);
+        newServer.getPresenceService().addListener(newListener.presenceListener);
+        newServer.getObservationService().addListener(newListener.observationListener);
+        newServer.getSendService().addListener(newListener.sendListener);
+
+        this.server = newServer;
+        this.context.setServer(newServer);
+        this.serverListener = newListener;
+        log.info("New LwM2M server started successfully.");
     }
 
     @Override

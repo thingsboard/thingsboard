@@ -63,7 +63,7 @@ public class CertificateReloadManagerTest {
             reloadLatch.countDown();
         });
 
-        Thread.sleep(100);
+        TimeUnit.MILLISECONDS.sleep(100);
         Files.writeString(certFile, "-----BEGIN CERTIFICATE-----\nTEST_CERT_V2_MODIFIED\n-----END CERTIFICATE-----\n");
 
         ReflectionTestUtils.invokeMethod(certificateReloadManager, "checkCertificates");
@@ -80,9 +80,9 @@ public class CertificateReloadManagerTest {
 
         certificateReloadManager.registerWatcher("test-cert", certFile, reloadCount::incrementAndGet);
 
-        Thread.sleep(100);
+        TimeUnit.MILLISECONDS.sleep(100);
         ReflectionTestUtils.invokeMethod(certificateReloadManager, "checkCertificates");
-        Thread.sleep(100);
+        TimeUnit.MILLISECONDS.sleep(100);
         ReflectionTestUtils.invokeMethod(certificateReloadManager, "checkCertificates");
 
         assertThat(reloadCount.get()).isEqualTo(0);
@@ -94,7 +94,7 @@ public class CertificateReloadManagerTest {
 
         certificateReloadManager.registerWatcher("test-cert", certFile, reloadCount::incrementAndGet);
 
-        Thread.sleep(100);
+        TimeUnit.MILLISECONDS.sleep(100);
 
         ReflectionTestUtils.invokeMethod(certificateReloadManager, "checkCertificates");
 
@@ -107,13 +107,13 @@ public class CertificateReloadManagerTest {
 
         certificateReloadManager.registerWatcher("test-cert", certFile, reloadCount::incrementAndGet);
 
-        Thread.sleep(100);
+        TimeUnit.MILLISECONDS.sleep(100);
 
         Files.delete(certFile);
-        Thread.sleep(100);
+        TimeUnit.MILLISECONDS.sleep(100);
 
         ReflectionTestUtils.invokeMethod(certificateReloadManager, "checkCertificates");
-        Thread.sleep(100);
+        TimeUnit.MILLISECONDS.sleep(100);
 
         // File deletion changes checksum from real hash to "", so reload is triggered
         assertThat(reloadCount.get()).isEqualTo(1);
@@ -139,9 +139,9 @@ public class CertificateReloadManagerTest {
         certificateReloadManager.registerWatcher("test-cert", certFile, certReloadLatch::countDown);
         certificateReloadManager.registerWatcher("test-key", keyFile, keyReloadLatch::countDown);
 
-        Thread.sleep(100);
+        TimeUnit.MILLISECONDS.sleep(100);
         Files.writeString(keyFile, "-----BEGIN PRIVATE KEY-----\nTEST_KEY_V2_MODIFIED\n-----END PRIVATE KEY-----\n");
-        Thread.sleep(100);
+        TimeUnit.MILLISECONDS.sleep(100);
 
         ReflectionTestUtils.invokeMethod(certificateReloadManager, "checkCertificates");
 
@@ -162,10 +162,10 @@ public class CertificateReloadManagerTest {
         certificateReloadManager.registerWatcher("test-cert1", certFile, reload1Count::incrementAndGet);
         certificateReloadManager.registerWatcher("test-cert2", cert2File, reload2Count::incrementAndGet);
 
-        Thread.sleep(100);
+        TimeUnit.MILLISECONDS.sleep(100);
         Files.writeString(certFile, "-----BEGIN CERTIFICATE-----\nMODIFIED1\n-----END CERTIFICATE-----\n");
         Files.writeString(cert2File, "-----BEGIN CERTIFICATE-----\nMODIFIED2\n-----END CERTIFICATE-----\n");
-        Thread.sleep(100);
+        TimeUnit.MILLISECONDS.sleep(100);
 
         ReflectionTestUtils.invokeMethod(certificateReloadManager, "checkCertificates");
 
@@ -186,10 +186,10 @@ public class CertificateReloadManagerTest {
         });
         certificateReloadManager.registerWatcher("test-cert2", cert2File, reload2Count::incrementAndGet);
 
-        Thread.sleep(100);
+        TimeUnit.MILLISECONDS.sleep(100);
         Files.writeString(certFile, "-----BEGIN CERTIFICATE-----\nMODIFIED1\n-----END CERTIFICATE-----\n");
         Files.writeString(cert2File, "-----BEGIN CERTIFICATE-----\nMODIFIED2\n-----END CERTIFICATE-----\n");
-        Thread.sleep(100);
+        TimeUnit.MILLISECONDS.sleep(100);
 
         ReflectionTestUtils.invokeMethod(certificateReloadManager, "checkCertificates");
 
@@ -203,15 +203,15 @@ public class CertificateReloadManagerTest {
 
         certificateReloadManager.registerWatcher("test-cert", certFile, reloadCount::incrementAndGet);
 
-        Thread.sleep(100);
+        TimeUnit.MILLISECONDS.sleep(100);
 
         Files.delete(certFile);
-        Thread.sleep(100);
+        TimeUnit.MILLISECONDS.sleep(100);
 
         ReflectionTestUtils.invokeMethod(certificateReloadManager, "checkCertificates");
 
         Files.writeString(certFile, "-----BEGIN CERTIFICATE-----\nNEW_CERT\n-----END CERTIFICATE-----\n");
-        Thread.sleep(100);
+        TimeUnit.MILLISECONDS.sleep(100);
 
         ReflectionTestUtils.invokeMethod(certificateReloadManager, "checkCertificates");
 
@@ -229,12 +229,12 @@ public class CertificateReloadManagerTest {
             reloadLatch.countDown();
         });
 
-        Thread.sleep(100);
+        TimeUnit.MILLISECONDS.sleep(100);
 
         for (int i = 0; i < 5; i++) {
             Files.writeString(certFile, "-----BEGIN CERTIFICATE-----\nCERT_VERSION_" + i + "\n-----END CERTIFICATE-----\n");
         }
-        Thread.sleep(100);
+        TimeUnit.MILLISECONDS.sleep(100);
 
         ReflectionTestUtils.invokeMethod(certificateReloadManager, "checkCertificates");
 
@@ -252,9 +252,9 @@ public class CertificateReloadManagerTest {
 
         certificateReloadManager.registerWatcher("test-cert", certFile, reloadCount::incrementAndGet);
 
-        Thread.sleep(100);
+        TimeUnit.MILLISECONDS.sleep(100);
         Files.writeString(certFile, "-----BEGIN CERTIFICATE-----\nMODIFIED\n-----END CERTIFICATE-----\n");
-        Thread.sleep(100);
+        TimeUnit.MILLISECONDS.sleep(100);
 
         for (int i = 0; i < 5; i++) {
             new Thread(() -> {
@@ -284,10 +284,10 @@ public class CertificateReloadManagerTest {
 
         certificateReloadManager.registerWatcher("test-cert", certFile, reloadCount::incrementAndGet);
 
-        Thread.sleep(100);
+        TimeUnit.MILLISECONDS.sleep(100);
 
         Files.writeString(certFile, originalContent);
-        Thread.sleep(100);
+        TimeUnit.MILLISECONDS.sleep(100);
 
         ReflectionTestUtils.invokeMethod(certificateReloadManager, "checkCertificates");
 
@@ -304,9 +304,9 @@ public class CertificateReloadManagerTest {
             throw new RuntimeException("Persistent failure");
         });
 
-        Thread.sleep(100);
+        TimeUnit.MILLISECONDS.sleep(100);
         Files.writeString(certFile, "-----BEGIN CERTIFICATE-----\nBAD_CERT\n-----END CERTIFICATE-----\n");
-        Thread.sleep(100);
+        TimeUnit.MILLISECONDS.sleep(100);
 
         // Retry up to MAX_CONSECUTIVE_FAILURES (10) + a few extra to confirm it stops
         for (int i = 0; i < 15; i++) {
@@ -328,9 +328,9 @@ public class CertificateReloadManagerTest {
             }
         });
 
-        Thread.sleep(100);
+        TimeUnit.MILLISECONDS.sleep(100);
         Files.writeString(certFile, "-----BEGIN CERTIFICATE-----\nBAD_CERT\n-----END CERTIFICATE-----\n");
-        Thread.sleep(100);
+        TimeUnit.MILLISECONDS.sleep(100);
 
         // First attempt fails
         ReflectionTestUtils.invokeMethod(certificateReloadManager, "checkCertificates");
@@ -338,9 +338,9 @@ public class CertificateReloadManagerTest {
 
         // Fix the callback and change the file to new content
         shouldFail.set(0);
-        Thread.sleep(100);
+        TimeUnit.MILLISECONDS.sleep(100);
         Files.writeString(certFile, "-----BEGIN CERTIFICATE-----\nGOOD_CERT\n-----END CERTIFICATE-----\n");
-        Thread.sleep(100);
+        TimeUnit.MILLISECONDS.sleep(100);
 
         // Should reset failure counter and succeed because file content changed
         ReflectionTestUtils.invokeMethod(certificateReloadManager, "checkCertificates");
@@ -359,9 +359,9 @@ public class CertificateReloadManagerTest {
             }
         });
 
-        Thread.sleep(100);
+        TimeUnit.MILLISECONDS.sleep(100);
         Files.writeString(certFile, "-----BEGIN CERTIFICATE-----\nBAD_CERT\n-----END CERTIFICATE-----\n");
-        Thread.sleep(100);
+        TimeUnit.MILLISECONDS.sleep(100);
 
         // Exhaust all retries
         for (int i = 0; i < 15; i++) {
@@ -371,9 +371,9 @@ public class CertificateReloadManagerTest {
 
         // Fix callback and change file to new content
         shouldFail.set(0);
-        Thread.sleep(100);
+        TimeUnit.MILLISECONDS.sleep(100);
         Files.writeString(certFile, "-----BEGIN CERTIFICATE-----\nFIXED_CERT\n-----END CERTIFICATE-----\n");
-        Thread.sleep(100);
+        TimeUnit.MILLISECONDS.sleep(100);
 
         // Should detect new content, reset counter, and succeed
         ReflectionTestUtils.invokeMethod(certificateReloadManager, "checkCertificates");

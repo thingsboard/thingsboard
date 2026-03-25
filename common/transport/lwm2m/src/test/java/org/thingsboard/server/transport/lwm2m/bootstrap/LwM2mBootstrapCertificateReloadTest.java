@@ -118,8 +118,8 @@ public class LwM2mBootstrapCertificateReloadTest {
 
         Runnable reloadCallback = callbackCaptor.getValue();
 
-        // getLhBootstrapServer() will fail due to null host.
-        // With create-then-swap, the old server should NOT be destroyed.
+        // getLhBootstrapServer() will fail due to null host before old server is stopped.
+        // The old server should NOT be destroyed since the new server was never created.
         reloadCallback.run();
 
         verify(mockBootstrapServer, never()).destroy();
@@ -164,15 +164,18 @@ public class LwM2mBootstrapCertificateReloadTest {
     }
 
     @Test
-    public void givenReloadCallback_whenNewServerStartFails_thenNewServerDestroyedAndOldPreserved() {
+    public void givenReloadCallback_whenNewServerStartFails_thenNewServerDestroyedAndRestorationAttempted() {
         // GIVEN
         ReflectionTestUtils.setField(bootstrapService, "server", mockBootstrapServer);
 
         LeshanBootstrapServer mockNewServer = mock(LeshanBootstrapServer.class);
         doThrow(new RuntimeException("start failed")).when(mockNewServer).start();
 
+        LeshanBootstrapServer mockRestoredServer = mock(LeshanBootstrapServer.class);
+
         LwM2MTransportBootstrapService spyService = Mockito.spy(bootstrapService);
-        doReturn(mockNewServer).when(spyService).getLhBootstrapServer();
+        // First call returns the failing server, second call returns the restoration server
+        doReturn(mockNewServer).doReturn(mockRestoredServer).when(spyService).getLhBootstrapServer();
 
         ArgumentCaptor<Runnable> callbackCaptor = ArgumentCaptor.forClass(Runnable.class);
         spyService.afterSingletonsInstantiated();
@@ -184,9 +187,13 @@ public class LwM2mBootstrapCertificateReloadTest {
         reloadCallback.run();
 
         // THEN
+        // Old server is destroyed to release ports
+        verify(mockBootstrapServer).destroy();
+        // New server fails to start and is destroyed
         verify(mockNewServer).destroy();
-        assertThat(ReflectionTestUtils.getField(spyService, "server")).isSameAs(mockBootstrapServer);
-        verify(mockBootstrapServer, never()).destroy();
+        // Restoration server is started and becomes the active server
+        verify(mockRestoredServer).start();
+        assertThat(ReflectionTestUtils.getField(spyService, "server")).isSameAs(mockRestoredServer);
     }
 
 }
