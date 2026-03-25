@@ -159,6 +159,9 @@ public class LwM2mServerCertificateReloadTest {
         LwM2mServerListener serverListener = new LwM2mServerListener(mockHandler);
         ReflectionTestUtils.setField(lwm2mTransportService, "serverListener", serverListener);
 
+        // Force getLhServer() to fail by returning null host
+        when(mockConfig.getHost()).thenReturn(null);
+
         // Invoke the callback — new server creation will fail, old listeners should stay
         callbackCaptor.getValue().run();
 
