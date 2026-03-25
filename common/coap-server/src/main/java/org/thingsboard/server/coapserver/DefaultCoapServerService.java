@@ -214,12 +214,12 @@ public class DefaultCoapServerService implements CoapServerService, SmartInitial
 
         if (oldDtlsEndpoint != null) {
             log.info("Stopping old DTLS endpoint...");
+            server.getEndpoints().remove(oldDtlsEndpoint);
             oldDtlsEndpoint.stop();
             if (oldDtlsConnector != null) {
                 oldDtlsConnector.destroy();
             }
             oldDtlsEndpoint.destroy();
-            server.getEndpoints().remove(oldDtlsEndpoint);
             log.info("Old DTLS endpoint stopped and destroyed.");
         }
     }

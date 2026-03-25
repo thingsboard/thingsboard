@@ -196,14 +196,20 @@ public class CertificateReloadManager implements SmartInitializingSingleton, Dis
             for (Path path : paths) {
                 String checksum = calculateChecksum(path);
                 currentChecksums.put(path, checksum);
-                combined.append(checksum);
+                if (!combined.isEmpty()) {
+                    combined.append("|");
+                }
+                combined.append(path).append("=").append(checksum);
             }
             String combinedChecksum = combined.toString();
 
             // Build old combined checksum for comparison
             StringBuilder oldCombined = new StringBuilder();
             for (Path path : paths) {
-                oldCombined.append(lastChecksumMap.getOrDefault(path, ""));
+                if (!oldCombined.isEmpty()) {
+                    oldCombined.append("|");
+                }
+                oldCombined.append(path).append("=").append(lastChecksumMap.getOrDefault(path, ""));
             }
             String oldCombinedChecksum = oldCombined.toString();
 
@@ -216,7 +222,7 @@ public class CertificateReloadManager implements SmartInitializingSingleton, Dis
             }
 
             if (!combinedChecksum.equals(failedCombinedChecksum) && consecutiveFailures > 0) {
-                // File content changed since last failure — reset and retry
+                // File content has changed since the last failure - reset and retry
                 consecutiveFailures = 0;
                 failedCombinedChecksum = null;
             }

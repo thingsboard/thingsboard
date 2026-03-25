@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.ssl.NoSuchSslBundleException;
 import org.springframework.boot.ssl.SslBundle;
 import org.springframework.boot.ssl.SslBundles;
 import org.springframework.boot.ssl.SslStoreBundle;
@@ -125,7 +126,7 @@ public class SslCredentialsWebServerCustomizer implements WebServerFactoryCustom
         @Override
         public SslBundle getBundle(String name) {
             if (!DEFAULT_BUNDLE_NAME.equals(name)) {
-                throw new IllegalArgumentException("Unknown SSL bundle: " + name);
+                throw new NoSuchSslBundleException(name, "Unknown SSL bundle: " + name);
             }
             return createSslBundle();
         }

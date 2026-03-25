@@ -18,14 +18,15 @@ package org.thingsboard.server.common.data;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ResourceUtilsTest {
 
     @Test
-    public void givenNonExistentResource_whenGetUri_thenReturnsNull() {
-        String result = ResourceUtils.getUri(ResourceUtilsTest.class.getClassLoader(), "non/existent/resource/path.txt");
-
-        assertThat(result).isNull();
+    public void givenNonExistentResource_whenGetUri_thenThrowsRuntimeException() {
+        assertThatThrownBy(() -> ResourceUtils.getUri(ResourceUtilsTest.class.getClassLoader(), "non/existent/resource/path.txt"))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Unable to find resource");
     }
 
     @Test

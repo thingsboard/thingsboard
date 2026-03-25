@@ -111,7 +111,10 @@ public class ResourceUtils {
                 return resourceFile.getAbsolutePath();
             } else {
                 URL url = classLoader.getResource(filePath);
-                return url != null ? url.toURI().toString() : null;
+                if (url == null) {
+                    throw new RuntimeException("Unable to find resource: " + filePath);
+                }
+                return url.toURI().toString();
             }
         } catch (Exception e) {
             if (e instanceof NullPointerException) {

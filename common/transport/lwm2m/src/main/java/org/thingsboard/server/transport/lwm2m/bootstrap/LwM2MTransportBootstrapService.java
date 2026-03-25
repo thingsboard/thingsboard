@@ -64,7 +64,7 @@ public class LwM2MTransportBootstrapService implements SmartInitializingSingleto
     private final LwM2MInMemoryBootstrapConfigStore lwM2MInMemoryBootstrapConfigStore;
     private final TransportService transportService;
     private final TbLwM2MDtlsBootstrapCertificateVerifier certificateVerifier;
-    private LeshanBootstrapServer server;
+    private volatile LeshanBootstrapServer server;
 
     @Override
     public void afterSingletonsInstantiated() {

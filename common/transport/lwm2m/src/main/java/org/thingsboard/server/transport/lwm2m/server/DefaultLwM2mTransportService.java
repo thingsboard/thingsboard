@@ -84,8 +84,8 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService, Smar
     private final TbLwM2MAuthorizer authorizer;
     private final LwM2mVersionedModelProvider modelProvider;
 
-    private LeshanServer server;
-    private LwM2mServerListener serverListener;
+    private volatile LeshanServer server;
+    private volatile LwM2mServerListener serverListener;
 
     @Override
     public void afterSingletonsInstantiated() {
