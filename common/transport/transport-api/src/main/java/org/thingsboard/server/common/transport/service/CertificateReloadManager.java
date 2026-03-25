@@ -28,6 +28,7 @@ import org.thingsboard.server.common.transport.config.ssl.SslCredentialsConfig;
 import org.thingsboard.server.queue.util.TbTransportComponent;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
@@ -50,7 +51,7 @@ public class CertificateReloadManager implements SmartInitializingSingleton, Dis
     @Value("${transport.ssl.certificate.reload.enabled:true}")
     private boolean reloadEnabled;
 
-    @Value("${transport.ssl.certificate.reload.check_interval:60}")
+    @Value("${transport.ssl.certificate.reload.check_interval_seconds:60}")
     private long checkIntervalInSeconds;
 
     @Autowired
@@ -258,9 +259,14 @@ public class CertificateReloadManager implements SmartInitializingSingleton, Dis
                     return "";
                 }
                 MessageDigest md = MessageDigest.getInstance("SHA-256");
-                byte[] bytes = Files.readAllBytes(path);
-                byte[] hash = md.digest(bytes);
-                return Base64.getEncoder().encodeToString(hash);
+                byte[] buf = new byte[8192];
+                try (InputStream is = Files.newInputStream(path)) {
+                    int bytesRead;
+                    while ((bytesRead = is.read(buf)) != -1) {
+                        md.update(buf, 0, bytesRead);
+                    }
+                }
+                return Base64.getEncoder().encodeToString(md.digest());
             } catch (Exception e) {
                 log.warn("Failed to calculate checksum for certificate file: {}", path, e);
                 return "";

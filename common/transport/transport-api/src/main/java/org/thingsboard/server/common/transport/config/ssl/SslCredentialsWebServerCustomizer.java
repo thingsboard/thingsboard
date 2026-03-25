@@ -147,7 +147,7 @@ public class SslCredentialsWebServerCustomizer implements WebServerFactoryCustom
 
         @Override
         public void addBundleRegisterHandler(BiConsumer<String, SslBundle> registerHandler) {
-
+            log.debug("addBundleRegisterHandler is not supported for dynamic SSL bundles");
         }
 
     }

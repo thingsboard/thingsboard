@@ -235,7 +235,13 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService, Smar
 
         log.info("Creating new LwM2M server with updated certificates...");
         LeshanServer newServer = getLhServer();
-        newServer.start();
+        try {
+            newServer.start();
+        } catch (Exception e) {
+            log.error("Failed to start new LwM2M server, rolling back", e);
+            newServer.destroy();
+            throw e;
+        }
 
         try {
             LwM2mServerListener newListener = new LwM2mServerListener(handler);
