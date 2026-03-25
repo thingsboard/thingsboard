@@ -20,6 +20,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -40,7 +41,7 @@ public class RuleChainDetails extends RuleChain {
 
     public RuleChainDetails(RuleChainDetails ruleChainDetails) {
         super(ruleChainDetails);
-        this.notes = ruleChainDetails.getNotes();
+        this.notes = ruleChainDetails.getNotes() != null ? new ArrayList<>(ruleChainDetails.getNotes()) : null;
     }
 
 }

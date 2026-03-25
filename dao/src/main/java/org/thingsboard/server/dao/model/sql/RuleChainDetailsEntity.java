@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
@@ -25,11 +26,8 @@ import lombok.EqualsAndHashCode;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainDetails;
-import org.thingsboard.server.common.data.rule.RuleChainNote;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.util.mapping.JsonConverter;
-
-import java.util.Arrays;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -57,7 +55,7 @@ public class RuleChainDetailsEntity extends AbstractRuleChainEntity<RuleChainDet
         RuleChain ruleChain = super.toRuleChain();
         RuleChainDetails details = new RuleChainDetails(ruleChain);
         if (notes != null && notes.isArray()) {
-            details.setNotes(Arrays.asList(JacksonUtil.treeToValue(notes, RuleChainNote[].class)));
+            details.setNotes(JacksonUtil.treeToValue(notes, new TypeReference<>() {}));
         }
         return details;
     }
