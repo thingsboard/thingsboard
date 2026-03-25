@@ -131,6 +131,9 @@ public class ThingsboardSecurityConfiguration {
     @Autowired
     private AuthExceptionHandler authExceptionHandler;
 
+    @Autowired
+    private HttpSecurityHeadersCustomizer httpSecurityHeadersCustomizer;
+
     @Bean
     protected PayloadSizeFilter payloadSizeFilter() {
         return new PayloadSizeFilter(maxPayloadSizeConfig);
@@ -198,9 +201,11 @@ public class ThingsboardSecurityConfiguration {
         http
                 .securityMatchers(matchers -> matchers
                         .requestMatchers("/*.js", "/*.css", "/*.ico", "/assets/**", "/static/**"))
-                .headers(header -> header
-                        .defaultsDisabled()
-                        .addHeaderWriter(new StaticHeadersWriter(HttpHeaders.CACHE_CONTROL, "max-age=0, public")))
+                .headers(headers -> {
+                    headers.defaultsDisabled();
+                    headers.addHeaderWriter(new StaticHeadersWriter(HttpHeaders.CACHE_CONTROL, "max-age=0, public"));
+                    httpSecurityHeadersCustomizer.customize(headers);
+                })
                 .authorizeHttpRequests((authorize) -> authorize.anyRequest().permitAll())
                 .requestCache(RequestCacheConfigurer::disable)
                 .securityContext(AbstractHttpConfigurer::disable)
@@ -210,9 +215,11 @@ public class ThingsboardSecurityConfiguration {
 
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.headers(headers -> headers
-                        .cacheControl(config -> {})
-                        .frameOptions(config -> {}).disable())
+        http.headers(headers -> {
+                    headers.defaultsDisabled();
+                    headers.cacheControl(config -> {});
+                    httpSecurityHeadersCustomizer.customize(headers);
+                })
                 .cors(cors -> {})
                 .csrf(AbstractHttpConfigurer::disable)
                 .exceptionHandling(config -> {})

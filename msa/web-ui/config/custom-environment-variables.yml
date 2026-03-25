@@ -25,6 +25,20 @@ thingsboard:
   host: "TB_HOST"
   # ThingsBoard node port
   port: "TB_PORT"
+security:
+  headers:
+    x-content-type-options:
+      enabled: "SECURITY_HEADERS_X_CONTENT_TYPE_OPTIONS_ENABLED"
+    referrer-policy:
+      enabled: "SECURITY_HEADERS_REFERRER_POLICY_ENABLED"
+      value: "SECURITY_HEADERS_REFERRER_POLICY_VALUE"
+    x-frame-options:
+      enabled: "SECURITY_HEADERS_X_FRAME_OPTIONS_ENABLED"
+      value: "SECURITY_HEADERS_X_FRAME_OPTIONS_VALUE"
+    content-security-policy:
+      enabled: "SECURITY_HEADERS_CONTENT_SECURITY_POLICY_ENABLED"
+      value: "SECURITY_HEADERS_CONTENT_SECURITY_POLICY_VALUE"
+      report-only: "SECURITY_HEADERS_CONTENT_SECURITY_POLICY_REPORT_ONLY"
 logger:
   level: "LOGGER_LEVEL"
   path: "LOG_FOLDER"

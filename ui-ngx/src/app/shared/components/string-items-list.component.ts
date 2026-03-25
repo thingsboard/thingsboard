@@ -29,7 +29,7 @@ import { FloatLabelType, MatFormFieldAppearance, SubscriptSizing } from '@angula
 import { coerceArray, coerceBoolean } from '@shared/decorators/coercion';
 import { Observable, of } from 'rxjs';
 import { filter, mergeMap, share, tap } from 'rxjs/operators';
-import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { MatAutocompleteSelectedEvent, MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { isDefined, isUndefined } from '@core/utils';
 
 export interface StringItemsOption {
@@ -37,18 +37,18 @@ export interface StringItemsOption {
   value: any;
 }
 @Component({
-    selector: 'tb-string-items-list',
-    templateUrl: './string-items-list.component.html',
-    styleUrls: [],
-    providers: [
-        {
-            provide: NG_VALUE_ACCESSOR,
-            useExisting: forwardRef(() => StringItemsListComponent),
-            multi: true
-        }
-    ],
-    encapsulation: ViewEncapsulation.None,
-    standalone: false
+  selector: 'tb-string-items-list',
+  templateUrl: './string-items-list.component.html',
+  styleUrls: [],
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => StringItemsListComponent),
+      multi: true
+    }
+  ],
+  encapsulation: ViewEncapsulation.None,
+  standalone: false
 })
 export class StringItemsListComponent implements ControlValueAccessor, OnInit {
 
@@ -149,9 +149,7 @@ export class StringItemsListComponent implements ControlValueAccessor, OnInit {
       this.filteredValues = this.itemControl.valueChanges
         .pipe(
           tap((value) => {
-            if (value && typeof value !== 'string') {
-              this.add(value);
-            } else if (value === null) {
+            if (value === null) {
               this.clear();
             }
           }),
@@ -209,16 +207,17 @@ export class StringItemsListComponent implements ControlValueAccessor, OnInit {
     this.dirty = true;
   }
 
-  addOnBlur(event: FocusEvent) {
-    const target: HTMLElement = event.relatedTarget as HTMLElement;
-    if (target && target.tagName !== 'MAT-OPTION') {
-      this.addItem(this.stringItemInput.nativeElement.value ?? '')
+  onOptionSelected(event: MatAutocompleteSelectedEvent): void {
+    if (event.option.value != null) {
+      this.add(event.option.value);
+    } else {
+      this.clear();
     }
-    this.onTouched();
   }
 
   addOnEnd(event: MatChipInputEvent): void {
-    this.addItem(event.value ?? '')
+    this.addItem(event.value ?? '');
+    this.onTouched();
   }
 
   removeItems(item: StringItemsOption) {
@@ -295,6 +294,8 @@ export class StringItemsListComponent implements ControlValueAccessor, OnInit {
     this.stringItemInput.nativeElement.value = value;
     this.itemControl.patchValue(value, {emitEvent: true});
     setTimeout(() => {
+      this.stringItemInput.nativeElement.value = value;
+      this.itemControl.patchValue(null, {emitEvent: false});
       this.stringItemInput.nativeElement.blur();
       this.stringItemInput.nativeElement.focus();
     }, 0);

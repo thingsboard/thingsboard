@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.thingsboard</groupId>
     <artifactId>thingsboard</artifactId>
-    <version>4.2.2-SNAPSHOT</version>
+    <version>4.2.2.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Thingsboard</name>
@@ -38,11 +38,8 @@
         <pkg.implementationTitle>${project.name}</pkg.implementationTitle>
         <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
-        <spring-boot.version>3.4.13</spring-boot.version>
-        <tomcat.version>10.1.52</tomcat.version> <!-- to fix CVE-2026-24734 and CVE-2025-66614. TODO: remove when fixed in spring-boot-dependencies -->
-        <jackson.version>2.18.6</jackson.version> <!-- to fix CWE-770. TODO: remove when fixed in spring-boot-dependencies -->
+        <spring-boot.version>3.5.12</spring-boot.version>
         <javax.xml.bind-api.version>2.4.0-b180830.0359</javax.xml.bind-api.version>
-        <jedis.version>5.1.5</jedis.version>
         <jjwt.version>0.12.5</jjwt.version>
         <rat.version>0.10</rat.version> <!-- unused -->
         <cassandra.version>4.17.0</cassandra.version>
@@ -63,16 +60,16 @@
         <leshan.version>2.0.0-M15</leshan.version>
         <mail.version>2.0.1</mail.version>
         <curator.version>5.6.0</curator.version>
-        <zookeeper.version>3.9.3</zookeeper.version>
+        <zookeeper.version>3.9.5</zookeeper.version> <!-- to fix CVE-2026-24308 and CVE-2026-24281. TODO: remove override when fixed in curator-client -->
         <protobuf.version>3.25.5</protobuf.version> <!-- A Major v4 does not support by the pubsub yet-->
         <grpc.version>1.76.0</grpc.version>
         <tbel.version>1.2.9</tbel.version>
-        <lombok.version>1.18.38</lombok.version>
+        <lombok.version>1.18.44</lombok.version> <!-- must be in sync with spring-boot-dependencies; needed for maven-compiler-plugin annotationProcessorPaths -->
         <paho.client.version>1.2.5</paho.client.version>
         <paho.mqttv5.client.version>1.2.5</paho.mqttv5.client.version>
         <os-maven-plugin.version>1.7.1</os-maven-plugin.version>
         <surefire.version>3.5.4</surefire.version>
-        <jar-plugin.version>3.4.0</jar-plugin.version>
+        <jar-plugin.version>3.5.0</jar-plugin.version>
         <springdoc-swagger.version>2.8.8TB</springdoc-swagger.version>
         <swagger-annotations.version>2.2.30</swagger-annotations.version>
         <spatial4j.version>0.8</spatial4j.version>
@@ -91,7 +88,6 @@
         <lz4.version>1.10.1</lz4.version> <!-- to fix CVE-2025-12183 and CVE-2025-66566 introduced through kafka-clients 3.9.1 TODO: remove when kafka-clients is bumped -->
         <bucket4j.version>8.10.1</bucket4j.version>
         <antlr.version>3.5.3</antlr.version>
-        <snakeyaml.version>2.2</snakeyaml.version>
         <aws.sdk.version>1.12.701</aws.sdk.version>
         <pubsub.client.version>1.128.1</pubsub.client.version>
 
@@ -532,6 +528,8 @@
                                     <arg>-PpkgInstallFolder=${pkg.installFolder}</arg>
                                     <arg>-PpkgCopyInstallScripts=${pkg.copyInstallScripts}</arg>
                                     <arg>-PpkgLogFolder=${pkg.unixLogFolder}</arg>
+                                    <arg>--project-cache-dir</arg>
+                                    <arg>${project.build.directory}/.gradle</arg>
                                     <arg>--warning-mode</arg>
                                     <arg>all</arg>
                                 </args>
@@ -635,7 +633,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.1.1</version>
+                    <version>${jar-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -655,7 +653,7 @@
                 <plugin>
                     <groupId>com.github.eirslett</groupId>
                     <artifactId>frontend-maven-plugin</artifactId>
-                    <version>1.12.0</version>
+                    <version>2.0.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -888,6 +886,21 @@
                 <groupId>com.mycila</groupId>
                 <artifactId>license-maven-plugin</artifactId>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-clean-plugin</artifactId>
+                <inherited>false</inherited>
+                <configuration>
+                    <filesets>
+                        <fileset>
+                            <directory>${main.dir}/packaging/java/.gradle</directory>
+                        </fileset>
+                        <fileset>
+                            <directory>${main.dir}/packaging/js/.gradle</directory>
+                        </fileset>
+                    </filesets>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
@@ -901,34 +914,6 @@
 
     <dependencyManagement>
         <dependencies>
-            <!-- Temporary Tomcat version override -->
-            <dependency>
-                <groupId>org.apache.tomcat.embed</groupId>
-                <artifactId>tomcat-embed-core</artifactId>
-                <version>${tomcat.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.tomcat.embed</groupId>
-                <artifactId>tomcat-embed-el</artifactId>
-                <version>${tomcat.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.tomcat.embed</groupId>
-                <artifactId>tomcat-embed-websocket</artifactId>
-                <version>${tomcat.version}</version>
-            </dependency>
-            <!-- End of Tomcat version override -->
-
-            <!-- Temporary Jackson version override -->
-            <dependency>
-                <groupId>com.fasterxml.jackson</groupId>
-                <artifactId>jackson-bom</artifactId>
-                <version>${jackson.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <!-- End of Jackson version override -->
-
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
@@ -1201,11 +1186,6 @@
                 <groupId>io.jsonwebtoken</groupId>
                 <artifactId>jjwt</artifactId>
                 <version>${jjwt.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.yaml</groupId>
-                <artifactId>snakeyaml</artifactId>
-                <version>${snakeyaml.version}</version>
             </dependency>
             <dependency>
                 <groupId>antlr</groupId>
@@ -1508,12 +1488,6 @@
                 <scope>test</scope>
             </dependency>
             <dependency>
-                <groupId>org.projectlombok</groupId>
-                <artifactId>lombok</artifactId>
-                <version>${lombok.version}</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
                 <groupId>org.eclipse.paho</groupId>
                 <artifactId>org.eclipse.paho.client.mqttv3</artifactId>
                 <version>${paho.client.version}</version>
@@ -1557,11 +1531,6 @@
                 <groupId>org.bouncycastle</groupId>
                 <artifactId>bcprov-ext-jdk18on</artifactId>
                 <version>${bouncycastle.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>redis.clients</groupId>
-                <artifactId>jedis</artifactId>
-                <version>${jedis.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.sun.winsw</groupId>

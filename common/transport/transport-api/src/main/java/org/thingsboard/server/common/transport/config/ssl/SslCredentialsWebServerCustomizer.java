@@ -33,6 +33,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 @Slf4j
@@ -142,6 +143,11 @@ public class SslCredentialsWebServerCustomizer implements WebServerFactoryCustom
             } else {
                 log.warn("Attempted to register update handler for unknown bundle: {}", name);
             }
+        }
+
+        @Override
+        public void addBundleRegisterHandler(BiConsumer<String, SslBundle> registerHandler) {
+
         }
 
     }
