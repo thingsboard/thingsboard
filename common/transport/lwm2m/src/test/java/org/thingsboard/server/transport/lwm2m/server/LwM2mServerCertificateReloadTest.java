@@ -139,9 +139,10 @@ public class LwM2mServerCertificateReloadTest {
         // Force getLhServer() to fail by returning null host (causes InetSocketAddress to throw)
         when(mockConfig.getHost()).thenReturn(null);
 
-        // With create-then-swap, the old server should NOT be destroyed if the new one fails.
+        // With create-then-swap, the old server should NOT be stopped/destroyed if the new one fails to build.
         reloadCallback.run();
 
+        verify(mockLeshanServer, never()).stop();
         verify(mockLeshanServer, never()).destroy();
         // Old server should still be the active one
         assertThat(ReflectionTestUtils.getField(lwm2mTransportService, "server")).isSameAs(mockLeshanServer);

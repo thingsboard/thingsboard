@@ -18,7 +18,6 @@ package org.thingsboard.server.coapserver;
 import org.eclipse.californium.core.CoapServer;
 import org.eclipse.californium.core.network.CoapEndpoint;
 import org.eclipse.californium.core.network.Endpoint;
-import org.eclipse.californium.elements.config.Configuration;
 import org.eclipse.californium.scandium.DTLSConnector;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,22 +25,23 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
+import org.mockito.MockedConstruction;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -155,37 +155,42 @@ public class CoapDtlsCertificateReloadTest {
         // GIVEN
         when(mockCoapServerContext.getDtlsSettings()).thenReturn(mockDtlsSettings);
 
-        CoapEndpoint mockNewEndpoint = mock(CoapEndpoint.class);
-        DTLSConnector mockNewConnector = mock(DTLSConnector.class);
         DtlsConnectorConfig mockDtlsConfig = mock(DtlsConnectorConfig.class);
         TbCoapDtlsCertificateVerifier mockNewVerifier = mock(TbCoapDtlsCertificateVerifier.class);
         when(mockDtlsConfig.getAdvancedCertificateVerifier()).thenReturn(mockNewVerifier);
+        when(mockDtlsConfig.getAddress()).thenReturn(new InetSocketAddress("localhost", 5684));
+        when(mockDtlsSettings.dtlsConnectorConfig(any())).thenReturn(mockDtlsConfig);
 
-        DefaultCoapServerService spyService = Mockito.spy(coapServerService);
-        ReflectionTestUtils.setField(spyService, "coapServerContext", mockCoapServerContext);
-        ReflectionTestUtils.setField(spyService, "server", mockCoapServer);
-        ReflectionTestUtils.setField(spyService, "dtlsCoapEndpoint", mockDtlsEndpoint);
-        ReflectionTestUtils.setField(spyService, "dtlsConnector", mockDtlsConnector);
-
-        doReturn(mockDtlsConfig).when(spyService).buildDtlsConnectorConfig(any(Configuration.class));
-        doReturn(mockNewConnector).when(spyService).createDtlsConnector(any(DtlsConnectorConfig.class));
-        doReturn(mockNewEndpoint).when(spyService).buildDtlsEndpoint(any(Configuration.class), any(DTLSConnector.class));
+        ReflectionTestUtils.setField(coapServerService, "server", mockCoapServer);
+        ReflectionTestUtils.setField(coapServerService, "dtlsCoapEndpoint", mockDtlsEndpoint);
+        ReflectionTestUtils.setField(coapServerService, "dtlsConnector", mockDtlsConnector);
 
         List<Endpoint> endpointsList = new CopyOnWriteArrayList<>();
         endpointsList.add(mockDtlsEndpoint);
         when(mockCoapServer.getEndpoints()).thenReturn(endpointsList);
 
-        // WHEN
-        ReflectionTestUtils.invokeMethod(spyService, "recreateDtlsEndpoint");
+        CoapEndpoint mockNewEndpoint = mock(CoapEndpoint.class);
 
-        // THEN
-        assertThat(endpointsList).doesNotContain(mockDtlsEndpoint);
-        verify(mockDtlsEndpoint).stop();
-        verify(mockDtlsEndpoint).destroy();
-        verify(mockDtlsConnector).destroy();
-        verify(mockCoapServer).addEndpoint(mockNewEndpoint);
-        verify(mockNewEndpoint).start();
-        assertThat(ReflectionTestUtils.getField(spyService, "dtlsCoapEndpoint")).isSameAs(mockNewEndpoint);
+        try (MockedConstruction<DTLSConnector> dtlsMock = mockConstruction(DTLSConnector.class);
+             MockedConstruction<CoapEndpoint.Builder> builderMock = mockConstruction(CoapEndpoint.Builder.class,
+                     (builder, context) -> {
+                         when(builder.build()).thenReturn(mockNewEndpoint);
+                         when(builder.setConfiguration(any())).thenReturn(builder);
+                         when(builder.setConnector(any(DTLSConnector.class))).thenReturn(builder);
+                     })) {
+
+            // WHEN
+            ReflectionTestUtils.invokeMethod(coapServerService, "recreateDtlsEndpoint");
+
+            // THEN
+            assertThat(endpointsList).doesNotContain(mockDtlsEndpoint);
+            verify(mockDtlsEndpoint).stop();
+            verify(mockDtlsEndpoint).destroy();
+            verify(mockDtlsConnector).destroy();
+            verify(mockCoapServer).addEndpoint(mockNewEndpoint);
+            verify(mockNewEndpoint).start();
+            assertThat(ReflectionTestUtils.getField(coapServerService, "dtlsCoapEndpoint")).isSameAs(mockNewEndpoint);
+        }
     }
 
     @Test
@@ -193,44 +198,49 @@ public class CoapDtlsCertificateReloadTest {
         // GIVEN
         when(mockCoapServerContext.getDtlsSettings()).thenReturn(mockDtlsSettings);
 
-        CoapEndpoint mockNewEndpoint = mock(CoapEndpoint.class);
-        DTLSConnector mockNewConnector = mock(DTLSConnector.class);
         DtlsConnectorConfig mockDtlsConfig = mock(DtlsConnectorConfig.class);
+        when(mockDtlsConfig.getAddress()).thenReturn(new InetSocketAddress("localhost", 5684));
+        when(mockDtlsSettings.dtlsConnectorConfig(any())).thenReturn(mockDtlsConfig);
 
-        doThrow(new IOException("start failed")).when(mockNewEndpoint).start();
-
-        DefaultCoapServerService spyService = Mockito.spy(coapServerService);
-        ReflectionTestUtils.setField(spyService, "coapServerContext", mockCoapServerContext);
-        ReflectionTestUtils.setField(spyService, "server", mockCoapServer);
-        ReflectionTestUtils.setField(spyService, "dtlsCoapEndpoint", mockDtlsEndpoint);
-        ReflectionTestUtils.setField(spyService, "dtlsConnector", mockDtlsConnector);
-
-        doReturn(mockDtlsConfig).when(spyService).buildDtlsConnectorConfig(any(Configuration.class));
-        doReturn(mockNewConnector).when(spyService).createDtlsConnector(any(DtlsConnectorConfig.class));
-        doReturn(mockNewEndpoint).when(spyService).buildDtlsEndpoint(any(Configuration.class), any(DTLSConnector.class));
+        ReflectionTestUtils.setField(coapServerService, "server", mockCoapServer);
+        ReflectionTestUtils.setField(coapServerService, "dtlsCoapEndpoint", mockDtlsEndpoint);
+        ReflectionTestUtils.setField(coapServerService, "dtlsConnector", mockDtlsConnector);
 
         List<Endpoint> endpointsList = new CopyOnWriteArrayList<>();
         endpointsList.add(mockDtlsEndpoint);
         when(mockCoapServer.getEndpoints()).thenReturn(endpointsList);
 
-        // WHEN - the callback catches the IOException internally
-        spyService.afterSingletonsInstantiated();
+        CoapEndpoint mockNewEndpoint = mock(CoapEndpoint.class);
+        doThrow(new IOException("start failed")).when(mockNewEndpoint).start();
 
-        ArgumentCaptor<Runnable> callbackCaptor = ArgumentCaptor.forClass(Runnable.class);
-        verify(mockDtlsSettings).registerReloadCallback(callbackCaptor.capture());
-        Runnable reloadCallback = callbackCaptor.getValue();
-        reloadCallback.run();
+        try (MockedConstruction<DTLSConnector> dtlsMock = mockConstruction(DTLSConnector.class);
+             MockedConstruction<CoapEndpoint.Builder> builderMock = mockConstruction(CoapEndpoint.Builder.class,
+                     (builder, context) -> {
+                         when(builder.build()).thenReturn(mockNewEndpoint);
+                         when(builder.setConfiguration(any())).thenReturn(builder);
+                         when(builder.setConnector(any(DTLSConnector.class))).thenReturn(builder);
+                     })) {
 
-        // THEN - new resources cleaned up
-        verify(mockNewEndpoint).destroy();
-        verify(mockNewConnector).destroy();
-        assertThat(endpointsList).doesNotContain(mockNewEndpoint);
-        // Old endpoint was stopped to release port, then restored after new one failed
-        verify(mockDtlsEndpoint).stop();
-        verify(mockDtlsEndpoint).start();
-        // Old fields preserved
-        assertThat(ReflectionTestUtils.getField(spyService, "dtlsCoapEndpoint")).isSameAs(mockDtlsEndpoint);
-        assertThat(ReflectionTestUtils.getField(spyService, "dtlsConnector")).isSameAs(mockDtlsConnector);
+            // WHEN
+            coapServerService.afterSingletonsInstantiated();
+
+            ArgumentCaptor<Runnable> callbackCaptor = ArgumentCaptor.forClass(Runnable.class);
+            verify(mockDtlsSettings).registerReloadCallback(callbackCaptor.capture());
+            Runnable reloadCallback = callbackCaptor.getValue();
+            reloadCallback.run();
+
+            // THEN - new resources cleaned up
+            DTLSConnector constructedConnector = dtlsMock.constructed().get(0);
+            verify(mockNewEndpoint).destroy();
+            verify(constructedConnector).destroy();
+            assertThat(endpointsList).doesNotContain(mockNewEndpoint);
+            // Old endpoint was stopped to release port, then restored after new one failed
+            verify(mockDtlsEndpoint).stop();
+            verify(mockDtlsEndpoint).start();
+            // Old fields preserved
+            assertThat(ReflectionTestUtils.getField(coapServerService, "dtlsCoapEndpoint")).isSameAs(mockDtlsEndpoint);
+            assertThat(ReflectionTestUtils.getField(coapServerService, "dtlsConnector")).isSameAs(mockDtlsConnector);
+        }
     }
 
 }

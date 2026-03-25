@@ -185,10 +185,10 @@ public class LwM2MTransportBootstrapService implements SmartInitializingSingleto
         log.info("Creating new LwM2M Bootstrap server with updated certificates...");
         LeshanBootstrapServer newServer = getLhBootstrapServer();
 
-        // Stop the old server first to release the ports before starting the new one
+        // Stop (not destroy) the old server to release ports but keep it restartable for rollback
         if (oldServer != null) {
             log.info("Stopping old LwM2M Bootstrap server to release ports...");
-            oldServer.destroy();
+            oldServer.stop();
         }
 
         try {
@@ -196,13 +196,11 @@ public class LwM2MTransportBootstrapService implements SmartInitializingSingleto
         } catch (Exception e) {
             log.error("Failed to start new LwM2M Bootstrap server", e);
             newServer.destroy();
-            // Attempt to restore the old server
+            // Attempt to restart the old server (only stopped, not destroyed)
             if (oldServer != null) {
                 try {
-                    LeshanBootstrapServer restoredServer = getLhBootstrapServer();
-                    restoredServer.start();
-                    this.server = restoredServer;
-                    log.info("Restored LwM2M Bootstrap server with previous configuration.");
+                    oldServer.start();
+                    log.info("Restored old LwM2M Bootstrap server successfully.");
                 } catch (Exception restoreEx) {
                     log.error("Failed to restore old LwM2M Bootstrap server", restoreEx);
                 }
@@ -211,6 +209,11 @@ public class LwM2MTransportBootstrapService implements SmartInitializingSingleto
         }
         this.server = newServer;
         log.info("New LwM2M Bootstrap server started successfully.");
+
+        // Destroy the old server only after a successful swap
+        if (oldServer != null) {
+            oldServer.destroy();
+        }
     }
 
 }

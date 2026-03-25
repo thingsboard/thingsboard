@@ -154,14 +154,14 @@ public class DefaultCoapServerService implements CoapServerService, SmartInitial
         return networkConfig;
     }
 
-    DtlsConnectorConfig buildDtlsConnectorConfig(Configuration networkConfig) throws UnknownHostException {
+    private DtlsConnectorConfig buildDtlsConnectorConfig(Configuration networkConfig) throws UnknownHostException {
         TbCoapDtlsSettings dtlsSettings = coapServerContext.getDtlsSettings();
         DtlsConnectorConfig dtlsConnectorConfig = dtlsSettings.dtlsConnectorConfig(networkConfig);
         networkConfig.set(CoapConfig.COAP_SECURE_PORT, dtlsConnectorConfig.getAddress().getPort());
         return dtlsConnectorConfig;
     }
 
-    CoapEndpoint buildDtlsEndpoint(Configuration networkConfig, DTLSConnector connector) {
+    private CoapEndpoint buildDtlsEndpoint(Configuration networkConfig, DTLSConnector connector) {
         CoapEndpoint.Builder dtlsCoapEndpointBuilder = new CoapEndpoint.Builder();
         dtlsCoapEndpointBuilder.setConfiguration(networkConfig);
         dtlsCoapEndpointBuilder.setConnector(connector);
@@ -179,7 +179,7 @@ public class DefaultCoapServerService implements CoapServerService, SmartInitial
         tbDtlsCertificateVerifier = (TbCoapDtlsCertificateVerifier) dtlsConnectorConfig.getAdvancedCertificateVerifier();
     }
 
-    DTLSConnector createDtlsConnector(DtlsConnectorConfig config) {
+    private DTLSConnector createDtlsConnector(DtlsConnectorConfig config) {
         return new DTLSConnector(config);
     }
 
@@ -195,7 +195,7 @@ public class DefaultCoapServerService implements CoapServerService, SmartInitial
         DTLSConnector newConnector = createDtlsConnector(dtlsConnectorConfig);
         CoapEndpoint newEndpoint = buildDtlsEndpoint(networkConfig, newConnector);
 
-        // Stop old endpoint first to release the port before starting the new one
+        // Stop the old endpoint first to release the port before starting the new one
         if (oldDtlsEndpoint != null) {
             log.info("Stopping old DTLS endpoint to release the port...");
             server.getEndpoints().remove(oldDtlsEndpoint);
@@ -229,7 +229,7 @@ public class DefaultCoapServerService implements CoapServerService, SmartInitial
         dtlsCoapEndpoint = newEndpoint;
         tbDtlsCertificateVerifier = (TbCoapDtlsCertificateVerifier) dtlsConnectorConfig.getAdvancedCertificateVerifier();
 
-        // Destroy old resources after successful swap
+        // Destroy old resources after a successful swap
         if (oldDtlsEndpoint != null) {
             if (oldDtlsConnector != null) {
                 oldDtlsConnector.destroy();

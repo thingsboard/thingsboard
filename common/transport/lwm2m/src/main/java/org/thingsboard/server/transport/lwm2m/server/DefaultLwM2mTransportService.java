@@ -236,7 +236,7 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService, Smar
         log.info("Creating new LwM2M server with updated certificates...");
         LeshanServer newServer = getLhServer();
 
-        // Stop old server first to release the ports before starting the new one
+        // Stop (not destroy) old server to release ports but keep it restartable for rollback
         if (oldServer != null) {
             log.info("Stopping old LwM2M server to release ports...");
             if (oldListener != null) {
@@ -245,7 +245,7 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService, Smar
                 oldServer.getObservationService().removeListener(oldListener.observationListener);
                 oldServer.getSendService().removeListener(oldListener.sendListener);
             }
-            oldServer.destroy();
+            oldServer.stop();
         }
 
         try {
@@ -253,21 +253,20 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService, Smar
         } catch (Exception e) {
             log.error("Failed to start new LwM2M server", e);
             newServer.destroy();
-            // Attempt to restore the old server
-            try {
-                LeshanServer restoredServer = getLhServer();
-                restoredServer.start();
-                LwM2mServerListener restoredListener = new LwM2mServerListener(handler);
-                restoredServer.getRegistrationService().addListener(restoredListener.registrationListener);
-                restoredServer.getPresenceService().addListener(restoredListener.presenceListener);
-                restoredServer.getObservationService().addListener(restoredListener.observationListener);
-                restoredServer.getSendService().addListener(restoredListener.sendListener);
-                this.server = restoredServer;
-                this.context.setServer(restoredServer);
-                this.serverListener = restoredListener;
-                log.info("Restored LwM2M server with previous configuration.");
-            } catch (Exception restoreEx) {
-                log.error("Failed to restore old LwM2M server", restoreEx);
+            // Attempt to restart the old server (only stopped, not destroyed)
+            if (oldServer != null) {
+                try {
+                    oldServer.start();
+                    if (oldListener != null) {
+                        oldServer.getRegistrationService().addListener(oldListener.registrationListener);
+                        oldServer.getPresenceService().addListener(oldListener.presenceListener);
+                        oldServer.getObservationService().addListener(oldListener.observationListener);
+                        oldServer.getSendService().addListener(oldListener.sendListener);
+                    }
+                    log.info("Restored old LwM2M server successfully.");
+                } catch (Exception restoreEx) {
+                    log.error("Failed to restore old LwM2M server", restoreEx);
+                }
             }
             throw e;
         }
@@ -282,6 +281,11 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService, Smar
         this.context.setServer(newServer);
         this.serverListener = newListener;
         log.info("New LwM2M server started successfully.");
+
+        // Destroy old server only after successful swap
+        if (oldServer != null) {
+            oldServer.destroy();
+        }
     }
 
     @Override

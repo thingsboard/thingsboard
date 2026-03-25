@@ -48,7 +48,7 @@ public class CertificateReloadManager implements SmartInitializingSingleton, Dis
 
     private static final int MAX_CONSECUTIVE_FAILURES = 10;
 
-    @Value("${transport.ssl.certificate.reload.enabled:true}")
+    @Value("${transport.ssl.certificate.reload.enabled:false}")
     private boolean reloadEnabled;
 
     @Value("${transport.ssl.certificate.reload.check_interval_seconds:60}")
@@ -103,7 +103,7 @@ public class CertificateReloadManager implements SmartInitializingSingleton, Dis
 
                     List<Path> filePaths = credentials.getCertificateFilePaths();
                     if (filePaths == null || filePaths.isEmpty()) {
-                        log.debug("No certificate files to watch for: {} ({})", config.getName(), beanName);
+                        log.debug("No file-system certificate paths to watch for: {} ({}) — certificates may be classpath-based", config.getName(), beanName);
                         continue;
                     }
 
