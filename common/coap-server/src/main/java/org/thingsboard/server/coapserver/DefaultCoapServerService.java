@@ -195,14 +195,31 @@ public class DefaultCoapServerService implements CoapServerService, SmartInitial
         DTLSConnector newConnector = createDtlsConnector(dtlsConnectorConfig);
         CoapEndpoint newEndpoint = buildDtlsEndpoint(networkConfig, newConnector);
 
+        // Stop old endpoint first to release the port before starting the new one
+        if (oldDtlsEndpoint != null) {
+            log.info("Stopping old DTLS endpoint to release the port...");
+            server.getEndpoints().remove(oldDtlsEndpoint);
+            oldDtlsEndpoint.stop();
+        }
+
         server.addEndpoint(newEndpoint);
         try {
             newEndpoint.start();
         } catch (IOException e) {
-            log.error("Failed to start new DTLS endpoint, cleaning up", e);
+            log.error("Failed to start new DTLS endpoint, restoring old endpoint", e);
             server.getEndpoints().remove(newEndpoint);
             newEndpoint.destroy();
             newConnector.destroy();
+            // Attempt to restore the old endpoint
+            if (oldDtlsEndpoint != null) {
+                try {
+                    server.addEndpoint(oldDtlsEndpoint);
+                    oldDtlsEndpoint.start();
+                    log.info("Old DTLS endpoint restored successfully.");
+                } catch (IOException restoreEx) {
+                    log.error("Failed to restore old DTLS endpoint", restoreEx);
+                }
+            }
             throw e;
         }
         log.info("New DTLS endpoint started successfully.");
@@ -212,15 +229,13 @@ public class DefaultCoapServerService implements CoapServerService, SmartInitial
         dtlsCoapEndpoint = newEndpoint;
         tbDtlsCertificateVerifier = (TbCoapDtlsCertificateVerifier) dtlsConnectorConfig.getAdvancedCertificateVerifier();
 
+        // Destroy old resources after successful swap
         if (oldDtlsEndpoint != null) {
-            log.info("Stopping old DTLS endpoint...");
-            server.getEndpoints().remove(oldDtlsEndpoint);
-            oldDtlsEndpoint.stop();
             if (oldDtlsConnector != null) {
                 oldDtlsConnector.destroy();
             }
             oldDtlsEndpoint.destroy();
-            log.info("Old DTLS endpoint stopped and destroyed.");
+            log.info("Old DTLS endpoint destroyed.");
         }
     }
 

@@ -228,6 +228,10 @@ public class CertificateReloadManager implements SmartInitializingSingleton, Dis
             }
 
             if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+                // Update modification times to avoid re-checking mtime and re-computing checksums every poll cycle
+                for (Path path : paths) {
+                    lastModifiedMap.put(path, getLastModifiedTime(path));
+                }
                 return;
             }
 

@@ -60,8 +60,7 @@ public abstract class AbstractSslCredentials implements SslCredentials {
 
     @Override
     public void reload(boolean trustsOnly) throws IOException, GeneralSecurityException {
-        SslState newState = buildState(trustsOnly);
-        state.set(newState);
+        init(trustsOnly);
     }
 
     private SslState buildState(boolean trustsOnly) throws IOException, GeneralSecurityException {

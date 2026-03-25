@@ -189,7 +189,7 @@ public class CoapDtlsCertificateReloadTest {
     }
 
     @Test
-    public void givenReloadCallback_whenStartFails_thenNewResourcesCleaned() throws Exception {
+    public void givenReloadCallback_whenStartFails_thenNewResourcesCleanedAndOldRestored() throws Exception {
         // GIVEN
         when(mockCoapServerContext.getDtlsSettings()).thenReturn(mockDtlsSettings);
 
@@ -210,6 +210,7 @@ public class CoapDtlsCertificateReloadTest {
         doReturn(mockNewEndpoint).when(spyService).buildDtlsEndpoint(any(Configuration.class), any(DTLSConnector.class));
 
         List<Endpoint> endpointsList = new CopyOnWriteArrayList<>();
+        endpointsList.add(mockDtlsEndpoint);
         when(mockCoapServer.getEndpoints()).thenReturn(endpointsList);
 
         // WHEN - the callback catches the IOException internally
@@ -224,12 +225,12 @@ public class CoapDtlsCertificateReloadTest {
         verify(mockNewEndpoint).destroy();
         verify(mockNewConnector).destroy();
         assertThat(endpointsList).doesNotContain(mockNewEndpoint);
+        // Old endpoint was stopped to release port, then restored after new one failed
+        verify(mockDtlsEndpoint).stop();
+        verify(mockDtlsEndpoint).start();
         // Old fields preserved
         assertThat(ReflectionTestUtils.getField(spyService, "dtlsCoapEndpoint")).isSameAs(mockDtlsEndpoint);
         assertThat(ReflectionTestUtils.getField(spyService, "dtlsConnector")).isSameAs(mockDtlsConnector);
-        // Old endpoint not touched
-        verify(mockDtlsEndpoint, never()).stop();
-        verify(mockDtlsEndpoint, never()).destroy();
     }
 
 }
