@@ -39,6 +39,7 @@ public class AlarmCreateOrUpdateActiveRequest implements AlarmModificationReques
     private TenantId tenantId;
     @Schema(description = "JSON object with Customer Id", accessMode = Schema.AccessMode.READ_ONLY)
     private CustomerId customerId;
+    @NoXss
     @NotNull
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "representing type of the Alarm", example = "High Temperature Alarm")
     @Length(fieldName = "type")
