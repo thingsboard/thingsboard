@@ -18,7 +18,6 @@ package org.thingsboard.server.service.query;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -105,13 +104,11 @@ public class DefaultEntityQueryService implements EntityQueryService {
 
     @Override
     public long countEntitiesByQuery(SecurityUser securityUser, EntityCountQuery query) {
-
         return entityService.countEntitiesByQuery(securityUser.getTenantId(), securityUser.getCustomerId(), query);
     }
 
     @Override
     public PageData<EntityData> findEntityDataByQuery(SecurityUser securityUser, EntityDataQuery query) {
-
         if (query.getKeyFilters() != null) {
             resolveDynamicValuesInPredicates(
                     query.getKeyFilters().stream()
@@ -181,7 +178,6 @@ public class DefaultEntityQueryService implements EntityQueryService {
 
     @Override
     public PageData<AlarmData> findAlarmDataByQuery(SecurityUser securityUser, AlarmDataQuery query) {
-
         EntityDataQuery entityDataQuery = this.buildEntityDataQuery(query);
         PageData<EntityData> entities = entityService.findEntityDataByQuery(securityUser.getTenantId(),
                 securityUser.getCustomerId(), entityDataQuery);
@@ -208,7 +204,6 @@ public class DefaultEntityQueryService implements EntityQueryService {
 
     @Override
     public long countAlarmsByQuery(SecurityUser securityUser, AlarmCountQuery query) {
-
         if (query.getEntityFilter() != null) {
             EntityDataQuery entityDataQuery = this.buildEntityDataQuery(query);
             PageData<EntityData> entities = entityService.findEntityDataByQuery(securityUser.getTenantId(),
@@ -240,8 +235,6 @@ public class DefaultEntityQueryService implements EntityQueryService {
         EntityDataPageLink edpl = new EntityDataPageLink(maxEntitiesPerAlarmSubscription, 0, null, entitiesSortOrder);
         return new EntityDataQuery(query.getEntityFilter(), edpl, query.getEntityFields(), query.getLatestValues(), query.getKeyFilters(), query.getKeyFiltersOperationOrDefault());
     }
-
-
 
     @Override
     public ListenableFuture<AvailableEntityKeys> getKeysByQuery(SecurityUser securityUser, TenantId tenantId, EntityDataQuery query,
