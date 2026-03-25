@@ -110,118 +110,25 @@ public class SsrfProtectionValidator {
     }
 
     // =====================================================================
-    // Legacy static-state API (deprecated)
+    // Legacy static-state API (deprecated) — delegates to config-based API
     // =====================================================================
 
     /** @deprecated Use {@link #validateUri(URI, SsrfProtectionConfig)} instead. */
     @Deprecated
     public static void validateUri(URI uri) {
-        validateUri(uri, enabled);
+        validateUri(uri, snapshotGlobalConfig(enabled));
     }
 
+    /** @deprecated Use {@link #validateUri(URI, SsrfProtectionConfig)} instead. */
+    @Deprecated
     static void validateUri(URI uri, boolean ssrfProtectionEnabled) {
-        if (!ssrfProtectionEnabled) {
-            return;
-        }
-
-        String scheme = uri.getScheme();
-        if (scheme == null || !ALLOWED_SCHEMES.contains(scheme.toLowerCase())) {
-            throw new RuntimeException("URI is invalid: only HTTP and HTTPS schemes are allowed, got: " + scheme);
-        }
-
-        String host = uri.getHost();
-        if (host == null || host.isEmpty()) {
-            throw new RuntimeException("URI is invalid: hostname is missing");
-        }
-
-        String hostLower = host.toLowerCase();
-
-        // Allow-listed hostnames bypass all hostname and IP checks
-        AllowedHosts currentAllowed = allowedHosts;
-        if (currentAllowed.hostnames.contains(hostLower)) {
-            return;
-        }
-
-        if (BLOCKED_HOSTNAMES.contains(hostLower) || additionalBlocked.hostnames.contains(hostLower)) {
-            throwBlockedHost(host);
-        }
-        for (String suffix : BLOCKED_HOSTNAME_SUFFIXES) {
-            if (hostLower.endsWith(suffix)) {
-                throwBlockedHost(host);
-            }
-        }
-        // Block IPv6 loopback literal in URL (e.g. http://[::1]/)
-        if ("[::1]".equals(host) || "::1".equals(host)) {
-            throwBlockedHost(host);
-        }
-
-        validateResolvedAddresses(host);
-    }
-
-    private static void validateResolvedAddresses(String host) {
-        InetAddress[] addresses;
-        try {
-            addresses = InetAddress.getAllByName(host);
-        } catch (UnknownHostException e) {
-            throw new RuntimeException("URI is invalid: unable to resolve hostname '" + host + "'", e);
-        }
-
-        for (InetAddress address : addresses) {
-            if (isBlockedAddress(address)) {
-                log.debug("Blocked request to host '{}' resolved to '{}'", host, address.getHostAddress());
-                throwBlockedHost(host);
-            }
-        }
+        validateUri(uri, snapshotGlobalConfig(ssrfProtectionEnabled));
     }
 
     /** @deprecated Use {@link #isBlockedAddress(InetAddress, SsrfProtectionConfig)} instead. */
     @Deprecated
     public static boolean isBlockedAddress(InetAddress address) {
-        // Check allow-list first: allowed addresses bypass all block checks
-        AllowedHosts currentAllowed = allowedHosts;
-        for (CidrRange cidr : currentAllowed.cidrRanges) {
-            if (cidr.contains(address)) {
-                return false;
-            }
-        }
-
-        // Covers 127.0.0.0/8 and ::1
-        if (address.isLoopbackAddress()) {
-            return true;
-        }
-        // Covers 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16
-        if (address.isSiteLocalAddress()) {
-            return true;
-        }
-        // Covers 169.254.0.0/16 and fe80::/10
-        if (address.isLinkLocalAddress()) {
-            return true;
-        }
-        // Covers 0.0.0.0
-        if (address.isAnyLocalAddress()) {
-            return true;
-        }
-        // Additional check for IPv6 unique local addresses (fc00::/7)
-        byte[] addr = address.getAddress();
-        if (addr.length == 16) {
-            int firstByte = addr[0] & 0xFF;
-            // fc00::/7 means first 7 bits are 1111110, so first byte is 0xFC or 0xFD
-            if (firstByte == 0xFC || firstByte == 0xFD) {
-                return true;
-            }
-        }
-        for (CidrRange cidr : CLOUD_METADATA_RANGES) {
-            if (cidr.contains(address)) {
-                return true;
-            }
-        }
-        // Check additional configured CIDR ranges
-        for (CidrRange cidr : additionalBlocked.cidrRanges) {
-            if (cidr.contains(address)) {
-                return true;
-            }
-        }
-        return false;
+        return isBlockedAddress(address, snapshotGlobalConfig(enabled));
     }
 
     private static void throwBlockedHost(String host) {
@@ -291,7 +198,15 @@ public class SsrfProtectionValidator {
     /** @deprecated Use {@link #isHostnameAllowed(String, SsrfProtectionConfig)} instead. */
     @Deprecated
     public static boolean isHostnameAllowed(String hostname) {
-        return allowedHosts.hostnames.contains(hostname.toLowerCase());
+        return isHostnameAllowed(hostname, snapshotGlobalConfig(enabled));
+    }
+
+    private static SsrfProtectionConfig snapshotGlobalConfig(boolean ssrfEnabled) {
+        AllowedHosts currentAllowed = allowedHosts;
+        AdditionalBlockedHosts currentBlocked = additionalBlocked;
+        return new SsrfProtectionConfig(ssrfEnabled,
+                currentAllowed.cidrRanges, currentAllowed.hostnames,
+                currentBlocked.cidrRanges, currentBlocked.hostnames);
     }
 
     private static ParsedHostEntries parseHostEntries(List<String> entries) {

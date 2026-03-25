@@ -42,11 +42,11 @@ public final class SsrfProtectionConfig {
     private final List<SsrfProtectionValidator.CidrRange> additionalBlockedCidrRanges;
     private final Set<String> additionalBlockedHostnames;
 
-    public SsrfProtectionConfig(boolean enabled,
-                                List<SsrfProtectionValidator.CidrRange> allowedCidrRanges,
-                                Set<String> allowedHostnames,
-                                List<SsrfProtectionValidator.CidrRange> additionalBlockedCidrRanges,
-                                Set<String> additionalBlockedHostnames) {
+    SsrfProtectionConfig(boolean enabled,
+                         List<SsrfProtectionValidator.CidrRange> allowedCidrRanges,
+                         Set<String> allowedHostnames,
+                         List<SsrfProtectionValidator.CidrRange> additionalBlockedCidrRanges,
+                         Set<String> additionalBlockedHostnames) {
         this.enabled = enabled;
         this.allowedCidrRanges = allowedCidrRanges;
         this.allowedHostnames = allowedHostnames;
