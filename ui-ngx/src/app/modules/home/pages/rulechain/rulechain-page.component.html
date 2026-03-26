@@ -87,7 +87,7 @@
           </div>
         </mat-drawer>
         <mat-drawer class="tb-details-drawer"
-                    [opened]="isEditingRuleNode || isEditingRuleNodeLink"
+                    [opened]="isEditingRuleNode || isEditingRuleNodeLink || isEditingNote"
                     (closed)="onDetailsDrawerClosed()"
                     mode="over"
                     position="end">
@@ -98,12 +98,12 @@
                               (ruleNodeTypeDescriptorsMap.get(editingRuleNode.component.type).name | translate)
                               + ' - ' + editingRuleNode.component.name
                             }}"
-              [isReadOnly]="selectedRuleNodeTabIndex > 0"
-              [isAlwaysEdit]="true"
-              (closeDetails)="onEditRuleNodeClosed()"
-              (toggleDetailsEditMode)="onRevertRuleNodeEdit()"
-              (applyDetails)="saveRuleNode()"
-              [theForm]="tbRuleNode.ruleNodeFormGroup">
+                            [isReadOnly]="selectedRuleNodeTabIndex > 0"
+                            [isAlwaysEdit]="true"
+                            (closeDetails)="onEditRuleNodeClosed()"
+                            (toggleDetailsEditMode)="onRevertRuleNodeEdit()"
+                            (applyDetails)="saveRuleNode()"
+                            [theForm]="tbRuleNode.ruleNodeFormGroup">
               <div class="details-buttons">
                 <div [tb-help]="helpLinkIdForRuleNodeType()"></div>
               </div>
@@ -167,6 +167,22 @@
               </tb-rule-node-link>
             </tb-details-panel>
           }
+          @if (editingNote) {
+            <tb-details-panel class="flex-1"
+                              headerTitle="{{ 'rulechain.note' | translate }}"
+                              headerSubtitle="{{ 'rulechain.note-details' | translate }}"
+                              [isReadOnly]="false"
+                              [isAlwaysEdit]="true"
+                              (closeDetails)="onEditNoteClosed()"
+                              (toggleDetailsEditMode)="onRevertNoteEdit()"
+                              (applyDetails)="saveNote()"
+                              [theForm]="tbRuleNote.noteForm">
+              <tb-rule-note-editor #tbRuleNote
+                                   [note]="editingNote"
+                                   class="mt-3 flex-1">
+              </tb-rule-note-editor>
+            </tb-details-panel>
+          }
         </mat-drawer>
         <mat-drawer-content class="tb-rulechain-graph-content">
           <button color="primary"
@@ -178,6 +194,14 @@
             <mat-icon class="tb-library-node-btn-icon" [class.tb-library-node-btn-icon-toggled]="drawer.opened">chevron_right</mat-icon>
           </button>
           @if (!isImport) {
+            <button color="primary"
+                    type="button"
+                    mat-mini-fab class="add-note-button"
+                    (click)="addNote()"
+                    matTooltip="{{'rulechain.add-note' | translate}}"
+                    matTooltipPosition="above">
+              <mat-icon>sticky_note_2</mat-icon>
+            </button>
             <button #versionControlButton
                     color="primary"
                     type="button"
@@ -212,9 +236,11 @@
                     @if (contextInfo.iconUrl) {
                       <img [src]="contextInfo.iconUrl"/>
                     }
-                    <div class="flex-1">
+                    <div class="flex-1 self-center">
                       <div class="tb-context-menu-title">{{contextInfo.title}}</div>
-                      <div class="tb-context-menu-subtitle">{{contextInfo.subtitle}}</div>
+                      @if (contextInfo.subtitle) {
+                        <div class="tb-context-menu-subtitle">{{contextInfo.subtitle}}</div>
+                      }
                     </div>
                   </div>
                   @for (menuItem of contextInfo.menuItems; track menuItem) {

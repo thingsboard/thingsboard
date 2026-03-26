@@ -27,7 +27,7 @@
             type="button"
     mat-button (click)="toggleEditMode()">{{ 'markdown.preview' | translate }}</button>
     @if (helpId) {
-      <div [tb-help-popup]="helpId"></div>
+      <div [tb-help-popup]="helpId" [tb-help-popup-style]="helpPopupStyle"></div>
     }
     <fieldset style="width: initial">
       <div matTooltip="{{(fullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"

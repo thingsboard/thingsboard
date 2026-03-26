@@ -40,14 +40,14 @@ public class ShortCustomerInfo {
     @NoXss
     private String title;
 
-    @JsonProperty("isPublic")
+    @JsonProperty("public")
     @Schema(description = "Indicates special 'Public' customer used to embed dashboards on public websites.")
     private boolean publicCustomer;
 
-    @JsonProperty("isPublic")
+    @JsonProperty("public")
     public boolean isPublic() { return publicCustomer; }
 
-    @JsonProperty("isPublic")
+    @JsonProperty("public")
     public void setPublic(boolean publicCustomer) { this.publicCustomer = publicCustomer; }
 
     @Override

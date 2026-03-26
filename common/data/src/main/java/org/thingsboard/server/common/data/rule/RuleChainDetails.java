@@ -13,32 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.model.sql;
+package org.thingsboard.server.common.data.rule;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.thingsboard.server.common.data.rule.RuleChain;
-import org.thingsboard.server.dao.model.ModelConstants;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@Entity
-@Table(name = ModelConstants.RULE_CHAIN_TABLE_NAME)
-public class RuleChainEntity extends AbstractRuleChainEntity<RuleChain> {
+public class RuleChainDetails extends RuleChain {
 
-    public RuleChainEntity() {
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @Schema(description = "List of sticky notes placed on the rule chain canvas")
+    private List<RuleChainNote> notes;
+
+    public RuleChainDetails() {
         super();
     }
 
-    public RuleChainEntity(RuleChain ruleChain) {
+    public RuleChainDetails(RuleChain ruleChain) {
         super(ruleChain);
     }
 
-    @Override
-    public RuleChain toData() {
-        return super.toRuleChain();
+    public RuleChainDetails(RuleChainDetails ruleChainDetails) {
+        super(ruleChainDetails);
+        this.notes = ruleChainDetails.getNotes() != null ? new ArrayList<>(ruleChainDetails.getNotes()) : null;
     }
 
 }
