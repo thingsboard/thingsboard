@@ -189,12 +189,12 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
             }
         }
 
-        boolean hasMatchesEntityAggCfs = calculatedFieldCache.getCalculatedFieldCtxsByType(CalculatedFieldType.ENTITY_AGGREGATION).anyMatch(filter);
+        boolean hasMatchesEntityAggCfs = calculatedFieldCache.getCalculatedFieldCtxsByType(tenantId, CalculatedFieldType.ENTITY_AGGREGATION).anyMatch(filter);
         if (hasMatchesEntityAggCfs) {
             return true;
         }
 
-        List<CalculatedFieldCtx> relatedEntitiesAggregationCfs = calculatedFieldCache.getCalculatedFieldCtxsByType(CalculatedFieldType.RELATED_ENTITIES_AGGREGATION)
+        List<CalculatedFieldCtx> relatedEntitiesAggregationCfs = calculatedFieldCache.getCalculatedFieldCtxsByType(tenantId, CalculatedFieldType.RELATED_ENTITIES_AGGREGATION)
                 .filter(relatedEntityFilter)
                 .toList();
         for (CalculatedFieldCtx cfCtx : relatedEntitiesAggregationCfs) {
