@@ -31,11 +31,15 @@
 
     <properties>
         <main.dir>${basedir}/..</main.dir>
+        <!-- msa/* docker modules copy the .deb from target/ directly (not via Maven reactor),
+             so they need the DEB-copy goal to run at the package phase regardless of
+             pkg.package.phase (which is "none" here since these modules don't produce packaging). -->
+        <pkg.deb.phase>package</pkg.deb.phase>
         <docker.repo>thingsboard</docker.repo>
         <docker.base.image>thingsboard/openjdk25:trixie-slim</docker.base.image>
         <dockerfile.skip>true</dockerfile.skip>
         <blackBoxTests.skip>true</blackBoxTests.skip>
-        <dockerfile-maven.version>1.4.13</dockerfile-maven.version>
+        <exec-maven-plugin.version>3.5.1</exec-maven-plugin.version>
         <docker.push-arm-amd-image.phase>none</docker.push-arm-amd-image.phase>
     </properties>
 
@@ -53,6 +57,37 @@
     </modules>
 
     <profiles>
+        <!-- Mirror of the root-pom skip-deb profile. Required because Maven resolves
+             child <properties> entries (pkg.deb.phase=package above) with higher priority
+             than profile properties from a parent POM. Redeclaring the profile here ensures
+             pkg.deb.phase=none wins when -Dpkg.skip.deb=true is passed. -->
+        <profile>
+            <id>skip-deb</id>
+            <activation>
+                <property>
+                    <name>pkg.skip.deb</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <properties>
+                <pkg.deb.phase>none</pkg.deb.phase>
+            </properties>
+        </profile>
+        <!-- Mirror of the root-pom skip-pkg profile. Same precedence reason as skip-deb above:
+             pkg.deb.phase=package in this POM's <properties> would win over the parent profile,
+             so we must redeclare it here to ensure pkg.deb.phase=none when -Dpkg.skip=true. -->
+        <profile>
+            <id>skip-pkg</id>
+            <activation>
+                <property>
+                    <name>pkg.skip</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <properties>
+                <pkg.deb.phase>none</pkg.deb.phase>
+            </properties>
+        </profile>
         <profile>
             <id>black-box-tests</id>
             <activation>
@@ -213,19 +248,12 @@
         </profile>
     </profiles>
     <build>
-        <extensions>
-            <extension>
-                <groupId>com.spotify</groupId>
-                <artifactId>dockerfile-maven-extension</artifactId>
-                <version>${dockerfile-maven.version}</version>
-            </extension>
-        </extensions>
         <pluginManagement>
             <plugins>
                 <plugin>
-                    <groupId>com.spotify</groupId>
-                    <artifactId>dockerfile-maven-plugin</artifactId>
-                    <version>${dockerfile-maven.version}</version>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>exec-maven-plugin</artifactId>
+                    <version>${exec-maven-plugin.version}</version>
                 </plugin>
             </plugins>
         </pluginManagement>

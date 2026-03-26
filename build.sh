@@ -31,7 +31,7 @@ java -version
 #echo "Cleaning ui-ngx/node_modules" && rm -rf ui-ngx/node_modules
 
 MAVEN_OPTS="-Xmx1024m" NODE_OPTIONS="--max_old_space_size=4096" DOCKER_CLI_EXPERIMENTAL=enabled DOCKER_BUILDKIT=0 \
-mvn -T2 license:format clean install -DskipTests \
+mvn -T6 license:format clean install -DskipTests -Dpkg.skip=true \
   $PROJECTS --also-make
 #   \
 #  -Dpush-docker-amd-arm-images
