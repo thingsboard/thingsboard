@@ -243,6 +243,14 @@ public class JacksonUtil {
         }
     }
 
+    public static <T> T treeToValue(JsonNode node, TypeReference<T> type) {
+        try {
+            return OBJECT_MAPPER.treeToValue(node, type);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Can't convert value: " + node.toString(), e);
+        }
+    }
+
     public static JsonNode toJsonNode(String value) {
         return toJsonNode(value, OBJECT_MAPPER);
     }
