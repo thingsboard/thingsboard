@@ -129,6 +129,19 @@
             {{ 'rule-node-config.ignore-request-body' | translate }}
           </mat-slide-toggle>
         </div>
+        <section *ngIf="!restApiCallConfigForm.get('ignoreRequestBody').value">
+          <label translate class="tb-title">rule-node-config.request-body-template</label>
+          <div class="tb-hint" [innerHTML]="'rule-node-config.request-body-template-hint' | translate | safe: 'html'"></div>
+          <mat-form-field class="mat-block" subscriptSizing="dynamic">
+            <mat-label translate>rule-node-config.request-body-template</mat-label>
+            <textarea matInput
+                      formControlName="requestBodyTemplate"
+                      class="tb-enable-vertical-resize"
+                      cdkTextareaAutosize
+                      cdkAutosizeMinRows="3"></textarea>
+            <mat-hint translate>rule-node-config.request-body-template-empty-hint</mat-hint>
+          </mat-form-field>
+        </section>
         <mat-form-field class="mat-block" subscriptSizing="dynamic">
           <mat-label translate>rule-node-config.read-timeout</mat-label>
           <input type="text" min="0" [max]="IntLimit" inputmode="numeric" pattern="[0-9]*" matInput formControlName="readTimeoutMs">

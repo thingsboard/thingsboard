@@ -51,6 +51,7 @@ public class TbRestApiCallNodeConfiguration implements NodeConfiguration<TbRestA
     private String proxyPassword;
     private ClientCredentials credentials;
     private boolean ignoreRequestBody;
+    private String requestBodyTemplate;
     private int maxInMemoryBufferSizeInKb;
 
     @JsonIgnore

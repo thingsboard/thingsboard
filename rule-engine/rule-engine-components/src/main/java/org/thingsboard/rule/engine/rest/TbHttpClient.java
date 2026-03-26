@@ -55,6 +55,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -182,10 +183,7 @@ public class TbHttpClient {
     }
 
     EventLoopGroup getSharedOrCreateEventLoopGroup(EventLoopGroup eventLoopGroupShared) {
-        if (eventLoopGroupShared != null) {
-            return eventLoopGroupShared;
-        }
-        return this.eventLoopGroup = new NioEventLoopGroup();
+        return Objects.requireNonNullElseGet(eventLoopGroupShared, () -> this.eventLoopGroup = new NioEventLoopGroup());
     }
 
     private void checkSystemProxyProperties() throws TbNodeException {
@@ -243,7 +241,7 @@ public class TbHttpClient {
             if ((HttpMethod.POST.equals(method) || HttpMethod.PUT.equals(method) ||
                     HttpMethod.PATCH.equals(method) || HttpMethod.DELETE.equals(method)) &&
                     !config.isIgnoreRequestBody()) {
-                request.body(BodyInserters.fromValue(getData(msg, config.isParseToPlainText())));
+                request.body(BodyInserters.fromValue(getRequestBody(msg)));
             }
 
             request
@@ -275,7 +273,7 @@ public class TbHttpClient {
         if (origin instanceof WebClientResponseException restClientResponseException
                 && restClientResponseException.getStatusCode().is2xxSuccessful()) {
             // return cause instead of original exception in case 2xx status code
-            // this will provide meaningful error message to the user
+            // this will provide a meaningful error message to the user
             return new RuntimeException(restClientResponseException.getCause());
         }
         return origin;
@@ -340,6 +338,15 @@ public class TbHttpClient {
         return UriComponentsBuilder.fromUriString(endpointUrl).build().encode().toUri();
     }
 
+    private Object getRequestBody(TbMsg msg) {
+        if (StringUtils.isNotBlank(config.getRequestBodyTemplate())) {
+            boolean escapeJson = !config.isParseToPlainText();
+            String processedTemplate = TbNodeUtils.processPattern(config.getRequestBodyTemplate(), msg, escapeJson);
+            return config.isParseToPlainText() ? processedTemplate : JacksonUtil.toJsonNode(processedTemplate);
+        }
+        return getData(msg, config.isParseToPlainText());
+    }
+
     private Object getData(TbMsg tbMsg, boolean parseToPlainText) {
         String data = tbMsg.getData();
         return parseToPlainText ? JacksonUtil.toPlainText(data) : JacksonUtil.toJsonNode(data);
@@ -363,7 +370,7 @@ public class TbHttpClient {
         headers.forEach((key, values) -> {
             if (values != null && !values.isEmpty()) {
                 if (values.size() == 1) {
-                    consumer.accept(key, values.get(0));
+                    consumer.accept(key, values.getFirst());
                 } else {
                     consumer.accept(key, JacksonUtil.toString(values));
                 }
