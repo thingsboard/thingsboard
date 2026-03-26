@@ -33,13 +33,13 @@ public interface CalculatedFieldCache {
 
     CalculatedField getCalculatedField(CalculatedFieldId calculatedFieldId);
 
-    List<CalculatedField> getCalculatedFieldsByEntityId(TenantId tenantId, EntityId entityId);
+    List<CalculatedField> getCalculatedFieldsByEntityId(EntityId entityId);
 
-    List<CalculatedFieldLink> getCalculatedFieldLinksByEntityId(TenantId tenantId, EntityId entityId);
+    List<CalculatedFieldLink> getCalculatedFieldLinksByEntityId(EntityId entityId);
 
     CalculatedFieldCtx getCalculatedFieldCtx(CalculatedFieldId calculatedFieldId);
 
-    List<CalculatedFieldCtx> getCalculatedFieldCtxsByEntityId(TenantId tenantId, EntityId entityId);
+    List<CalculatedFieldCtx> getCalculatedFieldCtxsByEntityId(EntityId entityId);
 
     Stream<CalculatedFieldCtx> getCalculatedFieldCtxsByType(TenantId tenantId, CalculatedFieldType cfType);
 

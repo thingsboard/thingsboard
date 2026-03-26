@@ -171,7 +171,7 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
             return true;
         }
 
-        List<CalculatedFieldLink> links = calculatedFieldCache.getCalculatedFieldLinksByEntityId(tenantId, entityId);
+        List<CalculatedFieldLink> links = calculatedFieldCache.getCalculatedFieldLinksByEntityId(entityId);
         for (CalculatedFieldLink link : links) {
             CalculatedFieldCtx ctx = calculatedFieldCache.getCalculatedFieldCtx(link.calculatedFieldId());
             if (ctx != null && linkedEntityFilter.test(ctx)) {
@@ -180,11 +180,11 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
         }
 
         for (EntityId dynamicEntity : calculatedFieldCache.getDynamicEntities(tenantId, entityId)) {
-            if (calculatedFieldCache.getCalculatedFieldCtxsByEntityId(tenantId, dynamicEntity).stream().anyMatch(dynamicSourceFilter)) {
+            if (calculatedFieldCache.getCalculatedFieldCtxsByEntityId(dynamicEntity).stream().anyMatch(dynamicSourceFilter)) {
                 return true;
             }
             EntityId dynamicEntityProfileId = calculatedFieldCache.getProfileId(tenantId, dynamicEntity);
-            if (calculatedFieldCache.getCalculatedFieldCtxsByEntityId(tenantId, dynamicEntityProfileId).stream().anyMatch(dynamicSourceFilter)) {
+            if (calculatedFieldCache.getCalculatedFieldCtxsByEntityId(dynamicEntityProfileId).stream().anyMatch(dynamicSourceFilter)) {
                 return true;
             }
         }
