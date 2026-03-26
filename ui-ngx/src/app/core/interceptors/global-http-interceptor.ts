@@ -29,8 +29,9 @@ import { ActionNotificationShow } from '@app/core/notification/notification.acti
 import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
 import { parseHttpErrorMessage } from '@core/utils';
-import { getInterceptorConfig } from './interceptor.util';
+import { getInterceptorConfig, httpUrlPathname } from './interceptor.util';
 import { DomSanitizer } from '@angular/platform-browser';
+import { environment } from '@env/environment';
 
 const tmpHeaders = {};
 
@@ -51,24 +52,26 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
   ) {}
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    if (req.url.startsWith('/api/')) {
-      const config = getInterceptorConfig(req);
+    const outgoingReq = this.applyApiBaseUrl(req);
+    const isApiRequest = httpUrlPathname(outgoingReq.url).startsWith('/api/');
+    if (isApiRequest) {
+      const config = getInterceptorConfig(outgoingReq);
       this.updateLoadingState(config, true);
       let observable$: Observable<HttpEvent<any>>;
-      if (this.isTokenBasedAuthEntryPoint(req.url)) {
+      if (this.isTokenBasedAuthEntryPoint(outgoingReq.url)) {
         if (!AuthService.getJwtToken() && !this.authService.refreshTokenPending()) {
-          observable$ = this.handleResponseError(req, next, new HttpErrorResponse({error: {message: 'Unauthorized!'}, status: 401}));
+          observable$ = this.handleResponseError(outgoingReq, next, new HttpErrorResponse({error: {message: 'Unauthorized!'}, status: 401}));
         } else if (!AuthService.isJwtTokenValid()) {
-          observable$ = this.handleResponseError(req, next, new HttpErrorResponse({error: {refreshTokenPending: true}}));
+          observable$ = this.handleResponseError(outgoingReq, next, new HttpErrorResponse({error: {refreshTokenPending: true}}));
         } else {
-          observable$ = this.jwtIntercept(req, next);
+          observable$ = this.jwtIntercept(outgoingReq, next);
         }
       } else {
-        observable$ = this.handleRequest(req, next);
+        observable$ = this.handleRequest(outgoingReq, next);
       }
       return observable$.pipe(
         finalize(() => {
-          if (req.url.startsWith('/api/')) {
+          if (isApiRequest) {
             this.updateLoadingState(config, false);
           }
         })
@@ -76,6 +79,14 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
     } else {
       return next.handle(req);
     }
+  }
+
+  private applyApiBaseUrl(req: HttpRequest<any>): HttpRequest<any> {
+    const base = environment.apiBaseUrl?.replace(/\/$/, '');
+    if (base && req.url.startsWith('/api/')) {
+      return req.clone({ url: base + req.url });
+    }
+    return req;
   }
 
   private jwtIntercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
@@ -102,7 +113,7 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
     const resendRequest = config.resendRequest;
     const errorCode = errorResponse.error ? errorResponse.error.errorCode : null;
     if (errorResponse.error && errorResponse.error.refreshTokenPending ||
-      errorResponse.status === 401 && req.url !== Constants.entryPoints.tokenRefresh) {
+      errorResponse.status === 401 && httpUrlPathname(req.url) !== Constants.entryPoints.tokenRefresh) {
       if (errorResponse.error && errorResponse.error.refreshTokenPending ||
           errorCode && errorCode === Constants.serverErrorCode.jwtTokenExpired) {
           return this.refreshTokenAndRetry(req, next);
@@ -123,7 +134,7 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
       }
     } else if (errorResponse.status === 0 || errorResponse.status === -1) {
         this.showError('Unable to connect');
-    } else if (!(req.url.startsWith('/api/rpc') || req.url.startsWith('/api/plugins/rpc'))) {
+    } else if (!(httpUrlPathname(req.url).startsWith('/api/rpc') || httpUrlPathname(req.url).startsWith('/api/plugins/rpc'))) {
       if (errorResponse.status === 404) {
         if (!ignoreErrors) {
           this.showError(req.method + ': ' + req.url + '<br/>' +
@@ -178,10 +189,11 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
   }
 
   private isTokenBasedAuthEntryPoint(url: string): boolean {
-    return  url.startsWith('/api/') &&
-      !url.startsWith(Constants.entryPoints.login) &&
-      !url.startsWith(Constants.entryPoints.tokenRefresh) &&
-      !url.startsWith(Constants.entryPoints.nonTokenBased);
+    const path = httpUrlPathname(url);
+    return path.startsWith('/api/') &&
+      !path.startsWith(Constants.entryPoints.login) &&
+      !path.startsWith(Constants.entryPoints.tokenRefresh) &&
+      !path.startsWith(Constants.entryPoints.nonTokenBased);
   }
 
   private updateLoadingState(config: InterceptorConfig, isLoading: boolean) {

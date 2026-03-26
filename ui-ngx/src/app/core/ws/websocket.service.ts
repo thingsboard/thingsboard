@@ -29,6 +29,7 @@ import {
   WebsocketDataMsg
 } from '@shared/models/telemetry/telemetry.models';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
+import { environment } from '@env/environment';
 import Timeout = NodeJS.Timeout;
 
 const RECONNECT_INTERVAL = 2000;
@@ -69,19 +70,29 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
       }
     );
 
-    let port = this.window.location.port;
-    if (this.window.location.protocol === 'https:') {
+    if (environment.apiBaseUrl) {
+      const base = new URL(environment.apiBaseUrl);
+      const isHttps = base.protocol === 'https:';
+      let port = base.port;
       if (!port) {
-        port = '443';
+        port = isHttps ? '443' : '80';
       }
-      this.wsUri = 'wss:';
+      this.wsUri = (isHttps ? 'wss:' : 'ws:') + `//${base.hostname}:${port}/${apiEndpoint}`;
     } else {
-      if (!port) {
-        port = '80';
+      let port = this.window.location.port;
+      if (this.window.location.protocol === 'https:') {
+        if (!port) {
+          port = '443';
+        }
+        this.wsUri = 'wss:';
+      } else {
+        if (!port) {
+          port = '80';
+        }
+        this.wsUri = 'ws:';
       }
-      this.wsUri = 'ws:';
+      this.wsUri += `//${this.window.location.hostname}:${port}/${apiEndpoint}`;
     }
-    this.wsUri += `//${this.window.location.hostname}:${port}/${apiEndpoint}`;
   }
 
   abstract subscribe(subscriber: WsSubscriber);

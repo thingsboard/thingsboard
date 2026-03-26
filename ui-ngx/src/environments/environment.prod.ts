@@ -17,6 +17,7 @@
 export const environment = {
   appTitle: 'ThingsBoard',
   production: true,
+  apiBaseUrl: '',
 // @ts-ignore
   tbVersion: TB_VERSION,
 // @ts-ignore

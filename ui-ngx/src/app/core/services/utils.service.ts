@@ -351,12 +351,12 @@ export class UtilsService {
     for (const key of keys) {
       params = this.updateUrlQueryString(params, key, null);
     }
-    const baseUrlPart = [baseUrl(), this.window.location.pathname].join('');
+    const baseUrlPart = this.window.location.origin + this.window.location.pathname;
     this.window.history.replaceState({}, '', baseUrlPart + params);
   }
 
   public updateQueryParam(name: string, value: string | null) {
-    const baseUrlPart = [baseUrl(), this.window.location.pathname].join('');
+    const baseUrlPart = this.window.location.origin + this.window.location.pathname;
     const urlQueryString = this.window.location.search;
     const params = this.updateUrlQueryString(urlQueryString, name, value);
     this.window.history.replaceState({}, '', baseUrlPart + params);

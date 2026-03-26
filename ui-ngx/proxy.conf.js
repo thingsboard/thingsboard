@@ -13,35 +13,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const forwardUrl = "http://localhost:8080";
-const wsForwardUrl = "ws://localhost:8080";
+const forwardUrl = "https://newgen.iot-platform.io.vn";
+const wsForwardUrl = "wss://newgen.iot-platform.io.vn";
 const ruleNodeUiforwardUrl = forwardUrl;
 
 const PROXY_CONFIG = {
   "/api": {
     "target": forwardUrl,
+    // Dev environment may use self-signed certificates.
+    // Disabling verification avoids "self-signed certificate" proxy failures.
     "secure": false,
+    "changeOrigin": true,
   },
   "/static/rulenode": {
     "target": ruleNodeUiforwardUrl,
     "secure": false,
+    "changeOrigin": true,
   },
   "/static/widgets": {
     "target": forwardUrl,
     "secure": false,
+    "changeOrigin": true,
   },
   "/oauth2": {
     "target": forwardUrl,
     "secure": false,
+    "changeOrigin": true,
   },
   "/login/oauth2": {
     "target": forwardUrl,
     "secure": false,
+    "changeOrigin": true,
   },
   "/api/ws": {
     "target": wsForwardUrl,
     "ws": true,
-    "secure": false
+    "secure": false,
+    "changeOrigin": true,
   },
 };
 

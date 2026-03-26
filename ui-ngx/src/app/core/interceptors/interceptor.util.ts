@@ -23,6 +23,17 @@ const internalUrlPrefixes = [
   '/api/rpc'
 ];
 
+export function httpUrlPathname(url: string): string {
+  if (url.startsWith('/')) {
+    return url.split('?')[0];
+  }
+  try {
+    return new URL(url).pathname;
+  } catch {
+    return url.split('?')[0];
+  }
+}
+
 export const getInterceptorConfig = (req: HttpRequest<unknown>): InterceptorConfig => {
   let config: InterceptorConfig;
   if (req.params && req.params instanceof InterceptorHttpParams) {
@@ -37,8 +48,9 @@ export const getInterceptorConfig = (req: HttpRequest<unknown>): InterceptorConf
 };
 
 const isInternalUrlPrefix = (url: string): boolean => {
+  const path = httpUrlPathname(url);
   for (const prefix of internalUrlPrefixes) {
-    if (url.startsWith(prefix)) {
+    if (path.startsWith(prefix)) {
       return true;
     }
   }

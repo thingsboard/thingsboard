@@ -23,7 +23,7 @@ import {
   EntityConflictDialogComponent
 } from '@shared/components/dialog/entity-conflict-dialog/entity-conflict-dialog.component';
 import { EntityInfoData, VersionedEntity } from '@shared/models/entity.models';
-import { getInterceptorConfig } from './interceptor.util';
+import { getInterceptorConfig, httpUrlPathname } from './interceptor.util';
 import { isDefined } from '@core/utils';
 import { InterceptorConfig } from '@core/interceptors/interceptor-config';
 import { RuleChainMetaData } from '@shared/models/rule-chain.models';
@@ -36,7 +36,7 @@ export class EntityConflictInterceptor implements HttpInterceptor {
   ) {}
 
   intercept(request: HttpRequest<VersionedEntity>, next: HttpHandler): Observable<HttpEvent<unknown>> {
-    if (!request.url.startsWith('/api/')) {
+    if (!httpUrlPathname(request.url).startsWith('/api/')) {
       return next.handle(request);
     }
 

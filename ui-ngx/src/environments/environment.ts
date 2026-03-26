@@ -21,6 +21,11 @@
 export const environment = {
   appTitle: 'ThingsBoard',
   production: false,
+  /**
+   * When set (e.g. local UI on localhost), HTTP API and WebSocket use this origin so requests
+   * go to the remote ThingsBoard instead of the dev server. Must have no trailing slash.
+   */
+  apiBaseUrl: 'https://newgen.iot-platform.io.vn',
 // @ts-ignore
   tbVersion: TB_VERSION,
 // @ts-ignore

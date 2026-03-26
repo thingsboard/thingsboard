@@ -35,6 +35,7 @@ import {
 import { DomSanitizer } from '@angular/platform-browser';
 import { SecurityContext } from '@angular/core';
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
+import { environment } from '@env/environment';
 
 const varsRegex = /\${([^}]*)}/g;
 const emailRegex = /^[A-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
@@ -764,6 +765,12 @@ export function padValue(val: any, dec: number): string {
 }
 
 export function baseUrl(): string {
+  if (environment.apiBaseUrl) {
+    const { hostname } = window.location;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return environment.apiBaseUrl;
+    }
+  }
   let url = window.location.protocol + '//' + window.location.hostname;
   const port = window.location.port;
   if (port && port.length > 0 && port !== '80' && port !== '443') {
