@@ -91,13 +91,17 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
     }
 
     @Override
-    public List<CalculatedField> getCalculatedFieldsByEntityId(EntityId entityId) {
-        return entityIdCalculatedFields.getOrDefault(entityId, Collections.emptyList());
+    public List<CalculatedField> getCalculatedFieldsByEntityId(TenantId tenantId, EntityId entityId) {
+        return entityIdCalculatedFields.getOrDefault(entityId, Collections.emptyList()).stream()
+                .filter(cf -> cf.getTenantId().equals(tenantId))
+                .toList();
     }
 
     @Override
-    public List<CalculatedFieldLink> getCalculatedFieldLinksByEntityId(EntityId entityId) {
-        return entityIdCalculatedFieldLinks.getOrDefault(entityId, Collections.emptyList());
+    public List<CalculatedFieldLink> getCalculatedFieldLinksByEntityId(TenantId tenantId, EntityId entityId) {
+        return entityIdCalculatedFieldLinks.getOrDefault(entityId, Collections.emptyList()).stream()
+                .filter(link -> link.getTenantId().equals(tenantId))
+                .toList();
     }
 
     @Override
@@ -125,11 +129,11 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
     }
 
     @Override
-    public List<CalculatedFieldCtx> getCalculatedFieldCtxsByEntityId(EntityId entityId) {
+    public List<CalculatedFieldCtx> getCalculatedFieldCtxsByEntityId(TenantId tenantId, EntityId entityId) {
         if (entityId == null) {
             return Collections.emptyList();
         }
-        return getCalculatedFieldsByEntityId(entityId).stream()
+        return getCalculatedFieldsByEntityId(tenantId, entityId).stream()
                 .map(cf -> getCalculatedFieldCtx(cf.getId()))
                 .toList();
     }
