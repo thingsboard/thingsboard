@@ -291,6 +291,11 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>org.thingsboard.client</groupId>
+            <artifactId>thingsboard-ce-client</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>

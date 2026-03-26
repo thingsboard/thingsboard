@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="selectAssetProfileFormGroup" class="mat-block" subscriptSizing="{{ subscriptSizing }}">
+<mat-form-field [formGroup]="selectAssetProfileFormGroup" class="mat-block" [subscriptSizing]="subscriptSizing" [appearance]="appearance">
   <mat-label>{{ 'asset-profile.asset-profile' | translate }}</mat-label>
   <input matInput type="text"
          #assetProfileInput
