@@ -30,6 +30,7 @@ import org.thingsboard.edge.rpc.EdgeRpcClient;
 import org.thingsboard.server.controller.AbstractWebTest;
 import org.thingsboard.server.gen.edge.v1.AdminSettingsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AiModelUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.ApiKeyUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AlarmCommentUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AlarmUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
@@ -373,6 +374,11 @@ public class EdgeImitator {
         if (downlinkMsg.getAiModelUpdateMsgCount() > 0) {
             for (AiModelUpdateMsg aiModelUpdateMsg : downlinkMsg.getAiModelUpdateMsgList()) {
                 result.add(saveDownlinkMsg(aiModelUpdateMsg));
+            }
+        }
+        if (downlinkMsg.getApiKeyUpdateMsgCount() > 0) {
+            for (ApiKeyUpdateMsg apiKeyUpdateMsg : downlinkMsg.getApiKeyUpdateMsgList()) {
+                result.add(saveDownlinkMsg(apiKeyUpdateMsg));
             }
         }
         if (downlinkMsg.hasEdgeConfiguration()) {

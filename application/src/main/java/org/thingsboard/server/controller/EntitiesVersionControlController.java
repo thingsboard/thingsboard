@@ -214,19 +214,19 @@ public class EntitiesVersionControlController extends BaseController {
             "      \"timestamp\": 1655198593000,\n" +
             "      \"id\": \"fd82625bdd7d6131cf8027b44ee967012ecaf990\",\n" +
             "      \"name\": \"Devices and assets - v2.0\",\n" +
-            "      \"author\": \"John Doe <johndoe@gmail.com>\"\n" +
+            "      \"author\": \"John Doe (johndoe@gmail.com)\"\n" +
             "    },\n" +
             "    {\n" +
             "      \"timestamp\": 1655198528000,\n" +
             "      \"id\": \"682adcffa9c8a2f863af6f00c4850323acbd4219\",\n" +
             "      \"name\": \"Update my device\",\n" +
-            "      \"author\": \"John Doe <johndoe@gmail.com>\"\n" +
+            "      \"author\": \"John Doe (johndoe@gmail.com)\"\n" +
             "    },\n" +
             "    {\n" +
             "      \"timestamp\": 1655198280000,\n" +
             "      \"id\": \"d2a6087c2b30e18cc55e7cdda345a8d0dfb959a4\",\n" +
             "      \"name\": \"Devices and assets - v1.0\",\n" +
-            "      \"author\": \"John Doe <johndoe@gmail.com>\"\n" +
+            "      \"author\": \"John Doe (johndoe@gmail.com)\"\n" +
             "    }\n" +
             "  ],\n" +
             "  \"totalPages\": 1,\n" +

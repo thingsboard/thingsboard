@@ -133,6 +133,8 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
     private HousekeeperService housekeeperService;
     @MockitoSpyBean
     private HousekeeperReprocessingService housekeeperReprocessingService;
+    @MockitoSpyBean
+    private TsHistoryDeletionTaskProcessor tsHistoryDeletionTaskProcessor;
     @Autowired
     private EventService eventService;
     @Autowired
@@ -155,8 +157,6 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
     private CustomerService customerService;
     @Autowired
     private DashboardService dashboardService;
-    @MockitoSpyBean
-    private TsHistoryDeletionTaskProcessor tsHistoryDeletionTaskProcessor;
 
     private TenantId tenantId;
 

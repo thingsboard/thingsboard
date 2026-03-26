@@ -206,16 +206,16 @@ public class DeviceController extends BaseController {
             notes = "Create or update the Device. When creating device, platform generates Device Id as " + UUID_WIKI_LINK +
                     "Requires to provide the Device Credentials object as well as an existing device profile ID or use \"default\".\n" +
                     "You may find the example of device with different type of credentials below: \n\n" +
-                    "- Credentials type: <b>\"Access token\"</b> with <b>device profile ID</b> below: \n\n" +
+                    "- Credentials type: **\"Access token\"** with **device profile ID** below: \n\n" +
                     DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_ACCESS_TOKEN_DESCRIPTION_MARKDOWN + "\n\n" +
-                    "- Credentials type: <b>\"Access token\"</b> with  <b>device profile default</b> below: \n\n" +
+                    "- Credentials type: **\"Access token\"** with  **device profile default** below: \n\n" +
                     DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_ACCESS_TOKEN_DEFAULT_DESCRIPTION_MARKDOWN + "\n\n" +
-                    "- Credentials type: <b>\"X509\"</b> with <b>device profile ID</b> below: \n\n" +
-                    "Note: <b>credentialsId</b> -  format <b>Sha3Hash</b>, <b>certificateValue</b> - format <b>PEM</b> (with \"--BEGIN CERTIFICATE----\" and  -\"----END CERTIFICATE-\").\n\n" +
+                    "- Credentials type: **\"X509\"** with **device profile ID** below: \n\n" +
+                    "Note: **credentialsId** -  format **Sha3Hash**, **certificateValue** - format **PEM** (with \"--BEGIN CERTIFICATE----\" and  -\"----END CERTIFICATE-\").\n\n" +
                     DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_X509_CERTIFICATE_DESCRIPTION_MARKDOWN + "\n\n" +
-                    "- Credentials type: <b>\"MQTT_BASIC\"</b> with <b>device profile ID</b> below: \n\n" +
+                    "- Credentials type: **\"MQTT_BASIC\"** with **device profile ID** below: \n\n" +
                     DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_MQTT_BASIC_DESCRIPTION_MARKDOWN + "\n\n" +
-                    "- You may find the example of <b>LwM2M</b> device and <b>RPK</b> credentials below: \n\n" +
+                    "- You may find the example of **LwM2M** device and **RPK** credentials below: \n\n" +
                     "Note: LwM2M device - only existing device profile ID (Transport configuration -> Transport type: \"LWM2M\".\n\n" +
                     DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_LVM2M_RPK_DESCRIPTION_MARKDOWN + "\n\n" +
                     "Remove 'id', 'tenantId' and optionally 'customerId' from the request body example (below) to create new Device entity. " +
@@ -322,14 +322,14 @@ public class DeviceController extends BaseController {
                     "Then use current method to update the credentials type and value. It is not possible to create multiple device credentials for the same device.\n" +
                     "The structure of device credentials id and value is simple for the 'ACCESS_TOKEN' but is much more complex for the 'MQTT_BASIC' or 'LWM2M_CREDENTIALS'.\n" +
                     "You may find the example of device with different type of credentials below: \n\n" +
-                    "- Credentials type: <b>\"Access token\"</b> with <b>device ID</b> and with <b>device ID</b> below: \n\n" +
+                    "- Credentials type: **\"Access token\"** with **device ID** and with **device ID** below: \n\n" +
                     DEVICE_UPDATE_CREDENTIALS_PARAM_ACCESS_TOKEN_DESCRIPTION_MARKDOWN + "\n\n" +
-                    "- Credentials type: <b>\"X509\"</b> with <b>device profile ID</b> below: \n\n" +
-                    "Note: <b>credentialsId</b> -  format <b>Sha3Hash</b>, <b>certificateValue</b> - format <b>PEM</b> (with \"--BEGIN CERTIFICATE----\" and  -\"----END CERTIFICATE-\").\n\n" +
+                    "- Credentials type: **\"X509\"** with **device profile ID** below: \n\n" +
+                    "Note: **credentialsId** -  format **Sha3Hash**, **certificateValue** - format **PEM** (with \"--BEGIN CERTIFICATE----\" and  -\"----END CERTIFICATE-\").\n\n" +
                     DEVICE_UPDATE_CREDENTIALS_PARAM_X509_CERTIFICATE_DESCRIPTION_MARKDOWN + "\n\n" +
-                    "- Credentials type: <b>\"MQTT_BASIC\"</b> with <b>device profile ID</b> below: \n\n" +
+                    "- Credentials type: **\"MQTT_BASIC\"** with **device profile ID** below: \n\n" +
                     DEVICE_UPDATE_CREDENTIALS_PARAM_MQTT_BASIC_DESCRIPTION_MARKDOWN + "\n\n" +
-                    "- You may find the example of <b>LwM2M</b> device and <b>RPK</b> credentials below: \n\n" +
+                    "- You may find the example of **LwM2M** device and **RPK** credentials below: \n\n" +
                     "Note: LwM2M device - only existing device profile ID (Transport configuration -> Transport type: \"LWM2M\".\n\n" +
                     DEVICE_UPDATE_CREDENTIALS_PARAM_LVM2M_RPK_DESCRIPTION_MARKDOWN + "\n\n" +
                     "Update to real value:\n" +

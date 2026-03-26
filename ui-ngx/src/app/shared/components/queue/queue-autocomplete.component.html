@@ -16,7 +16,7 @@
 
 -->
 <mat-form-field [formGroup]="selectQueueFormGroup"
-                class="mat-block autocomplete-queue" subscriptSizing="{{subscriptSizing}}">
+                class="mat-block autocomplete-queue" [subscriptSizing]="subscriptSizing" [appearance]="appearance">
   <mat-label>{{ 'queue.queue-name' | translate }}</mat-label>
   <input matInput type="text"
          #queueInput

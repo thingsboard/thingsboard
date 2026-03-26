@@ -15,6 +15,7 @@
 #
 
 # Server common parameters
+# Configures HTTP/HTTPS bind address, port, SSL, WebSocket, and REST API settings.
 server:
   # Server bind-address
   address: "${HTTP_BIND_ADDRESS:0.0.0.0}"
@@ -109,23 +110,25 @@ server:
       response_timeout: "${DEFAULT_RULE_ENGINE_RESPONSE_TIMEOUT:10000}"
 
 # Application info parameters
+# Exposes application metadata such as version string injected at build time.
 app:
   # Application version
   version: "@project.version@"
 
-# Zookeeper connection parameters
+# ZooKeeper connection parameters
+# Controls ZooKeeper-based service discovery and cluster coordination for microservice deployments.
 zk:
-  # Enable/disable zookeeper discovery service.
+  # Enable/disable ZooKeeper discovery service.
   enabled: "${ZOOKEEPER_ENABLED:false}"
-  # Zookeeper connect string
+  # ZooKeeper connect string
   url: "${ZOOKEEPER_URL:localhost:2181}"
-  # Zookeeper retry interval in milliseconds
+  # ZooKeeper retry interval in milliseconds
   retry_interval_ms: "${ZOOKEEPER_RETRY_INTERVAL_MS:3000}"
-  # Zookeeper connection timeout in milliseconds
+  # ZooKeeper connection timeout in milliseconds
   connection_timeout_ms: "${ZOOKEEPER_CONNECTION_TIMEOUT_MS:3000}"
-  # Zookeeper session timeout in milliseconds
+  # ZooKeeper session timeout in milliseconds
   session_timeout_ms: "${ZOOKEEPER_SESSION_TIMEOUT_MS:3000}"
-  # Name of the directory in zookeeper 'filesystem'
+  # Name of the directory in ZooKeeper 'filesystem'
   zk_dir: "${ZOOKEEPER_NODES_DIR:/thingsboard}"
   # The recalculate_delay property is recommended in a microservices architecture setup for rule-engine services.
   # This property provides a pause to ensure that when a rule-engine service is restarted, other nodes don't immediately attempt to recalculate their partitions.
@@ -133,6 +136,7 @@ zk:
   recalculate_delay: "${ZOOKEEPER_RECALCULATE_DELAY_MS:0}"
 
 # Cluster parameters
+# Controls cluster statistics — tracks the number of messages exchanged between cluster nodes.
 cluster:
   stats:
     # Enable/Disable the cluster statistics. Calculates the number of messages sent between cluster nodes based on each type
@@ -141,11 +145,13 @@ cluster:
     print_interval_ms: "${TB_CLUSTER_STATS_PRINT_INTERVAL_MS:10000}"
 
 # Plugins configuration parameters
+# Defines classpath scan packages used to discover and register ThingsBoard extension plugins.
 plugins:
   # Comma-separated package list used during classpath scanning for plugins
   scan_packages: "${PLUGINS_SCAN_PACKAGES:org.thingsboard.server.extensions,org.thingsboard.rule.engine}"
 
 # Security parameters
+# Configures JWT tokens, user login, device claiming, OAuth2, and CA certificate trust store.
 security:
   # JWT Token parameters
   jwt: # Since 3.4.2 values are persisted in the database during installation or upgrade. On Install, the key will be generated randomly if no custom value set. You can change it later from Web UI under SYS_ADMIN
@@ -182,8 +188,63 @@ security:
     path: "${SECURITY_JAVA_CACERTS_PATH:${java.home}/lib/security/cacerts}"
     # The password of the cacerts keystore file
     password: "${SECURITY_JAVA_CACERTS_PASSWORD:changeit}"
+  # HTTP security response headers configuration.
+  # These headers are set on responses from the ThingsBoard backend (tb-node).
+  # In microservice deployments, the web-ui (Express.js) has its own header configuration
+  # under msa/web-ui/config/ using the same environment variable names.
+  headers:
+    # X-Content-Type-Options header prevents browsers from MIME-sniffing the Content-Type.
+    # Safe to enable. Only disable if you intentionally serve resources with mismatched Content-Type.
+    x-content-type-options:
+      # Enable/disable X-Content-Type-Options header. Prevents browsers from MIME-sniffing the Content-Type
+      enabled: "${SECURITY_HEADERS_X_CONTENT_TYPE_OPTIONS_ENABLED:true}"
+    # Referrer-Policy header controls how much referrer info the browser sends with requests.
+    # The default 'strict-origin-when-cross-origin' matches the browser's built-in default,
+    # so enabling this does not change existing behavior — it just makes the policy explicit.
+    # Valid values: no-referrer, no-referrer-when-downgrade, origin, origin-when-cross-origin,
+    #              same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+    referrer-policy:
+      # Enable/disable Referrer-Policy header
+      enabled: "${SECURITY_HEADERS_REFERRER_POLICY_ENABLED:true}"
+      # Referrer-Policy header value
+      value: "${SECURITY_HEADERS_REFERRER_POLICY_VALUE:strict-origin-when-cross-origin}"
+    # X-Frame-Options header protects against clickjacking attacks by preventing the page
+    # from being loaded in iframes on other domains.
+    # Disabled by default because ThingsBoard supports multi-domain deployments where
+    # the platform may be embedded in iframes on customer domains.
+    # WARNING: Enabling with DENY will block ALL iframe embedding including dashboards
+    # embedded on external sites. Use SAMEORIGIN to allow same-domain iframes only.
+    x-frame-options:
+      # Enable/disable X-Frame-Options header. Protects against clickjacking attacks
+      enabled: "${SECURITY_HEADERS_X_FRAME_OPTIONS_ENABLED:false}"
+      # Valid values: DENY, SAMEORIGIN
+      value: "${SECURITY_HEADERS_X_FRAME_OPTIONS_VALUE:SAMEORIGIN}"
+    # Content-Security-Policy header mitigates XSS and data injection attacks by restricting
+    # which resources the browser is allowed to load.
+    # Disabled by default because ThingsBoard supports multi-domain deployments and
+    # because custom HTML Card widgets may use inline scripts, inline styles, and
+    # external resources that a restrictive CSP would block.
+    # WARNING when enabling: A strict CSP (e.g. script-src 'self') will break:
+    #   - HTML Card widgets with inline JavaScript
+    #   - Custom widget types with inline scripts/styles
+    #   - Widgets loading external resources (images, fonts, scripts)
+    #   - Dashboard embedding via iframes (if frame-ancestors is restrictive)
+    # Use 'report-only: true' first to test the impact before enforcing.
+    # The default value covers core ThingsBoard functionality including OpenStreetMap, ArcGIS maps,
+    # solution template previews, WebSocket telemetry, and chart Web Workers.
+    # NOTE: Google Maps requires adding Google domains to script-src, which is not included by default.
+    # To add Google Maps support, append to script-src: https://maps.googleapis.com https://maps.gstatic.com
+    content-security-policy:
+      # Enable/disable Content-Security-Policy header. Mitigates XSS and data injection attacks
+      enabled: "${SECURITY_HEADERS_CONTENT_SECURITY_POLICY_ENABLED:false}"
+      # Full CSP directive string. The default value is a working policy for most ThingsBoard deployments
+      value: "${SECURITY_HEADERS_CONTENT_SECURITY_POLICY_VALUE:default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://img.thingsboard.io https://tile.openstreetmap.org https://*.tile.openstreetmap.org https://*.arcgis.com; font-src 'self' data:; connect-src 'self' ws: wss: https://*.arcgis.com https://*.arcgisonline.com; worker-src 'self' blob:; frame-ancestors 'self'}"
+      # If true, uses Content-Security-Policy-Report-Only header instead — the browser
+      # reports violations but does not enforce them. Use for testing before enforcing.
+      report-only: "${SECURITY_HEADERS_CONTENT_SECURITY_POLICY_REPORT_ONLY:false}"
 
 # Mail settings parameters
+# Configures mail service OAuth2 token refresh and per-tenant sending rate limits.
 mail:
   oauth2:
     # Interval for checking refresh token expiration in seconds(by default, 1 day).
@@ -192,6 +253,7 @@ mail:
   per_tenant_rate_limits: "${MAIL_PER_TENANT_RATE_LIMITS:}"
 
 # Usage statistics parameters
+# Controls collection and reporting intervals for API usage stats at system, tenant, and customer levels.
 usage:
   stats:
     report:
@@ -215,6 +277,7 @@ usage:
       report_interval: "${DEVICES_STATS_REPORT_INTERVAL:60}"
 
 # UI settings parameters
+# Configures dashboard data limits and base URL for UI help assets.
 ui:
   # Dashboard parameters
   dashboard:
@@ -226,6 +289,7 @@ ui:
     base-url: "${UI_HELP_BASE_URL:https://raw.githubusercontent.com/thingsboard/thingsboard-ui-help/release-4.4}"
 
 # Database telemetry parameters
+# Selects the storage backend (SQL, Cassandra, or TimescaleDB) for time-series and latest telemetry data.
 database:
   ts_max_intervals: "${DATABASE_TS_MAX_INTERVALS:700}" # Max number of DB queries generated by a single API call to fetch telemetry records
   ts:
@@ -234,6 +298,7 @@ database:
     type: "${DATABASE_TS_LATEST_TYPE:sql}" # cassandra, sql, or timescale (for hybrid mode, DATABASE_TS_TYPE value should be cassandra, or timescale)
 
 # Cassandra driver configuration parameters
+# Configures cluster name, keyspace, SSL, credentials, socket, and query settings for the Cassandra driver.
 cassandra:
   # Thingsboard cluster name
   cluster_name: "${CASSANDRA_CLUSTER_NAME:Thingsboard Cluster}"
@@ -352,6 +417,7 @@ cassandra:
       print_tenant_names: "${CASSANDRA_QUERY_TENANT_RATE_LIMITS_PRINT_TENANT_NAMES:false}"
 
 # SQL configuration parameters
+# Tunes batch sizes, delays, thread counts, TTL, and partitioning for SQL-backed persistence of telemetry, events, and audit logs.
 sql:
   # Specify batch size for persisting attribute updates
   attributes:
@@ -432,10 +498,11 @@ sql:
       edge_events_ttl: "${SQL_TTL_EDGE_EVENTS_TTL:2628000}" # Number of seconds. The current value corresponds to one month
     alarms:
       checking_interval: "${SQL_ALARMS_TTL_CHECKING_INTERVAL:7200000}" # Number of milliseconds. The current value corresponds to two hours
-      removal_batch_size: "${SQL_ALARMS_TTL_REMOVAL_BATCH_SIZE:3000}" # To delete outdated alarms not all at once but in batches
+      removal_batch_size: "${SQL_ALARMS_TTL_REMOVAL_BATCH_SIZE:3000}" # Batch size for records removal
     rpc:
       enabled: "${SQL_TTL_RPC_ENABLED:true}" # Enable/disable TTL (Time To Live) for rpc call records
       checking_interval: "${SQL_RPC_TTL_CHECKING_INTERVAL:7200000}" # Number of milliseconds. The current value corresponds to two hours
+      removal_batch_size: "${SQL_RPC_TTL_REMOVAL_BATCH_SIZE:10000}" # Batch size for records removal
     audit_logs:
       enabled: "${SQL_TTL_AUDIT_LOGS_ENABLED:true}" # Enable/disable TTL (Time To Live) for audit log records
       ttl: "${SQL_TTL_AUDIT_LOGS_SECS:0}" # Disabled by default. The accuracy of the cleanup depends on the sql.audit_logs.partition_size
@@ -444,6 +511,7 @@ sql:
       enabled: "${SQL_TTL_NOTIFICATIONS_ENABLED:true}" # Enable/disable TTL (Time To Live) for notification center records
       ttl: "${SQL_TTL_NOTIFICATIONS_SECS:2592000}" # Default value - 30 days
       checking_interval_ms: "${SQL_TTL_NOTIFICATIONS_CHECKING_INTERVAL_MS:86400000}" # Default value - 1 day
+      removal_batch_size: "${SQL_TTL_NOTIFICATIONS_REMOVAL_BATCH_SIZE:10000}" # Batch size for records removal
     api_keys:
       enabled: "${SQL_TTL_API_KEYS_ENABLED:true}" # Enable/disable TTL (Time To Live) for expired api keys records
       checking_interval_ms: "${SQL_TTL_API_KEYS_CHECKING_INTERVAL_MS:86400000}" # Default value - 1 day
@@ -453,6 +521,7 @@ sql:
     query_timeout: "${SQL_RELATIONS_QUERY_TIMEOUT_SEC:20}" # This value has to be reasonably small to prevent the relation query from blocking all other DB calls
 
 # Actor system parameters
+# Configures thread pools, timeouts, and behavior for the internal actor system processing devices, rules, and RPCs.
 actors:
   system:
     throughput: "${ACTORS_SYSTEM_THROUGHPUT:5}" # Number of messages the actor system will process per actor before switching to processing of messages for the next actor
@@ -521,6 +590,10 @@ actors:
       # Comma-separated list of additional blocked destinations (IPs, CIDR subnets, or hostnames).
       # Example: "198.51.100.0/24,metadata.tencentyun.com,rancher-metadata"
       ssrf_additional_blocked_hosts: "${SSRF_ADDITIONAL_BLOCKED_HOSTS:}"
+      # Comma-separated list of allowed destinations that bypass SSRF blocking (IPs, CIDR subnets, or hostnames).
+      # Use this when your rule chains need to reach devices on private networks (e.g., 192.168.1.0/24).
+      # Example: "192.168.1.0/24,10.0.0.0/8,my-internal-service.corp"
+      ssrf_allowed_hosts: "${SSRF_ALLOWED_HOSTS:}"
   rpc:
     # Maximum number of persistent RPC call retries in case of failed request delivery.
     max_retries: "${ACTORS_RPC_MAX_RETRIES:5}"
@@ -553,6 +626,8 @@ actors:
     # Time in seconds to receive calculation result.
     calculation_timeout: "${ACTORS_CALCULATION_TIMEOUT_SEC:5}"
 
+# Debug settings parameters
+# Configures the global default duration for debug mode used by rule chains and calculated fields.
 debug:
   settings:
     # Default duration (in minutes) for debug mode. Min value is 1 minute. Tenant profile settings override this one.
@@ -560,6 +635,7 @@ debug:
     default_duration: "${DEBUG_SETTINGS_DEFAULT_DURATION_MINUTES:15}"
 
 # Cache settings parameters
+# Configures cache type (Caffeine or Redis), pool size, and per-entity TTL and max-size limits for all caches.
 cache:
   # caffeine or redis(7.2 - latest compatible version)
   type: "${CACHE_TYPE:caffeine}"
@@ -719,6 +795,7 @@ cache:
 spring.data.redis.repositories.enabled: false # Disable this because it is not required.
 
 # Redis/Valkey configuration parameters
+# Configures standalone, cluster, or sentinel Redis connection, SSL, and connection pool settings used for caching.
 redis:
   # standalone or cluster or sentinel
   connection:
@@ -755,9 +832,9 @@ redis:
     password: "${REDIS_SENTINEL_PASSWORD:}"
     # If set false will be used pool config build from values of the pool config section
     useDefaultPoolConfig: "${REDIS_USE_DEFAULT_POOL_CONFIG:true}"
-  # db index
+  # Redis logical database index to select after connecting.
   db: "${REDIS_DB:0}"
-  # db password
+  # Password for Redis authentication (leave empty if not required).
   password: "${REDIS_PASSWORD:}"
   # Redis username for ACL authentication (Redis 6.0+). Leave empty for legacy password-only auth
   username: "${REDIS_USERNAME:}"
@@ -802,27 +879,36 @@ redis:
 
 
 # Update version parameters
+# Controls whether the platform periodically checks for new ThingsBoard releases.
 updates:
   # Enable/disable checks for the new version
   enabled: "${UPDATES_ENABLED:true}"
 
-# Spring CORS configuration parameters
+# Spring CORS configuration parameters.
+# Controls the Access-Control-Allow-Origin and Access-Control-Allow-Credentials response headers.
+# WARNING: The default configuration allows cross-origin requests from ANY domain with credentials.
+# This means any website can make API requests on behalf of an authenticated user if the token
+# is accessible (e.g., via XSS). For production deployments, restrict to your domain(s):
+#   TB_CORS_ALLOWED_ORIGIN_PATTERNS=https://your-domain.com
+# For multi-domain deployments, list all allowed domains comma-separated:
+#   TB_CORS_ALLOWED_ORIGIN_PATTERNS=https://domain1.com,https://domain2.com
 spring.mvc.cors:
   mappings:
     # Intercept path
     "[/api/**]":
       #Comma-separated list of origins to allow. '*' allows all origins. When not set, CORS support is disabled.
-      allowed-origin-patterns: "*"
+      allowed-origin-patterns: "${TB_CORS_ALLOWED_ORIGIN_PATTERNS:*}"
       #Comma-separated list of methods to allow. '*' allows all methods.
-      allowed-methods: "*"
+      allowed-methods: "${TB_CORS_ALLOWED_METHODS:*}"
       #Comma-separated list of headers to allow in a request. '*' allows all headers.
-      allowed-headers: "*"
+      allowed-headers: "${TB_CORS_ALLOWED_HEADERS:*}"
       #How long, in seconds, the response from a pre-flight request can be cached by clients.
-      max-age: "1800"
+      max-age: "${TB_CORS_MAX_AGE:1800}"
       #Set whether credentials are supported. When not set, credentials are not supported.
-      allow-credentials: "true"
+      allow-credentials: "${TB_CORS_ALLOW_CREDENTIALS:true}"
 
 # General spring parameters
+# Miscellaneous Spring Boot settings for circular references, Freemarker, MVC, multipart, and JPA dialect.
 spring.main.allow-circular-references: "true" # Spring Boot configuration property that controls whether circular dependencies between beans are allowed.
 spring.freemarker.checkTemplateLocation: "false" # spring freemarker configuration
 spring.mvc.async.request-timeout: "${SPRING_MVC_ASYNC_REQUEST_TIMEOUT:30000}" # The default timeout for asynchronous requests in milliseconds
@@ -841,6 +927,7 @@ spring.jpa.properties.hibernate.order_by.default_null_ordering: "${SPRING_JPA_PR
 spring.jpa.properties.hibernate.dialect: "${SPRING_JPA_DIALECT:org.thingsboard.server.dao.ThingsboardPostgreSQLDialect}" # we use custom dialect that contains ilike(arg1, arg2) function (is interpreted to postgres ILIKE operator)
 
 # SQL DAO Configuration parameters
+# Configures Spring JPA, Hibernate DDL, and HikariCP datasource connections for the primary and events databases.
 spring:
   data:
     jpa:
@@ -891,6 +978,7 @@ spring:
         registerMbeans: "${SPRING_EVENTS_DATASOURCE_HIKARI_REGISTER_MBEANS:false}"
 
 # Audit log parameters
+# Configures audit logging levels per entity type and optional forwarding to an external sink such as Elasticsearch.
 audit-log:
   # Enable/disable audit log functionality.
   enabled: "${AUDIT_LOG_ENABLED:true}"
@@ -933,6 +1021,7 @@ audit-log:
     password: "${AUDIT_LOG_SINK_PASSWORD:}" # Password used to access external sink system
 
 # Device state parameters
+# Configures device inactivity detection, state persistence strategy, and rate limits for state rule nodes.
 state:
   # Device inactivity timeout is a global configuration parameter that defines when the device will be marked as "inactive" by the server.
   # The parameter value is in seconds. A user can overwrite this parameter for an individual device by setting the “inactivityTimeout” server-side attribute (NOTE: expects value in milliseconds).
@@ -963,7 +1052,8 @@ state:
         # Refill is set to be greedy. Please refer to Bucket4j library documentation for more details.
         rateLimit: "${DEVICE_STATE_NODE_RATE_LIMIT_CONFIGURATION:1:1,30:60,60:3600}"
 
-# Tbel parameters
+# TBEL parameters
+# Configures the ThingsBoard Expression Language (TBEL) engine: limits, timeouts, thread pool, and blacklisting.
 tbel:
   # Enable/Disable TBEL feature.
   enabled: "${TBEL_ENABLED:true}"
@@ -992,6 +1082,7 @@ tbel:
     print_interval_ms: "${TB_TBEL_STATS_PRINT_INTERVAL_MS:10000}"
 
 # JS parameters
+# Configures the JavaScript execution engine (local Nashorn or remote Node.js): limits, sandboxing, and thread pools.
 js:
   # local (Nashorn Engine, deprecated) OR remote JS-Executors (NodeJS)
   evaluator: "${JS_EVALUATOR:local}"
@@ -1039,6 +1130,7 @@ js:
       print_interval_ms: "${TB_JS_REMOTE_STATS_PRINT_INTERVAL_MS:10000}"
 
 # Transport configuration parameters
+# Configures session management, rate limits, and protocol-specific settings for HTTP, MQTT, CoAP, LwM2M, and SNMP transports.
 transport:
   sessions:
     # Session inactivity timeout is a global configuration parameter that defines how long the device transport session will be opened after the last message arrives from the device.
@@ -1349,6 +1441,7 @@ transport:
         fetch_frequency: "${TB_GATEWAY_DASHBOARD_SYNC_FETCH_FREQUENCY:24}"
 
 # CoAP server parameters
+# Configures the standalone CoAP server bind address, port, DTLS encryption, and credential settings.
 coap:
   server:
     # Enable/disable coap server.
@@ -1433,6 +1526,7 @@ coap:
       dtls_session_report_timeout: "${TB_COAP_X509_DTLS_SESSION_REPORT_TIMEOUT:1800000}"
 
 # Device connectivity parameters
+# Specifies the hosts, ports, and credentials exposed to the UI for generating device connection check commands.
 device:
   connectivity:
     http:
@@ -1486,6 +1580,7 @@ device:
       image_version: "${DEVICE_CONNECTIVITY_GATEWAY_IMAGE_VERSION:3.8-stable}"
 
 # Edges parameters
+# Controls Edge instance gRPC communication, event storage, state persistence, and statistics reporting.
 edges:
   # Enable/disable Edge instance
   enabled: "${EDGES_ENABLED:true}"
@@ -1507,10 +1602,17 @@ edges:
     ssl:
       # Enable/disable SSL support
       enabled: "${EDGES_RPC_SSL_ENABLED:false}"
-      # Cert file to be used during TLS connectivity to the cloud
+      # Path to the server certificate file (holds server certificate or certificate chain, may include server private key).
+      # Accepts an absolute filesystem path (e.g. /etc/thingsboard/certChainFile.pem),
+      # a relative path resolved against the working directory first then the classpath,
+      # or a classpath resource with the explicit "classpath:" prefix (e.g. classpath:conf/certChainFile.pem).
       cert: "${EDGES_RPC_SSL_CERT:certChainFile.pem}"
-      # Private key file associated with the Cert certificate. This key is used in the encryption process during a secure connection
+      # Path to the server certificate private key file. Optional if the private key is already present in the cert file above.
+      # Supports the same path resolution as 'cert': absolute, relative/classpath, or "classpath:" prefix.
+      # Leave empty when using a combined PEM cert that already contains the private key.
       private_key: "${EDGES_RPC_SSL_PRIVATE_KEY:privateKeyFile.pem}"
+      # Server certificate private key password (optional). Leave empty if the key is not encrypted.
+      key_password: "${EDGES_RPC_SSL_KEY_PASSWORD:}"
     # Maximum size (in bytes) of inbound messages the cloud can handle from the edge. By default, it can handle messages up to 4 Megabytes
     max_inbound_message_size: "${EDGES_RPC_MAX_INBOUND_MESSAGE_SIZE:4194304}"
     # Maximum length of telemetry (time-series and attributes) message the cloud sends to the edge. By default, there is no limitation.
@@ -1547,6 +1649,7 @@ edges:
     report-interval-millis: "${EDGES_STATS_REPORT_INTERVAL_MS:600000}"
 
 # Spring doc common parameters
+# Enables or disables the OpenAPI/Swagger documentation endpoint and sets the default media type.
 springdoc:
   # If false swagger API docs will be unavailable
   api-docs.enabled: "${SWAGGER_ENABLED:true}"
@@ -1554,6 +1657,7 @@ springdoc:
   default-produces-media-type: "${SWAGGER_DEFAULT_PRODUCES_MEDIA_TYPE:application/json}"
 
 # Swagger common parameters
+# Configures Swagger UI metadata: title, description, contact, license, version, and API path patterns.
 swagger:
   # General swagger match pattern of swagger UI links
   api_path: "${SWAGGER_API_PATH:/api/**}"
@@ -1585,6 +1689,7 @@ swagger:
   doc_expansion: "${SWAGGER_DOC_EXPANSION:list}"
 
 # Queue configuration parameters
+# Configures the message queue backend (in-memory or Kafka) and all topic/partition/consumer settings for each service.
 queue:
   type: "${TB_QUEUE_TYPE:in-memory}" # in-memory or kafka (Apache Kafka)
   prefix: "${TB_QUEUE_PREFIX:}" # Global queue prefix. If specified, prefix is added before default topic name: 'prefix.default_topic_name'. Prefix is applied to all topics (and consumer groups for kafka).
@@ -2002,12 +2107,14 @@ queue:
       processing_interval: "${TB_QUEUE_TASKS_STATS_PROCESSING_INTERVAL_MS:1000}"
 
 # Event configuration parameters
+# Controls limits on debug event content size stored for rule chain and rule node execution.
 event:
   debug:
     # Maximum number of symbols per debug event. The event content will be truncated if needed
     max-symbols: "${TB_MAX_DEBUG_EVENT_SYMBOLS:4096}"
 
 # General service parameters
+# Sets the deployment type (monolith or microservice) and assigns tenant profiles to specific Rule Engine instances.
 service:
   type: "${TB_SERVICE_TYPE:monolith}" # monolith or tb-core or tb-rule-engine
   # Unique id for this service (autogenerated if empty)
@@ -2021,6 +2128,7 @@ service:
       executor_thread_pool_size: "${TB_RULE_ENGINE_PUBSUB_EXECUTOR_THREAD_POOL_SIZE:0}"
 
 # Metrics parameters
+# Enables actuator metrics endpoint and configures system info (CPU, memory) persistence frequency and TTL.
 metrics:
   # Enable/disable actuator metrics.
   enabled: "${METRICS_ENABLED:false}"
@@ -2034,6 +2142,7 @@ metrics:
     ttl: "${METRICS_SYSTEM_INFO_TTL_DAYS:7}"
 
 # Version control parameters
+# Configures thread pools and Git repository folder for entity version control (export/import) operations.
 vc:
   # Pool size for handling export tasks
   thread_pool_size: "${TB_VC_POOL_SIZE:6}"
@@ -2044,6 +2153,7 @@ vc:
     repositories-folder: "${TB_VC_GIT_REPOSITORIES_FOLDER:${java.io.tmpdir}/repositories}"
 
 # Notification system parameters
+# Configures thread pool size and deduplication intervals for the notification rule processing engine.
 notification_system:
   # Specify thread pool size for Notification System processing notification rules and notification sending. Recommend value <= 10
   thread_pool_size: "${TB_NOTIFICATION_SYSTEM_THREAD_POOL_SIZE:10}"
@@ -2052,6 +2162,7 @@ notification_system:
     deduplication_durations: "${TB_NOTIFICATION_RULES_DEDUPLICATION_DURATIONS:NEW_PLATFORM_VERSION:0;RATE_LIMITS:14400000;}"
 
 # General management parameters
+# Configures Spring Boot Actuator endpoint exposure and health indicator settings.
 management:
   endpoints:
     web:
@@ -2064,6 +2175,7 @@ management:
       enabled: "false"
 
 # Mobile application settings for Thingsboard mobile application
+# Specifies domain name and store links used for the ThingsBoard Live mobile application QR code and deep links.
 mobileApp:
   # Server domain name for Thingsboard Live mobile application
   domain: "${TB_MOBILE_APP_DOMAIN:demo.thingsboard.io}"
@@ -2072,6 +2184,8 @@ mobileApp:
   # Link to App Store for Thingsboard Live mobile application
   appStoreLink: "${TB_MOBILE_APP_APP_STORE_LINK:https://apps.apple.com/us/app/thingsboard-live/id1594355695}"
 
+# MQTT client parameters
+# Configures MQTT client retransmission behavior including max attempts, initial delay, and jitter factor.
 mqtt:
   # MQTT client configuration parameters
   client:

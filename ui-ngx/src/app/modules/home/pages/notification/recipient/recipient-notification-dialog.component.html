@@ -26,136 +26,155 @@
       <mat-icon class="material-icons">close</mat-icon>
     </button>
   </mat-toolbar>
-  <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
-  </mat-progress-bar>
-  <div style="height: 4px;" *ngIf="(isLoading$ | async) === false"></div>
+  @if (isLoading$ | async) {
+    <mat-progress-bar color="warn" mode="indeterminate"></mat-progress-bar>
+  } @else {
+    <div style="height: 4px;"></div>
+  }
   <div mat-dialog-content>
-    <mat-form-field class="mat-block">
+    <mat-form-field class="mat-block" appearance="outline">
       <mat-label translate>notification.name</mat-label>
       <input matInput formControlName="name" required>
-      <mat-error *ngIf="targetNotificationForm.get('name').hasError('required')">
-        {{ 'notification.name-required' | translate }}
-      </mat-error>
+      @if (targetNotificationForm.get('name').hasError('required')) {
+        <mat-error>{{ 'notification.name-required' | translate }}</mat-error>
+      }
     </mat-form-field>
     <section formGroupName="configuration">
       <label class="tb-title">{{ 'notification.type' | translate }}</label>
       <mat-radio-group formControlName="type">
-        <mat-radio-button *ngFor="let notificationTargetType of notificationTargetTypes" [value]="notificationTargetType">
-          <div class="flex flex-col">
-            <div>{{ notificationTargetTypeTranslationMap.get(notificationTargetType) | translate }}</div>
-          </div>
-        </mat-radio-button>
-      </mat-radio-group>
-      <section formGroupName="usersFilter"
-               *ngIf="targetNotificationForm.get('configuration.type').value === notificationTargetType.PLATFORM_USERS">
-        <mat-form-field class="mat-block" subscriptSizing="dynamic">
-          <mat-label translate>notification.recipient-type.user-filters</mat-label>
-          <mat-select formControlName="type">
-            <mat-option *ngFor="let type of notificationTargetConfigTypes" [value]="type">
-              {{ notificationTargetConfigTypeInfoMap.get(type).name | translate }}
-            </mat-option>
-          </mat-select>
-          <mat-hint>{{ notificationTargetConfigTypeInfoMap.get(targetNotificationForm.get('configuration.usersFilter.type').value).hint | translate }}</mat-hint>
-        </mat-form-field>
-        <ng-container [ngSwitch]="targetNotificationForm.get('configuration.usersFilter.type').value">
-          <ng-container *ngSwitchCase="notificationTargetConfigType.TENANT_ADMINISTRATORS">
-            <section *ngIf="isSysAdmin()">
-              <div class="flex flex-1 items-center justify-center">
-                <tb-toggle-select class="tb-notification-tenant-group" appearance="fill"
-                                  formControlName="filterByTenants">
-                  <tb-toggle-option [value]="true">{{ 'tenant.tenant' | translate }}</tb-toggle-option>
-                  <tb-toggle-option [value]="false">{{ 'tenant-profile.tenant-profile' | translate }}</tb-toggle-option>
-                </tb-toggle-select>
-              </div>
-              <ng-container *ngIf="targetNotificationForm.get('configuration.usersFilter.filterByTenants').value; else tenantProfiles">
-                <tb-entity-list
-                  formControlName="tenantsIds"
-                  syncIdsWithDB
-                  subscriptSizing="dynamic"
-                  labelText="{{ 'tenant.tenants' | translate }}"
-                  placeholderText="{{ 'tenant.tenants' | translate }}"
-                  hint="{{ 'notification.tenants-list-rule-hint' | translate }}"
-                  [entityType]="entityType.TENANT">
-                </tb-entity-list>
-              </ng-container>
-              <ng-template #tenantProfiles>
-                <tb-entity-list
-                  formControlName="tenantProfilesIds"
-                  syncIdsWithDB
-                  subscriptSizing="dynamic"
-                  labelText="{{ 'tenant-profile.tenant-profiles' | translate }}"
-                  placeholderText="{{ 'tenant-profile.tenant-profiles' | translate }}"
-                  hint="{{ 'notification.tenant-profiles-list-rule-hint' | translate }}"
-                  [entityType]="entityType.TENANT_PROFILE">
-                </tb-entity-list>
-              </ng-template>
-            </section>
-          </ng-container>
-          <ng-container *ngSwitchCase="notificationTargetConfigType.USER_LIST">
-            <tb-entity-list
-              required
-              syncIdsWithDB
-              formControlName="usersIds"
-              [entityType]="entityType.USER"
-              labelText="{{ 'user.user-list' | translate }}"
-              placeholderText="{{ 'user.user' | translate }}"
-              requiredText="{{ 'user.user-list-required' | translate }}">
-            </tb-entity-list>
-          </ng-container>
-          <ng-container *ngSwitchCase="notificationTargetConfigType.CUSTOMER_USERS">
-            <tb-entity-autocomplete
-              required
-              formControlName="customerId"
-              [entityType]="entityType.CUSTOMER">
-            </tb-entity-autocomplete>
-          </ng-container>
-        </ng-container>
-      </section>
-      <section *ngIf="targetNotificationForm.get('configuration.type').value === notificationTargetType.SLACK">
-        <label class="tb-title">{{ 'notification.slack-chanel-type' | translate }}</label>
-        <mat-radio-group formControlName="conversationType">
-          <mat-radio-button *ngFor="let slackChanelType of slackChanelTypes" [value]="slackChanelType">
-             {{ slackChanelTypesTranslateMap.get(slackChanelType) | translate }}
+        @for (notificationTargetType of notificationTargetTypes; track notificationTargetType) {
+          <mat-radio-button [value]="notificationTargetType">
+            <div class="flex flex-col">
+              <div>{{ notificationTargetTypeTranslationMap.get(notificationTargetType) | translate }}</div>
+            </div>
           </mat-radio-button>
-        </mat-radio-group>
-        <tb-slack-conversation-autocomplete
-          formControlName="conversation" required
-          [slackChanelType]="targetNotificationForm.get('configuration.conversationType').value">
-        </tb-slack-conversation-autocomplete>
-      </section>
-      <section *ngIf="targetNotificationForm.get('configuration.type').value === notificationTargetType.MICROSOFT_TEAMS">
-        <section class="tb-form-row" style="margin-bottom: 16px">
-          <mat-slide-toggle class="mat-slide margin" formControlName="useOldApi">
-            {{ "notification.use-old-api" | translate }}
-          </mat-slide-toggle>
-          <a mat-icon-button
-             href="https://devblogs.microsoft.com/microsoft365dev/retirement-of-office-365-connectors-within-microsoft-teams/"
-             target="_blank"
-             matTooltip="{{ 'notification.use-deprecated-webhook-connectors' | translate }}"
-             matTooltipPosition="above"
-             class="tb-mat-20">
-            <mat-icon>open_in_new</mat-icon>
-          </a>
+        }
+      </mat-radio-group>
+      @if (targetNotificationForm.get('configuration.type').value === notificationTargetType.PLATFORM_USERS) {
+        <section formGroupName="usersFilter">
+          <mat-form-field class="mat-block" appearance="outline" subscriptSizing="dynamic">
+            <mat-label translate>notification.recipient-type.user-filters</mat-label>
+            <mat-select formControlName="type">
+              @for (type of notificationTargetConfigTypes; track type) {
+                <mat-option [value]="type">
+                  {{ notificationTargetConfigTypeInfoMap.get(type).name | translate }}
+                </mat-option>
+              }
+            </mat-select>
+            <mat-hint>{{ notificationTargetConfigTypeInfoMap.get(targetNotificationForm.get('configuration.usersFilter.type').value).hint | translate }}</mat-hint>
+          </mat-form-field>
+          @switch (targetNotificationForm.get('configuration.usersFilter.type').value) {
+            @case (notificationTargetConfigType.TENANT_ADMINISTRATORS) {
+              @if (isSysAdmin()) {
+                <section>
+                  <div class="flex flex-1 items-center justify-center">
+                    <tb-toggle-select class="tb-notification-tenant-group" appearance="fill"
+                                      formControlName="filterByTenants">
+                      <tb-toggle-option [value]="true">{{ 'tenant.tenant' | translate }}</tb-toggle-option>
+                      <tb-toggle-option [value]="false">{{ 'tenant-profile.tenant-profile' | translate }}</tb-toggle-option>
+                    </tb-toggle-select>
+                  </div>
+                  @if (targetNotificationForm.get('configuration.usersFilter.filterByTenants').value) {
+                    <tb-entity-list
+                      formControlName="tenantsIds"
+                      syncIdsWithDB
+                      appearance="outline"
+                      subscriptSizing="dynamic"
+                      labelText="{{ 'tenant.tenants' | translate }}"
+                      placeholderText="{{ 'tenant.tenants' | translate }}"
+                      hint="{{ 'notification.tenants-list-rule-hint' | translate }}"
+                      [entityType]="entityType.TENANT">
+                    </tb-entity-list>
+                  } @else {
+                    <tb-entity-list
+                      formControlName="tenantProfilesIds"
+                      syncIdsWithDB
+                      appearance="outline"
+                      subscriptSizing="dynamic"
+                      labelText="{{ 'tenant-profile.tenant-profiles' | translate }}"
+                      placeholderText="{{ 'tenant-profile.tenant-profiles' | translate }}"
+                      hint="{{ 'notification.tenant-profiles-list-rule-hint' | translate }}"
+                      [entityType]="entityType.TENANT_PROFILE">
+                    </tb-entity-list>
+                  }
+                </section>
+              }
+            }
+            @case (notificationTargetConfigType.USER_LIST) {
+              <tb-entity-list
+                required
+                syncIdsWithDB
+                appearance="outline"
+                formControlName="usersIds"
+                [entityType]="entityType.USER"
+                labelText="{{ 'user.user-list' | translate }}"
+                placeholderText="{{ 'user.user' | translate }}"
+                requiredText="{{ 'user.user-list-required' | translate }}">
+              </tb-entity-list>
+            }
+            @case (notificationTargetConfigType.CUSTOMER_USERS) {
+              <tb-entity-autocomplete
+                required
+                appearance="outline"
+                formControlName="customerId"
+                [entityType]="entityType.CUSTOMER">
+              </tb-entity-autocomplete>
+            }
+          }
         </section>
-        <mat-form-field class="mat-block">
-          <mat-label>{{ (targetNotificationForm.get('configuration.useOldApi').value ?
-            'notification.webhook-url' : 'notification.workflow-url') | translate }}</mat-label>
-          <input matInput formControlName="webhookUrl">
-          <mat-error *ngIf="targetNotificationForm.get('configuration.webhookUrl').hasError('required')">
-            {{ (targetNotificationForm.get('configuration.useOldApi').value ? 'notification.webhook-url-required' : 'notification.workflow-url-required') | translate }}
-          </mat-error>
-        </mat-form-field>
-        <mat-form-field class="mat-block">
-          <mat-label translate>notification.channel-name</mat-label>
-          <input matInput formControlName="channelName">
-          <mat-error *ngIf="targetNotificationForm.get('configuration.channelName').hasError('required')">
-            {{ 'notification.channel-name-required' | translate }}
-          </mat-error>
-        </mat-form-field>
-      </section>
-      <mat-form-field class="mat-block">
+      }
+      @if (targetNotificationForm.get('configuration.type').value === notificationTargetType.SLACK) {
+        <section>
+          <label class="tb-title">{{ 'notification.slack-chanel-type' | translate }}</label>
+          <mat-radio-group formControlName="conversationType">
+            @for (slackChanelType of slackChanelTypes; track slackChanelType) {
+              <mat-radio-button [value]="slackChanelType">
+                {{ slackChanelTypesTranslateMap.get(slackChanelType) | translate }}
+              </mat-radio-button>
+            }
+          </mat-radio-group>
+          <tb-slack-conversation-autocomplete
+            formControlName="conversation" required
+            appearance="outline"
+            [slackChanelType]="targetNotificationForm.get('configuration.conversationType').value">
+          </tb-slack-conversation-autocomplete>
+        </section>
+      }
+      @if (targetNotificationForm.get('configuration.type').value === notificationTargetType.MICROSOFT_TEAMS) {
+        <section>
+          <section class="tb-form-row" style="margin-bottom: 16px">
+            <mat-slide-toggle class="mat-slide margin" formControlName="useOldApi">
+              {{ "notification.use-old-api" | translate }}
+            </mat-slide-toggle>
+            <a mat-icon-button
+               href="https://devblogs.microsoft.com/microsoft365dev/retirement-of-office-365-connectors-within-microsoft-teams/"
+               target="_blank"
+               matTooltip="{{ 'notification.use-deprecated-webhook-connectors' | translate }}"
+               matTooltipPosition="above"
+               class="tb-mat-20">
+              <mat-icon>open_in_new</mat-icon>
+            </a>
+          </section>
+          <mat-form-field class="mat-block" appearance="outline">
+            <mat-label>{{ (targetNotificationForm.get('configuration.useOldApi').value ?
+              'notification.webhook-url' : 'notification.workflow-url') | translate }}</mat-label>
+            <input matInput formControlName="webhookUrl">
+            @if (targetNotificationForm.get('configuration.webhookUrl').hasError('required')) {
+              <mat-error>{{ (targetNotificationForm.get('configuration.useOldApi').value ? 'notification.webhook-url-required' : 'notification.workflow-url-required') | translate }}</mat-error>
+            }
+          </mat-form-field>
+          <mat-form-field class="mat-block" appearance="outline">
+            <mat-label translate>notification.channel-name</mat-label>
+            <input matInput formControlName="channelName">
+            @if (targetNotificationForm.get('configuration.channelName').hasError('required')) {
+              <mat-error>{{ 'notification.channel-name-required' | translate }}</mat-error>
+            }
+          </mat-form-field>
+        </section>
+      }
+      <mat-form-field class="mat-block" appearance="outline">
         <mat-label translate>notification.description</mat-label>
-        <input matInput formControlName="description">
+        <textarea matInput formControlName="description" cdkTextareaAutosize cdkAutosizeMinRows="1" rows="1"></textarea>
       </mat-form-field>
     </section>
   </div>

@@ -15,16 +15,13 @@
  */
 package org.thingsboard.server.common.data;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.validation.NoXss;
-
-/**
- * Created by igor on 2/27/18.
- */
 
 @Schema
 @AllArgsConstructor
@@ -39,9 +36,15 @@ public class ShortCustomerInfo {
     @NoXss
     private String title;
 
+    @JsonProperty("public")
     @Schema(description = "Indicates special 'Public' customer used to embed dashboards on public websites.")
-    @Getter @Setter
-    private boolean isPublic;
+    private boolean publicCustomer;
+
+    @JsonProperty("public")
+    public boolean isPublic() { return publicCustomer; }
+
+    @JsonProperty("public")
+    public void setPublic(boolean publicCustomer) { this.publicCustomer = publicCustomer; }
 
     @Override
     public boolean equals(Object o) {

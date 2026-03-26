@@ -56,6 +56,8 @@ import {
 import { AttributeDatasource } from '@home/models/datasource/attribute-datasource';
 import { AttributeService } from '@app/core/http/attribute.service';
 import { EntityType } from '@shared/models/entity-type.models';
+import { Authority } from '@shared/models/authority.enum';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
   AddAttributeDialogComponent,
@@ -90,7 +92,6 @@ import { DeleteTimeseriesPanelComponent } from '@home/components/attribute/delet
 import { FormBuilder } from '@angular/forms';
 import { AggregationType, defaultTimewindow } from '@shared/models/time/time.models';
 import { TimeService } from '@core/services/time.service';
-
 
 @Component({
     selector: 'tb-attribute-table',
@@ -186,6 +187,8 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
 
   textSearch = this.fb.control('', {nonNullable: true});
 
+  isSysAdmin = false;
+
   private destroy$ = new Subject<void>();
   selectAllModel: boolean = false;
 
@@ -207,6 +210,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
               private fb: FormBuilder,
               private timeService: TimeService) {
     super(store);
+    this.isSysAdmin = getCurrentAuthUser(this.store).authority === Authority.SYS_ADMIN;
     this.dirtyValue = !this.activeValue;
     const sortOrder: SortOrder = { property: 'key', direction: Direction.ASC };
     this.pageLink = new PageLink(10, 0, null, sortOrder);

@@ -162,6 +162,7 @@ CREATE TABLE IF NOT EXISTS rule_chain (
     created_time bigint NOT NULL,
     additional_info varchar,
     configuration varchar(10000000),
+    notes varchar(1000000),
     name varchar(255),
     type varchar(255),
     first_rule_node_id uuid,
@@ -935,6 +936,7 @@ CREATE TABLE IF NOT EXISTS calculated_field (
     configuration varchar(1000000),
     version BIGINT DEFAULT 1,
     debug_settings varchar(1024),
+    additional_info varchar,
     CONSTRAINT calculated_field_unq_key UNIQUE (entity_id, type, name)
 );
 

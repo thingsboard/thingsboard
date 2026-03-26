@@ -77,24 +77,24 @@
 </div>
 <div class="mat-padding flex flex-col">
   <form [formGroup]="entityForm">
-    <fieldset [disabled]="(isLoading$ | async) || !isEdit">
-      <mat-form-field class="mat-block">
+    <fieldset [disabled]="(isLoading$ | async) || !isEdit" style="min-width: 0;">
+      <mat-form-field class="mat-block" appearance="outline">
         <mat-label translate>rulechain.name</mat-label>
         <input matInput formControlName="name" required>
-        <mat-error *ngIf="entityForm.get('name').hasError('required')">
-          {{ 'rulechain.name-required' | translate }}
-        </mat-error>
-        <mat-error *ngIf="entityForm.get('name').hasError('maxlength')">
-          {{ 'rulechain.name-max-length' | translate }}
-        </mat-error>
+        @if (entityForm.get('name').hasError('required')) {
+          <mat-error>{{ 'rulechain.name-required' | translate }}</mat-error>
+        }
+        @if (entityForm.get('name').hasError('maxlength')) {
+          <mat-error>{{ 'rulechain.name-max-length' | translate }}</mat-error>
+        }
       </mat-form-field>
       <mat-checkbox class="flex-1" formControlName="debugMode" style="padding-bottom: 16px;">
         {{ 'rulechain.debug-mode' | translate }}
       </mat-checkbox>
       <div formGroupName="additionalInfo">
-        <mat-form-field class="mat-block">
+        <mat-form-field class="mat-block" appearance="outline">
           <mat-label translate>rulechain.description</mat-label>
-          <textarea matInput formControlName="description" rows="2"></textarea>
+          <textarea matInput formControlName="description" cdkTextareaAutosize cdkAutosizeMinRows="1" rows="1"></textarea>
         </mat-form-field>
       </div>
     </fieldset>
