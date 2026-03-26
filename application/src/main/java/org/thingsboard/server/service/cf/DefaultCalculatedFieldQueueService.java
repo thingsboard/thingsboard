@@ -171,7 +171,7 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
             return true;
         }
 
-        List<CalculatedFieldLink> links = calculatedFieldCache.getCalculatedFieldLinksByEntityId(entityId);
+        List<CalculatedFieldLink> links = calculatedFieldCache.getCalculatedFieldLinksByEntityId(tenantId, entityId);
         for (CalculatedFieldLink link : links) {
             CalculatedFieldCtx ctx = calculatedFieldCache.getCalculatedFieldCtx(link.calculatedFieldId());
             if (ctx != null && linkedEntityFilter.test(ctx)) {
@@ -180,21 +180,21 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
         }
 
         for (EntityId dynamicEntity : calculatedFieldCache.getDynamicEntities(tenantId, entityId)) {
-            if (calculatedFieldCache.getCalculatedFieldCtxsByEntityId(dynamicEntity).stream().anyMatch(dynamicSourceFilter)) {
+            if (calculatedFieldCache.getCalculatedFieldCtxsByEntityId(tenantId, dynamicEntity).stream().anyMatch(dynamicSourceFilter)) {
                 return true;
             }
             EntityId dynamicEntityProfileId = calculatedFieldCache.getProfileId(tenantId, dynamicEntity);
-            if (calculatedFieldCache.getCalculatedFieldCtxsByEntityId(dynamicEntityProfileId).stream().anyMatch(dynamicSourceFilter)) {
+            if (calculatedFieldCache.getCalculatedFieldCtxsByEntityId(tenantId, dynamicEntityProfileId).stream().anyMatch(dynamicSourceFilter)) {
                 return true;
             }
         }
 
-        boolean hasMatchesEntityAggCfs = calculatedFieldCache.getCalculatedFieldCtxsByType(CalculatedFieldType.ENTITY_AGGREGATION).anyMatch(filter);
+        boolean hasMatchesEntityAggCfs = calculatedFieldCache.getCalculatedFieldCtxsByType(tenantId, CalculatedFieldType.ENTITY_AGGREGATION).anyMatch(filter);
         if (hasMatchesEntityAggCfs) {
             return true;
         }
 
-        List<CalculatedFieldCtx> relatedEntitiesAggregationCfs = calculatedFieldCache.getCalculatedFieldCtxsByType(CalculatedFieldType.RELATED_ENTITIES_AGGREGATION)
+        List<CalculatedFieldCtx> relatedEntitiesAggregationCfs = calculatedFieldCache.getCalculatedFieldCtxsByType(tenantId, CalculatedFieldType.RELATED_ENTITIES_AGGREGATION)
                 .filter(relatedEntityFilter)
                 .toList();
         for (CalculatedFieldCtx cfCtx : relatedEntitiesAggregationCfs) {
