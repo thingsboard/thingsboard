@@ -173,6 +173,60 @@ security:
     path: "${SECURITY_JAVA_CACERTS_PATH:${java.home}/lib/security/cacerts}"
     # The password of the cacerts keystore file
     password: "${SECURITY_JAVA_CACERTS_PASSWORD:changeit}"
+  # HTTP security response headers configuration.
+  # These headers are set on responses from the ThingsBoard backend (tb-node).
+  # In microservice deployments, the web-ui (Express.js) has its own header configuration
+  # under msa/web-ui/config/ using the same environment variable names.
+  headers:
+    # X-Content-Type-Options header prevents browsers from MIME-sniffing the Content-Type.
+    # Safe to enable. Only disable if you intentionally serve resources with mismatched Content-Type.
+    x-content-type-options:
+      # Enable/disable X-Content-Type-Options header. Prevents browsers from MIME-sniffing the Content-Type
+      enabled: "${SECURITY_HEADERS_X_CONTENT_TYPE_OPTIONS_ENABLED:true}"
+    # Referrer-Policy header controls how much referrer info the browser sends with requests.
+    # The default 'strict-origin-when-cross-origin' matches the browser's built-in default,
+    # so enabling this does not change existing behavior — it just makes the policy explicit.
+    # Valid values: no-referrer, no-referrer-when-downgrade, origin, origin-when-cross-origin,
+    #              same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+    referrer-policy:
+      # Enable/disable Referrer-Policy header
+      enabled: "${SECURITY_HEADERS_REFERRER_POLICY_ENABLED:true}"
+      # Referrer-Policy header value
+      value: "${SECURITY_HEADERS_REFERRER_POLICY_VALUE:strict-origin-when-cross-origin}"
+    # X-Frame-Options header protects against clickjacking attacks by preventing the page
+    # from being loaded in iframes on other domains.
+    # Disabled by default because ThingsBoard supports multi-domain deployments where
+    # the platform may be embedded in iframes on customer domains.
+    # WARNING: Enabling with DENY will block ALL iframe embedding including dashboards
+    # embedded on external sites. Use SAMEORIGIN to allow same-domain iframes only.
+    x-frame-options:
+      # Enable/disable X-Frame-Options header. Protects against clickjacking attacks
+      enabled: "${SECURITY_HEADERS_X_FRAME_OPTIONS_ENABLED:false}"
+      # Valid values: DENY, SAMEORIGIN
+      value: "${SECURITY_HEADERS_X_FRAME_OPTIONS_VALUE:SAMEORIGIN}"
+    # Content-Security-Policy header mitigates XSS and data injection attacks by restricting
+    # which resources the browser is allowed to load.
+    # Disabled by default because ThingsBoard supports multi-domain deployments and
+    # because custom HTML Card widgets may use inline scripts, inline styles, and
+    # external resources that a restrictive CSP would block.
+    # WARNING when enabling: A strict CSP (e.g. script-src 'self') will break:
+    #   - HTML Card widgets with inline JavaScript
+    #   - Custom widget types with inline scripts/styles
+    #   - Widgets loading external resources (images, fonts, scripts)
+    #   - Dashboard embedding via iframes (if frame-ancestors is restrictive)
+    # Use 'report-only: true' first to test the impact before enforcing.
+    # The default value covers core ThingsBoard functionality including OpenStreetMap, ArcGIS maps,
+    # solution template previews, WebSocket telemetry, and chart Web Workers.
+    # NOTE: Google Maps requires adding Google domains to script-src, which is not included by default.
+    # To add Google Maps support, append to script-src: https://maps.googleapis.com https://maps.gstatic.com
+    content-security-policy:
+      # Enable/disable Content-Security-Policy header. Mitigates XSS and data injection attacks
+      enabled: "${SECURITY_HEADERS_CONTENT_SECURITY_POLICY_ENABLED:false}"
+      # Full CSP directive string. The default value is a working policy for most ThingsBoard deployments
+      value: "${SECURITY_HEADERS_CONTENT_SECURITY_POLICY_VALUE:default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://img.thingsboard.io https://tile.openstreetmap.org https://*.tile.openstreetmap.org https://*.arcgis.com; font-src 'self' data:; connect-src 'self' ws: wss: https://*.arcgis.com https://*.arcgisonline.com; worker-src 'self' blob:; frame-ancestors 'self'}"
+      # If true, uses Content-Security-Policy-Report-Only header instead — the browser
+      # reports violations but does not enforce them. Use for testing before enforcing.
+      report-only: "${SECURITY_HEADERS_CONTENT_SECURITY_POLICY_REPORT_ONLY:false}"
 
 # Mail settings parameters
 mail:
@@ -421,10 +475,11 @@ sql:
       edge_events_ttl: "${SQL_TTL_EDGE_EVENTS_TTL:2628000}" # Number of seconds. The current value corresponds to one month
     alarms:
       checking_interval: "${SQL_ALARMS_TTL_CHECKING_INTERVAL:7200000}" # Number of milliseconds. The current value corresponds to two hours
-      removal_batch_size: "${SQL_ALARMS_TTL_REMOVAL_BATCH_SIZE:3000}" # To delete outdated alarms not all at once but in batches
+      removal_batch_size: "${SQL_ALARMS_TTL_REMOVAL_BATCH_SIZE:3000}" # Batch size for records removal
     rpc:
       enabled: "${SQL_TTL_RPC_ENABLED:true}" # Enable/disable TTL (Time To Live) for rpc call records
       checking_interval: "${SQL_RPC_TTL_CHECKING_INTERVAL:7200000}" # Number of milliseconds. The current value corresponds to two hours
+      removal_batch_size: "${SQL_RPC_TTL_REMOVAL_BATCH_SIZE:10000}" # Batch size for records removal
     audit_logs:
       enabled: "${SQL_TTL_AUDIT_LOGS_ENABLED:true}" # Enable/disable TTL (Time To Live) for audit log records
       ttl: "${SQL_TTL_AUDIT_LOGS_SECS:0}" # Disabled by default. The accuracy of the cleanup depends on the sql.audit_logs.partition_size
@@ -433,6 +488,7 @@ sql:
       enabled: "${SQL_TTL_NOTIFICATIONS_ENABLED:true}" # Enable/disable TTL (Time To Live) for notification center records
       ttl: "${SQL_TTL_NOTIFICATIONS_SECS:2592000}" # Default value - 30 days
       checking_interval_ms: "${SQL_TTL_NOTIFICATIONS_CHECKING_INTERVAL_MS:86400000}" # Default value - 1 day
+      removal_batch_size: "${SQL_TTL_NOTIFICATIONS_REMOVAL_BATCH_SIZE:10000}" # Batch size for records removal
   relations:
     max_level: "${SQL_RELATIONS_MAX_LEVEL:50}" # This value has to be reasonably small to prevent infinite recursion as early as possible
     pool_size: "${SQL_RELATIONS_POOL_SIZE:4}" # This value has to be reasonably small to prevent the relation query from blocking all other DB calls
@@ -507,6 +563,10 @@ actors:
       # Comma-separated list of additional blocked destinations (IPs, CIDR subnets, or hostnames).
       # Example: "198.51.100.0/24,metadata.tencentyun.com,rancher-metadata"
       ssrf_additional_blocked_hosts: "${SSRF_ADDITIONAL_BLOCKED_HOSTS:}"
+      # Comma-separated list of allowed destinations that bypass SSRF blocking (IPs, CIDR subnets, or hostnames).
+      # Use this when your rule chains need to reach devices on private networks (e.g., 192.168.1.0/24).
+      # Example: "192.168.1.0/24,10.0.0.0/8,my-internal-service.corp"
+      ssrf_allowed_hosts: "${SSRF_ALLOWED_HOSTS:}"
   rpc:
     # Maximum number of persistent RPC call retries in case of failed request delivery.
     max_retries: "${ACTORS_RPC_MAX_RETRIES:5}"
@@ -786,21 +846,28 @@ updates:
   # Enable/disable checks for the new version
   enabled: "${UPDATES_ENABLED:true}"
 
-# Spring CORS configuration parameters
+# Spring CORS configuration parameters.
+# Controls the Access-Control-Allow-Origin and Access-Control-Allow-Credentials response headers.
+# WARNING: The default configuration allows cross-origin requests from ANY domain with credentials.
+# This means any website can make API requests on behalf of an authenticated user if the token
+# is accessible (e.g., via XSS). For production deployments, restrict to your domain(s):
+#   TB_CORS_ALLOWED_ORIGIN_PATTERNS=https://your-domain.com
+# For multi-domain deployments, list all allowed domains comma-separated:
+#   TB_CORS_ALLOWED_ORIGIN_PATTERNS=https://domain1.com,https://domain2.com
 spring.mvc.cors:
   mappings:
     # Intercept path
     "[/api/**]":
       #Comma-separated list of origins to allow. '*' allows all origins. When not set, CORS support is disabled.
-      allowed-origin-patterns: "*"
+      allowed-origin-patterns: "${TB_CORS_ALLOWED_ORIGIN_PATTERNS:*}"
       #Comma-separated list of methods to allow. '*' allows all methods.
-      allowed-methods: "*"
+      allowed-methods: "${TB_CORS_ALLOWED_METHODS:*}"
       #Comma-separated list of headers to allow in a request. '*' allows all headers.
-      allowed-headers: "*"
+      allowed-headers: "${TB_CORS_ALLOWED_HEADERS:*}"
       #How long, in seconds, the response from a pre-flight request can be cached by clients.
-      max-age: "1800"
+      max-age: "${TB_CORS_MAX_AGE:1800}"
       #Set whether credentials are supported. When not set, credentials are not supported.
-      allow-credentials: "true"
+      allow-credentials: "${TB_CORS_ALLOW_CREDENTIALS:true}"
 
 # General spring parameters
 spring.main.allow-circular-references: "true" # Spring Boot configuration property that controls whether circular dependencies between beans are allowed.
@@ -1487,10 +1554,17 @@ edges:
     ssl:
       # Enable/disable SSL support
       enabled: "${EDGES_RPC_SSL_ENABLED:false}"
-      # Cert file to be used during TLS connectivity to the cloud
+      # Path to the server certificate file (holds server certificate or certificate chain, may include server private key).
+      # Accepts an absolute filesystem path (e.g. /etc/thingsboard/certChainFile.pem),
+      # a relative path resolved against the working directory first then the classpath,
+      # or a classpath resource with the explicit "classpath:" prefix (e.g. classpath:conf/certChainFile.pem).
       cert: "${EDGES_RPC_SSL_CERT:certChainFile.pem}"
-      # Private key file associated with the Cert certificate. This key is used in the encryption process during a secure connection
+      # Path to the server certificate private key file. Optional if the private key is already present in the cert file above.
+      # Supports the same path resolution as 'cert': absolute, relative/classpath, or "classpath:" prefix.
+      # Leave empty when using a combined PEM cert that already contains the private key.
       private_key: "${EDGES_RPC_SSL_PRIVATE_KEY:privateKeyFile.pem}"
+      # Server certificate private key password (optional). Leave empty if the key is not encrypted.
+      key_password: "${EDGES_RPC_SSL_KEY_PASSWORD:}"
     # Maximum size (in bytes) of inbound messages the cloud can handle from the edge. By default, it can handle messages up to 4 Megabytes
     max_inbound_message_size: "${EDGES_RPC_MAX_INBOUND_MESSAGE_SIZE:4194304}"
     # Maximum length of telemetry (time-series and attributes) message the cloud sends to the edge. By default, there is no limitation.

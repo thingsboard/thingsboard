@@ -17,6 +17,7 @@ package org.thingsboard.server.common.data.notification.rule;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -29,7 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-@JsonIgnoreProperties
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "triggerType", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY, defaultImpl = DefaultNotificationRuleRecipientsConfig.class)
 @JsonSubTypes({
         @Type(name = "ALARM", value = EscalatedNotificationRuleRecipientsConfig.class),
@@ -38,6 +39,7 @@ import java.util.UUID;
 public abstract class NotificationRuleRecipientsConfig implements Serializable {
 
     @NotNull
+    @JsonProperty("triggerType")
     private NotificationRuleTriggerType triggerType;
 
     @JsonIgnore

@@ -1,8 +1,8 @@
 diff --git a/node_modules/@angular/core/fesm2022/debug_node.mjs b/node_modules/@angular/core/fesm2022/debug_node.mjs
-index d9be60f..24891ce 100755
+index 35c61af..d89462b 100755
 --- a/node_modules/@angular/core/fesm2022/debug_node.mjs
 +++ b/node_modules/@angular/core/fesm2022/debug_node.mjs
-@@ -9421,13 +9421,13 @@ function findDirectiveDefMatches(tView, tNode) {
+@@ -9428,13 +9428,13 @@ function findDirectiveDefMatches(tView, tNode) {
              if (isNodeMatchingSelectorList(tNode, def.selectors, /* isProjectionMode */ false)) {
                  matches ??= [];
                  if (isComponentDef(def)) {

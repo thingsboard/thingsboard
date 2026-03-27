@@ -50,7 +50,7 @@ public interface NotificationRequestDao extends Dao<NotificationRequest> {
 
     boolean existsByTenantIdAndStatusAndTemplateId(TenantId tenantId, NotificationRequestStatus status, NotificationTemplateId templateId);
 
-    int removeAllByCreatedTimeBefore(long ts);
+    int removeByTenantIdAndCreatedTimeBeforeBatch(TenantId tenantId, long ts, int batchSize);
 
     NotificationRequestInfo findInfoById(TenantId tenantId, NotificationRequestId id);
 

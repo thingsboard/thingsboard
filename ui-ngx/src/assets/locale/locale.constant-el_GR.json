@@ -545,13 +545,7 @@
     "slack-settings": "Ρυθμίσεις Slack",
     "mobile-settings": "Ρυθμίσεις κινητού",
     "firebase-service-account-file": "Αρχείο διαπιστευτηρίων λογαριασμού υπηρεσίας Firebase (JSON)",
-    "select-firebase-service-account-file": "Σύρετε και αποθέστε το αρχείο διαπιστευτηρίων λογαριασμού υπηρεσίας Firebase ή ",
-    "trendz": "Trendz",
-    "trendz-settings": "Ρυθμίσεις Trendz",
-    "trendz-url": "Διεύθυνση URL Trendz",
-    "trendz-url-required": "Απαιτείται η διεύθυνση URL του Trendz",
-    "trendz-api-key": "API κλειδί Trendz",
-    "trendz-enable": "Ενεργοποίηση Trendz"
+    "select-firebase-service-account-file": "Σύρετε και αποθέστε το αρχείο διαπιστευτηρίων λογαριασμού υπηρεσίας Firebase ή "
   },
   "alarm": {
     "alarm": "Συναγερμός",
@@ -794,7 +788,7 @@
     "no-assets-matching": "Δεν βρέθηκαν περιουσιακά στοιχεία που να ταιριάζουν με '{{entity}}'.",
     "asset-required": "Απαιτείται περιουσιακό στοιχείο",
     "name-starts-with": "Έκφραση ονόματος περιουσιακού στοιχείου",
-    "help-text": "Χρησιμοποιήστε το '%' κατά περίπτωση: '%περιουσιακό_όνομα%', '%περιουσιακό_όνομα_λήγει', 'περιουσιακό_ξεκινά_με'.",
+    "help-text": "Χρησιμοποιήστε '%' ανάλογα με τις ανάγκες: '%asset_name_contains%', '%asset_name_ends', 'asset_starts_with%'.",
     "search": "Αναζήτηση περιουσιακών στοιχείων",
     "import": "Εισαγωγή περιουσιακών στοιχείων",
     "asset-file": "Αρχείο περιουσιακών στοιχείων",
@@ -898,9 +892,9 @@
     "processing-timeouts": "Χρονικά όρια επεξεργασίας ${entityName}",
     "rule-chain": "Αλυσίδα κανόνων",
     "rule-engine": "Μηχανή κανόνων",
-    "rule-engine-daily-activity": "Ημερήσια δραστηριότητα μηχανής κανόνων",
     "rule-engine-executions": "Εκτελέσεις μηχανής κανόνων",
     "rule-engine-hourly-activity": "Ωριαία δραστηριότητα μηχανής κανόνων",
+    "rule-engine-daily-activity": "Ημερήσια δραστηριότητα μηχανής κανόνων",
     "rule-engine-monthly-activity": "Μηνιαία δραστηριότητα μηχανής κανόνων",
     "rule-engine-statistics": "Στατιστικά μηχανής κανόνων",
     "rule-node": "Κόμβος κανόνα",
@@ -917,11 +911,9 @@
     "transport": "Μεταφορά",
     "transport-daily-activity": "Ημερήσια δραστηριότητα μεταφοράς",
     "transport-data-points": "Σημεία δεδομένων μεταφοράς",
-    "transport-hourly-activity": "Ωριαία δραστηριότητα μεταφοράς",
-    "transport-messages": "Μηνύματα μεταφοράς",
-    "transport-monthly-activity": "Μηνιαία δραστηριότητα μεταφοράς",
     "view-details": "Προβολή λεπτομερειών",
-    "view-statistics": "Προβολή στατιστικών"
+    "view-statistics": "Προβολή στατιστικών",
+    "transport-messages": "Μηνύματα transport"
   },
   "api-limit": {
     "cassandra-write-queries-core": "Ερωτήματα εγγραφής Cassandra από REST API",
@@ -1020,7 +1012,7 @@
     "selected-fields": "{ count, plural, =1 {1 υπολογιζόμενο πεδίο} other {# υπολογιζόμενα πεδία} } επιλεγμένα",
     "type": {
       "simple": "Απλό",
-      "script": "Script"
+      "script": "Σενάριο"
     },
     "arguments": "Ορίσματα",
     "decimals-by-default": "Αριθμοί μετά την υποδιαστολή (προεπιλογή)",
@@ -1038,7 +1030,6 @@
     "argument-customer": "Πελάτης",
     "argument-tenant": "Τρέχων ενοικιαστής",
     "argument-type": "Τύπος ορίσματος",
-    "see-debug-events": "Προβολή γεγονότων εντοπισμού σφαλμάτων",
     "attribute": "Χαρακτηριστικό",
     "copy-argument-name": "Αντιγραφή ονόματος ορίσματος",
     "timeseries-key": "Κλειδί χρονοσειράς",
@@ -1071,8 +1062,8 @@
     "test-with-this-message": "Δοκιμή με αυτό το μήνυμα",
     "use-latest-timestamp": "Χρήση πιο πρόσφατης χρονικής σήμανσης",
     "hint": {
-      "arguments-simple-with-rolling": "Τα υπολογιζόμενα πεδία τύπου Simple δεν πρέπει να περιέχουν κλειδιά τύπου time series rolling.",
-      "arguments-empty": "Τα ορίσματα δεν πρέπει να είναι κενά.",
+      "arguments-simple-with-rolling": "Το υπολογιζόμενο πεδίο τύπου «Απλό» δεν πρέπει να περιέχει κλειδιά με τύπο «Κυλιόμενη χρονοσειρά».",
+      "arguments-empty": "Πρέπει να καθοριστεί τουλάχιστον ένα όρισμα.",
       "expression-required": "Απαιτείται έκφραση.",
       "expression-invalid": "Η έκφραση δεν είναι έγκυρη.",
       "expression-max-length": "Το μήκος της έκφρασης πρέπει να είναι μικρότερο από 255 χαρακτήρες.",
@@ -1193,6 +1184,7 @@
   "contact": {
     "country": "Χώρα",
     "country-required": "Η χώρα είναι υποχρεωτική.",
+    "country-object-required": "Παρακαλούμε επιλέξτε μια έγκυρη χώρα από τη λίστα.",
     "city": "Πόλη",
     "state": "Πολιτεία / Περιφέρεια",
     "postal-code": "Ταχυδρομικός Κώδικας",
@@ -1653,7 +1645,7 @@
     "remove-alias": "Αφαίρεση ψευδωνύμου συσκευής",
     "add-alias": "Προσθήκη ψευδωνύμου συσκευής",
     "name-starts-with": "Έκφραση ονόματος συσκευής",
-    "help-text": "Χρησιμοποιήστε '%' όπως απαιτείται: '%device_name_contains%', '%device_name_ends', 'device_starts_with'.",
+    "help-text": "Χρησιμοποιήστε '%' ανάλογα με τις ανάγκες: '%device_name_contains%', '%device_name_ends', 'device_starts_with%'.",
     "device-list": "Λίστα συσκευών",
     "use-device-name-filter": "Χρήση φίλτρου",
     "device-list-empty": "Δεν έχουν επιλεγεί συσκευές.",
@@ -1780,7 +1772,6 @@
     "unable-delete-device-alias-text": "Το ψευδώνυμο συσκευής '{{deviceAlias}}' δεν μπορεί να διαγραφεί επειδή χρησιμοποιείται από τα παρακάτω widget(s):<br/>{{widgetsList}}",
     "is-gateway": "Είναι gateway",
     "overwrite-activity-time": "Αντικατάσταση χρόνου δραστηριότητας για συνδεδεμένη συσκευή",
-    "device-filter": "Φίλτρο συσκευής",
     "device-filter-title": "Φίλτρο συσκευής",
     "filter-title": "Φίλτρο",
     "device-state": "Κατάσταση συσκευής",
@@ -2234,7 +2225,7 @@
       "short-id-required": "Το σύντομο αναγνωριστικό διακομιστή είναι υποχρεωτικό.",
       "short-id-range": "Το σύντομο αναγνωριστικό διακομιστή πρέπει να είναι εντός του εύρους από {{ min }} έως {{ max }}.",
       "short-id-pattern": "Το σύντομο αναγνωριστικό διακομιστή πρέπει να είναι θετικός ακέραιος αριθμός.",
-      "lifetime": "Διάρκεια εγγραφής πελάτη",
+      "lifetime": "Διάρκεια ζωής καταχώρισης πελάτη",
       "lifetime-required": "Η διάρκεια εγγραφής πελάτη είναι υποχρεωτική.",
       "lifetime-pattern": "Η διάρκεια εγγραφής πελάτη πρέπει να είναι θετικός ακέραιος αριθμός.",
       "default-min-period": "Ελάχιστη περίοδος μεταξύ δύο ειδοποιήσεων (δλ)",
@@ -2564,7 +2555,7 @@
     "no-entities-text": "Δεν βρέθηκαν οντότητες",
     "no-entity-types-matching": "Δεν βρέθηκαν τύποι οντοτήτων που να ταιριάζουν με '{{entityType}}'.",
     "name-starts-with": "Έκφραση ονόματος",
-    "help-text": "Χρησιμοποιήστε '%' ανάλογα με την ανάγκη: '%entity_name_contains%', '%entity_name_ends', 'entity_starts_with'.",
+    "help-text": "Χρησιμοποιήστε '%' ανάλογα με τις ανάγκες: '%entity_name_contains%', '%entity_name_ends', 'entity_starts_with%'.",
     "use-entity-name-filter": "Χρήση φίλτρου",
     "entity-list-empty": "Δεν επιλέχθηκαν οντότητες.",
     "entity-type-list-required": "Πρέπει να επιλεγεί τουλάχιστον ένας τύπος οντότητας.",
@@ -2756,7 +2747,7 @@
     "remove-alias": "Αφαίρεση ψευδωνύμου προβολής οντότητας",
     "add-alias": "Προσθήκη ψευδωνύμου προβολής οντότητας",
     "name-starts-with": "Έκφραση ονόματος προβολής οντότητας",
-    "help-text": "Χρησιμοποιήστε '%' όπως απαιτείται: '%entity-view_name_contains%', '%entity-view_name_ends', 'entity-view_starts_with'.",
+    "help-text": "Χρησιμοποιήστε '%' ανάλογα με τις ανάγκες: '%entity-view_name_contains%', '%entity-view_name_ends', 'entity-view_starts_with%'.",
     "entity-view-list": "Λίστα προβολών οντοτήτων",
     "use-entity-view-name-filter": "Χρήση φίλτρου",
     "entity-view-list-empty": "Δεν έχουν επιλεγεί προβολές οντοτήτων.",
@@ -3798,7 +3789,6 @@
     "password-link-sent-message": "Ο σύνδεσμος επαναφοράς έχει σταλεί",
     "email": "Email",
     "invalid-email-format": "Μη έγκυρη μορφή email.",
-    "login-with": "Σύνδεση με {{name}}",
     "or": "ή",
     "error": "Σφάλμα σύνδεσης",
     "verify-your-identity": "Επαληθεύστε την ταυτότητά σας",
@@ -5410,8 +5400,7 @@
       },
       "time-series": "Χρονοσειρές",
       "latest": "Τελευταίες τιμές",
-      "web-sockets": "WebSockets",
-      "calculated-fields": "Υπολογιζόμενα πεδία"
+      "web-sockets": "WebSockets"
     },
     "save-attribute": {
       "processing-settings": "Ρυθμίσεις επεξεργασίας",
@@ -6658,7 +6647,7 @@
     "export-relations": "Εξαγωγή σχέσεων",
     "export-attributes": "Εξαγωγή ιδιοτήτων",
     "export-credentials": "Εξαγωγή διαπιστευτηρίων",
-    "export-calculated-fields": "Εξαγωγή υπολογιζόμενων πεδίων",
+    "export-calculated-fields": "Εξαγωγή υπολογιζόμενων πεδίων \nκαι κανόνων συναγερμού",
     "entity-versions": "Εκδόσεις οντοτήτων",
     "versions": "Εκδόσεις",
     "created-time": "Ώρα δημιουργίας",
@@ -7473,9 +7462,9 @@
       },
       "chart-axis": {
         "scale": "Κλίμακα",
-        "scale-min": "ελάχιστο",
-        "scale-max": "μέγιστο",
-        "scale-auto": "Αυτόματα"
+        "scale-min": "ελάχ.",
+        "scale-max": "μέγ.",
+        "scale-auto": "Αυτόματο"
       },
       "bar": {
         "show-border": "Εμφάνιση περιγράμματος",
@@ -8508,11 +8497,11 @@
           "finish-circle-hint-with-entity": "Κύκλος για '{{entityName}}': κάντε κλικ για ολοκλήρωση και αποθήκευση",
           "finish-circle-hint": "Κύκλος: κάντε κλικ για ολοκλήρωση σχεδίασης"
         },
-        "select-entity": "Επιλέξτε οντότητα",
-        "select-entity-hint": "Υπόδειξη: μετά την επιλογή κάντε κλικ στον χάρτη για ορισμό θέσης"
+        "select-entity": "Επιλογή οντότητας",
+        "select-entity-hint": "Υπόδειξη: μετά την επιλογή, κάντε κλικ στον χάρτη για να ορίσετε θέση"
       },
-      "select-entity": "Επιλέξτε οντότητα",
-      "select-entity-hint": "Υπόδειξη: μετά την επιλογή κάντε κλικ στον χάρτη για ορισμό θέσης",
+      "select-entity": "Επιλογή οντότητας",
+      "select-entity-hint": "Υπόδειξη: μετά την επιλογή, κάντε κλικ στον χάρτη για να ορίσετε θέση",
       "tooltips": {
         "placeMarker": "Κάντε κλικ για τοποθέτηση οντότητας '{{entityName}}'",
         "firstVertex": "Πολύγωνο για '{{entityName}}': κάντε κλικ για τοποθέτηση πρώτου σημείου",

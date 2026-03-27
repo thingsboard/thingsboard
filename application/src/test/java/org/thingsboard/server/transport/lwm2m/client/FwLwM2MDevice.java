@@ -171,7 +171,14 @@ public class FwLwM2MDevice extends BaseInstanceEnabler implements Destroyable {
 
                 if (this.leshanClient != null) {
                     log.info("Stop/reboot LwM2M client {}", this.leshanClient.getEndpoint(identity));
-                    this.leshanClient.stop(false);
+                    try {
+                        this.leshanClient.stop(false);
+                    } catch (Exception stopEx) {
+                        // Leshan may throw NPE during CoAP observe-relation cleanup when the server
+                        // reference is null (race condition in NotificationDataStore.toKey()).
+                        // The client is still considered stopped at this point — proceed with restart.
+                        log.warn("Exception during LwM2M client stop, proceeding with restart: {}", stopEx.getMessage());
+                    }
 
                     log.info("Start after update fw LwM2M client {}", this.leshanClient.getEndpoint(identity));
                     this.leshanClient.start();
@@ -193,7 +200,7 @@ public class FwLwM2MDevice extends BaseInstanceEnabler implements Destroyable {
             } catch (Exception e) {
                 log.error("Error during firmware update", e);
             }
-        }, 0, TimeUnit.SECONDS); // start immediately, without further delay
+        }, 1, TimeUnit.SECONDS); // delay 1 sec to allow CoAP Execute response to be delivered before client stops
     }
 
     protected void setLeshanClient(LeshanClient leshanClient) {
