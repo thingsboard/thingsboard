@@ -38,7 +38,7 @@
              formArrayName="keyFilters"
              *ngFor="let keyFilterControl of keyFiltersFormArray.controls; let $index = index">
           <div class="filters-operation max-w-8% flex-full">
-            <span *ngIf="$index > 0" translate>filter.operation.and</span>
+            <span *ngIf="$index > 0">{{ complexOperationTranslationMap.get(operation) | translate }}</span>
           </div>
           <div class="flex max-w-92% flex-full flex-col">
             <div class="flex flex-row items-center justify-start">
@@ -85,7 +85,7 @@
         </mat-panel-title>
       </mat-expansion-panel-header>
       <div class="tb-filter-preview">
-        <tb-filter-text [formControl]="keyFiltersControl"></tb-filter-text>
+        <tb-filter-text [formControl]="keyFiltersControl" [operation]="operation"></tb-filter-text>
       </div>
     </mat-expansion-panel>
   </mat-accordion>

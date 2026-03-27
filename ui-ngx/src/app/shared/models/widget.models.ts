@@ -24,6 +24,7 @@ import { EntityId } from '@shared/models/id/entity-id';
 import {
   AlarmFilter,
   AlarmFilterConfig,
+  ComplexOperation,
   EntityDataPageLink,
   EntityFilter,
   KeyFilter
@@ -450,6 +451,7 @@ export interface Datasource {
   origDatasourceIndex?: number;
   pageLink?: EntityDataPageLink;
   keyFilters?: Array<KeyFilter>;
+  keyFiltersOperation?: ComplexOperation;
   entityFilter?: EntityFilter;
   alarmFilterConfig?: AlarmFilterConfig;
   alarmFilter?: AlarmFilter;

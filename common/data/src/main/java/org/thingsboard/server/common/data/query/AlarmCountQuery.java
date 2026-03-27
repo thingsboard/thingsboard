@@ -51,4 +51,8 @@ public class AlarmCountQuery extends EntityCountQuery {
         super(entityFilter, keyFilters);
     }
 
+    public AlarmCountQuery(EntityFilter entityFilter, List<KeyFilter> keyFilters, ComplexOperation keyFiltersOperation) {
+        super(entityFilter, keyFilters, keyFiltersOperation);
+    }
+
 }
