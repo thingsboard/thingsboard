@@ -127,9 +127,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-/**
- * Created by ashvayka on 17.10.18.
- */
 @Slf4j
 @Service
 @TbTransportComponent
@@ -789,7 +786,7 @@ public class DefaultTransportService extends TransportActivityManager implements
 
         TransportProtos.SessionCloseNotificationProto notification = TransportProtos.SessionCloseNotificationProto.newBuilder().setMessage("session timeout!").build();
 
-        ScheduledFuture executorFuture = scheduler.schedule(() -> {
+        ScheduledFuture<?> executorFuture = scheduler.schedule(() -> {
             listener.onRemoteSessionCloseCommand(sessionId, notification);
             deregisterSession(sessionInfo);
         }, timeout, TimeUnit.MILLISECONDS);
@@ -1169,6 +1166,7 @@ public class DefaultTransportService extends TransportActivityManager implements
         public void onFailure(Throwable t) {
             DefaultTransportService.this.transportCallbackExecutor.submit(() -> callback.onError(t));
         }
+
     }
 
     private static class StatsCallback implements TbQueueCallback {
@@ -1183,16 +1181,19 @@ public class DefaultTransportService extends TransportActivityManager implements
         @Override
         public void onSuccess(TbQueueMsgMetadata metadata) {
             stats.incrementSuccessful();
-            if (callback != null)
+            if (callback != null) {
                 callback.onSuccess(metadata);
+            }
         }
 
         @Override
         public void onFailure(Throwable t) {
             stats.incrementFailed();
-            if (callback != null)
+            if (callback != null) {
                 callback.onFailure(t);
+            }
         }
+
     }
 
     private class MsgPackCallback implements TbQueueCallback {
@@ -1215,6 +1216,7 @@ public class DefaultTransportService extends TransportActivityManager implements
         public void onFailure(Throwable t) {
             DefaultTransportService.this.transportCallbackExecutor.submit(() -> callback.onError(t));
         }
+
     }
 
     private class ApiStatsProxyCallback<T> implements TransportServiceCallback<T> {
@@ -1244,6 +1246,7 @@ public class DefaultTransportService extends TransportActivityManager implements
         public void onError(Throwable e) {
             callback.onError(e);
         }
+
     }
 
     @Override
@@ -1270,4 +1273,5 @@ public class DefaultTransportService extends TransportActivityManager implements
             log.info("Transport Stats: {}", values);
         }
     }
+
 }

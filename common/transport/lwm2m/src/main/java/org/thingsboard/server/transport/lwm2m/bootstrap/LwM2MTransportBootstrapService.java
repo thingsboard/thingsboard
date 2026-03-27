@@ -29,6 +29,7 @@ import org.eclipse.leshan.server.californium.bootstrap.LwM2mBootstrapPskStore;
 import org.eclipse.leshan.server.californium.bootstrap.endpoint.CaliforniumBootstrapServerEndpointsProvider;
 import org.eclipse.leshan.server.californium.bootstrap.endpoint.coap.CoapBootstrapServerProtocolProvider;
 import org.eclipse.leshan.server.californium.bootstrap.endpoint.coaps.CoapsBootstrapServerProtocolProvider;
+import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.config.ssl.SslCredentials;
@@ -55,7 +56,7 @@ import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.se
 @Component
 @TbLwM2mBootstrapTransportComponent
 @RequiredArgsConstructor
-public class LwM2MTransportBootstrapService {
+public class LwM2MTransportBootstrapService implements SmartInitializingSingleton {
 
     private final LwM2MTransportServerConfig serverConfig;
     private final LwM2MTransportBootstrapConfig bootstrapConfig;
@@ -63,7 +64,20 @@ public class LwM2MTransportBootstrapService {
     private final LwM2MInMemoryBootstrapConfigStore lwM2MInMemoryBootstrapConfigStore;
     private final TransportService transportService;
     private final TbLwM2MDtlsBootstrapCertificateVerifier certificateVerifier;
-    private LeshanBootstrapServer server;
+    private volatile LeshanBootstrapServer server;
+
+    @Override
+    public void afterSingletonsInstantiated() {
+        bootstrapConfig.registerServerReloadCallback(() -> {
+            try {
+                log.info("LwM2M Bootstrap certificates reloaded. Recreating bootstrap server...");
+                recreateBootstrapServer();
+                log.info("LwM2M Bootstrap server recreated successfully with new certificates.");
+            } catch (Exception e) {
+                log.error("Failed to recreate LwM2M Bootstrap server after certificate reload", e);
+            }
+        });
+    }
 
     @PostConstruct
     public void init() {
@@ -110,7 +124,7 @@ public class LwM2MTransportBootstrapService {
 
         // Create Californium Configuration
         Configuration serverCoapConfig = endpointsBuilder.createDefaultConfiguration();
-        getCoapConfig(serverCoapConfig, bootstrapConfig.getPort(), bootstrapConfig.getSecurePort(),serverConfig);
+        getCoapConfig(serverCoapConfig, bootstrapConfig.getPort(), bootstrapConfig.getSecurePort(), serverConfig);
         serverCoapConfig.setTransient(DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY);
         serverCoapConfig.set(DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY, serverConfig.isRecommendedCiphers());
         serverCoapConfig.setTransient(DtlsConfig.DTLS_CONNECTION_ID_LENGTH);
@@ -119,7 +133,7 @@ public class LwM2MTransportBootstrapService {
         serverCoapConfig.set(DTLS_RETRANSMISSION_TIMEOUT, serverConfig.getDtlsRetransmissionTimeout(), MILLISECONDS);
 
         if (serverConfig.getDtlsCidLength() != null) {
-            setDtlsConnectorConfigCidLength( serverCoapConfig, serverConfig.getDtlsCidLength());
+            setDtlsConnectorConfigCidLength(serverCoapConfig, serverConfig.getDtlsCidLength());
         }
 
         /* Create DTLS Config */
@@ -164,4 +178,42 @@ public class LwM2MTransportBootstrapService {
             builder.setTrustedCertificates(new X509Certificate[0]);
         }
     }
+
+    private synchronized void recreateBootstrapServer() {
+        LeshanBootstrapServer oldServer = this.server;
+
+        log.info("Creating new LwM2M Bootstrap server with updated certificates...");
+        LeshanBootstrapServer newServer = getLhBootstrapServer();
+
+        // Stop (not destroy) the old server to release ports but keep it restartable for rollback
+        if (oldServer != null) {
+            log.info("Stopping old LwM2M Bootstrap server to release ports...");
+            oldServer.stop();
+        }
+
+        try {
+            newServer.start();
+        } catch (Exception e) {
+            log.error("Failed to start new LwM2M Bootstrap server", e);
+            newServer.destroy();
+            // Attempt to restart the old server (only stopped, not destroyed)
+            if (oldServer != null) {
+                try {
+                    oldServer.start();
+                    log.info("Restored old LwM2M Bootstrap server successfully.");
+                } catch (Exception restoreEx) {
+                    log.error("Failed to restore old LwM2M Bootstrap server", restoreEx);
+                }
+            }
+            throw e;
+        }
+        this.server = newServer;
+        log.info("New LwM2M Bootstrap server started successfully.");
+
+        // Destroy the old server only after a successful swap
+        if (oldServer != null) {
+            oldServer.destroy();
+        }
+    }
+
 }
