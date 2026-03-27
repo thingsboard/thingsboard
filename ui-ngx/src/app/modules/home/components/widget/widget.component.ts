@@ -182,6 +182,7 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
   widgetInstanceInited = false;
   dataUpdatePending = false;
   latestDataUpdatePending = false;
+  reInitInProgress = false;
   pendingMessage: SubscriptionMessage;
 
   cafs: {[cafId: string]: CancelAnimationFrame} = {};
@@ -589,7 +590,11 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
             }
           } else {
             this.loadingData = false;
-            this.displayNoData = true;
+            if (!this.reInitInProgress &&
+              !Object.values(this.widgetContext.subscriptions).some(s => s.loadingData)) {
+              this.displayNoData = true;
+            }
+            this.reInitInProgress = false;
           }
           this.detectChanges();
         } catch (e) {
@@ -691,6 +696,7 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
             this.widgetContext.reset();
             this.subscriptionInited = true;
             this.configureDynamicWidgetComponent();
+            this.reInitInProgress = true;
             this.onInit();
           }
         },
@@ -700,6 +706,7 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
           } else {
             this.widgetContext.reset();
             this.subscriptionInited = true;
+            this.reInitInProgress = true;
             this.onInit();
           }
         }
@@ -708,6 +715,7 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
       this.widgetContext.reset();
       this.subscriptionInited = true;
       this.configureDynamicWidgetComponent();
+      this.reInitInProgress = true;
       this.onInit();
     }
   }
@@ -930,6 +938,7 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
       onDataUpdated: () => {
         try {
           if (this.displayWidgetInstance()) {
+            this.displayNoData = false;
             if (this.widgetInstanceInited) {
               this.widgetTypeInstance.onDataUpdated();
               setTimeout(() => {
@@ -944,6 +953,7 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
       onLatestDataUpdated: () => {
         try {
           if (this.displayWidgetInstance()) {
+            this.displayNoData = false;
             if (this.widgetInstanceInited) {
               this.widgetTypeInstance.onLatestDataUpdated();
             } else {
@@ -976,6 +986,11 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
       dataLoading: (subscription) => {
         if (this.loadingData !== subscription.loadingData) {
           this.loadingData = subscription.loadingData;
+          if (!this.loadingData
+            && !Object.values(this.widgetContext.subscriptions).some(s => s.loadingData)
+            && !this.displayWidgetInstance()) {
+            this.displayNoData = true;
+          }
           this.detectChanges();
         }
       },
