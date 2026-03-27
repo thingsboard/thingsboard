@@ -42,14 +42,17 @@ import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.device.profile.JsonTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.transport.TransportService;
+import org.thingsboard.server.common.transport.limits.TransportRateLimitService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.mqtt.adaptors.JsonMqttAdaptor;
 
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -72,6 +75,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @Slf4j
@@ -95,12 +99,15 @@ public class MqttTransportHandlerTest {
 
     @Spy
     TransportService transportService;
+    @Spy
+    TransportRateLimitService transportRateLimitService;
 
     @BeforeEach
     public void setUp() throws Exception {
 
         lenient().doReturn(MSG_QUEUE_LIMIT).when(context).getMessageQueueSizePerDeviceLimit();
         lenient().doReturn(transportService).when(context).getTransportService();
+        lenient().doReturn(transportRateLimitService).when(context).getRateLimitService();
 
         handler = spy(new MqttTransportHandler(context, sslHandler));
         lenient().doReturn(IP_ADDR).when(handler).getAddress(any());
@@ -250,6 +257,13 @@ public class MqttTransportHandlerTest {
         expectedMd.putValue(DataConstants.MQTT_TOPIC, message.variableHeader().topicName());
 
         verify(transportService, times(1)).process(any(), (TransportProtos.PostTelemetryMsg) any(), eq(expectedMd), any());
+    }
+
+    @Test
+    public void givenOnTenantDeleted_thenNoMessagesToCore() {
+        handler.deviceSessionCtx.setChannel(ctx);
+        handler.onTenantDeleted(new DeviceId(UUID.randomUUID()));
+        verifyNoInteractions(transportService, transportRateLimitService);
     }
 
 }
