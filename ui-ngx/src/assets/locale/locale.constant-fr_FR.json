@@ -545,13 +545,7 @@
     "slack-settings": "Paramètres Slack",
     "mobile-settings": "Paramètres mobiles",
     "firebase-service-account-file": "Fichier JSON des identifiants du compte de service Firebase",
-    "select-firebase-service-account-file": "Glissez-déposez votre fichier d'identifiants de compte de service Firebase ou ",
-    "trendz": "Trendz",
-    "trendz-settings": "Paramètres Trendz",
-    "trendz-url": "URL Trendz",
-    "trendz-url-required": "L'URL Trendz est requise",
-    "trendz-api-key": "Clé API Trendz",
-    "trendz-enable": "Activer Trendz"
+    "select-firebase-service-account-file": "Glissez-déposez votre fichier d'identifiants de compte de service Firebase ou "
   },
   "alarm": {
     "alarm": "Alarme",
@@ -794,7 +788,7 @@
     "no-assets-matching": "Aucun actif correspondant à '{{entity}}' trouvé.",
     "asset-required": "L'actif est requis",
     "name-starts-with": "Expression du nom de l'actif",
-    "help-text": "Utilisez '%' selon le besoin : '%nom_actif_contient%', '%nom_actif_termine', 'actif_commence_par'.",
+    "help-text": "Utilisez '%' selon vos besoins : '%asset_name_contains%', '%asset_name_ends', 'asset_starts_with%'.",
     "search": "Rechercher des actifs",
     "import": "Importer des actifs",
     "asset-file": "Fichier d'actifs",
@@ -898,9 +892,9 @@
     "processing-timeouts": "Expirations de traitement ${entityName}",
     "rule-chain": "Chaîne de règles",
     "rule-engine": "Moteur de règles",
-    "rule-engine-daily-activity": "Activité quotidienne du moteur de règles",
     "rule-engine-executions": "Exécutions du moteur de règles",
     "rule-engine-hourly-activity": "Activité horaire du moteur de règles",
+    "rule-engine-daily-activity": "Activité quotidienne du moteur de règles",
     "rule-engine-monthly-activity": "Activité mensuelle du moteur de règles",
     "rule-engine-statistics": "Statistiques du moteur de règles",
     "rule-node": "Nœud de règle",
@@ -917,11 +911,9 @@
     "transport": "Transport",
     "transport-daily-activity": "Activité quotidienne de transport",
     "transport-data-points": "Points de données de transport",
-    "transport-hourly-activity": "Activité horaire de transport",
-    "transport-messages": "Messages de transport",
-    "transport-monthly-activity": "Activité mensuelle de transport",
     "view-details": "Voir les détails",
-    "view-statistics": "Voir les statistiques"
+    "view-statistics": "Voir les statistiques",
+    "transport-messages": "Messages de transport"
   },
   "api-limit": {
     "cassandra-write-queries-core": "Requêtes d’écriture Cassandra via l’API REST",
@@ -1038,7 +1030,6 @@
     "argument-customer": "Client",
     "argument-tenant": "Tenant actuel",
     "argument-type": "Type d'argument",
-    "see-debug-events": "Voir les événements de débogage",
     "attribute": "Attribut",
     "copy-argument-name": "Copier le nom de l'argument",
     "timeseries-key": "Clé de série temporelle",
@@ -1071,8 +1062,8 @@
     "test-with-this-message": "Tester avec ce message",
     "use-latest-timestamp": "Utiliser le dernier horodatage",
     "hint": {
-      "arguments-simple-with-rolling": "Un champ calculé de type simple ne doit pas contenir de clés avec déroulement de séries temporelles.",
-      "arguments-empty": "Les arguments ne doivent pas être vides.",
+      "arguments-simple-with-rolling": "Un champ calculé de type simple ne doit pas contenir de clés avec le type « Série temporelle glissante ».",
+      "arguments-empty": "Au moins un argument doit être spécifié.",
       "expression-required": "L'expression est requise.",
       "expression-invalid": "L'expression est invalide.",
       "expression-max-length": "La longueur de l'expression doit être inférieure à 255 caractères.",
@@ -1193,6 +1184,7 @@
   "contact": {
     "country": "Pays",
     "country-required": "Le pays est requis.",
+    "country-object-required": "Veuillez sélectionner un pays valide dans la liste.",
     "city": "Ville",
     "state": "État / Province",
     "postal-code": "Code postal / ZIP",
@@ -1653,7 +1645,7 @@
     "remove-alias": "Supprimer l'alias de l'appareil",
     "add-alias": "Ajouter un alias d'appareil",
     "name-starts-with": "Expression du nom de l'appareil",
-    "help-text": "Utilisez '%' selon le besoin : '%device_name_contains%', '%device_name_ends', 'device_starts_with'.",
+    "help-text": "Utilisez '%' selon vos besoins : '%device_name_contains%', '%device_name_ends', 'device_starts_with%'.",
     "device-list": "Liste des appareils",
     "use-device-name-filter": "Utiliser un filtre",
     "device-list-empty": "Aucun appareil sélectionné.",
@@ -1780,7 +1772,6 @@
     "unable-delete-device-alias-text": "L'alias de l'appareil '{{deviceAlias}}' ne peut pas être supprimé car il est utilisé par le(s) widget(s) suivant(s) :<br/>{{widgetsList}}",
     "is-gateway": "Est une passerelle",
     "overwrite-activity-time": "Écraser l'heure d'activité de l'appareil connecté",
-    "device-filter": "Filtre d'appareil",
     "device-filter-title": "Filtre d'appareil",
     "filter-title": "Filtre",
     "device-state": "État de l'appareil",
@@ -2564,7 +2555,7 @@
     "no-entities-text": "Aucune entité trouvée",
     "no-entity-types-matching": "Aucun type d'entité correspondant à '{{entityType}}' n'a été trouvé.",
     "name-starts-with": "Expression du nom",
-    "help-text": "Utilisez '%' selon le besoin : '%nom_entité_contient%', '%nom_entité_se_termine', 'entité_commence_par'.",
+    "help-text": "Utilisez '%' selon vos besoins : '%entity_name_contains%', '%entity_name_ends', 'entity_starts_with%'.",
     "use-entity-name-filter": "Utiliser le filtre",
     "entity-list-empty": "Aucune entité sélectionnée.",
     "entity-type-list-required": "Au moins un type d'entité doit être sélectionné.",
@@ -2756,7 +2747,7 @@
     "remove-alias": "Supprimer l'alias de la vue d'entité",
     "add-alias": "Ajouter un alias de vue d'entité",
     "name-starts-with": "Expression du nom de la vue d'entité",
-    "help-text": "Utilisez '%' selon le besoin : '%entity-view_name_contains%', '%entity-view_name_ends', 'entity-view_starts_with'.",
+    "help-text": "Utilisez '%' selon vos besoins : '%entity-view_name_contains%', '%entity-view_name_ends', 'entity-view_starts_with%'.",
     "entity-view-list": "Liste des vues d'entité",
     "use-entity-view-name-filter": "Utiliser un filtre",
     "entity-view-list-empty": "Aucune vue d'entité sélectionnée.",
@@ -3798,7 +3789,6 @@
     "password-link-sent-message": "Le lien de réinitialisation a été envoyé",
     "email": "Email",
     "invalid-email-format": "Format d'email invalide.",
-    "login-with": "Connexion avec {{name}}",
     "or": "ou",
     "error": "Erreur de connexion",
     "verify-your-identity": "Vérifiez votre identité",
@@ -5410,8 +5400,7 @@
       },
       "time-series": "Séries temporelles",
       "latest": "Dernières valeurs",
-      "web-sockets": "WebSockets",
-      "calculated-fields": "Champs calculés"
+      "web-sockets": "WebSockets"
     },
     "save-attribute": {
       "processing-settings": "Paramètres de traitement",
@@ -6658,7 +6647,7 @@
     "export-relations": "Exporter les relations",
     "export-attributes": "Exporter les attributs",
     "export-credentials": "Exporter les identifiants",
-    "export-calculated-fields": "Exporter les champs calculés",
+    "export-calculated-fields": "Exporter les champs calculés \net les règles d’alarme",
     "entity-versions": "Versions des entités",
     "versions": "Versions",
     "created-time": "Date de création",
@@ -8509,10 +8498,10 @@
           "finish-circle-hint": "Cercle : cliquez pour terminer le dessin"
         },
         "select-entity": "Sélectionner une entité",
-        "select-entity-hint": "Astuce : après sélection, cliquez sur la carte pour définir la position"
+        "select-entity-hint": "Astuce : après la sélection, cliquer sur la carte pour définir la position"
       },
       "select-entity": "Sélectionner une entité",
-      "select-entity-hint": "Astuce : après la sélection, cliquez sur la carte pour définir la position",
+      "select-entity-hint": "Astuce : après la sélection, cliquer sur la carte pour définir la position",
       "tooltips": {
         "placeMarker": "Cliquez pour placer l’entité '{{entityName}}'",
         "firstVertex": "Polygone pour '{{entityName}}' : cliquez pour placer le premier point",

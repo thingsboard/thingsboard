@@ -323,22 +323,24 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
 
     @Override
     public Iterator<Registration> getAllRegistrations() {
-        try (var connection = connectionFactory.getConnection()) {
+        try (var scanConnection = connectionFactory.getConnection();
+             var getConnection = connectionFactory.getConnection()) {
             Collection<Registration> list = new LinkedList<>();
             ScanOptions scanOptions = ScanOptions.scanOptions().count(100).match(REG_EP + "*").build();
             List<Cursor<byte[]>> scans = new ArrayList<>();
-            if (connection instanceof RedisClusterConnection) {
-                ((RedisClusterConnection) connection).clusterGetNodes().forEach(node -> {
-                    scans.add(((RedisClusterConnection) connection).scan(node, scanOptions));
-                });
+            if (scanConnection instanceof RedisClusterConnection clusterConnection) {
+                clusterConnection.clusterGetNodes().forEach(node ->
+                        scans.add(clusterConnection.scan(node, scanOptions)));
             } else {
-                scans.add(connection.scan(scanOptions));
+                scans.add(scanConnection.scan(scanOptions));
             }
 
             scans.forEach(scan -> {
                 scan.forEachRemaining(key -> {
-                    byte[] element = connection.get(key);
-                    list.add(deserializeReg(element));
+                    byte[] element = getConnection.get(key);
+                    if (element != null) {
+                        list.add(deserializeReg(element));
+                    }
                 });
             });
             return list.iterator();
