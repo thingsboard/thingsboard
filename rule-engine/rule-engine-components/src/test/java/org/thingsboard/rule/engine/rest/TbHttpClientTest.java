@@ -569,8 +569,8 @@ public class TbHttpClientTest {
         Map<String, String> data = metaData.getData();
 
         Assertions.assertEquals(2, data.size());
-        Assertions.assertEquals(data.get("Content-Type"), "binary");
-        Assertions.assertEquals(data.get("Set-Cookie"), "[\"sap-context=sap-client=075; path=/\",\"sap-token=sap-client=075; path=/\"]");
+        Assertions.assertEquals("binary", data.get("Content-Type"));
+        Assertions.assertEquals("[\"sap-context=sap-client=075; path=/\",\"sap-token=sap-client=075; path=/\"]", data.get("Set-Cookie"));
     }
 
 }
