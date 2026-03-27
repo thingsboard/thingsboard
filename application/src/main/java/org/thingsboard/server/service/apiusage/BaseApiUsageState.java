@@ -35,6 +35,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public abstract class BaseApiUsageState {
     private final Map<ApiUsageRecordKey, Long> currentCycleValues = new ConcurrentHashMap<>();
     private final Map<ApiUsageRecordKey, Long> currentHourValues = new ConcurrentHashMap<>();
+    private final Map<ApiUsageRecordKey, Long> currentDayValues = new ConcurrentHashMap<>();
 
     private final Map<ApiUsageRecordKey, Map<String, Long>> lastGaugesByServiceId = new HashMap<>();
     private final Map<ApiUsageRecordKey, Long> gaugesReportCycles = new HashMap<>();
@@ -48,6 +49,8 @@ public abstract class BaseApiUsageState {
     private volatile long nextCycleTs;
     @Getter
     private volatile long currentHourTs;
+    @Getter
+    private volatile long currentDayTs;
 
     @Setter
     private long gaugeReportInterval;
@@ -57,30 +60,36 @@ public abstract class BaseApiUsageState {
         this.currentCycleTs = SchedulerUtils.getStartOfCurrentMonth();
         this.nextCycleTs = SchedulerUtils.getStartOfNextMonth();
         this.currentHourTs = SchedulerUtils.getStartOfCurrentHour();
+        this.currentDayTs = SchedulerUtils.getStartOfCurrentDay();
     }
 
     public StatsCalculationResult calculate(ApiUsageRecordKey key, long value, String serviceId) {
         long currentValue = get(key);
         long currentHourlyValue = getHourly(key);
+        long currentDailyValue = getDaily(key);
 
         StatsCalculationResult result;
         if (key.isCounter()) {
             result = StatsCalculationResult.builder()
                     .newValue(currentValue + value).valueChanged(true)
                     .newHourlyValue(currentHourlyValue + value).hourlyValueChanged(true)
+                    .newDailyValue(currentDailyValue + value).dailyValueChanged(true)
                     .build();
         } else {
             Long newGaugeValue = calculateGauge(key, value, serviceId);
             long newValue = newGaugeValue != null ? newGaugeValue : currentValue;
             long newHourlyValue = newGaugeValue != null ? Math.max(newGaugeValue, currentHourlyValue) : currentHourlyValue;
+            long newDailyValue = newGaugeValue != null ? Math.max(newGaugeValue, currentDailyValue) : currentDailyValue;
             result = StatsCalculationResult.builder()
                     .newValue(newValue).valueChanged(newValue != currentValue || !currentCycleValues.containsKey(key))
                     .newHourlyValue(newHourlyValue).hourlyValueChanged(newHourlyValue != currentHourlyValue || !currentHourValues.containsKey(key))
+                    .newDailyValue(newDailyValue).dailyValueChanged(newDailyValue != currentDailyValue || !currentDayValues.containsKey(key))
                     .build();
         }
 
         set(key, result.getNewValue());
         setHourly(key, result.getNewHourlyValue());
+        setDaily(key, result.getNewDailyValue());
         return result;
     }
 
@@ -118,11 +127,24 @@ public abstract class BaseApiUsageState {
         return currentHourValues.getOrDefault(key, 0L);
     }
 
+    public void setDaily(ApiUsageRecordKey key, Long value) {
+        currentDayValues.put(key, value);
+    }
+
+    public long getDaily(ApiUsageRecordKey key) {
+        return currentDayValues.getOrDefault(key, 0L);
+    }
+
     public void setHour(long currentHourTs) {
         this.currentHourTs = currentHourTs;
         currentHourValues.clear();
         lastGaugesByServiceId.clear();
         gaugesReportCycles.clear();
+    }
+
+    public void setDay(long currentDayTs) {
+        this.currentDayTs = currentDayTs;
+        currentDayValues.clear();
     }
 
     public void setCycles(long currentCycleTs, long nextCycleTs) {
@@ -207,6 +229,7 @@ public abstract class BaseApiUsageState {
                 ", currentCycleTs=" + currentCycleTs +
                 ", nextCycleTs=" + nextCycleTs +
                 ", currentHourTs=" + currentHourTs +
+                ", currentDayTs=" + currentDayTs +
                 '}';
     }
 
@@ -217,6 +240,8 @@ public abstract class BaseApiUsageState {
         private final boolean valueChanged;
         private final long newHourlyValue;
         private final boolean hourlyValueChanged;
+        private final long newDailyValue;
+        private final boolean dailyValueChanged;
     }
 
 }

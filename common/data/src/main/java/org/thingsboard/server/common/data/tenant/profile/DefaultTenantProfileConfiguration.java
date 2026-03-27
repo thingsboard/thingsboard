@@ -168,6 +168,12 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
 
     private double warnThreshold;
 
+    // Number of "peak days" used to compute the daily quota.
+    // Daily quota = monthlyQuota * dailyPeakDays / daysInBillingMonth.
+    // Default of 3 means a tenant may use up to 3× the daily fair-share per day.
+    @Builder.Default
+    private int dailyPeakDays = 3;
+
     @Schema(example = "5")
     private long maxCalculatedFieldsPerEntity = 5;
     @Schema(example = "10")
