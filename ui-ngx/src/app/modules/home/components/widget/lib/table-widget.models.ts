@@ -433,7 +433,7 @@ export function noDataMessage(noDataDisplayMessage: string, defaultMessage: stri
   return translate.instant(defaultMessage);
 }
 
-export function constructTableCssString(widgetConfig: WidgetConfig): string {
+export function constructTableCssString(widgetConfig: WidgetConfig, isTabsEnabled = false): string {
   const origColor = widgetConfig.color || 'rgba(0, 0, 0, 0.87)';
   const origBackgroundColor = widgetConfig.backgroundColor || 'rgb(255, 255, 255)';
   const currentEntityColor = 'rgba(221, 221, 221, 0.65)';
@@ -451,13 +451,9 @@ export function constructTableCssString(widgetConfig: WidgetConfig): string {
   const mdDarkDisabled = defaultColor.setAlpha(0.26).toRgbString();
   const mdDarkDisabled2 = defaultColor.setAlpha(0.38).toRgbString();
   const mdDarkDivider = defaultColor.setAlpha(0.12).toRgbString();
-  
-  const cssString = ` {
+
+  let cssString = ` {
     --mat-toolbar-container-text-color: ${mdDark};
-    --mat-tab-active-label-text-color: ${mdDark};
-    --mat-tab-inactive-label-text-color: ${mdDark};
-    --mat-tab-pagination-icon-color: ${mdDark};
-    --mat-tab-pagination-disabled-icon-color: ${mdDarkDisabled2};
     --mat-table-header-headline-color: ${mdDarkSecondary};
     --mat-table-row-item-label-text-color: ${mdDark};
     --mat-icon-color: ${mdDarkSecondary};
@@ -481,7 +477,19 @@ export function constructTableCssString(widgetConfig: WidgetConfig): string {
     --tb-selected-sticky-color: ${selectedStickyColor};
   }
   `;
-  return cssString;
+  if (isTabsEnabled) {
+    cssString += `
+    .mat-mdc-tab-group {
+      --mat-tab-inactive-label-text-color: ${mdDarkSecondary};
+      --mat-tab-pagination-icon-color: ${mdDark};
+      --mat-tab-pagination-disabled-icon-color: ${mdDarkDisabled2};
+      --mat-tab-inactive-ripple-color: ${mdDarkSecondary};
+      --mat-tab-inactive-focus-label-text-color: ${mdDarkSecondary};
+      --mat-tab-inactive-hover-label-text-color: ${mdDarkSecondary};
+    }
+    `
+  }
+  return cssString ;
 }
 
 export function getHeaderTitle(dataKey: DataKey, keySettings: TableWidgetDataKeySettings | undefined, utils: UtilsService) {

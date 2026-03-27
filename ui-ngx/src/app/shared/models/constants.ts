@@ -56,6 +56,12 @@ export const serverErrorCodesTranslations = new Map<number, string>([
   [Constants.serverErrorCode.entitiesLimitExceeded, 'server-error.entities-limit-exceeded'],
 ]);
 
+export const httpStatusMessageMap = new Map<number, string>([
+  [502, 'Server is temporarily unavailable (Bad Gateway)'],
+  [503, 'Server is temporarily unavailable'],
+  [504, 'Server did not respond in time (Gateway Timeout)'],
+]);
+
 export const MediaBreakpoints = {
   xs: 'screen and (max-width: 599px)',
   sm: 'screen and (min-width: 600px) and (max-width: 959px)',

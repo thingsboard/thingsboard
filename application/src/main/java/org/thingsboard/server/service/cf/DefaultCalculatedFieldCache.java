@@ -152,9 +152,9 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
     }
 
     @Override
-    public Stream<CalculatedFieldCtx> getCalculatedFieldCtxsByType(CalculatedFieldType cfType) {
+    public Stream<CalculatedFieldCtx> getCalculatedFieldCtxsByType(TenantId tenantId, CalculatedFieldType cfType) {
         return calculatedFields.values().stream()
-                .filter(cf -> cfType.equals(cf.getType()))
+                .filter(cf -> cf.getTenantId().equals(tenantId) && cfType.equals(cf.getType()))
                 .map(cf -> getCalculatedFieldCtx(cf.getId()));
     }
 
