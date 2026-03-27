@@ -19,6 +19,7 @@ import fs from 'node:fs';
 import { _logger, KafkaJsWinstonLogCreator } from '../config/logger';
 import { JsInvokeMessageProcessor } from '../api/jsInvokeMessageProcessor'
 import { IQueue } from './queue.models';
+import {oauthBearerProvider} from './oAuthBearerProvider';
 import {
     Admin,
     CompressionTypes,
@@ -89,11 +90,25 @@ export class KafkaTemplate implements IQueue {
         kafkaConfig['connectionTimeout'] = this.connectionTimeout;
 
         if (useConfluent) {
-            kafkaConfig['sasl'] = {
-                mechanism: config.get('kafka.confluent.sasl.mechanism') as any,
-                username: config.get('kafka.confluent.username'),
-                password: config.get('kafka.confluent.password')
-            };
+            let saslMechanism = config.get('kafka.confluent.sasl.mechanism') as String
+            if(saslMechanism.toLowerCase() == "oauthbearer"){
+                kafkaConfig['sasl'] = {
+                mechanism: "oauthbearer",
+                oauthBearerProvider: oauthBearerProvider({
+                    clientId: config.get('kafka.confluent.oauth.client_id'),
+                    clientSecret: config.get('kafka.confluent.oauth.client_secret'),
+                    host:  config.get('kafka.confluent.oauth.endpoint_url'),
+                    refreshThresholdMs: config.get('kafka.confluent.oauth.refresh_threshold'),
+                })
+                };
+            }
+            else{
+                kafkaConfig['sasl'] = {
+                    mechanism: config.get('kafka.confluent.sasl.mechanism') as any,
+                    username: config.get('kafka.confluent.username'),
+                    password: config.get('kafka.confluent.password')
+                };
+            }
             kafkaConfig['ssl'] = true;
         }
 
