@@ -16,41 +16,47 @@
 
 -->
 <section [formGroup]="scriptConfigForm">
-  <tb-script-lang formControlName="scriptLang" *ngIf="tbelEnabled"></tb-script-lang>
-  <tb-js-func *ngIf="scriptConfigForm.get('scriptLang').value === scriptLanguage.JS"
-              #jsFuncComponent
-              formControlName="jsScript"
-              functionName="Filter"
-              [functionArgs]="['msg', 'metadata', 'msgType']"
-              helpId="rulenode/filter_node_script_fn"
-              noValidate="true">
-    <button toolbarSuffixButton
-            mat-icon-button
-            matTooltip="{{ testScriptLabel | translate }}"
-            matTooltipPosition="above"
-            class="tb-mat-32"
-            (click)="testScript()">
-      <mat-icon class="material-icons" color="primary">bug_report</mat-icon>
-    </button>
-  </tb-js-func>
-  <tb-js-func *ngIf="scriptConfigForm.get('scriptLang').value === scriptLanguage.TBEL"
-              #tbelFuncComponent
-              formControlName="tbelScript"
-              functionName="Filter"
-              [functionArgs]="['msg', 'metadata', 'msgType']"
-              [disableUndefinedCheck]="true"
-              [scriptLanguage]="scriptLanguage.TBEL"
-              helpId="rulenode/tbel/filter_node_script_fn"
-              noValidate="true">
-    <button toolbarSuffixButton
-            mat-icon-button
-            matTooltip="{{ testScriptLabel | translate }}"
-            matTooltipPosition="above"
-            class="tb-mat-32"
-            (click)="testScript()">
-      <mat-icon class="material-icons" color="primary">bug_report</mat-icon>
-    </button>
-  </tb-js-func>
+  @if (tbelEnabled) {
+    <tb-script-lang formControlName="scriptLang"></tb-script-lang>
+  }
+  @if (scriptConfigForm.get('scriptLang').value === scriptLanguage.JS) {
+    <tb-js-func
+      #jsFuncComponent
+      formControlName="jsScript"
+      functionName="Filter"
+      [functionArgs]="['msg', 'metadata', 'msgType']"
+      helpId="rulenode/filter_node_script_fn"
+      noValidate="true">
+      <button toolbarSuffixButton
+              mat-icon-button
+              matTooltip="{{ testScriptLabel | translate }}"
+              matTooltipPosition="above"
+              class="tb-mat-32"
+              (click)="testScript()">
+        <mat-icon class="material-icons" color="primary">bug_report</mat-icon>
+      </button>
+    </tb-js-func>
+  }
+  @if (scriptConfigForm.get('scriptLang').value === scriptLanguage.TBEL) {
+    <tb-js-func
+      #tbelFuncComponent
+      formControlName="tbelScript"
+      functionName="Filter"
+      [functionArgs]="['msg', 'metadata', 'msgType']"
+      [disableUndefinedCheck]="true"
+      [scriptLanguage]="scriptLanguage.TBEL"
+      helpId="rulenode/tbel/filter_node_script_fn"
+      noValidate="true">
+      <button toolbarSuffixButton
+              mat-icon-button
+              matTooltip="{{ testScriptLabel | translate }}"
+              matTooltipPosition="above"
+              class="tb-mat-32"
+              (click)="testScript()">
+        <mat-icon class="material-icons" color="primary">bug_report</mat-icon>
+      </button>
+    </tb-js-func>
+  }
   <button mat-button mat-raised-button color="primary" (click)="testScript()">
     {{ testScriptLabel | translate }}
   </button>

@@ -25,9 +25,11 @@
   </mat-form-field>
   <mat-form-field class="tb-inline-field tb-position-field" appearance="outline" subscriptSizing="dynamic">
     <mat-select formControlName="position">
-      <mat-option *ngFor="let position of axisPositions" [value]="position">
-        {{ timeSeriesAxisPositionTranslations.get(position) | translate }}
-      </mat-option>
+      @for (position of axisPositions; track position) {
+        <mat-option [value]="position">
+          {{ timeSeriesAxisPositionTranslations.get(position) | translate }}
+        </mat-option>
+      }
     </mat-select>
   </mat-form-field>
   <div class="tb-min-field" formGroupName="min">
@@ -59,14 +61,16 @@
       <mat-icon>settings</mat-icon>
     </button>
     <div class="tb-remove-button">
-      <button *ngIf="modelValue.id !== 'default'"
-              type="button"
-              mat-icon-button
-              (click)="axisRemoved.emit()"
-              matTooltip="{{ 'widgets.time-series-chart.axis.remove-y-axis' | translate }}"
-              matTooltipPosition="above">
-        <mat-icon>delete</mat-icon>
-      </button>
+      @if (modelValue.id !== 'default') {
+        <button
+          type="button"
+          mat-icon-button
+          (click)="axisRemoved.emit()"
+          matTooltip="{{ 'widgets.time-series-chart.axis.remove-y-axis' | translate }}"
+          matTooltipPosition="above">
+          <mat-icon>delete</mat-icon>
+        </button>
+      }
     </div>
   </div>
 </div>

@@ -24,10 +24,10 @@
 </div>
 <div id="gridster-parent"
      class="tb-dashboard-content flex-1" [class.autofill-height]="isAutofillHeight()"
-                [class.center-vertical]="centerVertical"
-                [class.center-horizontal]="centerHorizontal"
-                (mousedown)="onDashboardMouseDown($event)"
-                (tbcontextmenu)="openDashboardContextMenu($event)">
+     [class.center-vertical]="centerVertical"
+     [class.center-horizontal]="centerHorizontal"
+     (mousedown)="onDashboardMouseDown($event)"
+     (tbcontextmenu)="openDashboardContextMenu($event)">
   <div #dashboardMenuTrigger="matMenuTrigger" style="visibility: hidden; position: fixed"
        [style.left]="dashboardMenuPosition.x"
        [style.top]="dashboardMenuPosition.y"
@@ -36,13 +36,19 @@
   <mat-menu #dashboardMenu="matMenu">
     <ng-template matMenuContent let-items="items">
       <div class="tb-dashboard-context-menu-items">
-        <button mat-menu-item *ngFor="let item of items;"
-                [disabled]="!item.enabled"
-                (click)="item.action(dashboardContextMenuEvent)">
-          <span *ngIf="item.shortcut" class="tb-alt-text"> {{ item.shortcut | keyboardShortcut }}</span>
-          <mat-icon *ngIf="item.icon">{{item.icon}}</mat-icon>
-          <span translate>{{item.value}}</span>
-        </button>
+        @for (item of items; track item) {
+          <button mat-menu-item
+                  [disabled]="!item.enabled"
+                  (click)="item.action(dashboardContextMenuEvent)">
+            @if (item.shortcut) {
+              <span class="tb-alt-text"> {{ item.shortcut | keyboardShortcut }}</span>
+            }
+            @if (item.icon) {
+              <mat-icon>{{item.icon}}</mat-icon>
+            }
+            <span translate>{{item.value}}</span>
+          </button>
+        }
       </div>
     </ng-template>
   </mat-menu>
@@ -54,37 +60,45 @@
   <mat-menu #widgetMenu="matMenu">
     <ng-template matMenuContent let-items="items" let-widget="widget">
       <div class="tb-dashboard-context-menu-items">
-        <button mat-menu-item *ngFor="let item of items;"
-                [disabled]="!item.enabled"
-                (click)="item.action(widgetContextMenuEvent, widget)">
-          <span *ngIf="item.shortcut" class="tb-alt-text"> {{ item.shortcut | keyboardShortcut }}</span>
-          <tb-icon matMenuItemIcon *ngIf="item.icon">{{item.icon}}</tb-icon>
-          <span translate>{{item.value}}</span>
-        </button>
+        @for (item of items; track item) {
+          <button mat-menu-item
+                  [disabled]="!item.enabled"
+                  (click)="item.action(widgetContextMenuEvent, widget)">
+            @if (item.shortcut) {
+              <span class="tb-alt-text"> {{ item.shortcut | keyboardShortcut }}</span>
+            }
+            @if (item.icon) {
+              <tb-icon matMenuItemIcon>{{item.icon}}</tb-icon>
+            }
+            <span translate>{{item.value}}</span>
+          </button>
+        }
       </div>
     </ng-template>
   </mat-menu>
   <div [class]="dashboardClass" id="gridster-background">
     <gridster #gridster id="gridster-child" [options]="gridsterOpts">
-      <gridster-item #gridsterItem [item]="widget" [class]="{'tb-noselect': isEdit}" *ngFor="let widget of dashboardWidgets">
-        <tb-widget-container
-          [gridsterItem]="gridsterItem"
-          [widget]="widget"
-          [dashboardWidgets]="dashboardWidgets"
-          [dashboardStyle]="dashboardStyle"
-          [backgroundImage]="backgroundImage"
-          [isEdit]="isEdit"
-          [isEditingWidget]="isEditingWidget"
-          [isPreview]="isPreview"
-          [isMobile]="isMobileSize"
-          [isEditActionEnabled]="isEditActionEnabled"
-          [isExportActionEnabled]="isExportActionEnabled"
-          [isRemoveActionEnabled]="isRemoveActionEnabled"
-          [disableWidgetInteraction]="disableWidgetInteraction"
-          (widgetFullscreenChanged)="onWidgetFullscreenChanged($event)"
-          (widgetComponentAction)="onWidgetComponentAction($event, widget)">
-        </tb-widget-container>
-      </gridster-item>
+      @for (widget of dashboardWidgets; track widget) {
+        <gridster-item #gridsterItem [item]="widget" [class]="{'tb-noselect': isEdit}">
+          <tb-widget-container
+            [gridsterItem]="gridsterItem"
+            [widget]="widget"
+            [dashboardWidgets]="dashboardWidgets"
+            [dashboardStyle]="dashboardStyle"
+            [backgroundImage]="backgroundImage"
+            [isEdit]="isEdit"
+            [isEditingWidget]="isEditingWidget"
+            [isPreview]="isPreview"
+            [isMobile]="isMobileSize"
+            [isEditActionEnabled]="isEditActionEnabled"
+            [isExportActionEnabled]="isExportActionEnabled"
+            [isRemoveActionEnabled]="isRemoveActionEnabled"
+            [disableWidgetInteraction]="disableWidgetInteraction"
+            (widgetFullscreenChanged)="onWidgetFullscreenChanged($event)"
+            (widgetComponentAction)="onWidgetComponentAction($event, widget)">
+          </tb-widget-container>
+        </gridster-item>
+      }
     </gridster>
   </div>
 </div>

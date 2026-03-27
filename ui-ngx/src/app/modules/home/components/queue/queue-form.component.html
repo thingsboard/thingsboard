@@ -19,15 +19,21 @@
   <mat-form-field class="mat-block" appearance="fill">
     <mat-label translate>admin.queue-name</mat-label>
     <input matInput formControlName="name" required>
-    <mat-error *ngIf="queueFormGroup.get('name').hasError('required')">
-      {{ 'queue.name-required' | translate }}
-    </mat-error>
-    <mat-error *ngIf="queueFormGroup.get('name').hasError('unique')">
-      {{ 'queue.name-unique' | translate }}
-    </mat-error>
-    <mat-error *ngIf="queueFormGroup.get('name').hasError('pattern')">
-      {{ 'queue.name-pattern' | translate }}
-    </mat-error>
+    @if (queueFormGroup.get('name').hasError('required')) {
+      <mat-error>
+        {{ 'queue.name-required' | translate }}
+      </mat-error>
+    }
+    @if (queueFormGroup.get('name').hasError('unique')) {
+      <mat-error>
+        {{ 'queue.name-unique' | translate }}
+      </mat-error>
+    }
+    @if (queueFormGroup.get('name').hasError('pattern')) {
+      <mat-error>
+        {{ 'queue.name-pattern' | translate }}
+      </mat-error>
+    }
   </mat-form-field>
   <mat-accordion class="queue-strategy" [multi]="true">
     <mat-expansion-panel [expanded]="true">
@@ -41,30 +47,38 @@
           <div class="flex-1">
             <label class="group-label" translate>queue.submit-strategy</label>
             <mat-radio-group class="flex flex-1 flex-col" formControlName="type" required>
-              <mat-radio-button *ngFor="let strategy of submitStrategies" [value]="strategy">
-                {{ queueSubmitStrategyTypesMap.get(queueSubmitStrategyTypes[strategy]).label | translate }}
-                <mat-icon
-                  class="hint-icon"
-                  matTooltip="{{ queueSubmitStrategyTypesMap.get(queueSubmitStrategyTypes[strategy]).hint | translate }}"
-                  svgIcon="mdi:information-outline">
-                </mat-icon>
-              </mat-radio-button>
+              @for (strategy of submitStrategies; track strategy) {
+                <mat-radio-button [value]="strategy">
+                  {{ queueSubmitStrategyTypesMap.get(queueSubmitStrategyTypes[strategy]).label | translate }}
+                  <mat-icon
+                    class="hint-icon"
+                    matTooltip="{{ queueSubmitStrategyTypesMap.get(queueSubmitStrategyTypes[strategy]).hint | translate }}"
+                    svgIcon="mdi:information-outline">
+                  </mat-icon>
+                </mat-radio-button>
+              }
             </mat-radio-group>
           </div>
-          <div class="flex-1" *ngIf="hideBatchSize">
-            <label class="group-label" translate>queue.grouping-parameter</label>
-            <mat-form-field class="mat-block">
-              <mat-label translate>queue.batch-size</mat-label>
-              <input type="number" matInput formControlName="batchSize" required>
-              <mat-error *ngIf="queueFormGroup.get('submitStrategy.batchSize').hasError('required')">
-                {{ 'queue.batch-size-required' | translate }}
-              </mat-error>
-              <mat-error *ngIf="queueFormGroup.get('submitStrategy.batchSize').hasError('min') &&
-                   !queueFormGroup.get('submitStrategy.batchSize').hasError('required')">
-                {{ 'queue.batch-size-min-value' | translate }}
-              </mat-error>
-            </mat-form-field>
-          </div>
+          @if (hideBatchSize) {
+            <div class="flex-1">
+              <label class="group-label" translate>queue.grouping-parameter</label>
+              <mat-form-field class="mat-block">
+                <mat-label translate>queue.batch-size</mat-label>
+                <input type="number" matInput formControlName="batchSize" required>
+                @if (queueFormGroup.get('submitStrategy.batchSize').hasError('required')) {
+                  <mat-error>
+                    {{ 'queue.batch-size-required' | translate }}
+                  </mat-error>
+                }
+                @if (queueFormGroup.get('submitStrategy.batchSize').hasError('min') &&
+                  !queueFormGroup.get('submitStrategy.batchSize').hasError('required')) {
+                  <mat-error>
+                    {{ 'queue.batch-size-min-value' | translate }}
+                  </mat-error>
+                }
+              </mat-form-field>
+            </div>
+          }
         </div>
       </ng-template>
     </mat-expansion-panel>
@@ -78,8 +92,9 @@
         <div class="flex flex-1 flex-row gap-4 lt-md:flex-col" formGroupName="processingStrategy">
           <div class="flex-1">
             <label class="group-label" translate>queue.processing-strategy</label>
-              <mat-radio-group class="flex flex-1 flex-col" formControlName="type" required>
-                <mat-radio-button *ngFor="let strategy of processingStrategies" [value]="strategy">
+            <mat-radio-group class="flex flex-1 flex-col" formControlName="type" required>
+              @for (strategy of processingStrategies; track strategy) {
+                <mat-radio-button [value]="strategy">
                   {{ queueProcessingStrategyTypesMap.get(queueProcessingStrategyTypes[strategy]).label | translate }}
                   <mat-icon
                     class="hint-icon"
@@ -87,7 +102,8 @@
                     svgIcon="mdi:information-outline">
                   </mat-icon>
                 </mat-radio-button>
-              </mat-radio-group>
+              }
+            </mat-radio-group>
           </div>
           <div class="flex-1">
             <label class="group-label" translate>queue.retries-settings</label>
@@ -95,55 +111,73 @@
               <mat-label translate>queue.retries</mat-label>
               <input type="number" matInput formControlName="retries" required>
               <mat-hint></mat-hint>
-              <mat-error *ngIf="queueFormGroup.get('processingStrategy.retries').hasError('required')">
-                {{ 'queue.retries-required' | translate }}
-              </mat-error>
-              <mat-error *ngIf="queueFormGroup.get('processingStrategy.retries').hasError('min') &&
-                 !queueFormGroup.get('processingStrategy.retries').hasError('required')">
-                {{ 'queue.retries-min-value' | translate }}
-              </mat-error>
+              @if (queueFormGroup.get('processingStrategy.retries').hasError('required')) {
+                <mat-error>
+                  {{ 'queue.retries-required' | translate }}
+                </mat-error>
+              }
+              @if (queueFormGroup.get('processingStrategy.retries').hasError('min') &&
+                !queueFormGroup.get('processingStrategy.retries').hasError('required')) {
+                <mat-error>
+                  {{ 'queue.retries-min-value' | translate }}
+                </mat-error>
+              }
             </mat-form-field>
             <mat-form-field class="mat-block" subscriptSizing="dynamic">
               <mat-label translate>queue.failure-percentage</mat-label>
               <input type="number" matInput formControlName="failurePercentage" required>
               <mat-hint></mat-hint>
-              <mat-error *ngIf="queueFormGroup.get('processingStrategy.failurePercentage').hasError('required')">
-                {{ 'queue.failure-percentage-required' | translate }}
-              </mat-error>
-              <mat-error *ngIf="queueFormGroup.get('processingStrategy.failurePercentage').hasError('min') &&
-                 !queueFormGroup.get('processingStrategy.failurePercentage').hasError('required') &&
-                 !queueFormGroup.get('processingStrategy.failurePercentage').hasError('max')">
-                {{ 'queue.failure-percentage-min-value' | translate }}
-              </mat-error>
-              <mat-error *ngIf="queueFormGroup.get('processingStrategy.failurePercentage').hasError('max') &&
-                 !queueFormGroup.get('processingStrategy.failurePercentage').hasError('required') &&
-                 !queueFormGroup.get('processingStrategy.failurePercentage').hasError('min')">
-                {{ 'queue.failure-percentage-max-value' | translate }}
-              </mat-error>
+              @if (queueFormGroup.get('processingStrategy.failurePercentage').hasError('required')) {
+                <mat-error>
+                  {{ 'queue.failure-percentage-required' | translate }}
+                </mat-error>
+              }
+              @if (queueFormGroup.get('processingStrategy.failurePercentage').hasError('min') &&
+                !queueFormGroup.get('processingStrategy.failurePercentage').hasError('required') &&
+                !queueFormGroup.get('processingStrategy.failurePercentage').hasError('max')) {
+                <mat-error>
+                  {{ 'queue.failure-percentage-min-value' | translate }}
+                </mat-error>
+              }
+              @if (queueFormGroup.get('processingStrategy.failurePercentage').hasError('max') &&
+                !queueFormGroup.get('processingStrategy.failurePercentage').hasError('required') &&
+                !queueFormGroup.get('processingStrategy.failurePercentage').hasError('min')) {
+                <mat-error>
+                  {{ 'queue.failure-percentage-max-value' | translate }}
+                </mat-error>
+              }
             </mat-form-field>
             <mat-form-field class="mat-block" subscriptSizing="dynamic">
               <mat-label translate>queue.pause-between-retries</mat-label>
               <input type="number" matInput formControlName="pauseBetweenRetries" required>
               <mat-hint></mat-hint>
-              <mat-error *ngIf="queueFormGroup.get('processingStrategy.pauseBetweenRetries').hasError('required')">
-                {{ 'queue.pause-between-retries-required' | translate }}
-              </mat-error>
-              <mat-error *ngIf="queueFormGroup.get('processingStrategy.pauseBetweenRetries').hasError('min') &&
-                 !queueFormGroup.get('processingStrategy.pauseBetweenRetries').hasError('required')">
-                {{ 'queue.pause-between-retries-min-value' | translate }}
-              </mat-error>
+              @if (queueFormGroup.get('processingStrategy.pauseBetweenRetries').hasError('required')) {
+                <mat-error>
+                  {{ 'queue.pause-between-retries-required' | translate }}
+                </mat-error>
+              }
+              @if (queueFormGroup.get('processingStrategy.pauseBetweenRetries').hasError('min') &&
+                !queueFormGroup.get('processingStrategy.pauseBetweenRetries').hasError('required')) {
+                <mat-error>
+                  {{ 'queue.pause-between-retries-min-value' | translate }}
+                </mat-error>
+              }
             </mat-form-field>
             <mat-form-field class="mat-block" subscriptSizing="dynamic">
               <mat-label translate>queue.max-pause-between-retries</mat-label>
               <input type="number" matInput formControlName="maxPauseBetweenRetries" required>
               <mat-hint></mat-hint>
-              <mat-error *ngIf="queueFormGroup.get('processingStrategy.maxPauseBetweenRetries').hasError('required')">
-                {{ 'queue.max-pause-between-retries-required' | translate }}
-              </mat-error>
-              <mat-error *ngIf="queueFormGroup.get('processingStrategy.maxPauseBetweenRetries').hasError('min') &&
-                 !queueFormGroup.get('processingStrategy.maxPauseBetweenRetries').hasError('required')">
-                {{ 'queue.max-pause-between-retries-min-value' | translate }}
-              </mat-error>
+              @if (queueFormGroup.get('processingStrategy.maxPauseBetweenRetries').hasError('required')) {
+                <mat-error>
+                  {{ 'queue.max-pause-between-retries-required' | translate }}
+                </mat-error>
+              }
+              @if (queueFormGroup.get('processingStrategy.maxPauseBetweenRetries').hasError('min') &&
+                !queueFormGroup.get('processingStrategy.maxPauseBetweenRetries').hasError('required')) {
+                <mat-error>
+                  {{ 'queue.max-pause-between-retries-min-value' | translate }}
+                </mat-error>
+              }
             </mat-form-field>
           </div>
         </div>
@@ -163,24 +197,32 @@
               <mat-form-field class="mat-block flex-1">
                 <mat-label translate>queue.poll-interval</mat-label>
                 <input type="number" matInput formControlName="pollInterval" required>
-                <mat-error *ngIf="queueFormGroup.get('pollInterval').hasError('required')">
-                  {{ 'queue.poll-interval-required' | translate }}
-                </mat-error>
-                <mat-error *ngIf="queueFormGroup.get('pollInterval').hasError('min') &&
-                 !queueFormGroup.get('pollInterval').hasError('required')">
-                  {{ 'queue.poll-interval-min-value' | translate }}
-                </mat-error>
+                @if (queueFormGroup.get('pollInterval').hasError('required')) {
+                  <mat-error>
+                    {{ 'queue.poll-interval-required' | translate }}
+                  </mat-error>
+                }
+                @if (queueFormGroup.get('pollInterval').hasError('min') &&
+                  !queueFormGroup.get('pollInterval').hasError('required')) {
+                  <mat-error>
+                    {{ 'queue.poll-interval-min-value' | translate }}
+                  </mat-error>
+                }
               </mat-form-field>
               <mat-form-field class="mat-block flex-1">
                 <mat-label translate>queue.partitions</mat-label>
                 <input type="number" matInput formControlName="partitions" required>
-                <mat-error *ngIf="queueFormGroup.get('partitions').hasError('required')">
-                  {{ 'queue.partitions-required' | translate }}
-                </mat-error>
-                <mat-error *ngIf="queueFormGroup.get('partitions').hasError('min') &&
-                 !queueFormGroup.get('partitions').hasError('required')">
-                  {{ 'queue.partitions-min-value' | translate }}
-                </mat-error>
+                @if (queueFormGroup.get('partitions').hasError('required')) {
+                  <mat-error>
+                    {{ 'queue.partitions-required' | translate }}
+                  </mat-error>
+                }
+                @if (queueFormGroup.get('partitions').hasError('min') &&
+                  !queueFormGroup.get('partitions').hasError('required')) {
+                  <mat-error>
+                    {{ 'queue.partitions-min-value' | translate }}
+                  </mat-error>
+                }
               </mat-form-field>
             </div>
           </div>
@@ -193,13 +235,17 @@
               <mat-form-field class="mat-block flex-1">
                 <mat-label translate>queue.processing-timeout</mat-label>
                 <input type="number" matInput formControlName="packProcessingTimeout" required>
-                <mat-error *ngIf="queueFormGroup.get('packProcessingTimeout').hasError('required')">
-                  {{ 'queue.pack-processing-timeout-required' | translate }}
-                </mat-error>
-                <mat-error *ngIf="queueFormGroup.get('packProcessingTimeout').hasError('min') &&
-                 !queueFormGroup.get('packProcessingTimeout').hasError('required')">
-                  {{ 'queue.pack-processing-timeout-min-value' | translate }}
-                </mat-error>
+                @if (queueFormGroup.get('packProcessingTimeout').hasError('required')) {
+                  <mat-error>
+                    {{ 'queue.pack-processing-timeout-required' | translate }}
+                  </mat-error>
+                }
+                @if (queueFormGroup.get('packProcessingTimeout').hasError('min') &&
+                  !queueFormGroup.get('packProcessingTimeout').hasError('required')) {
+                  <mat-error>
+                    {{ 'queue.pack-processing-timeout-min-value' | translate }}
+                  </mat-error>
+                }
               </mat-form-field>
             </div>
           </div>

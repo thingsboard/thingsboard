@@ -21,14 +21,18 @@
                 [class.tb-time-field]="!fieldClass && type === 'time'"
                 [class.with-clear]="allowClear"
                 [subscriptSizing]="subscriptSizing" [appearance]="appearance" [floatLabel]="floatLabel">
-  <mat-label *ngIf="showLabel">{{ dateText }}</mat-label>
+  @if (showLabel) {
+    <mat-label>{{ dateText }}</mat-label>
+  }
   <div matSuffix class="mat-mdc-form-field-icon-suffix flex flex-row">
-    <button *ngIf="allowClear && date && !disabled"
-            type="button"
-            mat-icon-button aria-label="Clear"
-            (click)="clear($event)">
-      <mat-icon>close</mat-icon>
-    </button>
+    @if (allowClear && date && !disabled) {
+      <button
+        type="button"
+        mat-icon-button aria-label="Clear"
+        (click)="clear($event)">
+        <mat-icon>close</mat-icon>
+      </button>
+    }
     <mat-datetimepicker-toggle [for]="datePicker"></mat-datetimepicker-toggle>
   </div>
   <mat-datetimepicker #datePicker [type]="type" openOnFocus="true"></mat-datetimepicker>

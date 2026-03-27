@@ -28,14 +28,15 @@
                     opened
                     position="start">
           <mat-toolbar color="primary" class="tb-dark">
-            <tb-rule-chain-select
-              class="flex-1"
-              *ngIf="!isImport"
-              [ruleChainType]="ruleChainType"
-              [disabled]="isDirtyValue"
-              [(ngModel)]="ruleChain"
-              (ngModelChange)="currentRuleChainIdChanged(ruleChain.id?.id)">
-            </tb-rule-chain-select>
+            @if (!isImport) {
+              <tb-rule-chain-select
+                class="flex-1"
+                [ruleChainType]="ruleChainType"
+                [disabled]="isDirtyValue"
+                [(ngModel)]="ruleChain"
+                (ngModelChange)="currentRuleChainIdChanged(ruleChain.id?.id)">
+              </tb-rule-chain-select>
+            }
           </mat-toolbar>
           <mat-toolbar>
             <div class="mat-toolbar-tools">
@@ -59,28 +60,30 @@
             </div>
           </mat-toolbar>
           <div class="tb-rulechain-library-panel-group">
-            <mat-expansion-panel #ruleNodeTypeExpansionPanels
-                                 class="mat-elevation-z2"
-                                 [expanded]="true" *ngFor="let ruleNodeType of ruleNodeTypesLibraryArray">
-              <mat-expansion-panel-header expandedHeight="48px"
-                                          (mouseenter)="typeHeaderMouseEnter($event, ruleNodeType)"
-                                          (mouseleave)="destroyTooltips()">
-                <mat-panel-title>
-                  <mat-icon>{{ ruleNodeTypeDescriptorsMap.get(ruleNodeType).icon }}</mat-icon>
-                  <div class="tb-panel-title" translate>{{ ruleNodeTypeDescriptorsMap.get(ruleNodeType).name }}</div>
-                </mat-panel-title>
-              </mat-expansion-panel-header>
-              <fc-canvas id="tb-rulchain-{{ruleNodeType}}"
-                         [model]="ruleNodeTypesModel[ruleNodeType].model"
-                         [selectedObjects]="ruleNodeTypesModel[ruleNodeType].selectedObjects"
-                         [automaticResize]="false"
-                         fitModelSizeByDefault
-                         [userCallbacks]="nodeLibCallbacks"
-                         [nodeWidth]="170"
-                         [nodeHeight]="50"
-                         [dropTargetId]="'tb-rulchain-canvas'">
-              </fc-canvas>
-            </mat-expansion-panel>
+            @for (ruleNodeType of ruleNodeTypesLibraryArray; track ruleNodeType) {
+              <mat-expansion-panel #ruleNodeTypeExpansionPanels
+                                   class="mat-elevation-z2"
+                                   [expanded]="true">
+                <mat-expansion-panel-header expandedHeight="48px"
+                                            (mouseenter)="typeHeaderMouseEnter($event, ruleNodeType)"
+                                            (mouseleave)="destroyTooltips()">
+                  <mat-panel-title>
+                    <mat-icon>{{ ruleNodeTypeDescriptorsMap.get(ruleNodeType).icon }}</mat-icon>
+                    <div class="tb-panel-title" translate>{{ ruleNodeTypeDescriptorsMap.get(ruleNodeType).name }}</div>
+                  </mat-panel-title>
+                </mat-expansion-panel-header>
+                <fc-canvas id="tb-rulchain-{{ruleNodeType}}"
+                           [model]="ruleNodeTypesModel[ruleNodeType].model"
+                           [selectedObjects]="ruleNodeTypesModel[ruleNodeType].selectedObjects"
+                           [automaticResize]="false"
+                           fitModelSizeByDefault
+                           [userCallbacks]="nodeLibCallbacks"
+                           [nodeWidth]="170"
+                           [nodeHeight]="50"
+                           [dropTargetId]="'tb-rulchain-canvas'">
+                </fc-canvas>
+              </mat-expansion-panel>
+            }
           </div>
         </mat-drawer>
         <mat-drawer class="tb-details-drawer"
@@ -88,8 +91,9 @@
                     (closed)="onDetailsDrawerClosed()"
                     mode="over"
                     position="end">
-          <tb-details-panel *ngIf="editingRuleNode" class="flex-1"
-                            headerTitle="{{editingRuleNode.name}}"
+          @if (editingRuleNode) {
+            <tb-details-panel class="flex-1"
+                              headerTitle="{{editingRuleNode.name}}"
                             headerSubtitle="{{
                               (ruleNodeTypeDescriptorsMap.get(editingRuleNode.component.type).name | translate)
                               + ' - ' + editingRuleNode.component.name
@@ -100,78 +104,85 @@
                             (toggleDetailsEditMode)="onRevertRuleNodeEdit()"
                             (applyDetails)="saveRuleNode()"
                             [theForm]="tbRuleNode.ruleNodeFormGroup">
-            <div class="details-buttons">
-              <div [tb-help]="helpLinkIdForRuleNodeType()"></div>
-            </div>
-            <mat-tab-group mat-stretch-tabs="false" class="tb-absolute-fill tb-rulenode-details flex-1" [(selectedIndex)]="selectedRuleNodeTabIndex">
-              <mat-tab label="{{ 'rulenode.details' | translate }}">
-                <tb-rule-node #tbRuleNode
-                              [additionalActionConfig]="additionalActionConfig"
-                              [ruleNode]="editingRuleNode"
-                              [ruleChainId]="ruleChain.id?.id"
-                              [ruleChainType]="ruleChainType"
-                              (initRuleNode)="onRuleNodeInit()"
-                              (changeScript)="switchToFirstTab()">
-                </tb-rule-node>
-              </mat-tab>
-              <mat-tab *ngIf="editingRuleNode.ruleNodeId" label="{{ 'rulenode.events' | translate }}" #eventsTab="matTab">
-                <tb-event-table [debugEventTypes]="[debugEventTypes.DEBUG_RULE_NODE]"
-                                [defaultEventType]="debugEventTypes.DEBUG_RULE_NODE"
-                                [active]="eventsTab.isActive"
-                                [tenantId]="ruleChain.tenantId.id"
-                                [entityId]="editingRuleNode.ruleNodeId"
-                                [functionTestButtonLabel]="ruleNodeTestButtonLabel"
-                                (debugEventSelected)="onDebugEventSelected($event)">
-                </tb-event-table>
-              </mat-tab>
-              <mat-tab label="{{ 'rulenode.help' | translate }}">
-                <div class="tb-rule-node-help">
-                  <div id="tb-node-content" class="mat-padding flex flex-col">
-                    <div class="tb-node-title">{{editingRuleNode.component.name}}</div>
-                    <div>&nbsp;</div>
-                    <div class="tb-node-description" [innerHtml]="editingRuleNode.component.configurationDescriptor.nodeDefinition.description | safe: 'html'"></div>
-                    <div>&nbsp;</div>
-                    <div class="tb-node-details" [innerHtml]="editingRuleNode.component.configurationDescriptor.nodeDefinition.details | safe: 'html'"></div>
+              <div class="details-buttons">
+                <div [tb-help]="helpLinkIdForRuleNodeType()"></div>
+              </div>
+              <mat-tab-group mat-stretch-tabs="false" class="tb-absolute-fill tb-rulenode-details flex-1" [(selectedIndex)]="selectedRuleNodeTabIndex">
+                <mat-tab label="{{ 'rulenode.details' | translate }}">
+                  <tb-rule-node #tbRuleNode
+                                [additionalActionConfig]="additionalActionConfig"
+                                [ruleNode]="editingRuleNode"
+                                [ruleChainId]="ruleChain.id?.id"
+                                [ruleChainType]="ruleChainType"
+                                (initRuleNode)="onRuleNodeInit()"
+                                (changeScript)="switchToFirstTab()">
+                  </tb-rule-node>
+                </mat-tab>
+                @if (editingRuleNode.ruleNodeId) {
+                  <mat-tab label="{{ 'rulenode.events' | translate }}" #eventsTab="matTab">
+                    <tb-event-table [debugEventTypes]="[debugEventTypes.DEBUG_RULE_NODE]"
+                                    [defaultEventType]="debugEventTypes.DEBUG_RULE_NODE"
+                                    [active]="eventsTab.isActive"
+                                    [tenantId]="ruleChain.tenantId.id"
+                                    [entityId]="editingRuleNode.ruleNodeId"
+                                    [functionTestButtonLabel]="ruleNodeTestButtonLabel"
+                                    (debugEventSelected)="onDebugEventSelected($event)">
+                    </tb-event-table>
+                  </mat-tab>
+                }
+                <mat-tab label="{{ 'rulenode.help' | translate }}">
+                  <div class="tb-rule-node-help">
+                    <div id="tb-node-content" class="mat-padding flex flex-col">
+                      <div class="tb-node-title">{{editingRuleNode.component.name}}</div>
+                      <div>&nbsp;</div>
+                      <div class="tb-node-description" [innerHtml]="editingRuleNode.component.configurationDescriptor.nodeDefinition.description | safe: 'html'"></div>
+                      <div>&nbsp;</div>
+                      <div class="tb-node-details" [innerHtml]="editingRuleNode.component.configurationDescriptor.nodeDefinition.details | safe: 'html'"></div>
+                    </div>
                   </div>
-                </div>
-              </mat-tab>
-            </mat-tab-group>
-          </tb-details-panel>
-          <tb-details-panel *ngIf="editingRuleNodeLink" class="flex-1"
-                            headerTitle="{{editingRuleNodeLink.label}}"
-                            headerSubtitle="{{'rulenode.link-details' | translate}}"
-                            [isReadOnly]="false"
-                            [isAlwaysEdit]="true"
-                            (closeDetails)="onEditRuleNodeLinkClosed()"
-                            (toggleDetailsEditMode)="onRevertRuleNodeLinkEdit()"
-                            (applyDetails)="saveRuleNodeLink()"
-                            [theForm]="tbRuleNodeLink.ruleNodeLinkFormGroup">
-            <div class="details-buttons">
-              <div [tb-help]="'ruleEngine'"></div>
-            </div>
-            <tb-rule-node-link
-              class="flex-1"
-              #tbRuleNodeLink
-              [(ngModel)]="editingRuleNodeLink"
-              [allowedLabels]="editingRuleNodeLinkLabels"
-              [allowCustom]="editingRuleNodeAllowCustomLabels"
-              [sourceRuleChainId]="editingRuleNodeSourceRuleChainId">
-            </tb-rule-node-link>
-          </tb-details-panel>
-          <tb-details-panel *ngIf="editingNote" class="flex-1"
-                            headerTitle="{{ 'rulechain.note' | translate }}"
-                            headerSubtitle="{{ 'rulechain.note-details' | translate }}"
-                            [isReadOnly]="false"
-                            [isAlwaysEdit]="true"
-                            (closeDetails)="onEditNoteClosed()"
-                            (toggleDetailsEditMode)="onRevertNoteEdit()"
-                            (applyDetails)="saveNote()"
-                            [theForm]="tbRuleNote.noteForm">
-            <tb-rule-note-editor #tbRuleNote
-                          [note]="editingNote"
-                          class="mt-3 flex-1">
-            </tb-rule-note-editor>
-          </tb-details-panel>
+                </mat-tab>
+              </mat-tab-group>
+            </tb-details-panel>
+          }
+          @if (editingRuleNodeLink) {
+            <tb-details-panel class="flex-1"
+                              headerTitle="{{editingRuleNodeLink.label}}"
+                              headerSubtitle="{{'rulenode.link-details' | translate}}"
+                              [isReadOnly]="false"
+                              [isAlwaysEdit]="true"
+                              (closeDetails)="onEditRuleNodeLinkClosed()"
+                              (toggleDetailsEditMode)="onRevertRuleNodeLinkEdit()"
+                              (applyDetails)="saveRuleNodeLink()"
+                              [theForm]="tbRuleNodeLink.ruleNodeLinkFormGroup">
+              <div class="details-buttons">
+                <div [tb-help]="'ruleEngine'"></div>
+              </div>
+              <tb-rule-node-link
+                class="flex-1"
+                #tbRuleNodeLink
+                [(ngModel)]="editingRuleNodeLink"
+                [allowedLabels]="editingRuleNodeLinkLabels"
+                [allowCustom]="editingRuleNodeAllowCustomLabels"
+                [sourceRuleChainId]="editingRuleNodeSourceRuleChainId">
+              </tb-rule-node-link>
+            </tb-details-panel>
+          }
+          @if (editingNote) {
+            <tb-details-panel class="flex-1"
+                              headerTitle="{{ 'rulechain.note' | translate }}"
+                              headerSubtitle="{{ 'rulechain.note-details' | translate }}"
+                              [isReadOnly]="false"
+                              [isAlwaysEdit]="true"
+                              (closeDetails)="onEditNoteClosed()"
+                              (toggleDetailsEditMode)="onRevertNoteEdit()"
+                              (applyDetails)="saveNote()"
+                              [theForm]="tbRuleNote.noteForm">
+              <tb-rule-note-editor #tbRuleNote
+                                   [note]="editingNote"
+                                   class="mt-3 flex-1">
+              </tb-rule-note-editor>
+            </tb-details-panel>
+          }
         </mat-drawer>
         <mat-drawer-content class="tb-rulechain-graph-content">
           <button color="primary"
@@ -219,8 +230,12 @@
               <ng-template matMenuContent let-contextInfo="contextInfo">
                 <div class="tb-rule-chain-context-menu-container" (mouseleave)="onRuleChainContextMenuMouseLeave()">
                   <div class="tb-context-menu-header {{contextInfo.headerClass}}">
-                    <mat-icon *ngIf="!contextInfo.iconUrl">{{contextInfo.icon}}</mat-icon>
-                    <img *ngIf="contextInfo.iconUrl" [src]="contextInfo.iconUrl"/>
+                    @if (!contextInfo.iconUrl) {
+                      <mat-icon>{{contextInfo.icon}}</mat-icon>
+                    }
+                    @if (contextInfo.iconUrl) {
+                      <img [src]="contextInfo.iconUrl"/>
+                    }
                     <div class="flex-1 self-center">
                       <div class="tb-context-menu-title">{{contextInfo.title}}</div>
                       @if (contextInfo.subtitle) {
@@ -228,17 +243,27 @@
                       }
                     </div>
                   </div>
-                  <div *ngFor="let menuItem of contextInfo.menuItems">
-                    <mat-divider *ngIf="menuItem.divider"></mat-divider>
-                    <button *ngIf="!menuItem.divider"
-                            mat-menu-item
-                            [disabled]="!menuItem.enabled"
-                            (click)="menuItem.action(contextMenuEvent)">
-                      <span *ngIf="menuItem.shortcut" class="tb-alt-text"> {{ menuItem.shortcut | keyboardShortcut }}</span>
-                      <mat-icon *ngIf="menuItem.icon">{{menuItem.icon}}</mat-icon>
-                      <span translate>{{menuItem.value}}</span>
-                    </button>
-                  </div>
+                  @for (menuItem of contextInfo.menuItems; track menuItem) {
+                    <div>
+                      @if (menuItem.divider) {
+                        <mat-divider></mat-divider>
+                      }
+                      @if (!menuItem.divider) {
+                        <button
+                          mat-menu-item
+                          [disabled]="!menuItem.enabled"
+                          (click)="menuItem.action(contextMenuEvent)">
+                          @if (menuItem.shortcut) {
+                            <span class="tb-alt-text"> {{ menuItem.shortcut | keyboardShortcut }}</span>
+                          }
+                          @if (menuItem.icon) {
+                            <mat-icon>{{menuItem.icon}}</mat-icon>
+                          }
+                          <span translate>{{menuItem.value}}</span>
+                        </button>
+                      }
+                    </div>
+                  }
                 </div>
               </ng-template>
             </mat-menu>

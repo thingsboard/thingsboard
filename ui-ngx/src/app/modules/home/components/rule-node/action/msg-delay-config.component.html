@@ -20,38 +20,51 @@
     {{ 'rule-node-config.use-metadata-period-in-seconds-patterns' | translate }}
   </mat-checkbox>
   <div class="tb-hint" translate>rule-node-config.use-metadata-period-in-seconds-patterns-hint</div>
-  <mat-form-field *ngIf="msgDelayConfigForm.get('useMetadataPeriodInSecondsPatterns').value !== true; else periodInSecondsPattern"
-                  class="mat-block">
-    <mat-label translate>rule-node-config.period-seconds</mat-label>
-    <input required type="number" min="0" step="1" matInput formControlName="periodInSeconds">
-    <mat-error *ngIf="msgDelayConfigForm.get('periodInSeconds').hasError('required')">
-      {{ 'rule-node-config.period-seconds-required' | translate }}
-    </mat-error>
-    <mat-error *ngIf="msgDelayConfigForm.get('periodInSeconds').hasError('min')">
-      {{ 'rule-node-config.min-period-0-seconds-message' | translate }}
-    </mat-error>
-  </mat-form-field>
-  <ng-template #periodInSecondsPattern>
+  @if (msgDelayConfigForm.get('useMetadataPeriodInSecondsPatterns').value !== true) {
+    <mat-form-field
+      class="mat-block">
+      <mat-label translate>rule-node-config.period-seconds</mat-label>
+      <input required type="number" min="0" step="1" matInput formControlName="periodInSeconds">
+      @if (msgDelayConfigForm.get('periodInSeconds').hasError('required')) {
+        <mat-error>
+          {{ 'rule-node-config.period-seconds-required' | translate }}
+        </mat-error>
+      }
+      @if (msgDelayConfigForm.get('periodInSeconds').hasError('min')) {
+        <mat-error>
+          {{ 'rule-node-config.min-period-0-seconds-message' | translate }}
+        </mat-error>
+      }
+    </mat-form-field>
+  } @else {
     <mat-form-field class="mat-block" subscriptSizing="dynamic">
       <mat-label translate>rule-node-config.period-in-seconds-pattern</mat-label>
       <input required matInput formControlName="periodInSecondsPattern">
-      <mat-error *ngIf="msgDelayConfigForm.get('periodInSecondsPattern').hasError('required')">
-        {{ 'rule-node-config.period-in-seconds-pattern-required' | translate }}
-      </mat-error>
+      @if (msgDelayConfigForm.get('periodInSecondsPattern').hasError('required')) {
+        <mat-error>
+          {{ 'rule-node-config.period-in-seconds-pattern-required' | translate }}
+        </mat-error>
+      }
       <mat-hint translate>rule-node-config.general-pattern-hint</mat-hint>
     </mat-form-field>
-  </ng-template>
+  }
   <mat-form-field class="mat-block">
     <mat-label translate>rule-node-config.max-pending-messages</mat-label>
     <input required type="number" min="1" max="100000" step="1" matInput formControlName="maxPendingMsgs">
-    <mat-error *ngIf="msgDelayConfigForm.get('maxPendingMsgs').hasError('required')">
-      {{ 'rule-node-config.max-pending-messages-required' | translate }}
-    </mat-error>
-    <mat-error *ngIf="msgDelayConfigForm.get('maxPendingMsgs').hasError('min')">
-      {{ 'rule-node-config.max-pending-messages-range' | translate }}
-    </mat-error>
-    <mat-error *ngIf="msgDelayConfigForm.get('maxPendingMsgs').hasError('max')">
-      {{ 'rule-node-config.max-pending-messages-range' | translate }}
-    </mat-error>
+    @if (msgDelayConfigForm.get('maxPendingMsgs').hasError('required')) {
+      <mat-error>
+        {{ 'rule-node-config.max-pending-messages-required' | translate }}
+      </mat-error>
+    }
+    @if (msgDelayConfigForm.get('maxPendingMsgs').hasError('min')) {
+      <mat-error>
+        {{ 'rule-node-config.max-pending-messages-range' | translate }}
+      </mat-error>
+    }
+    @if (msgDelayConfigForm.get('maxPendingMsgs').hasError('max')) {
+      <mat-error>
+        {{ 'rule-node-config.max-pending-messages-range' | translate }}
+      </mat-error>
+    }
   </mat-form-field>
 </section>

@@ -76,50 +76,58 @@
           </mat-header-cell>
           <mat-cell *matCellDef="let column">
             <div class="flex flex-row items-stretch justify-end lt-lg:!hidden">
-              <ng-container *ngFor="let actionDescriptor of actionCellButtonAction">
+              @for (actionDescriptor of actionCellButtonAction; track actionDescriptor) {
                 <button mat-icon-button [disabled]="isLoading$ | async"
                         matTooltip="{{ actionDescriptor.displayName }}"
                         matTooltipPosition="above"
                         (click)="onActionButtonClick($event, column, actionDescriptor)">
                   <tb-icon>{{ actionDescriptor.icon }}</tb-icon>
                 </button>
-              </ng-container>
+              }
             </div>
-            <div class="gt-md:!hidden" *ngIf="actionCellButtonAction.length">
-              <button mat-icon-button
-                      (click)="$event.stopPropagation(); ctx.detectChanges();"
-                      [matMenuTriggerFor]="cellActionsMenu">
-                <tb-icon>more_vert</tb-icon>
-              </button>
-              <mat-menu #cellActionsMenu="matMenu" xPosition="before">
-                <ng-container *ngFor="let actionDescriptor of actionCellButtonAction">
-                  <button mat-menu-item *ngIf="actionDescriptor.icon"
-                          [disabled]="(isLoading$ | async)"
-                          (click)="onActionButtonClick($event, column, actionDescriptor)">
-                    <tb-icon matMenuItemIcon>{{actionDescriptor.icon}}</tb-icon>
-                    <span>{{ actionDescriptor.displayName }}</span>
-                  </button>
-                </ng-container>
-              </mat-menu>
-            </div>
+            @if (actionCellButtonAction.length) {
+              <div class="gt-md:!hidden">
+                <button mat-icon-button
+                        (click)="$event.stopPropagation(); ctx.detectChanges();"
+                        [matMenuTriggerFor]="cellActionsMenu">
+                  <tb-icon>more_vert</tb-icon>
+                </button>
+                <mat-menu #cellActionsMenu="matMenu" xPosition="before">
+                  @for (actionDescriptor of actionCellButtonAction; track actionDescriptor) {
+                    @if (actionDescriptor.icon) {
+                      <button mat-menu-item
+                              [disabled]="(isLoading$ | async)"
+                              (click)="onActionButtonClick($event, column, actionDescriptor)">
+                        <tb-icon matMenuItemIcon>{{actionDescriptor.icon}}</tb-icon>
+                        <span>{{ actionDescriptor.displayName }}</span>
+                      </button>
+                    }
+                  }
+                </mat-menu>
+              </div>
+            }
           </mat-cell>
         </ng-container>
         <mat-header-row *matHeaderRowDef="displayedColumns; sticky: enableStickyHeader"></mat-header-row>
         <mat-row *matRowDef="let column; columns: displayedColumns"
-                 [class.!hidden]="persistentDatasource.dataLoading"></mat-row>
+        [class.!hidden]="persistentDatasource.dataLoading"></mat-row>
       </table>
       <span [class.!hidden]="(persistentDatasource.isEmpty() | async) === false || persistentDatasource.dataLoading || !hasData"
-            class="no-data-found flex items-center justify-center">{{ noDataDisplayMessageText }}</span>
+      class="no-data-found flex items-center justify-center">{{ noDataDisplayMessageText }}</span>
       <span [class.!hidden]="!persistentDatasource.dataLoading"
-            class="no-data-found flex items-center justify-center">{{ 'common.loading' | translate }}</span>
-  </div>
-  <mat-divider *ngIf="displayPagination"></mat-divider>
-  <mat-paginator *ngIf="displayPagination"
-                 [length]="persistentDatasource.total() | async"
-                 [pageIndex]="pageLink.page"
-                 [pageSize]="pageLink.pageSize"
-                 [pageSizeOptions]="pageSizeOptions"
-                 [hidePageSize]="hidePageSize"
-                 showFirstLastButtons></mat-paginator>
+      class="no-data-found flex items-center justify-center">{{ 'common.loading' | translate }}</span>
+    </div>
+    @if (displayPagination) {
+      <mat-divider></mat-divider>
+    }
+    @if (displayPagination) {
+      <mat-paginator
+        [length]="persistentDatasource.total() | async"
+        [pageIndex]="pageLink.page"
+        [pageSize]="pageLink.pageSize"
+        [pageSizeOptions]="pageSizeOptions"
+        [hidePageSize]="hidePageSize"
+      showFirstLastButtons></mat-paginator>
+    }
   </div>
 </div>

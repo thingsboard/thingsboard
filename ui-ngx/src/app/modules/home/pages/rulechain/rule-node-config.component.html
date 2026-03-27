@@ -17,12 +17,16 @@
 -->
 <div [formGroup]="ruleNodeConfigFormGroup" class="rule-node-config">
   <ng-container #definedConfigContent></ng-container>
-  <div class="tb-rulenode-directive-error" *ngIf="definedDirectiveError">{{definedDirectiveError}}</div>
-  <tb-json-object-edit *ngIf="!useDefinedDirective()" #jsonObjectEditComponent
-                       class="tb-rule-node-configuration-json"
-                       formControlName="configuration"
-                       [label]="'rulenode.configuration' | translate"
-                       [jsonRequired]="required"
-                       [fillHeight]="true">
-  </tb-json-object-edit>
+  @if (definedDirectiveError) {
+    <div class="tb-rulenode-directive-error">{{definedDirectiveError}}</div>
+  }
+  @if (!useDefinedDirective()) {
+    <tb-json-object-edit #jsonObjectEditComponent
+                         class="tb-rule-node-configuration-json"
+                         formControlName="configuration"
+                         [label]="'rulenode.configuration' | translate"
+                         [jsonRequired]="required"
+                         [fillHeight]="true">
+    </tb-json-object-edit>
+  }
 </div>

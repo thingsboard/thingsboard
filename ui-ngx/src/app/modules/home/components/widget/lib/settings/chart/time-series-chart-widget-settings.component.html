@@ -56,10 +56,11 @@
       </div>
     </div>
   </div>
-  <tb-time-series-chart-states-panel
-      *ngIf="chartType === TimeSeriesChartType.state"
+  @if (chartType === TimeSeriesChartType.state) {
+    <tb-time-series-chart-states-panel
       formControlName="states">
-  </tb-time-series-chart-states-panel>
+    </tb-time-series-chart-states-panel>
+  }
   <tb-time-series-chart-y-axes-panel
     formControlName="yAxes"
     [aliasController]="aliasController"
@@ -70,13 +71,13 @@
     advanced>
   </tb-time-series-chart-y-axes-panel>
   <tb-time-series-chart-thresholds-panel
-      formControlName="thresholds"
-      [aliasController]="aliasController"
-      [dataKeyCallbacks]="dataKeyCallbacks"
-      [datasource]="datasource"
-      [widgetConfig]="widgetConfig?.config"
-      [yAxisIds]="yAxisIds"
-      [supportsUnitConversion]="widgetConfig.typeParameters.supportsUnitConversion">
+    formControlName="thresholds"
+    [aliasController]="aliasController"
+    [dataKeyCallbacks]="dataKeyCallbacks"
+    [datasource]="datasource"
+    [widgetConfig]="widgetConfig?.config"
+    [yAxisIds]="yAxisIds"
+    [supportsUnitConversion]="widgetConfig.typeParameters.supportsUnitConversion">
   </tb-time-series-chart-thresholds-panel>
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widgets.time-series-chart.chart-style</div>
@@ -86,7 +87,7 @@
       </mat-slide-toggle>
     </div>
     <tb-time-series-chart-grid-settings
-        formControlName="grid">
+      formControlName="grid">
     </tb-time-series-chart-grid-settings>
     <div class="tb-form-row">
       <mat-slide-toggle class="mat-slide" formControlName="stack">
@@ -98,15 +99,16 @@
     <div class="tb-form-panel">
       <div class="tb-form-panel-title" translate>widgets.time-series-chart.axis.x-axis</div>
       <tb-time-series-chart-axis-settings
-          formControlName="xAxis"
-          advanced
-          axisType="xAxis">
+        formControlName="xAxis"
+        advanced
+        axisType="xAxis">
       </tb-time-series-chart-axis-settings>
     </div>
-    <tb-time-series-no-aggregation-bar-width-settings
-      *ngIf="chartType === TimeSeriesChartType.default || chartType === TimeSeriesChartType.bar"
-      formControlName="noAggregationBarWidthSettings">
-    </tb-time-series-no-aggregation-bar-width-settings>
+    @if (chartType === TimeSeriesChartType.default || chartType === TimeSeriesChartType.bar) {
+      <tb-time-series-no-aggregation-bar-width-settings
+        formControlName="noAggregationBarWidthSettings">
+      </tb-time-series-no-aggregation-bar-width-settings>
+    }
     <div class="tb-form-panel tb-slide-toggle">
       <mat-expansion-panel class="tb-settings" [expanded]="timeSeriesChartWidgetSettingsForm.get('showLegend').value"
                            [disabled]="!timeSeriesChartWidgetSettingsForm.get('showLegend').value">
@@ -178,9 +180,9 @@
             <div>{{ 'tooltip.trigger' | translate }}</div>
             <mat-chip-listbox class="center-stretch" formControlName="tooltipTrigger">
               <mat-chip-option [selectable]="timeSeriesChartWidgetSettingsForm.get('tooltipTrigger').value !== EChartsTooltipTrigger.point"
-                               [value]="EChartsTooltipTrigger.point">{{ 'tooltip.trigger-point' | translate }}</mat-chip-option>
+              [value]="EChartsTooltipTrigger.point">{{ 'tooltip.trigger-point' | translate }}</mat-chip-option>
               <mat-chip-option [selectable]="timeSeriesChartWidgetSettingsForm.get('tooltipTrigger').value !== EChartsTooltipTrigger.axis"
-                               [value]="EChartsTooltipTrigger.axis">{{ 'tooltip.trigger-axis' | translate }}</mat-chip-option>
+              [value]="EChartsTooltipTrigger.axis">{{ 'tooltip.trigger-axis' | translate }}</mat-chip-option>
             </mat-chip-listbox>
           </div>
           <div class="tb-form-row space-between">
@@ -210,11 +212,11 @@
             </div>
           </div>
           <tb-js-func
-              formControlName="tooltipValueFormatter"
-              [globalVariables]="functionScopeVariables"
-              [functionArgs]="['value', 'latestData']"
-              functionTitle="{{ 'widgets.chart.tooltip-value-format-function' | translate }}"
-              helpId="widget/lib/flot/tooltip_value_format_fn">
+            formControlName="tooltipValueFormatter"
+            [globalVariables]="functionScopeVariables"
+            [functionArgs]="['value', 'latestData']"
+            functionTitle="{{ 'widgets.chart.tooltip-value-format-function' | translate }}"
+            helpId="widget/lib/flot/tooltip_value_format_fn">
           </tb-js-func>
           <div class="tb-form-row column-xs">
             <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="tooltipShowDate">
@@ -222,7 +224,7 @@
             </mat-slide-toggle>
             <div class="flex flex-row items-center justify-start gap-2 gt-xs:flex-1">
               <tb-date-format-select class="flex-1" excludeLastUpdateAgo includeAuto
-                                     formControlName="tooltipDateFormat"></tb-date-format-select>
+              formControlName="tooltipDateFormat"></tb-date-format-select>
               <tb-font-settings formControlName="tooltipDateFont"
                                 [initialPreviewStyle]="{ color: timeSeriesChartWidgetSettingsForm.get('tooltipDateColor').value }"
                                 [previewText]="tooltipDatePreviewFn">

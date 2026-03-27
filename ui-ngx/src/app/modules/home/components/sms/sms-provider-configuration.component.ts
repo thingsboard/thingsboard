@@ -47,7 +47,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 export class SmsProviderConfigurationComponent implements ControlValueAccessor, OnInit {
 
   smsProviderType = SmsProviderType;
-  smsProviderTypes = Object.keys(SmsProviderType);
+  smsProviderTypes = Object.values(SmsProviderType);
   smsProviderTypeTranslations = smsProviderTypeTranslationMap;
 
   smsProviderConfigurationFormGroup: UntypedFormGroup;

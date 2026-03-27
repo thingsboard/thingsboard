@@ -173,9 +173,9 @@ export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, 
     }
   }
 
-  displayEntityTypeFn(entityType?: EntityType | AliasEntityType | null): string | undefined {
-    if (this.additionEntityTypes[entityType]) {
-      return this.additionEntityTypes[entityType];
+  displayEntityTypeFn(entityType?: EntityType | AliasEntityType | string | null): string | undefined {
+    if (this.additionEntityTypes[entityType as EntityType]) {
+      return this.additionEntityTypes[entityType as EntityType];
     } else if (entityType) {
       return this.translate.instant(entityTypeTranslations.get(entityType as EntityType).type);
     } else {

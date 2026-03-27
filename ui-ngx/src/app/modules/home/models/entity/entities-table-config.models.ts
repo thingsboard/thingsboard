@@ -51,6 +51,9 @@ export type HeaderCellStyleFunction<T extends BaseData<HasId>> = (key: string) =
 export type CellStyleFunction<T extends BaseData<HasId>> = (entity: T, key: string) => object;
 export type CopyCellContent<T extends BaseData<HasId>> = (entity: T, key: string, length: number) => object;
 
+export type EntityColumnsType = Array<Partial<EntityTableColumn<BaseData<HasId>> & EntityLinkTableColumn<BaseData<HasId>> & EntityChipsEntityTableColumn<BaseData<HasId>>>>;
+export type EntityColumnType = Partial<EntityTableColumn<BaseData<HasId>> & EntityLinkTableColumn<BaseData<HasId>> & EntityChipsEntityTableColumn<BaseData<HasId>>>;
+
 export enum CellActionDescriptorType { 'DEFAULT', 'COPY_BUTTON'}
 
 export interface CellActionDescriptor<T extends BaseData<HasId>> {

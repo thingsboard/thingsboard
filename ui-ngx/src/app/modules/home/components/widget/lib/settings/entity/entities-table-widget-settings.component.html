@@ -20,14 +20,14 @@
     <div class="tb-form-panel-title" translate>widgets.table.table-header</div>
     <div class="tb-form-row">
       <div class="fixed-title-width">{{ 'widgets.table.entities-table-title' | translate }}</div>
-      <tb-string-pattern-autocomplete class="flex-1" 
-                                        appearance="outline"
-                                        brackets="curly" 
-                                        subscriptSizing="dynamic"
-                                        predefinedValuesButton="true"
-                                        [predefinedValues]="predefinedValues"
-                                        placeholderText="{{ 'widget-config.set' | translate }}"
-                                        formControlName="entitiesTitle"
+      <tb-string-pattern-autocomplete class="flex-1"
+                                      appearance="outline"
+                                      brackets="curly"
+                                      subscriptSizing="dynamic"
+                                      predefinedValuesButton="true"
+                                      [predefinedValues]="predefinedValues"
+                                      placeholderText="{{ 'widget-config.set' | translate }}"
+                                      formControlName="entitiesTitle"
       ></tb-string-pattern-autocomplete>
     </div>
     <div class="tb-form-row">
@@ -104,34 +104,36 @@
         <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
           <input matInput formControlName="pageStepIncrement" type="number" min="1" step="1" required
                  placeholder="{{ 'widget-config.set' | translate }}">
-          <mat-icon matSuffix
-                    matTooltipPosition="above"
-                    matTooltipClass="tb-error-tooltip"
+          @if (entitiesTableWidgetSettingsForm.get('pageStepIncrement').invalid
+            && entitiesTableWidgetSettingsForm.get('pageStepIncrement').touched) {
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
                     [matTooltip]="(entitiesTableWidgetSettingsForm.get('pageStepIncrement').hasError('required')
                                      ? 'widgets.value-source.value-required'
                                      : 'widgets.table.page-step-increment-format-message') | translate"
-                    *ngIf="entitiesTableWidgetSettingsForm.get('pageStepIncrement').invalid
-                    && entitiesTableWidgetSettingsForm.get('pageStepIncrement').touched"
-                    class="tb-error">
-            warning
-          </mat-icon>
+              class="tb-error">
+              warning
+            </mat-icon>
+          }
         </mat-form-field>
         <mat-divider vertical class="xs:hidden"></mat-divider>
         <div class="tb-small-label" translate>widgets.table.page-step-count</div>
         <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
           <input matInput formControlName="pageStepCount" type="number" min="1" max="100" step="1" required
                  placeholder="{{ 'widget-config.set' | translate }}">
-          <mat-icon matSuffix
-                    matTooltipPosition="above"
-                    matTooltipClass="tb-error-tooltip"
+          @if (entitiesTableWidgetSettingsForm.get('pageStepCount').invalid
+            && entitiesTableWidgetSettingsForm.get('pageStepCount').touched) {
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
                     [matTooltip]="(entitiesTableWidgetSettingsForm.get('pageStepCount').hasError('required')
                                      ? 'widgets.value-source.value-required'
                                      : 'widgets.table.page-step-count-format-message') | translate"
-                    *ngIf="entitiesTableWidgetSettingsForm.get('pageStepCount').invalid
-                    && entitiesTableWidgetSettingsForm.get('pageStepCount').touched"
-                    class="tb-error">
-            warning
-          </mat-icon>
+              class="tb-error">
+              warning
+            </mat-icon>
+          }
         </mat-form-field>
       </div>
     </div>
@@ -139,9 +141,11 @@
       <div translate>widgets.table.default-page-size</div>
       <mat-form-field appearance="outline" subscriptSizing="dynamic">
         <mat-select formControlName="defaultPageSize" placeholder="{{ 'widget-config.set' | translate }}">
-          <mat-option *ngFor="let size of pageStepSizeValues" [value]="size">
-            {{ size }}
-          </mat-option>
+          @for (size of pageStepSizeValues; track size) {
+            <mat-option [value]="size">
+              {{ size }}
+            </mat-option>
+          }
         </mat-select>
       </mat-form-field>
     </div>

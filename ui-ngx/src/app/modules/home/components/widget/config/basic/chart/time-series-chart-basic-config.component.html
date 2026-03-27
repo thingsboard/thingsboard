@@ -19,11 +19,11 @@
   <tb-timewindow-config-panel formControlName="timewindowConfig">
   </tb-timewindow-config-panel>
   <tb-datasources
-      [configMode]="basicMode"
-      hideDatasourceLabel
-      hideDataKeys
-      forceSingleDatasource
-      formControlName="datasources">
+    [configMode]="basicMode"
+    hideDatasourceLabel
+    hideDataKeys
+    forceSingleDatasource
+    formControlName="datasources">
   </tb-datasources>
   <div class="tb-form-panel">
     <div class="flex flex-row items-center justify-between">
@@ -36,8 +36,8 @@
         <tb-toggle-option value="comparison">{{ 'widgets.time-series-chart.comparison.comparison' | translate }}</tb-toggle-option>
       </tb-toggle-select>
     </div>
-    <tb-data-keys-panel
-        *ngIf="seriesMode === 'series'"
+    @if (seriesMode === 'series') {
+      <tb-data-keys-panel
         hidePanel
         panelTitle="{{ 'widgets.chart.series' | translate }}"
         addKeyTitle="{{ 'widgets.chart.add-series' | translate }}"
@@ -53,55 +53,60 @@
         [deviceId]="datasource?.deviceId"
         [entityAliasId]="datasource?.entityAliasId"
         formControlName="series">
-    </tb-data-keys-panel>
-    <div *ngIf="seriesMode === 'comparison'" class="tb-form-row no-border no-padding column-xs">
-      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="comparisonEnabled">
-        {{ 'widgets.time-series-chart.comparison.comparison' | translate }}
-      </mat-slide-toggle>
-      <div class="flex flex-1 flex-row items-center justify-start gap-2">
-        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
-          <mat-select formControlName="timeForComparison">
-            <mat-option [value]="'previousInterval'">
-              {{ 'widgets.chart.time-for-comparison-previous-interval' | translate }}
-            </mat-option>
-            <mat-option [value]="'days'">
-              {{ 'widgets.chart.time-for-comparison-days' | translate }}
-            </mat-option>
-            <mat-option [value]="'weeks'">
-              {{ 'widgets.chart.time-for-comparison-weeks' | translate }}
-            </mat-option>
-            <mat-option [value]="'months'">
-              {{ 'widgets.chart.time-for-comparison-months' | translate }}
-            </mat-option>
-            <mat-option [value]="'years'">
-              {{ 'widgets.chart.time-for-comparison-years' | translate }}
-            </mat-option>
-            <mat-option [value]="'customInterval'">
-              {{ 'widgets.chart.time-for-comparison-custom-interval' | translate }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field [class.!hidden]="timeSeriesChartWidgetConfigForm.get('timeForComparison').value !== 'customInterval'"
-                        appearance="outline" class="number flex-lt-md" subscriptSizing="dynamic">
-          <input matInput formControlName="comparisonCustomIntervalValue" type="number" min="0" placeholder="{{ 'widget-config.set' | translate }}">
-        </mat-form-field>
-        <tb-time-series-chart-axis-settings-button
+      </tb-data-keys-panel>
+    }
+    @if (seriesMode === 'comparison') {
+      <div class="tb-form-row no-border no-padding column-xs">
+        <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="comparisonEnabled">
+          {{ 'widgets.time-series-chart.comparison.comparison' | translate }}
+        </mat-slide-toggle>
+        <div class="flex flex-1 flex-row items-center justify-start gap-2">
+          <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+            <mat-select formControlName="timeForComparison">
+              <mat-option [value]="'previousInterval'">
+                {{ 'widgets.chart.time-for-comparison-previous-interval' | translate }}
+              </mat-option>
+              <mat-option [value]="'days'">
+                {{ 'widgets.chart.time-for-comparison-days' | translate }}
+              </mat-option>
+              <mat-option [value]="'weeks'">
+                {{ 'widgets.chart.time-for-comparison-weeks' | translate }}
+              </mat-option>
+              <mat-option [value]="'months'">
+                {{ 'widgets.chart.time-for-comparison-months' | translate }}
+              </mat-option>
+              <mat-option [value]="'years'">
+                {{ 'widgets.chart.time-for-comparison-years' | translate }}
+              </mat-option>
+              <mat-option [value]="'customInterval'">
+                {{ 'widgets.chart.time-for-comparison-custom-interval' | translate }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field [class.!hidden]="timeSeriesChartWidgetConfigForm.get('timeForComparison').value !== 'customInterval'"
+                          appearance="outline" class="number flex-lt-md" subscriptSizing="dynamic">
+            <input matInput formControlName="comparisonCustomIntervalValue" type="number" min="0" placeholder="{{ 'widget-config.set' | translate }}">
+          </mat-form-field>
+          <tb-time-series-chart-axis-settings-button
             axisType="xAxis"
             panelTitle="{{ 'widgets.time-series-chart.axis.comparison-x-axis-settings' | translate }}"
             formControlName="comparisonXAxis">
-        </tb-time-series-chart-axis-settings-button>
+          </tb-time-series-chart-axis-settings-button>
+        </div>
       </div>
-    </div>
-    <tb-comparison-keys-table
-        *ngIf="seriesMode === 'comparison'"
+    }
+    @if (seriesMode === 'comparison') {
+      <tb-comparison-keys-table
         [datasourceType]="datasource?.type"
         formControlName="series">
-    </tb-comparison-keys-table>
+      </tb-comparison-keys-table>
+    }
   </div>
-  <tb-time-series-chart-states-panel
-      *ngIf="chartType === TimeSeriesChartType.state"
+  @if (chartType === TimeSeriesChartType.state) {
+    <tb-time-series-chart-states-panel
       formControlName="states">
-  </tb-time-series-chart-states-panel>
+    </tb-time-series-chart-states-panel>
+  }
   <tb-time-series-chart-y-axes-panel
     [aliasController]="aliasController"
     [dataKeyCallbacks]="callbacks"
@@ -176,7 +181,7 @@
       </mat-slide-toggle>
     </div>
     <tb-time-series-chart-grid-settings
-        formControlName="grid">
+      formControlName="grid">
     </tb-time-series-chart-grid-settings>
     <div class="tb-form-row">
       <mat-slide-toggle class="mat-slide" formControlName="stack">
@@ -193,10 +198,11 @@
       axisType="xAxis">
     </tb-time-series-chart-axis-settings>
   </div>
-  <tb-time-series-no-aggregation-bar-width-settings
-    *ngIf="chartType === TimeSeriesChartType.default || chartType === TimeSeriesChartType.bar"
-    formControlName="noAggregationBarWidthSettings">
-  </tb-time-series-no-aggregation-bar-width-settings>
+  @if (chartType === TimeSeriesChartType.default || chartType === TimeSeriesChartType.bar) {
+    <tb-time-series-no-aggregation-bar-width-settings
+      formControlName="noAggregationBarWidthSettings">
+    </tb-time-series-no-aggregation-bar-width-settings>
+  }
   <div class="tb-form-panel tb-slide-toggle">
     <mat-expansion-panel class="tb-settings" [expanded]="timeSeriesChartWidgetConfigForm.get('showLegend').value"
                          [disabled]="!timeSeriesChartWidgetConfigForm.get('showLegend').value">
@@ -268,9 +274,9 @@
           <div>{{ 'tooltip.trigger' | translate }}</div>
           <mat-chip-listbox class="center-stretch" formControlName="tooltipTrigger">
             <mat-chip-option [selectable]="timeSeriesChartWidgetConfigForm.get('tooltipTrigger').value !== EChartsTooltipTrigger.point"
-                             [value]="EChartsTooltipTrigger.point">{{ 'tooltip.trigger-point' | translate }}</mat-chip-option>
+            [value]="EChartsTooltipTrigger.point">{{ 'tooltip.trigger-point' | translate }}</mat-chip-option>
             <mat-chip-option [selectable]="timeSeriesChartWidgetConfigForm.get('tooltipTrigger').value !== EChartsTooltipTrigger.axis"
-                             [value]="EChartsTooltipTrigger.axis">{{ 'tooltip.trigger-axis' | translate }}</mat-chip-option>
+            [value]="EChartsTooltipTrigger.axis">{{ 'tooltip.trigger-axis' | translate }}</mat-chip-option>
           </mat-chip-listbox>
         </div>
         <div class="tb-form-row space-between">
@@ -305,7 +311,7 @@
           </mat-slide-toggle>
           <div class="flex flex-row items-center justify-start gap-2 gt-xs:flex-1">
             <tb-date-format-select class="flex-1" excludeLastUpdateAgo includeAuto
-                                   formControlName="tooltipDateFormat"></tb-date-format-select>
+            formControlName="tooltipDateFormat"></tb-date-format-select>
             <tb-font-settings formControlName="tooltipDateFont"
                               [initialPreviewStyle]="{ color: timeSeriesChartWidgetConfigForm.get('tooltipDateColor').value }"
                               [previewText]="tooltipDatePreviewFn">
@@ -325,7 +331,7 @@
         </div>
         <div class="tb-form-row">
           <mat-slide-toggle class="mat-slide" formControlName="tooltipHideZeroValues">
-              {{ 'tooltip.hide-zero-tooltip-values' | translate }}
+            {{ 'tooltip.hide-zero-tooltip-values' | translate }}
           </mat-slide-toggle>
         </div>
         <div class="tb-form-row">
@@ -380,6 +386,6 @@
     </div>
   </div>
   <tb-widget-actions-panel
-      formControlName="actions">
+    formControlName="actions">
   </tb-widget-actions-panel>
 </ng-container>

@@ -19,24 +19,30 @@
   <mat-form-field class="mat-block" subscriptSizing="dynamic">
     <mat-label translate>rule-node-config.topic</mat-label>
     <input required matInput formControlName="topicPattern">
-    <mat-error *ngIf="azureIotHubConfigForm.get('topicPattern').hasError('required')">
-      {{ 'rule-node-config.topic-required' | translate }}
-    </mat-error>
+    @if (azureIotHubConfigForm.get('topicPattern').hasError('required')) {
+      <mat-error>
+        {{ 'rule-node-config.topic-required' | translate }}
+      </mat-error>
+    }
     <mat-hint translate>rule-node-config.general-pattern-hint</mat-hint>
   </mat-form-field>
   <mat-form-field class="mat-block">
     <mat-label translate>rule-node-config.hostname</mat-label>
     <input required matInput formControlName="host">
-    <mat-error *ngIf="azureIotHubConfigForm.get('host').hasError('required')">
-      {{ 'rule-node-config.hostname-required' | translate }}
-    </mat-error>
+    @if (azureIotHubConfigForm.get('host').hasError('required')) {
+      <mat-error>
+        {{ 'rule-node-config.hostname-required' | translate }}
+      </mat-error>
+    }
   </mat-form-field>
   <mat-form-field class="mat-block">
     <mat-label translate>rule-node-config.device-id</mat-label>
     <input required matInput formControlName="clientId" autocomplete="new-clientId">
-    <mat-error *ngIf="azureIotHubConfigForm.get('clientId').hasError('required')">
-      {{ 'rule-node-config.device-id-required' | translate }}
-    </mat-error>
+    @if (azureIotHubConfigForm.get('clientId').hasError('required')) {
+      <mat-error>
+        {{ 'rule-node-config.device-id-required' | translate }}
+      </mat-error>
+    }
   </mat-form-field>
   <tb-mqtt-version-select formControlName="protocolVersion" subscriptSizing="fixed"
                           [excludeVersions]="[MqttVersion.MQTT_3_1, MqttVersion.MQTT_5]">
@@ -53,71 +59,78 @@
         <mat-form-field class="mat-block">
           <mat-label translate>rule-node-config.credentials-type</mat-label>
           <mat-select formControlName="type" required>
-            <mat-option *ngFor="let credentialsType of allAzureIotHubCredentialsTypes" [value]="credentialsType">
-              {{ azureIotHubCredentialsTypeTranslationsMap.get(credentialsType) | translate }}
-            </mat-option>
+            @for (credentialsType of allAzureIotHubCredentialsTypes; track credentialsType) {
+              <mat-option [value]="credentialsType">
+                {{ azureIotHubCredentialsTypeTranslationsMap.get(credentialsType) | translate }}
+              </mat-option>
+            }
           </mat-select>
-          <mat-error *ngIf="azureIotHubConfigForm.get('credentials.type').hasError('required')">
-            {{ 'rule-node-config.credentials-type-required' | translate }}
-          </mat-error>
+          @if (azureIotHubConfigForm.get('credentials.type').hasError('required')) {
+            <mat-error>
+              {{ 'rule-node-config.credentials-type-required' | translate }}
+            </mat-error>
+          }
         </mat-form-field>
-        <section class="flex flex-col" [ngSwitch]="azureIotHubConfigForm.get('credentials.type').value">
-          <ng-template ngSwitchCase="anonymous">
-          </ng-template>
-          <ng-template ngSwitchCase="sas">
-            <mat-form-field class="mat-block">
-              <mat-label translate>rule-node-config.sas-key</mat-label>
-              <input type="password" required matInput formControlName="sasKey" autocomplete="new-password">
-              <tb-toggle-password matSuffix></tb-toggle-password>
-              <mat-error *ngIf="azureIotHubConfigForm.get('credentials.sasKey').hasError('required')">
-                {{ 'rule-node-config.sas-key-required' | translate }}
-              </mat-error>
-            </mat-form-field>
-            <tb-file-input formControlName="caCert"
-                           inputId="caCertSelect"
-                           [existingFileName]="azureIotHubConfigForm.get('credentials.caCertFileName').value"
-                           (fileNameChanged)="azureIotHubConfigForm.get('credentials.caCertFileName').setValue($event)"
-                           label="{{'rule-node-config.azure-ca-cert' | translate}}"
-                           noFileText="rule-node-config.no-file"
-                           dropLabel="{{'rule-node-config.drop-file' | translate}}">
-            </tb-file-input>
-          </ng-template>
-          <ng-template ngSwitchCase="cert.PEM">
-            <tb-file-input formControlName="caCert"
-                           inputId="caCertSelect"
-                           [existingFileName]="azureIotHubConfigForm.get('credentials.caCertFileName').value"
-                           (fileNameChanged)="azureIotHubConfigForm.get('credentials.caCertFileName').setValue($event)"
-                           label="{{'rule-node-config.azure-ca-cert' | translate}}"
-                           noFileText="rule-node-config.no-file"
-                           dropLabel="{{'rule-node-config.drop-file' | translate}}">
-            </tb-file-input>
-            <tb-file-input formControlName="cert"
-                           inputId="CertSelect"
-                           [existingFileName]="azureIotHubConfigForm.get('credentials.certFileName').value"
-                           (fileNameChanged)="azureIotHubConfigForm.get('credentials.certFileName').setValue($event)"
-                           required
-                           requiredAsError
-                           label="{{'rule-node-config.cert' | translate}}"
-                           noFileText="rule-node-config.no-file"
-                           dropLabel="{{'rule-node-config.drop-file' | translate}}">
-            </tb-file-input>
-            <tb-file-input style="padding-bottom: 8px;"
-                           formControlName="privateKey"
-                           inputId="privateKeySelect"
-                           [existingFileName]="azureIotHubConfigForm.get('credentials.privateKeyFileName').value"
-                           (fileNameChanged)="azureIotHubConfigForm.get('credentials.privateKeyFileName').setValue($event)"
-                           required
-                           requiredAsError
-                           label="{{'rule-node-config.private-key' | translate}}"
-                           noFileText="rule-node-config.no-file"
-                           dropLabel="{{'rule-node-config.drop-file' | translate}}">
-            </tb-file-input>
-            <mat-form-field class="mat-block">
-              <mat-label translate>rule-node-config.private-key-password</mat-label>
-              <input type="password" matInput formControlName="password" autocomplete="new-password">
-              <tb-toggle-password matSuffix></tb-toggle-password>
-            </mat-form-field>
-          </ng-template>
+        <section class="flex flex-col">
+          @switch (azureIotHubConfigForm.get('credentials.type').value) {
+            @case ('anonymous') {}
+            @case ('sas') {
+              <mat-form-field class="mat-block">
+                <mat-label translate>rule-node-config.sas-key</mat-label>
+                <input type="password" required matInput formControlName="sasKey" autocomplete="new-password">
+                <tb-toggle-password matSuffix></tb-toggle-password>
+                @if (azureIotHubConfigForm.get('credentials.sasKey').hasError('required')) {
+                  <mat-error>
+                    {{ 'rule-node-config.sas-key-required' | translate }}
+                  </mat-error>
+                }
+              </mat-form-field>
+              <tb-file-input formControlName="caCert"
+                             inputId="caCertSelect"
+                             [existingFileName]="azureIotHubConfigForm.get('credentials.caCertFileName').value"
+                             (fileNameChanged)="azureIotHubConfigForm.get('credentials.caCertFileName').setValue($event)"
+                             label="{{'rule-node-config.azure-ca-cert' | translate}}"
+                             noFileText="rule-node-config.no-file"
+                             dropLabel="{{'rule-node-config.drop-file' | translate}}">
+              </tb-file-input>
+            }
+            @case ('cert.PEM') {
+              <tb-file-input formControlName="caCert"
+                             inputId="caCertSelect"
+                             [existingFileName]="azureIotHubConfigForm.get('credentials.caCertFileName').value"
+                             (fileNameChanged)="azureIotHubConfigForm.get('credentials.caCertFileName').setValue($event)"
+                             label="{{'rule-node-config.azure-ca-cert' | translate}}"
+                             noFileText="rule-node-config.no-file"
+                             dropLabel="{{'rule-node-config.drop-file' | translate}}">
+              </tb-file-input>
+              <tb-file-input formControlName="cert"
+                             inputId="CertSelect"
+                             [existingFileName]="azureIotHubConfigForm.get('credentials.certFileName').value"
+                             (fileNameChanged)="azureIotHubConfigForm.get('credentials.certFileName').setValue($event)"
+                             required
+                             requiredAsError
+                             label="{{'rule-node-config.cert' | translate}}"
+                             noFileText="rule-node-config.no-file"
+                             dropLabel="{{'rule-node-config.drop-file' | translate}}">
+              </tb-file-input>
+              <tb-file-input style="padding-bottom: 8px;"
+                             formControlName="privateKey"
+                             inputId="privateKeySelect"
+                             [existingFileName]="azureIotHubConfigForm.get('credentials.privateKeyFileName').value"
+                             (fileNameChanged)="azureIotHubConfigForm.get('credentials.privateKeyFileName').setValue($event)"
+                             required
+                             requiredAsError
+                             label="{{'rule-node-config.private-key' | translate}}"
+                             noFileText="rule-node-config.no-file"
+                             dropLabel="{{'rule-node-config.drop-file' | translate}}">
+              </tb-file-input>
+              <mat-form-field class="mat-block">
+                <mat-label translate>rule-node-config.private-key-password</mat-label>
+                <input type="password" matInput formControlName="password" autocomplete="new-password">
+                <tb-toggle-password matSuffix></tb-toggle-password>
+              </mat-form-field>
+            }
+          }
         </section>
       </section>
     </mat-expansion-panel>

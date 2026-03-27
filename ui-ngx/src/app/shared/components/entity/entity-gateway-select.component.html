@@ -23,34 +23,43 @@
          (keydown)="gatewayNameEnter($event)"
          (keypress)="gatewayNameEnter($event)"
          [matAutocomplete]="gatewayAutocomplete"
-  >
-  <button *ngIf="selectDeviceGatewayFormGroup.get('gateway').value && !isStateForm" (click)="clear()"
-          type="button" matSuffix mat-icon-button aria-label="Clear">
-    <mat-icon class="material-icons">close</mat-icon>
-  </button>
+         >
+  @if (selectDeviceGatewayFormGroup.get('gateway').value && !isStateForm) {
+    <button (click)="clear()"
+            type="button" matSuffix mat-icon-button aria-label="Clear">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  }
   <mat-autocomplete class="tb-autocomplete"
                     #gatewayAutocomplete="matAutocomplete"
                     [displayWith]="displayGatewayFn">
-    <mat-option *ngFor="let gateway of filteredGateways | async" [value]="gateway">
-      <span [innerHTML]="gateway.name | highlight:searchText"></span>
-    </mat-option>
-    <mat-option *ngIf="!(filteredGateways | async)?.length" [value]="null" class="tb-not-found">
-      <div class="tb-not-found-content" (click)="$event.stopPropagation()">
-        <div *ngIf="!textIsNotEmpty(searchText); else searchNotEmpty">
-          <span translate>gateway.no-gateway-found</span>
-        </div>
-        <ng-template #searchNotEmpty>
-          <span translate [translateParams]="{item: searchText | truncate:true:6:&apos;...&apos;}">
-            gateway.no-gateway-matching
+    @for (gateway of filteredGateways | async; track gateway) {
+      <mat-option [value]="gateway">
+        <span [innerHTML]="gateway.name | highlight:searchText"></span>
+      </mat-option>
+    }
+    @if (!(filteredGateways | async)?.length) {
+      <mat-option [value]="null" class="tb-not-found">
+        <div class="tb-not-found-content" (click)="$event.stopPropagation()">
+          @if (!textIsNotEmpty(searchText)) {
+            <div>
+              <span translate>gateway.no-gateway-found</span>
+            </div>
+          } @else {
+            <span translate [translateParams]="{item: searchText | truncate:true:6:&apos;...&apos;}">
+              gateway.no-gateway-matching
+            </span>
+          }
+          <span>
+            <a translate (click)="createGateway($event, searchText)">gateway.create-new-gateway</a>
           </span>
-        </ng-template>
-        <span>
-          <a translate (click)="createGateway($event, searchText)">gateway.create-new-gateway</a>
-        </span>
-      </div>
-    </mat-option>
+        </div>
+      </mat-option>
+    }
   </mat-autocomplete>
-  <mat-error *ngIf="selectDeviceGatewayFormGroup.get('gateway').hasError('required')">
-    {{ 'gateway.gateway-name-required' | translate }}
-  </mat-error>
+  @if (selectDeviceGatewayFormGroup.get('gateway').hasError('required')) {
+    <mat-error>
+      {{ 'gateway.gateway-name-required' | translate }}
+    </mat-error>
+  }
 </mat-form-field>

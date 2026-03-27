@@ -17,7 +17,9 @@
 -->
 <mat-form-field [appearance]="appearance" [class]="additionalClass"
                 [subscriptSizing]="subscriptSizing" style="width: 100%">
-  <mat-label *ngIf="label">{{label}}</mat-label>
+  @if (label) {
+    <mat-label>{{label}}</mat-label>
+  }
   <pre #highlightTextRef class="highlighted-text" [class.disabled]="disabled" [innerHTML]="highlightedHtml"></pre>
   <input matInput #inputRef
          class="input-field-highlight"
@@ -34,17 +36,21 @@
       <tb-icon matButtonIcon="">mdi:variable</tb-icon>
     </button>
   }
-  <mat-icon *ngIf="selectionFormControl.hasError('required') && !showInlineError"
-            matIconSuffix
-            [matTooltip]="errorText"
-            matTooltipPosition="above"
-            [matTooltipClass]="tooltipClass"
-            class="material-icons tb-suffix-show-always tb-error">
-    warning
-  </mat-icon>
-  <mat-error *ngIf="selectionFormControl.hasError('required') && showInlineError">
-    {{errorText}}
-  </mat-error>
+  @if (selectionFormControl.hasError('required') && !showInlineError) {
+    <mat-icon
+      matIconSuffix
+      [matTooltip]="errorText"
+      matTooltipPosition="above"
+      [matTooltipClass]="tooltipClass"
+      class="material-icons tb-suffix-show-always tb-error">
+      warning
+    </mat-icon>
+  }
+  @if (selectionFormControl.hasError('required') && showInlineError) {
+    <mat-error>
+      {{errorText}}
+    </mat-error>
+  }
 </mat-form-field>
 <ng-template #autocompleteTemplate>
   <div role="listbox" class="mat-mdc-autocomplete-panel mat-mdc-autocomplete-visible tb-autocomplete tb-sting-pattern-autocomplete-panel">

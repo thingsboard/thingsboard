@@ -29,20 +29,25 @@
   <div class="body">
     @for (keyValControl of keyValsFormArray().controls; track $index) {
       <div class="row flex flex-row items-center justify-start gap-2"
-           formArrayName="keyVals">
+           formArrayName="keyVals"
+           >
         <mat-form-field class="cell mat-block flex-1">
           <input [formControl]="keyValControl.get('key')" matInput required
                  placeholder="{{ keyText | translate }}"/>
-          <mat-error *ngIf="keyValControl.get('key').hasError('required')">
-            {{ keyRequiredText | translate }}
-          </mat-error>
+          @if (keyValControl.get('key').hasError('required')) {
+            <mat-error>
+              {{ keyRequiredText | translate }}
+            </mat-error>
+          }
         </mat-form-field>
         <mat-form-field class="cell mat-block flex-1">
           <input [formControl]="keyValControl.get('value')" matInput required
                  placeholder="{{ valText | translate }}"/>
-          <mat-error *ngIf="keyValControl.get('value').hasError('required')">
-            {{ valRequiredText | translate }}
-          </mat-error>
+          @if (keyValControl.get('value').hasError('required')) {
+            <mat-error>
+              {{ valRequiredText | translate }}
+            </mat-error>
+          }
         </mat-form-field>
         <button mat-icon-button color="primary"
                 [class.!hidden]="disabled"

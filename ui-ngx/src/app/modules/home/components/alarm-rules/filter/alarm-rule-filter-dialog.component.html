@@ -53,14 +53,18 @@
                 <mat-icon class="tb-mat-18" svgIcon="{{ entityKeyValueTypes.get(filterFormGroup.get('valueType').value)?.icon }}"></mat-icon>
                 <span>{{ entityKeyValueTypes.get(filterFormGroup.get('valueType').value)?.name | translate }}</span>
               </mat-select-trigger>
-              <mat-option *ngFor="let valueType of entityKeyValueTypesKeys" [value]="valueType">
-                <mat-icon class="tb-mat-18" svgIcon="{{ entityKeyValueTypes.get(entityKeyValueTypeEnum[valueType]).icon }}"></mat-icon>
-                <span>{{ entityKeyValueTypes.get(entityKeyValueTypeEnum[valueType]).name | translate }}</span>
-              </mat-option>
+              @for (valueType of entityKeyValueTypesKeys; track valueType) {
+                <mat-option [value]="valueType">
+                  <mat-icon class="tb-mat-18" svgIcon="{{ entityKeyValueTypes.get(entityKeyValueTypeEnum[valueType]).icon }}"></mat-icon>
+                  <span>{{ entityKeyValueTypes.get(entityKeyValueTypeEnum[valueType]).name | translate }}</span>
+                </mat-option>
+              }
             </mat-select>
-            <mat-error *ngIf="filterFormGroup.get('valueType').hasError('required')">
-              {{ 'filter.value-type-required' | translate }}
-            </mat-error>
+            @if (filterFormGroup.get('valueType').hasError('required')) {
+              <mat-error>
+                {{ 'filter.value-type-required' | translate }}
+              </mat-error>
+            }
           </mat-form-field>
         </div>
       </section>

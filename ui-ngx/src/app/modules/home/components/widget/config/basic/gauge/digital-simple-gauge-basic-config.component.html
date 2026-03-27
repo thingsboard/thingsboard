@@ -16,10 +16,12 @@
 
 -->
 <ng-container [formGroup]="simpleGaugeWidgetConfigForm">
-  <tb-timewindow-config-panel *ngIf="displayTimewindowConfig"
-                              [onlyHistoryTimewindow]="onlyHistoryTimewindow()"
-                              formControlName="timewindowConfig">
-  </tb-timewindow-config-panel>
+  @if (displayTimewindowConfig) {
+    <tb-timewindow-config-panel
+      [onlyHistoryTimewindow]="onlyHistoryTimewindow()"
+      formControlName="timewindowConfig">
+    </tb-timewindow-config-panel>
+  }
   <tb-datasources
     [configMode]="basicMode"
     hideDataKeyLabel
@@ -35,21 +37,25 @@
                                     breakpoints: {
                                       'lt-md': 2
                                     }}"
-                           label="{{ 'widgets.gauge.simple-gauge-type' | translate }}"
-                           formControlName="gaugeType">
-      <tb-image-cards-select-option *ngFor="let layout of digitalGaugeLayouts"
-                                    [value]="layout"
-                                    [image]="digitalGaugeLayoutImageMap.get(layout)">
-        {{ digitalGaugeLayoutTranslationMap.get(layout) | translate }}
-      </tb-image-cards-select-option>
+      label="{{ 'widgets.gauge.simple-gauge-type' | translate }}"
+      formControlName="gaugeType">
+      @for (layout of digitalGaugeLayouts; track layout) {
+        <tb-image-cards-select-option
+          [value]="layout"
+          [image]="digitalGaugeLayoutImageMap.get(layout)">
+          {{ digitalGaugeLayoutTranslationMap.get(layout) | translate }}
+        </tb-image-cards-select-option>
+      }
     </tb-image-cards-select>
 
-    <div class="tb-form-row space-between" *ngIf="simpleGaugeWidgetConfigForm.get('gaugeType').value === digitalGaugeType.donut">
-      <div class="fixed-title-width">{{ 'widgets.gauge.donut-start-angle' | translate }}</div>
-      <mat-form-field appearance="outline" subscriptSizing="dynamic">
-        <input matInput formControlName="donutStartAngle" type="number" min="0" max="360" step="1" placeholder="{{ 'widget-config.set' | translate }}">
-      </mat-form-field>
-    </div>
+    @if (simpleGaugeWidgetConfigForm.get('gaugeType').value === digitalGaugeType.donut) {
+      <div class="tb-form-row space-between">
+        <div class="fixed-title-width">{{ 'widgets.gauge.donut-start-angle' | translate }}</div>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <input matInput formControlName="donutStartAngle" type="number" min="0" max="360" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+      </div>
+    }
 
     <div class="tb-form-row space-between column-xs">
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showMinMax">
@@ -76,14 +82,15 @@
         <div class="tb-small-label" translate>widgets.gauge.max-value-short</div>
         <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
           <input matInput formControlName="maxValue" type="number" step="1" placeholder="{{ 'widget-config.set' | translate }}">
-          <mat-icon matSuffix
-                    matTooltipPosition="above"
-                    matTooltipClass="tb-error-tooltip"
-                    [matTooltip]="'widgets.gauge.min-max-validation-text' | translate"
-                    *ngIf="simpleGaugeWidgetConfigForm.get('maxValue').hasError('maxValue')"
-                    class="material-icons tb-suffix-show-always tb-error">
-            warning
-          </mat-icon>
+          @if (simpleGaugeWidgetConfigForm.get('maxValue').hasError('maxValue')) {
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="'widgets.gauge.min-max-validation-text' | translate"
+                      class="material-icons tb-suffix-show-always tb-error">
+              warning
+            </mat-icon>
+          }
         </mat-form-field>
       </div>
     </div>

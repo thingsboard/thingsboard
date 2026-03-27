@@ -19,32 +19,38 @@
   <mat-form-field class="mat-block">
     <mat-label translate>admin.sms-provider-type</mat-label>
     <mat-select formControlName="type" [required]="required">
-      <mat-option *ngFor="let type of smsProviderTypes" [value]="type">
-        {{smsProviderTypeTranslations.get(type) | translate}}
-      </mat-option>
+      @for (type of smsProviderTypes; track type) {
+        <mat-option [value]="type">
+          {{smsProviderTypeTranslations.get(type) | translate}}
+        </mat-option>
+      }
     </mat-select>
-    <mat-error *ngIf="smsProviderConfigurationFormGroup.get('type').hasError('required')">
-      {{ 'admin.sms-provider-type-required' | translate }}
-    </mat-error>
+    @if (smsProviderConfigurationFormGroup.get('type').hasError('required')) {
+      <mat-error>
+        {{ 'admin.sms-provider-type-required' | translate }}
+      </mat-error>
+    }
   </mat-form-field>
-  <div [ngSwitch]="smsProviderConfigurationFormGroup.get('type').value">
-    <ng-template [ngSwitchCase]="smsProviderType.AWS_SNS">
-      <tb-aws-sns-provider-configuration
-        [required]="required"
-        formControlName="configuration">
-      </tb-aws-sns-provider-configuration>
-    </ng-template>
-    <ng-template [ngSwitchCase]="smsProviderType.TWILIO">
-      <tb-twilio-sms-provider-configuration
-        [required]="required"
-        formControlName="configuration">
-      </tb-twilio-sms-provider-configuration>
-    </ng-template>
-    <ng-template [ngSwitchCase]="smsProviderType.SMPP">
-      <tb-smpp-sms-provider-configuration
-        [required]="required"
-        formControlName="configuration">
-      </tb-smpp-sms-provider-configuration>
-    </ng-template>
+  <div>
+    @switch (smsProviderConfigurationFormGroup.get('type').value) {
+      @case (smsProviderType.AWS_SNS) {
+        <tb-aws-sns-provider-configuration
+          [required]="required"
+          formControlName="configuration">
+        </tb-aws-sns-provider-configuration>
+      }
+      @case (smsProviderType.TWILIO) {
+        <tb-twilio-sms-provider-configuration
+          [required]="required"
+          formControlName="configuration">
+        </tb-twilio-sms-provider-configuration>
+      }
+      @case (smsProviderType.SMPP) {
+        <tb-smpp-sms-provider-configuration
+          [required]="required"
+          formControlName="configuration">
+        </tb-smpp-sms-provider-configuration>
+      }
+    }
   </div>
 </div>

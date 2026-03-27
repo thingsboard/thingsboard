@@ -51,12 +51,16 @@
       <mat-form-field class="mat-block">
         <mat-label translate>tenant.title</mat-label>
         <input matInput formControlName="title" required/>
-        <mat-error *ngIf="entityForm.get('title').hasError('required')">
-          {{ 'tenant.title-required' | translate }}
-        </mat-error>
-        <mat-error *ngIf="entityForm.get('title').hasError('maxlength')">
-          {{ 'tenant.title-max-length' | translate }}
-        </mat-error>
+        @if (entityForm.get('title').hasError('required')) {
+          <mat-error>
+            {{ 'tenant.title-required' | translate }}
+          </mat-error>
+        }
+        @if (entityForm.get('title').hasError('maxlength')) {
+          <mat-error>
+            {{ 'tenant.title-max-length' | translate }}
+          </mat-error>
+        }
       </mat-form-field>
       <tb-tenant-profile-autocomplete
         [selectDefaultProfile]="isAdd"
@@ -70,21 +74,23 @@
           <mat-label translate>tenant.description</mat-label>
           <textarea matInput formControlName="description" rows="2"></textarea>
         </mat-form-field>
-        <section class="tb-default-dashboard flex flex-1 flex-col" *ngIf="entity?.id">
-          <section class="flex flex-1 flex-col gt-sm:flex-row">
-            <tb-dashboard-autocomplete
-              class="flex-1"
-              label="{{ 'dashboard.home-dashboard' | translate }}"
-              formControlName="homeDashboardId"
-              [dashboardsScope]="'tenant'"
-              [tenantId]="entity?.id.id"
-              [selectFirstDashboard]="false"
-            ></tb-dashboard-autocomplete>
-            <mat-checkbox class="flex-1" formControlName="homeDashboardHideToolbar">
-              {{ 'dashboard.home-dashboard-hide-toolbar' | translate }}
-            </mat-checkbox>
+        @if (entity?.id) {
+          <section class="tb-default-dashboard flex flex-1 flex-col">
+            <section class="flex flex-1 flex-col gt-sm:flex-row">
+              <tb-dashboard-autocomplete
+                class="flex-1"
+                label="{{ 'dashboard.home-dashboard' | translate }}"
+                formControlName="homeDashboardId"
+                [dashboardsScope]="'tenant'"
+                [tenantId]="entity?.id.id"
+                [selectFirstDashboard]="false"
+              ></tb-dashboard-autocomplete>
+              <mat-checkbox class="flex-1" formControlName="homeDashboardHideToolbar">
+                {{ 'dashboard.home-dashboard-hide-toolbar' | translate }}
+              </mat-checkbox>
+            </section>
           </section>
-        </section>
+        }
       </div>
       <tb-contact [parentForm]="entityForm" [isEdit]="isEdit"></tb-contact>
     </fieldset>

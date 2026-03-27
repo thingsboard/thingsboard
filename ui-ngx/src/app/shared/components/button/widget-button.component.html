@@ -33,8 +33,14 @@
         [class.tb-disabled-state]="disabled"
         [style.border-radius]="computedBorderRadius"
         [style.pointer-events]="disableEvents ? 'none' : ''">
-  <div #widgetButtonContent class="tb-widget-button-content" *ngIf="appearance.showIcon || appearance.showLabel">
-    <tb-icon matButtonIcon *ngIf="appearance.showIcon" [style]="iconStyle">{{ appearance.icon }}</tb-icon>
-    <span *ngIf="appearance.showLabel" class="tb-widget-button-label">{{ label$ | async }}</span>
-  </div>
+  @if (appearance.showIcon || appearance.showLabel) {
+    <div #widgetButtonContent class="tb-widget-button-content">
+      @if (appearance.showIcon) {
+        <tb-icon matButtonIcon [style]="iconStyle">{{ appearance.icon }}</tb-icon>
+      }
+      @if (appearance.showLabel) {
+        <span class="tb-widget-button-label">{{ label$ | async }}</span>
+      }
+    </div>
+  }
 </button>

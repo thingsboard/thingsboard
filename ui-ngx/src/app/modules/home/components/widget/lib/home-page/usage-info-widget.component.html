@@ -16,7 +16,7 @@
 
 -->
 <div class="tb-card-content flex flex-col gap-2">
-  <ng-container *ngIf="hasUsageInfoAccess; else noDataAvailable">
+  @if (hasUsageInfoAccess) {
     <div class="tb-card-header">
       <a class="tb-title-link" routerLink="/usage">{{ 'widgets.usage-info.title' | translate }}</a>
       <tb-toggle-header #usageToggle [value]="toggleValue" name="usageToggle">
@@ -24,8 +24,8 @@
         <tb-toggle-option value="apiCalls">{{ 'widgets.usage-info.api-calls' | translate }}</tb-toggle-option>
       </tb-toggle-header>
     </div>
-    <ng-container [ngSwitch]="usageToggle.value">
-      <ng-template [ngSwitchCase]="'entities'">
+    @switch (usageToggle.value) {
+      @case ('entities') {
         <div class="tb-usage-list flex-1">
           <div class="tb-usage-items">
             <div class="tb-usage-item" [class.critical]="entityItemCritical.devices" translate>device.devices</div>
@@ -51,8 +51,8 @@
             </div>
           </div>
         </div>
-      </ng-template>
-      <ng-template [ngSwitchCase]="'apiCalls'">
+      }
+      @case ('apiCalls') {
         <div class="tb-usage-list flex-1">
           <div class="tb-usage-items">
             <div class="tb-usage-item" [class.critical]="apiCallItemCritical.transportMessages" translate>api-usage.transport-messages</div>
@@ -78,10 +78,9 @@
             </div>
           </div>
         </div>
-      </ng-template>
-    </ng-container>
-  </ng-container>
-  <ng-template #noDataAvailable>
+      }
+    }
+  } @else {
     <div class="tb-card-header">
       <div class="tb-title">{{ 'widgets.usage-info.title' | translate }}</div>
     </div>
@@ -89,5 +88,5 @@
       <div class="tb-no-data-bg"></div>
       <div class="tb-no-data-text" translate>widgets.home.no-data-available</div>
     </div>
-  </ng-template>
+  }
 </div>

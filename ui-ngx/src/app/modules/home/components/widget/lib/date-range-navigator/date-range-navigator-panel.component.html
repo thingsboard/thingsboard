@@ -16,20 +16,24 @@
 
 -->
 <div class="mat-content mat-padding flex flex-col">
-  <mat-form-field *ngIf="settings.showTemplate" class="mat-block">
-    <input readonly [ngModel]="model.chosenLabel" matInput type="text">
-  </mat-form-field>
+  @if (settings.showTemplate) {
+    <mat-form-field class="mat-block">
+      <input readonly [ngModel]="model.chosenLabel" matInput type="text">
+    </mat-form-field>
+  }
   <ngx-daterangepicker-material [startDate]="model.startDate"
                                 [endDate]="model.endDate"
                                 [locale]="locale"
                                 [singleDatePicker]="settings.onePanel"
                                 [autoApply]="true" (choosedDate)="choosedDate($event)">
   </ngx-daterangepicker-material>
-  <div class="tb-panel-actions flex flex-row" *ngIf="!settings.autoConfirm">
-    <span class="flex-1"></span>
-    <button mat-button mat-raised-button color="primary"
-            type="button" (click)="apply()">
-      {{ 'action.ok' | translate }}
-    </button>
-  </div>
+  @if (!settings.autoConfirm) {
+    <div class="tb-panel-actions flex flex-row">
+      <span class="flex-1"></span>
+      <button mat-button mat-raised-button color="primary"
+              type="button" (click)="apply()">
+        {{ 'action.ok' | translate }}
+      </button>
+    </div>
+  }
 </div>

@@ -184,30 +184,36 @@ class ScadaSymbolTagInputPanelComponent extends ScadaSymbolPanelComponent implem
 
 @Component({
     template: `<div class="tb-scada-symbol-tooltip-panel">
-    <span>{{ symbolElement?.element?.type }}{{ symbolElement?.invisible ? ' (' + ('scada.hidden' | translate) + ')' : '' }}:</span>
-    <span><b>{{ symbolElement?.tag }}</b></span>
-    <button *ngIf="!symbolElement?.readonly" type="button" mat-icon-button class="tb-mat-20"
-            matTooltip="{{ 'scada.tag.update-tag' | translate }}"
-            matTooltipPosition="above"
-            (click)="onUpdateTag()">
-      <mat-icon>edit</mat-icon>
-    </button>
-    <button *ngIf="displayTagSettings"
-            #tagSettingsButton type="button"
-            mat-icon-button class="tb-mat-20"
-            matTooltip="{{ 'scada.tag.tag-settings' | translate }}"
-            matTooltipPosition="above">
-      <mat-icon>settings</mat-icon>
-    </button>
-    <button *ngIf="!symbolElement?.readonly"
-            #removeTagButton
-            type="button"
-            mat-icon-button class="tb-mat-20"
-            matTooltip="{{ 'scada.tag.remove-tag' | translate }}"
-            matTooltipPosition="above">
-      <mat-icon>delete</mat-icon>
-    </button>
-  </div>`,
+      <span>{{ symbolElement?.element?.type }}{{ symbolElement?.invisible ? ' (' + ('scada.hidden' | translate) + ')' : '' }}:</span>
+      <span><b>{{ symbolElement?.tag }}</b></span>
+      @if (!symbolElement?.readonly) {
+        <button type="button" mat-icon-button class="tb-mat-20"
+          matTooltip="{{ 'scada.tag.update-tag' | translate }}"
+          matTooltipPosition="above"
+          (click)="onUpdateTag()">
+          <mat-icon>edit</mat-icon>
+        </button>
+      }
+      @if (displayTagSettings) {
+        <button
+          #tagSettingsButton type="button"
+          mat-icon-button class="tb-mat-20"
+          matTooltip="{{ 'scada.tag.tag-settings' | translate }}"
+          matTooltipPosition="above">
+          <mat-icon>settings</mat-icon>
+        </button>
+      }
+      @if (!symbolElement?.readonly) {
+        <button
+          #removeTagButton
+          type="button"
+          mat-icon-button class="tb-mat-20"
+          matTooltip="{{ 'scada.tag.remove-tag' | translate }}"
+          matTooltipPosition="above">
+          <mat-icon>delete</mat-icon>
+        </button>
+      }
+    </div>`,
     styleUrls: ['./scada-symbol-tooltip.component.scss'],
     encapsulation: ViewEncapsulation.None,
     standalone: false
@@ -360,37 +366,49 @@ class ScadaSymbolRemoveTagConfirmComponent extends ScadaSymbolPanelComponent imp
 
 @Component({
     template: `<div class="tooltipster-content tb-scada-symbol-tooltip-panel column flex-start">
-    <div *ngIf="!symbolElement?.readonly || hasStateRenderFunction" translate>scada.state-render-function</div>
-    <button *ngIf="hasStateRenderFunction"
-            mat-stroked-button
-            color="primary"
-            (click)="editStateRenderFunction()">
-      <mat-icon>{{ symbolElement?.readonly ? 'visibility' : 'edit' }}</mat-icon>
-      <span>{{ (symbolElement?.readonly ? 'action.view' : 'action.edit') | translate }}</span>
-    </button>
-    <button *ngIf="!hasStateRenderFunction && !symbolElement?.readonly"
-            mat-stroked-button
-            color="primary"
-            (click)="editStateRenderFunction()">
-      <mat-icon>add</mat-icon>
-      <span translate>action.add</span>
-    </button>
-    <div *ngIf="!symbolElement?.readonly || hasClickAction" translate>scada.tag.on-click-action</div>
-    <button *ngIf="hasClickAction"
-            mat-stroked-button
-            color="primary"
-            (click)="editClickAction()">
-      <mat-icon>{{ symbolElement?.readonly ? 'visibility' : 'edit' }}</mat-icon>
-      <span>{{ (symbolElement?.readonly ? 'action.view' : 'action.edit') | translate }}</span>
-    </button>
-    <button *ngIf="!hasClickAction && !symbolElement?.readonly"
-            mat-stroked-button
-            color="primary"
-            (click)="editClickAction()">
-      <mat-icon>add</mat-icon>
-      <span translate>action.add</span>
-    </button>
-  </div>`,
+      @if (!symbolElement?.readonly || hasStateRenderFunction) {
+        <div translate>scada.state-render-function</div>
+      }
+      @if (hasStateRenderFunction) {
+        <button
+          mat-stroked-button
+          color="primary"
+          (click)="editStateRenderFunction()">
+          <mat-icon>{{ symbolElement?.readonly ? 'visibility' : 'edit' }}</mat-icon>
+          <span>{{ (symbolElement?.readonly ? 'action.view' : 'action.edit') | translate }}</span>
+        </button>
+      }
+      @if (!hasStateRenderFunction && !symbolElement?.readonly) {
+        <button
+          mat-stroked-button
+          color="primary"
+          (click)="editStateRenderFunction()">
+          <mat-icon>add</mat-icon>
+          <span translate>action.add</span>
+        </button>
+      }
+      @if (!symbolElement?.readonly || hasClickAction) {
+        <div translate>scada.tag.on-click-action</div>
+      }
+      @if (hasClickAction) {
+        <button
+          mat-stroked-button
+          color="primary"
+          (click)="editClickAction()">
+          <mat-icon>{{ symbolElement?.readonly ? 'visibility' : 'edit' }}</mat-icon>
+          <span>{{ (symbolElement?.readonly ? 'action.view' : 'action.edit') | translate }}</span>
+        </button>
+      }
+      @if (!hasClickAction && !symbolElement?.readonly) {
+        <button
+          mat-stroked-button
+          color="primary"
+          (click)="editClickAction()">
+          <mat-icon>add</mat-icon>
+          <span translate>action.add</span>
+        </button>
+      }
+    </div>`,
     styleUrls: ['./scada-symbol-tooltip.component.scss'],
     encapsulation: ViewEncapsulation.None,
     standalone: false

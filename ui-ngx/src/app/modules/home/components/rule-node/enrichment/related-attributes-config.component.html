@@ -23,9 +23,11 @@
   <div class="tb-form-panel stroked">
     <div class="tb-form-panel-title" translate>rule-node-config.data-to-fetch</div>
     <tb-toggle-select formControlName="dataToFetch" appearance="fill">
-      <tb-toggle-option *ngFor="let data of fetchToData" [value]="data.value">
-        {{ data.name }}
-      </tb-toggle-option>
+      @for (data of fetchToData; track data) {
+        <tb-toggle-option [value]="data.value">
+          {{ data.name }}
+        </tb-toggle-option>
+      }
     </tb-toggle-select>
     <tb-kv-map-config
       [hidden]="relatedAttributesConfigForm.get('dataToFetch').value === DataToFetch.FIELDS"

@@ -18,7 +18,7 @@
 <h2 mat-dialog-title translate>{{configuration.title}}</h2>
 <div mat-dialog-content class="tb-resources-in-use-content" [class]="{multiple: data.multiple}">
   <div [innerHTML]="configuration.message | safe: 'html'"></div>
-  <ng-container *ngIf="data.multiple; else singleResourceReferences">
+  @if (data.multiple) {
     <div class="table-container">
       <table mat-table [dataSource]="dataSource">
         <ng-container matColumnDef="select" sticky>
@@ -35,20 +35,21 @@
             </mat-checkbox>
           </mat-cell>
         </ng-container>
-        <ng-container matColumnDef="preview" *ngIf="displayPreview">
-          <mat-header-cell *matHeaderCellDef style="width: 50px; min-width: 50px;"></mat-header-cell>
-          <mat-cell *matCellDef="let image">
-            <img class="tb-image-preview" [src]="image.link | image: {preview: true} | async" alt="{{ image.title }}">
-          </mat-cell>
-        </ng-container>
+        @if (displayPreview) {
+          <ng-container matColumnDef="preview">
+            <mat-header-cell *matHeaderCellDef style="width: 50px; min-width: 50px;"></mat-header-cell>
+            <mat-cell *matCellDef="let image">
+              <img class="tb-image-preview" [src]="image.link | image: {preview: true} | async" alt="{{ image.title }}">
+            </mat-cell>
+          </ng-container>
+        }
         <ng-container matColumnDef="title">
           <mat-header-cell *matHeaderCellDef style="width: 100%;">
-            <ng-container *ngIf="dataSource.selection.isEmpty(); else selectedResources">
+            @if (dataSource.selection.isEmpty()) {
               {{ 'resource.title' | translate }}
-            </ng-container>
-            <ng-template #selectedResources>
+            } @else {
               {{ translate.get(configuration.selectedText, {count: dataSource.selection.selected.length}) | async }}
-            </ng-template>
+            }
           </mat-header-cell>
           <mat-cell *matCellDef="let resource">
             {{ resource.title }}
@@ -60,23 +61,22 @@
             <button #showReferencesButton
                     mat-stroked-button
                     color="primary"
-                    (click)="toggleShowReferences($event, resource, showReferencesButton)">{{ 'image.references' | translate }}</button>
+            (click)="toggleShowReferences($event, resource, showReferencesButton)">{{ 'image.references' | translate }}</button>
           </mat-cell>
         </ng-container>
         <mat-header-row class="mat-row-select" *matHeaderRowDef="configuration.columns; sticky: true"></mat-header-row>
         <mat-row class="mat-row-select"
                  [class.mat-selected]="dataSource.selection.isSelected(resource)"
-                 *matRowDef="let resource; columns: configuration.columns;"></mat-row>
+        *matRowDef="let resource; columns: configuration.columns;"></mat-row>
       </table>
     </div>
-  </ng-container>
+  } @else {
+    <tb-image-references [references]="references"></tb-image-references>
+    <div [innerHTML]="configuration.deleteText | translate | safe: 'html'"></div>
+  }
 </div>
 <div mat-dialog-actions class="flex items-center justify-end">
   <button mat-button color="primary" (click)="cancel()">{{'action.cancel' | translate}}</button>
   <button mat-raised-button color="accent" (click)="delete()" [disabled]="data.multiple && dataSource.selection.isEmpty()"
-          cdkFocusInitial>{{ (data.multiple ? 'action.delete-selected' : 'action.delete-anyway') | translate}}</button>
+  cdkFocusInitial>{{ (data.multiple ? 'action.delete-selected' : 'action.delete-anyway') | translate}}</button>
 </div>
-<ng-template #singleResourceReferences>
-  <tb-image-references [references]="references"></tb-image-references>
-  <div [innerHTML]="configuration.deleteText | translate | safe: 'html'"></div>
-</ng-template>

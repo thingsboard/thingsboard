@@ -19,27 +19,35 @@
   <mat-form-field class="mat-block" subscriptSizing="dynamic">
     <mat-label translate>admin.number-from</mat-label>
     <input type="tel" required [pattern]="phoneNumberPatternTwilio" matInput formControlName="numberFrom">
-    <mat-error *ngIf="twilioSmsProviderConfigurationFormGroup.get('numberFrom').hasError('required')">
-      {{ 'admin.number-from-required' | translate }}
-    </mat-error>
-    <mat-error *ngIf="twilioSmsProviderConfigurationFormGroup.get('numberFrom').hasError('pattern')">
-      {{ 'admin.phone-number-pattern-twilio' | translate }}
-    </mat-error>
+    @if (twilioSmsProviderConfigurationFormGroup.get('numberFrom').hasError('required')) {
+      <mat-error>
+        {{ 'admin.number-from-required' | translate }}
+      </mat-error>
+    }
+    @if (twilioSmsProviderConfigurationFormGroup.get('numberFrom').hasError('pattern')) {
+      <mat-error>
+        {{ 'admin.phone-number-pattern-twilio' | translate }}
+      </mat-error>
+    }
     <mat-hint innerHTML="{{ 'admin.phone-number-hint-twilio' | translate }}"></mat-hint>
   </mat-form-field>
   <mat-form-field class="mat-block">
     <mat-label translate>admin.twilio-account-sid</mat-label>
     <input required matInput formControlName="accountSid">
-    <mat-error *ngIf="twilioSmsProviderConfigurationFormGroup.get('accountSid').hasError('required')">
-      {{ 'admin.twilio-account-sid-required' | translate }}
-    </mat-error>
+    @if (twilioSmsProviderConfigurationFormGroup.get('accountSid').hasError('required')) {
+      <mat-error>
+        {{ 'admin.twilio-account-sid-required' | translate }}
+      </mat-error>
+    }
   </mat-form-field>
   <mat-form-field class="mat-block">
     <mat-label translate>admin.twilio-account-token</mat-label>
     <input required type="password" autocomplete="new-password" matInput formControlName="accountToken">
     <tb-toggle-password matSuffix></tb-toggle-password>
-    <mat-error *ngIf="twilioSmsProviderConfigurationFormGroup.get('accountToken').hasError('required')">
-      {{ 'admin.twilio-account-token-required' | translate }}
-    </mat-error>
+    @if (twilioSmsProviderConfigurationFormGroup.get('accountToken').hasError('required')) {
+      <mat-error>
+        {{ 'admin.twilio-account-token-required' | translate }}
+      </mat-error>
+    }
   </mat-form-field>
 </form>

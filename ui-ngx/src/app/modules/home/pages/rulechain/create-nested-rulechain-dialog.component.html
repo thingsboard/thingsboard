@@ -25,20 +25,26 @@
       <mat-icon class="material-icons">close</mat-icon>
     </button>
   </mat-toolbar>
-  <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
-  </mat-progress-bar>
+  @if (isLoading$ | async) {
+    <mat-progress-bar color="warn" mode="indeterminate">
+    </mat-progress-bar>
+  }
   <div mat-dialog-content>
     <form [formGroup]="createNestedRuleChainFormGroup" class="mat-padding">
       <fieldset [disabled]="isLoading$ | async">
         <mat-form-field class="mat-block flex-1">
           <mat-label translate>rulechain.name</mat-label>
           <input matInput formControlName="name" required>
-          <mat-error *ngIf="createNestedRuleChainFormGroup.get('name').hasError('required')">
-            {{ 'rulechain.name-required' | translate }}
-          </mat-error>
-          <mat-error *ngIf="createNestedRuleChainFormGroup.get('name').hasError('maxlength')">
-            {{ 'rulechain.name-max-length' | translate }}
-          </mat-error>
+          @if (createNestedRuleChainFormGroup.get('name').hasError('required')) {
+            <mat-error>
+              {{ 'rulechain.name-required' | translate }}
+            </mat-error>
+          }
+          @if (createNestedRuleChainFormGroup.get('name').hasError('maxlength')) {
+            <mat-error>
+              {{ 'rulechain.name-max-length' | translate }}
+            </mat-error>
+          }
         </mat-form-field>
         <div formGroupName="additionalInfo">
           <mat-form-field class="mat-block">

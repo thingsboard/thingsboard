@@ -16,8 +16,8 @@
 
 -->
 <section class="tb-widget-settings flex flex-col" [formGroup]="gatewayEventsWidgetSettingsForm">
-  <tb-string-pattern-autocomplete class="mat-block flex-1" 
-                                  brackets="curly" 
+  <tb-string-pattern-autocomplete class="mat-block flex-1"
+                                  brackets="curly"
                                   subscriptSizing="fixed"
                                   predefinedValuesButton="true"
                                   label="{{ 'widgets.gateway.events-title' | translate }}"
@@ -28,13 +28,14 @@
   <mat-form-field class="mat-block flex-1" floatLabel="always">
     <mat-label translate>widgets.gateway.events-filter</mat-label>
     <mat-chip-grid #chipList formControlName="eventsReg">
-      <mat-chip-row
-        *ngFor="let eventFilter of gatewayEventsWidgetSettingsForm.get('eventsReg').value"
-        [removable]="true"
-        (removed)="removeEventFilter(eventFilter)">
-        {{eventFilter}}
-        <mat-icon matChipRemove>cancel</mat-icon>
-      </mat-chip-row>
+      @for (eventFilter of gatewayEventsWidgetSettingsForm.get('eventsReg').value; track eventFilter) {
+        <mat-chip-row
+          [removable]="true"
+          (removed)="removeEventFilter(eventFilter)">
+          {{eventFilter}}
+          <mat-icon matChipRemove>cancel</mat-icon>
+        </mat-chip-row>
+      }
       <input
         placeholder="{{ 'widgets.gateway.event-key-contains' | translate }}"
         [matChipInputSeparatorKeyCodes]="separatorKeysCodes"

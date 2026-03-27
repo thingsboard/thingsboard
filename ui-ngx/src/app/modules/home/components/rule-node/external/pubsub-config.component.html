@@ -19,16 +19,20 @@
   <mat-form-field class="mat-block">
     <mat-label translate>rule-node-config.gcp-project-id</mat-label>
     <input required matInput formControlName="projectId">
-    <mat-error *ngIf="pubSubConfigForm.get('projectId').hasError('required')">
-      {{ 'rule-node-config.gcp-project-id-required' | translate }}
-    </mat-error>
+    @if (pubSubConfigForm.get('projectId').hasError('required')) {
+      <mat-error>
+        {{ 'rule-node-config.gcp-project-id-required' | translate }}
+      </mat-error>
+    }
   </mat-form-field>
   <mat-form-field class="mat-block">
     <mat-label translate>rule-node-config.pubsub-topic-name</mat-label>
     <input required matInput formControlName="topicName">
-    <mat-error *ngIf="pubSubConfigForm.get('topicName').hasError('required')">
-      {{ 'rule-node-config.pubsub-topic-name-required' | translate }}
-    </mat-error>
+    @if (pubSubConfigForm.get('topicName').hasError('required')) {
+      <mat-error>
+        {{ 'rule-node-config.pubsub-topic-name-required' | translate }}
+      </mat-error>
+    }
   </mat-form-field>
   <tb-file-input style="padding-bottom: 24px;"
                  formControlName="serviceAccountKey"

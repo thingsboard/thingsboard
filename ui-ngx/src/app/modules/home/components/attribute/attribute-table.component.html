@@ -21,34 +21,40 @@
       <div class="mat-toolbar-tools">
         <div class="title-container flex flex-row items-center justify-start xs:flex-col xs:items-start xs:justify-center">
           <span class="tb-entity-table-title">{{telemetryTypeTranslationsMap.get(attributeScope) | translate}}</span>
-          <mat-form-field class="mat-block tb-attribute-scope" *ngIf="!disableAttributeScopeSelection && !attributeScopeSelectionReadonly">
-            <mat-label translate>attribute.attributes-scope</mat-label>
-            <mat-select [disabled]="(isLoading$ | async)"
-                        [ngModel]="attributeScope"
-                        (ngModelChange)="attributeScopeChanged($event)">
-              <mat-option *ngFor="let scope of attributeScopes" [value]="scope">
-                {{ telemetryTypeTranslationsMap.get(toTelemetryTypeFunc(scope)) | translate }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
+          @if (!disableAttributeScopeSelection && !attributeScopeSelectionReadonly) {
+            <mat-form-field class="mat-block tb-attribute-scope">
+              <mat-label translate>attribute.attributes-scope</mat-label>
+              <mat-select [disabled]="(isLoading$ | async)"
+                          [ngModel]="attributeScope"
+                          (ngModelChange)="attributeScopeChanged($event)">
+                @for (scope of attributeScopes; track scope) {
+                  <mat-option [value]="scope">
+                    {{ telemetryTypeTranslationsMap.get(toTelemetryTypeFunc(scope)) | translate }}
+                  </mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          }
         </div>
         <span class="flex-1"></span>
-        <button mat-icon-button
-                *ngIf="attributeScope !== attributeScopeTypes.CLIENT_SCOPE"
-                [disabled]="isLoading$ | async"
-                (click)="addAttribute($event)"
-                matTooltip="{{ 'action.add' | translate }}"
-                matTooltipPosition="above">
-          <mat-icon>add</mat-icon>
-        </button>
-        <button mat-icon-button
-                *ngIf="!isClientSideTelemetryTypeMap.get(attributeScope)"
-                [disabled]="isLoading$ | async"
-                (click)="reloadAttributes()"
-                matTooltip="{{ 'action.refresh' | translate }}"
-                matTooltipPosition="above">
-          <mat-icon>refresh</mat-icon>
-        </button>
+        @if (attributeScope !== attributeScopeTypes.CLIENT_SCOPE) {
+          <button mat-icon-button
+                  [disabled]="isLoading$ | async"
+                  (click)="addAttribute($event)"
+                  matTooltip="{{ 'action.add' | translate }}"
+                  matTooltipPosition="above">
+            <mat-icon>add</mat-icon>
+          </button>
+        }
+        @if (!isClientSideTelemetryTypeMap.get(attributeScope)) {
+          <button mat-icon-button
+                  [disabled]="isLoading$ | async"
+                  (click)="reloadAttributes()"
+                  matTooltip="{{ 'action.refresh' | translate }}"
+                  matTooltipPosition="above">
+            <mat-icon>refresh</mat-icon>
+          </button>
+        }
         <button mat-icon-button
                 [disabled]="isLoading$ | async"
                 (click)="enterFilterMode()"
@@ -82,7 +88,7 @@
       <div class="mat-toolbar-tools xs:flex xs:flex-row xs:flex-wrap">
         <span class="tb-entity-table-info">
           {{ (attributeScope === latestTelemetryTypes.LATEST_TELEMETRY ?
-                'attribute.selected-telemetry' : 'attribute.selected-attributes') | translate:{count: dataSource.selection.selected.length} }}
+          'attribute.selected-telemetry' : 'attribute.selected-attributes') | translate:{count: dataSource.selection.selected.length} }}
         </span>
         <span class="flex-1"></span>
         <button [class.!hidden]="attributeScope === attributeScopeTypes.CLIENT_SCOPE"
@@ -139,7 +145,7 @@
     </mat-toolbar>
     <div class="table-container flex-1" [class.!hidden]="mode === 'widget'">
       <table mat-table [dataSource]="dataSource"
-                 matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
+             matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
         <ng-container matColumnDef="select" sticky>
           <mat-header-cell *matHeaderCellDef style="width: 40px;">
             <mat-checkbox (change)="$event ? dataSource.masterToggle() : null"
@@ -173,7 +179,7 @@
                 tooltipPosition="above"
                 icon="content_copy"
                 [style]="{padding: '4px', 'font-size': '16px', color: 'rgba(0,0,0,.87)'}"
-              >
+                >
               </tb-copy-button>
             </div>
           </mat-cell>
@@ -186,38 +192,41 @@
             <div class="flex flex-1 flex-row" style="align-items: center">
               <div class="flex flex-1 flex-row" style="overflow: hidden; align-items: center;">
                 <span class="ellipsis">{{attribute.value | tbJson}}</span>
-                <tb-copy-button
-                  *ngIf="attribute.value !== ''"
-                  class="attribute-copy"
-                  [disabled]="isLoading$ | async"
-                  [copyText]="attribute.value | tbJson"
-                  tooltipText="{{ 'attribute.copy-value' | translate }}"
-                  tooltipPosition="above"
-                  icon="content_copy"
-                  [style]="{padding: '4px', 'font-size': '16px', color: 'rgba(0,0,0,.87)'}"
-                >
-                </tb-copy-button>
+                @if (attribute.value !== '') {
+                  <tb-copy-button
+                    class="attribute-copy"
+                    [disabled]="isLoading$ | async"
+                    [copyText]="attribute.value | tbJson"
+                    tooltipText="{{ 'attribute.copy-value' | translate }}"
+                    tooltipPosition="above"
+                    icon="content_copy"
+                    [style]="{padding: '4px', 'font-size': '16px', color: 'rgba(0,0,0,.87)'}"
+                    >
+                  </tb-copy-button>
+                }
               </div>
               <span [class.!hidden]="isClientSideTelemetryTypeMap.get(attributeScope)">
                 <mat-icon>edit</mat-icon>
               </span>
-              <button mat-icon-button *ngIf="attributeScope === latestTelemetryTypes.LATEST_TELEMETRY"
-                      (click)="deleteTimeseries($event, attribute)">
-                <mat-icon>delete</mat-icon>
-              </button>
+              @if (attributeScope === latestTelemetryTypes.LATEST_TELEMETRY) {
+                <button mat-icon-button
+                        (click)="deleteTimeseries($event, attribute)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              }
             </div>
           </mat-cell>
         </ng-container>
         <mat-header-row class="mat-row-select" *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
         <mat-row class="mat-row-select" [class.mat-selected]="dataSource.selection.isSelected(attribute)"
-                 *matRowDef="let attribute; columns: displayedColumns;" (click)="dataSource.selection.toggle(attribute)"></mat-row>
+        *matRowDef="let attribute; columns: displayedColumns;" (click)="dataSource.selection.toggle(attribute)"></mat-row>
       </table>
       <span [class.!hidden]="(dataSource.isEmpty() | async) === false"
             class="no-data-found flex items-center justify-center" translate>{{
-          attributeScope === latestTelemetryTypes.LATEST_TELEMETRY
-              ? 'attribute.no-telemetry-text'
-              : 'attribute.no-attributes-text'
-        }}</span>
+            attributeScope === latestTelemetryTypes.LATEST_TELEMETRY
+            ? 'attribute.no-telemetry-text'
+            : 'attribute.no-attributes-text'
+      }}</span>
     </div>
     <mat-divider [class.!hidden]="mode === 'widget'"></mat-divider>
     <mat-paginator [class.!hidden]="mode === 'widget'"
@@ -226,58 +235,65 @@
                    [pageSize]="pageLink.pageSize"
                    [pageSizeOptions]="[10, 20, 30]"
                    [hidePageSize]="hidePageSize"
-                   showFirstLastButtons></mat-paginator>
-    <ngx-hm-carousel *ngIf="mode === 'widget' && widgetsList.length > 0"
-                     #carousel
-                     [(ngModel)]="widgetsCarouselIndex"
-                     (ngModelChange)="onWidgetsCarouselIndexChanged()"
-                     [data]="widgetsList"
-                     [infinite]="false"
-                     class="carousel c-accent flex-1">
-      <section ngx-hm-carousel-container class="content">
-        <article class="item cursor-pointer"
-                 ngx-hm-carousel-item
-                 *ngFor="let widgets of widgetsList">
-          <tb-dashboard class="tb-absolute-fill"
-            [aliasController]="aliasController"
-            [widgets]="widgets"
-            [columns]="20"
-            [isEdit]="false"
-            [isMobileDisabled]="true"
-            [isEditActionEnabled]="false"
-            [isRemoveActionEnabled]="false">
-          </tb-dashboard>
-        </article>
-      </section>
-
-      <ng-template #carouselPrev>
-        <button mat-icon-button
-                *ngIf="widgetsCarouselIndex > 0"
-                matTooltip="{{ 'attribute.prev-widget' | translate }}"
-                matTooltipPosition="above">
-          <mat-icon>keyboard_arrow_left</mat-icon>
-        </button>
-      </ng-template>
-      <ng-template #carouselNext>
-        <button mat-icon-button
-                *ngIf="widgetsCarouselIndex < widgetsList.length - 1"
-                matTooltip="{{ 'attribute.next-widget' | translate }}"
-                matTooltipPosition="above">
-          <mat-icon>keyboard_arrow_right</mat-icon>
-        </button>
-      </ng-template>
-
-      <ng-template #carouselDot let-model>
-        <div class="ball"
-             [class.visible]="model.index === model.currentIndex"></div>
-      </ng-template>
-
-    </ngx-hm-carousel>
-    <span translate *ngIf="mode === 'widget' && widgetsLoaded &&
-                           widgetsList.length === 0 &&
-                           widgetBundleSet"
-          class="mat-headline-5 flex flex-1 items-center justify-center">widgets-bundle.empty</span>
-    <span translate *ngIf="mode === 'widget' && !widgetBundleSet"
-          class="mat-headline-5 flex flex-1 items-center justify-center">widget.select-widgets-bundle</span>
+    showFirstLastButtons></mat-paginator>
+    @if (mode === 'widget' && widgetsList.length > 0) {
+      <ngx-hm-carousel
+        #carousel
+        [(ngModel)]="widgetsCarouselIndex"
+        (ngModelChange)="onWidgetsCarouselIndexChanged()"
+        [data]="widgetsList"
+        [infinite]="false"
+        class="carousel c-accent flex-1">
+        <section ngx-hm-carousel-container class="content">
+          @for (widgets of widgetsList; track widgets) {
+            <article class="item cursor-pointer"
+                     ngx-hm-carousel-item
+                     >
+              <tb-dashboard class="tb-absolute-fill"
+                            [aliasController]="aliasController"
+                            [widgets]="widgets"
+                            [columns]="20"
+                            [isEdit]="false"
+                            [isMobileDisabled]="true"
+                            [isEditActionEnabled]="false"
+                            [isRemoveActionEnabled]="false">
+              </tb-dashboard>
+            </article>
+          }
+        </section>
+        <ng-template #carouselPrev>
+          @if (widgetsCarouselIndex > 0) {
+            <button mat-icon-button
+                    matTooltip="{{ 'attribute.prev-widget' | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon>keyboard_arrow_left</mat-icon>
+            </button>
+          }
+        </ng-template>
+        <ng-template #carouselNext>
+          @if (widgetsCarouselIndex < widgetsList.length - 1) {
+            <button mat-icon-button
+                    matTooltip="{{ 'attribute.next-widget' | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon>keyboard_arrow_right</mat-icon>
+            </button>
+          }
+        </ng-template>
+        <ng-template #carouselDot let-model>
+          <div class="ball"
+          [class.visible]="model.index === model.currentIndex"></div>
+        </ng-template>
+      </ngx-hm-carousel>
+    }
+    @if (mode === 'widget' && widgetsLoaded &&
+      widgetsList.length === 0 &&
+      widgetBundleSet) {
+      <span translate
+      class="mat-headline-5 flex flex-1 items-center justify-center">widgets-bundle.empty</span>
+    }
+    @if (mode === 'widget' && !widgetBundleSet) {
+      <span translate
+      class="mat-headline-5 flex flex-1 items-center justify-center">widget.select-widgets-bundle</span>
+    }
   </div>
 </div>

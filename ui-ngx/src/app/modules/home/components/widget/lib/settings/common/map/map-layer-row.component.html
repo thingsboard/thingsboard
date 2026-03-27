@@ -21,47 +21,67 @@
   </mat-form-field>
   <mat-form-field class="tb-inline-field tb-provider-field" appearance="outline" subscriptSizing="dynamic">
     <mat-select formControlName="provider" required>
-      <mat-option *ngFor="let provider of mapProviders" [value]="provider">
-        {{ mapProviderTranslationMap.get(provider) | translate }}
-      </mat-option>
+      @for (provider of mapProviders; track provider) {
+        <mat-option [value]="provider">
+          {{ mapProviderTranslationMap.get(provider) | translate }}
+        </mat-option>
+      }
     </mat-select>
   </mat-form-field>
-  <mat-form-field *ngIf="MapProvider.openstreet === layerFormGroup.get('provider').value"
-                  class="tb-inline-field tb-layer-field" appearance="outline" subscriptSizing="dynamic">
-    <mat-select formControlName="layerType" required>
-      <mat-option *ngFor="let layerType of openStreetLayerTypes" [value]="layerType">
-        {{ openStreetMapLayerTranslationMap.get(layerType) | translate }}
-      </mat-option>
-    </mat-select>
-  </mat-form-field>
-  <mat-form-field *ngIf="MapProvider.google === layerFormGroup.get('provider').value"
-                  class="tb-inline-field tb-layer-field" appearance="outline" subscriptSizing="dynamic">
-    <mat-select formControlName="layerType" required>
-      <mat-option *ngFor="let layerType of googleMapLayerTypes" [value]="layerType">
-        {{ googleMapLayerTranslationMap.get(layerType) | translate }}
-      </mat-option>
-    </mat-select>
-  </mat-form-field>
-  <mat-form-field *ngIf="MapProvider.here === layerFormGroup.get('provider').value"
-                  class="tb-inline-field tb-layer-field" appearance="outline" subscriptSizing="dynamic">
-    <mat-select formControlName="layerType" required>
-      <mat-option *ngFor="let layerType of hereLayerTypes" [value]="layerType">
-        {{ hereLayerTranslationMap.get(layerType) | translate }}
-      </mat-option>
-    </mat-select>
-  </mat-form-field>
-  <mat-form-field *ngIf="MapProvider.tencent === layerFormGroup.get('provider').value"
-                  class="tb-inline-field tb-layer-field" appearance="outline" subscriptSizing="dynamic">
-    <mat-select formControlName="layerType" required>
-      <mat-option *ngFor="let layerType of tencentLayerTypes" [value]="layerType">
-        {{ tencentLayerTranslationMap.get(layerType) | translate }}
-      </mat-option>
-    </mat-select>
-  </mat-form-field>
-  <mat-form-field *ngIf="MapProvider.custom === layerFormGroup.get('provider').value"
-                  class="tb-inline-field tb-layer-field" appearance="outline" subscriptSizing="dynamic">
-    <input matInput formControlName="tileUrl" required placeholder="{{ 'widget-config.set' | translate }}">
-  </mat-form-field>
+  @if (MapProvider.openstreet === layerFormGroup.get('provider').value) {
+    <mat-form-field
+      class="tb-inline-field tb-layer-field" appearance="outline" subscriptSizing="dynamic">
+      <mat-select formControlName="layerType" required>
+        @for (layerType of openStreetLayerTypes; track layerType) {
+          <mat-option [value]="layerType">
+            {{ openStreetMapLayerTranslationMap.get(layerType) | translate }}
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  }
+  @if (MapProvider.google === layerFormGroup.get('provider').value) {
+    <mat-form-field
+      class="tb-inline-field tb-layer-field" appearance="outline" subscriptSizing="dynamic">
+      <mat-select formControlName="layerType" required>
+        @for (layerType of googleMapLayerTypes; track layerType) {
+          <mat-option [value]="layerType">
+            {{ googleMapLayerTranslationMap.get(layerType) | translate }}
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  }
+  @if (MapProvider.here === layerFormGroup.get('provider').value) {
+    <mat-form-field
+      class="tb-inline-field tb-layer-field" appearance="outline" subscriptSizing="dynamic">
+      <mat-select formControlName="layerType" required>
+        @for (layerType of hereLayerTypes; track layerType) {
+          <mat-option [value]="layerType">
+            {{ hereLayerTranslationMap.get(layerType) | translate }}
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  }
+  @if (MapProvider.tencent === layerFormGroup.get('provider').value) {
+    <mat-form-field
+      class="tb-inline-field tb-layer-field" appearance="outline" subscriptSizing="dynamic">
+      <mat-select formControlName="layerType" required>
+        @for (layerType of tencentLayerTypes; track layerType) {
+          <mat-option [value]="layerType">
+            {{ tencentLayerTranslationMap.get(layerType) | translate }}
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  }
+  @if (MapProvider.custom === layerFormGroup.get('provider').value) {
+    <mat-form-field
+      class="tb-inline-field tb-layer-field" appearance="outline" subscriptSizing="dynamic">
+      <input matInput formControlName="tileUrl" required placeholder="{{ 'widget-config.set' | translate }}">
+    </mat-form-field>
+  }
   <div class="tb-form-table-row-cell-buttons">
     <button type="button"
             mat-icon-button

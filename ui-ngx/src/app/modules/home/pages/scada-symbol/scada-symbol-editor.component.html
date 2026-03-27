@@ -43,14 +43,16 @@
         <mat-icon>remove</mat-icon>
       </button>
     </div>
-    <div *ngIf="displayShowHidden" [class.!hidden]="editorMode !== 'svg'" class="tb-primary-fill">
-      <button mat-icon-button
-              (click)="toggleShowHidden()"
-              matTooltip="{{ (showHiddenElements ? 'scada.hide-hidden-elements' : 'scada.show-hidden-elements') | translate }}"
-              matTooltipPosition="above">
-        <mat-icon>{{ showHiddenElements ? 'visibility_off' : 'visibility' }}</mat-icon>
-      </button>
-    </div>
+    @if (displayShowHidden) {
+      <div [class.!hidden]="editorMode !== 'svg'" class="tb-primary-fill">
+        <button mat-icon-button
+                (click)="toggleShowHidden()"
+                matTooltip="{{ (showHiddenElements ? 'scada.hide-hidden-elements' : 'scada.show-hidden-elements') | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>{{ showHiddenElements ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+      </div>
+    }
   </div>
   <div class="tb-scada-symbol-editor-right-buttons">
     <div class="tb-primary-fill">

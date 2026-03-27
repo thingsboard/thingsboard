@@ -33,30 +33,36 @@
         </mat-panel-title>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
-        <tb-html *ngIf="patternSettingsFormGroup.get('type').value === DataLayerPatternType.pattern"
-                 formControlName="pattern"
-                 required
-                 minHeight="100px"
-                 label="{{ (patternType === 'label' ? 'widgets.maps.data-layer.label-pattern' : 'widgets.maps.data-layer.tooltip-pattern') | translate }}">
-        </tb-html>
-        <tb-js-func *ngIf="patternSettingsFormGroup.get('type').value === DataLayerPatternType.function"
-                    formControlName="patternFunction"
-                    required
-                    withModules
-                    [globalVariables]="functionScopeVariables"
-                    [functionArgs]="['data', 'dsData', 'ctx']"
-                    functionTitle="{{ (patternType === 'label' ? 'widgets.maps.data-layer.label-function' : 'widgets.maps.data-layer.tooltip-function') | translate }}"
-                    [helpId]="helpId"
-                    [helpPopupStyle]="{width: '900px'}">
-        </tb-js-func>
-        <ng-container *ngIf="patternType === 'tooltip'">
+        @if (patternSettingsFormGroup.get('type').value === DataLayerPatternType.pattern) {
+          <tb-html
+            formControlName="pattern"
+            required
+            minHeight="100px"
+            label="{{ (patternType === 'label' ? 'widgets.maps.data-layer.label-pattern' : 'widgets.maps.data-layer.tooltip-pattern') | translate }}">
+          </tb-html>
+        }
+        @if (patternSettingsFormGroup.get('type').value === DataLayerPatternType.function) {
+          <tb-js-func
+            formControlName="patternFunction"
+            required
+            withModules
+            [globalVariables]="functionScopeVariables"
+            [functionArgs]="['data', 'dsData', 'ctx']"
+            functionTitle="{{ (patternType === 'label' ? 'widgets.maps.data-layer.label-function' : 'widgets.maps.data-layer.tooltip-function') | translate }}"
+            [helpId]="helpId"
+            [helpPopupStyle]="{width: '900px'}">
+          </tb-js-func>
+        }
+        @if (patternType === 'tooltip') {
           <div class="tb-form-row space-between column-xs">
             <div translate>widgets.maps.data-layer.tooltip-trigger</div>
             <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
               <mat-select formControlName="trigger">
-                <mat-option *ngFor="let trigger of dataLayerTooltipTriggers" [value]="trigger">
-                  {{ dataLayerTooltipTriggerTranslationMap.get(trigger) | translate }}
-                </mat-option>
+                @for (trigger of dataLayerTooltipTriggers; track trigger) {
+                  <mat-option [value]="trigger">
+                    {{ dataLayerTooltipTriggerTranslationMap.get(trigger) | translate }}
+                  </mat-option>
+                }
               </mat-select>
             </mat-form-field>
           </div>
@@ -65,30 +71,32 @@
               {{ 'widgets.maps.data-layer.auto-close-tooltips' | translate }}
             </mat-slide-toggle>
           </div>
-          <div *ngIf="hasTooltipOffset" class="tb-form-row space-between column-lt-md">
-            <div translate>widgets.maps.data-layer.tooltip-offset</div>
-            <div class="flex flex-row items-center justify-start gap-2 xs:flex-1 xs:flex-col xs:items-stretch">
-              <div class="flex flex-row items-center justify-start gap-2 xs:flex-1">
-                <div class="tb-small-label xs:min-w-20" translate>widgets.maps.data-layer.tooltip-offset-horizontal</div>
-                <mat-form-field appearance="outline" class="number xs:flex-1" subscriptSizing="dynamic">
-                  <input matInput formControlName="offsetX"
-                         type="number" placeholder="{{ 'widget-config.set' | translate }}">
-                </mat-form-field>
-              </div>
-              <div class="flex flex-row items-center justify-start gap-2 xs:flex-1">
-                <div class="tb-small-label xs:min-w-20" translate>widgets.maps.data-layer.tooltip-offset-vertical</div>
-                <mat-form-field appearance="outline" class="number xs:flex-1" subscriptSizing="dynamic">
-                  <input matInput formControlName="offsetY"
-                         type="number" placeholder="{{ 'widget-config.set' | translate }}">
-                </mat-form-field>
+          @if (hasTooltipOffset) {
+            <div class="tb-form-row space-between column-lt-md">
+              <div translate>widgets.maps.data-layer.tooltip-offset</div>
+              <div class="flex flex-row items-center justify-start gap-2 xs:flex-1 xs:flex-col xs:items-stretch">
+                <div class="flex flex-row items-center justify-start gap-2 xs:flex-1">
+                  <div class="tb-small-label xs:min-w-20" translate>widgets.maps.data-layer.tooltip-offset-horizontal</div>
+                  <mat-form-field appearance="outline" class="number xs:flex-1" subscriptSizing="dynamic">
+                    <input matInput formControlName="offsetX"
+                           type="number" placeholder="{{ 'widget-config.set' | translate }}">
+                  </mat-form-field>
+                </div>
+                <div class="flex flex-row items-center justify-start gap-2 xs:flex-1">
+                  <div class="tb-small-label xs:min-w-20" translate>widgets.maps.data-layer.tooltip-offset-vertical</div>
+                  <mat-form-field appearance="outline" class="number xs:flex-1" subscriptSizing="dynamic">
+                    <input matInput formControlName="offsetY"
+                           type="number" placeholder="{{ 'widget-config.set' | translate }}">
+                  </mat-form-field>
+                </div>
               </div>
             </div>
-          </div>
+          }
           <tb-map-tooltip-tag-actions-panel
             [context]="context"
             formControlName="tagActions">
           </tb-map-tooltip-tag-actions-panel>
-        </ng-container>
+        }
       </ng-template>
     </mat-expansion-panel>
   </div>

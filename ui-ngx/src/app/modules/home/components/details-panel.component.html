@@ -28,41 +28,49 @@
           <ng-content select=".header-pane"></ng-content>
         </span>
       </div>
-      <div *ngIf="isShowSearch" [class.!hidden]="!showSearchPane" class="flex flex-row items-center justify-start" style="width: 100%;">
-        <button mat-icon-button (click)="onToggleSearch()">
-          <mat-icon class="material-icons">arrow_back</mat-icon>
-        </button>
-        <div style="width: 100%; margin: 0 20px">
-          <ng-content select=".search-pane"></ng-content>
+      @if (isShowSearch) {
+        <div [class.!hidden]="!showSearchPane" class="flex flex-row items-center justify-start" style="width: 100%;">
+          <button mat-icon-button (click)="onToggleSearch()">
+            <mat-icon class="material-icons">arrow_back</mat-icon>
+          </button>
+          <div style="width: 100%; margin: 0 20px">
+            <ng-content select=".search-pane"></ng-content>
+          </div>
         </div>
-      </div>
-      <button mat-icon-button *ngIf="isShowSearch && !showSearchPane" (click)="onToggleSearch()">
-        <mat-icon class="material-icons">search</mat-icon>
-      </button>
+      }
+      @if (isShowSearch && !showSearchPane) {
+        <button mat-icon-button (click)="onToggleSearch()">
+          <mat-icon class="material-icons">search</mat-icon>
+        </button>
+      }
       <ng-content select=".details-buttons"></ng-content>
-      <button *ngIf="showCloseDetails" mat-icon-button (click)="onCloseDetails()">
-        <mat-icon class="material-icons">close</mat-icon>
-      </button>
+      @if (showCloseDetails) {
+        <button mat-icon-button (click)="onCloseDetails()">
+          <mat-icon class="material-icons">close</mat-icon>
+        </button>
+      }
     </div>
-    <section *ngIf="!isReadOnly" class="layout-wrap tb-header-buttons flex flex-row">
-      <button [disabled]="(isLoading$ | async) || theForm?.invalid || !theForm?.dirty"
-              mat-fab
-              matTooltip="{{ 'action.apply-changes' | translate }}"
-              matTooltipPosition="above"
-              color="accent" class="tb-btn-header mat-fab-bottom-right"
-              [class.tb-hide]="!isEdit"
-              (click)="onApplyDetails()">
-        <mat-icon class="material-icons">done</mat-icon>
-      </button>
-      <button [disabled]="(isLoading$ | async) || (isAlwaysEdit && !theForm?.dirty)"
-              mat-fab
-              matTooltip="{{ (isAlwaysEdit ? 'action.decline-changes' : (isEdit ? 'action.decline-changes' : 'details.toggle-edit-mode')) | translate }}"
-              matTooltipPosition="above"
-              color="accent" class="tb-btn-header mat-fab-bottom-right"
-              (click)="onToggleDetailsEditMode()">
-        <mat-icon class="material-icons">{{isEdit ? 'close' : 'edit'}}</mat-icon>
-      </button>
-    </section>
+    @if (!isReadOnly) {
+      <section class="layout-wrap tb-header-buttons flex flex-row">
+        <button [disabled]="(isLoading$ | async) || theForm?.invalid || !theForm?.dirty"
+                mat-fab
+                matTooltip="{{ 'action.apply-changes' | translate }}"
+                matTooltipPosition="above"
+                color="accent" class="tb-btn-header mat-fab-bottom-right"
+                [class.tb-hide]="!isEdit"
+                (click)="onApplyDetails()">
+          <mat-icon class="material-icons">done</mat-icon>
+        </button>
+        <button [disabled]="(isLoading$ | async) || (isAlwaysEdit && !theForm?.dirty)"
+                mat-fab
+                matTooltip="{{ (isAlwaysEdit ? 'action.decline-changes' : (isEdit ? 'action.decline-changes' : 'details.toggle-edit-mode')) | translate }}"
+                matTooltipPosition="above"
+                color="accent" class="tb-btn-header mat-fab-bottom-right"
+                (click)="onToggleDetailsEditMode()">
+          <mat-icon class="material-icons">{{isEdit ? 'close' : 'edit'}}</mat-icon>
+        </button>
+      </section>
+    }
   </mat-toolbar>
 </header>
 <div class="mat-content flex-1" [style.background-color]="backgroundColor">

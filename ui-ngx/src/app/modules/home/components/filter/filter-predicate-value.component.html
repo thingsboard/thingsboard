@@ -17,28 +17,30 @@
 -->
 <div class="flex flex-1 flex-row items-center justify-start gap-2" [formGroup]="filterPredicateValueFormGroup">
   <div class="flex flex-1 flex-col" [class.!hidden]="dynamicMode || onlyUserDynamicSource">
-    <div class="flex flex-col" [ngSwitch]="valueType">
-      <ng-template [ngSwitchCase]="valueTypeEnum.STRING">
-        <mat-form-field hideRequiredMarker class="mat-block">
-          <input matInput formControlName="defaultValue" placeholder="{{'filter.value' | translate}}">
-        </mat-form-field>
-      </ng-template>
-      <ng-template [ngSwitchCase]="valueTypeEnum.NUMERIC">
-        <mat-form-field hideRequiredMarker class="mat-block">
-          <input required type="number" matInput formControlName="defaultValue"
-                 placeholder="{{'filter.value' | translate}}">
-        </mat-form-field>
-      </ng-template>
-      <ng-template [ngSwitchCase]="valueTypeEnum.DATE_TIME">
-        <tb-datetime formControlName="defaultValue"
-                     dateText="{{ 'filter.date' | translate }}"
-                     required [showLabel]="false"></tb-datetime>
-      </ng-template>
-      <ng-template [ngSwitchCase]="valueTypeEnum.BOOLEAN">
-        <mat-checkbox formControlName="defaultValue">
-          {{ (filterPredicateValueFormGroup.get('defaultValue').value ? 'value.true' : 'value.false') | translate }}
-        </mat-checkbox>
-      </ng-template>
+    <div class="flex flex-col">
+      @switch (valueType) {
+        @case (valueTypeEnum.STRING) {
+          <mat-form-field hideRequiredMarker class="mat-block">
+            <input matInput formControlName="defaultValue" placeholder="{{'filter.value' | translate}}">
+          </mat-form-field>
+        }
+        @case (valueTypeEnum.NUMERIC) {
+          <mat-form-field hideRequiredMarker class="mat-block">
+            <input required type="number" matInput formControlName="defaultValue"
+                   placeholder="{{'filter.value' | translate}}">
+          </mat-form-field>
+        }
+        @case (valueTypeEnum.DATE_TIME) {
+          <tb-datetime formControlName="defaultValue"
+                       dateText="{{ 'filter.date' | translate }}"
+          required [showLabel]="false"></tb-datetime>
+        }
+        @case (valueTypeEnum.BOOLEAN) {
+          <mat-checkbox formControlName="defaultValue">
+            {{ (filterPredicateValueFormGroup.get('defaultValue').value ? 'value.true' : 'value.false') | translate }}
+          </mat-checkbox>
+        }
+      }
     </div>
     <div class="tb-hint">{{ hintText | translate }}</div>
   </div>
@@ -50,9 +52,11 @@
             <mat-option [value]="null">
               {{'filter.no-dynamic-value' | translate}}
             </mat-option>
-            <mat-option *ngFor="let sourceType of dynamicValueSourceTypes" [value]="sourceType">
-              {{dynamicValueSourceTypeTranslations.get(sourceType) | translate}}
-            </mat-option>
+            @for (sourceType of dynamicValueSourceTypes; track sourceType) {
+              <mat-option [value]="sourceType">
+                {{dynamicValueSourceTypeTranslations.get(sourceType) | translate}}
+              </mat-option>
+            }
           </mat-select>
         </mat-form-field>
         <div class="tb-hint" translate>filter.dynamic-source-type</div>
@@ -63,23 +67,27 @@
         </mat-form-field>
         <div class="tb-hint" translate>filter.source-attribute</div>
       </div>
-      <div *ngIf="!allow && inheritMode"
-           class="flex flex-col"
-           style="padding-top: 6px">
-        <mat-checkbox formControlName="inherit">
-          {{ 'filter.inherit-owner' | translate}}
-        </mat-checkbox>
-        <div class="tb-hint" translate>filter.source-attribute-not-set</div>
-      </div>
+      @if (!allow && inheritMode) {
+        <div
+          class="flex flex-col"
+          style="padding-top: 6px">
+          <mat-checkbox formControlName="inherit">
+            {{ 'filter.inherit-owner' | translate}}
+          </mat-checkbox>
+          <div class="tb-hint" translate>filter.source-attribute-not-set</div>
+        </div>
+      }
     </div>
   </div>
-  <button mat-icon-button *ngIf="!onlyUserDynamicSource"
-          class="mat-elevation-z1 tb-mat-32"
-          color="primary"
-          type="button"
-          matTooltip="{{ (dynamicMode ? 'filter.switch-to-default-value' : 'filter.switch-to-dynamic-value') | translate }}"
-          matTooltipPosition="above"
-          (click)="dynamicMode = !dynamicMode">
-    <tb-icon class="tb-mat-20">{{ dynamicMode ? 'mdi:numeric' : 'mdi:variable' }}</tb-icon>
-  </button>
+  @if (!onlyUserDynamicSource) {
+    <button mat-icon-button
+            class="mat-elevation-z1 tb-mat-32"
+            color="primary"
+            type="button"
+            matTooltip="{{ (dynamicMode ? 'filter.switch-to-default-value' : 'filter.switch-to-dynamic-value') | translate }}"
+            matTooltipPosition="above"
+            (click)="dynamicMode = !dynamicMode">
+      <tb-icon class="tb-mat-20">{{ dynamicMode ? 'mdi:numeric' : 'mdi:variable' }}</tb-icon>
+    </button>
+  }
 </div>

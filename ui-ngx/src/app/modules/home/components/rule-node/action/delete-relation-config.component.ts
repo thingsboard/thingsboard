@@ -28,7 +28,7 @@ import { RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@app/shar
 })
 export class DeleteRelationConfigComponent extends RuleNodeConfigurationComponent {
 
-  directionTypes = Object.keys(EntitySearchDirection);
+  directionTypes = Object.values(EntitySearchDirection);
 
   directionTypeTranslations  = new Map<EntitySearchDirection, string>(
     [

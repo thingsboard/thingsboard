@@ -23,30 +23,39 @@
          (focusin)="onFocus()"
          [required]="required"
          [matAutocomplete]="slackAutocomplete">
-  <button *ngIf="conversationSlackFormGroup.get('conversation').value && !disabled"
-          type="button" matSuffix mat-icon-button aria-label="Clear"
-          (click)="clear()">
-    <mat-icon class="material-icons">close</mat-icon>
-  </button>
+  @if (conversationSlackFormGroup.get('conversation').value && !disabled) {
+    <button
+      type="button" matSuffix mat-icon-button aria-label="Clear"
+      (click)="clear()">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  }
   <mat-autocomplete class="tb-autocomplete"
                     #slackAutocomplete="matAutocomplete"
                     [displayWith]="displaySlackConversationFn"
                     >
-    <mat-option *ngFor="let template of slackConversation$ | async" [value]="template" class="template-option">
-      <span [innerHTML]="template.title | highlight:slackSearchText"></span>
-    </mat-option>
-    <mat-option *ngIf="!(slackConversation$ | async)?.length" [value]="null" class="tb-not-found">
-      <div class="tb-not-found-content" (click)="$event.stopPropagation()">
-        <div *ngIf="!textIsNotEmpty(slackSearchText); else searchNotEmpty">
-          <span translate>notification.not-found-slack-recipient</span>
+    @for (template of slackConversation$ | async; track template) {
+      <mat-option [value]="template" class="template-option">
+        <span [innerHTML]="template.title | highlight:slackSearchText"></span>
+      </mat-option>
+    }
+    @if (!(slackConversation$ | async)?.length) {
+      <mat-option [value]="null" class="tb-not-found">
+        <div class="tb-not-found-content" (click)="$event.stopPropagation()">
+          @if (!textIsNotEmpty(slackSearchText)) {
+            <div>
+              <span translate>notification.not-found-slack-recipient</span>
+            </div>
+          } @else {
+            <span>Not slack recipient matches {{ truncate.transform(slackSearchText, true, 6, &apos;...&apos;) }}</span>
+          }
         </div>
-        <ng-template #searchNotEmpty>
-          <span>Not slack recipient matches {{ truncate.transform(slackSearchText, true, 6, &apos;...&apos;) }}</span>
-        </ng-template>
-      </div>
-    </mat-option>
+      </mat-option>
+    }
   </mat-autocomplete>
-  <mat-error *ngIf="conversationSlackFormGroup.get('conversation').hasError('required')">
-    {{ requiredText }}
-  </mat-error>
+  @if (conversationSlackFormGroup.get('conversation').hasError('required')) {
+    <mat-error>
+      {{ requiredText }}
+    </mat-error>
+  }
 </mat-form-field>

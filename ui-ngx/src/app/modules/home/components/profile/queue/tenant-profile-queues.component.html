@@ -16,40 +16,46 @@
 
 -->
 <div class="flex flex-col">
-  <div class="tb-tenant-profile-queues"
-       *ngFor="let queuesControl of queuesFormArray.controls; trackBy: trackByQueue;
-       let $index = index; last as isLast;"
-       [class.pb-2]="!isLast">
-    <mat-expansion-panel class="flex-1" [expanded]="true">
-      <mat-expansion-panel-header>
-        <div class="flex flex-1 flex-row items-center justify-start">
-          <mat-panel-title>
-            {{ getTitle(queuesControl.value.name) }}
-          </mat-panel-title>
-          <span class="flex-1"></span>
-          <button *ngIf="!($index === 0) && !disabled" mat-icon-button style="min-width: 40px;"
-                  type="button"
-                  (click)="removeQueue($index)"
-                  matTooltip="{{ 'action.remove' | translate }}"
-                  matTooltipPosition="above">
-            <mat-icon>delete</mat-icon>
-          </button>
-        </div>
-      </mat-expansion-panel-header>
-      <ng-template matExpansionPanelContent>
-        <tb-queue-form [formControl]="queuesControl" [newQueue]="newQueue"></tb-queue-form>
-      </ng-template>
-    </mat-expansion-panel>
-  </div>
-  <div *ngIf="!queuesFormArray.controls.length">
+  @for (queuesControl of queuesFormArray.controls; track trackByQueue($index, queuesControl); let isLast = $last) {
+    <div class="tb-tenant-profile-queues"
+         [class.pb-2]="!isLast">
+      <mat-expansion-panel class="flex-1" [expanded]="true">
+        <mat-expansion-panel-header>
+          <div class="flex flex-1 flex-row items-center justify-start">
+            <mat-panel-title>
+              {{ getTitle(queuesControl.value.name) }}
+            </mat-panel-title>
+            <span class="flex-1"></span>
+            @if (!($index === 0) && !disabled) {
+              <button mat-icon-button style="min-width: 40px;"
+                      type="button"
+                      (click)="removeQueue($index)"
+                      matTooltip="{{ 'action.remove' | translate }}"
+                      matTooltipPosition="above">
+                <mat-icon>delete</mat-icon>
+              </button>
+            }
+          </div>
+        </mat-expansion-panel-header>
+        <ng-template matExpansionPanelContent>
+          <tb-queue-form [formControl]="queuesControl" [newQueue]="newQueue"></tb-queue-form>
+        </ng-template>
+      </mat-expansion-panel>
+    </div>
+  }
+  @if (!queuesFormArray.controls.length) {
+    <div>
       <span translate
-            class="tb-prompt flex items-center justify-center">tenant-profile.no-queue</span>
-  </div>
-  <div *ngIf="!disabled" style="padding-top: 16px;">
-    <button mat-raised-button color="primary"
-            type="button"
-            (click)="addQueue()">
-      <span translate>tenant-profile.add-queue</span>
-    </button>
-  </div>
+      class="tb-prompt flex items-center justify-center">tenant-profile.no-queue</span>
+    </div>
+  }
+  @if (!disabled) {
+    <div style="padding-top: 16px;">
+      <button mat-raised-button color="primary"
+              type="button"
+              (click)="addQueue()">
+        <span translate>tenant-profile.add-queue</span>
+      </button>
+    </div>
+  }
 </div>

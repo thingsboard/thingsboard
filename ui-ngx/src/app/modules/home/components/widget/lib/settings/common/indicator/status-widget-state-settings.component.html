@@ -16,39 +16,43 @@
 
 -->
 <ng-container [formGroup]="stateSettingsFormGroup">
-  <div *ngIf="layout !== StatusWidgetLayout.icon" class="tb-form-row column-xs">
-    <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showLabel">
-      {{ 'widgets.status-widget.label' | translate }}
-    </mat-slide-toggle>
-    <div class="flex flex-1 flex-row items-center justify-start gap-2">
-      <tb-string-pattern-autocomplete class="flex-1"
-                                      appearance="outline"
-                                      brackets="curly"
-                                      subscriptSizing="dynamic"
-                                      predefinedValuesButton="true"
-                                      [disabled]="!stateSettingsFormGroup.get('showLabel').value"
-                                      [predefinedValues]="predefinedValues"
-                                      placeholderText="{{ 'widget-config.set' | translate }}"
-                                      formControlName="label"
-      ></tb-string-pattern-autocomplete>
-      <tb-font-settings formControlName="labelFont"
-                        [previewText]="stateSettingsFormGroup.get('label').value">
-      </tb-font-settings>
+  @if (layout !== StatusWidgetLayout.icon) {
+    <div class="tb-form-row column-xs">
+      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showLabel">
+        {{ 'widgets.status-widget.label' | translate }}
+      </mat-slide-toggle>
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
+        <tb-string-pattern-autocomplete class="flex-1"
+                                        appearance="outline"
+                                        brackets="curly"
+                                        subscriptSizing="dynamic"
+                                        predefinedValuesButton="true"
+                                        [disabled]="!stateSettingsFormGroup.get('showLabel').value"
+                                        [predefinedValues]="predefinedValues"
+                                        placeholderText="{{ 'widget-config.set' | translate }}"
+                                        formControlName="label"
+        ></tb-string-pattern-autocomplete>
+        <tb-font-settings formControlName="labelFont"
+                          [previewText]="stateSettingsFormGroup.get('label').value">
+        </tb-font-settings>
+      </div>
     </div>
-  </div>
-  <div *ngIf="layout !== StatusWidgetLayout.icon" class="tb-form-row column-xs">
-    <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showStatus">
-      {{ 'widgets.status-widget.status' | translate }}
-    </mat-slide-toggle>
-    <div class="flex flex-1 flex-row items-center justify-start gap-2">
-      <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
-        <input matInput formControlName="status" placeholder="{{ 'widget-config.set' | translate }}">
-      </mat-form-field>
-      <tb-font-settings formControlName="statusFont"
-                        [previewText]="stateSettingsFormGroup.get('status').value">
-      </tb-font-settings>
+  }
+  @if (layout !== StatusWidgetLayout.icon) {
+    <div class="tb-form-row column-xs">
+      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showStatus">
+        {{ 'widgets.status-widget.status' | translate }}
+      </mat-slide-toggle>
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
+        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+          <input matInput formControlName="status" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+        <tb-font-settings formControlName="statusFont"
+                          [previewText]="stateSettingsFormGroup.get('status').value">
+        </tb-font-settings>
+      </div>
     </div>
-  </div>
+  }
   <div class="tb-form-row">
     <div class="fixed-title-width">
       {{ 'widgets.status-widget.icon' | translate }}
@@ -74,13 +78,17 @@
                         formControlName="primaryColor">
         </tb-color-input>
       </div>
-      <mat-divider *ngIf="layout !== StatusWidgetLayout.icon" vertical class="lt-md:!hidden"></mat-divider>
-      <div *ngIf="layout !== StatusWidgetLayout.icon" class="flex flex-row items-center justify-start gap-2">
-        <div tb-hint-tooltip-icon="{{'widgets.status-widget.secondary-color-hint' | translate}}" translate>widgets.status-widget.secondary</div>
-        <tb-color-input asBoxInput
-                        formControlName="secondaryColor">
-        </tb-color-input>
-      </div>
+      @if (layout !== StatusWidgetLayout.icon) {
+        <mat-divider vertical class="lt-md:!hidden"></mat-divider>
+      }
+      @if (layout !== StatusWidgetLayout.icon) {
+        <div class="flex flex-row items-center justify-start gap-2">
+          <div tb-hint-tooltip-icon="{{'widgets.status-widget.secondary-color-hint' | translate}}" translate>widgets.status-widget.secondary</div>
+          <tb-color-input asBoxInput
+                          formControlName="secondaryColor">
+          </tb-color-input>
+        </div>
+      }
       <mat-divider vertical class="lt-sm:!hidden" [class.lt-md:!hidden]="layout !== StatusWidgetLayout.icon"></mat-divider>
       <div class="flex flex-row items-center justify-start gap-2">
         <div translate>widgets.status-widget.background</div>
@@ -100,13 +108,17 @@
                         formControlName="primaryColorDisabled">
         </tb-color-input>
       </div>
-      <mat-divider *ngIf="layout !== StatusWidgetLayout.icon" vertical class="lt-md:!hidden"></mat-divider>
-      <div *ngIf="layout !== StatusWidgetLayout.icon" class="flex flex-row items-center justify-start gap-2">
-        <div tb-hint-tooltip-icon="{{'widgets.status-widget.secondary-color-hint' | translate}}" translate>widgets.status-widget.secondary</div>
-        <tb-color-input asBoxInput
-                        formControlName="secondaryColorDisabled">
-        </tb-color-input>
-      </div>
+      @if (layout !== StatusWidgetLayout.icon) {
+        <mat-divider vertical class="lt-md:!hidden"></mat-divider>
+      }
+      @if (layout !== StatusWidgetLayout.icon) {
+        <div class="flex flex-row items-center justify-start gap-2">
+          <div tb-hint-tooltip-icon="{{'widgets.status-widget.secondary-color-hint' | translate}}" translate>widgets.status-widget.secondary</div>
+          <tb-color-input asBoxInput
+                          formControlName="secondaryColorDisabled">
+          </tb-color-input>
+        </div>
+      }
       <mat-divider vertical class="lt-sm:!hidden" [class.lt-md:!hidden]="layout !== StatusWidgetLayout.icon"></mat-divider>
       <div class="flex flex-row items-center justify-start gap-2">
         <div translate>widgets.status-widget.background</div>

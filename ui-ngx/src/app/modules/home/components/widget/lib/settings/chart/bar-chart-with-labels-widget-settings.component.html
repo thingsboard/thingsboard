@@ -24,7 +24,7 @@
       </mat-slide-toggle>
     </div>
     <tb-time-series-chart-grid-settings
-        formControlName="grid">
+      formControlName="grid">
     </tb-time-series-chart-grid-settings>
     <div class="tb-form-panel">
       <div class="tb-form-panel-title" translate>widgets.bar-chart.bar-appearance</div>
@@ -78,43 +78,43 @@
         </mat-form-field>
       </div>
       <tb-chart-fill-settings
-          formControlName="barBackgroundSettings"
-          titleText="widgets.chart.background"
-          fillNoneTitle="widgets.chart.fill-type-solid">
+        formControlName="barBackgroundSettings"
+        titleText="widgets.chart.background"
+        fillNoneTitle="widgets.chart.fill-type-solid">
       </tb-chart-fill-settings>
       <tb-time-series-no-aggregation-bar-width-settings
-          stroked
-          formControlName="noAggregationBarWidthSettings">
+        stroked
+        formControlName="noAggregationBarWidthSettings">
       </tb-time-series-no-aggregation-bar-width-settings>
     </div>
     <div class="tb-form-panel">
       <div class="tb-form-panel-title" translate>widgets.time-series-chart.axis.y-axis</div>
       <tb-time-series-chart-axis-settings
-          formControlName="yAxis"
-          [aliasController]="aliasController"
-          [dataKeyCallbacks]="callbacks"
-          [datasource]="datasource"
-          axisType="yAxis"
-          advanced
-          hideUnits
-          hideDecimals>
+        formControlName="yAxis"
+        [aliasController]="aliasController"
+        [dataKeyCallbacks]="callbacks"
+        [datasource]="datasource"
+        axisType="yAxis"
+        advanced
+        hideUnits
+        hideDecimals>
       </tb-time-series-chart-axis-settings>
     </div>
     <div class="tb-form-panel">
       <div class="tb-form-panel-title" translate>widgets.time-series-chart.axis.x-axis</div>
       <tb-time-series-chart-axis-settings
-          formControlName="xAxis"
-          axisType="xAxis"
-          advanced>
+        formControlName="xAxis"
+        axisType="xAxis"
+        advanced>
       </tb-time-series-chart-axis-settings>
     </div>
     <tb-time-series-chart-thresholds-panel
-        formControlName="thresholds"
-        [aliasController]="aliasController"
-        [dataKeyCallbacks]="dataKeyCallbacks"
-        [datasource]="datasource"
-        [widgetConfig]="widgetConfig?.config"
-        hideYAxis>
+      formControlName="thresholds"
+      [aliasController]="aliasController"
+      [dataKeyCallbacks]="dataKeyCallbacks"
+      [datasource]="datasource"
+      [widgetConfig]="widgetConfig?.config"
+      hideYAxis>
     </tb-time-series-chart-thresholds-panel>
     <div class="tb-form-panel tb-slide-toggle">
       <mat-expansion-panel class="tb-settings" [expanded]="barChartWidgetSettingsForm.get('showLegend').value" [disabled]="!barChartWidgetSettingsForm.get('showLegend').value">
@@ -130,9 +130,11 @@
             <div>{{ 'legend.position' | translate }}</div>
             <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
               <mat-select formControlName="legendPosition">
-                <mat-option *ngFor="let pos of legendPositions" [value]="pos">
-                  {{ legendPositionTranslationMap.get(pos) | translate }}
-                </mat-option>
+                @for (pos of legendPositions; track pos) {
+                  <mat-option [value]="pos">
+                    {{ legendPositionTranslationMap.get(pos) | translate }}
+                  </mat-option>
+                }
               </mat-select>
             </mat-form-field>
           </div>
@@ -193,7 +195,7 @@
             </mat-slide-toggle>
             <div class="flex flex-row items-center justify-start gap-2 gt-xs:flex-1">
               <tb-date-format-select class="flex-1" excludeLastUpdateAgo includeAuto
-                                     formControlName="tooltipDateFormat"></tb-date-format-select>
+              formControlName="tooltipDateFormat"></tb-date-format-select>
               <tb-font-settings formControlName="tooltipDateFont"
                                 [initialPreviewStyle]="{ color: barChartWidgetSettingsForm.get('tooltipDateColor').value }"
                                 [previewText]="tooltipDatePreviewFn">
@@ -229,7 +231,7 @@
       </mat-expansion-panel>
     </div>
     <tb-chart-animation-settings
-        formControlName="animation">
+      formControlName="animation">
     </tb-chart-animation-settings>
     <div class="tb-form-panel">
       <div class="tb-form-panel-title" translate>widget-config.card-appearance</div>

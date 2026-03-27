@@ -21,12 +21,14 @@
                                     breakpoints: {
                                       'lt-md': 1
                                     }}"
-                         label="{{ 'widgets.count.layout' | translate }}" formControlName="layout">
-    <tb-image-cards-select-option *ngFor="let layout of countCardLayouts"
-                                  [value]="layout"
-                                  [image]="countCardLayoutImageMap.get(layout)">
-      {{ countCardLayoutTranslationMap.get(layout) | translate }}
-    </tb-image-cards-select-option>
+    label="{{ 'widgets.count.layout' | translate }}" formControlName="layout">
+    @for (layout of countCardLayouts; track layout) {
+      <tb-image-cards-select-option
+        [value]="layout"
+        [image]="countCardLayoutImageMap.get(layout)">
+        {{ countCardLayoutTranslationMap.get(layout) | translate }}
+      </tb-image-cards-select-option>
+    }
   </tb-image-cards-select>
   <div class="tb-form-row">
     <mat-slide-toggle class="mat-slide" formControlName="autoScale">
@@ -42,16 +44,16 @@
         <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
           <input matInput formControlName="label" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
-      }@else {
+        }@else {
         <tb-string-pattern-autocomplete class="flex-1"
-                                      appearance="outline"
-                                      brackets="curly"
-                                      subscriptSizing="dynamic"
-                                      predefinedValuesButton="true"
-                                      [disabled]="!countWidgetConfigForm.get('showLabel').value"
-                                      [predefinedValues]="predefinedValues"
-                                      placeholderText="{{ 'widget-config.set' | translate }}"
-                                      formControlName="label"
+                                        appearance="outline"
+                                        brackets="curly"
+                                        subscriptSizing="dynamic"
+                                        predefinedValuesButton="true"
+                                        [disabled]="!countWidgetConfigForm.get('showLabel').value"
+                                        [predefinedValues]="predefinedValues"
+                                        placeholderText="{{ 'widget-config.set' | translate }}"
+                                        formControlName="label"
         ></tb-string-pattern-autocomplete>
       }
       <tb-font-settings formControlName="labelFont"
@@ -76,7 +78,7 @@
                                [backgroundColor]="countWidgetConfigForm.get('iconBackgroundColor').enabled
                                                           ? countWidgetConfigForm.get('iconBackgroundColor').value?.color
                                                           : ''"
-                               formControlName="icon">
+        formControlName="icon">
       </tb-material-icon-select>
       <tb-color-settings formControlName="iconColor" settingsKey="{{'widgets.count.icon' | translate }}">
       </tb-color-settings>

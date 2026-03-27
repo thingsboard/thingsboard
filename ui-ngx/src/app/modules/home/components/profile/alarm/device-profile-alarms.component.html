@@ -17,25 +17,30 @@
 -->
 <div class="flex flex-col">
   <div class="tb-device-profile-alarms">
-    <div *ngFor="let alarmControl of alarmsFormArray.controls; trackBy: trackByAlarm;
-                 let $index = index; last as isLast;"
-         class="flex flex-col" [class.pb-2]="!isLast">
-      <tb-device-profile-alarm [formControl]="alarmControl"
-                               [expanded]="$index === 0"
-                               [deviceProfileId]="deviceProfileId"
-                               (removeAlarm)="removeAlarm($index)">
-      </tb-device-profile-alarm>
-    </div>
+    @for (alarmControl of alarmsFormArray.controls; track trackByAlarm($index, alarmControl); let isLast = $last) {
+      <div
+        class="flex flex-col" [class.pb-2]="!isLast">
+        <tb-device-profile-alarm [formControl]="alarmControl"
+                                 [expanded]="$index === 0"
+                                 [deviceProfileId]="deviceProfileId"
+                                 (removeAlarm)="removeAlarm($index)">
+        </tb-device-profile-alarm>
+      </div>
+    }
   </div>
-  <div *ngIf="!alarmsFormArray.controls.length">
+  @if (!alarmsFormArray.controls.length) {
+    <div>
       <span translate
-            class="tb-prompt flex items-center justify-center">device-profile.no-alarm-rules</span>
-  </div>
-  <div *ngIf="!disabled" style="padding-top: 16px;">
-    <button mat-raised-button color="primary"
-            type="button"
-            (click)="addAlarm()">
-      <span translate>device-profile.add-alarm-rule</span>
-    </button>
-  </div>
+      class="tb-prompt flex items-center justify-center">device-profile.no-alarm-rules</span>
+    </div>
+  }
+  @if (!disabled) {
+    <div style="padding-top: 16px;">
+      <button mat-raised-button color="primary"
+              type="button"
+              (click)="addAlarm()">
+        <span translate>device-profile.add-alarm-rule</span>
+      </button>
+    </div>
+  }
 </div>

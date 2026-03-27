@@ -23,8 +23,10 @@
                     required
                     addFilterPrompt="{{'device-profile.enter-alarm-rule-condition-prompt' | translate}}">
     </tb-filter-text>
-    <span *ngIf="specText" class="tb-alarm-rule-condition-spec" [class.disabled]="disabled" [innerHTML]="specText">
-    </span>
+    @if (specText) {
+      <span class="tb-alarm-rule-condition-spec" [class.disabled]="disabled" [innerHTML]="specText">
+      </span>
+    }
   </div>
   <button mat-icon-button
           [color]="conditionSet() ? 'primary' : 'warn'"

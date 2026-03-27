@@ -19,16 +19,17 @@
   <mat-form-field appearance="outline" subscriptSizing="dynamic" class="tb-inline-field tb-suffix-absolute number" [class.flex]="flex">
     <input matInput [required]="required"
            type="number" min="0" formControlName="size" placeholder="{{ 'widget-config.set' | translate }}">
-    <mat-icon matSuffix
-              matTooltipPosition="above"
-              matTooltipClass="tb-error-tooltip"
+    @if (cssSizeFormGroup.get('size').invalid && cssSizeFormGroup.get('size').touched) {
+      <mat-icon matSuffix
+                matTooltipPosition="above"
+                matTooltipClass="tb-error-tooltip"
               [matTooltip]="cssSizeFormGroup.get('size').hasError('required') ? ((requiredText ? requiredText : 'css-size.size-value-required') | translate) :
                                ('css-size.invalid-size-value' | translate)"
-              *ngIf="cssSizeFormGroup.get('size').invalid && cssSizeFormGroup.get('size').touched"
-              class="tb-error">
-      warning
-    </mat-icon>
+        class="tb-error">
+        warning
+      </mat-icon>
+    }
   </mat-form-field>
   <tb-css-unit-select [allowEmpty]="allowEmptyUnit" [style.flex]="flex ? '1' : null"
-                      [width]="flex ? '100%' : ''" formControlName="unit"></tb-css-unit-select>
+  [width]="flex ? '100%' : ''" formControlName="unit"></tb-css-unit-select>
 </div>

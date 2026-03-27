@@ -35,9 +35,11 @@
             cdkFocusInitial>
       {{ 'action.cancel' | translate }}
     </button>
-    <button *ngIf="!data.readonly" mat-raised-button color="primary" (click)="save()"
-            [disabled]="editDetailsFormGroup.invalid || !editDetailsFormGroup.dirty">
-      {{ 'action.save' | translate }}
-    </button>
+    @if (!data.readonly) {
+      <button mat-raised-button color="primary" (click)="save()"
+              [disabled]="editDetailsFormGroup.invalid || !editDetailsFormGroup.dirty">
+        {{ 'action.save' | translate }}
+      </button>
+    }
   </div>
 </form>

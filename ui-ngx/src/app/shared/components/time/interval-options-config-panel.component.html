@@ -32,20 +32,20 @@
         </mat-checkbox>
         {{ "timewindow.interval" | translate }}
       </div>
-      <ng-container *ngIf="aggregation">
+      @if (aggregation) {
         <div class="tb-form-table-header-cell tb-agg-interval-header" tbTruncateWithTooltip>{{"timewindow.allowed-agg-intervals" | translate }}</div>
         <div class="tb-form-table-header-cell tb-agg-interval-header" tbTruncateWithTooltip>{{"timewindow.default-agg-interval" | translate }}</div>
-      </ng-container>
+      }
     </div>
     <div class="tb-form-table-body" formArrayName="intervals">
-      <ng-container *ngFor="let interval of intervalsFormArray.controls; let i = index; trackBy: trackByElement">
+      @for (interval of intervalsFormArray.controls; track trackByElement(i, interval); let i = $index) {
         <div [formGroupName]="i" class="tb-form-table-row">
           <div class="tb-form-table-row-cell tb-interval">
             <mat-checkbox class="tb-interval-option" formControlName="enabled" color="primary">
               <mat-label tbTruncateWithTooltip>{{ interval.get('name').value }}</mat-label>
             </mat-checkbox>
           </div>
-          <ng-container *ngIf="aggregation">
+          @if (aggregation) {
             <div class="tb-form-table-row-cell tb-agg-interval">
               <tb-grouping-interval-options
                 formControlName="aggIntervalsConfig"
@@ -56,9 +56,9 @@
                 appearance="outline">
               </tb-grouping-interval-options>
             </div>
-          </ng-container>
+          }
         </div>
-      </ng-container>
+      }
     </div>
   </div>
   <div class="flex flex-row gap-2 items-center">

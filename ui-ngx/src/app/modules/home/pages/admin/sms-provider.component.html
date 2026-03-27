@@ -15,35 +15,41 @@
     limitations under the License.
 
 -->
-<mat-card appearance="outlined" class="settings-card" *ngIf="isSysAdmin()">
-  <mat-card-header>
-    <mat-card-title>
-      <span class="mat-headline-5" translate>admin.sms-provider-settings</span>
-    </mat-card-title>
-    <span class="flex-1"></span>
-    <div tb-help="smsProviderSettings"></div>
-  </mat-card-header>
-  <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
-  </mat-progress-bar>
-  <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
-  <mat-card-content>
-    <form [formGroup]="smsProvider" (ngSubmit)="save()">
-      <tb-sms-provider-configuration
-        required
-        formControlName="configuration">
-      </tb-sms-provider-configuration>
-      <div class="flex flex-row items-center justify-end gap-4 xs:flex-col xs:items-stretch">
-        <button mat-raised-button type="button"
-                [disabled]="(isLoading$ | async) || smsProvider.invalid" (click)="sendTestSms()">
-          {{'admin.send-test-sms' | translate}}
-        </button>
-        <button mat-raised-button color="primary" [disabled]="(isLoading$ | async) || smsProvider.invalid || !smsProvider.dirty"
-                type="submit">{{'action.save' | translate}}
-        </button>
-      </div>
-    </form>
-  </mat-card-content>
-</mat-card>
+@if (isSysAdmin()) {
+  <mat-card appearance="outlined" class="settings-card">
+    <mat-card-header>
+      <mat-card-title>
+        <span class="mat-headline-5" translate>admin.sms-provider-settings</span>
+      </mat-card-title>
+      <span class="flex-1"></span>
+      <div tb-help="smsProviderSettings"></div>
+    </mat-card-header>
+    @if (isLoading$ | async) {
+      <mat-progress-bar color="warn" mode="indeterminate">
+      </mat-progress-bar>
+    }
+    @if (!(isLoading$ | async)) {
+      <div style="height: 4px;"></div>
+    }
+    <mat-card-content>
+      <form [formGroup]="smsProvider" (ngSubmit)="save()">
+        <tb-sms-provider-configuration
+          required
+          formControlName="configuration">
+        </tb-sms-provider-configuration>
+        <div class="flex flex-row items-center justify-end gap-4 xs:flex-col xs:items-stretch">
+          <button mat-raised-button type="button"
+                  [disabled]="(isLoading$ | async) || smsProvider.invalid" (click)="sendTestSms()">
+            {{'admin.send-test-sms' | translate}}
+          </button>
+          <button mat-raised-button color="primary" [disabled]="(isLoading$ | async) || smsProvider.invalid || !smsProvider.dirty"
+                  type="submit">{{'action.save' | translate}}
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+}
 <form [formGroup]="notificationSettingsForm" (ngSubmit)="saveNotification()">
   <mat-card appearance="outlined" class="settings-card" formGroupName="deliveryMethodsConfigs">
     <mat-card-header>
@@ -53,32 +59,40 @@
       <span class="flex-1"></span>
       <div tb-help="slackSettings"></div>
     </mat-card-header>
-    <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
-    </mat-progress-bar>
-    <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
+    @if (isLoading$ | async) {
+      <mat-progress-bar color="warn" mode="indeterminate">
+      </mat-progress-bar>
+    }
+    @if (!(isLoading$ | async)) {
+      <div style="height: 4px;"></div>
+    }
     <mat-card-content formGroupName="SLACK">
       <mat-form-field class="mat-block" subscriptSizing="dynamic">
         <mat-label translate>admin.slack-api-token</mat-label>
         <input matInput formControlName="botToken"/>
       </mat-form-field>
     </mat-card-content>
-    <mat-card-header *ngIf="isSysAdmin()">
-      <mat-card-title>
-        <span class="mat-headline-5" translate>admin.mobile-settings</span>
-      </mat-card-title>
-      <span class="flex-1"></span>
-      <!--    <div tb-help="mobileSettings"></div>-->
-    </mat-card-header>
-    <mat-card-content formGroupName="MOBILE_APP" *ngIf="isSysAdmin()">
-      <tb-file-input formControlName="firebaseServiceAccountCredentials"
-                     dropLabel="{{ 'admin.select-firebase-service-account-file' | translate }}"
-                     label="{{ 'admin.firebase-service-account-file' | translate }}"
-                     accept=".json,application/json"
-                     allowedExtensions="json"
-                     [existingFileName]="notificationSettingsForm.get('deliveryMethodsConfigs.MOBILE_APP.firebaseServiceAccountCredentialsFileName')?.value"
-                     (fileNameChanged)="notificationSettingsForm?.get('deliveryMethodsConfigs.MOBILE_APP.firebaseServiceAccountCredentialsFileName').patchValue($event)">
-      </tb-file-input>
-    </mat-card-content>
+    @if (isSysAdmin()) {
+      <mat-card-header>
+        <mat-card-title>
+          <span class="mat-headline-5" translate>admin.mobile-settings</span>
+        </mat-card-title>
+        <span class="flex-1"></span>
+        <!--    <div tb-help="mobileSettings"></div>-->
+      </mat-card-header>
+    }
+    @if (isSysAdmin()) {
+      <mat-card-content formGroupName="MOBILE_APP">
+        <tb-file-input formControlName="firebaseServiceAccountCredentials"
+                       dropLabel="{{ 'admin.select-firebase-service-account-file' | translate }}"
+                       label="{{ 'admin.firebase-service-account-file' | translate }}"
+                       accept=".json,application/json"
+                       allowedExtensions="json"
+                       [existingFileName]="notificationSettingsForm.get('deliveryMethodsConfigs.MOBILE_APP.firebaseServiceAccountCredentialsFileName')?.value"
+                       (fileNameChanged)="notificationSettingsForm?.get('deliveryMethodsConfigs.MOBILE_APP.firebaseServiceAccountCredentialsFileName').patchValue($event)">
+        </tb-file-input>
+      </mat-card-content>
+    }
     <mat-card-actions  class="flex items-center justify-end xs:flex-col xs:items-stretch">
       <button mat-button mat-raised-button color="primary"
               [disabled]="(isLoading$ | async) || notificationSettingsForm.invalid || !notificationSettingsForm.dirty"

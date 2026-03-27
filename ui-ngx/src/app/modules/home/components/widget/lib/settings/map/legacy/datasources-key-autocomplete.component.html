@@ -23,17 +23,21 @@
          (focusin)="onFocus()"
          formControlName="key"
          [matAutocomplete]="keyAutocomplete">
-  <button *ngIf="keyFormGroup.get('key').value && !keyFormGroup.get('key').disabled"
-          type="button"
-          matSuffix mat-icon-button aria-label="Clear"
-          (click)="clearKey()">
-    <mat-icon class="material-icons">close</mat-icon>
-  </button>
+  @if (keyFormGroup.get('key').value && !keyFormGroup.get('key').disabled) {
+    <button
+      type="button"
+      matSuffix mat-icon-button aria-label="Clear"
+      (click)="clearKey()">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  }
   <mat-autocomplete
     class="tb-autocomplete"
     #keyAutocomplete="matAutocomplete">
-    <mat-option *ngFor="let key of filteredKeys | async" [value]="key">
-      <span [innerHTML]="key | highlight:keySearchText"></span>
-    </mat-option>
+    @for (key of filteredKeys | async; track key) {
+      <mat-option [value]="key">
+        <span [innerHTML]="key | highlight:keySearchText"></span>
+      </mat-option>
+    }
   </mat-autocomplete>
 </mat-form-field>

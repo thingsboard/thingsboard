@@ -51,8 +51,8 @@
           <mat-icon class="material-icons">arrow_back</mat-icon>
         </button>
         <tb-breadcrumb
-            [class.!hidden]="displaySearchMode()"
-            class="mat-toolbar-tools flex-1">
+          [class.!hidden]="displaySearchMode()"
+          class="mat-toolbar-tools flex-1">
         </tb-breadcrumb>
         <div [class.!hidden]="!displaySearchMode()" class="tb-dark flex flex-1 flex-row">
           <mat-form-field class="tb-appearance-transparent flex-1">
@@ -66,18 +66,22 @@
                 mat-icon-button (click)="openSearch()">
           <mat-icon class="material-icons">search</mat-icon>
         </button>
-        <button *ngIf="fullscreenEnabled"
-                [class.!hidden]="displaySearchMode()"
-                class="lt-md:!hidden"
-                mat-icon-button (click)="toggleFullscreen()">
-          <mat-icon class="material-icons">{{ isFullscreen() ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
-        </button>
+        @if (fullscreenEnabled) {
+          <button
+            [class.!hidden]="displaySearchMode()"
+            class="lt-md:!hidden"
+            mat-icon-button (click)="toggleFullscreen()">
+            <mat-icon class="material-icons">{{ isFullscreen() ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+          </button>
+        }
         <tb-notification-bell></tb-notification-bell>
         <tb-user-menu [displayUserInfo]="!displaySearchMode()"></tb-user-menu>
       </mat-toolbar>
-      <mat-progress-bar color="warn" style="z-index: 10; margin-bottom: -4px; width: 100%;" mode="indeterminate"
-                        *ngIf="!hideLoadingBar && (isLoading$ | async)">
-      </mat-progress-bar>
+      @if (!hideLoadingBar && (isLoading$ | async)) {
+        <mat-progress-bar color="warn" style="z-index: 10; margin-bottom: -4px; width: 100%;" mode="indeterminate"
+                          >
+        </mat-progress-bar>
+      }
       <div tb-toast class="tb-main-content flex flex-1 flex-col">
         <router-outlet (activate)="activeComponentChanged($event)"></router-outlet>
       </div>

@@ -16,106 +16,126 @@
 
 -->
 <section class="tb-datasource-section tb-form-panel outlined" [formGroup]="datasourceFormGroup">
-  <mat-form-field *ngIf="!basicMode" class="tb-datasource-type" hideRequiredMarker appearance="outline">
-    <mat-label translate>widget-config.datasource-type</mat-label>
-    <mat-select formControlName="type">
-      <mat-option *ngFor="let datasourceType of datasourceTypes" [value]="datasourceType">
-        {{ datasourceTypesTranslations.get(datasourceType) | translate }}
-      </mat-option>
-    </mat-select>
-  </mat-form-field>
-  <section class="flex flex-col" [ngSwitch]="datasourceFormGroup.get('type').value">
-    <ng-template [ngSwitchCase]="datasourceType.function">
-      <mat-form-field *ngIf="!hideDatasourceLabel" class="flex-1">
-        <mat-label translate>datasource.label</mat-label>
-        <input matInput
-               formControlName="name">
-      </mat-form-field>
-    </ng-template>
-    <ng-template [ngSwitchCase]="datasourceFormGroup.get('type').value === datasourceType.device ||
-                                 datasourceFormGroup.get('type').value === datasourceType.entity ||
-                                 datasourceFormGroup.get('type').value === datasourceType.entityCount ||
-                                 datasourceFormGroup.get('type').value === datasourceType.alarmCount ? datasourceFormGroup.get('type').value : ''">
-      <tb-alarm-filter-config *ngIf="datasourceFormGroup.get('type').value === datasourceType.alarmCount && !hideAlarmFilter"
-                              [initialAlarmFilterConfig]="{ statusList: [alarmSearchStatus.ACTIVE] }"
-                              style="height: 56px; margin-bottom: 22px;"
-                              formControlName="alarmFilterConfig"></tb-alarm-filter-config>
-      <tb-entity-autocomplete *ngIf="datasourceFormGroup.get('type').value === datasourceType.device"
-                              [required]="!datasourcesOptional"
-                              [entityType]="entityType.DEVICE"
-                              appearance="outline"
-                              formControlName="deviceId">
-      </tb-entity-autocomplete>
-      <tb-entity-alias-select
-        *ngIf="datasourceFormGroup.get('type').value !== datasourceType.device"
-        [showLabel]="true"
-        appearance="outline"
-        [tbRequired]="!entityAliasOptional"
-        [aliasController]="aliasController"
-        formControlName="entityAliasId"
-        [callbacks]="entityAliasSelectCallbacks">
-      </tb-entity-alias-select>
-      <mat-form-field *ngIf="!hideDatasourceLabel && [datasourceType.entityCount, datasourceType.alarmCount].includes(datasourceFormGroup.get('type').value)"
-                      class="flex-1" appearance="outline">
-        <input matInput
-               placeholder="{{ 'datasource.label' | translate }}"
-               formControlName="name">
-      </mat-form-field>
-    </ng-template>
+  @if (!basicMode) {
+    <mat-form-field class="tb-datasource-type" hideRequiredMarker appearance="outline">
+      <mat-label translate>widget-config.datasource-type</mat-label>
+      <mat-select formControlName="type">
+        @for (datasourceType of datasourceTypes; track datasourceType) {
+          <mat-option [value]="datasourceType">
+            {{ datasourceTypesTranslations.get(datasourceType) | translate }}
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  }
+  <section class="flex flex-col">
+    @switch (datasourceFormGroup.get('type').value) {
+      @case (datasourceType.function) {
+        @if (!hideDatasourceLabel) {
+          <mat-form-field class="flex-1">
+            <mat-label translate>datasource.label</mat-label>
+            <input matInput
+                   formControlName="name">
+          </mat-form-field>
+        }
+      }
+      @case (datasourceFormGroup.get('type').value === datasourceType.device ||
+        datasourceFormGroup.get('type').value === datasourceType.entity ||
+        datasourceFormGroup.get('type').value === datasourceType.entityCount ||
+        datasourceFormGroup.get('type').value === datasourceType.alarmCount ? datasourceFormGroup.get('type').value : '') {
+        @if (datasourceFormGroup.get('type').value === datasourceType.alarmCount && !hideAlarmFilter) {
+          <tb-alarm-filter-config
+            [initialAlarmFilterConfig]="{ statusList: [alarmSearchStatus.ACTIVE] }"
+            style="height: 56px; margin-bottom: 22px;"
+          formControlName="alarmFilterConfig"></tb-alarm-filter-config>
+        }
+        @if (datasourceFormGroup.get('type').value === datasourceType.device) {
+          <tb-entity-autocomplete
+            [required]="!datasourcesOptional"
+            [entityType]="entityType.DEVICE"
+            appearance="outline"
+            formControlName="deviceId">
+          </tb-entity-autocomplete>
+        }
+        @if (datasourceFormGroup.get('type').value !== datasourceType.device) {
+          <tb-entity-alias-select
+            [showLabel]="true"
+            appearance="outline"
+            [tbRequired]="!entityAliasOptional"
+            [aliasController]="aliasController"
+            formControlName="entityAliasId"
+            [callbacks]="entityAliasSelectCallbacks">
+          </tb-entity-alias-select>
+        }
+        @if (!hideDatasourceLabel && [datasourceType.entityCount, datasourceType.alarmCount].includes(datasourceFormGroup.get('type').value)) {
+          <mat-form-field
+            class="flex-1" appearance="outline">
+            <input matInput
+                   placeholder="{{ 'datasource.label' | translate }}"
+                   formControlName="name">
+          </mat-form-field>
+        }
+      }
+    }
   </section>
-  <section *ngIf="!hideDataKeys" class="flex flex-1 flex-col items-stretch justify-start">
-    <tb-data-keys class="tb-data-keys flex-1"
-                  appearance="outline"
-                  [widgetType]="widgetType"
-                  [datasourceType]="datasourceFormGroup.get('type').value"
-                  [hideDataKeyLabel]="hideDataKeyLabel"
-                  [hideDataKeyColor]="hideDataKeyColor"
-                  [hideDataKeyUnits]="hideDataKeyUnits"
-                  [hideDataKeyDecimals]="hideDataKeyDecimals"
-                  [maxDataKeys]="maxDataKeys"
-                  [supportsUnitConversion]="supportsUnitConversion"
-                  [optDataKeys]="isDataKeysOptional(datasourceFormGroup.get('type').value)"
-                  [simpleDataKeysLabel]="!hasAdditionalLatestDataKeys"
-                  [aliasController]="aliasController"
-                  [dataKeySettingsForm]="dataKeySettingsForm"
-                  [dataKeySettingsDirective]="dataKeySettingsDirective"
-                  [datakeySettingsFunction]="dataKeySettingsFunction"
-                  [dashboard]="dashboard"
-                  [widget]="widget"
-                  [callbacks]="callbacks"
-                  [entityAliasId]="datasourceFormGroup.get('entityAliasId').value"
-                  [deviceId]="datasourceFormGroup.get('deviceId').value"
-                  formControlName="dataKeys">
-    </tb-data-keys>
-    <tb-data-keys *ngIf="hasAdditionalLatestDataKeys" class="tb-data-keys flex-1"
-                  appearance="outline"
-                  [widgetType]="widgetTypes.latest"
-                  [datasourceType]="datasourceFormGroup.get('type').value"
-                  [hideDataKeyLabel]="hideDataKeyLabel"
-                  [hideDataKeyColor]="hideDataKeyColor"
-                  [hideDataKeyUnits]="hideDataKeyUnits"
-                  [hideDataKeyDecimals]="hideDataKeyDecimals"
-                  latestDataKeys
-                  [supportsUnitConversion]="supportsUnitConversion"
-                  [optDataKeys]="true"
-                  [aliasController]="aliasController"
-                  [dataKeySettingsForm]="latestDataKeySettingsForm"
-                  [dataKeySettingsDirective]="latestDataKeySettingsDirective"
-                  [datakeySettingsFunction]="dataKeySettingsFunction"
-                  [dashboard]="dashboard"
-                  [widget]="widget"
-                  [callbacks]="callbacks"
-                  [entityAliasId]="datasourceFormGroup.get('entityAliasId').value"
-                  [deviceId]="datasourceFormGroup.get('deviceId').value"
-                  formControlName="latestDataKeys">
-    </tb-data-keys>
-  </section>
-  <tb-filter-select
-    *ngIf="(!basicMode || displayDatasourceFilterForBasicMode) && ![datasourceType.function].includes(datasourceFormGroup.get('type').value)"
-    appearance="outline"
-    [showLabel]="true"
-    [aliasController]="aliasController"
-    formControlName="filterId"
-    [callbacks]="filterSelectCallbacks">
-  </tb-filter-select>
+  @if (!hideDataKeys) {
+    <section class="flex flex-1 flex-col items-stretch justify-start">
+      <tb-data-keys class="tb-data-keys flex-1"
+                    appearance="outline"
+                    [widgetType]="widgetType"
+                    [datasourceType]="datasourceFormGroup.get('type').value"
+                    [hideDataKeyLabel]="hideDataKeyLabel"
+                    [hideDataKeyColor]="hideDataKeyColor"
+                    [hideDataKeyUnits]="hideDataKeyUnits"
+                    [hideDataKeyDecimals]="hideDataKeyDecimals"
+                    [maxDataKeys]="maxDataKeys"
+                    [supportsUnitConversion]="supportsUnitConversion"
+                    [optDataKeys]="isDataKeysOptional(datasourceFormGroup.get('type').value)"
+                    [simpleDataKeysLabel]="!hasAdditionalLatestDataKeys"
+                    [aliasController]="aliasController"
+                    [dataKeySettingsForm]="dataKeySettingsForm"
+                    [dataKeySettingsDirective]="dataKeySettingsDirective"
+                    [datakeySettingsFunction]="dataKeySettingsFunction"
+                    [dashboard]="dashboard"
+                    [widget]="widget"
+                    [callbacks]="callbacks"
+                    [entityAliasId]="datasourceFormGroup.get('entityAliasId').value"
+                    [deviceId]="datasourceFormGroup.get('deviceId').value"
+                    formControlName="dataKeys">
+      </tb-data-keys>
+      @if (hasAdditionalLatestDataKeys) {
+        <tb-data-keys class="tb-data-keys flex-1"
+                      appearance="outline"
+                      [widgetType]="widgetTypes.latest"
+                      [datasourceType]="datasourceFormGroup.get('type').value"
+                      [hideDataKeyLabel]="hideDataKeyLabel"
+                      [hideDataKeyColor]="hideDataKeyColor"
+                      [hideDataKeyUnits]="hideDataKeyUnits"
+                      [hideDataKeyDecimals]="hideDataKeyDecimals"
+                      latestDataKeys
+                      [supportsUnitConversion]="supportsUnitConversion"
+                      [optDataKeys]="true"
+                      [aliasController]="aliasController"
+                      [dataKeySettingsForm]="latestDataKeySettingsForm"
+                      [dataKeySettingsDirective]="latestDataKeySettingsDirective"
+                      [datakeySettingsFunction]="dataKeySettingsFunction"
+                      [dashboard]="dashboard"
+                      [widget]="widget"
+                      [callbacks]="callbacks"
+                      [entityAliasId]="datasourceFormGroup.get('entityAliasId').value"
+                      [deviceId]="datasourceFormGroup.get('deviceId').value"
+                      formControlName="latestDataKeys">
+        </tb-data-keys>
+      }
+    </section>
+  }
+  @if ((!basicMode || displayDatasourceFilterForBasicMode) && ![datasourceType.function].includes(datasourceFormGroup.get('type').value)) {
+    <tb-filter-select
+      appearance="outline"
+      [showLabel]="true"
+      [aliasController]="aliasController"
+      formControlName="filterId"
+      [callbacks]="filterSelectCallbacks">
+    </tb-filter-select>
+  }
 </section>

@@ -23,9 +23,11 @@
       <mat-option [value]="null">
         {{ 'widgets.persistent-table.rpc-search-status-all' | translate }}
       </mat-option>
-      <mat-option *ngFor="let searchStatus of persistentSearchStatuses" [value]="searchStatus">
-        {{ rpcSearchStatusTranslationMap.get(searchStatus) | translate }}
-      </mat-option>
+      @for (searchStatus of persistentSearchStatuses; track searchStatus) {
+        <mat-option [value]="searchStatus">
+          {{ rpcSearchStatusTranslationMap.get(searchStatus) | translate }}
+        </mat-option>
+      }
     </mat-select>
   </mat-form-field>
   <div class="tb-panel-actions flex flex-row items-center justify-end">

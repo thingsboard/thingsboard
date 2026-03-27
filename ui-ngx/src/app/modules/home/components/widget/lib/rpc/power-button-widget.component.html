@@ -22,5 +22,7 @@
     <div #powerButtonShape class="tb-power-button-shape" [class.tb-power-button-pointer]="!disabled && (loading$ | async) === false">
     </div>
   </div>
-  <mat-progress-bar class="tb-action-widget-progress" style="height: 4px;" color="accent" mode="indeterminate" *ngIf="loading$ | async"></mat-progress-bar>
+  @if (loading$ | async) {
+    <mat-progress-bar class="tb-action-widget-progress" style="height: 4px;" color="accent" mode="indeterminate"></mat-progress-bar>
+  }
 </div>

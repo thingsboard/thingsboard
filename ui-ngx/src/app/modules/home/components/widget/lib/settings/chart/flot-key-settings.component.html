@@ -202,16 +202,19 @@
         <span translate>widgets.chart.add-threshold</span>
       </button>
     </div>
-    <div *ngIf="thresholdsFormArray().length" class="tb-control-list tb-drop-list flex flex-col gap-3" cdkDropList cdkDropListOrientation="vertical"
-         (cdkDropListDropped)="thresholdDrop($event)">
-      <div cdkDrag class="tb-draggable" *ngFor="let thresholdControl of thresholdsFormArray().controls; trackBy: trackByThreshold;
-                 let $index = index;">
-        <tb-flot-threshold [formControl]="thresholdControl"
-                           [aliasController]="aliasController"
-                           (removeThreshold)="removeThreshold($index)">
-        </tb-flot-threshold>
+    @if (thresholdsFormArray().length) {
+      <div class="tb-control-list tb-drop-list flex flex-col gap-3" cdkDropList cdkDropListOrientation="vertical"
+           (cdkDropListDropped)="thresholdDrop($event)">
+        @for (thresholdControl of thresholdsFormArray().controls; track trackByThreshold($index, thresholdControl)) {
+          <div cdkDrag class="tb-draggable">
+            <tb-flot-threshold [formControl]="thresholdControl"
+                               [aliasController]="aliasController"
+                               (removeThreshold)="removeThreshold($index)">
+            </tb-flot-threshold>
+          </div>
+        }
       </div>
-    </div>
+    }
   </div>
   <div class="tb-form-panel tb-slide-toggle" formGroupName="comparisonSettings">
     <div class="tb-form-panel-title" translate>widgets.chart.comparison-settings</div>

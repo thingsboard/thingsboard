@@ -19,22 +19,30 @@
   <mat-form-field class="mat-block flex-1" [appearance]="appearance">
     <mat-label>{{ labelText | translate }}</mat-label>
     <input matInput type="number" min="0" formControlName="time" required>
-    <mat-error *ngIf="timeUnitSelectFormGroup.get('time').hasError('required')">
-      {{ requiredText | translate }}
-    </mat-error>
-    <mat-error *ngIf="timeUnitSelectFormGroup.get('time').hasError('pattern')">
-      {{ patternText | translate }}
-    </mat-error>
-    <mat-error *ngIf="timeUnitSelectFormGroup.get('time').hasError('min')">
-      {{ (minText || patternText) | translate : {min: minTime/1000} }}
-    </mat-error>
+    @if (timeUnitSelectFormGroup.get('time').hasError('required')) {
+      <mat-error>
+        {{ requiredText | translate }}
+      </mat-error>
+    }
+    @if (timeUnitSelectFormGroup.get('time').hasError('pattern')) {
+      <mat-error>
+        {{ patternText | translate }}
+      </mat-error>
+    }
+    @if (timeUnitSelectFormGroup.get('time').hasError('min')) {
+      <mat-error>
+        {{ (minText || patternText) | translate : {min: minTime/1000} }}
+      </mat-error>
+    }
   </mat-form-field>
   <mat-form-field class="mat-block flex-1" [appearance]="appearance">
     <mat-label translate>device-profile.condition-duration-time-unit</mat-label>
     <mat-select formControlName="unit">
-      <mat-option *ngFor="let timeUnit of timeUnits" [value]="timeUnit">
-        {{ timeUnitTranslations.get(timeUnit) | translate }}
-      </mat-option>
+      @for (timeUnit of timeUnits; track timeUnit) {
+        <mat-option [value]="timeUnit">
+          {{ timeUnitTranslations.get(timeUnit) | translate }}
+        </mat-option>
+      }
     </mat-select>
   </mat-form-field>
 </section>

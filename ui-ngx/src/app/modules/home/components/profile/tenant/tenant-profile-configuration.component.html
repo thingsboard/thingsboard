@@ -16,12 +16,14 @@
 
 -->
 <div [formGroup]="tenantProfileConfigurationFormGroup">
-  <div [ngSwitch]="type">
-    <ng-template [ngSwitchCase]="tenantProfileType.DEFAULT">
-      <tb-default-tenant-profile-configuration
-        [required]="required"
-        formControlName="configuration">
-      </tb-default-tenant-profile-configuration>
-    </ng-template>
+  <div>
+    @switch (type) {
+      @case (tenantProfileType.DEFAULT) {
+        <tb-default-tenant-profile-configuration
+          [required]="required"
+          formControlName="configuration">
+        </tb-default-tenant-profile-configuration>
+      }
+    }
   </div>
 </div>

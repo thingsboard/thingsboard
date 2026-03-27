@@ -33,13 +33,15 @@
                     'max-w-45%': isConstantKeyType,
                     'max-w-70%': !isConstantKeyType
                  }"
-                 formGroupName="key">
+          formGroupName="key">
           <mat-form-field class="mat-block max-w-40% flex-full">
             <mat-label translate>filter.key-type.key-type</mat-label>
             <mat-select required formControlName="type">
-              <mat-option *ngFor="let type of entityKeyTypes" [value]="type">
-                {{entityKeyTypeTranslations.get(type) | translate}}
-              </mat-option>
+              @for (type of entityKeyTypes; track type) {
+                <mat-option [value]="type">
+                  {{entityKeyTypeTranslations.get(type) | translate}}
+                </mat-option>
+              }
             </mat-select>
           </mat-form-field>
           <mat-form-field class="mat-block max-w-60% flex-full">
@@ -49,20 +51,26 @@
                    (focusin)="onFocus()"
                    [matAutocomplete]="keyName"
                    [matAutocompleteDisabled]="!showAutocomplete">
-            <button *ngIf="keyFilterFormGroup.get('key.key').value && showAutocomplete"
-                    type="button"
-                    matSuffix mat-icon-button aria-label="Clear"
-                    (click)="clear()">
-              <mat-icon class="material-icons">close</mat-icon>
-            </button>
+            @if (keyFilterFormGroup.get('key.key').value && showAutocomplete) {
+              <button
+                type="button"
+                matSuffix mat-icon-button aria-label="Clear"
+                (click)="clear()">
+                <mat-icon class="material-icons">close</mat-icon>
+              </button>
+            }
             <mat-autocomplete autoActiveFirstOption #keyName="matAutocomplete">
-              <mat-option *ngFor="let keyName of filteredKeysName | async" [value]="keyName">
-                <span [innerHTML]="keyName | highlight:searchText"></span>
-              </mat-option>
+              @for (keyName of filteredKeysName | async; track keyName) {
+                <mat-option [value]="keyName">
+                  <span [innerHTML]="keyName | highlight:searchText"></span>
+                </mat-option>
+              }
             </mat-autocomplete>
-            <mat-error *ngIf="keyFilterFormGroup.get('key.key').hasError('required')">
-              {{ 'filter.key-name-required' | translate }}
-            </mat-error>
+            @if (keyFilterFormGroup.get('key.key').hasError('required')) {
+              <mat-error>
+                {{ 'filter.key-name-required' | translate }}
+              </mat-error>
+            }
           </mat-form-field>
         </section>
         <mat-form-field class="mat-block tb-value-type flex-full"
@@ -76,50 +84,60 @@
               <mat-icon class="tb-mat-18" svgIcon="{{ entityKeyValueTypes.get(keyFilterFormGroup.get('valueType').value)?.icon }}"></mat-icon>
               <span>{{ entityKeyValueTypes.get(keyFilterFormGroup.get('valueType').value)?.name | translate }}</span>
             </mat-select-trigger>
-            <mat-option *ngFor="let valueType of entityKeyValueTypesKeys" [value]="valueType">
-              <mat-icon class="tb-mat-18" svgIcon="{{ entityKeyValueTypes.get(entityKeyValueTypeEnum[valueType]).icon }}"></mat-icon>
-              <span>{{ entityKeyValueTypes.get(entityKeyValueTypeEnum[valueType]).name | translate }}</span>
-            </mat-option>
+            @for (valueType of entityKeyValueTypesKeys; track valueType) {
+              <mat-option [value]="valueType">
+                <mat-icon class="tb-mat-18" svgIcon="{{ entityKeyValueTypes.get(entityKeyValueTypeEnum[valueType]).icon }}"></mat-icon>
+                <span>{{ entityKeyValueTypes.get(entityKeyValueTypeEnum[valueType]).name | translate }}</span>
+              </mat-option>
+            }
           </mat-select>
-          <mat-error *ngIf="keyFilterFormGroup.get('valueType').hasError('required')">
-            {{ 'filter.value-type-required' | translate }}
-          </mat-error>
+          @if (keyFilterFormGroup.get('valueType').hasError('required')) {
+            <mat-error>
+              {{ 'filter.value-type-required' | translate }}
+            </mat-error>
+          }
         </mat-form-field>
-        <div class="flex-1" *ngIf="isConstantKeyType">
-          <div class="flex flex-col" [ngSwitch]="keyFilterFormGroup.get('valueType').value">
-            <ng-template [ngSwitchCase]="entityKeyValueTypeEnum.STRING">
-              <mat-form-field class="mat-block">
-                <mat-label translate>filter.value</mat-label>
-                <input matInput required formControlName="value" placeholder="{{'filter.value' | translate}}">
-              </mat-form-field>
-            </ng-template>
-            <ng-template [ngSwitchCase]="entityKeyValueTypeEnum.NUMERIC">
-              <mat-form-field class="mat-block">
-                <mat-label translate>filter.value</mat-label>
-                <input required type="number" matInput formControlName="value">
-              </mat-form-field>
-            </ng-template>
-            <ng-template [ngSwitchCase]="entityKeyValueTypeEnum.DATE_TIME">
-              <tb-datetime formControlName="value"
-                           dateText="{{ 'filter.date' | translate }}"
-                           required></tb-datetime>
-            </ng-template>
-            <ng-template [ngSwitchCase]="entityKeyValueTypeEnum.BOOLEAN">
-              <mat-checkbox formControlName="value" style="margin-top: 20px">
-                {{ (keyFilterFormGroup.get('value').value ? 'value.true' : 'value.false') | translate }}
-              </mat-checkbox>
-            </ng-template>
+        @if (isConstantKeyType) {
+          <div class="flex-1">
+            <div class="flex flex-col">
+              @switch (keyFilterFormGroup.get('valueType').value) {
+                @case (entityKeyValueTypeEnum.STRING) {
+                  <mat-form-field class="mat-block">
+                    <mat-label translate>filter.value</mat-label>
+                    <input matInput required formControlName="value" placeholder="{{'filter.value' | translate}}">
+                  </mat-form-field>
+                }
+                @case (entityKeyValueTypeEnum.NUMERIC) {
+                  <mat-form-field class="mat-block">
+                    <mat-label translate>filter.value</mat-label>
+                    <input required type="number" matInput formControlName="value">
+                  </mat-form-field>
+                }
+                @case (entityKeyValueTypeEnum.DATE_TIME) {
+                  <tb-datetime formControlName="value"
+                               dateText="{{ 'filter.date' | translate }}"
+                  required></tb-datetime>
+                }
+                @case (entityKeyValueTypeEnum.BOOLEAN) {
+                  <mat-checkbox formControlName="value" style="margin-top: 20px">
+                    {{ (keyFilterFormGroup.get('value').value ? 'value.true' : 'value.false') | translate }}
+                  </mat-checkbox>
+                }
+              }
+            </div>
           </div>
-        </div>
+        }
       </section>
-      <tb-filter-predicate-list *ngIf="keyFilterFormGroup.get('valueType').value"
-                                [allowUserDynamicSource]="data.allowUserDynamicSource"
-                                [onlyUserDynamicSource]="isConstantKeyType"
-                                [displayUserParameters]="data.displayUserParameters"
-                                [valueType]="keyFilterFormGroup.get('valueType').value"
-                                [key]="keyFilterFormGroup.get('key.key').value"
-                                formControlName="predicates">
-      </tb-filter-predicate-list>
+      @if (keyFilterFormGroup.get('valueType').value) {
+        <tb-filter-predicate-list
+          [allowUserDynamicSource]="data.allowUserDynamicSource"
+          [onlyUserDynamicSource]="isConstantKeyType"
+          [displayUserParameters]="data.displayUserParameters"
+          [valueType]="keyFilterFormGroup.get('valueType').value"
+          [key]="keyFilterFormGroup.get('key.key').value"
+          formControlName="predicates">
+        </tb-filter-predicate-list>
+      }
     </fieldset>
   </div>
   <div mat-dialog-actions class="flex items-center justify-end">
@@ -130,11 +148,12 @@
             cdkFocusInitial>
       {{ (data.readonly ? 'action.close' : 'action.cancel') | translate }}
     </button>
-    <button mat-raised-button color="primary"
-            type="submit"
-            *ngIf="!data.readonly"
-            [disabled]="(isLoading$ | async) || keyFilterFormGroup.invalid || !keyFilterFormGroup.dirty">
-      {{ (data.isAdd ? 'action.add' : 'action.update') | translate }}
-    </button>
+    @if (!data.readonly) {
+      <button mat-raised-button color="primary"
+              type="submit"
+              [disabled]="(isLoading$ | async) || keyFilterFormGroup.invalid || !keyFilterFormGroup.dirty">
+        {{ (data.isAdd ? 'action.add' : 'action.update') | translate }}
+      </button>
+    }
   </div>
 </form>

@@ -20,30 +20,36 @@
   </tb-alarm-rule-condition>
   <tb-alarm-schedule-info formControlName="schedule">
   </tb-alarm-schedule-info>
-  <div *ngIf="!disabled || alarmRuleFormGroup.get('alarmDetails').value" class="flex flex-row items-center justify-start">
-    <span class="tb-alarm-rule-details title" (click)="openEditDetailsDialog($event)">
-      {{ ('device-profile.alarm-rule-additional-info' | translate) + ': ' }}
-    </span>
-    <span *ngIf="alarmRuleFormGroup.get('alarmDetails').value" class="tb-alarm-rule-details"
-          (click)="openEditDetailsDialog($event)"
-          [innerHTML]="alarmDetailsText"></span>
-    <button mat-icon-button color="primary"
-       type="button"
-       (click)="openEditDetailsDialog($event)"
-       matTooltip="{{ (disabled ? 'action.view' : 'action.edit') | translate }}"
-       matTooltipPosition="above">
-      <mat-icon>{{ disabled ? 'visibility' : (alarmRuleFormGroup.get('alarmDetails').value ? 'edit' : 'add') }}</mat-icon>
-    </button>
-  </div>
-  <div *ngIf="!disabled || alarmRuleFormGroup.get('dashboardId').value" class="flex flex-col items-start justify-start gt-sm:flex-row gt-sm:items-center">
-    <span class="tb-alarm-rule-dashboard title">
-      {{ ('device-profile.alarm-rule-mobile-dashboard' | translate) + ': ' }}
-    </span>
-    <tb-dashboard-autocomplete class="tb-alarm-rule-dashboard dashboard"
-      label=""
-      placeholder="{{ 'device-profile.alarm-rule-no-mobile-dashboard' | translate }}"
-      formControlName="dashboardId">
-      <span tb-hint>{{'device-profile.alarm-rule-mobile-dashboard-hint' | translate}}</span>
-    </tb-dashboard-autocomplete>
-  </div>
+  @if (!disabled || alarmRuleFormGroup.get('alarmDetails').value) {
+    <div class="flex flex-row items-center justify-start">
+      <span class="tb-alarm-rule-details title" (click)="openEditDetailsDialog($event)">
+        {{ ('device-profile.alarm-rule-additional-info' | translate) + ': ' }}
+      </span>
+      @if (alarmRuleFormGroup.get('alarmDetails').value) {
+        <span class="tb-alarm-rule-details"
+              (click)="openEditDetailsDialog($event)"
+        [innerHTML]="alarmDetailsText"></span>
+      }
+      <button mat-icon-button color="primary"
+              type="button"
+              (click)="openEditDetailsDialog($event)"
+              matTooltip="{{ (disabled ? 'action.view' : 'action.edit') | translate }}"
+              matTooltipPosition="above">
+        <mat-icon>{{ disabled ? 'visibility' : (alarmRuleFormGroup.get('alarmDetails').value ? 'edit' : 'add') }}</mat-icon>
+      </button>
+    </div>
+  }
+  @if (!disabled || alarmRuleFormGroup.get('dashboardId').value) {
+    <div class="flex flex-col items-start justify-start gt-sm:flex-row gt-sm:items-center">
+      <span class="tb-alarm-rule-dashboard title">
+        {{ ('device-profile.alarm-rule-mobile-dashboard' | translate) + ': ' }}
+      </span>
+      <tb-dashboard-autocomplete class="tb-alarm-rule-dashboard dashboard"
+                                 label=""
+                                 placeholder="{{ 'device-profile.alarm-rule-no-mobile-dashboard' | translate }}"
+                                 formControlName="dashboardId">
+        <span tb-hint>{{'device-profile.alarm-rule-mobile-dashboard-hint' | translate}}</span>
+      </tb-dashboard-autocomplete>
+    </div>
+  }
 </div>

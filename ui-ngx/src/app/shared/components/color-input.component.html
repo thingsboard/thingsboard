@@ -15,26 +15,37 @@
     limitations under the License.
 
 -->
-<mat-form-field *ngIf="!asBoxInput; else boxInput" [formGroup]="colorFormGroup">
-  <mat-label *ngIf="icon || label">
-    <mat-icon *ngIf="icon">{{icon}}</mat-icon>
-    <span *ngIf="label">{{label}}</span>
-  </mat-label>
-  <div matPrefix class="tb-color-preview" (click)="!disabled && showColorPicker($event)">
-    <div class="tb-color-result" [style.background]="colorFormGroup.get('color').value"></div>
-  </div>
-  <input matInput formControlName="color" (keydown)="$event.preventDefault();" (click)="openOnInput && showColorPicker($event)" [required]="required">
-  <button *ngIf="colorClearButton && !disabled"
-          type="button"
-          matSuffix mat-icon-button aria-label="Clear"
-          (click)="clear()">
-    <mat-icon class="material-icons">close</mat-icon>
-  </button>
-  <mat-error *ngIf="colorFormGroup.get('color').hasError('required')">
-    {{ requiredText }}
-  </mat-error>
-</mat-form-field>
-<ng-template #boxInput>
+@if (!asBoxInput) {
+  <mat-form-field [formGroup]="colorFormGroup">
+    @if (icon || label) {
+      <mat-label>
+        @if (icon) {
+          <mat-icon>{{icon}}</mat-icon>
+        }
+        @if (label) {
+          <span>{{label}}</span>
+        }
+      </mat-label>
+    }
+    <div matPrefix class="tb-color-preview" (click)="!disabled && showColorPicker($event)">
+      <div class="tb-color-result" [style.background]="colorFormGroup.get('color').value"></div>
+    </div>
+    <input matInput formControlName="color" (keydown)="$event.preventDefault();" (click)="openOnInput && showColorPicker($event)" [required]="required">
+    @if (colorClearButton && !disabled) {
+      <button
+        type="button"
+        matSuffix mat-icon-button aria-label="Clear"
+        (click)="clear()">
+        <mat-icon class="material-icons">close</mat-icon>
+      </button>
+    }
+    @if (colorFormGroup.get('color').hasError('required')) {
+      <mat-error>
+        {{ requiredText }}
+      </mat-error>
+    }
+  </mat-form-field>
+} @else {
   <button type="button"
           mat-stroked-button
           class="tb-box-button"
@@ -46,4 +57,4 @@
       <div class="tb-color-result" [style]="!disabled ? {background: colorFormGroup.get('color').value} : {}"></div>
     </div>
   </button>
-</ng-template>
+}

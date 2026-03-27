@@ -20,15 +20,21 @@
     <mat-form-field class="flex">
       <mat-label translate>admin.oauth2.domain-name</mat-label>
       <input matInput formControlName="name">
-      <mat-error *ngIf="entityForm.get('name').hasError('required')">
-        {{ 'admin.oauth2.domain-name-required' | translate }}
-      </mat-error>
-      <mat-error *ngIf="entityForm.get('name').hasError('maxlength')">
-        {{ 'admin.domain-name-max-length' | translate }}
-      </mat-error>
-      <mat-error *ngIf="entityForm.get('name').hasError('pattern')">
-        {{ 'admin.error-verification-url' | translate }}
-      </mat-error>
+      @if (entityForm.get('name').hasError('required')) {
+        <mat-error>
+          {{ 'admin.oauth2.domain-name-required' | translate }}
+        </mat-error>
+      }
+      @if (entityForm.get('name').hasError('maxlength')) {
+        <mat-error>
+          {{ 'admin.domain-name-max-length' | translate }}
+        </mat-error>
+      }
+      @if (entityForm.get('name').hasError('pattern')) {
+        <mat-error>
+          {{ 'admin.error-verification-url' | translate }}
+        </mat-error>
+      }
     </mat-form-field>
   </div>
   <div class="tb-form-row tb-standard-fields no-border no-padding">

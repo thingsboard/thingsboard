@@ -16,32 +16,34 @@
 
 -->
 <ng-container [formGroup]="latestChartWidgetConfigForm">
-  <tb-timewindow-config-panel *ngIf="displayTimewindowConfig"
-                              [onlyHistoryTimewindow]="onlyHistoryTimewindow()"
-                              formControlName="timewindowConfig">
-  </tb-timewindow-config-panel>
+  @if (displayTimewindowConfig) {
+    <tb-timewindow-config-panel
+      [onlyHistoryTimewindow]="onlyHistoryTimewindow()"
+      formControlName="timewindowConfig">
+    </tb-timewindow-config-panel>
+  }
   <tb-datasources
-      [configMode]="basicMode"
-      hideDatasourceLabel
-      hideDataKeys
-      forceSingleDatasource
-      formControlName="datasources">
+    [configMode]="basicMode"
+    hideDatasourceLabel
+    hideDataKeys
+    forceSingleDatasource
+    formControlName="datasources">
   </tb-datasources>
   <tb-data-keys-panel
-      panelTitle="{{ 'widgets.chart.series' | translate }}"
-      addKeyTitle="{{ 'widgets.chart.add-series' | translate }}"
-      keySettingsTitle="{{ 'widgets.chart.series-settings' | translate }}"
-      removeKeyTitle="{{ 'widgets.chart.remove-series' | translate }}"
-      noKeysText="{{ 'widgets.chart.no-series' | translate }}"
-      requiredKeysText="{{ 'widgets.chart.no-series-error' | translate }}"
-      hideUnits
-      hideDecimals
-      hideDataKeyUnits
-      hideDataKeyDecimals
-      [datasourceType]="datasource?.type"
-      [deviceId]="datasource?.deviceId"
-      [entityAliasId]="datasource?.entityAliasId"
-      formControlName="series">
+    panelTitle="{{ 'widgets.chart.series' | translate }}"
+    addKeyTitle="{{ 'widgets.chart.add-series' | translate }}"
+    keySettingsTitle="{{ 'widgets.chart.series-settings' | translate }}"
+    removeKeyTitle="{{ 'widgets.chart.remove-series' | translate }}"
+    noKeysText="{{ 'widgets.chart.no-series' | translate }}"
+    requiredKeysText="{{ 'widgets.chart.no-series-error' | translate }}"
+    hideUnits
+    hideDecimals
+    hideDataKeyUnits
+    hideDataKeyDecimals
+    [datasourceType]="datasource?.type"
+    [deviceId]="datasource?.deviceId"
+    [entityAliasId]="datasource?.entityAliasId"
+    formControlName="series">
   </tb-data-keys-panel>
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widget-config.appearance</div>
@@ -121,9 +123,11 @@
           <div>{{ 'legend.position' | translate }}</div>
           <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="legendPosition">
-              <mat-option *ngFor="let pos of legendPositions" [value]="pos">
-                {{ legendPositionTranslationMap.get(pos) | translate }}
-              </mat-option>
+              @for (pos of legendPositions; track pos) {
+                <mat-option [value]="pos">
+                  {{ legendPositionTranslationMap.get(pos) | translate }}
+                </mat-option>
+              }
             </mat-select>
           </mat-form-field>
         </div>
@@ -174,9 +178,11 @@
           <div class="flex flex-row items-center justify-start gap-2">
             <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
               <mat-select formControlName="tooltipValueType">
-                <mat-option *ngFor="let type of latestChartTooltipValueTypes" [value]="type">
-                  {{ latestChartTooltipValueTypeTranslationMap.get(type) | translate }}
-                </mat-option>
+                @for (type of latestChartTooltipValueTypes; track type) {
+                  <mat-option [value]="type">
+                    {{ latestChartTooltipValueTypeTranslationMap.get(type) | translate }}
+                  </mat-option>
+                }
               </mat-select>
             </mat-form-field>
             <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
@@ -210,7 +216,7 @@
     </mat-expansion-panel>
   </div>
   <tb-chart-animation-settings
-      formControlName="animation">
+    formControlName="animation">
   </tb-chart-animation-settings>
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widget-config.card-appearance</div>
@@ -239,7 +245,7 @@
     </div>
   </div>
   <tb-widget-actions-panel
-      formControlName="actions">
+    formControlName="actions">
   </tb-widget-actions-panel>
 </ng-container>
 
@@ -254,9 +260,11 @@
         <div class="flex flex-1 flex-row items-center justify-start gap-2">
           <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="labelPosition">
-              <mat-option *ngFor="let position of pieChartLabelPositions" [value]="position">
-                {{ pieChartLabelPositionTranslationMap.get(position) | translate }}
-              </mat-option>
+              @for (position of pieChartLabelPositions; track position) {
+                <mat-option [value]="position">
+                  {{ pieChartLabelPositionTranslationMap.get(position) | translate }}
+                </mat-option>
+              }
             </mat-select>
           </mat-form-field>
           <tb-font-settings formControlName="labelFont"
@@ -310,12 +318,14 @@
                                     breakpoints: {
                                       'lt-sm': 1
                                     }}"
-                             label="{{ 'widgets.doughnut.layout' | translate }}" formControlName="layout">
-        <tb-image-cards-select-option *ngFor="let layout of doughnutLayouts"
-                                      [value]="layout"
-                                      [image]="doughnutLayoutImageMap.get(layout)">
-          {{ doughnutLayoutTranslationMap.get(layout) | translate }}
-        </tb-image-cards-select-option>
+        label="{{ 'widgets.doughnut.layout' | translate }}" formControlName="layout">
+        @for (layout of doughnutLayouts; track layout) {
+          <tb-image-cards-select-option
+            [value]="layout"
+            [image]="doughnutLayoutImageMap.get(layout)">
+            {{ doughnutLayoutTranslationMap.get(layout) | translate }}
+          </tb-image-cards-select-option>
+        }
       </tb-image-cards-select>
       <div class="tb-form-row">
         <mat-slide-toggle class="mat-slide" formControlName="autoScale">
@@ -346,8 +356,8 @@
     <div class="tb-form-panel">
       <div class="tb-form-panel-title" translate>widgets.bar-chart.bar-appearance</div>
       <tb-chart-bar-settings
-          formControlName="barSettings"
-          [series]="false">
+        formControlName="barSettings"
+        [series]="false">
       </tb-chart-bar-settings>
     </div>
     <div class="tb-form-panel">
@@ -385,9 +395,9 @@
     <div class="tb-form-panel">
       <div class="tb-form-panel-title" translate>widgets.bar-chart.bar-appearance</div>
       <tb-chart-bar-settings
-          formControlName="barSettings"
-          pieLabelPosition
-          [series]="false">
+        formControlName="barSettings"
+        pieLabelPosition
+        [series]="false">
       </tb-chart-bar-settings>
     </div>
     <div class="tb-form-panel">
@@ -434,9 +444,11 @@
         <div>{{ 'widgets.radar-chart.shape' | translate }}</div>
         <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
           <mat-select formControlName="shape">
-            <mat-option *ngFor="let shape of radarChartShapes" [value]="shape">
-              {{ radarChartShapeTranslations.get(shape) | translate }}
-            </mat-option>
+            @for (shape of radarChartShapes; track shape) {
+              <mat-option [value]="shape">
+                {{ radarChartShapeTranslations.get(shape) | translate }}
+              </mat-option>
+            }
           </mat-select>
         </mat-form-field>
       </div>
@@ -454,9 +466,11 @@
         <div class="flex flex-row items-center justify-start gap-2">
           <mat-form-field class="medium-width xs:flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="lineType">
-              <mat-option *ngFor="let type of chartLineTypes" [value]="type">
-                {{ chartLineTypeTranslations.get(type) | translate }}
-              </mat-option>
+              @for (type of chartLineTypes; track type) {
+                <mat-option [value]="type">
+                  {{ chartLineTypeTranslations.get(type) | translate }}
+                </mat-option>
+              }
             </mat-select>
           </mat-form-field>
           <mat-form-field appearance="outline" class="number fixed-width" subscriptSizing="dynamic">
@@ -472,9 +486,11 @@
         <div class="flex flex-row items-center justify-start gap-2">
           <mat-form-field class="medium-width xs:flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="pointShape">
-              <mat-option *ngFor="let shape of chartShapes" [value]="shape">
-                {{ chartShapeTranslations.get(shape) | translate }}
-              </mat-option>
+              @for (shape of chartShapes; track shape) {
+                <mat-option [value]="shape">
+                  {{ chartShapeTranslations.get(shape) | translate }}
+                </mat-option>
+              }
             </mat-select>
           </mat-form-field>
           <mat-form-field appearance="outline" class="number fixed-width" subscriptSizing="dynamic">
@@ -490,9 +506,11 @@
         <div class="flex flex-row items-center justify-start gap-2 lt-md:flex-1">
           <mat-form-field class="medium-width lt-md:flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="labelPosition">
-              <mat-option *ngFor="let position of chartLabelPositions" [value]="position">
-                {{ chartLabelPositionTranslations.get(position) | translate }}
-              </mat-option>
+              @for (position of chartLabelPositions; track position) {
+                <mat-option [value]="position">
+                  {{ chartLabelPositionTranslations.get(position) | translate }}
+                </mat-option>
+              }
             </mat-select>
           </mat-form-field>
           <tb-font-settings formControlName="labelFont"
@@ -508,7 +526,7 @@
         </div>
       </div>
       <tb-chart-fill-settings
-          formControlName="fillAreaSettings">
+        formControlName="fillAreaSettings">
       </tb-chart-fill-settings>
     </div>
     <div class="tb-form-panel">

@@ -26,56 +26,73 @@
          (keypress)="assetProfileEnter($event)"
          [matAutocomplete]="assetProfileAutocomplete"
          [class.!hidden]="showDetailsPageLink && useAssetProfileLink && disabled && selectAssetProfileFormGroup.get('assetProfile').value">
-  <a *ngIf="showDetailsPageLink && useAssetProfileLink && selectAssetProfileFormGroup.get('assetProfile').value && disabled"
-     aria-label="Open asset profile" [routerLink]=assetProfileURL>
-    {{ displayAssetProfileFn(selectAssetProfileFormGroup.get('assetProfile').value) }}
-  </a>
-  <button *ngIf="selectAssetProfileFormGroup.get('assetProfile').value && !disabled"
-          type="button"
-          matSuffix mat-icon-button aria-label="Clear"
-          (click)="clear()">
-    <mat-icon class="material-icons">close</mat-icon>
-  </button>
-  <button *ngIf="selectAssetProfileFormGroup.get('assetProfile').value?.id && !disabled && editProfileEnabled"
-          type="button"
-          matSuffix mat-icon-button aria-label="Edit"
-          matTooltip="{{ 'asset-profile.edit' | translate }}"
-          matTooltipPosition="above"
-          (click)="editAssetProfile($event)">
-    <mat-icon class="material-icons">edit</mat-icon>
-  </button>
-  <button mat-button color="primary" matSuffix
-          (click)="createAssetProfile($event, '')"
-          *ngIf="!selectAssetProfileFormGroup.get('assetProfile').value && !disabled && addNewProfile">
-    <span style="white-space: nowrap">{{ 'notification.create-new' | translate }}</span>
-  </button>
+  @if (showDetailsPageLink && useAssetProfileLink && selectAssetProfileFormGroup.get('assetProfile').value && disabled) {
+    <a
+      aria-label="Open asset profile" [routerLink]=assetProfileURL>
+      {{ displayAssetProfileFn(selectAssetProfileFormGroup.get('assetProfile').value) }}
+    </a>
+  }
+  @if (selectAssetProfileFormGroup.get('assetProfile').value && !disabled) {
+    <button
+      type="button"
+      matSuffix mat-icon-button aria-label="Clear"
+      (click)="clear()">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  }
+  @if (selectAssetProfileFormGroup.get('assetProfile').value?.id && !disabled && editProfileEnabled) {
+    <button
+      type="button"
+      matSuffix mat-icon-button aria-label="Edit"
+      matTooltip="{{ 'asset-profile.edit' | translate }}"
+      matTooltipPosition="above"
+      (click)="editAssetProfile($event)">
+      <mat-icon class="material-icons">edit</mat-icon>
+    </button>
+  }
+  @if (!selectAssetProfileFormGroup.get('assetProfile').value && !disabled && addNewProfile) {
+    <button mat-button color="primary" matSuffix
+            (click)="createAssetProfile($event, '')"
+            >
+      <span style="white-space: nowrap">{{ 'notification.create-new' | translate }}</span>
+    </button>
+  }
   <mat-autocomplete
     class="tb-autocomplete"
     (closed)="onPanelClosed()"
     #assetProfileAutocomplete="matAutocomplete"
     [displayWith]="displayAssetProfileFn">
-    <mat-option *ngFor="let assetProfile of filteredAssetProfiles | async" [value]="assetProfile">
-      <span [innerHTML]="assetProfile.name | highlight:searchText"></span>
-    </mat-option>
-    <mat-option *ngIf="!(filteredAssetProfiles | async)?.length" [value]="null" class="tb-not-found">
-      <div class="tb-not-found-content" (click)="$event.stopPropagation()">
-        <div *ngIf="!textIsNotEmpty(searchText) || !addNewProfile; else searchNotEmpty">
-          <span translate>asset-profile.no-asset-profiles-found</span>
-        </div>
-        <ng-template #searchNotEmpty>
-          <span>
+    @for (assetProfile of filteredAssetProfiles | async; track assetProfile) {
+      <mat-option [value]="assetProfile">
+        <span [innerHTML]="assetProfile.name | highlight:searchText"></span>
+      </mat-option>
+    }
+    @if (!(filteredAssetProfiles | async)?.length) {
+      <mat-option [value]="null" class="tb-not-found">
+        <div class="tb-not-found-content" (click)="$event.stopPropagation()">
+          @if (!textIsNotEmpty(searchText) || !addNewProfile) {
+            <div>
+              <span translate>asset-profile.no-asset-profiles-found</span>
+            </div>
+          } @else {
+            <span>
               {{ translate.get('asset-profile.no-asset-profiles-matching',
-            {entity: truncate.transform(searchText, true, 6, &apos;...&apos;)}) | async }}
-          </span>
-          <span>
-            <a translate (click)="createAssetProfile($event, searchText)">asset-profile.create-new-asset-profile</a>
-          </span>
-        </ng-template>
-      </div>
-    </mat-option>
+              {entity: truncate.transform(searchText, true, 6, &apos;...&apos;)}) | async }}
+            </span>
+            <span>
+              <a translate (click)="createAssetProfile($event, searchText)">asset-profile.create-new-asset-profile</a>
+            </span>
+          }
+        </div>
+      </mat-option>
+    }
   </mat-autocomplete>
-  <mat-error *ngIf="selectAssetProfileFormGroup.get('assetProfile').hasError('required')">
-    {{ 'asset-profile.asset-profile-required' | translate }}
-  </mat-error>
-  <mat-hint *ngIf="hint && !disabled">{{ hint | translate }}</mat-hint>
+  @if (selectAssetProfileFormGroup.get('assetProfile').hasError('required')) {
+    <mat-error>
+      {{ 'asset-profile.asset-profile-required' | translate }}
+    </mat-error>
+  }
+  @if (hint && !disabled) {
+    <mat-hint>{{ hint | translate }}</mat-hint>
+  }
 </mat-form-field>

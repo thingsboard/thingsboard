@@ -26,19 +26,23 @@
             <span>{{ numberText(gpioItemFormGroup.value.row, -1) }}) - [</span><small>col:</small>
             <span>{{ numberText(gpioItemFormGroup.value.col, -1) }}]</span>
           </div>
-          <div *ngIf="hasColor" class="tb-color-preview" style="margin-left: 6px;">
-            <div class="tb-color-result" [style.background]="gpioItemFormGroup.get('color').value"></div>
-          </div>
+          @if (hasColor) {
+            <div class="tb-color-preview" style="margin-left: 6px;">
+              <div class="tb-color-result" [style.background]="gpioItemFormGroup.get('color').value"></div>
+            </div>
+          }
         </div>
       </mat-panel-title>
       <span class="flex-1"></span>
-      <button *ngIf="!disabled" mat-icon-button style="min-width: 40px;"
-              type="button"
-              (click)="removeGpioItem.emit()"
-              matTooltip="{{ 'action.remove' | translate }}"
-              matTooltipPosition="above">
-        <mat-icon>delete</mat-icon>
-      </button>
+      @if (!disabled) {
+        <button mat-icon-button style="min-width: 40px;"
+                type="button"
+                (click)="removeGpioItem.emit()"
+                matTooltip="{{ 'action.remove' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>delete</mat-icon>
+        </button>
+      }
     </div>
   </mat-expansion-panel-header>
   <ng-template matExpansionPanelContent>
@@ -65,13 +69,14 @@
             <input required matInput type="number" min="0" max="1" step="1" formControlName="col">
           </mat-form-field>
         </section>
-        <tb-color-input
-          *ngIf="hasColor"
-          required
-          formControlName="color"
-          icon="format_color_fill"
-          label="{{ 'widgets.gpio.color' | translate }}" openOnInput colorClearButton>
-        </tb-color-input>
+        @if (hasColor) {
+          <tb-color-input
+            required
+            formControlName="color"
+            icon="format_color_fill"
+            label="{{ 'widgets.gpio.color' | translate }}" openOnInput colorClearButton>
+          </tb-color-input>
+        }
       </section>
     </div>
   </ng-template>

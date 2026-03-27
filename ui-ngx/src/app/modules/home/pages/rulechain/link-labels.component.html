@@ -18,13 +18,16 @@
 <mat-form-field [formGroup]="linksFormGroup" style="width: 100%;">
   <mat-label translate>rulenode.link-labels</mat-label>
   <mat-chip-grid #chipList>
-    <mat-chip-row
-      *ngFor="let label of labels"
-      [removable]="!disabled"
-      (removed)="remove(label)">
-      {{label.name}}
-      <mat-icon matChipRemove *ngIf="!disabled">close</mat-icon>
-    </mat-chip-row>
+    @for (label of labels; track label) {
+      <mat-chip-row
+        [removable]="!disabled"
+        (removed)="remove(label)">
+        {{label.name}}
+        @if (!disabled) {
+          <mat-icon matChipRemove>close</mat-icon>
+        }
+      </mat-chip-row>
+    }
     <input matInput type="text" placeholder="{{ !disabled ? ('rulenode.link-label' | translate) : '' }}"
            style="max-width: 200px;"
            #labelInput
@@ -42,24 +45,31 @@
                     class="tb-autocomplete"
                     (optionSelected)="selected($event)"
                     [displayWith]="displayLabelFn">
-    <mat-option *ngFor="let label of filteredLabels | async" [value]="label">
-      <span [innerHTML]="label.name | highlight:searchText"></span>
-    </mat-option>
-    <mat-option *ngIf="(filteredLabels | async)?.length === 0" [value]="null" class="tb-not-found">
-      <div class="tb-not-found-content" (click)="$event.stopPropagation()">
-        <div *ngIf="!textIsNotEmpty(searchText); else searchNotEmpty">
-          <span translate>rulenode.no-link-labels-found</span>
+    @for (label of filteredLabels | async; track label) {
+      <mat-option [value]="label">
+        <span [innerHTML]="label.name | highlight:searchText"></span>
+      </mat-option>
+    }
+    @if ((filteredLabels | async)?.length === 0) {
+      <mat-option [value]="null" class="tb-not-found">
+        <div class="tb-not-found-content" (click)="$event.stopPropagation()">
+          @if (!textIsNotEmpty(searchText)) {
+            <div>
+              <span translate>rulenode.no-link-labels-found</span>
+            </div>
+          } @else {
+            <span>
+              {{ translate.get('rulenode.no-link-label-matching',
+              {label: truncate.transform(searchText, true, 6, &apos;...&apos;)}) | async }}
+            </span>
+          }
+          @if (allowCustom) {
+            <span>
+              <a translate (click)="createLinkLabel($event, searchText)">rulenode.create-new-link-label</a>
+            </span>
+          }
         </div>
-        <ng-template #searchNotEmpty>
-                <span>
-                  {{ translate.get('rulenode.no-link-label-matching',
-                  {label: truncate.transform(searchText, true, 6, &apos;...&apos;)}) | async }}
-                </span>
-        </ng-template>
-        <span *ngIf="allowCustom">
-                <a translate (click)="createLinkLabel($event, searchText)">rulenode.create-new-link-label</a>
-              </span>
-      </div>
-    </mat-option>
+      </mat-option>
+    }
   </mat-autocomplete>
 </mat-form-field>

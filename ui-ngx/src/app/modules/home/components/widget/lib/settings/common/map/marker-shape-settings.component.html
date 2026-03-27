@@ -26,13 +26,17 @@
           [disabled]="disabled"
           #matButton
           (click)="openShapePopup($event, matButton)">
-    <img *ngIf="markerType === MarkerType.shape" matButtonIcon width="24px" height="24px" style="object-fit: contain;" [src]="shapePreview$ | async" [class.disabled]="disabled"/>
-    <div *ngIf="markerType === MarkerType.icon" matButtonIcon style="object-fit: contain; width: 24px; height: 24px;" [innerHTML]="iconPreview$ | async" [class.disabled]="disabled">
-    </div>
+    @if (markerType === MarkerType.shape) {
+      <img matButtonIcon width="24px" height="24px" style="object-fit: contain;" [src]="shapePreview$ | async" [class.disabled]="disabled"/>
+    }
+    @if (markerType === MarkerType.icon) {
+      <div matButtonIcon style="object-fit: contain; width: 24px; height: 24px;" [innerHTML]="iconPreview$ | async" [class.disabled]="disabled">
+      </div>
+    }
   </button>
   <tb-data-layer-color-settings [context]="context"
                                 [dsType]="dsType"
                                 [dsEntityAliasId]="dsEntityAliasId"
                                 [dsDeviceId]="dsDeviceId"
-                                helpId="widget/lib/map/color_fn" formControlName="color"></tb-data-layer-color-settings>
+  helpId="widget/lib/map/color_fn" formControlName="color"></tb-data-layer-color-settings>
 </div>

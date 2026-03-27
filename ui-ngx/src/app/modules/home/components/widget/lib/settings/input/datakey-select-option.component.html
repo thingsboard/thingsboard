@@ -22,18 +22,22 @@
         <div class="flex flex-1 flex-row items-center justify-start">
           <div>
             <span>{{ selectOptionFormGroup.value.value || 'Undefined' }} </span>
-            <span *ngIf="selectOptionFormGroup.value.label">(<small>{{ selectOptionFormGroup.value.label }}</small>)</span>
+            @if (selectOptionFormGroup.value.label) {
+              <span>(<small>{{ selectOptionFormGroup.value.label }}</small>)</span>
+            }
           </div>
         </div>
       </mat-panel-title>
       <span class="flex-1"></span>
-      <button *ngIf="!disabled" mat-icon-button style="min-width: 40px;"
-              type="button"
-              (click)="removeSelectOption.emit()"
-              matTooltip="{{ 'action.remove' | translate }}"
-              matTooltipPosition="above">
-        <mat-icon>delete</mat-icon>
-      </button>
+      @if (!disabled) {
+        <button mat-icon-button style="min-width: 40px;"
+                type="button"
+                (click)="removeSelectOption.emit()"
+                matTooltip="{{ 'action.remove' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>delete</mat-icon>
+        </button>
+      }
     </div>
   </mat-expansion-panel-header>
   <ng-template matExpansionPanelContent>

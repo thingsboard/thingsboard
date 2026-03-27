@@ -27,17 +27,19 @@
     </button>
   </div>
   <mat-grid-list class="tb-links-list flex-1" [cols]="columns" [rowHeight]="rowHeight" [gutterSize]="gutterSize">
-    <mat-grid-tile class="tb-links-tile" *ngFor="let docLink of documentationLinks?.links">
-      <a class="tb-link-button flex-1"
-         [href]="docLink.link" target="_blank">
-        <div class="tb-link-container">
-          <div class="tb-link-icon-container">
-            <tb-icon color="primary">{{ docLink.icon }}</tb-icon>
+    @for (docLink of documentationLinks?.links; track docLink) {
+      <mat-grid-tile class="tb-links-tile">
+        <a class="tb-link-button flex-1"
+           [href]="docLink.link" target="_blank">
+          <div class="tb-link-container">
+            <div class="tb-link-icon-container">
+              <tb-icon color="primary">{{ docLink.icon }}</tb-icon>
+            </div>
+            <div class="tb-link-text">{{ docLink.name | customTranslate }}</div>
           </div>
-          <div class="tb-link-text">{{ docLink.name | customTranslate }}</div>
-        </div>
-      </a>
-    </mat-grid-tile>
+        </a>
+      </mat-grid-tile>
+    }
     <mat-grid-tile class="tb-links-tile">
       <div class="tb-add-link-button flex-1"
            matTooltip="{{ 'widgets.documentation.add-link' | translate }}"

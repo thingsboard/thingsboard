@@ -15,15 +15,19 @@
     limitations under the License.
 
 -->
-<tb-dashboard-page *ngIf="stateExists"
-  [embedded]="true"
-  [syncStateWithQueryParam]="false"
-  [hideToolbar]="true"
-  [currentState]="currentState"
-  [dashboard]="dashboard"
-  [parentDashboard]="parentDashboard"
-  [parentAliasController]="parentAliasController">
-</tb-dashboard-page>
-<div class="tb-absolute-fill tb-widget-error" *ngIf="!stateExists">
-  <span>{{ 'dashboard.non-existent-dashboard-state-error' | translate:{stateId} }}</span>
-</div>
+@if (stateExists) {
+  <tb-dashboard-page
+    [embedded]="true"
+    [syncStateWithQueryParam]="false"
+    [hideToolbar]="true"
+    [currentState]="currentState"
+    [dashboard]="dashboard"
+    [parentDashboard]="parentDashboard"
+    [parentAliasController]="parentAliasController">
+  </tb-dashboard-page>
+}
+@if (!stateExists) {
+  <div class="tb-absolute-fill tb-widget-error">
+    <span>{{ 'dashboard.non-existent-dashboard-state-error' | translate:{stateId} }}</span>
+  </div>
+}

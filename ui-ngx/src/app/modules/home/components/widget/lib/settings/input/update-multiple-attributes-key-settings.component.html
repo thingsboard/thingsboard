@@ -102,31 +102,33 @@
           <input matInput formControlName="disabledOnDataKey">
         </mat-form-field>
       </section>
-      <section *ngIf="!['booleanSwitch', 'booleanCheckbox', 'radio'].includes(updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value)"
-               class="flex flex-col gt-xs:flex-row gt-xs:items-center gt-xs:justify-start gt-xs:gap-2">
-        <mat-form-field class="mat-block flex-full xs:max-h-50% gt-xs:max-w-50%">
-          <mat-label translate>widgets.input-widgets.field-appearance</mat-label>
-          <mat-select formControlName="appearance">
-            <mat-option [value]="'fill'">
-              {{ 'widgets.input-widgets.appearance-fill' | translate }}
-            </mat-option>
-            <mat-option [value]="'outline'">
-              {{ 'widgets.input-widgets.appearance-outline' | translate }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field class="mat-block flex-full xs:max-h-50% gt-xs:max-w-50%">
-          <mat-label translate>widgets.input-widgets.subscript-sizing</mat-label>
-          <mat-select formControlName="subscriptSizing">
-            <mat-option [value]="'fixed'">
-              {{ 'widgets.input-widgets.subscript-sizing-fixed' | translate }}
-            </mat-option>
-            <mat-option [value]="'dynamic'">
-              {{ 'widgets.input-widgets.subscript-sizing-dynamic' | translate }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-      </section>
+      @if (!['booleanSwitch', 'booleanCheckbox', 'radio'].includes(updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value)) {
+        <section
+          class="flex flex-col gt-xs:flex-row gt-xs:items-center gt-xs:justify-start gt-xs:gap-2">
+          <mat-form-field class="mat-block flex-full xs:max-h-50% gt-xs:max-w-50%">
+            <mat-label translate>widgets.input-widgets.field-appearance</mat-label>
+            <mat-select formControlName="appearance">
+              <mat-option [value]="'fill'">
+                {{ 'widgets.input-widgets.appearance-fill' | translate }}
+              </mat-option>
+              <mat-option [value]="'outline'">
+                {{ 'widgets.input-widgets.appearance-outline' | translate }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field class="mat-block flex-full xs:max-h-50% gt-xs:max-w-50%">
+            <mat-label translate>widgets.input-widgets.subscript-sizing</mat-label>
+            <mat-select formControlName="subscriptSizing">
+              <mat-option [value]="'fixed'">
+                {{ 'widgets.input-widgets.subscript-sizing-fixed' | translate }}
+              </mat-option>
+              <mat-option [value]="'dynamic'">
+                {{ 'widgets.input-widgets.subscript-sizing-dynamic' | translate }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </section>
+      }
     </div>
   </fieldset>
   <fieldset [class.!hidden]="updateMultipleAttributesKeySettingsForm.get('dataKeyHidden').value ||
@@ -152,20 +154,22 @@
     <div class="flex flex-col">
       <div class="tb-control-list tb-drop-list" cdkDropList cdkDropListOrientation="vertical"
            (cdkDropListDropped)="selectOptionDrop($event)">
-        <div cdkDrag class="tb-draggable" *ngFor="let selectOptionControl of selectOptionsFormArray().controls; trackBy: trackBySelectOption;
-                 let $index = index; last as isLast;"
-             class="flex flex-col" [class.pb-2]="!isLast">
-          <tb-datakey-select-option [formControl]="selectOptionControl"
-                                    [expanded]="selectOptionControl.new"
-                                    (removeSelectOption)="removeSelectOption($index)">
-          </tb-datakey-select-option>
+        @for (selectOptionControl of typedSelectOptions; track trackBySelectOption($index, selectOptionControl); let isLast = $last) {
+          <div cdkDrag class="tb-draggable flex flex-col" [class.pb-2]="!isLast">
+            <tb-datakey-select-option [formControl]="selectOptionControl"
+                                      [expanded]="selectOptionControl.new"
+                                      (removeSelectOption)="removeSelectOption($index)">
+            </tb-datakey-select-option>
+          </div>
+        }
+      </div>
+      @if (!selectOptionsFormArray().controls.length) {
+        <div>
+          <span class="tb-prompt flex items-center justify-center">
+            {{ (updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value === 'select' ? 'widgets.input-widgets.no-select-options' : 'widgets.input-widgets.no-radio-options') | translate }}
+          </span>
         </div>
-      </div>
-      <div *ngIf="!selectOptionsFormArray().controls.length">
-            <span class="tb-prompt flex items-center justify-center">
-              {{ (updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value === 'select' ? 'widgets.input-widgets.no-select-options' : 'widgets.input-widgets.no-radio-options') | translate }}
-            </span>
-      </div>
+      }
       <div style="padding-top: 16px;">
         <button mat-raised-button color="primary"
                 type="button"
@@ -234,7 +238,7 @@
     </mat-form-field>
     <section [class.!hidden]="updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value !== 'integer' &&
                               updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value !== 'double'"
-             class="flex flex-row gap-2">
+      class="flex flex-row gap-2">
       <mat-form-field class="mat-block flex-1">
         <mat-label translate>widgets.input-widgets.min-value-error-message</mat-label>
         <input matInput formControlName="minValueErrorMessage">
@@ -275,7 +279,7 @@
   </fieldset>
   <fieldset [class.!hidden]="updateMultipleAttributesKeySettingsForm.get('dataKeyHidden').value ||
                              ['date', 'dateTime', 'time'].includes(updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value)"
-            class="fields-group">
+    class="fields-group">
     <legend class="group-title" translate>widgets.input-widgets.icon-settings</legend>
     <mat-slide-toggle formControlName="useCustomIcon" class="slide-block">
       {{ 'widgets.input-widgets.use-custom-icon' | translate }}
@@ -286,8 +290,8 @@
                              formControlName="icon">
     </tb-material-icon-select>
     <tb-gallery-image-input [class.!hidden]="!updateMultipleAttributesKeySettingsForm.get('useCustomIcon').value"
-                    label="{{ 'widgets.input-widgets.input-cell-icon' | translate }}"
-                    formControlName="customIcon">
+                            label="{{ 'widgets.input-widgets.input-cell-icon' | translate }}"
+                            formControlName="customIcon">
     </tb-gallery-image-input>
   </fieldset>
   <fieldset [class.!hidden]="updateMultipleAttributesKeySettingsForm.get('dataKeyHidden').value" class="fields-group">

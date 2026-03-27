@@ -72,6 +72,9 @@ export class LabelWidgetSettingsComponent extends WidgetSettingsComponent {
   labelsFormArray(): UntypedFormArray {
     return this.labelWidgetSettingsForm.get('labels') as UntypedFormArray;
   }
+  get typedSelectOptions() {
+    return this.labelsFormArray().controls as (AbstractControl & { new?: boolean })[];
+  }
 
   public trackByLabelControl(index: number, labelControl: AbstractControl): any {
     return labelControl;
