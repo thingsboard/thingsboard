@@ -35,6 +35,7 @@ import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 import { beautifyCss } from '@shared/models/beautify.models';
+import { LanguageProvider } from 'ace-linters';
 
 @Component({
     selector: 'tb-css',
@@ -88,6 +89,8 @@ export class CssComponent implements OnInit, OnDestroy, ControlValueAccessor, Va
 
   private propagateChange = null;
 
+  private languageProvider: LanguageProvider;
+
   constructor(public elementRef: ElementRef,
               private utils: UtilsService,
               private translate: TranslateService,
@@ -115,6 +118,10 @@ export class CssComponent implements OnInit, OnDestroy, ControlValueAccessor, Va
     getAce().subscribe(
       (ace) => {
         this.cssEditor = ace.edit(editorElement, editorOptions);
+        this.cssEditor.session.setUseWorker(false);
+        const worker = new Worker(new URL('../../core/worker/css-linter.worker', import.meta.url), { type: 'module' });
+        this.languageProvider = LanguageProvider.create(worker);
+        this.languageProvider.registerEditor(this.cssEditor);
         this.cssEditor.session.setUseWrapMode(true);
         this.cssEditor.setValue(this.modelValue ? this.modelValue : '', -1);
         this.cssEditor.setReadOnly(this.disabled);
