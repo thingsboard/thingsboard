@@ -203,7 +203,7 @@ class DefaultTbAlarmServiceTest {
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("failed to delete alarm");
 
-        verify(logEntityActionService).logEntityAction(tenantId, new DeviceId(EntityId.NULL_UUID), ActionType.ALARM_DELETE, user, exception, alarm.getId());
+        verify(logEntityActionService).logEntityAction(tenantId, alarmOriginator, ActionType.ALARM_DELETE, user, exception, alarm.getId());
         verify(alarmSubscriptionService).deleteAlarm(tenantId, alarm.getId());
     }
 
