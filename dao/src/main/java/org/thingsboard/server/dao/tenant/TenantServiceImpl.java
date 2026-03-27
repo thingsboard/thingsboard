@@ -83,6 +83,8 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
     @Autowired
     private TrendzSettingsService trendzSettingsService;
     @Autowired
+    private org.thingsboard.server.dao.iot_hub.IotHubInstalledItemService iotHubInstalledItemService;
+    @Autowired
     private TenantDataValidator tenantValidator;
     @Autowired
     protected TbTransactionalCache<TenantId, Boolean> existsTenantCache;
@@ -168,6 +170,7 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
         notificationSettingsService.deleteNotificationSettings(tenantId);
         trendzSettingsService.deleteTrendzSettings(tenantId);
         qrCodeSettingService.deleteByTenantId(tenantId);
+        iotHubInstalledItemService.deleteByTenantId(tenantId);
 
         tenantDao.removeById(tenantId, tenantId.getId());
         publishEvictEvent(new TenantEvictEvent(tenantId, true));
