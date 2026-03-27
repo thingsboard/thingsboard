@@ -146,7 +146,7 @@ export abstract class BasicActionWidgetComponent implements OnInit, OnDestroy, A
   }
 
   private onError(error: string) {
-    this.ctx.showErrorToast(error, 'bottom', 'center', this.ctx.toastTargetId, true);
+    this.ctx.showErrorToast(error, 'center', 'right', this.ctx.toastTargetId, true);
   }
 
   protected updateValue<V>(valueSetter: ValueSetter<V>,
