@@ -113,6 +113,27 @@ monitoring:
         # To add more targets, use following environment variables:
         # monitoring.transports.lwm2m.targets[1].base_url, monitoring.transports.lwm2m.targets[2].base_url, etc.
 
+  rpc:
+    mqtt:
+      # Enable MQTT RPC checks
+      enabled: '${RPC_MQTT_MONITORING_ENABLED:false}'
+      # Timeout for the two-way RPC round-trip in milliseconds.
+      # Must be less than monitoring.rest.request_timeout_ms so the REST call doesn't
+      # time out on the client side before TB times out on the server side.
+      request_timeout_ms: '${RPC_MQTT_REQUEST_TIMEOUT_MS:4000}'
+      # MQTT QoS for RPC subscription and response publishing
+      qos: '${RPC_MQTT_QOS_LEVEL:1}'
+      targets:
+          # Each target represents one pre-existing device and covers one partition shard.
+          # Add more targets (targets[1], targets[2], ...) to probe additional partitions.
+        - base_url: '${RPC_MQTT_BASE_URL:tcp://${monitoring.domain}:1883}'
+          # UUID of the existing device that will act as the RPC echo responder
+          device_id: '${RPC_MQTT_DEVICE_ID:}'
+          # Access token of that device
+          access_token: '${RPC_MQTT_ACCESS_TOKEN:}'
+          # Optional human-readable label used in metric keys (e.g. "shard0")
+          label: '${RPC_MQTT_LABEL:}'
+
   edqs:
     enabled: "${EDQS_MONITORING_ENABLED:false}"
 
