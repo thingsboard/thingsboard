@@ -64,6 +64,7 @@
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
         <spring-boot.version>3.5.12</spring-boot.version>
         <jackson-bom.version>2.21.1</jackson-bom.version> <!-- to fix GHSA-72hv-8253-57qq. TODO: remove when fixed in spring-boot-dependencies -->
+        <netty.version>4.1.132.Final</netty.version> <!-- to fix CVE-2026-33870 and CVE-2026-33871. TODO: remove when fixed in spring-boot-dependencies -->
         <javax.xml.bind-api.version>2.4.0-b180830.0359</javax.xml.bind-api.version>
         <jjwt.version>0.12.5</jjwt.version>
         <rat.version>0.10</rat.version> <!-- unused -->
@@ -1001,6 +1002,15 @@
                 <scope>import</scope>
             </dependency>
             <!-- End of jackson-bom version override -->
+            <!-- Temporary netty-bom version override -->
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-bom</artifactId>
+                <version>${netty.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- End of netty-bom version override -->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
