@@ -39,6 +39,8 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.credentials.BasicCredentials;
 import org.thingsboard.rule.engine.credentials.ClientCredentials;
 import org.thingsboard.rule.engine.credentials.CredentialsType;
+import org.thingsboard.rule.engine.credentials.DigestCredentials;
+import org.thingsboard.rule.engine.util.DigestAuthUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -222,40 +224,130 @@ public class TbHttpClient {
             HttpMethod method = HttpMethod.valueOf(config.getRequestMethod());
             URI uri = buildEncodedUri(endpointUrl);
 
-            RequestBodySpec request = webClient
-                    .method(method)
-                    .uri(uri)
-                    .headers(headers -> prepareHeaders(headers, msg));
+            boolean hasBody =
+                    (HttpMethod.POST.equals(method) || HttpMethod.PUT.equals(method) ||
+                            HttpMethod.PATCH.equals(method) || HttpMethod.DELETE.equals(method))
+                            && !config.isIgnoreRequestBody();
 
-            if ((HttpMethod.POST.equals(method) || HttpMethod.PUT.equals(method) ||
-                    HttpMethod.PATCH.equals(method) || HttpMethod.DELETE.equals(method)) &&
-                    !config.isIgnoreRequestBody()) {
-                request.body(BodyInserters.fromValue(getData(msg, config.isParseToPlainText())));
+            Object requestBodyObj = null;
+            byte[] requestBodyBytes = null;
+            if (hasBody) {
+                Object raw = getData(msg, config.isParseToPlainText());
+                if (raw instanceof String s) {
+                    requestBodyObj = s;
+                    requestBodyBytes = s.getBytes(StandardCharsets.UTF_8);
+                } else if (raw instanceof byte[] b) {
+                    requestBodyObj = b;
+                    requestBodyBytes = b;
+                } else {
+                    String json = JacksonUtil.toString(raw);
+                    requestBodyObj = json;
+                    requestBodyBytes = json.getBytes(StandardCharsets.UTF_8);
+                }
             }
 
-            request
-                    .retrieve()
-                    .toEntity(String.class)
-                    .subscribe(responseEntity -> {
-                        if (semaphore != null) {
-                            semaphore.release();
-                        }
+            issueRequest(ctx, msg, method, uri, requestBodyObj, requestBodyBytes,
+                    null, null, onSuccess, onFailure, false);
 
+        } catch (InterruptedException e) {
+            log.warn("Timeout during waiting for reply!", e);
+        }
+    }
+
+    private void issueRequest(TbContext ctx, TbMsg msg,
+                              HttpMethod method, URI uri,
+                              Object requestBodyObj, byte[] requestBodyBytes,
+                              String digestAuthHeader,
+                              String cookieHeader,
+                              Consumer<TbMsg> onSuccess,
+                              BiConsumer<TbMsg, Throwable> onFailure,
+                              boolean attemptedDigest) {
+
+        RequestBodySpec spec = webClient
+                .method(method)
+                .uri(uri)
+                .headers(headers -> {
+                    prepareHeaders(headers, msg);
+                    if (digestAuthHeader != null) {
+                        headers.add(HttpHeaders.AUTHORIZATION, digestAuthHeader);
+                    }
+                    if (cookieHeader != null && !cookieHeader.isEmpty()) {
+                        headers.add(HttpHeaders.COOKIE, cookieHeader);
+                    }
+                });
+
+        if (requestBodyObj != null) {
+            spec.body(BodyInserters.fromValue(requestBodyObj));
+        }
+
+        spec.retrieve()
+                .toEntity(String.class)
+                .subscribe(responseEntity -> {
+                    try {
                         if (responseEntity.getStatusCode().is2xxSuccessful()) {
                             onSuccess.accept(processResponse(ctx, msg, responseEntity));
                         } else {
                             onFailure.accept(processFailureResponse(msg, responseEntity), null);
                         }
-                    }, throwable -> {
-                        if (semaphore != null) {
-                            semaphore.release();
+                    } finally {
+                        if (semaphore != null) semaphore.release();
+                    }
+                }, throwable -> {
+                    try {
+                        if (CredentialsType.DIGEST == config.getCredentials().getType()
+                                && !attemptedDigest
+                                && throwable instanceof WebClientResponseException wcre
+                                && wcre.getStatusCode().value() == 401) {
+
+                            String wwwAuth = wcre.getHeaders().getFirst(HttpHeaders.WWW_AUTHENTICATE);
+                            String setCookie = wcre.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
+
+                            String authz = buildDigestAuthHeaderIfNeeded(method, uri, wwwAuth, requestBodyBytes);
+                            String cookie = extractCookieHeader(setCookie);
+
+                            issueRequest(ctx, msg, method, uri, requestBodyObj, requestBodyBytes,
+                                    authz, cookie, onSuccess, onFailure, true);
+                            return;
                         }
 
                         onFailure.accept(processException(msg, throwable), processThrowable(throwable));
-                    });
-        } catch (InterruptedException e) {
-            log.warn("Timeout during waiting for reply!", e);
+                    } finally {
+                        if (semaphore != null) semaphore.release();
+                    }
+                });
+    }
+
+    private String buildDigestAuthHeaderIfNeeded(HttpMethod method, URI uri,
+                                                 String wwwAuthenticate, byte[] requestBodyBytes) {
+        if (wwwAuthenticate == null
+                || !wwwAuthenticate.toLowerCase(java.util.Locale.ROOT).contains("digest")) {
+            return null;
         }
+
+        String username = null, password = null;
+        ClientCredentials creds = config.getCredentials();
+        if (creds instanceof DigestCredentials dc) {
+            username = dc.getUsername();
+            password = dc.getPassword();
+        }
+
+        String reqTarget = DigestAuthUtil.requestUriForDigest(uri);
+
+        return DigestAuthUtil.buildDigestAuthHeader(
+                username,
+                password,
+                method.name(),
+                reqTarget,
+                wwwAuthenticate,
+                requestBodyBytes
+        );
+    }
+
+    private static String extractCookieHeader(String setCookie) {
+        if (setCookie == null || setCookie.isEmpty()) return null;
+        int i = setCookie.indexOf(';');
+        String c = (i > 0 ? setCookie.substring(0, i) : setCookie).trim();
+        return c.isEmpty() ? null : c;
     }
 
     private Throwable processThrowable(Throwable origin) {
