@@ -2110,7 +2110,12 @@
         "toggle-edit-mode": "Toggle edit mode"
     },
     "device": {
-        "device": "Device",
+          
+          "device": "Device",
+          "add-device": "Add Device",
+          "pingSuccess": "Device is reachable. Last seen: {lastSeen}",
+          "pingFailed": "Device is not reachable",
+          "pingError": "Failed to ping device: {error}",
         "device-required": "Device is required.",
         "devices": "Devices",
         "management": "Device management",
