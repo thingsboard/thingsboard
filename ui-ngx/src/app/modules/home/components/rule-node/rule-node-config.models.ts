@@ -244,14 +244,15 @@ export const sqsQueueTypeTranslations = new Map<SqsQueueType, string>(
   ]
 );
 
-export type credentialsType = 'anonymous' | 'basic' | 'cert.PEM';
-export const credentialsTypes: credentialsType[] = ['anonymous', 'basic', 'cert.PEM'];
+export type credentialsType = 'anonymous' | 'basic' | 'cert.PEM' | 'digest';
+export const credentialsTypes: credentialsType[] = ['anonymous', 'basic', 'cert.PEM', 'digest'];
 
 export const credentialsTypeTranslations = new Map<credentialsType, string>(
   [
     ['anonymous', 'rule-node-config.credentials-anonymous'],
     ['basic', 'rule-node-config.credentials-basic'],
-    ['cert.PEM', 'rule-node-config.credentials-pem']
+    ['cert.PEM', 'rule-node-config.credentials-pem'],
+    ['digest', 'Digest']
   ]
 );
 
