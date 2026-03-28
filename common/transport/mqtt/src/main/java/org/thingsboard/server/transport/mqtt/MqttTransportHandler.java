@@ -1127,7 +1127,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 return (X509Certificate) certChain[0];
             }
         } catch (SSLPeerUnverifiedException e) {
-            log.warn(e.getMessage());
+            // Expected when client connects without a valid certificate — no stack trace needed
+            log.warn("SSL peer unverified: {}", e.getMessage());
             return null;
         }
         return null;
