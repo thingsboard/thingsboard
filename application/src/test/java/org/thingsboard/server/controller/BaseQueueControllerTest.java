@@ -19,6 +19,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.awaitility.Awaitility;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -31,12 +32,15 @@ import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.queue.ProcessingStrategy;
 import org.thingsboard.server.common.data.queue.ProcessingStrategyType;
 import org.thingsboard.server.common.data.queue.Queue;
@@ -378,6 +382,74 @@ public class BaseQueueControllerTest extends AbstractControllerTest {
         doPost("/api/queues?serviceType=" + "TB-RULE-ENGINE", queue2)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(String.format("The queue name '%s' is not allowed. This name is reserved for internal use. Please choose a different name.", DataConstants.CF_STATES_QUEUE_NAME))));
+    }
+
+    @Test
+    public void testSaveQueueAuditLog() throws Exception {
+        loginSysAdmin();
+        Queue savedQueue = doPost("/api/queues?serviceType=TB_RULE_ENGINE", createValidQueue("AuditTest"), Queue.class);
+
+        Awaitility.await("Audit log for queue creation")
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> doGetTypedWithTimePageLink(
+                        "/api/audit/logs/entity/QUEUE/" + savedQueue.getId().getId() + "?",
+                        new TypeReference<PageData<AuditLog>>() {},
+                        new TimePageLink(100)).getData().stream()
+                        .anyMatch(log -> log.getActionType() == ActionType.ADDED)
+                );
+
+        savedQueue.setPackProcessingTimeout(3000);
+        doPost("/api/queues?serviceType=TB_RULE_ENGINE", savedQueue, Queue.class);
+
+        Awaitility.await("Audit log for queue update")
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> doGetTypedWithTimePageLink(
+                        "/api/audit/logs/entity/QUEUE/" + savedQueue.getId().getId() + "?",
+                        new TypeReference<PageData<AuditLog>>() {},
+                        new TimePageLink(100)).getData().stream()
+                        .anyMatch(log -> log.getActionType() == ActionType.UPDATED)
+                );
+
+        doDelete("/api/queues/" + savedQueue.getUuidId()).andExpect(status().isOk());
+    }
+
+    @Test
+    public void testDeleteQueueAuditLog() throws Exception {
+        loginSysAdmin();
+        Queue savedQueue = doPost("/api/queues?serviceType=TB_RULE_ENGINE", createValidQueue("AuditDelTest"), Queue.class);
+
+        doDelete("/api/queues/" + savedQueue.getUuidId()).andExpect(status().isOk());
+
+        Awaitility.await("Audit log for queue deletion")
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> doGetTypedWithTimePageLink(
+                        "/api/audit/logs/entity/QUEUE/" + savedQueue.getId().getId() + "?",
+                        new TypeReference<PageData<AuditLog>>() {},
+                        new TimePageLink(100)).getData().stream()
+                        .anyMatch(log -> log.getActionType() == ActionType.DELETED)
+                );
+    }
+
+    private Queue createValidQueue(String name) {
+        Queue queue = new Queue();
+        queue.setName(name);
+        queue.setTopic("tb_rule_engine." + name.toLowerCase());
+        queue.setPollInterval(25);
+        queue.setPartitions(10);
+        queue.setTenantId(TenantId.SYS_TENANT_ID);
+        queue.setConsumerPerPartition(false);
+        queue.setPackProcessingTimeout(2000);
+        SubmitStrategy submitStrategy = new SubmitStrategy();
+        submitStrategy.setType(SubmitStrategyType.SEQUENTIAL_BY_ORIGINATOR);
+        queue.setSubmitStrategy(submitStrategy);
+        ProcessingStrategy processingStrategy = new ProcessingStrategy();
+        processingStrategy.setType(ProcessingStrategyType.RETRY_ALL);
+        processingStrategy.setRetries(3);
+        processingStrategy.setFailurePercentage(0.7);
+        processingStrategy.setPauseBetweenRetries(3);
+        processingStrategy.setMaxPauseBetweenRetries(5);
+        queue.setProcessingStrategy(processingStrategy);
+        return queue;
     }
 
     private Queue saveQueue(Queue queue) {
