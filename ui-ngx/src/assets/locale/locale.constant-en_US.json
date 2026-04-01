@@ -8926,7 +8926,18 @@
                     },
                     "custom": {
                         "title": "Custom",
-                        "tile-url": "Tile URL"
+                        "tile-url": "Tile URL",
+                        "style-url": "Style URL",
+                        "vector-tiles": "Vector tiles",
+                        "vector-tiles-hint": "Enable when using a style URL from providers like OpenFreeMap or MapTiler.",
+                        "attribution": "Copyright text",
+                        "attribution-hint": "Displayed at the bottom of the map. Required by most tile providers."
+                    },
+                    "openfreemap": {
+                        "title": "OpenFreeMap",
+                        "liberty": "Liberty",
+                        "bright": "Bright",
+                        "positron": "Positron"
                     }
                 },
                 "credentials": {
