@@ -1661,7 +1661,7 @@ public class ControllerConstants {
             "Platform creates an audit log event about entity time series updates with action type 'TIMESERIES_UPDATED' that includes an error stacktrace.";
 
     protected static final String ENTITY_ATTRIBUTE_SCOPES_TEMPLATE = " List of possible attribute scopes depends on the entity type: " +
-            "\n\n * SERVER_SCOPE - supported for all entity types;" +
+            "\n\n * SERVER_SCOPE - supported for all entity types, including device profiles and asset profiles;" +
             "\n * SHARED_SCOPE - supported for devices";
     protected static final String ENTITY_SAVE_ATTRIBUTE_SCOPES = ENTITY_ATTRIBUTE_SCOPES_TEMPLATE + ".\n\n";
     protected static final String ENTITY_GET_ATTRIBUTE_SCOPES = ENTITY_ATTRIBUTE_SCOPES_TEMPLATE +
