@@ -513,6 +513,7 @@ public class TwoFactorAuthConfigTest extends AbstractControllerTest {
     public void testSavePlatformTwoFaSettingsAuditLog() throws Exception {
         loginSysAdmin();
 
+        long startTs = System.currentTimeMillis();
         TotpTwoFaProviderConfig totpTwoFaProviderConfig = new TotpTwoFaProviderConfig();
         totpTwoFaProviderConfig.setIssuerName("tb");
 
@@ -528,7 +529,7 @@ public class TwoFactorAuthConfigTest extends AbstractControllerTest {
                 .until(() -> doGetTypedWithTimePageLink(
                         "/api/audit/logs/entity/USER/" + currentUserId.getId() + "?",
                         new TypeReference<PageData<AuditLog>>() {},
-                        new TimePageLink(100)).getData().stream()
+                        new TimePageLink(100, 0, null, null, startTs, null)).getData().stream()
                         .anyMatch(log -> log.getActionType() == ActionType.UPDATED)
                 );
     }

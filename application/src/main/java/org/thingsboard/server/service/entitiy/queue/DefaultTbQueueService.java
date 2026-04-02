@@ -55,7 +55,7 @@ public class DefaultTbQueueService extends AbstractTbEntityService implements Tb
         TenantId tenantId = queue.getTenantId();
         try {
             Queue oldQueue;
-            if (queue.getId() == null) {
+            if (actionType == ActionType.ADDED) {
                 oldQueue = null;
             } else {
                 oldQueue = queueService.findQueueById(tenantId, queue.getId());

@@ -193,11 +193,12 @@ public class AdminControllerTest extends AbstractControllerTest {
     public void testSaveAdminSettingsAuditLog() throws Exception {
         loginSysAdmin();
 
+        long startTs = System.currentTimeMillis();
         AdminSettings adminSettings = doGet("/api/admin/settings/general", AdminSettings.class);
         ((ObjectNode) adminSettings.getJsonValue()).put("baseUrl", "http://audit-test.org");
         doPost("/api/admin/settings", adminSettings).andExpect(status().isOk());
 
-        awaitAuditLog(ActionType.UPDATED);
+        awaitAuditLog(ActionType.UPDATED, startTs);
 
         // cleanup
         ((ObjectNode) adminSettings.getJsonValue()).put("baseUrl", "http://localhost:8080");
@@ -208,30 +209,32 @@ public class AdminControllerTest extends AbstractControllerTest {
     public void testSaveSecuritySettingsAuditLog() throws Exception {
         loginSysAdmin();
 
+        long startTs = System.currentTimeMillis();
         SecuritySettings securitySettings = doGet("/api/admin/securitySettings", SecuritySettings.class);
         doPost("/api/admin/securitySettings", securitySettings).andExpect(status().isOk());
 
-        awaitAuditLog(ActionType.UPDATED);
+        awaitAuditLog(ActionType.UPDATED, startTs);
     }
 
     @Test
     public void testSaveJwtSettingsAuditLog() throws Exception {
         loginSysAdmin();
 
+        long startTs = System.currentTimeMillis();
         JwtSettings jwtSettings = doGet("/api/admin/jwtSettings", JwtSettings.class);
         doPost("/api/admin/jwtSettings", jwtSettings).andExpect(status().isOk());
 
         loginSysAdmin();
-        awaitAuditLog(ActionType.UPDATED);
+        awaitAuditLog(ActionType.UPDATED, startTs);
     }
 
-    private void awaitAuditLog(ActionType expectedAction) {
+    private void awaitAuditLog(ActionType expectedAction, long startTs) {
         Awaitility.await("Await audit log: " + expectedAction)
                 .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() -> doGetTypedWithTimePageLink(
                         "/api/audit/logs/entity/USER/" + currentUserId.getId() + "?",
                         new TypeReference<PageData<AuditLog>>() {},
-                        new TimePageLink(100)).getData().stream()
+                        new TimePageLink(100, 0, null, null, startTs, null)).getData().stream()
                         .anyMatch(log -> log.getActionType() == expectedAction)
                 );
     }
