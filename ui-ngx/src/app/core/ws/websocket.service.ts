@@ -52,6 +52,7 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
   subscribersMap = new Map<number, TelemetrySubscriber | NotificationSubscriber>();
 
   reconnectSubscribers = new Set<WsSubscriber>();
+  pendingUpdates = new Set<T>();
 
   wsUri: string;
 
@@ -140,6 +141,7 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
     if (close) {
       this.reconnectAttempts = 0;
       this.lastShownCloseCode = null;
+      this.pendingUpdates.clear();
       this.closeSocket();
     }
   }
@@ -223,6 +225,7 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
         }
       );
       this.reconnectSubscribers.clear();
+      this.processPendingUpdates();
     } else {
       this.publishCommands();
     }
@@ -297,5 +300,14 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
     this.store.dispatch(new ActionNotificationShow({
       message, type: notificationType
     }));
+  }
+
+  private processPendingUpdates() {
+    if (this.pendingUpdates.size > 0) {
+      this.pendingUpdates.forEach((subscriber) => {
+        this.update(subscriber);
+      });
+      this.pendingUpdates.clear();
+    }
   }
 }

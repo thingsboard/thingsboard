@@ -50,6 +50,7 @@ import {
   UnreadCountSubCmd,
   UnreadSubCmd,
   UnsubscribeCmd,
+  WebsocketCmd,
   WebsocketDataMsg
 } from '@app/shared/models/telemetry/telemetry.models';
 import { Store } from '@ngrx/store';
@@ -94,11 +95,14 @@ export class TelemetryWebsocketService extends WebsocketService<TelemetrySubscri
       subscriber.subscriptionCommands.forEach(
         (subscriptionCommand) => {
           if (subscriptionCommand.cmdId && (subscriptionCommand instanceof EntityDataCmd || subscriptionCommand instanceof UnreadSubCmd)) {
+            this.syncCommandId(subscriptionCommand, subscriber);
             this.cmdWrapper.cmds.push(subscriptionCommand);
           }
         }
       );
       this.publishCommands();
+    } else {
+      this.pendingUpdates.add(subscriber);
     }
   }
 
@@ -173,6 +177,17 @@ export class TelemetryWebsocketService extends WebsocketService<TelemetrySubscri
       subscriber = this.subscribersMap.get(message.subscriptionId) as TelemetrySubscriber;
       if (subscriber) {
         subscriber.onData(new SubscriptionUpdate(message));
+      }
+    }
+  }
+
+  private syncCommandId(subscriptionCommand: WebsocketCmd, subscriber: TelemetrySubscriber) {
+    if (!this.subscribersMap.has(subscriptionCommand.cmdId)) {
+      for (const [cmdId, sub] of this.subscribersMap.entries()) {
+        if (sub === subscriber) {
+          subscriptionCommand.cmdId = cmdId;
+          break;
+        }
       }
     }
   }
