@@ -217,6 +217,90 @@ class TbelInvokeServiceTest extends AbstractTbelInvokeTest {
         assertThat(compiledScriptsCache.getIfPresent(scriptIdToHash.get(scriptRemovedFromCache))).isNotNull();
     }
 
+    @Test
+    void givenForbiddenSocketHandler_whenInvoking_thenThrowsRuntimeError() throws ExecutionException, InterruptedException {
+        UUID scriptId = evalScript("new java.util.logging.SocketHandler(\"127.0.0.1\", 9999)");
+        assertThatThrownBy(() -> invokeScript(scriptId, "{\"temperature\":25}"))
+                .isInstanceOf(ExecutionException.class)
+                .cause()
+                .isInstanceOf(TbScriptException.class)
+                .asInstanceOf(type(TbScriptException.class))
+                .satisfies(ex -> {
+                    assertThat(ex.getErrorCode()).isEqualTo(TbScriptException.ErrorCode.RUNTIME);
+                    assertThat(ex.getCause().getMessage()).contains("could not resolve class: java.util.logging.SocketHandler");
+                });
+    }
+
+    @Test
+    void givenForbiddenZipFile_whenInvoking_thenThrowsRuntimeError() throws ExecutionException, InterruptedException {
+        UUID scriptId = evalScript("new java.util.zip.ZipFile(\"/tmp/test.zip\")");
+        assertThatThrownBy(() -> invokeScript(scriptId, "{\"temperature\":25}"))
+                .isInstanceOf(ExecutionException.class)
+                .cause()
+                .isInstanceOf(TbScriptException.class)
+                .asInstanceOf(type(TbScriptException.class))
+                .satisfies(ex -> {
+                    assertThat(ex.getErrorCode()).isEqualTo(TbScriptException.ErrorCode.RUNTIME);
+                    assertThat(ex.getCause().getMessage()).contains("could not resolve class: java.util.zip.ZipFile");
+                });
+    }
+
+    @Test
+    void givenForbiddenFileHandler_whenInvoking_thenThrowsRuntimeError() throws ExecutionException, InterruptedException {
+        UUID scriptId = evalScript("new java.util.logging.FileHandler(\"/tmp/test.log\")");
+        assertThatThrownBy(() -> invokeScript(scriptId, "{\"temperature\":25}"))
+                .isInstanceOf(ExecutionException.class)
+                .cause()
+                .isInstanceOf(TbScriptException.class)
+                .asInstanceOf(type(TbScriptException.class))
+                .satisfies(ex -> {
+                    assertThat(ex.getErrorCode()).isEqualTo(TbScriptException.ErrorCode.RUNTIME);
+                    assertThat(ex.getCause().getMessage()).contains("could not resolve class: java.util.logging.FileHandler");
+                });
+    }
+
+    @Test
+    void givenForbiddenJarFile_whenInvoking_thenThrowsRuntimeError() throws ExecutionException, InterruptedException {
+        UUID scriptId = evalScript("new java.util.jar.JarFile(\"/tmp/test.jar\")");
+        assertThatThrownBy(() -> invokeScript(scriptId, "{\"temperature\":25}"))
+                .isInstanceOf(ExecutionException.class)
+                .cause()
+                .isInstanceOf(TbScriptException.class)
+                .asInstanceOf(type(TbScriptException.class))
+                .satisfies(ex -> {
+                    assertThat(ex.getErrorCode()).isEqualTo(TbScriptException.ErrorCode.RUNTIME);
+                    assertThat(ex.getCause().getMessage()).contains("could not resolve class: java.util.jar.JarFile");
+                });
+    }
+
+    @Test
+    void givenForbiddenPreferences_whenInvoking_thenThrowsRuntimeError() throws ExecutionException, InterruptedException {
+        UUID scriptId = evalScript("java.util.prefs.Preferences.userRoot()");
+        assertThatThrownBy(() -> invokeScript(scriptId, "{\"temperature\":25}"))
+                .isInstanceOf(ExecutionException.class)
+                .cause()
+                .isInstanceOf(TbScriptException.class)
+                .asInstanceOf(type(TbScriptException.class))
+                .satisfies(ex -> {
+                    assertThat(ex.getErrorCode()).isEqualTo(TbScriptException.ErrorCode.RUNTIME);
+                    assertThat(ex.getMessage()).contains("unresolvable property or identifier: java");
+                });
+    }
+
+    @Test
+    void givenForbiddenLocaleServiceProvider_whenInvoking_thenThrowsRuntimeError() throws ExecutionException, InterruptedException {
+        UUID scriptId = evalScript("new java.util.spi.LocaleServiceProvider()");
+        assertThatThrownBy(() -> invokeScript(scriptId, "{\"temperature\":25}"))
+                .isInstanceOf(ExecutionException.class)
+                .cause()
+                .isInstanceOf(TbScriptException.class)
+                .asInstanceOf(type(TbScriptException.class))
+                .satisfies(ex -> {
+                    assertThat(ex.getErrorCode()).isEqualTo(TbScriptException.ErrorCode.RUNTIME);
+                    assertThat(ex.getCause().getMessage()).contains("could not resolve class: java.util.spi.LocaleServiceProvider");
+                });
+    }
+
     private void assertThatScriptIsBlocked(UUID scriptId) {
         assertThatThrownBy(() -> {
             invokeScriptResultString(scriptId, "{}");
