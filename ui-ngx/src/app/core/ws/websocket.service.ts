@@ -50,6 +50,7 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
   lastCmdId = 0;
   subscribersCount = 0;
   subscribersMap = new Map<number, TelemetrySubscriber | NotificationSubscriber>();
+  subscriberCmdIds = new Map<WsSubscriber, Set<number>>();
 
   reconnectSubscribers = new Set<WsSubscriber>();
   pendingUpdates = new Set<T>();
@@ -136,6 +137,7 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
     }
     this.lastCmdId = 0;
     this.subscribersMap.clear();
+    this.subscriberCmdIds.clear();
     this.subscribersCount = 0;
     this.cmdWrapper.clear();
     if (close) {
@@ -304,10 +306,13 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
 
   private processPendingUpdates() {
     if (this.pendingUpdates.size > 0) {
-      this.pendingUpdates.forEach((subscriber) => {
-        this.update(subscriber);
-      });
+      const subscribers = Array.from(this.pendingUpdates);
       this.pendingUpdates.clear();
+      for (const subscriber of subscribers) {
+        if (this.subscriberCmdIds.has(subscriber)) {
+          this.update(subscriber);
+        }
+      }
     }
   }
 }
