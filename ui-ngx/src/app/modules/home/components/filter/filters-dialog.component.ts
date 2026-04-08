@@ -70,6 +70,8 @@ export class FiltersDialogComponent extends DialogComponent<FiltersDialogCompone
 
   filtersFormGroup: UntypedFormGroup;
 
+  displayedColumns = ['filter', 'editable', 'actions'];
+
   submitted = false;
 
   constructor(protected store: Store<AppState>,

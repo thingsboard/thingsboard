@@ -26,119 +26,128 @@
     </button>
   </mat-toolbar>
   <div mat-dialog-content>
-    <fieldset [disabled]="isLoading$ | async" class="flex flex-col">
-      <section class="entity-key flex flex-row gap-2">
-        <section class="flex flex-full flex-row gap-2"
-                 [class]="{
+    <section class="tb-form-panel no-border no-padding">
+      <section class="tb-form-panel">
+        <div class="tb-form-panel-title">{{ 'filter.key-filter' | translate }}</div>
+        <div class="flex flex-row gap-2 xs:flex-col">
+          <div class="flex flex-row flex-full gap-2 xs:flex-col"
+               [class]="{
                     'max-w-45%': isConstantKeyType,
                     'max-w-70%': !isConstantKeyType
                  }"
-          formGroupName="key">
-          <mat-form-field class="mat-block max-w-40% flex-full">
-            <mat-label translate>filter.key-type.key-type</mat-label>
-            <mat-select required formControlName="type">
-              @for (type of entityKeyTypes; track type) {
-                <mat-option [value]="type">
-                  {{entityKeyTypeTranslations.get(type) | translate}}
-                </mat-option>
+               formGroupName="key">
+            <mat-form-field class="mat-block max-w-40% flex-full" appearance="outline">
+              <mat-label translate>filter.key-type.key-type</mat-label>
+              <mat-select required formControlName="type">
+                @for (type of entityKeyTypes; track type) {
+                  <mat-option [value]="type">
+                    {{entityKeyTypeTranslations.get(type) | translate}}
+                  </mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field class="mat-block max-w-60% flex-full" appearance="outline">
+              <mat-label translate>filter.key-name</mat-label>
+              <input matInput required formControlName="key"
+                     #keyNameInput
+                     (focusin)="onFocus()"
+                     [matAutocomplete]="keyName"
+                     [matAutocompleteDisabled]="!showAutocomplete">
+              @if (keyFilterFormGroup.get('key.key').value && showAutocomplete) {
+                <button
+                  type="button"
+                  matSuffix mat-icon-button aria-label="Clear"
+                  (click)="clear()">
+                  <mat-icon class="material-icons">close</mat-icon>
+                </button>
               }
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field class="mat-block max-w-60% flex-full">
-            <mat-label translate>filter.key-name</mat-label>
-            <input matInput required formControlName="key"
-                   #keyNameInput
-                   (focusin)="onFocus()"
-                   [matAutocomplete]="keyName"
-                   [matAutocompleteDisabled]="!showAutocomplete">
-            @if (keyFilterFormGroup.get('key.key').value && showAutocomplete) {
-              <button
-                type="button"
-                matSuffix mat-icon-button aria-label="Clear"
-                (click)="clear()">
-                <mat-icon class="material-icons">close</mat-icon>
-              </button>
-            }
-            <mat-autocomplete autoActiveFirstOption #keyName="matAutocomplete">
-              @for (keyName of filteredKeysName | async; track keyName) {
-                <mat-option [value]="keyName">
-                  <span [innerHTML]="keyName | highlight:searchText"></span>
-                </mat-option>
+              <mat-autocomplete autoActiveFirstOption #keyName="matAutocomplete">
+                @for (keyName of filteredKeysName | async; track keyName) {
+                  <mat-option [value]="keyName">
+                    <span [innerHTML]="keyName | highlight:searchText"></span>
+                  </mat-option>
+                }
+              </mat-autocomplete>
+              @if (keyFilterFormGroup.get('key.key').hasError('required')) {
+                <mat-error>
+                  {{ 'filter.key-name-required' | translate }}
+                </mat-error>
               }
-            </mat-autocomplete>
-            @if (keyFilterFormGroup.get('key.key').hasError('required')) {
-              <mat-error>
-                {{ 'filter.key-name-required' | translate }}
-              </mat-error>
-            }
-          </mat-form-field>
-        </section>
-        <mat-form-field class="mat-block tb-value-type flex-full"
-                        [class]="{
+            </mat-form-field>
+          </div>
+          <mat-form-field class="mat-block tb-value-type flex-full" appearance="outline"
+                          [class]="{
                           'max-w-20%': isConstantKeyType,
                           'max-w-30%': !isConstantKeyType
                         }">
-          <mat-label translate>filter.value-type.value-type</mat-label>
-          <mat-select formControlName="valueType">
-            <mat-select-trigger>
-              <mat-icon class="tb-mat-18" svgIcon="{{ entityKeyValueTypes.get(keyFilterFormGroup.get('valueType').value)?.icon }}"></mat-icon>
-              <span>{{ entityKeyValueTypes.get(keyFilterFormGroup.get('valueType').value)?.name | translate }}</span>
-            </mat-select-trigger>
-            @for (valueType of entityKeyValueTypesKeys; track valueType) {
-              <mat-option [value]="valueType">
-                <mat-icon class="tb-mat-18" svgIcon="{{ entityKeyValueTypes.get(entityKeyValueTypeEnum[valueType]).icon }}"></mat-icon>
-                <span>{{ entityKeyValueTypes.get(entityKeyValueTypeEnum[valueType]).name | translate }}</span>
-              </mat-option>
-            }
-          </mat-select>
-          @if (keyFilterFormGroup.get('valueType').hasError('required')) {
-            <mat-error>
-              {{ 'filter.value-type-required' | translate }}
-            </mat-error>
-          }
-        </mat-form-field>
-        @if (isConstantKeyType) {
-          <div class="flex-1">
-            <div class="flex flex-col">
-              @switch (keyFilterFormGroup.get('valueType').value) {
-                @case (entityKeyValueTypeEnum.STRING) {
-                  <mat-form-field class="mat-block">
-                    <mat-label translate>filter.value</mat-label>
-                    <input matInput required formControlName="value" placeholder="{{'filter.value' | translate}}">
-                  </mat-form-field>
-                }
-                @case (entityKeyValueTypeEnum.NUMERIC) {
-                  <mat-form-field class="mat-block">
-                    <mat-label translate>filter.value</mat-label>
-                    <input required type="number" matInput formControlName="value">
-                  </mat-form-field>
-                }
-                @case (entityKeyValueTypeEnum.DATE_TIME) {
-                  <tb-datetime formControlName="value"
-                               dateText="{{ 'filter.date' | translate }}"
-                  required></tb-datetime>
-                }
-                @case (entityKeyValueTypeEnum.BOOLEAN) {
-                  <mat-checkbox formControlName="value" style="margin-top: 20px">
-                    {{ (keyFilterFormGroup.get('value').value ? 'value.true' : 'value.false') | translate }}
-                  </mat-checkbox>
-                }
+            <mat-label translate>filter.value-type.value-type</mat-label>
+            <mat-select formControlName="valueType">
+              <mat-select-trigger>
+                <mat-icon class="tb-mat-18" svgIcon="{{ entityKeyValueTypes.get(keyFilterFormGroup.get('valueType').value)?.icon }}"></mat-icon>
+                <span>{{ entityKeyValueTypes.get(keyFilterFormGroup.get('valueType').value)?.name | translate }}</span>
+              </mat-select-trigger>
+              @for (valueType of entityKeyValueTypesKeys; track valueType) {
+                <mat-option [value]="valueType">
+                  <mat-icon class="tb-mat-18" svgIcon="{{ entityKeyValueTypes.get(entityKeyValueTypeEnum[valueType]).icon }}"></mat-icon>
+                  <span>{{ entityKeyValueTypes.get(entityKeyValueTypeEnum[valueType]).name | translate }}</span>
+                </mat-option>
               }
+            </mat-select>
+            @if (keyFilterFormGroup.get('valueType').hasError('required')) {
+              <mat-error>
+                {{ 'filter.value-type-required' | translate }}
+              </mat-error>
+            }
+          </mat-form-field>
+          @if (isConstantKeyType) {
+            <div class="flex-1">
+              <div class="flex flex-col">
+                @switch (keyFilterFormGroup.get('valueType').value) {
+                  @case (entityKeyValueTypeEnum.STRING) {
+                    <mat-form-field class="mat-block" appearance="outline">
+                      <mat-label translate>filter.value</mat-label>
+                      <input matInput required formControlName="value" placeholder="{{'filter.value' | translate}}">
+                    </mat-form-field>
+                  }
+                  @case (entityKeyValueTypeEnum.NUMERIC) {
+                    <mat-form-field class="mat-block" appearance="outline">
+                      <mat-label translate>filter.value</mat-label>
+                      <input required type="number" matInput formControlName="value">
+                    </mat-form-field>
+                  }
+                  @case (entityKeyValueTypeEnum.DATE_TIME) {
+                    <tb-datetime formControlName="value"
+                                 dateText="{{ 'filter.date' | translate }}"
+                                 required></tb-datetime>
+                  }
+                  @case (entityKeyValueTypeEnum.BOOLEAN) {
+                    <mat-checkbox formControlName="value" style="margin-top: 20px">
+                      {{ (keyFilterFormGroup.get('value').value ? 'value.true' : 'value.false') | translate }}
+                    </mat-checkbox>
+                  }
+                }
+              </div>
             </div>
-          </div>
-        }
+          }
+        </div>
       </section>
       @if (keyFilterFormGroup.get('valueType').value) {
-        <tb-filter-predicate-list
-          [allowUserDynamicSource]="data.allowUserDynamicSource"
-          [onlyUserDynamicSource]="isConstantKeyType"
-          [displayUserParameters]="data.displayUserParameters"
-          [valueType]="keyFilterFormGroup.get('valueType').value"
-          [key]="keyFilterFormGroup.get('key.key').value"
-          formControlName="predicates">
-        </tb-filter-predicate-list>
+        <section class="tb-form-panel">
+          <div class="flex flex-row items-center justify-between">
+            <div class="tb-form-panel-title">{{ 'filter.filters' | translate }}
+            </div>
+          </div>
+          <tb-filter-predicate-list
+            [allowUserDynamicSource]="data.allowUserDynamicSource"
+            [onlyUserDynamicSource]="isConstantKeyType"
+            [displayUserParameters]="data.displayUserParameters"
+            [valueType]="keyFilterFormGroup.get('valueType').value"
+            [key]="keyFilterFormGroup.get('key.key').value"
+            formControlName="predicates">
+          </tb-filter-predicate-list>
+        </section>
       }
-    </fieldset>
+    </section>
   </div>
   <div mat-dialog-actions class="flex items-center justify-end">
     <button mat-button color="primary"

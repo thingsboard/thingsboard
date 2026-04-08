@@ -93,4 +93,5 @@ export class ComplexFilterPredicateDialogComponent extends
       this.dialogRef.close(predicate);
     }
   }
+
 }
