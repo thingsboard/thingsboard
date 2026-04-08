@@ -195,7 +195,7 @@ export class TelemetryWebsocketService extends WebsocketService<TelemetrySubscri
   }
 
   private syncCommandId(subscriptionCommand: WebsocketCmd, subscriber: TelemetrySubscriber) {
-    if (!this.subscribersMap.has(subscriptionCommand.cmdId)) {
+    if (this.subscribersMap.get(subscriptionCommand.cmdId) !== subscriber) {
       const cmdIds = this.subscriberCmdIds.get(subscriber);
       if (cmdIds?.size) {
         subscriptionCommand.cmdId = cmdIds.values().next().value;
