@@ -144,6 +144,7 @@ public class CalculatedField extends BaseData<CalculatedFieldId> implements HasN
                 .append("CalculatedField[")
                 .append("tenantId=").append(tenantId)
                 .append(", entityId=").append(entityId)
+                .append(", enabled=").append(enabled)
                 .append(", type='").append(type)
                 .append(", name='").append(name)
                 .append(", configurationVersion=").append(configurationVersion)

@@ -390,10 +390,14 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
   private toggleEnabled($event: Event, entity: CalculatedFieldsTableEntity): void {
     $event?.stopPropagation();
     this.calculatedFieldsService.getCalculatedFieldById(entity.id.id).pipe(
-      switchMap(cf => this.calculatedFieldsService.saveCalculatedField({...cf, enabled: !cf.enabled}, {ignoreLoading: true}))
+      switchMap(cf => this.calculatedFieldsService.saveCalculatedField({...cf, enabled: !cf.enabled}, {ignoreLoading: true})),
+      catchError(() => of(null)),
+      takeUntilDestroyed(this.destroyRef),
     ).subscribe((saved) => {
-        entity.enabled = saved.enabled;
-        this.getTable().detectChanges();
+        if (saved) {
+          entity.enabled = saved.enabled;
+          this.getTable().detectChanges();
+        }
       });
   }
 
