@@ -28,9 +28,9 @@ export interface ShortNumberArgs {
 export class ShortNumberPipe implements PipeTransform {
 
   transform(number: number, args?: ShortNumberArgs): string {
-    if (isNaN(number)) return '0';
-    if (number === null) return '0';
-    if (number === 0) return '0';
+    if (!Number.isFinite(number) || number === 0) {
+      return '0';
+    }
     let abs = Math.abs(number);
     const rounder = Math.pow(10, 1);
     const isNegative = number < 0;
