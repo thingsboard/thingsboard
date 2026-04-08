@@ -38,6 +38,7 @@ import { Timewindow, WidgetTimewindow } from '@shared/models/time/time.models';
 import {
   IAliasController,
   IStateController,
+  IWidgetHttpUtils,
   IWidgetSubscription,
   IWidgetUtils,
   RpcApi,
@@ -58,6 +59,13 @@ import {
   ViewContainerRef
 } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import {
+  createDefaultHttpOptions,
+  defaultHttpOptions,
+  defaultHttpOptionsFromConfig,
+  defaultHttpOptionsFromParams,
+  defaultHttpUploadOptions
+} from '@core/http/http-utils';
 import { RafService } from '@core/services/raf.service';
 import { WidgetTypeId } from '@shared/models/id/widget-type-id';
 import { TenantId } from '@shared/models/id/tenant-id';
@@ -68,7 +76,8 @@ import {
   formatValue,
   getEntityDetailsPageURL,
   hasDatasourceLabelsVariables,
-  isDefined, isDefinedAndNotNull
+  isDefined,
+  isDefinedAndNotNull
 } from '@core/utils';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -292,6 +301,14 @@ export class WidgetContext {
   utils: IWidgetUtils = {
     formatValue,
     getEntityDetailsPageURL
+  };
+
+  httpUtils: IWidgetHttpUtils = {
+    defaultHttpOptions,
+    defaultHttpOptionsFromConfig,
+    defaultHttpOptionsFromParams,
+    defaultHttpUploadOptions,
+    createDefaultHttpOptions
   };
 
   $widgetElement: JQuery<HTMLElement>;
