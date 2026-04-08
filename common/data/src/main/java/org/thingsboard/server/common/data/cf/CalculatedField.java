@@ -67,6 +67,8 @@ public class CalculatedField extends BaseData<CalculatedFieldId> implements HasN
 
     private TenantId tenantId;
     private EntityId entityId;
+    @Schema(description = "Enable/disable the calculated field.", example = "true")
+    private boolean enabled = true;
 
     @NoXss
     @Length(fieldName = "type")
@@ -101,6 +103,7 @@ public class CalculatedField extends BaseData<CalculatedFieldId> implements HasN
         super(calculatedField);
         this.tenantId = calculatedField.tenantId;
         this.entityId = calculatedField.entityId;
+        this.enabled = calculatedField.enabled;
         this.type = calculatedField.type;
         this.name = calculatedField.name;
         this.debugMode = calculatedField.debugMode;

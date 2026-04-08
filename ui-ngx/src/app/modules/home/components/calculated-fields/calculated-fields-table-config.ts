@@ -162,6 +162,15 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
 
     this.cellActionDescriptors.push(
       {
+        name: '',
+        nameFunction: (entity) =>
+          this.translate.instant(entity.enabled ? 'calculated-fields.disable' : 'calculated-fields.enable'),
+        icon: 'mdi:toggle-switch',
+        isEnabled: () => true,
+        iconFunction: (entity) => entity.enabled ? 'mdi:toggle-switch' : 'mdi:toggle-switch-off-outline',
+        onAction: ($event, entity) => this.toggleEnabled($event, entity),
+      },
+      {
         name: this.translate.instant('action.copy'),
         icon: 'content_copy',
         isEnabled: () => true,
@@ -376,6 +385,16 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
     }
 
     return calculatedField;
+  }
+
+  private toggleEnabled($event: Event, entity: CalculatedFieldsTableEntity): void {
+    $event?.stopPropagation();
+    this.calculatedFieldsService.getCalculatedFieldById(entity.id.id).pipe(
+      switchMap(cf => this.calculatedFieldsService.saveCalculatedField({...cf, enabled: !cf.enabled}, {ignoreLoading: true}))
+    ).subscribe((saved) => {
+        entity.enabled = saved.enabled;
+        this.getTable().detectChanges();
+      });
   }
 
   private onDebugConfigChanged(id: string, debugSettings: EntityDebugSettings): void {

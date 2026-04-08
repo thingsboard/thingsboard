@@ -732,6 +732,7 @@ public class ModelConstants {
     public static final String CALCULATED_FIELD_CONFIGURATION = "configuration";
     public static final String CALCULATED_FIELD_VERSION = "version";
     public static final String CALCULATED_FIELD_ADDITIONAL_INFO = ADDITIONAL_INFO_PROPERTY;
+    public static final String CALCULATED_FIELD_ENABLED = "enabled";
 
     /**
      * Tasks constants.

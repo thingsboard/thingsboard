@@ -417,8 +417,8 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             callback.onSuccess();
         } else {
             var cf = cfDaoService.findById(msg.getTenantId(), cfId);
-            if (cf == null) {
-                log.debug("[{}] Failed to lookup CF by id [{}]", tenantId, cfId);
+            if (cf == null || !cf.isEnabled()) {
+                log.debug("[{}] CF not found or disabled [{}]", tenantId, cfId);
                 callback.onSuccess();
             } else {
                 var cfCtx = getCfCtx(cf);
@@ -451,6 +451,9 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             if (newCf == null) {
                 log.debug("[{}] Failed to lookup CF by id [{}]", tenantId, cfId);
                 callback.onSuccess();
+            } else if (!newCf.isEnabled()) {
+                log.debug("[{}] CF disabled, treating as delete [{}]", tenantId, cfId);
+                onCfDeleted(msg, callback);
             } else {
                 var newCfCtx = getCfCtx(newCf);
                 try {
@@ -805,6 +808,10 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         PageDataIterable<CalculatedField> cfs = new PageDataIterable<>(pageLink -> cfDaoService.findCalculatedFieldsByTenantId(tenantId, pageLink), cfSettings.getInitTenantFetchPackSize());
         cfs.forEach(cf -> {
             log.trace("Processing calculated field record: {}", cf);
+            if (!cf.isEnabled()) {
+                log.debug("[{}] Skipping disabled calculated field [{}]", tenantId, cf.getId());
+                return;
+            }
             try {
                 initCalculatedField(cf);
                 initCalculatedFieldLinks(cf);
