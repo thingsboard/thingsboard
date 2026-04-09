@@ -22,12 +22,11 @@
         <div class="flex flex-full flex-row items-center justify-start gap-2">
           <div class="flex flex-1 flex-row pl-2">
             <label translate class="filter-title max-w-30% flex-full">filter.operation.operation</label>
-            <label translate class="filter-title max-w-[68%] flex-full">filter.value</label>
-            @if (displayUserParameters) {
-              <label translate class="filter-title max-w-[8%] flex-full">filter.user-parameters</label>
-            }
+            <label translate class="filter-title max-w-70% flex-full">filter.value</label>
           </div>
-          <span [class.!hidden]="disabled" class="min-w-10">&nbsp;</span>
+          @if (displayUserParameters) {
+            <span [class.!hidden]="disabled" class="min-w-12">&nbsp;</span>
+          }
         </div>
       </div>
       <mat-divider style="padding-bottom: 5px;"></mat-divider>

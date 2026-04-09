@@ -155,7 +155,7 @@ export class FilterPredicateComponent implements ControlValueAccessor, Validator
           type: this.type,
           value: v.value,
           operation: v.operation,
-          ignoreCase: v.ignoreCase
+          ignoreCase: !!v.ignoreCase
         } as KeyFilterPredicate;
       }
       predicate = {
