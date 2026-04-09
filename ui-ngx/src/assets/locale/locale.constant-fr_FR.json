@@ -208,7 +208,7 @@
     "minimum-max-failed-login-attempts-range": "Le nombre maximal de tentatives échouées ne peut pas être négatif",
     "user-lockout-notification-email": "En cas de verrouillage du compte utilisateur, envoyer une notification par e-mail",
     "user-activation-token-ttl": "Durée de validité du lien d'activation (en heures)",
-    "user-activation-token-ttl-range": "La durée doit être comprise entre 1 et 24 heures",
+    "user-activation-token-ttl-range": "La durée doit être comprise entre 1 et {{max}} heures",
     "password-reset-token-ttl": "Durée de validité du lien de réinitialisation (en heures)",
     "password-reset-token-ttl-range": "La durée doit être comprise entre 1 et 24 heures",
     "mobile-secret-key-length": "Longueur de la clé secrète mobile",

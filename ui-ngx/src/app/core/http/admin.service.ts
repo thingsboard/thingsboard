@@ -74,6 +74,10 @@ export class AdminService {
       defaultHttpOptionsFromConfig(config));
   }
 
+  public getActivationLinkMaxTtl(config?: RequestConfig): Observable<number> {
+    return this.http.get<number>(`/api/admin/securitySettings/activationLinkMaxTtl`, defaultHttpOptionsFromConfig(config));
+  }
+
   public getJwtSettings(config?: RequestConfig): Observable<JwtSettings> {
     return this.http.get<JwtSettings>(`/api/admin/jwtSettings`, defaultHttpOptionsFromConfig(config));
   }

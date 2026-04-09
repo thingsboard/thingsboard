@@ -208,7 +208,7 @@
     "minimum-max-failed-login-attempts-range": "Maksimalt antal mislykkede loginforsøg må ikke være negativt",
     "user-lockout-notification-email": "Ved kontolåsning, send notifikation til e-mail",
     "user-activation-token-ttl": "Brugeraktiveringslink TTL i timer",
-    "user-activation-token-ttl-range": "Brugeraktiveringslink TTL skal være mellem 1 og 24 timer",
+    "user-activation-token-ttl-range": "Brugeraktiveringslink TTL skal være mellem 1 og {{max}} timer",
     "password-reset-token-ttl": "Link til nulstilling af adgangskode TTL i timer",
     "password-reset-token-ttl-range": "Link til nulstilling af adgangskode TTL skal være mellem 1 og 24 timer",
     "mobile-secret-key-length": "Længde på mobil hemmelig nøgle",

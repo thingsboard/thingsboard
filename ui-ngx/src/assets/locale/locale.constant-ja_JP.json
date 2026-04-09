@@ -208,7 +208,7 @@
     "minimum-max-failed-login-attempts-range": "ログイン失敗回数の上限は負の値にはできません",
     "user-lockout-notification-email": "ユーザーアカウントがロックアウトされた場合、emailに通知を送信",
     "user-activation-token-ttl": "ユーザー有効化リンクのTTL（時間）",
-    "user-activation-token-ttl-range": "ユーザー有効化リンクのTTLは1〜24時間の範囲である必要があります",
+    "user-activation-token-ttl-range": "ユーザー有効化リンクのTTLは1〜{{max}}時間の範囲である必要があります",
     "password-reset-token-ttl": "パスワードリセットリンクのTTL（時間）",
     "password-reset-token-ttl-range": "パスワードリセットリンクのTTLは1〜24時間の範囲である必要があります",
     "mobile-secret-key-length": "モバイルシークレットキー長",

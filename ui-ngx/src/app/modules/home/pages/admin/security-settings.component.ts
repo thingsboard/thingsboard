@@ -31,7 +31,7 @@ import {
 import { JwtSettings, SecuritySettings } from '@shared/models/settings.models';
 import { AdminService } from '@core/http/admin.service';
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
-import { mergeMap, tap } from 'rxjs/operators';
+import { catchError, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { randomAlphanumeric, validateEmail } from '@core/utils';
 import { AuthService } from '@core/auth/auth.service';
 import { DialogService } from '@core/services/dialog.service';
@@ -51,6 +51,7 @@ export class SecuritySettingsComponent extends PageComponent implements HasConfi
   jwtSecuritySettingsFormGroup: UntypedFormGroup;
 
   showMainLoadingBar = false;
+  maxActivationLinkTtl: number;
 
   private securitySettings: SecuritySettings;
   private jwtSettings: JwtSettings;
@@ -66,9 +67,17 @@ export class SecuritySettingsComponent extends PageComponent implements HasConfi
     super(store);
     this.buildSecuritySettingsForm();
     this.buildJwtSecuritySettingsForm();
-    this.adminService.getSecuritySettings().subscribe(
-      securitySettings => this.processSecuritySettings(securitySettings)
-    );
+    this.adminService.getActivationLinkMaxTtl().pipe(
+      catchError(() => of(null)),
+      tap(maxTtl => {
+        if (maxTtl != null) {
+          this.maxActivationLinkTtl = maxTtl;
+          this.securitySettingsFormGroup.get('userActivationTokenTtl')
+            .addValidators(Validators.max(maxTtl));
+        }
+      }),
+      switchMap(() => this.adminService.getSecuritySettings())
+    ).subscribe(securitySettings => this.processSecuritySettings(securitySettings));
     this.adminService.getJwtSettings().subscribe(
       jwtSettings => this.processJwtSettings(jwtSettings)
     );
@@ -78,7 +87,7 @@ export class SecuritySettingsComponent extends PageComponent implements HasConfi
     this.securitySettingsFormGroup = this.fb.group({
       maxFailedLoginAttempts: [null, [Validators.min(0)]],
       userLockoutNotificationEmail: ['', [validateEmail]],
-      userActivationTokenTtl: [24, [Validators.required, Validators.min(1), Validators.max(24)]],
+      userActivationTokenTtl: [24, [Validators.required, Validators.min(1)]],
       passwordResetTokenTtl: [24, [Validators.required, Validators.min(1), Validators.max(24)]],
       mobileSecretKeyLength: [null, [Validators.min(1)]],
       passwordPolicy: this.fb.group(

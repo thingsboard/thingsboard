@@ -208,7 +208,7 @@
     "minimum-max-failed-login-attempts-range": "El número máximo de intentos fallidos no puede ser negativo",
     "user-lockout-notification-email": "En caso de bloqueo de cuenta de usuario, enviar notificación por correo",
     "user-activation-token-ttl": "Duración del enlace de activación de usuario (en horas)",
-    "user-activation-token-ttl-range": "La duración del enlace de activación debe estar entre 1 y 24 horas",
+    "user-activation-token-ttl-range": "La duración del enlace de activación debe estar entre 1 y {{max}} horas",
     "password-reset-token-ttl": "Duración del enlace de restablecimiento de contraseña (en horas)",
     "password-reset-token-ttl-range": "La duración del enlace de restablecimiento debe estar entre 1 y 24 horas",
     "mobile-secret-key-length": "Longitud de la clave secreta móvil",

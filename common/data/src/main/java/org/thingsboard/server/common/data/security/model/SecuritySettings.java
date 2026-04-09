@@ -43,8 +43,8 @@ public class SecuritySettings implements Serializable {
     @Schema(description = "Mobile secret key length")
     private Integer mobileSecretKeyLength;
 
-    @NotNull @Min(1) @Max(24)
-    @Schema(description = "TTL in hours for user activation link", minimum = "1", maximum = "24", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotNull @Min(1)
+    @Schema(description = "TTL in hours for user activation link", minimum = "1", requiredMode = Schema.RequiredMode.REQUIRED)
     private Integer userActivationTokenTtl;
 
     @NotNull @Min(1) @Max(24)

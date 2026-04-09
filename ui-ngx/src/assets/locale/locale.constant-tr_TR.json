@@ -208,7 +208,7 @@
     "minimum-max-failed-login-attempts-range": "Maksimum başarısız giriş denemesi negatif olamaz",
     "user-lockout-notification-email": "Kullanıcı hesabı kilitlenirse e-posta bildirimi gönder",
     "user-activation-token-ttl": "Kullanıcı etkinleştirme bağlantısı TTL (saat)",
-    "user-activation-token-ttl-range": "Kullanıcı etkinleştirme bağlantısı süresi 1 ile 24 saat arasında olmalıdır",
+    "user-activation-token-ttl-range": "Kullanıcı etkinleştirme bağlantısı süresi 1 ile {{max}} saat arasında olmalıdır",
     "password-reset-token-ttl": "Şifre sıfırlama bağlantısı TTL (saat)",
     "password-reset-token-ttl-range": "Şifre sıfırlama bağlantısı süresi 1 ile 24 saat arasında olmalıdır",
     "mobile-secret-key-length": "Mobil gizli anahtar uzunluğu",

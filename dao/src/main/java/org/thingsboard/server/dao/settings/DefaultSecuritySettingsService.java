@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.settings;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.common.data.security.model.UserPasswordPolicy;
+import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.ConstraintValidator;
 
 import static org.thingsboard.server.common.data.CacheConstants.SECURITY_SETTINGS_CACHE;
@@ -33,6 +35,9 @@ import static org.thingsboard.server.common.data.CacheConstants.SECURITY_SETTING
 public class DefaultSecuritySettingsService implements SecuritySettingsService {
 
     private final AdminSettingsService adminSettingsService;
+
+    @Value("${security.user_activation_link_max_ttl:720}")
+    private int maxActivationLinkTtl;
 
     public static final int DEFAULT_MOBILE_SECRET_KEY_LENGTH = 64;
 
@@ -59,10 +64,18 @@ public class DefaultSecuritySettingsService implements SecuritySettingsService {
         return securitySettings;
     }
 
+    @Override
+    public int getMaxActivationLinkTtl() {
+        return maxActivationLinkTtl;
+    }
+
     @CacheEvict(cacheNames = SECURITY_SETTINGS_CACHE, key = "'securitySettings'")
     @Override
     public SecuritySettings saveSecuritySettings(SecuritySettings securitySettings) {
         ConstraintValidator.validateFields(securitySettings);
+        if (securitySettings.getUserActivationTokenTtl() > maxActivationLinkTtl) {
+            throw new DataValidationException("User activation link TTL must not exceed " + maxActivationLinkTtl + " hours");
+        }
         AdminSettings adminSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "securitySettings");
         if (adminSettings == null) {
             adminSettings = new AdminSettings();

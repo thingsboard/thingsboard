@@ -295,6 +295,42 @@ public class AuthControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testActivationLinkMaxTtlEndpoint() throws Exception {
+        loginSysAdmin();
+        int maxTtl = doGet("/api/admin/securitySettings/activationLinkMaxTtl", Integer.class);
+        assertThat(maxTtl).isEqualTo(720);
+    }
+
+    @Test
+    public void testActivationLinkTtlAtMaxIsAllowed() throws Exception {
+        loginSysAdmin();
+        int maxTtl = doGet("/api/admin/securitySettings/activationLinkMaxTtl", Integer.class);
+        SecuritySettings securitySettings = doGet("/api/admin/securitySettings", SecuritySettings.class);
+        securitySettings.setUserActivationTokenTtl(maxTtl);
+        doPost("/api/admin/securitySettings", securitySettings).andExpect(status().isOk());
+    }
+
+    @Test
+    public void testActivationLinkTtlExceedsMax() throws Exception {
+        loginSysAdmin();
+        int maxTtl = doGet("/api/admin/securitySettings/activationLinkMaxTtl", Integer.class);
+        SecuritySettings securitySettings = doGet("/api/admin/securitySettings", SecuritySettings.class);
+        securitySettings.setUserActivationTokenTtl(maxTtl + 1);
+        doPost("/api/admin/securitySettings", securitySettings).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void testActivationLinkMaxTtlEndpointAccessDeniedForTenantAdmin() throws Exception {
+        loginTenantAdmin();
+        doGet("/api/admin/securitySettings/activationLinkMaxTtl").andExpect(status().isForbidden());
+    }
+
+    @Test
+    public void testActivationLinkMaxTtlEndpointUnauthorized() throws Exception {
+        doGet("/api/admin/securitySettings/activationLinkMaxTtl").andExpect(status().isUnauthorized());
+    }
+
+    @Test
     public void testGetPageWithoutRedirect() throws Exception {
         doGet("/login").andExpect(status().isOk());
         doGet("/home").andExpect(status().isOk());

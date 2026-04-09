@@ -208,7 +208,7 @@
     "minimum-max-failed-login-attempts-range": "Maximum aantal mislukte pogingen mag niet negatief zijn",
     "user-lockout-notification-email": "Stuur e-mailmelding bij accountvergrendeling",
     "user-activation-token-ttl": "Levensduur activatielink gebruiker in uren",
-    "user-activation-token-ttl-range": "Levensduur activatielink moet tussen 1 en 24 uur liggen",
+    "user-activation-token-ttl-range": "Levensduur activatielink moet tussen 1 en {{max}} uur liggen",
     "password-reset-token-ttl": "Levensduur wachtwoordherstellink in uren",
     "password-reset-token-ttl-range": "Levensduur herstellink moet tussen 1 en 24 uur liggen",
     "mobile-secret-key-length": "Lengte mobiele geheime sleutel",
