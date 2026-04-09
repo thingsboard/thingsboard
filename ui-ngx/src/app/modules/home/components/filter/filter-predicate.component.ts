@@ -22,6 +22,7 @@ import {
   NG_VALUE_ACCESSOR,
   ValidationErrors,
   Validator,
+  Validators,
 } from '@angular/forms';
 import {
   EntityKeyValueType,
@@ -135,8 +136,22 @@ export class FilterPredicateComponent implements ControlValueAccessor, Validator
 
   writeValue(predicate: KeyFilterPredicateInfo): void {
     this.type = predicate.keyFilterPredicate.type;
+    this.updateValidators();
     this.filterPredicateFormGroup.patchValue(predicate.keyFilterPredicate, {emitEvent: false});
     this.filterPredicateFormGroup.get('userInfo').patchValue(predicate.userInfo, {emitEvent: false});
+  }
+
+  private updateValidators(): void {
+    const operationCtrl = this.filterPredicateFormGroup.get('operation');
+    const predicatesCtrl = this.filterPredicateFormGroup.get('predicates');
+    operationCtrl.setValidators([Validators.required]);
+    if (this.type === FilterPredicateType.COMPLEX) {
+      predicatesCtrl.setValidators([Validators.required]);
+    } else {
+      predicatesCtrl.clearValidators();
+    }
+    operationCtrl.updateValueAndValidity({emitEvent: false});
+    predicatesCtrl.updateValueAndValidity({emitEvent: false});
   }
 
   private updateModel() {
