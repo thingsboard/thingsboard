@@ -858,6 +858,161 @@ public class AlarmRulesTest extends AbstractControllerTest {
         });
     }
 
+    @Test
+    public void testDisabledAlarmRuleDoesNotCreateAlarm() throws Exception {
+        Argument temperatureArgument = new Argument();
+        temperatureArgument.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
+        temperatureArgument.setDefaultValue("0");
+        Map<String, Argument> arguments = Map.of("temperature", temperatureArgument);
+
+        Map<AlarmSeverity, Condition> createRules = Map.of(
+                AlarmSeverity.CRITICAL, new Condition("return temperature >= 50;", null, null)
+        );
+
+        AlarmRuleDefinition alarmRule = createAlarmRule(deviceId, "Disabled Alarm Test",
+                arguments, createRules, null);
+
+        // Verify alarm is created when enabled
+        postTelemetry(deviceId, "{\"temperature\":50}");
+        checkAlarmResult(alarmRule, alarmResult -> {
+            assertThat(alarmResult.isCreated()).isTrue();
+            assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.CRITICAL);
+        });
+
+        // Disable the alarm rule
+        AlarmRuleDefinition fetched = doGet("/api/alarm/rule/" + alarmRule.getId().getId(), AlarmRuleDefinition.class);
+        fetched.setEnabled(false);
+        AlarmRuleDefinition disabled = saveAlarmRule(fetched);
+        assertThat(disabled.isEnabled()).isFalse();
+
+        // Send telemetry that would trigger alarm — should NOT produce new alarm result
+        postTelemetry(deviceId, "{\"temperature\":200}");
+
+        await().alias("disabled alarm rule should not process").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .during(3, TimeUnit.SECONDS)
+                .untilAsserted(() -> assertThat(getLatestAlarmResult(alarmRule.getId())).isNull());
+    }
+
+    @Test
+    public void testReEnabledAlarmRuleCreatesAlarm() throws Exception {
+        Argument temperatureArgument = new Argument();
+        temperatureArgument.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
+        temperatureArgument.setDefaultValue("0");
+        Map<String, Argument> arguments = Map.of("temperature", temperatureArgument);
+
+        Map<AlarmSeverity, Condition> createRules = Map.of(
+                AlarmSeverity.CRITICAL, new Condition("return temperature >= 50;", null, null)
+        );
+        Condition clearRule = new Condition("return temperature < 50;", null, null);
+
+        AlarmRuleDefinition alarmRule = createAlarmRule(deviceId, "Re-enable Alarm Test",
+                arguments, createRules, clearRule);
+
+        // Create alarm
+        postTelemetry(deviceId, "{\"temperature\":60}");
+        checkAlarmResult(alarmRule, alarmResult -> {
+            assertThat(alarmResult.isCreated()).isTrue();
+        });
+
+        // Clear alarm
+        postTelemetry(deviceId, "{\"temperature\":10}");
+        checkAlarmResult(alarmRule, alarmResult -> {
+            assertThat(alarmResult.isCleared()).isTrue();
+        });
+
+        // Disable
+        AlarmRuleDefinition fetched = doGet("/api/alarm/rule/" + alarmRule.getId().getId(), AlarmRuleDefinition.class);
+        fetched.setEnabled(false);
+        saveAlarmRule(fetched);
+
+        // Re-enable
+        fetched = doGet("/api/alarm/rule/" + alarmRule.getId().getId(), AlarmRuleDefinition.class);
+        fetched.setEnabled(true);
+        saveAlarmRule(fetched);
+
+        // Trigger alarm again — re-enabled rule should process
+        postTelemetry(deviceId, "{\"temperature\":80}");
+        checkAlarmResult(alarmRule, alarmResult -> {
+            assertThat(alarmResult.isCreated()).isTrue();
+            assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.CRITICAL);
+        });
+    }
+
+    @Test
+    public void testEnableDisableCycles() throws Exception {
+        Argument temperatureArgument = new Argument();
+        temperatureArgument.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
+        temperatureArgument.setDefaultValue("0");
+        Map<String, Argument> arguments = Map.of("temperature", temperatureArgument);
+
+        Map<AlarmSeverity, Condition> createRules = Map.of(
+                AlarmSeverity.CRITICAL, new Condition("return temperature >= 50;", null, null)
+        );
+        Condition clearRule = new Condition("return temperature < 50;", null, null);
+
+        AlarmRuleDefinition alarmRule = createAlarmRule(deviceId, "Cycle Alarm Test",
+                arguments, createRules, clearRule);
+
+        // --- Cycle 1: enabled → alarm → clear → disable → no alarm → re-enable → alarm ---
+
+        postTelemetry(deviceId, "{\"temperature\":60}");
+        checkAlarmResult(alarmRule, alarmResult -> {
+            assertThat(alarmResult.isCreated()).isTrue();
+        });
+
+        postTelemetry(deviceId, "{\"temperature\":10}");
+        checkAlarmResult(alarmRule, alarmResult -> {
+            assertThat(alarmResult.isCleared()).isTrue();
+        });
+
+        // Disable
+        AlarmRuleDefinition fetched = doGet("/api/alarm/rule/" + alarmRule.getId().getId(), AlarmRuleDefinition.class);
+        fetched.setEnabled(false);
+        saveAlarmRule(fetched);
+
+        postTelemetry(deviceId, "{\"temperature\":70}");
+        await().alias("cycle 1: disabled, no alarm").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .during(3, TimeUnit.SECONDS)
+                .untilAsserted(() -> assertThat(getLatestAlarmResult(alarmRule.getId())).isNull());
+
+        // Re-enable
+        fetched = doGet("/api/alarm/rule/" + alarmRule.getId().getId(), AlarmRuleDefinition.class);
+        fetched.setEnabled(true);
+        saveAlarmRule(fetched);
+
+        postTelemetry(deviceId, "{\"temperature\":80}");
+        checkAlarmResult(alarmRule, alarmResult -> {
+            assertThat(alarmResult.isCreated()).isTrue();
+        });
+
+        // Clear for cycle 2
+        postTelemetry(deviceId, "{\"temperature\":10}");
+        checkAlarmResult(alarmRule, alarmResult -> {
+            assertThat(alarmResult.isCleared()).isTrue();
+        });
+
+        // --- Cycle 2: disable → no alarm → re-enable → alarm ---
+
+        fetched = doGet("/api/alarm/rule/" + alarmRule.getId().getId(), AlarmRuleDefinition.class);
+        fetched.setEnabled(false);
+        saveAlarmRule(fetched);
+
+        postTelemetry(deviceId, "{\"temperature\":90}");
+        await().alias("cycle 2: disabled, no alarm").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .during(3, TimeUnit.SECONDS)
+                .untilAsserted(() -> assertThat(getLatestAlarmResult(alarmRule.getId())).isNull());
+
+        fetched = doGet("/api/alarm/rule/" + alarmRule.getId().getId(), AlarmRuleDefinition.class);
+        fetched.setEnabled(true);
+        saveAlarmRule(fetched);
+
+        postTelemetry(deviceId, "{\"temperature\":100}");
+        checkAlarmResult(alarmRule, alarmResult -> {
+            assertThat(alarmResult.isCreated()).isTrue();
+            assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.CRITICAL);
+        });
+    }
+
     // TODO: MSA tests
 
     private TbAlarmResult checkAlarmResult(AlarmRuleDefinition alarmRule, Consumer<TbAlarmResult> assertion) {
