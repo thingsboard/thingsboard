@@ -24,9 +24,10 @@ import { mapWidgetDefaultSettings } from '@home/components/widget/lib/maps/map-w
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
 
 @Component({
-  selector: 'tb-map-widget-settings',
-  templateUrl: './map-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-map-widget-settings',
+    templateUrl: './map-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class MapWidgetSettingsComponent extends WidgetSettingsComponent {
 

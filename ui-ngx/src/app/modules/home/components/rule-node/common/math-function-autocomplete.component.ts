@@ -21,18 +21,20 @@ import { TranslateService } from '@ngx-translate/core';
 import { FunctionData, MathFunction, MathFunctionMap } from '../rule-node-config.models';
 import { map, tap } from 'rxjs/operators';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { MatFormFieldAppearance } from '@angular/material/form-field';
 
 @Component({
-  selector: 'tb-math-function-autocomplete',
-  templateUrl: './math-function-autocomplete.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => MathFunctionAutocompleteComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-math-function-autocomplete',
+    templateUrl: './math-function-autocomplete.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => MathFunctionAutocompleteComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class MathFunctionAutocompleteComponent implements ControlValueAccessor, OnInit {
 
@@ -48,6 +50,9 @@ export class MathFunctionAutocompleteComponent implements ControlValueAccessor, 
   }
 
   @Input() disabled: boolean;
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   @ViewChild('operationInput', {static: true}) operationInput: ElementRef;
 

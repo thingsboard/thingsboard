@@ -28,9 +28,10 @@ export interface AlarmCommentDialogData {
 }
 
 @Component({
-  selector: 'tb-alarm-comment-dialog',
-  templateUrl: './alarm-comment-dialog.component.html',
-  styleUrls: []
+    selector: 'tb-alarm-comment-dialog',
+    templateUrl: './alarm-comment-dialog.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class AlarmCommentDialogComponent extends DialogComponent<AlarmCommentDialogComponent, void> {
 

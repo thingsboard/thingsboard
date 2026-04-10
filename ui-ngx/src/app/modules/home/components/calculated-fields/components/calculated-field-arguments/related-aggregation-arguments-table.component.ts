@@ -36,21 +36,22 @@ import { AliasFilterType } from '@shared/models/alias.models';
 import { EntityType } from '@shared/models/entity-type.models';
 
 @Component({
-  selector: 'tb-related-aggregation-arguments-table',
-  templateUrl: './calculated-field-arguments-table.component.html',
-  styleUrls: [`calculated-field-arguments-table.component.scss`],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => RelatedAggregationArgumentsTableComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => RelatedAggregationArgumentsTableComponent),
-      multi: true
-    }
-  ],
+    selector: 'tb-related-aggregation-arguments-table',
+    templateUrl: './calculated-field-arguments-table.component.html',
+    styleUrls: [`calculated-field-arguments-table.component.scss`],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => RelatedAggregationArgumentsTableComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => RelatedAggregationArgumentsTableComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class RelatedAggregationArgumentsTableComponent extends CalculatedFieldArgumentsTableComponent {
 

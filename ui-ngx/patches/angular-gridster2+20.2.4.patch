@@ -1,0 +1,15 @@
+diff --git a/node_modules/angular-gridster2/fesm2022/angular-gridster2.mjs b/node_modules/angular-gridster2/fesm2022/angular-gridster2.mjs
+index 9fbf502..ee1b125 100644
+--- a/node_modules/angular-gridster2/fesm2022/angular-gridster2.mjs
++++ b/node_modules/angular-gridster2/fesm2022/angular-gridster2.mjs
+@@ -777,8 +777,8 @@ class GridsterRenderer {
+             renderer.setStyle(el, DirTypes.LTR ? 'margin-right' : 'margin-left', '');
+         }
+         else {
+-            const x = Math.round(this.gridster.curColWidth * item.x);
+-            const y = Math.round(this.gridster.curRowHeight * item.y);
++            const x = this.gridster.curColWidth * item.x;
++            const y = this.gridster.curRowHeight * item.y;
+             const width = this.gridster.curColWidth * item.cols - this.gridster.$options.margin;
+             const height = this.gridster.curRowHeight * item.rows - this.gridster.$options.margin;
+             // set the cell style

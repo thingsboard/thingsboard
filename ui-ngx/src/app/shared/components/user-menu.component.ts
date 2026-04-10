@@ -25,10 +25,11 @@ import { AuthService } from '@core/auth/auth.service';
 import { Router } from '@angular/router';
 
 @Component({
-  selector: 'tb-user-menu',
-  templateUrl: './user-menu.component.html',
-  styleUrls: ['./user-menu.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'tb-user-menu',
+    templateUrl: './user-menu.component.html',
+    styleUrls: ['./user-menu.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class UserMenuComponent implements OnInit, OnDestroy {
 

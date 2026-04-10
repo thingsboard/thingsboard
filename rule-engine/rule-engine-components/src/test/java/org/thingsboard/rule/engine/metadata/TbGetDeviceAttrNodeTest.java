@@ -26,7 +26,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
-import org.thingsboard.rule.engine.TestDbCallbackExecutor;
+import org.thingsboard.common.util.DirectListeningExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -62,7 +62,7 @@ public class TbGetDeviceAttrNodeTest extends AbstractRuleNodeUpgradeTest {
 
     private final TenantId TENANT_ID = new TenantId(UUID.fromString("5aea576c-66c4-4732-86b8-dc6bfcde7443"));
     private final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("40b6b393-6ddf-47f9-973a-18550ca70384"));
-    private final ListeningExecutor executor = new TestDbCallbackExecutor();
+    private final ListeningExecutor executor = DirectListeningExecutor.INSTANCE;
 
 
     private TbGetDeviceAttrNode node;

@@ -24,9 +24,11 @@
   </mat-form-field>
   <mat-form-field class="tb-inline-field tb-type-field fixed-height" appearance="outline" subscriptSizing="dynamic">
     <mat-select formControlName="type">
-      <mat-option *ngFor="let type of scadaSymbolBehaviorTypes" [value]="type">
-        {{ scadaSymbolBehaviorTypeTranslations.get(type) | translate }}
-      </mat-option>
+      @for (type of scadaSymbolBehaviorTypes; track type) {
+        <mat-option [value]="type">
+          {{ scadaSymbolBehaviorTypeTranslations.get(type) | translate }}
+        </mat-option>
+      }
     </mat-select>
   </mat-form-field>
   <div class="tb-form-table-row-cell-buttons">
@@ -38,13 +40,15 @@
             matTooltipPosition="above">
       <mat-icon>settings</mat-icon>
     </button>
-    <button *ngIf="!disabled"
-            type="button"
-            mat-icon-button
-            (click)="behaviorRemoved.emit()"
-            matTooltip="{{ 'scada.behavior.remove-behavior' | translate }}"
-            matTooltipPosition="above">
-      <mat-icon>delete</mat-icon>
-    </button>
+    @if (!disabled) {
+      <button
+        type="button"
+        mat-icon-button
+        (click)="behaviorRemoved.emit()"
+        matTooltip="{{ 'scada.behavior.remove-behavior' | translate }}"
+        matTooltipPosition="above">
+        <mat-icon>delete</mat-icon>
+      </button>
+    }
   </div>
 </div>

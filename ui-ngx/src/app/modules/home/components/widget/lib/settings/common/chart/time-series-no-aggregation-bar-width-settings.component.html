@@ -19,12 +19,14 @@
   <div class="flex flex-row items-center justify-between">
     <div class="flex-1" translate>widgets.time-series-chart.no-aggregation-bar-width-strategy</div>
     <tb-toggle-select formControlName="strategy" selectMediaBreakpoint="xs">
-      <tb-toggle-option *ngFor="let strategy of timeSeriesChartNoAggregationBarWidthStrategies" [value]="strategy">
-        {{ timeSeriesChartNoAggregationBarWidthStrategyTranslations.get(strategy) | translate }}
-      </tb-toggle-option>
+      @for (strategy of timeSeriesChartNoAggregationBarWidthStrategies; track strategy) {
+        <tb-toggle-option [value]="strategy">
+          {{ timeSeriesChartNoAggregationBarWidthStrategyTranslations.get(strategy) | translate }}
+        </tb-toggle-option>
+      }
     </tb-toggle-select>
   </div>
-  <ng-container *ngIf="barWidthSettingsFormGroup.get('strategy').value === TimeSeriesChartNoAggregationBarWidthStrategy.group">
+  @if (barWidthSettingsFormGroup.get('strategy').value === TimeSeriesChartNoAggregationBarWidthStrategy.group) {
     <ng-container
       *ngTemplateOutlet="barWidth;
       context: {
@@ -32,8 +34,8 @@
         label: 'widgets.time-series-chart.bar-group-width'
       }">
     </ng-container>
-  </ng-container>
-  <ng-container *ngIf="barWidthSettingsFormGroup.get('strategy').value === TimeSeriesChartNoAggregationBarWidthStrategy.separate">
+  }
+  @if (barWidthSettingsFormGroup.get('strategy').value === TimeSeriesChartNoAggregationBarWidthStrategy.separate) {
     <ng-container
       *ngTemplateOutlet="barWidth;
       context: {
@@ -41,7 +43,7 @@
         label: 'widgets.time-series-chart.bar-width'
       }">
     </ng-container>
-  </ng-container>
+  }
 </div>
 <ng-template #barWidth let-label="label" let-formGroup="formGroup">
   <div class="tb-form-row space-between column-lt-md" [formGroup]="formGroup">
@@ -51,8 +53,8 @@
         <mat-select formControlName="relative">
           <mat-select-trigger>
             {{ (formGroup.get('relative').value ?
-               'widgets.time-series-chart.bar-width-relative' :
-               'widgets.time-series-chart.bar-width-absolute') | translate }}
+            'widgets.time-series-chart.bar-width-relative' :
+            'widgets.time-series-chart.bar-width-absolute') | translate }}
           </mat-select-trigger>
           <mat-option [value]="true">
             {{ 'widgets.time-series-chart.bar-width-relative' | translate }}
@@ -62,14 +64,18 @@
           </mat-option>
         </mat-select>
       </mat-form-field>
-      <mat-form-field *ngIf="formGroup.get('relative').value" class="number fixed-width" appearance="outline" subscriptSizing="dynamic">
-        <input required matInput type="number" formControlName="relativeWidth" min="0.1" max="100" placeholder="{{ 'widget-config.set' | translate }}"/>
-        <span matSuffix>%</span>
-      </mat-form-field>
-      <mat-form-field *ngIf="!formGroup.get('relative').value" class="number fixed-width" appearance="outline" subscriptSizing="dynamic">
-        <input required matInput type="number" formControlName="absoluteWidth" min="100" step="1" placeholder="{{ 'widget-config.set' | translate }}"/>
-        <span matSuffix>ms</span>
-      </mat-form-field>
+      @if (formGroup.get('relative').value) {
+        <mat-form-field class="number fixed-width" appearance="outline" subscriptSizing="dynamic">
+          <input required matInput type="number" formControlName="relativeWidth" min="0.1" max="100" placeholder="{{ 'widget-config.set' | translate }}"/>
+          <span matSuffix>%</span>
+        </mat-form-field>
+      }
+      @if (!formGroup.get('relative').value) {
+        <mat-form-field class="number fixed-width" appearance="outline" subscriptSizing="dynamic">
+          <input required matInput type="number" formControlName="absoluteWidth" min="100" step="1" placeholder="{{ 'widget-config.set' | translate }}"/>
+          <span matSuffix>ms</span>
+        </mat-form-field>
+      }
     </div>
   </div>
 </ng-template>

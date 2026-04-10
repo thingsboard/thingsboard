@@ -42,11 +42,12 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-background-settings-panel',
-  templateUrl: './background-settings-panel.component.html',
-  providers: [],
-  styleUrls: ['./background-settings-panel.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-background-settings-panel',
+    templateUrl: './background-settings-panel.component.html',
+    providers: [],
+    styleUrls: ['./background-settings-panel.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class BackgroundSettingsPanelComponent extends PageComponent implements OnInit {
 

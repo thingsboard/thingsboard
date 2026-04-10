@@ -58,9 +58,10 @@ import { EntitySearchDirection } from '@shared/models/relation.models';
 import { CdkDragDrop } from "@angular/cdk/drag-drop";
 
 @Component({
-  selector: 'tb-calculated-field-geofencing-zone-groups-panel',
-  templateUrl: './calculated-field-geofencing-zone-groups-panel.component.html',
-  styleUrls: ['../common/calculated-field-panel.scss', './calculated-field-geofencing-zone-groups-panel.component.scss']
+    selector: 'tb-calculated-field-geofencing-zone-groups-panel',
+    templateUrl: './calculated-field-geofencing-zone-groups-panel.component.html',
+    styleUrls: ['../common/calculated-field-panel.scss', './calculated-field-geofencing-zone-groups-panel.component.scss'],
+    standalone: false
 })
 export class CalculatedFieldGeofencingZoneGroupsPanelComponent implements OnInit, AfterViewInit {
 

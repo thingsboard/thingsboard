@@ -25,9 +25,10 @@ import { FormBuilder } from '@angular/forms';
 import { deepTrim } from '@core/utils';
 
 @Component({
-  selector: 'tb-add-mobile-page-dialog',
-  templateUrl: './add-mobile-page-dialog.component.html',
-  styleUrls: ['./add-mobile-page-dialog.component.scss']
+    selector: 'tb-add-mobile-page-dialog',
+    templateUrl: './add-mobile-page-dialog.component.html',
+    styleUrls: ['./add-mobile-page-dialog.component.scss'],
+    standalone: false
 })
 export class AddMobilePageDialogComponent extends DialogComponent<AddMobilePageDialogComponent, CustomMobilePage> {
 

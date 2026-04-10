@@ -38,7 +38,7 @@ export class CalculatedFieldFormService {
 
   buildForm(): FormGroup {
     return this.fb.group({
-      name: ['', [Validators.required, Validators.pattern(oneSpaceInsideRegex), Validators.maxLength(255)]],
+      name: ['', [Validators.required, Validators.maxLength(255)]],
       entityId: [null, Validators.required],
       type: [CalculatedFieldType.SIMPLE],
       debugSettings: [],
@@ -48,7 +48,7 @@ export class CalculatedFieldFormService {
 
   buildAlarmRuleForm(): FormGroup {
     return this.fb.group({
-      name: ['', [Validators.required, Validators.pattern(oneSpaceInsideRegex), Validators.maxLength(255)]],
+      name: ['', [Validators.required, Validators.maxLength(255)]],
       entityId: [null, Validators.required],
       type: [CalculatedFieldType.ALARM],
       debugSettings: [],

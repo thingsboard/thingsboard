@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -191,7 +192,7 @@ public class TenantProfileController extends BaseController {
             oldProfile = checkTenantProfileId(tenantProfile.getId(), Operation.WRITE);
         }
 
-        return tbTenantProfileService.save(getTenantId(), tenantProfile, oldProfile);
+        return tbTenantProfileService.save(getTenantId(), tenantProfile, oldProfile, getCurrentUser());
     }
 
     @ApiOperation(value = "Delete Tenant Profile (deleteTenantProfile)",
@@ -204,7 +205,7 @@ public class TenantProfileController extends BaseController {
         checkParameter("tenantProfileId", strTenantProfileId);
         TenantProfileId tenantProfileId = new TenantProfileId(toUUID(strTenantProfileId));
         TenantProfile profile = checkTenantProfileId(tenantProfileId, Operation.DELETE);
-        tbTenantProfileService.delete(getTenantId(), profile);
+        tbTenantProfileService.delete(getTenantId(), profile, getCurrentUser());
     }
 
     @ApiOperation(value = "Make tenant profile default (setDefaultTenantProfile)",
@@ -217,7 +218,7 @@ public class TenantProfileController extends BaseController {
         checkParameter("tenantProfileId", strTenantProfileId);
         TenantProfileId tenantProfileId = new TenantProfileId(toUUID(strTenantProfileId));
         TenantProfile tenantProfile = checkTenantProfileId(tenantProfileId, Operation.WRITE);
-        tenantProfileService.setDefaultTenantProfile(getTenantId(), tenantProfileId);
+        tenantProfile = tbTenantProfileService.setDefaultTenantProfile(getTenantId(), tenantProfile, getCurrentUser());
         return tenantProfile;
     }
 
@@ -242,7 +243,7 @@ public class TenantProfileController extends BaseController {
     @ApiOperation(value = "Get Tenant Profiles Info (getTenantProfileInfos)", notes = "Returns a page of tenant profile info objects registered in the platform. "
             + TENANT_PROFILE_INFO_DESCRIPTION + PAGE_DATA_PARAMETERS + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @GetMapping(value = "/tenantProfileInfos", params = {"pageSize", "page"})
+    @GetMapping(value = "/tenantProfileInfos")
     public PageData<EntityInfo> getTenantProfileInfos(
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
@@ -258,11 +259,19 @@ public class TenantProfileController extends BaseController {
         return checkNotNull(tenantProfileService.findTenantProfileInfos(getTenantId(), pageLink));
     }
 
+    @Hidden
     @GetMapping(value = "/tenantProfiles", params = {"ids"})
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    public List<TenantProfile> getTenantProfilesByIds(@Parameter(description = "Comma-separated list of tenant profile ids", array = @ArraySchema(schema = @Schema(type = "string")))
-                                                      @RequestParam("ids") UUID[] ids) {
+    public List<TenantProfile> getTenantProfilesByIds(@RequestParam("ids") UUID[] ids) {
         return tenantProfileService.findTenantProfilesByIds(TenantId.SYS_TENANT_ID, ids);
+    }
+
+    @ApiOperation(value = "Get Tenant Profile list (getTenantProfileList)")
+    @GetMapping(value = "/tenantProfiles/list")
+    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+    public List<TenantProfile> getTenantProfileList(@Parameter(description = "Comma-separated list of tenant profile ids", array = @ArraySchema(schema = @Schema(type = "string")))
+                                                    @RequestParam("ids") UUID[] ids) {
+        return getTenantProfilesByIds(ids);
     }
 
 }

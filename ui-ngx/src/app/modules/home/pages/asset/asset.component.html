@@ -64,7 +64,7 @@
   </div>
 </div>
 <div class="mat-padding flex flex-col">
-  <mat-form-field class="mat-block"
+  <mat-form-field class="mat-block" appearance="outline"
                   [class.!hidden]="isEdit || !isAssignedToCustomer(entity)
                               || entity?.customerIsPublic || assetScope !== 'tenant'">
     <mat-label translate>asset.assignedToCustomer</mat-label>
@@ -75,42 +75,45 @@
     {{ 'asset.asset-public' | translate }}
   </div>
   <form [formGroup]="entityForm">
-    <fieldset [disabled]="(isLoading$ | async) || !isEdit">
-      <mat-form-field class="mat-block">
+    <fieldset [disabled]="(isLoading$ | async) || !isEdit" style="min-width: 0;">
+      <mat-form-field class="mat-block" appearance="outline">
         <mat-label translate>asset.name</mat-label>
         <input matInput formControlName="name" required>
-        <mat-error *ngIf="entityForm.get('name').hasError('required')">
-          {{ 'asset.name-required' | translate }}
-        </mat-error>
-        <mat-error *ngIf="entityForm.get('name').hasError('maxlength')">
-          {{ 'asset.name-max-length' | translate }}
-        </mat-error>
+        @if (entityForm.get('name').hasError('required')) {
+          <mat-error>{{ 'asset.name-required' | translate }}</mat-error>
+        }
+        @if (entityForm.get('name').hasError('maxlength')) {
+          <mat-error>{{ 'asset.name-max-length' | translate }}</mat-error>
+        }
       </mat-form-field>
-      <mat-form-field class="mat-block">
+      <mat-form-field class="mat-block" appearance="outline">
         <mat-label translate>asset.label</mat-label>
         <input matInput formControlName="label">
-        <mat-error *ngIf="entityForm.get('label').hasError('maxlength')">
-          {{ 'asset.label-max-length' | translate }}
-        </mat-error>
+        @if (entityForm.get('label').hasError('maxlength')) {
+          <mat-error>{{ 'asset.label-max-length' | translate }}</mat-error>
+        }
       </mat-form-field>
       <tb-asset-profile-autocomplete
         [selectDefaultProfile]="isAdd"
         required
         formControlName="assetProfileId"
+        appearance="outline"
         [showDetailsPageLink]="true"
         (assetProfileUpdated)="onAssetProfileUpdated()">
       </tb-asset-profile-autocomplete>
-      <tb-entity-autocomplete
-        *ngIf="isAdd"
-        useFullEntityId
-        formControlName="customerId"
-        labelText="asset.assign-to-customer"
-        [entityType]="entityType.CUSTOMER">
-      </tb-entity-autocomplete>
+      @if (isAdd) {
+        <tb-entity-autocomplete
+          useFullEntityId
+          formControlName="customerId"
+          labelText="asset.assign-to-customer"
+          appearance="outline"
+          [entityType]="entityType.CUSTOMER">
+        </tb-entity-autocomplete>
+      }
       <div formGroupName="additionalInfo">
-        <mat-form-field class="mat-block">
+        <mat-form-field class="mat-block" appearance="outline">
           <mat-label translate>asset.description</mat-label>
-          <textarea matInput formControlName="description" rows="2"></textarea>
+          <textarea matInput formControlName="description" cdkTextareaAutosize cdkAutosizeMinRows="1" rows="1"></textarea>
         </mat-form-field>
       </div>
     </fieldset>

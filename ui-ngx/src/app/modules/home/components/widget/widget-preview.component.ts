@@ -24,9 +24,10 @@ import { deepClone } from '@core/utils';
 import { Timewindow } from '@shared/models/time/time.models';
 
 @Component({
-  selector: 'tb-widget-preview',
-  templateUrl: './widget-preview.component.html',
-  styleUrls: ['./widget-preview.component.scss']
+    selector: 'tb-widget-preview',
+    templateUrl: './widget-preview.component.html',
+    styleUrls: ['./widget-preview.component.scss'],
+    standalone: false
 })
 export class WidgetPreviewComponent extends PageComponent implements OnInit, OnChanges {
 

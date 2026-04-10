@@ -47,21 +47,22 @@ import { IAliasController } from '@core/api/widget-api.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-map-provider-settings',
-  templateUrl: './map-provider-settings.component.html',
-  styleUrls: ['./../../widget-settings.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => MapProviderSettingsComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => MapProviderSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-map-provider-settings',
+    templateUrl: './map-provider-settings.component.html',
+    styleUrls: ['./../../widget-settings.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => MapProviderSettingsComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => MapProviderSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class MapProviderSettingsComponent extends PageComponent implements OnInit, ControlValueAccessor, Validator {
 

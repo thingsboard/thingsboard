@@ -32,24 +32,29 @@ import {
 } from '@home/components/rule-node/action/timeseries-config.models';
 import { isDefinedAndNotNull } from '@core/utils';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MatFormFieldAppearance } from '@angular/material/form-field';
 
 @Component({
-  selector: 'tb-advanced-processing-setting-row',
-  templateUrl: './advanced-processing-setting-row.component.html',
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => AdvancedProcessingSettingRowComponent),
-    multi: true
-  },{
-    provide: NG_VALIDATORS,
-    useExisting: forwardRef(() => AdvancedProcessingSettingRowComponent),
-    multi: true
-  }]
+    selector: 'tb-advanced-processing-setting-row',
+    templateUrl: './advanced-processing-setting-row.component.html',
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => AdvancedProcessingSettingRowComponent),
+            multi: true
+        }, {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => AdvancedProcessingSettingRowComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class AdvancedProcessingSettingRowComponent implements ControlValueAccessor, Validator {
 
   @Input()
   title: string;
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   processingSettingRowForm = this.fb.group({
     type: [defaultAdvancedProcessingConfig.type],

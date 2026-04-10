@@ -26,14 +26,15 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-mqtt-device-transport-configuration',
-  templateUrl: './mqtt-device-transport-configuration.component.html',
-  styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => MqttDeviceTransportConfigurationComponent),
-    multi: true
-  }]
+    selector: 'tb-mqtt-device-transport-configuration',
+    templateUrl: './mqtt-device-transport-configuration.component.html',
+    styleUrls: [],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => MqttDeviceTransportConfigurationComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class MqttDeviceTransportConfigurationComponent implements ControlValueAccessor, OnInit {
 

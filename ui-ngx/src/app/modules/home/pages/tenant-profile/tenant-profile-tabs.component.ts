@@ -21,9 +21,10 @@ import { EntityTabsComponent } from '../../components/entity/entity-tabs.compone
 import { TenantProfile } from '@shared/models/tenant.model';
 
 @Component({
-  selector: 'tb-tenant-profile-tabs',
-  templateUrl: './tenant-profile-tabs.component.html',
-  styleUrls: []
+    selector: 'tb-tenant-profile-tabs',
+    templateUrl: './tenant-profile-tabs.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class TenantProfileTabsComponent extends EntityTabsComponent<TenantProfile> {
 

@@ -21,13 +21,14 @@ import { EntitySearchDirection } from '@app/shared/models/relation.models';
 import { EntityType } from '@app/shared/models/entity-type.models';
 
 @Component({
-  selector: 'tb-action-node-create-relation-config',
-  templateUrl: './create-relation-config.component.html',
-  styleUrls: []
+    selector: 'tb-action-node-create-relation-config',
+    templateUrl: './create-relation-config.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class CreateRelationConfigComponent extends RuleNodeConfigurationComponent {
 
-  directionTypes = Object.keys(EntitySearchDirection);
+  directionTypes = Object.values(EntitySearchDirection);
   directionTypeTranslations  = new Map<EntitySearchDirection, string>(
     [
       [EntitySearchDirection.FROM, 'rule-node-config.search-direction-from'],

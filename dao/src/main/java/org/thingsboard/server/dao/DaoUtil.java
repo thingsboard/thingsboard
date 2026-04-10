@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao;
 
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -200,6 +201,15 @@ public final class DaoUtil {
                 .map(info -> new EntitySubtype(tenantId, entityType, info.getName()))
                 .sorted(Comparator.comparing(EntitySubtype::getType))
                 .collect(Collectors.toList());
+    }
+
+    public static ConstraintViolationException extractConstraintViolation(Throwable t) {
+        if (t instanceof ConstraintViolationException cve) {
+            return cve;
+        } else if (t != null && t.getCause() instanceof ConstraintViolationException cve) {
+            return cve;
+        }
+        return null;
     }
 
 }

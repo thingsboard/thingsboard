@@ -16,32 +16,38 @@
 
 -->
 <div class="flex flex-col">
-  <div class="tb-tenant-profile-queues flex flex-row items-center"
-       *ngFor="let escalationControl of escalationsFormArray.controls;
-       let $index = index; last as isLast;"
-       [class.pb-2]="!isLast">
-    <tb-escalation-form class="flex-1"
-                        [formControl]="escalationControl"
-                        [systemEscalation]="$index === 0">
-    </tb-escalation-form>
-    <span *ngIf="$index === 0" style="width: 48px;"></span>
-    <button *ngIf="!($index === 0) && !disabled" mat-icon-button style="min-width: 40px;"
-            type="button"
-            (click)="removeEscalation($index)"
-            matTooltip="{{ 'action.remove' | translate }}"
-            matTooltipPosition="above">
-      <mat-icon>close</mat-icon>
-    </button>
-  </div>
-  <div *ngIf="!escalationsFormArray.controls.length">
-      <span translate
-            class="tb-prompt flex items-center justify-center">notification.no-rule</span>
-  </div>
-  <div *ngIf="!disabled" style="padding: 16px 0;">
-    <button mat-raised-button color="primary"
-            type="button"
-            (click)="addEscalation()">
-      <span translate>notification.add-stage</span>
-    </button>
-  </div>
+  @for (escalationControl of escalationsFormArray.controls; track $index; let isLast = $last) {
+    <div class="tb-tenant-profile-queues flex flex-row items-center" [class.pb-2]="!isLast">
+      <tb-escalation-form class="flex-1"
+                          [formControl]="escalationControl"
+                          [systemEscalation]="$index === 0">
+      </tb-escalation-form>
+      @if ($index === 0) {
+        <span style="width: 48px;"></span>
+      }
+      @if (!($index === 0) && !disabled) {
+        <button mat-icon-button style="min-width: 40px;"
+                type="button"
+                (click)="removeEscalation($index)"
+                matTooltip="{{ 'action.remove' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </div>
+  }
+  @if (!escalationsFormArray.controls.length) {
+    <div>
+      <span translate class="tb-prompt flex items-center justify-center">notification.no-rule</span>
+    </div>
+  }
+  @if (!disabled) {
+    <div style="padding: 16px 0;">
+      <button mat-raised-button color="primary"
+              type="button"
+              (click)="addEscalation()">
+        <span translate>notification.add-stage</span>
+      </button>
+    </div>
+  }
 </div>

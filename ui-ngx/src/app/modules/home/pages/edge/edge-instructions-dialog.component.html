@@ -25,64 +25,65 @@
   </button>
 </mat-toolbar>
 <div mat-dialog-content>
-  <section *ngIf="loadedInstructions; else loadingInstructions" class="tb-form-panel no-padding no-border">
-    <div class="tb-form-panel no-padding no-border">
-      <mat-tab-group [(selectedIndex)]="tabIndex" (selectedTabChange)="selectedTabChange(tabIndex)">
-        <mat-tab>
-          <ng-template mat-tab-label>
-            <mat-icon class="tabs-icon" svgIcon="docker"></mat-icon>
-            Docker
-          </ng-template>
-          <ng-template matTabContent>
-            <div class="tb-form-panel no-padding no-border">
-              <div class="tb-form-panel no-padding stroked">
-                <tb-markdown [data]='contentData.docker'></tb-markdown>
+  @if (loadedInstructions) {
+    <section class="tb-form-panel no-padding no-border">
+      <div class="tb-form-panel no-padding no-border">
+        <mat-tab-group [(selectedIndex)]="tabIndex" (selectedTabChange)="selectedTabChange(tabIndex)">
+          <mat-tab>
+            <ng-template mat-tab-label>
+              <mat-icon class="tabs-icon" svgIcon="docker"></mat-icon>
+              Docker
+            </ng-template>
+            <ng-template matTabContent>
+              <div class="tb-form-panel no-padding no-border">
+                <div class="tb-form-panel no-padding stroked">
+                  <tb-markdown [data]='contentData.docker'></tb-markdown>
+                </div>
               </div>
-            </div>
-          </ng-template>
-        </mat-tab>
-        <mat-tab>
-          <ng-template mat-tab-label>
-            <mat-icon class="tabs-icon" svgIcon="mdi:ubuntu"></mat-icon>
-            Ubuntu
-          </ng-template>
-          <ng-template matTabContent>
-            <div class="tb-form-panel no-padding no-border">
-              <div class="tb-form-panel no-padding stroked">
-                <tb-markdown [data]='contentData.ubuntu'></tb-markdown>
+            </ng-template>
+          </mat-tab>
+          <mat-tab>
+            <ng-template mat-tab-label>
+              <mat-icon class="tabs-icon" svgIcon="mdi:ubuntu"></mat-icon>
+              Ubuntu
+            </ng-template>
+            <ng-template matTabContent>
+              <div class="tb-form-panel no-padding no-border">
+                <div class="tb-form-panel no-padding stroked">
+                  <tb-markdown [data]='contentData.ubuntu'></tb-markdown>
+                </div>
               </div>
-            </div>
-          </ng-template>
-        </mat-tab>
-        <mat-tab>
-          <ng-template mat-tab-label>
-            <mat-icon class="tabs-icon" svgIcon="mdi:centos"></mat-icon>
-            CentOS/RHEL
-          </ng-template>
-          <ng-template matTabContent>
-            <div class="tb-form-panel no-padding no-border">
-              <div class="tb-form-panel no-padding stroked">
-                <tb-markdown [data]='contentData.centos'></tb-markdown>
+            </ng-template>
+          </mat-tab>
+          <mat-tab>
+            <ng-template mat-tab-label>
+              <mat-icon class="tabs-icon" svgIcon="mdi:centos"></mat-icon>
+              CentOS/RHEL
+            </ng-template>
+            <ng-template matTabContent>
+              <div class="tb-form-panel no-padding no-border">
+                <div class="tb-form-panel no-padding stroked">
+                  <tb-markdown [data]='contentData.centos'></tb-markdown>
+                </div>
               </div>
-            </div>
-          </ng-template>
-        </mat-tab>
-      </mat-tab-group>
+            </ng-template>
+          </mat-tab>
+        </mat-tab-group>
+      </div>
+    </section>
+  } @else {
+    <div class="tb-loader">
+      <mat-spinner color="accent" diameter="65" strokeWidth="4"></mat-spinner>
+      <span class="mat-subtitle-1 label">
+        {{ 'edge.loading-edge-instructions' | translate }}
+      </span>
     </div>
-  </section>
+  }
 </div>
 <div mat-dialog-actions class="tb-dialog-actions">
   <mat-slide-toggle [class.!hidden]="!showDontShowAgain" [(ngModel)]="notShowAgain">{{ 'action.dont-show-again' | translate}}</mat-slide-toggle>
   <span class="flex-1"></span>
   <button mat-button
           [disabled]="(isLoading$ | async)"
-          (click)="close()">{{ 'action.close' | translate }}</button>
+  (click)="close()">{{ 'action.close' | translate }}</button>
 </div>
-<ng-template #loadingInstructions>
-  <div class="tb-loader">
-    <mat-spinner color="accent" diameter="65" strokeWidth="4"></mat-spinner>
-    <span class="mat-subtitle-1 label">
-        {{ 'edge.loading-edge-instructions' | translate }}
-      </span>
-  </div>
-</ng-template>

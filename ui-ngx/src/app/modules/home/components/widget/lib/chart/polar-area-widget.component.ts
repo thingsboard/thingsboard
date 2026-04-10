@@ -30,10 +30,11 @@ import {
 } from '@home/components/widget/lib/chart/polar-area-widget.models';
 
 @Component({
-  selector: 'tb-polar-area-chart-widget',
-  templateUrl: './latest-chart-widget.component.html',
-  styleUrls: [],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-polar-area-chart-widget',
+    templateUrl: './latest-chart-widget.component.html',
+    styleUrls: [],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class PolarAreaWidgetComponent implements OnInit {
 

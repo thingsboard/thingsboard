@@ -15,9 +15,11 @@
  */
 package org.thingsboard.server.common.data.sync.vc.request.load;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 @Data
+@Schema
 public class VersionLoadConfig {
 
     private boolean loadRelations;

@@ -18,10 +18,11 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from 
 import { Color } from '@iplab/ngx-color-picker';
 
 @Component({
-  selector: `tb-hex-input`,
-  templateUrl: `./hex-input.component.html`,
-  styleUrls: ['./hex-input.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: `tb-hex-input`,
+    templateUrl: `./hex-input.component.html`,
+    styleUrls: ['./hex-input.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class HexInputComponent {
 

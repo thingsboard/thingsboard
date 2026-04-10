@@ -47,7 +47,6 @@ export class TemplateTableConfigResolver  {
 
     this.config.entityType = EntityType.NOTIFICATION_TEMPLATE;
     this.config.detailsPanelEnabled = false;
-    this.config.addAsTextButton = true;
     this.config.rowPointer = true;
 
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.NOTIFICATION_TEMPLATE);

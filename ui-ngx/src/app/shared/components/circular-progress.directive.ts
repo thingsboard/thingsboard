@@ -18,8 +18,9 @@ import { ComponentRef, Directive, ElementRef, Input, ViewContainerRef } from '@a
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Directive({
-  // eslint-disable-next-line @angular-eslint/directive-selector
-  selector: '[tb-circular-progress]'
+    // eslint-disable-next-line @angular-eslint/directive-selector
+    selector: '[tb-circular-progress]',
+    standalone: false
 })
 export class CircularProgressDirective {
 

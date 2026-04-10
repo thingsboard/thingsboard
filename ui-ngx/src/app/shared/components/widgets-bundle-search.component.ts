@@ -18,15 +18,16 @@ import { Component, ElementRef, forwardRef, Input, ViewChild, ViewEncapsulation 
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 @Component({
-  selector: 'tb-widgets-bundle-search',
-  templateUrl: './widgets-bundle-search.component.html',
-  styleUrls: ['./widgets-bundle-search.component.scss'],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => WidgetsBundleSearchComponent),
-    multi: true
-  }],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-widgets-bundle-search',
+    templateUrl: './widgets-bundle-search.component.html',
+    styleUrls: ['./widgets-bundle-search.component.scss'],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => WidgetsBundleSearchComponent),
+            multi: true
+        }],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class WidgetsBundleSearchComponent implements ControlValueAccessor {
 

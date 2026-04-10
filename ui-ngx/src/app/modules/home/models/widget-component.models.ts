@@ -38,6 +38,7 @@ import { Timewindow, WidgetTimewindow } from '@shared/models/time/time.models';
 import {
   IAliasController,
   IStateController,
+  IWidgetHttpUtils,
   IWidgetSubscription,
   IWidgetUtils,
   RpcApi,
@@ -58,6 +59,13 @@ import {
   ViewContainerRef
 } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import {
+  createDefaultHttpOptions,
+  defaultHttpOptions,
+  defaultHttpOptionsFromConfig,
+  defaultHttpOptionsFromParams,
+  defaultHttpUploadOptions
+} from '@core/http/http-utils';
 import { RafService } from '@core/services/raf.service';
 import { WidgetTypeId } from '@shared/models/id/widget-type-id';
 import { TenantId } from '@shared/models/id/tenant-id';
@@ -68,7 +76,8 @@ import {
   formatValue,
   getEntityDetailsPageURL,
   hasDatasourceLabelsVariables,
-  isDefined
+  isDefined,
+  isDefinedAndNotNull
 } from '@core/utils';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -292,6 +301,14 @@ export class WidgetContext {
   utils: IWidgetUtils = {
     formatValue,
     getEntityDetailsPageURL
+  };
+
+  httpUtils: IWidgetHttpUtils = {
+    defaultHttpOptions,
+    defaultHttpOptionsFromConfig,
+    defaultHttpOptionsFromParams,
+    defaultHttpUploadOptions,
+    createDefaultHttpOptions
   };
 
   $widgetElement: JQuery<HTMLElement>;
@@ -555,7 +572,9 @@ export class LabelVariablePattern {
         const entityInfo = this.ctx.defaultSubscription.getFirstEntityInfo();
         label = createLabelFromSubscriptionEntityInfo(entityInfo, label);
       } else {
-        const datasource = this.ctx.defaultSubscription?.firstDatasource ?? (this.ctx as any).mapInstance?.getData()[0];
+        const datasource = isDefinedAndNotNull(this.ctx.defaultSubscription)
+          ? this.ctx.defaultSubscription.firstDatasource ?? undefined
+          : (this.ctx as any).mapInstance?.getData()[0];
         label = createLabelFromDatasource(datasource, label);
       }
     }

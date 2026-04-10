@@ -28,9 +28,10 @@ import type { JsFuncComponent } from '@app/shared/components/js-func.component';
 import { DebugRuleNodeEventBody } from '@shared/models/event.models';
 
 @Component({
-  selector: 'tb-action-node-clear-alarm-config',
-  templateUrl: './clear-alarm-config.component.html',
-  styleUrls: []
+    selector: 'tb-action-node-clear-alarm-config',
+    templateUrl: './clear-alarm-config.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class ClearAlarmConfigComponent extends RuleNodeConfigurationComponent {
 

@@ -47,18 +47,20 @@ import { EntityFilter, singleEntityFilterFromDeviceId } from '@shared/models/que
 import { AliasFilterType } from '@shared/models/alias.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MatFormFieldAppearance } from '@angular/material/form-field';
 
 @Component({
-  selector: 'tb-device-key-autocomplete',
-  templateUrl: './device-key-autocomplete.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DeviceKeyAutocompleteComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-device-key-autocomplete',
+    templateUrl: './device-key-autocomplete.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DeviceKeyAutocompleteComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class DeviceKeyAutocompleteComponent extends PageComponent implements OnInit, ControlValueAccessor, OnChanges {
 
@@ -95,6 +97,9 @@ export class DeviceKeyAutocompleteComponent extends PageComponent implements OnI
   @Input()
   @coerceBoolean()
   inlineField: boolean;
+
+  @Input()
+  appearance: MatFormFieldAppearance;
 
   dataKeyType = DataKeyType;
 

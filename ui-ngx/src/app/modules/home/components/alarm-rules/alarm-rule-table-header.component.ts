@@ -22,9 +22,10 @@ import { CalculatedFieldAlarmRule, CalculatedFieldsQuery } from "@shared/models/
 import { AlarmRulesTableConfig } from "@home/components/alarm-rules/alarm-rules-table-config";
 
 @Component({
-  selector: 'tb-alarm-rule-table-header',
-  templateUrl: './alarm-rule-table-header.component.html',
-  styleUrls: ['./alarm-rule-table-header.component.scss']
+    selector: 'tb-alarm-rule-table-header',
+    templateUrl: './alarm-rule-table-header.component.html',
+    styleUrls: ['./alarm-rule-table-header.component.scss'],
+    standalone: false
 })
 export class AlarmRuleTableHeaderComponent extends EntityTableHeaderComponent<CalculatedFieldAlarmRule> {
 

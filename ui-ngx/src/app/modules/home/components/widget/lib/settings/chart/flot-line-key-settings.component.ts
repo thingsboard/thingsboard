@@ -22,9 +22,10 @@ import { AppState } from '@core/core.state';
 import { flotDataKeyDefaultSettings } from '@home/components/widget/lib/settings/chart/flot-key-settings.component';
 
 @Component({
-  selector: 'tb-flot-line-key-settings',
-  templateUrl: './flot-line-key-settings.component.html',
-  styleUrls: []
+    selector: 'tb-flot-line-key-settings',
+    templateUrl: './flot-line-key-settings.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class FlotLineKeySettingsComponent extends WidgetSettingsComponent {
 

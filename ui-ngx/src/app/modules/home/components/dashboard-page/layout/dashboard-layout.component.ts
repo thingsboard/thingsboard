@@ -36,15 +36,15 @@ import { TbCheatSheetComponent } from '@shared/components/cheatsheet.component';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { map } from 'rxjs/operators';
-import { displayGrids } from 'angular-gridster2/lib/gridsterConfig.interface';
 import { BreakpointId, LayoutType, ViewFormatType } from '@shared/models/dashboard.models';
 import { isNotEmptyStr } from '@core/utils';
 import { TbContextMenuEvent } from '@shared/models/jquery-event.models';
 
 @Component({
-  selector: 'tb-dashboard-layout',
-  templateUrl: './dashboard-layout.component.html',
-  styleUrls: ['./dashboard-layout.component.scss']
+    selector: 'tb-dashboard-layout',
+    templateUrl: './dashboard-layout.component.html',
+    styleUrls: ['./dashboard-layout.component.scss'],
+    standalone: false
 })
 export class DashboardLayoutComponent extends PageComponent implements ILayoutController, DashboardCallbacks, OnInit, OnDestroy {
 
@@ -114,7 +114,7 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
     return this.layoutCtx.gridSettings.minColumns || this.layoutCtx.gridSettings.columns || 24;
   }
 
-  get displayGrid(): displayGrids {
+  get displayGrid(): 'always' | 'onDrag&Resize' | 'none' {
     return this.layoutCtx.displayGrid || 'onDrag&Resize';
   }
 

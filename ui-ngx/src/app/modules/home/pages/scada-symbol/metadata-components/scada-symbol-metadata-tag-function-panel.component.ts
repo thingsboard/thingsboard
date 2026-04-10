@@ -36,10 +36,11 @@ import {
 import { JsFuncComponent } from '@shared/components/js-func.component';
 
 @Component({
-  selector: 'tb-scada-symbol-metadata-tag-function-panel',
-  templateUrl: './scada-symbol-metadata-tag-function-panel.component.html',
-  styleUrls: ['./scada-symbol-metadata-tag-function-panel.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-scada-symbol-metadata-tag-function-panel',
+    templateUrl: './scada-symbol-metadata-tag-function-panel.component.html',
+    styleUrls: ['./scada-symbol-metadata-tag-function-panel.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class ScadaSymbolMetadataTagFunctionPanelComponent implements OnInit, AfterViewInit {
 

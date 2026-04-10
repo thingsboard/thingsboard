@@ -37,21 +37,22 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-tencent-map-provider-settings',
-  templateUrl: './tencent-map-provider-settings.component.html',
-  styleUrls: ['./../../widget-settings.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => TencentMapProviderSettingsComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => TencentMapProviderSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-tencent-map-provider-settings',
+    templateUrl: './tencent-map-provider-settings.component.html',
+    styleUrls: ['./../../widget-settings.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TencentMapProviderSettingsComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => TencentMapProviderSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class TencentMapProviderSettingsComponent extends PageComponent implements OnInit, ControlValueAccessor, Validator {
 

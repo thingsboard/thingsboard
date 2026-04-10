@@ -29,14 +29,15 @@ import { EntityService } from '@core/http/entity.service';
 import { isDefinedAndNotNull } from '@core/utils';
 
 @Component({
-  selector: 'tb-aliases-entity-autocomplete',
-  templateUrl: './aliases-entity-autocomplete.component.html',
-  styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => AliasesEntityAutocompleteComponent),
-    multi: true
-  }]
+    selector: 'tb-aliases-entity-autocomplete',
+    templateUrl: './aliases-entity-autocomplete.component.html',
+    styleUrls: [],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => AliasesEntityAutocompleteComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class AliasesEntityAutocompleteComponent implements ControlValueAccessor, OnInit, AfterViewInit {
 

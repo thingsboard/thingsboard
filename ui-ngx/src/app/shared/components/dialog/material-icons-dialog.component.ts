@@ -32,10 +32,11 @@ export interface MaterialIconsDialogResult {
 }
 
 @Component({
-  selector: 'tb-material-icons-dialog',
-  templateUrl: './material-icons-dialog.component.html',
-  providers: [],
-  styleUrls: ['./material-icons-dialog.component.scss']
+    selector: 'tb-material-icons-dialog',
+    templateUrl: './material-icons-dialog.component.html',
+    providers: [],
+    styleUrls: ['./material-icons-dialog.component.scss'],
+    standalone: false
 })
 export class MaterialIconsDialogComponent extends DialogComponent<MaterialIconsDialogComponent, MaterialIconsDialogResult> {
 

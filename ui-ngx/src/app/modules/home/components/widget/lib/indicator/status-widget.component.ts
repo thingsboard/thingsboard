@@ -48,10 +48,11 @@ import { ValueType } from '@shared/models/constants';
 const initialStatusWidgetSize = 147;
 
 @Component({
-  selector: 'tb-status-widget',
-  templateUrl: './status-widget.component.html',
-  styleUrls: ['../action/action-widget.scss', './status-widget.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-status-widget',
+    templateUrl: './status-widget.component.html',
+    styleUrls: ['../action/action-widget.scss', './status-widget.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class StatusWidgetComponent extends
   BasicActionWidgetComponent implements OnInit, AfterViewInit, OnDestroy {

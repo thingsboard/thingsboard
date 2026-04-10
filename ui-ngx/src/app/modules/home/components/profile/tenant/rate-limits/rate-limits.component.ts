@@ -39,21 +39,22 @@ import {
 import { isDefined } from '@core/utils';
 
 @Component({
-  selector: 'tb-rate-limits',
-  templateUrl: './rate-limits.component.html',
-  styleUrls: ['./rate-limits.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => RateLimitsComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => RateLimitsComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-rate-limits',
+    templateUrl: './rate-limits.component.html',
+    styleUrls: ['./rate-limits.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => RateLimitsComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => RateLimitsComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class RateLimitsComponent implements ControlValueAccessor, OnInit, Validator {
 

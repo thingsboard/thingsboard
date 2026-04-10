@@ -32,14 +32,15 @@ import { coerceArray, coerceBoolean } from '@shared/decorators/coercion';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 
 @Component({
-  selector: 'tb-entity-autocomplete',
-  templateUrl: './entity-autocomplete.component.html',
-  styleUrls: ['./entity-autocomplete.component.scss'],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => EntityAutocompleteComponent),
-    multi: true
-  }]
+    selector: 'tb-entity-autocomplete',
+    templateUrl: './entity-autocomplete.component.html',
+    styleUrls: ['./entity-autocomplete.component.scss'],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => EntityAutocompleteComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit {
 

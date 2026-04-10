@@ -49,44 +49,54 @@
           <div translate>widgets.time-series-chart.axis.position</div>
           <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="position">
-              <mat-option *ngFor="let position of axisPositions" [value]="position">
-                {{ timeSeriesAxisPositionTranslations.get(position) | translate }}
-              </mat-option>
+              @for (position of axisPositions; track position) {
+                <mat-option [value]="position">
+                  {{ timeSeriesAxisPositionTranslations.get(position) | translate }}
+                </mat-option>
+              }
             </mat-select>
           </mat-form-field>
         </div>
-        <div *ngIf="axisType === 'yAxis' && !hideUnits" class="tb-form-row space-between">
-          <div translate>widget-config.units-short</div>
-          <tb-unit-input
-            supportsUnitConversion
-            formControlName="units">
-          </tb-unit-input>
-        </div>
-        <div *ngIf="axisType === 'yAxis' && !hideDecimals" class="tb-form-row space-between">
-          <div translate>widget-config.decimals-short</div>
-          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
-            <input matInput formControlName="decimals" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
-          </mat-form-field>
-        </div>
-        <div *ngIf="axisType === 'yAxis' && advanced" class="tb-form-row">
-          <tb-js-func class="flex-1"
-                      formControlName="ticksGenerator"
-                      [globalVariables]="functionScopeVariables"
-                      [functionArgs]="['extent']"
-                      functionTitle="{{ 'widgets.time-series-chart.axis.ticks-generator-function' | translate }}"
-                      helpId="widget/lib/chart/ticks_generator_fn">
-          </tb-js-func>
-        </div>
+        @if (axisType === 'yAxis' && !hideUnits) {
+          <div class="tb-form-row space-between">
+            <div translate>widget-config.units-short</div>
+            <tb-unit-input
+              supportsUnitConversion
+              formControlName="units">
+            </tb-unit-input>
+          </div>
+        }
+        @if (axisType === 'yAxis' && !hideDecimals) {
+          <div class="tb-form-row space-between">
+            <div translate>widget-config.decimals-short</div>
+            <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+              <input matInput formControlName="decimals" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+            </mat-form-field>
+          </div>
+        }
+        @if (axisType === 'yAxis' && advanced) {
+          <div class="tb-form-row">
+            <tb-js-func class="flex-1"
+                        formControlName="ticksGenerator"
+                        [globalVariables]="functionScopeVariables"
+                        [functionArgs]="['extent']"
+                        functionTitle="{{ 'widgets.time-series-chart.axis.ticks-generator-function' | translate }}"
+                        helpId="widget/lib/chart/ticks_generator_fn">
+            </tb-js-func>
+          </div>
+        }
         <div class="tb-form-panel no-padding stroked">
           <div class="tb-form-row no-border space-between column-xs">
             <mat-slide-toggle class="mat-slide" formControlName="showTickLabels">
               <div translate>widgets.time-series-chart.axis.tick-labels</div>
             </mat-slide-toggle>
             <div class="flex flex-row items-center justify-start gap-2">
-              <tb-auto-date-format-settings *ngIf="axisType === 'xAxis'"
-                                            formControlName="ticksFormat"
-                                            [defaultValues]="defaultXAxisTicksFormat">
-              </tb-auto-date-format-settings>
+              @if (axisType === 'xAxis') {
+                <tb-auto-date-format-settings
+                  formControlName="ticksFormat"
+                  [defaultValues]="defaultXAxisTicksFormat">
+                </tb-auto-date-format-settings>
+              }
               <tb-font-settings formControlName="tickLabelFont"
                                 clearButton
                                 disabledLineHeight
@@ -99,15 +109,17 @@
               </tb-color-input>
             </div>
           </div>
-          <div *ngIf="axisType === 'yAxis' && advanced" class="tb-form-row no-border">
-            <tb-js-func class="flex-1"
-              formControlName="ticksFormatter"
-              [globalVariables]="functionScopeVariables"
-              [functionArgs]="['value']"
-              functionTitle="{{ 'widgets.time-series-chart.axis.ticks-formatter-function' | translate }}"
-              helpId="widget/lib/flot/ticks_formatter_fn">
-            </tb-js-func>
-          </div>
+          @if (axisType === 'yAxis' && advanced) {
+            <div class="tb-form-row no-border">
+              <tb-js-func class="flex-1"
+                          formControlName="ticksFormatter"
+                          [globalVariables]="functionScopeVariables"
+                          [functionArgs]="['value']"
+                          functionTitle="{{ 'widgets.time-series-chart.axis.ticks-formatter-function' | translate }}"
+                          helpId="widget/lib/flot/ticks_formatter_fn">
+              </tb-js-func>
+            </div>
+          }
         </div>
         <div class="tb-form-row space-between">
           <mat-slide-toggle class="mat-slide" formControlName="showTicks">
@@ -139,55 +151,61 @@
                           formControlName="splitLinesColor">
           </tb-color-input>
         </div>
-        <div *ngIf="axisType === 'yAxis'" class="tb-form-row space-between">
-          <div tb-hint-tooltip-icon="{{ 'widgets.time-series-chart.axis.ticks-interval-hint' | translate }}">
-            {{ 'widgets.time-series-chart.axis.ticks-interval' | translate }}
+        @if (axisType === 'yAxis') {
+          <div class="tb-form-row space-between">
+            <div tb-hint-tooltip-icon="{{ 'widgets.time-series-chart.axis.ticks-interval-hint' | translate }}">
+              {{ 'widgets.time-series-chart.axis.ticks-interval' | translate }}
+            </div>
+            <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+              <input matInput formControlName="interval"
+                     type="number" min="0" placeholder="{{ 'widgets.chart.chart-axis.scale-auto' | translate }}">
+            </mat-form-field>
           </div>
-          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
-            <input matInput formControlName="interval"
-                   type="number" min="0" placeholder="{{ 'widgets.chart.chart-axis.scale-auto' | translate }}">
-          </mat-form-field>
-        </div>
-        <div *ngIf="axisType === 'yAxis'" class="tb-form-row space-between">
-          <div tb-hint-tooltip-icon="{{ 'widgets.time-series-chart.axis.split-number-hint' | translate }}">
-            {{ 'widgets.time-series-chart.axis.split-number' | translate }}
+        }
+        @if (axisType === 'yAxis') {
+          <div class="tb-form-row space-between">
+            <div tb-hint-tooltip-icon="{{ 'widgets.time-series-chart.axis.split-number-hint' | translate }}">
+              {{ 'widgets.time-series-chart.axis.split-number' | translate }}
+            </div>
+            <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+              <input matInput formControlName="splitNumber"
+                     type="number" min="1" placeholder="{{ 'widgets.chart.chart-axis.scale-auto' | translate }}">
+            </mat-form-field>
           </div>
-          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
-            <input matInput formControlName="splitNumber"
-                   type="number" min="1" placeholder="{{ 'widgets.chart.chart-axis.scale-auto' | translate }}">
-          </mat-form-field>
-        </div>
-        <div *ngIf="axisType === 'yAxis'" class="tb-form-panel stroked">
-          <div class="flex flex-col gap-2">
-            <div translate>widgets.chart.chart-axis.scale-limits</div>
-            <div class="tb-form-table">
-              <div class="tb-form-table-header">
-                <div class="tb-form-table-header-cell" [class]="alwaysExpanded ? 'basis-10' : 'basis-1/5'" translate>widgets.chart.chart-axis.limit</div>
-                <div class="tb-form-table-header-cell flex-grow flex-shrink" [class]="alwaysExpanded ? 'basis-1/2' : 'basis-40%'" translate>widgets.chart.chart-axis.source</div>
-                <div class="tb-form-table-header-cell flex-grow flex-shrink" [class]="alwaysExpanded ? 'basis-1/2' : 'basis-40%'" translate>widgets.chart.chart-axis.key-value</div>
-              </div>
-              <div class="tb-form-table-body">
-                <tb-axis-scale-row
-                  [isPanelView]="alwaysExpanded"
-                  [datasource]="datasource"
-                  [callbacks]="dataKeyCallbacks"
-                  [aliasController]="aliasController"
-                  formControlName="min"
-                  labelKey="widgets.chart.chart-axis.scale-min">
-                </tb-axis-scale-row>
-                <mat-divider class="mt-2 gt-sm:hidden"></mat-divider>
-                <tb-axis-scale-row
-                  [isPanelView]="alwaysExpanded"
-                  [datasource]="datasource"
-                  [callbacks]="dataKeyCallbacks"
-                  [aliasController]="aliasController"
-                  formControlName="max"
-                  labelKey="widgets.chart.chart-axis.scale-max">
-                </tb-axis-scale-row>
+        }
+        @if (axisType === 'yAxis') {
+          <div class="tb-form-panel stroked">
+            <div class="flex flex-col gap-2">
+              <div translate>widgets.chart.chart-axis.scale-limits</div>
+              <div class="tb-form-table">
+                <div class="tb-form-table-header">
+                  <div class="tb-form-table-header-cell" [class]="alwaysExpanded ? 'basis-10' : 'basis-1/5'" translate>widgets.chart.chart-axis.limit</div>
+                  <div class="tb-form-table-header-cell flex-grow flex-shrink" [class]="alwaysExpanded ? 'basis-1/2' : 'basis-40%'" translate>widgets.chart.chart-axis.source</div>
+                  <div class="tb-form-table-header-cell flex-grow flex-shrink" [class]="alwaysExpanded ? 'basis-1/2' : 'basis-40%'" translate>widgets.chart.chart-axis.key-value</div>
+                </div>
+                <div class="tb-form-table-body">
+                  <tb-axis-scale-row
+                    [isPanelView]="alwaysExpanded"
+                    [datasource]="datasource"
+                    [callbacks]="dataKeyCallbacks"
+                    [aliasController]="aliasController"
+                    formControlName="min"
+                    labelKey="widgets.chart.chart-axis.scale-min">
+                  </tb-axis-scale-row>
+                  <mat-divider class="mt-2 gt-sm:hidden"></mat-divider>
+                  <tb-axis-scale-row
+                    [isPanelView]="alwaysExpanded"
+                    [datasource]="datasource"
+                    [callbacks]="dataKeyCallbacks"
+                    [aliasController]="aliasController"
+                    formControlName="max"
+                    labelKey="widgets.chart.chart-axis.scale-max">
+                  </tb-axis-scale-row>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        }
       </ng-template>
     </mat-expansion-panel>
   </div>

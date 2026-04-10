@@ -42,11 +42,12 @@ export interface AddWidgetDialogData {
 }
 
 @Component({
-  selector: 'tb-add-widget-dialog',
-  templateUrl: './add-widget-dialog.component.html',
-  providers: [/*{provide: ErrorStateMatcher, useExisting: AddWidgetDialogComponent}*/],
-  styleUrls: ['./add-widget-dialog.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-add-widget-dialog',
+    templateUrl: './add-widget-dialog.component.html',
+    providers: [ /*{provide: ErrorStateMatcher, useExisting: AddWidgetDialogComponent}*/],
+    styleUrls: ['./add-widget-dialog.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class AddWidgetDialogComponent extends DialogComponent<AddWidgetDialogComponent, Widget>
   implements OnInit, ErrorStateMatcher {

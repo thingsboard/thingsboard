@@ -24,14 +24,15 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { isEqual } from '@core/utils';
 
 @Component({
-  selector: 'tb-aggregation-type-select',
-  templateUrl: './aggregation-type-select.component.html',
-  styleUrls: ['./aggregation-type-select.component.scss'],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => AggregationTypeSelectComponent),
-    multi: true
-  }]
+    selector: 'tb-aggregation-type-select',
+    templateUrl: './aggregation-type-select.component.html',
+    styleUrls: ['./aggregation-type-select.component.scss'],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => AggregationTypeSelectComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class AggregationTypeSelectComponent implements ControlValueAccessor, OnInit, OnChanges {
 

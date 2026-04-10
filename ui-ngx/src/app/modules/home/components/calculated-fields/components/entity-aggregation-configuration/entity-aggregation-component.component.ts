@@ -59,20 +59,21 @@ enum TimeCategory {
 }
 
 @Component({
-  selector: 'tb-entity-aggregation-component',
-  templateUrl: './entity-aggregation-component.component.html',
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => EntityAggregationComponentComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => EntityAggregationComponentComponent),
-      multi: true
-    }
-  ],
+    selector: 'tb-entity-aggregation-component',
+    templateUrl: './entity-aggregation-component.component.html',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => EntityAggregationComponentComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => EntityAggregationComponentComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class EntityAggregationComponentComponent implements ControlValueAccessor, Validator {
 

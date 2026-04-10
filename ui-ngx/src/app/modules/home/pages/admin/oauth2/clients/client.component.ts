@@ -44,9 +44,10 @@ import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 
 @Component({
-  selector: 'tb-client',
-  templateUrl: './client.component.html',
-  styleUrls: ['./client.component.scss']
+    selector: 'tb-client',
+    templateUrl: './client.component.html',
+    styleUrls: ['./client.component.scss'],
+    standalone: false
 })
 export class ClientComponent extends EntityComponent<OAuth2Client, PageLink, OAuth2ClientInfo> implements OnDestroy {
 

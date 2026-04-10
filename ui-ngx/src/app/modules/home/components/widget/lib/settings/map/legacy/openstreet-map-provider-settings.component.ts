@@ -37,21 +37,22 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-openstreet-map-provider-settings',
-  templateUrl: './openstreet-map-provider-settings.component.html',
-  styleUrls: ['./../../widget-settings.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => OpenStreetMapProviderSettingsComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => OpenStreetMapProviderSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-openstreet-map-provider-settings',
+    templateUrl: './openstreet-map-provider-settings.component.html',
+    styleUrls: ['./../../widget-settings.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => OpenStreetMapProviderSettingsComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => OpenStreetMapProviderSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class OpenStreetMapProviderSettingsComponent extends PageComponent implements OnInit, ControlValueAccessor, Validator {
 

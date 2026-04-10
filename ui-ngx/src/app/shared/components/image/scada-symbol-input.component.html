@@ -16,50 +16,62 @@
 
 -->
 <div class="tb-container">
-  <label class="tb-title" *ngIf="label" [class]="{'tb-error': !disabled && (required && linkType === ScadaSymbolLinkType.none), 'tb-required': !disabled && required}">{{label}}</label>
+  @if (label) {
+    <label class="tb-title" [class]="{'tb-error': !disabled && (required && linkType === ScadaSymbolLinkType.none), 'tb-required': !disabled && required}">{{label}}</label>
+  }
   <div class="tb-scada-symbol-select-container" [class]="{disabled: disabled && linkType === ScadaSymbolLinkType.none}">
     <div class="tb-scada-symbol-container">
-      <img *ngIf="linkType !== ScadaSymbolLinkType.none && scadaSymbolUrl; else noSymbol" class="tb-scada-symbol-preview" [src]="scadaSymbolUrl | image: {preview: true} | async">
+      @if (linkType !== ScadaSymbolLinkType.none && scadaSymbolUrl) {
+        <img class="tb-scada-symbol-preview" [src]="scadaSymbolUrl | image: {preview: true} | async">
+      } @else {
+        <div class="tb-no-symbol">{{ (disabled ? 'scada.no-symbol' : 'scada.no-symbol-selected') | translate }}</div>
+      }
     </div>
-    <div *ngIf="linkType !== ScadaSymbolLinkType.none && !disabled" class="tb-scada-symbol-info-container">
-      <div *ngIf="linkType === ScadaSymbolLinkType.resource" class="tb-resource-scada-symbol-container" [class]="{loading: loadingImageResource}">
-        <ng-container *ngIf="!loadingImageResource; else loading">
-          <div class="tb-scada-symbol-title">
-            {{ imageResource.title | customTranslate }}
+    @if (linkType !== ScadaSymbolLinkType.none && !disabled) {
+      <div class="tb-scada-symbol-info-container">
+        @if (linkType === ScadaSymbolLinkType.resource) {
+          <div class="tb-resource-scada-symbol-container" [class]="{loading: loadingImageResource}">
+            @if (!loadingImageResource) {
+              <div class="tb-scada-symbol-title">
+                {{ imageResource.title | customTranslate }}
+              </div>
+            } @else {
+              <mat-spinner [diameter]="80" strokeWidth="4"></mat-spinner>
+            }
           </div>
-        </ng-container>
+        }
+        @if (linkType === ScadaSymbolLinkType.content) {
+          <div class="tb-resource-scada-symbol-container">
+            <div class="tb-scada-symbol-title">
+              {{ scadaSymbolMetadata.title | customTranslate }}
+            </div>
+          </div>
+        }
+        @if (linkType === ScadaSymbolLinkType.resource && !disabled) {
+          <button
+            class="tb-scada-symbol-clear-btn"
+            type="button"
+            mat-icon-button
+            matTooltip="{{ 'scada.clear-symbol' | translate }}"
+            matTooltipPosition="above"
+            (click)="clearSymbol()">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
       </div>
-      <div *ngIf="linkType === ScadaSymbolLinkType.content" class="tb-resource-scada-symbol-container">
-        <div class="tb-scada-symbol-title">
-          {{ scadaSymbolMetadata.title | customTranslate }}
-        </div>
+    }
+    @if (linkType === ScadaSymbolLinkType.none && !disabled) {
+      <div class="tb-scada-symbol-select-buttons-container">
+        <button mat-stroked-button
+                type="button"
+                color="primary"
+                class="tb-scada-symbol-select-button"
+                (click)="openGallery($event)">
+          <tb-icon matButtonIcon>filter</tb-icon>
+          <span translate>scada.browse-symbol-from-gallery</span>
+        </button>
       </div>
-      <button *ngIf="linkType === ScadaSymbolLinkType.resource && !disabled"
-              class="tb-scada-symbol-clear-btn"
-              type="button"
-              mat-icon-button
-              matTooltip="{{ 'scada.clear-symbol' | translate }}"
-              matTooltipPosition="above"
-              (click)="clearSymbol()">
-        <mat-icon>close</mat-icon>
-      </button>
-    </div>
-    <div *ngIf="linkType === ScadaSymbolLinkType.none && !disabled" class="tb-scada-symbol-select-buttons-container">
-      <button mat-stroked-button
-              type="button"
-              color="primary"
-              class="tb-scada-symbol-select-button"
-              (click)="openGallery($event)">
-        <tb-icon matButtonIcon>filter</tb-icon>
-        <span translate>scada.browse-symbol-from-gallery</span>
-      </button>
-    </div>
+    }
   </div>
 </div>
 
-<ng-template #noSymbol>
-  <div class="tb-no-symbol">{{ (disabled ? 'scada.no-symbol' : 'scada.no-symbol-selected') | translate }}</div>
-</ng-template>
-<ng-template #loading>
-  <mat-spinner [diameter]="80" strokeWidth="4"></mat-spinner>
-</ng-template>

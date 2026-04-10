@@ -67,6 +67,7 @@ import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { MatDialogRef } from '@angular/material/dialog';
 import { TbUnit } from '@shared/models/unit.models';
 import { UnitService } from '@core/services/unit.service';
+import { HttpOptionsResult, HttpUploadOptionsResult, QueryParams, RequestConfig } from '@core/http/http-utils';
 
 export interface TimewindowFunctions {
   onUpdateTimewindow: (startTimeMs: number, endTimeMs: number, interval?: number) => void;
@@ -92,6 +93,14 @@ export interface RpcApi {
 export interface IWidgetUtils {
   formatValue: (value: any, dec?: number, units?: string, showZeroDecimals?: boolean) => string | undefined;
   getEntityDetailsPageURL: (id: string, entityType: EntityType) => string;
+}
+
+export interface IWidgetHttpUtils {
+  defaultHttpOptions: (ignoreLoading?: boolean, ignoreErrors?: boolean, resendRequest?: boolean, queryParams?: QueryParams) => HttpOptionsResult;
+  defaultHttpOptionsFromConfig: (config?: RequestConfig) => HttpOptionsResult;
+  defaultHttpOptionsFromParams: (queryParams?: QueryParams, config?: RequestConfig) => HttpOptionsResult;
+  defaultHttpUploadOptions: (ignoreLoading?: boolean, ignoreErrors?: boolean, resendRequest?: boolean, queryParams?: QueryParams) => HttpUploadOptionsResult;
+  createDefaultHttpOptions: (queryParamsOrConfig?: QueryParams | RequestConfig, config?: RequestConfig) => HttpOptionsResult;
 }
 
 export interface PlaceMapItemActionData {

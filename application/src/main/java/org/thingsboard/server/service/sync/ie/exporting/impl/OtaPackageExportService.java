@@ -37,11 +37,6 @@ public class OtaPackageExportService extends BaseEntityExportService<OtaPackageI
     }
 
     @Override
-    protected OtaPackageExportData newExportData() {
-        return new OtaPackageExportData();
-    }
-
-    @Override
     public Set<EntityType> getSupportedEntityTypes() {
         return Set.of(EntityType.OTA_PACKAGE);
     }

@@ -16,46 +16,50 @@
 
 -->
 <div class="flex flex-1 flex-row items-center justify-start gap-2" [formGroup]="filterPredicateFormGroup">
-  <div class="flex flex-1 flex-col" [ngSwitch]="type">
-    <ng-template [ngSwitchCase]="filterPredicateType.STRING">
-      <tb-string-filter-predicate
-        [allowUserDynamicSource]="allowUserDynamicSource"
-        [onlyUserDynamicSource]="onlyUserDynamicSource"
-        formControlName="predicate">
-      </tb-string-filter-predicate>
-    </ng-template>
-    <ng-template [ngSwitchCase]="filterPredicateType.NUMERIC">
-      <tb-numeric-filter-predicate
-        [allowUserDynamicSource]="allowUserDynamicSource"
-        [onlyUserDynamicSource]="onlyUserDynamicSource"
-        [valueType]="valueType"
-        formControlName="predicate">
-      </tb-numeric-filter-predicate>
-    </ng-template>
-    <ng-template [ngSwitchCase]="filterPredicateType.BOOLEAN">
-      <tb-boolean-filter-predicate
-        [allowUserDynamicSource]="allowUserDynamicSource"
-        [onlyUserDynamicSource]="onlyUserDynamicSource"
-        formControlName="predicate">
-      </tb-boolean-filter-predicate>
-    </ng-template>
-    <ng-template [ngSwitchCase]="filterPredicateType.COMPLEX">
-      <tb-complex-filter-predicate
-        [allowUserDynamicSource]="allowUserDynamicSource"
-        [onlyUserDynamicSource]="onlyUserDynamicSource"
-        [key]="key"
-        [valueType]="valueType"
-        [displayUserParameters]="displayUserParameters"
-        formControlName="predicate">
-      </tb-complex-filter-predicate>
-    </ng-template>
+  <div class="flex flex-1 flex-col">
+    @switch (type) {
+      @case (filterPredicateType.STRING) {
+        <tb-string-filter-predicate
+          [allowUserDynamicSource]="allowUserDynamicSource"
+          [onlyUserDynamicSource]="onlyUserDynamicSource"
+          formControlName="predicate">
+        </tb-string-filter-predicate>
+      }
+      @case (filterPredicateType.NUMERIC) {
+        <tb-numeric-filter-predicate
+          [allowUserDynamicSource]="allowUserDynamicSource"
+          [onlyUserDynamicSource]="onlyUserDynamicSource"
+          [valueType]="valueType"
+          formControlName="predicate">
+        </tb-numeric-filter-predicate>
+      }
+      @case (filterPredicateType.BOOLEAN) {
+        <tb-boolean-filter-predicate
+          [allowUserDynamicSource]="allowUserDynamicSource"
+          [onlyUserDynamicSource]="onlyUserDynamicSource"
+          formControlName="predicate">
+        </tb-boolean-filter-predicate>
+      }
+      @case (filterPredicateType.COMPLEX) {
+        <tb-complex-filter-predicate
+          [allowUserDynamicSource]="allowUserDynamicSource"
+          [onlyUserDynamicSource]="onlyUserDynamicSource"
+          [key]="key"
+          [valueType]="valueType"
+          [displayUserParameters]="displayUserParameters"
+          formControlName="predicate">
+        </tb-complex-filter-predicate>
+      }
+    }
   </div>
-  <tb-filter-user-info *ngIf="type !== filterPredicateType.COMPLEX && displayUserParameters"
-                       style="width: 60px;"
-                       class="flex flex-row items-stretch justify-center"
-                       [valueType]="valueType"
-                       [operation]="filterPredicateFormGroup.get('predicate').value?.operation"
-                       [key]="key"
-                       formControlName="userInfo">
-  </tb-filter-user-info>
+  @if (type !== filterPredicateType.COMPLEX && displayUserParameters) {
+    <tb-filter-user-info
+      style="width: 60px;"
+      class="flex flex-row items-stretch justify-center"
+      [valueType]="valueType"
+      [operation]="filterPredicateFormGroup.get('predicate').value?.operation"
+      [key]="key"
+      formControlName="userInfo">
+    </tb-filter-user-info>
+  }
 </div>

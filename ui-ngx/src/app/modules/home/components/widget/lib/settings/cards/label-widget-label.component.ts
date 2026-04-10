@@ -32,16 +32,17 @@ export interface LabelWidgetLabel {
 }
 
 @Component({
-  selector: 'tb-label-widget-label',
-  templateUrl: './label-widget-label.component.html',
-  styleUrls: ['./label-widget-label.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => LabelWidgetLabelComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-label-widget-label',
+    templateUrl: './label-widget-label.component.html',
+    styleUrls: ['./label-widget-label.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => LabelWidgetLabelComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class LabelWidgetLabelComponent extends PageComponent implements OnInit, ControlValueAccessor {
 

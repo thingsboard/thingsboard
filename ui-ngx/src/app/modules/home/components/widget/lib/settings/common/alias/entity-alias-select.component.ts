@@ -39,14 +39,15 @@ import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-entity-alias-select',
-  templateUrl: './entity-alias-select.component.html',
-  styleUrls: ['./entity-alias-select.component.scss'],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => EntityAliasSelectComponent),
-    multi: true
-  }]
+    selector: 'tb-entity-alias-select',
+    templateUrl: './entity-alias-select.component.html',
+    styleUrls: ['./entity-alias-select.component.scss'],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => EntityAliasSelectComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class EntityAliasSelectComponent implements ControlValueAccessor, OnInit, ErrorStateMatcher {
 

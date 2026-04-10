@@ -19,6 +19,9 @@
     <!-- <logger name="org.hibernate.SQL" level="DEBUG"/> -->
     <!-- <logger name="org.springframework.jdbc.core.JdbcTemplate" level="DEBUG" /> -->
 
+    <!-- Avoiding multiple logs like: The cache 'relations' is not recording statistics. No meters except 'cache.size' will be registered. Call 'Caffeine#recordStats()' prior to building the cache for metrics to be recorded.-->
+    <logger name="io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics" level="ERROR"/>
+
     <root level="WARN">
         <appender-ref ref="console"/>
     </root>

@@ -33,9 +33,10 @@ import { first } from 'rxjs/operators';
 import { Authority } from '@shared/models/authority.enum';
 
 @Component({
-  selector: 'tb-getting-started-widget',
-  templateUrl: './getting-started-widget.component.html',
-  styleUrls: ['./getting-started-widget.component.scss']
+    selector: 'tb-getting-started-widget',
+    templateUrl: './getting-started-widget.component.html',
+    styleUrls: ['./getting-started-widget.component.scss'],
+    standalone: false
 })
 export class GettingStartedWidgetComponent extends PageComponent implements OnInit, OnDestroy {
 

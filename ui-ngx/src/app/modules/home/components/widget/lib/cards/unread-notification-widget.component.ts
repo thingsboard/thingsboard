@@ -37,7 +37,7 @@ import {
   unreadNotificationDefaultSettings,
   UnreadNotificationWidgetSettings
 } from '@home/components/widget/lib/cards/unread-notification-widget.models';
-import { Notification, NotificationRequest, NotificationType } from '@shared/models/notification.models';
+import { Notification, NotificationType } from '@shared/models/notification.models';
 import { NotificationSubscriber } from '@shared/models/telemetry/telemetry.models';
 import { NotificationWebsocketService } from '@core/ws/notification-websocket.service';
 import { distinctUntilChanged, map, share, skip, take, tap } from 'rxjs/operators';
@@ -54,10 +54,11 @@ import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 
 @Component({
-  selector: 'tb-unread-notification-widget',
-  templateUrl: './unread-notification-widget.component.html',
-  styleUrls: ['unread-notification-widget.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-unread-notification-widget',
+    templateUrl: './unread-notification-widget.component.html',
+    styleUrls: ['unread-notification-widget.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class UnreadNotificationWidgetComponent implements OnInit, OnDestroy {
 
@@ -227,10 +228,6 @@ export class UnreadNotificationWidgetComponent implements OnInit, OnDestroy {
       }
       this.router.navigateByUrl(this.router.parseUrl('/notification/inbox')).then(() => {});
     }
-  }
-
-  trackById(index: number, item: NotificationRequest): string {
-    return item.id.id;
   }
 
   private editNotificationTypeFilter($event: Event) {

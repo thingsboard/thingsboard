@@ -22,9 +22,10 @@ import { AppState } from '@core/core.state';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 
 @Component({
-  selector: 'tb-resource-library-tabs',
-  templateUrl: './resource-library-tabs.component.html',
-  styleUrls: []
+    selector: 'tb-resource-library-tabs',
+    templateUrl: './resource-library-tabs.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class ResourceLibraryTabsComponent extends EntityTabsComponent<Resource> {
 

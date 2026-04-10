@@ -83,7 +83,7 @@
   </div>
 </div>
 <div class="mat-padding flex flex-col">
-  <mat-form-field class="mat-block"
+  <mat-form-field class="mat-block" appearance="outline"
                   [class.!hidden]="isEdit || !assignedCustomersText?.length
                               || dashboardScope !== 'tenant'">
     <mat-label translate>dashboard.assignedToCustomers</mat-label>
@@ -98,7 +98,7 @@
                            shareHashTags="thingsboard, iot">
     </tb-social-share-panel>
     <div class="flex flex-row">
-      <mat-form-field class="mat-block flex-1">
+      <mat-form-field class="mat-block flex-1" appearance="outline">
         <mat-label translate>dashboard.public-link</mat-label>
         <input matInput disabled [ngModel]="publicLink">
       </mat-form-field>
@@ -113,35 +113,31 @@
     </div>
   </div>
   <form [formGroup]="entityForm">
-    <fieldset [disabled]="(isLoading$ | async) || !isEdit">
-      <mat-form-field class="mat-block">
+    <fieldset [disabled]="(isLoading$ | async) || !isEdit" style="min-width: 0;">
+      <mat-form-field class="mat-block" appearance="outline">
         <mat-label translate>dashboard.title</mat-label>
         <input matInput formControlName="title" required>
-        <mat-error *ngIf="entityForm.get('title').hasError('required')">
-          {{ 'dashboard.title-required' | translate }}
-        </mat-error>
-        <mat-error *ngIf="entityForm.get('title').hasError('maxlength')">
-          {{ 'dashboard.title-max-length' | translate }}
-        </mat-error>
+        @if (entityForm.get('title').hasError('required')) {
+          <mat-error>{{ 'dashboard.title-required' | translate }}</mat-error>
+        }
+        @if (entityForm.get('title').hasError('maxlength')) {
+          <mat-error>{{ 'dashboard.title-max-length' | translate }}</mat-error>
+        }
       </mat-form-field>
-      <div formGroupName="configuration" class="flex flex-col">
-        <mat-form-field class="mat-block">
-          <mat-label translate>dashboard.description</mat-label>
-          <textarea matInput formControlName="description" rows="2"></textarea>
-        </mat-form-field>
-      </div>
-      <tb-entity-list
-        *ngIf="isAdd"
-        formControlName="assignedCustomerIds"
-        labelText="{{ 'dashboard.assigned-customers' | translate }}"
-        [entityType]="entityType.CUSTOMER">
-      </tb-entity-list>
+      @if (isAdd) {
+        <tb-entity-list
+          formControlName="assignedCustomerIds"
+          labelText="{{ 'dashboard.assigned-customers' | translate }}"
+          appearance="outline"
+          [entityType]="entityType.CUSTOMER">
+        </tb-entity-list>
+      }
       <div class="tb-form-panel stroked no-gap">
         <div class="tb-form-panel-title" translate>dashboard.mobile-app-settings</div>
         <mat-slide-toggle formControlName="mobileHide" class="mat-slide margin fixed-title-width">
           {{ 'dashboard.mobile-hide' | translate }}
         </mat-slide-toggle>
-        <mat-form-field class="mat-block">
+        <mat-form-field class="mat-block" appearance="outline">
           <mat-label translate>dashboard.mobile-order</mat-label>
           <input matInput formControlName="mobileOrder" type="number" step="1">
         </mat-form-field>
@@ -149,6 +145,12 @@
                                 label="{{'dashboard.image' | translate}}"
                                 formControlName="image">
         </tb-gallery-image-input>
+      </div>
+      <div formGroupName="configuration" class="flex flex-col mt-5">
+        <mat-form-field class="mat-block" appearance="outline">
+          <mat-label translate>dashboard.description</mat-label>
+          <textarea matInput formControlName="description" cdkTextareaAutosize cdkAutosizeMinRows="1" rows="1"></textarea>
+        </mat-form-field>
       </div>
     </fieldset>
   </form>

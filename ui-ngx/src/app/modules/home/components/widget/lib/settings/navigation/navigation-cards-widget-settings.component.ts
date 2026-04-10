@@ -26,9 +26,10 @@ import { Observable, of, Subject } from 'rxjs';
 import { map, mergeMap, share, startWith } from 'rxjs/operators';
 
 @Component({
-  selector: 'tb-navigation-cards-widget-settings',
-  templateUrl: './navigation-cards-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-navigation-cards-widget-settings',
+    templateUrl: './navigation-cards-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class NavigationCardsWidgetSettingsComponent extends WidgetSettingsComponent {
 

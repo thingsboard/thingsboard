@@ -30,6 +30,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 @Component
@@ -86,6 +87,11 @@ public class SslCredentialsWebServerCustomizer implements WebServerFactoryCustom
 
             @Override
             public void addBundleUpdateHandler(String name, Consumer<SslBundle> handler) {
+                // no-op
+            }
+
+            @Override
+            public void addBundleRegisterHandler(BiConsumer<String, SslBundle> handler) {
                 // no-op
             }
         };

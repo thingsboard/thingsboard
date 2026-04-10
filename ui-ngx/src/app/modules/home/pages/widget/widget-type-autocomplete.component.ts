@@ -37,15 +37,16 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 import { WidgetService } from '@core/http/widget.service';
 
 @Component({
-  selector: 'tb-widget-type-autocomplete',
-  templateUrl: './widget-type-autocomplete.component.html',
-  styleUrls: ['./widget-type-autocomplete.component.scss'],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => WidgetTypeAutocompleteComponent),
-    multi: true
-  }],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-widget-type-autocomplete',
+    templateUrl: './widget-type-autocomplete.component.html',
+    styleUrls: ['./widget-type-autocomplete.component.scss'],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => WidgetTypeAutocompleteComponent),
+            multi: true
+        }],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class WidgetTypeAutocompleteComponent implements ControlValueAccessor, OnInit, AfterViewInit {
 

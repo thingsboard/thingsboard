@@ -30,10 +30,11 @@ import {
 import { TbBarsChart } from '@home/components/widget/lib/chart/bars-chart';
 
 @Component({
-  selector: 'tb-bar-chart-widget',
-  templateUrl: './latest-chart-widget.component.html',
-  styleUrls: [],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-bar-chart-widget',
+    templateUrl: './latest-chart-widget.component.html',
+    styleUrls: [],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class BarChartWidgetComponent implements OnInit {
 

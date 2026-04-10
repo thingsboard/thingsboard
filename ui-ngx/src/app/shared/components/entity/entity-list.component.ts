@@ -50,21 +50,22 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 import { isArray } from 'lodash';
 
 @Component({
-  selector: 'tb-entity-list',
-  templateUrl: './entity-list.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => EntityListComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => EntityListComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-entity-list',
+    templateUrl: './entity-list.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => EntityListComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => EntityListComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class EntityListComponent implements ControlValueAccessor, OnInit, OnChanges {
 

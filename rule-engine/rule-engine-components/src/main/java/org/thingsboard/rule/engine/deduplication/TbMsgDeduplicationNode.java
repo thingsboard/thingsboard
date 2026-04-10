@@ -41,6 +41,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -177,15 +178,11 @@ public class TbMsgDeduplicationNode implements TbNode {
                         }
                     }
                     if (resultMsg != null) {
-                        String queueName1 = queueName != null ? queueName : resultMsg.getQueueName();
-                        deduplicationResults.add(TbMsg.newMsg()
-                                .queueName(queueName1)
-                                .type(resultMsg.getType())
-                                .originator(resultMsg.getOriginator())
-                                .customerId(resultMsg.getCustomerId())
-                                .copyMetaData(resultMsg.getMetaData())
-                                .data(resultMsg.getData())
-                                .build());
+                        var msgBuilder = resultMsg.copyWithNewCtx().id(UUID.randomUUID());
+                        if (queueName != null) {
+                            msgBuilder.queueName(queueName);
+                        }
+                        deduplicationResults.add(msgBuilder.build());
                     }
                 }
                 packBoundsOpt = findValidPack(msgList, deduplicationTimeoutMs);

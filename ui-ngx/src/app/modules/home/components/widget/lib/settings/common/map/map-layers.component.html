@@ -23,28 +23,34 @@
       <div class="tb-form-table-header-cell tb-layer-header" translate>widgets.maps.layer.layer</div>
       <div class="tb-form-table-header-cell tb-actions-header"></div>
     </div>
-    <div *ngIf="layersFormArray().controls.length; else noLayers" class="tb-form-table-body tb-drop-list max-h-64 overflow-y-auto"
-         cdkDropList cdkDropListOrientation="vertical"
-         [cdkDropListDisabled]="!dragEnabled"
-         (cdkDropListDropped)="layerDrop($event)">
-      <div cdkDrag [cdkDragDisabled]="!dragEnabled"
-           class="tb-draggable-form-table-row"
-           *ngFor="let layerControl of layersFormArray().controls; trackBy: trackByLayer; let $index = index;">
-        <tb-map-layer-row class="flex-1"
-                          [formControl]="layerControl"
-                          (layerRemoved)="removeLayer($index)"></tb-map-layer-row>
-        <div class="tb-form-table-row-cell-buttons">
-          <button [class.tb-hidden]="!dragEnabled"
-                  mat-icon-button
-                  type="button"
-                  cdkDragHandle
-                  matTooltip="{{ 'action.drag' | translate }}"
-                  matTooltipPosition="above">
-            <mat-icon>drag_indicator</mat-icon>
-          </button>
-        </div>
+    @if (layersFormArray().controls.length) {
+      <div class="tb-form-table-body tb-drop-list max-h-64 overflow-y-auto"
+           cdkDropList cdkDropListOrientation="vertical"
+           [cdkDropListDisabled]="!dragEnabled"
+           (cdkDropListDropped)="layerDrop($event)">
+        @for (layerControl of layersFormArray().controls; track trackByLayer($index, layerControl)) {
+          <div cdkDrag [cdkDragDisabled]="!dragEnabled"
+               class="tb-draggable-form-table-row"
+               >
+            <tb-map-layer-row class="flex-1"
+                              [formControl]="layerControl"
+            (layerRemoved)="removeLayer($index)"></tb-map-layer-row>
+            <div class="tb-form-table-row-cell-buttons">
+              <button [class.tb-hidden]="!dragEnabled"
+                      mat-icon-button
+                      type="button"
+                      cdkDragHandle
+                      matTooltip="{{ 'action.drag' | translate }}"
+                      matTooltipPosition="above">
+                <mat-icon>drag_indicator</mat-icon>
+              </button>
+            </div>
+          </div>
+        }
       </div>
-    </div>
+    } @else {
+      <span class="tb-prompt flex items-center justify-center">{{ 'widgets.maps.layer.no-layers' | translate }}</span>
+    }
   </div>
   <div>
     <button type="button" mat-stroked-button color="primary" (click)="addLayer()">
@@ -52,6 +58,3 @@
     </button>
   </div>
 </div>
-<ng-template #noLayers>
-  <span class="tb-prompt flex items-center justify-center">{{ 'widgets.maps.layer.no-layers' | translate }}</span>
-</ng-template>

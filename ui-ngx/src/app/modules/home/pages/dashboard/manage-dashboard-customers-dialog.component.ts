@@ -35,10 +35,11 @@ export interface ManageDashboardCustomersDialogData {
 }
 
 @Component({
-  selector: 'tb-manage-dashboard-customers-dialog',
-  templateUrl: './manage-dashboard-customers-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: ManageDashboardCustomersDialogComponent}],
-  styleUrls: []
+    selector: 'tb-manage-dashboard-customers-dialog',
+    templateUrl: './manage-dashboard-customers-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: ManageDashboardCustomersDialogComponent }],
+    styleUrls: [],
+    standalone: false
 })
 export class ManageDashboardCustomersDialogComponent extends
   DialogComponent<ManageDashboardCustomersDialogComponent, boolean> implements OnInit, ErrorStateMatcher {

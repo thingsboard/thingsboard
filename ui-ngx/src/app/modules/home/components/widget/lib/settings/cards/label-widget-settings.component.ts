@@ -23,9 +23,10 @@ import { LabelWidgetLabel } from '@home/components/widget/lib/settings/cards/lab
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 
 @Component({
-  selector: 'tb-label-widget-settings',
-  templateUrl: './label-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-label-widget-settings',
+    templateUrl: './label-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class LabelWidgetSettingsComponent extends WidgetSettingsComponent {
 
@@ -70,6 +71,9 @@ export class LabelWidgetSettingsComponent extends WidgetSettingsComponent {
 
   labelsFormArray(): UntypedFormArray {
     return this.labelWidgetSettingsForm.get('labels') as UntypedFormArray;
+  }
+  get typedSelectOptions() {
+    return this.labelsFormArray().controls as (AbstractControl & { new?: boolean })[];
   }
 
   public trackByLabelControl(index: number, labelControl: AbstractControl): any {

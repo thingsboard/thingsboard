@@ -29,7 +29,8 @@ export interface RateLimitsDetailsDialogData {
 }
 
 @Component({
-  templateUrl: './rate-limits-details-dialog.component.html'
+    templateUrl: './rate-limits-details-dialog.component.html',
+    standalone: false
 })
 export class RateLimitsDetailsDialogComponent extends DialogComponent<RateLimitsDetailsDialogComponent> {
 

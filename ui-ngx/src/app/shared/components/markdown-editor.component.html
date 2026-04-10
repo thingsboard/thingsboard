@@ -22,11 +22,13 @@
     <span class="flex-1"></span>
     <button [class.!hidden]="editorMode"
             type="button"
-            mat-button (click)="toggleEditMode()">{{ 'markdown.edit' | translate }}</button>
+    mat-button (click)="toggleEditMode()">{{ 'markdown.edit' | translate }}</button>
     <button [class.!hidden]="!editorMode"
             type="button"
-            mat-button (click)="toggleEditMode()">{{ 'markdown.preview' | translate }}</button>
-    <div *ngIf = "helpId" [tb-help-popup]="helpId"></div>
+    mat-button (click)="toggleEditMode()">{{ 'markdown.preview' | translate }}</button>
+    @if (helpId) {
+      <div [tb-help-popup]="helpId" [tb-help-popup-style]="helpPopupStyle"></div>
+    }
     <fieldset style="width: initial">
       <div matTooltip="{{(fullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
            matTooltipPosition="above"
@@ -44,7 +46,9 @@
       <tb-markdown [data]="renderValue" lineNumbers fallbackToPlainMarkdown></tb-markdown>
     </div>
   </div>
-  <div *ngIf="readonly || disabled" class="tb-markdown-view-container">
-    <tb-markdown [data]="renderValue" lineNumbers fallbackToPlainMarkdown></tb-markdown>
-  </div>
+  @if (readonly || disabled) {
+    <div class="tb-markdown-view-container">
+      <tb-markdown [data]="renderValue" lineNumbers fallbackToPlainMarkdown></tb-markdown>
+    </div>
+  }
 </div>

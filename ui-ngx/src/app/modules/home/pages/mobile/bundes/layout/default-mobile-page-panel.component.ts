@@ -21,10 +21,11 @@ import { FormBuilder, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-default-mobile-page-panel',
-  templateUrl: './default-mobile-page-panel.component.html',
-  styleUrls: ['./default-mobile-page-panel.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-default-mobile-page-panel',
+    templateUrl: './default-mobile-page-panel.component.html',
+    styleUrls: ['./default-mobile-page-panel.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class DefaultMobilePagePanelComponent implements OnInit {
 

@@ -21,9 +21,10 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 
 @Component({
-  selector: 'tb-doc-links-widget-settings',
-  templateUrl: './doc-links-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-doc-links-widget-settings',
+    templateUrl: './doc-links-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class DocLinksWidgetSettingsComponent extends WidgetSettingsComponent {
 

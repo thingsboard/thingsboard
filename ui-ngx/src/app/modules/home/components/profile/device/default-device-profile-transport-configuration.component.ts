@@ -32,21 +32,22 @@ import { DefaultDeviceProfileTransportConfiguration, DeviceTransportType } from 
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-default-device-profile-transport-configuration',
-  templateUrl: './default-device-profile-transport-configuration.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DefaultDeviceProfileTransportConfigurationComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => DefaultDeviceProfileTransportConfigurationComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-default-device-profile-transport-configuration',
+    templateUrl: './default-device-profile-transport-configuration.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DefaultDeviceProfileTransportConfigurationComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => DefaultDeviceProfileTransportConfigurationComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class DefaultDeviceProfileTransportConfigurationComponent implements ControlValueAccessor, OnInit, Validator {
 

@@ -71,12 +71,12 @@ public class OAuth2ConfigTemplateController extends BaseController {
         oAuth2ConfigTemplateService.deleteClientRegistrationTemplateById(clientRegistrationTemplateId);
     }
 
-    @ApiOperation(value = "Get the list of all OAuth2 client registration templates (getClientRegistrationTemplates)" + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH,
+    @ApiOperation(value = "Get the list of all OAuth2 client registration templates (getOAuth2ClientRegistrationTemplates)" + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH,
             notes = OAUTH2_CLIENT_REGISTRATION_TEMPLATE_DEFINITION)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
-    public List<OAuth2ClientRegistrationTemplate> getClientRegistrationTemplates() throws ThingsboardException {
+    public List<OAuth2ClientRegistrationTemplate> getOAuth2ClientRegistrationTemplates() throws ThingsboardException {
         accessControlService.checkPermission(getCurrentUser(), Resource.OAUTH2_CONFIGURATION_TEMPLATE, Operation.READ);
         return oAuth2ConfigTemplateService.findAllClientRegistrationTemplates();
     }

@@ -20,81 +20,81 @@
     <fieldset class="fields-group">
       <legend class="group-title" translate>device-profile.coap-device-type</legend>
       <div class="flex flex-col gap-2">
-        <mat-form-field class="mat-block">
+        <mat-form-field class="mat-block" appearance="outline">
           <mat-select formControlName="coapDeviceType" required>
-            <mat-option *ngFor="let type of coapTransportDeviceTypes" [value]="type">
-              {{ coapTransportDeviceTypeTranslations.get(type) | translate}}
-            </mat-option>
+            @for (type of coapTransportDeviceTypes; track type) {
+              <mat-option [value]="type">
+                {{ coapTransportDeviceTypeTranslations.get(type) | translate }}
+              </mat-option>
+            }
           </mat-select>
-          <mat-error *ngIf="coapTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.coapDeviceType').hasError('required')">
-            {{ 'device-profile.coap-device-type-required' | translate }}
-          </mat-error>
+          @if (coapTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.coapDeviceType').hasError('required')) {
+            <mat-error>{{ 'device-profile.coap-device-type-required' | translate }}</mat-error>
+          }
         </mat-form-field>
       </div>
     </fieldset>
-    <div *ngIf="coapDeviceTypeDefault" formGroupName="transportPayloadTypeConfiguration">
-      <fieldset class="fields-group">
-        <legend class="group-title" translate>device-profile.coap-device-payload-type</legend>
-        <div class="flex flex-col gap-2">
-          <mat-form-field class="mat-block">
-            <mat-select formControlName="transportPayloadType" required>
-              <mat-option *ngFor="let type of transportPayloadTypes" [value]="type">
-                {{ transportPayloadTypeTranslations.get(type) | translate}}
-              </mat-option>
-            </mat-select>
-            <mat-error *ngIf="coapTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.transportPayloadTypeConfiguration.transportPayloadType').hasError('required')">
-              {{ 'device-profile.mqtt-payload-type-required' | translate }}
-            </mat-error>
-          </mat-form-field>
-          <div *ngIf="protoPayloadType" class="flex flex-col">
-            <ng-container>
-              <tb-protobuf-content
-                class="flex-1"
-                formControlName="deviceTelemetryProtoSchema"
-                label="{{ 'device-profile.telemetry-proto-schema' | translate }}"
-                [fillHeight]="true">
-              </tb-protobuf-content>
-              <mat-error *ngIf="coapTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.transportPayloadTypeConfiguration.deviceTelemetryProtoSchema').hasError('required')">
-                {{ 'device-profile.telemetry-proto-schema-required' | translate}}
-              </mat-error>
-            </ng-container>
-            <ng-container>
-              <tb-protobuf-content
-                class="flex-1"
-                formControlName="deviceAttributesProtoSchema"
-                label="{{ 'device-profile.attributes-proto-schema' | translate }}"
-                [fillHeight]="true">
-              </tb-protobuf-content>
-              <mat-error *ngIf="coapTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.transportPayloadTypeConfiguration.deviceAttributesProtoSchema').hasError('required')">
-                {{ 'device-profile.attributes-proto-schema-required' | translate}}
-              </mat-error>
-            </ng-container>
-            <ng-container>
-              <tb-protobuf-content
-                class="flex-1"
-                formControlName="deviceRpcRequestProtoSchema"
-                label="{{ 'device-profile.rpc-request-proto-schema' | translate }}"
-                [fillHeight]="true">
-              </tb-protobuf-content>
-              <mat-error *ngIf="coapTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.transportPayloadTypeConfiguration.deviceRpcRequestProtoSchema').hasError('required')">
-                {{ 'device-profile.rpc-request-proto-schema-required' | translate}}
-              </mat-error>
-            </ng-container>
-            <ng-container>
-              <tb-protobuf-content
-                class="flex-1"
-                formControlName="deviceRpcResponseProtoSchema"
-                label="{{ 'device-profile.rpc-response-proto-schema' | translate }}"
-                [fillHeight]="true">
-              </tb-protobuf-content>
-              <mat-error *ngIf="coapTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.transportPayloadTypeConfiguration.deviceRpcResponseProtoSchema').hasError('required')">
-                {{ 'device-profile.rpc-response-proto-schema-required' | translate}}
-              </mat-error>
-            </ng-container>
+    @if (coapDeviceTypeDefault) {
+      <div formGroupName="transportPayloadTypeConfiguration">
+        <fieldset class="fields-group">
+          <legend class="group-title" translate>device-profile.coap-device-payload-type</legend>
+          <div class="flex flex-col gap-2">
+            <mat-form-field class="mat-block" appearance="outline">
+              <mat-select formControlName="transportPayloadType" required>
+                @for (type of transportPayloadTypes; track type) {
+                  <mat-option [value]="type">
+                    {{ transportPayloadTypeTranslations.get(type) | translate }}
+                  </mat-option>
+                }
+              </mat-select>
+              @if (coapTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.transportPayloadTypeConfiguration.transportPayloadType').hasError('required')) {
+                <mat-error>{{ 'device-profile.mqtt-payload-type-required' | translate }}</mat-error>
+              }
+            </mat-form-field>
+            @if (protoPayloadType) {
+              <div class="flex flex-col">
+                <tb-protobuf-content
+                  class="flex-1"
+                  formControlName="deviceTelemetryProtoSchema"
+                  label="{{ 'device-profile.telemetry-proto-schema' | translate }}"
+                  [fillHeight]="true">
+                </tb-protobuf-content>
+                @if (coapTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.transportPayloadTypeConfiguration.deviceTelemetryProtoSchema').hasError('required')) {
+                  <mat-error>{{ 'device-profile.telemetry-proto-schema-required' | translate }}</mat-error>
+                }
+                <tb-protobuf-content
+                  class="flex-1"
+                  formControlName="deviceAttributesProtoSchema"
+                  label="{{ 'device-profile.attributes-proto-schema' | translate }}"
+                  [fillHeight]="true">
+                </tb-protobuf-content>
+                @if (coapTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.transportPayloadTypeConfiguration.deviceAttributesProtoSchema').hasError('required')) {
+                  <mat-error>{{ 'device-profile.attributes-proto-schema-required' | translate }}</mat-error>
+                }
+                <tb-protobuf-content
+                  class="flex-1"
+                  formControlName="deviceRpcRequestProtoSchema"
+                  label="{{ 'device-profile.rpc-request-proto-schema' | translate }}"
+                  [fillHeight]="true">
+                </tb-protobuf-content>
+                @if (coapTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.transportPayloadTypeConfiguration.deviceRpcRequestProtoSchema').hasError('required')) {
+                  <mat-error>{{ 'device-profile.rpc-request-proto-schema-required' | translate }}</mat-error>
+                }
+                <tb-protobuf-content
+                  class="flex-1"
+                  formControlName="deviceRpcResponseProtoSchema"
+                  label="{{ 'device-profile.rpc-response-proto-schema' | translate }}"
+                  [fillHeight]="true">
+                </tb-protobuf-content>
+                @if (coapTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.transportPayloadTypeConfiguration.deviceRpcResponseProtoSchema').hasError('required')) {
+                  <mat-error>{{ 'device-profile.rpc-response-proto-schema-required' | translate }}</mat-error>
+                }
+              </div>
+            }
           </div>
-        </div>
-      </fieldset>
-    </div>
+        </fieldset>
+      </div>
+    }
   </section>
   <section formGroupName="clientSettings">
     <fieldset class="fields-group">

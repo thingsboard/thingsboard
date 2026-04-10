@@ -27,7 +27,10 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.util.TestSocketUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.Customer;
@@ -36,6 +39,7 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.HasVersion;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.SaveOtaPackageInfoRequest;
 import org.thingsboard.server.common.data.StringUtils;
@@ -118,6 +122,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 })
 @Slf4j
 abstract public class AbstractEdgeTest extends AbstractControllerTest {
+
+    public static final String EDGE_HOST = "localhost";
+    public static final int EDGE_PORT = TestSocketUtils.findAvailableTcpPort();
+    @DynamicPropertySource
+    static void props(DynamicPropertyRegistry registry) {
+        log.debug("edges.rpc.port = {}", EDGE_PORT);
+        registry.add("edges.rpc.port", () -> EDGE_PORT);
+    }
+
     public static final Integer CONNECT_MESSAGE_COUNT = 17;
     public static final Integer INSTALLATION_MESSAGE_COUNT = 8;
     public static final Integer SYNC_MESSAGE_COUNT = CONNECT_MESSAGE_COUNT + INSTALLATION_MESSAGE_COUNT;
@@ -144,7 +157,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         //8 installation messages
         installation();
 
-        edgeImitator = new EdgeImitator("localhost", 7070, edge.getRoutingKey(), edge.getSecret());
+        edgeImitator = new EdgeImitator(EDGE_HOST, EDGE_PORT, edge.getRoutingKey(), edge.getSecret());
         // 17 connect messages + 8 installation messages
         edgeImitator.expectMessageAmount(SYNC_MESSAGE_COUNT);
         edgeImitator.ignoreType(OAuth2ClientUpdateMsg.class);
@@ -593,7 +606,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         DeviceCredentials deviceCredentialsMsg = JacksonUtil.fromString(deviceCredentialsUpdateMsg.getEntity(), DeviceCredentials.class, true);
         Assert.assertNotNull(deviceCredentialsMsg);
         Assert.assertEquals(savedDevice.getId(), deviceCredentialsMsg.getDeviceId());
-        Assert.assertEquals(deviceCredentials, deviceCredentialsMsg);
+        compareHasVersionEntities(deviceCredentials, deviceCredentialsMsg);
 
         return savedDevice;
     }
@@ -761,6 +774,12 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
                     Map<String, Object> activeAttr = activeAttrOpt.get();
                     return Boolean.toString(value).equals(activeAttr.get("value").toString());
                 });
+    }
+
+    protected void compareHasVersionEntities(HasVersion entity1, HasVersion entity2) {
+        entity1.setVersion(null);
+        entity2.setVersion(null);
+        Assert.assertEquals(entity1, entity2);
     }
 
 }

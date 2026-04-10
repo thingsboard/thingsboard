@@ -61,9 +61,10 @@ enum BackupCodeState {
 }
 
 @Component({
-  selector: 'tb-force-two-factor-auth-login',
-  templateUrl: './force-two-factor-auth-login.component.html',
-  styleUrls: ['./force-two-factor-auth-login.component.scss']
+    selector: 'tb-force-two-factor-auth-login',
+    templateUrl: './force-two-factor-auth-login.component.html',
+    styleUrls: ['./force-two-factor-auth-login.component.scss'],
+    standalone: false
 })
 export class ForceTwoFactorAuthLoginComponent extends PageComponent implements OnInit, OnDestroy {
 

@@ -57,16 +57,17 @@ import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { DomSanitizer } from '@angular/platform-browser';
 
 @Component({
-  selector: 'tb-manage-widget-actions',
-  templateUrl: './manage-widget-actions.component.html',
-  styleUrls: ['./manage-widget-actions.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ManageWidgetActionsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-manage-widget-actions',
+    templateUrl: './manage-widget-actions.component.html',
+    styleUrls: ['./manage-widget-actions.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ManageWidgetActionsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ManageWidgetActionsComponent extends PageComponent implements OnInit, AfterViewInit, OnDestroy, ControlValueAccessor {
 

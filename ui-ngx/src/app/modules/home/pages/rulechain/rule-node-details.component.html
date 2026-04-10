@@ -15,43 +15,48 @@
     limitations under the License.
 
 -->
-<div class="tb-details-buttons" *ngIf="!isAdd && ruleNode.component?.configurationDescriptor?.nodeDefinition?.ruleChainNode">
-  <button mat-raised-button color="primary"
-          (click)="openRuleChain($event)">
-    {{'rulechain.open-rulechain' | translate }}
-  </button>
-</div>
+@if (!isAdd && ruleNode.component?.configurationDescriptor?.nodeDefinition?.ruleChainNode) {
+  <div class="tb-details-buttons">
+    <button mat-raised-button color="primary"
+            (click)="openRuleChain($event)">
+      {{'rulechain.open-rulechain' | translate }}
+    </button>
+  </div>
+}
 <form [formGroup]="ruleNodeFormGroup" class="mat-padding">
   <section class="title-row align-center flex">
-    <mat-form-field class="mat-block flex-1">
+    <mat-form-field class="mat-block flex-1" appearance="outline">
       <mat-label translate>rulenode.name</mat-label>
       <input matInput formControlName="name" required>
-      <mat-error *ngIf="ruleNodeFormGroup.get('name').hasError('required')
-                         || ruleNodeFormGroup.get('name').hasError('pattern')">
-        {{ 'rulenode.name-required' | translate }}
-      </mat-error>
-      <mat-error *ngIf="ruleNodeFormGroup.get('name').hasError('maxlength')">
-        {{ 'rulenode.name-max-length' | translate }}
-      </mat-error>
+      @if (ruleNodeFormGroup.get('name').hasError('required') || ruleNodeFormGroup.get('name').hasError('pattern')) {
+        <mat-error>
+          {{ 'rulenode.name-required' | translate }}
+        </mat-error>
+      }
+      @if (ruleNodeFormGroup.get('name').hasError('maxlength')) {
+        <mat-error>
+          {{ 'rulenode.name-max-length' | translate }}
+        </mat-error>
+      }
     </mat-form-field>
     <section class="mb-5 flex max-w-xs flex-row">
       <tb-entity-debug-settings-button
         [additionalActionConfig]="additionalActionConfig"
         class="mr-2"
         formControlName="debugSettings"
-        [entityType]="entityType.RULE_NODE"
-      />
-      <button mat-stroked-button
-              class="tb-rounded-btn flex-1"
-              color="primary"
-              *ngIf="isSingleton()"
-              [disabled]="ruleNodeFormGroup.get('singletonMode').disabled || disabled"
-              [class.active]="ruleNodeFormGroup.get('singletonMode').value"
-              (click)="onSingleModeChange($event)">
-        <mat-icon [class.invisible]="!ruleNodeFormGroup.get('singletonMode').value">checkmark</mat-icon>
-        <span translate>rulenode.singleton</span>
-        <input class="hidden" formControlName="singletonMode">
-      </button>
+        [entityType]="entityType.RULE_NODE"/>
+      @if (isSingleton()) {
+        <button mat-stroked-button
+                class="tb-rounded-btn flex-1"
+                color="primary"
+                [disabled]="ruleNodeFormGroup.get('singletonMode').disabled || disabled"
+                [class.active]="ruleNodeFormGroup.get('singletonMode').value"
+                (click)="onSingleModeChange($event)">
+          <mat-icon [class.invisible]="!ruleNodeFormGroup.get('singletonMode').value">checkmark</mat-icon>
+          <span translate>rulenode.singleton</span>
+          <input class="hidden" formControlName="singletonMode">
+        </button>
+      }
     </section>
   </section>
   <tb-rule-node-config #ruleNodeConfigComponent
@@ -65,17 +70,19 @@
   </tb-rule-node-config>
 
   <div class="description-block">
-    <tb-queue-autocomplete
-      *ngIf="isAddQueue()"
-      [queueType]="serviceType"
-      subscriptSizing="dynamic"
-      [autocompleteHint]="isSingleton() ? 'rulenode.queue-singleton-hint' : 'rulenode.queue-hint'"
-      formControlName="queueName">
-    </tb-queue-autocomplete>
+    @if (isAddQueue()) {
+      <tb-queue-autocomplete
+        [queueType]="serviceType"
+        appearance="outline"
+        subscriptSizing="dynamic"
+        [autocompleteHint]="isSingleton() ? 'rulenode.queue-singleton-hint' : 'rulenode.queue-hint'"
+        formControlName="queueName">
+      </tb-queue-autocomplete>
+    }
     <div formGroupName="additionalInfo">
-      <mat-form-field class="mat-block">
+      <mat-form-field class="mat-block" appearance="outline">
         <mat-label translate>rulenode.rule-node-description</mat-label>
-        <textarea matInput formControlName="description" rows="1"></textarea>
+        <textarea matInput formControlName="description" cdkTextareaAutosize cdkAutosizeMinRows="1" rows="1"></textarea>
       </mat-form-field>
     </div>
   </div>

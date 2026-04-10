@@ -22,9 +22,10 @@ import { CalculatedField, CalculatedFieldsQuery } from "@shared/models/calculate
 import { CalculatedFieldsTableConfig } from '@home/components/calculated-fields/calculated-fields-table-config';
 
 @Component({
-  selector: 'tb-calculated-fields-table-header',
-  templateUrl: './calculated-fields-header.component.html',
-  styleUrls: ['./calculated-fields-header.component.scss']
+    selector: 'tb-calculated-fields-table-header',
+    templateUrl: './calculated-fields-header.component.html',
+    styleUrls: ['./calculated-fields-header.component.scss'],
+    standalone: false
 })
 export class CalculatedFieldsHeaderComponent extends EntityTableHeaderComponent<CalculatedField> {
 

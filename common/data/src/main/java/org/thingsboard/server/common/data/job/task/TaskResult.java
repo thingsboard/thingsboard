@@ -46,4 +46,6 @@ public abstract class TaskResult {
     @JsonIgnore
     public abstract JobType getJobType();
 
+    public abstract String getError();
+
 }

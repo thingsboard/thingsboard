@@ -45,21 +45,22 @@ import {
 import { CalculatedFieldArgument } from "@shared/models/calculated-field.models";
 
 @Component({
-  selector: 'tb-alarm-rule-filter-predicate',
-  templateUrl: './alarm-rule-filter-predicate.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => AlarmRuleFilterPredicateComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => AlarmRuleFilterPredicateComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-alarm-rule-filter-predicate',
+    templateUrl: './alarm-rule-filter-predicate.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => AlarmRuleFilterPredicateComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => AlarmRuleFilterPredicateComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class AlarmRuleFilterPredicateComponent implements ControlValueAccessor, Validator {
 

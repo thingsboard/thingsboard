@@ -144,7 +144,7 @@ public class DefaultWebSocketService implements WebSocketService {
     private final ConcurrentMap<TenantId, Set<String>> tenantSubscriptionsMap = new ConcurrentHashMap<>();
     private final ConcurrentMap<CustomerId, Set<String>> customerSubscriptionsMap = new ConcurrentHashMap<>();
     private final ConcurrentMap<UserId, Set<String>> regularUserSubscriptionsMap = new ConcurrentHashMap<>();
-    private final ConcurrentMap<UserId, Set<String>> publicUserSubscriptionsMap = new ConcurrentHashMap<>();
+    private final ConcurrentMap<TenantId, Set<String>> publicUserSubscriptionsMap = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, Map<Integer, Integer>> sessionCmdMap = new ConcurrentHashMap<>();
 
     private ExecutorService executor;
@@ -315,7 +315,7 @@ public class DefaultWebSocketService implements WebSocketService {
         }
     }
 
-    private void processSessionClose(WebSocketSessionRef sessionRef) {
+    void processSessionClose(WebSocketSessionRef sessionRef) {
         var tenantProfileConfiguration = getTenantProfileConfiguration(sessionRef);
         if (tenantProfileConfiguration != null) {
             String sessionId = "[" + sessionRef.getSessionId() + "]";
@@ -340,7 +340,7 @@ public class DefaultWebSocketService implements WebSocketService {
                     }
                 }
                 if (tenantProfileConfiguration.getMaxWsSubscriptionsPerPublicUser() > 0 && UserPrincipal.Type.PUBLIC_ID.equals(sessionRef.getSecurityCtx().getUserPrincipal().getType())) {
-                    Set<String> publicUserSessions = publicUserSubscriptionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getId(), id -> ConcurrentHashMap.newKeySet());
+                    Set<String> publicUserSessions = publicUserSubscriptionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getTenantId(), id -> ConcurrentHashMap.newKeySet());
                     synchronized (publicUserSessions) {
                         publicUserSessions.removeIf(subId -> subId.startsWith(sessionId));
                     }
@@ -349,7 +349,7 @@ public class DefaultWebSocketService implements WebSocketService {
         }
     }
 
-    private boolean processSubscription(WebSocketSessionRef sessionRef, SubscriptionCmd cmd) {
+    boolean processSubscription(WebSocketSessionRef sessionRef, SubscriptionCmd cmd) {
         var tenantProfileConfiguration = getTenantProfileConfiguration(sessionRef);
         if (tenantProfileConfiguration == null) return true;
 
@@ -401,9 +401,11 @@ public class DefaultWebSocketService implements WebSocketService {
                     }
                 }
                 if (tenantProfileConfiguration.getMaxWsSubscriptionsPerPublicUser() > 0 && UserPrincipal.Type.PUBLIC_ID.equals(sessionRef.getSecurityCtx().getUserPrincipal().getType())) {
-                    Set<String> publicUserSessions = publicUserSubscriptionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getId(), id -> ConcurrentHashMap.newKeySet());
+                    Set<String> publicUserSessions = publicUserSubscriptionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getTenantId(), id -> ConcurrentHashMap.newKeySet());
                     synchronized (publicUserSessions) {
-                        if (publicUserSessions.size() < tenantProfileConfiguration.getMaxWsSubscriptionsPerPublicUser()) {
+                        if (cmd.isUnsubscribe()) {
+                            publicUserSessions.remove(subId);
+                        } else if (publicUserSessions.size() < tenantProfileConfiguration.getMaxWsSubscriptionsPerPublicUser()) {
                             publicUserSessions.add(subId);
                         } else {
                             log.info("[{}][{}][{}] Failed to start subscription. Max public user subscriptions limit reached"

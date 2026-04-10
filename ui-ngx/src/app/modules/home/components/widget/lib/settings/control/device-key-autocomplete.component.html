@@ -15,43 +15,52 @@
     limitations under the License.
 
 -->
-<mat-form-field class="mat-block flex-1" [appearance]="inlineField ? 'outline': 'fill'"
+<mat-form-field class="mat-block flex-1" [appearance]="!appearance ? inlineField ? 'outline': 'fill' : appearance"
                 [subscriptSizing]="inlineField ? 'dynamic' : 'fixed'"
                 [class]="{'tb-inline-field': inlineField, 'flex': inlineField,
                           'tb-suffix-absolute': (inlineField && !deviceKeyFormGroup.get('key').value)}"
-                [formGroup]="deviceKeyFormGroup">
-  <mat-label *ngIf="!inlineField">{{ (keyType === dataKeyType.attribute
-    ? attributeLabel
+  [formGroup]="deviceKeyFormGroup">
+  @if (!inlineField) {
+    <mat-label>{{ (keyType === dataKeyType.attribute
+      ? attributeLabel
     : timeseriesLabel) | translate }}</mat-label>
+  }
   <input [required]="required" matInput
          type="text" placeholder="{{ 'entity.key-name' | translate }}"
          #keyInput
          (focusin)="onFocus()"
          formControlName="key"
          [matAutocomplete]="keyAutocomplete">
-  <button *ngIf="deviceKeyFormGroup.get('key').value && !deviceKeyFormGroup.get('key').disabled"
-          type="button"
-          matSuffix mat-icon-button aria-label="Clear"
-          (click)="clearKey()">
-    <mat-icon class="material-icons">close</mat-icon>
-  </button>
-  <mat-icon matSuffix
-            matTooltipPosition="above"
-            matTooltipClass="tb-error-tooltip"
-            [matTooltip]="requiredText | translate"
-            *ngIf="inlineField && requiredText && deviceKeyFormGroup.get('key').hasError('required')
-                            && deviceKeyFormGroup.get('key').touched"
-            class="tb-error">
-    warning
-  </mat-icon>
+  @if (deviceKeyFormGroup.get('key').value && !deviceKeyFormGroup.get('key').disabled) {
+    <button
+      type="button"
+      matSuffix mat-icon-button aria-label="Clear"
+      (click)="clearKey()">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  }
+  @if (inlineField && requiredText && deviceKeyFormGroup.get('key').hasError('required')
+    && deviceKeyFormGroup.get('key').touched) {
+    <mat-icon matSuffix
+              matTooltipPosition="above"
+              matTooltipClass="tb-error-tooltip"
+              [matTooltip]="requiredText | translate"
+              class="tb-error">
+      warning
+    </mat-icon>
+  }
   <mat-autocomplete
     class="tb-autocomplete"
     #keyAutocomplete="matAutocomplete">
-    <mat-option *ngFor="let key of filteredKeys | async" [value]="key">
-      <span [innerHTML]="key | highlight:keySearchText"></span>
-    </mat-option>
+    @for (key of filteredKeys | async; track key) {
+      <mat-option [value]="key">
+        <span [innerHTML]="key | highlight:keySearchText"></span>
+      </mat-option>
+    }
   </mat-autocomplete>
-  <mat-error *ngIf="!inlineField && requiredText && deviceKeyFormGroup.get('key').hasError('required')">
-    {{ requiredText | translate }}
-  </mat-error>
+  @if (!inlineField && requiredText && deviceKeyFormGroup.get('key').hasError('required')) {
+    <mat-error>
+      {{ requiredText | translate }}
+    </mat-error>
+  }
 </mat-form-field>

@@ -36,7 +36,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
-import org.thingsboard.rule.engine.TestDbCallbackExecutor;
+import org.thingsboard.common.util.DirectListeningExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
@@ -78,7 +78,7 @@ public class TbRabbitMqNodeTest {
     );
 
     private final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("b3d6f9dd-15cc-4e61-acc0-13197a090406"));
-    private final ListeningExecutor executor = new TestDbCallbackExecutor();
+    private final ListeningExecutor executor = DirectListeningExecutor.INSTANCE;
 
     private TbRabbitMqNode node;
     private TbRabbitMqNodeConfiguration config;

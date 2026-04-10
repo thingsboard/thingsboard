@@ -44,9 +44,10 @@ interface QrCodeWidgetSettings {
 type QrCodeTextFunction = (data: FormattedData[]) => string;
 
 @Component({
-  selector: 'tb-qrcode-widget',
-  templateUrl: './qrcode-widget.component.html',
-  styleUrls: []
+    selector: 'tb-qrcode-widget',
+    templateUrl: './qrcode-widget.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class QrCodeWidgetComponent extends PageComponent implements OnInit, AfterViewInit {
 

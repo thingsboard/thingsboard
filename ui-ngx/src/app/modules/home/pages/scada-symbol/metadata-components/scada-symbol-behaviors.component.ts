@@ -55,22 +55,23 @@ import { WidgetActionCallbacks } from '@home/components/widget/action/manage-wid
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-scada-symbol-metadata-behaviors',
-  templateUrl: './scada-symbol-behaviors.component.html',
-  styleUrls: ['./scada-symbol-behaviors.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ScadaSymbolBehaviorsComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => ScadaSymbolBehaviorsComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-scada-symbol-metadata-behaviors',
+    templateUrl: './scada-symbol-behaviors.component.html',
+    styleUrls: ['./scada-symbol-behaviors.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ScadaSymbolBehaviorsComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => ScadaSymbolBehaviorsComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class ScadaSymbolBehaviorsComponent implements ControlValueAccessor, OnInit, Validator {
 

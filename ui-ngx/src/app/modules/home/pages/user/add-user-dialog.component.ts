@@ -40,9 +40,10 @@ export interface AddUserDialogData {
 }
 
 @Component({
-  selector: 'tb-add-user-dialog',
-  templateUrl: './add-user-dialog.component.html',
-  styleUrls: ['./add-user-dialog.component.scss']
+    selector: 'tb-add-user-dialog',
+    templateUrl: './add-user-dialog.component.html',
+    styleUrls: ['./add-user-dialog.component.scss'],
+    standalone: false
 })
 export class AddUserDialogComponent extends DialogComponent<AddUserDialogComponent, User> implements OnInit {
 

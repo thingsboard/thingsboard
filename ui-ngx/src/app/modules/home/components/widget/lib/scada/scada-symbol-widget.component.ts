@@ -44,10 +44,11 @@ import { MatIconRegistry } from '@angular/material/icon';
 import { RafService } from '@core/services/raf.service';
 
 @Component({
-  selector: 'tb-scada-symbol-widget',
-  templateUrl: './scada-symbol-widget.component.html',
-  styleUrls: ['../action/action-widget.scss', './scada-symbol-widget.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-scada-symbol-widget',
+    templateUrl: './scada-symbol-widget.component.html',
+    styleUrls: ['../action/action-widget.scss', './scada-symbol-widget.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class ScadaSymbolWidgetComponent implements OnInit, AfterViewInit, OnDestroy, ScadaSymbolObjectCallbacks {
 

@@ -42,18 +42,20 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { ColorPickerPanelComponent } from '@shared/components/color-picker/color-picker-panel.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MatFormFieldAppearance } from '@angular/material/form-field';
 
 @Component({
-  selector: 'tb-color-input',
-  templateUrl: './color-input.component.html',
-  styleUrls: ['./color-input.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ColorInputComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-color-input',
+    templateUrl: './color-input.component.html',
+    styleUrls: ['./color-input.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ColorInputComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ColorInputComponent extends PageComponent implements OnInit, ControlValueAccessor {
 
@@ -81,6 +83,9 @@ export class ColorInputComponent extends PageComponent implements OnInit, Contro
   @Input()
   @coerceBoolean()
   noBorder = false;
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   private requiredValue: boolean;
   get required(): boolean {

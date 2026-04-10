@@ -34,9 +34,10 @@ export interface PersistentDetailsDialogData {
 }
 
 @Component({
-  selector: 'tb-persistent-details-dialog',
-  templateUrl: './persistent-details-dialog.component.html',
-  styleUrls: ['./persistent-details-dialog.component.scss']
+    selector: 'tb-persistent-details-dialog',
+    templateUrl: './persistent-details-dialog.component.html',
+    styleUrls: ['./persistent-details-dialog.component.scss'],
+    standalone: false
 })
 
 export class PersistentDetailsDialogComponent extends DialogComponent<PersistentDetailsDialogComponent, boolean> implements OnInit {

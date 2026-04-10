@@ -16,6 +16,7 @@
 package org.thingsboard.server.edqs.util;
 
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.rocksdb.Options;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksIterator;
@@ -26,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.BiConsumer;
 
+@Slf4j
 public class TbRocksDb {
 
     protected final String path;
@@ -45,6 +47,7 @@ public class TbRocksDb {
 
     @SneakyThrows
     public void init() {
+        log.debug("RocksDB init in {}", path);
         Files.createDirectories(Path.of(path).getParent());
         db = RocksDB.open(dbOptions, path);
     }

@@ -181,25 +181,25 @@ public class OtaPackageController extends BaseController {
         return checkNotNull(otaPackageService.findTenantOtaPackagesByTenantId(getTenantId(), pageLink));
     }
 
-    @ApiOperation(value = "Get OTA Package Infos (getOtaPackages)",
+    @ApiOperation(value = "Get OTA Package Infos by device profile and type (getOtaPackagesByDeviceProfileAndType)",
             notes = "Returns a page of OTA Package Info objects owned by tenant. " +
                     PAGE_DATA_PARAMETERS + OTA_PACKAGE_INFO_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/otaPackages/{deviceProfileId}/{type}")
-    public PageData<OtaPackageInfo> getOtaPackages(@Parameter(description = DEVICE_PROFILE_ID_PARAM_DESCRIPTION)
-                                                   @PathVariable("deviceProfileId") String strDeviceProfileId,
-                                                   @Parameter(description = "OTA Package type.", schema = @Schema(allowableValues = {"FIRMWARE", "SOFTWARE"}))
-                                                   @PathVariable("type") String strType,
-                                                   @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
-                                                   @RequestParam int pageSize,
-                                                   @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
-                                                   @RequestParam int page,
-                                                   @Parameter(description = OTA_PACKAGE_TEXT_SEARCH_DESCRIPTION)
-                                                   @RequestParam(required = false) String textSearch,
-                                                   @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "type", "title", "version", "tag", "url", "fileName", "dataSize", "checksum"}))
-                                                   @RequestParam(required = false) String sortProperty,
-                                                   @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
-                                                   @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+    public PageData<OtaPackageInfo> getOtaPackagesByDeviceProfileAndType(@Parameter(description = DEVICE_PROFILE_ID_PARAM_DESCRIPTION)
+                                                                         @PathVariable("deviceProfileId") String strDeviceProfileId,
+                                                                         @Parameter(description = "OTA Package type.", schema = @Schema(allowableValues = {"FIRMWARE", "SOFTWARE"}))
+                                                                         @PathVariable("type") String strType,
+                                                                         @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
+                                                                         @RequestParam int pageSize,
+                                                                         @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
+                                                                         @RequestParam int page,
+                                                                         @Parameter(description = OTA_PACKAGE_TEXT_SEARCH_DESCRIPTION)
+                                                                         @RequestParam(required = false) String textSearch,
+                                                                         @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "type", "title", "version", "tag", "url", "fileName", "dataSize", "checksum"}))
+                                                                         @RequestParam(required = false) String sortProperty,
+                                                                         @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
+                                                                         @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         checkParameter("deviceProfileId", strDeviceProfileId);
         checkParameter("type", strType);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);

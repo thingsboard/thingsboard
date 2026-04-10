@@ -18,15 +18,16 @@ import { Component, EventEmitter, forwardRef, Input, Output } from '@angular/cor
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 @Component({
-  selector: 'tb-checkbox',
-  templateUrl: './tb-checkbox.component.html',
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => TbCheckboxComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-checkbox',
+    templateUrl: './tb-checkbox.component.html',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TbCheckboxComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class TbCheckboxComponent implements ControlValueAccessor {
 

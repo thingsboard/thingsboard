@@ -28,16 +28,17 @@ import {
 } from '@home/components/widget/lib/settings/common/map/shape-fill-stripe-settings-panel.component';
 
 @Component({
-  selector: 'tb-shape-fill-stripe-settings',
-  templateUrl: './shape-fill-stripe-settings.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ShapeFillStripeSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-shape-fill-stripe-settings',
+    templateUrl: './shape-fill-stripe-settings.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ShapeFillStripeSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ShapeFillStripeSettingsComponent implements ControlValueAccessor {
 

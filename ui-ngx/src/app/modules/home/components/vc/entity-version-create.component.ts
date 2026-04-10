@@ -36,9 +36,10 @@ import { share } from 'rxjs/operators';
 import { parseHttpErrorMessage } from '@core/utils';
 
 @Component({
-  selector: 'tb-entity-version-create',
-  templateUrl: './entity-version-create.component.html',
-  styleUrls: ['./version-control.scss']
+    selector: 'tb-entity-version-create',
+    templateUrl: './entity-version-create.component.html',
+    styleUrls: ['./version-control.scss'],
+    standalone: false
 })
 export class EntityVersionCreateComponent extends PageComponent implements OnInit, OnDestroy {
 

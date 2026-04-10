@@ -83,8 +83,6 @@ export class TbImageMap extends TbMap<ImageMapSettings> {
         this.onResize(true);
       } else {
         this.onResize();
-        this.initMapSubject.next(this.map);
-        this.initMapSubject.complete();
       }
     });
     return this.initMapSubject.asObservable();
@@ -227,6 +225,8 @@ export class TbImageMap extends TbMap<ImageMapSettings> {
         attributionControl: false
       });
       this.updateMaxBounds(updateImage);
+      this.initMapSubject.next(this.map);
+      this.initMapSubject.complete();
     }
   }
 

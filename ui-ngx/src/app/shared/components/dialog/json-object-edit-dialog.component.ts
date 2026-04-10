@@ -34,9 +34,10 @@ export interface JsonObjectEditDialogData {
 }
 
 @Component({
-  selector: 'tb-object-edit-dialog',
-  templateUrl: './json-object-edit-dialog.component.html',
-  styleUrls: []
+    selector: 'tb-object-edit-dialog',
+    templateUrl: './json-object-edit-dialog.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class JsonObjectEditDialogComponent extends DialogComponent<JsonObjectEditDialogComponent, object> {
 

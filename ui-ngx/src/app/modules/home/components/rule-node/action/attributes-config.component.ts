@@ -33,14 +33,15 @@ import {
 } from '@home/components/rule-node/action/attributes-config.model';
 
 @Component({
-  selector: 'tb-action-node-attributes-config',
-  templateUrl: './attributes-config.component.html',
-  styleUrls: []
+    selector: 'tb-action-node-attributes-config',
+    templateUrl: './attributes-config.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class AttributesConfigComponent extends RuleNodeConfigurationComponent {
 
   attributeScopeMap = AttributeScope;
-  attributeScopes = Object.keys(AttributeScope);
+  attributeScopes = Object.values(AttributeScope);
   telemetryTypeTranslationsMap = telemetryTypeTranslations;
 
   ProcessingType = ProcessingType;

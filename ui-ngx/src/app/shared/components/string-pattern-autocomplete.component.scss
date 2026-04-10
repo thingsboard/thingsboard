@@ -29,10 +29,10 @@
     text-decoration: inherit;
     text-transform: inherit;
     overflow: hidden;
-    color: var(--mdc-filled-text-field-input-text-color, var(--mat-app-on-surface));
+    color: var(--mat-form-field-filled-input-text-color, var(--mat-app-on-surface));
 
     &.disabled {
-      color: var(--mdc-filled-text-field-disabled-input-text-color);
+      color: var(--mat-form-field-filled-disabled-input-text-color);
     }
   }
 
@@ -63,7 +63,7 @@
     &.disabled {
       .highlight {
         color: $tb-primary-color-light;
-        text-shadow: 0 0 0.5px var($tb-primary-color-light, var(--mdc-filled-text-field-disabled-input-text-color));
+        text-shadow: 0 0 0.5px var($tb-primary-color-light, var(--mat-form-field-filled-disabled-input-text-color));
       }
     }
   }

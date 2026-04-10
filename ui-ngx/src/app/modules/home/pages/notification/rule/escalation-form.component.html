@@ -17,25 +17,28 @@
 -->
 <form [formGroup]="escalationFormGroup" class="flex flex-col">
   <div class="escalation flex flex-row items-center justify-center xs:flex-col xs:items-stretch xs:justify-start">
-    <div class="flex-1" *ngIf="systemEscalation; else selectTime" translate>notification.first-recipient</div>
-    <ng-template #selectTime>
+    @if (systemEscalation) {
+      <div class="flex-1" translate>notification.first-recipient</div>
+    } @else {
       <div class="flex flex-1 flex-row items-center justify-center xs:flex-col">
         <span translate>notification.after</span>
         <tb-timeinterval
+          appearance="outline"
           subscriptSizing="dynamic"
           formControlName="delayInSec"
-          min="60000"
-          max="604800000"
-          disabledAdvanced></tb-timeinterval>
+          [min]="60000"
+          [max]="604800000"
+          disabledAdvanced=""></tb-timeinterval>
         <span class="escalation-notify flex-1" translate>notification.notify</span>
       </div>
-    </ng-template>
+    }
     <tb-entity-list
       required
       class="flex-full xs:max-h-60% gt-xs:max-w-60%"
       formControlName="targets"
+      appearance="outline"
       subscriptSizing="dynamic"
-      entityType="{{ entityType.NOTIFICATION_TARGET }}"
+      [entityType]="entityType.NOTIFICATION_TARGET"
       subType="{{ notificationType.ALARM }}"
       [placeholderText]="escalationFormGroup.get('targets').value ? '' : ('notification.add-recipient' | translate)">
       <button #createTargetButton

@@ -21,16 +21,17 @@ import { deduplicationStrategiesTranslations, FetchMode } from '@home/components
 import { RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@shared/models/rule-node.models';
 
 @Component({
-  selector: 'tb-transformation-node-deduplication-config',
-  templateUrl: './deduplication-config.component.html',
-  styleUrls: []
+    selector: 'tb-transformation-node-deduplication-config',
+    templateUrl: './deduplication-config.component.html',
+    styleUrls: [],
+    standalone: false
 })
 
 export class DeduplicationConfigComponent extends RuleNodeConfigurationComponent {
 
   deduplicationConfigForm: FormGroup;
   deduplicationStrategie = FetchMode;
-  deduplicationStrategies = Object.keys(this.deduplicationStrategie);
+  deduplicationStrategies = Object.values(this.deduplicationStrategie);
   deduplicationStrategiesTranslations = deduplicationStrategiesTranslations;
 
   constructor(private fb: FormBuilder) {

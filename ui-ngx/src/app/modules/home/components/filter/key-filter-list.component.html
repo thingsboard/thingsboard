@@ -34,38 +34,42 @@
       </div>
       <mat-divider></mat-divider>
       <div class="key-filter-list">
-        <div class="flex flex-row items-stretch justify-start" style="max-height: 76px;"
-             formArrayName="keyFilters"
-             *ngFor="let keyFilterControl of keyFiltersFormArray.controls; let $index = index">
-          <div class="filters-operation max-w-8% flex-full">
-            <span *ngIf="$index > 0" translate>filter.operation.and</span>
-          </div>
-          <div class="flex max-w-92% flex-full flex-col">
-            <div class="flex flex-row items-center justify-start">
-              <div class="flex-1">{{ keyFilterControl.value.key.key }}</div>
-              <div class="flex-1">{{ entityKeyTypeTranslations.get(keyFilterControl.value.key.type) | translate }}</div>
-              <button mat-icon-button color="primary"
-                      type="button"
-                      (click)="editKeyFilter($index)"
-                      matTooltip="{{ (disabled ? 'filter.key-filter' : 'filter.edit-key-filter') | translate }}"
-                      matTooltipPosition="above">
-                <mat-icon>{{disabled ? 'more_vert' : 'edit'}}</mat-icon>
-              </button>
-              <button mat-icon-button color="primary"
-                      [class.!hidden]="disabled"
-                      type="button"
-                      (click)="removeKeyFilter($index)"
-                      matTooltip="{{ 'filter.remove-key-filter' | translate }}"
-                      matTooltipPosition="above">
-                <mat-icon>close</mat-icon>
-              </button>
+        @for (keyFilterControl of keyFiltersFormArray.controls; track keyFilterControl) {
+          <div class="flex flex-row items-stretch justify-start" style="max-height: 76px;"
+               formArrayName="keyFilters"
+               >
+            <div class="filters-operation max-w-8% flex-full">
+              @if ($index > 0) {
+                <span translate>filter.operation.and</span>
+              }
             </div>
-            <mat-divider></mat-divider>
+            <div class="flex max-w-92% flex-full flex-col">
+              <div class="flex flex-row items-center justify-start">
+                <div class="flex-1">{{ keyFilterControl.value.key.key }}</div>
+                <div class="flex-1">{{ entityKeyTypeTranslations.get(keyFilterControl.value.key.type) | translate }}</div>
+                <button mat-icon-button color="primary"
+                        type="button"
+                        (click)="editKeyFilter($index)"
+                        matTooltip="{{ (disabled ? 'filter.key-filter' : 'filter.edit-key-filter') | translate }}"
+                        matTooltipPosition="above">
+                  <mat-icon>{{disabled ? 'more_vert' : 'edit'}}</mat-icon>
+                </button>
+                <button mat-icon-button color="primary"
+                        [class.!hidden]="disabled"
+                        type="button"
+                        (click)="removeKeyFilter($index)"
+                        matTooltip="{{ 'filter.remove-key-filter' | translate }}"
+                        matTooltipPosition="above">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+              <mat-divider></mat-divider>
+            </div>
           </div>
-        </div>
+        }
         <span [class.!hidden]="!!keyFiltersFormArray.length"
               [class.disabled]="disabled"
-              class="no-data-found flex items-center justify-center" translate>filter.no-key-filters</span>
+        class="no-data-found flex items-center justify-center" translate>filter.no-key-filters</span>
       </div>
       <div style="margin-top: 16px;">
         <button mat-button mat-raised-button color="primary"

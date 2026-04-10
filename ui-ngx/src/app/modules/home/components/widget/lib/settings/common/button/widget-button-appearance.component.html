@@ -21,18 +21,22 @@
                                     breakpoints: {
                                       'lt-sm': 1
                                     }}"
-                         label="{{ 'widgets.button.layout' | translate }}" formControlName="type">
-    <tb-image-cards-select-option *ngFor="let type of widgetButtonTypes"
-                                  [value]="type"
-                                  [image]="widgetButtonTypeImageMap.get(type)">
-      {{ widgetButtonTypeTranslationMap.get(type) | translate }}
-    </tb-image-cards-select-option>
+    label="{{ 'widgets.button.layout' | translate }}" formControlName="type">
+    @for (type of widgetButtonTypes; track type) {
+      <tb-image-cards-select-option
+        [value]="type"
+        [image]="widgetButtonTypeImageMap.get(type)">
+        {{ widgetButtonTypeTranslationMap.get(type) | translate }}
+      </tb-image-cards-select-option>
+    }
   </tb-image-cards-select>
-  <div *ngIf="withAutoScale" class="tb-form-row">
-    <mat-slide-toggle class="mat-slide" formControlName="autoScale">
-      {{ 'widgets.button.auto-scale' | translate }}
-    </mat-slide-toggle>
-  </div>
+  @if (withAutoScale) {
+    <div class="tb-form-row">
+      <mat-slide-toggle class="mat-slide" formControlName="autoScale">
+        {{ 'widgets.button.auto-scale' | translate }}
+      </mat-slide-toggle>
+    </div>
+  }
   <div class="tb-form-row">
     <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showLabel">
       {{ 'widgets.button.label' | translate }}
@@ -63,10 +67,12 @@
       </tb-material-icon-select>
     </div>
   </div>
-  <div *ngIf="withBorderRadius" class="tb-form-row">
-    <div class="fixed-title-width">{{ 'widgets.button.border-radius' | translate }}</div>
-    <tb-css-size-input flex formControlName="borderRadius"></tb-css-size-input>
-  </div>
+  @if (withBorderRadius) {
+    <div class="tb-form-row">
+      <div class="fixed-title-width">{{ 'widgets.button.border-radius' | translate }}</div>
+      <tb-css-size-input flex formControlName="borderRadius"></tb-css-size-input>
+    </div>
+  }
   <div class="tb-form-row space-between column-xs">
     <div>{{ 'widgets.button.color-palette' | translate }}</div>
     <div class="flex flex-row items-center justify-start gap-3">
@@ -93,16 +99,18 @@
         </mat-panel-title>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
-        <div class="tb-form-row space-between" *ngFor="let state of widgetButtonStates">
-          <div>{{ widgetButtonStateTranslationMap.get(state) | translate }}</div>
-          <tb-widget-button-custom-style
-            [state]="state"
-            [appearance]="this.appearanceFormGroup.value"
-            [borderRadius]="borderRadius"
-            [autoScale]="autoScale"
-            [formControlName]="state">
-          </tb-widget-button-custom-style>
-        </div>
+        @for (state of widgetButtonStates; track state) {
+          <div class="tb-form-row space-between">
+            <div>{{ widgetButtonStateTranslationMap.get(state) | translate }}</div>
+            <tb-widget-button-custom-style
+              [state]="state"
+              [appearance]="appearanceFormGroup.value"
+              [borderRadius]="borderRadius"
+              [autoScale]="autoScale"
+              [formControlName]="state">
+            </tb-widget-button-custom-style>
+          </div>
+        }
       </ng-template>
     </mat-expansion-panel>
   </div>

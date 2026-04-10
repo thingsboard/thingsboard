@@ -23,14 +23,15 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
-  selector: 'tb-default-tenant-profile-configuration',
-  templateUrl: './default-tenant-profile-configuration.component.html',
-  styleUrls: ['./default-tenant-profile-configuration.component.scss'],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => DefaultTenantProfileConfigurationComponent),
-    multi: true
-  }]
+    selector: 'tb-default-tenant-profile-configuration',
+    templateUrl: './default-tenant-profile-configuration.component.html',
+    styleUrls: ['./default-tenant-profile-configuration.component.scss'],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DefaultTenantProfileConfigurationComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class DefaultTenantProfileConfigurationComponent implements ControlValueAccessor {
 

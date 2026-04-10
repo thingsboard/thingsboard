@@ -19,40 +19,45 @@
   <mat-toolbar color="primary">
     <h2>{{ 'datakey.configuration' | translate }}</h2>
     <span class="flex-1"></span>
-    <tb-toggle-select *ngIf="hasAdvanced"
-                      appearance="fill-invert" selectMediaBreakpoint="xs" [options]="dataKeyConfigHeaderOptions"
-                      [(ngModel)]="dataKeyConfigMode" [ngModelOptions]="{ standalone: true }">
-    </tb-toggle-select>
+    @if (hasAdvanced) {
+      <tb-toggle-select
+        appearance="fill-invert" selectMediaBreakpoint="xs" [options]="dataKeyConfigHeaderOptions"
+        [(ngModel)]="dataKeyConfigMode" [ngModelOptions]="{ standalone: true }">
+      </tb-toggle-select>
+    }
     <button mat-icon-button
             (click)="cancel()"
             type="button">
       <mat-icon class="material-icons">close</mat-icon>
     </button>
   </mat-toolbar>
-  <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
-  </mat-progress-bar>
-  <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
+  @if (isLoading$ | async) {
+    <mat-progress-bar color="warn" mode="indeterminate">
+    </mat-progress-bar>
+  } @else {
+    <div style="height: 4px;"></div>
+  }
   <div mat-dialog-content style="padding: 0; height: 800px; overflow: auto;">
     <tb-data-key-config #dataKeyConfig
-      [dataKeyConfigMode]="dataKeyConfigMode"
-      [dataKeySettingsForm]="data.dataKeySettingsForm"
-      [dataKeySettingsDirective]="data.dataKeySettingsDirective"
-      [deviceId]="data.deviceId"
-      [entityAliasId]="data.entityAliasId"
-      [dashboard]="data.dashboard"
-      [aliasController]="data.aliasController"
-      [widget]="data.widget"
-      [widgetType]="data.widgetType"
-      [showPostProcessing]="data.showPostProcessing"
-      [callbacks]="data.callbacks"
-      [hideDataKeyName]="data.hideDataKeyName"
-      [hideDataKeyLabel]="data.hideDataKeyLabel"
-      [hideDataKeyColor]="data.hideDataKeyColor"
-      [hideDataKeyUnits]="data.hideDataKeyUnits"
-      [hideDataKeyDecimals]="data.hideDataKeyDecimals"
-      [hideDataKeyAggregation]="data.hideDataKeyAggregation"
-      [supportsUnitConversion]="data.supportsUnitConversion"
-      formControlName="dataKey">
+                        [dataKeyConfigMode]="dataKeyConfigMode"
+                        [dataKeySettingsForm]="data.dataKeySettingsForm"
+                        [dataKeySettingsDirective]="data.dataKeySettingsDirective"
+                        [deviceId]="data.deviceId"
+                        [entityAliasId]="data.entityAliasId"
+                        [dashboard]="data.dashboard"
+                        [aliasController]="data.aliasController"
+                        [widget]="data.widget"
+                        [widgetType]="data.widgetType"
+                        [showPostProcessing]="data.showPostProcessing"
+                        [callbacks]="data.callbacks"
+                        [hideDataKeyName]="data.hideDataKeyName"
+                        [hideDataKeyLabel]="data.hideDataKeyLabel"
+                        [hideDataKeyColor]="data.hideDataKeyColor"
+                        [hideDataKeyUnits]="data.hideDataKeyUnits"
+                        [hideDataKeyDecimals]="data.hideDataKeyDecimals"
+                        [hideDataKeyAggregation]="data.hideDataKeyAggregation"
+                        [supportsUnitConversion]="data.supportsUnitConversion"
+                        formControlName="dataKey">
     </tb-data-key-config>
   </div>
   <div mat-dialog-actions class="flex items-center justify-end">

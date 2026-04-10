@@ -15,25 +15,30 @@
     limitations under the License.
 
 -->
-<tb-dashboard-page *ngIf="homeDashboard; else homeLinks" [embedded]="true" [dashboard]="homeDashboard" [hideToolbar]="homeDashboard.hideDashboardToolbar"></tb-dashboard-page>
-<ng-template #homeLinks>
+@if (homeDashboard) {
+  <tb-dashboard-page [embedded]="true" [dashboard]="homeDashboard" [hideToolbar]="homeDashboard.hideDashboardToolbar"></tb-dashboard-page>
+} @else {
   <mat-grid-list class="tb-home-links" [cols]="cols" rowHeight="280px">
-    <mat-grid-tile [colspan]="sectionColspan(section)" *ngFor="let section of homeSections$| async">
-      <mat-card appearance="outlined" style="width: 100%;">
-        <mat-card-title>
-          <span translate class="mat-headline-5">{{section.name}}</span>
-        </mat-card-title>
-        <mat-card-content>
-          <mat-grid-list rowHeight="170px" [cols]="section.places.length">
-            <mat-grid-tile *ngFor="let place of section.places">
-              <a mat-raised-button color="primary" class="tb-card-button" routerLink="{{place.path}}">
-                <tb-icon matButtonIcon class="tb-mat-96">{{place.icon}}</tb-icon>
-                <span>{{place.customTranslate ? (place.name | customTranslate) : (place.name | translate)}}</span>
-              </a>
-            </mat-grid-tile>
-          </mat-grid-list>
-        </mat-card-content>
-      </mat-card>
-    </mat-grid-tile>
+    @for (section of homeSections$| async; track section) {
+      <mat-grid-tile [colspan]="sectionColspan(section)">
+        <mat-card appearance="outlined" style="width: 100%;">
+          <mat-card-title>
+            <span translate class="mat-headline-5">{{section.name}}</span>
+          </mat-card-title>
+          <mat-card-content>
+            <mat-grid-list rowHeight="170px" [cols]="section.places.length">
+              @for (place of section.places; track place) {
+                <mat-grid-tile>
+                  <a mat-raised-button color="primary" class="tb-card-button" routerLink="{{place.path}}">
+                    <tb-icon matButtonIcon class="tb-mat-96">{{place.icon}}</tb-icon>
+                    <span>{{place.customTranslate ? (place.name | customTranslate) : (place.name | translate)}}</span>
+                  </a>
+                </mat-grid-tile>
+              }
+            </mat-grid-list>
+          </mat-card-content>
+        </mat-card>
+      </mat-grid-tile>
+    }
   </mat-grid-list>
-</ng-template>
+}

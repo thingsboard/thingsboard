@@ -53,7 +53,14 @@ public class ApiKeyControllerTest extends AbstractControllerTest {
         Assert.assertEquals(tenantId, savedApiKey.getTenantId());
         Assert.assertEquals(tenantAdminUser.getId(), savedApiKey.getUserId());
 
-        doDelete("/api/apiKey/" + savedApiKey.getId()).andExpect(status().isOk());
+        String newDescription = "Updated API Key Description";
+        savedApiKey.setDescription(newDescription);
+        ApiKey updatedApiKey = doPost("/api/apiKey", savedApiKey, ApiKey.class);
+        Assert.assertNotNull(updatedApiKey);
+        Assert.assertEquals(newDescription, updatedApiKey.getDescription());
+        Assert.assertNull("Verify we do not expose API key value on update", updatedApiKey.getValue());
+
+        doDelete("/api/apiKey/" + updatedApiKey.getId()).andExpect(status().isOk());
     }
 
     @Test

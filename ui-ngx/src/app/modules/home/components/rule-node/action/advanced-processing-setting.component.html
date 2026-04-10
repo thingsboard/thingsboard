@@ -19,26 +19,41 @@
   <tb-example-hint
     [hintText]="'rule-node-config.save-time-series.advanced-settings-hint'"
     [popupHelpLink]="timeseries ? 'rulenode/save_timeseries_node_advanced' : 'rulenode/save_attributes_node_advanced'"
-  >
+    >
   </tb-example-hint>
-  <tb-advanced-processing-setting-row *ngIf="timeseries"
-    formControlName="timeseries"
-    title="{{ 'rule-node-config.save-time-series.time-series' | translate }}"
-  ></tb-advanced-processing-setting-row>
-  <tb-advanced-processing-setting-row *ngIf="attributes"
-    formControlName="attributes"
-    title="{{ 'rule-node-config.save-attribute.attributes' | translate }}"
-  ></tb-advanced-processing-setting-row>
-  <tb-advanced-processing-setting-row *ngIf="latest"
-    formControlName="latest"
-    title="{{ 'rule-node-config.save-time-series.latest' | translate }}"
-  ></tb-advanced-processing-setting-row>
-  <tb-advanced-processing-setting-row *ngIf="webSockets"
-    formControlName="webSockets"
-    title="{{ 'rule-node-config.save-time-series.web-sockets' | translate }}"
-  ></tb-advanced-processing-setting-row>
-  <tb-advanced-processing-setting-row *ngIf="calculatedFields"
-    formControlName="calculatedFields"
-    title="{{ 'rule-node-config.save-time-series.calculated-fields-and-alarm-rules' | translate }}"
-  ></tb-advanced-processing-setting-row>
+  @if (timeseries) {
+    <tb-advanced-processing-setting-row
+      formControlName="timeseries"
+      appearance="outline"
+      title="{{ 'rule-node-config.save-time-series.time-series' | translate }}"
+    ></tb-advanced-processing-setting-row>
+  }
+  @if (attributes) {
+    <tb-advanced-processing-setting-row
+      formControlName="attributes"
+      appearance="outline"
+      title="{{ 'rule-node-config.save-attribute.attributes' | translate }}"
+    ></tb-advanced-processing-setting-row>
+  }
+  @if (latest) {
+    <tb-advanced-processing-setting-row
+      formControlName="latest"
+      appearance="outline"
+      title="{{ 'rule-node-config.save-time-series.latest' | translate }}"
+    ></tb-advanced-processing-setting-row>
+  }
+  @if (webSockets) {
+    <tb-advanced-processing-setting-row
+      formControlName="webSockets"
+      appearance="outline"
+      title="{{ 'rule-node-config.save-time-series.web-sockets' | translate }}"
+    ></tb-advanced-processing-setting-row>
+  }
+  @if (calculatedFields) {
+    <tb-advanced-processing-setting-row
+      formControlName="calculatedFields"
+      appearance="outline"
+      title="{{ 'rule-node-config.save-time-series.calculated-fields-and-alarm-rules' | translate }}"
+    ></tb-advanced-processing-setting-row>
+  }
 </section>

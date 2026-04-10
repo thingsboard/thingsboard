@@ -40,7 +40,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { DialogService } from '@core/services/dialog.service';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { forkJoin, merge, Observable, Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, take, takeUntil } from 'rxjs/operators';
 import { EntityId } from '@shared/models/id/entity-id';
 import {
   AttributeData,
@@ -56,6 +56,8 @@ import {
 import { AttributeDatasource } from '@home/models/datasource/attribute-datasource';
 import { AttributeService } from '@app/core/http/attribute.service';
 import { EntityType } from '@shared/models/entity-type.models';
+import { Authority } from '@shared/models/authority.enum';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
   AddAttributeDialogComponent,
@@ -88,15 +90,16 @@ import { Filters } from '@shared/models/query/query.models';
 import { hidePageSizePixelValue } from '@shared/models/constants';
 import { DeleteTimeseriesPanelComponent } from '@home/components/attribute/delete-timeseries-panel.component';
 import { FormBuilder } from '@angular/forms';
+import { coerceBoolean } from '@shared/decorators/coercion';
 import { AggregationType, defaultTimewindow } from '@shared/models/time/time.models';
 import { TimeService } from '@core/services/time.service';
 
-
 @Component({
-  selector: 'tb-attribute-table',
-  templateUrl: './attribute-table.component.html',
-  styleUrls: ['./attribute-table.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'tb-attribute-table',
+    templateUrl: './attribute-table.component.html',
+    styleUrls: ['./attribute-table.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class AttributeTableComponent extends PageComponent implements AfterViewInit, OnInit, OnDestroy {
 
@@ -144,6 +147,10 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
   }
 
   @Input()
+  @coerceBoolean()
+  disableAddTelemetry: boolean;
+
+  @Input()
   set disableAttributeScopeSelection(value: boolean) {
     this.disableAttributeScopeSelectionValue = coerceBooleanProperty(value);
   }
@@ -185,7 +192,10 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
 
   textSearch = this.fb.control('', {nonNullable: true});
 
+  isSysAdmin = false;
+
   private destroy$ = new Subject<void>();
+  selectAllModel: boolean = false;
 
   constructor(protected store: Store<AppState>,
               private attributeService: AttributeService,
@@ -205,6 +215,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
               private fb: FormBuilder,
               private timeService: TimeService) {
     super(store);
+    this.isSysAdmin = getCurrentAuthUser(this.store).authority === Authority.SYS_ADMIN;
     this.dirtyValue = !this.activeValue;
     const sortOrder: SortOrder = { property: 'key', direction: Direction.ASC };
     this.pageLink = new PageLink(10, 0, null, sortOrder);
@@ -222,6 +233,14 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
       });
     });
     this.widgetResize$.observe(this.elementRef.nativeElement);
+
+    this.dataSource.selection.changed.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
+      this.dataSource.isAllSelected().pipe(take(1)).subscribe(allSelected => {
+        this.selectAllModel = allSelected;
+      });
+    });
   }
 
   ngOnDestroy() {
@@ -236,6 +255,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
     this.attributeScope = attributeScope;
     this.mode = 'default';
     this.paginator.pageIndex = 0;
+    this.selectAllModel = false;
     this.updateData(true);
   }
 

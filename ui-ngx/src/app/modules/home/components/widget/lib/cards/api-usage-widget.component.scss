@@ -50,8 +50,8 @@ $warning-color: #FAA405;
             color: $enabled-color;
           }
           .mat-mdc-progress-bar {
-            --mdc-linear-progress-track-color: #{rgba($enabled-color, 0.06)};
-            --mdc-linear-progress-active-indicator-color: #{$enabled-color};
+            --mat-progress-bar-track-color: #{rgba($enabled-color, 0.06)};
+            --mat-progress-bar-active-indicator-color: #{$enabled-color};
           }
         }
         &.disabled {
@@ -59,8 +59,8 @@ $warning-color: #FAA405;
             color: $disabled-color;
           }
           .mat-mdc-progress-bar {
-            --mdc-linear-progress-track-color: #{rgba($disabled-color, 0.06)};
-            --mdc-linear-progress-active-indicator-color: #{$disabled-color};
+            --mat-progress-bar-track-color: #{rgba($disabled-color, 0.06)};
+            --mat-progress-bar-active-indicator-color: #{$disabled-color};
           }
         }
         &.warning {
@@ -68,8 +68,8 @@ $warning-color: #FAA405;
             color: $warning-color;
           }
           .mat-mdc-progress-bar {
-            --mdc-linear-progress-track-color: #{rgba($warning-color, 0.06)};
-            --mdc-linear-progress-active-indicator-color: #{$warning-color};
+            --mat-progress-bar-track-color: #{rgba($warning-color, 0.06)};
+            --mat-progress-bar-active-indicator-color: #{$warning-color};
           }
         }
 
@@ -120,8 +120,8 @@ $warning-color: #FAA405;
               font-size: 14px;
             }
             &-progress {
-              --mdc-linear-progress-track-height: 8px;
-              --mdc-linear-progress-active-indicator-height: 8px;
+              --mat-progress-bar-track-height: 8px;
+              --mat-progress-bar-active-indicator-height: 8px;
               padding: 4px 0;
               .mat-mdc-progress-bar {
                 border-radius: 6px;

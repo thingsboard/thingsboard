@@ -18,8 +18,9 @@ import { Component, Input } from '@angular/core';
 import { UntypedFormGroup } from '@angular/forms';
 
 @Component({
-  selector: 'tb-contact',
-  templateUrl: './contact.component.html'
+    selector: 'tb-contact',
+    templateUrl: './contact.component.html',
+    standalone: false
 })
 export class ContactComponent {
 

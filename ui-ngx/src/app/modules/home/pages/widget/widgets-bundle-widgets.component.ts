@@ -36,9 +36,10 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 type WidgetTypeBundle = WithOptional<WidgetTypeInfo, 'widgetType'>;
 
 @Component({
-  selector: 'tb-widgets-bundle-widget',
-  templateUrl: './widgets-bundle-widgets.component.html',
-  styleUrls: ['./widgets-bundle-widgets.component.scss']
+    selector: 'tb-widgets-bundle-widget',
+    templateUrl: './widgets-bundle-widgets.component.html',
+    styleUrls: ['./widgets-bundle-widgets.component.scss'],
+    standalone: false
 })
 export class WidgetsBundleWidgetsComponent extends PageComponent implements OnInit {
 

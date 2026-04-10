@@ -29,9 +29,10 @@ export interface FiltersEditPanelData {
 }
 
 @Component({
-  selector: 'tb-filters-edit-panel',
-  templateUrl: './filters-edit-panel.component.html',
-  styleUrls: ['./filters-edit-panel.component.scss']
+    selector: 'tb-filters-edit-panel',
+    templateUrl: './filters-edit-panel.component.html',
+    styleUrls: ['./filters-edit-panel.component.scss'],
+    standalone: false
 })
 export class FiltersEditPanelComponent {
 

@@ -27,9 +27,10 @@ import { Subject } from 'rxjs';
 const SETTINGS_KEY = 'HIDE_GITHUB_STAR_BUTTON';
 
 @Component({
-  selector: 'tb-github-badge',
-  templateUrl: './github-badge.component.html',
-  styleUrl: './github-badge.component.scss'
+    selector: 'tb-github-badge',
+    templateUrl: './github-badge.component.html',
+    styleUrl: './github-badge.component.scss',
+    standalone: false
 })
 export class GithubBadgeComponent implements OnDestroy {
 

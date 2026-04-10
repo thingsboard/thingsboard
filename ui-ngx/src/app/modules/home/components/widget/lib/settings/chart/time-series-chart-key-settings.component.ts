@@ -35,9 +35,10 @@ import { TimeSeriesChartWidgetSettings } from '@home/components/widget/lib/chart
 import { WidgetService } from '@core/http/widget.service';
 
 @Component({
-  selector: 'tb-time-series-chart-key-settings',
-  templateUrl: './time-series-chart-key-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-time-series-chart-key-settings',
+    templateUrl: './time-series-chart-key-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class TimeSeriesChartKeySettingsComponent extends WidgetSettingsComponent {
 

@@ -32,14 +32,15 @@ import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 
 @Component({
-  selector: 'tb-entity-gateway-select',
-  templateUrl: './entity-gateway-select.component.html',
-  styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => EntityGatewaySelectComponent),
-    multi: true
-  }]
+    selector: 'tb-entity-gateway-select',
+    templateUrl: './entity-gateway-select.component.html',
+    styleUrls: [],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => EntityGatewaySelectComponent),
+            multi: true
+        }],
+    standalone: false
 })
 
 export class EntityGatewaySelectComponent implements ControlValueAccessor, OnInit {

@@ -37,16 +37,17 @@ export interface ValueSourceProperty {
 }
 
 @Component({
-  selector: 'tb-value-source',
-  templateUrl: './value-source.component.html',
-  styleUrls: ['./../widget-settings.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ValueSourceComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-value-source',
+    templateUrl: './value-source.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ValueSourceComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ValueSourceComponent extends PageComponent implements OnInit, ControlValueAccessor {
 

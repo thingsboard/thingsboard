@@ -62,17 +62,9 @@ public class TbMsgDelayNode implements TbNode {
         if (msg.isTypeOf(TbMsgType.DELAY_TIMEOUT_SELF_MSG)) {
             TbMsg pendingMsg = pendingMsgs.remove(UUID.fromString(msg.getData()));
             if (pendingMsg != null) {
-                ctx.enqueueForTellNext(
-                        TbMsg.newMsg()
-                                .queueName(pendingMsg.getQueueName())
-                                .type(pendingMsg.getType())
-                                .originator(pendingMsg.getOriginator())
-                                .customerId(pendingMsg.getCustomerId())
-                                .copyMetaData(pendingMsg.getMetaData())
-                                .data(pendingMsg.getData())
-                                .build(),
-                        TbNodeConnectionType.SUCCESS
-                );
+                ctx.enqueueForTellNext(pendingMsg.copyWithNewCtx()
+                        .id(UUID.randomUUID())
+                        .build(), TbNodeConnectionType.SUCCESS);
             }
         } else {
             if (pendingMsgs.size() < config.getMaxPendingMsgs()) {

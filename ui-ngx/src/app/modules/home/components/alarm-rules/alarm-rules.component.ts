@@ -22,19 +22,19 @@ import { FormBuilder, FormGroup } from '@angular/forms';
 import { EntityType } from '@shared/models/entity-type.models';
 import { TranslateService } from '@ngx-translate/core';
 import {
+  CalculatedFieldAlarmRuleConfiguration,
+  CalculatedFieldAlarmRuleInfo,
   CalculatedFieldArgument,
-  CalculatedFieldConfiguration,
-  CalculatedFieldInfo,
   CalculatedFieldType
 } from '@shared/models/calculated-field.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { BaseData } from '@shared/models/base-data';
 import { Observable } from 'rxjs';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
-import {
-  CalculatedFieldsTableConfig,
-  CalculatedFieldsTableEntity
-} from '@home/components/calculated-fields/calculated-fields-table-config';
+import type {
+  AlarmRulesTableConfig,
+  AlarmRuleTableEntity
+} from '@home/components/alarm-rules/alarm-rules-table-config';
 import { TenantId } from '@shared/models/id/tenant-id';
 import { StringItemsOption } from '@shared/components/string-items-list.component';
 import { RelationTypes } from '@shared/models/relation.models';
@@ -51,11 +51,12 @@ import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { EntityService } from '@core/http/entity.service';
 
 @Component({
-  selector: 'tb-alarm-rules',
-  templateUrl: './alarm-rules.component.html',
-  styleUrls: ['./alarm-rule-dialog.component.scss']
+    selector: 'tb-alarm-rules',
+    templateUrl: './alarm-rules.component.html',
+    styleUrls: ['./alarm-rule-dialog.component.scss'],
+    standalone: false
 })
-export class AlarmRulesComponent extends EntityComponent<CalculatedFieldsTableEntity> {
+export class AlarmRulesComponent extends EntityComponent<AlarmRuleTableEntity> {
 
   @Input()
   standalone = false;
@@ -74,8 +75,8 @@ export class AlarmRulesComponent extends EntityComponent<CalculatedFieldsTableEn
 
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
-              @Inject('entity') protected entityValue: CalculatedFieldInfo,
-              @Inject('entitiesTableConfig') protected entitiesTableConfigValue: CalculatedFieldsTableConfig,
+              @Inject('entity') protected entityValue: CalculatedFieldAlarmRuleInfo,
+              @Inject('entitiesTableConfig') protected entitiesTableConfigValue: AlarmRulesTableConfig,
               protected fb: FormBuilder,
               protected cd: ChangeDetectorRef,
               private entityService: EntityService) {
@@ -92,21 +93,14 @@ export class AlarmRulesComponent extends EntityComponent<CalculatedFieldsTableEn
 
   additionalDebugActionConfig = {
     ...this.entitiesTableConfig.additionalDebugActionConfig,
-    action: () => this.entitiesTableConfig.additionalDebugActionConfig.action(
-      { id: this.entity.id, ...this.entityFormValue() }, false,
-      (expression) => {
-        if (expression) {
-          this.entityForm.get('configuration').setValue({...this.entityFormValue().configuration, expression});
-          this.entityForm.get('configuration').markAsDirty();
-        }
-      }),
+    action: () => this.entitiesTableConfig.additionalDebugActionConfig.action({id: this.entity.id, ...this.entityFormValue()})
   };
 
   get entityId(): EntityId {
     return this.entityForm.get('entityId').value;
   }
 
-  get entitiesTableConfig(): CalculatedFieldsTableConfig {
+  get entitiesTableConfig(): AlarmRulesTableConfig {
     return this.entitiesTableConfigValue;
   }
 
@@ -114,12 +108,12 @@ export class AlarmRulesComponent extends EntityComponent<CalculatedFieldsTableEn
     this.entityName = entity?.name;
   }
 
-  buildForm(_entity?: CalculatedFieldInfo): FormGroup {
+  buildForm(_entity?: CalculatedFieldAlarmRuleInfo): FormGroup {
     return inject(CalculatedFieldFormService).buildAlarmRuleForm();
   }
 
-  updateForm(entity: CalculatedFieldInfo) {
-    const { configuration = {} as CalculatedFieldConfiguration, type = CalculatedFieldType.ALARM, debugSettings = { failuresEnabled: true, allEnabled: true }, entityId = this.entityId, ...value } = entity ?? {};
+  updateForm(entity: CalculatedFieldAlarmRuleInfo) {
+    const { configuration = {} as CalculatedFieldAlarmRuleConfiguration, type = CalculatedFieldType.ALARM, debugSettings = { failuresEnabled: true, allEnabled: true }, entityId = this.entityId, ...value } = entity ?? {};
     this.entityForm.patchValue({ configuration, debugSettings, entityId, ...value }, {emitEvent: false});
     if (!entityId) {
       this.entityForm.get('configuration').disable({emitEvent: false});

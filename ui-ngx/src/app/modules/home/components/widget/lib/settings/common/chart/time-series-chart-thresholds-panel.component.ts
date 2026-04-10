@@ -43,22 +43,23 @@ import { ValueSourceType } from '@shared/models/widget-settings.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-time-series-chart-thresholds-panel',
-  templateUrl: './time-series-chart-thresholds-panel.component.html',
-  styleUrls: ['./time-series-chart-thresholds-panel.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => TimeSeriesChartThresholdsPanelComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => TimeSeriesChartThresholdsPanelComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-time-series-chart-thresholds-panel',
+    templateUrl: './time-series-chart-thresholds-panel.component.html',
+    styleUrls: ['./time-series-chart-thresholds-panel.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TimeSeriesChartThresholdsPanelComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => TimeSeriesChartThresholdsPanelComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class TimeSeriesChartThresholdsPanelComponent implements ControlValueAccessor, OnInit, Validator {
 

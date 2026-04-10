@@ -20,18 +20,23 @@
                 [floatLabel]="floatLabel"
                 [appearance]="appearance"
                 [subscriptSizing]="subscriptSizing">
-  <mat-label *ngIf="label">{{ label }}</mat-label>
+  @if (label) {
+    <mat-label>{{ label }}</mat-label>
+  }
   <mat-chip-grid #itemsChipList formControlName="items" [required]="required">
-    <mat-chip-row *ngFor="let item of itemList"
-                  class="tb-chip-row-ellipsis"
-                  [removable]="!disabled"
-                  [contentEditable]="editable && !disabled"
-                  (removed)="removeItems(item)">
-      {{ item.name }}
-      <mat-icon matChipRemove *ngIf="!disabled">close</mat-icon>
-    </mat-chip-row>
+    @for (item of itemList; track item) {
+      <mat-chip-row
+        class="tb-chip-row-ellipsis"
+        [removable]="!disabled"
+        [contentEditable]="editable && !disabled"
+        (removed)="removeItems(item)">
+        {{ item.name }}
+        @if (!disabled) {
+          <mat-icon matChipRemove>close</mat-icon>
+        }
+      </mat-chip-row>
+    }
     <input matInput type="text"
-           (blur)="addOnBlur($event)"
            placeholder="{{ placeholder }}"
            style="max-width: 300px;min-width: 250px"
            #stringItemInput
@@ -40,20 +45,22 @@
            #origin="matAutocompleteOrigin"
            [matChipInputFor]="itemsChipList"
            [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+           [matChipInputAddOnBlur]="true"
            matAutocompleteOrigin
            (matChipInputTokenEnd)="addOnEnd($event)"
            [matAutocompleteConnectedTo]="origin"
            [matAutocomplete]="stringItemAutocomplete"
-           [matAutocompleteDisabled]="!predefinedValues?.length">
+           [matAutocompleteDisabled]="!predefinedValues?.length && !fetchOptionsFn">
   </mat-chip-grid>
   <mat-autocomplete #stringItemAutocomplete="matAutocomplete"
                     [displayWith]="displayValueFn"
+                    (optionSelected)="onOptionSelected($event)"
                     class="tb-autocomplete">
     @for (value of filteredValues | async; track value.value) {
-      <mat-option [value]="value"><span [innerHTML]="value.name | highlight:searchText"></span></mat-option>
-    } @empty {
+      <mat-option [value]="value" (mousedown)="$event.preventDefault()"><span [innerHTML]="value.name | highlight:searchText:true"></span></mat-option>
+      } @empty {
       @if (!allowUserValue) {
-        <mat-option [value]="null">{{ 'common.not-found' | translate }}</mat-option>
+        <mat-option [value]="null" (mousedown)="$event.preventDefault()">{{ 'common.not-found' | translate }}</mat-option>
       }
     }
   </mat-autocomplete>
@@ -66,7 +73,9 @@
   <div matSuffix>
     <ng-content select="[matSuffix]"></ng-content>
   </div>
-  <mat-error *ngIf="stringItemsForm.get('items').hasError('required')">
-    {{ requiredText }}
-  </mat-error>
+  @if (stringItemsForm.get('items').hasError('required')) {
+    <mat-error>
+      {{ requiredText }}
+    </mat-error>
+  }
 </mat-form-field>

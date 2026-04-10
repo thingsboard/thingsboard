@@ -51,16 +51,17 @@ export interface AlarmRuleFilterConfigData {
 }
 
 @Component({
-  selector: 'tb-alarm-rule-filter-config',
-  templateUrl: './alarm-rule-filter-config.component.html',
-  styleUrls: ['./alarm-rule-filter-config.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => AlarmRuleFilterConfigComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-alarm-rule-filter-config',
+    templateUrl: './alarm-rule-filter-config.component.html',
+    styleUrls: ['./alarm-rule-filter-config.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => AlarmRuleFilterConfigComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class AlarmRuleFilterConfigComponent implements OnInit, ControlValueAccessor {
 

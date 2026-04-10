@@ -32,21 +32,17 @@
           </tb-branch-autocomplete>
         </div>
         <span class="flex-1"></span>
-        <div class="flex flex-row items-center justify-center xs:flex-col xs:items-end xs:justify-center">
-          <button *ngIf="singleEntityMode" mat-stroked-button color="primary"
-                  #createVersionButton
-                  [disabled]="(isLoading$ | async) || (isReadOnly | async)"
-                  (click)="toggleCreateVersion($event, createVersionButton)">
-            <mat-icon>update</mat-icon>
-            {{'version-control.create-version' | translate }}
-          </button>
-          <button *ngIf="!singleEntityMode" mat-stroked-button color="primary"
-                  #complexCreateVersionButton
-                  [disabled]="(isLoading$ | async) || (isReadOnly | async)"
-                  (click)="toggleComplexCreateVersion($event, complexCreateVersionButton)">
-            <mat-icon>update</mat-icon>
-            {{'version-control.create-entities-version' | translate }}
-          </button>
+        <div class="flex flex-row items-center justify-center xs:flex-col xs:items-end xs:justify-center"
+             [class.xs:flex-col-reverse]="!singleEntityMode">
+          @if (singleEntityMode) {
+            <button mat-stroked-button color="primary"
+                    #createVersionButton
+                    [disabled]="(isLoading$ | async) || (isReadOnly | async)"
+                    (click)="toggleCreateVersion($event, createVersionButton)">
+              <mat-icon>update</mat-icon>
+              {{'version-control.create-version' | translate }}
+            </button>
+          }
           <div class="flex flex-row">
             <button mat-icon-button [disabled]="isLoading$ | async" (click)="updateData()"
                     matTooltip="{{ 'action.refresh' | translate }}"
@@ -61,6 +57,16 @@
               <mat-icon>search</mat-icon>
             </button>
           </div>
+          @if (!singleEntityMode) {
+            <button mat-flat-button color="primary"
+                    class="gt-xs:ml-3"
+                    #complexCreateVersionButton
+                    [disabled]="(isLoading$ | async) || (isReadOnly | async)"
+                    (click)="toggleComplexCreateVersion($event, complexCreateVersionButton)">
+              <mat-icon>update</mat-icon>
+              {{'version-control.create-entities-version' | translate }}
+            </button>
+          }
         </div>
       </div>
     </mat-toolbar>
@@ -127,31 +133,37 @@
         </ng-container>
         <ng-container matColumnDef="actions" stickyEnd>
           <mat-header-cell *matHeaderCellDef [class.min-w-20]="singleEntityMode" [class.max-w-20]="singleEntityMode" [class.w-20]="singleEntityMode"
-                                             [class.min-w-10]="!singleEntityMode" [class.max-w-10]="!singleEntityMode" [class.w-10]="!singleEntityMode">
+                           [class.min-w-10]="!singleEntityMode" [class.max-w-10]="!singleEntityMode" [class.w-10]="!singleEntityMode">
           </mat-header-cell>
           <mat-cell *matCellDef="let entityVersion">
             <div class="flex flex-1 flex-row items-stretch justify-end">
-              <button *ngIf="singleEntityMode" mat-icon-button [disabled]="isLoading$ | async"
-                      matTooltip="{{ 'version-control.compare-with-current' | translate }}"
-                      matTooltipPosition="above"
-                      #diffVersionButton
-                      (click)="toggleShowVersionDiff($event, diffVersionButton, entityVersion)">
-                <mat-icon>difference</mat-icon>
-              </button>
-              <button *ngIf="singleEntityMode" mat-icon-button [disabled]="isLoading$ | async"
-                      matTooltip="{{ 'version-control.restore-version' | translate }}"
-                      matTooltipPosition="above"
-                      #restoreVersionButton
-                      (click)="toggleRestoreEntityVersion($event, restoreVersionButton, entityVersion)">
-                <mat-icon>restore</mat-icon>
-              </button>
-              <button *ngIf="!singleEntityMode" mat-icon-button [disabled]="isLoading$ | async"
-                      matTooltip="{{ 'version-control.restore-version' | translate }}"
-                      matTooltipPosition="above"
-                      #restoreEntitiesVersionButton
-                      (click)="toggleRestoreEntitiesVersion($event, restoreEntitiesVersionButton, entityVersion)">
-                <mat-icon>restore</mat-icon>
-              </button>
+              @if (singleEntityMode) {
+                <button mat-icon-button [disabled]="isLoading$ | async"
+                        matTooltip="{{ 'version-control.compare-with-current' | translate }}"
+                        matTooltipPosition="above"
+                        #diffVersionButton
+                        (click)="toggleShowVersionDiff($event, diffVersionButton, entityVersion)">
+                  <mat-icon>difference</mat-icon>
+                </button>
+              }
+              @if (singleEntityMode) {
+                <button mat-icon-button [disabled]="isLoading$ | async"
+                        matTooltip="{{ 'version-control.restore-version' | translate }}"
+                        matTooltipPosition="above"
+                        #restoreVersionButton
+                        (click)="toggleRestoreEntityVersion($event, restoreVersionButton, entityVersion)">
+                  <mat-icon>restore</mat-icon>
+                </button>
+              }
+              @if (!singleEntityMode) {
+                <button mat-icon-button [disabled]="isLoading$ | async"
+                        matTooltip="{{ 'version-control.restore-version' | translate }}"
+                        matTooltipPosition="above"
+                        #restoreEntitiesVersionButton
+                        (click)="toggleRestoreEntitiesVersion($event, restoreEntitiesVersionButton, entityVersion)">
+                  <mat-icon>restore</mat-icon>
+                </button>
+              }
             </div>
           </mat-cell>
         </ng-container>
@@ -160,12 +172,12 @@
       </table>
       <span [class.!hidden]="(isLoading$ | async) || (dataSource.isEmpty() | async) === false || dataSource.dataLoading"
             class="no-data-found flex items-center justify-center" translate>{{
-        singleEntityMode
-          ? 'version-control.no-entity-versions-text'
-          : 'version-control.no-versions-text'
-        }}</span>
+            singleEntityMode
+            ? 'version-control.no-entity-versions-text'
+            : 'version-control.no-versions-text'
+      }}</span>
       <span [class.!hidden]="!dataSource.dataLoading"
-            class="no-data-found flex items-center justify-center">{{ 'common.loading' | translate }}</span>
+      class="no-data-found flex items-center justify-center">{{ 'common.loading' | translate }}</span>
     </div>
     <mat-divider></mat-divider>
     <mat-paginator [length]="dataSource.total() | async"
@@ -173,6 +185,6 @@
                    [pageSize]="pageLink.pageSize"
                    [pageSizeOptions]="[10, 20, 30]"
                    [hidePageSize]="hidePageSize"
-                   showFirstLastButtons></mat-paginator>
+    showFirstLastButtons></mat-paginator>
   </div>
 </div>

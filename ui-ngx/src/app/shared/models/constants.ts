@@ -56,6 +56,12 @@ export const serverErrorCodesTranslations = new Map<number, string>([
   [Constants.serverErrorCode.entitiesLimitExceeded, 'server-error.entities-limit-exceeded'],
 ]);
 
+export const httpStatusMessageMap = new Map<number, string>([
+  [502, 'Server is temporarily unavailable (Bad Gateway)'],
+  [503, 'Server is temporarily unavailable'],
+  [504, 'Server did not respond in time (Gateway Timeout)'],
+]);
+
 export const MediaBreakpoints = {
   xs: 'screen and (max-width: 599px)',
   sm: 'screen and (min-width: 600px) and (max-width: 959px)',
@@ -217,7 +223,7 @@ export const HelpLinks = {
     mobileQrCode: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/mobile-qr-code/`,
     calculatedField: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/calculated-fields/`,
     aiModels: `${helpBaseUrl}/docs${docPlatformPrefix}/samples/analytics/ai-models/`,
-    apiKeys: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/api-keys`,
+    apiKeys: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/security/api-keys/`,
     timewindowSettings: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/dashboards/#time-window`,
     trendzSettings: `${helpBaseUrl}/docs/trendz/`,
     alarmRules: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/alarm-rules/`,

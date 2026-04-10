@@ -23,12 +23,14 @@
                                     breakpoints: {
                                       'lt-sm': 1
                                     }}"
-                           label="{{ 'widgets.signal-strength.layout' | translate }}" formControlName="layout">
-      <tb-image-cards-select-option *ngFor="let layout of signalStrengthLayouts"
-                                    [value]="layout"
-                                    [image]="signalStrengthLayoutImageMap.get(layout)">
-        {{ signalStrengthLayoutTranslationMap.get(layout) | translate }}
-      </tb-image-cards-select-option>
+      label="{{ 'widgets.signal-strength.layout' | translate }}" formControlName="layout">
+      @for (layout of signalStrengthLayouts; track layout) {
+        <tb-image-cards-select-option
+          [value]="layout"
+          [image]="signalStrengthLayoutImageMap.get(layout)">
+          {{ signalStrengthLayoutTranslationMap.get(layout) | translate }}
+        </tb-image-cards-select-option>
+      }
     </tb-image-cards-select>
     <div class="tb-form-row column-xs">
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showDate">

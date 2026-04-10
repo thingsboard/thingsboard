@@ -29,16 +29,17 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 
 // @dynamic
 @Component({
-  selector: 'tb-legend-config',
-  templateUrl: './legend-config.component.html',
-  styleUrls: ['./../widget-settings.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => LegendConfigComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-legend-config',
+    templateUrl: './legend-config.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => LegendConfigComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class LegendConfigComponent implements OnInit, OnDestroy, ControlValueAccessor {
 

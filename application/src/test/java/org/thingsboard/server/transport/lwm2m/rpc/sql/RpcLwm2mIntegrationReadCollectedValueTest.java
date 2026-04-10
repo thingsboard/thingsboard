@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Test;
+import org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper;
 import org.thingsboard.server.transport.lwm2m.rpc.AbstractRpcLwM2MIntegrationTest;
 import java.util.concurrent.atomic.AtomicReference;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -36,6 +37,12 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID
 
 @Slf4j
 public class RpcLwm2mIntegrationReadCollectedValueTest extends AbstractRpcLwM2MIntegrationTest {
+
+    @Before
+    public void resetCollectedValueTimestamps() {
+        Lwm2mTestHelper.RESOURCE_ID_3303_12_5700_TS_0 = 0;
+        Lwm2mTestHelper.RESOURCE_ID_3303_12_5700_TS_1 = 0;
+    }
 
     /**
      * Read {"id":"/3303/12/5700"}

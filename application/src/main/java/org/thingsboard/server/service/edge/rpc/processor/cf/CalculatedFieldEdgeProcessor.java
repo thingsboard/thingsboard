@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.edge.rpc.EdgeVersionComparator;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
@@ -116,7 +117,7 @@ public class CalculatedFieldEdgeProcessor extends BaseCalculatedFieldProcessor i
     }
 
     private boolean isValidCfToSend(CalculatedFieldType type, EdgeVersion edgeVersion) {
-        return edgeVersion.getNumber() >= EdgeVersion.V_4_3_0.getNumber() || (type == SIMPLE || type == SCRIPT);
+        return EdgeVersionComparator.INSTANCE.compare(edgeVersion, EdgeVersion.V_4_3_0) >= 0 || (type == SIMPLE || type == SCRIPT);
     }
 
     @Override

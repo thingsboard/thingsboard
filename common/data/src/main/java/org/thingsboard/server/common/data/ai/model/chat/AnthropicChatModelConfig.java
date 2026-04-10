@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data.ai.model.chat;
 
 import dev.langchain4j.model.chat.ChatModel;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
@@ -27,8 +28,10 @@ import lombok.With;
 import org.thingsboard.server.common.data.ai.provider.AiProvider;
 import org.thingsboard.server.common.data.ai.provider.AnthropicProviderConfig;
 
+@Schema
 @Builder
 public record AnthropicChatModelConfig(
+        @Schema(ref = "#/components/schemas/AnthropicProviderConfig")
         @NotNull @Valid AnthropicProviderConfig providerConfig,
         @NotBlank String modelId,
         @PositiveOrZero Double temperature,

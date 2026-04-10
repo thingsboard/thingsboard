@@ -23,9 +23,10 @@ import { DialogComponent } from '@app/shared/components/dialog.component';
 import { DashboardLayoutId } from '@app/shared/models/dashboard.models';
 
 @Component({
-  selector: 'tb-select-target-layout-dialog',
-  templateUrl: './select-target-layout-dialog.component.html',
-  styleUrls: ['./layout-button.scss']
+    selector: 'tb-select-target-layout-dialog',
+    templateUrl: './select-target-layout-dialog.component.html',
+    styleUrls: ['./layout-button.scss'],
+    standalone: false
 })
 export class SelectTargetLayoutDialogComponent extends DialogComponent<SelectTargetLayoutDialogComponent, DashboardLayoutId>
   implements OnInit {

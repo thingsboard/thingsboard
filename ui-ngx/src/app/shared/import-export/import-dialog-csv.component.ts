@@ -48,10 +48,11 @@ export interface ImportDialogCsvData {
 }
 
 @Component({
-  selector: 'tb-import-csv-dialog',
-  templateUrl: './import-dialog-csv.component.html',
-  providers: [],
-  styleUrls: ['./import-dialog-csv.component.scss']
+    selector: 'tb-import-csv-dialog',
+    templateUrl: './import-dialog-csv.component.html',
+    providers: [],
+    styleUrls: ['./import-dialog-csv.component.scss'],
+    standalone: false
 })
 export class ImportDialogCsvComponent extends DialogComponent<ImportDialogCsvComponent, boolean>
   implements AfterViewInit, OnDestroy {

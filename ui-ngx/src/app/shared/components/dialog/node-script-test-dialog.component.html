@@ -34,9 +34,10 @@
             <div class="tb-editor-area-title-panel">
               <label translate>rulenode.message</label>
             </div>
-            <div formGroupName="payload" class="flex flex-col" style="height: 100%;">
+            <div formGroupName="payload" class="flex flex-col pt-1" style="height: 100%;">
               <div class="flex flex-row">
                 <tb-message-type-autocomplete
+                  appearance="outline"
                   style="margin-bottom: 0; min-width: 300px;"
                   formControlName="msgType"
                   required>
@@ -60,7 +61,8 @@
               <label translate>rulenode.metadata</label>
             </div>
             <tb-key-val-map
-              subscriptSizing="dynamic"
+              subscriptSizing="fixed"
+              appearance="outline"
               formControlName="metadata"
               [isValueRequired]="false"
               titleText="rulenode.metadata">

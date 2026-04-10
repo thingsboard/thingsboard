@@ -16,7 +16,9 @@
 
 -->
 <div style="background: #fff;" [class.fill-height]="fillHeight">
-  <label class="tb-title no-padding" *ngIf="label">{{ label }}</label>
+  @if (label) {
+    <label class="tb-title no-padding">{{ label }}</label>
+  }
   <span class="flex-1"></span>
   <div #jsonViewer id="tb-json-view" [class.fill-height]="fillHeight"></div>
 </div>

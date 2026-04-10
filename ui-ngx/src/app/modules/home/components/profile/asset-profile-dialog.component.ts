@@ -32,10 +32,11 @@ export interface AssetProfileDialogData {
 }
 
 @Component({
-  selector: 'tb-asset-profile-dialog',
-  templateUrl: './asset-profile-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: AssetProfileDialogComponent}],
-  styleUrls: []
+    selector: 'tb-asset-profile-dialog',
+    templateUrl: './asset-profile-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: AssetProfileDialogComponent }],
+    styleUrls: [],
+    standalone: false
 })
 export class AssetProfileDialogComponent extends
   DialogComponent<AssetProfileDialogComponent, AssetProfile> implements ErrorStateMatcher, AfterViewInit {

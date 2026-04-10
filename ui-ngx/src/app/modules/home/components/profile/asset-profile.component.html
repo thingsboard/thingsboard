@@ -15,70 +15,76 @@
     limitations under the License.
 
 -->
-<div class="tb-details-buttons xs:flex xs:flex-col" *ngIf="!standalone">
-  <button mat-raised-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'open')"
-          [class.!hidden]="isEdit || isDetailsPage">
-    {{'common.open-details-page' | translate }}
-  </button>
-  <button mat-raised-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'export')"
-          [class.!hidden]="isEdit">
-    {{'asset-profile.export' | translate }}
-  </button>
-  <button mat-raised-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'setDefault')"
-          [class.!hidden]="isEdit || entity?.default">
-    {{'asset-profile.set-default' | translate }}
-  </button>
-  <button mat-raised-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'delete')"
-          [class.!hidden]="hideDelete() || isEdit">
-    {{'asset-profile.delete' | translate }}
-  </button>
-  <div class="flex flex-row xs:flex-col">
-    <button mat-raised-button
-            ngxClipboard
-            (cbOnSuccess)="onAssetProfileIdCopied($event)"
-            [cbContent]="entity?.id?.id"
-            [class.!hidden]="isEdit">
-      <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
-      <span translate>asset-profile.copyId</span>
+@if (!standalone) {
+  <div class="tb-details-buttons xs:flex xs:flex-col">
+    <button mat-raised-button color="primary"
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'open')"
+            [class.!hidden]="isEdit || isDetailsPage">
+      {{'common.open-details-page' | translate }}
     </button>
+    <button mat-raised-button color="primary"
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'export')"
+            [class.!hidden]="isEdit">
+      {{'asset-profile.export' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'setDefault')"
+            [class.!hidden]="isEdit || entity?.default">
+      {{'asset-profile.set-default' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'delete')"
+            [class.!hidden]="hideDelete() || isEdit">
+      {{'asset-profile.delete' | translate }}
+    </button>
+    <div class="flex flex-row xs:flex-col">
+      <button mat-raised-button
+              ngxClipboard
+              (cbOnSuccess)="onAssetProfileIdCopied($event)"
+              [cbContent]="entity?.id?.id"
+              [class.!hidden]="isEdit">
+        <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+        <span translate>asset-profile.copyId</span>
+      </button>
+    </div>
   </div>
-</div>
+}
 <div [class.mat-padding]="!standalone" class="flex flex-col">
   <form [formGroup]="entityForm">
-    <fieldset [disabled]="(isLoading$ | async) || !isEdit" style="min-width: 0;">
-      <mat-form-field class="mat-block">
+    <fieldset [disabled]="(isLoading$ | async) || !isEdit" style="min-width: 0;" class="flex flex-col gap-2">
+      <mat-form-field class="mat-block" appearance="outline">
         <mat-label translate>asset-profile.name</mat-label>
         <input matInput formControlName="name" required/>
-        <mat-error *ngIf="entityForm.get('name').hasError('required')">
-          {{ 'asset-profile.name-required' | translate }}
-        </mat-error>
-        <mat-error *ngIf="entityForm.get('name').hasError('maxlength')">
-          {{ 'asset-profile.name-max-length' | translate }}
-        </mat-error>
+        @if (entityForm.get('name').hasError('required')) {
+          <mat-error>{{ 'asset-profile.name-required' | translate }}</mat-error>
+        }
+        @if (entityForm.get('name').hasError('maxlength')) {
+          <mat-error>{{ 'asset-profile.name-max-length' | translate }}</mat-error>
+        }
       </mat-form-field>
       <tb-rule-chain-autocomplete
         labelText="asset-profile.default-rule-chain"
+        appearance="outline"
         formControlName="defaultRuleChainId">
       </tb-rule-chain-autocomplete>
       <tb-dashboard-autocomplete
         label="{{'asset-profile.mobile-dashboard' | translate}}"
+        appearance="outline"
         formControlName="defaultDashboardId">
         <span tb-hint>{{'asset-profile.mobile-dashboard-hint' | translate}}</span>
       </tb-dashboard-autocomplete>
       <tb-queue-autocomplete
         [queueType]="serviceType"
+        appearance="outline"
         formControlName="defaultQueueName">
       </tb-queue-autocomplete>
       <tb-rule-chain-autocomplete
         labelText="asset-profile.default-edge-rule-chain"
+        appearance="outline"
         formControlName="defaultEdgeRuleChainId"
         [ruleChainType]="edgeRuleChainType">
         <span tb-hint>{{'asset-profile.default-edge-rule-chain-hint' | translate}}</span>
@@ -87,9 +93,9 @@
                       label="{{'asset-profile.image' | translate}}"
                       formControlName="image">
       </tb-gallery-image-input>
-      <mat-form-field class="mat-block">
+      <mat-form-field class="mat-block" appearance="outline">
         <mat-label translate>asset-profile.description</mat-label>
-        <textarea matInput formControlName="description" rows="2"></textarea>
+        <textarea matInput formControlName="description" cdkTextareaAutosize cdkAutosizeMinRows="1" rows="1"></textarea>
       </mat-form-field>
     </fieldset>
   </form>

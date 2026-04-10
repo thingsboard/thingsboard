@@ -42,11 +42,12 @@ interface MarkerIconContainerInfo {
 }
 
 @Component({
-  selector: 'tb-marker-icon-shapes',
-  templateUrl: './marker-icon-shapes.component.html',
-  providers: [],
-  styleUrls: ['./marker-icon-shapes.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-marker-icon-shapes',
+    templateUrl: './marker-icon-shapes.component.html',
+    providers: [],
+    styleUrls: ['./marker-icon-shapes.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class MarkerIconShapesComponent extends PageComponent implements OnInit {
 

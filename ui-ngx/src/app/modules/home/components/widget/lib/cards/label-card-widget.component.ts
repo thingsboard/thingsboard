@@ -45,10 +45,11 @@ import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
 
 @Component({
-  selector: 'tb-label-card-widget',
-  templateUrl: './label-card-widget.component.html',
-  styleUrls: ['./label-card-widget.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-label-card-widget',
+    templateUrl: './label-card-widget.component.html',
+    styleUrls: ['./label-card-widget.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class LabelCardWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
 

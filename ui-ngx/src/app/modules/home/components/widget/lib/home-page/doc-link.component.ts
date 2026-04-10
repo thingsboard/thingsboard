@@ -29,17 +29,18 @@ import { DocumentationLink } from '@shared/models/user-settings.models';
 import { ErrorStateMatcher } from '@angular/material/core';
 
 @Component({
-  selector: 'tb-doc-link',
-  templateUrl: './doc-link.component.html',
-  styleUrls: ['./link.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DocLinkComponent),
-      multi: true
-    },
-    {provide: ErrorStateMatcher, useExisting: DocLinkComponent}
-  ]
+    selector: 'tb-doc-link',
+    templateUrl: './doc-link.component.html',
+    styleUrls: ['./link.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DocLinkComponent),
+            multi: true
+        },
+        { provide: ErrorStateMatcher, useExisting: DocLinkComponent }
+    ],
+    standalone: false
 })
 export class DocLinkComponent extends PageComponent implements OnInit, ControlValueAccessor, ErrorStateMatcher {
 

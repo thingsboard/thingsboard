@@ -18,9 +18,10 @@ import { Component, HostBinding, Input } from '@angular/core';
 import { TooltipPosition } from '@angular/material/tooltip';
 
 @Component({
-  selector: '[tb-hint-tooltip-icon]',
-  templateUrl: './hint-tooltip-icon.component.html',
-  styleUrls: ['./hint-tooltip-icon.component.scss']
+    selector: '[tb-hint-tooltip-icon]',
+    templateUrl: './hint-tooltip-icon.component.html',
+    styleUrls: ['./hint-tooltip-icon.component.scss'],
+    standalone: false
 })
 export class HintTooltipIconComponent {
 

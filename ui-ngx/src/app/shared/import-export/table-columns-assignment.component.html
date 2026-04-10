@@ -32,25 +32,33 @@
     <mat-header-cell *matHeaderCellDef class="mat-column-type"> {{ 'import.column-type.column-type' | translate }} </mat-header-cell>
     <mat-cell *matCellDef="let column">
       <mat-select [(ngModel)]="column.type" (ngModelChange)="columnsUpdated()">
-        <mat-option *ngFor="let type of columnTypes" [value]="type.value" [disabled]="type.disabled">
-          {{ columnTypesTranslations.get(type.value) | translate }}
-        </mat-option>
-        <mat-optgroup label="{{ 'import.credentials' | translate }}" *ngIf="entityType === entityTypeDevice">
-          <mat-option *ngFor="let credential of columnDeviceCredentials" [value]="credential.value" [disabled]="credential.disabled">
-            {{ columnTypesTranslations.get(credential.value) | translate }}
+        @for (type of columnTypes; track type) {
+          <mat-option [value]="type.value" [disabled]="type.disabled">
+            {{ columnTypesTranslations.get(type.value) | translate }}
           </mat-option>
-        </mat-optgroup>
+        }
+        @if (entityType === entityTypeDevice) {
+          <mat-optgroup label="{{ 'import.credentials' | translate }}">
+            @for (credential of columnDeviceCredentials; track credential) {
+              <mat-option [value]="credential.value" [disabled]="credential.disabled">
+                {{ columnTypesTranslations.get(credential.value) | translate }}
+              </mat-option>
+            }
+          </mat-optgroup>
+        }
       </mat-select>
     </mat-cell>
   </ng-container>
   <ng-container matColumnDef="key">
     <mat-header-cell *matHeaderCellDef class="mat-column-key"> {{ 'import.column-key' | translate }} </mat-header-cell>
     <mat-cell *matCellDef="let column">
-      <mat-form-field *ngIf="isColumnTypeDiffers(column.type)">
-        <input matInput [required]="isColumnTypeDiffers(column.type)"
-               [(ngModel)]="column.key" (ngModelChange)="columnsUpdated()"
-               placeholder="{{ 'import.column-value' | translate }}"/>
-      </mat-form-field>
+      @if (isColumnTypeDiffers(column.type)) {
+        <mat-form-field>
+          <input matInput [required]="isColumnTypeDiffers(column.type)"
+                 [(ngModel)]="column.key" (ngModelChange)="columnsUpdated()"
+                 placeholder="{{ 'import.column-value' | translate }}"/>
+        </mat-form-field>
+      }
     </mat-cell>
   </ng-container>
   <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>

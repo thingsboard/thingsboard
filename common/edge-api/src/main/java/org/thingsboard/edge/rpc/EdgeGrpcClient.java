@@ -143,16 +143,7 @@ public class EdgeGrpcClient implements EdgeRpcClient {
     }
 
     public static EdgeVersion getNewestEdgeVersion() {
-        EdgeVersion newest = null;
-        for (EdgeVersion v : EdgeVersion.values()) {
-            if (v == EdgeVersion.V_LATEST || v == EdgeVersion.UNRECOGNIZED) {
-                continue;
-            }
-            if (newest == null || v.getNumber() > newest.getNumber()) {
-                newest = v;
-            }
-        }
-        return newest;
+        return EdgeVersionComparator.getNewestEdgeVersion();
     }
 
     private StreamObserver<ResponseMsg> initOutputStream(String edgeKey,

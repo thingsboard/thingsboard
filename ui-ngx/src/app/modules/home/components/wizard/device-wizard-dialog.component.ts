@@ -35,9 +35,10 @@ import { CustomerId } from '@shared/models/id/customer-id';
 import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
-  selector: 'tb-device-wizard',
-  templateUrl: './device-wizard-dialog.component.html',
-  styleUrls: ['./device-wizard-dialog.component.scss']
+    selector: 'tb-device-wizard',
+    templateUrl: './device-wizard-dialog.component.html',
+    styleUrls: ['./device-wizard-dialog.component.scss'],
+    standalone: false
 })
 export class DeviceWizardDialogComponent extends DialogComponent<DeviceWizardDialogComponent, Device> {
 

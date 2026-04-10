@@ -28,6 +28,7 @@ import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
 import { emptyPageData } from '@shared/models/page/page-data';
 import {
+  NotificationDeliveryMethod,
   NotificationDeliveryMethodInfoMap,
   NotificationTemplate,
   NotificationType
@@ -41,17 +42,19 @@ import {
 import { MatDialog } from '@angular/material/dialog';
 import { MatButton } from '@angular/material/button';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { MatFormFieldAppearance } from '@angular/material/form-field';
 
 @Component({
-  selector: 'tb-template-autocomplete',
-  templateUrl: './template-autocomplete.component.html',
-  styleUrls: ['./template-autocomplete.component.scss'],
-  encapsulation: ViewEncapsulation.None,
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => TemplateAutocompleteComponent),
-    multi: true
-  }]
+    selector: 'tb-template-autocomplete',
+    templateUrl: './template-autocomplete.component.html',
+    styleUrls: ['./template-autocomplete.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TemplateAutocompleteComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class TemplateAutocompleteComponent implements ControlValueAccessor, OnInit {
 
@@ -70,6 +73,8 @@ export class TemplateAutocompleteComponent implements ControlValueAccessor, OnIn
   @coerceBoolean()
   allowEdit = false;
 
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   @Input()
   disabled: boolean;
@@ -216,7 +221,7 @@ export class TemplateAutocompleteComponent implements ControlValueAccessor, OnIn
     button._elementRef.nativeElement.blur();
     this.createTemplateByName($event);
   }
-  
+
   createTemplateByName($event: Event, name?: string) {
     $event?.stopPropagation();
     this.openNotificationTemplateDialog({
@@ -263,5 +268,9 @@ export class TemplateAutocompleteComponent implements ControlValueAccessor, OnIn
     this.selectTemplateFormGroup.get('templateName').patchValue('', {emitEvent: false});
     this.updateView(null);
     this.dirty = true;
+  }
+
+  getNotificationDeliveryMethodInfoMap(key: string) {
+    return this.notificationDeliveryMethodInfoMap.get(key as NotificationDeliveryMethod);
   }
 }

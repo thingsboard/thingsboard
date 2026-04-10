@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.common.data.device.profile;
 
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.device.data.PowerMode;
@@ -22,20 +24,25 @@ import org.thingsboard.server.common.data.device.profile.lwm2m.OtherConfiguratio
 import org.thingsboard.server.common.data.device.profile.lwm2m.TelemetryMappingConfiguration;
 import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.LwM2MBootstrapServerCredential;
 
-import static org.eclipse.leshan.core.LwM2m.Version.V1_0;
-import static org.thingsboard.server.common.data.device.profile.lwm2m.TelemetryObserveStrategy.SINGLE;
-
 import java.util.Collections;
 import java.util.List;
 
+import static org.eclipse.leshan.core.LwM2m.Version.V1_0;
+import static org.thingsboard.server.common.data.device.profile.lwm2m.TelemetryObserveStrategy.SINGLE;
+
 @Data
+@Schema
 public class Lwm2mDeviceProfileTransportConfiguration implements DeviceProfileTransportConfiguration {
 
     private static final long serialVersionUID = 6257277825459600068L;
 
+    @Schema(description = "Configuration for mapping LwM2M resources to telemetry and attributes")
     private TelemetryMappingConfiguration observeAttr;
+    @Schema(description = "Flag indicating whether LwM2M bootstrap server update is enabled")
     private boolean bootstrapServerUpdateEnable;
+    @ArraySchema(schema = @Schema(implementation = LwM2MBootstrapServerCredential.class))
     private List<LwM2MBootstrapServerCredential> bootstrap;
+    @Schema(description = "Other LwM2M client settings")
     private OtherConfiguration clientLwM2mSettings;
 
     public Lwm2mDeviceProfileTransportConfiguration() {

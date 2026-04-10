@@ -59,14 +59,12 @@ public class CoapEfentoUtils {
         return String.format("%s UTC", simpleDateFormat.format(new Date(timestampInMillis)));
     }
 
-    public static JsonObject setDefaultMeasurements(String serialNumber, boolean batteryStatus, long measurementPeriod, long nextTransmissionAtMillis, long signal, long startTimestampMillis) {
+    public static JsonObject setDefaultMeasurements(String serialNumber, boolean batteryStatus, long nextTransmissionAtMillis, long signal) {
         JsonObject values = new JsonObject();
         values.addProperty("serial", serialNumber);
         values.addProperty("battery", batteryStatus ? "ok" : "low");
-        values.addProperty("measured_at", convertTimestampToUtcString(startTimestampMillis));
         values.addProperty("next_transmission_at", convertTimestampToUtcString(nextTransmissionAtMillis));
         values.addProperty("signal", signal);
-        values.addProperty("measurement_interval", measurementPeriod);
         return values;
     }
 

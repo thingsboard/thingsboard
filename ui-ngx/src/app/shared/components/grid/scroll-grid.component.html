@@ -18,28 +18,31 @@
 <cdk-virtual-scroll-viewport #viewport class="tb-scroll-grid-viewport" [itemSize]="calculatedItemSize"
                              [minBufferPx]="minBuffer" [maxBufferPx]="maxBuffer" appendOnly>
   <ng-container *cdkVirtualFor="let itemsRow of dataSource; let row = index; trackBy: trackByItemsRow">
-    <div *ngIf="itemsRow" class="tb-scroll-grid-items-row" [style]="{gap: gap+'px'}">
-      <div *ngFor="let item of itemsRow; let col = index; trackBy: trackByItem" class="tb-scroll-grid-item-container">
-        <ng-container *ngIf="item === 'loadingCell'">
-          <ng-container *ngTemplateOutlet="loadingCell ? loadingCell : defaultLoadingCell"></ng-container>
-        </ng-container>
-        <ng-container *ngIf="isObject(item)">
-          <ng-container *ngTemplateOutlet="itemCard; context:{ item: item, itemIndex: row * dataSource.currentColumns + col }"></ng-container>
-        </ng-container>
+    @if (itemsRow) {
+      <div class="tb-scroll-grid-items-row" [style]="{gap: gap+'px'}">
+        @for (item of itemsRow; track trackByItem(col, item); let col = $index) {
+          <div class="tb-scroll-grid-item-container">
+            @if (item === 'loadingCell') {
+              <ng-container *ngTemplateOutlet="loadingCell ? loadingCell : defaultLoadingCell"></ng-container>
+            }
+            @if (isObject(item)) {
+              <ng-container *ngTemplateOutlet="itemCard; context:{ item: item, itemIndex: row * dataSource.currentColumns + col }"></ng-container>
+            }
+          </div>
+        }
       </div>
-    </div>
+    }
   </ng-container>
 </cdk-virtual-scroll-viewport>
-<ng-container *ngIf="dataSource.isEmpty">
+@if (dataSource.isEmpty) {
   <ng-container *ngTemplateOutlet="loadingItems"></ng-container>
-</ng-container>
+}
 <ng-template #loadingItems>
-  <ng-container *ngIf="dataSource.initialDataLoading; else emptyData">
+  @if (dataSource.initialDataLoading) {
     <ng-container *ngTemplateOutlet="dataLoading ? dataLoading : defaultDataLoading"></ng-container>
-  </ng-container>
-</ng-template>
-<ng-template #emptyData>
-  <ng-container *ngTemplateOutlet="noData"></ng-container>
+  } @else {
+    <ng-container *ngTemplateOutlet="noData"></ng-container>
+  }
 </ng-template>
 <ng-template #defaultLoadingCell>
   <div class="flex flex-col items-center justify-center" [style]="{minHeight: itemSize + 'px'}">

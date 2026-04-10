@@ -22,9 +22,11 @@
         <div class="tb-form-row no-padding no-border column-xs flex-1/ w-full max-w-30% xs:max-w-full">
           <mat-form-field hideRequiredMarker class="flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-select required formControlName="operation" placeholder="{{'filter.operation.operation' | translate}}">
-              <mat-option *ngFor="let operation of stringOperations" [value]="operation">
-                {{stringOperationTranslationMap.get(stringOperation[operation]) | translate}}
-              </mat-option>
+              @for (operation of stringOperations; track operation) {
+                <mat-option [value]="operation">
+                  {{stringOperationTranslationMap.get(stringOperation[operation]) | translate}}
+                </mat-option>
+              }
             </mat-select>
           </mat-form-field>
           @if (filterPredicateFormGroup.get('operation').value !== stringOperation.NO_DATA) {
@@ -38,9 +40,11 @@
         <div class="tb-form-row no-border no-padding no-border w-full max-w-30%">
           <mat-form-field hideRequiredMarker class="flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-select required formControlName="operation" placeholder="{{'filter.operation.operation' | translate}}">
-              <mat-option *ngFor="let operation of numericOperations" [value]="operation">
-                {{numericOperationTranslations.get(numericOperationEnum[operation]) | translate}}
-              </mat-option>
+              @for (operation of numericOperations; track operation) {
+                <mat-option [value]="operation">
+                  {{numericOperationTranslations.get(numericOperationEnum[operation]) | translate}}
+                </mat-option>
+              }
             </mat-select>
           </mat-form-field>
         </div>
@@ -49,16 +53,18 @@
         <div class="tb-form-row no-border no-padding no-border w-full max-w-30%">
           <mat-form-field hideRequiredMarker class="flex-1"  appearance="outline" subscriptSizing="dynamic">
             <mat-select required formControlName="operation" placeholder="{{'filter.operation.operation' | translate}}">
-              <mat-option *ngFor="let operation of booleanOperations" [value]="operation">
-                {{booleanOperationTranslations.get(booleanOperationEnum[operation]) | translate}}
-              </mat-option>
+              @for (operation of booleanOperations; track operation) {
+                <mat-option [value]="operation">
+                  {{booleanOperationTranslations.get(booleanOperationEnum[operation]) | translate}}
+                </mat-option>
+              }
             </mat-select>
           </mat-form-field>
         </div>
       }
       @case (filterPredicateType.COMPLEX) {
         <div class="tb-form-row no-border no-padding flex-1">
-          <button type="button" style="--mat-outlined-button-horizontal-padding: 3px 0px 12px;"
+          <button type="button" style="--mat-button-outlined-horizontal-padding: 3px 0px 12px;"
                   class="block w-full"
                   mat-stroked-button [color]="predicateValid ? 'primary' : 'warn'"
                   (click)="openComplexFilterDialog()">

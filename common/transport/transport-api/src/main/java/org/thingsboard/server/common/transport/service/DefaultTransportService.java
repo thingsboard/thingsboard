@@ -508,7 +508,9 @@ public class DefaultTransportService extends TransportActivityManager implements
     @Override
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.SessionEventMsg msg, TransportServiceCallback<Void> callback) {
         if (checkLimits(sessionInfo, msg, callback)) {
-            recordActivityInternal(sessionInfo);
+            if (msg.getEvent() != TransportProtos.SessionEvent.CLOSED) {
+                recordActivityInternal(sessionInfo);
+            }
             sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
                     .setSessionEvent(msg).build(), callback);
         }
@@ -1257,9 +1259,21 @@ public class DefaultTransportService extends TransportActivityManager implements
     }
 
     @Override
-    public void createGaugeStats(String statsName, AtomicInteger number) {
-        statsFactory.createGauge(StatsType.TRANSPORT + "." + statsName, number);
-        statsMap.put(statsName, number);
+    public void createGaugeStats(String statsName, AtomicInteger number, String... tags) {
+        String key = "thingsboard" + "." + StatsType.TRANSPORT.getName() + "." + statsName;
+        statsFactory.createGauge(key, number, tags);
+        statsMap.put(statsName + tagsKey(tags), number);
+    }
+
+    private String tagsKey(String... tags) {
+        if (tags == null || tags.length < 2) return "";
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < tags.length; i += 2) {
+            if (i > 0) sb.append(',');
+            sb.append(tags[i]).append('=').append(i + 1 < tags.length ? tags[i + 1] : "");
+        }
+        sb.append(']');
+        return sb.toString();
     }
 
     @Scheduled(fixedDelayString = "${transport.stats.print-interval-ms:60000}")

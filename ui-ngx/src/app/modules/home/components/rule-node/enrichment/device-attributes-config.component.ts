@@ -22,9 +22,10 @@ import { RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@app/shar
 import { FetchTo } from '@home/components/rule-node/rule-node-config.models';
 
 @Component({
-  selector: 'tb-enrichment-node-device-attributes-config',
-  templateUrl: './device-attributes-config.component.html',
-  styleUrls: []
+    selector: 'tb-enrichment-node-device-attributes-config',
+    templateUrl: './device-attributes-config.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class DeviceAttributesConfigComponent extends RuleNodeConfigurationComponent {
 

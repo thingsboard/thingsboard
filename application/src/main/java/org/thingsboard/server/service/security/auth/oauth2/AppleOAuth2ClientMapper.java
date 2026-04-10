@@ -79,9 +79,13 @@ public class AppleOAuth2ClientMapper extends AbstractOAuth2ClientMapper implemen
                     }
                 }
                 if (user.has(EMAIL)) {
-                    JsonNode email = user.get(EMAIL);
-                    if (email != null && email.isTextual()) {
-                        updated.put(EMAIL, email.asText());
+                    JsonNode emailNode = user.get(EMAIL);
+                    if (emailNode != null && emailNode.isTextual()) {
+                        Object tokenEmail = attributes.get(EMAIL);
+                        if (tokenEmail != null && !emailNode.asText().equals(tokenEmail.toString())) {
+                            log.warn("Apple OAuth2 callback: ignoring email [{}] from user POST parameter " +
+                                    "that differs from validated ID token email [{}]", emailNode.asText(), tokenEmail);
+                        }
                     }
                 }
             }

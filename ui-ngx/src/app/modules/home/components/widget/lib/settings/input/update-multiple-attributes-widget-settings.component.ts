@@ -21,9 +21,10 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 
 @Component({
-  selector: 'tb-update-multiple-attributes-widget-settings',
-  templateUrl: './update-multiple-attributes-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-update-multiple-attributes-widget-settings',
+    templateUrl: './update-multiple-attributes-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class UpdateMultipleAttributesWidgetSettingsComponent extends WidgetSettingsComponent {
 

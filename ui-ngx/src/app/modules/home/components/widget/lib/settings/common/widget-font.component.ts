@@ -32,16 +32,17 @@ export interface WidgetFont {
 }
 
 @Component({
-  selector: 'tb-widget-font',
-  templateUrl: './widget-font.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => WidgetFontComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-widget-font',
+    templateUrl: './widget-font.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => WidgetFontComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class WidgetFontComponent extends PageComponent implements OnInit, ControlValueAccessor {
 

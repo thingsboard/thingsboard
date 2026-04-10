@@ -35,16 +35,18 @@ import { MatDialog } from '@angular/material/dialog';
 import { TenantProfileDialogComponent, TenantProfileDialogData } from './tenant-profile-dialog.component';
 import { emptyPageData } from '@shared/models/page/page-data';
 import { getEntityDetailsPageURL } from '@core/utils';
+import { MatFormFieldAppearance } from '@angular/material/form-field';
 
 @Component({
-  selector: 'tb-tenant-profile-autocomplete',
-  templateUrl: './tenant-profile-autocomplete.component.html',
-  styleUrls: ['./tenant-profile-autocomplete.component.scss'],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => TenantProfileAutocompleteComponent),
-    multi: true
-  }]
+    selector: 'tb-tenant-profile-autocomplete',
+    templateUrl: './tenant-profile-autocomplete.component.html',
+    styleUrls: ['./tenant-profile-autocomplete.component.scss'],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TenantProfileAutocompleteComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class TenantProfileAutocompleteComponent implements ControlValueAccessor, OnInit {
 
@@ -69,6 +71,9 @@ export class TenantProfileAutocompleteComponent implements ControlValueAccessor,
 
   @Input()
   showDetailsPageLink = false;
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   @Output()
   tenantProfileUpdated = new EventEmitter<TenantProfileId>();

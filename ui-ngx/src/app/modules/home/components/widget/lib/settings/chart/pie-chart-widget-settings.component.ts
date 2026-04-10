@@ -28,9 +28,10 @@ import {
 } from '@home/components/widget/lib/settings/chart/latest-chart-widget-settings.component';
 
 @Component({
-  selector: 'tb-pie-chart-widget-settings',
-  templateUrl: './latest-chart-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-pie-chart-widget-settings',
+    templateUrl: './latest-chart-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class PieChartWidgetSettingsComponent extends LatestChartWidgetSettingsComponent<PieChartWidgetSettings> {
 

@@ -14,34 +14,48 @@
 /// limitations under the License.
 ///
 
-import { OverlayModule } from '@angular/cdk/overlay';
-import { NgModule } from '@angular/core';
-import { DEFAULT_DIALOG_CONFIG, DialogConfig, DialogModule } from '@angular/cdk/dialog';
+import { Overlay, OverlayContainer, OverlayModule } from '@angular/cdk/overlay';
+import { inject, Injector, NgModule } from '@angular/core';
+import { DEFAULT_DIALOG_CONFIG, Dialog, DialogConfig, DialogModule } from '@angular/cdk/dialog';
 import { MatDialogModule } from '@angular/material/dialog';
 import { DynamicDialog, DynamicMatDialog } from './dynamic-dialog';
 import { DynamicOverlay } from './dynamic-overlay';
-import { DynamicOverlayContainer } from './dynamic-overlay-container';
+import { DynamicOverlayContainer, PARENT_OVERLAY_CONTAINER } from './dynamic-overlay-container';
 
 export const DYNAMIC_MAT_DIALOG_PROVIDERS = [
-  DynamicOverlayContainer,
-  DynamicOverlay,
-  DynamicDialog,
-  DynamicMatDialog,
   {
-    provide: DEFAULT_DIALOG_CONFIG,
-    useValue: {
-      ...new DialogConfig()
+    provide: DynamicMatDialog,
+    useFactory: () => {
+      const parentInjector = inject(Injector);
+      const parentOverlayContainer = parentInjector.get(OverlayContainer);
+
+      const customInjector = Injector.create({
+        providers: [
+          { provide: PARENT_OVERLAY_CONTAINER, useValue: parentOverlayContainer },
+          DynamicOverlayContainer,
+          { provide: OverlayContainer, useExisting: DynamicOverlayContainer },
+          DynamicOverlay,
+          { provide: Overlay, useExisting: DynamicOverlay },
+          DynamicDialog,
+          { provide: Dialog, useExisting: DynamicDialog },
+          DynamicMatDialog,
+          { provide: DEFAULT_DIALOG_CONFIG, useValue: new DialogConfig() }
+        ],
+        parent: parentInjector
+      });
+
+      return customInjector.get(DynamicMatDialog);
     }
   }
 ];
 
-@NgModule( {
+@NgModule({
   imports: [
     OverlayModule,
     DialogModule,
     MatDialogModule
   ],
   providers: DYNAMIC_MAT_DIALOG_PROVIDERS
-} )
+})
 export class DynamicMatDialogModule {
 }

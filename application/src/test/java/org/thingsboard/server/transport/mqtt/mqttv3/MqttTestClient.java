@@ -27,11 +27,15 @@ import org.thingsboard.server.common.data.StringUtils;
 
 import java.util.concurrent.TimeUnit;
 
+import static org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest.MQTT_HOST;
+import static org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest.MQTT_PORT;
+
 public class MqttTestClient {
 
-    private static final String MQTT_URL = "tcp://localhost:1883";
     private static final int TIMEOUT = 30; // seconds
     public static final long TIMEOUT_MS = TimeUnit.SECONDS.toMillis(TIMEOUT);
+
+    private String MQTT_URL = "tcp://" + MQTT_HOST + ":" + MQTT_PORT;
 
     private final MqttAsyncClient client;
 

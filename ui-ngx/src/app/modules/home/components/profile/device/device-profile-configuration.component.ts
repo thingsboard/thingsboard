@@ -24,14 +24,15 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 @Component({
-  selector: 'tb-device-profile-configuration',
-  templateUrl: './device-profile-configuration.component.html',
-  styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => DeviceProfileConfigurationComponent),
-    multi: true
-  }]
+    selector: 'tb-device-profile-configuration',
+    templateUrl: './device-profile-configuration.component.html',
+    styleUrls: [],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DeviceProfileConfigurationComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class DeviceProfileConfigurationComponent implements ControlValueAccessor, OnInit, OnDestroy {
 

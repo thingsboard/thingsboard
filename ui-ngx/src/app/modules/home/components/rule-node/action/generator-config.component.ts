@@ -28,9 +28,10 @@ import { EntityType } from '@app/shared/models/entity-type.models';
 import { DebugRuleNodeEventBody } from '@shared/models/event.models';
 
 @Component({
-  selector: 'tb-action-node-generator-config',
-  templateUrl: './generator-config.component.html',
-  styleUrls: ['generator-config.component.scss']
+    selector: 'tb-action-node-generator-config',
+    templateUrl: './generator-config.component.html',
+    styleUrls: ['generator-config.component.scss'],
+    standalone: false
 })
 export class GeneratorConfigComponent extends RuleNodeConfigurationComponent {
 

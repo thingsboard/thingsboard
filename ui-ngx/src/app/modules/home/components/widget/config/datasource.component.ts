@@ -47,21 +47,22 @@ import { FormProperty } from '@shared/models/dynamic-form.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-datasource',
-  templateUrl: './datasource.component.html',
-  styleUrls: ['./datasource.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DatasourceComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => DatasourceComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-datasource',
+    templateUrl: './datasource.component.html',
+    styleUrls: ['./datasource.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DatasourceComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => DatasourceComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class DatasourceComponent implements ControlValueAccessor, OnInit, Validator {
 

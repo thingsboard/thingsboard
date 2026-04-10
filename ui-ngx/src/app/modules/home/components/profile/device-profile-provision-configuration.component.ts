@@ -40,21 +40,22 @@ import { TranslateService } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-device-profile-provision-configuration',
-  templateUrl: './device-profile-provision-configuration.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DeviceProfileProvisionConfigurationComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => DeviceProfileProvisionConfigurationComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-device-profile-provision-configuration',
+    templateUrl: './device-profile-provision-configuration.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DeviceProfileProvisionConfigurationComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => DeviceProfileProvisionConfigurationComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class DeviceProfileProvisionConfigurationComponent implements ControlValueAccessor, OnInit, Validator {
 
@@ -211,5 +212,9 @@ export class DeviceProfileProvisionConfigurationComponent implements ControlValu
       this.provisionConfigurationFormGroup.get('provisionDeviceSecret').reset({value: null, disabled: true}, {emitEvent: false});
       this.provisionConfigurationFormGroup.get('provisionDeviceKey').reset({value: null, disabled: true}, {emitEvent: false});
     }
+  }
+
+  getDeviceProvisionType(type: string): string {
+    return this.deviceProvisionTypeTranslateMap.get(type as DeviceProvisionType);
   }
 }

@@ -511,12 +511,10 @@ public class DefaultNotifications {
             rule.setTriggerConfig(defaultRule.getTriggerConfig());
             if (rule.getTriggerType() == NotificationRuleTriggerType.ALARM) {
                 EscalatedNotificationRuleRecipientsConfig recipientsConfig = new EscalatedNotificationRuleRecipientsConfig();
-                recipientsConfig.setTriggerType(rule.getTriggerType());
                 recipientsConfig.setEscalationTable(Map.of(0, toUUIDs(List.of(targets))));
                 rule.setRecipientsConfig(recipientsConfig);
             } else {
-                DefaultNotificationRuleRecipientsConfig recipientsConfig = new DefaultNotificationRuleRecipientsConfig();
-                recipientsConfig.setTriggerType(rule.getTriggerType());
+                DefaultNotificationRuleRecipientsConfig recipientsConfig = DefaultNotificationRuleRecipientsConfig.forTriggerType(rule.getTriggerType());
                 recipientsConfig.setTargets(toUUIDs(List.of(targets)));
                 rule.setRecipientsConfig(recipientsConfig);
             }

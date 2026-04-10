@@ -21,9 +21,10 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 
 @Component({
-  selector: 'tb-html-card-widget-settings',
-  templateUrl: './html-card-widget-settings.component.html',
-  styleUrls: []
+    selector: 'tb-html-card-widget-settings',
+    templateUrl: './html-card-widget-settings.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class HtmlCardWidgetSettingsComponent extends WidgetSettingsComponent {
 

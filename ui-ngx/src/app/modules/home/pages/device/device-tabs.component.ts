@@ -22,9 +22,10 @@ import { EntityTabsComponent } from '../../components/entity/entity-tabs.compone
 import { EntityId } from "@shared/models/id/entity-id";
 
 @Component({
-  selector: 'tb-device-tabs',
-  templateUrl: './device-tabs.component.html',
-  styleUrls: []
+    selector: 'tb-device-tabs',
+    templateUrl: './device-tabs.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class DeviceTabsComponent extends EntityTabsComponent<DeviceInfo> {
 

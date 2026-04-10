@@ -27,11 +27,12 @@ import { DataKeysCallbacks } from '@home/components/widget/lib/settings/common/k
 import { Datasource } from '@shared/models/widget.models';
 
 @Component({
-  selector: 'tb-time-series-chart-axis-settings-panel',
-  templateUrl: './time-series-chart-axis-settings-panel.component.html',
-  providers: [],
-  styleUrls: ['./time-series-chart-axis-settings-panel.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-time-series-chart-axis-settings-panel',
+    templateUrl: './time-series-chart-axis-settings-panel.component.html',
+    providers: [],
+    styleUrls: ['./time-series-chart-axis-settings-panel.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class TimeSeriesChartAxisSettingsPanelComponent implements OnInit {
 

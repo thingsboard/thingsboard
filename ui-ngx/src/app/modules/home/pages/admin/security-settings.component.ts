@@ -40,9 +40,10 @@ import { Observable, of } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-security-settings',
-  templateUrl: './security-settings.component.html',
-  styleUrls: ['./security-settings.component.scss', './settings-card.scss']
+    selector: 'tb-security-settings',
+    templateUrl: './security-settings.component.html',
+    styleUrls: ['./security-settings.component.scss', './settings-card.scss'],
+    standalone: false
 })
 export class SecuritySettingsComponent extends PageComponent implements HasConfirmForm {
 

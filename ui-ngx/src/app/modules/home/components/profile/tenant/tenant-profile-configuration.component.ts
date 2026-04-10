@@ -24,14 +24,15 @@ import { TenantProfileConfiguration, TenantProfileType } from '@shared/models/te
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-tenant-profile-configuration',
-  templateUrl: './tenant-profile-configuration.component.html',
-  styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => TenantProfileConfigurationComponent),
-    multi: true
-  }]
+    selector: 'tb-tenant-profile-configuration',
+    templateUrl: './tenant-profile-configuration.component.html',
+    styleUrls: [],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TenantProfileConfigurationComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class TenantProfileConfigurationComponent implements ControlValueAccessor, OnInit {
 

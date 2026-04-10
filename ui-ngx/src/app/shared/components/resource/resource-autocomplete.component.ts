@@ -35,14 +35,15 @@ import { PageLink } from '@shared/models/page/page-link';
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 
 @Component({
-  selector: 'tb-resource-autocomplete',
-  templateUrl: './resource-autocomplete.component.html',
-  styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => ResourceAutocompleteComponent),
-    multi: true
-  }]
+    selector: 'tb-resource-autocomplete',
+    templateUrl: './resource-autocomplete.component.html',
+    styleUrls: [],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ResourceAutocompleteComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class ResourceAutocompleteComponent implements ControlValueAccessor, OnInit {
 

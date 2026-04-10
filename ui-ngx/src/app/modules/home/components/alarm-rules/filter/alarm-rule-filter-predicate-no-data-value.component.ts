@@ -31,21 +31,22 @@ import { AlarmRuleFilterPredicateType, NoDataAlarmRuleFilterPredicate } from "@s
 import { isDefinedAndNotNull } from "@core/utils";
 
 @Component({
-  selector: 'tb-alarm-rule-filter-predicate-no-data-value',
-  templateUrl: './alarm-rule-filter-predicate-no-data-value.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => AlarmRuleFilterPredicateNoDataValueComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => AlarmRuleFilterPredicateNoDataValueComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-alarm-rule-filter-predicate-no-data-value',
+    templateUrl: './alarm-rule-filter-predicate-no-data-value.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => AlarmRuleFilterPredicateNoDataValueComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => AlarmRuleFilterPredicateNoDataValueComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class AlarmRuleFilterPredicateNoDataValueComponent implements ControlValueAccessor, Validator, OnInit, OnChanges {
 

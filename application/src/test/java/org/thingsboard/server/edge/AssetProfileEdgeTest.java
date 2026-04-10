@@ -53,7 +53,7 @@ public class AssetProfileEdgeTest extends AbstractEdgeTest {
         AssetProfileUpdateMsg assetProfileUpdateMsg = (AssetProfileUpdateMsg) latestMessage;
         AssetProfile assetProfileMsg = JacksonUtil.fromString(assetProfileUpdateMsg.getEntity(), AssetProfile.class, true);
         Assert.assertNotNull(assetProfileMsg);
-        Assert.assertEquals(assetProfile, assetProfileMsg);
+        compareHasVersionEntities(assetProfile, assetProfileMsg);
         Assert.assertEquals("Building", assetProfileMsg.getName());
         Assert.assertEquals(buildingsRuleChainId, assetProfileMsg.getDefaultEdgeRuleChainId());
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, assetProfileUpdateMsg.getMsgType());

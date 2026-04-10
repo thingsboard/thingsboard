@@ -27,7 +27,8 @@ import {
 @Component({
     selector: 'tb-action-node-device-state-config',
     templateUrl: './device-state-config.component.html',
-    styleUrls: []
+    styleUrls: [],
+    standalone: false
 })
 export class DeviceStateConfigComponent extends RuleNodeConfigurationComponent {
 

@@ -21,9 +21,10 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 
 @Component({
-  selector: 'tb-chart-widget-settings',
-  templateUrl: './chart-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-chart-widget-settings',
+    templateUrl: './chart-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class ChartWidgetSettingsComponent extends WidgetSettingsComponent {
 

@@ -49,9 +49,10 @@ import {
 import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Component({
-  selector: 'tb-digital-gauge-widget-settings',
-  templateUrl: './digital-gauge-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-digital-gauge-widget-settings',
+    templateUrl: './digital-gauge-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class DigitalGaugeWidgetSettingsComponent extends WidgetSettingsComponent {
 

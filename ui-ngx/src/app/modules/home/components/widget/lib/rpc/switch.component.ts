@@ -51,9 +51,10 @@ interface SwitchSettings {
 }
 
 @Component({
-  selector: 'tb-switch',
-  templateUrl: './switch.component.html',
-  styleUrls: ['./switch.component.scss']
+    selector: 'tb-switch',
+    templateUrl: './switch.component.html',
+    styleUrls: ['./switch.component.scss'],
+    standalone: false
 })
 export class SwitchComponent extends PageComponent implements AfterViewInit, OnDestroy {
 

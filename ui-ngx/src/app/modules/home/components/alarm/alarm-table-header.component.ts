@@ -23,9 +23,10 @@ import { AlarmTableConfig } from './alarm-table-config';
 import { AlarmFilterConfig } from '@shared/models/query/query.models';
 
 @Component({
-  selector: 'tb-alarm-table-header',
-  templateUrl: './alarm-table-header.component.html',
-  styleUrls: ['./alarm-table-header.component.scss']
+    selector: 'tb-alarm-table-header',
+    templateUrl: './alarm-table-header.component.html',
+    styleUrls: ['./alarm-table-header.component.scss'],
+    standalone: false
 })
 export class AlarmTableHeaderComponent extends EntityTableHeaderComponent<AlarmInfo> {
 

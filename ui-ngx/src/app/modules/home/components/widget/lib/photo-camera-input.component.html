@@ -16,50 +16,56 @@
 
 -->
 <div class="tb-web-camera flex flex-col items-center justify-center" tb-fullscreen [fullscreen]="isShowCamera">
-  <div *ngIf="isEntityDetected && dataKeyDetected && isCameraSupport && isProtocolHttps" class="image-container">
-    <div [class.!hidden]="isShowCamera" class="flex size-full flex-col items-center justify-between">
-      <div class="tb-web-camera__last-photo flex-1">
-        <span [class.!hidden]="lastPhoto" class="tb-web-camera__last-photo_text" translate>widgets.input-widgets.no-image</span>
-        <img [class.!hidden]="!lastPhoto" class="tb-web-camera__last-photo_img" [src]="lastPhoto | image | async" alt="last photo"/>
+  @if (isEntityDetected && dataKeyDetected && isCameraSupport && isProtocolHttps) {
+    <div class="image-container">
+      <div [class.!hidden]="isShowCamera" class="flex size-full flex-col items-center justify-between">
+        <div class="tb-web-camera__last-photo flex-1">
+          <span [class.!hidden]="lastPhoto" class="tb-web-camera__last-photo_text" translate>widgets.input-widgets.no-image</span>
+          <img [class.!hidden]="!lastPhoto" class="tb-web-camera__last-photo_img" [src]="lastPhoto | image | async" alt="last photo"/>
+        </div>
+        @if (!textMessage) {
+          <button mat-raised-button color="primary" (click)="takePhoto()">
+            {{ "widgets.input-widgets.take-photo" | translate }}
+          </button>
+        }
       </div>
-      <button mat-raised-button color="primary" (click)="takePhoto()" *ngIf="!textMessage">
-        {{ "widgets.input-widgets.take-photo" | translate }}
-      </button>
-    </div>
-    <div [class.!hidden]="!isShowCamera" class="camera-container flex flex-col items-center justify-center">
-      <div class="camera" [class.!hidden]="isPreviewPhoto">
-        <video autoplay muted playsinline class="camera-stream" #videoStream></video>
-        <div class="camera-controls flex flex-row flex-wrap items-end justify-between">
-          <div class="flex-1"></div>
-          <button mat-mini-fab color="primary" (click)="switchWebCamera()" [disabled]="singleDevice">
-            <mat-icon>switch_camera</mat-icon>
-          </button>
-          <button mat-fab color="accent" (click)="createPhoto()">
-            <mat-icon>photo_camera</mat-icon>
-          </button>
-          <button mat-mini-fab color="primary" (click)="closeCamera()">
-            <mat-icon>close</mat-icon>
-          </button>
-          <div class="flex-1"></div>
+      <div [class.!hidden]="!isShowCamera" class="camera-container flex flex-col items-center justify-center">
+        <div class="camera" [class.!hidden]="isPreviewPhoto">
+          <video autoplay muted playsinline class="camera-stream" #videoStream></video>
+          <div class="camera-controls flex flex-row flex-wrap items-end justify-between">
+            <div class="flex-1"></div>
+            <button mat-mini-fab color="primary" (click)="switchWebCamera()" [disabled]="singleDevice">
+              <mat-icon>switch_camera</mat-icon>
+            </button>
+            <button mat-fab color="accent" (click)="createPhoto()">
+              <mat-icon>photo_camera</mat-icon>
+            </button>
+            <button mat-mini-fab color="primary" (click)="closeCamera()">
+              <mat-icon>close</mat-icon>
+            </button>
+            <div class="flex-1"></div>
+          </div>
+        </div>
+        <div class="camera" [class.!hidden]="!isPreviewPhoto">
+          <img alt="preview photo" class="camera-stream" [src]="previewPhoto">
+          <canvas #canvas style="display:none;"></canvas>
+          <div class="camera-controls flex flex-row items-end justify-between">
+            <div class="flex-1"></div>
+            <button mat-fab color="primary" [disabled]="updatePhoto" (click)="cancelPhoto()">
+              <mat-icon>close</mat-icon>
+            </button>
+            <button mat-fab color="accent" [disabled]="updatePhoto" (click)="savePhoto()">
+              <mat-icon>check</mat-icon>
+            </button>
+            <div class="flex-1"></div>
+          </div>
         </div>
       </div>
-      <div class="camera" [class.!hidden]="!isPreviewPhoto">
-        <img alt="preview photo" class="camera-stream" [src]="previewPhoto">
-        <canvas #canvas style="display:none;"></canvas>
-        <div class="camera-controls flex flex-row items-end justify-between">
-          <div class="flex-1"></div>
-          <button mat-fab color="primary" [disabled]="updatePhoto" (click)="cancelPhoto()">
-            <mat-icon>close</mat-icon>
-          </button>
-          <button mat-fab color="accent" [disabled]="updatePhoto" (click)="savePhoto()">
-            <mat-icon>check</mat-icon>
-          </button>
-          <div class="flex-1"></div>
-        </div>
-      </div>
     </div>
-  </div>
-  <div class="message-text" *ngIf="textMessage">
-    {{ textMessage | translate }}
-  </div>
+  }
+  @if (textMessage) {
+    <div class="message-text">
+      {{ textMessage | translate }}
+    </div>
+  }
 </div>

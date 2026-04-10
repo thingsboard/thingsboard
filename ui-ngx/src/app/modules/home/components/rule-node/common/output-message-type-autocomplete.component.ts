@@ -24,7 +24,7 @@ import {
   Validator,
   Validators
 } from '@angular/forms';
-import { SubscriptSizing } from '@angular/material/form-field';
+import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 import { coerceBoolean } from '@shared/public-api';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
@@ -34,21 +34,22 @@ interface MessageType {
 }
 
 @Component({
-  selector: 'tb-output-message-type-autocomplete',
-  templateUrl: './output-message-type-autocomplete.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => OutputMessageTypeAutocompleteComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => OutputMessageTypeAutocompleteComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-output-message-type-autocomplete',
+    templateUrl: './output-message-type-autocomplete.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => OutputMessageTypeAutocompleteComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => OutputMessageTypeAutocompleteComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 
 export class OutputMessageTypeAutocompleteComponent implements ControlValueAccessor, Validator {
@@ -59,6 +60,9 @@ export class OutputMessageTypeAutocompleteComponent implements ControlValueAcces
   @Input()
   @coerceBoolean()
   disabled: boolean;
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   @Input()
   @coerceBoolean()

@@ -15,13 +15,21 @@
 ///
 
 import { OverlayContainer } from "@angular/cdk/overlay";
-import { Injectable } from "@angular/core";
+import { inject, Injectable, InjectionToken } from "@angular/core";
+
+export const PARENT_OVERLAY_CONTAINER = new InjectionToken<OverlayContainer>('PARENT_OVERLAY_CONTAINER');
 
 @Injectable()
 export class DynamicOverlayContainer extends OverlayContainer {
 
-  public setContainerElement( containerElement:HTMLElement ):void {
+  private _globalContainer = inject(PARENT_OVERLAY_CONTAINER);
+  private _customElement: HTMLElement | null = null;
 
-    this._containerElement = containerElement;
+  public override getContainerElement(): HTMLElement {
+    return this._customElement || this._globalContainer.getContainerElement();
+  }
+
+  setContainerElement(element: HTMLElement | null): void {
+    this._customElement = element;
   }
 }

@@ -25,16 +25,17 @@ import {
 } from '@home/components/widget/lib/settings/common/auto-date-format-settings-panel.component';
 
 @Component({
-  selector: 'tb-auto-date-format-settings',
-  templateUrl: './auto-date-format-settings.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => AutoDateFormatSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-auto-date-format-settings',
+    templateUrl: './auto-date-format-settings.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => AutoDateFormatSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class AutoDateFormatSettingsComponent implements OnInit, ControlValueAccessor {
 

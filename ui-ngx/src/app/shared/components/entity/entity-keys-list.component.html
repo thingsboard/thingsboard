@@ -15,15 +15,18 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="keysListFormGroup" class="mat-block tb-chip-list">
+<mat-form-field [formGroup]="keysListFormGroup" class="mat-block tb-chip-list" [appearance]="appearance">
   <mat-chip-grid #chipList>
-    <mat-chip-row
-      *ngFor="let key of modelValue"
-      [removable]="!disabled"
-      (removed)="remove(key)">
-      {{key}}
-      <mat-icon matChipRemove *ngIf="!disabled">close</mat-icon>
-    </mat-chip-row>
+    @for (key of modelValue; track key) {
+      <mat-chip-row
+        [removable]="!disabled"
+        (removed)="remove(key)">
+        {{key}}
+        @if (!disabled) {
+          <mat-icon matChipRemove>close</mat-icon>
+        }
+      </mat-chip-row>
+    }
     <input matInput type="text" placeholder="{{ !disabled ? (keysText | translate) : '' }}"
            style="max-width: 200px;"
            #keyInput
@@ -42,8 +45,10 @@
                     class="tb-autocomplete"
                     (optionSelected)="selected($event)"
                     [displayWith]="displayKeyFn">
-    <mat-option *ngFor="let key of filteredKeys | async" [value]="key">
-      <span [innerHTML]="key | highlight:searchText"></span>
-    </mat-option>
+    @for (key of filteredKeys | async; track key) {
+      <mat-option [value]="key">
+        <span [innerHTML]="key | highlight:searchText"></span>
+      </mat-option>
+    }
   </mat-autocomplete>
 </mat-form-field>

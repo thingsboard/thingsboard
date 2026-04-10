@@ -43,10 +43,11 @@
 }
 
 @Component({
-  selector: 'tb-alarm-rule-filter-dialog',
-  templateUrl: './alarm-rule-filter-dialog.component.html',
-  providers: [],
-  styleUrls: ['./alarm-rule-filter-dialog.component.scss']
+    selector: 'tb-alarm-rule-filter-dialog',
+    templateUrl: './alarm-rule-filter-dialog.component.html',
+    providers: [],
+    styleUrls: ['./alarm-rule-filter-dialog.component.scss'],
+    standalone: false
 })
 export class AlarmRuleFilterDialogComponent extends DialogComponent<AlarmRuleFilterDialogComponent, AlarmRuleFilter> {
 

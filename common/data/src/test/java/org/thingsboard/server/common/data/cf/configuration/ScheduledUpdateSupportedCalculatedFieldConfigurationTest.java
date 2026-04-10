@@ -47,8 +47,8 @@ public class ScheduledUpdateSupportedCalculatedFieldConfigurationTest {
 
         assertThatThrownBy(() -> cfg.validate(minAllowedInterval))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Scheduled update interval is less than configured " +
-                            "minimum allowed interval in tenant profile: " + minAllowedInterval);
+                .hasMessage("Scheduled update interval (1 seconds) is less than " +
+                            "minimum allowed interval in tenant profile: " + minAllowedInterval + " seconds");
     }
 
 }

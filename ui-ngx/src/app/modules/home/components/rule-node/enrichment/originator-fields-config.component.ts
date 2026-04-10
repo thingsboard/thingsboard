@@ -22,8 +22,9 @@ import { allowedOriginatorFields, FetchTo, SvMapOption } from '@home/components/
 import { RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@app/shared/models/rule-node.models';
 
 @Component({
-  selector: 'tb-enrichment-node-originator-fields-config',
-  templateUrl: './originator-fields-config.component.html'
+    selector: 'tb-enrichment-node-originator-fields-config',
+    templateUrl: './originator-fields-config.component.html',
+    standalone: false
 })
 export class OriginatorFieldsConfigComponent extends RuleNodeConfigurationComponent {
 

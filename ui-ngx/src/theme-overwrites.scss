@@ -63,10 +63,15 @@
 @mixin _mat-button-overwrites($primary, $config-or-theme) {
   .mat-toolbar {
     .mat-mdc-outlined-button {
-      --mdc-outlined-button-outline-color: inherit;
+      --mat-button-outlined-outline-color: inherit;
       &:not(:disabled) {
         border-color: inherit;
       }
+    }
+  }
+  .mat-mdc-button-base {
+    .mat-icon {
+      min-height: auto;
     }
   }
 }

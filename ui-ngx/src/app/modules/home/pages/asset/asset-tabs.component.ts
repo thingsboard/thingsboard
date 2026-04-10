@@ -22,9 +22,10 @@ import { AssetInfo } from '@app/shared/models/asset.models';
 import { EntityId } from "@shared/models/id/entity-id";
 
 @Component({
-  selector: 'tb-asset-tabs',
-  templateUrl: './asset-tabs.component.html',
-  styleUrls: []
+    selector: 'tb-asset-tabs',
+    templateUrl: './asset-tabs.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class AssetTabsComponent extends EntityTabsComponent<AssetInfo> {
 

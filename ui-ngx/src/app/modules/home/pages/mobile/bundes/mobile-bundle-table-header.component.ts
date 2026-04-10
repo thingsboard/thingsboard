@@ -21,9 +21,10 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 
 @Component({
-  selector: 'tb-mobile-bundle-table-header',
-  templateUrl: './mobile-bundle-table-header.component.html',
-  styleUrls: ['./mobile-bundle-table-header.component.scss']
+    selector: 'tb-mobile-bundle-table-header',
+    templateUrl: './mobile-bundle-table-header.component.html',
+    styleUrls: ['./mobile-bundle-table-header.component.scss'],
+    standalone: false
 })
 export class MobileBundleTableHeaderComponent extends EntityTableHeaderComponent<MobileAppBundleInfo> {
 

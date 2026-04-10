@@ -98,9 +98,10 @@ interface PersistentTableWidgetActionDescriptor extends TableCellButtonActionDes
 }
 
 @Component({
-  selector: 'tb-persistent-table-widget',
-  templateUrl: './persistent-table.component.html',
-  styleUrls: ['./persistent-table.component.scss' , '../table-widget.scss']
+    selector: 'tb-persistent-table-widget',
+    templateUrl: './persistent-table.component.html',
+    styleUrls: ['./persistent-table.component.scss', '../table-widget.scss'],
+    standalone: false
 })
 
 export class PersistentTableComponent extends PageComponent implements OnInit, OnDestroy, AfterViewInit {

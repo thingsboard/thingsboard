@@ -29,9 +29,10 @@ import {
 } from '@home/components/rule-node/action/timeseries-config.models';
 
 @Component({
-  selector: 'tb-action-node-timeseries-config',
-  templateUrl: './timeseries-config.component.html',
-  styleUrls: []
+    selector: 'tb-action-node-timeseries-config',
+    templateUrl: './timeseries-config.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class TimeseriesConfigComponent extends RuleNodeConfigurationComponent {
 

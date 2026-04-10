@@ -50,7 +50,8 @@ public class DefaultNativeAssetRepository extends AbstractNativeRepository imple
     @Override
     public PageData<ProfileEntityIdInfo> findProfileEntityIdInfosByTenantId(UUID tenantId, Pageable pageable) {
         String PROFILE_ASSET_ID_INFO_QUERY = String.format("SELECT tenant_id as tenantId, customer_id as customerId, asset_profile_id as profileId, id as id FROM asset WHERE tenant_id = '%s' ORDER BY created_time ASC LIMIT %%s OFFSET %%s", tenantId);
-        return find(COUNT_QUERY, PROFILE_ASSET_ID_INFO_QUERY, pageable, DefaultNativeAssetRepository::toInfo);
+        String COUNT_QUERY_BY_TENANT = String.format("SELECT count(id) FROM asset WHERE tenant_id = '%s';", tenantId);
+        return find(COUNT_QUERY_BY_TENANT, PROFILE_ASSET_ID_INFO_QUERY, pageable, DefaultNativeAssetRepository::toInfo);
     }
 
     private static ProfileEntityIdInfo toInfo(Map<String, Object> row) {

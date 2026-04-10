@@ -32,9 +32,10 @@ import { DateFormatProcessor, DateFormatSettings, getLabel } from '@shared/model
 import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Component({
-  selector: 'tb-value-card-widget-settings',
-  templateUrl: './value-card-widget-settings.component.html',
-  styleUrls: []
+    selector: 'tb-value-card-widget-settings',
+    templateUrl: './value-card-widget-settings.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class ValueCardWidgetSettingsComponent extends WidgetSettingsComponent {
 

@@ -34,10 +34,11 @@ import { isUndefinedOrNull } from '@core/utils';
 import { StringItemsOption } from '@shared/components/string-items-list.component';
 
 @Component({
-  selector: 'tb-dynamic-form-property-panel',
-  templateUrl: './dynamic-form-property-panel.component.html',
-  styleUrls: ['./dynamic-form-property-panel.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-dynamic-form-property-panel',
+    templateUrl: './dynamic-form-property-panel.component.html',
+    styleUrls: ['./dynamic-form-property-panel.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class DynamicFormPropertyPanelComponent implements OnInit {
 

@@ -54,22 +54,23 @@ export interface JsFuncModuleRow {
 export const moduleValid = (module: JsFuncModuleRow): boolean => !(!module.alias || !module.moduleLink);
 
 @Component({
-  selector: 'tb-js-func-module-row',
-  templateUrl: './js-func-module-row.component.html',
-  styleUrls: ['./js-func-module-row.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => JsFuncModuleRowComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => JsFuncModuleRowComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-js-func-module-row',
+    templateUrl: './js-func-module-row.component.html',
+    styleUrls: ['./js-func-module-row.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => JsFuncModuleRowComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => JsFuncModuleRowComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class JsFuncModuleRowComponent implements ControlValueAccessor, OnInit, Validator {
 

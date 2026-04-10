@@ -61,7 +61,8 @@ export type ScrollDirection = 'after' | 'before';
   {
     // eslint-disable-next-line @angular-eslint/directive-selector
     selector: 'tb-toggle-option',
-  }
+    standalone: false
+}
 )
 // eslint-disable-next-line @angular-eslint/directive-class-suffix
 export class ToggleOption implements OnChanges, OnDestroy {
@@ -136,9 +137,10 @@ export abstract class _ToggleBase extends PageComponent implements AfterContentI
 }
 
 @Component({
-  selector: 'tb-toggle-header',
-  templateUrl: './toggle-header.component.html',
-  styleUrls: ['./toggle-header.component.scss']
+    selector: 'tb-toggle-header',
+    templateUrl: './toggle-header.component.html',
+    styleUrls: ['./toggle-header.component.scss'],
+    standalone: false
 })
 export class ToggleHeaderComponent extends _ToggleBase implements OnInit, AfterViewInit, AfterContentInit,
   AfterContentChecked, AfterViewChecked, OnDestroy {

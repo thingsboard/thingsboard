@@ -34,10 +34,11 @@ export interface EntityLimitExceededDialogData {
 
 // @dynamic
 @Component({
-  selector: 'tb-entity-limit-exceeded-dialog',
-  templateUrl: './entity-limit-exceeded-dialog.component.html',
-  styleUrls: ['./entity-limit-exceeded-dialog.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-entity-limit-exceeded-dialog',
+    templateUrl: './entity-limit-exceeded-dialog.component.html',
+    styleUrls: ['./entity-limit-exceeded-dialog.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class EntityLimitExceededDialogComponent extends DialogComponent<EntityLimitExceededDialogComponent> {
 

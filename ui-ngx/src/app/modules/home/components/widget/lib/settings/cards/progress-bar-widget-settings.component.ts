@@ -30,9 +30,10 @@ import {
 import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Component({
-  selector: 'tb-progress-bar-widget-settings',
-  templateUrl: './progress-bar-widget-settings.component.html',
-  styleUrls: []
+    selector: 'tb-progress-bar-widget-settings',
+    templateUrl: './progress-bar-widget-settings.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class ProgressBarWidgetSettingsComponent extends WidgetSettingsComponent {
 

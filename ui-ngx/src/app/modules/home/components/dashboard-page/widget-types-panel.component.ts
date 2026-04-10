@@ -30,9 +30,10 @@ export interface DisplayWidgetTypesPanelData {
 }
 
 @Component({
-  selector: 'tb-widget-types-panel',
-  templateUrl: './widget-types-panel.component.html',
-  styleUrls: ['./widget-types-panel.component.scss']
+    selector: 'tb-widget-types-panel',
+    templateUrl: './widget-types-panel.component.html',
+    styleUrls: ['./widget-types-panel.component.scss'],
+    standalone: false
 })
 export class DisplayWidgetTypesPanelComponent {
 

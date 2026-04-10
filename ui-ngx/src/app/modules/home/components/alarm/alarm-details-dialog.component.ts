@@ -47,9 +47,10 @@ export interface AlarmDetailsDialogData {
 }
 
 @Component({
-  selector: 'tb-alarm-details-dialog',
-  templateUrl: './alarm-details-dialog.component.html',
-  styleUrls: ['./alarm-details-dialog.component.scss']
+    selector: 'tb-alarm-details-dialog',
+    templateUrl: './alarm-details-dialog.component.html',
+    styleUrls: ['./alarm-details-dialog.component.scss'],
+    standalone: false
 })
 export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDialogComponent, boolean> {
 

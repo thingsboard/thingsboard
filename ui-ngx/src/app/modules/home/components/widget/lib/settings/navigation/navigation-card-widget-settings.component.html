@@ -16,16 +16,17 @@
 
 -->
 <section class="tb-widget-settings flex flex-col" [formGroup]="navigationCardWidgetSettingsForm">
-  <mat-form-field class="mat-block flex-1">
+  <mat-form-field class="mat-block flex-1" appearance="outline">
     <mat-label translate>widgets.navigation.title</mat-label>
     <input required matInput formControlName="name">
   </mat-form-field>
   <tb-material-icon-select class="flex-1"
                            iconClearButton
                            required
+                           appearance="outline"
                            formControlName="icon">
   </tb-material-icon-select>
-  <mat-form-field class="mat-block flex-1">
+  <mat-form-field class="mat-block flex-1" appearance="outline">
     <mat-label translate>widgets.navigation.navigation-path</mat-label>
     <input required matInput formControlName="path">
   </mat-form-field>

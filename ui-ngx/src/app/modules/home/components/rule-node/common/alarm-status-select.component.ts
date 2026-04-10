@@ -20,14 +20,15 @@ import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from 
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-alarm-status-select',
-  templateUrl: './alarm-status-select.component.html',
-  styleUrls: ['./alarm-status-select.component.scss'],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => AlarmStatusSelectComponent),
-    multi: true
-  }]
+    selector: 'tb-alarm-status-select',
+    templateUrl: './alarm-status-select.component.html',
+    styleUrls: ['./alarm-status-select.component.scss'],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => AlarmStatusSelectComponent),
+            multi: true
+        }],
+    standalone: false
 })
 
 export class AlarmStatusSelectComponent extends PageComponent implements OnInit, ControlValueAccessor {

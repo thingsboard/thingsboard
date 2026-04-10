@@ -30,9 +30,10 @@ import {
 } from '@home/components/widget/lib/cards/unread-notification-widget.models';
 
 @Component({
-  selector: 'tb-unread-notification-basic-config',
-  templateUrl: './unread-notification-basic-config.component.html',
-  styleUrls: ['../basic-config.scss']
+    selector: 'tb-unread-notification-basic-config',
+    templateUrl: './unread-notification-basic-config.component.html',
+    styleUrls: ['../basic-config.scss'],
+    standalone: false
 })
 export class UnreadNotificationBasicConfigComponent extends BasicWidgetConfigComponent {
 

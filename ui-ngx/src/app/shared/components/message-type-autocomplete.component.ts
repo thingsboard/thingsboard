@@ -24,16 +24,18 @@ import { TranslateService } from '@ngx-translate/core';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { MessageType, messageTypeNames } from '@shared/models/rule-node.models';
 import { objectValues } from '@core/utils';
+import { MatFormFieldAppearance } from '@angular/material/form-field';
 
 @Component({
-  selector: 'tb-message-type-autocomplete',
-  templateUrl: './message-type-autocomplete.component.html',
-  styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => MessageTypeAutocompleteComponent),
-    multi: true
-  }]
+    selector: 'tb-message-type-autocomplete',
+    templateUrl: './message-type-autocomplete.component.html',
+    styleUrls: [],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => MessageTypeAutocompleteComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class MessageTypeAutocompleteComponent implements ControlValueAccessor, OnInit, AfterViewInit, OnDestroy {
 
@@ -49,6 +51,9 @@ export class MessageTypeAutocompleteComponent implements ControlValueAccessor, O
   set required(value: boolean) {
     this.requiredValue = coerceBooleanProperty(value);
   }
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   @Input()
   disabled: boolean;

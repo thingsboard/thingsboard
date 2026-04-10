@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.common.data.query.AvailableEntityKeys;
+import org.thingsboard.server.common.data.query.AvailableEntityKeysV2;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
@@ -46,6 +47,8 @@ import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.query.EntityQueryService;
 import org.thingsboard.server.service.security.permission.Operation;
+
+import java.util.Set;
 
 import static org.thingsboard.server.controller.ControllerConstants.ALARM_DATA_QUERY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_COUNT_QUERY_DESCRIPTION;
@@ -115,9 +118,11 @@ public class EntityQueryController extends BaseController {
         return entityQueryService.countAlarmsByQuery(getCurrentUser(), query);
     }
 
+    @Deprecated(forRemoval = true)
     @ApiOperation(
-            value = "Find Available Entity Keys by Query",
+            value = "Find Available Entity Keys by Query (deprecated)",
             notes = """
+                    **Deprecated.** Use the V2 endpoint (`POST /api/v2/entitiesQuery/find/keys`) instead.\n
                     Returns unique time series and/or attribute key names from entities matching the query.\n
                     Executes the Entity Data Query to find up to 100 entities, then fetches and aggregates all distinct key names.\n
                     Primarily used for UI features like autocomplete suggestions.""" + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH
@@ -127,9 +132,6 @@ public class EntityQueryController extends BaseController {
     public DeferredResult<AvailableEntityKeys> findAvailableEntityKeysByQuery(
             @Parameter(description = "Entity data query to find entities. Page size is capped at 100.")
             @RequestBody EntityDataQuery query,
-
-            // fixme: combination of timeseries = false and attributes = false is allowed, but always results in empty response, therefore does not make any sense
-            //        such combinations should NOT be allowed, but changing this will break clients
 
             @Parameter(description = """
                     When true, includes unique time series key names in the response.
@@ -153,6 +155,54 @@ public class EntityQueryController extends BaseController {
             pageLink.setPageSize(MAX_PAGE_SIZE);
         }
         return wrapFuture(entityQueryService.getKeysByQuery(getCurrentUser(), getTenantId(), query, includeTimeseries, includeAttributes, scope));
+    }
+
+    @ApiOperation(
+            value = "Find Available Entity Keys By Query",
+            notes = """
+                    Discovers unique time series and/or attribute key names available on entities that match the given query.
+                    Works in two steps: first, the request body (an Entity Data Query) is executed to find matching entities
+                    (page size is capped at 100); then, all distinct key names are collected from those entities.\n
+                    Optionally, each key can include a sample — the most recent value (by timestamp) for that key
+                    across all matched entities."""
+                    + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH
+    )
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PostMapping("/v2/entitiesQuery/find/keys")
+    public DeferredResult<AvailableEntityKeysV2> findAvailableEntityKeysByQueryV2(
+            @Parameter(description = "Entity data query to find entities. Page size is capped at 100.")
+            @RequestBody EntityDataQuery query,
+
+            @Parameter(description = """
+                    When true, includes unique time series keys in the response.
+                    When false, the 'timeseries' field is omitted. At least one of 'includeTimeseries' or 'includeAttributes' must be true.""")
+            @RequestParam(defaultValue = "true") boolean includeTimeseries,
+
+            @Parameter(description = """
+                    When true, includes unique attribute keys in the response.
+                    When false, the 'attributes' field is omitted. At least one of 'includeTimeseries' or 'includeAttributes' must be true.""")
+            @RequestParam(defaultValue = "true") boolean includeAttributes,
+
+            @Parameter(description = """
+                    Filters attribute keys by scope. Only applies when 'includeAttributes' is true.
+                    When not specified, scopes are auto-determined: all three scopes (server, client, shared) for device entities,
+                    server scope only for other entity types.""",
+                    schema = @Schema(allowableValues = {"SERVER_SCOPE", "SHARED_SCOPE", "CLIENT_SCOPE"}))
+            @RequestParam(required = false) Set<AttributeScope> scopes,
+
+            @Parameter(description = """
+                    When true, each key entry includes a 'sample' object with the most recent value and timestamp.
+                    When false, only key names are returned (sample is omitted from JSON).""")
+            @RequestParam(defaultValue = "false") boolean includeSamples
+    ) throws ThingsboardException {
+        resolveQuery(query);
+        EntityDataPageLink pageLink = query.getPageLink();
+        if (pageLink.getPageSize() > MAX_PAGE_SIZE) {
+            pageLink.setPageSize(MAX_PAGE_SIZE);
+        }
+        return wrapFuture(entityQueryService.findAvailableEntityKeysByQuery(
+                getCurrentUser(), query,
+                includeTimeseries, includeAttributes, scopes, includeSamples));
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")

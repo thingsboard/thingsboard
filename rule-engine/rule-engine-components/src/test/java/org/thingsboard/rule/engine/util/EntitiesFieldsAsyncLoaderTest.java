@@ -22,8 +22,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.thingsboard.common.util.DirectListeningExecutor;
 import org.thingsboard.common.util.ListeningExecutor;
-import org.thingsboard.rule.engine.TestDbCallbackExecutor;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
@@ -76,7 +76,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class EntitiesFieldsAsyncLoaderTest {
 
-    private static final ListeningExecutor DB_EXECUTOR = new TestDbCallbackExecutor();
+    private static final ListeningExecutor DB_EXECUTOR = DirectListeningExecutor.INSTANCE;
     private static EnumSet<EntityType> SUPPORTED_ENTITY_TYPES;
     private static UUID RANDOM_UUID;
     private static TenantId TENANT_ID;

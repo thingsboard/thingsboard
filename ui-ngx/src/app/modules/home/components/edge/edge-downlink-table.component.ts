@@ -29,9 +29,10 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 
 @Component({
-  selector: 'tb-edge-downlink-table',
-  templateUrl: './edge-downlink-table.component.html',
-  styleUrls: ['./edge-downlink-table.component.scss']
+    selector: 'tb-edge-downlink-table',
+    templateUrl: './edge-downlink-table.component.html',
+    styleUrls: ['./edge-downlink-table.component.scss'],
+    standalone: false
 })
 export class EdgeDownlinkTableComponent implements OnInit {
 

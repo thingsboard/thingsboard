@@ -61,10 +61,11 @@ export interface DataKeyConfigDialogData {
 }
 
 @Component({
-  selector: 'tb-data-key-config-dialog',
-  templateUrl: './data-key-config-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: DataKeyConfigDialogComponent}],
-  styleUrls: ['./data-key-config-dialog.component.scss']
+    selector: 'tb-data-key-config-dialog',
+    templateUrl: './data-key-config-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: DataKeyConfigDialogComponent }],
+    styleUrls: ['./data-key-config-dialog.component.scss'],
+    standalone: false
 })
 export class DataKeyConfigDialogComponent extends DialogComponent<DataKeyConfigDialogComponent, DataKey>
   implements OnInit, ErrorStateMatcher {

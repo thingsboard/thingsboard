@@ -31,9 +31,10 @@ export interface MakeDashboardPublicDialogData {
 }
 
 @Component({
-  selector: 'tb-make-dashboard-public-dialog',
-  templateUrl: './make-dashboard-public-dialog.component.html',
-  styleUrls: []
+    selector: 'tb-make-dashboard-public-dialog',
+    templateUrl: './make-dashboard-public-dialog.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class MakeDashboardPublicDialogComponent extends DialogComponent<MakeDashboardPublicDialogComponent> implements OnInit {
 

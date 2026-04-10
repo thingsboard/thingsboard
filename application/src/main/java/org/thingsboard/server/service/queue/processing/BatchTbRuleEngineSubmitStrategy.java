@@ -73,7 +73,7 @@ public class BatchTbRuleEngineSubmitStrategy extends AbstractTbRuleEngineSubmitS
             pendingPack.clear();
             for (int i = startIdx; i < endIdx; i++) {
                 IdMsgPair<TransportProtos.ToRuleEngineMsg> pair = orderedMsgList.get(i);
-                pendingPack.put(pair.uuid, pair.msg);
+                pendingPack.put(pair.uuid(), pair.msg());
             }
             tmpPack = new LinkedHashMap<>(pendingPack);
         }

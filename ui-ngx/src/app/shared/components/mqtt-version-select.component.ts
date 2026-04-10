@@ -21,14 +21,15 @@ import { SubscriptSizing, MatFormFieldAppearance } from '@angular/material/form-
 import { MqttVersionTranslation, MqttVersion } from '@shared/models/mqtt.models';
 
 @Component({
-  selector: 'tb-mqtt-version-select',
-  templateUrl: './mqtt-version-select.component.html',
-  styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => MqttVersionSelectComponent),
-    multi: true
-  }]
+    selector: 'tb-mqtt-version-select',
+    templateUrl: './mqtt-version-select.component.html',
+    styleUrls: [],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => MqttVersionSelectComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class MqttVersionSelectComponent implements ControlValueAccessor, OnChanges {
 

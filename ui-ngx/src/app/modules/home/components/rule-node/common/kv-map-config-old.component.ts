@@ -33,21 +33,22 @@ import { TranslateService } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-kv-map-config-old',
-  templateUrl: './kv-map-config-old.component.html',
-  styleUrls: ['./kv-map-config-old.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => KvMapConfigOldComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => KvMapConfigOldComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-kv-map-config-old',
+    templateUrl: './kv-map-config-old.component.html',
+    styleUrls: ['./kv-map-config-old.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => KvMapConfigOldComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => KvMapConfigOldComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class KvMapConfigOldComponent extends PageComponent implements ControlValueAccessor, OnInit, Validator {
 
@@ -67,6 +68,10 @@ export class KvMapConfigOldComponent extends PageComponent implements ControlVal
 
   @Input() hintText: string;
 
+  @Input() description: string;
+
+  @Input() emptyText: string;
+
   private requiredValue: boolean;
 
   get required(): boolean {
@@ -82,11 +87,11 @@ export class KvMapConfigOldComponent extends PageComponent implements ControlVal
 
   ngControl: NgControl;
 
-  private propagateChange = null;
+  public propagateChange = null;
 
   constructor(public translate: TranslateService,
               private injector: Injector,
-              private fb: FormBuilder,
+              protected fb: FormBuilder,
               private destroyRef: DestroyRef) {
     super();
   }
@@ -178,7 +183,7 @@ export class KvMapConfigOldComponent extends PageComponent implements ControlVal
     return null;
   }
 
-  private updateModel() {
+  protected updateModel() {
     const kvList: { key: string; value: string }[] = this.kvListFormGroup.get('keyVals').value;
     if (this.required && !kvList.length || !this.kvListFormGroup.valid) {
       this.propagateChange(null);

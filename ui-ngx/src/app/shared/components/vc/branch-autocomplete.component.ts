@@ -38,15 +38,16 @@ import { MatAutocomplete, MatAutocompleteTrigger } from '@angular/material/autoc
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 
 @Component({
-  selector: 'tb-branch-autocomplete',
-  templateUrl: './branch-autocomplete.component.html',
-  styleUrls: ['./branch-autocomplete.component.scss'],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => BranchAutocompleteComponent),
-    multi: true
-  }],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-branch-autocomplete',
+    templateUrl: './branch-autocomplete.component.html',
+    styleUrls: ['./branch-autocomplete.component.scss'],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => BranchAutocompleteComponent),
+            multi: true
+        }],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class BranchAutocompleteComponent implements ControlValueAccessor, OnInit, AfterViewInit {
 

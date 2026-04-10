@@ -23,7 +23,9 @@
          (focus)="toggleFocus()"
          (blur)="toggleFocus()"
          [placeholder]=placeholder>
-  <button type="button" *ngIf="searchText" mat-icon-button (click)="clear($event)">
-    <mat-icon class="close">close</mat-icon>
-  </button>
+  @if (searchText) {
+    <button type="button" mat-icon-button (click)="clear($event)">
+      <mat-icon class="close">close</mat-icon>
+    </button>
+  }
 </div>

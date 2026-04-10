@@ -172,4 +172,14 @@ public class CachedRedisSqlTimeseriesLatestDao extends BaseAbstractSqlTimeseries
         return sqlDao.findAllKeysByEntityIdsAsync(tenantId, entityIds);
     }
 
+    @Override
+    public List<TsKvEntry> findLatestByEntityIds(TenantId tenantId, List<EntityId> entityIds) {
+        return sqlDao.findLatestByEntityIds(tenantId, entityIds);
+    }
+
+    @Override
+    public ListenableFuture<List<TsKvEntry>> findLatestByEntityIdsAsync(TenantId tenantId, List<EntityId> entityIds) {
+        return sqlDao.findLatestByEntityIdsAsync(tenantId, entityIds);
+    }
+
 }

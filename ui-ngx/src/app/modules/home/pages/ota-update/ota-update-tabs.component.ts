@@ -23,9 +23,10 @@ import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { OtaPackage } from '@shared/models/ota-package.models';
 
 @Component({
-  selector: 'tb-ota-update-tabs',
-  templateUrl: './ota-update-tabs.component.html',
-  styleUrls: []
+    selector: 'tb-ota-update-tabs',
+    templateUrl: './ota-update-tabs.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class OtaUpdateTabsComponent extends EntityTabsComponent<OtaPackage> {
 

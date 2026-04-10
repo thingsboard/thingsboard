@@ -20,13 +20,14 @@ import { RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@shared/m
 import { AttributeScope, telemetryTypeTranslations } from '@shared/models/telemetry/telemetry.models';
 
 @Component({
-  selector: 'tb-action-node-push-to-edge-config',
-  templateUrl: './push-to-edge-config.component.html',
-  styleUrls: []
+    selector: 'tb-action-node-push-to-edge-config',
+    templateUrl: './push-to-edge-config.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class PushToEdgeConfigComponent extends RuleNodeConfigurationComponent {
 
-  attributeScopes = Object.keys(AttributeScope);
+  attributeScopes = Object.values(AttributeScope);
   telemetryTypeTranslationsMap = telemetryTypeTranslations;
 
   pushToEdgeConfigForm: UntypedFormGroup;

@@ -41,9 +41,10 @@ export interface DashboardImageDialogResult {
 }
 
 @Component({
-  selector: 'tb-dashboard-image-dialog',
-  templateUrl: './dashboard-image-dialog.component.html',
-  styleUrls: ['./dashboard-image-dialog.component.scss']
+    selector: 'tb-dashboard-image-dialog',
+    templateUrl: './dashboard-image-dialog.component.html',
+    styleUrls: ['./dashboard-image-dialog.component.scss'],
+    standalone: false
 })
 export class DashboardImageDialogComponent extends DialogComponent<DashboardImageDialogComponent, DashboardImageDialogResult> {
 

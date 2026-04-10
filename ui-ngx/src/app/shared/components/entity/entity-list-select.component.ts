@@ -21,6 +21,7 @@ import { EntityService } from '@core/http/entity.service';
 import { EntityId } from '@shared/models/id/entity-id';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { isDefinedAndNotNull } from '@core/utils';
+import { MatFormFieldAppearance } from '@angular/material/form-field';
 
 interface EntityListSelectModel {
   entityType: EntityType | AliasEntityType;
@@ -28,14 +29,15 @@ interface EntityListSelectModel {
 }
 
 @Component({
-  selector: 'tb-entity-list-select',
-  templateUrl: './entity-list-select.component.html',
-  styleUrls: ['./entity-list-select.component.scss'],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => EntityListSelectComponent),
-    multi: true
-  }]
+    selector: 'tb-entity-list-select',
+    templateUrl: './entity-list-select.component.html',
+    styleUrls: ['./entity-list-select.component.scss'],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => EntityListSelectComponent),
+            multi: true
+        }],
+    standalone: false
 })
 
 export class EntityListSelectComponent implements ControlValueAccessor, OnInit {
@@ -70,6 +72,9 @@ export class EntityListSelectComponent implements ControlValueAccessor, OnInit {
 
   @Input({transform: booleanAttribute})
   useEntityDisplayName = false;
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   displayEntityTypeSelect: boolean;
 

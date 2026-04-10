@@ -201,7 +201,7 @@ public class DashboardEdgeTest extends AbstractEdgeTest {
         CustomerUpdateMsg customerUpdateMsg = customerUpdateOpt.get();
         Customer customerMsg = JacksonUtil.fromString(customerUpdateMsg.getEntity(), Customer.class, true);
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, customerUpdateMsg.getMsgType());
-        Assert.assertEquals(savedCustomer, customerMsg);
+        compareHasVersionEntities(savedCustomer, customerMsg);
 
         Dashboard dashboard = buildDashboardForUplinkMsg(savedCustomer);
 

@@ -25,7 +25,9 @@
     </mat-slider>
     <div class="tb-timeline-controls">
       <div class="flex flex-1 flex-row items-center justify-start">
-        <div class="tb-map-timeline-timestamp" *ngIf="settings.showTimestamp" [innerHTML]="timestampFormat.formatted"></div>
+        @if (settings.showTimestamp) {
+          <div class="tb-map-timeline-timestamp" [innerHTML]="timestampFormat.formatted"></div>
+        }
       </div>
       <div class="tb-timeline-buttons flex flex-1 flex-row items-center justify-center gap-3">
         <button mat-mini-fab color="primary"
@@ -67,7 +69,9 @@
       <div class="flex flex-1 flex-row items-center justify-end">
         <mat-select class="w-auto" [(ngModel)]="speed" (selectionChange)="speedUpdated()" aria-label="Speed selector">
           <mat-select-trigger><span style="padding-right: 10px;">{{speed}}x</span></mat-select-trigger>
-          <mat-option [value]="speedValue" *ngFor="let speedValue of settings.speedOptions">{{speedValue}}x</mat-option>
+          @for (speedValue of settings.speedOptions; track speedValue) {
+            <mat-option [value]="speedValue">{{speedValue}}x</mat-option>
+          }
         </mat-select>
       </div>
     </div>

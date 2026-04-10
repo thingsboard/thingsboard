@@ -28,9 +28,10 @@ import org.thingsboard.server.common.msg.session.FeatureType;
 
 import java.io.IOException;
 
+import static org.thingsboard.server.transport.coap.AbstractCoapIntegrationTest.COAP_BASE_URL;
+
 public class CoapTestClient {
 
-    private static final String COAP_BASE_URL = "coap://localhost:5683/api/v1/";
     private static final long CLIENT_REQUEST_TIMEOUT = 60000L;
 
     private final CoapClient client;

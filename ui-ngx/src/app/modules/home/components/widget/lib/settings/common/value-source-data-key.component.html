@@ -19,59 +19,67 @@
   <div class="tb-source-field">
     <mat-form-field class="tb-type-field" appearance="outline" subscriptSizing="dynamic">
       <mat-select formControlName="type">
-        <mat-option *ngFor="let type of valueSourceDataKeyTypes" [value]="type">
-          {{ valueSourceDataKeyTypeTranslation.get(type) | translate }}
-        </mat-option>
+        @for (type of valueSourceDataKeyTypes; track type) {
+          <mat-option [value]="type">
+            {{ valueSourceDataKeyTypeTranslation.get(type) | translate }}
+          </mat-option>
+        }
       </mat-select>
     </mat-form-field>
-    <tb-entity-alias-input
-      class="tb-entity-alias-field"
-      *ngIf="valueSourceFormGroup.get('type').value === valueSourceDataKeyType.entity"
-      [aliasController]="aliasController"
-      required
-      formControlName="entityAlias">
-    </tb-entity-alias-input>
+    @if (valueSourceFormGroup.get('type').value === valueSourceDataKeyType.entity) {
+      <tb-entity-alias-input
+        class="tb-entity-alias-field"
+        [aliasController]="aliasController"
+        required
+        formControlName="entityAlias">
+      </tb-entity-alias-input>
+    }
   </div>
   <div class="tb-key-value-field">
-    <mat-form-field *ngIf="valueSourceFormGroup.get('type').value === valueSourceDataKeyType.constant"
-                    appearance="outline" class="tb-constant-field number" subscriptSizing="dynamic"
-                    [class.tb-suffix-absolute]="!valueSourceFormGroup.get('value').value">
-      <input required matInput formControlName="value" type="number" placeholder="{{ 'widget-config.set' | translate }}">
-      <mat-icon matSuffix
-                matTooltipPosition="above"
-                matTooltipClass="tb-error-tooltip"
-                [matTooltip]="'widgets.value-source.value-required' | translate"
-                *ngIf="valueSourceFormGroup.get('value').hasError('required')
-                       && valueSourceFormGroup.get('value').touched"
-                class="tb-error">
-        warning
-      </mat-icon>
-    </mat-form-field>
-    <tb-data-key-input
-      *ngIf="valueSourceFormGroup.get('type').value === valueSourceDataKeyType.latestKey"
-      required
-      requiredText="widgets.value-source.key-required"
-      [datasourceType]="datasource?.type"
-      [entityAliasId]="datasource?.entityAliasId"
-      [deviceId]="datasource?.deviceId"
-      [aliasController]="aliasController"
-      [dataKeyType]="datasource?.type === datasourceType.function ? dataKeyType.function : null"
-      [dataKeyTypes]="[dataKeyType.attribute, dataKeyType.timeseries]"
-      [callbacks]="dataKeyCallbacks"
-      [editable]="false"
-      [formControl]="latestKeyFormControl">
-    </tb-data-key-input>
-    <tb-data-key-input
-      *ngIf="valueSourceFormGroup.get('type').value === valueSourceDataKeyType.entity"
-      required
-      requiredText="widgets.value-source.entity-key-required"
-      [datasourceType]="datasourceType.entity"
-      [aliasController]="aliasController"
-      [entityAlias]="valueSourceFormGroup.get('entityAlias').value"
-      [dataKeyTypes]="[dataKeyType.attribute, dataKeyType.timeseries]"
-      [callbacks]="dataKeyCallbacks"
-      [editable]="false"
-      [formControl]="entityKeyFormControl">
-    </tb-data-key-input>
+    @if (valueSourceFormGroup.get('type').value === valueSourceDataKeyType.constant) {
+      <mat-form-field
+        appearance="outline" class="tb-constant-field number" subscriptSizing="dynamic"
+        [class.tb-suffix-absolute]="!valueSourceFormGroup.get('value').value">
+        <input required matInput formControlName="value" type="number" placeholder="{{ 'widget-config.set' | translate }}">
+        @if (valueSourceFormGroup.get('value').hasError('required')
+          && valueSourceFormGroup.get('value').touched) {
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="'widgets.value-source.value-required' | translate"
+                    class="tb-error">
+            warning
+          </mat-icon>
+        }
+      </mat-form-field>
+    }
+    @if (valueSourceFormGroup.get('type').value === valueSourceDataKeyType.latestKey) {
+      <tb-data-key-input
+        required
+        requiredText="widgets.value-source.key-required"
+        [datasourceType]="datasource?.type"
+        [entityAliasId]="datasource?.entityAliasId"
+        [deviceId]="datasource?.deviceId"
+        [aliasController]="aliasController"
+        [dataKeyType]="datasource?.type === datasourceType.function ? dataKeyType.function : null"
+        [dataKeyTypes]="[dataKeyType.attribute, dataKeyType.timeseries]"
+        [callbacks]="dataKeyCallbacks"
+        [editable]="false"
+        [formControl]="latestKeyFormControl">
+      </tb-data-key-input>
+    }
+    @if (valueSourceFormGroup.get('type').value === valueSourceDataKeyType.entity) {
+      <tb-data-key-input
+        required
+        requiredText="widgets.value-source.entity-key-required"
+        [datasourceType]="datasourceType.entity"
+        [aliasController]="aliasController"
+        [entityAlias]="valueSourceFormGroup.get('entityAlias').value"
+        [dataKeyTypes]="[dataKeyType.attribute, dataKeyType.timeseries]"
+        [callbacks]="dataKeyCallbacks"
+        [editable]="false"
+        [formControl]="entityKeyFormControl">
+      </tb-data-key-input>
+    }
   </div>
 </div>

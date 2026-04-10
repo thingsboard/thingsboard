@@ -19,9 +19,10 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@shared/models/rule-node.models';
 
 @Component({
-  selector: 'tb-external-node-send-sms-config',
-  templateUrl: './send-sms-config.component.html',
-  styleUrls: []
+    selector: 'tb-external-node-send-sms-config',
+    templateUrl: './send-sms-config.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class SendSmsConfigComponent extends RuleNodeConfigurationComponent {
 

@@ -61,21 +61,21 @@ public class TbRedisLwM2MClientStore implements TbLwM2MClientStore {
 
     @Override
     public Set<LwM2mClient> getAll() {
-        try (var connection = connectionFactory.getConnection()) {
+        try (var scanConnection = connectionFactory.getConnection();
+             var getConnection = connectionFactory.getConnection()) {
             Set<LwM2mClient> clients = new HashSet<>();
             ScanOptions scanOptions = ScanOptions.scanOptions().count(100).match(CLIENT_EP + "*").build();
             List<Cursor<byte[]>> scans = new ArrayList<>();
-            if (connection instanceof RedisClusterConnection) {
-                ((RedisClusterConnection) connection).clusterGetNodes().forEach(node -> {
-                    scans.add(((RedisClusterConnection) connection).scan(node, scanOptions));
-                });
+            if (scanConnection instanceof RedisClusterConnection clusterConnection) {
+                clusterConnection.clusterGetNodes().forEach(node ->
+                        scans.add(clusterConnection.scan(node, scanOptions)));
             } else {
-                scans.add(connection.scan(scanOptions));
+                scans.add(scanConnection.scan(scanOptions));
             }
 
             scans.forEach(scan -> {
                 scan.forEachRemaining(key -> {
-                    byte[] element = connection.get(key);
+                    byte[] element = getConnection.get(key);
                     if (element != null) {
                         try {
                             clients.add(deserialize(element));

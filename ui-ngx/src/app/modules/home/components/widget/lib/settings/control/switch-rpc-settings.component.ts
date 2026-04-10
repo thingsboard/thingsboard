@@ -65,21 +65,22 @@ export const switchRpcDefaultSettings = (): SwitchRpcSettings => ({
   });
 
 @Component({
-  selector: 'tb-switch-rpc-settings',
-  templateUrl: './switch-rpc-settings.component.html',
-  styleUrls: ['./../widget-settings.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => SwitchRpcSettingsComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => SwitchRpcSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-switch-rpc-settings',
+    templateUrl: './switch-rpc-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => SwitchRpcSettingsComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => SwitchRpcSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class SwitchRpcSettingsComponent extends PageComponent implements OnInit, ControlValueAccessor, Validator {
 

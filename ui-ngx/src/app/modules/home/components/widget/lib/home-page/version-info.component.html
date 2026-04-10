@@ -36,28 +36,29 @@
         </div>
       </div>
     </div>
-    <div class="tb-version-info-container flex flex-1 flex-row" *ngIf="updateMessage?.updateAvailable; else versionUpToDate">
-      <div class="flex flex-1 flex-col items-stretch justify-evenly">
-        <div class="tb-card-header">
-          <a class="tb-version-link" [href]="updateMessage?.latestVersionReleaseNotesUrl" target="_blank">
-            <span class="md-lg:!hidden" translate>widgets.version-info.available-version</span>
-            <span class="lt-md:!hidden gt-md-lg:!hidden" translate>widgets.version-info.available</span>
-          </a>
+    @if (updateMessage?.updateAvailable) {
+      <div class="tb-version-info-container flex flex-1 flex-row">
+        <div class="flex flex-1 flex-col items-stretch justify-evenly">
+          <div class="tb-card-header">
+            <a class="tb-version-link" [href]="updateMessage?.latestVersionReleaseNotesUrl" target="_blank">
+              <span class="md-lg:!hidden" translate>widgets.version-info.available-version</span>
+              <span class="lt-md:!hidden gt-md-lg:!hidden" translate>widgets.version-info.available</span>
+            </a>
+          </div>
+          <div class="tb-version">{{ updateMessage?.latestVersion }}</div>
+          <div class="flex flex-row items-end justify-end gt-md-lg:!hidden">
+            <a mat-flat-button color="primary" class="tb-upgrade" [href]="updateMessage?.upgradeInstructionsUrl" target="_blank">{{ 'widgets.version-info.upgrade' | translate }}</a>
+          </div>
         </div>
-        <div class="tb-version">{{ updateMessage?.latestVersion }}</div>
-        <div class="flex flex-row items-end justify-end gt-md-lg:!hidden">
+        <div class="flex flex-col items-stretch justify-center md-lg:!hidden lt-md:!hidden">
           <a mat-flat-button color="primary" class="tb-upgrade" [href]="updateMessage?.upgradeInstructionsUrl" target="_blank">{{ 'widgets.version-info.upgrade' | translate }}</a>
         </div>
       </div>
-      <div class="flex flex-col items-stretch justify-center md-lg:!hidden lt-md:!hidden">
-        <a mat-flat-button color="primary" class="tb-upgrade" [href]="updateMessage?.upgradeInstructionsUrl" target="_blank">{{ 'widgets.version-info.upgrade' | translate }}</a>
+    } @else {
+      <div class="tb-version-info-container up-to-date flex flex-1 flex-col items-center justify-evenly">
+        <div class="material-icons-round check-icon">check</div>
+        <div class="up-to-date-text" translate>widgets.version-info.version-is-up-to-date</div>
       </div>
-    </div>
+    }
   </div>
 </div>
-<ng-template #versionUpToDate>
-  <div class="tb-version-info-container up-to-date flex flex-1 flex-col items-center justify-evenly">
-    <div class="material-icons-round check-icon">check</div>
-    <div class="up-to-date-text" translate>widgets.version-info.version-is-up-to-date</div>
-  </div>
-</ng-template>

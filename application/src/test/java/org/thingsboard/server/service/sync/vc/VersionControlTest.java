@@ -942,7 +942,6 @@ public class VersionControlTest extends AbstractControllerTest {
         }
         return result.getResult().stream().collect(Collectors.toMap(EntityTypeLoadResult::getEntityType, r -> r));
     }
-
     private List<EntityVersion> listVersions() throws Exception {
         PageData<EntityVersion> versions = doGetAsyncTyped("/api/entities/vc/version?branch=" + branch + "&pageSize=100&page=0&sortProperty=timestamp&sortOrder=DESC", new TypeReference<PageData<EntityVersion>>() {});
         return versions.getData();

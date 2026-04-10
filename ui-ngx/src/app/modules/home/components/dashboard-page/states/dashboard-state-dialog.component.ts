@@ -43,10 +43,11 @@ export interface DashboardStateDialogData {
 }
 
 @Component({
-  selector: 'tb-dashboard-state-dialog',
-  templateUrl: './dashboard-state-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: DashboardStateDialogComponent}],
-  styleUrls: []
+    selector: 'tb-dashboard-state-dialog',
+    templateUrl: './dashboard-state-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: DashboardStateDialogComponent }],
+    styleUrls: [],
+    standalone: false
 })
 export class DashboardStateDialogComponent extends
   DialogComponent<DashboardStateDialogComponent, DashboardStateInfo>

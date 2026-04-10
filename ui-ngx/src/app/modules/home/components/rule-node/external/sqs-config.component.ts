@@ -20,16 +20,17 @@ import { RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@app/shar
 import { SqsQueueType, sqsQueueTypeTranslations } from '@home/components/rule-node/rule-node-config.models';
 
 @Component({
-  selector: 'tb-external-node-sqs-config',
-  templateUrl: './sqs-config.component.html',
-  styleUrls: []
+    selector: 'tb-external-node-sqs-config',
+    templateUrl: './sqs-config.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class SqsConfigComponent extends RuleNodeConfigurationComponent {
 
   sqsConfigForm: UntypedFormGroup;
 
   sqsQueueType = SqsQueueType;
-  sqsQueueTypes = Object.keys(SqsQueueType);
+  sqsQueueTypes = Object.values(SqsQueueType);
   sqsQueueTypeTranslationsMap = sqsQueueTypeTranslations;
 
   constructor(private fb: UntypedFormBuilder) {

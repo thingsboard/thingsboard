@@ -41,17 +41,18 @@ import {
 } from '@home/components/widget/lib/settings/common/action/widget-action-settings-panel.component';
 
 @Component({
-  selector: 'tb-widget-action-settings',
-  templateUrl: './action-settings-button.component.html',
-  styleUrls: ['./action-settings-button.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => WidgetActionSettingsComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-widget-action-settings',
+    templateUrl: './action-settings-button.component.html',
+    styleUrls: ['./action-settings-button.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => WidgetActionSettingsComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class WidgetActionSettingsComponent implements OnInit, ControlValueAccessor {
 

@@ -91,21 +91,22 @@ export function flotDataKeyDefaultSettings(chartType: ChartType): TbFlotKeySetti
 }
 
 @Component({
-  selector: 'tb-flot-key-settings',
-  templateUrl: './flot-key-settings.component.html',
-  styleUrls: ['./../widget-settings.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => FlotKeySettingsComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => FlotKeySettingsComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-flot-key-settings',
+    templateUrl: './flot-key-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => FlotKeySettingsComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => FlotKeySettingsComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class FlotKeySettingsComponent extends PageComponent implements OnInit, ControlValueAccessor, Validator {
 

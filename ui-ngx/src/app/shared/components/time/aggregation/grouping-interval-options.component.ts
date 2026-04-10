@@ -29,16 +29,17 @@ import { isDefined } from '@core/utils';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-grouping-interval-options',
-  templateUrl: './grouping-interval-options.component.html',
-  styleUrls: ['./grouping-interval-options.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => GroupingIntervalOptionsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-grouping-interval-options',
+    templateUrl: './grouping-interval-options.component.html',
+    styleUrls: ['./grouping-interval-options.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => GroupingIntervalOptionsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class GroupingIntervalOptionsComponent implements OnInit, ControlValueAccessor {
 

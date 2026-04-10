@@ -32,9 +32,10 @@ import {
 import { MapModelDefinition } from '@shared/models/widget/maps/map-model.definition';
 
 @Component({
-  selector: 'tb-map-basic-config',
-  templateUrl: './map-basic-config.component.html',
-  styleUrls: ['../basic-config.scss']
+    selector: 'tb-map-basic-config',
+    templateUrl: './map-basic-config.component.html',
+    styleUrls: ['../basic-config.scss'],
+    standalone: false
 })
 export class MapBasicConfigComponent extends BasicWidgetConfigComponent {
 

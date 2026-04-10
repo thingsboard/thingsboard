@@ -31,9 +31,10 @@ import {
 } from '@home/components/widget/config/basic/chart/latest-chart-basic-config.component';
 
 @Component({
-  selector: 'tb-bar-chart-basic-config',
-  templateUrl: './latest-chart-basic-config.component.html',
-  styleUrls: ['../basic-config.scss']
+    selector: 'tb-bar-chart-basic-config',
+    templateUrl: './latest-chart-basic-config.component.html',
+    styleUrls: ['../basic-config.scss'],
+    standalone: false
 })
 export class BarChartBasicConfigComponent extends LatestChartBasicConfigComponent<BarChartWidgetSettings> {
 

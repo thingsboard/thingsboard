@@ -49,10 +49,11 @@ interface DiffInfo {
 }
 
 @Component({
-  selector: 'tb-entity-version-diff',
-  templateUrl: './entity-version-diff.component.html',
-  styleUrls: ['./entity-version-diff.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-entity-version-diff',
+    templateUrl: './entity-version-diff.component.html',
+    styleUrls: ['./entity-version-diff.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class EntityVersionDiffComponent extends PageComponent implements OnInit, OnDestroy {
 
@@ -125,6 +126,7 @@ export class EntityVersionDiffComponent extends PageComponent implements OnInit,
             {
               element: this.diffViewerElmRef.nativeElement,
               mode: 'ace/mode/json',
+              lockScrolling: false,
               left: {
                 copyLinkEnabled: false,
                 editable: false,

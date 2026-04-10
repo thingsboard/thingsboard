@@ -35,10 +35,11 @@ import { TbPopoverService } from '@shared/components/popover.service';
 import { UserId } from '@shared/models/id/user-id';
 
 @Component({
-  selector: 'tb-api-keys-table',
-  templateUrl: './api-keys-table.component.html',
-  styleUrls: ['./api-keys-table.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'tb-api-keys-table',
+    templateUrl: './api-keys-table.component.html',
+    styleUrls: ['./api-keys-table.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class ApiKeysTableComponent {
 

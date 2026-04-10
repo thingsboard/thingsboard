@@ -27,9 +27,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * @author Andrew Shvayka
- */
 public interface AttributesService {
 
     ListenableFuture<Optional<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, AttributeScope scope, String attributeKey);
@@ -48,7 +45,13 @@ public interface AttributesService {
 
     List<String> findAllKeysByEntityIds(TenantId tenantId, List<EntityId> entityIds);
 
-    List<String> findAllKeysByEntityIds(TenantId tenantId, List<EntityId> entityIds, AttributeScope scope);
+    List<String> findAllKeysByEntityIdsAndScope(TenantId tenantId, List<EntityId> entityIds, AttributeScope scope);
+
+    ListenableFuture<List<String>> findAllKeysByEntityIdsAndScopeAsync(TenantId tenantId, List<EntityId> entityIds, AttributeScope scope);
+
+    List<AttributeKvEntry> findLatestByEntityIdsAndScope(TenantId tenantId, List<EntityId> entityIds, AttributeScope scope);
+
+    ListenableFuture<List<AttributeKvEntry>> findLatestByEntityIdsAndScopeAsync(TenantId tenantId, List<EntityId> entityIds, AttributeScope scope);
 
     int removeAllByEntityId(TenantId tenantId, EntityId entityId);
 

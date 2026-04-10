@@ -15,22 +15,28 @@
     limitations under the License.
 
 -->
-<mat-grid-list *ngIf="cols" class="tb-navigation-cards" [cols]="cols" rowHeight="280px">
-  <mat-grid-tile [colspan]="sectionColspan(section)" *ngFor="let section of showHomeSections$| async">
-    <mat-card appearance="outlined" style="width: 100%;">
-      <mat-card-title>
-        <span translate class="mat-headline-5">{{section.name}}</span>
-      </mat-card-title>
-      <mat-card-content>
-        <mat-grid-list rowHeight="170px" [cols]="sectionPlaces(section).length">
-          <mat-grid-tile *ngFor="let place of sectionPlaces(section)">
-            <a mat-raised-button color="primary" class="tb-card-button" href="{{place.path}}" (click)="navigate($event, place.path)">
-              <tb-icon matButtonIcon class="tb-mat-96">{{place.icon}}</tb-icon>
-              <span>{{place.customTranslate ? (place.name | customTranslate) : (place.name | translate)}}</span>
-            </a>
-          </mat-grid-tile>
-        </mat-grid-list>
-      </mat-card-content>
-    </mat-card>
-  </mat-grid-tile>
-</mat-grid-list>
+@if (cols) {
+  <mat-grid-list class="tb-navigation-cards" [cols]="cols" rowHeight="280px">
+    @for (section of showHomeSections$| async; track section) {
+      <mat-grid-tile [colspan]="sectionColspan(section)">
+        <mat-card appearance="outlined" style="width: 100%;">
+          <mat-card-title>
+            <span translate class="mat-headline-5">{{section.name}}</span>
+          </mat-card-title>
+          <mat-card-content>
+            <mat-grid-list rowHeight="170px" [cols]="sectionPlaces(section).length">
+              @for (place of sectionPlaces(section); track place) {
+                <mat-grid-tile>
+                  <a mat-raised-button color="primary" class="tb-card-button" href="{{place.path}}" (click)="navigate($event, place.path)">
+                    <tb-icon matButtonIcon class="tb-mat-96">{{place.icon}}</tb-icon>
+                    <span>{{place.customTranslate ? (place.name | customTranslate) : (place.name | translate)}}</span>
+                  </a>
+                </mat-grid-tile>
+              }
+            </mat-grid-list>
+          </mat-card-content>
+        </mat-card>
+      </mat-grid-tile>
+    }
+  </mat-grid-list>
+}

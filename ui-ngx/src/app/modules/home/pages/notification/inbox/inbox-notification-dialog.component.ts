@@ -27,9 +27,10 @@ export interface InboxNotificationDialogData {
 }
 
 @Component({
-  selector: 'tb-inbox-notification-dialog',
-  templateUrl: './inbox-notification-dialog.component.html',
-  styleUrls: ['inbox-notification-dialog.component.scss']
+    selector: 'tb-inbox-notification-dialog',
+    templateUrl: './inbox-notification-dialog.component.html',
+    styleUrls: ['inbox-notification-dialog.component.scss'],
+    standalone: false
 })
 export class InboxNotificationDialogComponent extends DialogComponent<InboxNotificationDialogComponent, string> {
 

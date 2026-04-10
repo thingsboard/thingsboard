@@ -31,6 +31,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.SsrfProtectionValidator;
 import org.thingsboard.rule.engine.api.DeviceStateManager;
 import org.thingsboard.rule.engine.api.JobManager;
 import org.thingsboard.rule.engine.api.MailService;
@@ -42,6 +43,7 @@ import org.thingsboard.rule.engine.api.notification.SlackService;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
 import org.thingsboard.script.api.js.JsInvokeService;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
+import org.thingsboard.server.actors.calculatedField.CalculatedFieldException;
 import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.actors.tenant.DebugTbRateLimits;
 import org.thingsboard.server.cache.limits.RateLimitService;
@@ -143,6 +145,7 @@ import org.thingsboard.server.utils.DebugModeRateLimitsConfig;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -613,9 +616,27 @@ public class ActorSystemContext {
     @Getter
     private boolean localCacheType;
 
+    @Value("${actors.rule.external.ssrf_protection_enabled:false}")
+    private boolean ssrfProtectionEnabled;
+
+    @Value("${actors.rule.external.ssrf_additional_blocked_hosts:}")
+    private List<String> ssrfAdditionalBlockedHosts;
+
+    @Value("${actors.rule.external.ssrf_allowed_hosts:}")
+    private List<String> ssrfAllowedHosts;
+
     @PostConstruct
     public void init() {
         this.localCacheType = "caffeine".equals(cacheType);
+        SsrfProtectionValidator.setEnabled(ssrfProtectionEnabled);
+        SsrfProtectionValidator.setAdditionalBlockedHosts(ssrfAdditionalBlockedHosts);
+        SsrfProtectionValidator.setAllowedHosts(ssrfAllowedHosts);
+        if (!ssrfProtectionEnabled) {
+            log.warn("SSRF protection for external rule nodes is DISABLED. This allows rule chains to make HTTP requests to " +
+                    "internal/private network addresses including cloud metadata endpoints. It is strongly recommended to " +
+                    "enable SSRF protection by setting SSRF_PROTECTION_ENABLED=true. If your rule chains need to access " +
+                    "devices on local networks, use SSRF_ALLOWED_HOSTS to whitelist specific addresses or ranges.");
+        }
     }
 
     @Value("${actors.tenant.create_components_on_init:true}")
@@ -829,6 +850,18 @@ public class ActorSystemContext {
 
         ListenableFuture<Void> future = eventService.saveAsync(event.build());
         Futures.addCallback(future, RULE_CHAIN_DEBUG_EVENT_ERROR_CALLBACK, MoreExecutors.directExecutor());
+    }
+
+    public void persistCalculatedFieldDebugError(CalculatedFieldException cfe) {
+        String message;
+        if (cfe.getErrorMessage() != null) {
+            message = cfe.getErrorMessage();
+        } else if (cfe.getCause() != null) {
+            message = cfe.getCause().getMessage();
+        } else {
+            message = "N/A";
+        }
+        persistCalculatedFieldDebugEvent(cfe.getCtx().getTenantId(), cfe.getCtx().getCfId(), cfe.getEventEntity(), cfe.getArguments(), cfe.getMsgId(), cfe.getMsgType(), null, message);
     }
 
     public void persistCalculatedFieldDebugEvent(TenantId tenantId, CalculatedFieldId calculatedFieldId, EntityId entityId, JsonNode arguments, UUID tbMsgId, String tbMsgType, String result, String errorMessage) {

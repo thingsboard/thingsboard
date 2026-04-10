@@ -29,6 +29,7 @@ import {
   CellActionDescriptor,
   EntityActionTableColumn,
   EntityColumn,
+  EntityColumnsType,
   EntityTableColumn,
   EntityTableConfig,
   GroupActionDescriptor,
@@ -46,7 +47,7 @@ export interface IEntitiesTableComponent {
   groupActionDescriptors: Array<GroupActionDescriptor<BaseData<HasId>>>;
   cellActionDescriptors: Array<CellActionDescriptor<BaseData<HasId>>>;
   actionColumns: Array<EntityActionTableColumn<BaseData<HasId>>>;
-  entityColumns: Array<EntityTableColumn<BaseData<HasId>>>;
+  entityColumns: EntityColumnsType;
   displayedColumns: string[];
   headerCellStyleCache: Array<any>;
   cellContentCache: Array<SafeHtml>;

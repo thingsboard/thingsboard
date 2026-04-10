@@ -41,10 +41,11 @@ export interface FilterDialogData {
 }
 
 @Component({
-  selector: 'tb-filter-dialog',
-  templateUrl: './filter-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: FilterDialogComponent}],
-  styleUrls: ['./filter-dialog.component.scss']
+    selector: 'tb-filter-dialog',
+    templateUrl: './filter-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: FilterDialogComponent }],
+    styleUrls: ['./filter-dialog.component.scss'],
+    standalone: false
 })
 export class FilterDialogComponent extends DialogComponent<FilterDialogComponent, Filter>
   implements OnInit, ErrorStateMatcher {

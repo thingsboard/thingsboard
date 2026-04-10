@@ -100,6 +100,18 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
     @Autowired
     private DashboardService dashboardService;
 
+    @Value("${transport.lwm2m.server.bind_port:5685}")
+    private Integer lwm2mPort;
+
+    @Value("${transport.lwm2m.server.security.bind_port:5686}")
+    private Integer lwm2mSecurePort;
+
+    @Value("${transport.lwm2m.bootstrap.bind_port:5687}")
+    private Integer lwm2mBootstrapPort;
+
+    @Value("${transport.lwm2m.bootstrap.security.bind_port:5688}")
+    private Integer lwm2mBootstrapSecurePort;
+
     @Value("${security.java_cacerts.path:}")
     private String javaCacertsPath;
 
@@ -371,9 +383,9 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
             }
             int port;
             if (LwM2MSecurityMode.NO_SEC.equals(serverConfig.getSecurityMode())) {
-                port = serverConfig.isBootstrapServerIs() ? 5687 : 5685;
+                port = serverConfig.isBootstrapServerIs() ? lwm2mBootstrapPort : lwm2mPort;
             } else {
-                port = serverConfig.isBootstrapServerIs() ? 5688 : 5686;
+                port = serverConfig.isBootstrapServerIs() ? lwm2mBootstrapSecurePort : lwm2mSecurePort;
             }
             if (serverConfig.getPort() == null || serverConfig.getPort() != port) {
                 throw new DeviceCredentialsValidationException(server + " \"Port\" value = " + serverConfig.getPort() + ". This value for security " + serverConfig.getSecurityMode().name() + " must be " + port + "!");

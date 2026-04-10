@@ -35,21 +35,22 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-boolean-filter-predicate',
-  templateUrl: './boolean-filter-predicate.component.html',
-  styleUrls: ['./filter-predicate.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => BooleanFilterPredicateComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => BooleanFilterPredicateComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-boolean-filter-predicate',
+    templateUrl: './boolean-filter-predicate.component.html',
+    styleUrls: ['./filter-predicate.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => BooleanFilterPredicateComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => BooleanFilterPredicateComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class BooleanFilterPredicateComponent implements ControlValueAccessor, Validator, OnInit {
 

@@ -31,9 +31,10 @@ import {
 } from '../rule-node-config.models';
 
 @Component({
-  selector: 'tb-enrichment-node-get-telemetry-from-database',
-  templateUrl: './get-telemetry-from-database-config.component.html',
-  styleUrls: ['./get-telemetry-from-database-config.component.scss']
+    selector: 'tb-enrichment-node-get-telemetry-from-database',
+    templateUrl: './get-telemetry-from-database-config.component.html',
+    styleUrls: ['./get-telemetry-from-database-config.component.scss'],
+    standalone: false
 })
 export class GetTelemetryFromDatabaseConfigComponent extends RuleNodeConfigurationComponent {
 

@@ -21,9 +21,10 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 
 @Component({
-  selector: 'tb-quick-links-widget-settings',
-  templateUrl: './quick-links-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-quick-links-widget-settings',
+    templateUrl: './quick-links-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class QuickLinksWidgetSettingsComponent extends WidgetSettingsComponent {
 

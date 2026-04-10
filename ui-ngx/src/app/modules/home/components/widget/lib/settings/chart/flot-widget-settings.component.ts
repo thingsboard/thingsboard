@@ -106,21 +106,22 @@ export const flotDefaultSettings = (chartType: ChartType): Partial<TbFlotSetting
 };
 
 @Component({
-  selector: 'tb-flot-widget-settings',
-  templateUrl: './flot-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => FlotWidgetSettingsComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => FlotWidgetSettingsComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-flot-widget-settings',
+    templateUrl: './flot-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => FlotWidgetSettingsComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => FlotWidgetSettingsComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class FlotWidgetSettingsComponent extends PageComponent implements OnInit, ControlValueAccessor, Validator {
 
@@ -421,6 +422,10 @@ export class FlotWidgetSettingsComponent extends PageComponent implements OnInit
 
   dataKeysListForLabelsFormArray(): UntypedFormArray {
     return this.flotSettingsFormGroup.get('dataKeysListForLabels') as UntypedFormArray;
+  }
+
+  get typedSelectOptions() {
+    return this.dataKeysListForLabelsFormArray().controls as (AbstractControl & { new?: boolean })[];
   }
 
   public trackByLabelDataKey(index: number, labelDataKeyControl: AbstractControl): any {

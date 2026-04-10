@@ -156,6 +156,101 @@ public class TbUtilsTest {
     }
 
     @Test
+    public void parseBytesToInt_doesNotChangeInputData() {
+        byte[] data = new byte[]{(byte) 0xAA, (byte) 0xBB, (byte) 0xCC, (byte) 0xDD};
+        byte[] copy = data.clone();
+        TbUtils.parseBytesToInt(data, 0, 4, true);
+        Assertions.assertArrayEquals(copy, data);
+        TbUtils.parseBytesToInt(data, 0, 4, false);
+        Assertions.assertArrayEquals(copy, data);
+
+        TbUtils.parseBytesToUnsignedInt(data, 0, 4, true);
+        Assertions.assertArrayEquals(copy, data);
+        TbUtils.parseBytesToUnsignedInt(data, 0, 4, false);
+        Assertions.assertArrayEquals(copy, data);
+
+        TbUtils.parseBytesToLong(data, 0, 4, true);
+        Assertions.assertArrayEquals(copy, data);
+        TbUtils.parseBytesToLong(data, 0, 4, false);
+        Assertions.assertArrayEquals(copy, data);
+
+        TbUtils.parseBytesToFloat(data, 0, 4, true);
+        Assertions.assertArrayEquals(copy, data);
+        TbUtils.parseBytesToFloat(data, 0, 4, false);
+        Assertions.assertArrayEquals(copy, data);
+
+        TbUtils.parseBytesIntToFloat(data, 0, 4, true);
+        Assertions.assertArrayEquals(copy, data);
+        TbUtils.parseBytesIntToFloat(data, 0, 4, false);
+        Assertions.assertArrayEquals(copy, data);
+
+        TbUtils.parseBytesToDouble(data, 0, 4, true);
+        Assertions.assertArrayEquals(copy, data);
+        TbUtils.parseBytesToDouble(data, 0, 4, false);
+        Assertions.assertArrayEquals(copy, data);
+
+        TbUtils.parseBytesLongToDouble(data, 0, 4, true);
+        Assertions.assertArrayEquals(copy, data);
+        TbUtils.parseBytesLongToDouble(data, 0, 4, false);
+        Assertions.assertArrayEquals(copy, data);
+
+        List<Byte> listData = toList(new byte[]{(byte) 0xAA, (byte) 0xBB, (byte) 0xCC, (byte) 0xDD});
+        List<Byte> listCopy = new ArrayList<>(listData);
+        TbUtils.parseBytesToInt(listData, 0, 4, true);
+        Assertions.assertEquals(listCopy, listData);
+        TbUtils.parseBytesToInt(listData, 0, 4, false);
+        Assertions.assertEquals(listCopy, listData);
+
+        TbUtils.parseBytesToUnsignedInt(listData, 0, 4, true);
+        Assertions.assertEquals(listCopy, listData);
+        TbUtils.parseBytesToUnsignedInt(listData, 0, 4, false);
+        Assertions.assertEquals(listCopy, listData);
+
+        TbUtils.parseBytesToLong(listData, 0, 4, true);
+        Assertions.assertEquals(listCopy, listData);
+        TbUtils.parseBytesToLong(listData, 0, 4, false);
+        Assertions.assertEquals(listCopy, listData);
+
+        TbUtils.parseBytesToFloat(listData, 0, 4, true);
+        Assertions.assertEquals(listCopy, listData);
+        TbUtils.parseBytesToFloat(listData, 0, 4, false);
+        Assertions.assertEquals(listCopy, listData);
+
+        TbUtils.parseBytesIntToFloat(listData, 0, 4, true);
+        Assertions.assertEquals(listCopy, listData);
+        TbUtils.parseBytesIntToFloat(listData, 0, 4, false);
+        Assertions.assertEquals(listCopy, listData);
+
+        TbUtils.parseBytesToDouble(listData, 0, 4, true);
+        Assertions.assertEquals(listCopy, listData);
+        TbUtils.parseBytesToDouble(listData, 0, 4, false);
+        Assertions.assertEquals(listCopy, listData);
+
+        TbUtils.parseBytesLongToDouble(listData, 0, 4, true);
+        Assertions.assertEquals(listCopy, listData);
+        TbUtils.parseBytesLongToDouble(listData, 0, 4, false);
+        Assertions.assertEquals(listCopy, listData);
+    }
+
+    @Test
+    public void compare_parseBytesToInt_and_parseBytesToUnsignedInt() {
+        byte[] data = new byte[]{(byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF};
+
+        // 4 bytes: parseBytesToInt returns -1, parseBytesToUnsignedInt returns 4294967295L
+        Assertions.assertEquals(-1, TbUtils.parseBytesToInt(data, 0, 4, true));
+        Assertions.assertEquals(4294967295L, TbUtils.parseBytesToUnsignedInt(data, 0, 4, true));
+
+        // 2 bytes (0xFFFF): both return 65535 (no sign extension for parseBytesToInt when length < 4)
+        Assertions.assertEquals(65535, TbUtils.parseBytesToInt(data, 0, 2, true));
+        Assertions.assertEquals(65535L, TbUtils.parseBytesToUnsignedInt(data, 0, 2, true));
+
+        // 2 bytes with high bit set (0x8000)
+        byte[] data2 = new byte[]{(byte) 0x80, (byte) 0x00};
+        Assertions.assertEquals(32768, TbUtils.parseBytesToInt(data2, 0, 2, true));
+        Assertions.assertEquals(32768L, TbUtils.parseBytesToUnsignedInt(data2, 0, 2, true));
+    }
+
+    @Test
     public void toFlatMap() {
         ExecutionHashMap<String, Object> inputMap = new ExecutionHashMap<>(16, ctx);
         inputMap.put("name", "Alice");

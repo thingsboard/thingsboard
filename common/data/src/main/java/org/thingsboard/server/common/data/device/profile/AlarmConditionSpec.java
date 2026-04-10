@@ -19,9 +19,20 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.io.Serializable;
 
+@Schema(
+        description = "Specification for alarm conditions",
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "SIMPLE", schema = SimpleAlarmConditionSpec.class),
+                @DiscriminatorMapping(value = "DURATION", schema = DurationAlarmConditionSpec.class),
+                @DiscriminatorMapping(value = "REPEATING", schema = RepeatingAlarmConditionSpec.class)
+        }
+)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,

@@ -36,11 +36,12 @@ import { ValueType } from '@shared/models/constants';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-set-value-action-settings-panel',
-  templateUrl: './set-value-action-settings-panel.component.html',
-  providers: [],
-  styleUrls: ['./action-settings-panel.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-set-value-action-settings-panel',
+    templateUrl: './set-value-action-settings-panel.component.html',
+    providers: [],
+    styleUrls: ['./action-settings-panel.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class SetValueActionSettingsPanelComponent extends PageComponent implements OnInit {
 

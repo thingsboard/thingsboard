@@ -44,10 +44,11 @@ export interface RelationDialogData {
 }
 
 @Component({
-  selector: 'tb-relation-dialog',
-  templateUrl: './relation-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: RelationDialogComponent}],
-  styleUrls: ['./relation-dialog.component.scss']
+    selector: 'tb-relation-dialog',
+    templateUrl: './relation-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: RelationDialogComponent }],
+    styleUrls: ['./relation-dialog.component.scss'],
+    standalone: false
 })
 export class RelationDialogComponent extends DialogComponent<RelationDialogComponent, boolean> implements OnInit, ErrorStateMatcher {
 

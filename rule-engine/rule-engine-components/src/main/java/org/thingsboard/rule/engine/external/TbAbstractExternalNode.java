@@ -30,7 +30,7 @@ public abstract class TbAbstractExternalNode implements TbNode {
 
     protected void tellSuccess(TbContext ctx, TbMsg tbMsg) {
         if (forceAck) {
-            ctx.enqueueForTellNext(tbMsg.copyWithNewCtx(), TbNodeConnectionType.SUCCESS);
+            ctx.enqueueForTellNext(tbMsg.copyWithNewCtx().build(), TbNodeConnectionType.SUCCESS);
         } else {
             ctx.tellSuccess(tbMsg);
         }
@@ -39,9 +39,9 @@ public abstract class TbAbstractExternalNode implements TbNode {
     protected void tellFailure(TbContext ctx, TbMsg tbMsg, Throwable t) {
         if (forceAck) {
             if (t == null) {
-                ctx.enqueueForTellNext(tbMsg.copyWithNewCtx(), TbNodeConnectionType.FAILURE);
+                ctx.enqueueForTellNext(tbMsg.copyWithNewCtx().build(), TbNodeConnectionType.FAILURE);
             } else {
-                ctx.enqueueForTellFailure(tbMsg.copyWithNewCtx(), t);
+                ctx.enqueueForTellFailure(tbMsg.copyWithNewCtx().build(), t);
             }
         } else {
             if (t == null) {
@@ -55,7 +55,7 @@ public abstract class TbAbstractExternalNode implements TbNode {
     protected TbMsg ackIfNeeded(TbContext ctx, TbMsg msg) {
         if (forceAck) {
             ctx.ack(msg);
-            return msg.copyWithNewCtx();
+            return msg.copyWithNewCtx().build();
         } else {
             return msg;
         }

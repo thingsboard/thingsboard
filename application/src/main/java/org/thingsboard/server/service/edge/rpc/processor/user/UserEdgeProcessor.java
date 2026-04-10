@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.pat.ApiKey;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -34,6 +35,7 @@ import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.exception.DataValidationException;
+import org.thingsboard.server.gen.edge.v1.ApiKeyUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
@@ -42,6 +44,7 @@ import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -134,6 +137,10 @@ public class UserEdgeProcessor extends BaseUserProcessor implements UserProcesso
                     UserCredentials userCredentialsByUserId = edgeCtx.getUserService().findUserCredentialsByUserId(edgeEvent.getTenantId(), userId);
                     if (userCredentialsByUserId != null) {
                         builder.addUserCredentialsUpdateMsg(EdgeMsgConstructorUtils.constructUserCredentialsUpdatedMsg(userCredentialsByUserId));
+                    }
+                    List<ApiKey> apiKeys = edgeCtx.getApiKeyService().findApiKeysByUserId(edgeEvent.getTenantId(), userId);
+                    for (ApiKey apiKey : apiKeys) {
+                        builder.addApiKeyUpdateMsg(EdgeMsgConstructorUtils.constructApiKeyUpdatedMsg(msgType, apiKey));
                     }
                     return builder.build();
                 }

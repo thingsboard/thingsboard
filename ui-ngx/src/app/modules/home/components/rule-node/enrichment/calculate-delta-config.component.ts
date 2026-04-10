@@ -22,8 +22,9 @@ import { RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@shared/m
 import { deepTrim, isDefinedAndNotNull } from '@app/core/utils';
 
 @Component({
-  selector: 'tb-enrichment-node-calculate-delta-config',
-  templateUrl: './calculate-delta-config.component.html'
+    selector: 'tb-enrichment-node-calculate-delta-config',
+    templateUrl: './calculate-delta-config.component.html',
+    standalone: false
 })
 export class CalculateDeltaConfigComponent extends RuleNodeConfigurationComponent {
 

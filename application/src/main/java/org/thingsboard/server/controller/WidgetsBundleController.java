@@ -15,13 +15,13 @@
  */
 package org.thingsboard.server.controller;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -222,11 +222,10 @@ public class WidgetsBundleController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Get all Widget Bundles (getWidgetsBundles)",
-            notes = "Returns an array of Widget Bundle objects that are available for current user." + WIDGET_BUNDLE_DESCRIPTION + " " + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
+    @Hidden
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/widgetsBundles")
-    public List<WidgetsBundle> getWidgetsBundles() throws ThingsboardException {
+    public List<WidgetsBundle> getWidgetsBundlesV1() throws ThingsboardException {
         if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
             return checkNotNull(widgetsBundleService.findSystemWidgetsBundles(getTenantId()));
         } else {
@@ -235,19 +234,35 @@ public class WidgetsBundleController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Get Widgets Bundles By Ids (getWidgetsBundlesByIds)",
-            notes = "Requested widgets bundles must be system level or owned by tenant of the user which is performing the request. " +
-                    NEW_LINE)
+    @ApiOperation(value = "Get all Widget Bundles (getAllWidgetsBundles)",
+            notes = "Returns an array of Widget Bundle objects that are available for current user." + WIDGET_BUNDLE_DESCRIPTION + " " + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping(value = "/widgetsBundles/all")
+    public List<WidgetsBundle> getAllWidgetsBundles() throws ThingsboardException {
+        return getWidgetsBundlesV1();
+    }
+
+    @Hidden
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/widgetsBundles", params = {"widgetsBundleIds"})
     public List<WidgetsBundle> getWidgetsBundlesByIds(
-            @Parameter(description = "A list of widgets bundle ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
             @RequestParam("widgetsBundleIds") Set<UUID> widgetsBundleUUIDs) throws ThingsboardException {
         List<WidgetsBundleId> widgetsBundleIds = new ArrayList<>();
         for (UUID widgetsBundleUUID : widgetsBundleUUIDs) {
             widgetsBundleIds.add(new WidgetsBundleId(widgetsBundleUUID));
         }
         return widgetsBundleService.findSystemOrTenantWidgetsBundlesByIds(getTenantId(), widgetsBundleIds);
+    }
+
+    @ApiOperation(value = "Get Widgets Bundles By Ids (getWidgetsBundlesList)",
+            notes = "Requested widgets bundles must be system level or owned by tenant of the user which is performing the request. " +
+                    NEW_LINE)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping(value = "/widgetsBundles/list", params = {"widgetsBundleIds"})
+    public List<WidgetsBundle> getWidgetsBundlesList(
+            @Parameter(description = "A list of widgets bundle ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+            @RequestParam("widgetsBundleIds") Set<UUID> widgetsBundleUUIDs) throws ThingsboardException {
+        return getWidgetsBundlesByIds(widgetsBundleUUIDs);
     }
 
 }

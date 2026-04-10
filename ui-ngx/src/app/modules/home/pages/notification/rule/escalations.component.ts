@@ -35,21 +35,22 @@ import { takeUntil } from 'rxjs/operators';
 import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
-  selector: 'tb-escalations-component',
-  templateUrl: './escalations.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => EscalationsComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => EscalationsComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-escalations-component',
+    templateUrl: './escalations.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => EscalationsComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => EscalationsComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class EscalationsComponent implements ControlValueAccessor, Validator, OnInit, OnDestroy {
 

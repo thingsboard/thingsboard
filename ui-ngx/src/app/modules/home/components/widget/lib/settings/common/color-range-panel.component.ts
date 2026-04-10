@@ -27,11 +27,12 @@ import {
 } from '@home/components/widget/lib/settings/common/color-range-settings.component';
 
 @Component({
-  selector: 'tb-color-range-panel',
-  templateUrl: './color-range-panel.component.html',
-  providers: [],
-  styleUrls: ['./color-settings-panel.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-color-range-panel',
+    templateUrl: './color-range-panel.component.html',
+    providers: [],
+    styleUrls: ['./color-settings-panel.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class ColorRangePanelComponent extends PageComponent implements OnInit {
 

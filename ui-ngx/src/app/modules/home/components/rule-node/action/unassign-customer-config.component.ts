@@ -20,9 +20,10 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@app/shared/models/rule-node.models';
 
 @Component({
-  selector: 'tb-action-node-un-assign-to-customer-config',
-  templateUrl: './unassign-customer-config.component.html',
-  styleUrls: []
+    selector: 'tb-action-node-un-assign-to-customer-config',
+    templateUrl: './unassign-customer-config.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class UnassignCustomerConfigComponent extends RuleNodeConfigurationComponent {
 

@@ -119,16 +119,18 @@
               </mat-expansion-panel>
             </div>
           }
+        </div>
       </div>
-    </div>
 
       <section class="tb-form-panel stroked">
         <div class="flex flex-row items-center justify-between">
           <div class="tb-form-panel-title">{{ 'alarm-rule.type' | translate }}</div>
-          <tb-toggle-select formControlName="type" selectMediaBreakpoint="xs" [disabled]="isNoData">
-            <tb-toggle-option *ngFor="let alarmConditionType of alarmConditionTypes" [value]="alarmConditionType">
-              {{ alarmConditionTypeTranslation.get(alarmConditionType) | translate }}
-            </tb-toggle-option>
+          <tb-toggle-select formControlName="type" selectMediaBreakpoint="xs">
+            @for (alarmConditionType of alarmConditionTypes; track alarmConditionType) {
+              <tb-toggle-option [value]="alarmConditionType">
+                {{ alarmConditionTypeTranslation.get(alarmConditionType) | translate }}
+              </tb-toggle-option>
+            }
           </tb-toggle-select>
         </div>
         @if (isNoData) {
@@ -157,13 +159,17 @@
                 <mat-form-field class="mat-block" appearance="outline">
                   <mat-select formControlName="unit" required
                               placeholder="{{ 'alarm-rule.condition-duration-time-unit' | translate }}">
-                    <mat-option *ngFor="let timeUnit of timeUnits" [value]="timeUnit">
-                      {{ timeUnitTranslations.get(timeUnit) | translate }}
-                    </mat-option>
+                    @for (timeUnit of timeUnits; track timeUnit) {
+                      <mat-option [value]="timeUnit">
+                        {{ timeUnitTranslations.get(timeUnit) | translate }}
+                      </mat-option>
+                    }
                   </mat-select>
-                  <mat-error *ngIf="conditionFormGroup.get('unit').hasError('required')">
-                    {{ 'alarm-rule.condition-duration-time-unit-required' | translate }}
-                  </mat-error>
+                  @if (conditionFormGroup.get('unit').hasError('required')) {
+                    <mat-error>
+                      {{ 'alarm-rule.condition-duration-time-unit-required' | translate }}
+                    </mat-error>
+                  }
                 </mat-form-field>
               </div>
             </div>

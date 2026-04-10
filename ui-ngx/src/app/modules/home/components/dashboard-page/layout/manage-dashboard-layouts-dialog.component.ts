@@ -75,10 +75,11 @@ export interface DashboardLayoutSettings {
 }
 
 @Component({
-  selector: 'tb-manage-dashboard-layouts-dialog',
-  templateUrl: './manage-dashboard-layouts-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: ManageDashboardLayoutsDialogComponent}],
-  styleUrls: ['./manage-dashboard-layouts-dialog.component.scss', '../../../components/dashboard/layout-button.scss']
+    selector: 'tb-manage-dashboard-layouts-dialog',
+    templateUrl: './manage-dashboard-layouts-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: ManageDashboardLayoutsDialogComponent }],
+    styleUrls: ['./manage-dashboard-layouts-dialog.component.scss', '../../../components/dashboard/layout-button.scss'],
+    standalone: false
 })
 export class ManageDashboardLayoutsDialogComponent extends DialogComponent<ManageDashboardLayoutsDialogComponent, DashboardStateLayouts>
   implements ErrorStateMatcher, OnDestroy {

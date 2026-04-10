@@ -31,7 +31,7 @@ import {
   removeTbImagePrefix,
   ResourceSubType
 } from '@shared/models/resource.models';
-import { catchError, map, switchMap } from 'rxjs/operators';
+import { catchError, finalize, map, switchMap } from 'rxjs/operators';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { blobToBase64, blobToText } from '@core/utils';
 import { ResourcesService } from '@core/services/resources.service';
@@ -116,16 +116,15 @@ export class ImageService {
       request = new ReplaySubject<Blob>(1);
       this.imagesLoading[imageLink] = request;
       const options = defaultHttpOptionsFromConfig({ignoreLoading: true, ignoreErrors: true});
-      this.http.get(imageLink, {...options, ...{ responseType: 'blob' } }).subscribe({
+      this.http.get(imageLink, {...options, ...{ responseType: 'blob' } }).pipe(
+        finalize(()=> delete this.imagesLoading[imageLink])
+      ).subscribe({
         next: (value) => {
           request.next(value);
           request.complete();
         },
         error: err => {
           request.error(err);
-        },
-        complete: () => {
-          delete this.imagesLoading[imageLink];
         }
       });
     }

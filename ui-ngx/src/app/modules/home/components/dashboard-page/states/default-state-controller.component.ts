@@ -29,9 +29,10 @@ import { EntityService } from '@core/http/entity.service';
 import { MobileService } from '@core/services/mobile.service';
 
 @Component({
-  selector: 'tb-default-state-controller',
-  templateUrl: './default-state-controller.component.html',
-  styleUrls: ['./default-state-controller.component.scss']
+    selector: 'tb-default-state-controller',
+    templateUrl: './default-state-controller.component.html',
+    styleUrls: ['./default-state-controller.component.scss'],
+    standalone: false
 })
 export class DefaultStateControllerComponent extends StateControllerComponent implements OnInit, OnDestroy {
 

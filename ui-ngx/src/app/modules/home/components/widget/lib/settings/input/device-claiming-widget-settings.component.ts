@@ -21,9 +21,10 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 
 @Component({
-  selector: 'tb-device-claiming-widget-settings',
-  templateUrl: './device-claiming-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-device-claiming-widget-settings',
+    templateUrl: './device-claiming-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class DeviceClaimingWidgetSettingsComponent extends WidgetSettingsComponent {
 

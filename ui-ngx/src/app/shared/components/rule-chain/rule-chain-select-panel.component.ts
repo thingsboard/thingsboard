@@ -34,9 +34,10 @@ export interface RuleChainSelectPanelData {
 }
 
 @Component({
-  selector: 'tb-rule-chain-select-panel',
-  templateUrl: './rule-chain-select-panel.component.html',
-  styleUrls: ['./rule-chain-select-panel.component.scss']
+    selector: 'tb-rule-chain-select-panel',
+    templateUrl: './rule-chain-select-panel.component.html',
+    styleUrls: ['./rule-chain-select-panel.component.scss'],
+    standalone: false
 })
 export class RuleChainSelectPanelComponent implements AfterViewInit {
 

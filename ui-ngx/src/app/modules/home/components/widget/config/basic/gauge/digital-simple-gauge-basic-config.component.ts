@@ -45,9 +45,10 @@ import { ColorSettings, ColorType } from '@shared/models/widget-settings.models'
 import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Component({
-  selector: 'tb-digital-simple-gauge-basic-config',
-  templateUrl: './digital-simple-gauge-basic-config.component.html',
-  styleUrls: ['../basic-config.scss']
+    selector: 'tb-digital-simple-gauge-basic-config',
+    templateUrl: './digital-simple-gauge-basic-config.component.html',
+    styleUrls: ['../basic-config.scss'],
+    standalone: false
 })
 
 export class DigitalSimpleGaugeBasicConfigComponent extends BasicWidgetConfigComponent {

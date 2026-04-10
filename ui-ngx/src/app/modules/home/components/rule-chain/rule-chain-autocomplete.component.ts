@@ -31,16 +31,18 @@ import { RuleChainService } from '@core/http/rule-chain.service';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { RuleChainType } from '@app/shared/models/rule-chain.models';
 import { getEntityDetailsPageURL } from '@core/utils';
+import { MatFormFieldAppearance } from '@angular/material/form-field';
 
 @Component({
-  selector: 'tb-rule-chain-autocomplete',
-  templateUrl: './rule-chain-autocomplete.component.html',
-  styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => RuleChainAutocompleteComponent),
-    multi: true
-  }]
+    selector: 'tb-rule-chain-autocomplete',
+    templateUrl: './rule-chain-autocomplete.component.html',
+    styleUrls: [],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => RuleChainAutocompleteComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class RuleChainAutocompleteComponent implements ControlValueAccessor, OnInit {
 
@@ -56,6 +58,9 @@ export class RuleChainAutocompleteComponent implements ControlValueAccessor, OnI
 
   @Input()
   ruleChainType: RuleChainType = RuleChainType.CORE;
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   private requiredValue: boolean;
   get required(): boolean {

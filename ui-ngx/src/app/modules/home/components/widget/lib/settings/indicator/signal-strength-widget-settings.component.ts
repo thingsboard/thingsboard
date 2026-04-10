@@ -30,9 +30,10 @@ import { DateFormatProcessor, DateFormatSettings } from '@shared/models/widget-s
 import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Component({
-  selector: 'tb-signal-strength-widget-settings',
-  templateUrl: './signal-strength-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss'],
+    selector: 'tb-signal-strength-widget-settings',
+    templateUrl: './signal-strength-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class SignalStrengthWidgetSettingsComponent extends WidgetSettingsComponent {
 

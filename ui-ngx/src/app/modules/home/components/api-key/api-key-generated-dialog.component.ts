@@ -28,9 +28,10 @@ export interface ApiKeyGeneratedDialogData {
 }
 
 @Component({
-  selector: 'tb-api-key-generated-dialog',
-  templateUrl: './api-key-generated-dialog.component.html',
-  styleUrls: ['api-key-generated-dialog.component.scss']
+    selector: 'tb-api-key-generated-dialog',
+    templateUrl: './api-key-generated-dialog.component.html',
+    styleUrls: ['api-key-generated-dialog.component.scss'],
+    standalone: false
 })
 export class ApiKeyGeneratedDialogComponent extends DialogComponent<ApiKeyGeneratedDialogComponent, void> {
 

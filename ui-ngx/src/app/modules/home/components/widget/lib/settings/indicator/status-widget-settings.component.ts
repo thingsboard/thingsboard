@@ -28,9 +28,10 @@ import {
 import { ValueType } from '@shared/models/constants';
 
 @Component({
-  selector: 'tb-status-widget-settings',
-  templateUrl: './status-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss'],
+    selector: 'tb-status-widget-settings',
+    templateUrl: './status-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class StatusWidgetSettingsComponent extends WidgetSettingsComponent {
 

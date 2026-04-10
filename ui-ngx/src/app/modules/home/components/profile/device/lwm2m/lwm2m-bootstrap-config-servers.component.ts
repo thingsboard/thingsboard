@@ -18,11 +18,12 @@ import { Component, EventEmitter, forwardRef, Input, OnDestroy, OnInit, Output }
 import {
   AbstractControl,
   ControlValueAccessor,
-  UntypedFormArray,
   UntypedFormBuilder, UntypedFormControl,
   UntypedFormGroup,
   NG_VALIDATORS,
-  NG_VALUE_ACCESSOR
+  NG_VALUE_ACCESSOR,
+  FormControl,
+  FormArray
 } from '@angular/forms';
 import { of, Subject } from 'rxjs';
 import { ServerSecurityConfig } from '@home/components/profile/device/lwm2m/lwm2m-profile-config.models';
@@ -35,20 +36,21 @@ import { DeviceProfileService } from '@core/http/device-profile.service';
 import { Lwm2mSecurityType } from '@shared/models/lwm2m-security-config.models';
 
 @Component({
-  selector: 'tb-profile-lwm2m-bootstrap-config-servers',
-  templateUrl: './lwm2m-bootstrap-config-servers.component.html',
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => Lwm2mBootstrapConfigServersComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => Lwm2mBootstrapConfigServersComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-profile-lwm2m-bootstrap-config-servers',
+    templateUrl: './lwm2m-bootstrap-config-servers.component.html',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => Lwm2mBootstrapConfigServersComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => Lwm2mBootstrapConfigServersComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class Lwm2mBootstrapConfigServersComponent implements OnInit, ControlValueAccessor, OnDestroy {
 
@@ -103,8 +105,8 @@ export class Lwm2mBootstrapConfigServersComponent implements OnInit, ControlValu
     this.destroy$.complete();
   }
 
-  get serverConfigsFromArray(): UntypedFormArray {
-    return this.bootstrapConfigServersFormGroup.get('serverConfigs') as UntypedFormArray;
+  get serverConfigsFromArray(): FormArray<FormControl> {
+    return this.bootstrapConfigServersFormGroup.get('serverConfigs') as FormArray<FormControl>;
   }
 
   setDisabledState(isDisabled: boolean): void {

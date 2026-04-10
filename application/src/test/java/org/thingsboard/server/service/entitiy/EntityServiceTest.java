@@ -115,6 +115,8 @@ import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -1749,13 +1751,13 @@ public class EntityServiceTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testFindTenantTelemetry() {
+    public void testFindTenantTelemetry() throws ExecutionException, InterruptedException, TimeoutException {
         // save timeseries by sys admin
         BasicTsKvEntry timeseries = new BasicTsKvEntry(42L, new DoubleDataEntry("temperature", 45.5));
-        timeseriesService.save(TenantId.SYS_TENANT_ID, tenantId, timeseries);
+        timeseriesService.save(TenantId.SYS_TENANT_ID, tenantId, timeseries).get(TIMEOUT, TimeUnit.SECONDS);
 
         AttributeKvEntry attr = new BaseAttributeKvEntry(new LongDataEntry("attr", 10L), 42L);
-        attributesService.save(TenantId.SYS_TENANT_ID, tenantId, SERVER_SCOPE, List.of(attr));
+        attributesService.save(TenantId.SYS_TENANT_ID, tenantId, SERVER_SCOPE, List.of(attr)).get(TIMEOUT, TimeUnit.SECONDS);
 
         SingleEntityFilter singleEntityFilter = new SingleEntityFilter();
         singleEntityFilter.setSingleEntity(AliasEntityId.fromEntityId(tenantId));

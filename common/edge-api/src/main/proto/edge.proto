@@ -45,8 +45,17 @@ enum EdgeVersion {
   V_4_1_0 = 11;
   V_4_2_0 = 12;
   V_4_3_0 = 13;
+  V_4_2_1_2 = 14;
+  V_4_2_2 = 4220;
+  V_4_2_2_1 = 4221;
+  V_4_2_2_2 = 4222;
+  V_4_3_0_1 = 15;
+  V_4_3_1 = 4310;
+  V_4_3_1_1 = 4311;
+  V_4_3_1_2 = 4312;
+  V_4_4_0 = 4400;
 
-  V_LATEST = 999;
+  V_LATEST = 99999;
 }
 
 /**
@@ -135,6 +144,13 @@ message CalculatedFieldUpdateMsg{
 }
 
 message AiModelUpdateMsg{
+  UpdateMsgType msgType = 1;
+  int64 idMSB = 2;
+  int64 idLSB = 3;
+  string entity = 4;
+}
+
+message ApiKeyUpdateMsg{
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
@@ -451,6 +467,7 @@ message UplinkMsg {
   repeated AiModelUpdateMsg aiModelUpdateMsg = 27;
   repeated UserUpdateMsg userUpdateMsg = 28;
   repeated UserCredentialsUpdateMsg userCredentialsUpdateMsg = 29;
+  repeated ApiKeyUpdateMsg apiKeyUpdateMsg = 30;
 }
 
 message UplinkResponseMsg {
@@ -502,4 +519,5 @@ message DownlinkMsg {
   repeated OAuth2DomainUpdateMsg oAuth2DomainUpdateMsg = 34;
   repeated CalculatedFieldUpdateMsg calculatedFieldUpdateMsg = 35;
   repeated AiModelUpdateMsg aiModelUpdateMsg = 36;
+  repeated ApiKeyUpdateMsg apiKeyUpdateMsg = 37;
 }

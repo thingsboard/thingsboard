@@ -22,10 +22,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.JsonObject;
 import com.google.protobuf.AbstractMessage;
 import io.netty.handler.codec.mqtt.MqttQoS;
+import lombok.extern.slf4j.Slf4j;
 import org.awaitility.Awaitility;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.adaptor.JsonConverter;
@@ -84,12 +87,19 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.gen.edge.v1.UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE;
+import static org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest.MQTT_PORT;
 
 @TestPropertySource(properties = {
         "transport.mqtt.enabled=true"
 })
+@Slf4j
 @DaoSqlTest
 public class DeviceEdgeTest extends AbstractEdgeTest {
+    @DynamicPropertySource
+    static void props(DynamicPropertyRegistry registry) {
+        log.warn("transport.mqtt.bind_port = {}", MQTT_PORT);
+        registry.add("transport.mqtt.bind_port", () -> MQTT_PORT);
+    }
 
     private static final String DEFAULT_DEVICE_TYPE = "default";
 
@@ -131,7 +141,7 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
         Device deviceFromMsg = JacksonUtil.fromString(deviceUpdateMsg.getEntity(), Device.class, true);
         Assert.assertNotNull(deviceFromMsg);
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, deviceUpdateMsg.getMsgType());
-        Assert.assertEquals(savedDevice, deviceFromMsg);
+        compareHasVersionEntities(savedDevice, deviceFromMsg);
         Assert.assertEquals(savedDevice.getId(), deviceFromMsg.getId());
         Assert.assertEquals(savedDevice.getName(), deviceFromMsg.getName());
         Assert.assertEquals(savedDevice.getType(), deviceFromMsg.getType());
@@ -212,7 +222,7 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
         Assert.assertTrue(latestMessage instanceof DeviceCredentialsUpdateMsg);
         DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg = (DeviceCredentialsUpdateMsg) latestMessage;
         DeviceCredentials deviceCredentialsMsg = JacksonUtil.fromString(deviceCredentialsUpdateMsg.getEntity(), DeviceCredentials.class, true);
-        Assert.assertEquals(deviceCredentials, deviceCredentialsMsg);
+        compareHasVersionEntities(deviceCredentials, deviceCredentialsMsg);
 
         // update device credentials - X509_CERTIFICATE
         edgeImitator.expectMessageAmount(1);
@@ -262,7 +272,7 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
         Device deviceMsg = JacksonUtil.fromString(deviceUpdateMsg.getEntity(), Device.class, true);
         Assert.assertNotNull(deviceMsg);
         Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, deviceUpdateMsg.getMsgType());
-        Assert.assertEquals(savedDevice, deviceMsg);
+        compareHasVersionEntities(savedDevice, deviceMsg);
         Assert.assertEquals(firmwareOtaPackageInfo.getId(), deviceMsg.getFirmwareId());
         Assert.assertEquals(softwareOtaPackageInfo.getId(), deviceMsg.getSoftwareId());
         deviceData = deviceMsg.getDeviceData();
@@ -377,7 +387,7 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
         DeviceCredentials deviceCredentialsMsg = JacksonUtil.fromString(deviceCredentialsUpdateMsg.getEntity(), DeviceCredentials.class, true);
         Assert.assertNotNull(deviceCredentialsMsg);
         Assert.assertEquals(device.getId(), deviceCredentialsMsg.getDeviceId());
-        Assert.assertEquals(deviceCredentials, deviceCredentialsMsg);
+        compareHasVersionEntities(deviceCredentials, deviceCredentialsMsg);
     }
 
     @Test

@@ -21,9 +21,10 @@ import { EntityTabsComponent } from '../../components/entity/entity-tabs.compone
 import { RuleChain } from '@shared/models/rule-chain.models';
 
 @Component({
-  selector: 'tb-rulechain-tabs',
-  templateUrl: './rulechain-tabs.component.html',
-  styleUrls: []
+    selector: 'tb-rulechain-tabs',
+    templateUrl: './rulechain-tabs.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class RuleChainTabsComponent extends EntityTabsComponent<RuleChain> {
 

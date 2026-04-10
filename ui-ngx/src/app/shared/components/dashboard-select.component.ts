@@ -24,7 +24,8 @@ import {
   OnInit,
   StaticProvider,
   ViewChild,
-  ViewContainerRef
+  ViewContainerRef,
+  DOCUMENT
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable, of } from 'rxjs';
@@ -41,7 +42,7 @@ import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { TooltipPosition } from '@angular/material/tooltip';
 import { CdkOverlayOrigin, ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { DOCUMENT } from '@angular/common';
+
 import { WINDOW } from '@core/services/window.service';
 import { ComponentPortal } from '@angular/cdk/portal';
 import {
@@ -52,14 +53,15 @@ import { NULL_UUID } from '@shared/models/id/has-uuid';
 
 // @dynamic
 @Component({
-  selector: 'tb-dashboard-select',
-  templateUrl: './dashboard-select.component.html',
-  styleUrls: ['./dashboard-select.component.scss'],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => DashboardSelectComponent),
-    multi: true
-  }]
+    selector: 'tb-dashboard-select',
+    templateUrl: './dashboard-select.component.html',
+    styleUrls: ['./dashboard-select.component.scss'],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DashboardSelectComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class DashboardSelectComponent implements ControlValueAccessor, OnInit {
 

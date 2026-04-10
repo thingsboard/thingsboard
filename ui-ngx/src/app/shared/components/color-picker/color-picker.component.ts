@@ -35,16 +35,17 @@ const colorPresetsHex =
    '#A1ADB1', '#F9A19B', '#FFD190', '#FFF59D', '#C5E1A4', '#A5D7A7', '#80CBC3', '#81C4E9', '#B39CDB', '#CD93D7', '#F48FB1', '#BC91A4'];
 
 @Component({
-  selector: `tb-color-picker`,
-  templateUrl: `./color-picker.component.html`,
-  styleUrls: [`./color-picker.component.scss`],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ColorPickerComponent),
-      multi: true
-    }
-  ]
+    selector: `tb-color-picker`,
+    templateUrl: `./color-picker.component.html`,
+    styleUrls: [`./color-picker.component.scss`],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ColorPickerComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ColorPickerComponent implements ControlValueAccessor, OnDestroy {
 

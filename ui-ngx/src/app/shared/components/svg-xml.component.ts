@@ -37,22 +37,23 @@ import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
-  selector: 'tb-svg-xml',
-  templateUrl: './svg-xml.component.html',
-  styleUrls: ['./svg-xml.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => SvgXmlComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => SvgXmlComponent),
-      multi: true,
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-svg-xml',
+    templateUrl: './svg-xml.component.html',
+    styleUrls: ['./svg-xml.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => SvgXmlComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => SvgXmlComponent),
+            multi: true,
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class SvgXmlComponent implements OnInit, OnDestroy, ControlValueAccessor, Validator {
 

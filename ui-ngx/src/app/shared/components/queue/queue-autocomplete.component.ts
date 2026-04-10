@@ -31,17 +31,18 @@ import { QueueService } from '@core/http/queue.service';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
 import { emptyPageData } from '@shared/models/page/page-data';
-import { SubscriptSizing } from '@angular/material/form-field';
+import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 
 @Component({
-  selector: 'tb-queue-autocomplete',
-  templateUrl: './queue-autocomplete.component.html',
-  styleUrls: ['./queue-autocomplete.component.scss'],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => QueueAutocompleteComponent),
-    multi: true
-  }]
+    selector: 'tb-queue-autocomplete',
+    templateUrl: './queue-autocomplete.component.html',
+    styleUrls: ['./queue-autocomplete.component.scss'],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => QueueAutocompleteComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class QueueAutocompleteComponent implements ControlValueAccessor, OnInit {
 
@@ -75,6 +76,9 @@ export class QueueAutocompleteComponent implements ControlValueAccessor, OnInit 
 
   @Input()
   disabled: boolean;
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   @ViewChild('queueInput', {static: true}) queueInput: ElementRef;
 

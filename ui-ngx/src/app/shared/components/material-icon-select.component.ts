@@ -36,18 +36,20 @@ import { TbPopoverService } from '@shared/components/popover.service';
 import { MaterialIconsComponent } from '@shared/components/material-icons.component';
 import { MatButton } from '@angular/material/button';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MatFormFieldAppearance } from '@angular/material/form-field';
 
 @Component({
-  selector: 'tb-material-icon-select',
-  templateUrl: './material-icon-select.component.html',
-  styleUrls: ['./material-icon-select.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => MaterialIconSelectComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-material-icon-select',
+    templateUrl: './material-icon-select.component.html',
+    styleUrls: ['./material-icon-select.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => MaterialIconSelectComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class MaterialIconSelectComponent extends PageComponent implements OnInit, ControlValueAccessor {
 
@@ -74,6 +76,9 @@ export class MaterialIconSelectComponent extends PageComponent implements OnInit
   @Input()
   @coerceBoolean()
   allowedCustomIcon = false;
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   private requiredValue: boolean;
   get required(): boolean {

@@ -44,21 +44,22 @@ import { CalculatedFieldArgument } from "@shared/models/calculated-field.models"
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
-  selector: 'tb-alarm-rule-filter-list',
-  templateUrl: './alarm-rule-filter-list.component.html',
-  styleUrls: ['./alarm-rule-filter-list.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => AlarmRuleFilterListComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => AlarmRuleFilterListComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-alarm-rule-filter-list',
+    templateUrl: './alarm-rule-filter-list.component.html',
+    styleUrls: ['./alarm-rule-filter-list.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => AlarmRuleFilterListComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => AlarmRuleFilterListComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class AlarmRuleFilterListComponent implements ControlValueAccessor, Validator {
 

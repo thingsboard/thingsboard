@@ -21,9 +21,10 @@ import { EntitySearchDirection, entitySearchDirectionTranslations } from '@app/s
 import { RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@app/shared/models/rule-node.models';
 
 @Component({
-  selector: 'tb-filter-node-check-relation-config',
-  templateUrl: './check-relation-config.component.html',
-  styleUrls: ['./check-relation-config.component.scss']
+    selector: 'tb-filter-node-check-relation-config',
+    templateUrl: './check-relation-config.component.html',
+    styleUrls: ['./check-relation-config.component.scss'],
+    standalone: false
 })
 export class CheckRelationConfigComponent extends RuleNodeConfigurationComponent {
 

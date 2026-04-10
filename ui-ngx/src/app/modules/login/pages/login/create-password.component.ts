@@ -24,9 +24,10 @@ import { finalize } from 'rxjs/operators';
 import { PageComponent } from '@shared/components/page.component';
 
 @Component({
-  selector: 'tb-create-password',
-  templateUrl: './create-password.component.html',
-  styleUrls: ['./password.component.scss']
+    selector: 'tb-create-password',
+    templateUrl: './create-password.component.html',
+    styleUrls: ['./password.component.scss'],
+    standalone: false
 })
 export class CreatePasswordComponent extends PageComponent {
 

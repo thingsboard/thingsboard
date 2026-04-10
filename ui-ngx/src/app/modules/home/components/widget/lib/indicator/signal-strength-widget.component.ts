@@ -76,10 +76,11 @@ const shapeHeight = 113;
 const shapeAspect = shapeWidth / shapeHeight;
 
 @Component({
-  selector: 'tb-signal-strength-widget',
-  templateUrl: './signal-strength-widget.component.html',
-  styleUrls: ['./signal-strength-widget.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-signal-strength-widget',
+    templateUrl: './signal-strength-widget.component.html',
+    styleUrls: ['./signal-strength-widget.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterViewInit {
 

@@ -27,9 +27,11 @@
       <mat-form-field class="tb-appearance-transparent">
         <mat-select [disabled]="isReadOnly" placeholder="{{ 'widget.type' | translate }}"
                     [(ngModel)]="widget.type" (ngModelChange)="widgetTypeChanged()">
-          <mat-option *ngFor="let type of allWidgetTypes" [value]="type">
-            {{ widgetTypesDataMap.get(widgetTypes[type]).name | translate }}
-          </mat-option>
+          @for (type of allWidgetTypes; track type) {
+            <mat-option [value]="type">
+              {{ widgetTypesDataMap.get(widgetTypes[type]).name | translate }}
+            </mat-option>
+          }
         </mat-select>
       </mat-form-field>
       <span class="flex-1"></span>
@@ -48,15 +50,17 @@
         <mat-icon>undo</mat-icon>
         <span translate>action.undo</span>
       </button>
-      <button *ngIf="!isReadOnly" mat-raised-button
-              class="lt-md:!hidden" [disabled]="(isLoading$ | async) || saveDisabled()"
-              (click)="saveWidget()"
-              [tb-circular-progress]="saveWidgetPending"
-              matTooltip="{{ 'widget.save' | translate }} (CTRL + S)"
-              matTooltipPosition="below">
-        <mat-icon>save</mat-icon>
-        <span translate>action.save</span>
-      </button>
+      @if (!isReadOnly) {
+        <button mat-raised-button
+                class="lt-md:!hidden" [disabled]="(isLoading$ | async) || saveDisabled()"
+                (click)="saveWidget()"
+                [tb-circular-progress]="saveWidgetPending"
+                matTooltip="{{ 'widget.save' | translate }} (CTRL + S)"
+                matTooltipPosition="below">
+          <mat-icon>save</mat-icon>
+          <span translate>action.save</span>
+        </button>
+      }
       <button mat-raised-button
               class="lt-md:!hidden" [disabled]="(isLoading$ | async) || saveAsDisabled()"
               (click)="saveWidgetAs()"
@@ -97,12 +101,14 @@
           <mat-icon>undo</mat-icon>
           <span translate>action.undo</span>
         </button>
-        <button *ngIf="!isReadOnly" mat-menu-item
-                [disabled]="(isLoading$ | async) || saveDisabled()"
-                (click)="saveWidget()">
-          <mat-icon>save</mat-icon>
-          <span translate>action.save</span>
-        </button>
+        @if (!isReadOnly) {
+          <button mat-menu-item
+                  [disabled]="(isLoading$ | async) || saveDisabled()"
+                  (click)="saveWidget()">
+            <mat-icon>save</mat-icon>
+            <span translate>action.save</span>
+          </button>
+        }
         <button mat-menu-item
                 [disabled]="(isLoading$ | async) || saveAsDisabled()"
                 (click)="saveWidgetAs()">
@@ -119,28 +125,30 @@
               <mat-tab label="{{ 'widget.resources' | translate }}">
                 <div class="tb-resize-container" style="background-color: #fff;">
                   <div class="mat-padding">
-                    <div class="flex flex-1 flex-row items-center justify-start" style="max-height: 40px;"
-                         *ngFor="let resource of widget.resources; let i = index" >
-                      <tb-resource-autocomplete class="mat-block resource-field flex-1"
-                                                hideRequiredMarker required
-                                                subscriptSizing="dynamic"
-                                                [allowAutocomplete]="resource.isModule"
-                                                [(ngModel)]="resource.url"
-                                                (ngModelChange)="isDirty = true"
-                                                placeholder="{{ 'widget.resource-url' | translate }}">
-                      </tb-resource-autocomplete>
-                      <mat-checkbox [(ngModel)]="resource.isModule"
-                                    (ngModelChange)="isDirty = true">
-                        {{ 'widget.resource-is-extension' | translate }}
-                      </mat-checkbox>
-                      <button mat-icon-button color="primary"
-                              [disabled]="isLoading$ | async"
-                              (click)="removeResource(i)"
-                              matTooltip="{{'widget.remove-resource' | translate}}"
-                              matTooltipPosition="above">
-                        <mat-icon>close</mat-icon>
-                      </button>
-                    </div>
+                    @for (resource of widget.resources; track resource; let i = $index) {
+                      <div class="flex flex-1 flex-row items-center justify-start" style="max-height: 40px;"
+                           >
+                        <tb-resource-autocomplete class="mat-block resource-field flex-1"
+                                                  hideRequiredMarker required
+                                                  subscriptSizing="dynamic"
+                                                  [allowAutocomplete]="resource.isModule"
+                                                  [(ngModel)]="resource.url"
+                                                  (ngModelChange)="isDirty = true"
+                                                  placeholder="{{ 'widget.resource-url' | translate }}">
+                        </tb-resource-autocomplete>
+                        <mat-checkbox [(ngModel)]="resource.isModule"
+                                      (ngModelChange)="isDirty = true">
+                          {{ 'widget.resource-is-extension' | translate }}
+                        </mat-checkbox>
+                        <button mat-icon-button color="primary"
+                                [disabled]="isLoading$ | async"
+                                (click)="removeResource(i)"
+                                matTooltip="{{'widget.remove-resource' | translate}}"
+                                matTooltipPosition="above">
+                          <mat-icon>close</mat-icon>
+                        </button>
+                      </div>
+                    }
                     <button mat-raised-button color="primary"
                             style="margin-top: 8px;"
                             [disabled]="isLoading$ | async"
@@ -225,19 +233,12 @@
                 <div class="tb-resize-container" style="background-color: #fff;">
                   <div class="mat-padding">
                     <tb-gallery-image-input class="flex-1" label="{{'widget.image-preview' | translate}}"
-                                    [(ngModel)]="widget.image"
-                                    (ngModelChange)="isDirty = true" >
+                                            [(ngModel)]="widget.image"
+                                            (ngModelChange)="isDirty = true" >
                     </tb-gallery-image-input>
-                    <mat-form-field class="mat-block">
-                      <mat-label translate>widget.description</mat-label>
-                      <textarea matInput #descriptionInput
-                                [(ngModel)]="widget.description"
-                                (ngModelChange)="isDirty = true"
-                                rows="2" maxlength="1024"></textarea>
-                      <mat-hint align="end">{{descriptionInput.value?.length || 0}}/1024</mat-hint>
-                    </mat-form-field>
                     <tb-string-items-list
                       label="{{ 'widget.tags' | translate }}"
+                      appearance="outline"
                       [(ngModel)]="widget.tags"
                       (ngModelChange)="isDirty = true">
                     </tb-string-items-list>
@@ -253,34 +254,46 @@
                         {{ 'widget.deprecated' | translate }}
                       </mat-slide-toggle>
                     </div>
-                    <mat-form-field class="mat-block">
+                    <mat-form-field class="mat-block" appearance="outline">
                       <mat-label translate>widget.settings-form-selector</mat-label>
                       <input matInput
                              [(ngModel)]="widget.settingsDirective"
                              (ngModelChange)="isDirty = true"/>
                     </mat-form-field>
-                    <mat-form-field class="mat-block">
+                    <mat-form-field class="mat-block" appearance="outline">
                       <mat-label translate>widget.data-key-settings-form-selector</mat-label>
                       <input matInput
                              [(ngModel)]="widget.dataKeySettingsDirective"
                              (ngModelChange)="isDirty = true"/>
                     </mat-form-field>
-                    <mat-form-field *ngIf="widget.type === widgetTypes.timeseries" class="mat-block">
-                      <mat-label translate>widget.latest-data-key-settings-form-selector</mat-label>
-                      <input matInput
-                             [(ngModel)]="widget.latestDataKeySettingsDirective"
-                             (ngModelChange)="isDirty = true"/>
-                    </mat-form-field>
+                    @if (widget.type === widgetTypes.timeseries) {
+                      <mat-form-field class="mat-block" appearance="outline">
+                        <mat-label translate>widget.latest-data-key-settings-form-selector</mat-label>
+                        <input matInput
+                               [(ngModel)]="widget.latestDataKeySettingsDirective"
+                               (ngModelChange)="isDirty = true"/>
+                      </mat-form-field>
+                    }
                     <mat-slide-toggle class="mat-block" style="padding-bottom: 16px;"
                                       [(ngModel)]="widget.hasBasicMode"
                                       (ngModelChange)="isDirty = true">
                       {{ 'widget.has-basic-mode' | translate }}
                     </mat-slide-toggle>
-                    <mat-form-field *ngIf="widget.hasBasicMode" class="mat-block">
-                      <mat-label translate>widget.basic-mode-form-selector</mat-label>
-                      <input matInput
-                             [(ngModel)]="widget.basicModeDirective"
-                             (ngModelChange)="isDirty = true"/>
+                    @if (widget.hasBasicMode) {
+                      <mat-form-field class="mat-block" appearance="outline">
+                        <mat-label translate>widget.basic-mode-form-selector</mat-label>
+                        <input matInput
+                               [(ngModel)]="widget.basicModeDirective"
+                               (ngModelChange)="isDirty = true"/>
+                      </mat-form-field>
+                    }
+                    <mat-form-field class="mat-block" appearance="outline">
+                      <mat-label translate>widget.description</mat-label>
+                      <textarea matInput #descriptionInput
+                                [(ngModel)]="widget.description"
+                                (ngModelChange)="isDirty = true"
+                                cdkTextareaAutosize cdkAutosizeMinRows="1" rows="1" maxlength="1024"></textarea>
+                      <mat-hint align="end">{{descriptionInput.value?.length || 0}}/1024</mat-hint>
                     </mat-form-field>
                   </div>
                 </div>
@@ -315,10 +328,12 @@
             </div>
           </div>
           <div #framePanel class="tb-split tb-content" style="overflow-y: hidden; position: relative;">
-            <div class="mat-content tb-progress-cover flex flex-1 flex-col items-center justify-center"
-                 *ngIf="!iframeWidgetEditModeInited">
-              <mat-spinner diameter="100" mode="indeterminate" color="warn"></mat-spinner>
-            </div>
+            @if (!iframeWidgetEditModeInited) {
+              <div class="mat-content tb-progress-cover flex flex-1 flex-col items-center justify-center"
+                   >
+                <mat-spinner diameter="100" mode="indeterminate" color="warn"></mat-spinner>
+              </div>
+            }
             <div tb-fullscreen [fullscreen]="iFrameFullscreen" style="width: 100%; height: 100%;">
               <iframe #widgetIFrame style="border: 0;" height="100%" width="100%"></iframe>
               <div style="position: absolute; top: 10px; left: 10px; bottom: initial;">

@@ -38,21 +38,22 @@ import { EntityService } from '@core/http/entity.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-image-map-provider-settings',
-  templateUrl: './image-map-provider-settings.component.html',
-  styleUrls: ['./../../widget-settings.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ImageMapProviderSettingsComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => ImageMapProviderSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-image-map-provider-settings',
+    templateUrl: './image-map-provider-settings.component.html',
+    styleUrls: ['./../../widget-settings.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ImageMapProviderSettingsComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => ImageMapProviderSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ImageMapProviderSettingsComponent extends PageComponent implements OnInit, ControlValueAccessor, Validator {
 

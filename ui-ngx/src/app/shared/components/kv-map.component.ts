@@ -30,27 +30,28 @@ import {
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { SubscriptSizing } from '@angular/material/form-field';
+import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
-  selector: 'tb-key-val-map',
-  templateUrl: './kv-map.component.html',
-  styleUrls: ['./kv-map.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => KeyValMapComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => KeyValMapComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-key-val-map',
+    templateUrl: './kv-map.component.html',
+    styleUrls: ['./kv-map.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => KeyValMapComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => KeyValMapComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class KeyValMapComponent extends PageComponent implements ControlValueAccessor, OnInit, OnDestroy, Validator {
 
@@ -68,6 +69,9 @@ export class KeyValMapComponent extends PageComponent implements ControlValueAcc
 
   @Input()
   subscriptSizing: SubscriptSizing = 'fixed';
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   kvListFormGroup: UntypedFormGroup;
 

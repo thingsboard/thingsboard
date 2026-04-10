@@ -43,16 +43,17 @@ import { TranslateService } from '@ngx-translate/core';
 
 // @dynamic
 @Component({
-  selector: 'tb-audit-log-filter',
-  templateUrl: './audit-log-filter.component.html',
-  styleUrls: ['./audit-log-filter.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => AuditLogFilterComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-audit-log-filter',
+    templateUrl: './audit-log-filter.component.html',
+    styleUrls: ['./audit-log-filter.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => AuditLogFilterComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class AuditLogFilterComponent implements OnInit, ControlValueAccessor {
 

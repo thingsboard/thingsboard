@@ -21,9 +21,10 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 
 @Component({
-  selector: 'tb-qrcode-widget-settings',
-  templateUrl: './qrcode-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-qrcode-widget-settings',
+    templateUrl: './qrcode-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class QrCodeWidgetSettingsComponent extends WidgetSettingsComponent {
 

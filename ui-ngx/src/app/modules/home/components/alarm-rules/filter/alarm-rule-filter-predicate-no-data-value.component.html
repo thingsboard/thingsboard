@@ -28,15 +28,15 @@
         <mat-form-field hideRequiredMarker class="flex-1" appearance="outline" subscriptSizing="dynamic">
           <input required type="number" matInput formControlName="staticValue" min="1"
                  placeholder="{{'filter.value' | translate}}">
-            @if (filterPredicateValueNoDataFormGroup.get('duration.staticValue').touched && filterPredicateValueNoDataFormGroup.get('duration.staticValue').errors) {
-              <mat-icon matSuffix
-                        matTooltipPosition="above"
-                        matTooltipClass="tb-error-tooltip"
-                        [matTooltip]="(filterPredicateValueNoDataFormGroup.get('duration.staticValue').hasError('required') ? 'alarm-rule.value-required' : 'alarm-rule.min-value') | translate"
-                        class="tb-error">
-                warning
-              </mat-icon>
-            }
+          @if (filterPredicateValueNoDataFormGroup.get('duration.staticValue').touched && filterPredicateValueNoDataFormGroup.get('duration.staticValue').errors) {
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="(filterPredicateValueNoDataFormGroup.get('duration.staticValue').hasError('required') ? 'alarm-rule.value-required' : 'alarm-rule.min-value') | translate"
+                      class="tb-error">
+              warning
+            </mat-icon>
+          }
         </mat-form-field>
       } @else {
         <mat-form-field class="w-full flex-1" appearance="outline" subscriptSizing="dynamic">
@@ -68,9 +68,11 @@
     </ng-container>
     <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
       <mat-select formControlName="unit" required placeholder="{{'alarm-rule.time-unit' | translate}}">
-        <mat-option *ngFor="let timeUnit of timeUnits" [value]="timeUnit">
-          {{ timeUnitsTranslationMap.get(timeUnit) | translate }}
-        </mat-option>
+        @for (timeUnit of timeUnits; track timeUnit) {
+          <mat-option [value]="timeUnit">
+            {{ timeUnitsTranslationMap.get(timeUnit) | translate }}
+          </mat-option>
+        }
       </mat-select>
     </mat-form-field>
   </div>

@@ -108,7 +108,7 @@
       }
     }
     &.disabled {
-      color: var(--mdc-outlined-text-field-disabled-input-text-color);
+      color: var(--mat-form-field-outlined-disabled-input-text-color);
     }
     .mat-expansion-panel {
       &.tb-settings {
@@ -136,7 +136,7 @@
         > .mat-expansion-panel-header-description {
           align-items: center;
         }
-        > .mat-expansion-panel-content {
+        .mat-expansion-panel-content {
           > .mat-expansion-panel-body {
             display: flex;
             flex-direction: column;
@@ -164,9 +164,9 @@
   }
 
   .tb-form-panel-disabled {
-    color: var(--mdc-outlined-text-field-disabled-input-text-color);
+    color: var(--mat-form-field-outlined-disabled-input-text-color);
     .tb-form-panel {
-      color: var(--mdc-outlined-text-field-disabled-input-text-color);
+      color: var(--mat-form-field-outlined-disabled-input-text-color);
     }
   }
 
@@ -191,10 +191,10 @@
   }
   .tb-form-hint {
     padding: 12px 16px;
-    font-size: var(--mdc-typography-caption-font-size, 12px);
-    line-height: var(--mdc-typography-caption-line-height, 20px);
-    font-weight: var(--mdc-typography-caption-font-weight, 400);
-    letter-spacing: var(--mdc-typography-caption-letter-spacing, 0.0333333333em);
+    font-size: var(--mat-typography-caption-font-size, 12px);
+    line-height: var(--mat-typography-caption-line-height, 20px);
+    font-weight: var(--mat-typography-caption-font-weight, 400);
+    letter-spacing: var(--mat-typography-caption-letter-spacing, 0.0333333333em);
     color: rgba(0, 0, 0, 0.6);
     white-space: normal;
     border-radius: 6px;
@@ -845,8 +845,8 @@
   }
 
   .tb-form-panel.outlined {
-    --mdc-outlined-text-field-outline-color: rgba(0,0,0,0.12);
-    --mdc-outlined-text-field-container-shape: 6px;
+    --mat-form-field-outlined-outline-color: rgba(0,0,0,0.12);
+    --mat-form-field-outlined-container-shape: 6px;
     --mat-form-field-trailing-icon-color: rgba(0, 0, 0, 0.56);
 
     box-shadow: none;
@@ -875,8 +875,8 @@
       height: 56px;
       margin-bottom: 22px;
       &.disabled {
-        border-color: var(--mdc-outlined-text-field-disabled-outline-color);
-        color: var(--mdc-outlined-text-field-disabled-input-text-color);
+        border-color: var(--mat-form-field-outlined-disabled-outline-color);
+        color: var(--mat-form-field-outlined-disabled-input-text-color);
       }
     }
   }

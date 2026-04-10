@@ -54,10 +54,11 @@ import { TbUnit } from '@shared/models/unit.models';
 import { UnitService } from '@core/services/unit.service';
 
 @Component({
-  selector: 'tb-range-chart-widget',
-  templateUrl: './range-chart-widget.component.html',
-  styleUrls: ['./range-chart-widget.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-range-chart-widget',
+    templateUrl: './range-chart-widget.component.html',
+    styleUrls: ['./range-chart-widget.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewInit {
 
@@ -158,6 +159,12 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
   public onDataUpdated() {
     if (this.timeSeriesChart) {
       this.timeSeriesChart.update();
+    }
+  }
+
+  public onLatestDataUpdated() {
+    if (this.timeSeriesChart) {
+      this.timeSeriesChart.latestUpdated();
     }
   }
 

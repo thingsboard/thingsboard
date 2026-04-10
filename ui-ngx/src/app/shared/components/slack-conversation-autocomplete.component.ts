@@ -27,16 +27,18 @@ import { TruncatePipe } from '@shared/pipe/truncate.pipe';
 import { SlackChanelType, SlackConversation } from '@shared/models/notification.models';
 import { NotificationService } from '@core/http/notification.service';
 import { isEqual } from '@core/utils';
+import { MatFormFieldAppearance } from '@angular/material/form-field';
 
 @Component({
-  selector: 'tb-slack-conversation-autocomplete',
-  templateUrl: './slack-conversation-autocomplete.component.html',
-  styleUrls: ['./slack-conversation-autocomplete.component.scss'],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => SlackConversationAutocompleteComponent),
-    multi: true
-  }]
+    selector: 'tb-slack-conversation-autocomplete',
+    templateUrl: './slack-conversation-autocomplete.component.html',
+    styleUrls: ['./slack-conversation-autocomplete.component.scss'],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => SlackConversationAutocompleteComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class SlackConversationAutocompleteComponent implements ControlValueAccessor, OnInit, OnChanges {
 
@@ -65,6 +67,9 @@ export class SlackConversationAutocompleteComponent implements ControlValueAcces
 
   @Input()
   token: string;
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   @ViewChild('slackInput', {static: true}) slackInput: ElementRef;
 

@@ -38,13 +38,15 @@ import { SHARED_MODULE_TOKEN } from '@shared/components/tokens';
 import { guid, isDefinedAndNotNull } from '@core/utils';
 import { Observable, of, ReplaySubject } from 'rxjs';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { sanitizeTemplate } from './markdown-sanitize.helper';
 
 let defaultMarkdownStyle: string;
 
 @Component({
-  selector: 'tb-markdown',
-  templateUrl: './markdown.component.html',
-  styleUrls: ['./markdown.component.scss']
+    selector: 'tb-markdown',
+    templateUrl: './markdown.component.html',
+    styleUrls: ['./markdown.component.scss'],
+    standalone: false
 })
 export class TbMarkdownComponent implements OnChanges {
 
@@ -113,7 +115,7 @@ export class TbMarkdownComponent implements OnChanges {
   }
 
   private render(markdown: string) {
-    const compiled = this.markdownService.parse(markdown, { decodeHtml: false });
+    const compiled = this.markdownService.parse(markdown, { decodeHtml: false, disableSanitizer: true });
     let markdownClass = 'tb-markdown-view';
     if (this.markdownClass) {
       markdownClass += ` ${this.markdownClass}`;
@@ -132,7 +134,7 @@ export class TbMarkdownComponent implements OnChanges {
       const preHtml = preElements.item(i).outerHTML.replace('ngnonbindable=""', 'ngNonBindable');
       template = template.replace(matches[i][0], preHtml);
     }
-    template = this.sanitize(template);
+    template = sanitizeTemplate(template);
     this.markdownContainer.clear();
     let styles: string[] = [];
     let readyObservable: Observable<void>;
@@ -264,10 +266,6 @@ export class TbMarkdownComponent implements OnChanges {
     } else {
       return of(null);
     }
-  }
-
-  private sanitize(template: string): string {
-    return template.replace(/{/g, '&#123;').replace(/}/g, '&#125;').replace(/@/g, '&#64;');
   }
 
   private destroyMarkdownInstanceResources() {

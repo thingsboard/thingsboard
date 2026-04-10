@@ -29,9 +29,10 @@ import {
 } from '@home/components/widget/lib/button/command-button-widget.models';
 
 @Component({
-  selector: 'tb-command-button-basic-config',
-  templateUrl: './command-button-basic-config.component.html',
-  styleUrls: ['../basic-config.scss']
+    selector: 'tb-command-button-basic-config',
+    templateUrl: './command-button-basic-config.component.html',
+    styleUrls: ['../basic-config.scss'],
+    standalone: false
 })
 export class CommandButtonBasicConfigComponent extends BasicWidgetConfigComponent {
 

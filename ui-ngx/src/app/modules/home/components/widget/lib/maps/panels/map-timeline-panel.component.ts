@@ -34,10 +34,11 @@ import { filter } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-map-timeline-panel',
-  templateUrl: './map-timeline-panel.component.html',
-  styleUrls: ['./map-timeline-panel.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-map-timeline-panel',
+    templateUrl: './map-timeline-panel.component.html',
+    styleUrls: ['./map-timeline-panel.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class MapTimelinePanelComponent implements OnInit, OnDestroy {
 

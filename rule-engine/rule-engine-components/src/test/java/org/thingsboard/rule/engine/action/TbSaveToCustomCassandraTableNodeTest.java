@@ -41,7 +41,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
-import org.thingsboard.rule.engine.TestDbCallbackExecutor;
+import org.thingsboard.common.util.DirectListeningExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -88,7 +88,7 @@ public class TbSaveToCustomCassandraTableNodeTest extends AbstractRuleNodeUpgrad
     private final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("ac4ca02e-2ae6-404a-8f7e-c4ae31c56aa7"));
     private final TenantId TENANT_ID = TenantId.fromUUID(UUID.fromString("64ad971e-9cfa-49e4-9f59-faa1a2350c6e"));
 
-    private final ListeningExecutor dbCallbackExecutor = new TestDbCallbackExecutor();
+    private final ListeningExecutor dbCallbackExecutor = DirectListeningExecutor.INSTANCE;
 
     private TbSaveToCustomCassandraTableNode node;
     private TbSaveToCustomCassandraTableNodeConfiguration config;

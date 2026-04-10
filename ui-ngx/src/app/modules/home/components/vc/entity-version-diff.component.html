@@ -18,54 +18,62 @@
 <section class="entity-version-diff-view flex flex-col" [class.content-ready]="contentReady"
          tb-fullscreen [fullscreen]="isFullscreen" (fullscreenChanged)="onFullscreenChanged($event)"
          [style]="isFullscreen || !contentReady ? {} : {height: preferredDiffHeight}">
-  <mat-toolbar *ngIf="contentReady">
-    <h2>{{ 'version-control.diff-entity-with-version' | translate: {versionName} }}</h2>
-    <span class="flex-1"></span>
-    <button mat-icon-button
-            matTooltip="{{'version-control.previous-difference' | translate}}"
-            matTooltipPosition="below"
-            [disabled]="!hasPrevious"
-            (click)="prevDifference($event)">
-      <mat-icon>arrow_upward</mat-icon>
-    </button>
-    <button mat-icon-button
-            matTooltip="{{'version-control.next-difference' | translate}}"
-            matTooltipPosition="below"
-            [disabled]="!hasNext"
-            (click)="nextDifference($event)">
-      <mat-icon>arrow_downward</mat-icon>
-    </button>
-    <mat-divider vertical></mat-divider>
-    <span class="diff-count">{{ 'version-control.differences' | translate : {count: diffCount} }}</span>
-    <mat-divider vertical></mat-divider>
-    <button mat-stroked-button color="primary"
-            #restoreVersionButton
-            style="min-width: 150px"
-            [disabled]="(isLoading$ | async)"
-            (click)="toggleRestoreEntityVersion($event, restoreVersionButton)">
-      <mat-icon>restore</mat-icon>
-      {{'version-control.restore-version' | translate }}
-    </button>
-    <button mat-icon-button
-            matTooltip="{{(isFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
-            matTooltipPosition="below"
-            (click)="isFullscreen = !isFullscreen">
-      <mat-icon>{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
-    </button>
-  </mat-toolbar>
-  <div class="flex flex-row" *ngIf="contentReady">
-    <div class="version-title flex-1">{{ 'version-control.current' | translate }}</div>
-    <div style="width: 58px;"></div>
-    <div class="version-title flex-1">{{ versionIdContent() }}</div>
-  </div>
-  <mat-spinner *ngIf="!contentReady" mode="indeterminate" diameter="80"></mat-spinner>
+  @if (contentReady) {
+    <mat-toolbar>
+      <h2>{{ 'version-control.diff-entity-with-version' | translate: {versionName} }}</h2>
+      <span class="flex-1"></span>
+      <button mat-icon-button
+              matTooltip="{{'version-control.previous-difference' | translate}}"
+              matTooltipPosition="below"
+              [disabled]="!hasPrevious"
+              (click)="prevDifference($event)">
+        <mat-icon>arrow_upward</mat-icon>
+      </button>
+      <button mat-icon-button
+              matTooltip="{{'version-control.next-difference' | translate}}"
+              matTooltipPosition="below"
+              [disabled]="!hasNext"
+              (click)="nextDifference($event)">
+        <mat-icon>arrow_downward</mat-icon>
+      </button>
+      <mat-divider vertical></mat-divider>
+      <span class="diff-count">{{ 'version-control.differences' | translate : {count: diffCount} }}</span>
+      <mat-divider vertical></mat-divider>
+      <button mat-stroked-button color="primary"
+              #restoreVersionButton
+              style="min-width: 150px"
+              [disabled]="(isLoading$ | async)"
+              (click)="toggleRestoreEntityVersion($event, restoreVersionButton)">
+        <mat-icon>restore</mat-icon>
+        {{'version-control.restore-version' | translate }}
+      </button>
+      <button mat-icon-button
+              matTooltip="{{(isFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
+              matTooltipPosition="below"
+              (click)="isFullscreen = !isFullscreen">
+        <mat-icon>{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+      </button>
+    </mat-toolbar>
+  }
+  @if (contentReady) {
+    <div class="flex flex-row">
+      <div class="version-title flex-1">{{ 'version-control.current' | translate }}</div>
+      <div style="width: 58px;"></div>
+      <div class="version-title flex-1">{{ versionIdContent() }}</div>
+    </div>
+  }
+  @if (!contentReady) {
+    <mat-spinner mode="indeterminate" diameter="80"></mat-spinner>
+  }
   <div [class.!hidden]="!contentReady" class="diff-viewer flex-1" #diffViewer></div>
-  <div class="bottom-panel flex items-center justify-end gap-2" *ngIf="contentReady">
-    <button mat-button color="primary"
-            type="button"
-            [disabled]="(isLoading$ | async)"
-            (click)="close()" cdkFocusInitial>
-      {{ 'action.close' | translate }}
-    </button>
-  </div>
+  @if (contentReady) {
+    <div class="bottom-panel flex items-center justify-end gap-2">
+      <button mat-button color="primary"
+              type="button"
+              [disabled]="(isLoading$ | async)"
+              (click)="close()" cdkFocusInitial>
+        {{ 'action.close' | translate }}
+      </button>
+    </div>
+  }
 </section>

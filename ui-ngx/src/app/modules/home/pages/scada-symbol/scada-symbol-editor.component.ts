@@ -50,10 +50,11 @@ export interface ScadaSymbolEditorData {
 type editorModeType = 'svg' | 'xml';
 
 @Component({
-  selector: 'tb-scada-symbol-editor',
-  templateUrl: './scada-symbol-editor.component.html',
-  styleUrls: ['./scada-symbol-editor.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-scada-symbol-editor',
+    templateUrl: './scada-symbol-editor.component.html',
+    styleUrls: ['./scada-symbol-editor.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class ScadaSymbolEditorComponent implements OnInit, OnDestroy, AfterViewInit, OnChanges {
 

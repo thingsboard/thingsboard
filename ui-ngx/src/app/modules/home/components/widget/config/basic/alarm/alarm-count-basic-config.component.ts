@@ -33,9 +33,10 @@ import {
 } from '@home/components/widget/lib/count/count-widget.models';
 
 @Component({
-  selector: 'tb-alarm-count-basic-config',
-  templateUrl: './alarm-count-basic-config.component.html',
-  styleUrls: ['../basic-config.scss']
+    selector: 'tb-alarm-count-basic-config',
+    templateUrl: './alarm-count-basic-config.component.html',
+    styleUrls: ['../basic-config.scss'],
+    standalone: false
 })
 export class AlarmCountBasicConfigComponent extends BasicWidgetConfigComponent {
 

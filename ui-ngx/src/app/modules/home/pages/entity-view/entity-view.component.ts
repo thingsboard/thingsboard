@@ -30,9 +30,10 @@ import { EntityId } from '@app/shared/models/id/entity-id';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 
 @Component({
-  selector: 'tb-entity-view',
-  templateUrl: './entity-view.component.html',
-  styleUrls: ['./entity-view.component.scss']
+    selector: 'tb-entity-view',
+    templateUrl: './entity-view.component.html',
+    styleUrls: ['./entity-view.component.scss'],
+    standalone: false
 })
 export class EntityViewComponent extends EntityComponent<EntityViewInfo> {
 

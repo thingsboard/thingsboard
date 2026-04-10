@@ -34,9 +34,10 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { PageLink } from "@shared/models/page/page-link";
 
 @Component({
-  selector: 'tb-dashboard-form',
-  templateUrl: './dashboard-form.component.html',
-  styleUrls: ['./dashboard-form.component.scss']
+    selector: 'tb-dashboard-form',
+    templateUrl: './dashboard-form.component.html',
+    styleUrls: ['./dashboard-form.component.scss'],
+    standalone: false
 })
 export class DashboardFormComponent extends EntityComponent<Dashboard, PageLink, DashboardInfo> {
 

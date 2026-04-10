@@ -26,9 +26,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-persistent-add-dialog',
-  templateUrl: './persistent-add-dialog.component.html',
-  styleUrls: ['./persistent-add-dialog.component.scss']
+    selector: 'tb-persistent-add-dialog',
+    templateUrl: './persistent-add-dialog.component.html',
+    styleUrls: ['./persistent-add-dialog.component.scss'],
+    standalone: false
 })
 
 export class PersistentAddDialogComponent extends DialogComponent<PersistentAddDialogComponent, RequestData> implements OnInit {

@@ -40,8 +40,6 @@
               <mat-error>
                 @if (fieldFormGroup.get('name').hasError('required')) {
                   {{ 'alarm-rule.alarm-type-required' | translate }}
-                } @else if (fieldFormGroup.get('name').hasError('pattern')) {
-                  {{ 'alarm-rule.alarm-type-pattern' | translate }}
                 } @else if (fieldFormGroup.get('name').hasError('maxlength')) {
                   {{ 'alarm-rule.alarm-type-max-length' | translate }}
                 }
@@ -104,9 +102,11 @@
               <mat-icon>delete</mat-icon>
             </button>
           </div>
-          <div *ngIf="!configFormGroup.get('clearRule').value">
-            <span translate class="tb-prompt flex items-center justify-center text-base">alarm-rule.no-clear-alarm-rule</span>
-          </div>
+          @if (!configFormGroup.get('clearRule').value) {
+            <div>
+              <span translate class="tb-prompt flex items-center justify-center text-base">alarm-rule.no-clear-alarm-rule</span>
+            </div>
+          }
           <div [class.!hidden]="configFormGroup.get('clearRule').value">
             <button mat-stroked-button color="primary"
                     [disabled]="disabledClearRuleButton"

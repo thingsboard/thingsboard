@@ -22,9 +22,10 @@ import { AppState } from '@core/core.state';
 import { flotDefaultSettings } from '@home/components/widget/lib/settings/chart/flot-widget-settings.component';
 
 @Component({
-  selector: 'tb-flot-bar-widget-settings',
-  templateUrl: './flot-bar-widget-settings.component.html',
-  styleUrls: []
+    selector: 'tb-flot-bar-widget-settings',
+    templateUrl: './flot-bar-widget-settings.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class FlotBarWidgetSettingsComponent extends WidgetSettingsComponent {
 

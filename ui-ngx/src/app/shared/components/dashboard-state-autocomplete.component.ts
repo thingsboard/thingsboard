@@ -24,18 +24,19 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { FloatLabelType } from '@angular/material/form-field';
+import { MatFormFieldAppearance } from '@angular/material/form-field';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 
 @Component({
-  selector: 'tb-dashboard-state-autocomplete',
-  templateUrl: './dashboard-state-autocomplete.component.html',
-  styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => DashboardStateAutocompleteComponent),
-    multi: true
-  }]
+    selector: 'tb-dashboard-state-autocomplete',
+    templateUrl: './dashboard-state-autocomplete.component.html',
+    styleUrls: [],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DashboardStateAutocompleteComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class DashboardStateAutocompleteComponent implements ControlValueAccessor, OnInit {
 
@@ -49,6 +50,9 @@ export class DashboardStateAutocompleteComponent implements ControlValueAccessor
 
   @Input()
   label: string = this.translate.instant('widget-action.target-dashboard-state');
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   @Input()
   placeholder: string;

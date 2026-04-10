@@ -82,10 +82,11 @@ import { WidgetService } from '@core/http/widget.service';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 
 @Component({
-  selector: 'tb-scada-symbol',
-  templateUrl: './scada-symbol.component.html',
-  styleUrls: ['./scada-symbol.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-scada-symbol',
+    templateUrl: './scada-symbol.component.html',
+    styleUrls: ['./scada-symbol.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class ScadaSymbolComponent extends PageComponent
   implements OnInit, OnDestroy, HasDirtyFlag, ScadaSymbolEditObjectCallbacks {

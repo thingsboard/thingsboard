@@ -25,27 +25,27 @@ $backgroundColorDisabled: var(--tb-slider-background-color-disabled, #D5D7E5);
 .tb-slider-panel {
 
   .mat-mdc-slider.mat-primary.tb-slider {
-    --mdc-slider-active-track-color: #{$mainColor};
-    --mdc-slider-handle-color: #{$mainColor};
-    --mdc-slider-focus-handle-color: #{$mainColor};
-    --mdc-slider-hover-handle-color: #{$mainColor};
+    --mat-slider-active-track-color: #{$mainColor};
+    --mat-slider-handle-color: #{$mainColor};
+    --mat-slider-focus-handle-color: #{$mainColor};
+    --mat-slider-hover-handle-color: #{$mainColor};
 
-    --mdc-slider-with-tick-marks-inactive-container-color: #{$tickMarksColor};
+    --mat-slider-with-tick-marks-inactive-container-color: #{$tickMarksColor};
     --mat-mdc-slider-ripple-color: #{$mainColor};
 
     --mat-mdc-slider-hover-ripple-color: #{$hoverRippleColor};
     --mat-mdc-slider-focus-ripple-color: #{$focusRippleColor};
 
-    --mdc-slider-inactive-track-color: #{$backgroundColor};
+    --mat-slider-inactive-track-color: #{$backgroundColor};
 
-    --mdc-slider-disabled-active-track-color: #{$mainColorDisabled};
-    --mdc-slider-disabled-handle-color: #{$mainColorDisabled};
+    --mat-slider-disabled-active-track-color: #{$mainColorDisabled};
+    --mat-slider-disabled-handle-color: #{$mainColorDisabled};
 
-    --mdc-slider-disabled-inactive-track-color: #{$backgroundColorDisabled};
-    --mdc-slider-with-tick-marks-disabled-container-color: #{$mainColorDisabled};
+    --mat-slider-disabled-inactive-track-color: #{$backgroundColorDisabled};
+    --mat-slider-with-tick-marks-disabled-container-color: #{$mainColorDisabled};
 
-    --mdc-slider-handle-width: 16px;
-    --mdc-slider-handle-height: 16px;
+    --mat-slider-handle-width: 16px;
+    --mat-slider-handle-height: 16px;
   }
 
   width: 100%;

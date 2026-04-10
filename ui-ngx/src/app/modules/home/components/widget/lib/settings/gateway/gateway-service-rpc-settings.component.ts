@@ -21,9 +21,10 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 
 @Component({
-  selector: 'tb-gateway-service-rpc-settings',
-  templateUrl: './gateway-service-rpc-settings.component.html',
-  styleUrls: ['../widget-settings.scss']
+    selector: 'tb-gateway-service-rpc-settings',
+    templateUrl: './gateway-service-rpc-settings.component.html',
+    styleUrls: ['../widget-settings.scss'],
+    standalone: false
 })
 export class GatewayServiceRPCSettingsComponent extends WidgetSettingsComponent {
 

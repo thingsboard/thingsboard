@@ -21,9 +21,10 @@ import { RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@app/shar
 import { EntityType } from '@app/shared/models/entity-type.models';
 
 @Component({
-  selector: 'tb-filter-node-originator-type-config',
-  templateUrl: './originator-type-config.component.html',
-  styleUrls: []
+    selector: 'tb-filter-node-originator-type-config',
+    templateUrl: './originator-type-config.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class OriginatorTypeConfigComponent extends RuleNodeConfigurationComponent {
 

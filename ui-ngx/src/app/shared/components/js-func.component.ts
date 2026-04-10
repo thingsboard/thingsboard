@@ -53,22 +53,23 @@ import { catchError } from 'rxjs/operators';
 import { tbelUtilsAutocompletes, tbelUtilsFuncHighlightRules } from '@shared/models/ace/tbel-utils.models';
 
 @Component({
-  selector: 'tb-js-func',
-  templateUrl: './js-func.component.html',
-  styleUrls: ['./js-func.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => JsFuncComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => JsFuncComponent),
-      multi: true,
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-js-func',
+    templateUrl: './js-func.component.html',
+    styleUrls: ['./js-func.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => JsFuncComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => JsFuncComponent),
+            multi: true,
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class JsFuncComponent implements OnInit, OnChanges, OnDestroy, ControlValueAccessor, Validator {
 

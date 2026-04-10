@@ -29,9 +29,10 @@ import { EntityTableConfig } from '@home/models/entity/entities-table-config.mod
 import {EdgeService} from "@core/http/edge.service";
 
 @Component({
-  selector: 'tb-edge',
-  templateUrl: './edge.component.html',
-  styleUrls: ['./edge.component.scss']
+    selector: 'tb-edge',
+    templateUrl: './edge.component.html',
+    styleUrls: ['./edge.component.scss'],
+    standalone: false
 })
 export class EdgeComponent extends EntityComponent<EdgeInfo> {
 

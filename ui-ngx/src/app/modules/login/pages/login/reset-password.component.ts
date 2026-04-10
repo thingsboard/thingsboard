@@ -23,9 +23,10 @@ import { passwordsMatchValidator, passwordStrengthValidator } from '@shared/mode
 import { finalize } from 'rxjs/operators';
 
 @Component({
-  selector: 'tb-reset-password',
-  templateUrl: './reset-password.component.html',
-  styleUrls: ['./password.component.scss']
+    selector: 'tb-reset-password',
+    templateUrl: './reset-password.component.html',
+    styleUrls: ['./password.component.scss'],
+    standalone: false
 })
 export class ResetPasswordComponent {
 

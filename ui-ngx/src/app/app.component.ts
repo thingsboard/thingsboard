@@ -35,9 +35,10 @@ import { SETTINGS_KEY } from '@core/settings/settings.effects';
 import { initCustomJQueryEvents } from '@shared/models/jquery-event.models';
 
 @Component({
-  selector: 'tb-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss']
+    selector: 'tb-root',
+    templateUrl: './app.component.html',
+    styleUrls: ['./app.component.scss'],
+    standalone: false
 })
 export class AppComponent {
 
@@ -87,7 +88,7 @@ export class AppComponent {
     if (!env.production) {
       console.log(`Default Lang: ${env.defaultLang}`);
     }
-    this.translate.setDefaultLang(env.defaultLang);
+    this.translate.setFallbackLang(env.defaultLang);
   }
 
   setupAuth() {

@@ -26,16 +26,17 @@ import { chartAnimationEasings, ChartAnimationSettings } from '@home/components/
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-chart-animation-settings',
-  templateUrl: './chart-animation-settings.component.html',
-  styleUrls: ['./../../widget-settings.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ChartAnimationSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-chart-animation-settings',
+    templateUrl: './chart-animation-settings.component.html',
+    styleUrls: ['./../../widget-settings.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ChartAnimationSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ChartAnimationSettingsComponent implements OnInit, ControlValueAccessor {
 

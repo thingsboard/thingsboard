@@ -23,9 +23,10 @@ import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { UrlHolder } from '@shared/pipe/image.pipe';
 
 @Component({
-  selector: 'tb-logo',
-  templateUrl: './logo.component.html',
-  styleUrls: ['./logo.component.scss']
+    selector: 'tb-logo',
+    templateUrl: './logo.component.html',
+    styleUrls: ['./logo.component.scss'],
+    standalone: false
 })
 export class LogoComponent implements OnInit {
 

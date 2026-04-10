@@ -30,7 +30,7 @@ import {
   OnInit,
   Optional,
   Output,
-  Renderer2,
+  Renderer2, runInInjectionContext,
   SimpleChanges,
   TemplateRef,
   Type,
@@ -63,17 +63,23 @@ import { distinctUntilChanged, take, takeUntil } from 'rxjs/operators';
 import { isNotEmptyStr, onParentScrollOrWindowResize } from '@core/utils';
 import { animate, AnimationBuilder, AnimationMetadata, style } from '@angular/animations';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import {
+  widgetContextToken,
+  widgetErrorMessagesToken,
+  widgetTitlePanelToken
+} from '@home/models/widget-component.models';
 
 export type TbPopoverTrigger = 'click' | 'focus' | 'hover' | null;
 
 @Directive({
-  // eslint-disable-next-line @angular-eslint/directive-selector
-  selector: '[tb-popover]',
-  exportAs: 'tbPopover',
-  // eslint-disable-next-line @angular-eslint/no-host-metadata-property
-  host: {
-    '[class.tb-popover-open]': 'visible'
-  }
+    // eslint-disable-next-line @angular-eslint/directive-selector
+    selector: '[tb-popover]',
+    exportAs: 'tbPopover',
+    // eslint-disable-next-line @angular-eslint/no-host-metadata-property
+    host: {
+        '[class.tb-popover-open]': 'visible'
+    },
+    standalone: false
 })
 export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
 
@@ -156,7 +162,7 @@ export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
       this.renderer.parentNode(this.elementRef.nativeElement),
       componentRef.location.nativeElement
     );
-    this.component.setOverlayOrigin(new CdkOverlayOrigin(this.origin || this.elementRef));
+    this.component.setOriginElement(this.origin || this.elementRef);
 
     this.initProperties();
 
@@ -300,13 +306,13 @@ export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
 }
 
 @Component({
-  selector: 'tb-popover',
-  exportAs: 'tbPopoverComponent',
-  animations: [popoverMotion],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  encapsulation: ViewEncapsulation.None,
-  styleUrls: ['./popover.component.scss'],
-  template: `
+    selector: 'tb-popover',
+    exportAs: 'tbPopoverComponent',
+    animations: [popoverMotion],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    encapsulation: ViewEncapsulation.None,
+    styleUrls: ['./popover.component.scss'],
+    template: `
     <ng-template
       #overlay="cdkConnectedOverlay"
       cdkConnectedOverlay
@@ -321,9 +327,9 @@ export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
       (overlayOutsideClick)="onClickOutside($event)"
       (detach)="hide()"
       (positionChange)="onPositionChange($event)"
-    >
+      >
       <div #popoverRoot [@popoverMotion]="tbAnimationState"
-           (@popoverMotion.done)="animationDone()">
+        (@popoverMotion.done)="animationDone()">
         <div
           #popover
           class="tb-popover"
@@ -331,28 +337,32 @@ export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
           [class.tb-popover-rtl]="dir === 'rtl'"
           [class]="classMap"
           [style]="tbOverlayStyle"
-        >
+          >
           <div class="tb-popover-content">
             <div class="tb-popover-arrow">
               <span class="tb-popover-arrow-content"></span>
             </div>
             <div class="tb-popover-inner" [style]="tbPopoverInnerStyle" role="tooltip">
-              <div *ngIf="tbShowCloseButton" class="tb-popover-close-button" (click)="closeButtonClick($event)">×</div>
+              @if (tbShowCloseButton) {
+                <div class="tb-popover-close-button" (click)="closeButtonClick($event)">×</div>
+              }
               <div style="width: 100%; height: 100%;">
                 <div class="tb-popover-inner-content"  [style]="tbPopoverInnerContentStyle"
-                     [class.strict-position]="strictPosition">
-                  <ng-container *ngIf="tbContent">
+                  [class.strict-position]="strictPosition">
+                  @if (tbContent) {
                     <ng-container *tbStringTemplateOutlet="tbContent; context: tbComponentContext">
                       {{ tbContent }}
                     </ng-container>
-                  </ng-container>
-                  <ng-container *ngIf="tbComponent"
-                                [tbComponentOutlet]="tbComponent"
-                                [tbComponentInjector]="tbComponentInjector"
-                                [tbComponentOutletContext]="tbComponentContext"
-                                (componentChange)="onComponentChange($event)"
-                                [tbComponentStyle]="tbComponentStyle">
-                  </ng-container>
+                  }
+                  @if (tbComponent) {
+                    <ng-container
+                      [tbComponentOutlet]="tbComponent"
+                      [tbComponentInjector]="tbComponentInjector"
+                      [tbComponentOutletContext]="tbComponentContext"
+                      (componentChange)="onComponentChange($event)"
+                      [tbComponentStyle]="tbComponentStyle">
+                    </ng-container>
+                  }
                 </div>
               </div>
             </div>
@@ -360,7 +370,8 @@ export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
         </div>
       </div>
     </ng-template>
-  `
+    `,
+    standalone: false
 })
 export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
 
@@ -484,6 +495,7 @@ export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
   preferredPlacement: PopoverPlacement = 'top';
   strictPosition = false;
   origin!: CdkOverlayOrigin;
+  originElement: ElementRef;
   public dir: Direction = 'ltr';
   classMap: { [klass: string]: any } = {};
   positions: ConnectionPositionPair[] = [...DEFAULT_POPOVER_POSITIONS];
@@ -502,6 +514,7 @@ export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
     public cdr: ChangeDetectorRef,
     private renderer: Renderer2,
     private animationBuilder: AnimationBuilder,
+    private injector: Injector,
     @Optional() private directionality: Directionality
   ) {}
 
@@ -544,7 +557,27 @@ export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
     if (this.tbVisible) {
       return;
     }
+    if (!this.origin) {
+        const injector: Injector = Injector.create(
+        {
+          providers: [
+            {
+              provide: ElementRef,
+              useValue: this.originElement
+            }
+          ],
+          parent: this.injector
+        });
+        runInInjectionContext(injector, () => {
+          this.origin = new CdkOverlayOrigin();
+          this.doShow();
+        });
+    } else {
+      this.doShow();
+    }
+  }
 
+  private doShow(): void {
     if (!this.isEmpty()) {
       this.tbVisible = true;
       this.tbVisibleChange.next(true);
@@ -646,9 +679,8 @@ export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
     }
   }
 
-  setOverlayOrigin(origin: CdkOverlayOrigin): void {
-    this.origin = origin;
-    this.cdr.markForCheck();
+  setOriginElement(originElement: ElementRef): void {
+    this.originElement = originElement;
   }
 
   onClickOutside(event: MouseEvent): void {

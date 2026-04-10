@@ -21,9 +21,10 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 
 @Component({
-  selector: 'tb-edge-quick-overview-widget-settings',
-  templateUrl: './edge-quick-overview-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-edge-quick-overview-widget-settings',
+    templateUrl: './edge-quick-overview-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class EdgeQuickOverviewWidgetSettingsComponent extends WidgetSettingsComponent {
 

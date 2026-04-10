@@ -28,9 +28,10 @@ import {
 } from '@home/components/widget/lib/rpc/power-button-widget.models';
 
 @Component({
-  selector: 'tb-power-button-widget-settings',
-  templateUrl: './power-button-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-power-button-widget-settings',
+    templateUrl: './power-button-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class PowerButtonWidgetSettingsComponent extends WidgetSettingsComponent {
 

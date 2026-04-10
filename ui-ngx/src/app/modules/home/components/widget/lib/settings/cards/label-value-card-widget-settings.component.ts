@@ -24,9 +24,10 @@ import { formatValue } from '@core/utils';
 import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Component({
-  selector: 'tb-label-value-card-widget-settings',
-  templateUrl: './label-value-card-widget-settings.component.html',
-  styleUrls: []
+    selector: 'tb-label-value-card-widget-settings',
+    templateUrl: './label-value-card-widget-settings.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class LabelValueCardWidgetSettingsComponent extends WidgetSettingsComponent {
 

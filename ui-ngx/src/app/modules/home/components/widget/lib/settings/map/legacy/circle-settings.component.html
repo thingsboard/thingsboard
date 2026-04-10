@@ -88,9 +88,11 @@
               <mat-form-field class="flex-1">
                 <mat-label translate>widgets.maps.show-tooltip-action</mat-label>
                 <mat-select required formControlName="showCircleTooltipAction">
-                  <mat-option *ngFor="let action of showTooltipActions" [value]="action">
-                    {{showTooltipActionTranslations.get(action) | translate}}
-                  </mat-option>
+                  @for (action of showTooltipActions; track action) {
+                    <mat-option [value]="action">
+                      {{showTooltipActionTranslations.get(action) | translate}}
+                    </mat-option>
+                  }
                 </mat-select>
               </mat-form-field>
               <mat-slide-toggle formControlName="autoCloseCircleTooltip" class="slide-block">

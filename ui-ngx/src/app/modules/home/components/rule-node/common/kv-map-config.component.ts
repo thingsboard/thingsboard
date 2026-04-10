@@ -34,21 +34,22 @@ import { isEqual } from '@core/public-api';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-kv-map-config',
-  templateUrl: './kv-map-config.component.html',
-  styleUrls: ['./kv-map-config.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => KvMapConfigComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => KvMapConfigComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-kv-map-config',
+    templateUrl: './kv-map-config.component.html',
+    styleUrls: ['./kv-map-config.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => KvMapConfigComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => KvMapConfigComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class KvMapConfigComponent implements ControlValueAccessor, OnInit, Validator {
 
@@ -78,6 +79,8 @@ export class KvMapConfigComponent implements ControlValueAccessor, OnInit, Valid
   @Input() valRequiredText: string;
 
   @Input() hintText: string;
+
+  @Input() emptyText: string;
 
   @Input() popupHelpLink: string;
 
@@ -170,7 +173,7 @@ export class KvMapConfigComponent implements ControlValueAccessor, OnInit, Valid
   };
 
   writeValue(keyValMap: { [key: string]: string }): void {
-    const keyValuesData = Object.keys(keyValMap).map(key => ({key, value: keyValMap[key]}));
+    const keyValuesData = Object.keys(keyValMap ?? {}).map(key => ({key, value: keyValMap[key]}));
     if (this.keyValsFormArray().length === keyValuesData.length) {
       this.keyValsFormArray().patchValue(keyValuesData, {emitEvent: false});
     } else {

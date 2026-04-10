@@ -103,7 +103,9 @@ public class EntityRelation implements HasVersion, Serializable, EdqsObject {
         this.version = entityRelation.getVersion();
     }
 
-    @Schema(description = "Additional parameters of the relation", implementation = JsonNode.class)
+    @Schema(description = "Additional parameters of the relation.",
+            implementation = JsonNode.class,
+            example = "{\"description\":\"Power supply connection\"}")
     public JsonNode getAdditionalInfo() {
         return BaseDataWithAdditionalInfo.getJson(() -> additionalInfo, () -> additionalInfoBytes);
     }

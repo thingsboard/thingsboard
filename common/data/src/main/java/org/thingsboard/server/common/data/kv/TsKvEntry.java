@@ -37,4 +37,9 @@ public interface TsKvEntry extends KvEntry, HasVersion {
         return new TsValue(getTs(), getValueAsString());
     }
 
+    @JsonIgnore
+    default boolean isDeletedEntry() {
+        return getTs() == 0 && (getValue() == null || getValueAsString().isEmpty());
+    }
+
 }

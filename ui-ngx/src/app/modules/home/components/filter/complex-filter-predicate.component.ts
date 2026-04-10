@@ -24,16 +24,17 @@ import { COMPLEX_FILTER_PREDICATE_DIALOG_COMPONENT_TOKEN } from '@home/component
 import { ComponentType } from '@angular/cdk/portal';
 
 @Component({
-  selector: 'tb-complex-filter-predicate',
-  templateUrl: './complex-filter-predicate.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ComplexFilterPredicateComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-complex-filter-predicate',
+    templateUrl: './complex-filter-predicate.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ComplexFilterPredicateComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ComplexFilterPredicateComponent implements ControlValueAccessor, OnInit {
 
