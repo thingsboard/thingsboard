@@ -14,6 +14,8 @@ jobs:
   build:
     name: Build & Package
     runs-on: ubuntu-22.04
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       - name: Checkout repository
@@ -26,22 +28,20 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Set up Node.js 18
+      - name: Set up Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: ui-ngx/package-lock.json
+          node-version: '20'
 
-      - name: Cache Maven packages
+      - name: Cache npm dependencies
         uses: actions/cache@v4
         with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('ui-ngx/package.json') }}
           restore-keys: |
-            ${{ runner.os }}-maven-
+            ${{ runner.os }}-npm-
 
-      - name: Build with Maven (skip tests for speed)
+      - name: Build with Maven (skip tests)
         run: mvn clean install -DskipTests -Dlicense.skip=true --batch-mode --no-transfer-progress
         env:
           MAVEN_OPTS: "-Xmx2g -XX:+UseParallelGC"
