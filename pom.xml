@@ -678,6 +678,7 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.11.0</version>
                     <configuration>
+                        <enablePreview>true</enablePreview>
                         <compilerArgs>
                             <arg>-Xlint:deprecation</arg>
                             <arg>-Xlint:removal</arg>
@@ -737,6 +738,7 @@
                             -XX:+UseStringDeduplication -XX:MaxGCPauseMillis=200
                             -XX:+EnableDynamicAgentLoading
                             --add-opens=java.base/java.lang.reflect=ALL-UNNAMED
+                            --enable-preview
                             -Dqueue.edqs.local.rocksdb_path="target/rocksdb/fork_${surefire.forkNumber}/edqs"
                             -Dqueue.calculated_fields.rocks_db_path="target/rocksdb/fork_${surefire.forkNumber}/cf"
                         </argLine>
