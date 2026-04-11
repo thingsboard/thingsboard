@@ -28,8 +28,8 @@
     <inceptionYear>2016</inceptionYear>
 
     <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
         <main.dir>${basedir}</main.dir>
         <pkg.process-resources.phase>none</pkg.process-resources.phase>
         <pkg.package.phase>none</pkg.package.phase>
@@ -678,7 +678,7 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.11.0</version>
                     <configuration>
-                        <release>17</release>
+                        <release>21</release>
                         <compilerArgs>
                             <arg>-Xlint:deprecation</arg>
                             <arg>-Xlint:removal</arg>
