@@ -16,26 +16,80 @@
 @import '../../../../../scss/constants';
 @import '../../../../../theme';
 
+// Apex Service brand colours
+$as-primary: #FFDF63;
+$as-primary-hover: rgba(255, 223, 99, 0.35);
+$as-primary-bg: rgba(255, 223, 99, 0.15);
+$as-text: #1A1A1A;
+$as-bg: #ffffff;
+
 :host {
   display: flex;
   flex: 1 1 0;
+
   .tb-login-content {
-    margin-top: 36px;
-    margin-bottom: 76px;
-    background-color: #eee;
-    --mat-card-elevated-container-elevation: none;
+    margin-top: 0;
+    margin-bottom: 0;
+    background: linear-gradient(135deg, #f8f8f8 0%, #ffffff 60%, $as-primary-bg 100%);
+    --mat-card-elevated-container-elevation: 0 4px 32px rgba(0,0,0,0.10);
+
+    mat-card {
+      border: 1.5px solid rgba(255, 223, 99, 0.4);
+      border-radius: 16px !important;
+      box-shadow: 0 4px 32px rgba(0, 0, 0, 0.10) !important;
+      background: $as-bg;
+    }
+
     .tb-login-form {
       @media #{$mat-gt-xs} {
         width: 480px !important;
       }
 
+      .login-logo {
+        margin-bottom: 8px;
+        img {
+          height: 90px;
+          object-fit: contain;
+        }
+      }
+
+      // Override Angular Material accent colour to use AS yellow
+      button[color="accent"], .mat-mdc-raised-button.mat-accent {
+        background-color: $as-primary !important;
+        color: $as-text !important;
+        border-radius: 8px;
+        font-weight: 700;
+        letter-spacing: 0.4px;
+
+        &:hover:not([disabled]) {
+          background-color: darken($as-primary, 6%) !important;
+        }
+
+        &[disabled] {
+          opacity: 0.55;
+        }
+      }
+
+      .tb-action-button {
+        margin: 20px 0 16px;
+        background-color: $as-primary;
+        color: $as-text;
+        border-radius: 8px;
+        font-weight: 700;
+
+        &:hover:not([disabled]) {
+          background-color: darken($as-primary, 6%);
+        }
+      }
+
       .forgot-password {
         --mat-button-text-horizontal-padding: 0;
         --mat-button-text-container-height: 20px;
-      }
 
-      .tb-action-button{
-        margin: 20px 0 16px;
+        .tb-reset-password {
+          color: darken($as-primary, 20%);
+          font-size: 13px;
+        }
       }
     }
 
@@ -47,8 +101,8 @@
       width: 100%;
       margin-bottom: 16px;
 
-      .mat-divider-horizontal{
-        --mat-divider-color: var(--mat-form-field-outlined-outline-color);
+      .mat-divider-horizontal {
+        --mat-divider-color: rgba(255, 223, 99, 0.5);
       }
 
       .text {
@@ -56,26 +110,34 @@
         padding-left: 8px;
         font-size: 16px;
         line-height: 24px;
+        color: #888;
       }
     }
 
-    .oauth-container{
+    .oauth-container {
       .title {
         font-size: 20px;
         line-height: 24px;
         letter-spacing: .1px;
         text-align: center;
         margin-bottom: 4px;
+        color: $as-text;
+        font-weight: 600;
       }
 
-      .material-icons{
+      .material-icons {
         width: 20px;
         min-width: 20px;
       }
 
       a.login-with-button {
-        color: rgba(black, 0.87);
-        background-color: #ffffff;
+        color: $as-text;
+        background-color: $as-primary-bg;
+        border-color: rgba(255, 223, 99, 0.5);
+
+        &:hover {
+          background-color: $as-primary-hover;
+        }
       }
 
       .login-button-container {
@@ -107,4 +169,3 @@
     }
   }
 }
-

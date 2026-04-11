@@ -31,9 +31,10 @@ $mat-md-lg: "screen and (min-width: 960px) and (max-width: 1819px)";
 
 $primary-hue-3: rgb(207, 216, 220) !default;
 
-$tb-primary-color: #305680;
-$tb-secondary-color: #527dad;
-$tb-hue3-color: #a7c1de;
+// Apex Service brand palette
+$tb-primary-color: #FFDF63;
+$tb-secondary-color: #f5cc30;
+$tb-hue3-color: rgba(255, 223, 99, 0.35);
 
-$tb-dark-primary-color: #9fa8da;
-$tb-primary-color-light: #7986cb;
+$tb-dark-primary-color: #FFDF63;
+$tb-primary-color-light: rgba(255, 223, 99, 0.55);

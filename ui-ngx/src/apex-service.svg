@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <rect width="64" height="64" rx="10" fill="#1A1A1A"/>
+  <!-- APEX triangle outline (two overlapping triangles forming the A-shape) -->
+  <!-- Outer triangle -->
+  <polyline points="32,6 58,52 6,52" fill="none" stroke="#FFDF63" stroke-width="5" stroke-linejoin="round"/>
+  <!-- Inner cut (bottom of A) -->
+  <line x1="20" y1="40" x2="44" y2="40" stroke="#1A1A1A" stroke-width="5"/>
+</svg>

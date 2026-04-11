@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 80" height="80" width="320">
-  <!-- Icon: hexagon with AS -->
+  <!-- Icon -->
   <rect x="4" y="4" width="72" height="72" rx="14" fill="#FFDF63"/>
   <text x="40" y="54" font-family="Arial, sans-serif" font-weight="900" font-size="36" text-anchor="middle" fill="#1A1A1A">AS</text>
   <!-- Text: Apex Service -->
-  <text x="94" y="35" font-family="Arial, sans-serif" font-weight="700" font-size="22" fill="#FFDF63">Apex</text>
-  <text x="94" y="62" font-family="Arial, sans-serif" font-weight="400" font-size="20" fill="#ffffff">Service</text>
+  <text x="94" y="35" font-family="Arial, sans-serif" font-weight="700" font-size="22" fill="#1A1A1A">Apex</text>
+  <text x="94" y="62" font-family="Arial, sans-serif" font-weight="400" font-size="20" fill="#555555">Service</text>
 </svg>

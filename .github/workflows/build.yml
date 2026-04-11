@@ -1,0 +1,70 @@
+name: Build Apex Service
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  build:
+    name: Build & Package
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Set up Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: ui-ngx/package-lock.json
+
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Build with Maven (skip tests for speed)
+        run: mvn clean install -DskipTests -Dlicense.skip=true --batch-mode --no-transfer-progress
+        env:
+          MAVEN_OPTS: "-Xmx2g -XX:+UseParallelGC"
+
+      - name: Find .deb artifact
+        id: find_deb
+        run: |
+          DEB_FILE=$(find . -name "*.deb" -not -path "./.git/*" | head -1)
+          echo "deb_path=$DEB_FILE" >> "$GITHUB_OUTPUT"
+          echo "Found: $DEB_FILE"
+
+      - name: Upload .deb artifact
+        if: steps.find_deb.outputs.deb_path != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: apex-service-deb-${{ github.sha }}
+          path: ${{ steps.find_deb.outputs.deb_path }}
+          retention-days: 14
+
+      - name: Upload application JAR (fallback)
+        if: steps.find_deb.outputs.deb_path == ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: apex-service-jar-${{ github.sha }}
+          path: application/target/*.jar
+          retention-days: 14

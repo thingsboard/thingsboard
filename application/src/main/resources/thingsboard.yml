@@ -301,8 +301,8 @@ database:
 # Configures cluster name, keyspace, SSL, credentials, socket, and query settings for the Cassandra driver.
 cassandra:
   # Thingsboard cluster name
-  cluster_name: "${CASSANDRA_CLUSTER_NAME:Thingsboard Cluster}"
-  # Thingsboard keyspace name
+  cluster_name: "${CASSANDRA_CLUSTER_NAME:Apex Service Cluster}"
+  # Apex Service keyspace name
   keyspace_name: "${CASSANDRA_KEYSPACE_NAME:thingsboard}"
   # Specify node list
   url: "${CASSANDRA_URL:127.0.0.1:9042}"
@@ -1666,16 +1666,16 @@ swagger:
   # Nonsecurity API path match pattern of swagger UI links
   non_security_path_regex: "${SWAGGER_NON_SECURITY_PATH_REGEX:/api/(?:noauth|v1)/.*}"
   # The title on the API doc UI page
-  title: "${SWAGGER_TITLE:ThingsBoard REST API}"
+  title: "${SWAGGER_TITLE:APEX Electro Mechanical Service REST API}"
   # The description on the API doc UI page
-  description: "${SWAGGER_DESCRIPTION: ThingsBoard open-source IoT platform REST API documentation.}"
+  description: "${SWAGGER_DESCRIPTION:APEX Electro Mechanical Service IoT platform REST API documentation.}"
   contact:
     # The contact name on the API doc UI page
-    name: "${SWAGGER_CONTACT_NAME:ThingsBoard team}"
+    name: "${SWAGGER_CONTACT_NAME:APEX Electro Mechanical Service team}"
     # The contact URL on the API doc UI page
-    url: "${SWAGGER_CONTACT_URL:https://thingsboard.io}"
+    url: "${SWAGGER_CONTACT_URL:}"
     # The contact email on the API doc UI page
-    email: "${SWAGGER_CONTACT_EMAIL:info@thingsboard.io}"
+    email: "${SWAGGER_CONTACT_EMAIL:}"
   license:
     # The license title on the API doc UI page
     title: "${SWAGGER_LICENSE_TITLE:Apache License Version 2.0}"
@@ -1684,7 +1684,7 @@ swagger:
   # The version of the API doc to display. Default to the package version.
   version: "${SWAGGER_VERSION:}"
   # The group name (definition) on the API doc UI page.
-  group_name: "${SWAGGER_GROUP_NAME:thingsboard}"
+  group_name: "${SWAGGER_GROUP_NAME:apex-service}"
   # Control the initial display state of API operations and tags (none or list)
   doc_expansion: "${SWAGGER_DOC_EXPANSION:list}"
 

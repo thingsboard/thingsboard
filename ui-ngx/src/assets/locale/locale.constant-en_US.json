@@ -1878,8 +1878,8 @@
         "make-private-dashboard-title": "Are you sure you want to make the dashboard '{{dashboardTitle}}' private?",
         "make-private-dashboard-text": "After the confirmation the dashboard will be made private and won't be accessible by others.",
         "make-private-dashboard": "Make dashboard private",
-        "socialshare-text": "'{{dashboardTitle}}' powered by ThingsBoard",
-        "socialshare-title": "'{{dashboardTitle}}' powered by ThingsBoard",
+        "socialshare-text": "'{{dashboardTitle}}' powered by Apex Service",
+        "socialshare-title": "'{{dashboardTitle}}' powered by Apex Service",
         "select-dashboard": "Select dashboard",
         "no-dashboards-matching": "No dashboards matching '{{entity}}' were found.",
         "dashboard-required": "Dashboard is required.",
@@ -6218,7 +6218,7 @@
         "tenant-required": "Tenant is required",
         "search": "Search tenants",
         "selected-tenants": "{ count, plural, =1 {1 tenant} other {# tenants} } selected",
-        "isolated-tb-rule-engine": "Use isolated ThingsBoard Rule Engine queues",
+        "isolated-tb-rule-engine": "Use isolated Apex Service Rule Engine queues",
         "isolated-tb-rule-engine-details": "Each tenant will have dedicated Rule Engine queues"
     },
     "tenant-profile": {
@@ -10062,7 +10062,7 @@
         },
         "functions": {
             "title": "Functions",
-            "pe-feature-tooltip": "Only on ThingsBoard\nProfessional Edition",
+            "pe-feature-tooltip": "Only on Apex Service\nProfessional Edition",
             "switch-to-pe": "Switch to PE",
             "alarms": "Alarms",
             "dashboards": "Dashboards",
