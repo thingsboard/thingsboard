@@ -15,6 +15,7 @@
 ///
 
 import { Component } from '@angular/core';
+import { WhiteLabelService, WL_DEFAULTS } from '@core/services/white-label.service';
 
 @Component({
     selector: 'tb-footer',
@@ -26,4 +27,9 @@ export class FooterComponent {
 
   year = new Date().getFullYear();
 
+  constructor(public whiteLabelService: WhiteLabelService) {}
+
+  get footerText(): string {
+    return this.whiteLabelService.snapshot.footerText || WL_DEFAULTS.footerText;
+  }
 }

@@ -23,6 +23,7 @@ import { AdminService } from '@core/http/admin.service';
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
 import { Subject } from 'rxjs';
 import { AdminSettings } from '@shared/models/settings.models';
+import { WhiteLabelService } from '@core/services/white-label.service';
 
 export interface WhiteLabelSettings {
   appTitle: string;
@@ -51,6 +52,7 @@ export class WhiteLabelComponent extends PageComponent implements HasConfirmForm
 
   constructor(protected store: Store<AppState>,
               private adminService: AdminService,
+              private whiteLabelService: WhiteLabelService,
               public fb: FormBuilder) {
     super(store);
     this.buildForm();
@@ -117,7 +119,10 @@ export class WhiteLabelComponent extends PageComponent implements HasConfirmForm
     }
     this.adminSettings.jsonValue = { ...this.adminSettings.jsonValue, ...this.whiteLabelForm.value };
     this.adminService.saveAdminSettings(this.adminSettings)
-      .subscribe(settings => this.processSettings(settings));
+      .subscribe(settings => {
+        this.processSettings(settings);
+        this.whiteLabelService.reload();
+      });
   }
 
   discard(): void {

@@ -34,6 +34,7 @@ import { RouterTabsComponent } from '@home/components/router-tabs.component';
 import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { isDefined, isDefinedAndNotNull } from '@core/utils';
+import { WhiteLabelService } from '@core/services/white-label.service';
 
 @Component({
     selector: 'tb-home',
@@ -55,6 +56,10 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
 
   logo = 'assets/logo_title_white.svg';
 
+  get whiteLabelSettings() {
+    return this.whiteLabelService.snapshot;
+  }
+
   @ViewChild('sidenav')
   sidenav: MatSidenav;
 
@@ -74,11 +79,16 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
               @Inject(WINDOW) private window: Window,
               private activeComponentService: ActiveComponentService,
               private fb: FormBuilder,
-              public breakpointObserver: BreakpointObserver) {
+              public breakpointObserver: BreakpointObserver,
+              private whiteLabelService: WhiteLabelService) {
     super(store);
   }
 
   ngOnInit() {
+    this.whiteLabelService.load();
+    this.whiteLabelService.settings$.pipe(takeUntil(this.destroy$)).subscribe(s => {
+      if (s.logoUrl) { this.logo = s.logoUrl; }
+    });
 
     const isGtSm = this.breakpointObserver.isMatched(MediaBreakpoints['gt-sm']);
     this.sidenavMode = isGtSm ? 'side' : 'over';
