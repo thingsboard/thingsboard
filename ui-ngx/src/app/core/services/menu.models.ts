@@ -109,7 +109,8 @@ export enum MenuId {
   version_control = 'version_control',
   api_usage = 'api_usage',
   trendz_settings = 'trendz_settings',
-  ai_models = 'ai_models'
+  ai_models = 'ai_models',
+  white_label = 'white_label'
 }
 
 declare type MenuFilter = (authState: AuthState) => boolean;
@@ -740,6 +741,16 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       path: '/settings/trendz',
       icon: 'trendz-settings'
     }
+  ],
+  [
+    MenuId.white_label,
+    {
+      id: MenuId.white_label,
+      name: 'white-label.white-label',
+      type: 'link',
+      path: '/whitelabel',
+      icon: 'palette'
+    }
   ]
 ]);
 
@@ -819,7 +830,8 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
           },
           {id: MenuId.audit_log}
         ]
-      }
+      },
+      {id: MenuId.white_label}
     ]
   ],
   [

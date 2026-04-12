@@ -1,0 +1,240 @@
+/**
+ * Copyright © 2016-2026 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import '../../../../../scss/constants';
+
+:host {
+  display: block;
+  padding: 24px;
+  max-width: 1200px;
+  background: $as-content-bg;
+  min-height: 100%;
+
+  .wl-page {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  // ── Header ────────────────────────────────────────────────
+  .wl-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: $as-sidebar-bg;
+    border-radius: 12px;
+    padding: 20px 24px;
+    color: #fff;
+
+    .wl-header-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: rgba(255, 223, 99, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+
+      mat-icon {
+        color: $as-sidebar-accent;
+        font-size: 26px;
+        width: 26px;
+        height: 26px;
+      }
+    }
+
+    .wl-header-text {
+      h2 {
+        margin: 0 0 4px;
+        font-size: 20px;
+        font-weight: 600;
+        color: #fff;
+      }
+      p {
+        margin: 0;
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.65);
+      }
+    }
+  }
+
+  // ── Card grid ─────────────────────────────────────────────
+  .wl-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+
+    @media #{$mat-lt-md} {
+      grid-template-columns: 1fr;
+    }
+
+    // Make the last card span full width on odd columns
+    .wl-card:last-child:nth-child(odd) {
+      grid-column: 1 / -1;
+    }
+  }
+
+  // ── Individual card ────────────────────────────────────────
+  .wl-card {
+    border-radius: 12px !important;
+    box-shadow: $as-card-shadow !important;
+    border: 1px solid #e8ecf4;
+
+    mat-card-header {
+      padding: 20px 20px 0;
+      align-items: center;
+
+      .wl-card-icon {
+        background: rgba(255, 223, 99, 0.15);
+        border-radius: 8px;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: darken(#FFDF63, 20%);
+        font-size: 20px;
+        margin-right: 4px;
+      }
+
+      mat-card-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: $as-sidebar-bg;
+      }
+
+      mat-card-subtitle {
+        font-size: 12.5px;
+        color: rgba(0,0,0,0.5);
+      }
+    }
+
+    mat-card-content {
+      padding: 16px 20px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+  }
+
+  // ── Fields ────────────────────────────────────────────────
+  .wl-field {
+    width: 100%;
+  }
+
+  // ── Color picker row ──────────────────────────────────────
+  .wl-color-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .wl-field-color {
+      flex: 1;
+    }
+
+    .wl-color-swatch {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      border: 2px solid rgba(0,0,0,0.12);
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    .wl-color-picker {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      border: 2px solid rgba(0,0,0,0.12);
+      border-radius: 8px;
+      cursor: pointer;
+      flex-shrink: 0;
+      background: transparent;
+    }
+  }
+
+  // ── Info box ──────────────────────────────────────────────
+  .wl-info-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    background: rgba(255, 223, 99, 0.12);
+    border: 1px solid rgba(255, 223, 99, 0.35);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12.5px;
+    color: #5a4800;
+    margin-top: 4px;
+
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+      margin-top: 1px;
+      color: darken(#FFDF63, 25%);
+    }
+  }
+
+  // ── Logo preview ──────────────────────────────────────────
+  .wl-logo-preview {
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    border: 1px dashed rgba(0,0,0,0.15);
+
+    &.wl-logo-dark {
+      background: $as-sidebar-bg;
+    }
+
+    &.wl-logo-light {
+      background: #f9f9f9;
+    }
+
+    .wl-preview-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 600;
+      opacity: 0.5;
+    }
+
+    img {
+      max-height: 48px;
+      max-width: 200px;
+      object-fit: contain;
+    }
+  }
+
+  // ── Action bar ────────────────────────────────────────────
+  .wl-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 0 8px;
+
+    button mat-icon {
+      margin-right: 6px;
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  }
+}

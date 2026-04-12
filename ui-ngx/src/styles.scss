@@ -40,7 +40,7 @@ body, html {
 body {
   margin: 0;
   padding: 0;
-  background-color: #eee;
+  background-color: #F4F6FA;
   overflow: hidden;
 }
 
@@ -1350,4 +1350,48 @@ pre.tb-highlight {
 
 @tailwind base;
 @tailwind components;
+
+/***************
+ * APEX SERVICE GLOBAL OVERRIDES
+ ***************/
+
+// Better card styling across the app
+.mat-mdc-card {
+  border-radius: 10px !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,.07), 0 2px 8px rgba(0,0,0,.04) !important;
+  border: 1px solid #eaeff5 !important;
+}
+
+// Improve data table header
+.mat-mdc-table .mat-mdc-header-row {
+  background-color: #f8fafd !important;
+}
+
+// Top toolbar breadcrumb styling
+.tb-breadcrumb .tb-last-item,
+.tb-breadcrumb-item-label {
+  font-weight: 500 !important;
+  font-size: 15px !important;
+}
+
+// Better focus ring on primary buttons
+.mat-mdc-raised-button.mat-primary,
+.mat-mdc-flat-button.mat-primary {
+  border-radius: 8px !important;
+}
+
+// Progress bar color
+.mat-mdc-progress-bar.mat-warn {
+  --mdc-linear-progress-active-indicator-color: #FFDF63;
+}
+
+// Notification bell & user menu icon color in dark top bar → now white bg so use dark icons
+.tb-primary-toolbar .mat-mdc-icon-button .mat-icon {
+  color: #3a4057 !important;
+}
+
+// Sidenav mat-sidenav-container background
+.mat-drawer-container {
+  background-color: #F4F6FA !important;
+}
 @tailwind utilities;

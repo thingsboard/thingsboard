@@ -1,0 +1,162 @@
+<!--
+
+    Copyright © 2016-2026 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="wl-page" [formGroup]="whiteLabelForm">
+
+  <!-- Header -->
+  <div class="wl-header">
+    <div class="wl-header-icon">
+      <mat-icon>palette</mat-icon>
+    </div>
+    <div class="wl-header-text">
+      <h2>White Label Settings</h2>
+      <p>Customize the branding and appearance of your APEX Service platform.</p>
+    </div>
+  </div>
+
+  <div class="wl-grid">
+
+    <!-- Branding card -->
+    <mat-card class="wl-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar class="wl-card-icon">business</mat-icon>
+        <mat-card-title>Branding & Identity</mat-card-title>
+        <mat-card-subtitle>Application name, colors and identity</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+
+        <mat-form-field class="wl-field" appearance="outline">
+          <mat-label>Application Title</mat-label>
+          <input matInput formControlName="appTitle" placeholder="e.g. APEX Electro Mechanical Service"/>
+          <mat-hint>Shown in the browser tab and page header.</mat-hint>
+          <mat-error *ngIf="whiteLabelForm.get('appTitle').hasError('required')">
+            Application title is required.
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field class="wl-field" appearance="outline">
+          <mat-label>Footer Text</mat-label>
+          <input matInput formControlName="footerText" placeholder="e.g. APEX Electro Mechanical Service"/>
+          <mat-hint>Shown at the bottom of every page.</mat-hint>
+        </mat-form-field>
+
+        <div class="wl-color-row">
+          <mat-form-field class="wl-field-color" appearance="outline">
+            <mat-label>Primary Brand Color</mat-label>
+            <input matInput formControlName="primaryColor" placeholder="#FFDF63"/>
+            <mat-error *ngIf="whiteLabelForm.get('primaryColor').hasError('pattern')">
+              Enter a valid hex color, e.g. #FFDF63
+            </mat-error>
+          </mat-form-field>
+          <div class="wl-color-swatch"
+               [style.background-color]="whiteLabelForm.get('primaryColor').value">
+          </div>
+          <input type="color"
+                 class="wl-color-picker"
+                 [value]="whiteLabelForm.get('primaryColor').value"
+                 (input)="whiteLabelForm.get('primaryColor').setValue($event.target['value'])"/>
+        </div>
+
+        <div class="wl-info-box">
+          <mat-icon>info_outline</mat-icon>
+          <span>Color changes take effect after rebuilding and redeploying the frontend. The current primary color is <strong>{{ whiteLabelForm.get('primaryColor').value }}</strong>.</span>
+        </div>
+
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Logo card -->
+    <mat-card class="wl-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar class="wl-card-icon">image</mat-icon>
+        <mat-card-title>Logos</mat-card-title>
+        <mat-card-subtitle>Sidebar and login page logos</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+
+        <mat-form-field class="wl-field" appearance="outline">
+          <mat-label>Sidebar Logo URL</mat-label>
+          <input matInput formControlName="logoUrl" placeholder="/assets/logo_title_white.svg"/>
+          <mat-hint>Shown in the sidebar navigation header (dark background).</mat-hint>
+        </mat-form-field>
+
+        <div class="wl-logo-preview wl-logo-dark" *ngIf="logoPreview">
+          <span class="wl-preview-label">Preview (dark bg)</span>
+          <img [src]="logoPreview" alt="Sidebar logo preview" />
+        </div>
+
+        <mat-form-field class="wl-field" appearance="outline">
+          <mat-label>Login Page Logo URL</mat-label>
+          <input matInput formControlName="logoLoginUrl" placeholder="/assets/apex-logo-white-bg.png"/>
+          <mat-hint>Shown on the login page (white background).</mat-hint>
+        </mat-form-field>
+
+        <div class="wl-logo-preview wl-logo-light" *ngIf="logoLoginPreview">
+          <span class="wl-preview-label">Preview (light bg)</span>
+          <img [src]="logoLoginPreview" alt="Login logo preview" />
+        </div>
+
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Support card -->
+    <mat-card class="wl-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar class="wl-card-icon">support_agent</mat-icon>
+        <mat-card-title>Support & Contact</mat-card-title>
+        <mat-card-subtitle>Support email and links shown to users</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+
+        <mat-form-field class="wl-field" appearance="outline">
+          <mat-label>Support Email</mat-label>
+          <input matInput formControlName="supportEmail" placeholder="support@apex.com" type="email"/>
+          <mat-icon matSuffix>email</mat-icon>
+          <mat-error *ngIf="whiteLabelForm.get('supportEmail').hasError('email')">
+            Enter a valid email address.
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field class="wl-field" appearance="outline">
+          <mat-label>Support URL</mat-label>
+          <input matInput formControlName="supportUrl" placeholder="https://apex.com/support"/>
+          <mat-icon matSuffix>open_in_new</mat-icon>
+        </mat-form-field>
+
+      </mat-card-content>
+    </mat-card>
+
+  </div>
+
+  <!-- Action bar -->
+  <div class="wl-actions">
+    <button mat-stroked-button
+            [disabled]="!whiteLabelForm.dirty"
+            (click)="discard()">
+      <mat-icon>undo</mat-icon>
+      Discard changes
+    </button>
+    <button mat-flat-button
+            color="primary"
+            [disabled]="whiteLabelForm.invalid || !whiteLabelForm.dirty"
+            (click)="save()">
+      <mat-icon>save</mat-icon>
+      Save settings
+    </button>
+  </div>
+
+</div>

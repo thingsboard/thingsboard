@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@import '../../../../../scss/constants';
+
 :host {
   width: 100%;
 }
@@ -27,34 +29,67 @@
   }
 
   .tb-side-menu > li {
-    border-bottom: 1px solid rgba(0, 0, 0, .12);
+    border-bottom: 1px solid $as-sidebar-separator;
+  }
+
+  // Section group label
+  .tb-side-menu-section {
+    padding: 18px 16px 4px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: $as-sidebar-text-muted;
+    pointer-events: none;
   }
 
   a.mat-mdc-button.mat-mdc-button-base {
     display: inline-flex;
     width: 100%;
-    height: 40px;
+    height: 44px;
     align-items: center;
     overflow: hidden;
-    line-height: 40px;
+    line-height: 44px;
     border-radius: 0;
     padding: 0 16px;
+    color: $as-sidebar-text;
+    letter-spacing: 0.01em;
+    font-size: 13.5px;
+    font-weight: 400;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    border-left: 3px solid transparent;
+
     &:hover {
       border-bottom: none;
-      background-color: rgba(255,255,255,0.08);
+      background-color: $as-sidebar-bg-hover;
+      color: #ffffff;
     }
+
     &:focus {
       border-bottom: none;
     }
+
     &.tb-active {
-      background-color: rgba(255, 255, 255, .15);
+      background-color: $as-sidebar-bg-active;
+      border-left-color: $as-sidebar-accent;
+      color: $as-sidebar-accent;
+      font-weight: 500;
+
+      .mat-icon {
+        color: $as-sidebar-accent !important;
+      }
     }
+
     .mat-icon {
-      margin-right: 8px;
+      margin-right: 10px;
       margin-left: 0;
       min-width: 1.125rem;
       min-height: 1.125rem;
+      font-size: 1.125rem;
+      color: $as-sidebar-text-muted;
+      transition: color 0.15s ease;
     }
+
     span.mdc-button__label {
       width: 100%;
       overflow: hidden;
@@ -68,7 +103,20 @@
       .tb-toggle-icon {
         padding-top: 12px;
         padding-bottom: 12px;
+        color: $as-sidebar-text-muted;
+        margin-left: auto;
       }
+    }
+  }
+
+  // Sub-menu (nested items)
+  ul.tb-side-sub-menu {
+    background-color: rgba(0, 0, 0, 0.12);
+
+    a.mat-mdc-button.mat-mdc-button-base {
+      padding-left: 40px;
+      height: 38px;
+      font-size: 13px;
     }
   }
 }

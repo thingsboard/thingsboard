@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@import '../../../../../scss/constants';
+
 :host {
   display: flex;
   width: 100%;
@@ -20,51 +22,98 @@
 
   mat-sidenav-container {
     flex: 1;
+    background-color: $as-content-bg;
   }
+
   mat-sidenav.tb-site-sidenav {
-    width: 250px;
-    @media (max-width:456px) {
+    width: $as-sidebar-width;
+    background-color: $as-sidebar-bg !important;
+    border-right: none !important;
+    box-shadow: 2px 0 12px rgba(0, 0, 0, 0.18) !important;
+
+    @media (max-width: 456px) {
       width: calc(100% - 56px);
     }
+
     .tb-nav-header {
       z-index: 2;
       flex-shrink: 0;
       white-space: nowrap;
+
       .tb-nav-header-toolbar {
-        min-height: 64px;
+        min-height: 66px;
         height: inherit;
-        padding: 0;
+        padding: 0 16px;
         z-index: 2;
         flex-shrink: 0;
         white-space: nowrap;
-        border-bottom: 1px solid rgba(0, 0, 0, .12);
+        background-color: $as-sidebar-bg !important;
+        border-bottom: 1px solid $as-sidebar-separator;
+
         & > div {
-          height: 64px;
+          height: 66px;
+          display: flex;
+          align-items: center;
+
           .tb-logo-title {
             width: auto;
             max-width: 100%;
-            height: 36px;
+            height: 38px;
             max-height: 100%;
             margin: auto;
+            // brightness filter ensures white logo looks good on dark bg
+            filter: brightness(1.1);
           }
         }
       }
     }
+
     .tb-side-menu-toolbar {
       overflow-y: auto;
+      overflow-x: hidden;
       height: inherit;
       padding: 0;
+      background-color: $as-sidebar-bg !important;
+
+      // Custom scrollbar
+      &::-webkit-scrollbar {
+        width: 4px;
+      }
+      &::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      &::-webkit-scrollbar-thumb {
+        background: rgba(255,255,255,0.15);
+        border-radius: 2px;
+      }
     }
   }
+
+  // Top toolbar: white with subtle shadow
   .tb-primary-toolbar {
     z-index: 2;
+    background: #ffffff !important;
+    color: #1A2035 !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.10) !important;
+    border-bottom: 1px solid #e8ecf4;
+    min-height: 66px !important;
+
+    // All icons in the top toolbar should be dark
+    .mat-icon,
+    button.mat-mdc-icon-button {
+      color: #3a4057 !important;
+    }
+
     h1 {
-      font-size: 24px !important;
-      font-weight: 400 !important;
+      font-size: 20px !important;
+      font-weight: 500 !important;
+      color: #1A2035 !important;
     }
   }
+
   .tb-main-content {
     overflow: auto;
     position: relative;
+    background-color: $as-content-bg;
   }
 }
