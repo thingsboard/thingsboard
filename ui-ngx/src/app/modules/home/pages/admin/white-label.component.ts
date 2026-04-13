@@ -56,7 +56,7 @@ export class WhiteLabelComponent extends PageComponent implements HasConfirmForm
               public fb: FormBuilder) {
     super(store);
     this.buildForm();
-    this.adminService.getAdminSettings<WhiteLabelSettings>('whiteLabel')
+    this.adminService.getWhiteLabelSettings()
       .subscribe({
         next: settings => this.processSettings(settings),
         error: () => {
@@ -118,7 +118,7 @@ export class WhiteLabelComponent extends PageComponent implements HasConfirmForm
       } as AdminSettings<WhiteLabelSettings>;
     }
     this.adminSettings.jsonValue = { ...this.adminSettings.jsonValue, ...this.whiteLabelForm.value };
-    this.adminService.saveAdminSettings(this.adminSettings)
+    this.adminService.saveWhiteLabelSettings(this.adminSettings)
       .subscribe(settings => {
         this.processSettings(settings);
         this.whiteLabelService.reload();

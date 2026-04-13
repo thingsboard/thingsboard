@@ -46,7 +46,7 @@ export class WhiteLabelService {
     if (this.loaded) { return; }
     this.loaded = true;
 
-    this.adminService.getAdminSettings<WhiteLabelSettings>('whiteLabel').subscribe({
+    this.adminService.getWhiteLabelSettings().subscribe({
       next: (result) => {
         if (result?.jsonValue) {
           const merged = { ...WL_DEFAULTS, ...result.jsonValue };

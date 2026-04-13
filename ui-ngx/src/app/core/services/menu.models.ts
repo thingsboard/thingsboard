@@ -935,7 +935,8 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
             ]
           }
         ]
-      }
+      },
+      {id: MenuId.white_label}
     ]
   ],
   [

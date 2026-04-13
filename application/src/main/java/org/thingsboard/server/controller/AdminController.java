@@ -159,6 +159,34 @@ public class AdminController extends BaseController {
         return adminSettings;
     }
 
+    @ApiOperation(value = "Get white-label settings (getWhiteLabelSettings)",
+            notes = "Returns white-label settings for the current user scope. " +
+                    "SYS_ADMIN receives system-level settings; TENANT_ADMIN receives tenant-level settings, falling back to system-level defaults.")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @GetMapping(value = "/whiteLabel")
+    public AdminSettings getWhiteLabelSettings() throws ThingsboardException {
+        TenantId tenantId = getTenantId();
+        AdminSettings settings = adminSettingsService.findAdminSettingsByTenantIdAndKey(tenantId, "whiteLabel");
+        if (settings == null && !TenantId.SYS_TENANT_ID.equals(tenantId)) {
+            settings = adminSettingsService.findAdminSettingsByTenantIdAndKey(TenantId.SYS_TENANT_ID, "whiteLabel");
+        }
+        return settings;
+    }
+
+    @ApiOperation(value = "Save white-label settings (saveWhiteLabelSettings)",
+            notes = "Creates or updates white-label settings for the current user scope. " +
+                    "SYS_ADMIN saves system-level settings; TENANT_ADMIN saves tenant-level settings.")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @PostMapping(value = "/whiteLabel")
+    public AdminSettings saveWhiteLabelSettings(
+            @Parameter(description = "A JSON value representing the White Label Settings.")
+            @RequestBody AdminSettings adminSettings) throws ThingsboardException {
+        TenantId tenantId = getTenantId();
+        adminSettings.setTenantId(tenantId);
+        adminSettings.setKey("whiteLabel");
+        return checkNotNull(adminSettingsService.saveAdminSettings(tenantId, adminSettings));
+    }
+
     @ApiOperation(value = "Get the Security Settings object (getSecuritySettings)",
             notes = "Get the Security Settings object that contains password policy, etc." + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")

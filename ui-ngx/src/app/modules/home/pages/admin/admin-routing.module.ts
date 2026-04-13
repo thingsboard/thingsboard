@@ -397,7 +397,7 @@ const routes: Routes = [
     component: WhiteLabelComponent,
     canDeactivate: [ConfirmOnExitGuard],
     data: {
-      auth: [Authority.SYS_ADMIN],
+      auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
       title: 'white-label.settings',
       breadcrumb: {
         menuId: MenuId.white_label

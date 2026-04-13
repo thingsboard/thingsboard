@@ -54,6 +54,15 @@ export class AdminService {
     return this.http.post<AdminSettings<T>>('/api/admin/settings', adminSettings, defaultHttpOptionsFromConfig(config));
   }
 
+  public getWhiteLabelSettings(config?: RequestConfig): Observable<AdminSettings<any>> {
+    return this.http.get<AdminSettings<any>>('/api/admin/whiteLabel', defaultHttpOptionsFromConfig(config));
+  }
+
+  public saveWhiteLabelSettings(adminSettings: AdminSettings<any>,
+                                config?: RequestConfig): Observable<AdminSettings<any>> {
+    return this.http.post<AdminSettings<any>>('/api/admin/whiteLabel', adminSettings, defaultHttpOptionsFromConfig(config));
+  }
+
   public sendTestMail(adminSettings: AdminSettings<MailServerSettings>,
                       config?: RequestConfig): Observable<void> {
     return this.http.post<void>('/api/admin/settings/testMail', adminSettings, defaultHttpOptionsFromConfig(config));
