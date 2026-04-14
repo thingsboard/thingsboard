@@ -534,9 +534,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
       const exactMatch = entities.find(e =>
         (this.useEntityDisplayName ? getEntityDisplayName(e) : e.name)?.toLowerCase() === searchLower
       );
-      if (exactMatch) {
-        this.selectMatchedEntity(exactMatch);
-      } else if (entities.length === 1 && !this.allowCreateNew) {
+      if (entities.length === 1 && (!this.allowCreateNew || exactMatch)) {
         this.selectMatchedEntity(entities[0]);
       }
     });
