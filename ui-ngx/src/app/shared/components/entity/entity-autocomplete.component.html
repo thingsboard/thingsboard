@@ -69,7 +69,7 @@
     <mat-icon matSuffix
               matTooltipPosition="above"
               matTooltipClass="tb-error-tooltip"
-              [matTooltip]="entityNotValidText | translate"
+              [matTooltip]="entityNotValidText | translate: {entity: entityTypeValue.toLocaleLowerCase()}"
               class="tb-error">
       warning
     </mat-icon>
@@ -110,7 +110,7 @@
   }
   @if (!inlineField && selectEntityFormGroup.get('entity').hasError('objectRequired')) {
     <mat-error>
-      {{ entityNotValidText | translate }}
+      {{ entityNotValidText | translate: {entity: entityTypeValue.toLocaleLowerCase()} }}
     </mat-error>
   }
 </mat-form-field>
