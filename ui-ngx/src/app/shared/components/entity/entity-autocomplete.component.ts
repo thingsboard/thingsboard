@@ -30,6 +30,7 @@ import { Authority } from '@shared/models/authority.enum';
 import { getEntityDetailsPageURL, isDefinedAndNotNull, isEqual, objectRequired } from '@core/utils';
 import { coerceArray, coerceBoolean } from '@shared/decorators/coercion';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'tb-entity-autocomplete',
@@ -48,7 +49,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
 
   private modelValue: string | EntityId | null;
 
-  public entityTypeValue: EntityType | AliasEntityType;
+  private entityTypeValue: EntityType | AliasEntityType;
 
   private entitySubtypeValue: string;
 
@@ -186,10 +187,15 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
     return this.entityText;
   }
 
+  get entityNameForError(): string {
+    return this.entityText ? this.translate.instant(this.entityText).toLowerCase() : '';
+  }
+
 
   constructor(private store: Store<AppState>,
               private entityService: EntityService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private translate: TranslateService) {
     this.selectEntityFormGroup = this.fb.group({
       entity: [null, objectRequired()]
     });
@@ -226,6 +232,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
           tap(() => {
             if (this.pendingBlur) {
               this.handleBlur();
+              this.pendingBlur = false;
             }
           }),
           shareReplay(1)
