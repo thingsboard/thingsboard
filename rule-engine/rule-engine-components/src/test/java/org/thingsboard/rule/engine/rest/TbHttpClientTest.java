@@ -26,8 +26,11 @@ import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.mockserver.integration.ClientAndServer;
+import org.mockserver.matchers.Times;
 import org.springframework.util.LinkedMultiValueMap;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.credentials.DigestCredentials;
+import org.thingsboard.rule.engine.util.DigestAuthUtil;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
@@ -42,8 +45,10 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.startsWith;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.willCallRealMethod;
@@ -187,6 +192,261 @@ public class TbHttpClientTest {
         verify(ctx, times(1)).tellSuccess(any());
         verify(ctx, times(0)).tellFailure(any(), any());
         Assertions.assertEquals(successResponseBody, capturedData.getValue());
+    }
+
+    @Test
+    public void testDigestAuth_401Challenge_retriesAndSucceeds() throws Exception {
+        String path = "/api/secure";
+        String wwwAuth = "Digest realm=\"TestRealm\", nonce=\"abc123nonce\", qop=\"auth\", algorithm=MD5";
+
+        var server = startClientAndServer("localhost", 1082);
+        try {
+            // First request (no Authorization) → 401 Digest challenge
+            server.when(
+                    request().withMethod("GET").withPath(path),
+                    Times.once()
+            ).respond(
+                    response().withStatusCode(401).withHeader("WWW-Authenticate", wwwAuth)
+            );
+            // Retry (with Authorization: Digest ...) → 200
+            server.when(
+                    request().withMethod("GET").withPath(path)
+            ).respond(
+                    response().withStatusCode(200).withBody("OK")
+            );
+
+            var credentials = new DigestCredentials();
+            credentials.setUsername("admin");
+            credentials.setPassword("secret");
+
+            var config = new TbRestApiCallNodeConfiguration().defaultConfiguration();
+            config.setRequestMethod("GET");
+            config.setRestEndpointUrlPattern("http://localhost:" + server.getPort() + path);
+            config.setUseSimpleClientHttpFactory(true);
+            config.setCredentials(credentials);
+
+            var httpClient = new TbHttpClient(config, null);
+            try {
+                var msg = TbMsg.newMsg()
+                        .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                        .originator(new DeviceId(EntityId.NULL_UUID))
+                        .copyMetaData(TbMsgMetaData.EMPTY)
+                        .data(TbMsg.EMPTY_JSON_OBJECT)
+                        .build();
+
+                var ctx = mock(TbContext.class);
+                when(ctx.transformMsg(eq(msg), any(), any())).thenReturn(msg);
+
+                var latch = new CountDownLatch(1);
+                httpClient.processMessage(ctx, msg,
+                        m -> { ctx.tellSuccess(m); latch.countDown(); },
+                        (m, t) -> { ctx.tellFailure(m, t); latch.countDown(); });
+
+                latch.await(5, TimeUnit.SECONDS);
+
+                verify(ctx, times(1)).tellSuccess(any());
+                verify(ctx, times(0)).tellFailure(any(), any());
+
+                // Verify two requests were made and the retry carried Authorization: Digest
+                var recorded = server.retrieveRecordedRequests(request().withPath(path));
+                Assertions.assertEquals(2, recorded.length);
+                assertThat(recorded[1].getFirstHeader("Authorization"), startsWith("Digest "));
+            } finally {
+                httpClient.destroy();
+            }
+        } finally {
+            server.stop();
+        }
+    }
+
+    @Test
+    public void testDigestAuthUtil_parseWwwAuthenticate_extractsFields() {
+        String header = "Digest realm=\"TestRealm\", nonce=\"testNonce123\", qop=\"auth\", algorithm=MD5";
+        var params = DigestAuthUtil.parseWwwAuthenticate(header);
+        Assertions.assertEquals("TestRealm", params.get("realm"));
+        Assertions.assertEquals("testNonce123", params.get("nonce"));
+        Assertions.assertEquals("auth", params.get("qop"));
+        Assertions.assertEquals("MD5", params.get("algorithm"));
+    }
+
+    @Test
+    public void testDigestAuthUtil_requestUriForDigest_pathAndQuery() throws Exception {
+        Assertions.assertEquals("/api/data?key=value",
+                DigestAuthUtil.requestUriForDigest(new URI("http://localhost:8080/api/data?key=value")));
+        Assertions.assertEquals("/api/data",
+                DigestAuthUtil.requestUriForDigest(new URI("http://localhost:8080/api/data")));
+        Assertions.assertEquals("/",
+                DigestAuthUtil.requestUriForDigest(new URI("http://localhost:8080")));
+    }
+
+    @Test
+    public void testDigestAuthUtil_buildDigestAuthHeader_containsRequiredFields() {
+        String header = DigestAuthUtil.buildDigestAuthHeader(
+                "user", "pass", "GET", "/api",
+                "Digest realm=\"Realm\", nonce=\"nonce123\", qop=\"auth\", algorithm=MD5",
+                null
+        );
+        assertThat(header, startsWith("Digest "));
+        assertThat(header, containsString("username=\"user\""));
+        assertThat(header, containsString("realm=\"Realm\""));
+        assertThat(header, containsString("nonce=\"nonce123\""));
+        assertThat(header, containsString("uri=\"/api\""));
+        assertThat(header, containsString("response="));
+        assertThat(header, containsString("qop=auth"));
+        assertThat(header, containsString("nc=00000001"));
+        assertThat(header, containsString("cnonce="));
+    }
+
+    @Test
+    public void testDigestAuth_secondConsecutive401_stopsRetrying() throws Exception {
+        String path = "/api/secure";
+        String wwwAuth = "Digest realm=\"TestRealm\", nonce=\"nonce\", qop=\"auth\", algorithm=MD5";
+
+        var server = startClientAndServer(0);
+        try {
+            // Always returns 401, even on retry
+            server.when(request().withMethod("GET").withPath(path))
+                    .respond(response().withStatusCode(401).withHeader("WWW-Authenticate", wwwAuth));
+
+            var credentials = new DigestCredentials();
+            credentials.setUsername("admin");
+            credentials.setPassword("secret");
+
+            var config = new TbRestApiCallNodeConfiguration().defaultConfiguration();
+            config.setRequestMethod("GET");
+            config.setRestEndpointUrlPattern("http://localhost:" + server.getPort() + path);
+            config.setUseSimpleClientHttpFactory(true);
+            config.setCredentials(credentials);
+
+            var httpClient = new TbHttpClient(config, null);
+            try {
+                var msg = TbMsg.newMsg()
+                        .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                        .originator(new DeviceId(EntityId.NULL_UUID))
+                        .copyMetaData(TbMsgMetaData.EMPTY)
+                        .data(TbMsg.EMPTY_JSON_OBJECT)
+                        .build();
+
+                var ctx = mock(TbContext.class);
+                var latch = new CountDownLatch(1);
+                httpClient.processMessage(ctx, msg,
+                        m -> { ctx.tellSuccess(m); latch.countDown(); },
+                        (m, t) -> { ctx.tellFailure(m, t); latch.countDown(); });
+
+                latch.await(5, TimeUnit.SECONDS);
+
+                verify(ctx, times(0)).tellSuccess(any());
+                verify(ctx, times(1)).tellFailure(any(), any());
+
+                // Initial + one retry only — no further retries
+                var recorded = server.retrieveRecordedRequests(request().withPath(path));
+                Assertions.assertEquals(2, recorded.length);
+            } finally {
+                httpClient.destroy();
+            }
+        } finally {
+            server.stop();
+        }
+    }
+
+    @Test
+    public void testDigestAuth_nonDigestChallenge_retriesOnceWithNoAuth() throws Exception {
+        String path = "/api/secure";
+
+        var server = startClientAndServer(0);
+        try {
+            // Returns 401 with Basic challenge — not Digest
+            server.when(request().withMethod("GET").withPath(path))
+                    .respond(response().withStatusCode(401).withHeader("WWW-Authenticate", "Basic realm=\"TestRealm\""));
+
+            var credentials = new DigestCredentials();
+            credentials.setUsername("admin");
+            credentials.setPassword("secret");
+
+            var config = new TbRestApiCallNodeConfiguration().defaultConfiguration();
+            config.setRequestMethod("GET");
+            config.setRestEndpointUrlPattern("http://localhost:" + server.getPort() + path);
+            config.setUseSimpleClientHttpFactory(true);
+            config.setCredentials(credentials);
+
+            var httpClient = new TbHttpClient(config, null);
+            try {
+                var msg = TbMsg.newMsg()
+                        .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                        .originator(new DeviceId(EntityId.NULL_UUID))
+                        .copyMetaData(TbMsgMetaData.EMPTY)
+                        .data(TbMsg.EMPTY_JSON_OBJECT)
+                        .build();
+
+                var ctx = mock(TbContext.class);
+                var latch = new CountDownLatch(1);
+                httpClient.processMessage(ctx, msg,
+                        m -> { ctx.tellSuccess(m); latch.countDown(); },
+                        (m, t) -> { ctx.tellFailure(m, t); latch.countDown(); });
+
+                latch.await(5, TimeUnit.SECONDS);
+
+                verify(ctx, times(0)).tellSuccess(any());
+                verify(ctx, times(1)).tellFailure(any(), any());
+
+                // Retries once (buildDigestAuthHeaderIfNeeded returns null → no Authorization header)
+                // but does not retry a third time
+                var recorded = server.retrieveRecordedRequests(request().withPath(path));
+                Assertions.assertEquals(2, recorded.length);
+                Assertions.assertTrue(recorded[1].getFirstHeader("Authorization").isEmpty());
+            } finally {
+                httpClient.destroy();
+            }
+        } finally {
+            server.stop();
+        }
+    }
+
+    @Test
+    public void testDigestAuth_nonDigestCredentials_noRetryOn401() throws Exception {
+        String path = "/api/secure";
+        String wwwAuth = "Digest realm=\"TestRealm\", nonce=\"nonce\", qop=\"auth\", algorithm=MD5";
+
+        var server = startClientAndServer(0);
+        try {
+            server.when(request().withMethod("GET").withPath(path))
+                    .respond(response().withStatusCode(401).withHeader("WWW-Authenticate", wwwAuth));
+
+            // Default credentials are AnonymousCredentials (not DIGEST)
+            var config = new TbRestApiCallNodeConfiguration().defaultConfiguration();
+            config.setRequestMethod("GET");
+            config.setRestEndpointUrlPattern("http://localhost:" + server.getPort() + path);
+            config.setUseSimpleClientHttpFactory(true);
+
+            var httpClient = new TbHttpClient(config, null);
+            try {
+                var msg = TbMsg.newMsg()
+                        .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                        .originator(new DeviceId(EntityId.NULL_UUID))
+                        .copyMetaData(TbMsgMetaData.EMPTY)
+                        .data(TbMsg.EMPTY_JSON_OBJECT)
+                        .build();
+
+                var ctx = mock(TbContext.class);
+                var latch = new CountDownLatch(1);
+                httpClient.processMessage(ctx, msg,
+                        m -> { ctx.tellSuccess(m); latch.countDown(); },
+                        (m, t) -> { ctx.tellFailure(m, t); latch.countDown(); });
+
+                latch.await(5, TimeUnit.SECONDS);
+
+                verify(ctx, times(0)).tellSuccess(any());
+                verify(ctx, times(1)).tellFailure(any(), any());
+
+                // No retry — only 1 request
+                var recorded = server.retrieveRecordedRequests(request().withPath(path));
+                Assertions.assertEquals(1, recorded.length);
+            } finally {
+                httpClient.destroy();
+            }
+        } finally {
+            server.stop();
+        }
     }
 
     private ClientAndServer setUpDummyServer(String host, String path, String paramKey, String paramVal, String successResponseBody) {

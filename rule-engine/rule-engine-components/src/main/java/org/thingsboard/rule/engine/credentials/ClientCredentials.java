@@ -28,6 +28,7 @@ import javax.net.ssl.SSLException;
 @JsonSubTypes({
         @JsonSubTypes.Type(value = AnonymousCredentials.class, name = "anonymous"),
         @JsonSubTypes.Type(value = BasicCredentials.class, name = "basic"),
+        @JsonSubTypes.Type(value = DigestCredentials.class, name = "digest"),
         @JsonSubTypes.Type(value = AzureIotHubSasCredentials.class, name = "sas"),
         @JsonSubTypes.Type(value = CertPemCredentials.class, name = "cert.PEM")})
 public interface ClientCredentials {

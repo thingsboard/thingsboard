@@ -167,6 +167,13 @@ export class CredentialsConfigComponent extends PageComponent implements Control
           password: credentialsConfigValue.password,
         };
         break;
+      case 'digest':
+        credentialsConfigValue = {
+          type: credentialsTypeValue,
+          username: credentialsConfigValue.username,
+          password: credentialsConfigValue.password,
+        };
+        break;
       case 'cert.PEM':
         delete credentialsConfigValue.username;
         break;
