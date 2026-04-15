@@ -17,6 +17,7 @@ package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -49,6 +50,7 @@ import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.query.EntityQueryService;
 import org.thingsboard.server.service.security.permission.Operation;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.AggHistoryCmd;
 
 import static org.thingsboard.server.controller.ControllerConstants.ALARM_DATA_QUERY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ATTRIBUTES_SCOPE_DESCRIPTION;
@@ -147,6 +149,36 @@ public class EntityQueryController extends BaseController {
             pageLink.setPageSize(MAX_PAGE_SIZE);
         }
         return entityQueryService.getKeysByQuery(getCurrentUser(), tenantId, query, isTimeseries, isAttributes, scope);
+    }
+
+    @ApiOperation(value = "Find Aggregated Historical Entity Data by Query",
+            notes = "Runs the entity data query and, for each matched entity, fetches a single aggregated value per key over [startTs, endTs] " +
+                    "with per-key aggregation function. Optional previousStartTs/previousEndTs per key add a comparison window. " +
+                    "REST equivalent of the WebSocket AggHistoryCmd. The aggregated values are returned in the 'aggLatest' field of each EntityData.")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PostMapping("/entitiesQuery/find/aggHistory")
+    public DeferredResult<PageData<EntityData>> findEntityDataAggHistoryByQuery(
+            @Parameter(description = "A JSON value representing the entity data query and aggregated history command.")
+            @RequestBody EntityDataAggHistoryRequest request) throws ThingsboardException {
+        checkNotNull(request);
+        checkNotNull(request.getQuery());
+        checkNotNull(request.getAggHistoryCmd());
+        AggHistoryCmd cmd = request.getAggHistoryCmd();
+        if (cmd.getEndTs() < cmd.getStartTs()) {
+            throw new IllegalArgumentException("endTs must be >= startTs");
+        }
+        EntityDataPageLink pageLink = request.getQuery().getPageLink();
+        if (pageLink != null && pageLink.getPageSize() > MAX_PAGE_SIZE) {
+            pageLink.setPageSize(MAX_PAGE_SIZE);
+        }
+        resolveQuery(request.getQuery());
+        return entityQueryService.findEntityDataAggHistoryByQuery(getCurrentUser(), request.getQuery(), cmd);
+    }
+
+    @Data
+    public static class EntityDataAggHistoryRequest {
+        private EntityDataQuery query;
+        private AggHistoryCmd aggHistoryCmd;
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
