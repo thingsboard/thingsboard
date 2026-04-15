@@ -138,8 +138,8 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         resourceValidator.validate(image, TbResourceInfo::getTenantId);
 
         ImageDescriptor descriptor = image.getDescriptor(ImageDescriptor.class);
-        long maxDecodedImageSize = resourceValidator.getMaxResourceSize(image.getTenantId());
-        Pair<ImageDescriptor, byte[]> result = processImage(image.getData(), descriptor, maxDecodedImageSize);
+        long maxResourceSize = resourceValidator.getMaxResourceSize(image.getTenantId());
+        Pair<ImageDescriptor, byte[]> result = processImage(image.getData(), descriptor, maxResourceSize);
         descriptor = result.getLeft();
         image.setEtag(descriptor.getEtag());
         image.setDescriptorValue(descriptor);
@@ -153,14 +153,14 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         return new TbResourceInfo(doSaveResource(image));
     }
 
-    private Pair<ImageDescriptor, byte[]> processImage(byte[] data, ImageDescriptor descriptor, long maxDecodedImageSize) throws Exception {
-        if (maxDecodedImageSize > 0) {
+    private Pair<ImageDescriptor, byte[]> processImage(byte[] data, ImageDescriptor descriptor, long maxResourceSize) throws Exception {
+        if (maxResourceSize > 0) {
             int[] dimensions = ImageUtils.getImageDimensions(data, descriptor.getMediaType());
             if (dimensions != null) {
                 long decodedSize = (long) dimensions[0] * dimensions[1] * 4;
-                if (decodedSize > maxDecodedImageSize) {
-                    log.info("Image decoded size ({} bytes) exceeds max decoded image size ({} bytes), skipping preview generation",
-                            decodedSize, maxDecodedImageSize);
+                if (decodedSize > maxResourceSize) {
+                    log.info("Image decoded size ({} bytes) exceeds maxResourceSize ({} bytes), skipping preview generation",
+                            decodedSize, maxResourceSize);
                     descriptor.setWidth(dimensions[0]);
                     descriptor.setHeight(dimensions[1]);
                     descriptor.setSize(data.length);

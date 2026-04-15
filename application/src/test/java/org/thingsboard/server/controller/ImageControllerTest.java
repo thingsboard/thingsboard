@@ -333,25 +333,26 @@ public class ImageControllerTest extends AbstractControllerTest {
         });
         loginTenantAdmin();
 
-        String filename = "large_decoded_image.png";
-        TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", filename, "image/png", PNG_IMAGE);
+        try {
+            String filename = "large_decoded_image.png";
+            TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", filename, "image/png", PNG_IMAGE);
 
-        ImageDescriptor imageDescriptor = imageInfo.getDescriptor(ImageDescriptor.class);
-        assertThat(imageDescriptor.getWidth()).isEqualTo(200);
-        assertThat(imageDescriptor.getHeight()).isEqualTo(160);
+            ImageDescriptor imageDescriptor = imageInfo.getDescriptor(ImageDescriptor.class);
+            assertThat(imageDescriptor.getWidth()).isEqualTo(200);
+            assertThat(imageDescriptor.getHeight()).isEqualTo(160);
 
-        ImageDescriptor previewDescriptor = imageDescriptor.getPreviewDescriptor();
-        assertThat(previewDescriptor.getMediaType()).isEqualTo("image/gif");
-        assertThat(previewDescriptor.getWidth()).isEqualTo(1);
-        assertThat(previewDescriptor.getHeight()).isEqualTo(1);
+            ImageDescriptor previewDescriptor = imageDescriptor.getPreviewDescriptor();
+            assertThat(previewDescriptor.getMediaType()).isEqualTo("image/gif");
+            assertThat(previewDescriptor.getWidth()).isEqualTo(1);
+            assertThat(previewDescriptor.getHeight()).isEqualTo(1);
 
-        assertThat(downloadImagePreview("tenant", filename)).containsExactly(ImageUtils.PLACEHOLDER_PREVIEW);
-
-        // Reset maxResourceSize
-        loginSysAdmin();
-        updateDefaultTenantProfileConfig(tenantProfileConfig -> {
-            tenantProfileConfig.setMaxResourceSize(0);
-        });
+            assertThat(downloadImagePreview("tenant", filename)).containsExactly(ImageUtils.PLACEHOLDER_PREVIEW);
+        } finally {
+            loginSysAdmin();
+            updateDefaultTenantProfileConfig(tenantProfileConfig -> {
+                tenantProfileConfig.setMaxResourceSize(0);
+            });
+        }
     }
 
     @Test

@@ -86,6 +86,9 @@ public class ImageUtils {
             return null;
         }
         try (ImageInputStream iis = ImageIO.createImageInputStream(new ByteArrayInputStream(data))) {
+            if (iis == null) {
+                return null;
+            }
             var readers = ImageIO.getImageReaders(iis);
             if (readers.hasNext()) {
                 ImageReader reader = readers.next();
