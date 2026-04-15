@@ -72,6 +72,8 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
 
   private pendingBlur = false;
 
+  private isFetching = false;
+
   private propagateChange: (value: any) => void = () => { };
 
   private onTouched = () => { };
@@ -103,16 +105,16 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
     }
   }
 
-  private _entityNotValidText: string | null = null;
+  private _entityNotValidTranslationKey: string | null = null;
 
   @Input()
-  set entityNotValidText(value: string) {
-    this._entityNotValidText = value;
+  set entityNotValidTranslationKey(value: string) {
+    this._entityNotValidTranslationKey = value;
   }
 
-  get entityNotValidText(): string {
-    if (this._entityNotValidText) {
-      return this._entityNotValidText;
+  get entityNotValidTranslationKey(): string {
+    if (this._entityNotValidTranslationKey) {
+      return this._entityNotValidTranslationKey;
     }
     return this.allowCreateNew ? 'entity.entity-not-valid-create-new' : 'entity.entity-not-valid';
   }
@@ -188,7 +190,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   }
 
   get entityNameForError(): string {
-    return this.entityText ? this.translate.instant(this.entityText).toLowerCase() : '';
+    return this.label ? this.translate.instant(this.label).toLowerCase() : '';
   }
 
 
@@ -228,8 +230,12 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
             }
           }),
           map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
-          switchMap(name => this.fetchEntities(name)),
+          switchMap(name => {
+            this.isFetching = true;
+            return this.fetchEntities(name);
+          }),
           tap(() => {
+            this.isFetching = false;
             if (this.pendingBlur) {
               this.handleBlur();
               this.pendingBlur = false;
@@ -518,7 +524,9 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   onBlur(): void {
     this.onTouched();
     this.pendingBlur = true;
-    this.handleBlur();
+    if (!this.isFetching) {
+      this.handleBlur();
+    }
   }
 
   private handleBlur(): void {
@@ -542,7 +550,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
 
   private selectMatchedEntity(entity: BaseData<EntityId>): void {
     this.pendingBlur = false;
-    this.selectEntityFormGroup.get('entity').setValue(entity, {emitEvent: false});
+    this.selectEntityFormGroup.get('entity').patchValue(entity, {emitEvent: false});
     const newModelValue = this.useFullEntityId ? entity.id : entity.id.id;
     this.updateView(newModelValue, entity);
     this.autocompleteTrigger?.closePanel();
