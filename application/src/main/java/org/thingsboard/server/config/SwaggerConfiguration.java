@@ -600,6 +600,22 @@ public class SwaggerConfiguration {
             if (baseType != null) {
                 return baseType;
             }
+
+            // Check if other oneOf items extend this candidate via allOf (parent-child without discriminator)
+            if (candidate != null) {
+                boolean isParent = oneOfSchemas.stream()
+                        .filter(s -> s.get$ref() != null && !s.get$ref().equals(ref))
+                        .anyMatch(s -> {
+                            String otherName = s.get$ref().substring(s.get$ref().lastIndexOf('/') + 1);
+                            Schema<?> otherSchema = schemas.get(otherName);
+                            return otherSchema != null && otherSchema.getAllOf() != null &&
+                                    otherSchema.getAllOf().stream().anyMatch(
+                                            a -> a.get$ref() != null && a.get$ref().endsWith("/" + refName));
+                        });
+                if (isParent) {
+                    return refName;
+                }
+            }
         }
         return null;
     }
