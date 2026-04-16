@@ -23,7 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.Objects;
 
-@Schema
+@Schema(allOf = AiProviderConfig.class)
 @Builder
 public record OpenAiProviderConfig(
         String baseUrl,

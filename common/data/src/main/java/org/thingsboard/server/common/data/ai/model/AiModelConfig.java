@@ -81,23 +81,12 @@ public interface AiModelConfig {
     )
     AiProvider provider();
 
-    @Schema(hidden = true)
+    @Schema(ref = "#/components/schemas/AiProviderConfig")
     @JsonTypeInfo(
             use = JsonTypeInfo.Id.NAME,
             include = JsonTypeInfo.As.EXTERNAL_PROPERTY,
             property = "provider"
     )
-    @JsonSubTypes({
-            @JsonSubTypes.Type(value = OpenAiProviderConfig.class, name = "OPENAI"),
-            @JsonSubTypes.Type(value = AzureOpenAiProviderConfig.class, name = "AZURE_OPENAI"),
-            @JsonSubTypes.Type(value = GoogleAiGeminiProviderConfig.class, name = "GOOGLE_AI_GEMINI"),
-            @JsonSubTypes.Type(value = GoogleVertexAiGeminiProviderConfig.class, name = "GOOGLE_VERTEX_AI_GEMINI"),
-            @JsonSubTypes.Type(value = MistralAiProviderConfig.class, name = "MISTRAL_AI"),
-            @JsonSubTypes.Type(value = AnthropicProviderConfig.class, name = "ANTHROPIC"),
-            @JsonSubTypes.Type(value = AmazonBedrockProviderConfig.class, name = "AMAZON_BEDROCK"),
-            @JsonSubTypes.Type(value = GitHubModelsProviderConfig.class, name = "GITHUB_MODELS"),
-            @JsonSubTypes.Type(value = OllamaProviderConfig.class, name = "OLLAMA")
-    })
     AiProviderConfig providerConfig();
 
     AiModelType modelType();

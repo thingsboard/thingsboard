@@ -49,10 +49,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springdoc.core.customizers.OperationCustomizer;
 import org.springdoc.core.discoverer.SpringDocParameterNameDiscoverer;
-import org.springdoc.core.utils.SpringDocUtils;
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springdoc.core.properties.SpringDocConfigProperties;
 import org.springdoc.core.properties.SwaggerUiConfigProperties;
+import org.springdoc.core.utils.SpringDocUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
@@ -64,6 +64,7 @@ import org.springframework.http.HttpStatus;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.ai.model.chat.AiChatModelConfig;
+import org.thingsboard.server.common.data.ai.provider.AiProviderConfig;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.exception.ThingsboardCredentialsExpiredResponse;
 import org.thingsboard.server.exception.ThingsboardErrorResponse;
@@ -379,6 +380,7 @@ public class SwaggerConfiguration {
                 .addSchemas("ThingsboardErrorResponse", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(ThingsboardErrorResponse.class)).schema)
                 .addSchemas("ThingsboardCredentialsExpiredResponse", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(ThingsboardCredentialsExpiredResponse.class)).schema)
                 .addSchemas("ThingsboardErrorCode", errorCodeSchema)
+                .addSchemas("AiProviderConfig", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(AiProviderConfig.class)).schema)
                 .addSchemas("AiChatModelConfig", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(AiChatModelConfig.class)).schema);
     }
 
@@ -600,7 +602,73 @@ public class SwaggerConfiguration {
             if (baseType != null) {
                 return baseType;
             }
+
+            // Check if other oneOf items extend this candidate via allOf (parent-child without discriminator)
+            if (candidate != null) {
+                boolean isParent = oneOfSchemas.stream()
+                        .filter(s -> s.get$ref() != null && !s.get$ref().equals(ref))
+                        .anyMatch(s -> {
+                            String otherName = s.get$ref().substring(s.get$ref().lastIndexOf('/') + 1);
+                            Schema<?> otherSchema = schemas.get(otherName);
+                            return otherSchema != null && otherSchema.getAllOf() != null &&
+                                    otherSchema.getAllOf().stream().anyMatch(
+                                            a -> a.get$ref() != null && a.get$ref().endsWith("/" + refName));
+                        });
+                if (isParent) {
+                    return refName;
+                }
+            }
         }
+
+        // Fallback: check if all oneOf items share a common parent via allOf (siblings with shared base type)
+        Set<String> commonParents = null;
+        for (Schema oneOfSchema : oneOfSchemas) {
+            String ref = oneOfSchema.get$ref();
+            if (ref == null) {
+                commonParents = null;
+                break;
+            }
+            String refName = ref.substring(ref.lastIndexOf('/') + 1);
+            Schema<?> refSchema = schemas.get(refName);
+            if (refSchema == null || refSchema.getAllOf() == null) {
+                commonParents = null;
+                break;
+            }
+            Set<String> parents = refSchema.getAllOf().stream()
+                    .filter(a -> a.get$ref() != null)
+                    .map(a -> a.get$ref().substring(a.get$ref().lastIndexOf('/') + 1))
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
+            if (commonParents == null) {
+                commonParents = parents;
+            } else {
+                commonParents.retainAll(parents);
+            }
+        }
+        if (commonParents != null && !commonParents.isEmpty()) {
+            return commonParents.iterator().next();
+        }
+
+        // Fallback: find a component schema whose own oneOf contains all the same items
+        // (handles interface implementations where subtypes don't have allOf with the parent)
+        Set<String> oneOfRefs = oneOfSchemas.stream()
+                .map(Schema::get$ref)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (!oneOfRefs.isEmpty()) {
+            for (Map.Entry<String, Schema> entry : schemas.entrySet()) {
+                Schema<?> candidate = entry.getValue();
+                if (candidate.getOneOf() != null && !candidate.getOneOf().isEmpty()) {
+                    Set<String> candidateRefs = candidate.getOneOf().stream()
+                            .map(Schema::get$ref)
+                            .filter(Objects::nonNull)
+                            .collect(Collectors.toSet());
+                    if (candidateRefs.containsAll(oneOfRefs)) {
+                        return entry.getKey();
+                    }
+                }
+            }
+        }
+
         return null;
     }
 
@@ -651,6 +719,11 @@ public class SwaggerConfiguration {
                             log.debug("Replaced oneOf in additionalProperties.items with $ref to {} in property {}", baseType, propName);
                         }
                     }
+                }
+
+                // If property has both $ref and oneOf, $ref takes precedence — drop the oneOf
+                if (prop.get$ref() != null && prop.getOneOf() != null) {
+                    prop.setOneOf(null);
                 }
 
                 // If property has oneOf, try to find the base discriminated type
