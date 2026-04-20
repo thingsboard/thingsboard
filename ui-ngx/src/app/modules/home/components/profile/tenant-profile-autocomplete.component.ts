@@ -15,11 +15,11 @@
 ///
 
 import { Component, ElementRef, EventEmitter, forwardRef, Input, OnInit, Output, ViewChild } from '@angular/core';
-import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { Observable, of } from 'rxjs';
+import { ControlValueAccessor, FormControl, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { Observable, of, shareReplay } from 'rxjs';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
-import { catchError, debounceTime, distinctUntilChanged, map, share, switchMap, tap } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, finalize, map, switchMap, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
@@ -34,8 +34,10 @@ import { TenantProfile } from '@shared/models/tenant.model';
 import { MatDialog } from '@angular/material/dialog';
 import { TenantProfileDialogComponent, TenantProfileDialogData } from './tenant-profile-dialog.component';
 import { emptyPageData } from '@shared/models/page/page-data';
-import { getEntityDetailsPageURL } from '@core/utils';
+import { getEntityDetailsPageURL, objectRequired } from '@core/utils';
 import { MatFormFieldAppearance } from '@angular/material/form-field';
+import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { AutocompleteBaseDirective } from '@shared/components/directives/autocomplete-base.directive';
 
 @Component({
     selector: 'tb-tenant-profile-autocomplete',
@@ -48,7 +50,7 @@ import { MatFormFieldAppearance } from '@angular/material/form-field';
         }],
     standalone: false
 })
-export class TenantProfileAutocompleteComponent implements ControlValueAccessor, OnInit {
+export class TenantProfileAutocompleteComponent extends AutocompleteBaseDirective<EntityInfoData, TenantProfileId> implements ControlValueAccessor, OnInit {
 
   selectTenantProfileFormGroup: UntypedFormGroup;
 
@@ -80,12 +82,11 @@ export class TenantProfileAutocompleteComponent implements ControlValueAccessor,
 
   @ViewChild('tenantProfileInput', {static: true}) tenantProfileInput: ElementRef;
 
+  @ViewChild('tenantProfileInput', {read: MatAutocompleteTrigger}) autocompleteTrigger: MatAutocompleteTrigger;
+
   filteredTenantProfiles: Observable<Array<EntityInfoData>>;
 
-  searchText = '';
   tenantProfileURL: string;
-
-  private dirty = false;
 
   private propagateChange = (v: any) => { };
 
@@ -95,8 +96,9 @@ export class TenantProfileAutocompleteComponent implements ControlValueAccessor,
               private tenantProfileService: TenantProfileService,
               private fb: UntypedFormBuilder,
               private dialog: MatDialog) {
+    super();
     this.selectTenantProfileFormGroup = this.fb.group({
-      tenantProfile: [null]
+      tenantProfile: [null, [objectRequired()]]
     });
   }
 
@@ -105,6 +107,31 @@ export class TenantProfileAutocompleteComponent implements ControlValueAccessor,
   }
 
   registerOnTouched(fn: any): void {
+    this.onTouched = fn;
+  }
+
+  protected getControl(): FormControl {
+    return this.selectTenantProfileFormGroup.get('tenantProfile') as FormControl;
+  }
+
+  protected getAutocompleteTrigger(): MatAutocompleteTrigger {
+    return this.autocompleteTrigger;
+  }
+
+  protected getInput(): ElementRef<HTMLInputElement> {
+    return this.tenantProfileInput as ElementRef<HTMLInputElement>;
+  }
+
+  protected getFilteredEntities(): Observable<Array<EntityInfoData>> {
+    return this.filteredTenantProfiles;
+  }
+
+  protected getModelValue(): TenantProfileId | null {
+    return this.modelValue;
+  }
+
+  protected isCreateNew(): boolean {
+    return false;
   }
 
   ngOnInit() {
@@ -122,8 +149,18 @@ export class TenantProfileAutocompleteComponent implements ControlValueAccessor,
         }),
         map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
         distinctUntilChanged(),
-        switchMap(name => this.fetchTenantProfiles(name)),
-        share()
+        switchMap(name => {
+          this.isFetching = true;
+          return this.fetchTenantProfiles(name).pipe(
+            finalize(() => this.isFetching = false)
+          );
+        }),
+        tap(entities => {
+          if (this.pendingBlur) {
+            this.performValidation(entities);
+          }
+        }),
+        shareReplay(1)
       );
   }
 
@@ -168,14 +205,7 @@ export class TenantProfileAutocompleteComponent implements ControlValueAccessor,
     this.dirty = true;
   }
 
-  onFocus() {
-    if (this.dirty) {
-      this.selectTenantProfileFormGroup.get('tenantProfile').updateValueAndValidity({onlySelf: true, emitEvent: true});
-      this.dirty = false;
-    }
-  }
-
-  updateView(value: TenantProfileId | null) {
+  protected updateView(value: TenantProfileId | null) {
     if (!entityIdEquals(this.modelValue, value)) {
       this.modelValue = value;
       this.propagateChange(this.modelValue);
@@ -186,8 +216,16 @@ export class TenantProfileAutocompleteComponent implements ControlValueAccessor,
     return profile ? profile.name : undefined;
   }
 
+  protected override selectMatchedEntity(entity: EntityInfoData): void {
+    this.pendingBlur = false;
+    this.searchText = entity.name ?? '';
+    this.getControl().patchValue(entity, { emitEvent: false });
+    this.updateView(new TenantProfileId(entity.id.id));
+    this.getAutocompleteTrigger()?.closePanel();
+  }
+
   fetchTenantProfiles(searchText?: string): Observable<Array<EntityInfoData>> {
-    this.searchText = searchText;
+    this.searchText = searchText ?? '';
     const pageLink = new PageLink(10, 0, searchText, {
       property: 'name',
       direction: Direction.ASC
@@ -198,18 +236,6 @@ export class TenantProfileAutocompleteComponent implements ControlValueAccessor,
         return pageData.data;
       })
     );
-  }
-
-  clear() {
-    this.selectTenantProfileFormGroup.get('tenantProfile').patchValue(null, {emitEvent: true});
-    setTimeout(() => {
-      this.tenantProfileInput.nativeElement.blur();
-      this.tenantProfileInput.nativeElement.focus();
-    }, 0);
-  }
-
-  textIsNotEmpty(text: string): boolean {
-    return (text && text.length > 0);
   }
 
   tenantProfileEnter($event: KeyboardEvent) {

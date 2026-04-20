@@ -16,9 +16,15 @@
 
 import { Component, ElementRef, EventEmitter, forwardRef, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
+import {
+  ControlValueAccessor,
+  FormControl,
+  NG_VALUE_ACCESSOR,
+  UntypedFormBuilder,
+  UntypedFormGroup
+} from '@angular/forms';
 import { firstValueFrom, merge, Observable, of, shareReplay, Subject } from 'rxjs';
-import { catchError, debounceTime, first, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, debounceTime, finalize, map, switchMap, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
@@ -31,6 +37,8 @@ import { getEntityDetailsPageURL, isDefinedAndNotNull, isEqual, objectRequired }
 import { coerceArray, coerceBoolean } from '@shared/decorators/coercion';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { TranslateService } from '@ngx-translate/core';
+import { AutocompleteBaseDirective } from '@shared/components/directives/autocomplete-base.directive';
+import { coerceBooleanProperty } from '@angular/cdk/coercion';
 
 @Component({
     selector: 'tb-entity-autocomplete',
@@ -43,7 +51,7 @@ import { TranslateService } from '@ngx-translate/core';
         }],
     standalone: false
 })
-export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit {
+export class EntityAutocompleteComponent extends AutocompleteBaseDirective<BaseData<EntityId>, string | EntityId> implements ControlValueAccessor, OnInit {
 
   selectEntityFormGroup: UntypedFormGroup;
 
@@ -62,21 +70,11 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
 
   filteredEntities: Observable<Array<BaseData<EntityId>>>;
 
-  searchText = '';
-
   entityURL: string;
-
-  private dirty = false;
 
   private refresh$ = new Subject<Array<BaseData<EntityId>>>();
 
-  private pendingBlur = false;
-
-  private isFetching = false;
-
   private propagateChange: (value: any) => void = () => { };
-
-  private onTouched = () => { };
 
   @Input()
   set entityType(entityType: EntityType) {
@@ -132,8 +130,9 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   placeholder: string;
 
   @Input()
-  @coerceBoolean()
-  useFullEntityId: boolean;
+  set useFullEntityId(value: boolean) {
+    super.useFullEntityId = coerceBooleanProperty(value);
+  }
 
   @Input()
   appearance: MatFormFieldAppearance = 'fill';
@@ -193,11 +192,38 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
     return this.label ? this.translate.instant(this.label).toLowerCase() : '';
   }
 
+  protected getControl() {
+    return this.selectEntityFormGroup.get('entity') as FormControl;
+  }
+
+  protected getAutocompleteTrigger() {
+    return this.autocompleteTrigger;
+  }
+
+  protected getInput() {
+    return this.entityInput;
+  }
+
+  protected getFilteredEntities() {
+    return this.filteredEntities;
+  }
+  protected getModelValue() {
+    return this.modelValue;
+  }
+
+  protected getDisplayName(entity: BaseData<EntityId>): string {
+    return this.useEntityDisplayName ? getEntityDisplayName(entity) : entity.name;
+  }
+
+  protected isCreateNew(): boolean {
+    return this.allowCreateNew;
+  }
 
   constructor(private store: Store<AppState>,
               private entityService: EntityService,
               private fb: UntypedFormBuilder,
               private translate: TranslateService) {
+    super();
     this.selectEntityFormGroup = this.fb.group({
       entity: [null, objectRequired()]
     });
@@ -232,13 +258,13 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
           map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
           switchMap(name => {
             this.isFetching = true;
-            return this.fetchEntities(name);
+            return this.fetchEntities(name).pipe(
+              finalize(() => this.isFetching = false)
+            );
           }),
-          tap(() => {
-            this.isFetching = false;
+          tap(entities => {
             if (this.pendingBlur) {
-              this.handleBlur();
-              this.pendingBlur = false;
+              this.performValidation(entities);
             }
           }),
           shareReplay(1)
@@ -473,19 +499,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
     this.dirty = true;
   }
 
-  onFocus() {
-    this.pendingBlur = false;
-    if (this.dirty) {
-      this.selectEntityFormGroup.get('entity').updateValueAndValidity({onlySelf: true, emitEvent: true});
-      this.dirty = false;
-    }
-  }
-
-  private reset() {
-    this.selectEntityFormGroup.get('entity').patchValue('', {emitEvent: false});
-  }
-
-  private updateView(value: string | EntityId | null, entity: BaseData<EntityId> | null) {
+  protected updateView(value: string | EntityId | null, entity: BaseData<EntityId> | null) {
     if (!isEqual(this.modelValue, value)) {
       this.modelValue = value;
       this.entityURL = (typeof entity === 'string' || !entity) ? '' : getEntityDetailsPageURL(entity.id.id, entity.id.entityType as EntityType);
@@ -499,7 +513,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   }
 
   private fetchEntities(searchText?: string): Observable<Array<BaseData<EntityId>>> {
-    this.searchText = searchText;
+    this.searchText = searchText ?? '';
     const targetEntityType = this.checkEntityType(this.entityTypeValue);
     return this.entityService.getEntitiesByNameFilter(targetEntityType, searchText,
       50, this.entitySubtypeValue, {ignoreLoading: true}).pipe(
@@ -519,18 +533,6 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
         }
       }
     ));
-  }
-
-  textIsNotEmpty(text: string): boolean {
-    return (text && text.length > 0);
-  }
-
-  clear() {
-    this.selectEntityFormGroup.get('entity').patchValue('', {emitEvent: true});
-    setTimeout(() => {
-      this.entityInput.nativeElement.blur();
-      this.entityInput.nativeElement.focus();
-    }, 0);
   }
 
   private checkEntityType(entityType: EntityType | AliasEntityType): EntityType {
@@ -562,40 +564,5 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
 
   markAsTouched(): void {
     this.selectEntityFormGroup.get('entity').markAsTouched();
-  }
-
-  onBlur(): void {
-    this.onTouched();
-    this.pendingBlur = true;
-    if (!this.isFetching) {
-      this.handleBlur();
-    }
-  }
-
-  private handleBlur(): void {
-    if (this.modelValue) {
-      this.pendingBlur = false;
-      return;
-    }
-    this.filteredEntities.pipe(first()).subscribe(entities => {
-      if (!entities?.length) {
-        return;
-      }
-      const searchLower = this.searchText?.toLowerCase() ?? '';
-      const exactMatch = entities.find(e =>
-        (this.useEntityDisplayName ? getEntityDisplayName(e) : e.name)?.toLowerCase() === searchLower
-      );
-      if (entities.length === 1 && (!this.allowCreateNew || exactMatch)) {
-        this.selectMatchedEntity(entities[0]);
-      }
-    });
-  }
-
-  private selectMatchedEntity(entity: BaseData<EntityId>): void {
-    this.pendingBlur = false;
-    this.selectEntityFormGroup.get('entity').patchValue(entity, {emitEvent: false});
-    const newModelValue = this.useFullEntityId ? entity.id : entity.id.id;
-    this.updateView(newModelValue, entity);
-    this.autocompleteTrigger?.closePanel();
   }
 }

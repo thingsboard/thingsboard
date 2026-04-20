@@ -15,9 +15,15 @@
 ///
 
 import { Component, ElementRef, forwardRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
-import { merge, Observable, of, Subject } from 'rxjs';
-import { catchError, debounceTime, map, share, switchMap, tap } from 'rxjs/operators';
+import {
+  ControlValueAccessor,
+  FormControl,
+  NG_VALUE_ACCESSOR,
+  UntypedFormBuilder,
+  UntypedFormGroup
+} from '@angular/forms';
+import { merge, Observable, of, shareReplay, Subject } from 'rxjs';
+import { catchError, debounceTime, finalize, map, switchMap, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
@@ -31,11 +37,13 @@ import { OtaPackageService } from '@core/http/ota-package.service';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
 import { emptyPageData } from '@shared/models/page/page-data';
-import { getEntityDetailsPageURL, isDefinedAndNotNull } from '@core/utils';
+import { getEntityDetailsPageURL, isDefinedAndNotNull, objectRequired } from '@core/utils';
 import { AuthUser } from '@shared/models/user.model';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 import { MatFormFieldAppearance } from '@angular/material/form-field';
+import { AutocompleteBaseDirective } from '@shared/components/directives/autocomplete-base.directive';
+import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 
 @Component({
     selector: 'tb-ota-package-autocomplete',
@@ -48,7 +56,7 @@ import { MatFormFieldAppearance } from '@angular/material/form-field';
         }],
     standalone: false
 })
-export class OtaPackageAutocompleteComponent implements ControlValueAccessor, OnInit, OnDestroy {
+export class OtaPackageAutocompleteComponent extends AutocompleteBaseDirective<OtaPackageInfo, string | EntityId> implements ControlValueAccessor, OnInit, OnDestroy {
 
   otaPackageFormGroup: UntypedFormGroup;
 
@@ -89,7 +97,9 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
   requiredText: string;
 
   @Input()
-  useFullEntityId = false;
+  set useFullEntityId(value: boolean) {
+    super.useFullEntityId = coerceBooleanProperty(value);
+  }
 
   @Input()
   showDetailsPageLink = false;
@@ -113,16 +123,16 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
 
   @ViewChild('packageInput', {static: true}) packageInput: ElementRef;
 
+  @ViewChild('autocompleteTrigger') autocompleteTrigger: MatAutocompleteTrigger;
+
   filteredPackages: Observable<Array<OtaPackageInfo>>;
 
-  searchText = '';
   packageURL: string;
 
   usePackageLink = true;
 
   private authUser: AuthUser;
 
-  private dirty = false;
   private cleanFilteredPackages: Subject<Array<OtaPackageInfo>> = new Subject();
 
   private propagateChange = (v: any) => { };
@@ -133,12 +143,13 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
               private entityService: EntityService,
               private otaPackageService: OtaPackageService,
               private fb: UntypedFormBuilder) {
+    super();
     this.authUser = getCurrentAuthUser(this.store);
     if (this.authUser.authority === Authority.CUSTOMER_USER) {
       this.usePackageLink = false;
     }
     this.otaPackageFormGroup = this.fb.group({
-      packageId: [null]
+      packageId: [null, objectRequired()]
     });
   }
 
@@ -147,6 +158,31 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
   }
 
   registerOnTouched(fn: any): void {
+    this.onTouched = fn;
+  }
+
+  protected getControl() {
+    return this.otaPackageFormGroup.get('packageId') as FormControl;
+  }
+
+  protected getAutocompleteTrigger() {
+    return this.autocompleteTrigger;
+  }
+
+  protected getInput() {
+    return this.packageInput;
+  }
+
+  protected getFilteredEntities() {
+    return this.filteredPackages;
+  }
+
+  protected getModelValue() {
+    return this.modelValue;
+  }
+
+  protected isCreateNew(): boolean {
+    return false;
   }
 
   ngOnInit() {
@@ -166,8 +202,18 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
           }
         }),
         map(value => value ? (typeof value === 'string' ? value : value.title) : ''),
-        switchMap(name => this.fetchPackages(name)),
-        share()
+        switchMap(name => {
+          this.isFetching = true;
+          return this.fetchPackages(name).pipe(
+            finalize(() => this.isFetching = false)
+          );
+        }),
+        tap(entities => {
+          if (this.pendingBlur) {
+            this.performValidation(entities);
+          }
+        }),
+        shareReplay(1)
       );
 
     this.filteredPackages = merge(this.cleanFilteredPackages, getPackages);
@@ -176,6 +222,7 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
   ngOnDestroy() {
     this.cleanFilteredPackages.complete();
     this.cleanFilteredPackages = null;
+    super.ngOnDestroy();
   }
 
   getCurrentEntity(): OtaPackageInfo | null {
@@ -194,10 +241,6 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
     } else {
       this.otaPackageFormGroup.enable({emitEvent: false});
     }
-  }
-
-  textIsNotEmpty(text: string): boolean {
-    return (text && text.length > 0);
   }
 
   writeValue(value: string | EntityId | null): void {
@@ -238,19 +281,12 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
     this.dirty = true;
   }
 
-  onFocus() {
-    if (this.dirty) {
-      this.otaPackageFormGroup.get('packageId').updateValueAndValidity({onlySelf: true, emitEvent: true});
-      this.dirty = false;
-    }
-  }
-
-  reset() {
+  override reset() {
     this.cleanFilteredPackages.next([]);
-    this.otaPackageFormGroup.get('packageId').patchValue('', {emitEvent: false});
+    super.reset();
   }
 
-  updateView(value: string | null) {
+  protected updateView(value: string | EntityId | null) {
     if (this.modelValue !== value) {
       this.modelValue = value;
       this.propagateChange(this.modelValue);
@@ -263,7 +299,7 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
 
   fetchPackages(searchText?: string): Observable<Array<OtaPackageInfo>> {
     if (isDefinedAndNotNull(this.deviceProfileId)) {
-      this.searchText = searchText;
+      this.searchText = searchText ?? '';
       const pageLink = new PageLink(50, 0, searchText, {
         property: 'title',
         direction: Direction.ASC
@@ -276,14 +312,6 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
     } else {
       return of([]);
     }
-  }
-
-  clear() {
-    this.otaPackageFormGroup.get('packageId').patchValue('');
-    setTimeout(() => {
-      this.packageInput.nativeElement.blur();
-      this.packageInput.nativeElement.focus();
-    }, 0);
   }
 
   get placeholderText(): string {

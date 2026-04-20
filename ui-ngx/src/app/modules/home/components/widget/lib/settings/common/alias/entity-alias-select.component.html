@@ -28,6 +28,7 @@
          #entityAliasInput
          formControlName="entityAlias"
          (focusin)="onFocus()"
+         (blur)="onBlur()"
          [required]="tbRequired"
          (keydown)="entityAliasEnter($event)"
          (keypress)="entityAliasEnter($event)"

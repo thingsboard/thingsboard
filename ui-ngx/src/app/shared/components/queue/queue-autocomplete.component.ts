@@ -15,16 +15,11 @@
 ///
 
 import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { Observable, of } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged, map, share, switchMap, tap } from 'rxjs/operators';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
+import { ControlValueAccessor, FormBuilder, FormControl, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import { Observable, of, shareReplay } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, finalize, map, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { EntityId } from '@shared/models/id/entity-id';
-import { BaseData } from '@shared/models/base-data';
-import { EntityService } from '@core/http/entity.service';
 import { TruncatePipe } from '@shared/pipe/truncate.pipe';
 import { QueueInfo, ServiceType } from '@shared/models/queue.models';
 import { QueueService } from '@core/http/queue.service';
@@ -32,6 +27,9 @@ import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
 import { emptyPageData } from '@shared/models/page/page-data';
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
+import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { objectRequired } from '@core/utils';
+import { AutocompleteBaseDirective } from '@shared/components/directives/autocomplete-base.directive';
 
 @Component({
     selector: 'tb-queue-autocomplete',
@@ -44,7 +42,8 @@ import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-
         }],
     standalone: false
 })
-export class QueueAutocompleteComponent implements ControlValueAccessor, OnInit {
+export class QueueAutocompleteComponent extends AutocompleteBaseDirective<QueueInfo, string>
+    implements ControlValueAccessor, OnInit {
 
   selectQueueFormGroup: FormGroup;
 
@@ -82,20 +81,17 @@ export class QueueAutocompleteComponent implements ControlValueAccessor, OnInit 
 
   @ViewChild('queueInput', {static: true}) queueInput: ElementRef;
 
-  filteredQueues: Observable<Array<BaseData<EntityId>>>;
+  @ViewChild('queueInput', {read: MatAutocompleteTrigger}) autocompleteTrigger: MatAutocompleteTrigger;
 
-  searchText = '';
+  filteredQueues: Observable<Array<QueueInfo>>;
 
-  private dirty = false;
+  private propagateChange = (_v: any) => { };
 
-  private propagateChange = (v: any) => { };
-
-  constructor(private store: Store<AppState>,
-              public translate: TranslateService,
+  constructor(public translate: TranslateService,
               public truncate: TruncatePipe,
-              private entityService: EntityService,
               private queueService: QueueService,
               private fb: FormBuilder) {
+    super();
     this.selectQueueFormGroup = this.fb.group({
       queueName: [null]
     });
@@ -106,14 +102,53 @@ export class QueueAutocompleteComponent implements ControlValueAccessor, OnInit 
   }
 
   registerOnTouched(fn: any): void {
+    this.onTouched = fn;
+  }
+
+  protected getControl(): FormControl {
+    return this.selectQueueFormGroup.get('queueName') as FormControl;
+  }
+
+  protected getAutocompleteTrigger(): MatAutocompleteTrigger {
+    return this.autocompleteTrigger;
+  }
+
+  protected getInput(): ElementRef<HTMLInputElement> {
+    return this.queueInput as ElementRef<HTMLInputElement>;
+  }
+
+  protected getFilteredEntities(): Observable<Array<QueueInfo>> {
+    return this.filteredQueues;
+  }
+
+  protected getModelValue(): string | null {
+    return this.modelValue;
+  }
+
+  protected isCreateNew(): boolean {
+    return false;
+  }
+
+  protected override selectMatchedEntity(entity: QueueInfo): void {
+    this.pendingBlur = false;
+    this.searchText = entity.name ?? '';
+    this.getControl().patchValue(entity, { emitEvent: false });
+    this.updateView(entity.name);
+    this.getAutocompleteTrigger()?.closePanel();
   }
 
   ngOnInit() {
-    this.filteredQueues = this.selectQueueFormGroup.get('queueName').valueChanges
+    const queueControl = this.selectQueueFormGroup.get('queueName');
+    if (this.required) {
+      queueControl.addValidators(Validators.required);
+      queueControl.updateValueAndValidity({ emitEvent: false });
+    }
+
+    this.filteredQueues = queueControl.valueChanges
       .pipe(
         debounceTime(150),
         tap(value => {
-          let modelValue;
+          let modelValue: string;
           if (typeof value === 'string' || !value) {
             modelValue = null;
           } else {
@@ -126,8 +161,18 @@ export class QueueAutocompleteComponent implements ControlValueAccessor, OnInit 
         }),
         map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
         distinctUntilChanged(),
-        switchMap(name => this.fetchQueue(name) ),
-        share()
+        switchMap(name => {
+          this.isFetching = true;
+          return this.fetchQueue(name).pipe(
+            finalize(() => this.isFetching = false)
+          );
+        }),
+        tap(entities => {
+          if (this.pendingBlur) {
+            this.performValidation(entities);
+          }
+        }),
+        shareReplay(1)
       );
   }
 
@@ -138,10 +183,6 @@ export class QueueAutocompleteComponent implements ControlValueAccessor, OnInit 
     } else {
       this.selectQueueFormGroup.enable({emitEvent: false});
     }
-  }
-
-  textIsNotEmpty(text: string): boolean {
-    return (text && text.length > 0);
   }
 
   writeValue(value: string | null): void {
@@ -167,30 +208,19 @@ export class QueueAutocompleteComponent implements ControlValueAccessor, OnInit 
     this.dirty = true;
   }
 
-  onFocus() {
-    if (this.dirty) {
-      this.selectQueueFormGroup.get('queueName').updateValueAndValidity({onlySelf: true, emitEvent: true});
-      this.dirty = false;
-    }
-  }
-
-  reset() {
-    this.selectQueueFormGroup.get('queueName').patchValue('', {emitEvent: false});
-  }
-
-  updateView(value: string | null) {
+  protected updateView(value: string | null) {
     if (this.modelValue !== value) {
       this.modelValue = value;
       this.propagateChange(this.modelValue);
     }
   }
 
-  displayQueueFn(queue?: BaseData<EntityId>): string | undefined {
+  displayQueueFn(queue?: QueueInfo): string | undefined {
     return queue ? queue.name : undefined;
   }
 
   fetchQueue(searchText?: string): Observable<Array<QueueInfo>> {
-    this.searchText = searchText;
+    this.searchText = searchText ?? '';
     const pageLink = new PageLink(10, 0, searchText, {
       property: 'name',
       direction: Direction.ASC
@@ -201,19 +231,11 @@ export class QueueAutocompleteComponent implements ControlValueAccessor, OnInit 
     );
   }
 
-  getDescription(value) {
+  getDescription(value: QueueInfo): string {
     return value.additionalInfo?.description ? value.additionalInfo.description :
       this.translate.instant(
         'queue.alt-description',
         {submitStrategy: value.submitStrategy.type, processingStrategy: value.processingStrategy.type}
       );
-  }
-
-  clear() {
-    this.selectQueueFormGroup.get('queueName').patchValue('', {emitEvent: true});
-    setTimeout(() => {
-      this.queueInput.nativeElement.blur();
-      this.queueInput.nativeElement.focus();
-    }, 0);
   }
 }

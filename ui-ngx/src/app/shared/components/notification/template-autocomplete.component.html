@@ -21,6 +21,7 @@
          #templateInput
          formControlName="templateName"
          (focusin)="onFocus()"
+         (blur)="onBlur()"
          [required]="required"
          [matAutocomplete]="templateAutocomplete">
   @if (selectTemplateFormGroup.get('templateName').value && !disabled) {
@@ -86,6 +87,11 @@
   @if (selectTemplateFormGroup.get('templateName').hasError('required')) {
     <mat-error>
       {{ 'notification.template-required' | translate }}
+    </mat-error>
+  }
+  @if (selectTemplateFormGroup.get('templateName').hasError('objectRequired')) {
+    <mat-error>
+      {{ 'entity.entity-not-valid' | translate: {entity: 'notification.template'} }}
     </mat-error>
   }
 </mat-form-field>
