@@ -131,7 +131,7 @@ export class TenantProfileAutocompleteComponent extends AutocompleteBaseDirectiv
   }
 
   protected isCreateNew(): boolean {
-    return false;
+    return true;
   }
 
   ngOnInit() {

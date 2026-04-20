@@ -34,7 +34,6 @@ import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { EntityAliasSelectCallbacks } from './entity-alias-select.component.models';
 import { ENTER } from '@angular/cdk/keycodes';
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
-import { objectRequired } from '@core/utils';
 import { AutocompleteBaseDirective } from '@shared/components/directives/autocomplete-base.directive';
 
 @Component({
@@ -131,7 +130,7 @@ export class EntityAliasSelectComponent extends AutocompleteBaseDirective<Entity
   }
 
   protected isCreateNew(): boolean {
-    return false;
+    return true;
   }
 
   protected getDisplayName(entity: EntityAlias): string {

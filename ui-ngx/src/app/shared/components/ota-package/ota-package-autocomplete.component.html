@@ -57,8 +57,7 @@
             </div>
           } @else {
             <span>
-              {{ translate.get(notMatchingPackage,
-              {entity: truncate.transform(searchText, true, 6, &apos;...&apos;)}) | async }}
+              {{ translate.get(notMatchingPackage, {entity: truncate.transform(searchText, true, 6, &apos;...&apos;)}) | async }}
             </span>
           }
         </div>
@@ -72,7 +71,7 @@
   }
   @if (otaPackageFormGroup.get('packageId').hasError('objectRequired')) {
     <mat-error>
-      {{ 'entity.entity-not-valid' | translate: {entity: placeholderText | translate} }}
+      {{ (isCreateNew() ? 'entity.entity-not-valid-create-new' : 'entity.entity-not-valid') | translate: {entity: placeholderText | translate} }}
     </mat-error>
   }
   @if (!disabled) {

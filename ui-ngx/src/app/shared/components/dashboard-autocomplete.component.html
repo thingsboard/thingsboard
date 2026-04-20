@@ -64,7 +64,7 @@
     <mat-icon matSuffix
               matTooltipPosition="above"
               matTooltipClass="tb-error-tooltip"
-              [matTooltip]="entityNotValidTranslationKey | translate: {entity: 'dashboard.dashboard'}"
+              [matTooltip]="(isCreateNew() ? 'entity.entity-not-valid-create-new' : 'entity.entity-not-valid') | translate: {entity: 'dashboard.dashboard'}"
               class="tb-error">
       warning
     </mat-icon>
@@ -101,7 +101,7 @@
   }
   @if (!inlineField && selectDashboardFormGroup.get('dashboard').hasError('objectRequired')) {
     <mat-error>
-      {{ entityNotValidTranslationKey | translate: {entity: 'dashboard.dashboard' | translate} }}
+      {{ (isCreateNew() ? 'entity.entity-not-valid-create-new' : 'entity.entity-not-valid') | translate: {entity: 'dashboard.dashboard' | translate} }}
     </mat-error>
   }
 </mat-form-field>

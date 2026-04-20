@@ -32,7 +32,6 @@ import { FilterSelectCallbacks } from './filter-select.component.models';
 import { Filter } from '@shared/models/query/query.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
-import { objectRequired } from '@core/utils';
 import { AutocompleteBaseDirective } from '@shared/components/directives/autocomplete-base.directive';
 
 @Component({
@@ -125,7 +124,7 @@ export class FilterSelectComponent extends AutocompleteBaseDirective<Filter, str
   }
 
   protected isCreateNew(): boolean {
-    return false;
+    return true;
   }
 
   protected getDisplayName(entity: Filter): string {
