@@ -91,7 +91,7 @@
   }
   @if (selectTemplateFormGroup.get('templateName').hasError('objectRequired')) {
     <mat-error>
-      {{ 'entity.entity-not-valid' | translate: {entity: 'notification.template'} }}
+      {{ 'entity.entity-not-valid' | translate: {entity: 'notification.template' | translate} }}
     </mat-error>
   }
 </mat-form-field>

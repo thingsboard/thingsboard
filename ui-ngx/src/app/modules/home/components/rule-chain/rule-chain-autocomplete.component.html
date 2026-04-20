@@ -73,7 +73,7 @@
   }
   @if (selectRuleChainFormGroup.get('ruleChainId').hasError('objectRequired')) {
     <mat-error>
-      {{ entityNotValidTranslationKey | translate: {entity: 'rulechain.rulechain'} }}
+      {{ entityNotValidTranslationKey | translate: {entity: 'rulechain.rulechain' | translate} }}
     </mat-error>
   }
   <mat-hint>

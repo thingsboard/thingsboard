@@ -100,7 +100,7 @@
   }
   @if (selectDeviceProfileFormGroup.get('deviceProfile').hasError('objectRequired')) {
     <mat-error>
-      {{ entityNotValidTranslationKey | translate: {entity: 'device-profile.device-profile'} }}
+      {{ entityNotValidTranslationKey | translate: {entity: 'device-profile.device-profile' | translate} }}
     </mat-error>
   }
   @if (hint && !disabled) {

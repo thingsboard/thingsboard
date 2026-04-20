@@ -101,7 +101,7 @@
   }
   @if (!inlineField && selectDashboardFormGroup.get('dashboard').hasError('objectRequired')) {
     <mat-error>
-      {{ entityNotValidTranslationKey | translate: {entity: 'dashboard.dashboard'} }}
+      {{ entityNotValidTranslationKey | translate: {entity: 'dashboard.dashboard' | translate} }}
     </mat-error>
   }
 </mat-form-field>

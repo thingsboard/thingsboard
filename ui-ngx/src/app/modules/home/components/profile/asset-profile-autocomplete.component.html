@@ -95,7 +95,7 @@
   }
   @if (selectAssetProfileFormGroup.get('assetProfile').hasError('objectRequired')) {
     <mat-error>
-      {{ 'entity.entity-not-valid' | translate: {entity: 'asset-profile.asset-profile'} }}
+      {{ 'entity.entity-not-valid' | translate: {entity: 'asset-profile.asset-profile' | translate} }}
     </mat-error>
   }
   @if (hint && !disabled) {
