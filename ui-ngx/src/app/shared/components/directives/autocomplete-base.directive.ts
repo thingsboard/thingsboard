@@ -119,7 +119,7 @@ export abstract class AutocompleteBaseDirective<E extends BaseType, M> implement
     if (entities.length === 1) {
       const entity = entities[0];
       const nameLower = this.getDisplayName(entity)?.toLowerCase() ?? '';
-      if (this.isCreateNew() || nameLower.startsWith(searchLower)) {
+      if (this.isCreateNew() || nameLower.includes(searchLower)) {
         this.selectMatchedEntity(entity);
         return;
       }
