@@ -17,14 +17,13 @@
 import { Directive, ElementRef, OnDestroy } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
-import { EntityId } from '@shared/models/id/entity-id';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { FormControl } from '@angular/forms';
 
 interface BaseType {
   name?: string;
   title?: string;
-  id?: string | EntityId
+  id?: string | { id: string };
 }
 
 @Directive()
