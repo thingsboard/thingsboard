@@ -85,8 +85,9 @@ public class SmppSmsSender extends AbstractSmsSender {
                 request.setSourceAddr(new Address(config.getSourceTon(), config.getSourceNpi(), config.getSourceAddress()));
             }
             request.setDestAddr(new Address(config.getDestinationTon(), config.getDestinationNpi(), prepareNumber(numberTo)));
-            request.setShortMessage(message);
-            request.setDataCoding(Optional.ofNullable(config.getCodingScheme()).orElse((byte) 0));
+            byte dataCoding = Optional.ofNullable(config.getCodingScheme()).orElse((byte) 0);
+            request.setShortMessage(message, charsetFor(dataCoding));
+            request.setDataCoding(dataCoding);
             request.setReplaceIfPresentFlag((byte) 0);
             request.setEsmClass((byte) 0);
             request.setProtocolId((byte) 0);
@@ -102,6 +103,27 @@ public class SmppSmsSender extends AbstractSmsSender {
         }
 
         return countMessageSegments(message);
+    }
+
+    private static String charsetFor(byte dataCoding) {
+        return switch (dataCoding) {
+            case 0 -> "US-ASCII"; // SMSC Default (GSM 7-bit subset)
+            case 1 -> "US-ASCII"; // IA5
+            // DCS 2, 4 are "Octet unspecified" (binary) — ISO-8859-1 is bijective for bytes 0-255, so it passes bytes through unchanged.
+            case 2 -> "ISO-8859-1"; // Octet unspecified (binary pass-through)
+            case 3 -> "ISO-8859-1"; // Latin 1
+            case 4 -> "ISO-8859-1"; // Octet unspecified (binary pass-through)
+            case 5 -> "Shift_JIS"; // JIS
+            case 6 -> "ISO-8859-5"; // Cyrillic
+            case 7 -> "ISO-8859-8"; // Latin/Hebrew
+            case 8 -> "UTF-16BE"; // UCS-2
+            // FIXME: Pictogram encoding not natively supported, falling back to ISO-8859-1.
+            case 9 -> "ISO-8859-1"; // Pictogram
+            case 10 -> "ISO-2022-JP"; // Music Codes
+            case 13 -> "JIS_X0212-1990"; // Extended Kanji JIS
+            case 14 -> "EUC-KR"; // KS C 5601
+            default -> throw new UnsupportedOperationException("Unsupported data_coding: " + dataCoding);
+        };
     }
 
     private synchronized void checkSmppSession() {
