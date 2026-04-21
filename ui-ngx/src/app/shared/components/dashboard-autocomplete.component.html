@@ -104,4 +104,14 @@
       {{ (isCreateNew() ? 'entity.entity-not-valid-create-new' : 'entity.entity-not-valid') | translate: {entity: 'dashboard.dashboard' | translate | lowercase} }}
     </mat-error>
   }
+  @if (!inlineField) {
+    <mat-error>
+      <ng-content select="[tb-error]"></ng-content>
+    </mat-error>
+  }
+  @if (!inlineField) {
+    <mat-hint>
+      <ng-content select="[tb-hint]"></ng-content>
+    </mat-hint>
+  }
 </mat-form-field>
