@@ -15,7 +15,6 @@
 ///
 
 import {
-  AfterViewInit,
   Component,
   ElementRef,
   forwardRef,
@@ -24,17 +23,20 @@ import {
   ViewChild,
   ViewEncapsulation
 } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
+import { ControlValueAccessor, FormControl, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Observable, of } from 'rxjs';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
-import { catchError, debounceTime, distinctUntilChanged, map, share, switchMap, tap } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, finalize, map, shareReplay, switchMap, tap } from 'rxjs/operators';
 import { emptyPageData } from '@shared/models/page/page-data';
 import { TranslateService } from '@ngx-translate/core';
 import { FloatLabelType, MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 import { WidgetTypeInfo } from '@shared/models/widget.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { WidgetService } from '@core/http/widget.service';
+import { objectRequired } from '@core/utils';
+import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { AutocompleteBaseDirective } from '@shared/components/directives/autocomplete-base.directive';
 
 @Component({
     selector: 'tb-widget-type-autocomplete',
@@ -48,9 +50,7 @@ import { WidgetService } from '@core/http/widget.service';
     encapsulation: ViewEncapsulation.None,
     standalone: false
 })
-export class WidgetTypeAutocompleteComponent implements ControlValueAccessor, OnInit, AfterViewInit {
-
-  private dirty = false;
+export class WidgetTypeAutocompleteComponent extends AutocompleteBaseDirective<WidgetTypeInfo, WidgetTypeInfo> implements ControlValueAccessor, OnInit {
 
   selectWidgetTypeFormGroup: UntypedFormGroup;
 
@@ -82,6 +82,7 @@ export class WidgetTypeAutocompleteComponent implements ControlValueAccessor, On
   excludeWidgetTypeIds: Array<string>;
 
   @ViewChild('widgetTypeInput', {static: true}) widgetTypeInput: ElementRef;
+  @ViewChild('widgetTypeInput', {read: MatAutocompleteTrigger}) autocompleteTrigger: MatAutocompleteTrigger;
 
   filteredWidgetTypes: Observable<Array<WidgetTypeInfo>>;
 
@@ -92,8 +93,9 @@ export class WidgetTypeAutocompleteComponent implements ControlValueAccessor, On
   constructor(public translate: TranslateService,
               private widgetService: WidgetService,
               private fb: UntypedFormBuilder) {
+    super();
     this.selectWidgetTypeFormGroup = this.fb.group({
-      widgetType: [null]
+      widgetType: [null, [objectRequired()]]
     });
   }
 
@@ -101,7 +103,40 @@ export class WidgetTypeAutocompleteComponent implements ControlValueAccessor, On
     this.propagateChange = fn;
   }
 
-  registerOnTouched(_fn: any): void {
+  registerOnTouched(fn: any): void {
+    this.onTouched = fn;
+  }
+
+  protected getControl(): FormControl {
+    return this.selectWidgetTypeFormGroup.get('widgetType') as FormControl;
+  }
+
+  protected getAutocompleteTrigger(): MatAutocompleteTrigger {
+    return this.autocompleteTrigger;
+  }
+
+  protected getInput(): ElementRef<HTMLInputElement> {
+    return this.widgetTypeInput as ElementRef<HTMLInputElement>;
+  }
+
+  protected getFilteredEntities(): Observable<Array<WidgetTypeInfo>> {
+    return this.filteredWidgetTypes;
+  }
+
+  protected getModelValue(): WidgetTypeInfo | null {
+    return this.modelValue;
+  }
+
+  protected isCreateNew(): boolean {
+    return false;
+  }
+
+  protected override selectMatchedEntity(entity: WidgetTypeInfo): void {
+    this.pendingBlur = false;
+    this.searchText = entity.name ?? '';
+    this.getControl().patchValue(entity, { emitEvent: false });
+    this.updateView(entity);
+    this.getAutocompleteTrigger()?.closePanel();
   }
 
   ngOnInit() {
@@ -119,12 +154,19 @@ export class WidgetTypeAutocompleteComponent implements ControlValueAccessor, On
         }),
         map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
         distinctUntilChanged(),
-        switchMap(name => this.fetchWidgetTypes(name) ),
-        share()
+        switchMap(name => {
+          this.isFetching = true;
+          return this.fetchWidgetTypes(name).pipe(
+            finalize(() => this.isFetching = false)
+          );
+        }),
+        tap(entities => {
+          if (this.pendingBlur) {
+            this.performValidation(entities);
+          }
+        }),
+        shareReplay(1)
       );
-  }
-
-  ngAfterViewInit(): void {
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -157,7 +199,7 @@ export class WidgetTypeAutocompleteComponent implements ControlValueAccessor, On
     this.dirty = true;
   }
 
-  updateView(value: WidgetTypeInfo | null) {
+  protected updateView(value: WidgetTypeInfo | null) {
     if (this.modelValue !== value) {
       this.modelValue = value;
       this.propagateChange(this.modelValue);
@@ -195,21 +237,6 @@ export class WidgetTypeAutocompleteComponent implements ControlValueAccessor, On
         }
       })
     );
-  }
-
-  onFocus() {
-    if (this.dirty) {
-      this.selectWidgetTypeFormGroup.get('widgetType').updateValueAndValidity({onlySelf: true});
-      this.dirty = false;
-    }
-  }
-
-  clear() {
-    this.selectWidgetTypeFormGroup.get('widgetType').patchValue('');
-    setTimeout(() => {
-      this.widgetTypeInput.nativeElement.blur();
-      this.widgetTypeInput.nativeElement.focus();
-    }, 0);
   }
 
   textIsNotEmpty(text: string): boolean {

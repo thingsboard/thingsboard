@@ -28,7 +28,6 @@ import { Direction } from '@shared/models/page/sort-order';
 import { emptyPageData } from '@shared/models/page/page-data';
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
-import { objectRequired } from '@core/utils';
 import { AutocompleteBaseDirective } from '@shared/components/directives/autocomplete-base.directive';
 
 @Component({

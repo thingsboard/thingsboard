@@ -25,6 +25,7 @@
          placeholder="{{ placeholder }}"
          formControlName="widgetType"
          (focusin)="onFocus()"
+         (blur)="onBlur()"
          [required]="required"
          [matAutocomplete]="widgetTypeAutocomplete">
   @if (selectWidgetTypeFormGroup.get('widgetType').value && !disabled) {
@@ -68,6 +69,11 @@
       </mat-option>
     }
   </mat-autocomplete>
+  @if (selectWidgetTypeFormGroup.get('widgetType').hasError('objectRequired')) {
+    <mat-error>
+      {{ 'entity.entity-not-valid' | translate: {entity: label} }}
+    </mat-error>
+  }
   <mat-error>
     <ng-content select="[tb-error]"></ng-content>
   </mat-error>
