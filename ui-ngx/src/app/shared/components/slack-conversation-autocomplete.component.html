@@ -60,7 +60,7 @@
   }
   @if (conversationSlackFormGroup.get('conversation').hasError('objectRequired')) {
     <mat-error>
-      {{ 'entity.entity-not-valid' | translate: {entity: labelText} }}
+      {{ 'entity.entity-not-valid' | translate: {entity: labelText | lowercase} }}
     </mat-error>
   }
 </mat-form-field>

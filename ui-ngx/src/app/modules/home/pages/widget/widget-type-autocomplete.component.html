@@ -71,7 +71,7 @@
   </mat-autocomplete>
   @if (selectWidgetTypeFormGroup.get('widgetType').hasError('objectRequired')) {
     <mat-error>
-      {{ 'entity.entity-not-valid' | translate: {entity: label} }}
+      {{ 'entity.entity-not-valid' | translate: {entity: label | lowercase} }}
     </mat-error>
   }
   <mat-error>
