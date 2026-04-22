@@ -22,7 +22,6 @@ import { FormControl } from '@angular/forms';
 
 interface BaseType {
   name?: string;
-  title?: string;
   id?: string | { id: string };
 }
 
@@ -57,7 +56,7 @@ export abstract class AutocompleteBaseDirective<E extends BaseType, M> implement
 
   protected abstract getModelValue(): M | null;
 
-  protected abstract updateView(value: M | E, entity: E): void;
+  protected abstract updateView(value: M | E, entity?: E): void;
 
   protected abstract isCreateNew(): boolean;
 
@@ -100,7 +99,10 @@ export abstract class AutocompleteBaseDirective<E extends BaseType, M> implement
 
   onBlur(): void {
     this.onTouched();
-    if (this.isFetching) {
+    const currentInput = (this.getInput()?.nativeElement?.value ?? '').toLowerCase();
+    const hasUncommittedInput = currentInput !== this.searchText.toLowerCase();
+
+    if (this.isFetching || hasUncommittedInput) {
       this.pendingBlur = true;
     } else {
       this.getFilteredEntities().pipe(

@@ -239,8 +239,5 @@ export class WidgetTypeAutocompleteComponent extends AutocompleteBaseDirective<W
     );
   }
 
-  textIsNotEmpty(text: string): boolean {
-    return (text && text.length > 0);
-  }
-
 }
+

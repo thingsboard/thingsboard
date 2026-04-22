@@ -96,6 +96,10 @@ export class OtaPackageAutocompleteComponent extends AutocompleteBaseDirective<O
   @Input()
   requiredText: string;
 
+  get useFullEntityId(): boolean {
+    return super.useFullEntityId;
+  }
+
   @Input()
   set useFullEntityId(value: boolean) {
     super.useFullEntityId = coerceBooleanProperty(value);

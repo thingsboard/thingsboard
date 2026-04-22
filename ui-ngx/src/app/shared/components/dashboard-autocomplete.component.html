@@ -64,7 +64,7 @@
     <mat-icon matSuffix
               matTooltipPosition="above"
               matTooltipClass="tb-error-tooltip"
-              [matTooltip]="(isCreateNew() ? 'entity.entity-not-valid-create-new' : 'entity.entity-not-valid') | translate: {entity: 'dashboard.dashboard' | lowercase}"
+              [matTooltip]="(isCreateNew() ? 'entity.entity-not-valid-create-new' : 'entity.entity-not-valid') | translate: {entity: 'dashboard.dashboard' | translate | lowercase}"
               class="tb-error">
       warning
     </mat-icon>

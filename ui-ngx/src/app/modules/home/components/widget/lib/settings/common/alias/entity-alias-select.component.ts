@@ -16,6 +16,7 @@
 
 import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
 import {
+  AbstractControl,
   ControlValueAccessor,
   FormBuilder,
   FormControl,
@@ -23,6 +24,7 @@ import {
   NG_VALUE_ACCESSOR,
   Validators
 } from '@angular/forms';
+import { ErrorStateMatcher } from '@angular/material/core';
 import { Observable, of, shareReplay } from 'rxjs';
 import { debounceTime, finalize, map, switchMap, takeUntil, tap } from 'rxjs/operators';
 import { EntityType } from '@shared/models/entity-type.models';
@@ -40,15 +42,21 @@ import { AutocompleteBaseDirective } from '@shared/components/directives/autocom
     selector: 'tb-entity-alias-select',
     templateUrl: './entity-alias-select.component.html',
     styleUrls: ['./entity-alias-select.component.scss'],
-    providers: [{
+    providers: [
+        {
             provide: NG_VALUE_ACCESSOR,
             useExisting: forwardRef(() => EntityAliasSelectComponent),
             multi: true
-        }],
+        },
+        {
+            provide: ErrorStateMatcher,
+            useExisting: forwardRef(() => EntityAliasSelectComponent)
+        }
+    ],
     standalone: false
 })
 export class EntityAliasSelectComponent extends AutocompleteBaseDirective<EntityAlias, string>
-    implements ControlValueAccessor, OnInit {
+    implements ControlValueAccessor, OnInit, ErrorStateMatcher {
 
   selectEntityAliasFormGroup: FormGroup;
 
@@ -107,6 +115,11 @@ export class EntityAliasSelectComponent extends AutocompleteBaseDirective<Entity
 
   registerOnTouched(fn: any): void {
     this.onTouched = fn;
+  }
+
+  isErrorState(control: AbstractControl | null, form: any): boolean {
+    const submitted = form?.submitted ?? false;
+    return !!(control?.invalid && (control?.dirty || control?.touched || submitted));
   }
 
   protected getControl(): FormControl {

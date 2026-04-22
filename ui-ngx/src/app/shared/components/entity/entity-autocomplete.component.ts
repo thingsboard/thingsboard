@@ -129,6 +129,10 @@ export class EntityAutocompleteComponent extends AutocompleteBaseDirective<BaseD
   @Input()
   placeholder: string;
 
+  get useFullEntityId(): boolean {
+    return super.useFullEntityId;
+  }
+
   @Input()
   set useFullEntityId(value: boolean) {
     super.useFullEntityId = coerceBooleanProperty(value);

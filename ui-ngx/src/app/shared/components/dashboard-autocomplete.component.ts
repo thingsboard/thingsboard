@@ -108,7 +108,6 @@ export class DashboardAutocompleteComponent extends AutocompleteBaseDirective<Da
   entityNotValidTranslationKey: string = 'entity.entity-not-valid';
 
   @ViewChild('dashboardInput', {static: true}) dashboardInput: ElementRef;
-  @ViewChild('dashboardInput', {read: MatAutocompleteTrigger, static: true}) dashboardAutocomplete: MatAutocompleteTrigger;
   @ViewChild('autocompleteTrigger') autocompleteTrigger: MatAutocompleteTrigger;
 
   filteredDashboards: Observable<Array<DashboardInfo>>;
@@ -225,7 +224,7 @@ export class DashboardAutocompleteComponent extends AutocompleteBaseDirective<Da
     this.disabled = isDisabled;
     if (this.disabled) {
       this.selectDashboardFormGroup.disable({emitEvent: false});
-      this.dashboardAutocomplete.closePanel();
+      this.autocompleteTrigger?.closePanel();
     } else {
       this.selectDashboardFormGroup.enable({emitEvent: false});
     }

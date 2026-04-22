@@ -16,6 +16,7 @@
 
 import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
 import {
+  AbstractControl,
   ControlValueAccessor,
   FormControl,
   NG_VALUE_ACCESSOR,
@@ -23,6 +24,7 @@ import {
   UntypedFormGroup,
   Validators
 } from '@angular/forms';
+import { ErrorStateMatcher } from '@angular/material/core';
 import { Observable, of, shareReplay } from 'rxjs';
 import { debounceTime, finalize, map, switchMap, takeUntil, tap } from 'rxjs/operators';
 import { IAliasController } from '@core/api/widget-api.models';
@@ -38,15 +40,21 @@ import { AutocompleteBaseDirective } from '@shared/components/directives/autocom
     selector: 'tb-filter-select',
     templateUrl: './filter-select.component.html',
     styleUrls: [],
-    providers: [{
+    providers: [
+        {
             provide: NG_VALUE_ACCESSOR,
             useExisting: forwardRef(() => FilterSelectComponent),
             multi: true
-        }],
+        },
+        {
+            provide: ErrorStateMatcher,
+            useExisting: forwardRef(() => FilterSelectComponent)
+        }
+    ],
     standalone: false
 })
 export class FilterSelectComponent extends AutocompleteBaseDirective<Filter, string>
-    implements ControlValueAccessor, OnInit {
+    implements ControlValueAccessor, OnInit, ErrorStateMatcher {
 
   selectFilterFormGroup: UntypedFormGroup;
 
@@ -101,6 +109,11 @@ export class FilterSelectComponent extends AutocompleteBaseDirective<Filter, str
 
   registerOnTouched(fn: any): void {
     this.onTouched = fn;
+  }
+
+  isErrorState(control: AbstractControl | null, form: any): boolean {
+    const submitted = form?.submitted ?? false;
+    return !!(control?.invalid && (control?.dirty || control?.touched || submitted));
   }
 
   protected getControl(): FormControl {
