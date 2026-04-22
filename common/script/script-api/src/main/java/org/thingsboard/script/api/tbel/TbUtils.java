@@ -1349,7 +1349,7 @@ public class TbUtils {
         for (byte b : byteArray) {
             byteList.add(b);
         }
-        ExecutionArrayList<Byte> list = new ExecutionArrayList(byteList, ctx);
+        ExecutionArrayList<Byte> list = new ExecutionArrayList<>(byteList, ctx);
         return list;
     }
 
