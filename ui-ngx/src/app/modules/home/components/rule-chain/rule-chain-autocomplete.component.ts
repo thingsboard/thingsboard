@@ -17,7 +17,7 @@
 import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
 import { ControlValueAccessor, FormControl, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Observable, of, shareReplay } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged, finalize, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, map, switchMap, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
@@ -45,7 +45,7 @@ import { AutocompleteBaseDirective } from '@shared/components/directives/autocom
         }],
     standalone: false
 })
-export class RuleChainAutocompleteComponent extends AutocompleteBaseDirective<BaseData<EntityId>, string> implements ControlValueAccessor, OnInit {
+export class RuleChainAutocompleteComponent extends AutocompleteBaseDirective implements ControlValueAccessor, OnInit {
 
   selectRuleChainFormGroup: UntypedFormGroup;
 
@@ -85,8 +85,6 @@ export class RuleChainAutocompleteComponent extends AutocompleteBaseDirective<Ba
 
   ruleChainURL: string;
 
-  private propagateChange = (v: any) => { };
-
   constructor(private store: Store<AppState>,
               public translate: TranslateService,
               public truncate: TruncatePipe,
@@ -99,36 +97,12 @@ export class RuleChainAutocompleteComponent extends AutocompleteBaseDirective<Ba
     });
   }
 
-  registerOnChange(fn: any): void {
-    this.propagateChange = fn;
-  }
-
-  registerOnTouched(fn: any): void {
-    this.onTouched = fn;
-  }
-
   protected getControl(): FormControl {
     return this.selectRuleChainFormGroup.get('ruleChainId') as FormControl;
   }
 
-  protected getAutocompleteTrigger(): MatAutocompleteTrigger {
-    return this.ruleChainAutocomplete;
-  }
-
   protected getInput(): ElementRef<HTMLInputElement> {
     return this.ruleChainInput as ElementRef<HTMLInputElement>;
-  }
-
-  protected getFilteredEntities(): Observable<Array<BaseData<EntityId>>> {
-    return this.filteredRuleChains;
-  }
-
-  protected getModelValue(): string | null {
-    return this.modelValue;
-  }
-
-  protected isCreateNew(): boolean {
-    return true;
   }
 
   ngOnInit() {
@@ -149,17 +123,7 @@ export class RuleChainAutocompleteComponent extends AutocompleteBaseDirective<Ba
         }),
         map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
         distinctUntilChanged(),
-        switchMap(name => {
-          this.isFetching = true;
-          return this.fetchRuleChain(name).pipe(
-            finalize(() => this.isFetching = false)
-          );
-        }),
-        tap(entities => {
-          if (this.pendingBlur) {
-            this.performValidation(entities);
-          }
-        }),
+        switchMap(name => this.fetchRuleChain(name)),
         shareReplay(1)
       );
   }
@@ -212,7 +176,7 @@ export class RuleChainAutocompleteComponent extends AutocompleteBaseDirective<Ba
     this.dirty = true;
   }
 
-  protected updateView(value: string | null) {
+  updateView(value: string | null) {
     if (this.modelValue !== value) {
       this.modelValue = value;
       this.propagateChange(this.modelValue);

@@ -17,7 +17,7 @@
 import { Component, ElementRef, forwardRef, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormControl, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { Observable, of, ReplaySubject, shareReplay } from 'rxjs';
-import { catchError, debounceTime, finalize, map, share, switchMap, tap } from 'rxjs/operators';
+import { catchError, debounceTime, map, share, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { TruncatePipe } from '@shared/pipe/truncate.pipe';
@@ -39,7 +39,7 @@ import { AutocompleteBaseDirective } from '@shared/components/directives/autocom
         }],
     standalone: false
 })
-export class SlackConversationAutocompleteComponent extends AutocompleteBaseDirective<SlackConversation, SlackConversation>
+export class SlackConversationAutocompleteComponent extends AutocompleteBaseDirective
   implements ControlValueAccessor, OnInit, OnChanges {
 
   conversationSlackFormGroup: FormGroup;
@@ -80,8 +80,6 @@ export class SlackConversationAutocompleteComponent extends AutocompleteBaseDire
   private latestSearchConversetionResult: Array<SlackConversation> = null;
   private slackConversetionFetchObservable$: Observable<Array<SlackConversation>> = null;
 
-  private propagateChange = (v: any) => { };
-
   constructor(public translate: TranslateService,
               public truncate: TruncatePipe,
               private notificationService: NotificationService,
@@ -92,48 +90,12 @@ export class SlackConversationAutocompleteComponent extends AutocompleteBaseDire
     });
   }
 
-  registerOnChange(fn: any): void {
-    this.propagateChange = fn;
-  }
-
-  registerOnTouched(fn: any): void {
-    this.onTouched = fn;
-  }
-
   protected getControl(): FormControl {
     return this.conversationSlackFormGroup.get('conversation') as FormControl;
   }
 
-  protected getAutocompleteTrigger(): MatAutocompleteTrigger {
-    return this.autocompleteTrigger;
-  }
-
   protected getInput(): ElementRef<HTMLInputElement> {
     return this.slackInput as ElementRef<HTMLInputElement>;
-  }
-
-  protected getFilteredEntities(): Observable<Array<SlackConversation>> {
-    return this.slackConversation$;
-  }
-
-  protected getModelValue(): SlackConversation | null {
-    return this.modelValue;
-  }
-
-  protected isCreateNew(): boolean {
-    return false;
-  }
-
-  protected override getDisplayName(entity: SlackConversation): string {
-    return entity.title ?? '';
-  }
-
-  protected override selectMatchedEntity(entity: SlackConversation): void {
-    this.pendingBlur = false;
-    this.searchText = entity.title ?? '';
-    this.getControl().patchValue(entity, {emitEvent: false});
-    this.updateView(entity);
-    this.getAutocompleteTrigger()?.closePanel();
   }
 
   ngOnInit() {
@@ -157,17 +119,7 @@ export class SlackConversationAutocompleteComponent extends AutocompleteBaseDire
           }
         }),
         map(value => value ? (typeof value === 'string' ? value : value.title) : ''),
-        switchMap(name => {
-          this.isFetching = true;
-          return this.fetchSlackConversation(name).pipe(
-            finalize(() => this.isFetching = false)
-          );
-        }),
-        tap(entities => {
-          if (this.pendingBlur) {
-            this.performValidation(entities);
-          }
-        }),
+        switchMap(name => this.fetchSlackConversation(name)),
         shareReplay(1)
       );
   }
@@ -206,7 +158,7 @@ export class SlackConversationAutocompleteComponent extends AutocompleteBaseDire
     this.dirty = true;
   }
 
-  protected updateView(value: SlackConversation | null) {
+  updateView(value: SlackConversation | null) {
     if (!isEqual(this.modelValue, value)) {
       this.modelValue = value;
       this.propagateChange(this.modelValue);

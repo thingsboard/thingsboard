@@ -91,7 +91,7 @@
   }
   @if (selectTemplateFormGroup.get('templateName').hasError('objectRequired')) {
     <mat-error>
-      {{ (isCreateNew() ? 'entity.entity-not-valid-create-new' : 'entity.entity-not-valid') | translate: {entity: 'notification.template' | translate | lowercase} }}
+      {{ (allowCreate ? 'entity.entity-not-valid-create-new' : 'entity.entity-not-valid') | translate: {entity: 'notification.template' | translate | lowercase} }}
     </mat-error>
   }
 </mat-form-field>

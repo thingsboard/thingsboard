@@ -93,7 +93,7 @@
   }
   @if (selectTenantProfileFormGroup.get('tenantProfile').hasError('objectRequired')) {
     <mat-error>
-      {{ (isCreateNew() ? 'entity.entity-not-valid-create-new' : 'entity.entity-not-valid') | translate: {entity: 'tenant-profile.tenant-profile' | translate | lowercase} }}
+      {{ 'entity.entity-not-valid-create-new' | translate: {entity: 'tenant-profile.tenant-profile' | translate | lowercase} }}
     </mat-error>
   }
 </mat-form-field>

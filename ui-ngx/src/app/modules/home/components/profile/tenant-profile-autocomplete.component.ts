@@ -19,7 +19,7 @@ import { ControlValueAccessor, FormControl, UntypedFormBuilder, UntypedFormGroup
 import { Observable, of, shareReplay } from 'rxjs';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
-import { catchError, debounceTime, distinctUntilChanged, finalize, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, map, switchMap, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
@@ -50,7 +50,7 @@ import { AutocompleteBaseDirective } from '@shared/components/directives/autocom
         }],
     standalone: false
 })
-export class TenantProfileAutocompleteComponent extends AutocompleteBaseDirective<EntityInfoData, TenantProfileId> implements ControlValueAccessor, OnInit {
+export class TenantProfileAutocompleteComponent extends AutocompleteBaseDirective implements ControlValueAccessor, OnInit {
 
   selectTenantProfileFormGroup: UntypedFormGroup;
 
@@ -88,8 +88,6 @@ export class TenantProfileAutocompleteComponent extends AutocompleteBaseDirectiv
 
   tenantProfileURL: string;
 
-  private propagateChange = (v: any) => { };
-
   constructor(private store: Store<AppState>,
               public translate: TranslateService,
               public truncate: TruncatePipe,
@@ -102,36 +100,12 @@ export class TenantProfileAutocompleteComponent extends AutocompleteBaseDirectiv
     });
   }
 
-  registerOnChange(fn: any): void {
-    this.propagateChange = fn;
-  }
-
-  registerOnTouched(fn: any): void {
-    this.onTouched = fn;
-  }
-
   protected getControl(): FormControl {
     return this.selectTenantProfileFormGroup.get('tenantProfile') as FormControl;
   }
 
-  protected getAutocompleteTrigger(): MatAutocompleteTrigger {
-    return this.autocompleteTrigger;
-  }
-
   protected getInput(): ElementRef<HTMLInputElement> {
     return this.tenantProfileInput as ElementRef<HTMLInputElement>;
-  }
-
-  protected getFilteredEntities(): Observable<Array<EntityInfoData>> {
-    return this.filteredTenantProfiles;
-  }
-
-  protected getModelValue(): TenantProfileId | null {
-    return this.modelValue;
-  }
-
-  protected isCreateNew(): boolean {
-    return true;
   }
 
   ngOnInit() {
@@ -149,17 +123,7 @@ export class TenantProfileAutocompleteComponent extends AutocompleteBaseDirectiv
         }),
         map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
         distinctUntilChanged(),
-        switchMap(name => {
-          this.isFetching = true;
-          return this.fetchTenantProfiles(name).pipe(
-            finalize(() => this.isFetching = false)
-          );
-        }),
-        tap(entities => {
-          if (this.pendingBlur) {
-            this.performValidation(entities);
-          }
-        }),
+        switchMap(name => this.fetchTenantProfiles(name)),
         shareReplay(1)
       );
   }
@@ -205,7 +169,7 @@ export class TenantProfileAutocompleteComponent extends AutocompleteBaseDirectiv
     this.dirty = true;
   }
 
-  protected updateView(value: TenantProfileId | null) {
+  updateView(value: TenantProfileId | null) {
     if (!entityIdEquals(this.modelValue, value)) {
       this.modelValue = value;
       this.propagateChange(this.modelValue);
@@ -214,14 +178,6 @@ export class TenantProfileAutocompleteComponent extends AutocompleteBaseDirectiv
 
   displayTenantProfileFn(profile?: EntityInfoData): string | undefined {
     return profile ? profile.name : undefined;
-  }
-
-  protected override selectMatchedEntity(entity: EntityInfoData): void {
-    this.pendingBlur = false;
-    this.searchText = entity.name ?? '';
-    this.getControl().patchValue(entity, { emitEvent: false });
-    this.updateView(new TenantProfileId(entity.id.id));
-    this.getAutocompleteTrigger()?.closePanel();
   }
 
   fetchTenantProfiles(searchText?: string): Observable<Array<EntityInfoData>> {

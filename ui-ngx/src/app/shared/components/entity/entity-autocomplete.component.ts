@@ -24,7 +24,7 @@ import {
   UntypedFormGroup
 } from '@angular/forms';
 import { firstValueFrom, merge, Observable, of, shareReplay, Subject } from 'rxjs';
-import { catchError, debounceTime, finalize, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, debounceTime, map, switchMap, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
@@ -51,7 +51,7 @@ import { coerceBooleanProperty } from '@angular/cdk/coercion';
         }],
     standalone: false
 })
-export class EntityAutocompleteComponent extends AutocompleteBaseDirective<BaseData<EntityId>, string | EntityId> implements ControlValueAccessor, OnInit {
+export class EntityAutocompleteComponent extends AutocompleteBaseDirective implements ControlValueAccessor, OnInit {
 
   selectEntityFormGroup: UntypedFormGroup;
 
@@ -73,8 +73,6 @@ export class EntityAutocompleteComponent extends AutocompleteBaseDirective<BaseD
   entityURL: string;
 
   private refresh$ = new Subject<Array<BaseData<EntityId>>>();
-
-  private propagateChange: (value: any) => void = () => { };
 
   @Input()
   set entityType(entityType: EntityType) {
@@ -129,13 +127,15 @@ export class EntityAutocompleteComponent extends AutocompleteBaseDirective<BaseD
   @Input()
   placeholder: string;
 
+  private _useFullEntityId = false;
+
   get useFullEntityId(): boolean {
-    return super.useFullEntityId;
+    return this._useFullEntityId;
   }
 
   @Input()
   set useFullEntityId(value: boolean) {
-    super.useFullEntityId = coerceBooleanProperty(value);
+    this._useFullEntityId = coerceBooleanProperty(value);
   }
 
   @Input()
@@ -200,27 +200,8 @@ export class EntityAutocompleteComponent extends AutocompleteBaseDirective<BaseD
     return this.selectEntityFormGroup.get('entity') as FormControl;
   }
 
-  protected getAutocompleteTrigger() {
-    return this.autocompleteTrigger;
-  }
-
   protected getInput() {
     return this.entityInput;
-  }
-
-  protected getFilteredEntities() {
-    return this.filteredEntities;
-  }
-  protected getModelValue() {
-    return this.modelValue;
-  }
-
-  protected getDisplayName(entity: BaseData<EntityId>): string {
-    return this.useEntityDisplayName ? getEntityDisplayName(entity) : entity.name;
-  }
-
-  protected isCreateNew(): boolean {
-    return this.allowCreateNew;
   }
 
   constructor(private store: Store<AppState>,
@@ -231,14 +212,6 @@ export class EntityAutocompleteComponent extends AutocompleteBaseDirective<BaseD
     this.selectEntityFormGroup = this.fb.group({
       entity: [null, objectRequired()]
     });
-  }
-
-  registerOnChange(fn: any): void {
-    this.propagateChange = fn;
-  }
-
-  registerOnTouched(fn: any): void {
-    this.onTouched = fn;
   }
 
   ngOnInit() {
@@ -260,17 +233,7 @@ export class EntityAutocompleteComponent extends AutocompleteBaseDirective<BaseD
             }
           }),
           map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
-          switchMap(name => {
-            this.isFetching = true;
-            return this.fetchEntities(name).pipe(
-              finalize(() => this.isFetching = false)
-            );
-          }),
-          tap(entities => {
-            if (this.pendingBlur) {
-              this.performValidation(entities);
-            }
-          }),
+          switchMap(name => this.fetchEntities(name)),
           shareReplay(1)
         )
     );
@@ -503,7 +466,7 @@ export class EntityAutocompleteComponent extends AutocompleteBaseDirective<BaseD
     this.dirty = true;
   }
 
-  protected updateView(value: string | EntityId | null, entity: BaseData<EntityId> | null) {
+  updateView(value: string | EntityId | null, entity: BaseData<EntityId> | null) {
     if (!isEqual(this.modelValue, value)) {
       this.modelValue = value;
       this.entityURL = (typeof entity === 'string' || !entity) ? '' : getEntityDetailsPageURL(entity.id.id, entity.id.entityType as EntityType);

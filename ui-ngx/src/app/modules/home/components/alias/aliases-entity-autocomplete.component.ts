@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
 import {
   ControlValueAccessor,
   UntypedFormBuilder,
@@ -23,7 +23,7 @@ import {
   FormControl
 } from '@angular/forms';
 import { Observable, of, shareReplay } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged, finalize, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, map, switchMap, tap } from 'rxjs/operators';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
@@ -47,7 +47,7 @@ import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
         }],
     standalone: false
 })
-export class AliasesEntityAutocompleteComponent extends AutocompleteBaseDirective<EntityInfo, EntityInfo> implements ControlValueAccessor, OnInit, AfterViewInit {
+export class AliasesEntityAutocompleteComponent extends AutocompleteBaseDirective implements ControlValueAccessor, OnInit {
 
   selectEntityInfoFormGroup: UntypedFormGroup;
 
@@ -77,8 +77,6 @@ export class AliasesEntityAutocompleteComponent extends AutocompleteBaseDirectiv
 
   filteredEntityInfos: Observable<Array<EntityInfo>>;
 
-  private propagateChange = (v: any) => { };
-
   constructor(private store: Store<AppState>,
               public translate: TranslateService,
               private entityService: EntityService,
@@ -89,36 +87,12 @@ export class AliasesEntityAutocompleteComponent extends AutocompleteBaseDirectiv
     });
   }
 
-  registerOnChange(fn: any): void {
-    this.propagateChange = fn;
-  }
-
-  registerOnTouched(fn: any): void {
-    this.onTouched = fn;
-  }
-
   protected getControl(): FormControl {
     return this.selectEntityInfoFormGroup.get('entityInfo') as FormControl;
   }
 
-  protected getAutocompleteTrigger(): MatAutocompleteTrigger {
-    return this.autocompleteTrigger;
-  }
-
   protected getInput(): ElementRef<HTMLInputElement> {
     return this.entityInfoInput as ElementRef<HTMLInputElement>;
-  }
-
-  protected getFilteredEntities(): Observable<Array<EntityInfo>> {
-    return this.filteredEntityInfos;
-  }
-
-  protected getModelValue() {
-    return this.modelValue;
-  }
-
-  protected isCreateNew(): boolean {
-    return false;
   }
 
   ngOnInit() {
@@ -136,22 +110,9 @@ export class AliasesEntityAutocompleteComponent extends AutocompleteBaseDirectiv
         }),
         map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
         distinctUntilChanged(),
-        switchMap(name => {
-          this.isFetching = true;
-          return this.fetchEntityInfos(name).pipe(
-            finalize(() => this.isFetching = false)
-          );
-        }),
-        tap(entities => {
-          if (this.pendingBlur) {
-            this.performValidation(entities);
-          }
-        }),
+        switchMap(name => this.fetchEntityInfos(name)),
         shareReplay(1)
       );
-  }
-
-  ngAfterViewInit(): void {
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -169,7 +130,7 @@ export class AliasesEntityAutocompleteComponent extends AutocompleteBaseDirectiv
     }
   }
 
-  protected updateView(value: EntityInfo | null) {
+  updateView(value: EntityInfo | null) {
     if (this.modelValue !== value) {
       this.modelValue = value;
       this.propagateChange(this.modelValue);
@@ -178,14 +139,6 @@ export class AliasesEntityAutocompleteComponent extends AutocompleteBaseDirectiv
 
   displayEntityInfoFn(entityInfo?: EntityInfo): string | undefined {
     return entityInfo ? entityInfo.name : undefined;
-  }
-
-  protected override selectMatchedEntity(entity: EntityInfo): void {
-    this.pendingBlur = false;
-    this.searchText = entity.name ?? '';
-    this.getControl().patchValue(entity, { emitEvent: false });
-    this.updateView(entity);
-    this.getAutocompleteTrigger()?.closePanel();
   }
 
   fetchEntityInfos(searchText?: string): Observable<Array<EntityInfo>> {

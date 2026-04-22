@@ -27,7 +27,7 @@ import { ControlValueAccessor, FormControl, NG_VALUE_ACCESSOR, UntypedFormBuilde
 import { Observable, of } from 'rxjs';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
-import { catchError, debounceTime, distinctUntilChanged, finalize, map, shareReplay, switchMap, tap } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, map, shareReplay, switchMap, tap } from 'rxjs/operators';
 import { emptyPageData } from '@shared/models/page/page-data';
 import { TranslateService } from '@ngx-translate/core';
 import { FloatLabelType, MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
@@ -50,7 +50,7 @@ import { AutocompleteBaseDirective } from '@shared/components/directives/autocom
     encapsulation: ViewEncapsulation.None,
     standalone: false
 })
-export class WidgetTypeAutocompleteComponent extends AutocompleteBaseDirective<WidgetTypeInfo, WidgetTypeInfo> implements ControlValueAccessor, OnInit {
+export class WidgetTypeAutocompleteComponent extends AutocompleteBaseDirective implements ControlValueAccessor, OnInit {
 
   selectWidgetTypeFormGroup: UntypedFormGroup;
 
@@ -86,10 +86,6 @@ export class WidgetTypeAutocompleteComponent extends AutocompleteBaseDirective<W
 
   filteredWidgetTypes: Observable<Array<WidgetTypeInfo>>;
 
-  searchText = '';
-
-  private propagateChange = (_v: any) => { };
-
   constructor(public translate: TranslateService,
               private widgetService: WidgetService,
               private fb: UntypedFormBuilder) {
@@ -99,44 +95,12 @@ export class WidgetTypeAutocompleteComponent extends AutocompleteBaseDirective<W
     });
   }
 
-  registerOnChange(fn: any): void {
-    this.propagateChange = fn;
-  }
-
-  registerOnTouched(fn: any): void {
-    this.onTouched = fn;
-  }
-
   protected getControl(): FormControl {
     return this.selectWidgetTypeFormGroup.get('widgetType') as FormControl;
   }
 
-  protected getAutocompleteTrigger(): MatAutocompleteTrigger {
-    return this.autocompleteTrigger;
-  }
-
   protected getInput(): ElementRef<HTMLInputElement> {
     return this.widgetTypeInput as ElementRef<HTMLInputElement>;
-  }
-
-  protected getFilteredEntities(): Observable<Array<WidgetTypeInfo>> {
-    return this.filteredWidgetTypes;
-  }
-
-  protected getModelValue(): WidgetTypeInfo | null {
-    return this.modelValue;
-  }
-
-  protected isCreateNew(): boolean {
-    return false;
-  }
-
-  protected override selectMatchedEntity(entity: WidgetTypeInfo): void {
-    this.pendingBlur = false;
-    this.searchText = entity.name ?? '';
-    this.getControl().patchValue(entity, { emitEvent: false });
-    this.updateView(entity);
-    this.getAutocompleteTrigger()?.closePanel();
   }
 
   ngOnInit() {
@@ -154,17 +118,7 @@ export class WidgetTypeAutocompleteComponent extends AutocompleteBaseDirective<W
         }),
         map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
         distinctUntilChanged(),
-        switchMap(name => {
-          this.isFetching = true;
-          return this.fetchWidgetTypes(name).pipe(
-            finalize(() => this.isFetching = false)
-          );
-        }),
-        tap(entities => {
-          if (this.pendingBlur) {
-            this.performValidation(entities);
-          }
-        }),
+        switchMap(name => this.fetchWidgetTypes(name)),
         shareReplay(1)
       );
   }
@@ -199,7 +153,7 @@ export class WidgetTypeAutocompleteComponent extends AutocompleteBaseDirective<W
     this.dirty = true;
   }
 
-  protected updateView(value: WidgetTypeInfo | null) {
+  updateView(value: WidgetTypeInfo | null) {
     if (this.modelValue !== value) {
       this.modelValue = value;
       this.propagateChange(this.modelValue);

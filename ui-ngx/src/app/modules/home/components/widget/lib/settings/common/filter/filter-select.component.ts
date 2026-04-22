@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, forwardRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -25,8 +25,8 @@ import {
   Validators
 } from '@angular/forms';
 import { ErrorStateMatcher } from '@angular/material/core';
-import { Observable, of, shareReplay } from 'rxjs';
-import { debounceTime, finalize, map, switchMap, takeUntil, tap } from 'rxjs/operators';
+import { Observable, of, shareReplay, Subject } from 'rxjs';
+import { debounceTime, map, switchMap, takeUntil, tap } from 'rxjs/operators';
 import { IAliasController } from '@core/api/widget-api.models';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { ENTER } from '@angular/cdk/keycodes';
@@ -53,8 +53,8 @@ import { AutocompleteBaseDirective } from '@shared/components/directives/autocom
     ],
     standalone: false
 })
-export class FilterSelectComponent extends AutocompleteBaseDirective<Filter, string>
-    implements ControlValueAccessor, OnInit, ErrorStateMatcher {
+export class FilterSelectComponent extends AutocompleteBaseDirective
+    implements ControlValueAccessor, OnInit, OnDestroy, ErrorStateMatcher {
 
   selectFilterFormGroup: UntypedFormGroup;
 
@@ -94,21 +94,13 @@ export class FilterSelectComponent extends AutocompleteBaseDirective<Filter, str
   filteredFilters: Observable<Array<Filter>>;
 
   private filterList: Array<Filter> = [];
-  private propagateChange = (_v: any) => { };
+  private destroy$ = new Subject<void>();
 
   constructor(private fb: UntypedFormBuilder) {
     super();
     this.selectFilterFormGroup = this.fb.group({
       filter: [null]
     });
-  }
-
-  registerOnChange(fn: any): void {
-    this.propagateChange = fn;
-  }
-
-  registerOnTouched(fn: any): void {
-    this.onTouched = fn;
   }
 
   isErrorState(control: AbstractControl | null, form: any): boolean {
@@ -120,28 +112,8 @@ export class FilterSelectComponent extends AutocompleteBaseDirective<Filter, str
     return this.selectFilterFormGroup.get('filter') as FormControl;
   }
 
-  protected getAutocompleteTrigger(): MatAutocompleteTrigger {
-    return this.autocompleteTrigger;
-  }
-
   protected getInput(): ElementRef<HTMLInputElement> {
     return this.filterInput as ElementRef<HTMLInputElement>;
-  }
-
-  protected getFilteredEntities(): Observable<Array<Filter>> {
-    return this.filteredFilters;
-  }
-
-  protected getModelValue(): string | null {
-    return this.modelValue;
-  }
-
-  protected isCreateNew(): boolean {
-    return true;
-  }
-
-  protected getDisplayName(entity: Filter): string {
-    return entity.filter ?? '';
   }
 
   ngOnInit() {
@@ -167,17 +139,7 @@ export class FilterSelectComponent extends AutocompleteBaseDirective<Filter, str
           }
         }),
         map(value => value ? (typeof value === 'string' ? value : value.filter) : ''),
-        switchMap(name => {
-          this.isFetching = true;
-          return this.fetchFilters(name).pipe(
-            finalize(() => this.isFetching = false)
-          );
-        }),
-        tap(entities => {
-          if (this.pendingBlur) {
-            this.performValidation(entities);
-          }
-        }),
+        switchMap(name => this.fetchFilters(name)),
         shareReplay(1)
       );
 
@@ -186,6 +148,11 @@ export class FilterSelectComponent extends AutocompleteBaseDirective<Filter, str
     ).subscribe(() => {
       this.loadFilters();
     });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -216,7 +183,7 @@ export class FilterSelectComponent extends AutocompleteBaseDirective<Filter, str
     this.dirty = true;
   }
 
-  protected updateView(value: string | null) {
+  updateView(value: string | null) {
     if (this.modelValue !== value) {
       this.modelValue = value;
       this.propagateChange(this.modelValue);

@@ -23,7 +23,7 @@ import {
   UntypedFormGroup
 } from '@angular/forms';
 import { merge, Observable, of, shareReplay, Subject } from 'rxjs';
-import { catchError, debounceTime, finalize, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, debounceTime, map, switchMap, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
@@ -56,7 +56,7 @@ import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
         }],
     standalone: false
 })
-export class OtaPackageAutocompleteComponent extends AutocompleteBaseDirective<OtaPackageInfo, string | EntityId> implements ControlValueAccessor, OnInit, OnDestroy {
+export class OtaPackageAutocompleteComponent extends AutocompleteBaseDirective implements ControlValueAccessor, OnInit, OnDestroy {
 
   otaPackageFormGroup: UntypedFormGroup;
 
@@ -96,13 +96,15 @@ export class OtaPackageAutocompleteComponent extends AutocompleteBaseDirective<O
   @Input()
   requiredText: string;
 
+  private _useFullEntityId = false;
+
   get useFullEntityId(): boolean {
-    return super.useFullEntityId;
+    return this._useFullEntityId;
   }
 
   @Input()
   set useFullEntityId(value: boolean) {
-    super.useFullEntityId = coerceBooleanProperty(value);
+    this._useFullEntityId = coerceBooleanProperty(value);
   }
 
   @Input()
@@ -139,8 +141,6 @@ export class OtaPackageAutocompleteComponent extends AutocompleteBaseDirective<O
 
   private cleanFilteredPackages: Subject<Array<OtaPackageInfo>> = new Subject();
 
-  private propagateChange = (v: any) => { };
-
   constructor(private store: Store<AppState>,
               public translate: TranslateService,
               public truncate: TruncatePipe,
@@ -157,36 +157,12 @@ export class OtaPackageAutocompleteComponent extends AutocompleteBaseDirective<O
     });
   }
 
-  registerOnChange(fn: any): void {
-    this.propagateChange = fn;
-  }
-
-  registerOnTouched(fn: any): void {
-    this.onTouched = fn;
-  }
-
   protected getControl() {
     return this.otaPackageFormGroup.get('packageId') as FormControl;
   }
 
-  protected getAutocompleteTrigger() {
-    return this.autocompleteTrigger;
-  }
-
   protected getInput() {
     return this.packageInput;
-  }
-
-  protected getFilteredEntities() {
-    return this.filteredPackages;
-  }
-
-  protected getModelValue() {
-    return this.modelValue;
-  }
-
-  protected isCreateNew(): boolean {
-    return false;
   }
 
   ngOnInit() {
@@ -206,17 +182,7 @@ export class OtaPackageAutocompleteComponent extends AutocompleteBaseDirective<O
           }
         }),
         map(value => value ? (typeof value === 'string' ? value : value.title) : ''),
-        switchMap(name => {
-          this.isFetching = true;
-          return this.fetchPackages(name).pipe(
-            finalize(() => this.isFetching = false)
-          );
-        }),
-        tap(entities => {
-          if (this.pendingBlur) {
-            this.performValidation(entities);
-          }
-        }),
+        switchMap(name => this.fetchPackages(name)),
         shareReplay(1)
       );
 
@@ -226,7 +192,6 @@ export class OtaPackageAutocompleteComponent extends AutocompleteBaseDirective<O
   ngOnDestroy() {
     this.cleanFilteredPackages.complete();
     this.cleanFilteredPackages = null;
-    super.ngOnDestroy();
   }
 
   getCurrentEntity(): OtaPackageInfo | null {
@@ -290,7 +255,7 @@ export class OtaPackageAutocompleteComponent extends AutocompleteBaseDirective<O
     super.reset();
   }
 
-  protected updateView(value: string | EntityId | null) {
+  updateView(value: string | EntityId | null) {
     if (this.modelValue !== value) {
       this.modelValue = value;
       this.propagateChange(this.modelValue);

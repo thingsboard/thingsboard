@@ -31,7 +31,7 @@ import { ControlValueAccessor, FormControl, NG_VALUE_ACCESSOR, UntypedFormBuilde
 import { Observable, of, shareReplay } from 'rxjs';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
-import { catchError, debounceTime, distinctUntilChanged, finalize, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, map, switchMap, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
@@ -65,7 +65,7 @@ import { AutocompleteBaseDirective } from '@shared/components/directives/autocom
         }],
     standalone: false
 })
-export class DeviceProfileAutocompleteComponent extends AutocompleteBaseDirective<DeviceProfileInfo, DeviceProfileId> implements ControlValueAccessor, OnInit, OnChanges {
+export class DeviceProfileAutocompleteComponent extends AutocompleteBaseDirective implements ControlValueAccessor, OnInit, OnChanges {
 
   selectDeviceProfileFormGroup: UntypedFormGroup;
 
@@ -147,8 +147,6 @@ export class DeviceProfileAutocompleteComponent extends AutocompleteBaseDirectiv
     id: null
   };
 
-  private propagateChange = (v: any) => { };
-
   constructor(private store: Store<AppState>,
               public translate: TranslateService,
               public truncate: TruncatePipe,
@@ -166,36 +164,12 @@ export class DeviceProfileAutocompleteComponent extends AutocompleteBaseDirectiv
     });
   }
 
-  registerOnChange(fn: any): void {
-    this.propagateChange = fn;
-  }
-
-  registerOnTouched(fn: any): void {
-    this.onTouched = fn;
-  }
-
   protected getControl(): FormControl {
     return this.selectDeviceProfileFormGroup.get('deviceProfile') as FormControl;
   }
 
-  protected getAutocompleteTrigger(): MatAutocompleteTrigger {
-    return this.autocompleteTrigger;
-  }
-
   protected getInput(): ElementRef<HTMLInputElement> {
     return this.deviceProfileInput as ElementRef<HTMLInputElement>;
-  }
-
-  protected getFilteredEntities(): Observable<Array<DeviceProfileInfo>> {
-    return this.filteredDeviceProfiles;
-  }
-
-  protected getModelValue(): DeviceProfileId | null {
-    return this.modelValue;
-  }
-
-  protected isCreateNew(): boolean {
-    return this.addNewProfile;
   }
 
   ngOnInit() {
@@ -229,17 +203,7 @@ export class DeviceProfileAutocompleteComponent extends AutocompleteBaseDirectiv
         }),
         debounceTime(150),
         distinctUntilChanged(),
-        switchMap(name => {
-          this.isFetching = true;
-          return this.fetchDeviceProfiles(name).pipe(
-            finalize(() => this.isFetching = false)
-          );
-        }),
-        tap(entities => {
-          if (this.pendingBlur) {
-            this.performValidation(entities);
-          }
-        }),
+        switchMap(name => this.fetchDeviceProfiles(name)),
         shareReplay(1)
       );
   }
@@ -335,7 +299,7 @@ export class DeviceProfileAutocompleteComponent extends AutocompleteBaseDirectiv
     }
   }
 
-  protected updateView(deviceProfile: DeviceProfileInfo | null) {
+  updateView(deviceProfile: DeviceProfileInfo | null) {
     const idValue = deviceProfile && deviceProfile.id ? new DeviceProfileId(deviceProfile.id.id) : null;
     if (!entityIdEquals(this.modelValue, idValue)) {
       this.modelValue = idValue;
@@ -346,17 +310,6 @@ export class DeviceProfileAutocompleteComponent extends AutocompleteBaseDirectiv
 
   displayDeviceProfileFn(profile?: DeviceProfileInfo): string | undefined {
     return profile ? profile.name : undefined;
-  }
-
-  protected override selectMatchedEntity(entity: DeviceProfileInfo): void {
-    if (!entity.id) {
-      return;
-    }
-    this.pendingBlur = false;
-    this.searchText = entity.name ?? '';
-    this.getControl().patchValue(entity, { emitEvent: false });
-    this.updateView(entity);
-    this.getAutocompleteTrigger()?.closePanel();
   }
 
   fetchDeviceProfiles(searchText?: string): Observable<Array<DeviceProfileInfo>> {

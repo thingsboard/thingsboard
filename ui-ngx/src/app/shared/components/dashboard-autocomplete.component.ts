@@ -26,7 +26,7 @@ import {
 import { Observable, of, shareReplay } from 'rxjs';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
-import { catchError, debounceTime, finalize, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, debounceTime, map, switchMap, tap } from 'rxjs/operators';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { DashboardInfo } from '@app/shared/models/dashboard.models';
 import { DashboardService } from '@core/http/dashboard.service';
@@ -54,7 +54,7 @@ import { AutocompleteBaseDirective } from '@shared/components/directives/autocom
         }],
     standalone: false
 })
-export class DashboardAutocompleteComponent extends AutocompleteBaseDirective<DashboardInfo, DashboardInfo | string> implements ControlValueAccessor, OnInit {
+export class DashboardAutocompleteComponent extends AutocompleteBaseDirective implements ControlValueAccessor, OnInit {
 
   selectDashboardFormGroup: UntypedFormGroup;
 
@@ -118,8 +118,6 @@ export class DashboardAutocompleteComponent extends AutocompleteBaseDirective<Da
 
   private authUser: AuthUser;
 
-  private propagateChange = (_v: any) => { };
-
   constructor(private store: Store<AppState>,
               public translate: TranslateService,
               private dashboardService: DashboardService,
@@ -135,36 +133,12 @@ export class DashboardAutocompleteComponent extends AutocompleteBaseDirective<Da
     });
   }
 
-  registerOnChange(fn: any): void {
-    this.propagateChange = fn;
-  }
-
-  registerOnTouched(fn: any): void {
-    this.onTouched = fn;
-  }
-
   protected getControl(): FormControl {
     return this.selectDashboardFormGroup.get('dashboard') as FormControl;
   }
 
-  protected getAutocompleteTrigger(): MatAutocompleteTrigger {
-    return this.autocompleteTrigger;
-  }
-
   protected getInput(): ElementRef<HTMLInputElement> {
     return this.dashboardInput as ElementRef<HTMLInputElement>;
-  }
-
-  protected getFilteredEntities(): Observable<Array<DashboardInfo>> {
-    return this.filteredDashboards;
-  }
-
-  protected getModelValue(): DashboardInfo | string | null {
-    return this.modelValue;
-  }
-
-  protected isCreateNew(): boolean {
-    return false;
   }
 
   ngOnInit() {
@@ -187,17 +161,7 @@ export class DashboardAutocompleteComponent extends AutocompleteBaseDirective<Da
           this.updateView(modelValue);
         }),
         map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
-        switchMap(name => {
-          this.isFetching = true;
-          return this.fetchDashboards(name).pipe(
-            finalize(() => this.isFetching = false)
-          );
-        }),
-        tap(entities => {
-          if (this.pendingBlur) {
-            this.performValidation(entities);
-          }
-        }),
+        switchMap(name => this.fetchDashboards(name)),
         shareReplay(1)
       );
   }
@@ -262,7 +226,7 @@ export class DashboardAutocompleteComponent extends AutocompleteBaseDirective<Da
     this.dirty = true;
   }
 
-  protected updateView(value: DashboardInfo | string | null) {
+  updateView(value: DashboardInfo | string | null) {
     if (this.modelValue !== value) {
       this.modelValue = value;
       this.propagateChange(this.modelValue);
@@ -271,14 +235,6 @@ export class DashboardAutocompleteComponent extends AutocompleteBaseDirective<Da
 
   displayDashboardFn(dashboard?: DashboardInfo): string | undefined {
     return dashboard ? dashboard.title : undefined;
-  }
-
-  protected override selectMatchedEntity(entity: DashboardInfo): void {
-    this.pendingBlur = false;
-    this.searchText = this.getDisplayName(entity);
-    this.getControl().patchValue(entity, { emitEvent: false });
-    this.updateView(this.useIdValue ? entity.id.id : entity);
-    this.getAutocompleteTrigger()?.closePanel();
   }
 
   fetchDashboards(searchText?: string): Observable<Array<DashboardInfo>> {

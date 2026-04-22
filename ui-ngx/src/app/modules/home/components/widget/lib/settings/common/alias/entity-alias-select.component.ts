@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, forwardRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -25,8 +25,8 @@ import {
   Validators
 } from '@angular/forms';
 import { ErrorStateMatcher } from '@angular/material/core';
-import { Observable, of, shareReplay } from 'rxjs';
-import { debounceTime, finalize, map, switchMap, takeUntil, tap } from 'rxjs/operators';
+import { Observable, of, shareReplay, Subject } from 'rxjs';
+import { debounceTime, map, switchMap, takeUntil, tap } from 'rxjs/operators';
 import { EntityType } from '@shared/models/entity-type.models';
 import { EntityService } from '@core/http/entity.service';
 import { coerceBoolean } from '@shared/decorators/coercion';
@@ -55,8 +55,8 @@ import { AutocompleteBaseDirective } from '@shared/components/directives/autocom
     ],
     standalone: false
 })
-export class EntityAliasSelectComponent extends AutocompleteBaseDirective<EntityAlias, string>
-    implements ControlValueAccessor, OnInit, ErrorStateMatcher {
+export class EntityAliasSelectComponent extends AutocompleteBaseDirective
+    implements ControlValueAccessor, OnInit, OnDestroy, ErrorStateMatcher {
 
   selectEntityAliasFormGroup: FormGroup;
 
@@ -99,7 +99,7 @@ export class EntityAliasSelectComponent extends AutocompleteBaseDirective<Entity
   filteredEntityAliases: Observable<Array<EntityAlias>>;
 
   private entityAliasList: Array<EntityAlias> = [];
-  private propagateChange = (_v: any) => { };
+  private destroy$ = new Subject<void>();
 
   constructor(private entityService: EntityService,
               private fb: FormBuilder) {
@@ -107,14 +107,6 @@ export class EntityAliasSelectComponent extends AutocompleteBaseDirective<Entity
     this.selectEntityAliasFormGroup = this.fb.group({
       entityAlias: [null]
     });
-  }
-
-  registerOnChange(fn: any): void {
-    this.propagateChange = fn;
-  }
-
-  registerOnTouched(fn: any): void {
-    this.onTouched = fn;
   }
 
   isErrorState(control: AbstractControl | null, form: any): boolean {
@@ -126,28 +118,8 @@ export class EntityAliasSelectComponent extends AutocompleteBaseDirective<Entity
     return this.selectEntityAliasFormGroup.get('entityAlias') as FormControl;
   }
 
-  protected getAutocompleteTrigger(): MatAutocompleteTrigger {
-    return this.autocompleteTrigger;
-  }
-
   protected getInput(): ElementRef<HTMLInputElement> {
     return this.entityAliasInput as ElementRef<HTMLInputElement>;
-  }
-
-  protected getFilteredEntities(): Observable<Array<EntityAlias>> {
-    return this.filteredEntityAliases;
-  }
-
-  protected getModelValue(): string | null {
-    return this.modelValue;
-  }
-
-  protected isCreateNew(): boolean {
-    return true;
-  }
-
-  protected getDisplayName(entity: EntityAlias): string {
-    return entity.alias ?? '';
   }
 
   ngOnInit() {
@@ -173,17 +145,7 @@ export class EntityAliasSelectComponent extends AutocompleteBaseDirective<Entity
           }
         }),
         map(value => value ? (typeof value === 'string' ? value : value.alias) : ''),
-        switchMap(name => {
-          this.isFetching = true;
-          return this.fetchEntityAliases(name).pipe(
-            finalize(() => this.isFetching = false)
-          );
-        }),
-        tap(entities => {
-          if (this.pendingBlur) {
-            this.performValidation(entities);
-          }
-        }),
+        switchMap(name => this.fetchEntityAliases(name)),
         shareReplay(1)
       );
 
@@ -194,6 +156,11 @@ export class EntityAliasSelectComponent extends AutocompleteBaseDirective<Entity
     });
 
     this.loadEntityAliases();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -224,7 +191,7 @@ export class EntityAliasSelectComponent extends AutocompleteBaseDirective<Entity
     this.dirty = true;
   }
 
-  protected updateView(value: string | null) {
+  updateView(value: string | null) {
     if (this.modelValue !== value) {
       this.modelValue = value;
       this.propagateChange(this.modelValue);

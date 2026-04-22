@@ -29,7 +29,7 @@ import { ControlValueAccessor, FormControl, NG_VALUE_ACCESSOR, UntypedFormBuilde
 import { Observable, of, shareReplay } from 'rxjs';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
-import { catchError, debounceTime, distinctUntilChanged, finalize, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, map, switchMap, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
@@ -62,7 +62,7 @@ import { AutocompleteBaseDirective } from '@shared/components/directives/autocom
         }],
     standalone: false
 })
-export class AssetProfileAutocompleteComponent extends AutocompleteBaseDirective<AssetProfileInfo, AssetProfileId> implements ControlValueAccessor, OnInit {
+export class AssetProfileAutocompleteComponent extends AutocompleteBaseDirective implements ControlValueAccessor, OnInit {
 
   selectAssetProfileFormGroup: UntypedFormGroup;
 
@@ -129,8 +129,6 @@ export class AssetProfileAutocompleteComponent extends AutocompleteBaseDirective
     id: null
   };
 
-  private propagateChange = (v: any) => { };
-
   constructor(private store: Store<AppState>,
               public translate: TranslateService,
               public truncate: TruncatePipe,
@@ -148,36 +146,12 @@ export class AssetProfileAutocompleteComponent extends AutocompleteBaseDirective
     });
   }
 
-  registerOnChange(fn: any): void {
-    this.propagateChange = fn;
-  }
-
-  registerOnTouched(fn: any): void {
-    this.onTouched = fn;
-  }
-
   protected getControl(): FormControl {
     return this.selectAssetProfileFormGroup.get('assetProfile') as FormControl;
   }
 
-  protected getAutocompleteTrigger(): MatAutocompleteTrigger {
-    return this.autocompleteTrigger;
-  }
-
   protected getInput(): ElementRef<HTMLInputElement> {
     return this.assetProfileInput as ElementRef<HTMLInputElement>;
-  }
-
-  protected getFilteredEntities(): Observable<Array<AssetProfileInfo>> {
-    return this.filteredAssetProfiles;
-  }
-
-  protected getModelValue(): AssetProfileId | null {
-    return this.modelValue;
-  }
-
-  protected isCreateNew(): boolean {
-    return this.addNewProfile;
   }
 
   ngOnInit() {
@@ -211,17 +185,7 @@ export class AssetProfileAutocompleteComponent extends AutocompleteBaseDirective
         }),
         debounceTime(150),
         distinctUntilChanged(),
-        switchMap(name => {
-          this.isFetching = true;
-          return this.fetchAssetProfiles(name).pipe(
-            finalize(() => this.isFetching = false)
-          );
-        }),
-        tap(entities => {
-          if (this.pendingBlur) {
-            this.performValidation(entities);
-          }
-        }),
+        switchMap(name => this.fetchAssetProfiles(name)),
         shareReplay(1)
       );
   }
@@ -306,7 +270,7 @@ export class AssetProfileAutocompleteComponent extends AutocompleteBaseDirective
     }
   }
 
-  protected updateView(assetProfile: AssetProfileInfo | null) {
+  updateView(assetProfile: AssetProfileInfo | null) {
     const idValue = assetProfile && assetProfile.id ? new AssetProfileId(assetProfile.id.id) : null;
     if (!entityIdEquals(this.modelValue, idValue)) {
       this.modelValue = idValue;
@@ -317,17 +281,6 @@ export class AssetProfileAutocompleteComponent extends AutocompleteBaseDirective
 
   displayAssetProfileFn(profile?: AssetProfileInfo): string | undefined {
     return profile ? profile.name : undefined;
-  }
-
-  protected override selectMatchedEntity(entity: AssetProfileInfo): void {
-    if (!entity.id) {
-      return;
-    }
-    this.pendingBlur = false;
-    this.searchText = entity.name ?? '';
-    this.getControl().patchValue(entity, { emitEvent: false });
-    this.updateView(entity);
-    this.getAutocompleteTrigger()?.closePanel();
   }
 
   fetchAssetProfiles(searchText?: string): Observable<Array<AssetProfileInfo>> {

@@ -17,7 +17,7 @@
 import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormControl, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { Observable, of, shareReplay } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged, finalize, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, map, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { TruncatePipe } from '@shared/pipe/truncate.pipe';
@@ -41,7 +41,7 @@ import { AutocompleteBaseDirective } from '@shared/components/directives/autocom
         }],
     standalone: false
 })
-export class QueueAutocompleteComponent extends AutocompleteBaseDirective<QueueInfo, string>
+export class QueueAutocompleteComponent extends AutocompleteBaseDirective
     implements ControlValueAccessor, OnInit {
 
   selectQueueFormGroup: FormGroup;
@@ -84,8 +84,6 @@ export class QueueAutocompleteComponent extends AutocompleteBaseDirective<QueueI
 
   filteredQueues: Observable<Array<QueueInfo>>;
 
-  private propagateChange = (_v: any) => { };
-
   constructor(public translate: TranslateService,
               public truncate: TruncatePipe,
               private queueService: QueueService,
@@ -96,44 +94,12 @@ export class QueueAutocompleteComponent extends AutocompleteBaseDirective<QueueI
     });
   }
 
-  registerOnChange(fn: any): void {
-    this.propagateChange = fn;
-  }
-
-  registerOnTouched(fn: any): void {
-    this.onTouched = fn;
-  }
-
   protected getControl(): FormControl {
     return this.selectQueueFormGroup.get('queueName') as FormControl;
   }
 
-  protected getAutocompleteTrigger(): MatAutocompleteTrigger {
-    return this.autocompleteTrigger;
-  }
-
   protected getInput(): ElementRef<HTMLInputElement> {
     return this.queueInput as ElementRef<HTMLInputElement>;
-  }
-
-  protected getFilteredEntities(): Observable<Array<QueueInfo>> {
-    return this.filteredQueues;
-  }
-
-  protected getModelValue(): string | null {
-    return this.modelValue;
-  }
-
-  protected isCreateNew(): boolean {
-    return false;
-  }
-
-  protected override selectMatchedEntity(entity: QueueInfo): void {
-    this.pendingBlur = false;
-    this.searchText = entity.name ?? '';
-    this.getControl().patchValue(entity, { emitEvent: false });
-    this.updateView(entity.name);
-    this.getAutocompleteTrigger()?.closePanel();
   }
 
   ngOnInit() {
@@ -160,17 +126,7 @@ export class QueueAutocompleteComponent extends AutocompleteBaseDirective<QueueI
         }),
         map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
         distinctUntilChanged(),
-        switchMap(name => {
-          this.isFetching = true;
-          return this.fetchQueue(name).pipe(
-            finalize(() => this.isFetching = false)
-          );
-        }),
-        tap(entities => {
-          if (this.pendingBlur) {
-            this.performValidation(entities);
-          }
-        }),
+        switchMap(name => this.fetchQueue(name)),
         shareReplay(1)
       );
   }
@@ -207,7 +163,7 @@ export class QueueAutocompleteComponent extends AutocompleteBaseDirective<QueueI
     this.dirty = true;
   }
 
-  protected updateView(value: string | null) {
+  updateView(value: string | null) {
     if (this.modelValue !== value) {
       this.modelValue = value;
       this.propagateChange(this.modelValue);
