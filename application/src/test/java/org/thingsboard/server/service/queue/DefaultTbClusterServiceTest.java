@@ -20,8 +20,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.thingsboard.common.util.JacksonUtil;
@@ -87,28 +87,28 @@ public class DefaultTbClusterServiceTest {
 
     public static final String TRANSPORT = "transport";
 
-    @MockBean
+    @MockitoBean
     protected TbDeviceProfileCache deviceProfileCache;
-    @MockBean
+    @MockitoBean
     protected TbAssetProfileCache assetProfileCache;
-    @MockBean
+    @MockitoBean
     protected GatewayNotificationsService gatewayNotificationsService;
-    @MockBean
+    @MockitoBean
     protected EdgeService edgeService;
-    @MockBean
+    @MockitoBean
     protected PartitionService partitionService;
-    @MockBean
+    @MockitoBean
     protected TbQueueProducerProvider producerProvider;
-    @MockBean
+    @MockitoBean
     protected TbRuleEngineProducerService ruleEngineProducerService;
-    @MockBean
+    @MockitoBean
     protected TbTransactionalCache<EdgeId, String> edgeCache;
-    @MockBean
+    @MockitoBean
     protected CalculatedFieldService calculatedFieldService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected TopicService topicService;
-    @SpyBean
+    @MockitoSpyBean
     protected TbClusterService clusterService;
 
     @Test

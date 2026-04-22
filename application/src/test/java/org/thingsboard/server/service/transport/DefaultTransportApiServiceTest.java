@@ -20,8 +20,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
@@ -72,35 +72,35 @@ import static org.mockito.Mockito.when;
 @ContextConfiguration(classes = DefaultTransportApiService.class)
 public class DefaultTransportApiServiceTest {
 
-    @MockBean
+    @MockitoBean
     protected TbDeviceProfileCache deviceProfileCache;
-    @MockBean
+    @MockitoBean
     protected TbTenantProfileCache tenantProfileCache;
-    @MockBean
+    @MockitoBean
     protected TbApiUsageStateService apiUsageStateService;
-    @MockBean
+    @MockitoBean
     protected DeviceService deviceService;
-    @MockBean
+    @MockitoBean
     protected DeviceProfileService deviceProfileService;
-    @MockBean
+    @MockitoBean
     protected RelationService relationService;
-    @MockBean
+    @MockitoBean
     protected DeviceCredentialsService deviceCredentialsService;
-    @MockBean
+    @MockitoBean
     protected DbCallbackExecutorService dbCallbackExecutorService;
-    @MockBean
+    @MockitoBean
     protected TbClusterService tbClusterService;
-    @MockBean
+    @MockitoBean
     protected DeviceProvisionService deviceProvisionService;
-    @MockBean
+    @MockitoBean
     protected ResourceService resourceService;
-    @MockBean
+    @MockitoBean
     protected OtaPackageService otaPackageService;
-    @MockBean
+    @MockitoBean
     protected OtaPackageDataCache otaPackageDataCache;
-    @MockBean
+    @MockitoBean
     protected QueueService queueService;
-    @SpyBean
+    @MockitoSpyBean
     DefaultTransportApiService service;
 
     private String certificateChain;
