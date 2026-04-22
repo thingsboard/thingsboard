@@ -20,7 +20,7 @@ import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.common.data.Customer;
@@ -87,7 +87,7 @@ import static org.mockito.Mockito.verify;
 @DaoSqlTest
 public class TenantServiceTest extends AbstractServiceTest {
 
-    @SpyBean
+    @MockitoSpyBean
     TenantDao tenantDao;
 
     @Autowired

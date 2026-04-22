@@ -17,8 +17,8 @@ package org.thingsboard.server.dao.service.validator;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
@@ -38,11 +38,11 @@ public class CalculatedFieldDataValidatorTest {
     private final TenantId TENANT_ID = TenantId.fromUUID(UUID.fromString("7b5229e9-166e-41a9-a257-3b1dafad1b04"));
     private final CalculatedFieldId CALCULATED_FIELD_ID = new CalculatedFieldId(UUID.fromString("060fbe45-fbb2-4549-abf3-f72a6be3cb9f"));
 
-    @MockBean
+    @MockitoBean
     private CalculatedFieldDao calculatedFieldDao;
-    @MockBean
+    @MockitoBean
     private DefaultApiLimitService apiLimitService;
-    @SpyBean
+    @MockitoSpyBean
     private CalculatedFieldDataValidator validator;
 
     @Test
