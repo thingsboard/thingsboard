@@ -18,7 +18,7 @@ package org.thingsboard.server.coapserver;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.config.ssl.SslCredentialsConfig;
@@ -41,11 +41,11 @@ class TbCoapDtlsSettingsTest {
 
     @Autowired
     TbCoapDtlsSettings coapDtlsSettings;
-    @MockBean
+    @MockitoBean
     SslCredentialsConfig sslCredentialsConfig;
-    @MockBean
+    @MockitoBean
     private TransportService transportService;
-    @MockBean
+    @MockitoBean
     private TbServiceInfoProvider serviceInfoProvider;
 
     @Test
