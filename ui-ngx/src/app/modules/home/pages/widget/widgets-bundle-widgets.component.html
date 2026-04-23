@@ -145,6 +145,7 @@
           [excludeWidgetTypeIds]="excludeWidgetTypeIds"
           [formControl]="addWidgetFormControl">
         </tb-widget-type-autocomplete>
+        <span tb-error> {{ 'entity.entity-not-valid' | translate: {entity: 'widget.widget' | lowercase} }}</span>
         <div class="tb-add-bundle-widget-actions">
           <button mat-button color="primary"
                   [disabled]="(isLoading$ | async)"

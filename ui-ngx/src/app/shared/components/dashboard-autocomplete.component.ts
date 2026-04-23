@@ -104,9 +104,6 @@ export class DashboardAutocompleteComponent extends AutocompleteBaseDirective im
   @Input()
   disabled: boolean;
 
-  @Input()
-  entityNotValidTranslationKey: string = 'entity.entity-not-valid';
-
   @ViewChild('dashboardInput', {static: true}) dashboardInput: ElementRef;
   @ViewChild('autocompleteTrigger') autocompleteTrigger: MatAutocompleteTrigger;
 

@@ -64,7 +64,7 @@
     <mat-icon matSuffix
               matTooltipPosition="above"
               matTooltipClass="tb-error-tooltip"
-              [matTooltip]="entityNotValidTranslationKey | translate: {entity: 'dashboard.dashboard' | translate | lowercase}"
+              [matTooltip]="'entity.entity-not-valid' | translate: {entity: 'dashboard.dashboard' | translate | lowercase}"
               class="tb-error">
       warning
     </mat-icon>
@@ -94,17 +94,12 @@
       </mat-option>
     }
   </mat-autocomplete>
-  @if (!inlineField && selectDashboardFormGroup.get('dashboard').hasError('required')) {
-    <mat-error>
-      {{ requiredText | translate }}
-    </mat-error>
-  }
   @if (!inlineField && selectDashboardFormGroup.get('dashboard').hasError('objectRequired')) {
     <mat-error>
-      {{ entityNotValidTranslationKey | translate: {entity: 'dashboard.dashboard' | translate | lowercase} }}
+      {{ 'entity.entity-not-valid' | translate: {entity: 'dashboard.dashboard' | translate | lowercase} }}
     </mat-error>
   }
-  @if (!inlineField) {
+  @if (!inlineField && !selectDashboardFormGroup.get('dashboard').hasError('objectRequired')) {
     <mat-error>
       <ng-content select="[tb-error]"></ng-content>
     </mat-error>

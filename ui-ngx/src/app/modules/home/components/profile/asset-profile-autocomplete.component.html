@@ -52,9 +52,7 @@
     </button>
   }
   @if (!selectAssetProfileFormGroup.get('assetProfile').value && !disabled && addNewProfile) {
-    <button mat-button color="primary" matSuffix
-            (click)="createAssetProfile($event, '')"
-            >
+    <button mat-button color="primary" matSuffix (click)="createAssetProfile($event, '')">
       <span style="white-space: nowrap">{{ 'notification.create-new' | translate }}</span>
     </button>
   }
