@@ -41,6 +41,9 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.rule.engine.EnrichEntityDescriptor;
+import org.thingsboard.server.common.data.rule.engine.EnrichedRuleEngineRequest;
+import org.thingsboard.server.common.data.rule.engine.EntityAclEntry;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.config.annotations.ApiOperation;
@@ -49,9 +52,13 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.ruleengine.RuleEngineCallService;
 import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.security.permission.AccessControlService;
 import org.thingsboard.server.service.security.permission.Operation;
+import org.thingsboard.server.service.security.permission.Resource;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 
@@ -78,6 +85,16 @@ public class RuleEngineController extends BaseController {
     private RuleEngineCallService ruleEngineCallService;
     @Autowired
     private AccessValidator accessValidator;
+    @Autowired
+    private AccessControlService accessControlService;
+
+    /**
+     * Maximum number of entities accepted for ACL enrichment in a single
+     * {@code /api/ruleEngine/v2} request. Each entity triggers N permission checks
+     * (one per {@link Operation} value), so the bound prevents excessive work per call.
+     */
+    @Value("${rule-engine.acl.max-entities:20}")
+    private int maxAclEntities;
 
     @ApiOperation(value = "Push user message to the rule engine (handleRuleEngineRequestForUser)",
             notes = MSG_DESCRIPTION_PREFIX +
@@ -207,6 +224,193 @@ public class RuleEngineController extends BaseController {
         } catch (IllegalArgumentException iae) {
             throw new ThingsboardException("Invalid request body", iae, ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
+    }
+
+    // ------------------------------------------------------------------
+    //  v2 endpoints with server-authoritative ACL enrichment
+    //
+    //  Adds two reserved metadata keys to every forwarded TbMsg:
+    //    tb_acl      — JSON array of EntityAclEntry, one per descriptor the
+    //                  caller supplied, listing the Operation names the caller
+    //                  is currently allowed to perform on that resource type.
+    //    tb_user_id  — UUID of the calling user, for audit logging inside
+    //                  rule chains.
+    //
+    //  Both keys are populated last when building metadata, so any caller-
+    //  supplied value is unconditionally overwritten.
+    // ------------------------------------------------------------------
+
+    private static final String V2_DESCRIPTION = "Variant of the Rule Engine REST API that enriches the forwarded `TbMsg` with two " +
+            "server-authoritative metadata keys before pushing it to the rule engine:\n\n" +
+            " * **`tb_acl`** — a JSON array of `{entityType, entityId, allowed[]}` computed for every entity the caller lists in `enrichEntities`. " +
+            "The `allowed` list contains the names of the `Operation` values the caller has on the entity's resource type;\n" +
+            " * **`tb_user_id`** — UUID of the calling user, intended for audit logging inside rule chains.\n\n" +
+            "Caller-supplied values for either key are overwritten by the platform. This endpoint preserves the existing v1 behavior " +
+            "(timeout, queue routing, REST Call Reply) — the enrichment is additive.";
+
+    @ApiOperation(value = "Push user message with ACL enrichment to the rule engine (handleEnrichedRuleEngineRequestForUser)",
+            notes = V2_DESCRIPTION + "\n\nUses current User Id as the Rule Engine message originator."
+                    + "\n\n" + ControllerConstants.SECURITY_WRITE_CHECK)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/v2/", method = RequestMethod.POST)
+    @ResponseBody
+    public DeferredResult<ResponseEntity> handleEnrichedRuleEngineRequestForUser(
+            @Parameter(description = "Enriched request body containing `payload` and optional `enrichEntities`.", required = true)
+            @RequestBody EnrichedRuleEngineRequest request) throws ThingsboardException {
+        return handleEnrichedRuleEngineRequestForEntityWithQueueAndTimeout(null, null, null, defaultResponseTimeout, request);
+    }
+
+    @ApiOperation(value = "Push entity message with ACL enrichment to the rule engine (handleEnrichedRuleEngineRequestForEntity)",
+            notes = V2_DESCRIPTION + "\n\nUses specified Entity Id as the Rule Engine message originator."
+                    + "\n\n" + ControllerConstants.SECURITY_WRITE_CHECK)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/v2/{entityType}/{entityId}", method = RequestMethod.POST)
+    @ResponseBody
+    public DeferredResult<ResponseEntity> handleEnrichedRuleEngineRequestForEntity(
+            @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
+            @PathVariable("entityType") String entityType,
+            @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true)
+            @PathVariable("entityId") String entityIdStr,
+            @Parameter(description = "Enriched request body containing `payload` and optional `enrichEntities`.", required = true)
+            @RequestBody EnrichedRuleEngineRequest request) throws ThingsboardException {
+        return handleEnrichedRuleEngineRequestForEntityWithQueueAndTimeout(entityType, entityIdStr, null, defaultResponseTimeout, request);
+    }
+
+    @ApiOperation(value = "Push entity message with timeout and ACL enrichment to the rule engine (handleEnrichedRuleEngineRequestForEntityWithTimeout)",
+            notes = V2_DESCRIPTION + "\n\nUses specified Entity Id as originator; timeout in milliseconds."
+                    + "\n\n" + ControllerConstants.SECURITY_WRITE_CHECK)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/v2/{entityType}/{entityId}/{timeout}", method = RequestMethod.POST)
+    @ResponseBody
+    public DeferredResult<ResponseEntity> handleEnrichedRuleEngineRequestForEntityWithTimeout(
+            @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
+            @PathVariable("entityType") String entityType,
+            @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true)
+            @PathVariable("entityId") String entityIdStr,
+            @Parameter(description = "Timeout to process the request in milliseconds", required = true)
+            @PathVariable("timeout") int timeout,
+            @Parameter(description = "Enriched request body containing `payload` and optional `enrichEntities`.", required = true)
+            @RequestBody EnrichedRuleEngineRequest request) throws ThingsboardException {
+        return handleEnrichedRuleEngineRequestForEntityWithQueueAndTimeout(entityType, entityIdStr, null, timeout, request);
+    }
+
+    @ApiOperation(value = "Push entity message with timeout, queue and ACL enrichment to the rule engine (handleEnrichedRuleEngineRequestForEntityWithQueueAndTimeout)",
+            notes = V2_DESCRIPTION + "\n\nUses specified Entity Id as originator and the provided queue name; timeout in milliseconds."
+                    + "\n\n" + ControllerConstants.SECURITY_WRITE_CHECK)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/v2/{entityType}/{entityId}/{queueName}/{timeout}", method = RequestMethod.POST)
+    @ResponseBody
+    public DeferredResult<ResponseEntity> handleEnrichedRuleEngineRequestForEntityWithQueueAndTimeout(
+            @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
+            @PathVariable("entityType") String entityType,
+            @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true)
+            @PathVariable("entityId") String entityIdStr,
+            @Parameter(description = "Queue name to process the request in the rule engine", required = true)
+            @PathVariable("queueName") String queueName,
+            @Parameter(description = "Timeout to process the request in milliseconds", required = true)
+            @PathVariable("timeout") int timeout,
+            @Parameter(description = "Enriched request body containing `payload` and optional `enrichEntities`.", required = true)
+            @RequestBody EnrichedRuleEngineRequest request) throws ThingsboardException {
+        try {
+            SecurityUser currentUser = getCurrentUser();
+            if (request == null || request.getPayload() == null) {
+                throw new ThingsboardException("Request body with 'payload' is required",
+                        ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+            }
+            EntityId entityId;
+            if (StringUtils.isEmpty(entityType) || StringUtils.isEmpty(entityIdStr)) {
+                entityId = currentUser.getId();
+            } else {
+                entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
+            }
+            // Fail fast on size limit BEFORE the async permission check on originator.
+            final String aclJson = buildAclMetadata(currentUser, request.getEnrichEntities());
+            final String requestBody = JacksonUtil.toString(request.getPayload());
+            final DeferredResult<ResponseEntity> response = new DeferredResult<>();
+            accessValidator.validate(currentUser, Operation.WRITE, entityId, new HttpValidationCallback(response, new FutureCallback<DeferredResult<ResponseEntity>>() {
+                @Override
+                public void onSuccess(@Nullable DeferredResult<ResponseEntity> result) {
+                    long expTime = System.currentTimeMillis() + timeout;
+                    HashMap<String, String> metaData = new HashMap<>();
+                    UUID requestId = UUID.randomUUID();
+                    metaData.put("serviceId", serviceInfoProvider.getServiceId());
+                    metaData.put("requestUUID", requestId.toString());
+                    metaData.put("expirationTime", Long.toString(expTime));
+                    // Server-authoritative keys — written last so any caller value is overwritten.
+                    metaData.put(TbMsgMetaData.TB_USER_ID_KEY, currentUser.getId().getId().toString());
+                    metaData.put(TbMsgMetaData.TB_ACL_KEY, aclJson);
+                    TbMsg msg = TbMsg.newMsg()
+                            .queueName(queueName)
+                            .type(TbMsgType.REST_API_REQUEST)
+                            .originator(entityId)
+                            .customerId(currentUser.getCustomerId())
+                            .copyMetaData(new TbMsgMetaData(metaData))
+                            .data(requestBody)
+                            .build();
+                    ruleEngineCallService.processRestApiCallToRuleEngine(currentUser.getTenantId(), requestId, msg, queueName != null,
+                            reply -> reply(new LocalRequestMetaData(msg, currentUser, result), reply));
+                }
+
+                @Override
+                public void onFailure(Throwable e) {
+                    ResponseEntity entity;
+                    if (e instanceof ToErrorResponseEntity) {
+                        entity = ((ToErrorResponseEntity) e).toErrorResponseEntity();
+                    } else {
+                        entity = new ResponseEntity(HttpStatus.UNAUTHORIZED);
+                    }
+                    logRuleEngineCall(currentUser, entityId, requestBody, null, e);
+                    response.setResult(entity);
+                }
+            }));
+            return response;
+        } catch (IllegalArgumentException iae) {
+            throw new ThingsboardException("Invalid request body", iae, ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        }
+    }
+
+    /**
+     * Computes the ACL snapshot for the requested entities under the given user.
+     * For each descriptor, {@link Resource#of(org.thingsboard.server.common.data.EntityType)}
+     * resolves the target Resource; then every {@link Operation} value is probed via
+     * {@link AccessControlService#checkPermission(SecurityUser, Resource, Operation)}.
+     * Operation names for which the call does not throw are accumulated into the entry.
+     * Unmapped EntityTypes produce an entry with {@code allowed=[]} — no error.
+     *
+     * @return serialized JSON array suitable for writing into {@link TbMsgMetaData#TB_ACL_KEY}.
+     * @throws ThingsboardException with {@link ThingsboardErrorCode#BAD_REQUEST_PARAMS} if
+     *                               the list exceeds the configured size limit.
+     */
+    private String buildAclMetadata(SecurityUser user, List<EnrichEntityDescriptor> entities) throws ThingsboardException {
+        if (entities == null || entities.isEmpty()) {
+            return "[]";
+        }
+        if (entities.size() > maxAclEntities) {
+            throw new ThingsboardException(
+                    "Exceeded max ACL enrichment entities: " + maxAclEntities,
+                    ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        }
+        List<EntityAclEntry> result = new ArrayList<>(entities.size());
+        for (EnrichEntityDescriptor d : entities) {
+            List<String> allowed = new ArrayList<>();
+            Resource resource;
+            try {
+                resource = Resource.of(d.getEntityType());
+            } catch (IllegalArgumentException ex) {
+                result.add(new EntityAclEntry(d.getEntityType(), d.getEntityId(), allowed));
+                continue;
+            }
+            for (Operation op : Operation.values()) {
+                try {
+                    accessControlService.checkPermission(user, resource, op);
+                    allowed.add(op.name());
+                } catch (ThingsboardException ignored) {
+                    // operation not allowed for this role/resource — skip
+                }
+            }
+            result.add(new EntityAclEntry(d.getEntityType(), d.getEntityId(), allowed));
+        }
+        return JacksonUtil.toString(result);
     }
 
     private void reply(LocalRequestMetaData rpcRequest, TbMsg response) {
