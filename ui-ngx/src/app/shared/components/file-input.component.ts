@@ -235,7 +235,7 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
       if (this.readAsBinary) {
         reader.readAsBinaryString(file.file);
       } else {
-        reader.readAsText(file.file);
+        reader.readAsText(file.file, 'ISO-8859-1');
       }
     });
   }

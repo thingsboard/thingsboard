@@ -210,7 +210,13 @@ export function objToBase64(obj: any): string {
 }
 
 export function base64toString(b64Encoded: string): string {
-  return decodeURIComponent(atob(b64Encoded).split('').map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+  const binary = atob(b64Encoded);
+  const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
+  try {
+    return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+  } catch {
+    return new TextDecoder('iso-8859-1').decode(bytes);
+  }
 }
 
 export function objToBase64URI(obj: any): string {
