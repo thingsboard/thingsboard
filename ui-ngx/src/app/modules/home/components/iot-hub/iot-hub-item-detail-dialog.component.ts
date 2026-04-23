@@ -162,7 +162,10 @@ export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubI
     return this.installedItem != null;
   }
 
-
+  shouldShowChangelog(): boolean {
+    const changelog = this.item.changelog?.trim();
+    return !!changelog && changelog !== 'Initial release';
+  }
 
   hasUpdate(): boolean {
     return this.installedItem != null

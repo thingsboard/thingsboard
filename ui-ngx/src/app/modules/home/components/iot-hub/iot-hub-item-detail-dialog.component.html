@@ -294,12 +294,12 @@
     }
 
     <!-- Readme / Changelog -->
-    @if (readmeContent || item.changelog) {
+    @if (readmeContent || shouldShowChangelog()) {
       <div class="dlg-readme">
         @if (readmeContent) {
           <tb-markdown [data]="readmeContent"></tb-markdown>
         }
-        @if (item.changelog) {
+        @if (shouldShowChangelog()) {
           <h3>{{ 'iot-hub.changelog' | translate }}</h3>
           <tb-markdown [data]="item.changelog"></tb-markdown>
         }
