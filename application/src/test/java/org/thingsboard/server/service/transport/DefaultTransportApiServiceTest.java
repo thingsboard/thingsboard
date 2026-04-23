@@ -69,8 +69,30 @@ import static org.mockito.Mockito.when;
 
 @Slf4j
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = DefaultTransportApiService.class)
+@ContextConfiguration(classes = DefaultTransportApiServiceTest.ContextConfiguration.class)
 public class DefaultTransportApiServiceTest {
+
+    @org.springframework.context.annotation.Configuration
+    static class ContextConfiguration {
+        @org.springframework.context.annotation.Bean
+        public DefaultTransportApiService defaultTransportApiService(TbDeviceProfileCache deviceProfileCache,
+                                                                     TbTenantProfileCache tenantProfileCache,
+                                                                     TbApiUsageStateService apiUsageStateService,
+                                                                     DeviceService deviceService,
+                                                                     DeviceProfileService deviceProfileService,
+                                                                     RelationService relationService,
+                                                                     DeviceCredentialsService deviceCredentialsService,
+                                                                     TbClusterService tbClusterService,
+                                                                     DeviceProvisionService deviceProvisionService,
+                                                                     ResourceService resourceService,
+                                                                     OtaPackageService otaPackageService,
+                                                                     OtaPackageDataCache otaPackageDataCache,
+                                                                     QueueService queueService) {
+            return new DefaultTransportApiService(deviceProfileCache, tenantProfileCache, apiUsageStateService,
+                    deviceService, deviceProfileService, relationService, deviceCredentialsService, tbClusterService,
+                    deviceProvisionService, resourceService, otaPackageService, otaPackageDataCache, queueService);
+        }
+    }
 
     @MockitoBean
     protected TbDeviceProfileCache deviceProfileCache;

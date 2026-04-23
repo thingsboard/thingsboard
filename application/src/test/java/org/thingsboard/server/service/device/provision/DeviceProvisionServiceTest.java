@@ -73,8 +73,23 @@ import static org.mockito.Mockito.when;
 
 @Slf4j
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = DeviceProvisionServiceImpl.class)
+@ContextConfiguration(classes = DeviceProvisionServiceTest.ContextConfiguration.class)
 public class DeviceProvisionServiceTest {
+
+    @org.springframework.context.annotation.Configuration
+    static class ContextConfiguration {
+        @org.springframework.context.annotation.Bean
+        public DeviceProvisionServiceImpl deviceProvisionService(TbQueueProducerProvider producerProvider,
+                                                                 DeviceProfileService deviceProfileService,
+                                                                 DeviceService deviceService,
+                                                                 DeviceCredentialsService deviceCredentialsService,
+                                                                 AttributesService attributesService,
+                                                                 AuditLogService auditLogService,
+                                                                 PartitionService partitionService) {
+            return new DeviceProvisionServiceImpl(producerProvider, deviceProfileService, deviceService,
+                    deviceCredentialsService, attributesService, auditLogService, partitionService);
+        }
+    }
 
     @MockitoBean
     protected TbQueueProducerProvider producerProvider;

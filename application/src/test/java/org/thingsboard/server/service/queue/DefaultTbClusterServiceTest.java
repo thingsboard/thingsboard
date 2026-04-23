@@ -56,6 +56,7 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.service.gateway_device.GatewayNotificationsService;
+import org.thingsboard.server.service.ota.OtaPackageStateService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 
@@ -67,6 +68,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -106,10 +108,25 @@ public class DefaultTbClusterServiceTest {
     @MockitoBean
     protected CalculatedFieldService calculatedFieldService;
 
-    @MockitoSpyBean
+    @MockitoBean
     protected TopicService topicService;
+    @MockitoBean
+    protected OtaPackageStateService otaPackageStateService;
     @MockitoSpyBean
     protected TbClusterService clusterService;
+
+    @org.junit.Before
+    public void setUp() {
+        lenient().when(topicService.getNotificationsTopic(any(), any())).thenAnswer(invocation -> {
+            ServiceType serviceType = invocation.getArgument(0);
+            String serviceId = invocation.getArgument(1);
+            return new TopicPartitionInfo(serviceType.name().toLowerCase() + ".notifications." + serviceId, null, null, false);
+        });
+        lenient().when(topicService.getCalculatedFieldNotificationsTopic(any())).thenAnswer(invocation -> {
+            String serviceId = invocation.getArgument(0);
+            return new TopicPartitionInfo("calculated_field.notifications." + serviceId, null, null, false);
+        });
+    }
 
     @Test
     public void testOnQueueChangeSingleMonolith() {
