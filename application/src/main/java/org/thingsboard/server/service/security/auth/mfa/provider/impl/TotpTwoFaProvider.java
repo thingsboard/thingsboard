@@ -62,7 +62,7 @@ public class TotpTwoFaProvider implements TwoFaProvider<TotpTwoFaProviderConfig,
     }
 
     private String generateSecretKey() {
-        return Base32.encode(RandomUtils.nextBytes(20));
+        return Base32.encode(RandomUtils.secure().randomBytes(20));
     }
 
 

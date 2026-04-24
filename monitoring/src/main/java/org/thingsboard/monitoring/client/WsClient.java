@@ -124,7 +124,7 @@ public class WsClient extends WebSocketClient implements AutoCloseable {
 
     public WsClient subscribeForTelemetry(List<UUID> devices, List<String> keys) {
         EntityDataCmd cmd = new EntityDataCmd();
-        cmd.setCmdId(RandomUtils.nextInt(0, 1000));
+        cmd.setCmdId(RandomUtils.secure().randomInt(0, 1000));
 
         EntityListFilter devicesFilter = new EntityListFilter();
         devicesFilter.setEntityType(EntityType.DEVICE);

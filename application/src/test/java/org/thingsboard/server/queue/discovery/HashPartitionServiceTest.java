@@ -380,7 +380,7 @@ public class HashPartitionServiceTest {
         }
 
         Stream.concat(Stream.of(TenantId.SYS_TENANT_ID), Stream.generate(UUID::randomUUID).map(TenantId::new).limit(10)).forEach(tenantId -> {
-            List<QueueKey> queues = Stream.generate(() -> RandomStringUtils.randomAlphabetic(10))
+            List<QueueKey> queues = Stream.generate(() -> RandomStringUtils.secure().nextAlphabetic(10))
                     .map(queueName -> new QueueKey(ServiceType.TB_RULE_ENGINE, queueName, tenantId))
                     .limit(100).toList();
 

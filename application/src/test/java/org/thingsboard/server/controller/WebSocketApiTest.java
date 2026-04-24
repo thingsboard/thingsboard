@@ -30,7 +30,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.TestPropertySource;
-import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
@@ -555,7 +555,7 @@ public class WebSocketApiTest extends AbstractControllerTest {
         for (int i = 0; i < 6; i++) {
             Alarm alarm = new Alarm();
             alarm.setOriginator(device.getId());
-            alarm.setType(RandomStringUtils.randomAlphabetic(10));
+            alarm.setType(RandomStringUtils.secure().nextAlphabetic(10));
             alarm.setSeverity(AlarmSeverity.CRITICAL);
             alarm = doPost("/api/alarm", alarm, Alarm.class);
             alarms.add(alarm);

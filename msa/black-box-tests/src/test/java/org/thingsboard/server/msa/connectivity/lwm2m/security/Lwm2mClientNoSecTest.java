@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.msa.connectivity.lwm2m.security;
 
-import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -34,7 +34,7 @@ public class Lwm2mClientNoSecTest extends AbstractLwm2mClientTest {
     @BeforeMethod
     public void setUp() throws Exception {
         testRestClient.login(TENANT_EMAIL, TENANT_PASSWORD);
-        this.lwm2mDevicesForTest = new Lwm2mDevicesForTest(initTest("lwm2m-NoSec-profile" + "-" +  RandomStringUtils.randomAlphanumeric(7)));
+        this.lwm2mDevicesForTest = new Lwm2mDevicesForTest(initTest("lwm2m-NoSec-profile" + "-" +  RandomStringUtils.secure().nextAlphanumeric(7)));
     }
 
     @AfterMethod

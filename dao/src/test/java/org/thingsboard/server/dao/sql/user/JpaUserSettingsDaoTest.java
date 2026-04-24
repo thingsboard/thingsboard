@@ -21,7 +21,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -112,7 +112,7 @@ public class JpaUserSettingsDaoTest extends AbstractJpaDaoTest {
     private UserSettings createUserSettings(UserId userId) {
         UserSettings userSettings = new UserSettings();
         userSettings.setType(UserSettingsType.GENERAL);
-        userSettings.setSettings(JacksonUtil.newObjectNode().put("text", RandomStringUtils.randomAlphanumeric(10)));
+        userSettings.setSettings(JacksonUtil.newObjectNode().put("text", RandomStringUtils.secure().nextAlphanumeric(10)));
         userSettings.setUserId(userId);
         return userSettingsDao.save(SYSTEM_TENANT_ID, userSettings);
     }

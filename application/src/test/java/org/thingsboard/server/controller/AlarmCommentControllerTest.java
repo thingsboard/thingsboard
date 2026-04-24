@@ -28,7 +28,7 @@ import org.mockito.Mockito;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ContextConfiguration;
-import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.alarm.Alarm;
@@ -292,7 +292,7 @@ public class AlarmCommentControllerTest extends AbstractControllerTest {
         final int size = 10;
         for (int i = 0; i < size; i++) {
             createdAlarmComments.add(
-                    createAlarmComment(alarm.getId(), RandomStringUtils.randomAlphanumeric(10))
+                    createAlarmComment(alarm.getId(), RandomStringUtils.secure().nextAlphanumeric(10))
             );
         }
 
@@ -323,7 +323,7 @@ public class AlarmCommentControllerTest extends AbstractControllerTest {
         List<AlarmComment> createdAlarmComments = new LinkedList<>();
         for (int i = 0; i < size; i++) {
             createdAlarmComments.add(
-                    createAlarmComment(alarm.getId(), RandomStringUtils.randomAlphanumeric(10))
+                    createAlarmComment(alarm.getId(), RandomStringUtils.secure().nextAlphanumeric(10))
             );
         }
 

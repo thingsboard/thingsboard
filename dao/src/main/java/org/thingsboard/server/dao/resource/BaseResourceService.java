@@ -74,6 +74,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -82,6 +83,7 @@ import java.util.function.UnaryOperator;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.server.common.data.StringUtils.isNotEmpty;
+import static org.thingsboard.server.common.data.StringUtils.removeStart;
 import static org.thingsboard.server.dao.device.DeviceServiceImpl.INCORRECT_TENANT_ID;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -589,7 +591,7 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
             String resourceKey;
             TenantId resourceTenantId;
             try {
-                String[] parts = StringUtils.removeStart(link, "/api/resource/").split("/");
+                String[] parts = removeStart(link, "/api/resource/").split("/");
                 resourceType = ResourceType.valueOf(parts[0].toUpperCase());
                 String scope = parts[1];
                 resourceKey = parts[2];
@@ -612,7 +614,7 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
 
     private String getResourceLink(String value) {
         if (StringUtils.startsWith(value, DataConstants.TB_RESOURCE_PREFIX + "/api/resource/")) {
-            return StringUtils.removeStart(value, DataConstants.TB_RESOURCE_PREFIX);
+            return removeStart(value, DataConstants.TB_RESOURCE_PREFIX);
         } else {
             return null;
         }
@@ -659,7 +661,7 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
                 }
 
                 String newValue = processor.apply(value);
-                if (StringUtils.equals(value, newValue)) {
+                if (Objects.equals(value, newValue)) {
                     return value;
                 } else {
                     updated.set(true);

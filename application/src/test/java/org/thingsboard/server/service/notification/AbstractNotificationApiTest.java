@@ -155,7 +155,7 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
         User user = new User();
         user.setTenantId(tenantId);
         user.setAuthority(authority);
-        user.setEmail(RandomStringUtils.randomAlphabetic(20) + "@thingsboard.com");
+        user.setEmail(RandomStringUtils.secure().nextAlphabetic(20) + "@thingsboard.com");
         user = createUserAndLogin(user, "12345678");
         NotificationApiWsClient wsClient = buildAndConnectWebSocketClient();
         return Pair.of(user, wsClient);
