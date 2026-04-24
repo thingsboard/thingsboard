@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -76,7 +77,7 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
 
     @Override
     @Transactional
-    public void delete(CalculatedField calculatedField, SecurityUser user) {
+    public void delete(CalculatedField calculatedField, User user) {
         ActionType actionType = ActionType.DELETED;
         TenantId tenantId = calculatedField.getTenantId();
         CalculatedFieldId calculatedFieldId = calculatedField.getId();

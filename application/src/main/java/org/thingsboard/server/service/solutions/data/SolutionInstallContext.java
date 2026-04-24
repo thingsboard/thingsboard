@@ -29,7 +29,6 @@ import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.service.solutions.data.definition.AssetDefinition;
 import org.thingsboard.server.service.solutions.data.definition.AssetProfileDefinition;
@@ -57,7 +56,7 @@ public class SolutionInstallContext {
 
     private final TenantId tenantId;
     private final Path tempDir;
-    private final SecurityUser user;
+    private final User user;
     private final TenantSolutionTemplateInstructions solutionInstructions;
     private final List<EntityId> createdEntitiesList = new ArrayList<>();
     private final Map<String, String> realIds = new HashMap<>();
@@ -78,12 +77,12 @@ public class SolutionInstallContext {
     private Map<String, EmulatorDefinition> deviceEmulators;
     private Map<String, EmulatorDefinition> assetEmulators;
 
-    public SolutionInstallContext(TenantId tenantId, String solutionId, Path tempDir, SecurityUser user) {
+    public SolutionInstallContext(TenantId tenantId, String solutionId, Path tempDir, User user, TenantSolutionTemplateInstructions solutionInstructions) {
         this.tenantId = tenantId;
         this.solutionId = solutionId;
         this.tempDir = tempDir;
         this.user = user;
-        this.solutionInstructions = new TenantSolutionTemplateInstructions();
+        this.solutionInstructions = solutionInstructions;
         this.installTs = System.currentTimeMillis();
         put(new EntitySearchKey(tenantId, EntityType.TENANT, null), tenantId);
     }
