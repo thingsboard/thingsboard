@@ -18,6 +18,7 @@ package org.thingsboard.server.transport.lwm2m.server.store;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.connection.RedisConnection;
@@ -51,10 +52,10 @@ class TbRedisLwM2MClientStoreTest {
     @Mock
     RedisConnectionFactory connectionFactory;
 
-    @Mock
+    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     RedisConnection scanConnection;
 
-    @Mock
+    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     RedisConnection getConnection;
 
     TbRedisLwM2MClientStore store;
@@ -77,8 +78,8 @@ class TbRedisLwM2MClientStoreTest {
 
         // Cursor created before thenReturn to avoid Mockito unfinished-stubbing error
         Cursor<byte[]> cursor = cursorOf(key);
-        when(scanConnection.scan(any(ScanOptions.class))).thenReturn(cursor);
-        when(getConnection.get(key)).thenReturn(value);
+        when(scanConnection.keyCommands().scan(any(ScanOptions.class))).thenReturn(cursor);
+        when(getConnection.stringCommands().get(key)).thenReturn(value);
 
         Set<LwM2mClient> result = store.getAll();
 
@@ -89,29 +90,29 @@ class TbRedisLwM2MClientStoreTest {
     @Test
     void getAll_getIsNeverCalledOnScanConnection() {
         Cursor<byte[]> cursor = cursorOf();
-        when(scanConnection.scan(any(ScanOptions.class))).thenReturn(cursor);
+        when(scanConnection.keyCommands().scan(any(ScanOptions.class))).thenReturn(cursor);
 
         store.getAll();
 
-        verify(scanConnection, never()).get(any(byte[].class));
+        verify(scanConnection.stringCommands(), never()).get(any(byte[].class));
     }
 
     @Test
     void getAll_scanIsNeverCalledOnGetConnection() {
         Cursor<byte[]> cursor = cursorOf();
-        when(scanConnection.scan(any(ScanOptions.class))).thenReturn(cursor);
+        when(scanConnection.keyCommands().scan(any(ScanOptions.class))).thenReturn(cursor);
 
         store.getAll();
 
-        verify(getConnection, never()).scan(any(ScanOptions.class));
+        verify(getConnection.keyCommands(), never()).scan(any(ScanOptions.class));
     }
 
     @Test
     void getAll_skipsKeyWhenValueIsNull() {
         byte[] key = "CLIENT#EP#gone".getBytes();
         Cursor<byte[]> cursor = cursorOf(key);
-        when(scanConnection.scan(any(ScanOptions.class))).thenReturn(cursor);
-        // getConnection.get(key) returns null by default — no stubbing needed
+        when(scanConnection.keyCommands().scan(any(ScanOptions.class))).thenReturn(cursor);
+        // getConnection.stringCommands().get(key) returns null by default — no stubbing needed
 
         Set<LwM2mClient> result = store.getAll();
 
