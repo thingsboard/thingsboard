@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, NgZone, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { Subject } from 'rxjs';
 import { debounceTime, takeUntil } from 'rxjs/operators';
 import { PageLink } from '@shared/models/page/page-link';
@@ -43,7 +43,7 @@ interface SortOption {
   styleUrls: ['./iot-hub-browse.component.scss'],
   host: { '[class.embedded]': 'embedded' }
 })
-export class TbIotHubBrowseComponent implements OnInit, OnDestroy {
+export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy {
 
   readonly ItemType = ItemType;
 
@@ -88,8 +88,21 @@ export class TbIotHubBrowseComponent implements OnInit, OnDestroy {
   filterDrawerOpened = false;
 
   textSearch = '';
-  pageSizeOptions = [12, 24, 48];
   _activeType: ItemType = ItemType.WIDGET;
+
+  @ViewChild('cardGridProbe', { static: true }) cardGridProbe!: ElementRef<HTMLElement>;
+  probeCols = 4;
+
+  get cols(): number {
+    return this.isCompactType ? Math.max(1, this.probeCols - 1) : this.probeCols;
+  }
+
+  get pageSizeOptions(): number[] {
+    return this.cols >= 5 ? [15, 30, 60] : [12, 24, 48];
+  }
+
+  private resizeObserver?: ResizeObserver;
+  private resize$ = new Subject<void>();
   activeCategories = new Set<string>();
   activeUseCases = new Set<string>();
   activeCfTypes = new Set<string>();
@@ -137,7 +150,8 @@ export class TbIotHubBrowseComponent implements OnInit, OnDestroy {
     private iotHubActions: IotHubActionsService,
     private translate: TranslateService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private zone: NgZone
   ) {}
 
   ngOnInit(): void {
@@ -166,12 +180,71 @@ export class TbIotHubBrowseComponent implements OnInit, OnDestroy {
     } else {
       this.loadInstalledItemCounts();
     }
+  }
+
+  ngAfterViewInit(): void {
+    this.probeCols = this.measureProbeCols();
+    this.adjustPageSize();
+    this.resize$.pipe(
+      debounceTime(150),
+      takeUntil(this.destroy$)
+    ).subscribe(() => this.handleResize());
+    this.resizeObserver = new ResizeObserver(() => {
+      this.zone.run(() => this.resize$.next());
+    });
+    this.resizeObserver.observe(this.cardGridProbe.nativeElement);
     this.loadItems();
   }
 
   ngOnDestroy(): void {
+    this.resizeObserver?.disconnect();
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  private measureProbeCols(): number {
+    const el = this.cardGridProbe?.nativeElement;
+    if (!el) {
+      return this.probeCols;
+    }
+    // Force layout so `grid-template-columns` resolves to pixel tracks, not `repeat(...)`.
+    void el.offsetWidth;
+    const tracks = getComputedStyle(el).gridTemplateColumns;
+    if (!tracks || tracks === 'none') {
+      return 1;
+    }
+    if (tracks.startsWith('repeat(')) {
+      const match = tracks.match(/^repeat\(\s*(\d+)\s*,/);
+      return match ? parseInt(match[1], 10) : 1;
+    }
+    return Math.max(1, tracks.trim().split(/\s+/).filter(t => t.length > 0).length);
+  }
+
+  private adjustPageSize(): void {
+    const options = this.pageSizeOptions;
+    if (options.includes(this.pageSize)) {
+      return;
+    }
+    const oldPageSize = this.pageSize;
+    const oldPageIndex = this.pageIndex;
+    this.pageSize = options.reduce((best, cur) =>
+      Math.abs(cur - oldPageSize) < Math.abs(best - oldPageSize) ? cur : best);
+    this.pageIndex = Math.floor((oldPageIndex * oldPageSize) / this.pageSize);
+  }
+
+  private handleResize(): void {
+    const newProbeCols = this.measureProbeCols();
+    if (newProbeCols === this.probeCols) {
+      return;
+    }
+    const oldOptions = this.pageSizeOptions;
+    this.probeCols = newProbeCols;
+    const newOptions = this.pageSizeOptions;
+    if (oldOptions[0] === newOptions[0]) {
+      return;
+    }
+    this.adjustPageSize();
+    this.loadItems();
   }
 
   onSearchChange(value: string): void {
@@ -185,6 +258,7 @@ export class TbIotHubBrowseComponent implements OnInit, OnDestroy {
     this.filterSearch = {};
     this.loadFilterInfo();
     this.pageIndex = 0;
+    this.adjustPageSize();
     if (type === ItemType.WIDGET) {
       this.loadInstalledWidgets();
     } else if (type === ItemType.SOLUTION_TEMPLATE) {
