@@ -235,7 +235,7 @@ public class DeviceProvisionServiceTest {
 
     private Tenant createTenant() {
         Tenant tenant = new Tenant();
-        tenant.setId(new TenantId(UUID.randomUUID()));
+        tenant.setId(TenantId.fromUUID(UUID.randomUUID()));
         return tenant;
     }
 

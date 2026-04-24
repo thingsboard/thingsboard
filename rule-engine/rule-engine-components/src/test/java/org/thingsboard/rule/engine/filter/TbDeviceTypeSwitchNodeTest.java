@@ -58,7 +58,7 @@ class TbDeviceTypeSwitchNodeTest {
 
     @BeforeEach
     void setUp() throws TbNodeException {
-        TenantId tenantId = new TenantId(UUID.randomUUID());
+        TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
         deviceId = new DeviceId(UUID.randomUUID());
         deviceIdDeleted = new DeviceId(UUID.randomUUID());
 
