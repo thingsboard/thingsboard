@@ -23,7 +23,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.google.common.base.Strings.nullToEmpty;
-import static org.apache.commons.lang3.StringUtils.removeStart;
+import static org.thingsboard.server.common.data.StringUtils.removeStart;
 
 public class TemplateUtils {
 
