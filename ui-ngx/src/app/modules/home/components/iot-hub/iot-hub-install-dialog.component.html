@@ -44,7 +44,13 @@
     @case ('error') {
       <h2 class="tb-iot-hub-install-title">{{ 'iot-hub.install-error-title' | translate }}</h2>
       <p class="tb-iot-hub-install-desc">{{ 'iot-hub.install-error-message' | translate:{ name: item.name } }}</p>
-      <div class="tb-iot-hub-error-details">{{ errorMessage }}</div>
+      @if (item?.type === ItemType.SOLUTION_TEMPLATE) {
+        <tb-markdown class="tb-iot-hub-error-details-markdown" [data]="errorMessage"></tb-markdown>
+      } @else {
+        <div class="tb-iot-hub-error-details">
+          {{ errorMessage }}
+        </div>
+      }
     }
   }
 </div>
