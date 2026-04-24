@@ -132,7 +132,7 @@ public class JpaBaseEventDaoTest extends AbstractJpaDaoTest {
         StatisticsEvent.StatisticsEventBuilder event = StatisticsEvent.builder();
         event.id(eventId);
         event.ts(System.currentTimeMillis());
-        event.tenantId(new TenantId(tenantId));
+        event.tenantId(TenantId.fromUUID(tenantId));
         event.entityId(entityId);
         event.serviceId("server A");
         event.messagesProcessed(1);

@@ -126,7 +126,7 @@ public class DefaultNativeCalculatedFieldRepository implements NativeCalculatedF
                 CalculatedFieldLink calculatedFieldLink = new CalculatedFieldLink();
                 calculatedFieldLink.setId(new CalculatedFieldLinkId(id));
                 calculatedFieldLink.setCreatedTime(createdTime);
-                calculatedFieldLink.setTenantId(new TenantId(tenantId));
+                calculatedFieldLink.setTenantId(TenantId.fromUUID(tenantId));
                 calculatedFieldLink.setEntityId(EntityIdFactory.getByTypeAndUuid(entityType, entityId));
                 calculatedFieldLink.setCalculatedFieldId(new CalculatedFieldId(calculatedFieldId));
 

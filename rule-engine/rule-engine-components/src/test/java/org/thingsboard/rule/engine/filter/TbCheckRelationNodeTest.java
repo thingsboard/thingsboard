@@ -63,7 +63,7 @@ import static org.mockito.Mockito.when;
 
 class TbCheckRelationNodeTest extends AbstractRuleNodeUpgradeTest {
 
-    private final TenantId TENANT_ID = new TenantId(UUID.randomUUID());
+    private final TenantId TENANT_ID = TenantId.fromUUID(UUID.randomUUID());
     private final DeviceId ORIGINATOR_ID = new DeviceId(UUID.randomUUID());
     private final DirectListeningExecutor DB_EXECUTOR = DirectListeningExecutor.INSTANCE;
     private final TbMsg EMPTY_POST_ATTRIBUTES_MSG = TbMsg.newMsg()
