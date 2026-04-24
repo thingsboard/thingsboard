@@ -57,7 +57,7 @@ public class DefaultQueryLogComponentTest {
 
     @Before
     public void setUp() {
-        tenantId = new TenantId(UUID.fromString("97275c1c-9cf2-4d25-a68d-933031158f84"));
+        tenantId = TenantId.fromUUID(UUID.fromString("97275c1c-9cf2-4d25-a68d-933031158f84"));
         ctx = new SqlQueryContext(new QueryContext(tenantId, null, EntityType.ALARM));
     }
 

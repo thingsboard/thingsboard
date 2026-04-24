@@ -62,7 +62,7 @@ public abstract class BaseEventServiceTest extends AbstractServiceTest {
 
     @Test
     public void saveEvent() throws Exception {
-        TenantId tenantId = new TenantId(Uuids.timeBased());
+        TenantId tenantId = TenantId.fromUUID(Uuids.timeBased());
         DeviceId devId = new DeviceId(Uuids.timeBased());
         RuleNodeDebugEvent event = generateEvent(tenantId, devId);
         eventService.saveAsync(event).get();

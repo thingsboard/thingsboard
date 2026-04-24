@@ -410,7 +410,7 @@ public class DefaultTbClusterServiceTest {
     @Test
     public void testGetRuleEngineProfileForUpdatedAndDeletedDevice() {
         DeviceId deviceId = new DeviceId(UUID.randomUUID());
-        TenantId tenantId = new TenantId(UUID.randomUUID());
+        TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
         DeviceProfileId deviceProfileId = new DeviceProfileId(UUID.randomUUID());
 
         Device device = new Device(deviceId);
@@ -430,7 +430,7 @@ public class DefaultTbClusterServiceTest {
     @Test
     public void testGetRuleEngineProfileForUpdatedAndDeletedAsset() {
         AssetId assetId = new AssetId(UUID.randomUUID());
-        TenantId tenantId = new TenantId(UUID.randomUUID());
+        TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
         AssetProfileId assetProfileId = new AssetProfileId(UUID.randomUUID());
 
         Asset asset = new Asset(assetId);
