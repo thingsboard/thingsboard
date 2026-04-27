@@ -130,6 +130,38 @@ export const installMethodLabels = new Map<string, string>(
   ]
 );
 
+export const peOnlyInstallMethods: ReadonlySet<string> = new Set<string>([
+  InstallMethod.INTEGRATION_APACHE_PULSAR,
+  InstallMethod.INTEGRATION_AWS_IOT,
+  InstallMethod.INTEGRATION_AWS_KINESIS,
+  InstallMethod.INTEGRATION_AWS_SQS,
+  InstallMethod.INTEGRATION_AZURE_EVENT_HUB,
+  InstallMethod.INTEGRATION_AZURE_IOT_HUB,
+  InstallMethod.INTEGRATION_AZURE_SERVICE_BUS,
+  InstallMethod.INTEGRATION_CHIRPSTACK,
+  InstallMethod.INTEGRATION_COAP,
+  InstallMethod.INTEGRATION_CUSTOM,
+  InstallMethod.INTEGRATION_HTTP,
+  InstallMethod.INTEGRATION_IOT_CREATORS,
+  InstallMethod.INTEGRATION_KAFKA,
+  InstallMethod.INTEGRATION_KPN_THINGS,
+  InstallMethod.INTEGRATION_LORIOT,
+  InstallMethod.INTEGRATION_MQTT,
+  InstallMethod.INTEGRATION_OPC_UA,
+  InstallMethod.INTEGRATION_PARTICLE,
+  InstallMethod.INTEGRATION_PUB_SUB,
+  InstallMethod.INTEGRATION_RABBITMQ,
+  InstallMethod.INTEGRATION_REMOTE,
+  InstallMethod.INTEGRATION_SIGFOX,
+  InstallMethod.INTEGRATION_TCP,
+  InstallMethod.INTEGRATION_THINGPARK,
+  InstallMethod.INTEGRATION_THINGPARK_ENTERPRISE,
+  InstallMethod.INTEGRATION_TTI,
+  InstallMethod.INTEGRATION_TTN,
+  InstallMethod.INTEGRATION_TUYA,
+  InstallMethod.INTEGRATION_UDP
+]);
+
 export enum InstallStepType {
   SHOW_INSTRUCTION = 'SHOW_INSTRUCTION',
   SHOW_FORM = 'SHOW_FORM',
