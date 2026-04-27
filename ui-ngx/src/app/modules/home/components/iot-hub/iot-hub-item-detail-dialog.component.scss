@@ -143,6 +143,11 @@
   &.dlg-preview-carousel {
     aspect-ratio: 1.5;
   }
+
+  &.dlg-preview-device {
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+  }
 }
 
 .dlg-preview-img {

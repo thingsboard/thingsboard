@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.entitiy.cf;
 
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
@@ -31,6 +32,6 @@ public interface TbCalculatedFieldService {
 
     PageData<CalculatedField> findAllByTenantIdAndEntityId(EntityId entityId, SecurityUser user, PageLink pageLink);
 
-    void delete(CalculatedField calculatedField, SecurityUser user);
+    void delete(CalculatedField calculatedField, User user);
 
 }

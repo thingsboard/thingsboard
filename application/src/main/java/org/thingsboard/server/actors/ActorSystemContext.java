@@ -35,6 +35,7 @@ import org.thingsboard.rule.engine.api.DeviceStateManager;
 import org.thingsboard.rule.engine.api.JobManager;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.MqttClientSettings;
+import org.thingsboard.rule.engine.api.TbHttpClientSettings;
 import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.rule.engine.api.RuleEngineAiChatModelService;
 import org.thingsboard.rule.engine.api.SmsService;
@@ -683,6 +684,10 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private MqttClientSettings mqttClientSettings;
+
+    @Autowired(required = false)
+    @Getter
+    private TbHttpClientSettings tbHttpClientSettings;
 
     @Getter
     @Setter

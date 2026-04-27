@@ -1,6 +1,6 @@
 {
   "name": "thingsboard",
-  "version": "4.2.2.1",
+  "version": "4.2.2.2",
   "scripts": {
     "ng": "ng",
     "start": "node --max_old_space_size=8048 ./node_modules/@angular/cli/bin/ng serve --configuration development --host 0.0.0.0 --open",
@@ -94,11 +94,11 @@
   },
   "devDependencies": {
     "@angular-builders/custom-esbuild": "20.0.0",
-    "@angular-devkit/build-angular": "20.3.20",
-    "@angular-devkit/core": "20.3.20",
-    "@angular-devkit/schematics": "20.3.20",
-    "@angular/build": "20.3.20",
-    "@angular/cli": "20.3.20",
+    "@angular-devkit/build-angular": "20.3.22",
+    "@angular-devkit/core": "20.3.22",
+    "@angular-devkit/schematics": "20.3.22",
+    "@angular/build": "20.3.22",
+    "@angular/cli": "20.3.22",
     "@angular/compiler-cli": "20.3.18",
     "@angular/language-service": "20.3.18",
     "@types/ace-diff": "^2.1.4",

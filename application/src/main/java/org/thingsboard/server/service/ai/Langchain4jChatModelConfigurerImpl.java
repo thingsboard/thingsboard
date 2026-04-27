@@ -177,8 +177,8 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
         if (chatModelConfig.frequencyPenalty() != null) {
             generationConfigBuilder.setFrequencyPenalty(chatModelConfig.frequencyPenalty().floatValue());
         }
-        if (chatModelConfig.frequencyPenalty() != null) {
-            generationConfigBuilder.setPresencePenalty(chatModelConfig.frequencyPenalty().floatValue());
+        if (chatModelConfig.presencePenalty() != null) {
+            generationConfigBuilder.setPresencePenalty(chatModelConfig.presencePenalty().floatValue());
         }
         if (chatModelConfig.maxOutputTokens() != null) {
             generationConfigBuilder.setMaxOutputTokens(chatModelConfig.maxOutputTokens());

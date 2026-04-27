@@ -44,6 +44,8 @@ export type InstallState = 'select-entity' | 'confirm' | 'installing' | 'success
 })
 export class TbIotHubInstallDialogComponent extends DialogComponent<TbIotHubInstallDialogComponent> {
 
+  ItemType = ItemType;
+
   item: MpItemVersionView;
   typeTranslations = itemTypeTranslations;
   state: InstallState = 'confirm';

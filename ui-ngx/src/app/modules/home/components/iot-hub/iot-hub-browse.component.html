@@ -16,6 +16,9 @@
 
 -->
 <div class="tb-iot-hub-browse flex h-full flex-col" [class.embedded]="embedded" [class.tabs-hidden]="hideTabs">
+  <!-- Hidden probe — we read its computed grid-template-columns to detect the current column count. -->
+  <div #cardGridProbe class="tb-iot-hub-card-grid tb-iot-hub-card-grid-probe" aria-hidden="true"></div>
+
   <!-- Type tabs -->
   <nav mat-tab-nav-bar class="tb-iot-hub-tabs" [tabPanel]="tabPanel" [class.hidden]="hideTabs">
     @for (tab of typeTabs; track tab.type) {

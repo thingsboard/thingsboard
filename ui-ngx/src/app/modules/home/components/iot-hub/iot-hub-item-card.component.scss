@@ -52,6 +52,11 @@
   position: relative;
   overflow: hidden;
   padding: 12px;
+
+  &.tb-iot-hub-card-preview-device {
+    background: white;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  }
 }
 
 .tb-iot-hub-preview-image {

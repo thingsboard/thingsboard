@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+@import '../../../../scss/constants';
+
 :host ::ng-deep {
   .tb-button-toggle {
     .tb-toggle-icon {
@@ -25,6 +28,23 @@
       &.tb-toggled {
         transform: rotateZ(180deg);
       }
+    }
+    &.is-new::after {
+      position: absolute;
+      right: 44px;
+      top: 4px;
+      content: "NEW";
+      font-size: 12px;
+      letter-spacing: .03125em;
+      display: inline-block;
+      border-radius: 10px;
+      line-height: 22px;
+      height: 20px;
+      background: #fff;
+      color: $tb-primary-color;
+      padding-left: 6px;
+      padding-right: 6px;
+      margin-left: -6px;
     }
   }
 

@@ -46,6 +46,8 @@ export type UpdateState = 'confirm' | 'updating' | 'success' | 'error';
 })
 export class TbIotHubUpdateDialogComponent extends DialogComponent<TbIotHubUpdateDialogComponent> {
 
+  ItemType = ItemType;
+
   typeTranslations = itemTypeTranslations;
   state: UpdateState = 'confirm';
   errorMessage = '';

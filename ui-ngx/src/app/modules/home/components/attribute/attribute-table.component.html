@@ -34,7 +34,7 @@
         </div>
         <span class="flex-1"></span>
         <button mat-icon-button
-                *ngIf="attributeScope !== attributeScopeTypes.CLIENT_SCOPE"
+                *ngIf="attributeScope !== attributeScopeTypes.CLIENT_SCOPE && !disableAddTelemetry"
                 [disabled]="isLoading$ | async"
                 (click)="addAttribute($event)"
                 matTooltip="{{ 'action.add' | translate }}"

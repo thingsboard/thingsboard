@@ -54,6 +54,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
     public void upgradeDatabase() {
         log.info("Updating schema...");
         loadSql(getSchemaUpdateFile("basic"));
+        loadSql(getSchemaUpdateFile("lts"));
         log.info("Schema updated.");
     }
 

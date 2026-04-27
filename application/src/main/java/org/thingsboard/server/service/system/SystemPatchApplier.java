@@ -28,6 +28,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
+import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.install.DatabaseSchemaSettingsService;
@@ -40,7 +41,9 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -48,7 +51,7 @@ import java.util.stream.Stream;
 
 /**
  * Runs at application startup and applies no-downtime data updates
- * when the package PATCH version increases (e.g., 4.2.1.0 -> 4.2.1.1).
+ * when the package version increases within the same LTS family (e.g., 4.3.0.0 -> 4.3.1.0 or 4.3.0.0 -> 4.3.0.1).
  */
 @Slf4j
 @Component
@@ -64,6 +67,7 @@ public class SystemPatchApplier {
     private final InstallScripts installScripts;
     private final DatabaseSchemaSettingsService schemaSettingsService;
     private final WidgetTypeService widgetTypeService;
+    private final ImageService imageService;
 
     @PostConstruct
     private void init() {
@@ -91,11 +95,16 @@ public class SystemPatchApplier {
         }
 
         try {
+            updateLtsSqlSchema();
+
             updateSqlViews();
             log.info("Updated sql database views");
 
             int updated = updateWidgetTypes();
             log.info("Updated {} widget types", updated);
+
+            int createdImages = createMissingSystemImages();
+            log.info("Created {} new system images", createdImages);
 
             schemaSettingsService.updateSchemaVersion();
             log.info("System data patch update completed successfully");
@@ -119,17 +128,37 @@ public class SystemPatchApplier {
             return false;
         }
 
-        if (!isPatchVersionChanged(packageVersionInfo, dbVersionInfo)) {
+        if (!isVersionIncreased(packageVersionInfo, dbVersionInfo)) {
             return false;
         }
 
-        log.info("Patch version increased from {} to {}. Starting system data update.", dbVersion, packageVersion);
+        log.info("Version increased from {} to {}. Starting system data update.", dbVersion, packageVersion);
         return true;
     }
 
-    private boolean isPatchVersionChanged(VersionInfo packageVersion, VersionInfo dbVersion) {
-        return packageVersion.major == dbVersion.major && packageVersion.minor == dbVersion.minor
-                && packageVersion.maintenance == dbVersion.maintenance && packageVersion.patch > dbVersion.patch;
+    private boolean isVersionIncreased(VersionInfo packageVersion, VersionInfo dbVersion) {
+        if (packageVersion.major != dbVersion.major || packageVersion.minor != dbVersion.minor) {
+            return false;
+        }
+        if (packageVersion.maintenance != dbVersion.maintenance) {
+            return packageVersion.maintenance > dbVersion.maintenance;
+        }
+        return packageVersion.patch > dbVersion.patch;
+    }
+
+    private void updateLtsSqlSchema() {
+        Path sqlFile = Paths.get(installScripts.getDataDir(), "upgrade", "lts", "schema_update.sql");
+        if (!Files.exists(sqlFile)) {
+            log.trace("LTS schema update file does not exist: {}", sqlFile);
+            return;
+        }
+        try {
+            String sql = Files.readString(sqlFile);
+            jdbcTemplate.execute(sql);
+            log.info("Applied LTS SQL schema update from {}", sqlFile);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to read LTS schema update file: " + sqlFile, e);
+        }
     }
 
     private void updateSqlViews() {
@@ -190,6 +219,39 @@ public class SystemPatchApplier {
 
         log.trace("Widget type unchanged: {}", fqn);
         return false;
+    }
+
+    private int createMissingSystemImages() {
+        AtomicInteger created = new AtomicInteger();
+        Path imagesDir = Paths.get(installScripts.getDataDir(), InstallScripts.RESOURCES_DIR, "images");
+
+        if (!Files.exists(imagesDir)) {
+            log.warn("System images directory does not exist: {}", imagesDir);
+            return 0;
+        }
+
+        Set<String> existingKeys = imageService.getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID);
+
+        try (Stream<Path> dirStream = listDir(imagesDir).filter(Files::isRegularFile)) {
+            dirStream.forEach(path -> {
+                String resourceKey = path.getFileName().toString();
+                if (existingKeys.contains(resourceKey)) {
+                    log.trace("System image already exists, skipping: {}", resourceKey);
+                    return;
+                }
+                try {
+                    byte[] data = Files.readAllBytes(path);
+                    imageService.createOrUpdateSystemImage(resourceKey, data);
+                    created.incrementAndGet();
+                    log.trace("Created system image: {}", resourceKey);
+                } catch (Exception e) {
+                    log.error("Unable to create system image from file: [{}]", path);
+                    throw new RuntimeException("Unable to create system image " + resourceKey, e);
+                }
+            });
+        }
+
+        return created.get();
     }
 
     private boolean isWidgetTypeChanged(WidgetTypeDetails existing, WidgetTypeDetails file) {

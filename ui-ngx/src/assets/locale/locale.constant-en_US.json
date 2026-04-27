@@ -9599,6 +9599,9 @@
             "no-links-matching": "No links matching '{{name}}' were found.",
             "columns": "Columns"
         },
+        "iot-hub": {
+            "title-text": "Build faster with community-proven resources from"
+        },
         "recent-dashboards": {
             "title": "Dashboards",
             "last": "Last viewed",

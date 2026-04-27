@@ -93,7 +93,9 @@
       } @else {
         <!-- Widget/Dashboard/Solution: image + description side by side -->
         <div class="flex gap-6">
-          <div class="dlg-preview" [class.dlg-preview-carousel]="item.type === ItemType.SOLUTION_TEMPLATE && carouselImages.length > 1">
+          <div class="dlg-preview"
+               [class.dlg-preview-carousel]="item.type === ItemType.SOLUTION_TEMPLATE && carouselImages.length > 1"
+               [class.dlg-preview-device]="item.type === ItemType.DEVICE">
             @if (item.type === ItemType.SOLUTION_TEMPLATE && carouselImages.length > 1) {
               <div class="dlg-hero-carousel">
                 <ngx-hm-carousel

@@ -32,15 +32,19 @@ import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.Device;
@@ -77,7 +81,6 @@ import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceConnectivityService;
 import org.thingsboard.server.dao.device.DockerComposeParams;
-import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
@@ -210,28 +213,136 @@ public class DefaultSolutionService implements SolutionService {
     public SolutionInstallResponse installSolution(SecurityUser user, TenantId tenantId, byte[] zipData, HttpServletRequest request) throws Exception {
         Path tempDir = Files.createTempDirectory("iot-hub-solution-");
         try {
-            extractZip(zipData, tempDir);
-        } catch (Throwable e) {
-            log.error("[{}] Failed to extract solution template zip", tenantId, e);
+            try {
+                extractZip(zipData, tempDir);
+            } catch (Throwable e) {
+                log.error("[{}] Failed to extract solution template zip", tenantId, e);
+                deleteDirectory(tempDir);
+                TenantSolutionTemplateInstructions instructions = new TenantSolutionTemplateInstructions();
+                instructions.setDetails(e.getMessage());
+                return new SolutionInstallResponse(instructions, false, List.of());
+            }
+
+            String solutionId = loadSolutionId(tempDir);
+            if (solutionId == null) {
+                throw new IllegalArgumentException("Solution template is missing solution.json or its 'title' field");
+            }
+
+            SolutionInstallResponse validateResult = validateSolution(tenantId, tempDir);
+            if (validateResult != null && !validateResult.isSuccess()) {
+                return validateResult;
+            }
+            return doInstallSolution(user, tenantId, solutionId, tempDir, request);
+        } finally {
             deleteDirectory(tempDir);
-            TenantSolutionTemplateInstructions instructions = new TenantSolutionTemplateInstructions();
-            instructions.setDetails(e.getMessage());
-            return new SolutionInstallResponse(instructions, false, List.of());
         }
-        SolutionInstallContext ctx = new SolutionInstallContext(tenantId, loadSolutionId(tempDir), tempDir, user);
+    }
+
+    @Override
+    public void deleteSolution(TenantId tenantId, List<EntityId> createdEntityIds, SecurityUser user) {
+        if (createdEntityIds == null || createdEntityIds.isEmpty()) {
+            return;
+        }
+        List<EntityId> entityIds = new ArrayList<>(createdEntityIds);
+        // Delete in the descending order of creation to avoid dependency issues.
+        Collections.reverse(entityIds);
+        for (EntityId entityId : entityIds) {
+            try {
+                deleteEntity(tenantId, entityId, user);
+            } catch (RuntimeException e) {
+                log.error("[{}] Failed to delete the entity: {}", tenantId, entityId, e);
+            }
+        }
+    }
+
+    private SolutionInstallResponse validateSolution(TenantId tenantId, Path tempDir) {
+        Map<EntityType, List<HasName>> alreadyExistingEntities = new HashMap<>();
+
+        //TODO: check other entities.
+
+        List<ReferenceableEntityDefinition> ruleChains = loadListOfEntitiesIfFileExists(tempDir, "rule_chains.json", new TypeReference<>() {
+        });
+        if (!ruleChains.isEmpty()) {
+            for (ReferenceableEntityDefinition ruleChain : ruleChains) {
+                List<RuleChain> savedRuleChains = ruleChainService.findTenantRuleChainsByType(tenantId, RuleChainType.CORE, new PageLink(1, 0, ruleChain.getName())).getData();
+                if (savedRuleChains != null && !savedRuleChains.isEmpty()) {
+                    alreadyExistingEntities.computeIfAbsent(EntityType.RULE_CHAIN, key -> new ArrayList<>()).add(savedRuleChains.get(0));
+                }
+            }
+        }
+
+        List<DeviceProfileDefinition> deviceProfiles = loadListOfEntitiesIfFileExists(tempDir, "device_profiles.json", new TypeReference<>() {
+        });
+        deviceProfiles.addAll(loadListOfEntitiesFromDirectory(tempDir, "device_profiles", DeviceProfileDefinition.class));
+        // Validate that entities with such name does not exist entities
+        if (!deviceProfiles.isEmpty()) {
+            for (DeviceProfile deviceProfile : deviceProfiles) {
+                DeviceProfile savedProfile = deviceProfileService.findDeviceProfileByName(tenantId, deviceProfile.getName());
+                if (savedProfile != null) {
+                    alreadyExistingEntities.computeIfAbsent(EntityType.DEVICE_PROFILE, key -> new ArrayList<>()).add(savedProfile);
+                }
+            }
+        }
+
+        List<AssetProfileDefinition> assetProfiles = loadListOfEntitiesIfFileExists(tempDir, "asset_profiles.json", new TypeReference<>() {
+        });
+        assetProfiles.addAll(loadListOfEntitiesFromDirectory(tempDir, "asset_profiles", AssetProfileDefinition.class));
+        // Validate that entities with such name does not exist entities
+        if (!assetProfiles.isEmpty()) {
+            for (AssetProfile assetProfile : assetProfiles) {
+                AssetProfile savedProfile = assetProfileService.findAssetProfileByName(tenantId, assetProfile.getName());
+                if (savedProfile != null) {
+                    alreadyExistingEntities.computeIfAbsent(EntityType.ASSET_PROFILE, key -> new ArrayList<>()).add(savedProfile);
+                }
+            }
+        }
+
+        List<DashboardDefinition> dashboards = loadListOfEntitiesIfFileExists(tempDir, "dashboards.json", new TypeReference<>() {
+        });
+        if (!dashboards.isEmpty()) {
+            for (DashboardDefinition dashboard : dashboards) {
+                List<DashboardInfo> savedDashboards = dashboardService.findDashboardsByTenantId(tenantId, new PageLink(1, 0, dashboard.getName())).getData();
+                if (savedDashboards != null && !savedDashboards.isEmpty()) {
+                    alreadyExistingEntities.computeIfAbsent(EntityType.DASHBOARD, key -> new ArrayList<>()).add(savedDashboards.get(0));
+                }
+            }
+        }
+        if (!alreadyExistingEntities.isEmpty()) {
+            SolutionInstallResponse solutionInstallResponse = new SolutionInstallResponse();
+            StringBuilder detailsBuilder = new StringBuilder();
+            detailsBuilder.append("## Validation failed").append(System.lineSeparator()).append(System.lineSeparator());
+            alreadyExistingEntities.forEach((type, list) -> detailsBuilder.append("The following **").append(getTypeLabel(type)).append("** entities already exist: ")
+                    .append(list.stream().map(HasName::getName).map(name -> "'" + name + "'").collect(Collectors.joining(","))).append(";")
+                    .append(System.lineSeparator()).append(System.lineSeparator()));
+            solutionInstallResponse.setSuccess(false);
+            solutionInstallResponse.setDetails(detailsBuilder.toString());
+            return solutionInstallResponse;
+        } else {
+            return null;
+        }
+    }
+
+    private SolutionInstallResponse doInstallSolution(User user, TenantId tenantId, String solutionId, Path tempDir, HttpServletRequest request) {
+        SolutionInstallContext ctx = new SolutionInstallContext(tenantId, solutionId, tempDir, user, new TenantSolutionTemplateInstructions());
+
         try {
+
             registerEmulatorsAndComputeOldestTelemetryTs(ctx);
 
             provisionTenantDetails(ctx);
 
             provisionRuleChains(ctx);
+
             provisionDeviceProfiles(ctx);
+
             provisionAssetProfiles(ctx);
 
             List<CustomerDefinition> customers = loadListOfEntitiesIfFileExists(ctx.getTempDir(), "customers.json", new TypeReference<>() {});
+
             provisionCustomers(ctx, customers);
 
             var assets = provisionAssets(ctx);
+
             var devices = provisionDevices(ctx);
 
             provisionDashboards(ctx);
@@ -239,7 +350,9 @@ public class DefaultSolutionService implements SolutionService {
             provisionCustomerUsers(ctx, customers);
 
             provisionRelations(ctx);
+
             updateRuleChains(ctx);
+
             provisionEdges(ctx);
 
             provisionAlarmRules(ctx);
@@ -255,7 +368,9 @@ public class DefaultSolutionService implements SolutionService {
             List<ReferenceableEntityDefinition> ruleChainDefs = loadListOfEntitiesIfFileExists(ctx.getTempDir(), "rule_chains.json", new TypeReference<>() {});
             if (ruleChainDefs.stream().anyMatch(r -> StringUtils.isNotEmpty(r.getUpdate()))) {
                 long timeout = loadInstallTimeoutMs(ctx.getTempDir());
-                Thread.sleep(timeout);
+                if (timeout > 0) {
+                    Thread.sleep(timeout);
+                }
                 finalUpdateRuleChains(ctx);
             }
 
@@ -267,31 +382,265 @@ public class DefaultSolutionService implements SolutionService {
                     ctx.getCreatedEntitiesList()
             );
         } catch (Throwable e) {
-            log.error("[{}] Failed to install solution template", tenantId, e);
-            rollback(tenantId, ctx, e);
+            log.error("[{}][{}] Failed to install solution template", tenantId, solutionId, e);
+            rollback(tenantId, solutionId, ctx, e);
             return new SolutionInstallResponse(
                     new TenantSolutionTemplateInstructions(ctx.getSolutionInstructions()),
                     false,
                     ctx.getCreatedEntitiesList()
             );
-        } finally {
-            deleteDirectory(tempDir);
         }
     }
 
-    @Override
-    public void deleteSolution(TenantId tenantId, List<EntityId> createdEntityIds, SecurityUser user) {
-        if (createdEntityIds == null || createdEntityIds.isEmpty()) {
-            return;
+    private void waitForTelemetryCompletion(Set<CompletableFuture<Void>> futures) throws InterruptedException {
+        CompletableFuture<Void> all = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+        try {
+            all.get();
+            Thread.sleep(futures.size() * 100L);
+        } catch (ExecutionException e) {
+            throw new RuntimeException("Telemetry processing failed", e.getCause());
         }
-        List<EntityId> reversed = new ArrayList<>(createdEntityIds);
-        Collections.reverse(reversed);
-        for (EntityId entityId : reversed) {
+    }
+
+    private void rollback(TenantId tenantId, String solutionId, SolutionInstallContext ctx, Throwable e) {
+        List<EntityId> createdEntities = new ArrayList<>(ctx.getCreatedEntitiesList());
+        Collections.reverse(createdEntities);
+        for (EntityId entityId : createdEntities) {
             try {
-                deleteEntity(tenantId, entityId, user);
-            } catch (Exception e) {
-                log.error("[{}] Failed to delete entity: {}", tenantId, entityId, e);
+                deleteEntity(tenantId, entityId, ctx.getUser());
+            } catch (RuntimeException re) {
+                log.error("[{}][{}] Failed to delete the entity: {}", tenantId, solutionId, entityId, re);
             }
+        }
+        ctx.getCreatedEntitiesList().clear();
+        ctx.getSolutionInstructions().setDetails(e.getMessage());
+    }
+
+    private String prepareInstructions(SolutionInstallContext ctx, HttpServletRequest request) {
+
+        Path instructionsFile = ctx.getTempDir().resolve("instructions.md");
+        if (!Files.exists(instructionsFile)) {
+            return null;
+        }
+        String template;
+        try {
+            template = Files.readString(instructionsFile);
+        } catch (IOException e) {
+            log.warn("[{}] Failed to read instructions.md", ctx.getTenantId(), e);
+            return null;
+        }
+
+        String baseUrl = systemSecurityService.getBaseUrl(ctx.getTenantId(), null, request);
+
+        // Inject edge instructions first, then run the full replacement logic on the combined string
+        if (template.contains("${edge_instructions}")) {
+            if (ctx.getCreatedEdges().isEmpty()) {
+                template = template.replace("${edge_instructions}", "");
+            } else {
+                Path edgeFile = ctx.getTempDir().resolve("edge_instructions.md");
+                String edgeTemplate = Files.exists(edgeFile) ? readFileContent(edgeFile) : "";
+                template = template.replace("${edge_instructions}", edgeTemplate);
+            }
+        }
+
+        template = template.replace("${DOCS_BASE_URL}", docsBaseUrl);
+        template = template.replace("${BASE_URL}", baseUrl);
+
+        TenantSolutionTemplateInstructions solutionInstructions = ctx.getSolutionInstructions();
+
+        if (solutionInstructions.getDashboardId() != null) {
+            template = template.replace("${MAIN_DASHBOARD_URL}",
+                    getDashboardLink(solutionInstructions, solutionInstructions.getDashboardId(), false));
+            if (solutionInstructions.isMainDashboardPublic()) {
+                template = template.replace("${MAIN_DASHBOARD_PUBLIC_URL}",
+                        getDashboardLink(solutionInstructions, solutionInstructions.getDashboardId(), true));
+            }
+        }
+
+        for (DashboardLinkInfo dashboardLinkInfo : ctx.getDashboardLinks()) {
+            template = template.replace("${" + dashboardLinkInfo.getName() + "DASHBOARD_URL}",
+                    getDashboardLink(solutionInstructions, dashboardLinkInfo.getDashboardId(), false));
+            if (dashboardLinkInfo.isPublic()) {
+                template = template.replace("${" + dashboardLinkInfo.getName() + "DASHBOARD_PUBLIC_URL}",
+                        getDashboardLink(solutionInstructions, dashboardLinkInfo.getDashboardId(), true));
+            }
+        }
+
+        if (template.contains("${GATEWAYS_URL}")) {
+            template = template.replace("${GATEWAYS_URL}", "/gateways");
+        }
+
+        // Device list and credentials
+        StringBuilder devList = new StringBuilder();
+        devList.append("| Device name | Access token | Owner |");
+        devList.append(System.lineSeparator());
+        devList.append("| :---   | :---  | :---  |");
+        devList.append(System.lineSeparator());
+
+        for (DeviceCredentialsInfo credentialsInfo : ctx.getCreatedDevices().values()) {
+            devList.append("|").append(credentialsInfo.getName())
+                    .append("|").append(credentialsInfo.getCredentials().getCredentialsId()).append("{:copy-code}")
+                    .append("|").append(credentialsInfo.getCustomerName() != null ? credentialsInfo.getCustomerName() : "Tenant");
+            devList.append(System.lineSeparator());
+
+            template = template.replace("${" + credentialsInfo.getName() + "ACCESS_TOKEN}", credentialsInfo.getCredentials().getCredentialsId());
+
+            if (credentialsInfo.isGateway()) {
+                template = template.replace("${DOCKER_CONFIG}",
+                        prepareDockerComposeFile(ctx.getTenantId(), ctx.getSolutionId(), baseUrl, credentialsInfo.getCredentials().getDeviceId()));
+            }
+        }
+
+        template = template.replace("${device_list_and_credentials}", devList.toString());
+
+        // User list (without user group column)
+        StringBuilder userList = new StringBuilder();
+        userList.append("| Name | Login | Password | Customer name |");
+        userList.append(System.lineSeparator());
+        userList.append("| :---  | :---  | :---  | :---  |");
+        userList.append(System.lineSeparator());
+
+        for (UserCredentialsInfo credentialsInfo : ctx.getCreatedUsers().values()) {
+            userList.append("|").append(credentialsInfo.getName())
+                    .append("|").append(credentialsInfo.getLogin()).append("{:copy-code}")
+                    .append("|").append(credentialsInfo.getPassword()).append("{:copy-code}")
+                    .append("|").append(credentialsInfo.getCustomerName() != null ? credentialsInfo.getCustomerName() : "");
+            userList.append(System.lineSeparator());
+        }
+
+        template = template.replace("${user_list}", userList.toString());
+
+        // Edge detail URLs
+        for (Map.Entry<String, EdgeLinkInfo> edgeLinkInfoEntry : ctx.getCreatedEdges().entrySet()) {
+            EdgeLinkInfo edgeLinkInfo = edgeLinkInfoEntry.getValue();
+            StringBuilder edgeDetailsUrl = new StringBuilder();
+            if (EntityType.CUSTOMER.equals(edgeLinkInfo.getOwnerId().getEntityType())) {
+                edgeDetailsUrl.append("/customers/").append(edgeLinkInfo.getOwnerId().getId());
+                edgeDetailsUrl.append("/edgeInstances/").append(edgeLinkInfo.getEdgeId().getId());
+            } else {
+                edgeDetailsUrl.append("/edgeManagement/instances/").append(edgeLinkInfo.getEdgeId().getId());
+            }
+            String edgeName = edgeLinkInfoEntry.getKey();
+            String edgeDetailsPlaceholder = "${" + edgeName + "EDGE_DETAILS_URL}";
+            template = template.replace(edgeDetailsPlaceholder, edgeDetailsUrl.toString());
+        }
+
+        template = replaceAlarmRules(ctx, template);
+        template = replaceCalculatedFields(ctx, template);
+        template = replaceCreatedEntities(ctx, template);
+
+        return template;
+    }
+
+    private static String replaceAlarmRules(SolutionInstallContext ctx, String template) {
+        StringBuilder alarmRules = new StringBuilder();
+
+        alarmRules.append("| Entity Profile Name | Alarm Type | Severities |").append(System.lineSeparator());
+        alarmRules.append("| :--- | :--- | :--- |").append(System.lineSeparator());
+
+        ctx.getCreatedAlarmRules().entrySet().stream()
+                .sorted(Map.Entry.comparingByValue(Comparator.comparing(CreatedAlarmRuleInfo::entityName, String.CASE_INSENSITIVE_ORDER)
+                        .thenComparing(CreatedAlarmRuleInfo::alarmType, String.CASE_INSENSITIVE_ORDER)))
+                .forEach(entry -> {
+                    UUID key = entry.getKey();
+                    var alarmRuleInfo = entry.getValue();
+
+                    String alarmType = alarmRuleInfo.alarmType();
+                    String link = alarmRuleInfo.getCfPageLink(key);
+
+                    String alarmTypeWithLink = "<a href=\"" + link + "\" target=\"_blank\">" + alarmType + "</a>";
+
+                    String profileName = alarmRuleInfo.entityId() != null ?
+                            "<a href=\"" + alarmRuleInfo.getEntityPageLink() + "\" target=\"_blank\">" + alarmRuleInfo.entityName() + "</a>"
+                            : alarmRuleInfo.entityName();
+
+                    alarmRules.append("|")
+                            .append(profileName).append("|")
+                            .append(alarmTypeWithLink).append("|")
+                            .append(alarmRuleInfo.severities()).append("|")
+                            .append(System.lineSeparator());
+                });
+
+        return template.replace("${alarm_rules}", alarmRules.toString());
+    }
+
+    private static String replaceCalculatedFields(SolutionInstallContext ctx, String template) {
+        StringBuilder calculatedFields = new StringBuilder();
+
+        calculatedFields.append("| Entity Profile Name | Field Name | Field Type |").append(System.lineSeparator());
+        calculatedFields.append("| :--- | :--- | :--- |").append(System.lineSeparator());
+
+        ctx.getCreatedCalculatedFields().entrySet().stream()
+                .sorted(Map.Entry.comparingByValue(
+                        Comparator.comparing(CreatedCalculatedFieldInfo::entityName, String.CASE_INSENSITIVE_ORDER)
+                                .thenComparing(CreatedCalculatedFieldInfo::name, String.CASE_INSENSITIVE_ORDER)
+                ))
+                .forEach(entry -> {
+                    UUID key = entry.getKey();
+                    var cfInfo = entry.getValue();
+
+                    String cfTitle = cfInfo.name();
+                    String link = cfInfo.getCfPageLink(key);
+
+                    String cfTitleWithLink = "<a href=\"" + link + "\" target=\"_blank\">" + cfTitle + "</a>";
+
+                    String profileName = cfInfo.entityId() != null ?
+                            "<a href=\"" + cfInfo.getEntityPageLink() + "\" target=\"_blank\">" + cfInfo.entityName() + "</a>"
+                            : cfInfo.entityName();
+
+                    calculatedFields.append("|")
+                            .append(profileName).append("|")
+                            .append(cfTitleWithLink).append("|")
+                            .append(cfInfo.type()).append("|")
+                            .append(System.lineSeparator());
+                });
+
+        return template.replace("${calculated_fields}", calculatedFields.toString());
+    }
+
+    private static String replaceCreatedEntities(SolutionInstallContext ctx, String template) {
+        StringBuilder entityList = new StringBuilder();
+
+        entityList.append("| Name | Type | Owner |").append(System.lineSeparator());
+        entityList.append("| :--- | :--- | :--- |").append(System.lineSeparator());
+
+        for (Map.Entry<UUID, CreatedEntityInfo> entry : ctx.getCreatedEntities().entrySet()) {
+            UUID key = entry.getKey();
+            var entityInfo = entry.getValue();
+            String link = entityInfo.getEntityPageLink(key);
+            String entityName = entityInfo.getName();
+
+            String name = link != null ?
+                    "<a href=\"" + link + "\" target=\"_blank\">" + entityName + "</a>"
+                    : entityName;
+
+            entityList.append("|")
+                    .append(name).append("|")
+                    .append(entityInfo.getType().getNormalName()).append("|")
+                    .append(entityInfo.getOwner()).append("|")
+                    .append(System.lineSeparator());
+        }
+        return template.replace("${all_entities}", entityList.toString());
+    }
+
+    private String getDashboardLink(TenantSolutionTemplateInstructions solutionInstructions, DashboardId dashboardId, boolean isPublic) {
+        if (isPublic && solutionInstructions.getPublicId() != null) {
+            return "/dashboard/" + dashboardId.getId() + "?publicId=" + solutionInstructions.getPublicId();
+        }
+        return "/dashboards/" + dashboardId.getId();
+    }
+
+    private String prepareDockerComposeFile(TenantId tenantId, String solutionId, String baseUrl, DeviceId deviceId) {
+        Device device = new Device(deviceId);
+        device.setTenantId(tenantId);
+        String containerName = "tb-gateway-" + solutionId.replace('_', '-');
+        DockerComposeParams params = new DockerComposeParams(false, containerName, false, true, false, false);
+        try (InputStream inputStream = deviceConnectivityService.createGatewayDockerComposeFile(baseUrl, device, params).getInputStream();
+             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))
+        ) {
+            return reader.lines().collect(Collectors.joining("\n"));
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to read or process the docker-compose.yml file.", e);
         }
     }
 
@@ -384,29 +733,6 @@ public class DefaultSolutionService implements SolutionService {
         }
     }
 
-    private String loadSolutionId(Path tempDir) {
-        Path solutionJson = tempDir.resolve("solution.json");
-        if (Files.exists(solutionJson)) {
-            JsonNode node = JacksonUtil.toJsonNode(solutionJson);
-            if (node != null && node.has("title")) {
-                String title = node.get("title").asText("");
-                return title.trim().toLowerCase().replaceAll("[^a-z0-9]+", "-").replaceAll("^-|-$", "");
-            }
-        }
-        return null;
-    }
-
-    private long loadInstallTimeoutMs(Path tempDir) {
-        Path solutionJson = tempDir.resolve("solution.json");
-        if (Files.exists(solutionJson)) {
-            JsonNode node = JacksonUtil.toJsonNode(solutionJson);
-            if (node != null && node.has("installTimeoutMs")) {
-                return node.get("installTimeoutMs").asLong(0L);
-            }
-        }
-        return 0L;
-    }
-
     private void provisionDeviceProfiles(SolutionInstallContext ctx) {
         List<DeviceProfileDefinition> deviceProfiles = loadListOfEntitiesIfFileExists(ctx.getTempDir(), "device_profiles.json", new TypeReference<>() {});
         deviceProfiles.addAll(loadListOfEntitiesFromDirectory(ctx.getTempDir(), "device_profiles", DeviceProfileDefinition.class));
@@ -479,46 +805,6 @@ public class DefaultSolutionService implements SolutionService {
         });
     }
 
-    private Map<Asset, AssetDefinition> provisionAssets(SolutionInstallContext ctx) {
-        Map<Asset, AssetDefinition> result = new HashMap<>();
-        Set<String> assetTypeSet = new HashSet<>();
-        List<AssetDefinition> assets = loadListOfEntitiesIfFileExists(ctx.getTempDir(), "assets.json", new TypeReference<>() {});
-        for (AssetDefinition entityDef : assets) {
-            Asset entity = new Asset();
-            entity.setTenantId(ctx.getTenantId());
-            entity.setName(entityDef.getName());
-            entity.setLabel(entityDef.getLabel());
-            entity.setType(entityDef.getType());
-            if (entityDef.isMakePublic()) {
-                entity.setCustomerId(getPublicCustomerId(ctx));
-            } else {
-                entity.setCustomerId(ctx.getIdFromMap(EntityType.CUSTOMER, entityDef.getCustomer()));
-            }
-            ensureAssetProfileExists(ctx, assetTypeSet, entityDef);
-            entity = assetService.saveAsset(entity);
-            ctx.register(entityDef, entity);
-            log.info("[{}] Saved asset: {}", entity.getId(), entity);
-            AssetId entityId = entity.getId();
-            ctx.putIdToMap(entityDef, entityId);
-            saveServerSideAttributes(ctx, entityId, entityDef.getAttributes());
-            ctx.put(entityId, entityDef.getRelations());
-            result.put(entity, entityDef);
-        }
-        return result;
-    }
-
-    private void ensureAssetProfileExists(SolutionInstallContext ctx, Set<String> assetTypeSet, AssetDefinition entityDef) {
-        if (!assetTypeSet.contains(entityDef.getType())) {
-            AssetProfile assetProfile = assetProfileService.findAssetProfileByName(ctx.getTenantId(), entityDef.getType());
-            if (assetProfile == null) {
-                AssetProfile created = assetProfileService.findOrCreateAssetProfile(ctx.getTenantId(), entityDef.getType());
-                ctx.register(created.getId());
-                log.info("Saved asset profile: {}", created.getId());
-            }
-            assetTypeSet.add(entityDef.getType());
-        }
-    }
-
     private CustomerId getPublicCustomerId(SolutionInstallContext ctx) {
         CustomerId publicId = ctx.getSolutionInstructions().getPublicId();
         if (publicId != null) {
@@ -527,6 +813,79 @@ public class DefaultSolutionService implements SolutionService {
         Customer publicCustomer = customerService.findOrCreatePublicCustomer(ctx.getTenantId());
         ctx.getSolutionInstructions().setPublicId(publicCustomer.getId());
         return publicCustomer.getId();
+    }
+
+    private void provisionDashboards(SolutionInstallContext ctx) {
+        List<DashboardDefinition> dashboardDefs = loadListOfEntitiesIfFileExists(ctx.getTempDir(), "dashboards.json", new TypeReference<>() {});
+        for (DashboardDefinition entityDef : dashboardDefs) {
+            CustomerId customerId = entityDef.isMakePublic() ? getPublicCustomerId(ctx) : ctx.getIdFromMap(EntityType.CUSTOMER, entityDef.getCustomer());
+            Path dashboardPath = ctx.getTempDir().resolve("dashboards").resolve(entityDef.getFile());
+            if (!Files.exists(dashboardPath)) {
+                log.warn("[{}] Dashboard file not found: {}", ctx.getTenantId(), entityDef.getFile());
+                continue;
+            }
+            JsonNode dashboardJson = replaceIds(ctx, JacksonUtil.toJsonNode(dashboardPath));
+            Dashboard dashboardTemplate = JacksonUtil.treeToValue(dashboardJson, Dashboard.class);
+
+            Dashboard dashboard = new Dashboard();
+            dashboard.setTenantId(ctx.getTenantId());
+            dashboard.setTitle(entityDef.getName());
+            dashboard.setConfiguration(dashboardTemplate.getConfiguration());
+            dashboard.setImage(dashboardTemplate.getImage());
+            dashboard.setResources(dashboardTemplate.getResources());
+            if (dashboardJson.has("mobileHide") && dashboardJson.get("mobileHide").isBoolean()) {
+                dashboard.setMobileHide(dashboardJson.get("mobileHide").asBoolean());
+            }
+            if (dashboardJson.has("mobileOrder") && dashboardJson.get("mobileOrder").isInt()) {
+                dashboard.setMobileOrder(dashboardJson.get("mobileOrder").asInt());
+            }
+
+            dashboard = dashboardService.saveDashboard(dashboard);
+            if (customerId != null) {
+                dashboardService.assignDashboardToCustomer(ctx.getTenantId(), dashboard.getId(), customerId);
+            }
+            ctx.register(entityDef, dashboard);
+            ctx.putIdToMap(EntityType.DASHBOARD, entityDef.getName(), dashboard.getId());
+
+            if (entityDef.isMain()) {
+                ctx.getSolutionInstructions().setDashboardId(dashboard.getId());
+                ctx.getSolutionInstructions().setMainDashboardPublic(entityDef.isMakePublic());
+            }
+            ctx.getDashboardLinks().add(new DashboardLinkInfo(dashboard.getTitle(), dashboard.getId(), entityDef.isMakePublic()));
+
+            log.debug("[{}] Dashboard provisioned: {}", ctx.getTenantId(), dashboard.getTitle());
+        }
+    }
+
+    private void provisionRelations(SolutionInstallContext ctx) {
+        ctx.getRelationDefinitions().forEach((id, relations) -> {
+            for (RelationDefinition relationDef : relations) {
+                log.info("[{}] Saving relation: {}", id, relationDef);
+                EntityRelation entityRelation = new EntityRelation();
+                EntityId otherId = resolveRelatedEntityId(relationDef, ctx);
+                if (EntitySearchDirection.FROM.equals(relationDef.getDirection())) {
+                    entityRelation.setFrom(otherId);
+                    entityRelation.setTo(id);
+                } else {
+                    entityRelation.setFrom(id);
+                    entityRelation.setTo(otherId);
+                }
+                entityRelation.setTypeGroup(RelationTypeGroup.COMMON);
+                entityRelation.setType(relationDef.getType());
+                try {
+                    relationService.save(ctx.getTenantId(), null, entityRelation, null);
+                } catch (Exception e) {
+                    log.info("[{}] Failed to save relation: {}, cause: {}", id, relationDef, e.getMessage());
+                }
+            }
+        });
+    }
+
+    private EntityId resolveRelatedEntityId(RelationDefinition relationDef, SolutionInstallContext ctx) {
+        if (relationDef.getEntityType() == EntityType.TENANT) {
+            return ctx.getTenantId();
+        }
+        return ctx.getIdFromMap(relationDef.getEntityType(), relationDef.getEntityName());
     }
 
     private Map<Device, DeviceDefinition> provisionDevices(SolutionInstallContext ctx) {
@@ -577,6 +936,115 @@ public class DefaultSolutionService implements SolutionService {
                 log.info("Saved device profile: {}", created.getId());
             }
             deviceTypeSet.add(entityDef.getType());
+        }
+    }
+
+    private void registerEmulatorsAndComputeOldestTelemetryTs(SolutionInstallContext ctx) {
+        List<EmulatorDefinition> emulatorDefinitions = loadListOfEntitiesIfFileExists(ctx.getTempDir(), "device_emulators.json", new TypeReference<>() {
+        });
+        Map<String, EmulatorDefinition> deviceEmulators = emulatorDefinitions.stream().collect(Collectors.toMap(EmulatorDefinition::getName, Function.identity()));
+        emulatorDefinitions.stream().filter(ed -> StringUtils.isNotEmpty(ed.getExtendz()))
+                .forEach(ed -> {
+                    EmulatorDefinition parent = deviceEmulators.get(ed.getExtendz());
+                    if (parent != null) {
+                        ed.enrich(parent);
+                    }
+                });
+        Map<String, EmulatorDefinition> assetEmulators = loadListOfEntitiesIfFileExists(ctx.getTempDir(), "asset_emulators.json", new TypeReference<List<EmulatorDefinition>>() {
+        }).stream().collect(Collectors.toMap(EmulatorDefinition::getName, Function.identity()));
+
+        ctx.setDeviceEmulators(deviceEmulators);
+        ctx.setAssetEmulators(assetEmulators);
+
+        long solutionInstallTs = ctx.getInstallTs();
+        long oldestDeviceEmulatorsTs = deviceEmulators.values().stream()
+                .mapToLong(value -> value.getOldestTs(solutionInstallTs))
+                .min().orElse(solutionInstallTs);
+        long oldestAssetEmulatorsTs = assetEmulators.values().stream()
+                .mapToLong(value -> value.getOldestTs(solutionInstallTs))
+                .min().orElse(solutionInstallTs);
+        long solutionOldestTs = Math.min(oldestDeviceEmulatorsTs, oldestAssetEmulatorsTs);
+
+        ctx.setOldestTelemetryTs(solutionOldestTs);
+    }
+
+    private Set<CompletableFuture<Void>> launchEmulators(SolutionInstallContext ctx, Map<Device, DeviceDefinition> devicesMap, Map<Asset, AssetDefinition> assets) throws Exception {
+        Set<CompletableFuture<Void>> results = new HashSet<>();
+
+        for (var entry : devicesMap.entrySet().stream().filter(e -> StringUtils.isNotBlank(e.getValue().getEmulator())).collect(Collectors.toSet())) {
+            results.add(DeviceEmulatorLauncher.builder()
+                    .entity(entry.getKey())
+                    .emulatorDefinition(ctx.getDeviceEmulators().get(entry.getValue().getEmulator()))
+                    .oldTelemetryExecutor(emulatorExecutor)
+                    .tbClusterService(tbClusterService)
+                    .partitionService(partitionService)
+                    .tbQueueProducerProvider(tbQueueProducerProvider)
+                    .serviceInfoProvider(serviceInfoProvider)
+                    .tsSubService(tsSubService)
+                    .build().launch());
+        }
+
+        for (var entry : assets.entrySet().stream().filter(e -> StringUtils.isNotBlank(e.getValue().getEmulator())).collect(Collectors.toSet())) {
+            results.add(AssetEmulatorLauncher.builder()
+                    .entity(entry.getKey())
+                    .emulatorDefinition(ctx.getAssetEmulators().get(entry.getValue().getEmulator()))
+                    .oldTelemetryExecutor(emulatorExecutor)
+                    .tbClusterService(tbClusterService)
+                    .partitionService(partitionService)
+                    .tbQueueProducerProvider(tbQueueProducerProvider)
+                    .serviceInfoProvider(serviceInfoProvider)
+                    .tsSubService(tsSubService)
+                    .build().launch());
+        }
+
+        return results;
+    }
+
+    private void provisionTenantDetails(SolutionInstallContext ctx) {
+        TenantDefinition tenant = loadEntityIfFileExists(ctx.getTempDir(), "tenant.json", TenantDefinition.class);
+        if (tenant != null) {
+            saveServerSideAttributes(ctx, ctx.getTenantId(), tenant.getAttributes());
+            ctx.put(ctx.getTenantId(), tenant.getRelations());
+        }
+    }
+
+    private Map<Asset, AssetDefinition> provisionAssets(SolutionInstallContext ctx) {
+        Map<Asset, AssetDefinition> result = new HashMap<>();
+        Set<String> assetTypeSet = new HashSet<>();
+        List<AssetDefinition> assets = loadListOfEntitiesIfFileExists(ctx.getTempDir(), "assets.json", new TypeReference<>() {});
+        for (AssetDefinition entityDef : assets) {
+            Asset entity = new Asset();
+            entity.setTenantId(ctx.getTenantId());
+            entity.setName(entityDef.getName());
+            entity.setLabel(entityDef.getLabel());
+            entity.setType(entityDef.getType());
+            if (entityDef.isMakePublic()) {
+                entity.setCustomerId(getPublicCustomerId(ctx));
+            } else {
+                entity.setCustomerId(ctx.getIdFromMap(EntityType.CUSTOMER, entityDef.getCustomer()));
+            }
+            ensureAssetProfileExists(ctx, assetTypeSet, entityDef);
+            entity = assetService.saveAsset(entity);
+            ctx.register(entityDef, entity);
+            log.info("[{}] Saved asset: {}", entity.getId(), entity);
+            AssetId entityId = entity.getId();
+            ctx.putIdToMap(entityDef, entityId);
+            saveServerSideAttributes(ctx, entityId, entityDef.getAttributes());
+            ctx.put(entityId, entityDef.getRelations());
+            result.put(entity, entityDef);
+        }
+        return result;
+    }
+
+    private void ensureAssetProfileExists(SolutionInstallContext ctx, Set<String> assetTypeSet, AssetDefinition entityDef) {
+        if (!assetTypeSet.contains(entityDef.getType())) {
+            AssetProfile assetProfile = assetProfileService.findAssetProfileByName(ctx.getTenantId(), entityDef.getType());
+            if (assetProfile == null) {
+                AssetProfile created = assetProfileService.findOrCreateAssetProfile(ctx.getTenantId(), entityDef.getType());
+                ctx.register(created.getId());
+                log.info("Saved asset profile: {}", created.getId());
+            }
+            assetTypeSet.add(entityDef.getType());
         }
     }
 
@@ -855,364 +1323,6 @@ public class DefaultSolutionService implements SolutionService {
         return calculatedFieldService.save(calculatedField);
     }
 
-    private void provisionTenantDetails(SolutionInstallContext ctx) {
-        TenantDefinition tenant = loadEntityIfFileExists(ctx.getTempDir(), "tenant.json", TenantDefinition.class);
-        if (tenant != null) {
-            saveServerSideAttributes(ctx, ctx.getTenantId(), tenant.getAttributes());
-            ctx.put(ctx.getTenantId(), tenant.getRelations());
-        }
-    }
-
-    private void registerEmulatorsAndComputeOldestTelemetryTs(SolutionInstallContext ctx) {
-        List<EmulatorDefinition> emulatorDefinitions = loadListOfEntitiesIfFileExists(ctx.getTempDir(), "device_emulators.json", new TypeReference<>() {
-        });
-        Map<String, EmulatorDefinition> deviceEmulators = emulatorDefinitions.stream().collect(Collectors.toMap(EmulatorDefinition::getName, Function.identity()));
-        emulatorDefinitions.stream().filter(ed -> StringUtils.isNotEmpty(ed.getExtendz()))
-                .forEach(ed -> {
-                    EmulatorDefinition parent = deviceEmulators.get(ed.getExtendz());
-                    if (parent != null) {
-                        ed.enrich(parent);
-                    }
-                });
-        Map<String, EmulatorDefinition> assetEmulators = loadListOfEntitiesIfFileExists(ctx.getTempDir(), "asset_emulators.json", new TypeReference<List<EmulatorDefinition>>() {
-        }).stream().collect(Collectors.toMap(EmulatorDefinition::getName, Function.identity()));
-
-        ctx.setDeviceEmulators(deviceEmulators);
-        ctx.setAssetEmulators(assetEmulators);
-
-        long solutionInstallTs = ctx.getInstallTs();
-        long oldestDeviceEmulatorsTs = deviceEmulators.values().stream()
-                .mapToLong(value -> value.getOldestTs(solutionInstallTs))
-                .min().orElse(solutionInstallTs);
-        long oldestAssetEmulatorsTs = assetEmulators.values().stream()
-                .mapToLong(value -> value.getOldestTs(solutionInstallTs))
-                .min().orElse(solutionInstallTs);
-        long solutionOldestTs = Math.min(oldestDeviceEmulatorsTs, oldestAssetEmulatorsTs);
-
-        ctx.setOldestTelemetryTs(solutionOldestTs);
-    }
-
-    private Set<CompletableFuture<Void>> launchEmulators(SolutionInstallContext ctx, Map<Device, DeviceDefinition> devicesMap, Map<Asset, AssetDefinition> assets) throws Exception {
-        Set<CompletableFuture<Void>> results = new HashSet<>();
-
-        for (var entry : devicesMap.entrySet().stream().filter(e -> StringUtils.isNotBlank(e.getValue().getEmulator())).collect(Collectors.toSet())) {
-            results.add(DeviceEmulatorLauncher.builder()
-                    .entity(entry.getKey())
-                    .emulatorDefinition(ctx.getDeviceEmulators().get(entry.getValue().getEmulator()))
-                    .oldTelemetryExecutor(emulatorExecutor)
-                    .tbClusterService(tbClusterService)
-                    .partitionService(partitionService)
-                    .tbQueueProducerProvider(tbQueueProducerProvider)
-                    .serviceInfoProvider(serviceInfoProvider)
-                    .tsSubService(tsSubService)
-                    .build().launch());
-        }
-
-        for (var entry : assets.entrySet().stream().filter(e -> StringUtils.isNotBlank(e.getValue().getEmulator())).collect(Collectors.toSet())) {
-            results.add(AssetEmulatorLauncher.builder()
-                    .entity(entry.getKey())
-                    .emulatorDefinition(ctx.getAssetEmulators().get(entry.getValue().getEmulator()))
-                    .oldTelemetryExecutor(emulatorExecutor)
-                    .tbClusterService(tbClusterService)
-                    .partitionService(partitionService)
-                    .tbQueueProducerProvider(tbQueueProducerProvider)
-                    .serviceInfoProvider(serviceInfoProvider)
-                    .tsSubService(tsSubService)
-                    .build().launch());
-        }
-
-        return results;
-    }
-
-    private void waitForTelemetryCompletion(Set<CompletableFuture<Void>> futures) throws InterruptedException {
-        CompletableFuture<Void> all = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
-        try {
-            all.get();
-            Thread.sleep(futures.size() * 100L);
-        } catch (ExecutionException e) {
-            throw new RuntimeException("Telemetry processing failed", e.getCause());
-        }
-    }
-
-    private void provisionDashboards(SolutionInstallContext ctx) {
-        List<DashboardDefinition> dashboardDefs = loadListOfEntitiesIfFileExists(ctx.getTempDir(), "dashboards.json", new TypeReference<>() {});
-        for (DashboardDefinition entityDef : dashboardDefs) {
-            CustomerId customerId = entityDef.isMakePublic() ? getPublicCustomerId(ctx) : ctx.getIdFromMap(EntityType.CUSTOMER, entityDef.getCustomer());
-            Path dashboardPath = ctx.getTempDir().resolve("dashboards").resolve(entityDef.getFile());
-            if (!Files.exists(dashboardPath)) {
-                log.warn("[{}] Dashboard file not found: {}", ctx.getTenantId(), entityDef.getFile());
-                continue;
-            }
-            JsonNode dashboardJson = replaceIds(ctx, JacksonUtil.toJsonNode(dashboardPath));
-            Dashboard dashboardTemplate = JacksonUtil.treeToValue(dashboardJson, Dashboard.class);
-
-            Dashboard dashboard = new Dashboard();
-            dashboard.setTenantId(ctx.getTenantId());
-            dashboard.setTitle(entityDef.getName());
-            dashboard.setConfiguration(dashboardTemplate.getConfiguration());
-            dashboard.setImage(dashboardTemplate.getImage());
-            dashboard.setResources(dashboardTemplate.getResources());
-            if (dashboardJson.has("mobileHide") && dashboardJson.get("mobileHide").isBoolean()) {
-                dashboard.setMobileHide(dashboardJson.get("mobileHide").asBoolean());
-            }
-            if (dashboardJson.has("mobileOrder") && dashboardJson.get("mobileOrder").isInt()) {
-                dashboard.setMobileOrder(dashboardJson.get("mobileOrder").asInt());
-            }
-
-            dashboard = dashboardService.saveDashboard(dashboard);
-            if (customerId != null) {
-                dashboardService.assignDashboardToCustomer(ctx.getTenantId(), dashboard.getId(), customerId);
-            }
-            ctx.register(entityDef, dashboard);
-            ctx.putIdToMap(EntityType.DASHBOARD, entityDef.getName(), dashboard.getId());
-
-            if (entityDef.isMain()) {
-                ctx.getSolutionInstructions().setDashboardId(dashboard.getId());
-                ctx.getSolutionInstructions().setMainDashboardPublic(entityDef.isMakePublic());
-            }
-            ctx.getDashboardLinks().add(new DashboardLinkInfo(dashboard.getTitle(), dashboard.getId(), entityDef.isMakePublic()));
-
-            log.debug("[{}] Dashboard provisioned: {}", ctx.getTenantId(), dashboard.getTitle());
-        }
-    }
-
-    private void provisionRelations(SolutionInstallContext ctx) {
-        ctx.getRelationDefinitions().forEach((id, relations) -> {
-            for (RelationDefinition relationDef : relations) {
-                log.info("[{}] Saving relation: {}", id, relationDef);
-                EntityRelation entityRelation = new EntityRelation();
-                EntityId otherId = resolveRelatedEntityId(relationDef, ctx);
-                if (EntitySearchDirection.FROM.equals(relationDef.getDirection())) {
-                    entityRelation.setFrom(otherId);
-                    entityRelation.setTo(id);
-                } else {
-                    entityRelation.setFrom(id);
-                    entityRelation.setTo(otherId);
-                }
-                entityRelation.setTypeGroup(RelationTypeGroup.COMMON);
-                entityRelation.setType(relationDef.getType());
-                try {
-                    relationService.save(ctx.getTenantId(), null, entityRelation, null);
-                } catch (Exception e) {
-                    log.info("[{}] Failed to save relation: {}, cause: {}", id, relationDef, e.getMessage());
-                }
-            }
-        });
-    }
-
-    private EntityId resolveRelatedEntityId(RelationDefinition relationDef, SolutionInstallContext ctx) {
-        if (relationDef.getEntityType() == EntityType.TENANT) {
-            return ctx.getTenantId();
-        }
-        return ctx.getIdFromMap(relationDef.getEntityType(), relationDef.getEntityName());
-    }
-
-    private String prepareInstructions(SolutionInstallContext ctx, HttpServletRequest request) {
-        Path instructionsFile = ctx.getTempDir().resolve("instructions.md");
-        if (!Files.exists(instructionsFile)) {
-            return null;
-        }
-        String template;
-        try {
-            template = Files.readString(instructionsFile);
-        } catch (IOException e) {
-            log.warn("[{}] Failed to read instructions.md", ctx.getTenantId(), e);
-            return null;
-        }
-
-        String baseUrl = systemSecurityService.getBaseUrl(ctx.getTenantId(), null, request);
-
-        // Inject edge instructions first, then run the full replacement logic on the combined string
-        if (template.contains("${edge_instructions}")) {
-            if (ctx.getCreatedEdges().isEmpty()) {
-                template = template.replace("${edge_instructions}", "");
-            } else {
-                Path edgeFile = ctx.getTempDir().resolve("edge_instructions.md");
-                String edgeTemplate = Files.exists(edgeFile) ? readFileContent(edgeFile) : "";
-                template = template.replace("${edge_instructions}", edgeTemplate);
-            }
-        }
-
-        template = template.replace("${DOCS_BASE_URL}", docsBaseUrl);
-        template = template.replace("${BASE_URL}", baseUrl);
-
-        TenantSolutionTemplateInstructions solutionInstructions = ctx.getSolutionInstructions();
-
-        if (solutionInstructions.getDashboardId() != null) {
-            template = template.replace("${MAIN_DASHBOARD_URL}",
-                    getDashboardLink(solutionInstructions, solutionInstructions.getDashboardId(), false));
-            if (solutionInstructions.isMainDashboardPublic()) {
-                template = template.replace("${MAIN_DASHBOARD_PUBLIC_URL}",
-                        getDashboardLink(solutionInstructions, solutionInstructions.getDashboardId(), true));
-            }
-        }
-
-        for (DashboardLinkInfo dashboardLinkInfo : ctx.getDashboardLinks()) {
-            template = template.replace("${" + dashboardLinkInfo.getName() + "DASHBOARD_URL}",
-                    getDashboardLink(solutionInstructions, dashboardLinkInfo.getDashboardId(), false));
-            if (dashboardLinkInfo.isPublic()) {
-                template = template.replace("${" + dashboardLinkInfo.getName() + "DASHBOARD_PUBLIC_URL}",
-                        getDashboardLink(solutionInstructions, dashboardLinkInfo.getDashboardId(), true));
-            }
-        }
-
-        if (template.contains("${GATEWAYS_URL}")) {
-            template = template.replace("${GATEWAYS_URL}", "/gateways");
-        }
-
-        // Device list and credentials
-        StringBuilder devList = new StringBuilder();
-        devList.append("| Device name | Access token | Owner |");
-        devList.append(System.lineSeparator());
-        devList.append("| :---   | :---  | :---  |");
-        devList.append(System.lineSeparator());
-
-        for (DeviceCredentialsInfo credentialsInfo : ctx.getCreatedDevices().values()) {
-            devList.append("|").append(credentialsInfo.getName())
-                    .append("|").append(credentialsInfo.getCredentials().getCredentialsId()).append("{:copy-code}")
-                    .append("|").append(credentialsInfo.getCustomerName() != null ? credentialsInfo.getCustomerName() : "Tenant");
-            devList.append(System.lineSeparator());
-
-            template = template.replace("${" + credentialsInfo.getName() + "ACCESS_TOKEN}", credentialsInfo.getCredentials().getCredentialsId());
-
-            if (credentialsInfo.isGateway()) {
-                template = template.replace("${DOCKER_CONFIG}",
-                        prepareDockerComposeFile(ctx.getTenantId(), ctx.getSolutionId(), baseUrl, credentialsInfo.getCredentials().getDeviceId()));
-            }
-        }
-
-        template = template.replace("${device_list_and_credentials}", devList.toString());
-
-        // User list (without user group column)
-        StringBuilder userList = new StringBuilder();
-        userList.append("| Name | Login | Password | Customer name |");
-        userList.append(System.lineSeparator());
-        userList.append("| :---  | :---  | :---  | :---  |");
-        userList.append(System.lineSeparator());
-
-        for (UserCredentialsInfo credentialsInfo : ctx.getCreatedUsers().values()) {
-            userList.append("|").append(credentialsInfo.getName())
-                    .append("|").append(credentialsInfo.getLogin()).append("{:copy-code}")
-                    .append("|").append(credentialsInfo.getPassword()).append("{:copy-code}")
-                    .append("|").append(credentialsInfo.getCustomerName() != null ? credentialsInfo.getCustomerName() : "");
-            userList.append(System.lineSeparator());
-        }
-
-        template = template.replace("${user_list}", userList.toString());
-
-        // Edge detail URLs
-        for (Map.Entry<String, EdgeLinkInfo> edgeLinkInfoEntry : ctx.getCreatedEdges().entrySet()) {
-            EdgeLinkInfo edgeLinkInfo = edgeLinkInfoEntry.getValue();
-            StringBuilder edgeDetailsUrl = new StringBuilder();
-            if (EntityType.CUSTOMER.equals(edgeLinkInfo.getOwnerId().getEntityType())) {
-                edgeDetailsUrl.append("/customers/").append(edgeLinkInfo.getOwnerId().getId());
-                edgeDetailsUrl.append("/edgeInstances/").append(edgeLinkInfo.getEdgeId().getId());
-            } else {
-                edgeDetailsUrl.append("/edgeManagement/instances/").append(edgeLinkInfo.getEdgeId().getId());
-            }
-            String edgeName = edgeLinkInfoEntry.getKey();
-            String edgeDetailsPlaceholder = "${" + edgeName + "EDGE_DETAILS_URL}";
-            template = template.replace(edgeDetailsPlaceholder, edgeDetailsUrl.toString());
-        }
-
-        template = replaceAlarmRules(ctx, template);
-        template = replaceCalculatedFields(ctx, template);
-        template = replaceCreatedEntities(ctx, template);
-
-        return template;
-    }
-
-    private static String replaceAlarmRules(SolutionInstallContext ctx, String template) {
-        StringBuilder alarmRules = new StringBuilder();
-
-        alarmRules.append("| Entity Profile Name | Alarm Type | Severities |").append(System.lineSeparator());
-        alarmRules.append("| :--- | :--- | :--- |").append(System.lineSeparator());
-
-        ctx.getCreatedAlarmRules().entrySet().stream()
-                .sorted(Map.Entry.comparingByValue(Comparator.comparing(CreatedAlarmRuleInfo::entityName, String.CASE_INSENSITIVE_ORDER)
-                        .thenComparing(CreatedAlarmRuleInfo::alarmType, String.CASE_INSENSITIVE_ORDER)))
-                .forEach(entry -> {
-                    UUID key = entry.getKey();
-                    var alarmRuleInfo = entry.getValue();
-
-                    String alarmType = alarmRuleInfo.alarmType();
-                    String link = alarmRuleInfo.getCfPageLink(key);
-
-                    String alarmTypeWithLink = "<a href=\"" + link + "\" target=\"_blank\">" + alarmType + "</a>";
-
-                    String profileName = alarmRuleInfo.entityId() != null ?
-                            "<a href=\"" + alarmRuleInfo.getEntityPageLink() + "\" target=\"_blank\">" + alarmRuleInfo.entityName() + "</a>"
-                            : alarmRuleInfo.entityName();
-
-                    alarmRules.append("|")
-                            .append(profileName).append("|")
-                            .append(alarmTypeWithLink).append("|")
-                            .append(alarmRuleInfo.severities()).append("|")
-                            .append(System.lineSeparator());
-                });
-
-        return template.replace("${alarm_rules}", alarmRules.toString());
-    }
-
-    private static String replaceCalculatedFields(SolutionInstallContext ctx, String template) {
-        StringBuilder calculatedFields = new StringBuilder();
-
-        calculatedFields.append("| Entity Profile Name | Field Name | Field Type |").append(System.lineSeparator());
-        calculatedFields.append("| :--- | :--- | :--- |").append(System.lineSeparator());
-
-        ctx.getCreatedCalculatedFields().entrySet().stream()
-                .sorted(Map.Entry.comparingByValue(
-                        Comparator.comparing(CreatedCalculatedFieldInfo::entityName, String.CASE_INSENSITIVE_ORDER)
-                                .thenComparing(CreatedCalculatedFieldInfo::name, String.CASE_INSENSITIVE_ORDER)
-                ))
-                .forEach(entry -> {
-                    UUID key = entry.getKey();
-                    var cfInfo = entry.getValue();
-
-                    String cfTitle = cfInfo.name();
-                    String link = cfInfo.getCfPageLink(key);
-
-                    String cfTitleWithLink = "<a href=\"" + link + "\" target=\"_blank\">" + cfTitle + "</a>";
-
-                    String profileName = cfInfo.entityId() != null ?
-                            "<a href=\"" + cfInfo.getEntityPageLink() + "\" target=\"_blank\">" + cfInfo.entityName() + "</a>"
-                            : cfInfo.entityName();
-
-                    calculatedFields.append("|")
-                            .append(profileName).append("|")
-                            .append(cfTitleWithLink).append("|")
-                            .append(cfInfo.type()).append("|")
-                            .append(System.lineSeparator());
-                });
-
-        return template.replace("${calculated_fields}", calculatedFields.toString());
-    }
-
-    private static String replaceCreatedEntities(SolutionInstallContext ctx, String template) {
-        StringBuilder entityList = new StringBuilder();
-
-        entityList.append("| Name | Type | Owner |").append(System.lineSeparator());
-        entityList.append("| :--- | :--- | :--- |").append(System.lineSeparator());
-
-        for (Map.Entry<UUID, CreatedEntityInfo> entry : ctx.getCreatedEntities().entrySet()) {
-            UUID key = entry.getKey();
-            var entityInfo = entry.getValue();
-            String link = entityInfo.getEntityPageLink(key);
-            String entityName = entityInfo.getName();
-
-            String name = link != null ?
-                    "<a href=\"" + link + "\" target=\"_blank\">" + entityName + "</a>"
-                    : entityName;
-
-            entityList.append("|")
-                    .append(name).append("|")
-                    .append(entityInfo.getType().getNormalName()).append("|")
-                    .append(entityInfo.getOwner()).append("|")
-                    .append(System.lineSeparator());
-        }
-        return template.replace("${all_entities}", entityList.toString());
-    }
-
     private RandomNameData generateRandomName(SolutionInstallContext ctx) {
         int i = 0;
         while (i < 10) {
@@ -1322,41 +1432,117 @@ public class DefaultSolutionService implements SolutionService {
         return String.valueOf(now.toInstant().toEpochMilli());
     }
 
-    private String getDashboardLink(TenantSolutionTemplateInstructions solutionInstructions, DashboardId dashboardId, boolean isPublic) {
-        if (isPublic && solutionInstructions.getPublicId() != null) {
-            return "/dashboard/" + dashboardId.getId() + "?publicId=" + solutionInstructions.getPublicId();
-        }
-        return "/dashboards/" + dashboardId.getId();
+    private String getTypeLabel(EntityType type) {
+        return type.name().toLowerCase().replace('_', ' ');
     }
 
-    private String prepareDockerComposeFile(TenantId tenantId, String solutionId, String baseUrl, DeviceId deviceId) {
-        Device device = new Device(deviceId);
-        device.setTenantId(tenantId);
-        String containerName = "tb-gateway-" + solutionId.replace('_', '-');
-        DockerComposeParams params = new DockerComposeParams(false, containerName, false, true, false, false);
-        try (InputStream inputStream = deviceConnectivityService.createGatewayDockerComposeFile(baseUrl, device, params).getInputStream();
-             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))
-        ) {
-            return reader.lines().collect(Collectors.joining("\n"));
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to read or process the docker-compose.yml file.", e);
+    private <T> T loadEntityIfFileExists(Path tempDir, String fileName, Class<T> clazz) {
+        Path filePath = tempDir.resolve("entities").resolve(fileName);
+        if (Files.exists(filePath)) {
+            return JacksonUtil.readValue(filePath.toFile(), clazz);
+        } else {
+            return null;
         }
     }
 
-    private void rollback(TenantId tenantId, SolutionInstallContext ctx, Throwable e) {
-        List<EntityId> createdEntities = ctx.getCreatedEntitiesList();
-        Collections.reverse(createdEntities);
-        for (EntityId entityId : createdEntities) {
+    private <T> List<T> loadListOfEntitiesIfFileExists(Path tempDir, String fileName, TypeReference<List<T>> typeReference) {
+        Path filePath = tempDir.resolve("entities").resolve(fileName);
+        if (Files.exists(filePath)) {
             try {
-                deleteEntity(tenantId, entityId, ctx.getUser());
-            } catch (RuntimeException re) {
-                log.error("[{}] Failed to delete the entity: {}", tenantId, entityId, re);
+                return JacksonUtil.readValue(filePath.toFile(), typeReference);
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Invalid json file " + fileName + " data structure", e);
+            }
+        } else {
+            return new ArrayList<>();
+        }
+    }
+
+    private <T> List<T> loadListOfEntitiesFromDirectory(Path tempDir, String dirName, Class<T> clazz) {
+        Path dirPath = tempDir.resolve(dirName);
+        if (Files.exists(dirPath) && Files.isDirectory(dirPath)) {
+            List<T> result = new ArrayList<>();
+            try {
+                for (Path filePath : Files.list(dirPath).collect(Collectors.toList())) {
+                    try {
+                        result.add(JacksonUtil.readValue(filePath.toFile(), clazz));
+                    } catch (Exception e) {
+                        throw new IllegalArgumentException("Invalid json file " + filePath.getFileName() + " data structure", e);
+                    }
+                }
+            } catch (IOException e) {
+                log.warn("Failed to read directory: {}", dirName, e);
+                throw new RuntimeException(e);
+            }
+            return result;
+        } else {
+            return new ArrayList<>();
+        }
+    }
+
+    private String loadSolutionId(Path tempDir) {
+        Path solutionJson = tempDir.resolve("solution.json");
+        if (Files.exists(solutionJson)) {
+            JsonNode node = JacksonUtil.toJsonNode(solutionJson);
+            if (node != null && node.has("title")) {
+                String title = node.get("title").asText("");
+                return title.trim().toLowerCase().replaceAll("[^a-z0-9]+", "-").replaceAll("^-|-$", "");
             }
         }
-        ctx.getSolutionInstructions().setDetails(e.getMessage());
+        return null;
     }
 
-    private void deleteEntity(TenantId tenantId, EntityId entityId, SecurityUser user) {
+    private long loadInstallTimeoutMs(Path tempDir) {
+        Path solutionJson = tempDir.resolve("solution.json");
+        if (Files.exists(solutionJson)) {
+            JsonNode node = JacksonUtil.toJsonNode(solutionJson);
+            if (node != null && node.has("installTimeoutMs")) {
+                return node.get("installTimeoutMs").asLong(0L);
+            }
+        }
+        return 0L;
+    }
+
+    private static void extractZip(byte[] zipData, Path destDir) throws IOException {
+        try (ZipInputStream zis = new ZipInputStream(new ByteArrayInputStream(zipData))) {
+            ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                Path entryPath = destDir.resolve(entry.getName()).normalize();
+                if (!entryPath.startsWith(destDir)) {
+                    throw new IOException("ZIP entry outside of target directory: " + entry.getName());
+                }
+                if (entry.isDirectory()) {
+                    Files.createDirectories(entryPath);
+                } else {
+                    Files.createDirectories(entryPath.getParent());
+                    Files.write(entryPath, zis.readAllBytes());
+                }
+                zis.closeEntry();
+            }
+        }
+    }
+
+    private static void deleteDirectory(Path dir) {
+        try {
+            Files.walkFileTree(dir, new SimpleFileVisitor<>() {
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    Files.delete(file);
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult postVisitDirectory(Path d, IOException exc) throws IOException {
+                    Files.delete(d);
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        } catch (IOException e) {
+            log.warn("Failed to clean up temp directory: {}", dir, e);
+        }
+    }
+
+    private void deleteEntity(TenantId tenantId, EntityId entityId, User user) {
         try {
             List<AlarmId> alarmIds = alarmService.findAlarms(tenantId, new AlarmQuery(entityId, new TimePageLink(Integer.MAX_VALUE), null, null, null, false))
                     .getData().stream().map(AlarmInfo::getId).collect(Collectors.toList());
@@ -1436,89 +1622,6 @@ public class DefaultSolutionService implements SolutionService {
         } catch (IOException e) {
             log.warn("Failed to read file: {}", path, e);
             return "";
-        }
-    }
-
-    private <T> T loadEntityIfFileExists(Path tempDir, String fileName, Class<T> clazz) {
-        Path filePath = tempDir.resolve("entities").resolve(fileName);
-        if (Files.exists(filePath)) {
-            return JacksonUtil.readValue(filePath.toFile(), clazz);
-        } else {
-            return null;
-        }
-    }
-
-    private <T> List<T> loadListOfEntitiesIfFileExists(Path tempDir, String fileName, TypeReference<List<T>> typeReference) {
-        Path filePath = tempDir.resolve("entities").resolve(fileName);
-        if (Files.exists(filePath)) {
-            try {
-                return JacksonUtil.readValue(filePath.toFile(), typeReference);
-            } catch (Exception e) {
-                throw new IllegalArgumentException("Invalid json file " + fileName + " data structure", e);
-            }
-        } else {
-            return new ArrayList<>();
-        }
-    }
-
-    private <T> List<T> loadListOfEntitiesFromDirectory(Path tempDir, String dirName, Class<T> clazz) {
-        Path dirPath = tempDir.resolve(dirName);
-        if (Files.exists(dirPath) && Files.isDirectory(dirPath)) {
-            List<T> result = new ArrayList<>();
-            try {
-                for (Path filePath : Files.list(dirPath).collect(Collectors.toList())) {
-                    try {
-                        result.add(JacksonUtil.readValue(filePath.toFile(), clazz));
-                    } catch (Exception e) {
-                        throw new IllegalArgumentException("Invalid json file " + filePath.getFileName() + " data structure", e);
-                    }
-                }
-            } catch (IOException e) {
-                log.warn("Failed to read directory: {}", dirName, e);
-                throw new RuntimeException(e);
-            }
-            return result;
-        } else {
-            return new ArrayList<>();
-        }
-    }
-
-    private static void extractZip(byte[] zipData, Path destDir) throws IOException {
-        try (ZipInputStream zis = new ZipInputStream(new ByteArrayInputStream(zipData))) {
-            ZipEntry entry;
-            while ((entry = zis.getNextEntry()) != null) {
-                Path entryPath = destDir.resolve(entry.getName()).normalize();
-                if (!entryPath.startsWith(destDir)) {
-                    throw new IOException("ZIP entry outside of target directory: " + entry.getName());
-                }
-                if (entry.isDirectory()) {
-                    Files.createDirectories(entryPath);
-                } else {
-                    Files.createDirectories(entryPath.getParent());
-                    Files.write(entryPath, zis.readAllBytes());
-                }
-                zis.closeEntry();
-            }
-        }
-    }
-
-    private static void deleteDirectory(Path dir) {
-        try {
-            Files.walkFileTree(dir, new SimpleFileVisitor<>() {
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    Files.delete(file);
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult postVisitDirectory(Path d, IOException exc) throws IOException {
-                    Files.delete(d);
-                    return FileVisitResult.CONTINUE;
-                }
-            });
-        } catch (IOException e) {
-            log.warn("Failed to clean up temp directory: {}", dir, e);
         }
     }
 

@@ -32,12 +32,16 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
+import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
+import org.thingsboard.server.service.install.DatabaseSchemaSettingsService;
 import org.thingsboard.server.service.install.InstallScripts;
 import org.thingsboard.server.service.system.SystemPatchApplier;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -72,7 +76,13 @@ public class SystemPatchApplierTest {
     private InstallScripts installScripts;
 
     @Mock
+    private DatabaseSchemaSettingsService schemaSettingsService;
+
+    @Mock
     private WidgetTypeService widgetTypeService;
+
+    @Mock
+    private ImageService imageService;
 
     @InjectMocks
     private SystemPatchApplier reconciler;
@@ -373,6 +383,247 @@ public class SystemPatchApplierTest {
         verify(widgetTypeService, times(1)).saveWidgetType(any());
     }
 
+    // --- isVersionIncreased tests ---
+
+    @ParameterizedTest(name = "isVersionIncreased: {0} (package={1}, db={2}) -> {3}")
+    @MethodSource("provideVersionComparisonTestCases")
+    void testIsVersionIncreased(String testName, SystemPatchApplier.VersionInfo packageVersion,
+                                SystemPatchApplier.VersionInfo dbVersion, boolean expected) {
+        Boolean result = ReflectionTestUtils.invokeMethod(reconciler, "isVersionIncreased", packageVersion, dbVersion);
+        assertEquals(expected, result, testName);
+    }
+
+    private static Stream<Arguments> provideVersionComparisonTestCases() {
+        return Stream.of(
+                // Maintenance digit increases within same LTS family
+                Arguments.of("maintenance increased",
+                        new SystemPatchApplier.VersionInfo(4, 3, 1, 0),
+                        new SystemPatchApplier.VersionInfo(4, 3, 0, 0), true),
+                Arguments.of("maintenance increased by more than one",
+                        new SystemPatchApplier.VersionInfo(4, 3, 3, 0),
+                        new SystemPatchApplier.VersionInfo(4, 3, 0, 0), true),
+
+                // Patch digit increases within same maintenance
+                Arguments.of("patch increased",
+                        new SystemPatchApplier.VersionInfo(4, 3, 0, 1),
+                        new SystemPatchApplier.VersionInfo(4, 3, 0, 0), true),
+                Arguments.of("patch increased by more than one",
+                        new SystemPatchApplier.VersionInfo(4, 3, 0, 5),
+                        new SystemPatchApplier.VersionInfo(4, 3, 0, 2), true),
+
+                // Both maintenance and patch increased
+                Arguments.of("maintenance and patch both increased",
+                        new SystemPatchApplier.VersionInfo(4, 3, 1, 1),
+                        new SystemPatchApplier.VersionInfo(4, 3, 0, 0), true),
+
+                // Maintenance increased, patch value is lower (irrelevant — maintenance wins)
+                Arguments.of("maintenance increased, patch is lower",
+                        new SystemPatchApplier.VersionInfo(4, 3, 2, 0),
+                        new SystemPatchApplier.VersionInfo(4, 3, 1, 5), true),
+
+                // Same version — no increase
+                Arguments.of("same version",
+                        new SystemPatchApplier.VersionInfo(4, 3, 0, 0),
+                        new SystemPatchApplier.VersionInfo(4, 3, 0, 0), false),
+                Arguments.of("same version with non-zero parts",
+                        new SystemPatchApplier.VersionInfo(4, 3, 1, 2),
+                        new SystemPatchApplier.VersionInfo(4, 3, 1, 2), false),
+
+                // Decreased versions — no increase
+                Arguments.of("maintenance decreased",
+                        new SystemPatchApplier.VersionInfo(4, 3, 0, 0),
+                        new SystemPatchApplier.VersionInfo(4, 3, 1, 0), false),
+                Arguments.of("patch decreased",
+                        new SystemPatchApplier.VersionInfo(4, 3, 0, 0),
+                        new SystemPatchApplier.VersionInfo(4, 3, 0, 1), false),
+
+                // Different major — different family, skip
+                Arguments.of("different major",
+                        new SystemPatchApplier.VersionInfo(5, 3, 0, 0),
+                        new SystemPatchApplier.VersionInfo(4, 3, 0, 0), false),
+                Arguments.of("major decreased",
+                        new SystemPatchApplier.VersionInfo(3, 3, 0, 0),
+                        new SystemPatchApplier.VersionInfo(4, 3, 0, 0), false),
+
+                // Different minor — different LTS family, skip
+                Arguments.of("minor increased (different LTS family)",
+                        new SystemPatchApplier.VersionInfo(4, 4, 0, 0),
+                        new SystemPatchApplier.VersionInfo(4, 3, 0, 0), false),
+                Arguments.of("minor decreased",
+                        new SystemPatchApplier.VersionInfo(4, 2, 0, 0),
+                        new SystemPatchApplier.VersionInfo(4, 3, 0, 0), false)
+        );
+    }
+
+    // --- isVersionChanged tests ---
+
+    @Test
+    void whenVersionIncreased_thenVersionChangedReturnsTrue() {
+        when(schemaSettingsService.getPackageSchemaVersion()).thenReturn("4.3.1.0");
+        when(schemaSettingsService.getDbSchemaVersion()).thenReturn("4.3.0.0");
+
+        Boolean result = ReflectionTestUtils.invokeMethod(reconciler, "isVersionChanged");
+
+        assertTrue(result);
+    }
+
+    @Test
+    void whenVersionNotIncreased_thenVersionChangedReturnsFalse() {
+        when(schemaSettingsService.getPackageSchemaVersion()).thenReturn("4.3.0.0");
+        when(schemaSettingsService.getDbSchemaVersion()).thenReturn("4.3.0.0");
+
+        Boolean result = ReflectionTestUtils.invokeMethod(reconciler, "isVersionChanged");
+
+        assertFalse(result);
+    }
+
+    @Test
+    void whenVersionUnparseable_thenVersionChangedReturnsFalse() {
+        when(schemaSettingsService.getPackageSchemaVersion()).thenReturn("invalid");
+        when(schemaSettingsService.getDbSchemaVersion()).thenReturn("4.3.0.0");
+
+        Boolean result = ReflectionTestUtils.invokeMethod(reconciler, "isVersionChanged");
+
+        assertFalse(result);
+    }
+
+    @Test
+    void whenDbVersionUnparseable_thenVersionChangedReturnsFalse() {
+        when(schemaSettingsService.getPackageSchemaVersion()).thenReturn("4.3.1.0");
+        when(schemaSettingsService.getDbSchemaVersion()).thenReturn("bad");
+
+        Boolean result = ReflectionTestUtils.invokeMethod(reconciler, "isVersionChanged");
+
+        assertFalse(result);
+    }
+
+    // --- updateLtsSqlSchema tests ---
+
+    @Test
+    void whenLtsSqlFileExists_thenExecutesSql() throws Exception {
+        Path dataDir = tempDir.resolve("data");
+        Path ltsDir = dataDir.resolve("upgrade").resolve("lts");
+        Files.createDirectories(ltsDir);
+        Files.writeString(ltsDir.resolve("schema_update.sql"), "ALTER TABLE device ADD COLUMN IF NOT EXISTS test_col VARCHAR(255);");
+        when(installScripts.getDataDir()).thenReturn(dataDir.toString());
+
+        ReflectionTestUtils.invokeMethod(reconciler, "updateLtsSqlSchema");
+
+        verify(jdbcTemplate).execute("ALTER TABLE device ADD COLUMN IF NOT EXISTS test_col VARCHAR(255);");
+    }
+
+    @Test
+    void whenLtsSqlFileDoesNotExist_thenSkips() {
+        Path dataDir = tempDir.resolve("data");
+        // Don't create the file
+        when(installScripts.getDataDir()).thenReturn(dataDir.toString());
+
+        ReflectionTestUtils.invokeMethod(reconciler, "updateLtsSqlSchema");
+
+        verify(jdbcTemplate, never()).execute(anyString());
+    }
+
+    @Test
+    void whenLtsSqlFileHasMultipleStatements_thenExecutesAll() throws Exception {
+        Path dataDir = tempDir.resolve("data");
+        Path ltsDir = dataDir.resolve("upgrade").resolve("lts");
+        Files.createDirectories(ltsDir);
+        String sql = "DO $$ BEGIN\n" +
+                "  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'test_type') THEN\n" +
+                "    CREATE TYPE test_type AS ENUM ('A', 'B');\n" +
+                "  END IF;\n" +
+                "END $$;\n" +
+                "ALTER TABLE device ADD COLUMN IF NOT EXISTS test_col VARCHAR(255);";
+        Files.writeString(ltsDir.resolve("schema_update.sql"), sql);
+        when(installScripts.getDataDir()).thenReturn(dataDir.toString());
+
+        ReflectionTestUtils.invokeMethod(reconciler, "updateLtsSqlSchema");
+
+        verify(jdbcTemplate).execute(sql);
+    }
+
+    // --- applyPatchIfNeeded flow tests ---
+
+    @Test
+    void whenVersionIncreased_thenAppliesLtsSqlBeforeViewsAndWidgets() throws Exception {
+        when(schemaSettingsService.getPackageSchemaVersion()).thenReturn("4.3.1.0");
+        when(schemaSettingsService.getDbSchemaVersion()).thenReturn("4.3.0.0");
+        when(jdbcTemplate.queryForObject(contains("pg_try_advisory_lock"), eq(Boolean.class), anyLong())).thenReturn(true);
+        when(jdbcTemplate.queryForObject(contains("pg_advisory_unlock"), eq(Boolean.class), anyLong())).thenReturn(true);
+
+        Path dataDir = tempDir.resolve("data");
+        Path ltsDir = dataDir.resolve("upgrade").resolve("lts");
+        Files.createDirectories(ltsDir);
+        Files.writeString(ltsDir.resolve("schema_update.sql"), "SELECT 1;");
+        when(installScripts.getDataDir()).thenReturn(dataDir.toString());
+
+        Path widgetTypesDir = tempDir.resolve("widget_types");
+        Files.createDirectories(widgetTypesDir);
+        when(installScripts.getWidgetTypesDir()).thenReturn(widgetTypesDir);
+
+        ReflectionTestUtils.invokeMethod(reconciler, "applyPatchIfNeeded");
+
+        // LTS SQL was executed
+        verify(jdbcTemplate).execute("SELECT 1;");
+        // Schema version was updated
+        verify(schemaSettingsService).updateSchemaVersion();
+    }
+
+    @Test
+    void whenVersionNotIncreased_thenSkipsEverything() {
+        when(schemaSettingsService.getPackageSchemaVersion()).thenReturn("4.3.0.0");
+        when(schemaSettingsService.getDbSchemaVersion()).thenReturn("4.3.0.0");
+
+        ReflectionTestUtils.invokeMethod(reconciler, "applyPatchIfNeeded");
+
+        // No lock acquired
+        verify(jdbcTemplate, never()).queryForObject(contains("pg_try_advisory_lock"), eq(Boolean.class), anyLong());
+        // No schema update
+        verify(schemaSettingsService, never()).updateSchemaVersion();
+    }
+
+    @Test
+    void whenLockNotAcquired_thenSkipsPatchApplication() {
+        when(schemaSettingsService.getPackageSchemaVersion()).thenReturn("4.3.1.0");
+        when(schemaSettingsService.getDbSchemaVersion()).thenReturn("4.3.0.0");
+        when(jdbcTemplate.queryForObject(contains("pg_try_advisory_lock"), eq(Boolean.class), anyLong())).thenReturn(false);
+
+        ReflectionTestUtils.invokeMethod(reconciler, "applyPatchIfNeeded");
+
+        verify(schemaSettingsService, never()).updateSchemaVersion();
+        verify(jdbcTemplate, never()).execute(anyString());
+    }
+
+    @Test
+    void whenMaintenanceVersionIncreased_thenAppliesPatch() throws Exception {
+        when(schemaSettingsService.getPackageSchemaVersion()).thenReturn("4.3.2.0");
+        when(schemaSettingsService.getDbSchemaVersion()).thenReturn("4.3.1.0");
+        when(jdbcTemplate.queryForObject(contains("pg_try_advisory_lock"), eq(Boolean.class), anyLong())).thenReturn(true);
+        when(jdbcTemplate.queryForObject(contains("pg_advisory_unlock"), eq(Boolean.class), anyLong())).thenReturn(true);
+
+        Path dataDir = tempDir.resolve("data");
+        when(installScripts.getDataDir()).thenReturn(dataDir.toString());
+
+        Path widgetTypesDir = tempDir.resolve("widget_types");
+        Files.createDirectories(widgetTypesDir);
+        when(installScripts.getWidgetTypesDir()).thenReturn(widgetTypesDir);
+
+        ReflectionTestUtils.invokeMethod(reconciler, "applyPatchIfNeeded");
+
+        verify(schemaSettingsService).updateSchemaVersion();
+    }
+
+    @Test
+    void whenDifferentLtsFamily_thenSkipsPatch() {
+        when(schemaSettingsService.getPackageSchemaVersion()).thenReturn("4.4.0.0");
+        when(schemaSettingsService.getDbSchemaVersion()).thenReturn("4.3.0.0");
+
+        ReflectionTestUtils.invokeMethod(reconciler, "applyPatchIfNeeded");
+
+        verify(jdbcTemplate, never()).queryForObject(contains("pg_try_advisory_lock"), eq(Boolean.class), anyLong());
+        verify(schemaSettingsService, never()).updateSchemaVersion();
+    }
+
     private static Stream<Arguments> provideDescriptorComparisonTestCases() {
         return Stream.of(
                 Arguments.of("Both null", null, null, true),
@@ -405,6 +656,202 @@ public class SystemPatchApplierTest {
         widget.setTenantId(TenantId.SYS_TENANT_ID);
         widget.setDescriptor(JacksonUtil.toJsonNode("{\"type\":\"latest\"}"));
         return widget;
+    }
+
+    // --- createMissingSystemImages tests ---
+
+    @Test
+    void whenImagesDirDoesNotExist_thenReturnsZeroAndDoesNotCallImageService() {
+        Path dataDir = tempDir.resolve("data");
+        // Intentionally do not create resources/images dir
+        when(installScripts.getDataDir()).thenReturn(dataDir.toString());
+
+        Integer created = ReflectionTestUtils.invokeMethod(reconciler, "createMissingSystemImages");
+
+        assertEquals(0, created);
+        verify(imageService, never()).getAllImageKeysByTenantId(any());
+        verify(imageService, never()).createOrUpdateSystemImage(anyString(), any(byte[].class));
+    }
+
+    @Test
+    void whenImagesDirIsEmpty_thenReturnsZeroAndDoesNotCallImageService() throws Exception {
+        Path imagesDir = tempDir.resolve("data").resolve(InstallScripts.RESOURCES_DIR).resolve("images");
+        Files.createDirectories(imagesDir);
+        when(installScripts.getDataDir()).thenReturn(tempDir.resolve("data").toString());
+        when(imageService.getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID)).thenReturn(Collections.emptySet());
+
+        Integer created = ReflectionTestUtils.invokeMethod(reconciler, "createMissingSystemImages");
+
+        assertEquals(0, created);
+        verify(imageService, never()).createOrUpdateSystemImage(anyString(), any(byte[].class));
+    }
+
+    @Test
+    void whenSystemImageDoesNotExistInDb_thenCreateIt() throws Exception {
+        Path imagesDir = tempDir.resolve("data").resolve(InstallScripts.RESOURCES_DIR).resolve("images");
+        Files.createDirectories(imagesDir);
+        when(installScripts.getDataDir()).thenReturn(tempDir.resolve("data").toString());
+
+        byte[] imageBytes = new byte[]{1, 2, 3, 4, 5};
+        Files.write(imagesDir.resolve("gateway.png"), imageBytes);
+
+        when(imageService.getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID)).thenReturn(Collections.emptySet());
+
+        Integer created = ReflectionTestUtils.invokeMethod(reconciler, "createMissingSystemImages");
+
+        assertEquals(1, created);
+        verify(imageService).getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID);
+        verify(imageService).createOrUpdateSystemImage(eq("gateway.png"), eq(imageBytes));
+    }
+
+    @Test
+    void whenSystemImageExistsInDb_thenSkipIt() throws Exception {
+        Path imagesDir = tempDir.resolve("data").resolve(InstallScripts.RESOURCES_DIR).resolve("images");
+        Files.createDirectories(imagesDir);
+        when(installScripts.getDataDir()).thenReturn(tempDir.resolve("data").toString());
+
+        Files.write(imagesDir.resolve("gateway.png"), new byte[]{1, 2, 3});
+
+        when(imageService.getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID)).thenReturn(Set.of("gateway.png"));
+
+        Integer created = ReflectionTestUtils.invokeMethod(reconciler, "createMissingSystemImages");
+
+        assertEquals(0, created);
+        verify(imageService).getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID);
+        verify(imageService, never()).createOrUpdateSystemImage(anyString(), any(byte[].class));
+    }
+
+    @Test
+    void whenMixOfNewAndExistingImages_thenOnlyCreateMissingOnes() throws Exception {
+        Path imagesDir = tempDir.resolve("data").resolve(InstallScripts.RESOURCES_DIR).resolve("images");
+        Files.createDirectories(imagesDir);
+        when(installScripts.getDataDir()).thenReturn(tempDir.resolve("data").toString());
+
+        byte[] newImageBytes = new byte[]{9, 9, 9};
+        byte[] existingImageBytes = new byte[]{1, 1, 1};
+        Files.write(imagesDir.resolve("new.png"), newImageBytes);
+        Files.write(imagesDir.resolve("existing.svg"), existingImageBytes);
+
+        when(imageService.getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID)).thenReturn(Set.of("existing.svg"));
+
+        Integer created = ReflectionTestUtils.invokeMethod(reconciler, "createMissingSystemImages");
+
+        assertEquals(1, created);
+        verify(imageService, times(1)).getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID);
+        verify(imageService).createOrUpdateSystemImage(eq("new.png"), eq(newImageBytes));
+        verify(imageService, never()).createOrUpdateSystemImage(eq("existing.svg"), any(byte[].class));
+    }
+
+    @Test
+    void whenImagesDirContainsSubdirectory_thenSubdirectoryIsIgnored() throws Exception {
+        Path imagesDir = tempDir.resolve("data").resolve(InstallScripts.RESOURCES_DIR).resolve("images");
+        Files.createDirectories(imagesDir);
+        Files.createDirectories(imagesDir.resolve("nested"));
+        when(installScripts.getDataDir()).thenReturn(tempDir.resolve("data").toString());
+
+        byte[] imageBytes = new byte[]{5, 6, 7};
+        Files.write(imagesDir.resolve("logo.png"), imageBytes);
+
+        when(imageService.getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID)).thenReturn(Collections.emptySet());
+
+        Integer created = ReflectionTestUtils.invokeMethod(reconciler, "createMissingSystemImages");
+
+        assertEquals(1, created);
+        verify(imageService).createOrUpdateSystemImage(eq("logo.png"), eq(imageBytes));
+        verify(imageService, never()).createOrUpdateSystemImage(eq("nested"), any(byte[].class));
+    }
+
+    @Test
+    void whenMultipleNewImages_thenCreatesAll() throws Exception {
+        Path imagesDir = tempDir.resolve("data").resolve(InstallScripts.RESOURCES_DIR).resolve("images");
+        Files.createDirectories(imagesDir);
+        when(installScripts.getDataDir()).thenReturn(tempDir.resolve("data").toString());
+
+        Files.write(imagesDir.resolve("a.png"), new byte[]{1});
+        Files.write(imagesDir.resolve("b.svg"), new byte[]{2});
+        Files.write(imagesDir.resolve("c.jpg"), new byte[]{3});
+
+        when(imageService.getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID)).thenReturn(Collections.emptySet());
+
+        Integer created = ReflectionTestUtils.invokeMethod(reconciler, "createMissingSystemImages");
+
+        assertEquals(3, created);
+        verify(imageService, times(1)).getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID);
+        verify(imageService).createOrUpdateSystemImage(eq("a.png"), any(byte[].class));
+        verify(imageService).createOrUpdateSystemImage(eq("b.svg"), any(byte[].class));
+        verify(imageService).createOrUpdateSystemImage(eq("c.jpg"), any(byte[].class));
+    }
+
+    @Test
+    void whenImageServiceThrows_thenWrapsAndPropagates() throws Exception {
+        Path imagesDir = tempDir.resolve("data").resolve(InstallScripts.RESOURCES_DIR).resolve("images");
+        Files.createDirectories(imagesDir);
+        when(installScripts.getDataDir()).thenReturn(tempDir.resolve("data").toString());
+
+        Files.write(imagesDir.resolve("broken.png"), new byte[]{1, 2});
+
+        when(imageService.getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID)).thenReturn(Collections.emptySet());
+        when(imageService.createOrUpdateSystemImage(eq("broken.png"), any(byte[].class)))
+                .thenThrow(new RuntimeException("DB error"));
+
+        RuntimeException thrown = assertThrows(RuntimeException.class,
+                () -> ReflectionTestUtils.invokeMethod(reconciler, "createMissingSystemImages"));
+        assertTrue(thrown.getMessage().contains("broken.png"));
+    }
+
+    @Test
+    void whenExistingKeysLookupFails_thenDoesNotCreateImage() throws Exception {
+        Path imagesDir = tempDir.resolve("data").resolve(InstallScripts.RESOURCES_DIR).resolve("images");
+        Files.createDirectories(imagesDir);
+        when(installScripts.getDataDir()).thenReturn(tempDir.resolve("data").toString());
+
+        Files.write(imagesDir.resolve("img.png"), new byte[]{1});
+
+        when(imageService.getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID))
+                .thenThrow(new RuntimeException("lookup failed"));
+
+        assertThrows(RuntimeException.class,
+                () -> ReflectionTestUtils.invokeMethod(reconciler, "createMissingSystemImages"));
+        verify(imageService, never()).createOrUpdateSystemImage(anyString(), any(byte[].class));
+    }
+
+    // --- applyPatchIfNeeded integration with createMissingSystemImages ---
+
+    @Test
+    void whenApplyPatchIfNeededRuns_thenCreatesMissingImagesAfterWidgets() throws Exception {
+        when(schemaSettingsService.getPackageSchemaVersion()).thenReturn("4.3.1.0");
+        when(schemaSettingsService.getDbSchemaVersion()).thenReturn("4.3.0.0");
+        when(jdbcTemplate.queryForObject(contains("pg_try_advisory_lock"), eq(Boolean.class), anyLong())).thenReturn(true);
+        when(jdbcTemplate.queryForObject(contains("pg_advisory_unlock"), eq(Boolean.class), anyLong())).thenReturn(true);
+
+        Path dataDir = tempDir.resolve("data");
+        Path imagesDir = dataDir.resolve(InstallScripts.RESOURCES_DIR).resolve("images");
+        Files.createDirectories(imagesDir);
+        byte[] imgBytes = new byte[]{7, 7, 7};
+        Files.write(imagesDir.resolve("new_icon.svg"), imgBytes);
+        when(installScripts.getDataDir()).thenReturn(dataDir.toString());
+
+        Path widgetTypesDir = tempDir.resolve("widget_types");
+        Files.createDirectories(widgetTypesDir);
+        when(installScripts.getWidgetTypesDir()).thenReturn(widgetTypesDir);
+
+        when(imageService.getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID)).thenReturn(Collections.emptySet());
+
+        ReflectionTestUtils.invokeMethod(reconciler, "applyPatchIfNeeded");
+
+        verify(imageService).createOrUpdateSystemImage(eq("new_icon.svg"), eq(imgBytes));
+        verify(schemaSettingsService).updateSchemaVersion();
+    }
+
+    @Test
+    void whenVersionNotIncreased_thenImagesAreNotTouched() {
+        when(schemaSettingsService.getPackageSchemaVersion()).thenReturn("4.3.0.0");
+        when(schemaSettingsService.getDbSchemaVersion()).thenReturn("4.3.0.0");
+
+        ReflectionTestUtils.invokeMethod(reconciler, "applyPatchIfNeeded");
+
+        verify(imageService, never()).getAllImageKeysByTenantId(any());
+        verify(imageService, never()).createOrUpdateSystemImage(anyString(), any(byte[].class));
     }
 
 }

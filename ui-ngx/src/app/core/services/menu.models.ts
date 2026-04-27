@@ -30,6 +30,7 @@ export interface MenuSection {
   pages?: Array<MenuSection>;
   opened?: boolean;
   rootOnly?: boolean;
+  isNew?: boolean;
   customTranslate?: boolean;
 }
 
@@ -716,7 +717,8 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       name: 'iot-hub.iot-hub',
       type: 'link',
       path: '/iot-hub',
-      icon: 'store'
+      icon: 'store',
+      isNew: true
     }
   ]
 ]);

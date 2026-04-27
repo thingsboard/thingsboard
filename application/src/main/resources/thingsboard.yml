@@ -567,6 +567,18 @@ actors:
       # Use this when your rule chains need to reach devices on private networks (e.g., 192.168.1.0/24).
       # Example: "192.168.1.0/24,10.0.0.0/8,my-internal-service.corp"
       ssrf_allowed_hosts: "${SSRF_ALLOWED_HOSTS:}"
+      http_client:
+        # Server-level ceiling for parallel in-flight HTTP requests per external HTTP rule node instance.
+        # Applied as min(nodeConfig, systemMax) when set; 0 = no system-level restriction (node config wins).
+        max_parallel_requests: "${ACTORS_RULE_EXTERNAL_HTTP_CLIENT_MAX_PARALLEL_REQUESTS:0}"
+        # Server-level ceiling for the pending-request queue depth per external HTTP rule node instance.
+        # Applied as min(nodeConfig, systemMax) when set; 0 = no system-level restriction.
+        max_pending_requests: "${ACTORS_RULE_EXTERNAL_HTTP_CLIENT_MAX_PENDING_REQUESTS:0}"
+        # Maximum number of TCP connections in the reactor-netty connection pool per external HTTP rule node instance.
+        # Defaults to reactor-netty's ConnectionProvider.DEFAULT_POOL_MAX_CONNECTIONS: max(availableProcessors, 8) * 2
+        # (e.g. 16 on an 8-core host). Increase for high-throughput nodes calling remote services that support many connections.
+        # 0 = use reactor-netty default.
+        pool_max_connections: "${ACTORS_RULE_EXTERNAL_HTTP_CLIENT_POOL_MAX_CONNECTIONS:${TB_RE_HTTP_CLIENT_POOL_MAX_CONNECTIONS:0}}"
   rpc:
     # Maximum number of persistent RPC call retries in case of failed request delivery.
     max_retries: "${ACTORS_RPC_MAX_RETRIES:5}"

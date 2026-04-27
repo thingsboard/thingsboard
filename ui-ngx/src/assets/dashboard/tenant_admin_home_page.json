@@ -6,6 +6,31 @@
   "configuration": {
     "description": "",
     "widgets": {
+      "fe678c4f-ea86-4cae-8d81-6fca493fe311": {
+          "type": "static",
+          "sizeX": 7.5,
+          "sizeY": 6.5,
+          "config": {
+              "showTitle": false,
+              "backgroundColor": "rgb(255, 255, 255)",
+              "color": "rgba(0, 0, 0, 0.87)",
+              "padding": "16px",
+              "settings": {},
+              "title": "IoT Hub",
+              "dropShadow": true,
+              "enableFullscreen": false,
+              "widgetStyle": {},
+              "widgetCss": "",
+              "pageSize": 1024,
+              "noDataDisplayMessage": "",
+              "showLegend": false,
+              "datasources": []
+          },
+          "row": 0,
+          "col": 0,
+          "id": "fe678c4f-ea86-4cae-8d81-6fca493fe311",
+          "typeFullFqn": "system.home_page_widgets.iot_hub"
+      },
       "d70cc256-4c7b-ee06-9905-b8c5e546605f": {
         "type": "latest",
         "sizeX": 5,
@@ -1228,55 +1253,63 @@
             "widgets": {
               "d70cc256-4c7b-ee06-9905-b8c5e546605f": {
                 "sizeX": 42,
-                "sizeY": 29,
-                "row": 13,
+                "sizeY": 17,
+                "row": 27,
                 "col": 43,
-                "mobileOrder": 4,
+                "mobileOrder": 5,
                 "mobileHeight": 10
               },
               "867f82cf-ecf2-2d5c-35cb-08c6f2edc3a4": {
                 "sizeX": 29,
-                "sizeY": 16,
-                "row": 42,
+                "sizeY": 14,
+                "row": 44,
                 "col": 28,
                 "mobileHide": true
               },
               "ebbd0a6e-8a47-e770-5086-7f4974250f2d": {
                 "sizeX": 28,
-                "sizeY": 16,
-                "row": 42,
+                "sizeY": 14,
+                "row": 44,
                 "col": 57,
-                "mobileOrder": 3,
+                "mobileOrder": 4,
                 "mobileHeight": 10
               },
               "9e3ef045-d8bc-1640-a3f4-2dd10b19d50e": {
                 "sizeX": 28,
-                "sizeY": 16,
-                "row": 42,
+                "sizeY": 14,
+                "row": 44,
                 "col": 0,
                 "mobileHide": true
               },
               "6d6e2b1d-6ce7-4678-3745-c6b0897b2674": {
                 "sizeX": 43,
-                "sizeY": 29,
-                "row": 13,
+                "sizeY": 17,
+                "row": 27,
                 "col": 0,
                 "mobileOrder": 2,
                 "mobileHeight": 10
               },
+              "fe678c4f-ea86-4cae-8d81-6fca493fe311": {
+                "sizeX": 85,
+                "sizeY": 15,
+                "row": 0,
+                "col": 0,
+                "mobileOrder": 3,
+                "mobileHeight": 12
+              },
               "35d3ac3b-f1af-dc3d-a1d1-11f351d16fc6": {
                 "sizeX": 43,
-                "sizeY": 13,
-                "row": 0,
+                "sizeY": 12,
+                "row": 15,
                 "col": 0,
                 "mobileHeight": 9,
                 "mobileOrder": 1
               },
               "7ac20b6a-dc40-b18e-9f5f-bca20bc693bb": {
                 "sizeX": 42,
-                "sizeY": 13,
+                "sizeY": 12,
                 "mobileHeight": 9,
-                "row": 0,
+                "row": 15,
                 "col": 43,
                 "mobileOrder": 0
               },
@@ -1365,15 +1398,15 @@
             "widgets": {
               "ed33e56f-293b-aaaa-ad19-0cf499dc926f": {
                 "sizeX": 120,
-                "sizeY": 45,
+                "sizeY": 44,
                 "row": 0,
                 "col": 0,
                 "mobileHide": true
               },
               "8c5207d8-7103-4dc2-db48-d61c0c8c61fd": {
                 "sizeX": 120,
-                "sizeY": 17,
-                "row": 45,
+                "sizeY": 14,
+                "row": 44,
                 "col": 0
               }
             },
