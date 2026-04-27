@@ -29,7 +29,6 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -87,9 +86,7 @@ public class TbCopyKeysNode extends TbAbstractTransformNodeWithTbMsgSource {
                     msgData = JacksonUtil.toString(msgDataNode);
                     break;
                 case DATA:
-                    Iterator<Map.Entry<String, JsonNode>> iteratorNode = dataNode.fields();
-                    while (iteratorNode.hasNext()) {
-                        Map.Entry<String, JsonNode> entry = iteratorNode.next();
+                    for (Map.Entry<String, JsonNode> entry : dataNode.properties()) {
                         String msgKey = entry.getKey();
                         JsonNode msgValue = entry.getValue();
                         if (matches(msgKey)) {
