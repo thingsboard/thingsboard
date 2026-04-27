@@ -35,6 +35,7 @@ import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import {
   installMethodLabels as INSTALL_METHOD_LABELS,
+  peOnlyInstallMethods,
   DeviceInstallStep,
   DevicePackageInfo,
   ENTITY_STEP_TYPES,
@@ -91,9 +92,14 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
 
   // Connectivity
   showConnectivitySelector = false;
+  showPeOnlyPanel = false;
   availableInstallMethods: string[] = [];
   selectedInstallMethod: string | null = null;
   installMethodLabels = INSTALL_METHOD_LABELS;
+
+  get isSelectedPeOnly(): boolean {
+    return this.selectedInstallMethod !== null && peOnlyInstallMethods.has(this.selectedInstallMethod);
+  }
 
   // Wizard
   wizardSteps: WizardStep[] = [];
@@ -172,7 +178,11 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     } else if (this.availableInstallMethods.length === 1) {
       this.selectedInstallMethod = this.availableInstallMethods[0];
       this.showConnectivitySelector = false;
-      this.startWizard();
+      if (this.isSelectedPeOnly) {
+        this.showPeOnlyPanel = true;
+      } else {
+        this.startWizard();
+      }
     } else {
       this.showConnectivitySelector = true;
     }
@@ -199,6 +209,11 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
 
   confirmConnectivity(): void {
     if (!this.selectedInstallMethod) {
+      return;
+    }
+    if (this.isSelectedPeOnly) {
+      this.showPeOnlyPanel = true;
+      this.cdr.detectChanges();
       return;
     }
     this.startWizard();
