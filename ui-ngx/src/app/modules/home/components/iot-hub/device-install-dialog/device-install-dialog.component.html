@@ -210,7 +210,7 @@
   </div>
   <mat-divider></mat-divider>
 
-  @if (!wizardStarted) {
+  @if (!wizardStarted && !showPeOnlyPanel) {
     <!-- Connectivity selector -->
     <div mat-dialog-content>
       <div class="tb-device-install-connectivity flex flex-col gap-3">
@@ -234,6 +234,28 @@
               (click)="confirmConnectivity()">
         {{ 'action.next' | translate }}
       </button>
+    </mat-dialog-actions>
+
+  } @else if (showPeOnlyPanel) {
+    <!-- PE-only gate -->
+    <div mat-dialog-content>
+      <div class="tb-device-install-pe-only flex flex-col items-center gap-3 py-6 text-center">
+        <mat-icon class="tb-device-install-pe-only-icon">workspace_premium</mat-icon>
+        <h3 class="tb-device-install-pe-only-title">
+          {{ 'iot-hub.device-install-pe-only-title' | translate }}
+        </h3>
+        <p class="tb-device-install-pe-only-message">
+          {{ 'iot-hub.device-install-pe-only-message' | translate:{ method: installMethodLabels.get(selectedInstallMethod) || selectedInstallMethod } }}
+        </p>
+        <a mat-stroked-button color="primary"
+           href="https://thingsboard.io/products/thingsboard-pe/"
+           target="_blank" rel="noopener">
+          {{ 'iot-hub.device-install-pe-only-learn-more' | translate }}
+        </a>
+      </div>
+    </div>
+    <mat-dialog-actions align="end">
+      <button mat-button (click)="cancel()">{{ 'action.close' | translate }}</button>
     </mat-dialog-actions>
 
   } @else if (reviewMode) {
