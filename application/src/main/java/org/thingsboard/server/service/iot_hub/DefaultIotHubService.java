@@ -24,6 +24,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -243,6 +244,8 @@ public class DefaultIotHubService implements IotHubService {
         }
         SolutionTemplateInstalledItemDescriptor descriptor = new SolutionTemplateInstalledItemDescriptor();
         descriptor.setCreatedEntityIds(response.getCreatedEntityIds());
+        descriptor.setTenantTelemetryKeys(response.getTenantTelemetryKeys());
+        descriptor.setTenantAttributeKeys(response.getTenantAttributeKeys());
         descriptor.setDashboardId(response.getDashboardId());
         descriptor.setPublicId(response.getPublicId());
         descriptor.setMainDashboardPublic(response.isMainDashboardPublic());
@@ -301,7 +304,7 @@ public class DefaultIotHubService implements IotHubService {
                 }
                 case "SOLUTION_TEMPLATE" -> {
                     SolutionTemplateInstalledItemDescriptor stDescriptor = (SolutionTemplateInstalledItemDescriptor) descriptor;
-                    solutionService.deleteSolution(tenantId, stDescriptor.getCreatedEntityIds(), user);
+                    solutionService.deleteSolution(tenantId, stDescriptor, user);
                     SolutionInstallResponse response = solutionService.installSolution(user, tenantId, fileData, request);
                     if (!response.isSuccess()) {
                         throw new RuntimeException(response.getDetails());
@@ -591,7 +594,11 @@ public class DefaultIotHubService implements IotHubService {
         } else if (descriptor instanceof DeviceInstalledItemDescriptor dd) {
             deleteDevicePackageEntities(tenantId, dd.getCreatedEntityIds(), user);
         } else if (descriptor instanceof SolutionTemplateInstalledItemDescriptor st) {
-            solutionService.deleteSolution(tenantId, st.getCreatedEntityIds(), user);
+            try {
+                solutionService.deleteSolution(tenantId, st, user);
+            } catch (ThingsboardException e) {
+                log.error("[{}] Failed to delete solution for installed item {}", tenantId, installedItemId, e);
+            }
         }
 
         iotHubInstalledItemService.deleteById(tenantId, installedItemId);

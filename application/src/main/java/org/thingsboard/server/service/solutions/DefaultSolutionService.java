@@ -37,6 +37,11 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.iot_hub.SolutionTemplateInstalledItemDescriptor;
+import org.thingsboard.server.common.data.kv.BaseDeleteTsKvQuery;
+import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.EntityType;
@@ -85,6 +90,7 @@ import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeService;
+import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.queue.discovery.PartitionService;
@@ -192,6 +198,7 @@ public class DefaultSolutionService implements SolutionService {
     private final CalculatedFieldService calculatedFieldService;
     private final TbCalculatedFieldService tbCalculatedFieldService;
     private final AttributesService attributesService;
+    private final TimeseriesService tsService;
     private final EntityActionService entityActionService;
     private final SystemSecurityService systemSecurityService;
     private final TbClusterService tbClusterService;
@@ -239,19 +246,35 @@ public class DefaultSolutionService implements SolutionService {
     }
 
     @Override
-    public void deleteSolution(TenantId tenantId, List<EntityId> createdEntityIds, SecurityUser user) {
-        if (createdEntityIds == null || createdEntityIds.isEmpty()) {
-            return;
-        }
-        List<EntityId> entityIds = new ArrayList<>(createdEntityIds);
-        // Delete in the descending order of creation to avoid dependency issues.
-        Collections.reverse(entityIds);
-        for (EntityId entityId : entityIds) {
-            try {
-                deleteEntity(tenantId, entityId, user);
-            } catch (RuntimeException e) {
-                log.error("[{}] Failed to delete the entity: {}", tenantId, entityId, e);
+    public void deleteSolution(TenantId tenantId, SolutionTemplateInstalledItemDescriptor descriptor, SecurityUser user) throws ThingsboardException {
+        try {
+            if (descriptor.getCreatedEntityIds() != null && descriptor.getCreatedEntityIds().isEmpty()) {
+                List<EntityId> entityIds = new ArrayList<>(descriptor.getCreatedEntityIds());
+                // Delete in the descending order of creation to avoid dependency issues.
+                Collections.reverse(entityIds);
+                for (EntityId entityId : entityIds) {
+                    try {
+                        deleteEntity(tenantId, entityId, user);
+                    } catch (RuntimeException e) {
+                        log.error("[{}] Failed to delete the entity: {}", tenantId, entityId, e);
+                    }
+                }
             }
+            List<String> tsKeys = descriptor.getTenantTelemetryKeys();
+            if (tsKeys != null && !tsKeys.isEmpty()) {
+                List<DeleteTsKvQuery> queries = new ArrayList<>(tsKeys.size());
+                for (String tsKey : tsKeys) {
+                    queries.add(new BaseDeleteTsKvQuery(tsKey, 0, System.currentTimeMillis(), false));
+                }
+                tsService.remove(tenantId, tenantId, queries).get();
+            }
+            List<String> attrKeys = descriptor.getTenantAttributeKeys();
+            if (tsKeys != null && !tsKeys.isEmpty()) {
+                attributesService.removeAll(tenantId, tenantId, AttributeScope.SERVER_SCOPE, attrKeys).get();
+            }
+        } catch (Exception e) {
+            log.error("[{}] Failed to delete the solution", tenantId, e);
+            throw new ThingsboardException(e, ThingsboardErrorCode.GENERAL);
         }
     }
 
@@ -379,7 +402,9 @@ public class DefaultSolutionService implements SolutionService {
             return new SolutionInstallResponse(
                     new TenantSolutionTemplateInstructions(ctx.getSolutionInstructions()),
                     true,
-                    ctx.getCreatedEntitiesList()
+                    ctx.getCreatedEntitiesList(),
+                    loadTenantTelemetryKeys(ctx.getTempDir()),
+                    loadTenantAttributeKeys(ctx.getTempDir())
             );
         } catch (Throwable e) {
             log.error("[{}][{}] Failed to install solution template", tenantId, solutionId, e);
@@ -1501,6 +1526,28 @@ public class DefaultSolutionService implements SolutionService {
             }
         }
         return 0L;
+    }
+
+    private List<String> loadTenantTelemetryKeys(Path tempDir) {
+        Path solutionJson = tempDir.resolve("solution.json");
+        if (Files.exists(solutionJson)) {
+            JsonNode node = JacksonUtil.toJsonNode(solutionJson);
+            if (node != null && node.has("tenantTelemetryKeys")) {
+                return JacksonUtil.convertValue(node.get("tenantTelemetryKeys"), new TypeReference<>() {});
+            }
+        }
+        return Collections.emptyList();
+    }
+
+    private List<String> loadTenantAttributeKeys(Path tempDir) {
+        Path solutionJson = tempDir.resolve("solution.json");
+        if (Files.exists(solutionJson)) {
+            JsonNode node = JacksonUtil.toJsonNode(solutionJson);
+            if (node != null && node.has("tenantAttributeKeys")) {
+                return JacksonUtil.convertValue(node.get("tenantAttributeKeys"), new TypeReference<>() {});
+            }
+        }
+        return Collections.emptyList();
     }
 
     private static void extractZip(byte[] zipData, Path destDir) throws IOException {

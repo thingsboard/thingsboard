@@ -26,6 +26,8 @@ import java.util.List;
 public class SolutionTemplateInstalledItemDescriptor implements IotHubInstalledItemDescriptor {
 
     private List<EntityId> createdEntityIds;
+    private List<String> tenantTelemetryKeys;
+    private List<String> tenantAttributeKeys;
     private DashboardId dashboardId;
     private CustomerId publicId;
     private boolean mainDashboardPublic;
