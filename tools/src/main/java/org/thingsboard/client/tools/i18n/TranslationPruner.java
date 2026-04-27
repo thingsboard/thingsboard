@@ -25,7 +25,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -37,9 +36,7 @@ public class TranslationPruner {
      */
     private static void collectKeys(JsonNode node, String prefix, Set<String> keys) {
         if (!node.isObject()) return;
-        Iterator<Map.Entry<String, JsonNode>> fields = node.fields();
-        while (fields.hasNext()) {
-            Map.Entry<String, JsonNode> entry = fields.next();
+        for (Map.Entry<String, JsonNode> entry : node.properties()) {
             String key = entry.getKey();
             String fullKey = prefix.isEmpty() ? key : prefix + "." + key;
             keys.add(fullKey);
@@ -52,9 +49,7 @@ public class TranslationPruner {
      */
     private static ObjectNode pruneNode(ObjectNode node, Set<String> keys, String prefix, ObjectMapper mapper) {
         ObjectNode pruned = mapper.createObjectNode();
-        Iterator<Map.Entry<String, JsonNode>> fields = node.fields();
-        while (fields.hasNext()) {
-            Map.Entry<String, JsonNode> entry = fields.next();
+        for (Map.Entry<String, JsonNode> entry : node.properties()) {
             String key = entry.getKey();
             JsonNode value = entry.getValue();
             String fullKey = prefix.isEmpty() ? key : prefix + "." + key;
