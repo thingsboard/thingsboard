@@ -241,6 +241,7 @@ public class ZkDiscoveryService implements DiscoveryService {
             client = CuratorFrameworkFactory.newClient(zkUrl, zkSessionTimeout, zkConnectionTimeout, new RetryForever(zkRetryInterval));
             client.start();
             client.blockUntilConnected();
+            client.createContainers(zkNodesDir);
             cache = CuratorCache.builder(client, zkNodesDir).build();
             cache.start();
             stopped = false;
