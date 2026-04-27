@@ -248,7 +248,7 @@ public class DefaultSolutionService implements SolutionService {
     @Override
     public void deleteSolution(TenantId tenantId, SolutionTemplateInstalledItemDescriptor descriptor, SecurityUser user) throws ThingsboardException {
         try {
-            if (descriptor.getCreatedEntityIds() != null && descriptor.getCreatedEntityIds().isEmpty()) {
+            if (descriptor.getCreatedEntityIds() != null && !descriptor.getCreatedEntityIds().isEmpty()) {
                 List<EntityId> entityIds = new ArrayList<>(descriptor.getCreatedEntityIds());
                 // Delete in the descending order of creation to avoid dependency issues.
                 Collections.reverse(entityIds);
