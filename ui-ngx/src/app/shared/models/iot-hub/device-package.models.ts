@@ -73,18 +73,60 @@ export enum InstallMethod {
 
 export const installMethodLabels = new Map<string, string>(
   [
+    // Direct
     [InstallMethod.DIRECT_HTTP, 'HTTP'],
     [InstallMethod.DIRECT_MQTT, 'MQTT'],
     [InstallMethod.DIRECT_COAP, 'CoAP'],
     [InstallMethod.DIRECT_LWM2M, 'LwM2M'],
     [InstallMethod.DIRECT_SNMP, 'SNMP'],
+    // Gateway connectors
     [InstallMethod.GATEWAY_MQTT, 'MQTT Gateway'],
     [InstallMethod.GATEWAY_MODBUS, 'Modbus Gateway'],
     [InstallMethod.GATEWAY_OPCUA, 'OPC-UA Gateway'],
+    [InstallMethod.GATEWAY_BACNET, 'BACnet Gateway'],
+    [InstallMethod.GATEWAY_BLE, 'BLE Gateway'],
+    [InstallMethod.GATEWAY_CAN, 'CAN Gateway'],
+    [InstallMethod.GATEWAY_FTP, 'FTP Gateway'],
+    [InstallMethod.GATEWAY_KNX, 'KNX Gateway'],
+    [InstallMethod.GATEWAY_OCPP, 'OCPP Gateway'],
+    [InstallMethod.GATEWAY_ODBC, 'ODBC Gateway'],
+    [InstallMethod.GATEWAY_REQUEST, 'Request Gateway'],
+    [InstallMethod.GATEWAY_REST, 'REST Gateway'],
+    [InstallMethod.GATEWAY_SNMP, 'SNMP Gateway'],
+    [InstallMethod.GATEWAY_SOCKET, 'Socket Gateway'],
+    [InstallMethod.GATEWAY_XMPP, 'XMPP Gateway'],
+    // ChirpStack
     [InstallMethod.CHIRPSTACK, 'ChirpStack'],
-    [InstallMethod.INTEGRATION_CHIRPSTACK, 'ChirpStack (PE)'],
+    // PE integrations
+    [InstallMethod.INTEGRATION_APACHE_PULSAR, 'Apache Pulsar'],
+    [InstallMethod.INTEGRATION_AWS_IOT, 'AWS IoT'],
+    [InstallMethod.INTEGRATION_AWS_KINESIS, 'AWS Kinesis'],
+    [InstallMethod.INTEGRATION_AWS_SQS, 'AWS SQS'],
+    [InstallMethod.INTEGRATION_AZURE_EVENT_HUB, 'Azure Event Hub'],
+    [InstallMethod.INTEGRATION_AZURE_IOT_HUB, 'Azure IoT Hub'],
+    [InstallMethod.INTEGRATION_AZURE_SERVICE_BUS, 'Azure Service Bus'],
+    [InstallMethod.INTEGRATION_CHIRPSTACK, 'ChirpStack (Integration)'],
+    [InstallMethod.INTEGRATION_COAP, 'CoAP Integration'],
+    [InstallMethod.INTEGRATION_CUSTOM, 'Custom Integration'],
+    [InstallMethod.INTEGRATION_HTTP, 'HTTP Integration'],
+    [InstallMethod.INTEGRATION_IOT_CREATORS, 'IoT Creators'],
+    [InstallMethod.INTEGRATION_KAFKA, 'Apache Kafka'],
+    [InstallMethod.INTEGRATION_KPN_THINGS, 'KPN Things'],
+    [InstallMethod.INTEGRATION_LORIOT, 'LORIOT'],
+    [InstallMethod.INTEGRATION_MQTT, 'MQTT Integration'],
+    [InstallMethod.INTEGRATION_OPC_UA, 'OPC-UA Integration'],
+    [InstallMethod.INTEGRATION_PARTICLE, 'Particle'],
+    [InstallMethod.INTEGRATION_PUB_SUB, 'Google Pub/Sub'],
+    [InstallMethod.INTEGRATION_RABBITMQ, 'RabbitMQ'],
+    [InstallMethod.INTEGRATION_REMOTE, 'Remote Integration'],
+    [InstallMethod.INTEGRATION_SIGFOX, 'Sigfox'],
+    [InstallMethod.INTEGRATION_TCP, 'TCP Integration'],
+    [InstallMethod.INTEGRATION_THINGPARK, 'ThingPark Wireless'],
+    [InstallMethod.INTEGRATION_THINGPARK_ENTERPRISE, 'ThingPark Enterprise'],
+    [InstallMethod.INTEGRATION_TTI, 'The Things Industries'],
     [InstallMethod.INTEGRATION_TTN, 'The Things Stack'],
-    [InstallMethod.INTEGRATION_LORIOT, 'LORIOT']
+    [InstallMethod.INTEGRATION_TUYA, 'Tuya'],
+    [InstallMethod.INTEGRATION_UDP, 'UDP Integration']
   ]
 );
 
