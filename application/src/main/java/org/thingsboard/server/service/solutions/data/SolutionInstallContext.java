@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -156,17 +157,17 @@ public class SolutionInstallContext {
         register(calculatedField.getId());
         EntityId entityId = calculatedField.getEntityId();
         CreatedEntityInfo entityInfo = createdEntities.get(entityId.getId());
-        boolean alarmRule = false; // TODO: CE doesn't have ALARM calculated field type yet
+        boolean alarmRule = calculatedField.getType() == CalculatedFieldType.ALARM;
         if (entityInfo == null) {
             String target = alarmRule ? "Alarm rule" : "Calculated field";
             throw new IllegalStateException("Failed to register " + target + " with name: " +
                     calculatedField.getName() + " for non-existing entity with id: " + entityId);
         }
         if (alarmRule) {
-            createdAlarmRules.put(calculatedField.getUuidId(), new CreatedAlarmRuleInfo(entityId, entityInfo.getName(), calculatedField.getName(), null));
+            createdAlarmRules.put(calculatedField.getUuidId(), CreatedAlarmRuleInfo.from(entityId, entityInfo.getName(), calculatedField));
             return;
         }
-        createdCalculatedFields.put(calculatedField.getUuidId(), new CreatedCalculatedFieldInfo(entityId, entityInfo.getName(), calculatedField.getType().name(), calculatedField.getName()));
+        createdCalculatedFields.put(calculatedField.getUuidId(), CreatedCalculatedFieldInfo.from(entityId, entityInfo.getName(), calculatedField));
     }
 
     public void putIdToMap(EntityDefinition entityDefinition, EntityId entityId) {

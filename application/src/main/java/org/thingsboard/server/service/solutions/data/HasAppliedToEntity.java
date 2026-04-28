@@ -15,20 +15,29 @@
  */
 package org.thingsboard.server.service.solutions.data;
 
-import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.id.EntityId;
 
 import java.util.UUID;
 
-public record CreatedCalculatedFieldInfo(EntityId entityId, String entityName, String type,
-                                         String name) implements HasAppliedToEntity {
+public interface HasAppliedToEntity {
 
-    public static CreatedCalculatedFieldInfo from(EntityId entityId, String entityName, CalculatedField calculatedField) {
-        return new CreatedCalculatedFieldInfo(entityId, entityName, calculatedField.getType().getDisplayName(), calculatedField.getName());
+    EntityId entityId();
+
+    String getCfPageLink(UUID cfId);
+
+    default String getEntityPageLink() {
+        EntityId id = entityId();
+        if (id == null) {
+            return null;
+        }
+        String idStr = id.getId().toString();
+        return switch (id.getEntityType()) {
+            case DEVICE_PROFILE -> "/profiles/deviceProfiles/" + idStr;
+            case ASSET_PROFILE -> "/profiles/assetProfiles/" + idStr;
+            case DEVICE -> "/entities/devices/" + idStr;
+            case ASSET -> "/entities/assets/" + idStr;
+            default -> null;
+        };
     }
 
-    @Override
-    public String getCfPageLink(UUID cfId) {
-        return "/calculatedFields/" + cfId;
-    }
 }

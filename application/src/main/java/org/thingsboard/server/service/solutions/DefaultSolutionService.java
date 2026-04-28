@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
+import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.iot_hub.SolutionTemplateInstalledItemDescriptor;
@@ -55,7 +56,6 @@ import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.cf.CalculatedField;
-import org.thingsboard.server.common.data.cf.configuration.BaseCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.AlarmId;
@@ -94,6 +94,7 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.exception.EntitiesLimitExceededException;
+import org.thingsboard.server.exception.ThingsboardRuntimeException;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
@@ -1329,8 +1330,8 @@ public class DefaultSolutionService implements SolutionService {
                 throw new RuntimeException("Calculated field: " + cf.getName() + " references non existing entity.");
             }
         }
-        if (cf.getConfiguration() instanceof BaseCalculatedFieldConfiguration baseCfg) {
-            baseCfg.getArguments().forEach((key, argument) -> {
+        if (cf.getConfiguration() instanceof ArgumentsBasedCalculatedFieldConfiguration argBasedCfg) {
+            argBasedCfg.getArguments().forEach((key, argument) -> {
                 EntityId refEntityId = argument.getRefEntityId();
                 if (refEntityId != null) {
                     if (refEntityId.getEntityType() == EntityType.TENANT) {
@@ -1340,8 +1341,8 @@ public class DefaultSolutionService implements SolutionService {
                         if (newId != null) {
                             argument.setRefEntityId(EntityIdFactory.getByTypeAndUuid(refEntityId.getEntityType(), newId));
                         } else {
-                            log.error("[{}] Calculated field: {} references non existing entity.", ctx.getTenantId(), cf.getName());
-                            throw new RuntimeException("Calculated field: " + cf.getName() + " references non existing entity.");
+                            log.error("[{}][{}] Calculated field: {} references non existing entity.", ctx.getTenantId(), ctx.getSolutionId(), cf.getName());
+                            throw new ThingsboardRuntimeException();
                         }
                     }
                 }
