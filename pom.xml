@@ -619,7 +619,6 @@
                             <groupId>org.apache.maven.plugins</groupId>
                             <artifactId>maven-assembly-plugin</artifactId>
                             <configuration>
-                                <skipAssembly>${pkg.skip.zip}</skipAssembly>
                                 <finalName>${pkg.name}</finalName>
                                 <descriptors>
                                     <descriptor>${main.dir}/packaging/${pkg.type}/assembly/windows.xml</descriptor>
@@ -632,6 +631,9 @@
                                     <goals>
                                         <goal>single</goal>
                                     </goals>
+                                    <configuration>
+                                        <skipAssembly>${pkg.skip.zip}</skipAssembly>
+                                    </configuration>
                                 </execution>
                             </executions>
                         </plugin>
