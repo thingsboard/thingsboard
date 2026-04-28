@@ -1,0 +1,301 @@
+/**
+ * Copyright © 2016-2026 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+@import "../../../../../scss/constants";
+@import "./iot-hub-common";
+
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.tb-search-results-count-mobile {
+  display: none;
+  margin-left: auto;
+}
+
+.tb-search-input-field {
+  @include tb-iot-hub-search-container;
+  width: 320px;
+  min-width: 0;
+}
+
+.tb-search-input-icon {
+  @include tb-iot-hub-search-icon;
+}
+
+.tb-search-input {
+  @include tb-iot-hub-search-input-text;
+}
+
+.tb-search-input-clear.mat-mdc-icon-button {
+  @include tb-iot-hub-search-clear;
+}
+
+.tb-search-sort-btn {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  letter-spacing: 0.25px;
+  margin-left: auto;
+}
+
+.tb-search-sort-btn-icon {
+  display: none;
+}
+
+// Results count + Pagination row
+.tb-search-pagination-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: -28px;
+}
+
+.tb-search-results-count {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: rgba(0, 0, 0, 0.76);
+  white-space: nowrap;
+}
+
+.tb-search-pagination {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.tb-search-page-btn {
+  min-width: 40px;
+  height: 40px;
+  border: none;
+  background: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.87);
+  cursor: pointer;
+  padding: 8px 16px;
+  font-family: inherit;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.04);
+  }
+
+  &.active {
+    background: $tb-primary-color;
+    color: white;
+  }
+}
+
+.tb-search-page-size {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  letter-spacing: 0.2px;
+  color: rgba(0, 0, 0, 0.76);
+  margin-left: auto;
+}
+
+.tb-search-page-size-select {
+  width: 77px;
+  height: 40px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 4px;
+  padding: 6px 12px;
+
+  ::ng-deep .mat-mdc-select-trigger {
+    font-size: 14px;
+  }
+}
+
+// Loading / Empty negative margin
+.tb-search-loading,
+.tb-search-empty {
+  margin-top: -20px;
+}
+
+// Empty state no-data-bg + text
+.tb-search-empty {
+  .tb-no-data-bg {
+    flex: auto;
+    height: 100px;
+  }
+
+  h3 {
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 24px;
+    letter-spacing: 0.1px;
+    color: rgba(0, 0, 0, 0.76);
+    margin: 0 0 8px;
+  }
+
+  p {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 20px;
+    letter-spacing: 0.2px;
+    color: rgba(0, 0, 0, 0.54);
+    margin: 0;
+  }
+}
+
+// Divider before categories
+.tb-search-divider {
+  background: rgba(0, 0, 0, 0.12);
+  height: 1px;
+  margin-bottom: -20px;
+  margin-top: -20px;
+}
+
+// Categories / sections
+.tb-search-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  margin-top: -20px;
+  overflow: auto;
+  padding-top: 20px;
+}
+
+// Section header
+.tb-search-section-header {
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 24px;
+  color: rgba(0, 0, 0, 0.87);
+  padding: 0;
+  margin-bottom: 12px;
+
+  mat-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+  }
+}
+
+// Card grid
+.tb-search-card-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 20px;
+
+  &.tb-search-card-grid-compact {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+// Responsive
+
+@media #{$mat-gt-xxl} {
+  .tb-search-card-grid {
+    grid-template-columns: repeat(6, 1fr);
+
+    &.tb-search-card-grid-compact {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+}
+
+@media #{$mat-lt-xl} {
+  .tb-search-card-grid {
+    grid-template-columns: repeat(4, 1fr);
+
+    &.tb-search-card-grid-compact {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+}
+
+@media #{$mat-lt-xmd} {
+  .tb-search-card-grid {
+    grid-template-columns: repeat(3, 1fr);
+
+    &.tb-search-card-grid-compact {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+}
+
+@media #{$mat-lt-lg} {
+  .tb-search-pagination-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .tb-search-results-count {
+    order: 1;
+  }
+
+  .tb-search-pagination {
+    order: 0;
+    width: 100%;
+  }
+
+  .tb-search-card-grid {
+    grid-template-columns: repeat(2, 1fr);
+
+    &.tb-search-card-grid-compact {
+      grid-template-columns: repeat(1, 1fr);
+    }
+  }
+}
+
+@media #{$mat-lt-md} {
+  .tb-search-results-count-mobile {
+    display: inline;
+  }
+
+  .tb-search-pagination-row .tb-search-results-count {
+    display: none;
+  }
+}
+
+@media #{$mat-lt-sm} {
+  .tb-search-input-field {
+    width: 100%;
+    flex: 1;
+  }
+
+  .tb-search-sort-btn-full {
+    display: none;
+  }
+
+  .tb-search-sort-btn-icon {
+    display: inline-flex;
+  }
+
+  .tb-search-card-grid {
+    grid-template-columns: repeat(1, 1fr);
+  }
+
+  .tb-search-pagination {
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .tb-search-page-size {
+    margin-left: 0;
+  }
+}

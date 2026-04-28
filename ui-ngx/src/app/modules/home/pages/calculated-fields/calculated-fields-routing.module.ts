@@ -33,6 +33,7 @@ import { DatePipe } from '@angular/common';
 import { ImportExportService } from '@shared/import-export/import-export.service';
 import { EntityDebugSettingsService } from '@home/components/entity/debug/entity-debug-settings.service';
 import { UtilsService } from '@core/services/utils.service';
+import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
 
 export const CalculatedFieldsTableConfigResolver: ResolveFn<CalculatedFieldsTableConfig> =
   (_route: ActivatedRouteSnapshot,
@@ -47,6 +48,7 @@ export const CalculatedFieldsTableConfigResolver: ResolveFn<CalculatedFieldsTabl
    entityDebugSettingsService = inject(EntityDebugSettingsService),
    utilsService = inject(UtilsService),
    router = inject(Router),
+   iotHubActions = inject(IotHubActionsService),
   ) => {
     return new CalculatedFieldsTableConfig(
       calculatedFieldsService,
@@ -63,6 +65,7 @@ export const CalculatedFieldsTableConfigResolver: ResolveFn<CalculatedFieldsTabl
       entityDebugSettingsService,
       utilsService,
       router,
+      iotHubActions,
       true,
     );
   };

@@ -130,6 +130,9 @@
               "node_modules/prismjs/components/prism-json.min.js",
               "node_modules/prismjs/components/prism-javascript.min.js",
               "node_modules/prismjs/components/prism-typescript.min.js",
+              "node_modules/prismjs/components/prism-python.min.js",
+              "node_modules/prismjs/components/prism-c.min.js",
+              "node_modules/prismjs/components/prism-cpp.min.js",
               "node_modules/prismjs/plugins/line-numbers/prism-line-numbers.min.js"
             ],
             "allowedCommonJsDependencies": [

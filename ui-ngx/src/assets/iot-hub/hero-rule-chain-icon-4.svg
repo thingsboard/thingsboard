@@ -1,0 +1,35 @@
+<svg width="88" height="88" viewBox="0 0 88 88" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g filter="url(#filter0_ii_17177_74102)">
+<g clip-path="url(#clip0_17177_74102)">
+<rect x="32.2102" width="64.4205" height="64.4205" rx="5.99735" transform="rotate(30 32.2102 0)" fill="#D99424"/>
+<g clip-path="url(#clip1_17177_74102)">
+<path d="M29.4855 50.2566L31.08 47.495L44.8386 44.392L40.6466 30.9251L42.241 28.1634L58.8109 37.7301L56.4193 41.8726L46.4428 36.1126L49.8787 47.3018L38.4706 49.9209L48.4471 55.6808L46.0554 59.8233L29.4855 50.2566Z" fill="white"/>
+</g>
+</g>
+<rect x="32.3932" y="0.682712" width="63.4209" height="63.4209" rx="5.49758" transform="rotate(30 32.3932 0.682712)" stroke="white" stroke-opacity="0.12" stroke-width="0.999559"/>
+</g>
+<defs>
+<filter id="filter0_ii_17177_74102" x="0.00152506" y="-2.01314" width="87.9996" height="92.0263" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset dy="-1.99912"/>
+<feGaussianBlur stdDeviation="3.99824"/>
+<feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.16 0"/>
+<feBlend mode="normal" in2="shape" result="effect1_innerShadow_17177_74102"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset dy="1.99912"/>
+<feGaussianBlur stdDeviation="3.99824"/>
+<feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/>
+<feColorMatrix type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.16 0"/>
+<feBlend mode="normal" in2="effect1_innerShadow_17177_74102" result="effect2_innerShadow_17177_74102"/>
+</filter>
+<clipPath id="clip0_17177_74102">
+<rect x="32.2102" width="64.4205" height="64.4205" rx="5.99735" transform="rotate(30 32.2102 0)" fill="white"/>
+</clipPath>
+<clipPath id="clip1_17177_74102">
+<rect width="38" height="38" fill="white" transform="translate(37.143 17.8568) scale(1.00701) rotate(30)"/>
+</clipPath>
+</defs>
+</svg>

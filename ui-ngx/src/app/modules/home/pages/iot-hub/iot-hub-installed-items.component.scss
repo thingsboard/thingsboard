@@ -1,0 +1,189 @@
+/**
+ * Copyright © 2016-2026 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+@import "../../../../../scss/constants";
+
+:host {
+  display: block;
+  padding: 16px;
+  height: 100%;
+}
+
+.tb-installed-items-page {
+  background: white;
+  border-radius: 8px;
+  padding: 40px 40px 40px;
+}
+
+// Back button
+.tb-installed-back-btn {
+  margin-bottom: 40px;
+}
+
+// Header: title + check for updates
+.tb-installed-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32px;
+}
+
+.tb-installed-title {
+  font-size: 36px;
+  font-weight: 500;
+  line-height: 48px;
+  color: rgba(0, 0, 0, 0.87);
+  margin: 0;
+}
+
+// Toolbar: filter + search
+.tb-installed-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.tb-installed-filter-btn {
+  &.mat-primary {
+    --mat-button-outlined-outline-color: #{$tb-primary-color};
+  }
+}
+
+.tb-installed-filter-chips {
+  .mat-mdc-standard-chip:not(.mdc-evolution-chip--disabled) {
+    --mat-chip-elevated-container-color: rgba(0, 0, 0, 0.04);
+  }
+}
+
+.tb-installed-clear-btn {
+  font-size: 14px;
+  font-weight: 400;
+  color: rgba(0, 0, 0, 0.54);
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 6px 8px;
+  font-family: inherit;
+
+  &:hover {
+    color: rgba(0, 0, 0, 0.87);
+  }
+}
+
+// Filter menu panel
+::ng-deep .tb-installed-filter-menu {
+  .mat-mdc-menu-content {
+    padding: 0;
+  }
+
+  .tb-installed-filter-item {
+    height: 40px;
+    padding: 0 16px;
+
+    mat-checkbox {
+      width: 100%;
+    }
+  }
+
+  mat-divider {
+    margin: 0;
+  }
+}
+
+// Search field
+.tb-installed-search {
+  width: 320px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: white;
+}
+
+.tb-installed-search-icon {
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+  color: rgba(0, 0, 0, 0.38);
+  flex-shrink: 0;
+}
+
+.tb-installed-search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  font-weight: 400;
+  color: rgba(0, 0, 0, 0.87);
+  background: transparent;
+  font-family: inherit;
+
+  &::placeholder {
+    color: rgba(0, 0, 0, 0.38);
+  }
+}
+
+// Responsive
+@media #{$mat-lt-lg} {
+  .tb-installed-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .tb-installed-search {
+    order: 1;
+  }
+
+  .tb-installed-filter-chips {
+    order: 10;
+  }
+
+  .tb-installed-clear-btn {
+    order: 11;
+  }
+
+  .tb-installed-toolbar::before {
+    content: '';
+    width: 100%;
+    order: 9;
+  }
+}
+
+@media #{$mat-lt-md} {
+  .tb-installed-items-page {
+    padding: 40px 24px;
+  }
+}
+
+@media #{$mat-xs} {
+  .tb-installed-items-page {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .tb-installed-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .tb-installed-search {
+    width: 200px;
+  }
+}

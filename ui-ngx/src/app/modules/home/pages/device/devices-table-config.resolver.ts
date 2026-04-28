@@ -84,6 +84,8 @@ import {
   DeviceCheckConnectivityDialogData
 } from '@home/pages/device/device-check-connectivity-dialog.component';
 import { EntityId } from '@shared/models/id/entity-id';
+import { ItemType } from '@shared/models/iot-hub/iot-hub-item.models';
+import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
 
 interface DevicePageQueryParams extends PageQueryParam {
   deviceProfileId?: string;
@@ -107,7 +109,8 @@ export class DevicesTableConfigResolver  {
               private translate: TranslateService,
               private datePipe: DatePipe,
               private router: Router,
-              private dialog: MatDialog) {
+              private dialog: MatDialog,
+              private iotHubActions: IotHubActionsService) {
 
     this.config.entityType = EntityType.DEVICE;
     this.config.entityComponent = DeviceComponent;
@@ -416,6 +419,12 @@ export class DevicesTableConfigResolver  {
           isEnabled: () => true,
           onAction: ($event) => this.importDevices($event)
         },
+        {
+          name: this.translate.instant('iot-hub.add-from-iot-hub'),
+          icon: 'store',
+          isEnabled: () => true,
+          onAction: (_$event) => this.addDeviceFromIotHub()
+        },
       );
       this.config.addEntity = () => {this.deviceWizard(null); return of(null); };
     }
@@ -448,6 +457,14 @@ export class DevicesTableConfigResolver  {
     }
     const url = this.router.createUrlTree([device.id.id], {relativeTo: config.getActivatedRoute()});
     this.router.navigateByUrl(url);
+  }
+
+  addDeviceFromIotHub() {
+    this.iotHubActions.addItem(ItemType.DEVICE).subscribe(result => {
+      if (result?.descriptor) {
+        this.config.updateData();
+      }
+    });
   }
 
   importDevices($event: Event) {
