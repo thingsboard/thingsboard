@@ -212,8 +212,8 @@ export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubI
       case 'WIDGET': entityId = descriptor.widgetTypeId?.id; entityType = EntityType.WIDGET_TYPE; break;
       case 'DASHBOARD': entityId = descriptor.dashboardId?.id; entityType = EntityType.DASHBOARD; break;
       case 'CALCULATED_FIELD':
-        entityId = descriptor.entityId?.id;
-        entityType = descriptor.entityId?.entityType as EntityType;
+        entityId = descriptor.calculatedFieldId?.id;
+        entityType = EntityType.CALCULATED_FIELD;
         break;
       case 'RULE_CHAIN': entityId = descriptor.ruleChainId?.id; entityType = EntityType.RULE_CHAIN; break;
       case 'SOLUTION_TEMPLATE': entityId = descriptor.dashboardId?.id; entityType = EntityType.DASHBOARD; break;

@@ -29,6 +29,7 @@ import { TbDeviceInstallDialogComponent } from './device-install-dialog/device-i
 import { TbIotHubSearchComponent } from './iot-hub-search.component';
 import { TbIotHubInstalledItemsTableComponent } from './iot-hub-installed-items-table.component';
 import { TbIotHubInstalledItemsDialogComponent } from './iot-hub-installed-items-dialog.component';
+import { TbIotHubSelectCfEntityDialogComponent } from './iot-hub-select-cf-entity-dialog.component';
 import { IotHubActionsService } from './iot-hub-actions.service';
 
 @NgModule({
@@ -44,7 +45,8 @@ import { IotHubActionsService } from './iot-hub-actions.service';
     TbDeviceInstallDialogComponent,
     TbIotHubSearchComponent,
     TbIotHubInstalledItemsTableComponent,
-    TbIotHubInstalledItemsDialogComponent
+    TbIotHubInstalledItemsDialogComponent,
+    TbIotHubSelectCfEntityDialogComponent
   ],
   imports: [
     CommonModule,
@@ -65,7 +67,8 @@ import { IotHubActionsService } from './iot-hub-actions.service';
     TbDeviceInstallDialogComponent,
     TbIotHubSearchComponent,
     TbIotHubInstalledItemsTableComponent,
-    TbIotHubInstalledItemsDialogComponent
+    TbIotHubInstalledItemsDialogComponent,
+    TbIotHubSelectCfEntityDialogComponent
   ]
 })
 export class IotHubComponentsModule { }

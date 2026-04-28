@@ -213,7 +213,7 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
     switch (descriptor.type) {
       case 'WIDGET': return descriptor.widgetTypeId?.id;
       case 'DASHBOARD': return descriptor.dashboardId?.id;
-      case 'CALCULATED_FIELD': return descriptor.entityId?.id;
+      case 'CALCULATED_FIELD': return descriptor.calculatedFieldId?.id;
       case 'RULE_CHAIN': return descriptor.ruleChainId?.id;
       case 'DEVICE': return descriptor.dashboardId?.id ?? null;
       case 'SOLUTION_TEMPLATE': return descriptor.dashboardId?.id;
@@ -226,7 +226,7 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
     switch (descriptor.type) {
       case 'WIDGET': return EntityType.WIDGET_TYPE;
       case 'DASHBOARD': return EntityType.DASHBOARD;
-      case 'CALCULATED_FIELD': return descriptor.entityId?.entityType as EntityType;
+      case 'CALCULATED_FIELD': return EntityType.CALCULATED_FIELD;
       case 'RULE_CHAIN': return EntityType.RULE_CHAIN;
       case 'DEVICE': return descriptor.dashboardId ? EntityType.DASHBOARD : null;
       case 'SOLUTION_TEMPLATE': return EntityType.DASHBOARD;
