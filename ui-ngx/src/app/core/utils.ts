@@ -209,13 +209,19 @@ export function objToBase64(obj: any): string {
     }));
 }
 
+const textDecoderUtf8 = new TextDecoder('utf-8', { fatal: true });
+const textDecoderLatin1 = new TextDecoder('iso-8859-1');
+
 export function base64toString(b64Encoded: string): string {
   const binary = atob(b64Encoded);
-  const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
   try {
-    return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+    return textDecoderUtf8.decode(bytes);
   } catch {
-    return new TextDecoder('iso-8859-1').decode(bytes);
+    return textDecoderLatin1.decode(bytes);
   }
 }
 
