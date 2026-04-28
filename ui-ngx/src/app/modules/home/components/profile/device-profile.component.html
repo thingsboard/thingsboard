@@ -83,6 +83,11 @@
         [ruleChainType]="edgeRuleChainType">
         <span tb-hint>{{'device-profile.default-edge-rule-chain-hint' | translate}}</span>
       </tb-rule-chain-autocomplete>
+      <tb-time-unit-input
+        labelText="{{ 'device-profile.inactivity-timeout' | translate }}"
+        hintText="{{ 'device-profile.inactivity-timeout-hint' | translate }}"
+        formControlName="inactivityTimeoutSec">
+      </tb-time-unit-input>
       <tb-ota-package-autocomplete
         [useFullEntityId]="true"
         [showDetailsPageLink]="true"

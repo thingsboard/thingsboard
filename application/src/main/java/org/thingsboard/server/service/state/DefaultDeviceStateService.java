@@ -34,6 +34,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
@@ -44,10 +45,12 @@ import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceIdInfo;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.exception.TenantNotFoundException;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
@@ -62,6 +65,7 @@ import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.notification.rule.trigger.DeviceActivityTrigger;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageDataIterable;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
@@ -72,6 +76,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
+import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
@@ -85,6 +90,7 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.partition.AbstractPartitionBasedService;
+import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import java.util.ArrayList;
@@ -168,6 +174,9 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
     @Autowired
     @Lazy
     private TelemetrySubscriptionService tsSubService;
+    @Autowired
+    @Lazy
+    private TbDeviceProfileCache deviceProfileCache;
 
     @Value("#{${state.defaultInactivityTimeoutInSec} * 1000}")
     private long defaultInactivityTimeoutMs;
@@ -191,6 +200,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
     private ListeningExecutorService deviceStateCallbackExecutor;
 
     final ConcurrentMap<DeviceId, DeviceStateData> deviceStates = new ConcurrentHashMap<>();
+    final ConcurrentMap<DeviceProfileId, Long> profileResolvedInactivityTimeoutMs = new ConcurrentHashMap<>();
 
     @PostConstruct
     public void init() {
@@ -307,13 +317,78 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         if (cleanDeviceStateIfBelongsToExternalPartition(tenantId, deviceId)) {
             return;
         }
-        if (inactivityTimeout <= 0L) {
-            inactivityTimeout = defaultInactivityTimeoutMs;
-        }
-        log.trace("[{}] on Device Activity Timeout Update device id {} inactivityTimeout {}", tenantId.getId(), deviceId.getId(), inactivityTimeout);
         DeviceStateData stateData = getOrFetchDeviceStateData(deviceId);
-        stateData.getState().setInactivityTimeout(inactivityTimeout);
+        boolean overridden = inactivityTimeout > 0L;
+        long resolved = resolveInactivityTimeout(inactivityTimeout, tenantId, stateData.getDeviceProfileId());
+        log.trace("[{}] on Device Activity Timeout Update device id {} inactivityTimeout {} (resolved {}, overridden {})",
+                tenantId.getId(), deviceId.getId(), inactivityTimeout, resolved, overridden);
+        stateData.setInactivityTimeoutOverridden(overridden);
+        stateData.getState().setInactivityTimeout(resolved);
         checkAndUpdateState(deviceId, stateData);
+    }
+
+    /**
+     * Three-tier resolution for the device inactivity timeout:
+     * <ol>
+     *   <li>per-device server attribute (positive value supplied here),</li>
+     *   <li>profile-level {@code inactivityTimeoutMs} (when set and positive),</li>
+     *   <li>global YAML default ({@code state.defaultInactivityTimeoutInSec}).</li>
+     * </ol>
+     */
+    private long resolveInactivityTimeout(long fromAttributeOrZero, TenantId tenantId, DeviceProfileId profileId) {
+        if (fromAttributeOrZero > 0L) {
+            return fromAttributeOrZero;
+        }
+        Long fromProfile = profileTimeoutMs(tenantId, profileId);
+        if (fromProfile != null && fromProfile > 0L) {
+            return fromProfile;
+        }
+        return defaultInactivityTimeoutMs;
+    }
+
+    private Long profileTimeoutMs(TenantId tenantId, DeviceProfileId profileId) {
+        if (tenantId == null || profileId == null) {
+            return null;
+        }
+        DeviceProfile profile = deviceProfileCache.get(tenantId, profileId);
+        if (profile == null || profile.getProfileData() == null) {
+            return null;
+        }
+        return profile.getProfileData().getInactivityTimeoutMs();
+    }
+
+    @EventListener(ComponentLifecycleMsg.class)
+    public void onComponentLifecycleEvent(ComponentLifecycleMsg event) {
+        if (!EntityType.DEVICE_PROFILE.equals(event.getEntityId().getEntityType())) {
+            return;
+        }
+        DeviceProfileId profileId = new DeviceProfileId(event.getEntityId().getId());
+        if (ComponentLifecycleEvent.DELETED.equals(event.getEvent())) {
+            profileResolvedInactivityTimeoutMs.remove(profileId);
+            return;
+        }
+        if (!ComponentLifecycleEvent.UPDATED.equals(event.getEvent())) {
+            return;
+        }
+        Long timeoutFromProfile = profileTimeoutMs(event.getTenantId(), profileId);
+        long resolvedNew = (timeoutFromProfile != null && timeoutFromProfile > 0L) ? timeoutFromProfile : defaultInactivityTimeoutMs;
+        Long previousResolved = profileResolvedInactivityTimeoutMs.put(profileId, resolvedNew);
+        if (previousResolved != null && previousResolved == resolvedNew) {
+            return;
+        }
+        deviceStateCallbackExecutor.submit(() -> deviceStates.forEach((deviceId, stateData) -> {
+            if (!profileId.equals(stateData.getDeviceProfileId())) {
+                return;
+            }
+            if (stateData.isInactivityTimeoutOverridden()) {
+                return;
+            }
+            if (stateData.getState().getInactivityTimeout() == resolvedNew) {
+                return;
+            }
+            stateData.getState().setInactivityTimeout(resolvedNew);
+            checkAndUpdateState(deviceId, stateData);
+        }));
     }
 
     @Override
@@ -384,6 +459,15 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                         md.putValue("deviceLabel", device.getLabel());
                         md.putValue("deviceType", device.getType());
                         stateData.setMetaData(md);
+                        DeviceProfileId newProfileId = device.getDeviceProfileId();
+                        if (!Objects.equals(newProfileId, stateData.getDeviceProfileId())) {
+                            stateData.setDeviceProfileId(newProfileId);
+                            if (!stateData.isInactivityTimeoutOverridden()) {
+                                long resolved = resolveInactivityTimeout(0L, device.getTenantId(), newProfileId);
+                                stateData.getState().setInactivityTimeout(resolved);
+                                checkAndUpdateState(device.getId(), stateData);
+                            }
+                        }
                         callback.onSuccess();
                     }
                 } else {
@@ -698,7 +782,9 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                 try {
                     long lastActivityTime = getEntryValue(data, LAST_ACTIVITY_TIME, 0L);
                     long inactivityAlarmTime = getEntryValue(data, INACTIVITY_ALARM_TIME, 0L);
-                    long inactivityTimeout = getEntryValue(data, INACTIVITY_TIMEOUT, defaultInactivityTimeoutMs);
+                    long timeoutFromAttribute = getEntryValue(data, INACTIVITY_TIMEOUT, 0L);
+                    boolean overridden = timeoutFromAttribute > 0L;
+                    long resolvedTimeout = resolveInactivityTimeout(timeoutFromAttribute, device.getTenantId(), device.getDeviceProfileId());
                     // Actual active state by wall-clock will be updated outside this method. This method is only for fetching persistent state
                     final boolean active = getEntryValue(data, ACTIVITY_STATE, false);
                     DeviceState deviceState = DeviceState.builder()
@@ -707,7 +793,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                             .lastDisconnectTime(getEntryValue(data, LAST_DISCONNECT_TIME, 0L))
                             .lastActivityTime(lastActivityTime)
                             .lastInactivityAlarmTime(inactivityAlarmTime)
-                            .inactivityTimeout(inactivityTimeout > 0 ? inactivityTimeout : defaultInactivityTimeoutMs)
+                            .inactivityTimeout(resolvedTimeout)
                             .build();
                     TbMsgMetaData md = new TbMsgMetaData();
                     md.putValue("deviceName", device.getName());
@@ -717,9 +803,12 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                             .customerId(device.getCustomerId())
                             .tenantId(device.getTenantId())
                             .deviceId(device.getId())
+                            .deviceProfileId(device.getDeviceProfileId())
                             .deviceCreationTime(device.getCreatedTime())
                             .metaData(md)
-                            .state(deviceState).build();
+                            .state(deviceState)
+                            .inactivityTimeoutOverridden(overridden)
+                            .build();
                     log.debug("[{}] Fetched device state from the DB {}", device.getId(), deviceStateData);
                     return deviceStateData;
                 } catch (Exception e) {
@@ -778,7 +867,9 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
     private DeviceStateData toDeviceStateData(EntityData ed, DeviceIdInfo deviceIdInfo) {
         long lastActivityTime = getEntryValue(ed, getKeyType(), LAST_ACTIVITY_TIME, 0L);
         long inactivityAlarmTime = getEntryValue(ed, getKeyType(), INACTIVITY_ALARM_TIME, 0L);
-        long inactivityTimeout = getEntryValue(ed, EntityKeyType.SERVER_ATTRIBUTE, INACTIVITY_TIMEOUT, defaultInactivityTimeoutMs);
+        long timeoutFromAttribute = getEntryValue(ed, EntityKeyType.SERVER_ATTRIBUTE, INACTIVITY_TIMEOUT, 0L);
+        boolean overridden = timeoutFromAttribute > 0L;
+        long resolvedTimeout = resolveInactivityTimeout(timeoutFromAttribute, deviceIdInfo.getTenantId(), deviceIdInfo.getDeviceProfileId());
         // Actual active state by wall-clock will be updated outside this method. This method is only for fetching persistent state
         final boolean active = getEntryValue(ed, getKeyType(), ACTIVITY_STATE, false);
         DeviceState deviceState = DeviceState.builder()
@@ -787,7 +878,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                 .lastDisconnectTime(getEntryValue(ed, getKeyType(), LAST_DISCONNECT_TIME, 0L))
                 .lastActivityTime(lastActivityTime)
                 .lastInactivityAlarmTime(inactivityAlarmTime)
-                .inactivityTimeout(inactivityTimeout)
+                .inactivityTimeout(resolvedTimeout)
                 .build();
         TbMsgMetaData md = new TbMsgMetaData();
         md.putValue("deviceName", getEntryValue(ed, EntityKeyType.ENTITY_FIELD, "name", ""));
@@ -797,9 +888,12 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                 .customerId(deviceIdInfo.getCustomerId())
                 .tenantId(deviceIdInfo.getTenantId())
                 .deviceId(deviceIdInfo.getDeviceId())
+                .deviceProfileId(deviceIdInfo.getDeviceProfileId())
                 .deviceCreationTime(getEntryValue(ed, EntityKeyType.ENTITY_FIELD, "createdTime", 0L))
                 .metaData(md)
-                .state(deviceState).build();
+                .state(deviceState)
+                .inactivityTimeoutOverridden(overridden)
+                .build();
     }
 
     private EntityKeyType getKeyType() {

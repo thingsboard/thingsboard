@@ -2479,6 +2479,8 @@
         "default-rule-chain": "Default rule chain",
         "default-edge-rule-chain": "Default edge rule chain",
         "default-edge-rule-chain-hint": "Used on edge as rule chain to process incoming data for devices of this device profile",
+        "inactivity-timeout": "Device inactivity timeout",
+        "inactivity-timeout-hint": "Default for all devices in this profile that have no per-device inactivityTimeout server attribute. Leave empty to use the server default.",
         "mobile-dashboard": "Mobile dashboard",
         "mobile-dashboard-hint": "Used by mobile application as a device details dashboard",
         "select-queue-hint": "Select from a drop-down list.",

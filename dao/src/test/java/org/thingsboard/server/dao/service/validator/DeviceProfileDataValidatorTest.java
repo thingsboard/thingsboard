@@ -125,6 +125,48 @@ class DeviceProfileDataValidatorTest {
     }
 
     @Test
+    void testValidate_InactivityTimeoutMs_Null_Ok() {
+        DeviceProfile deviceProfile = baseDefaultProfile();
+        deviceProfile.getProfileData().setInactivityTimeoutMs(null);
+        validator.validateDataImpl(tenantId, deviceProfile);
+    }
+
+    @Test
+    void testValidate_InactivityTimeoutMs_Positive_Ok() {
+        DeviceProfile deviceProfile = baseDefaultProfile();
+        deviceProfile.getProfileData().setInactivityTimeoutMs(1L);
+        validator.validateDataImpl(tenantId, deviceProfile);
+    }
+
+    @Test
+    void testValidate_InactivityTimeoutMs_Zero_Error() {
+        DeviceProfile deviceProfile = baseDefaultProfile();
+        deviceProfile.getProfileData().setInactivityTimeoutMs(0L);
+        assertThatThrownBy(() -> validator.validateDataImpl(tenantId, deviceProfile))
+                .hasMessageContaining("Device profile inactivity timeout must be greater than 0");
+    }
+
+    @Test
+    void testValidate_InactivityTimeoutMs_Negative_Error() {
+        DeviceProfile deviceProfile = baseDefaultProfile();
+        deviceProfile.getProfileData().setInactivityTimeoutMs(-1L);
+        assertThatThrownBy(() -> validator.validateDataImpl(tenantId, deviceProfile))
+                .hasMessageContaining("Device profile inactivity timeout must be greater than 0");
+    }
+
+    private DeviceProfile baseDefaultProfile() {
+        DeviceProfile deviceProfile = new DeviceProfile();
+        deviceProfile.setName("default");
+        deviceProfile.setType(DeviceProfileType.DEFAULT);
+        deviceProfile.setTransportType(DeviceTransportType.DEFAULT);
+        DeviceProfileData data = new DeviceProfileData();
+        data.setTransportConfiguration(new DefaultDeviceProfileTransportConfiguration());
+        deviceProfile.setProfileData(data);
+        deviceProfile.setTenantId(tenantId);
+        return deviceProfile;
+    }
+
+    @Test
     void testValidateDeviceProfile_Lwm2mBootstrap_ShortServerId_Ok() {
         Integer shortServerId = 123;
         Integer shortServerIdBs = null;
