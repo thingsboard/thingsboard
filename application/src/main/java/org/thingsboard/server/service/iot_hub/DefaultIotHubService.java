@@ -40,6 +40,7 @@ import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.RuleChainInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.SolutionTemplateInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.WidgetInstalledItemDescriptor;
+import org.thingsboard.server.exception.EntitiesLimitExceededException;
 import org.thingsboard.server.service.solutions.SolutionService;
 import org.thingsboard.server.service.solutions.data.solution.SolutionInstallResponse;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -135,6 +136,9 @@ public class DefaultIotHubService implements IotHubService {
             return InstallItemVersionResult.success(descriptor);
         } catch (Exception e) {
             log.error("[{}] Failed to install IoT Hub item version: {}", tenantId, versionId, e);
+            if (e instanceof EntitiesLimitExceededException el) {
+                throw el;
+            }
             return InstallItemVersionResult.error(e.getMessage());
         }
     }

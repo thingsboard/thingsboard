@@ -93,6 +93,7 @@ import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.rule.RuleChainService;
+import org.thingsboard.server.exception.EntitiesLimitExceededException;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
@@ -409,6 +410,9 @@ public class DefaultSolutionService implements SolutionService {
         } catch (Throwable e) {
             log.error("[{}][{}] Failed to install solution template", tenantId, solutionId, e);
             rollback(tenantId, solutionId, ctx, e);
+            if (e instanceof EntitiesLimitExceededException el) {
+                throw el;
+            }
             return new SolutionInstallResponse(
                     new TenantSolutionTemplateInstructions(ctx.getSolutionInstructions()),
                     false,

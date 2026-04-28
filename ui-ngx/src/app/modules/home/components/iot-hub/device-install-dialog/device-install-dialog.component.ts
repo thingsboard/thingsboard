@@ -748,12 +748,12 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         return { id: result.id.id, name: result.name, url: `/profiles/deviceProfiles/${result.id.id}` };
       }
       case InstallStepType.DEVICE: {
-        const result = await firstValueFrom(this.deviceService.saveDevice(template, {ignoreErrors: true}));
+        const result = await firstValueFrom(this.deviceService.saveDevice(template, {ignoreErrors: false}));
         const creds = await this.resolveCredentials(step, result.id.id);
         return { id: result.id.id, name: result.name, url: `/entities/devices/${result.id.id}`, token: creds.credentialsId };
       }
       case InstallStepType.GATEWAY: {
-        const result = await firstValueFrom(this.deviceService.saveDevice(template, {ignoreErrors: true}));
+        const result = await firstValueFrom(this.deviceService.saveDevice(template, {ignoreErrors: false}));
         const creds = await this.resolveCredentials(step, result.id.id);
         const output = {
           id: result.id.id,
@@ -904,13 +904,13 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       }
       case InstallStepType.DEVICE: {
         template.id = { id: existing.id, entityType: 'DEVICE' };
-        const result = await firstValueFrom(this.deviceService.saveDevice(template, {ignoreErrors: true}));
+        const result = await firstValueFrom(this.deviceService.saveDevice(template, {ignoreErrors: false}));
         const creds = await this.resolveCredentials(step, result.id.id);
         return { id: result.id.id, name: result.name, url: `/entities/devices/${result.id.id}`, token: creds.credentialsId };
       }
       case InstallStepType.GATEWAY: {
         template.id = { id: existing.id, entityType: 'DEVICE' };
-        const result = await firstValueFrom(this.deviceService.saveDevice(template, {ignoreErrors: true}));
+        const result = await firstValueFrom(this.deviceService.saveDevice(template, {ignoreErrors: false}));
         const creds = await this.resolveCredentials(step, result.id.id);
         const output: EntityStepOutput = {
           id: result.id.id,
