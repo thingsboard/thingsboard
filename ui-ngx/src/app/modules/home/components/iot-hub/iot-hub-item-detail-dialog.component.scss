@@ -551,6 +551,34 @@
     code:not([class*=language-]) {
       font-size: 14px;
     }
+
+    .tb-doc-link-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      margin: 4px 8px 4px 0;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      border-radius: 6px;
+      background: #fff;
+      color: rgba(0, 0, 0, 0.76);
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 20px;
+      text-decoration: none;
+      cursor: pointer;
+
+      i.material-icons {
+        font-size: 18px;
+        line-height: 18px;
+        color: rgba(0, 0, 0, 0.54);
+      }
+
+      &:hover {
+        background: rgba(0, 0, 0, 0.04);
+        border-color: rgba(0, 0, 0, 0.24);
+      }
+    }
   }
 }
 

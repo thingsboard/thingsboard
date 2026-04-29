@@ -33,6 +33,7 @@ import { RuleChainService } from '@core/http/rule-chain.service';
 import { AttributeService } from '@core/http/attribute.service';
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { EntityId } from '@shared/models/id/entity-id';
+import { generateSecret } from '@core/utils';
 import {
   installMethodLabels as INSTALL_METHOD_LABELS,
   peOnlyInstallMethods,
@@ -44,6 +45,7 @@ import {
   FormFieldDefinition,
   FormFieldType,
   InstallStepType,
+  resolveDocLinkPlaceholders,
   stepTypeAliasMap
 } from '@shared/models/iot-hub/device-package.models';
 
@@ -74,6 +76,7 @@ export interface WizardStep {
 }
 
 const ENTITY_STEP_MIN_DELAY = 2000;
+const DEFAULT_RANDOM_SIZE = 20;
 
 @Component({
   selector: 'tb-device-install-dialog',
@@ -422,6 +425,14 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   // --- Variable Resolution ---
 
   resolveVariables(content: string): string {
+    if (this.packageInfo) {
+      content = resolveDocLinkPlaceholders(
+        content,
+        this.packageInfo.name || '',
+        { productURL: this.packageInfo.productURL, datasheetURL: this.packageInfo.datasheetURL },
+        { productPage: 'Product page', datasheet: 'Datasheet' }
+      );
+    }
     return content.replace(/\$\{([^}]+)}/g, (_match, key) => {
       if (key in this.formValues) {
         return String(this.formValues[key]);
@@ -591,7 +602,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       if (field.validators?.length > 0) {
         validators.push(Validators.pattern(field.validators[0].pattern));
       }
-      const initialValue = storedValues?.[field.key] ?? field.defaultValue ?? (field.type === FormFieldType.BOOLEAN ? false : '');
+      const initialValue = this.resolveInitialFieldValue(field, storedValues?.[field.key]);
       controls[field.key] = new UntypedFormControl(initialValue, validators);
       if (field.type === FormFieldType.PASSWORD) {
         this.passwordVisible[field.key] = true; // Show passwords in review mode
@@ -602,6 +613,26 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       ws.formGroup.disable();
       ws.completed = true;
     }
+  }
+
+  private resolveInitialFieldValue(field: FormFieldDefinition, storedValue: any): any {
+    if (storedValue !== undefined) {
+      return storedValue;
+    }
+    const isStringLike = field.type === FormFieldType.STRING || field.type === FormFieldType.PASSWORD;
+    if (isStringLike && field.randomByDefault) {
+      return generateSecret(field.randomSize ?? DEFAULT_RANDOM_SIZE);
+    }
+    return field.defaultValue ?? (field.type === FormFieldType.BOOLEAN ? false : '');
+  }
+
+  regenerateFieldValue(ws: WizardStep, field: FormFieldDefinition): void {
+    const control = ws.formGroup?.controls[field.key];
+    if (!control) {
+      return;
+    }
+    control.patchValue(generateSecret(field.randomSize ?? DEFAULT_RANDOM_SIZE));
+    control.markAsDirty();
   }
 
   private onStepActivated(): void {
