@@ -3706,6 +3706,7 @@
         "and-devices": "& Devices",
         "search-placeholder": "Search in IoT Hub...",
         "search": "Search...",
+        "search-published-items": "Search published items...",
         "see-all-results": "See all results",
         "no-search-results": "No results found for '{{ search }}'",
         "no-items-available": "No items available",

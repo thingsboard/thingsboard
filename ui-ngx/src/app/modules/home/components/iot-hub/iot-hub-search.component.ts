@@ -58,6 +58,10 @@ export class TbIotHubSearchComponent implements OnInit, OnDestroy {
   @Input() showCreator = true;
   @Output() searchTextChange = new EventEmitter<string>();
 
+  get searchPlaceholderKey(): string {
+    return this.creatorId ? 'iot-hub.search-published-items' : 'iot-hub.search';
+  }
+
   resultGroups: SearchResultGroup[] = [];
   totalElements = 0;
   isLoading = false;

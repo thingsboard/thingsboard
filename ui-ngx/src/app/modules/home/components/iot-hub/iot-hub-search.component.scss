@@ -29,21 +29,15 @@
 }
 
 .tb-search-input-field {
-  @include tb-iot-hub-search-container;
-  width: 320px;
-  min-width: 0;
-}
-
-.tb-search-input-icon {
-  @include tb-iot-hub-search-icon;
+  @include tb-iot-hub-page-search-container;
 }
 
 .tb-search-input {
-  @include tb-iot-hub-search-input-text;
+  @include tb-iot-hub-page-search-input;
 }
 
-.tb-search-input-clear.mat-mdc-icon-button {
-  @include tb-iot-hub-search-clear;
+.tb-search-input-action {
+  @include tb-iot-hub-page-search-action;
 }
 
 .tb-search-sort-btn {
@@ -272,11 +266,6 @@
 }
 
 @media #{$mat-lt-sm} {
-  .tb-search-input-field {
-    width: 100%;
-    flex: 1;
-  }
-
   .tb-search-sort-btn-full {
     display: none;
   }
