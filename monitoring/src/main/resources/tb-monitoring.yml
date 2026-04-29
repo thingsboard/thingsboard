@@ -59,6 +59,21 @@ monitoring:
           check_domain_ips: '${MQTT_TRANSPORT_CHECK_DOMAIN_IPS:false}'
           # Prefix for the target device name
           name_prefix: '${MQTT_TRANSPORT_TARGET_NAME_PREFIX:}'
+          # Optional companion RPC check on this target.
+          # Issues POST /api/rpc/twoway/{deviceId} with method=monitoringCheck and a uuid,
+          # validates the device echoes the uuid back over the same MQTT session, and
+          # reports the round-trip under the <key>RpcRoundTrip latency.
+          # Failures appear as ":red_circle: MQTT RPC" in the IncidentManager header.
+          rpc:
+            enabled: '${MQTT_RPC_MONITORING_ENABLED:false}'
+            # RPC request timeout in ms; must be < monitoring.rest.request_timeout_ms.
+            # If unset, falls back to monitoring.transports.mqtt.request_timeout_ms.
+            request_timeout_ms: '${MQTT_RPC_REQUEST_TIMEOUT_MS:4000}'
+        # Secure MQTT example with RPC enabled by default:
+        # - base_url: '${MQTT_TRANSPORT_SSL_BASE_URL:ssl://${monitoring.domain}:8883}'
+        #   queue: 'Main'
+        #   rpc:
+        #     enabled: true
         # To add more targets, use following environment variables:
         # monitoring.transports.mqtt.targets[1].base_url, monitoring.transports.mqtt.targets[2].base_url, etc.
 
@@ -76,6 +91,11 @@ monitoring:
           check_domain_ips: '${COAP_TRANSPORT_CHECK_DOMAIN_IPS:false}'
           # Prefix for the target device name
           name_prefix: '${COAP_TRANSPORT_TARGET_NAME_PREFIX:}'
+          # Optional companion RPC check. Opens a CoAP OBSERVE on /api/v1/{token}/rpc on
+          # a separate CoapClient and echoes incoming RPC params back to /api/v1/{token}/rpc/{id}.
+          rpc:
+            enabled: '${COAP_RPC_MONITORING_ENABLED:false}'
+            request_timeout_ms: '${COAP_RPC_REQUEST_TIMEOUT_MS:4000}'
         # To add more targets, use following environment variables:
         # monitoring.transports.coap.targets[1].base_url, monitoring.transports.coap.targets[2].base_url, etc.
 
@@ -93,6 +113,12 @@ monitoring:
           check_domain_ips: '${HTTP_TRANSPORT_CHECK_DOMAIN_IPS:false}'
           # Prefix for the target device name
           name_prefix: '${HTTP_TRANSPORT_TARGET_NAME_PREFIX:}'
+          # Optional companion RPC check. Spawns a daemon long-poll thread per target on
+          # GET /api/v1/{token}/rpc?timeout=1000 and POSTs the echoed params back to
+          # /api/v1/{token}/rpc/{id} when an RPC arrives.
+          rpc:
+            enabled: '${HTTP_RPC_MONITORING_ENABLED:false}'
+            request_timeout_ms: '${HTTP_RPC_REQUEST_TIMEOUT_MS:4000}'
         # To add more targets, use following environment variables:
         # monitoring.transports.http.targets[1].base_url, monitoring.transports.http.targets[2].base_url, etc.
 
@@ -110,6 +136,15 @@ monitoring:
           check_domain_ips: '${LWM2M_TRANSPORT_CHECK_DOMAIN_IPS:false}'
           # Prefix for the target device name
           name_prefix: '${LWM2M_TRANSPORT_TARGET_NAME_PREFIX:}'
+          # Optional companion RPC check. Issues a server-initiated LwM2M Read on /3/0/0
+          # via /api/rpc/twoway/{deviceId} with method=Read; asserts the response is
+          # non-blank. The "value matches uuid" pattern used by other transports does not
+          # apply here because the Read is read-only — see design doc §4.6.
+          rpc:
+            enabled: '${LWM2M_RPC_MONITORING_ENABLED:false}'
+            # LwM2M Read goes through rule engine + Leshan registration, so default to
+            # 6000 ms; tune per environment.
+            request_timeout_ms: '${LWM2M_RPC_REQUEST_TIMEOUT_MS:6000}'
         # To add more targets, use following environment variables:
         # monitoring.transports.lwm2m.targets[1].base_url, monitoring.transports.lwm2m.targets[2].base_url, etc.
 

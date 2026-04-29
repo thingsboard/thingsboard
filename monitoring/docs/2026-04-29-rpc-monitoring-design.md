@@ -1,6 +1,6 @@
 # RPC Monitoring — Design
 
-| Status | Draft for review |
+| Status | Implemented (PR for #15541) |
 |--------|------------------|
 | Author | Sergii Matviienko (`smatvienko@thingsboard.io`) |
 | Date | 2026-04-29 |
@@ -313,6 +313,42 @@ just another `ServiceFailureNotification` whose `AffectedService` carries
 | Both broken | Two rows: `:red_circle: MQTT (n), :red_circle: MQTT RPC (m)`. |
 | RPC recovers first | MQTT RPC row turns `:large_green_circle:`, MQTT stays red until uplink recovers. |
 
+### 4.6 LwM2M Read-vs-echo asymmetry
+
+Three of the four transports use the same value-echo round-trip:
+
+```
+POST /api/rpc/twoway/{deviceId}  {method:"monitoringCheck", params:{value:<uuid>}}
+                                          ↓ rule engine + transport
+                              device echoes params back, value == uuid
+```
+
+LwM2M is the exception. There is no echo handler to add on the monitoring
+side because the existing `Lwm2mClient` already implements the standard
+Object 3 (Device) Read pathway: `Lwm2mClient.read(server, /3/0/0)` returns
+the value that was last set via `send()` (which is what the telemetry uplink
+phase does immediately before). So the LwM2M companion check uses a
+server-initiated Read instead of an echo:
+
+```
+POST /api/rpc/twoway/{deviceId}  {method:"Read", params:{key:"/3/0/0"}, timeout:6000}
+                                          ↓ rule engine + LwM2M Read
+                              device returns the resource value
+```
+
+The assertion is therefore weaker — non-blank instead of value-equal —
+because the resource value is not under the monitoring service's control on
+the wire (the rule-engine + Leshan registration path round-trips first).
+This is sufficient as a liveness signal for the cloud-to-device LwM2M Read
+pathway and matches what the existing fixtures (`device_profile.json`,
+`resource.json`) already expose. If a stronger assertion is wanted later,
+a Write+Read pair against a custom resource on the test model would close
+the gap, but that is out of scope for this PR.
+
+The `request_timeout_ms` default is therefore `6000` ms for LwM2M (vs `4000`
+ms for the other three transports) because the LwM2M Read traverses one
+extra hop (Leshan registration → device coap loop → response).
+
 ### 4.5 Proposed flow
 
 ```text
@@ -439,55 +475,73 @@ sequenceDiagram
 
 ## 5. Implementation phases
 
-Each phase is an independently reviewable commit:
+Each phase is an independently reviewable commit landing in the same PR:
 
 1. **Land this design paper.** No code changes.
 2. **Add the per-target hook.** Introduce `RpcCheckConfig`,
    `TransportMonitoringTarget.rpc`, `RpcInfo`, and the no-op `doRpcCheck`
    on `BaseHealthChecker`. Wire `BaseHealthChecker.check` to invoke
-   `doRpcCheck` after WS validation when enabled. Tests at base level.
+   `doRpcCheck` after WS validation. Tests at base level.
 3. **MQTT implementation.** Extend `MqttTransportHealthChecker.initClient`
-   to subscribe `v1/devices/me/rpc/request/+` on the existing client when
-   `rpc.enabled`, and implement `doRpcCheck` against
-   `TbClient.handleTwoWayDeviceRPCRequest`. Includes the device-side echo
-   callback (Paho async thread). Unit tests cover happy path, value
-   mismatch, REST exception, response timeout, and RPC-disabled (no
-   subscription).
-4. **Documentation polish.** Update
-   `monitoring/src/main/resources/README.md` with the new YAML keys, a
+   to subscribe `v1/devices/me/rpc/request/+` on the existing Paho client
+   when `rpc.enabled`. Implement the value-echo `doRpcCheck` once on
+   `TransportHealthChecker` so HTTP and CoAP can inherit it. Unit tests
+   cover happy path, value mismatch, REST exception, response timeout,
+   RPC-disabled (no subscription), and idempotent subscribe.
+4. **HTTP implementation.** Extend `HttpTransportHealthChecker.initClient`
+   to spawn an idempotent daemon long-poll thread on
+   `GET /api/v1/{token}/rpc?timeout=1000`; on each 200 response, POST the
+   echoed params back to `/api/v1/{token}/rpc/{id}`. The thread is
+   lifecycle-bound to `initClient` / `destroyClient`. Tests cover the
+   inherited `doRpcCheck` shape plus poll-thread start/stop/idempotency
+   and `pollOnce` behaviour for 200/408/204.
+5. **CoAP implementation.** Extend `CoapTransportHealthChecker.initClient`
+   to open a CoAP OBSERVE on `coap://host/api/v1/{token}/rpc` via a
+   second `CoapClient`; on each notification echo the params back to
+   `coap://host/api/v1/{token}/rpc/{id}`. `destroyClient` cancels the
+   observe and shuts down the rpc client. Tests cover the inherited
+   `doRpcCheck` shape, observe lifecycle, and notification handler
+   parsing.
+6. **LwM2M implementation.** Override `doRpcCheck` only — no
+   `initClient` changes — to issue
+   `POST /api/rpc/twoway/{deviceId} {method:"Read", params:{key:"/3/0/0"}}`
+   and assert non-blank, per §4.6.
+7. **Documentation polish.** Add `monitoring/src/main/resources/README.md`
+   with the per-transport behaviour table, the new YAML keys, the
    secure-MQTT example, and a small troubleshooting note on
-   `request_timeout_ms` ordering vs `monitoring.rest.request_timeout_ms`.
-5. **Follow-ups (separate issues).** HTTP RPC (long-poll
-   `GET /api/v1/{token}/rpc?timeout=…`) and CoAP RPC plug into the same
-   `doRpcCheck` hook with no further base-class changes; tracking issue
-   per transport.
+   `rpc.request_timeout_ms` ordering vs `monitoring.rest.request_timeout_ms`.
 
 ## 6. Open decisions
 
-Listed for reviewer push-back before implementation begins:
+Listed for reviewer push-back before implementation began. All four
+transports ship in this PR; the rest of the table below records the calls
+that survived review.
 
-1. **MQTT only in scope here.** HTTP/CoAP follow as separate issues. The
-   `doRpcCheck` hook is generic so they slot in without further base-class
-   churn.
+1. **All four transports in scope.** Hook + MQTT + HTTP + CoAP + LwM2M ship
+   together so the IncidentManager header gains a coherent set of
+   `:red_circle: <transport> RPC` rows in one go. The hook itself is
+   generic enough that adding more transports later (SNMP, custom) is
+   just another override.
 2. **Two-way RPC only.** Round-trip value validation is the strongest
    signal; one-way RPC would only confirm the request reached the device,
    which the telemetry uplink check already covers from the other
    direction.
 3. **RPC failure key shape.** Use `RpcInfo(TransportInfo)` implementing
    `ShortNameProvider` returning `"<transport.shortName> RPC"`. Alternative:
-   a string constant like `"MQTT RPC"`. Recommendation: the wrapper, so
+   a string constant like `"MQTT RPC"`. Decision: the wrapper, so
    non-default queues (`"MQTT Foo RPC"`) are handled with no extra code.
 4. **Latency suffix.** Reuse the transport target's `getKey()` derivation
    (`mqtt`, `mqttFoo`) and append `RpcRoundTrip` — no separate per-target
    label. This lines up with `<key>Request` / `<key>WsUpdate` already used
    for the telemetry side and means the existing latencies dashboard
    widget needs no schema changes.
-5. **Echo handler placement.** The MQTT echo callback (subscribe handler
-   that publishes `params` back as the response) lives inside
-   `MqttTransportHealthChecker.initClient` — same place where the telemetry
-   client is created, on the same Paho thread. Alternative: a separate
-   helper class. Recommendation: keep it inline. Echo logic is six lines
-   and is only meaningful in the context of one connected client.
+5. **Echo handler placement (MQTT/HTTP/CoAP).** Each transport's echo
+   path lives inline in its `initClient` rather than in a separate helper
+   class. Echo logic is small (a handful of lines per transport) and is
+   only meaningful in the context of one connected client.
+6. **LwM2M Read instead of echo.** See §4.6. The asymmetry is documented
+   in `monitoring/src/main/resources/README.md` so operators understand
+   why the LwM2M assertion is non-blank rather than uuid-equal.
 
 ## 7. Code references (`rc`)
 
