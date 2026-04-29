@@ -150,6 +150,7 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
       case 'DASHBOARD': return 'dashboard';
       case 'SOLUTION_TEMPLATE': return 'integration_instructions';
       case 'CALCULATED_FIELD': return 'functions';
+      case 'ALARM_RULE': return 'notification_important';
       case 'RULE_CHAIN': return 'settings_ethernet';
       case 'DEVICE': return 'memory';
       default: return 'category';
@@ -174,6 +175,7 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
       case 'WIDGET': return 'tb-type-widget';
       case 'DASHBOARD': return 'tb-type-dashboard';
       case 'CALCULATED_FIELD': return 'tb-type-calc-field';
+      case 'ALARM_RULE': return 'tb-type-alarm-rule';
       case 'RULE_CHAIN': return 'tb-type-rule-chain';
       case 'DEVICE': return 'tb-type-device';
       case 'SOLUTION_TEMPLATE': return 'tb-type-solution-template';
@@ -214,6 +216,7 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
       case 'WIDGET': return descriptor.widgetTypeId?.id;
       case 'DASHBOARD': return descriptor.dashboardId?.id;
       case 'CALCULATED_FIELD': return descriptor.entityId?.id;
+      case 'ALARM_RULE': return descriptor.entityId?.id;
       case 'RULE_CHAIN': return descriptor.ruleChainId?.id;
       case 'DEVICE': return descriptor.dashboardId?.id ?? null;
       case 'SOLUTION_TEMPLATE': return descriptor.dashboardId?.id;
@@ -227,6 +230,7 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
       case 'WIDGET': return EntityType.WIDGET_TYPE;
       case 'DASHBOARD': return EntityType.DASHBOARD;
       case 'CALCULATED_FIELD': return descriptor.entityId?.entityType as EntityType;
+      case 'ALARM_RULE': return descriptor.entityId?.entityType as EntityType;
       case 'RULE_CHAIN': return EntityType.RULE_CHAIN;
       case 'DEVICE': return descriptor.dashboardId ? EntityType.DASHBOARD : null;
       case 'SOLUTION_TEMPLATE': return EntityType.DASHBOARD;

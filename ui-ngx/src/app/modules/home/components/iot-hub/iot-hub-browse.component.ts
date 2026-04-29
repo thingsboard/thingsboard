@@ -21,7 +21,7 @@ import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { PageData } from '@shared/models/page/page-data';
 import { MpItemVersionQuery, MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
-import { ItemType, FilterParamInfo } from '@shared/models/iot-hub/iot-hub-item.models';
+import { ItemType, FilterParamInfo, CREATOR_VISIBLE_ITEM_TYPES } from '@shared/models/iot-hub/iot-hub-item.models';
 import { widgetTypeTranslations, cfTypeTranslations, ruleChainTypeTranslations } from '@shared/models/iot-hub/iot-hub-version.models';
 import { IotHubInstalledItem, DeviceInstalledItemDescriptor } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
@@ -44,6 +44,18 @@ interface SortOption {
   host: { '[class.embedded]': 'embedded' }
 })
 export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy {
+
+  private static typeTabLabel(t: ItemType): string {
+    switch (t) {
+      case ItemType.WIDGET: return 'item.type-widget-plural';
+      case ItemType.DASHBOARD: return 'item.type-dashboard-plural';
+      case ItemType.SOLUTION_TEMPLATE: return 'item.type-solution-template-plural';
+      case ItemType.CALCULATED_FIELD: return 'item.type-calculated-field-plural';
+      case ItemType.ALARM_RULE: return 'item.type-alarm-rule-plural';
+      case ItemType.RULE_CHAIN: return 'item.type-rule-chain-plural';
+      case ItemType.DEVICE: return 'item.type-device-plural';
+    }
+  }
 
   readonly ItemType = ItemType;
 
@@ -76,7 +88,9 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   get isCompactType(): boolean {
-    return this._activeType === ItemType.CALCULATED_FIELD || this._activeType === ItemType.RULE_CHAIN;
+    return this._activeType === ItemType.CALCULATED_FIELD
+        || this._activeType === ItemType.ALARM_RULE
+        || this._activeType === ItemType.RULE_CHAIN;
   }
 
   items: MpItemVersionView[] = [];
@@ -118,14 +132,10 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
     { value: 'name', label: 'iot-hub.sort-name', direction: Direction.ASC }
   ];
 
-  typeTabs: { type: ItemType; label: string }[] = [
-    { type: ItemType.WIDGET, label: 'item.type-widget-plural' },
-    { type: ItemType.DASHBOARD, label: 'item.type-dashboard-plural' },
-    { type: ItemType.SOLUTION_TEMPLATE, label: 'item.type-solution-template-plural' },
-    { type: ItemType.CALCULATED_FIELD, label: 'item.type-calculated-field-plural' },
-    { type: ItemType.RULE_CHAIN, label: 'item.type-rule-chain-plural' },
-    { type: ItemType.DEVICE, label: 'item.type-device-plural' }
-  ];
+  typeTabs: { type: ItemType; label: string }[] = CREATOR_VISIBLE_ITEM_TYPES.map(t => ({
+    type: t,
+    label: TbIotHubBrowseComponent.typeTabLabel(t)
+  }));
   selectedSortIndex = 0;
 
   subtypeOptions: FilterParamInfo[] = [];
@@ -512,6 +522,7 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
       case ItemType.DASHBOARD: return 'iot-hub.title-dashboards';
       case ItemType.SOLUTION_TEMPLATE: return 'iot-hub.title-solution-templates';
       case ItemType.CALCULATED_FIELD: return 'iot-hub.title-calculated-fields';
+      case ItemType.ALARM_RULE: return 'iot-hub.title-alarm-rules';
       case ItemType.RULE_CHAIN: return 'iot-hub.title-rule-chains';
       case ItemType.DEVICE: return 'iot-hub.title-devices';
     }

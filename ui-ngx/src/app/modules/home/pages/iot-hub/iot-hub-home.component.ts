@@ -81,14 +81,14 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
       icons: ['assets/iot-hub/hero-widget-icon-1.svg', 'assets/iot-hub/hero-widget-icon-2.svg', 'assets/iot-hub/hero-widget-icon-3.svg', 'assets/iot-hub/hero-widget-icon-4.svg']
     },
     {
-      type: ItemType.DASHBOARD, labelKey: 'item.type-dashboard-plural', color: '#4d5fd0',
-      gradientColor: 'rgba(77, 95, 208, 0.1)',
-      icons: ['assets/iot-hub/hero-dashboard-icon-1.svg', 'assets/iot-hub/hero-dashboard-icon-2.svg', 'assets/iot-hub/hero-dashboard-icon-3.svg', 'assets/iot-hub/hero-dashboard-icon-4.svg']
-    },
-    {
       type: ItemType.SOLUTION_TEMPLATE, labelKey: 'item.type-solution-template-plural', color: '#2666a9',
       gradientColor: 'rgba(38, 102, 169, 0.1)',
       icons: ['assets/iot-hub/hero-solution-template-icon-1.svg', 'assets/iot-hub/hero-solution-template-icon-2.svg', 'assets/iot-hub/hero-solution-template-icon-3.svg', 'assets/iot-hub/hero-solution-template-icon-4.svg']
+    },
+    {
+      type: ItemType.DEVICE, labelKey: 'item.type-device-plural', color: '#4b8a79',
+      gradientColor: 'rgba(75, 138, 121, 0.1)',
+      icons: ['assets/iot-hub/hero-device-icon-1.svg', 'assets/iot-hub/hero-device-icon-2.svg', 'assets/iot-hub/hero-device-icon-3.svg', 'assets/iot-hub/hero-device-icon-4.svg']
     },
     {
       type: ItemType.CALCULATED_FIELD, labelKey: 'item.type-calculated-field-plural', color: '#006d92',
@@ -96,14 +96,14 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
       icons: ['assets/iot-hub/hero-calculated-field-icon-1.svg', 'assets/iot-hub/hero-calculated-field-icon-2.svg', 'assets/iot-hub/hero-calculated-field-icon-3.svg', 'assets/iot-hub/hero-calculated-field-icon-4.svg']
     },
     {
+      type: ItemType.ALARM_RULE, labelKey: 'item.type-alarm-rule-plural', color: '#4d5fd0',
+      gradientColor: 'rgba(77, 95, 208, 0.1)',
+      icons: ['assets/iot-hub/hero-dashboard-icon-1.svg', 'assets/iot-hub/hero-dashboard-icon-2.svg', 'assets/iot-hub/hero-dashboard-icon-3.svg', 'assets/iot-hub/hero-dashboard-icon-4.svg']
+    },
+    {
       type: ItemType.RULE_CHAIN, labelKey: 'item.type-rule-chain-plural', color: '#95694b',
       gradientColor: 'rgba(149, 105, 75, 0.1)',
       icons: ['assets/iot-hub/hero-rule-chain-icon-1.svg', 'assets/iot-hub/hero-rule-chain-icon-2.svg', 'assets/iot-hub/hero-rule-chain-icon-3.svg', 'assets/iot-hub/hero-rule-chain-icon-4.svg']
-    },
-    {
-      type: ItemType.DEVICE, labelKey: 'iot-hub.and-devices', color: '#4b8a79',
-      gradientColor: 'rgba(75, 138, 121, 0.1)',
-      icons: ['assets/iot-hub/hero-device-icon-1.svg', 'assets/iot-hub/hero-device-icon-2.svg', 'assets/iot-hub/hero-device-icon-3.svg', 'assets/iot-hub/hero-device-icon-4.svg']
     }
   ];
 
@@ -113,25 +113,25 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
 
   categoryCards: CategoryCard[] = [
     { type: ItemType.WIDGET, titleKey: 'item.type-widget-plural', icon: 'widgets', cssClass: 'category-widgets', image: 'assets/iot-hub/category-widgets-img.svg' },
-    { type: ItemType.DASHBOARD, titleKey: 'item.type-dashboard-plural', icon: 'dashboard', cssClass: 'category-dashboards', image: 'assets/iot-hub/category-dashboards-img.svg' },
     { type: ItemType.SOLUTION_TEMPLATE, titleKey: 'item.type-solution-template-plural', icon: 'integration_instructions', cssClass: 'category-solutions', image: 'assets/iot-hub/category-solution-templates-img.png' },
+    { type: ItemType.DEVICE, titleKey: 'iot-hub.device-library', icon: 'memory', cssClass: 'category-devices', image: 'assets/iot-hub/category-device-library-img.svg' },
     { type: ItemType.CALCULATED_FIELD, titleKey: 'item.type-calculated-field-plural', icon: 'functions', cssClass: 'category-calc-fields', image: 'assets/iot-hub/category-calculated-fields-img.svg' },
-    { type: ItemType.RULE_CHAIN, titleKey: 'item.type-rule-chain-plural', icon: 'account_tree', cssClass: 'category-rule-chains', image: 'assets/iot-hub/category-rule-chains-img.svg' },
-    { type: ItemType.DEVICE, titleKey: 'iot-hub.device-library', icon: 'memory', cssClass: 'category-devices', image: 'assets/iot-hub/category-device-library-img.svg' }
+    { type: ItemType.ALARM_RULE, titleKey: 'item.type-alarm-rule-plural', icon: 'notification_important', cssClass: 'category-alarm-rules', image: 'assets/iot-hub/category-dashboards-img.svg' },
+    { type: ItemType.RULE_CHAIN, titleKey: 'item.type-rule-chain-plural', icon: 'account_tree', cssClass: 'category-rule-chains', image: 'assets/iot-hub/category-rule-chains-img.svg' }
   ];
 
   popularWidgets: MpItemVersionView[] = [];
-  popularDashboards: MpItemVersionView[] = [];
   popularSolutionTemplates: MpItemVersionView[] = [];
   popularCalcFields: MpItemVersionView[] = [];
+  popularAlarmRules: MpItemVersionView[] = [];
   popularRuleChains: MpItemVersionView[] = [];
   popularDevices: MpItemVersionView[] = [];
 
   installedWidgets: IotHubInstalledItem[] = [];
   installedSolutionTemplates: IotHubInstalledItem[] = [];
   installedDeviceCounts: Record<string, number> = {};
-  installedDashboardCounts: Record<string, number> = {};
   installedCalcFieldCounts: Record<string, number> = {};
+  installedAlarmRuleCounts: Record<string, number> = {};
   installedRuleChainCounts: Record<string, number> = {};
   installedItemsCount = 0;
 
@@ -260,11 +260,21 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
   }
 
   isCompactType(type: ItemType): boolean {
-    return type === ItemType.CALCULATED_FIELD || type === ItemType.RULE_CHAIN;
+    return type === ItemType.CALCULATED_FIELD
+        || type === ItemType.ALARM_RULE
+        || type === ItemType.RULE_CHAIN;
   }
 
   getCompactIcon(item: MpItemVersionView): string {
-    return item.icon || (item.type === ItemType.CALCULATED_FIELD ? 'functions' : 'settings_ethernet');
+    if (item.icon) {
+      return item.icon;
+    }
+    switch (item.type) {
+      case ItemType.CALCULATED_FIELD: return 'functions';
+      case ItemType.ALARM_RULE: return 'notification_important';
+      case ItemType.RULE_CHAIN: return 'settings_ethernet';
+      default: return 'category';
+    }
   }
 
   getItemImage(item: MpItemVersionView): string | null {
@@ -276,6 +286,7 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
       case ItemType.WIDGET: return 'widgets';
       case ItemType.DASHBOARD: return 'dashboard';
       case ItemType.SOLUTION_TEMPLATE: return 'integration_instructions';
+      case ItemType.ALARM_RULE: return 'notification_important';
       case ItemType.DEVICE: return 'memory';
       default: return 'category';
     }
@@ -296,6 +307,7 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
       case ItemType.DASHBOARD: return 'dashboards';
       case ItemType.SOLUTION_TEMPLATE: return 'solution-templates';
       case ItemType.CALCULATED_FIELD: return 'calculated-fields';
+      case ItemType.ALARM_RULE: return 'alarm-rules';
       case ItemType.RULE_CHAIN: return 'rule-chains';
       case ItemType.DEVICE: return 'devices';
       default: return 'widgets';
@@ -332,13 +344,13 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
       this.iotHubApiService.getInstalledItemCounts(ItemType.DEVICE, config).subscribe(counts => {
         this.installedDeviceCounts = counts;
       });
-    } else if (type === ItemType.DASHBOARD) {
-      this.iotHubApiService.getInstalledItemCounts(ItemType.DASHBOARD, config).subscribe(counts => {
-        this.installedDashboardCounts = counts;
-      });
     } else if (type === ItemType.CALCULATED_FIELD) {
       this.iotHubApiService.getInstalledItemCounts(ItemType.CALCULATED_FIELD, config).subscribe(counts => {
         this.installedCalcFieldCounts = counts;
+      });
+    } else if (type === ItemType.ALARM_RULE) {
+      this.iotHubApiService.getInstalledItemCounts(ItemType.ALARM_RULE, config).subscribe(counts => {
+        this.installedAlarmRuleCounts = counts;
       });
     } else if (type === ItemType.RULE_CHAIN) {
       this.iotHubApiService.getInstalledItemCounts(ItemType.RULE_CHAIN, config).subscribe(counts => {
@@ -362,10 +374,10 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
     switch (item.type) {
       case ItemType.DEVICE:
         return this.installedDeviceCounts[item.itemId] || 0;
-      case ItemType.DASHBOARD:
-        return this.installedDashboardCounts[item.itemId] || 0;
       case ItemType.CALCULATED_FIELD:
         return this.installedCalcFieldCounts[item.itemId] || 0;
+      case ItemType.ALARM_RULE:
+        return this.installedAlarmRuleCounts[item.itemId] || 0;
       case ItemType.RULE_CHAIN:
         return this.installedRuleChainCounts[item.itemId] || 0;
       default:
@@ -414,10 +426,10 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
         this.installedSolutionTemplates = this.installedSolutionTemplates.filter(i => i.id.id !== installedItem.id.id);
       } else if (item.type === ItemType.DEVICE && this.installedDeviceCounts[item.itemId]) {
         this.installedDeviceCounts[item.itemId] = Math.max(0, this.installedDeviceCounts[item.itemId] - 1);
-      } else if (item.type === ItemType.DASHBOARD && this.installedDashboardCounts[item.itemId]) {
-        this.installedDashboardCounts[item.itemId] = Math.max(0, this.installedDashboardCounts[item.itemId] - 1);
       } else if (item.type === ItemType.CALCULATED_FIELD && this.installedCalcFieldCounts[item.itemId]) {
         this.installedCalcFieldCounts[item.itemId] = Math.max(0, this.installedCalcFieldCounts[item.itemId] - 1);
+      } else if (item.type === ItemType.ALARM_RULE && this.installedAlarmRuleCounts[item.itemId]) {
+        this.installedAlarmRuleCounts[item.itemId] = Math.max(0, this.installedAlarmRuleCounts[item.itemId] - 1);
       } else if (item.type === ItemType.RULE_CHAIN && this.installedRuleChainCounts[item.itemId]) {
         this.installedRuleChainCounts[item.itemId] = Math.max(0, this.installedRuleChainCounts[item.itemId] - 1);
       }
@@ -472,31 +484,31 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
 
     forkJoin({
       widgets: this.iotHubApiService.getPublishedVersions(buildQuery(ItemType.WIDGET, this.bigCardCount), config),
-      dashboards: this.iotHubApiService.getPublishedVersions(buildQuery(ItemType.DASHBOARD, this.bigCardCount), config),
       solutionTemplates: this.iotHubApiService.getPublishedVersions(buildQuery(ItemType.SOLUTION_TEMPLATE, this.bigCardCount), config),
       calcFields: this.iotHubApiService.getPublishedVersions(buildQuery(ItemType.CALCULATED_FIELD, this.compactCardCount), config),
+      alarmRules: this.iotHubApiService.getPublishedVersions(buildQuery(ItemType.ALARM_RULE, this.compactCardCount), config),
       ruleChains: this.iotHubApiService.getPublishedVersions(buildQuery(ItemType.RULE_CHAIN, this.compactCardCount), config),
       devices: this.iotHubApiService.getPublishedVersions(buildQuery(ItemType.DEVICE, this.bigCardCount), config),
       installedWidgets: this.iotHubApiService.getInstalledItems(installedPageLink, ItemType.WIDGET, undefined, config),
       installedSolutionTemplates: this.iotHubApiService.getInstalledItems(installedPageLink, ItemType.SOLUTION_TEMPLATE, undefined, config),
       installedDeviceCounts: this.iotHubApiService.getInstalledItemCounts(ItemType.DEVICE, config),
-      installedDashboardCounts: this.iotHubApiService.getInstalledItemCounts(ItemType.DASHBOARD, config),
       installedCalcFieldCounts: this.iotHubApiService.getInstalledItemCounts(ItemType.CALCULATED_FIELD, config),
+      installedAlarmRuleCounts: this.iotHubApiService.getInstalledItemCounts(ItemType.ALARM_RULE, config),
       installedRuleChainCounts: this.iotHubApiService.getInstalledItemCounts(ItemType.RULE_CHAIN, config),
       installedCount: this.iotHubApiService.getInstalledItemsCount(null, config)
     }).subscribe({
       next: (results) => {
         this.popularWidgets = results.widgets.data;
-        this.popularDashboards = results.dashboards.data;
         this.popularSolutionTemplates = results.solutionTemplates.data;
         this.popularCalcFields = results.calcFields.data;
+        this.popularAlarmRules = results.alarmRules.data;
         this.popularRuleChains = results.ruleChains.data;
         this.popularDevices = results.devices.data;
         this.installedWidgets = results.installedWidgets.data;
         this.installedSolutionTemplates = results.installedSolutionTemplates.data;
         this.installedDeviceCounts = results.installedDeviceCounts;
-        this.installedDashboardCounts = results.installedDashboardCounts;
         this.installedCalcFieldCounts = results.installedCalcFieldCounts;
+        this.installedAlarmRuleCounts = results.installedAlarmRuleCounts;
         this.installedRuleChainCounts = results.installedRuleChainCounts;
         this.installedItemsCount = results.installedCount;
         this.isLoading = false;

@@ -32,6 +32,12 @@ export interface CalculatedFieldInstalledItemDescriptor {
   entityId: { entityType: string; id: string };
 }
 
+export interface AlarmRuleInstalledItemDescriptor {
+  type: 'ALARM_RULE';
+  calculatedFieldId: { id: string };
+  entityId: { entityType: string; id: string };
+}
+
 export interface RuleChainInstalledItemDescriptor {
   type: 'RULE_CHAIN';
   ruleChainId: { id: string };
@@ -58,6 +64,7 @@ export type IotHubInstalledItemDescriptor =
   | WidgetInstalledItemDescriptor
   | DashboardInstalledItemDescriptor
   | CalculatedFieldInstalledItemDescriptor
+  | AlarmRuleInstalledItemDescriptor
   | RuleChainInstalledItemDescriptor
   | DeviceInstalledItemDescriptor
   | SolutionTemplateInstalledItemDescriptor;

@@ -113,6 +113,8 @@ public class DefaultIotHubService implements IotHubService {
                 case "WIDGET" -> installWidget(user, tenantId, fileData);
                 case "DASHBOARD" -> installDashboard(user, tenantId, fileData);
                 case "CALCULATED_FIELD" -> installCalculatedField(user, tenantId, fileData, data);
+                case "ALARM_RULE" -> throw new IllegalArgumentException(
+                        "Alarm Rules require ThingsBoard 4.3 or later. Please update your platform instance to install Alarm Rule packages.");
                 case "RULE_CHAIN" -> installRuleChain(tenantId, fileData);
                 case "DEVICE" -> installDeviceProfile(user, tenantId, fileData);
                 case "SOLUTION_TEMPLATE" -> installSolution(user, tenantId, fileData, request);
