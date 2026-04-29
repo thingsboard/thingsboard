@@ -15,8 +15,11 @@
  */
 package org.thingsboard.monitoring.service.transport.impl;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.CoapClient;
+import org.eclipse.californium.core.CoapHandler;
+import org.eclipse.californium.core.CoapObserveRelation;
 import org.eclipse.californium.core.CoapResponse;
 import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.coap.MediaTypeRegistry;
@@ -24,6 +27,7 @@ import org.eclipse.californium.elements.config.SystemConfig;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.monitoring.config.transport.CoapTransportMonitoringConfig;
 import org.thingsboard.monitoring.config.transport.TransportMonitoringTarget;
 import org.thingsboard.monitoring.config.transport.TransportType;
@@ -41,6 +45,8 @@ public class CoapTransportHealthChecker extends TransportHealthChecker<CoapTrans
     }
 
     private CoapClient coapClient;
+    CoapClient rpcCoapClient;
+    CoapObserveRelation rpcObserveRelation;
 
     protected CoapTransportHealthChecker(CoapTransportMonitoringConfig config, TransportMonitoringTarget target) {
         super(config, target);
@@ -55,6 +61,59 @@ public class CoapTransportHealthChecker extends TransportHealthChecker<CoapTrans
             coapClient.setTimeout((long) config.getRequestTimeoutMs());
             log.debug("Initialized CoAP client for URI {}", uri);
         }
+        if (target.isRpcEnabled() && rpcObserveRelation == null) {
+            String accessToken = target.getDevice().getCredentials().getCredentialsId();
+            String rpcUri = target.getBaseUrl() + "/api/v1/" + accessToken + "/rpc";
+            if (rpcCoapClient == null) {
+                rpcCoapClient = new CoapClient(rpcUri);
+                rpcCoapClient.setTimeout((long) config.getRequestTimeoutMs());
+            }
+            rpcObserveRelation = rpcCoapClient.observe(new CoapHandler() {
+                @Override
+                public void onLoad(CoapResponse response) {
+                    handleRpcNotification(response);
+                }
+
+                @Override
+                public void onError() {
+                    log.debug("CoAP RPC observe failed");
+                }
+            });
+            log.debug("Started CoAP RPC observe on {}", rpcUri);
+        }
+    }
+
+    void handleRpcNotification(CoapResponse response) {
+        try {
+            String body = response == null ? null : response.getResponseText();
+            if (body == null || body.isEmpty()) {
+                return;
+            }
+            JsonNode rpc = JacksonUtil.toJsonNode(body);
+            JsonNode idNode = rpc == null ? null : rpc.get("id");
+            if (idNode == null) {
+                return;
+            }
+            JsonNode params = rpc.get("params");
+            String accessToken = target.getDevice().getCredentials().getCredentialsId();
+            String responseUri = target.getBaseUrl() + "/api/v1/" + accessToken + "/rpc/" + idNode.asLong();
+            String payload = params == null ? "{}" : JacksonUtil.toString(params);
+            postRpcResponse(responseUri, payload);
+        } catch (Throwable e) {
+            log.debug("CoAP RPC echo failed: {}", e.getMessage());
+        }
+    }
+
+    void postRpcResponse(String uri, String payload) {
+        CoapClient client = new CoapClient(uri);
+        try {
+            client.setTimeout((long) config.getRequestTimeoutMs());
+            client.post(payload, MediaTypeRegistry.APPLICATION_JSON);
+        } catch (Exception e) {
+            log.debug("CoAP RPC response post failed for {}: {}", uri, e.getMessage());
+        } finally {
+            client.shutdown();
+        }
     }
 
     @Override
@@ -67,7 +126,20 @@ public class CoapTransportHealthChecker extends TransportHealthChecker<CoapTrans
     }
 
     @Override
+    protected void doRpcCheck() throws Exception {
+        super.doRpcCheck();
+    }
+
+    @Override
     protected void destroyClient() throws Exception {
+        if (rpcObserveRelation != null) {
+            rpcObserveRelation.proactiveCancel();
+            rpcObserveRelation = null;
+        }
+        if (rpcCoapClient != null) {
+            rpcCoapClient.shutdown();
+            rpcCoapClient = null;
+        }
         if (coapClient != null) {
             coapClient.shutdown();
             coapClient = null;
