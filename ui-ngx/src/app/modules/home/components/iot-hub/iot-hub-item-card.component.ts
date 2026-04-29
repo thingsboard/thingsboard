@@ -52,7 +52,9 @@ export class TbIotHubItemCardComponent {
   ) {}
 
   isCompactLayout(): boolean {
-    return this.item.type === ItemType.CALCULATED_FIELD || this.item.type === ItemType.RULE_CHAIN;
+    return this.item.type === ItemType.CALCULATED_FIELD
+        || this.item.type === ItemType.ALARM_RULE
+        || this.item.type === ItemType.RULE_CHAIN;
   }
 
   getPreviewUrl(): string | null {
@@ -71,6 +73,8 @@ export class TbIotHubItemCardComponent {
       case ItemType.SOLUTION_TEMPLATE: return 'integration_instructions';
       case ItemType.CALCULATED_FIELD:
         return this.item.icon || cfTypeIcons.get(this.item.dataDescriptor?.cfType) || 'functions';
+      case ItemType.ALARM_RULE:
+        return this.item.icon || 'notification_important';
       case ItemType.RULE_CHAIN:
         return this.item.icon || (this.item.dataDescriptor?.ruleChainType === 'EDGE' ? 'router' : 'device_hub');
       case ItemType.DEVICE: return 'memory';
@@ -85,7 +89,8 @@ export class TbIotHubItemCardComponent {
         const key = wt ? widgetTypeTranslations.get(wt) : null;
         return key ? this.translate.instant(key) : wt || '';
       }
-      case ItemType.CALCULATED_FIELD: {
+      case ItemType.CALCULATED_FIELD:
+      case ItemType.ALARM_RULE: {
         const cfType = this.item.dataDescriptor?.cfType;
         const key = cfType ? cfTypeTranslations.get(cfType) : null;
         return key ? this.translate.instant(key) : cfType || '';

@@ -29,6 +29,7 @@ export function typeSegment(t: ItemType): string | undefined {
     case ItemType.DASHBOARD: return 'dashboards';
     case ItemType.SOLUTION_TEMPLATE: return 'solution-templates';
     case ItemType.CALCULATED_FIELD: return 'calculated-fields';
+    case ItemType.ALARM_RULE: return 'alarm-rules';
     case ItemType.RULE_CHAIN: return 'rule-chains';
     case ItemType.DEVICE: return 'devices';
     default: return undefined;
