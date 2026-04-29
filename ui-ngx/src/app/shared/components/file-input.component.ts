@@ -215,6 +215,7 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
         });
         return;
       }
+
       const reader = new FileReader();
       reader.onload = () => {
         let fileName = null;
@@ -235,7 +236,6 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
       reader.onerror = () => {
         resolve({fileContent: null, fileName: null, files: null, mediaType: null});
       };
-
       if (this.readAsBinary) {
         reader.readAsBinaryString(file.file);
       } else {
@@ -249,11 +249,12 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
           }
            Object.defineProperty(reader, 'readyState', {value: FileReader.DONE, configurable: true});
           Object.defineProperty(reader, 'result',    {value: text,            configurable: true});
-          reader.onload(new ProgressEvent('load'));
-        }).catch(() => reader.onerror(new ProgressEvent('error')));
+          reader.onload(new ProgressEvent('load') as ProgressEvent<FileReader>);
+        }).catch(() => reader.onerror(new ProgressEvent('error') as ProgressEvent<FileReader>));
       }
     });
   }
+
   private checkMaxSize(file: flowjs.FlowFile): boolean {
     return !this.maxSizeByte || file.size <= this.maxSizeByte;
   }
