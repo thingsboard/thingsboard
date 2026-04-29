@@ -17,3 +17,19 @@
 -- LTS cumulative schema update file.
 -- All statements must be idempotent (use IF NOT EXISTS, ADD COLUMN IF NOT EXISTS, DO $$ ... END $$ guards, etc.).
 -- This file is executed by SystemPatchApplier on every version increase within the LTS family.
+
+-- IOT HUB INSTALLED ITEM START
+
+CREATE TABLE IF NOT EXISTS iot_hub_installed_item (
+    id              UUID          NOT NULL PRIMARY KEY,
+    created_time    BIGINT        NOT NULL,
+    tenant_id       UUID          NOT NULL,
+    item_id         UUID          NOT NULL,
+    item_version_id UUID          NOT NULL,
+    item_name       VARCHAR       NOT NULL,
+    item_type       VARCHAR       NOT NULL,
+    version         VARCHAR       NOT NULL,
+    descriptor      JSONB         NOT NULL
+);
+
+-- IOT HUB INSTALLED ITEM END
