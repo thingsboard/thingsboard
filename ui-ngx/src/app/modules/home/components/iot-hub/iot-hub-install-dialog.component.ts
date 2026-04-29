@@ -75,7 +75,7 @@ export class TbIotHubInstallDialogComponent extends DialogComponent<TbIotHubInst
   }
 
   install(): void {
-    if (this.item.type === ItemType.CALCULATED_FIELD) {
+    if (this.item.type === ItemType.CALCULATED_FIELD || this.item.type === ItemType.ALARM_RULE) {
       this.state = 'select-entity';
       return;
     }

@@ -4234,8 +4234,6 @@
         "popular-solution-templates": "Popular Solution Templates",
         "popular-calculated-fields": "Popular Calculated Fields",
         "popular-alarm-rules": "Popular Alarm Rules",
-        "alarm-rule-install-update-required": "Update required",
-        "alarm-rule-install-update-required-text": "Alarm Rules require ThingsBoard 4.3 or later. Please update your platform instance to install Alarm Rule packages.",
         "popular-rule-chains": "Popular Rule Chains",
         "popular-devices": "Popular Devices",
         "become-creator-text": "Submit your templates to the ThingsBoard IoT Hub to get featured and showcase your solutions to our global community.",
