@@ -19,6 +19,7 @@ export enum ItemType {
   DASHBOARD = 'DASHBOARD',
   SOLUTION_TEMPLATE = 'SOLUTION_TEMPLATE',
   CALCULATED_FIELD = 'CALCULATED_FIELD',
+  ALARM_RULE = 'ALARM_RULE',
   RULE_CHAIN = 'RULE_CHAIN',
   DEVICE = 'DEVICE'
 }
@@ -29,10 +30,26 @@ export const itemTypeTranslations = new Map<ItemType, string>(
     [ItemType.DASHBOARD, 'item.type-dashboard'],
     [ItemType.SOLUTION_TEMPLATE, 'item.type-solution-template'],
     [ItemType.CALCULATED_FIELD, 'item.type-calculated-field'],
+    [ItemType.ALARM_RULE, 'item.type-alarm-rule'],
     [ItemType.RULE_CHAIN, 'item.type-rule-chain'],
     [ItemType.DEVICE, 'item.type-device']
   ]
 );
+
+/**
+ * Item types discoverable to creators in the marketplace UI.
+ * DASHBOARD is intentionally absent (IoT Hub no longer accepts Dashboard contributions).
+ * Defensive code paths (item card, detail dialog descriptor switch, installed-items table,
+ * install handler, /iot-hub/dashboards route) remain functional for already-installed items.
+ */
+export const CREATOR_VISIBLE_ITEM_TYPES: ItemType[] = [
+  ItemType.WIDGET,
+  ItemType.SOLUTION_TEMPLATE,
+  ItemType.DEVICE,
+  ItemType.CALCULATED_FIELD,
+  ItemType.ALARM_RULE,
+  ItemType.RULE_CHAIN,
+];
 
 export interface FilterParamInfo {
   key: string;

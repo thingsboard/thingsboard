@@ -63,6 +63,13 @@ const PAGE_CONFIGS: Record<string, ItemTypePageConfig> = {
     image: 'assets/iot-hub/items-page-calculated-fields-hero.svg',
     routeSegment: 'calculated-fields'
   },
+  ALARM_RULE: {
+    type: ItemType.ALARM_RULE,
+    titleKey: 'item.type-alarm-rule-plural',
+    descriptionKey: 'iot-hub.items-page-desc-alarm-rules',
+    image: 'assets/iot-hub/items-page-dashboards-hero.svg',
+    routeSegment: 'alarm-rules'
+  },
   RULE_CHAIN: {
     type: ItemType.RULE_CHAIN,
     titleKey: 'item.type-rule-chain-plural',

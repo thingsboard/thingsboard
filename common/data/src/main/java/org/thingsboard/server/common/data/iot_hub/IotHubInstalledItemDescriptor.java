@@ -30,6 +30,7 @@ import java.io.Serializable;
         @Type(name = "WIDGET", value = WidgetInstalledItemDescriptor.class),
         @Type(name = "DASHBOARD", value = DashboardInstalledItemDescriptor.class),
         @Type(name = "CALCULATED_FIELD", value = CalculatedFieldInstalledItemDescriptor.class),
+        @Type(name = "ALARM_RULE", value = AlarmRuleInstalledItemDescriptor.class),
         @Type(name = "RULE_CHAIN", value = RuleChainInstalledItemDescriptor.class),
         @Type(name = "DEVICE", value = DeviceInstalledItemDescriptor.class),
         @Type(name = "SOLUTION_TEMPLATE", value = SolutionTemplateInstalledItemDescriptor.class)

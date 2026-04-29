@@ -18,6 +18,8 @@ import { Injectable } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable, of, EMPTY } from 'rxjs';
 import { filter, mergeMap } from 'rxjs/operators';
+import { TranslateService } from '@ngx-translate/core';
+import { DialogService } from '@core/services/dialog.service';
 import { MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
 import { ItemType } from '@shared/models/iot-hub/iot-hub-item.models';
 import { DeviceInstalledItemDescriptor, IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
@@ -36,7 +38,9 @@ export class IotHubActionsService {
 
   constructor(
     private dialog: MatDialog,
-    private iotHubApiService: IotHubApiService
+    private iotHubApiService: IotHubApiService,
+    private dialogService: DialogService,
+    private translate: TranslateService
   ) {}
 
   openItemDetail(item: MpItemVersionView, installedItem?: IotHubInstalledItem, installedItemsCount?: number,
@@ -72,6 +76,13 @@ export class IotHubActionsService {
   }
 
   installItem(item: MpItemVersionView): Observable<string> {
+    if (item.type === ItemType.ALARM_RULE) {
+      this.dialogService.alert(
+        this.translate.instant('iot-hub.alarm-rule-install-update-required'),
+        this.translate.instant('iot-hub.alarm-rule-install-update-required-text')
+      );
+      return EMPTY;
+    }
     if (item.type === ItemType.DEVICE) {
       return this.installDevice(item);
     }

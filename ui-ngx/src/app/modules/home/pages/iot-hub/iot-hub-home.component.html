@@ -56,7 +56,7 @@
                 (mouseenter)="onHeroTypeHover(ht)"
                 (mouseleave)="onHeroTypeLeave()"
                 (click)="navigateToBrowse(ht.type)"
-                (keyup.enter)="navigateToBrowse(ht.type)">{{ ht.labelKey | translate }}@if (!last) {,}</span>
+                (keyup.enter)="navigateToBrowse(ht.type)">@if (last) {& }{{ ht.labelKey | translate }}@if (!last) {,}</span>
           @if (i === 2) {
             <span class="tb-iot-hub-hero-subtitle-break"></span>
           }
@@ -178,28 +178,6 @@
         </div>
       }
 
-      <!-- Popular Dashboards -->
-      @if (popularDashboards.length) {
-        <div class="tb-iot-hub-section">
-          <button mat-button class="tb-iot-hub-section-header" (click)="navigateToBrowse(ItemType.DASHBOARD)">
-            {{ 'iot-hub.popular-dashboards' | translate }}
-            <mat-icon iconPositionEnd>chevron_right</mat-icon>
-          </button>
-          <div class="tb-iot-hub-big-cards-row">
-            @for (item of popularDashboards; track item.id) {
-              <tb-iot-hub-item-card
-                [item]="item"
-                [showTypeChip]="false"
-                [showCreator]="true"
-                (cardClick)="openItemDetail($event)"
-                (creatorClick)="navigateToCreator($event)"
-                (installClick)="installItem($event)">
-              </tb-iot-hub-item-card>
-            }
-          </div>
-        </div>
-      }
-
       <!-- Popular Solution Templates -->
       @if (popularSolutionTemplates.length) {
         <div class="tb-iot-hub-section">
@@ -219,6 +197,29 @@
                 (installClick)="installItem($event)"
                 (updateClick)="updateItem($event)"
                 (deleteClick)="deleteInstalledItem($event)">
+              </tb-iot-hub-item-card>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Popular Devices -->
+      @if (popularDevices.length) {
+        <div class="tb-iot-hub-section">
+          <button mat-button class="tb-iot-hub-section-header" (click)="navigateToBrowse(ItemType.DEVICE)">
+            {{ 'iot-hub.popular-devices' | translate }}
+            <mat-icon iconPositionEnd>chevron_right</mat-icon>
+          </button>
+          <div class="tb-iot-hub-big-cards-row">
+            @for (item of popularDevices; track item.id) {
+              <tb-iot-hub-item-card
+                [item]="item"
+                [installedItemsCount]="findInstalledItemsCount(item)"
+                [showTypeChip]="false"
+                [showCreator]="true"
+                (cardClick)="openItemDetail($event)"
+                (creatorClick)="navigateToCreator($event)"
+                (installClick)="installItem($event)">
               </tb-iot-hub-item-card>
             }
           </div>
@@ -247,15 +248,15 @@
         </div>
       }
 
-      <!-- Popular Rule Chains -->
-      @if (popularRuleChains.length) {
+      <!-- Popular Alarm Rules -->
+      @if (popularAlarmRules.length) {
         <div class="tb-iot-hub-section">
-          <button mat-button class="tb-iot-hub-section-header" (click)="navigateToBrowse(ItemType.RULE_CHAIN)">
-            {{ 'iot-hub.popular-rule-chains' | translate }}
+          <button mat-button class="tb-iot-hub-section-header" (click)="navigateToBrowse(ItemType.ALARM_RULE)">
+            {{ 'iot-hub.popular-alarm-rules' | translate }}
             <mat-icon iconPositionEnd>chevron_right</mat-icon>
           </button>
           <div class="tb-iot-hub-compact-cards-grid">
-            @for (item of popularRuleChains; track item.id) {
+            @for (item of popularAlarmRules; track item.id) {
               <tb-iot-hub-item-card
                 [item]="item"
                 [showTypeChip]="false"
@@ -269,18 +270,17 @@
         </div>
       }
 
-      <!-- Popular Devices -->
-      @if (popularDevices.length) {
+      <!-- Popular Rule Chains -->
+      @if (popularRuleChains.length) {
         <div class="tb-iot-hub-section">
-          <button mat-button class="tb-iot-hub-section-header" (click)="navigateToBrowse(ItemType.DEVICE)">
-            {{ 'iot-hub.popular-devices' | translate }}
+          <button mat-button class="tb-iot-hub-section-header" (click)="navigateToBrowse(ItemType.RULE_CHAIN)">
+            {{ 'iot-hub.popular-rule-chains' | translate }}
             <mat-icon iconPositionEnd>chevron_right</mat-icon>
           </button>
-          <div class="tb-iot-hub-big-cards-row">
-            @for (item of popularDevices; track item.id) {
+          <div class="tb-iot-hub-compact-cards-grid">
+            @for (item of popularRuleChains; track item.id) {
               <tb-iot-hub-item-card
                 [item]="item"
-                [installedItemsCount]="findInstalledItemsCount(item)"
                 [showTypeChip]="false"
                 [showCreator]="true"
                 (cardClick)="openItemDetail($event)"
