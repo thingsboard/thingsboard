@@ -16,7 +16,6 @@
 package org.thingsboard.monitoring.service.transport.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.paho.client.mqttv3.IMqttToken;
@@ -30,16 +29,11 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.monitoring.config.transport.MqttTransportMonitoringConfig;
-import org.thingsboard.monitoring.config.transport.RpcInfo;
 import org.thingsboard.monitoring.config.transport.TransportMonitoringTarget;
 import org.thingsboard.monitoring.config.transport.TransportType;
-import org.thingsboard.monitoring.data.Latencies;
-import org.thingsboard.monitoring.data.ServiceFailureException;
 import org.thingsboard.monitoring.service.transport.TransportHealthChecker;
-import org.thingsboard.server.common.data.id.DeviceId;
 
 import java.nio.charset.StandardCharsets;
-import java.util.UUID;
 
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
@@ -103,30 +97,7 @@ public class MqttTransportHealthChecker extends TransportHealthChecker<MqttTrans
 
     @Override
     protected void doRpcCheck() throws Exception {
-        if (!target.isRpcEnabled()) {
-            return;
-        }
-        RpcInfo rpcInfo = getRpcInfo();
-        String testValue = UUID.randomUUID().toString();
-        ObjectNode body = JacksonUtil.newObjectNode();
-        body.put("method", "monitoringCheck");
-        body.set("params", JacksonUtil.newObjectNode().put("value", testValue));
-        body.put("timeout", getRpcTimeoutMs());
-
-        long start = System.nanoTime();
-        JsonNode response;
-        try {
-            response = tbClient.handleTwoWayDeviceRPCRequest(new DeviceId(target.getDeviceId()), body);
-        } catch (Throwable e) {
-            throw new ServiceFailureException(rpcInfo, e);
-        }
-        String actual = response == null ? null : response.path("value").asText(null);
-        if (!testValue.equals(actual)) {
-            throw new ServiceFailureException(rpcInfo,
-                    "RPC echo mismatch: expected " + testValue + " but got " + actual);
-        }
-        reportRpcLatency(System.nanoTime() - start);
-        log.trace("RPC round-trip latency reported under {}", Latencies.rpcRoundTrip(getKey()));
+        super.doRpcCheck();
     }
 
     @Override
