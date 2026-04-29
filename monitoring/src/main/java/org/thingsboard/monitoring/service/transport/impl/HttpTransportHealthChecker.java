@@ -15,11 +15,15 @@
  */
 package org.thingsboard.monitoring.service.transport.impl;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Scope;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.thingsboard.monitoring.config.transport.HttpTransportMonitoringConfig;
 import org.thingsboard.monitoring.config.transport.TransportMonitoringTarget;
@@ -27,13 +31,18 @@ import org.thingsboard.monitoring.config.transport.TransportType;
 import org.thingsboard.monitoring.service.transport.TransportHealthChecker;
 
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 @Slf4j
 public class HttpTransportHealthChecker extends TransportHealthChecker<HttpTransportMonitoringConfig> {
 
-    private RestTemplate restTemplate;
+    private static final long POLL_TIMEOUT_MS = 1000L;
+
+    RestTemplate restTemplate;
+    private final AtomicBoolean rpcPolling = new AtomicBoolean();
+    private Thread rpcPollThread;
 
     protected HttpTransportHealthChecker(HttpTransportMonitoringConfig config, TransportMonitoringTarget target) {
         super(config, target);
@@ -48,6 +57,57 @@ public class HttpTransportHealthChecker extends TransportHealthChecker<HttpTrans
                     .build();
             log.debug("Initialized HTTP client");
         }
+        if (target.isRpcEnabled() && rpcPolling.compareAndSet(false, true)) {
+            rpcPollThread = new Thread(this::rpcPollLoop, "http-rpc-poll-" + target.getDeviceId());
+            rpcPollThread.setDaemon(true);
+            rpcPollThread.start();
+            log.debug("Started HTTP RPC poll thread for device {}", target.getDeviceId());
+        }
+    }
+
+    private void rpcPollLoop() {
+        while (rpcPolling.get()) {
+            try {
+                pollOnce();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            } catch (Throwable e) {
+                log.debug("HTTP RPC poll error: {}", e.getMessage());
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    return;
+                }
+            }
+        }
+    }
+
+    void pollOnce() throws InterruptedException {
+        String accessToken = target.getDevice().getCredentials().getCredentialsId();
+        String pollUrl = target.getBaseUrl() + "/api/v1/" + accessToken + "/rpc?timeout=" + POLL_TIMEOUT_MS;
+        ResponseEntity<JsonNode> poll;
+        try {
+            poll = restTemplate.getForEntity(pollUrl, JsonNode.class);
+        } catch (HttpStatusCodeException e) {
+            if (e.getStatusCode() == HttpStatus.REQUEST_TIMEOUT || e.getStatusCode() == HttpStatus.NO_CONTENT) {
+                return;
+            }
+            throw e;
+        }
+        if (poll.getStatusCode() != HttpStatus.OK || poll.getBody() == null) {
+            return;
+        }
+        JsonNode rpc = poll.getBody();
+        JsonNode idNode = rpc.get("id");
+        JsonNode params = rpc.get("params");
+        if (idNode == null) {
+            log.debug("HTTP RPC poll response missing id: {}", rpc);
+            return;
+        }
+        String responseUrl = target.getBaseUrl() + "/api/v1/" + accessToken + "/rpc/" + idNode.asLong();
+        restTemplate.postForLocation(responseUrl, params == null ? null : params);
     }
 
     @Override
@@ -57,7 +117,18 @@ public class HttpTransportHealthChecker extends TransportHealthChecker<HttpTrans
     }
 
     @Override
-    protected void destroyClient() throws Exception {}
+    protected void doRpcCheck() throws Exception {
+        super.doRpcCheck();
+    }
+
+    @Override
+    protected void destroyClient() throws Exception {
+        if (rpcPolling.compareAndSet(true, false) && rpcPollThread != null) {
+            rpcPollThread.interrupt();
+            rpcPollThread = null;
+            log.debug("Stopped HTTP RPC poll thread");
+        }
+    }
 
     @Override
     protected TransportType getTransportType() {
