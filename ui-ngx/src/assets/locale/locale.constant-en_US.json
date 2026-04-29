@@ -3698,6 +3698,7 @@
     },
     "iot-hub": {
         "iot-hub": "IoT Hub",
+        "generate-random-value": "Generate random value",
         "home-title": "ThingsBoard IoT Hub",
         "home-subtitle-prefix": "Discover ready-to-use",
         "and-devices": "& Devices",

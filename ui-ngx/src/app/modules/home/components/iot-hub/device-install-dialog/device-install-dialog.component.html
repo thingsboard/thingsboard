@@ -62,6 +62,14 @@
                               (click)="passwordVisible[field.key] = !passwordVisible[field.key]">
                         <mat-icon>{{ passwordVisible[field.key] ? 'visibility_off' : 'visibility' }}</mat-icon>
                       </button>
+                      @if (field.randomGenerator) {
+                        <button mat-icon-button matSuffix type="button"
+                                [matTooltip]="'iot-hub.generate-random-value' | translate"
+                                matTooltipPosition="above"
+                                (click)="regenerateFieldValue(ws, field)">
+                          <mat-icon>autorenew</mat-icon>
+                        </button>
+                      }
                       @if (ws.formGroup.controls[field.key]?.hasError('required')) {
                         <mat-error>{{ field.label + ' is required' }}</mat-error>
                       }
@@ -86,6 +94,14 @@
                     <mat-form-field appearance="outline">
                       <mat-label>{{ field.label }}</mat-label>
                       <input matInput [formControlName]="field.key">
+                      @if (field.randomGenerator) {
+                        <button mat-icon-button matSuffix type="button"
+                                [matTooltip]="'iot-hub.generate-random-value' | translate"
+                                matTooltipPosition="above"
+                                (click)="regenerateFieldValue(ws, field)">
+                          <mat-icon>autorenew</mat-icon>
+                        </button>
+                      }
                       @if (ws.formGroup.controls[field.key]?.hasError('required')) {
                         <mat-error>{{ field.label + ' is required' }}</mat-error>
                       }
