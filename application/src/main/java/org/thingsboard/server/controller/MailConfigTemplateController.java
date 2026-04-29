@@ -43,12 +43,12 @@ public class MailConfigTemplateController extends BaseController {
     private static final String MAIL_CONFIG_TEMPLATE_DEFINITION = "Mail configuration template is set of default smtp settings for mail server that specific provider supports";
     private final TbMailConfigTemplateService mailConfigTemplateService;
 
-    @ApiOperation(value = "Get the list of all OAuth2 client registration templates (getClientRegistrationTemplates)" + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH,
+    @ApiOperation(value = "Get the list of all OAuth2 client registration templates (getMailConfigTemplates)" + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH,
             notes = MAIL_CONFIG_TEMPLATE_DEFINITION)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
-    public JsonNode getClientRegistrationTemplates() throws ThingsboardException, IOException {
+    public JsonNode getMailConfigTemplates() throws ThingsboardException, IOException {
         accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
         return mailConfigTemplateService.findAllMailConfigTemplates();
     }

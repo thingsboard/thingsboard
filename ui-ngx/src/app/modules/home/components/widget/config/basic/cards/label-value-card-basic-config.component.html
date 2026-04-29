@@ -16,10 +16,12 @@
 
 -->
 <ng-container [formGroup]="labelValueCardWidgetConfigForm">
-  <tb-timewindow-config-panel *ngIf="displayTimewindowConfig"
-                              [onlyHistoryTimewindow]="onlyHistoryTimewindow()"
-                              formControlName="timewindowConfig">
-  </tb-timewindow-config-panel>
+  @if (displayTimewindowConfig) {
+    <tb-timewindow-config-panel
+      [onlyHistoryTimewindow]="onlyHistoryTimewindow()"
+      formControlName="timewindowConfig">
+    </tb-timewindow-config-panel>
+  }
   <tb-datasources
     [configMode]="basicMode"
     hideDatasourceLabel
@@ -41,9 +43,16 @@
         {{ 'widgets.label-card.label' | translate }}
       </mat-slide-toggle>
       <div class="flex flex-1 flex-row items-center justify-start gap-2">
-        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
-          <input matInput formControlName="label" placeholder="{{ 'widget-config.set' | translate }}">
-        </mat-form-field>
+        <tb-string-pattern-autocomplete class="flex-1"
+                                        appearance="outline"
+                                        brackets="curly"
+                                        subscriptSizing="dynamic"
+                                        predefinedValuesButton="true"
+                                        [disabled]="!labelValueCardWidgetConfigForm.get('showLabel').value"
+                                        [predefinedValues]="predefinedValues"
+                                        placeholderText="{{ 'widget-config.set' | translate }}"
+                                        formControlName="label"
+        ></tb-string-pattern-autocomplete>
         <tb-font-settings formControlName="labelFont"
                           [previewText]="labelValueCardWidgetConfigForm.get('label').value">
         </tb-font-settings>

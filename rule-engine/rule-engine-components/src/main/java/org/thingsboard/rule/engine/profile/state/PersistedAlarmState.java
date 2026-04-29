@@ -21,6 +21,7 @@ import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import java.util.Map;
 
 @Data
+@Deprecated
 public class PersistedAlarmState {
 
     private Map<AlarmSeverity, PersistedAlarmRuleState> createRuleStates;

@@ -195,6 +195,11 @@ public abstract class AbstractTbQueueConsumerTemplate<R, T extends TbQueueMsg> i
     abstract protected void doUnsubscribe();
 
     @Override
+    public Set<TopicPartitionInfo> getPartitions() {
+        return partitions;
+    }
+
+    @Override
     public List<String> getFullTopicNames() {
         if (partitions == null) {
             return Collections.emptyList();

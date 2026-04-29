@@ -109,6 +109,10 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
       } else if (errorCode !== Constants.serverErrorCode.credentialsExpired) {
         unhandled = true;
       }
+    } else if (errorCode && errorCode === Constants.serverErrorCode.entitiesLimitExceeded) {
+      if (!ignoreErrors) {
+        this.dialogService.entitiesLimitExceeded(errorResponse.error);
+      }
     } else if (errorResponse.status === 429) {
       if (resendRequest) {
         return this.retryRequest(req, next);

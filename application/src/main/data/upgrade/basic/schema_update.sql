@@ -14,33 +14,14 @@
 -- limitations under the License.
 --
 
--- UPDATE OTA PACKAGE EXTERNAL ID START
+-- CALCULATED FIELD ADDITIONAL INFO ADDITION START
 
-ALTER TABLE ota_package
-    ADD COLUMN IF NOT EXISTS external_id uuid;
+ALTER TABLE calculated_field ADD COLUMN IF NOT EXISTS additional_info varchar;
 
-DO
-$$
-    BEGIN
-        IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname = 'ota_package_external_id_unq_key') THEN
-            ALTER TABLE ota_package ADD CONSTRAINT ota_package_external_id_unq_key UNIQUE (tenant_id, external_id);
-        END IF;
-    END;
-$$;
+-- CALCULATED FIELD ADDITIONAL INFO ADDITION END
 
--- UPDATE OTA PACKAGE EXTERNAL ID END
+-- RULE CHAIN NOTES MIGRATION START
 
--- DROP INDEXES THAT DUPLICATE UNIQUE CONSTRAINT START
+ALTER TABLE rule_chain ADD COLUMN IF NOT EXISTS notes varchar(1000000);
 
-DROP INDEX IF EXISTS idx_device_external_id;
-DROP INDEX IF EXISTS idx_device_profile_external_id;
-DROP INDEX IF EXISTS idx_asset_external_id;
-DROP INDEX IF EXISTS idx_entity_view_external_id;
-DROP INDEX IF EXISTS idx_rule_chain_external_id;
-DROP INDEX IF EXISTS idx_dashboard_external_id;
-DROP INDEX IF EXISTS idx_customer_external_id;
-DROP INDEX IF EXISTS idx_widgets_bundle_external_id;
-
--- DROP INDEXES THAT DUPLICATE UNIQUE CONSTRAINT END
-
-ALTER TABLE mobile_app ADD COLUMN IF NOT EXISTS title varchar(255);
+-- RULE CHAIN NOTES MIGRATION END

@@ -16,6 +16,7 @@
 package org.thingsboard.server.controller;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -23,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -34,6 +36,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.NameConflictPolicy;
+import org.thingsboard.server.common.data.NameConflictStrategy;
+import org.thingsboard.server.common.data.UniquifyStrategy;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.asset.AssetSearchQuery;
@@ -76,6 +81,8 @@ import static org.thingsboard.server.controller.ControllerConstants.EDGE_ASSIGN_
 import static org.thingsboard.server.controller.ControllerConstants.EDGE_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.EDGE_UNASSIGN_ASYNC_FIRST_STEP_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.EDGE_UNASSIGN_RECEIVE_STEP_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.NAME_CONFLICT_POLICY_DESC;
+import static org.thingsboard.server.controller.ControllerConstants.UNIQUIFY_SEPARATOR_DESC;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
@@ -83,6 +90,7 @@ import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_D
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.UNIQUIFY_STRATEGY_DESC;
 import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
 import static org.thingsboard.server.controller.EdgeController.EDGE_ID;
 
@@ -137,10 +145,16 @@ public class AssetController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/asset", method = RequestMethod.POST)
     @ResponseBody
-    public Asset saveAsset(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON value representing the asset.") @RequestBody Asset asset) throws Exception {
+    public Asset saveAsset(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON value representing the asset.") @RequestBody Asset asset,
+                           @Parameter(description = NAME_CONFLICT_POLICY_DESC)
+                           @RequestParam(name = "nameConflictPolicy", defaultValue = "FAIL") NameConflictPolicy nameConflictPolicy,
+                           @Parameter(description = UNIQUIFY_SEPARATOR_DESC)
+                           @RequestParam(name = "uniquifySeparator", defaultValue = "_") String uniquifySeparator,
+                           @Parameter(description = UNIQUIFY_STRATEGY_DESC)
+                           @RequestParam(name = "uniquifyStrategy", defaultValue = "RANDOM") UniquifyStrategy uniquifyStrategy) throws Exception {
         asset.setTenantId(getTenantId());
         checkEntity(asset.getId(), asset, Resource.ASSET);
-        return tbAssetService.save(asset, getCurrentUser());
+        return tbAssetService.save(asset, new NameConflictStrategy(nameConflictPolicy, uniquifySeparator, uniquifyStrategy), getCurrentUser());
     }
 
     @ApiOperation(value = "Delete asset (deleteAsset)",
@@ -205,8 +219,7 @@ public class AssetController extends BaseController {
             notes = "Returns a page of assets owned by tenant. " +
                     PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/assets", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/tenant/assets")
     public PageData<Asset> getTenantAssets(
             @Parameter(description = PAGE_SIZE_DESCRIPTION)
             @RequestParam int pageSize,
@@ -233,8 +246,7 @@ public class AssetController extends BaseController {
             notes = "Returns a page of assets info objects owned by tenant. " +
                     PAGE_DATA_PARAMETERS + ASSET_INFO_DESCRIPTION + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/assetInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/tenant/assetInfos")
     public PageData<AssetInfo> getTenantAssetInfos(
             @Parameter(description = PAGE_SIZE_DESCRIPTION)
             @RequestParam int pageSize,
@@ -262,25 +274,30 @@ public class AssetController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Get Tenant Asset (getTenantAsset)",
+    @Hidden
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @GetMapping(value = "/tenant/assets", params = {"assetName"})
+    public Asset getTenantAsset(@RequestParam String assetName) throws ThingsboardException {
+        TenantId tenantId = getCurrentUser().getTenantId();
+        return checkNotNull(assetService.findAssetByTenantIdAndName(tenantId, assetName));
+    }
+
+    @ApiOperation(value = "Get Tenant Asset (getTenantAssetByName)",
             notes = "Requested asset must be owned by tenant that the user belongs to. " +
                     "Asset name is an unique property of asset. So it can be used to identify the asset." + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/assets", params = {"assetName"}, method = RequestMethod.GET)
-    @ResponseBody
-    public Asset getTenantAsset(
+    @GetMapping(value = "/tenant/asset")
+    public Asset getTenantAssetByName(
             @Parameter(description = ASSET_NAME_DESCRIPTION)
             @RequestParam String assetName) throws ThingsboardException {
-        TenantId tenantId = getCurrentUser().getTenantId();
-        return checkNotNull(assetService.findAssetByTenantIdAndName(tenantId, assetName));
+        return getTenantAsset(assetName);
     }
 
     @ApiOperation(value = "Get Customer Assets (getCustomerAssets)",
             notes = "Returns a page of assets objects assigned to customer. " +
                     PAGE_DATA_PARAMETERS)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/customer/{customerId}/assets", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/customer/{customerId}/assets")
     public PageData<Asset> getCustomerAssets(
             @Parameter(description = CUSTOMER_ID_PARAM_DESCRIPTION)
             @PathVariable("customerId") String strCustomerId,
@@ -312,8 +329,7 @@ public class AssetController extends BaseController {
             notes = "Returns a page of assets info objects assigned to customer. " +
                     PAGE_DATA_PARAMETERS + ASSET_INFO_DESCRIPTION)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/customer/{customerId}/assetInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/customer/{customerId}/assetInfos")
     public PageData<AssetInfo> getCustomerAssetInfos(
             @Parameter(description = CUSTOMER_ID_PARAM_DESCRIPTION)
             @PathVariable("customerId") String strCustomerId,
@@ -349,8 +365,7 @@ public class AssetController extends BaseController {
     @ApiOperation(value = "Get Assets By Ids (getAssetsByIds)",
             notes = "Requested assets must be owned by tenant or assigned to customer which user is performing the request. ")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/assets", params = {"assetIds"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/assets")
     public List<Asset> getAssetsByIds(
             @Parameter(description = "A list of assets ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")))
             @RequestParam("assetIds") String[] strAssetIds) throws ThingsboardException, ExecutionException, InterruptedException {
@@ -371,14 +386,14 @@ public class AssetController extends BaseController {
         return checkNotNull(assets.get());
     }
 
-    @ApiOperation(value = "Find related assets (findByQuery)",
+    @ApiOperation(value = "Find related assets (findAssetsByQuery)",
             notes = "Returns all assets that are related to the specific entity. " +
                     "The entity id, relation type, asset types, depth of the search, and other query parameters defined using complex 'AssetSearchQuery' object. " +
                     "See 'Model' tab of the Parameters for more info.")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/assets", method = RequestMethod.POST)
     @ResponseBody
-    public List<Asset> findByQuery(@RequestBody AssetSearchQuery query) throws ThingsboardException, ExecutionException, InterruptedException {
+    public List<Asset> findAssetsByQuery(@RequestBody AssetSearchQuery query) throws ThingsboardException, ExecutionException, InterruptedException {
         checkNotNull(query);
         checkNotNull(query.getParameters());
         checkNotNull(query.getAssetTypes());
@@ -457,8 +472,7 @@ public class AssetController extends BaseController {
             notes = "Returns a page of assets assigned to edge. " +
                     PAGE_DATA_PARAMETERS)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/edge/{edgeId}/assets", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/edge/{edgeId}/assets")
     public PageData<Asset> getEdgeAssets(
             @Parameter(description = EDGE_ID_PARAM_DESCRIPTION)
             @PathVariable(EDGE_ID) String strEdgeId,
@@ -504,11 +518,11 @@ public class AssetController extends BaseController {
         return checkNotNull(filteredResult);
     }
 
-    @ApiOperation(value = "Import the bulk of assets (processAssetsBulkImport)",
+    @ApiOperation(value = "Import the bulk of assets (processAssetBulkImport)",
             notes = "There's an ability to import the bulk of assets using the only .csv file.")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @PostMapping("/asset/bulk_import")
-    public BulkImportResult<Asset> processAssetsBulkImport(@RequestBody BulkImportRequest request) throws Exception {
+    public BulkImportResult<Asset> processAssetBulkImport(@RequestBody BulkImportRequest request) throws Exception {
         SecurityUser user = getCurrentUser();
         return assetBulkImportService.processBulkImport(request, user);
     }

@@ -28,15 +28,17 @@
     </mat-expansion-panel-header>
     <ng-template matExpansionPanelContent>
       <mat-grid-list class="tb-image-cards-options" [cols]="cols$ | async" [rowHeight]="rowHeight" gutterSize="8">
-        <mat-grid-tile *ngFor="let option of options" (click)="updateModel(option.value)">
-          <div class="tb-image-cards-option" [class.selected]="modelValue === option.value">
-            <div class="tb-image-cards-option-background"></div>
-            <div class="tb-image-cards-option-title">{{ option.name }}</div>
-            <div class="tb-image-cards-option-image-container">
-              <img class="tb-image-cards-option-image" [src]="option.image"/>
+        @for (option of options; track option) {
+          <mat-grid-tile (click)="updateModel(option.value)">
+            <div class="tb-image-cards-option" [class.selected]="modelValue === option.value">
+              <div class="tb-image-cards-option-background"></div>
+              <div class="tb-image-cards-option-title">{{ option.name }}</div>
+              <div class="tb-image-cards-option-image-container">
+                <img class="tb-image-cards-option-image" [src]="option.image"/>
+              </div>
             </div>
-          </div>
-        </mat-grid-tile>
+          </mat-grid-tile>
+        }
       </mat-grid-list>
     </ng-template>
   </mat-expansion-panel>

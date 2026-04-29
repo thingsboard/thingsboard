@@ -32,6 +32,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
+import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.service.install.DatabaseSchemaSettingsService;
 import org.thingsboard.server.service.install.InstallScripts;
@@ -39,6 +40,8 @@ import org.thingsboard.server.service.system.SystemPatchApplier;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -77,6 +80,9 @@ public class SystemPatchApplierTest {
 
     @Mock
     private WidgetTypeService widgetTypeService;
+
+    @Mock
+    private ImageService imageService;
 
     @InjectMocks
     private SystemPatchApplier reconciler;
@@ -650,6 +656,202 @@ public class SystemPatchApplierTest {
         widget.setTenantId(TenantId.SYS_TENANT_ID);
         widget.setDescriptor(JacksonUtil.toJsonNode("{\"type\":\"latest\"}"));
         return widget;
+    }
+
+    // --- createMissingSystemImages tests ---
+
+    @Test
+    void whenImagesDirDoesNotExist_thenReturnsZeroAndDoesNotCallImageService() {
+        Path dataDir = tempDir.resolve("data");
+        // Intentionally do not create resources/images dir
+        when(installScripts.getDataDir()).thenReturn(dataDir.toString());
+
+        Integer created = ReflectionTestUtils.invokeMethod(reconciler, "createMissingSystemImages");
+
+        assertEquals(0, created);
+        verify(imageService, never()).getAllImageKeysByTenantId(any());
+        verify(imageService, never()).createOrUpdateSystemImage(anyString(), any(byte[].class));
+    }
+
+    @Test
+    void whenImagesDirIsEmpty_thenReturnsZeroAndDoesNotCallImageService() throws Exception {
+        Path imagesDir = tempDir.resolve("data").resolve(InstallScripts.RESOURCES_DIR).resolve("images");
+        Files.createDirectories(imagesDir);
+        when(installScripts.getDataDir()).thenReturn(tempDir.resolve("data").toString());
+        when(imageService.getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID)).thenReturn(Collections.emptySet());
+
+        Integer created = ReflectionTestUtils.invokeMethod(reconciler, "createMissingSystemImages");
+
+        assertEquals(0, created);
+        verify(imageService, never()).createOrUpdateSystemImage(anyString(), any(byte[].class));
+    }
+
+    @Test
+    void whenSystemImageDoesNotExistInDb_thenCreateIt() throws Exception {
+        Path imagesDir = tempDir.resolve("data").resolve(InstallScripts.RESOURCES_DIR).resolve("images");
+        Files.createDirectories(imagesDir);
+        when(installScripts.getDataDir()).thenReturn(tempDir.resolve("data").toString());
+
+        byte[] imageBytes = new byte[]{1, 2, 3, 4, 5};
+        Files.write(imagesDir.resolve("gateway.png"), imageBytes);
+
+        when(imageService.getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID)).thenReturn(Collections.emptySet());
+
+        Integer created = ReflectionTestUtils.invokeMethod(reconciler, "createMissingSystemImages");
+
+        assertEquals(1, created);
+        verify(imageService).getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID);
+        verify(imageService).createOrUpdateSystemImage(eq("gateway.png"), eq(imageBytes));
+    }
+
+    @Test
+    void whenSystemImageExistsInDb_thenSkipIt() throws Exception {
+        Path imagesDir = tempDir.resolve("data").resolve(InstallScripts.RESOURCES_DIR).resolve("images");
+        Files.createDirectories(imagesDir);
+        when(installScripts.getDataDir()).thenReturn(tempDir.resolve("data").toString());
+
+        Files.write(imagesDir.resolve("gateway.png"), new byte[]{1, 2, 3});
+
+        when(imageService.getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID)).thenReturn(Set.of("gateway.png"));
+
+        Integer created = ReflectionTestUtils.invokeMethod(reconciler, "createMissingSystemImages");
+
+        assertEquals(0, created);
+        verify(imageService).getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID);
+        verify(imageService, never()).createOrUpdateSystemImage(anyString(), any(byte[].class));
+    }
+
+    @Test
+    void whenMixOfNewAndExistingImages_thenOnlyCreateMissingOnes() throws Exception {
+        Path imagesDir = tempDir.resolve("data").resolve(InstallScripts.RESOURCES_DIR).resolve("images");
+        Files.createDirectories(imagesDir);
+        when(installScripts.getDataDir()).thenReturn(tempDir.resolve("data").toString());
+
+        byte[] newImageBytes = new byte[]{9, 9, 9};
+        byte[] existingImageBytes = new byte[]{1, 1, 1};
+        Files.write(imagesDir.resolve("new.png"), newImageBytes);
+        Files.write(imagesDir.resolve("existing.svg"), existingImageBytes);
+
+        when(imageService.getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID)).thenReturn(Set.of("existing.svg"));
+
+        Integer created = ReflectionTestUtils.invokeMethod(reconciler, "createMissingSystemImages");
+
+        assertEquals(1, created);
+        verify(imageService, times(1)).getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID);
+        verify(imageService).createOrUpdateSystemImage(eq("new.png"), eq(newImageBytes));
+        verify(imageService, never()).createOrUpdateSystemImage(eq("existing.svg"), any(byte[].class));
+    }
+
+    @Test
+    void whenImagesDirContainsSubdirectory_thenSubdirectoryIsIgnored() throws Exception {
+        Path imagesDir = tempDir.resolve("data").resolve(InstallScripts.RESOURCES_DIR).resolve("images");
+        Files.createDirectories(imagesDir);
+        Files.createDirectories(imagesDir.resolve("nested"));
+        when(installScripts.getDataDir()).thenReturn(tempDir.resolve("data").toString());
+
+        byte[] imageBytes = new byte[]{5, 6, 7};
+        Files.write(imagesDir.resolve("logo.png"), imageBytes);
+
+        when(imageService.getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID)).thenReturn(Collections.emptySet());
+
+        Integer created = ReflectionTestUtils.invokeMethod(reconciler, "createMissingSystemImages");
+
+        assertEquals(1, created);
+        verify(imageService).createOrUpdateSystemImage(eq("logo.png"), eq(imageBytes));
+        verify(imageService, never()).createOrUpdateSystemImage(eq("nested"), any(byte[].class));
+    }
+
+    @Test
+    void whenMultipleNewImages_thenCreatesAll() throws Exception {
+        Path imagesDir = tempDir.resolve("data").resolve(InstallScripts.RESOURCES_DIR).resolve("images");
+        Files.createDirectories(imagesDir);
+        when(installScripts.getDataDir()).thenReturn(tempDir.resolve("data").toString());
+
+        Files.write(imagesDir.resolve("a.png"), new byte[]{1});
+        Files.write(imagesDir.resolve("b.svg"), new byte[]{2});
+        Files.write(imagesDir.resolve("c.jpg"), new byte[]{3});
+
+        when(imageService.getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID)).thenReturn(Collections.emptySet());
+
+        Integer created = ReflectionTestUtils.invokeMethod(reconciler, "createMissingSystemImages");
+
+        assertEquals(3, created);
+        verify(imageService, times(1)).getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID);
+        verify(imageService).createOrUpdateSystemImage(eq("a.png"), any(byte[].class));
+        verify(imageService).createOrUpdateSystemImage(eq("b.svg"), any(byte[].class));
+        verify(imageService).createOrUpdateSystemImage(eq("c.jpg"), any(byte[].class));
+    }
+
+    @Test
+    void whenImageServiceThrows_thenWrapsAndPropagates() throws Exception {
+        Path imagesDir = tempDir.resolve("data").resolve(InstallScripts.RESOURCES_DIR).resolve("images");
+        Files.createDirectories(imagesDir);
+        when(installScripts.getDataDir()).thenReturn(tempDir.resolve("data").toString());
+
+        Files.write(imagesDir.resolve("broken.png"), new byte[]{1, 2});
+
+        when(imageService.getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID)).thenReturn(Collections.emptySet());
+        when(imageService.createOrUpdateSystemImage(eq("broken.png"), any(byte[].class)))
+                .thenThrow(new RuntimeException("DB error"));
+
+        RuntimeException thrown = assertThrows(RuntimeException.class,
+                () -> ReflectionTestUtils.invokeMethod(reconciler, "createMissingSystemImages"));
+        assertTrue(thrown.getMessage().contains("broken.png"));
+    }
+
+    @Test
+    void whenExistingKeysLookupFails_thenDoesNotCreateImage() throws Exception {
+        Path imagesDir = tempDir.resolve("data").resolve(InstallScripts.RESOURCES_DIR).resolve("images");
+        Files.createDirectories(imagesDir);
+        when(installScripts.getDataDir()).thenReturn(tempDir.resolve("data").toString());
+
+        Files.write(imagesDir.resolve("img.png"), new byte[]{1});
+
+        when(imageService.getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID))
+                .thenThrow(new RuntimeException("lookup failed"));
+
+        assertThrows(RuntimeException.class,
+                () -> ReflectionTestUtils.invokeMethod(reconciler, "createMissingSystemImages"));
+        verify(imageService, never()).createOrUpdateSystemImage(anyString(), any(byte[].class));
+    }
+
+    // --- applyPatchIfNeeded integration with createMissingSystemImages ---
+
+    @Test
+    void whenApplyPatchIfNeededRuns_thenCreatesMissingImagesAfterWidgets() throws Exception {
+        when(schemaSettingsService.getPackageSchemaVersion()).thenReturn("4.3.1.0");
+        when(schemaSettingsService.getDbSchemaVersion()).thenReturn("4.3.0.0");
+        when(jdbcTemplate.queryForObject(contains("pg_try_advisory_lock"), eq(Boolean.class), anyLong())).thenReturn(true);
+        when(jdbcTemplate.queryForObject(contains("pg_advisory_unlock"), eq(Boolean.class), anyLong())).thenReturn(true);
+
+        Path dataDir = tempDir.resolve("data");
+        Path imagesDir = dataDir.resolve(InstallScripts.RESOURCES_DIR).resolve("images");
+        Files.createDirectories(imagesDir);
+        byte[] imgBytes = new byte[]{7, 7, 7};
+        Files.write(imagesDir.resolve("new_icon.svg"), imgBytes);
+        when(installScripts.getDataDir()).thenReturn(dataDir.toString());
+
+        Path widgetTypesDir = tempDir.resolve("widget_types");
+        Files.createDirectories(widgetTypesDir);
+        when(installScripts.getWidgetTypesDir()).thenReturn(widgetTypesDir);
+
+        when(imageService.getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID)).thenReturn(Collections.emptySet());
+
+        ReflectionTestUtils.invokeMethod(reconciler, "applyPatchIfNeeded");
+
+        verify(imageService).createOrUpdateSystemImage(eq("new_icon.svg"), eq(imgBytes));
+        verify(schemaSettingsService).updateSchemaVersion();
+    }
+
+    @Test
+    void whenVersionNotIncreased_thenImagesAreNotTouched() {
+        when(schemaSettingsService.getPackageSchemaVersion()).thenReturn("4.3.0.0");
+        when(schemaSettingsService.getDbSchemaVersion()).thenReturn("4.3.0.0");
+
+        ReflectionTestUtils.invokeMethod(reconciler, "applyPatchIfNeeded");
+
+        verify(imageService, never()).getAllImageKeysByTenantId(any());
+        verify(imageService, never()).createOrUpdateSystemImage(anyString(), any(byte[].class));
     }
 
 }

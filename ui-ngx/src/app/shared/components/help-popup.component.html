@@ -15,44 +15,54 @@
     limitations under the License.
 
 -->
-<fieldset class="tb-help-popup-button-container" *ngIf="!textMode">
-  <div #toggleHelpButton
-       class="tb-toggle-help-popup-button"
-       matTooltip="{{ helpIconTooltip }}"
-       matTooltipPosition="above"
-       (click)="toggleHelp()">
-    <button mat-icon-button
-            [disabled]="disabled()"
-            color="primary"
-            class="tb-help-popup-button"
-            [class]="helpIconButtonClass"
-            type="button">
-      <tb-icon matButtonIcon>{{popoverVisible ? helpOpenedIcon : helpIcon}}</tb-icon>
-      <div *ngIf="popoverVisible && !popoverReady" class="tb-help-popup-button-loading absolute inset-0 flex items-center justify-center">
-        <mat-spinner mode="indeterminate" diameter="20" strokeWidth="2"></mat-spinner>
-      </div>
-    </button>
-  </div>
-</fieldset>
-<fieldset class="tb-help-popup-button-container" *ngIf="textMode">
-  <div #toggleHelpTextButton
-       class="tb-toggle-help-popup-text-button"
-       (click)="toggleHelp()">
-    <button mat-button
-            [disabled]="disabled()"
-            type="button"
-            color="primary"
-            class="tb-help-popup-text-button"
+@if (!textMode) {
+  <fieldset class="tb-help-popup-button-container">
+    <div #toggleHelpButton
+         class="tb-toggle-help-popup-button"
+         matTooltip="{{ helpIconTooltip }}"
+         matTooltipPosition="above"
+         (click)="toggleHelp()">
+      <button mat-icon-button
+              [disabled]="disabled()"
+              color="primary"
+              class="tb-help-popup-button"
+              [class]="helpIconButtonClass"
+              type="button">
+        <tb-icon matButtonIcon>{{popoverVisible ? helpOpenedIcon : helpIcon}}</tb-icon>
+        @if (popoverVisible && !popoverReady) {
+          <div class="tb-help-popup-button-loading absolute inset-0 flex items-center justify-center">
+            <mat-spinner mode="indeterminate" diameter="20" strokeWidth="2"></mat-spinner>
+          </div>
+        }
+      </button>
+    </div>
+  </fieldset>
+}
+@if (textMode) {
+  <fieldset class="tb-help-popup-button-container">
+    <div #toggleHelpTextButton
+         class="tb-toggle-help-popup-text-button"
+         (click)="toggleHelp()">
+      <button mat-button
+              [disabled]="disabled()"
+              type="button"
+              color="primary"
+              class="tb-help-popup-text-button"
             [class]="{'mat-mdc-outlined-button mdc-button--outlined': popoverVisible && popoverReady,
                       'hint-button': hintMode}">
-      <span>
-        <ng-container *ngIf="triggerSafeHtml">
-          <span [style]="triggerStyle" [innerHTML]="triggerSafeHtml"></span>
-        </ng-container>
-        <mat-icon *ngIf="(!popoverVisible || popoverReady)"
-                  [class]="hintMode ? 'tb-mat-12' : 'tb-mat-16'">open_in_new</mat-icon>
-        <mat-spinner *ngIf="popoverVisible && !popoverReady" mode="indeterminate" [diameter]="hintMode ? 12 : 16" strokeWidth="2"></mat-spinner>
-      </span>
-    </button>
-  </div>
-</fieldset>
+        <span>
+          @if (triggerSafeHtml) {
+            <span [style]="triggerStyle" [innerHTML]="triggerSafeHtml"></span>
+          }
+          @if ((!popoverVisible || popoverReady)) {
+            <mat-icon
+            [class]="hintMode ? 'tb-mat-12' : 'tb-mat-16'">open_in_new</mat-icon>
+          }
+          @if (popoverVisible && !popoverReady) {
+            <mat-spinner mode="indeterminate" [diameter]="hintMode ? 12 : 16" strokeWidth="2"></mat-spinner>
+          }
+        </span>
+      </button>
+    </div>
+  </fieldset>
+}

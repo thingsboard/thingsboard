@@ -23,7 +23,12 @@ import {
   ImageSourceType,
   loadImageWithAspect,
   MapZoomAction,
-  TbCircleData, TbPolygonCoordinate, TbPolygonCoordinates, TbPolygonRawCoordinate, TbPolygonRawCoordinates
+  TbCircleData,
+  TbPolygonCoordinate,
+  TbPolygonCoordinates,
+  TbPolygonRawCoordinate,
+  TbPolygonRawCoordinates, TbPolylineCoordinate, TbPolylineCoordinates, TbPolylineRawCoordinate,
+  TbPolylineRawCoordinates
 } from '@shared/models/widget/maps/map.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { DeepPartial } from '@shared/models/common';
@@ -337,6 +342,38 @@ export class TbImageMap extends TbMap<ImageMapSettings> {
         );
       })
     );
+  }
+
+  public polylineDataToCoordinates(expression: TbPolylineRawCoordinates): TbPolylineRawCoordinates{
+    return expression.map((el: TbPolylineRawCoordinate) => {
+    if (!Array.isArray(el[0]) && !Array.isArray(el[1]) && el.length === 2) {
+      const latLng = this.pointToLatLng(
+        el[0] * this.width,
+        el[1] * this.height
+      );
+      return [latLng.lat, latLng.lng] as TbPolylineRawCoordinate;
+    } else if (Array.isArray(el) && el.length) {
+      return this.polylineDataToCoordinates(el as TbPolylineRawCoordinates) as TbPolylineRawCoordinate;
+    }
+    else {
+      return null;
+    }
+  }).filter(el => !!el);
+  }
+
+  public coordinatesToPolylineData(coordinates: TbPolylineCoordinates): TbPolylineRawCoordinates{
+    if (coordinates.length) {
+      return coordinates.map((point: TbPolylineCoordinate) => {
+        if (Array.isArray(point)) {
+          return this.coordinatesToPolylineData(point) as TbPolylineRawCoordinate;
+        } else {
+          const pos = this.latLngToPoint(point);
+          return [calculateNewPointCoordinate(pos.x, this.width), calculateNewPointCoordinate(pos.y, this.height)];
+        }
+      });
+    } else {
+      return [];
+    }
   }
 
 }

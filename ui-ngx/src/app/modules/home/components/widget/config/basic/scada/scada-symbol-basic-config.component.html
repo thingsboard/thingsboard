@@ -16,7 +16,7 @@
 
 -->
 <ng-container [formGroup]="scadaSymbolWidgetConfigForm">
-  <tb-target-device formControlName="targetDevice"></tb-target-device>
+  <tb-target-device formControlName="targetDevice" appearance="outline"></tb-target-device>
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>scada.symbol.symbol</div>
     <tb-scada-symbol-input required
@@ -35,9 +35,16 @@
           {{ 'widget-config.title' | translate }}
         </mat-slide-toggle>
         <div class="flex flex-1 flex-row items-center justify-start gap-2">
-          <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
-            <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
-          </mat-form-field>
+          <tb-string-pattern-autocomplete class="flex-1"
+                                          appearance="outline"
+                                          brackets="curly"
+                                          subscriptSizing="dynamic"
+                                          predefinedValuesButton="true"
+                                          [disabled]="!scadaSymbolWidgetConfigForm.get('showTitle').value"
+                                          [predefinedValues]="predefinedValues"
+                                          placeholderText="{{ 'widget-config.set' | translate }}"
+                                          formControlName="title"
+          ></tb-string-pattern-autocomplete>
           <tb-font-settings formControlName="titleFont"
                             clearButton
                             [previewText]="scadaSymbolWidgetConfigForm.get('title').value"

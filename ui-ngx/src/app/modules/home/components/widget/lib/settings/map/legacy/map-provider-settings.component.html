@@ -21,9 +21,11 @@
     <mat-form-field>
       <mat-label translate>widgets.maps.map-provider</mat-label>
       <mat-select required formControlName="provider">
-        <mat-option *ngFor="let provider of mapProviders" [value]="provider">
-          {{mapProviderTranslations.get(provider) | translate}}
-        </mat-option>
+        @for (provider of mapProviders; track provider) {
+          <mat-option [value]="provider">
+            {{mapProviderTranslations.get(provider) | translate}}
+          </mat-option>
+        }
       </mat-select>
     </mat-form-field>
     <tb-google-map-provider-settings

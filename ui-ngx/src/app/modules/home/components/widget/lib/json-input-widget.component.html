@@ -16,43 +16,45 @@
 
 -->
 <div class="tb-json-input" tb-toast toastTarget="{{ toastTargetId }}">
-  <form *ngIf="attributeUpdateFormGroup"
-        class="tb-json-input__form flex flex-col"
-        [formGroup]="attributeUpdateFormGroup"
-        (ngSubmit)="save()">
-      <div class="flex flex-1 flex-col gap-2.5" *ngIf="datasourceDetected && !errorMessage; else errorContainer">
-        <fieldset class="flex-1">
-          <tb-json-object-edit
-            [editorStyle]="{minHeight: '100px'}"
-            fillHeight="true"
-            [jsonRequired]="settings.attributeRequired"
-            label="{{ settings.showLabel ? labelValue : '' }}"
-            formControlName="currentValue"
-            (focusin)="isFocused = true;"
-            (focusout)="isFocused = false;"
-          ></tb-json-object-edit>
-        </fieldset>
-        <div class="tb-json-input__actions flex flex-row items-center justify-end gap-5">
-          <button mat-button color="primary"
-                  type="button"
-                  [disabled]="!attributeUpdateFormGroup.dirty"
-                  (click)="discard()"
-                  matTooltip="{{ 'widgets.input-widgets.discard-changes' | translate }}"
-                  matTooltipPosition="above">
-            {{ "action.undo" | translate }}
-          </button>
-          <button mat-raised-button color="primary"
-                  type="submit"
-                  [disabled]="attributeUpdateFormGroup.invalid || !attributeUpdateFormGroup.dirty">
-            {{ "action.save" | translate }}
-          </button>
+  @if (attributeUpdateFormGroup) {
+    <form
+      class="tb-json-input__form flex flex-col"
+      [formGroup]="attributeUpdateFormGroup"
+      (ngSubmit)="save()">
+      @if (datasourceDetected && !errorMessage) {
+        <div class="flex flex-1 flex-col gap-2.5">
+          <fieldset class="flex-1">
+            <tb-json-object-edit
+              [editorStyle]="{minHeight: '100px'}"
+              fillHeight="true"
+              [jsonRequired]="settings.attributeRequired"
+              label="{{ settings.showLabel ? labelValue : '' }}"
+              formControlName="currentValue"
+              (focusin)="isFocused = true;"
+              (focusout)="isFocused = false;"
+            ></tb-json-object-edit>
+          </fieldset>
+          <div class="tb-json-input__actions flex flex-row items-center justify-end gap-5">
+            <button mat-button color="primary"
+                    type="button"
+                    [disabled]="!attributeUpdateFormGroup.dirty"
+                    (click)="discard()"
+                    matTooltip="{{ 'widgets.input-widgets.discard-changes' | translate }}"
+                    matTooltipPosition="above">
+              {{ "action.undo" | translate }}
+            </button>
+            <button mat-raised-button color="primary"
+                    type="submit"
+                    [disabled]="attributeUpdateFormGroup.invalid || !attributeUpdateFormGroup.dirty">
+              {{ "action.save" | translate }}
+            </button>
+          </div>
         </div>
-      </div>
-
-    <ng-template #errorContainer>
-      <div class="tb-json-input__error flex flex-1 flex-col items-center justify-center">
-        {{ errorMessage | translate }}
-      </div>
-    </ng-template>
-  </form>
+      } @else {
+        <div class="tb-json-input__error flex flex-1 flex-col items-center justify-center">
+          {{ errorMessage | translate }}
+        </div>
+      }
+    </form>
+  }
 </div>

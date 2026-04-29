@@ -26,21 +26,29 @@
          [class.row]="mobileAppSettings?.qrCodeConfig.badgePosition === badgePosition.RIGHT"
          [class.row-reverse]="mobileAppSettings?.qrCodeConfig.badgePosition === badgePosition.LEFT">
       <div class="tb-qrcode" (click)="navigateByDeepLink($event)" [innerHTML]="qrCodeSVG | safe: 'html'"></div>
-      <div class="tb-badges" [class.tb-no-interaction]="previewMode"
-           *ngIf="(mobileAppSettings?.iosEnabled || mobileAppSettings?.androidEnabled) &&
-                    mobileAppSettings?.qrCodeConfig.badgeEnabled && showBadgeContainer">
-        <a *ngIf="mobileAppSettings?.iosEnabled" [href]="appStoreLink" target="_blank">
-          <img alt="{{ 'widgets.mobile-app-qr-code.download-on-the-app-store' | translate }}"
-               src="assets/android-ios-stores-badges/ios_store_en_black_badge.svg">
-        </a>
-        <a *ngIf="mobileAppSettings?.androidEnabled" [href]="googlePlayLink" target="_blank">
-          <img alt="{{ 'widgets.mobile-app-qr-code.get-it-on-google-play' | translate }}"
-               src="assets/android-ios-stores-badges/android_store_en_black_badge.svg">
-        </a>
+      @if ((mobileAppSettings?.iosEnabled || mobileAppSettings?.androidEnabled) &&
+        mobileAppSettings?.qrCodeConfig.badgeEnabled && showBadgeContainer) {
+        <div class="tb-badges" [class.tb-no-interaction]="previewMode"
+             >
+          @if (mobileAppSettings?.iosEnabled) {
+            <a [href]="appStoreLink" target="_blank">
+              <img alt="{{ 'widgets.mobile-app-qr-code.download-on-the-app-store' | translate }}"
+                   src="assets/android-ios-stores-badges/ios_store_en_black_badge.svg">
+              </a>
+            }
+            @if (mobileAppSettings?.androidEnabled) {
+              <a [href]="googlePlayLink" target="_blank">
+                <img alt="{{ 'widgets.mobile-app-qr-code.get-it-on-google-play' | translate }}"
+                     src="assets/android-ios-stores-badges/android_store_en_black_badge.svg">
+                </a>
+              }
+            </div>
+          }
+        </div>
+        @if (mobileAppSettings?.qrCodeConfig.qrCodeLabelEnabled) {
+          <div class="tb-qrcode-label">
+            {{ mobileAppSettings.qrCodeConfig.qrCodeLabel }}
+          </div>
+        }
       </div>
     </div>
-    <div class="tb-qrcode-label" *ngIf="mobileAppSettings?.qrCodeConfig.qrCodeLabelEnabled">
-      {{ mobileAppSettings.qrCodeConfig.qrCodeLabel }}
-    </div>
-  </div>
-</div>

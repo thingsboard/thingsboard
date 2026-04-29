@@ -76,6 +76,20 @@
             </mat-form-field>
           </div>
         }
+        @case (MapItemType.polyline) {
+          <div class="tb-form-row">
+            <div class="fixed-title-width" translate>widget-action.map-item-tooltip.start-draw-polyline</div>
+            <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+              <input matInput placeholder="{{ mapItemTooltipsDefaultTranslate.startPolyline | translate }}" formControlName="firstVertex">
+            </mat-form-field>
+          </div>
+          <div class="tb-form-row">
+            <div class="fixed-title-width" translate>widget-action.map-item-tooltip.finish-draw-polyline</div>
+            <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+              <input matInput placeholder="{{ mapItemTooltipsDefaultTranslate.finishPolyline | translate }}" formControlName="continueLine">
+            </mat-form-field>
+          </div>
+        }
       }
     </ng-template>
   </mat-expansion-panel>

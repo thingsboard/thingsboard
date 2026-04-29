@@ -50,7 +50,7 @@ public class KafkaQueueStateService<E extends TbQueueMsg, S extends TbQueueMsg> 
     }
 
     @Override
-    protected void addPartitions(QueueKey queueKey, Set<TopicPartitionInfo> partitions, Runnable whenAllProcessed) {
+    protected void addPartitions(QueueKey queueKey, Set<TopicPartitionInfo> partitions, RestoreCallback callback) {
         Map<String, Long> eventsStartOffsets = eventsStartOffsetsProvider != null ? eventsStartOffsetsProvider.get() : null; // remembering the offsets before subscribing to states
 
         Set<TopicPartitionInfo> statePartitions = withTopic(partitions, stateConsumer.getTopic());
@@ -61,10 +61,13 @@ public class KafkaQueueStateService<E extends TbQueueMsg, S extends TbQueueMsg> 
             try {
                 partitionsInProgress.remove(statePartition);
                 log.info("Finished partition {} (still in progress: {})", statePartition, partitionsInProgress);
+                if (callback != null) {
+                    callback.onPartitionRestored(statePartition);
+                }
                 if (partitionsInProgress.isEmpty()) {
                     log.info("All partitions processed");
-                    if (whenAllProcessed != null) {
-                        whenAllProcessed.run();
+                    if (callback != null) {
+                        callback.onAllPartitionsRestored();
                     }
                 }
 

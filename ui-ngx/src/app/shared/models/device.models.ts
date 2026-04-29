@@ -22,7 +22,7 @@ import { DeviceCredentialsId } from '@shared/models/id/device-credentials-id';
 import { EntitySearchQuery } from '@shared/models/relation.models';
 import { DeviceProfileId } from '@shared/models/id/device-profile-id';
 import { RuleChainId } from '@shared/models/id/rule-chain-id';
-import { EntityInfoData, HasTenantId, HasVersion } from '@shared/models/entity.models';
+import { EntityInfoData, HasTenantId, HasVersion, SaveEntityParams } from '@shared/models/entity.models';
 import { FilterPredicateValue, KeyFilter } from '@shared/models/query/query.models';
 import { TimeUnit } from '@shared/models/time/time.models';
 import _moment from 'moment';
@@ -737,6 +737,10 @@ export interface DeviceInfoFilter {
   type?: string;
   deviceProfileId?: DeviceProfileId;
   active?: boolean;
+}
+
+export interface SaveDeviceParams extends SaveEntityParams {
+  accessToken?: string;
 }
 
 export class DeviceInfoQuery  {

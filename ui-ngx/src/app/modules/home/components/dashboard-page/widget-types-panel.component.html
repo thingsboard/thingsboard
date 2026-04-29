@@ -16,8 +16,10 @@
 
 -->
 <div class="mat-content mat-padding flex flex-col">
-  <mat-checkbox style="padding-bottom: 8px;" [(ngModel)]="type.display" *ngFor="let type of types"
-                (ngModelChange)="update()">
-    {{ 'widget.' + type.type | translate }}
-  </mat-checkbox>
+  @for (type of types; track type) {
+    <mat-checkbox style="padding-bottom: 8px;" [(ngModel)]="type.display"
+                  (ngModelChange)="update()">
+      {{ 'widget.' + type.type | translate }}
+    </mat-checkbox>
+  }
 </div>

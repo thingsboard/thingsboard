@@ -17,15 +17,12 @@ package org.thingsboard.server.transport.lwm2m.bootstrap.store;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.link.Link;
-import org.eclipse.leshan.core.node.LwM2mObject;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.request.BootstrapDeleteRequest;
 import org.eclipse.leshan.core.request.BootstrapDiscoverRequest;
 import org.eclipse.leshan.core.request.BootstrapDownlinkRequest;
-import org.eclipse.leshan.core.request.BootstrapReadRequest;
 import org.eclipse.leshan.core.request.ContentFormat;
 import org.eclipse.leshan.core.response.BootstrapDiscoverResponse;
-import org.eclipse.leshan.core.response.BootstrapReadResponse;
 import org.eclipse.leshan.core.response.LwM2mResponse;
 import org.eclipse.leshan.server.bootstrap.BootstrapConfig;
 import org.eclipse.leshan.server.bootstrap.BootstrapConfigStore;
@@ -33,7 +30,6 @@ import org.eclipse.leshan.server.bootstrap.BootstrapSession;
 import org.eclipse.leshan.server.bootstrap.BootstrapUtil;
 import org.eclipse.leshan.server.bootstrap.InvalidConfigurationException;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -43,14 +39,18 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.stream.Collectors;
 
-import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
+import static org.eclipse.leshan.core.LwM2mId.ACCESS_CONTROL;
+import static org.eclipse.leshan.core.LwM2mId.SECURITY;
+import static org.eclipse.leshan.core.LwM2mId.SERVER;
 import static org.eclipse.leshan.server.bootstrap.BootstrapUtil.toWriteRequest;
-import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.BOOTSTRAP_DEFAULT_SHORT_ID_0;
+import static org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mServerIdentifier.LWM2M_SERVER_MAX;
+import static org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mServerIdentifier.PRIMARY_LWM2M_SERVER;
+import static org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mServerIdentifier.isLwm2mServer;
 
 @Slf4j
 public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTaskProvider {
@@ -77,11 +77,11 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTask
     @Override
     public Tasks getTasks(BootstrapSession session, List<LwM2mResponse> previousResponse) {
 //        BootstrapConfig config = store.get(session.getEndpoint(), session.getClientTransportData().getIdentity(), session);
-        BootstrapConfig config = store.get(session);
-        if (config == null) {
+        BootstrapConfig configNew = store.get(session);
+        if (configNew == null) {
             return null;
         }
-        if (previousResponse == null && shouldStartWithDiscover(config)) {
+        if (previousResponse == null && shouldStartWithDiscover(configNew)) {
             Tasks tasks = new Tasks();
             tasks.requestsToSend = new ArrayList<>(1);
             tasks.requestsToSend.add(new BootstrapDiscoverRequest());
@@ -96,47 +96,27 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTask
             tasks.supportedObjects = this.supportedObjects;
             // handle bootstrap discover response
             if (previousResponse != null) {
-                if (previousResponse.get(0) instanceof BootstrapDiscoverResponse) {
-                    BootstrapDiscoverResponse discoverResponse = (BootstrapDiscoverResponse) previousResponse.get(0);
+                if (previousResponse.get(0) instanceof BootstrapDiscoverResponse discoverResponse) {
                     if (discoverResponse.isSuccess()) {
-                        this.initAfterBootstrapDiscover(discoverResponse);
-                        findSecurityInstanceId(discoverResponse.getObjectLinks(), session.getEndpoint());
+                         this.initAfterBootstrapDiscover(discoverResponse);
+                        /// Short Server Ids - in old config
+                        findInstancesIdOldByServerId(discoverResponse, session.getEndpoint());
+                        log.warn(
+                                "Bootstrap server instance successfully found in Security Object (0) in response {}. Continuing bootstrap session. Session: {}",
+                                discoverResponse, session);
                     } else {
                         log.warn(
-                                "Bootstrap Discover return error {} : to continue bootstrap session without autoIdForSecurityObject mode. {}",
+                                "Unable to find bootstrap server instance in Security Object (0) in response {}. Continuing bootstrap session with autoIdForSecurityObject mode, ignoring information from discoverResponse. Session: {}",
                                 discoverResponse, session);
                     }
-                    if (this.lwM2MBootstrapSessionClients.get(session.getEndpoint()).getSecurityInstances().get(BOOTSTRAP_DEFAULT_SHORT_ID_0) == null) {
-                        log.error(
-                                "Unable to find bootstrap server instance in Security Object (0) in response {}: unable to continue bootstrap session with autoIdForSecurityObject mode. {}",
-                                discoverResponse, session);
-                        return null;
-                    }
-                    tasks.requestsToSend = new ArrayList<>(1);
-                    tasks.requestsToSend.add(new BootstrapReadRequest("/1"));
-                    tasks.last = false;
-                    return tasks;
-                }
-                BootstrapReadResponse readResponse = (BootstrapReadResponse) previousResponse.get(0);
-                Integer bootstrapServerIdOld = null;
-                if (readResponse.isSuccess()) {
-                    findServerInstanceId(readResponse, session.getEndpoint());
-                    if (this.lwM2MBootstrapSessionClients.get(session.getEndpoint()).getSecurityInstances().size() > 0 && this.lwM2MBootstrapSessionClients.get(session.getEndpoint()).getServerInstances().size() > 0) {
-                        bootstrapServerIdOld = this.findBootstrapServerId(session.getEndpoint());
-                    }
-                } else {
-                    log.warn(
-                            "Bootstrap ReadResponse return error {} : to continue bootstrap session without find Server Instance Id. {}",
-                            readResponse, session);
                 }
                 // create requests from config
-                tasks.requestsToSend = this.toRequests(config,
-                        config.contentFormat != null ? config.contentFormat : session.getContentFormat(),
-                        bootstrapServerIdOld, session.getEndpoint());
+                tasks.requestsToSend = this.toRequests(configNew,
+                        configNew.contentFormat != null ? configNew.contentFormat : session.getContentFormat(), session.getEndpoint());
             } else {
                 // create requests from config
-                tasks.requestsToSend = BootstrapUtil.toRequests(config,
-                        config.contentFormat != null ? config.contentFormat : session.getContentFormat());
+                tasks.requestsToSend = BootstrapUtil.toRequests(configNew,
+                        configNew.contentFormat != null ? configNew.contentFormat : session.getContentFormat());
             }
             return tasks;
         }
@@ -148,68 +128,39 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTask
 
     /**
      * "Short Server ID": This Resource MUST be set when the Bootstrap-Server Resource has a value of 'false'.
-     * The values ID:0 and ID:65535 values MUST NOT be used for identifying the LwM2M Server.
-     * "Short Server ID":
+     * "Short Lwm2m Server ID":
      * - Link Instance (lwm2m Server) hase linkParams with key = "ssid" value = "shortId" (ver lvm2m = 1.1).
-     * - Link Instance (bootstrap Server) hase not linkParams with key = "ssid" (ver lvm2m = 1.0).
+     * The values ID:0 values MUST NOT be used for identifying the LwM2M Server only BS.
      */
-    protected void findSecurityInstanceId(Link[] objectLinks, String endpoint) {
-        log.info("Object after discover: [{}]", objectLinks);
-        for (Link link : objectLinks) {
-            if (link.getUriReference().startsWith("/0/")) {
-                try {
-                    LwM2mPath path = new LwM2mPath(link.getUriReference());
-                    if (path.isObjectInstance()) {
-                        if (link.getAttributes().get("ssid") != null) {
-                            int serverId = Integer.parseInt(link.getAttributes().get("ssid").getCoreLinkValue());
-                            if (!lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().containsKey(serverId)) {
-                                lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().put(serverId, path.getObjectInstanceId());
-                            } else {
-                                log.error("Invalid lwm2mSecurityInstance by [{}]", path.getObjectInstanceId());
-                            }
-                            lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().put(serverId, path.getObjectInstanceId());
+    protected void findInstancesIdOldByServerId(BootstrapDiscoverResponse discoverResponses, String endpoint) {
+        log.info("Object after discover: [{}]", Arrays.toString(discoverResponses.getObjectLinks()));
+        for (Link link : discoverResponses.getObjectLinks()) {
+            LwM2mPath path = new LwM2mPath(link.getUriReference());
+            if (path.isObjectInstance()) {
+                int lwm2mShortServerId = 0;
+                if (path.getObjectId() == 0) {
+                    if (link.getAttributes().get("ssid") != null) {
+                        lwm2mShortServerId = Integer.parseInt(link.getAttributes().get("ssid").getCoreLinkValue());
+                        if (validateLwm2mShortServerId(lwm2mShortServerId)) {
+                            this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().putIfAbsent(lwm2mShortServerId, path.getObjectInstanceId());
                         } else {
-                            if (!this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().containsKey(0)) {
-                                this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().put(BOOTSTRAP_DEFAULT_SHORT_ID_0, path.getObjectInstanceId());
-                            } else {
-                                log.error("Invalid bootstrapSecurityInstance by [{}]", path.getObjectInstanceId());
-                            }
+                            log.error("Invalid lwm2mSecurityInstance [{}] by short server id [{}]", path.getObjectInstanceId(), lwm2mShortServerId);
+                        }
+                    } else {
+                        this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().putIfAbsent(null, path.getObjectInstanceId());
+                    }
+                } else if (path.getObjectId() == 1) {
+                    if (link.getAttributes().get("ssid") != null) {
+                        lwm2mShortServerId = Integer.parseInt(link.getAttributes().get("ssid").getCoreLinkValue());
+                        if (validateLwm2mShortServerId(lwm2mShortServerId)) {
+                            this.lwM2MBootstrapSessionClients.get(endpoint).getServerInstances().putIfAbsent(lwm2mShortServerId, path.getObjectInstanceId());
+                        } else {
+                            log.error("Invalid lwm2mServerInstance [{}] by short server id [{}]", path.getObjectInstanceId(), lwm2mShortServerId);
                         }
                     }
-                } catch (Exception e) {
-                    // ignore if this is not a LWM2M path
-                    log.error("Invalid LwM2MPath starting by \"/0/\"");
                 }
             }
         }
-    }
-
-    protected void findServerInstanceId(BootstrapReadResponse readResponse, String endpoint) {
-        try {
-            ((LwM2mObject) readResponse.getContent()).getInstances().values().forEach(instance -> {
-                var shId = OPAQUE.equals(instance.getResource(0).getType()) ? new BigInteger((byte[]) instance.getResource(0).getValue()).intValue() : instance.getResource(0).getValue();
-                int shortId;
-                if (shId instanceof Long) {
-                    shortId = ((Long) shId).intValue();
-                } else {
-                    shortId = (int) shId;
-                }
-                this.lwM2MBootstrapSessionClients.get(endpoint).getServerInstances().put(shortId, instance.getId());
-            });
-        } catch (Exception e) {
-            log.error("Failed find Server Instance Id. ", e);
-        }
-    }
-
-    protected Integer findBootstrapServerId(String endpoint) {
-        Integer bootstrapServerIdOld = null;
-        Map<Integer, Integer> filteredMap = this.lwM2MBootstrapSessionClients.get(endpoint).getServerInstances().entrySet()
-                .stream().filter(x -> !this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().containsKey(x.getKey()))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        if (filteredMap.size() > 0) {
-            bootstrapServerIdOld = filteredMap.keySet().stream().findFirst().get();
-        }
-        return bootstrapServerIdOld;
     }
 
     public BootstrapConfigStore getStore() {
@@ -218,11 +169,16 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTask
 
     private void initAfterBootstrapDiscover(BootstrapDiscoverResponse response) {
         Link[] links = response.getObjectLinks();
+        AtomicReference<String> verDefault = new AtomicReference<>("1.0");
         Arrays.stream(links).forEach(link -> {
             LwM2mPath path = new LwM2mPath(link.getUriReference());
-            if (!path.isRoot() && path.getObjectId() < 3) {
+            if (path.isRoot()) {
+                if (link.hasAttribute() && link.getAttributes().get("lwm2m") != null) {
+                    verDefault.set(link.getAttributes().get("lwm2m").getValue().toString());
+                }
+            } else if (path.getObjectId() <= ACCESS_CONTROL) {
                 if (path.isObject()) {
-                    String ver = link.getAttributes().get("ver") != null ? link.getAttributes().get("ver").getCoreLinkValue() : "1.0";
+                    String ver = (link.hasAttribute() && link.getAttributes().get("ver") != null) ? link.getAttributes().get("ver").getCoreLinkValue() : verDefault.get();
                     this.supportedObjects.put(path.getObjectId(), ver);
                 }
             }
@@ -230,94 +186,124 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTask
     }
 
 
-    public List<BootstrapDownlinkRequest<? extends LwM2mResponse>> toRequests(BootstrapConfig bootstrapConfig,
+    /** Map<serverId ("Short Server ID"), InstanceId> => LwM2MBootstrapClientInstanceIds
+     * 1) Both
+     * - (Short) Server ID == null bs)
+     *  SECURITY = 0; InstanceId = 0
+     * - Short Server ID == 1 - 65534 lwm2m)
+     *  SECURITY = 0; InstanceId = 1
+     *  SERVER = 1; InstanceId = 0
+     * 2) Only BS Server
+     * - Short Server ID == null bs)
+     *  SECURITY = 0; InstanceId = 0
+     * 3) Only Lwm2m Server
+     * - Short Server ID == 1 - 65534 lwm2m)
+     *  SECURITY = 0; InstanceId = 0
+     *  SERVER = 1; InstanceId = 0
+     * */
+    public List<BootstrapDownlinkRequest<? extends LwM2mResponse>> toRequests(BootstrapConfig bootstrapConfigNew,
                                                                               ContentFormat contentFormat,
-                                                                              Integer bootstrapServerIdOld,
                                                                               String endpoint) {
+        Integer bootstrapSecurityInstanceId = this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().get(null) == null ?
+                -2 : this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().get(null);
         List<BootstrapDownlinkRequest<? extends LwM2mResponse>> requests = new ArrayList<>();
         Set<String> pathsDelete = new HashSet<>();
-        List<BootstrapDownlinkRequest<? extends LwM2mResponse>> requestsWrite = new ArrayList<>();
-        boolean isBsServer = false;
-        boolean isLwServer = false;
-        /** Map<serverId ("Short Server ID"), InstanceId> */
-        Map<Integer, Integer> instances = new HashMap<>();
-        Integer bootstrapServerIdNew = null;
-        // handle security
-        int lwm2mSecurityInstanceId = 0;
-        int bootstrapSecurityInstanceId = this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().get(BOOTSTRAP_DEFAULT_SHORT_ID_0);
-        for (BootstrapConfig.ServerSecurity security : new TreeMap<>(bootstrapConfig.security).values()) {
-            if (security.bootstrapServer) {
-                requestsWrite.add(toWriteRequest(bootstrapSecurityInstanceId, security, contentFormat));
-                isBsServer = true;
-                bootstrapServerIdNew = security.serverId;
-                instances.put(security.serverId, bootstrapSecurityInstanceId);
-            } else {
-                if (lwm2mSecurityInstanceId == bootstrapSecurityInstanceId) {
-                    lwm2mSecurityInstanceId++;
-                }
-                requestsWrite.add(toWriteRequest(lwm2mSecurityInstanceId, security, contentFormat));
-                instances.put(security.serverId, lwm2mSecurityInstanceId);
-                isLwServer = true;
-                if (!isBsServer && this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().containsKey(security.serverId) &&
-                        lwm2mSecurityInstanceId != this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().get(security.serverId)) {
-                    pathsDelete.add("/0/" + this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().get(security.serverId));
-                }
-                /**
-                 * If there is an instance in the serverInstances with serverId which we replace in the securityInstances
-                 */
-                // find serverId in securityInstances by id (instance)
-                Integer serverIdOld = null;
-                for (Map.Entry<Integer, Integer> entry : this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().entrySet()) {
-                    if (entry.getValue().equals(lwm2mSecurityInstanceId)) {
-                        serverIdOld = entry.getKey();
+        ConcurrentHashMap<String, BootstrapDownlinkRequest<? extends LwM2mResponse>> requestsWrite = new ConcurrentHashMap<>();
+
+        /// handle security & handle
+        // bootstrap  Security new - There can only be one instance of bootstrap  at a time.
+        /// bs: handle security only
+        for (BootstrapConfig.ServerSecurity security : new TreeMap<>(bootstrapConfigNew.security).values()) {
+            if (security.bootstrapServer && bootstrapSecurityInstanceId > -1) {
+                // delete old bootstrap Security
+                String path = "/" + SECURITY + "/" + bootstrapSecurityInstanceId;
+                pathsDelete.add(path);
+                security.serverId = null;
+                requestsWrite.put(path, toWriteRequest(bootstrapSecurityInstanceId, security, contentFormat));
+            }
+        }
+
+        /** lwm2m servers: Multiple instances of lwm2m servers can run simultaneously by SHORT_ID
+        if update -> delete and write by InstanceId
+        if new -> only write with InstanceIdMax++
+         */
+
+        /// lwm2m server: handle security & server
+        //max Lwm2m Security instance old id if new
+        int lwm2mSecurityInstanceIdMax = -1;
+        for (Integer shortId : this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().keySet()) {
+            if (isLwm2mServer(shortId)) {
+                lwm2mSecurityInstanceIdMax = Math.max(
+                        this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().get(shortId),
+                        lwm2mSecurityInstanceIdMax);
+            }
+        }
+        //max Lwm2m Server instance old id if new
+        int lwm2mServerInstanceIdMax = -1;
+        for (Integer shortId : this.lwM2MBootstrapSessionClients.get(endpoint).getServerInstances().keySet()) {
+            if (isLwm2mServer(shortId)) {
+                lwm2mServerInstanceIdMax = Math.max(
+                        this.lwM2MBootstrapSessionClients.get(endpoint).getServerInstances().get(shortId),
+                        lwm2mServerInstanceIdMax);
+            }
+        }
+        // Lwm2m update or new
+        for (BootstrapConfig.ServerSecurity security : new TreeMap<>(bootstrapConfigNew.security).values()) {
+            if (!security.bootstrapServer) {
+                // Security
+                Integer secureInstanceId = this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().get(security.serverId);
+                if (secureInstanceId != null) {
+                    pathsDelete.add("/" + SECURITY + "/" + secureInstanceId);
+                    requestsWrite.put("/" + SECURITY + "/" + secureInstanceId, toWriteRequest(secureInstanceId, security, contentFormat));
+                } else {
+                    secureInstanceId = ++lwm2mSecurityInstanceIdMax;
+                    if (bootstrapSecurityInstanceId.equals(secureInstanceId)) {
+                        secureInstanceId = ++lwm2mSecurityInstanceIdMax;
                     }
+                    requestsWrite.put("/" + SECURITY + "/" + secureInstanceId, toWriteRequest(secureInstanceId, security, contentFormat));
                 }
-                if (!isBsServer && serverIdOld != null && this.lwM2MBootstrapSessionClients.get(endpoint).getServerInstances().containsKey(serverIdOld)) {
-                    pathsDelete.add("/1/" + this.lwM2MBootstrapSessionClients.get(endpoint).getServerInstances().get(serverIdOld));
+                Integer serverInstanceId = this.lwM2MBootstrapSessionClients.get(endpoint).getServerInstances().get(security.serverId);
+                if (serverInstanceId != null) {
+                    pathsDelete.add("/" + SERVER + "/" + serverInstanceId);
+                } else {
+                    serverInstanceId = ++lwm2mServerInstanceIdMax;
                 }
-                lwm2mSecurityInstanceId++;
+                Integer finalServerInstanceId = serverInstanceId;
+                new TreeMap<>(bootstrapConfigNew.servers).values().stream()
+                        .filter(server -> server.shortId == security.serverId)
+                        .findFirst()
+                        .ifPresent(server ->
+                                requestsWrite.put(
+                                        "/" + SERVER + "/" + finalServerInstanceId,
+                                        toWriteRequest(finalServerInstanceId, server, contentFormat)
+                                )
+                        );
             }
         }
-        // handle server
-        for (Map.Entry<Integer, BootstrapConfig.ServerConfig> server : bootstrapConfig.servers.entrySet()) {
-            int securityInstanceId = instances.get(server.getValue().shortId);
-            requestsWrite.add(toWriteRequest(securityInstanceId, server.getValue(), contentFormat));
-            if (!isBsServer) {
-                /** Delete instance if bootstrapServerIdNew not equals bootstrapServerIdOld or securityInstanceBsIdNew not equals serverInstanceBsIdOld */
-                if (bootstrapServerIdNew != null && server.getValue().shortId == bootstrapServerIdNew &&
-                        (bootstrapServerIdNew != bootstrapServerIdOld || securityInstanceId != this.lwM2MBootstrapSessionClients.get(endpoint).getServerInstances().get(bootstrapServerIdOld))) {
-                    pathsDelete.add("/1/" + this.lwM2MBootstrapSessionClients.get(endpoint).getServerInstances().get(bootstrapServerIdOld));
-                    /** Delete instance if serverIdNew is present in serverInstances and  securityInstanceIdOld by serverIdNew not equals serverInstanceIdOld */
-                } else if (this.lwM2MBootstrapSessionClients.get(endpoint).getServerInstances().containsKey(server.getValue().shortId) &&
-                        securityInstanceId != this.lwM2MBootstrapSessionClients.get(endpoint).getServerInstances().get(server.getValue().shortId)) {
-                    pathsDelete.add("/1/" + this.lwM2MBootstrapSessionClients.get(endpoint).getServerInstances().get(server.getValue().shortId));
-                }
-            }
+
+        /// handle acl
+        for (Map.Entry<Integer, BootstrapConfig.ACLConfig> acl : bootstrapConfigNew.acls.entrySet()) {
+            requestsWrite.put("/" + ACCESS_CONTROL + "/" + acl.getKey(), toWriteRequest(acl.getKey(), acl.getValue(), contentFormat));
         }
-        // handle acl
-        for (Map.Entry<Integer, BootstrapConfig.ACLConfig> acl : bootstrapConfig.acls.entrySet()) {
-            requestsWrite.add(toWriteRequest(acl.getKey(), acl.getValue(), contentFormat));
-        }
-        // handle delete
-        if (isBsServer && isLwServer) {
-            requests.add(new BootstrapDeleteRequest("/0"));
-            requests.add(new BootstrapDeleteRequest("/1"));
-        } else {
-            pathsDelete.forEach(pathDelete -> requests.add(new BootstrapDeleteRequest(pathDelete)));
-        }
-        // handle write
-        if (requestsWrite.size() > 0) {
-            requests.addAll(requestsWrite);
+        /// handle delete
+        pathsDelete.forEach(pathDelete -> requests.add(new BootstrapDeleteRequest(pathDelete)));
+
+        /// handle write
+        if (!requestsWrite.isEmpty()) {
+            requests.addAll(requestsWrite.values());
         }
         return (requests);
     }
 
-
     private void initSupportedObjectsDefault() {
         this.supportedObjects = new HashMap<>();
-        this.supportedObjects.put(0, "1.1");
-        this.supportedObjects.put(1, "1.1");
-        this.supportedObjects.put(2, "1.0");
+        this.supportedObjects.put(SECURITY, "1.1");
+        this.supportedObjects.put(SERVER, "1.1");
+        this.supportedObjects.put(ACCESS_CONTROL, "1.0");
+    }
+
+    private boolean validateLwm2mShortServerId(int id){
+        return  id >= PRIMARY_LWM2M_SERVER.getId() && id <= LWM2M_SERVER_MAX.getId();
     }
 
     @Override

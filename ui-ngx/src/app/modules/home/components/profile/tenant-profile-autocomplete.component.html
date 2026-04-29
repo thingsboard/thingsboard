@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="selectTenantProfileFormGroup" class="mat-block">
+<mat-form-field [formGroup]="selectTenantProfileFormGroup" class="mat-block" [appearance]="appearance">
   <mat-label translate>tenant-profile.tenant-profile</mat-label>
   <input matInput type="text"
          #tenantProfileInput
@@ -26,53 +26,68 @@
          (keypress)="tenantProfileEnter($event)"
          [matAutocomplete]="tenantProfileAutocomplete"
          [class.!hidden]="showDetailsPageLink && disabled && selectTenantProfileFormGroup.get('tenantProfile').value">
-  <a *ngIf="showDetailsPageLink && selectTenantProfileFormGroup.get('tenantProfile').value && disabled" aria-label="Open tenant profile" [routerLink]=tenantProfileURL>
-    {{ displayTenantProfileFn(selectTenantProfileFormGroup.get('tenantProfile').value) }}
-  </a>
-  <button *ngIf="selectTenantProfileFormGroup.get('tenantProfile').value && !disabled"
-          type="button"
-          matSuffix mat-icon-button aria-label="Clear"
-          (click)="clear()">
-    <mat-icon class="material-icons">close</mat-icon>
-  </button>
-  <button *ngIf="selectTenantProfileFormGroup.get('tenantProfile').value?.id && !disabled"
-          type="button"
-          matSuffix mat-icon-button aria-label="Edit"
-          matTooltip="{{ 'tenant-profile.edit' | translate }}"
-          matTooltipPosition="above"
-          (click)="editTenantProfile($event)">
-    <mat-icon class="material-icons">edit</mat-icon>
-  </button>
-  <button mat-button color="primary" matSuffix
-          (click)="createTenantProfile($event, '')"
-          *ngIf="!selectTenantProfileFormGroup.get('tenantProfile').value && !disabled">
-    <span style="white-space: nowrap">{{ 'notification.create-new' | translate }}</span>
-  </button>
+  @if (showDetailsPageLink && selectTenantProfileFormGroup.get('tenantProfile').value && disabled) {
+    <a aria-label="Open tenant profile" [routerLink]=tenantProfileURL>
+      {{ displayTenantProfileFn(selectTenantProfileFormGroup.get('tenantProfile').value) }}
+    </a>
+  }
+  @if (selectTenantProfileFormGroup.get('tenantProfile').value && !disabled) {
+    <button
+      type="button"
+      matSuffix mat-icon-button aria-label="Clear"
+      (click)="clear()">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  }
+  @if (selectTenantProfileFormGroup.get('tenantProfile').value?.id && !disabled) {
+    <button
+      type="button"
+      matSuffix mat-icon-button aria-label="Edit"
+      matTooltip="{{ 'tenant-profile.edit' | translate }}"
+      matTooltipPosition="above"
+      (click)="editTenantProfile($event)">
+      <mat-icon class="material-icons">edit</mat-icon>
+    </button>
+  }
+  @if (!selectTenantProfileFormGroup.get('tenantProfile').value && !disabled) {
+    <button mat-button color="primary" matSuffix
+            (click)="createTenantProfile($event, '')"
+            >
+      <span style="white-space: nowrap">{{ 'notification.create-new' | translate }}</span>
+    </button>
+  }
   <mat-autocomplete
     class="tb-autocomplete"
     #tenantProfileAutocomplete="matAutocomplete"
     [displayWith]="displayTenantProfileFn">
-    <mat-option *ngFor="let tenantProfile of filteredTenantProfiles | async" [value]="tenantProfile">
-      <span [innerHTML]="tenantProfile.name | highlight:searchText"></span>
-    </mat-option>
-    <mat-option *ngIf="!(filteredTenantProfiles | async)?.length" [value]="null" class="tb-not-found">
-      <div class="tb-not-found-content" (click)="$event.stopPropagation()">
-        <div *ngIf="!textIsNotEmpty(searchText); else searchNotEmpty">
-          <span translate>tenant-profile.no-tenant-profiles-found</span>
-        </div>
-        <ng-template #searchNotEmpty>
-          <span>
+    @for (tenantProfile of filteredTenantProfiles | async; track tenantProfile) {
+      <mat-option [value]="tenantProfile">
+        <span [innerHTML]="tenantProfile.name | highlight:searchText"></span>
+      </mat-option>
+    }
+    @if (!(filteredTenantProfiles | async)?.length) {
+      <mat-option [value]="null" class="tb-not-found">
+        <div class="tb-not-found-content" (click)="$event.stopPropagation()">
+          @if (!textIsNotEmpty(searchText)) {
+            <div>
+              <span translate>tenant-profile.no-tenant-profiles-found</span>
+            </div>
+          } @else {
+            <span>
               {{ translate.get('tenant-profile.no-tenant-profiles-matching',
-            {entity: truncate.transform(searchText, true, 6, &apos;...&apos;)}) | async }}
+              {entity: truncate.transform(searchText, true, 6, &apos;...&apos;)}) | async }}
+            </span>
+          }
+          <span>
+            <a translate (click)="createTenantProfile($event, searchText)">tenant-profile.create-new-tenant-profile</a>
           </span>
-        </ng-template>
-        <span>
-          <a translate (click)="createTenantProfile($event, searchText)">tenant-profile.create-new-tenant-profile</a>
-        </span>
-      </div>
-    </mat-option>
+        </div>
+      </mat-option>
+    }
   </mat-autocomplete>
-  <mat-error *ngIf="selectTenantProfileFormGroup.get('tenantProfile').hasError('required')">
-    {{ 'tenant-profile.tenant-profile-required' | translate }}
-  </mat-error>
+  @if (selectTenantProfileFormGroup.get('tenantProfile').hasError('required')) {
+    <mat-error>
+      {{ 'tenant-profile.tenant-profile-required' | translate }}
+    </mat-error>
+  }
 </mat-form-field>

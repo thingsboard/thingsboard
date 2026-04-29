@@ -40,6 +40,7 @@ import {
   WidgetsBundleDialogComponent,
   WidgetsBundleDialogData
 } from '@home/pages/widget/widgets-bundle-dialog.component';
+import { MatFormFieldAppearance } from '@angular/material/form-field';
 
 @Component({
     selector: 'tb-widgets-bundle-select',
@@ -78,6 +79,9 @@ export class WidgetsBundleSelectComponent implements ControlValueAccessor, OnIni
   @Input()
   @coerceBoolean()
   createNew: boolean;
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   widgetsBundles$: Observable<Array<WidgetsBundle>>;
 

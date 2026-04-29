@@ -31,15 +31,12 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.id.MobileAppBundleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.mobile.app.MobileApp;
-import org.thingsboard.server.common.data.mobile.qrCodeSettings.QrCodeSettings;
 import org.thingsboard.server.common.data.mobile.app.StoreInfo;
-import org.thingsboard.server.common.data.oauth2.PlatformType;
+import org.thingsboard.server.common.data.mobile.qrCodeSettings.QrCodeSettings;
 import org.thingsboard.server.common.data.security.model.JwtPair;
 import org.thingsboard.server.config.annotations.ApiOperation;
-import org.thingsboard.server.dao.mobile.MobileAppService;
 import org.thingsboard.server.dao.mobile.QrCodeSettingService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.mobile.secret.MobileAppSecretService;
@@ -132,7 +129,7 @@ public class QrCodeSettingsController extends BaseController {
         return qrCodeSettingService.saveQrCodeSettings(currentUser.getTenantId(), qrCodeSettings);
     }
 
-    @ApiOperation(value = "Get Mobile application settings (getMobileAppSettings)",
+    @ApiOperation(value = "Get Mobile application settings (getQrCodeSettings)",
             notes = "The response payload contains configuration for android/iOS applications and platform qr code widget settings." + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/api/mobile/qr/settings")

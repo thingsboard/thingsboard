@@ -42,4 +42,6 @@ public interface TenantDao extends Dao<Tenant> {
 
     Tenant findTenantByName(TenantId tenantId, String name);
 
+    List<Tenant> findTenantsByIds(UUID tenantId, List<UUID> tenantIds);
+
 }

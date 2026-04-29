@@ -88,11 +88,21 @@ export const alarmSearchStatusTranslations = new Map<AlarmSearchStatus, string>(
 
 export const alarmSeverityColors = new Map<AlarmSeverity, string>(
   [
-    [AlarmSeverity.CRITICAL, 'red'],
-    [AlarmSeverity.MAJOR, 'orange'],
-    [AlarmSeverity.MINOR, '#ffca3d'],
-    [AlarmSeverity.WARNING, '#abab00'],
-    [AlarmSeverity.INDETERMINATE, 'green']
+    [AlarmSeverity.CRITICAL, 'var(--tb-alarm-severity-critical, rgb(209, 39, 48))'],
+    [AlarmSeverity.MAJOR, 'var(--tb-alarm-severity-major, rgb(246, 103, 22))'],
+    [AlarmSeverity.MINOR, 'var(--tb-alarm-severity-minor, rgb(250, 164, 5))'],
+    [AlarmSeverity.WARNING, 'var(--tb-alarm-severity-warning, rgb(242, 218, 5))'],
+    [AlarmSeverity.INDETERMINATE, 'var(--tb-alarm-severity-indeterminate, rgba(0, 0, 0, 0.38))']
+  ]
+);
+
+export const alarmSeverityBackgroundColors = new Map<AlarmSeverity, string>(
+  [
+    [AlarmSeverity.CRITICAL, `var(--tb-alarm-severity-critical-bg, rgba(209, 39, 48, 0.06))`],
+    [AlarmSeverity.MAJOR, 'var(--tb-alarm-severity-major-bg, rgba(246, 103, 22, 0.06))'],
+    [AlarmSeverity.MINOR, 'var(--tb-alarm-severity-minor-bg, rgba(250, 164, 5, 0.06))'],
+    [AlarmSeverity.WARNING, 'var(--tb-alarm-severity-warning-bg, rgba(242, 218, 5, 0.06))'],
+    [AlarmSeverity.INDETERMINATE, 'var(--tb-alarm-severity-indeterminate-bg, rgba(0, 0, 0, 0.06))']
   ]
 );
 
@@ -120,12 +130,27 @@ export enum AlarmCommentType {
   OTHER = 'OTHER'
 }
 
+export enum AlarmMessage {
+  ACKED_BY_USER = "alarm.system-comments.acked-by-user",
+  CLEARED_BY_USER = "alarm.system-comments.cleared-by-user",
+  ASSIGNED_TO_USER = "alarm.system-comments.assigned-to-user",
+  UNASSIGNED_BY_USER = "alarm.system-comments.unassigned-to-user",
+  UNASSIGNED_FROM_DELETED_USER = "alarm.system-comments.unassigned-from-deleted-user",
+  COMMENT_DELETED = "alarm.system-comments.comment-deleted",
+  SEVERITY_CHANGED = "alarm.system-comments.severity-changed",
+}
+
 export interface AlarmComment extends BaseData<AlarmCommentId> {
   alarmId: AlarmId;
   userId?: UserId;
   type: AlarmCommentType;
   comment: {
     text: string;
+    subtype?: keyof typeof AlarmMessage;
+    userName?: string;
+    assigneeName?: string;
+    oldSeverity?: AlarmSeverity;
+    newSeverity?: AlarmSeverity;
     edited?: boolean;
     editedOn?: number;
   };
@@ -140,6 +165,7 @@ export interface AlarmCommentInfo extends AlarmComment {
 export interface AlarmInfo extends Alarm {
   originatorName: string;
   originatorLabel: string;
+  originatorDisplayName?: string;
   assignee: AlarmAssignee;
 }
 
@@ -172,6 +198,7 @@ export const simulatedAlarm: AlarmInfo = {
   clearTs: 0,
   assignTs: 0,
   originatorName: 'Simulated',
+  originatorDisplayName: 'Simulated',
   originatorLabel: 'Simulated',
   assignee: {
     firstName: '',
@@ -242,6 +269,11 @@ export const alarmFields: {[fieldName: string]: AlarmField} = {
     value: 'originatorName',
     name: 'alarm.originator'
   },
+  originatorDisplayName: {
+    keyName: 'originatorDisplayName',
+    value: 'originatorDisplayName',
+    name: 'alarm.originator'
+  },
   originatorLabel: {
     keyName: 'originatorLabel',
     value: 'originatorLabel',
@@ -271,6 +303,11 @@ export const alarmFields: {[fieldName: string]: AlarmField} = {
     keyName: 'assignee',
     value: 'assignee',
     name: 'alarm.assignee'
+  },
+  details: {
+    keyName: 'details',
+    value: 'details',
+    name: 'alarm.details'
   }
 };
 

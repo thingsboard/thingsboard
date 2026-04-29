@@ -18,21 +18,25 @@
 <div class="tb-marker-shapes-panel">
   <div class="tb-marker-shapes-title" translate>widgets.maps.data-layer.marker.marker-shapes</div>
   <div class="flex flex-row flex-wrap gap-3">
-    <ng-container *ngFor="let shapeInfo of shapes">
-      <button *ngIf="shapeInfo.shape === shape"
-              class="tb-select-shape-button"
-              mat-raised-button
-              (click)="selectShape(shapeInfo.shape)"
-              type="button">
-        <img matButtonIcon class="tb-marker-shape" [src]="shapeInfo.url$ | async"/>
-      </button>
-      <button *ngIf="shapeInfo.shape !== shape"
-              class="tb-select-shape-button"
-              mat-button
-              (click)="selectShape(shapeInfo.shape)"
-              type="button">
-        <img matButtonIcon class="tb-marker-shape" [src]="shapeInfo.url$ | async"/>
-      </button>
-    </ng-container>
+    @for (shapeInfo of shapes; track shapeInfo) {
+      @if (shapeInfo.shape === shape) {
+        <button
+          class="tb-select-shape-button"
+          mat-raised-button
+          (click)="selectShape(shapeInfo.shape)"
+          type="button">
+          <img matButtonIcon class="tb-marker-shape" [src]="shapeInfo.url$ | async"/>
+        </button>
+      }
+      @if (shapeInfo.shape !== shape) {
+        <button
+          class="tb-select-shape-button"
+          mat-button
+          (click)="selectShape(shapeInfo.shape)"
+          type="button">
+          <img matButtonIcon class="tb-marker-shape" [src]="shapeInfo.url$ | async"/>
+        </button>
+      }
+    }
   </div>
 </div>

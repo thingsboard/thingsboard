@@ -50,8 +50,7 @@ public class X509_TrustLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegra
                 serverX509Cert.getEncoded());
         Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsSecure(X509, NONE));
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsSecure(clientCredentials, privateKey, certificate, X509, false);
-        this.basicTestConnection(security,
-                null,
+        this.basicTestConnection(security, null,
                 deviceCredentials,
                 clientEndpoint,
                 transportConfiguration,
@@ -77,8 +76,7 @@ public class X509_TrustLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegra
                 serverX509CertBs.getEncoded());
         Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsSecure(X509, BOTH));
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsSecure(clientCredentials, privateKey, certificate, X509, false);
-        this.basicTestConnection(security,
-                null,
+        this.basicTestConnection(security,null,
                 deviceCredentials,
                 clientEndpoint,
                 transportConfiguration,

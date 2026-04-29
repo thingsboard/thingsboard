@@ -29,7 +29,6 @@ import org.thingsboard.rule.engine.api.RuleEngineAssetProfileCache;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceProfileCache;
 import org.thingsboard.rule.engine.api.RuleEngineRpcService;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
@@ -46,14 +45,12 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.cf.CalculatedField;
-import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.domain.Domain;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
-import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.job.Job;
@@ -64,6 +61,7 @@ import org.thingsboard.server.common.data.notification.rule.NotificationRule;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.oauth2.OAuth2Client;
+import org.thingsboard.server.common.data.pat.ApiKey;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.queue.QueueStats;
 import org.thingsboard.server.common.data.rpc.Rpc;
@@ -80,6 +78,7 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.domain.DomainService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
+import org.thingsboard.server.dao.job.JobService;
 import org.thingsboard.server.dao.mobile.MobileAppBundleService;
 import org.thingsboard.server.dao.mobile.MobileAppService;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
@@ -88,11 +87,11 @@ import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.dao.oauth2.OAuth2ClientService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
+import org.thingsboard.server.dao.pat.ApiKeyService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.queue.QueueStatsService;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
-import org.thingsboard.server.dao.job.JobService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
@@ -170,6 +169,8 @@ public class TenantIdLoaderTest {
     private JobService jobService;
     @Mock
     private AiModelService aiModelService;
+    @Mock
+    private ApiKeyService apiKeyService;
 
     private TenantId tenantId;
     private TenantProfileId tenantProfileId;
@@ -208,159 +209,119 @@ public class TenantIdLoaderTest {
             case CUSTOMER:
                 Customer customer = new Customer();
                 customer.setTenantId(tenantId);
-
                 when(ctx.getCustomerService()).thenReturn(customerService);
                 doReturn(customer).when(customerService).findCustomerById(eq(tenantId), any());
-
                 break;
             case USER:
                 User user = new User();
                 user.setTenantId(tenantId);
-
                 when(ctx.getUserService()).thenReturn(userService);
                 doReturn(user).when(userService).findUserById(eq(tenantId), any());
-
                 break;
             case ASSET:
                 Asset asset = new Asset();
                 asset.setTenantId(tenantId);
-
                 when(ctx.getAssetService()).thenReturn(assetService);
                 doReturn(asset).when(assetService).findAssetById(eq(tenantId), any());
-
                 break;
             case DEVICE:
                 Device device = new Device();
                 device.setTenantId(tenantId);
-
                 when(ctx.getDeviceService()).thenReturn(deviceService);
                 doReturn(device).when(deviceService).findDeviceById(eq(tenantId), any());
-
                 break;
             case ALARM:
                 Alarm alarm = new Alarm();
                 alarm.setTenantId(tenantId);
-
                 when(ctx.getAlarmService()).thenReturn(alarmService);
                 doReturn(alarm).when(alarmService).findAlarmById(eq(tenantId), any());
-
                 break;
             case RULE_CHAIN:
                 RuleChain ruleChain = new RuleChain();
                 ruleChain.setTenantId(tenantId);
-
                 when(ctx.getRuleChainService()).thenReturn(ruleChainService);
                 doReturn(ruleChain).when(ruleChainService).findRuleChainById(eq(tenantId), any());
-
                 break;
             case ENTITY_VIEW:
                 EntityView entityView = new EntityView();
                 entityView.setTenantId(tenantId);
-
                 when(ctx.getEntityViewService()).thenReturn(entityViewService);
                 doReturn(entityView).when(entityViewService).findEntityViewById(eq(tenantId), any());
-
                 break;
             case DASHBOARD:
                 Dashboard dashboard = new Dashboard();
                 dashboard.setTenantId(tenantId);
-
                 when(ctx.getDashboardService()).thenReturn(dashboardService);
                 doReturn(dashboard).when(dashboardService).findDashboardById(eq(tenantId), any());
-
                 break;
             case EDGE:
                 Edge edge = new Edge();
                 edge.setTenantId(tenantId);
-
                 when(ctx.getEdgeService()).thenReturn(edgeService);
                 doReturn(edge).when(edgeService).findEdgeById(eq(tenantId), any());
-
                 break;
             case OTA_PACKAGE:
                 OtaPackage otaPackage = new OtaPackage();
                 otaPackage.setTenantId(tenantId);
-
                 when(ctx.getOtaPackageService()).thenReturn(otaPackageService);
                 doReturn(otaPackage).when(otaPackageService).findOtaPackageInfoById(eq(tenantId), any());
-
                 break;
             case ASSET_PROFILE:
                 AssetProfile assetProfile = new AssetProfile();
                 assetProfile.setTenantId(tenantId);
-
                 when(ctx.getAssetProfileCache()).thenReturn(assetProfileCache);
                 doReturn(assetProfile).when(assetProfileCache).get(eq(tenantId), any(AssetProfileId.class));
-
                 break;
             case DEVICE_PROFILE:
                 DeviceProfile deviceProfile = new DeviceProfile();
                 deviceProfile.setTenantId(tenantId);
-
                 when(ctx.getDeviceProfileCache()).thenReturn(deviceProfileCache);
                 doReturn(deviceProfile).when(deviceProfileCache).get(eq(tenantId), any(DeviceProfileId.class));
-
                 break;
             case WIDGET_TYPE:
                 WidgetType widgetType = new WidgetType();
                 widgetType.setTenantId(tenantId);
-
                 when(ctx.getWidgetTypeService()).thenReturn(widgetTypeService);
                 doReturn(widgetType).when(widgetTypeService).findWidgetTypeById(eq(tenantId), any());
-
                 break;
             case WIDGETS_BUNDLE:
                 WidgetsBundle widgetsBundle = new WidgetsBundle();
                 widgetsBundle.setTenantId(tenantId);
-
                 when(ctx.getWidgetBundleService()).thenReturn(widgetsBundleService);
                 doReturn(widgetsBundle).when(widgetsBundleService).findWidgetsBundleById(eq(tenantId), any());
-
                 break;
             case RPC:
                 Rpc rpc = new Rpc();
                 rpc.setTenantId(tenantId);
-
                 when(ctx.getRpcService()).thenReturn(rpcService);
                 doReturn(rpc).when(rpcService).findRpcById(eq(tenantId), any());
-
                 break;
             case QUEUE:
                 Queue queue = new Queue();
                 queue.setTenantId(tenantId);
-
                 when(ctx.getQueueService()).thenReturn(queueService);
                 doReturn(queue).when(queueService).findQueueById(eq(tenantId), any());
-
                 break;
             case API_USAGE_STATE:
                 ApiUsageState apiUsageState = new ApiUsageState();
                 apiUsageState.setTenantId(tenantId);
-
                 when(ctx.getRuleEngineApiUsageStateService()).thenReturn(ruleEngineApiUsageStateService);
                 doReturn(apiUsageState).when(ruleEngineApiUsageStateService).findApiUsageStateById(eq(tenantId), any());
-
                 break;
             case TB_RESOURCE:
                 TbResource tbResource = new TbResource();
                 tbResource.setTenantId(tenantId);
-
                 when(ctx.getResourceService()).thenReturn(resourceService);
                 doReturn(tbResource).when(resourceService).findResourceInfoById(eq(tenantId), any());
-
                 break;
             case RULE_NODE:
                 RuleNode ruleNode = new RuleNode();
-
                 when(ctx.getRuleChainService()).thenReturn(ruleChainService);
                 doReturn(ruleNode).when(ruleChainService).findRuleNodeById(eq(tenantId), any());
-
                 break;
             case TENANT_PROFILE:
                 TenantProfile tenantProfile = new TenantProfile(tenantProfileId);
-
                 when(ctx.getTenantProfile()).thenReturn(tenantProfile);
-
                 break;
             case NOTIFICATION_TARGET:
                 NotificationTarget notificationTarget = new NotificationTarget();
@@ -422,12 +383,6 @@ public class TenantIdLoaderTest {
                 when(ctx.getCalculatedFieldService()).thenReturn(calculatedFieldService);
                 doReturn(calculatedField).when(calculatedFieldService).findById(eq(tenantId), any());
                 break;
-            case CALCULATED_FIELD_LINK:
-                CalculatedFieldLink calculatedFieldLink = new CalculatedFieldLink();
-                calculatedFieldLink.setTenantId(tenantId);
-                when(ctx.getCalculatedFieldService()).thenReturn(calculatedFieldService);
-                doReturn(calculatedFieldLink).when(calculatedFieldService).findCalculatedFieldLinkById(eq(tenantId), any());
-                break;
             case JOB:
                 Job job = new Job();
                 job.setTenantId(tenantId);
@@ -439,6 +394,12 @@ public class TenantIdLoaderTest {
                 aiModel.setTenantId(tenantId);
                 when(ctx.getAiModelService()).thenReturn(aiModelService);
                 doReturn(Optional.of(aiModel)).when(aiModelService).findAiModelById(eq(tenantId), any());
+                break;
+            case API_KEY:
+                ApiKey apiKey = new ApiKey();
+                apiKey.setTenantId(tenantId);
+                when(ctx.getApiKeyService()).thenReturn(apiKeyService);
+                doReturn(apiKey).when(apiKeyService).findApiKeyById(eq(tenantId), any());
                 break;
             default:
                 throw new RuntimeException("Unexpected originator EntityType " + entityType);

@@ -110,6 +110,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
       bootstrapServerUpdateEnable: [false],
       bootstrap: [[]],
       observeStrategy: [null, []],
+      initAttrTelAsObsStrategy: [false],
       clientLwM2mSettings: this.fb.group({
         clientOnlyObserveAfterConnect: [1, []],
         useObject19ForOtaInfo: [false],
@@ -184,6 +185,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     this.lwm2mDeviceProfileFormGroup.get('objectIds').valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe(value => this.updateObserveStrategy(value));
+
 
     this.lwm2mDeviceProfileFormGroup.valueChanges.pipe(
       takeUntil(this.destroy$)
@@ -274,6 +276,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
         bootstrap: this.configurationValue.bootstrap,
         bootstrapServerUpdateEnable: this.configurationValue.bootstrapServerUpdateEnable || false,
         observeStrategy: this.configurationValue.observeAttr.observeStrategy || ObserveStrategy.SINGLE,
+        initAttrTelAsObsStrategy: this.configurationValue.observeAttr.initAttrTelAsObsStrategy ?? false,
         clientLwM2mSettings: {
           clientOnlyObserveAfterConnect: this.configurationValue.clientLwM2mSettings.clientOnlyObserveAfterConnect,
           useObject19ForOtaInfo: this.configurationValue.clientLwM2mSettings.useObject19ForOtaInfo ?? false,
@@ -442,6 +445,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     const attributes: any = {};
     const keyNameNew = {};
     const observeStrategyValue = this.lwm2mDeviceProfileFormGroup.get('observeStrategy').value;
+    const initAttrTelAsObsStrategyValue = this.lwm2mDeviceProfileFormGroup.get('initAttrTelAsObsStrategy').value;
     const observeJson: ObjectLwM2M[] = JSON.parse(JSON.stringify(val));
     observeJson.forEach(obj => {
       if (isDefinedAndNotNull(obj.attributes) && !isEmpty(obj.attributes)) {
@@ -483,6 +487,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
       telemetry: telemetryArray,
       keyName: this.sortObjectKeyPathJson(KEY_NAME, keyNameNew),
       attributeLwm2m: attributes,
+      initAttrTelAsObsStrategy: initAttrTelAsObsStrategyValue,
       observeStrategy: observeStrategyValue
     };
   }

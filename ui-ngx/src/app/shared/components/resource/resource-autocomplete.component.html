@@ -29,36 +29,44 @@
          [required]="required"
          [matAutocomplete]="entityAutocomplete"
          [matAutocompleteDisabled]="!allowAutocomplete">
-  <button *ngIf="resourceFormGroup.get('resource').value && !disabled"
-          type="button"
-          matSuffix mat-icon-button aria-label="Clear"
-          (click)="clear()">
-    <mat-icon class="material-icons">close</mat-icon>
-  </button>
+  @if (resourceFormGroup.get('resource').value && !disabled) {
+    <button
+      type="button"
+      matSuffix mat-icon-button aria-label="Clear"
+      (click)="clear()">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  }
   <mat-autocomplete class="tb-autocomplete"
                     #entityAutocomplete="matAutocomplete"
                     [displayWith]="displayResourceFn">
-    <mat-option *ngFor="let resource of filteredResources$ | async" [value]="resource">
-      <span [innerHTML]="resource.title | highlight:searchText"></span>
-    </mat-option>
-    <ng-container *ngIf="subType !== ResourceSubType.EXTENSION; else extensionNoText">
-      <mat-option *ngIf="!(filteredResources$ | async)?.length" [value]="null">
-        <div (click)="$event.stopPropagation()">
-          <div *ngIf="!textIsNotEmpty(searchText); else searchNotEmpty">
-            <span>{{ 'js-func.no-js-module-text' | translate }}</span>
+    @for (resource of filteredResources$ | async; track resource) {
+      <mat-option [value]="resource">
+        <span [innerHTML]="resource.title | highlight:searchText"></span>
+      </mat-option>
+    }
+    @if (subType !== ResourceSubType.EXTENSION) {
+      @if (!(filteredResources$ | async)?.length) {
+        <mat-option [value]="null">
+          <div (click)="$event.stopPropagation()">
+            @if (!textIsNotEmpty(searchText)) {
+              <div>
+                <span>{{ 'js-func.no-js-module-text' | translate }}</span>
+              </div>
+            } @else {
+              <span>
+                {{ 'js-func.no-js-module-matching' | translate: {module: searchText | truncate: true: 6: &apos;...&apos;} }}
+              </span>
+            }
           </div>
-          <ng-template #searchNotEmpty>
-          <span>
-              {{ 'js-func.no-js-module-matching' | translate: {module: searchText | truncate: true: 6: &apos;...&apos;} }}
-          </span>
-          </ng-template>
-        </div>
-      </mat-option>
-    </ng-container>
-    <ng-template #extensionNoText>
-      <mat-option *ngIf="!(filteredResources$ | async)?.length" [value]="searchText">
-        {{ searchText }}
-      </mat-option>
-    </ng-template>
+        </mat-option>
+      }
+    } @else {
+      @if (!(filteredResources$ | async)?.length) {
+        <mat-option [value]="searchText">
+          {{ searchText }}
+        </mat-option>
+      }
+    }
   </mat-autocomplete>
 </mat-form-field>

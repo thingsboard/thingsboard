@@ -24,7 +24,8 @@ import {
 import { Router } from '@angular/router';
 import {
   Resource,
-  ResourceInfo, ResourceInfoWithReferences,
+  ResourceInfo,
+  ResourceInfoWithReferences,
   ResourceType,
   ResourceTypeTranslationMap,
   toResourceDeleteResult
@@ -41,10 +42,10 @@ import { Authority } from '@shared/models/authority.enum';
 import { ResourcesLibraryComponent } from '@home/components/resources/resources-library.component';
 import { PageLink } from '@shared/models/page/page-link';
 import { EntityAction } from '@home/models/entity/entity-component.models';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { ResourcesTableHeaderComponent } from '@home/pages/admin/resource/resources-table-header.component';
 import { ResourceLibraryTabsComponent } from '@home/pages/admin/resource/resource-library-tabs.component';
-import { forkJoin, of } from "rxjs";
+import { forkJoin, Observable, of } from "rxjs";
 import {
   ResourcesInUseDialogComponent,
   ResourcesInUseDialogData
@@ -114,27 +115,36 @@ export class ResourcesLibraryTableConfigResolver  {
 
     this.config.entitiesFetchFunction = pageLink => this.resourceService.getResources(pageLink, this.config.componentsData.resourceType);
     this.config.loadEntity = id => this.resourceService.getResourceInfoById(id.id);
-    this.config.saveEntity = resource => this.saveResource(resource);
+    this.config.saveEntity = (resource, originalResource) => this.saveResource(resource, originalResource);
 
     this.config.onEntityAction = action => this.onResourceAction(action);
   }
 
-  saveResource(resource) {
+  saveResource(resource: Resource & {data?: File | File[]}, originalResource: Resource) {
     if (Array.isArray(resource.data)) {
       const resources = [];
       resource.data.forEach((data, index) => {
         resources.push({
           resourceType: resource.resourceType,
           data,
-          fileName: resource.fileName[index],
           title: resource.title
         });
       });
-      return this.resourceService.saveResources(resources, {resendRequest: true}).pipe(
+      return this.resourceService.uploadResources(resources, {resendRequest: true}).pipe(
         map((response) => response[0])
       );
+    } else if (!originalResource) {
+      return this.resourceService.uploadResource(resource);
     } else {
-      return this.resourceService.saveResource(resource);
+      const { data, ...resourceInfo } = resource;
+      let saveObservable: Observable<Resource>;
+      saveObservable = this.resourceService.updatedResourceInfo(resource.id.id, resourceInfo);
+      if (data) {
+        saveObservable = saveObservable.pipe(
+          switchMap(() => this.resourceService.updatedResourceData(resource.id.id, data))
+        )
+      }
+      return saveObservable;
     }
   }
 

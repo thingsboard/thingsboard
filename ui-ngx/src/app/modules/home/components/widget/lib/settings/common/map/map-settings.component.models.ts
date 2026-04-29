@@ -24,6 +24,7 @@ export interface MapSettingsContext {
   aliasController: IAliasController;
   callbacks: WidgetConfigCallbacks;
   widget: Widget;
-  editKey: (key: DataKey, deviceId: string, entityAliasId: string, WidgetType?: widgetType) => Observable<DataKey>;
+  editKey: (key: DataKey, deviceId: string, entityAliasId: string, WidgetType?: widgetType,
+            hideDataKeyAggregation?: boolean) => Observable<DataKey>;
   generateDataKey: (key: DataKey) => DataKey;
 }

@@ -28,14 +28,18 @@
   <div class="tb-range-chart-content" [class]="legendClass">
     <div #chartShape class="tb-range-chart-shape">
     </div>
-    <div *ngIf="showLegend" class="tb-range-chart-legend">
-      <div class="tb-range-chart-legend-item" *ngFor="let rangeItem of visibleRangeItems"
-           (click)="toggleRangeItem(rangeItem)">
-        <div class="tb-range-chart-legend-item-label">
-          <div class="tb-range-chart-legend-item-label-circle" [style]="{background: rangeItem.enabled ? rangeItem.color : null}"></div>
-          <div [style]="rangeItem.enabled ? legendLabelStyle : disabledLegendLabelStyle">{{ rangeItem.label }}</div>
-        </div>
+    @if (showLegend) {
+      <div class="tb-range-chart-legend">
+        @for (rangeItem of visibleRangeItems; track rangeItem) {
+          <div class="tb-range-chart-legend-item"
+               (click)="toggleRangeItem(rangeItem)">
+            <div class="tb-range-chart-legend-item-label">
+              <div class="tb-range-chart-legend-item-label-circle" [style]="{background: rangeItem.enabled ? rangeItem.color : null}"></div>
+              <div [style]="rangeItem.enabled ? legendLabelStyle : disabledLegendLabelStyle">{{ rangeItem.label }}</div>
+            </div>
+          </div>
+        }
       </div>
-    </div>
+    }
   </div>
 </div>

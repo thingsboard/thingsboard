@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -37,10 +38,12 @@ import java.util.Optional;
 @ToString(callSuper = true)
 public class WebDeliveryMethodNotificationTemplate extends DeliveryMethodNotificationTemplate implements HasSubject {
 
+    @Schema(description = "Subject line for the web notification", example = "New Message Received")
     @NoXss(fieldName = "web notification subject")
     @Length(fieldName = "web notification subject", max = 150, message = "cannot be longer than 150 chars")
     @NotEmpty
     private String subject;
+    @Schema(description = "Additional JSON configuration for web buttons/actions")
     private JsonNode additionalConfig;
 
     private final List<TemplatableValue> templatableValues = List.of(

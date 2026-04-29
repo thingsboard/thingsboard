@@ -15,10 +15,15 @@
  */
 package org.thingsboard.server.service.cf;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.calculatedField.CalculatedFieldStateRestoreMsg;
+import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.exception.TenantNotFoundException;
+import org.thingsboard.server.common.msg.CalculatedFieldStatePartitionRestoreMsg;
+import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.exception.CalculatedFieldStateException;
@@ -37,6 +42,7 @@ import java.util.stream.Collectors;
 import static org.thingsboard.server.utils.CalculatedFieldUtils.fromProto;
 import static org.thingsboard.server.utils.CalculatedFieldUtils.toProto;
 
+@Slf4j
 public abstract class AbstractCalculatedFieldStateService implements CalculatedFieldStateService {
 
     @Autowired
@@ -56,25 +62,44 @@ public abstract class AbstractCalculatedFieldStateService implements CalculatedF
     protected abstract void doPersist(CalculatedFieldEntityCtxId stateId, CalculatedFieldStateProto stateMsgProto, TbCallback callback);
 
     @Override
-    public final void removeState(CalculatedFieldEntityCtxId stateId, TbCallback callback) {
+    public final void deleteState(CalculatedFieldEntityCtxId stateId, TbCallback callback) {
         doRemove(stateId, callback);
     }
 
     protected abstract void doRemove(CalculatedFieldEntityCtxId stateId, TbCallback callback);
 
-    protected void processRestoredState(CalculatedFieldStateProto stateMsg, TbCallback callback) {
+    protected void processRestoredState(CalculatedFieldStateProto stateMsg, TopicPartitionInfo partition, TbCallback callback) {
         var id = fromProto(stateMsg.getId());
-        var state = fromProto(stateMsg);
-        processRestoredState(id, state, callback);
+        if (partition == null) {
+            try {
+                partition = actorSystemContext.resolve(ServiceType.TB_RULE_ENGINE, DataConstants.CF_QUEUE_NAME, id.tenantId(), id.entityId());
+            } catch (TenantNotFoundException e) {
+                log.debug("Skipping CF state msg for non-existing tenant {}", id.tenantId());
+                return;
+            }
+        }
+        var state = fromProto(id, stateMsg);
+        processRestoredState(id, state, partition, callback);
     }
 
-    protected void processRestoredState(CalculatedFieldEntityCtxId id, CalculatedFieldState state, TbCallback callback) {
-        actorSystemContext.tell(new CalculatedFieldStateRestoreMsg(id, state, callback));
+    protected void processRestoredState(CalculatedFieldEntityCtxId id, CalculatedFieldState state, TopicPartitionInfo partition, TbCallback callback) {
+        partition = partition.withTopic(DataConstants.CF_STATES_QUEUE_NAME);
+        actorSystemContext.tellWithHighPriority(new CalculatedFieldStateRestoreMsg(id, state, partition, callback));
     }
 
     @Override
     public void restore(QueueKey queueKey, Set<TopicPartitionInfo> partitions) {
-        stateService.update(queueKey, partitions, null);
+        stateService.update(queueKey, partitions, new QueueStateService.RestoreCallback() {
+            @Override
+            public void onAllPartitionsRestored() {
+            }
+
+            @Override
+            public void onPartitionRestored(TopicPartitionInfo partition) {
+                partition = partition.withTopic(DataConstants.CF_STATES_QUEUE_NAME);
+                actorSystemContext.tellWithHighPriority(new CalculatedFieldStatePartitionRestoreMsg(partition));
+            }
+        });
     }
 
     @Override

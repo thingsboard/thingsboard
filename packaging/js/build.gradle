@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import org.apache.tools.ant.filters.ReplaceTokens
 
 plugins {
-    id "nebula.ospackage" version "8.6.3"
+    id "com.netflix.nebula.ospackage" version "12.1.1"
 }
 
 buildDir = projectBuildDir
 version = projectVersion
-distsDirName = "./"
+base {
+    distsDirectory = layout.buildDirectory.dir("./")
+}
 
 // OS Package plugin configuration
 ospackage {
@@ -33,18 +34,22 @@ ospackage {
 
     into pkgInstallFolder
 
-    user pkgUser
-    permissionGroup pkgUser
+    user = pkgUser
+    permissionGroup = pkgUser
 
     // Copy the executable file
     from("${buildDir}/package/linux/bin/${pkgName}") {
-        fileMode 0500
+        filePermissions {
+            unix('r-x------')  // 0500
+        }
         into "bin"
     }
 
     // Copy the init file
     from("${buildDir}/package/linux/init/template") {
-        fileMode 0500
+        filePermissions {
+            unix('r-x------')  // 0500
+        }
         into "init"
         rename { String filename ->
             "${pkgName}"
@@ -54,7 +59,9 @@ ospackage {
     // Copy the config files
     from("${buildDir}/package/linux/conf") {
         fileType CONFIG | NOREPLACE
-        fileMode 0754
+        filePermissions {
+            unix('rwxr-xr--')  // 0754
+        }
         into "conf"
     }
 
@@ -78,13 +85,15 @@ buildRpm {
     preUninstall file("${buildDir}/control/rpm/prerm")
     postUninstall file("${buildDir}/control/rpm/postrm")
 
-    user pkgUser
-    permissionGroup pkgUser
+    user = pkgUser
+    permissionGroup = pkgUser
 
     // Copy the system unit files
     from("${buildDir}/control/template.service") {
         addParentDirs = false
-        fileMode 0644
+        filePermissions {
+            unix('rw-r--r--')  // 0644
+        }
         into "/usr/lib/systemd/system"
         rename { String filename ->
             "${pkgName}.service"
@@ -111,13 +120,15 @@ buildDeb {
     preUninstall file("${buildDir}/control/deb/prerm")
     postUninstall file("${buildDir}/control/deb/postrm")
 
-    user pkgUser
-    permissionGroup pkgUser
+    user = pkgUser
+    permissionGroup = pkgUser
 
     // Copy the system unit files
     from("${buildDir}/control/template.service") {
         addParentDirs = false
-        fileMode 0644
+        filePermissions {
+            unix('rw-r--r--')  // 0644
+        }
         into "/lib/systemd/system"
         rename { String filename ->
             "${pkgName}.service"

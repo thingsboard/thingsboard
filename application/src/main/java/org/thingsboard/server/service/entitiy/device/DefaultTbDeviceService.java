@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.NameConflictStrategy;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -56,10 +57,15 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
 
     @Override
     public Device save(Device device, String accessToken, User user) throws Exception {
+        return save(device, accessToken, NameConflictStrategy.DEFAULT, user);
+    }
+
+    @Override
+    public Device save(Device device, String accessToken, NameConflictStrategy nameConflictStrategy, User user) throws Exception {
         ActionType actionType = device.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = device.getTenantId();
         try {
-            Device savedDevice = checkNotNull(deviceService.saveDeviceWithAccessToken(device, accessToken));
+            Device savedDevice = checkNotNull(deviceService.saveDeviceWithAccessToken(device, accessToken, nameConflictStrategy));
             autoCommit(user, savedDevice.getId());
             logEntityActionService.logEntityAction(tenantId, savedDevice.getId(), savedDevice, savedDevice.getCustomerId(),
                     actionType, user);
@@ -73,10 +79,15 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
 
     @Override
     public Device saveDeviceWithCredentials(Device device, DeviceCredentials credentials, User user) throws ThingsboardException {
+        return saveDeviceWithCredentials(device, credentials, NameConflictStrategy.DEFAULT, user);
+    }
+
+    @Override
+    public Device saveDeviceWithCredentials(Device device, DeviceCredentials credentials, NameConflictStrategy nameConflictStrategy, User user) throws ThingsboardException {
         ActionType actionType = device.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = device.getTenantId();
         try {
-            Device savedDevice = checkNotNull(deviceService.saveDeviceWithCredentials(device, credentials));
+            Device savedDevice = checkNotNull(deviceService.saveDeviceWithCredentials(device, credentials, nameConflictStrategy));
             logEntityActionService.logEntityAction(tenantId, savedDevice.getId(), savedDevice, savedDevice.getCustomerId(),
                     actionType, user);
 

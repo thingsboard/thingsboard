@@ -12,6 +12,9 @@ Available template parameters:
 * `edgeId` - the edge id as uuid string;
 * `edgeName` - the name of the edge;
 * `eventType` - the string representation of the connectivity status: connected or disconnected;
+* `recipientEmail` - email of the recipient;
+* `recipientFirstName` - first name of the recipient;
+* `recipientLastName` - last name of the recipient;
 
 Parameter names must be wrapped using `${...}`. For example: `${edgeName}`.
 You may also modify the value of the parameter with one of the suffixes:

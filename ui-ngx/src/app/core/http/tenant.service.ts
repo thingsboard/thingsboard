@@ -35,6 +35,10 @@ export class TenantService {
     return this.http.get<PageData<Tenant>>(`/api/tenants${pageLink.toQuery()}`, defaultHttpOptionsFromConfig(config));
   }
 
+  public getTenantsByIds(tenantIds: Array<string>, config?: RequestConfig): Observable<Array<Tenant>> {
+    return this.http.get<Array<Tenant>>(`/api/tenants?tenantIds=${tenantIds.join(',')}`, defaultHttpOptionsFromConfig(config));
+  }
+
   public getTenantInfos(pageLink: PageLink, config?: RequestConfig): Observable<PageData<TenantInfo>> {
     return this.http.get<PageData<TenantInfo>>(`/api/tenantInfos${pageLink.toQuery()}`, defaultHttpOptionsFromConfig(config));
   }

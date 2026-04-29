@@ -20,18 +20,23 @@ import { SafeHtml } from '@angular/platform-browser';
 import { PageLink } from '@shared/models/page/page-link';
 import { Timewindow } from '@shared/models/time/time.models';
 import { EntitiesDataSource } from '@home/models/datasource/entity-datasource';
-import { ElementRef, EventEmitter, Renderer2, ViewContainerRef } from '@angular/core';
+import { ElementRef, EventEmitter, ViewContainerRef } from '@angular/core';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import {
-  CellActionDescriptor, EntityActionTableColumn, EntityColumn, EntityTableColumn,
+  CellActionDescriptor,
+  EntityActionTableColumn,
+  EntityColumn,
+  EntityColumnsType,
+  EntityTableColumn,
   EntityTableConfig,
   GroupActionDescriptor,
   HeaderActionDescriptor
 } from '@home/models/entity/entities-table-config.models';
 import { ActivatedRoute } from '@angular/router';
+import type { EntityDetailsPanelComponent } from '@home/components/entity/entity-details-panel.component';
 
 export type EntitiesTableAction = 'add';
 
@@ -42,7 +47,7 @@ export interface IEntitiesTableComponent {
   groupActionDescriptors: Array<GroupActionDescriptor<BaseData<HasId>>>;
   cellActionDescriptors: Array<CellActionDescriptor<BaseData<HasId>>>;
   actionColumns: Array<EntityActionTableColumn<BaseData<HasId>>>;
-  entityColumns: Array<EntityTableColumn<BaseData<HasId>>>;
+  entityColumns: EntityColumnsType;
   displayedColumns: string[];
   headerCellStyleCache: Array<any>;
   cellContentCache: Array<SafeHtml>;
@@ -64,6 +69,7 @@ export interface IEntitiesTableComponent {
   paginator: MatPaginator;
   sort: MatSort;
   route: ActivatedRoute;
+  entityDetailsPanel: EntityDetailsPanelComponent;
   viewContainerRef: ViewContainerRef;
 
   addEnabled(): boolean;

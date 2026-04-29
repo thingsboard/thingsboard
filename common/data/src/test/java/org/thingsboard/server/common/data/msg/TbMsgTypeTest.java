@@ -20,7 +20,6 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.thingsboard.server.common.data.msg.TbMsgType.ALARM;
 import static org.thingsboard.server.common.data.msg.TbMsgType.ALARM_DELETE;
 import static org.thingsboard.server.common.data.msg.TbMsgType.DEDUPLICATION_TIMEOUT_SELF_MSG;
 import static org.thingsboard.server.common.data.msg.TbMsgType.DELAY_TIMEOUT_SELF_MSG;
@@ -39,7 +38,6 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.SEND_EMAIL;
 class TbMsgTypeTest {
 
     private static final List<TbMsgType> typesWithNullRuleNodeConnection = List.of(
-            ALARM,
             ALARM_DELETE,
             ENTITY_ASSIGNED_TO_EDGE,
             ENTITY_UNASSIGNED_FROM_EDGE,

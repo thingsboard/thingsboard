@@ -25,6 +25,7 @@ import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.common.consumer.TbQueueConsumerManagerTask.UpdateConfigTask;
 import org.thingsboard.server.queue.common.consumer.TbQueueConsumerManagerTask.UpdatePartitionsTask;
+import org.thingsboard.server.queue.common.consumer.TbQueueConsumerTask.ConsumerKey;
 import org.thingsboard.server.queue.kafka.TbKafkaConsumerTemplate;
 
 import java.util.Collection;
@@ -218,7 +219,7 @@ public class MainQueueConsumerManager<M extends TbQueueMsg, C extends QueueConfi
         consumerTask.setTask(consumerLoop);
     }
 
-    private void consumerLoop(Object consumerKey, TbQueueConsumer<M> consumer) {
+    private void consumerLoop(ConsumerKey consumerKey, TbQueueConsumer<M> consumer) {
         try {
             while (!stopped && !consumer.isStopped()) {
                 try {
@@ -250,7 +251,7 @@ public class MainQueueConsumerManager<M extends TbQueueMsg, C extends QueueConfi
         }
     }
 
-    protected void processMsgs(List<M> msgs, TbQueueConsumer<M> consumer, Object consumerKey, C config) throws Exception {
+    protected void processMsgs(List<M> msgs, TbQueueConsumer<M> consumer, ConsumerKey consumerKey, C config) throws Exception {
         log.trace("Processing {} messages", msgs.size());
         msgPackProcessor.process(msgs, consumer, consumerKey, config);
         log.trace("Processed {} messages", msgs.size());
@@ -273,7 +274,7 @@ public class MainQueueConsumerManager<M extends TbQueueMsg, C extends QueueConfi
     }
 
     public interface MsgPackProcessor<M extends TbQueueMsg, C extends QueueConfig> {
-        void process(List<M> msgs, TbQueueConsumer<M> consumer, Object consumerKey, C config) throws Exception;
+        void process(List<M> msgs, TbQueueConsumer<M> consumer, ConsumerKey consumerKey, C config) throws Exception;
     }
 
     public interface ConsumerWrapper<M extends TbQueueMsg> {
@@ -285,6 +286,7 @@ public class MainQueueConsumerManager<M extends TbQueueMsg, C extends QueueConfi
     }
 
     class ConsumerPerPartitionWrapper implements ConsumerWrapper<M> {
+
         private final Map<TopicPartitionInfo, TbQueueConsumerTask<M>> consumers = new HashMap<>();
 
         @Override
@@ -307,8 +309,7 @@ public class MainQueueConsumerManager<M extends TbQueueMsg, C extends QueueConfi
 
         protected void addPartitions(Set<TopicPartitionInfo> partitions, Consumer<TopicPartitionInfo> onStop, Function<String, Long> startOffsetProvider) {
             partitions.forEach(tpi -> {
-                Integer partitionId = tpi.getPartition().orElse(-1);
-                String key = queueKey + "-" + partitionId;
+                ConsumerKey key = new ConsumerKey(queueKey, tpi);
                 Runnable callback = onStop != null ? () -> onStop.accept(tpi) : null;
 
                 TbQueueConsumerTask<M> consumer = new TbQueueConsumerTask<>(key, () -> {
@@ -328,9 +329,11 @@ public class MainQueueConsumerManager<M extends TbQueueMsg, C extends QueueConfi
         public Collection<TbQueueConsumerTask<M>> getConsumers() {
             return consumers.values();
         }
+
     }
 
     class SingleConsumerWrapper implements ConsumerWrapper<M> {
+
         private TbQueueConsumerTask<M> consumer;
 
         @Override
@@ -346,7 +349,7 @@ public class MainQueueConsumerManager<M extends TbQueueMsg, C extends QueueConfi
             }
 
             if (consumer == null) {
-                consumer = new TbQueueConsumerTask<>(queueKey, () -> consumerCreator.apply(config, null), null); // no partitionId passed
+                consumer = new TbQueueConsumerTask<>(new ConsumerKey(queueKey, null), () -> consumerCreator.apply(config, null), null); // no partitionId passed
             }
             consumer.subscribe(partitions);
             if (!consumer.isRunning()) {
@@ -361,5 +364,7 @@ public class MainQueueConsumerManager<M extends TbQueueMsg, C extends QueueConfi
             }
             return List.of(consumer);
         }
+
     }
+
 }

@@ -66,3 +66,5 @@ VALUES ( '6eaaefa6-4612-11e7-a919-92ebcb67fe33', 1592576748000 ,'13814000-1dd2-1
         '{"type": "BURST", "batchSize": 1000}',
         '{"type": "SKIP_ALL_FAILURES", "retries": 3, "failurePercentage": 0.0, "pauseBetweenRetries": 3, "maxPauseBetweenRetries": 3}'
 );
+
+INSERT INTO tb_schema_settings (schema_version, product) VALUES (999999000000, 'CE');

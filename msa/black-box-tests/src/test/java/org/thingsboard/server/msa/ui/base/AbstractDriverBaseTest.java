@@ -303,7 +303,7 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
     public void deleteDeviceProfileByTitle(String deviceProfileTitle) {
         DeviceProfile deviceProfile = getDeviceProfileByName(deviceProfileTitle);
         if (deviceProfile != null) {
-            testRestClient.deleteDeviseProfile(deviceProfile.getId());
+            testRestClient.deleteDeviceProfile(deviceProfile.getId());
         }
     }
 

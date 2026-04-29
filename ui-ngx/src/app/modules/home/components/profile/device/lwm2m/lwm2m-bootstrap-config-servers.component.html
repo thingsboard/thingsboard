@@ -17,25 +17,31 @@
 -->
 <div class="flex flex-col">
   <mat-accordion multi="true">
-    <div *ngFor="let serverConfig of serverConfigsFromArray.controls; trackBy: trackByParams; let $index = index;">
-      <tb-profile-lwm2m-device-config-server
-        [formControl]="serverConfig"
-        [isBootstrap]="serverConfig.value.bootstrapServerIs"
-        (removeServer)="removeServerConfig($event, $index)"
-        (isTransportWasRunWithBootstrapChange)="updateIsTransportWasRunWithBootstrap($event)">
-      </tb-profile-lwm2m-device-config-server>
-    </div>
+    @for (serverConfig of serverConfigsFromArray.controls; track trackByParams($index)) {
+      <div>
+        <tb-profile-lwm2m-device-config-server
+          [formControl]="serverConfig"
+          [isBootstrap]="serverConfig.value.bootstrapServerIs"
+          (removeServer)="removeServerConfig($event, $index)"
+          (isTransportWasRunWithBootstrapChange)="updateIsTransportWasRunWithBootstrap($event)">
+        </tb-profile-lwm2m-device-config-server>
+      </div>
+    }
   </mat-accordion>
-  <div *ngIf="!serverConfigsFromArray.controls.length" style="margin:32px 0">
+  @if (!serverConfigsFromArray.controls.length) {
+    <div style="margin:32px 0">
       <span translate
             class="tb-prompt flex items-center justify-center">device-profile.lwm2m.no-config-servers</span>
-  </div>
-  <div *ngIf="!disabled" style="padding-top: 16px;">
-    <button mat-raised-button color="primary"
-            type="button"
-            (click)="addServerConfig()">
+    </div>
+  }
+  @if (!disabled) {
+    <div style="padding-top: 16px;">
+      <button mat-raised-button color="primary"
+              type="button"
+              (click)="addServerConfig()">
       <span>{{ (isBootstrapServerNotAvailable() ? 'device-profile.lwm2m.add-lwm2m-server-config' :
         'device-profile.lwm2m.add-server-config') | translate }}</span>
-    </button>
-  </div>
+      </button>
+    </div>
+  }
 </div>

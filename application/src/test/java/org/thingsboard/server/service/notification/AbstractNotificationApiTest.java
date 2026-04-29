@@ -188,8 +188,7 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
         rule.setTriggerType(triggerConfig.getTriggerType());
         rule.setTriggerConfig(triggerConfig);
 
-        DefaultNotificationRuleRecipientsConfig recipientsConfig = new DefaultNotificationRuleRecipientsConfig();
-        recipientsConfig.setTriggerType(triggerConfig.getTriggerType());
+        DefaultNotificationRuleRecipientsConfig recipientsConfig = DefaultNotificationRuleRecipientsConfig.forTriggerType(triggerConfig.getTriggerType());
         recipientsConfig.setTargets(DaoUtil.toUUIDs(targets));
         rule.setRecipientsConfig(recipientsConfig);
 

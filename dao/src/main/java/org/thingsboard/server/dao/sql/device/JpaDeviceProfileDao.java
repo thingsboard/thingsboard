@@ -124,6 +124,11 @@ public class JpaDeviceProfileDao extends JpaAbstractDao<DeviceProfileEntity, Dev
     }
 
     @Override
+    public List<DeviceProfileInfo> findDeviceProfilesByTenantIdAndIds(UUID tenantId, List<UUID> deviceProfileIds) {
+        return deviceProfileRepository.findDeviceProfileInfosByTenantIdAndIdIn(tenantId, deviceProfileIds);
+    }
+
+    @Override
     public DeviceProfile findByTenantIdAndExternalId(UUID tenantId, UUID externalId) {
         return DaoUtil.getData(deviceProfileRepository.findByTenantIdAndExternalId(tenantId, externalId));
     }

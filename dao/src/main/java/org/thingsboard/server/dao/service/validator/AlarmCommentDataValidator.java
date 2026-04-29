@@ -21,8 +21,8 @@ import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.AlarmCommentType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.alarm.AlarmCommentDao;
-import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
+import org.thingsboard.server.exception.DataValidationException;
 
 @Component
 @AllArgsConstructor
@@ -54,4 +54,5 @@ public class AlarmCommentDataValidator extends DataValidator<AlarmComment> {
         }
         return oldAlarmComment;
     }
+
 }

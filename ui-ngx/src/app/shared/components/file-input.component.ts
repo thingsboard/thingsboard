@@ -181,17 +181,18 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
 
         if (readers.length) {
           Promise.all(readers).then((files) => {
-            files = files.filter(file => file.fileContent != null || file.files != null);
-            if (files.length === 1) {
-              this.fileContent = files[0].fileContent;
-              this.fileName = files[0].fileName;
-              this.files = files[0].files;
-              this.mediaType = files[0].mediaType;
+            const validResults = files.filter(file => file.fileContent != null || file.files != null);
+
+            if (validResults.length === 1) {
+              this.fileContent = validResults[0].fileContent;
+              this.fileName = validResults[0].fileName;
+              this.files = validResults[0].files;
+              this.mediaType = validResults[0].mediaType;
               this.updateModel();
-            } else if (files.length > 1) {
-              this.fileContent = files.map(content => content.fileContent);
-              this.fileName = files.map(content => content.fileName);
-              this.files = files.map(content => content.files);
+            } else if (validResults.length > 1) {
+              this.fileContent = validResults.map(content => content.fileContent);
+              this.fileName = validResults.map(content => content.fileName);
+              this.files = validResults.map(content => content.files);
               this.updateModel();
             }
           });
@@ -210,11 +211,10 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
           fileContent: null,
           fileName: file.name,
           files: file.file,
-          mediaType: file.file?.type || null
+          mediaType: file.file.type || null
         });
         return;
       }
-
       const reader = new FileReader();
       reader.onload = () => {
         let fileName = null;

@@ -48,6 +48,13 @@ import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { MatSort } from '@angular/material/sort';
 import { DashboardInfo } from '@shared/models/dashboard.models';
 import { DashboardAutocompleteComponent } from '@shared/components/dashboard-autocomplete.component';
+import { UtilsService } from '@core/services/utils.service';
+import { Datasource, DatasourceType, widgetType } from '@shared/models/widget.models';
+import { IWidgetSubscription, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
+import { formattedDataFormDatasourceData } from '@core/utils';
+import { AliasFilterType } from '@shared/models/alias.models';
+import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { EntityType } from '@shared/models/entity-type.models';
 
 @Component({
     selector: 'tb-recent-dashboards-widget',
@@ -78,13 +85,16 @@ export class RecentDashboardsWidgetComponent extends PageComponent implements On
 
   starredDashboardValue = null;
   hasDashboardsAccess = true;
+  hasDevice = true;
 
   dirty = false;
   public customerId: string;
   private isFullscreenMode = getCurrentAuthState(this.store).forceFullscreen;
+  private subscription: IWidgetSubscription;
 
   constructor(protected store: Store<AppState>,
               private cd: ChangeDetectorRef,
+              private utils: UtilsService,
               private userSettingService: UserSettingsService) {
     super(store);
   }
@@ -96,6 +106,41 @@ export class RecentDashboardsWidgetComponent extends PageComponent implements On
     this.hasDashboardsAccess = [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER].includes(this.authUser.authority);
     if (this.hasDashboardsAccess) {
       this.reload();
+
+      if (window.location.pathname.startsWith('/home') && this.authUser.authority === Authority.TENANT_ADMIN) {
+        const ds: Datasource = {
+          type: DatasourceType.entityCount,
+          name: '',
+          entityFilter: {
+            entityType: EntityType.DEVICE,
+            type: AliasFilterType.entityType
+          },
+          dataKeys: [this.utils.createKey({ name: 'count'}, DataKeyType.count)]
+        }
+
+        const apiUsageSubscriptionOptions: WidgetSubscriptionOptions = {
+          datasources: [ds],
+          useDashboardTimewindow: false,
+          type: widgetType.latest,
+          callbacks: {
+            onDataUpdated: (subscription) => {
+              const data = formattedDataFormDatasourceData(subscription.data);
+              this.hasDevice = (data[0].count || 0) !== 0;
+              this.cd.detectChanges();
+            }
+          }
+        };
+        this.ctx.subscriptionApi.createSubscription(apiUsageSubscriptionOptions, true).subscribe((subscription) => {
+          this.subscription = subscription;
+        });
+      }
+    }
+  }
+
+  ngOnDestroy() {
+    super.ngOnDestroy();
+    if (this.subscription) {
+      this.ctx.subscriptionApi.removeSubscription(this.subscription.id);
     }
   }
 

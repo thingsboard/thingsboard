@@ -180,16 +180,20 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         this.rpcAwaitingAck = new ConcurrentHashMap<>();
     }
 
+    boolean isSSL() {
+        return sslHandler != null;
+    }
+
     @Override
     public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
         super.channelRegistered(ctx);
-        context.channelRegistered();
+        context.channelRegistered(isSSL());
     }
 
     @Override
     public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
         super.channelUnregistered(ctx);
-        context.channelUnregistered();
+        context.channelUnregistered(isSSL());
     }
 
     @Override
@@ -251,6 +255,17 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             }
         } else {
             log.debug("[{}] Channel is already closed!", sessionId);
+        }
+    }
+
+    String getClientAddr(ChannelHandlerContext ctx) {
+        try {
+            InetSocketAddress remote = getAddress(ctx);
+            if (remote == null) return "unknown";
+            String host = remote.getAddress() != null ? remote.getAddress().getHostAddress() : remote.getHostString();
+            return host + ":" + remote.getPort();
+        } catch (Exception ignored) {
+            return "unknown";
         }
     }
 
@@ -1150,19 +1165,25 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         if (cause instanceof IOException) {
             if (log.isDebugEnabled()) {
-                log.debug("[{}][{}][{}] IOException: {}", sessionId,
+                String clientAddr = getClientAddr(ctx);
+                log.debug("[{}][{}][{}][{}] {}: {}", sessionId,
                         Optional.ofNullable(this.deviceSessionCtx.getDeviceInfo()).map(TransportDeviceInfo::getDeviceId).orElse(null),
                         Optional.ofNullable(this.deviceSessionCtx.getDeviceInfo()).map(TransportDeviceInfo::getDeviceName).orElse(""),
+                        clientAddr,
+                        cause.getClass().getSimpleName(),
                         cause.getMessage(),
                         cause);
             } else if (log.isInfoEnabled()) {
-                log.info("[{}][{}][{}] IOException: {}", sessionId,
+                String clientAddr = getClientAddr(ctx);
+                log.info("[{}][{}][{}][{}] {}: {}", sessionId,
                         Optional.ofNullable(this.deviceSessionCtx.getDeviceInfo()).map(TransportDeviceInfo::getDeviceId).orElse(null),
                         Optional.ofNullable(this.deviceSessionCtx.getDeviceInfo()).map(TransportDeviceInfo::getDeviceName).orElse(""),
+                        clientAddr,
+                        cause.getClass().getSimpleName(),
                         cause.getMessage());
             }
         } else {
-            log.error("[{}] Unexpected Exception", sessionId, cause);
+            log.error("[{}][{}] Unexpected Exception", sessionId, getClientAddr(ctx), cause);
         }
 
         closeCtx(ctx, MqttReasonCodes.Disconnect.SERVER_SHUTTING_DOWN);

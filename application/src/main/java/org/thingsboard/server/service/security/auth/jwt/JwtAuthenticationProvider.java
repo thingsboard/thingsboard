@@ -39,7 +39,7 @@ public class JwtAuthenticationProvider implements AuthenticationProvider {
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         RawAccessJwtToken rawAccessToken = (RawAccessJwtToken) authentication.getCredentials();
-        SecurityUser securityUser = authenticate(rawAccessToken.getToken());
+        SecurityUser securityUser = authenticate(rawAccessToken.token());
         return new JwtAuthenticationToken(securityUser);
     }
 
@@ -58,4 +58,5 @@ public class JwtAuthenticationProvider implements AuthenticationProvider {
     public boolean supports(Class<?> authentication) {
         return (JwtAuthenticationToken.class.isAssignableFrom(authentication));
     }
+
 }

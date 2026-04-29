@@ -21,6 +21,7 @@ import org.thingsboard.rule.engine.api.NodeConfiguration;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
+@Deprecated
 public class TbDeviceProfileNodeConfiguration implements NodeConfiguration<TbDeviceProfileNodeConfiguration> {
 
     private boolean persistAlarmRulesState;

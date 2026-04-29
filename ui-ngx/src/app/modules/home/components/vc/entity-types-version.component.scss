@@ -57,6 +57,17 @@
 
 :host ::ng-deep {
   .mat-expansion-panel.entity-type-config {
+    .entity-type-config-content {
+      .checkbox-pre-line {
+        .mdc-form-field {
+          .mdc-label {
+            white-space: pre-line;
+          }
+        }
+      }
+    }
+  }
+  .mat-expansion-panel.entity-type-config {
     .mat-expansion-panel-body {
       padding: 0;
     }

@@ -15,10 +15,12 @@
  */
 package org.thingsboard.server.edge;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.Assert;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -26,9 +28,13 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.edge.v1.CustomerUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.EdgeConfiguration;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
+import org.thingsboard.server.service.subscription.TbAttributeSubscriptionScope;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @DaoSqlTest
 public class EdgeTest extends AbstractEdgeTest {
@@ -57,7 +63,7 @@ public class EdgeTest extends AbstractEdgeTest {
         CustomerUpdateMsg customerUpdateMsg = customerUpdateOpt.get();
         Customer customerMsg = JacksonUtil.fromString(customerUpdateMsg.getEntity(), Customer.class, true);
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, customerUpdateMsg.getMsgType());
-        Assert.assertEquals(savedCustomer, customerMsg);
+        compareHasVersionEntities(savedCustomer, customerMsg);
 
         // unassign edge from customer
         edgeImitator.expectMessageAmount(2);
@@ -75,5 +81,24 @@ public class EdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE, customerUpdateMsg.getMsgType());
         Assert.assertEquals(savedCustomer.getUuidId().getMostSignificantBits(), customerUpdateMsg.getIdMSB());
         Assert.assertEquals(savedCustomer.getUuidId().getLeastSignificantBits(), customerUpdateMsg.getIdLSB());
+    }
+
+    @Test
+    public void testSyncEdge_attributeUpdated() throws Exception {
+        getWsClient().subscribeForAttributes(edge.getId(), TbAttributeSubscriptionScope.SERVER_SCOPE.name(), List.of(DataConstants.EDGE_SYNC_IN_PROGRESS_ATTR_KEY));
+
+        doPost("/api/edge/sync/" + edge.getId());
+
+        // wait for sync to start
+        waitForEdgeSyncInProgressEqualsValue(true);
+
+        // wait for sync to end
+        waitForEdgeSyncInProgressEqualsValue(false);
+    }
+
+    private void waitForEdgeSyncInProgressEqualsValue(Boolean value) {
+        getWsClient().registerWaitForUpdate();
+        JsonNode update = JacksonUtil.toJsonNode(getWsClient().waitForUpdate());
+        assertThat(update.get("data").get(DataConstants.EDGE_SYNC_IN_PROGRESS_ATTR_KEY).get(0).get(1).asBoolean()).isEqualTo(value);
     }
 }

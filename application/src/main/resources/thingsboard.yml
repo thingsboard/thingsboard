@@ -15,6 +15,7 @@
 #
 
 # Server common parameters
+# Configures HTTP/HTTPS bind address, port, SSL, WebSocket, and REST API settings.
 server:
   # Server bind-address
   address: "${HTTP_BIND_ADDRESS:0.0.0.0}"
@@ -104,25 +105,30 @@ server:
     rate_limits:
       # Limit that prohibits resetting the password for the user too often. The value of the rate limit. By default, no more than 5 requests per hour
       reset_password_per_user: "${RESET_PASSWORD_PER_USER_RATE_LIMIT_CONFIGURATION:5:3600}"
+    rule_engine:
+      # Default timeout for waiting response of REST API request to Rule Engine in milliseconds
+      response_timeout: "${DEFAULT_RULE_ENGINE_RESPONSE_TIMEOUT:10000}"
 
 # Application info parameters
+# Exposes application metadata such as version string injected at build time.
 app:
   # Application version
   version: "@project.version@"
 
-# Zookeeper connection parameters
+# ZooKeeper connection parameters
+# Controls ZooKeeper-based service discovery and cluster coordination for microservice deployments.
 zk:
-  # Enable/disable zookeeper discovery service.
+  # Enable/disable ZooKeeper discovery service.
   enabled: "${ZOOKEEPER_ENABLED:false}"
-  # Zookeeper connect string
+  # ZooKeeper connect string
   url: "${ZOOKEEPER_URL:localhost:2181}"
-  # Zookeeper retry interval in milliseconds
+  # ZooKeeper retry interval in milliseconds
   retry_interval_ms: "${ZOOKEEPER_RETRY_INTERVAL_MS:3000}"
-  # Zookeeper connection timeout in milliseconds
+  # ZooKeeper connection timeout in milliseconds
   connection_timeout_ms: "${ZOOKEEPER_CONNECTION_TIMEOUT_MS:3000}"
-  # Zookeeper session timeout in milliseconds
+  # ZooKeeper session timeout in milliseconds
   session_timeout_ms: "${ZOOKEEPER_SESSION_TIMEOUT_MS:3000}"
-  # Name of the directory in zookeeper 'filesystem'
+  # Name of the directory in ZooKeeper 'filesystem'
   zk_dir: "${ZOOKEEPER_NODES_DIR:/thingsboard}"
   # The recalculate_delay property is recommended in a microservices architecture setup for rule-engine services.
   # This property provides a pause to ensure that when a rule-engine service is restarted, other nodes don't immediately attempt to recalculate their partitions.
@@ -130,6 +136,7 @@ zk:
   recalculate_delay: "${ZOOKEEPER_RECALCULATE_DELAY_MS:0}"
 
 # Cluster parameters
+# Controls cluster statistics — tracks the number of messages exchanged between cluster nodes.
 cluster:
   stats:
     # Enable/Disable the cluster statistics. Calculates the number of messages sent between cluster nodes based on each type
@@ -138,11 +145,13 @@ cluster:
     print_interval_ms: "${TB_CLUSTER_STATS_PRINT_INTERVAL_MS:10000}"
 
 # Plugins configuration parameters
+# Defines classpath scan packages used to discover and register ThingsBoard extension plugins.
 plugins:
   # Comma-separated package list used during classpath scanning for plugins
   scan_packages: "${PLUGINS_SCAN_PACKAGES:org.thingsboard.server.extensions,org.thingsboard.rule.engine}"
 
 # Security parameters
+# Configures JWT tokens, user login, device claiming, OAuth2, and CA certificate trust store.
 security:
   # JWT Token parameters
   jwt: # Since 3.4.2 values are persisted in the database during installation or upgrade. On Install, the key will be generated randomly if no custom value set. You can change it later from Web UI under SYS_ADMIN
@@ -152,6 +161,12 @@ security:
     tokenSigningKey: "${JWT_TOKEN_SIGNING_KEY:thingsboardDefaultSigningKey}" # Base64 encoded
   # Enable/disable access to Tenant Administrators JWT token by System Administrator or Customer Users JWT token by Tenant Administrator
   user_token_access_enabled: "${SECURITY_USER_TOKEN_ACCESS_ENABLED:true}"
+  # API key parameters
+  api_key:
+    # Prefix for the auto-generated API key. For example, tb_Ood4dQMxWvMH-76z3E_Cv0mZaBWT0Clk3hRSO0P_jNQ
+    value_prefix: "${SECURITY_API_KEY_VALUE_PREFIX:tb_}"
+    # Length of the auto-generated API key. Max is 255
+    value_bytes_size: "${SECURITY_API_KEY_VALUE_PREFIX:64}"
   # Enable/disable case-sensitive username login
   user_login_case_sensitive: "${SECURITY_USER_LOGIN_CASE_SENSITIVE:true}"
   claim:
@@ -229,6 +244,7 @@ security:
       report-only: "${SECURITY_HEADERS_CONTENT_SECURITY_POLICY_REPORT_ONLY:false}"
 
 # Mail settings parameters
+# Configures mail service OAuth2 token refresh and per-tenant sending rate limits.
 mail:
   oauth2:
     # Interval for checking refresh token expiration in seconds(by default, 1 day).
@@ -237,6 +253,7 @@ mail:
   per_tenant_rate_limits: "${MAIL_PER_TENANT_RATE_LIMITS:}"
 
 # Usage statistics parameters
+# Controls collection and reporting intervals for API usage stats at system, tenant, and customer levels.
 usage:
   stats:
     report:
@@ -246,6 +263,8 @@ usage:
       enabled_per_customer: "${USAGE_STATS_REPORT_PER_CUSTOMER_ENABLED:false}"
       # Statistics reporting interval, set to send summarized data every 10 seconds by default
       interval: "${USAGE_STATS_REPORT_INTERVAL:60}"
+      # Reporting interval for urgent keys (e.g. SMS, Email) that require quicker usage state updates
+      urgent_interval: "${USAGE_STATS_REPORT_URGENT_INTERVAL:10}"
       # Amount of statistic messages in pack
       pack_size: "${USAGE_STATS_REPORT_PACK_SIZE:1024}"
     check:
@@ -258,6 +277,7 @@ usage:
       report_interval: "${DEVICES_STATS_REPORT_INTERVAL:60}"
 
 # UI settings parameters
+# Configures dashboard data limits and base URL for UI help assets.
 ui:
   # Dashboard parameters
   dashboard:
@@ -266,9 +286,10 @@ ui:
   # Help parameters
   help:
     # Base URL for UI help assets
-    base-url: "${UI_HELP_BASE_URL:https://raw.githubusercontent.com/thingsboard/thingsboard-ui-help/release-4.2.2}"
+    base-url: "${UI_HELP_BASE_URL:https://raw.githubusercontent.com/thingsboard/thingsboard-ui-help/release-4.4}"
 
 # Database telemetry parameters
+# Selects the storage backend (SQL, Cassandra, or TimescaleDB) for time-series and latest telemetry data.
 database:
   ts_max_intervals: "${DATABASE_TS_MAX_INTERVALS:700}" # Max number of DB queries generated by a single API call to fetch telemetry records
   ts:
@@ -277,6 +298,7 @@ database:
     type: "${DATABASE_TS_LATEST_TYPE:sql}" # cassandra, sql, or timescale (for hybrid mode, DATABASE_TS_TYPE value should be cassandra, or timescale)
 
 # Cassandra driver configuration parameters
+# Configures cluster name, keyspace, SSL, credentials, socket, and query settings for the Cassandra driver.
 cassandra:
   # Thingsboard cluster name
   cluster_name: "${CASSANDRA_CLUSTER_NAME:Thingsboard Cluster}"
@@ -395,6 +417,7 @@ cassandra:
       print_tenant_names: "${CASSANDRA_QUERY_TENANT_RATE_LIMITS_PRINT_TENANT_NAMES:false}"
 
 # SQL configuration parameters
+# Tunes batch sizes, delays, thread counts, TTL, and partitioning for SQL-backed persistence of telemetry, events, and audit logs.
 sql:
   # Specify batch size for persisting attribute updates
   attributes:
@@ -446,6 +469,10 @@ sql:
   log_tenant_stats: "${SQL_LOG_TENANT_STATS:true}"
   # Interval in milliseconds for printing the latest statistic information about the tenant
   log_tenant_stats_interval_ms: "${SQL_LOG_TENANT_STATS_INTERVAL_MS:60000}"
+  query:
+    key-filters-or-conditions:
+      # Enable/disable OR conditions between key filters in entity data queries
+      enabled: "${SQL_QUERY_KEY_FILTERS_OR_CONDITIONS_ENABLED:true}"
   postgres:
     # Specify partitioning size for timestamp key-value storage. Example: DAYS, MONTHS, YEARS, INDEFINITE.
     ts_key_value_partitioning: "${SQL_POSTGRES_TS_KV_PARTITIONING:MONTHS}"
@@ -489,12 +516,16 @@ sql:
       ttl: "${SQL_TTL_NOTIFICATIONS_SECS:2592000}" # Default value - 30 days
       checking_interval_ms: "${SQL_TTL_NOTIFICATIONS_CHECKING_INTERVAL_MS:86400000}" # Default value - 1 day
       removal_batch_size: "${SQL_TTL_NOTIFICATIONS_REMOVAL_BATCH_SIZE:10000}" # Batch size for records removal
+    api_keys:
+      enabled: "${SQL_TTL_API_KEYS_ENABLED:true}" # Enable/disable TTL (Time To Live) for expired api keys records
+      checking_interval_ms: "${SQL_TTL_API_KEYS_CHECKING_INTERVAL_MS:86400000}" # Default value - 1 day
   relations:
     max_level: "${SQL_RELATIONS_MAX_LEVEL:50}" # This value has to be reasonably small to prevent infinite recursion as early as possible
     pool_size: "${SQL_RELATIONS_POOL_SIZE:4}" # This value has to be reasonably small to prevent the relation query from blocking all other DB calls
     query_timeout: "${SQL_RELATIONS_QUERY_TIMEOUT_SEC:20}" # This value has to be reasonably small to prevent the relation query from blocking all other DB calls
 
 # Actor system parameters
+# Configures thread pools, timeouts, and behavior for the internal actor system processing devices, rules, and RPCs.
 actors:
   system:
     throughput: "${ACTORS_SYSTEM_THROUGHPUT:5}" # Number of messages the actor system will process per actor before switching to processing of messages for the next actor
@@ -588,14 +619,14 @@ actors:
     response_timeout_ms: "${ACTORS_RPC_RESPONSE_TIMEOUT_MS:30000}"
     # Close transport session if RPC delivery timed out. If enabled, RPC will be reverted to the queued state.
     # Note:
-    # - For MQTT transport:
-    #   - QoS level 0: This feature does not apply, as no acknowledgment is expected, and therefore no timeout is triggered.
-    #   - QoS level 1: This feature applies, as an acknowledgment is expected.
-    #   - QoS level 2: Unsupported.
-    # - For CoAP transport:
-    #   - Confirmable requests: This feature applies, as delivery confirmation is expected.
-    #   - Non-confirmable requests: This feature does not apply, as no delivery acknowledgment is expected.
-    # - For HTTP and SNPM transports: RPC is considered delivered immediately, and there is no logic to await acknowledgment.
+    # <ul><li> For MQTT transport:
+    #   <ul><li> QoS level 0: This feature does not apply, as no acknowledgment is expected, and therefore no timeout is triggered.</li>
+    #   <li> QoS level 1: This feature applies, as an acknowledgment is expected.</li>
+    #   <li> QoS level 2: Unsupported.</li></ul></li>
+    # <li> For CoAP transport:
+    #   <ul><li> Confirmable requests: This feature applies, as delivery confirmation is expected.</li>
+    #   <li> Non-confirmable requests: This feature does not apply, as no delivery acknowledgment is expected.</li></ul></li>
+    # <li> For HTTP and SNPM transports: RPC is considered delivered immediately, and there is no logic to await acknowledgment.</li></ul>
     close_session_on_rpc_delivery_timeout: "${ACTORS_RPC_CLOSE_SESSION_ON_RPC_DELIVERY_TIMEOUT:false}"
   statistics:
     # Enable/disable actor statistics
@@ -611,6 +642,8 @@ actors:
     # Time in seconds to receive calculation result.
     calculation_timeout: "${ACTORS_CALCULATION_TIMEOUT_SEC:5}"
 
+# Debug settings parameters
+# Configures the global default duration for debug mode used by rule chains and calculated fields.
 debug:
   settings:
     # Default duration (in minutes) for debug mode. Min value is 1 minute. Tenant profile settings override this one.
@@ -618,6 +651,7 @@ debug:
     default_duration: "${DEBUG_SETTINGS_DEFAULT_DURATION_MINUTES:15}"
 
 # Cache settings parameters
+# Configures cache type (Caffeine or Redis), pool size, and per-entity TTL and max-size limits for all caches.
 cache:
   # caffeine or redis(7.2 - latest compatible version)
   type: "${CACHE_TYPE:caffeine}"
@@ -746,6 +780,9 @@ cache:
     aiModel:
       timeToLiveInMinutes: "${CACHE_SPECS_AI_MODEL_TTL:1440}" # AI model cache TTL
       maxSize: "${CACHE_SPECS_AI_MODEL_MAX_SIZE:10000}" # 0 means the cache is disabled
+    apiKeys:
+      timeToLiveInMinutes: "${CACHE_SPECS_API_KEYS_TTL:1440}" # API keys cache TTL
+      maxSize: "${CACHE_SPECS_API_KEYS_MAX_SIZE:10000}" # 0 means the cache is disabled
 
   # Deliberately placed outside the 'specs' group above
   notificationRules:
@@ -766,11 +803,15 @@ cache:
   tbResourceData:
     timeToLiveInMinutes: "${CACHE_SPECS_RESOURCE_DATA_TTL:10080}" # TB resource data cache TTL
     maxSize: "${CACHE_SPECS_RESOURCE_DATA_MAX_SIZE:100000}" # 0 means the cache is disabled
+  userAuthDetails:
+    timeToLiveInMinutes: "${CACHE_SPECS_USER_AUTH_DETAILS_TTL:120}" # User auth details cache TTL
+    maxSize: "${CACHE_SPECS_USER_AUTH_DETAILS_MAX_SIZE:200000}" # 0 means the cache is disabled
 
 # Spring data parameters
 spring.data.redis.repositories.enabled: false # Disable this because it is not required.
 
 # Redis/Valkey configuration parameters
+# Configures standalone, cluster, or sentinel Redis connection, SSL, and connection pool settings used for caching.
 redis:
   # standalone or cluster or sentinel
   connection:
@@ -799,17 +840,17 @@ redis:
     # if set false will be used pool config build from values of the pool config section
     useDefaultPoolConfig: "${REDIS_USE_DEFAULT_POOL_CONFIG:true}"
   sentinel:
-    # name of the master node
+    # Name of the master node
     master: "${REDIS_MASTER:}"
-    # comma-separated list of "host:port" pairs of sentinels
+    # Comma-separated list of "host:port" pairs of sentinels
     sentinels: "${REDIS_SENTINELS:}"
-    # password to authenticate with sentinel
+    # Password to authenticate with sentinel
     password: "${REDIS_SENTINEL_PASSWORD:}"
-    # if set false will be used pool config build from values of the pool config section
+    # If set false will be used pool config build from values of the pool config section
     useDefaultPoolConfig: "${REDIS_USE_DEFAULT_POOL_CONFIG:true}"
-  # db index
+  # Redis logical database index to select after connecting.
   db: "${REDIS_DB:0}"
-  # db password
+  # Password for Redis authentication (leave empty if not required).
   password: "${REDIS_PASSWORD:}"
   # Redis username for ACL authentication (Redis 6.0+). Leave empty for legacy password-only auth
   username: "${REDIS_USERNAME:}"
@@ -854,6 +895,7 @@ redis:
 
 
 # Update version parameters
+# Controls whether the platform periodically checks for new ThingsBoard releases.
 updates:
   # Enable/disable checks for the new version
   enabled: "${UPDATES_ENABLED:true}"
@@ -882,6 +924,7 @@ spring.mvc.cors:
       allow-credentials: "${TB_CORS_ALLOW_CREDENTIALS:true}"
 
 # General spring parameters
+# Miscellaneous Spring Boot settings for circular references, Freemarker, MVC, multipart, and JPA dialect.
 spring.main.allow-circular-references: "true" # Spring Boot configuration property that controls whether circular dependencies between beans are allowed.
 spring.freemarker.checkTemplateLocation: "false" # spring freemarker configuration
 spring.mvc.async.request-timeout: "${SPRING_MVC_ASYNC_REQUEST_TIMEOUT:30000}" # The default timeout for asynchronous requests in milliseconds
@@ -900,6 +943,7 @@ spring.jpa.properties.hibernate.order_by.default_null_ordering: "${SPRING_JPA_PR
 spring.jpa.properties.hibernate.dialect: "${SPRING_JPA_DIALECT:org.thingsboard.server.dao.ThingsboardPostgreSQLDialect}" # we use custom dialect that contains ilike(arg1, arg2) function (is interpreted to postgres ILIKE operator)
 
 # SQL DAO Configuration parameters
+# Configures Spring JPA, Hibernate DDL, and HikariCP datasource connections for the primary and events databases.
 spring:
   data:
     jpa:
@@ -950,6 +994,7 @@ spring:
         registerMbeans: "${SPRING_EVENTS_DATASOURCE_HIKARI_REGISTER_MBEANS:false}"
 
 # Audit log parameters
+# Configures audit logging levels per entity type and optional forwarding to an external sink such as Elasticsearch.
 audit-log:
   # Enable/disable audit log functionality.
   enabled: "${AUDIT_LOG_ENABLED:true}"
@@ -992,6 +1037,7 @@ audit-log:
     password: "${AUDIT_LOG_SINK_PASSWORD:}" # Password used to access external sink system
 
 # Device state parameters
+# Configures device inactivity detection, state persistence strategy, and rate limits for state rule nodes.
 state:
   # Device inactivity timeout is a global configuration parameter that defines when the device will be marked as "inactive" by the server.
   # The parameter value is in seconds. A user can overwrite this parameter for an individual device by setting the “inactivityTimeout” server-side attribute (NOTE: expects value in milliseconds).
@@ -1022,7 +1068,8 @@ state:
         # Refill is set to be greedy. Please refer to Bucket4j library documentation for more details.
         rateLimit: "${DEVICE_STATE_NODE_RATE_LIMIT_CONFIGURATION:1:1,30:60,60:3600}"
 
-# Tbel parameters
+# TBEL parameters
+# Configures the ThingsBoard Expression Language (TBEL) engine: limits, timeouts, thread pool, and blacklisting.
 tbel:
   # Enable/Disable TBEL feature.
   enabled: "${TBEL_ENABLED:true}"
@@ -1051,6 +1098,7 @@ tbel:
     print_interval_ms: "${TB_TBEL_STATS_PRINT_INTERVAL_MS:10000}"
 
 # JS parameters
+# Configures the JavaScript execution engine (local Nashorn or remote Node.js): limits, sandboxing, and thread pools.
 js:
   # local (Nashorn Engine, deprecated) OR remote JS-Executors (NodeJS)
   evaluator: "${JS_EVALUATOR:local}"
@@ -1098,6 +1146,7 @@ js:
       print_interval_ms: "${TB_JS_REMOTE_STATS_PRINT_INTERVAL_MS:10000}"
 
 # Transport configuration parameters
+# Configures session management, rate limits, and protocol-specific settings for HTTP, MQTT, CoAP, LwM2M, and SNMP transports.
 transport:
   sessions:
     # Session inactivity timeout is a global configuration parameter that defines how long the device transport session will be opened after the last message arrives from the device.
@@ -1114,10 +1163,10 @@ transport:
   activity:
     # This property specifies the strategy for reporting activity events within each reporting period.
     # The accepted values are 'FIRST', 'LAST', 'FIRST_AND_LAST' and 'ALL'.
-    # - 'FIRST': Only the first activity event in each reporting period is reported.
-    # - 'LAST': Only the last activity event in the reporting period is reported.
-    # - 'FIRST_AND_LAST': Both the first and last activity events in the reporting period are reported.
-    # - 'ALL': All activity events in the reporting period are reported.
+    # <ul><li> 'FIRST': Only the first activity event in each reporting period is reported.</li>
+    # <li> 'LAST': Only the last activity event in the reporting period is reported.</li>
+    # <li> 'FIRST_AND_LAST': Both the first and last activity events in the reporting period are reported.</li>
+    # <li> 'ALL': All activity events in the reporting period are reported.</li></ul>
     reporting_strategy: "${TB_TRANSPORT_ACTIVITY_REPORTING_STRATEGY:LAST}"
   json:
     # Cast String data types to Numeric if possible when processing Telemetry/Attributes JSON
@@ -1235,16 +1284,16 @@ transport:
     dtls:
       # RFC7925_RETRANSMISSION_TIMEOUT_IN_MILLISECONDS = 9000
       retransmission_timeout: "${LWM2M_DTLS_RETRANSMISSION_TIMEOUT_MS:9000}"
-      # CoAP DTLS connection ID length for LWM2M. RFC 9146, Connection Identifier for DTLS 1.2
-      # Default: off
+      # LWM2M DTLS connection ID length for LWM2M. RFC 9146, Connection Identifier for DTLS 1.2
+      # Default: off. <br>
       # Control usage of DTLS connection ID length (CID).
-      # - 'off' to deactivate it.
-      # - 'on' to activate Connection ID support (same as CID 0 or more 0).
-      # - A positive value defines generated CID size in bytes.
-      # - A value of 0 means we accept using CID but will not generate one for foreign peer (enables support but not for incoming traffic).
-      # - A value between 0 and <= 4: SingleNodeConnectionIdGenerator is used
-      # - A value that are > 4: MultiNodeConnectionIdGenerator is used
-      connection_id_length: "${LWM2M_DTLS_CONNECTION_ID_LENGTH:}"
+      # <ul> <li> 'off' to deactivate it. </li>
+      # <li> 'on' to activate Connection ID support (same as CID 0 or more 0). </li>
+      # <li> A positive value defines generated CID size in bytes.</li>
+      # <li> A value of 0 means we accept using CID but will not generate one for foreign peer (enables support but not for incoming traffic). </li>
+      # <li> A value between 0 and <= 4: SingleNodeConnectionIdGenerator is used </li>
+      # <li> A value that are > 4: MultiNodeConnectionIdGenerator is used </li> </ul>
+      connection_id_length: "${LWM2M_DTLS_CONNECTION_ID_LENGTH:8}"
     server:
       # LwM2M Server ID
       id: "${LWM2M_SERVER_ID:123}"
@@ -1289,7 +1338,7 @@ transport:
       # Enable/disable Bootstrap Server
       enabled: "${LWM2M_ENABLED_BS:true}"
       # Default value in LwM2M client after start in mode Bootstrap for the object : name "LWM2M Security" field: "Short Server ID" (deviceProfile: Bootstrap.BOOTSTRAP SERVER.Short ID)
-      id: "${LWM2M_SERVER_ID_BS:111}"
+      id: "${LWM2M_SERVER_ID_BS:0}"
       # LwM2M bootstrap server bind address. Bind to all interfaces by default
       bind_address: "${LWM2M_BS_BIND_ADDRESS:0.0.0.0}"
       # LwM2M bootstrap server bind port
@@ -1403,11 +1452,12 @@ transport:
         # URL of gateways dashboard repository
         repository_url: "${TB_GATEWAY_DASHBOARD_SYNC_REPOSITORY_URL:https://github.com/thingsboard/gateway-management-extensions-dist.git}"
         # Branch of gateways dashboard repository to work with
-        branch: "${TB_GATEWAY_DASHBOARD_SYNC_BRANCH:release/4.0.0}"
+        branch: "${TB_GATEWAY_DASHBOARD_SYNC_BRANCH:release/4.3.0}"
         # Fetch frequency in hours for gateways dashboard repository
         fetch_frequency: "${TB_GATEWAY_DASHBOARD_SYNC_FETCH_FREQUENCY:24}"
 
 # CoAP server parameters
+# Configures the standalone CoAP server bind address, port, DTLS encryption, and credential settings.
 coap:
   server:
     # Enable/disable coap server.
@@ -1426,15 +1476,15 @@ coap:
     # CoAP DTLS bind port
     bind_port: "${COAP_DTLS_BIND_PORT:5684}"
     # CoAP DTLS connection ID length. RFC 9146, Connection Identifier for DTLS 1.2
-    # Default: off
+    # Default: off. <br>
     # Control usage of DTLS connection ID length (CID).
-    # - 'off' to deactivate it.
-    # - 'on' to activate Connection ID support (same as CID 0 or more 0).
-    # - A positive value defines generated CID size in bytes.
-    # - A value of 0 means we accept using CID but will not generate one for foreign peer (enables support but not for incoming traffic).
-    # - A value between 0 and <= 4: SingleNodeConnectionIdGenerator is used
-    # - A value that are > 4: MultiNodeConnectionIdGenerator is used
-    connection_id_length: "${COAP_DTLS_CONNECTION_ID_LENGTH:}"
+    # <ul> <li> 'off' to deactivate it. </li>
+    # <li> 'on' to activate Connection ID support (same as CID 0 or more 0). </li>
+    # <li> A positive value defines generated CID size in bytes.</li>
+    # <li> A value of 0 means we accept using CID but will not generate one for foreign peer (enables support but not for incoming traffic).</li>
+    # <li> A value between 0 and <= 4: SingleNodeConnectionIdGenerator is used</li>
+    # <li> A value that are > 4: MultiNodeConnectionIdGenerator is used</li> </ul>
+    connection_id_length: "${COAP_DTLS_CONNECTION_ID_LENGTH:8}"
     # Specify the MTU (Maximum Transmission Unit).
     # Should be used if LAN MTU is not used, e.g. if IP tunnels are used or if the client uses a smaller value than the LAN MTU.
     # Default = 1024
@@ -1450,13 +1500,13 @@ coap:
     # In order to negotiate smaller maximum fragment lengths,
     # clients MAY include an extension of type "max_fragment_length" in the (extended) client hello.
     # The "extension_data" field of this extension SHALL contain:
-    # enum {
+    # <pre> enum {
     #   2^9(1) == 512,
     #   2^10(2) == 1024,
     #   2^11(3) == 2048,
     #   2^12(4) == 4096,
     #   (255)
-    # } MaxFragmentLength;
+    # } MaxFragmentLength; </pre>
     # TLS already requires clients and servers to support fragmentation of handshake messages.
     max_fragment_length: "${COAP_DTLS_MAX_FRAGMENT_LENGTH:1024}"
     # Server DTLS credentials
@@ -1492,6 +1542,7 @@ coap:
       dtls_session_report_timeout: "${TB_COAP_X509_DTLS_SESSION_REPORT_TIMEOUT:1800000}"
 
 # Device connectivity parameters
+# Specifies the hosts, ports, and credentials exposed to the UI for generating device connection check commands.
 device:
   connectivity:
     http:
@@ -1542,9 +1593,10 @@ device:
       pem_cert_file: "${DEVICE_CONNECTIVITY_COAPS_CA_ROOT_CERT:cafile.pem}"
     gateway:
       # The docker tag for thingsboard/tb-gateway image used in docker-compose file for gateway launch
-      image_version: "${DEVICE_CONNECTIVITY_GATEWAY_IMAGE_VERSION:3.7-stable}"
+      image_version: "${DEVICE_CONNECTIVITY_GATEWAY_IMAGE_VERSION:3.8-stable}"
 
 # Edges parameters
+# Controls Edge instance gRPC communication, event storage, state persistence, and statistics reporting.
 edges:
   # Enable/disable Edge instance
   enabled: "${EDGES_ENABLED:true}"
@@ -1588,6 +1640,11 @@ edges:
     no_read_records_sleep: "${EDGES_NO_READ_RECORDS_SLEEP:1000}"
     # Number of milliseconds to wait before resending failed batch of edge events to edge
     sleep_between_batches: "${EDGES_SLEEP_BETWEEN_BATCHES:60000}"
+    # Time (in milliseconds) to subtract from the start timestamp when fetching edge events.
+    # This compensates for possible misordering between `created_time` (used for partitioning)
+    # and `seqId` (used for sorting). Without this, events with smaller seqId but larger created_time
+    # might be skipped, especially across partition boundaries.
+    misordering_compensation_millis: "${EDGES_MISORDERING_COMPENSATION_MILLIS:60000}"
   # Max number of high priority edge events per edge session. No persistence - stored in memory
   max_high_priority_queue_size_per_session: "${EDGES_MAX_HIGH_PRIORITY_QUEUE_SIZE_PER_SESSION:10000}"
   # Number of threads that are used to check DB for edge events
@@ -1608,6 +1665,7 @@ edges:
     report-interval-millis: "${EDGES_STATS_REPORT_INTERVAL_MS:600000}"
 
 # Spring doc common parameters
+# Enables or disables the OpenAPI/Swagger documentation endpoint and sets the default media type.
 springdoc:
   # If false swagger API docs will be unavailable
   api-docs.enabled: "${SWAGGER_ENABLED:true}"
@@ -1615,6 +1673,7 @@ springdoc:
   default-produces-media-type: "${SWAGGER_DEFAULT_PRODUCES_MEDIA_TYPE:application/json}"
 
 # Swagger common parameters
+# Configures Swagger UI metadata: title, description, contact, license, version, and API path patterns.
 swagger:
   # General swagger match pattern of swagger UI links
   api_path: "${SWAGGER_API_PATH:/api/**}"
@@ -1642,8 +1701,11 @@ swagger:
   version: "${SWAGGER_VERSION:}"
   # The group name (definition) on the API doc UI page.
   group_name: "${SWAGGER_GROUP_NAME:thingsboard}"
+  # Control the initial display state of API operations and tags (none or list)
+  doc_expansion: "${SWAGGER_DOC_EXPANSION:list}"
 
 # Queue configuration parameters
+# Configures the message queue backend (in-memory or Kafka) and all topic/partition/consumer settings for each service.
 queue:
   type: "${TB_QUEUE_TYPE:in-memory}" # in-memory or kafka (Apache Kafka)
   prefix: "${TB_QUEUE_PREFIX:}" # Global queue prefix. If specified, prefix is added before default topic name: 'prefix.default_topic_name'. Prefix is applied to all topics (and consumer groups for kafka).
@@ -1983,6 +2045,9 @@ queue:
       print-interval-ms: "${TB_QUEUE_RULE_ENGINE_STATS_PRINT_INTERVAL_MS:60000}"
       # Max length of the error message that is printed by statistics
       max-error-message-length: "${TB_QUEUE_RULE_ENGINE_MAX_ERROR_MESSAGE_LENGTH:4096}"
+    prometheus-stats:
+      # Enable/disable Prometheus statistics for individual Rule Engine message processing (records time in ms for success/failure).
+      enabled: "${TB_QUEUE_RULE_ENGINE_PROMETHEUS_STATS_ENABLED:false}"
     # After a queue is deleted (or the profile's isolation option was disabled), Rule Engine will continue reading related topics during this period before deleting the actual topics
     topic-deletion-delay: "${TB_QUEUE_RULE_ENGINE_TOPIC_DELETION_DELAY_SEC:15}"
     # Size of the thread pool that handles such operations as partition changes, config updates, queue deletion
@@ -2054,12 +2119,14 @@ queue:
       processing_interval: "${TB_QUEUE_TASKS_STATS_PROCESSING_INTERVAL_MS:1000}"
 
 # Event configuration parameters
+# Controls limits on debug event content size stored for rule chain and rule node execution.
 event:
   debug:
     # Maximum number of symbols per debug event. The event content will be truncated if needed
     max-symbols: "${TB_MAX_DEBUG_EVENT_SYMBOLS:4096}"
 
 # General service parameters
+# Sets the deployment type (monolith or microservice) and assigns tenant profiles to specific Rule Engine instances.
 service:
   type: "${TB_SERVICE_TYPE:monolith}" # monolith or tb-core or tb-rule-engine
   # Unique id for this service (autogenerated if empty)
@@ -2073,6 +2140,7 @@ service:
       executor_thread_pool_size: "${TB_RULE_ENGINE_PUBSUB_EXECUTOR_THREAD_POOL_SIZE:0}"
 
 # Metrics parameters
+# Enables actuator metrics endpoint and configures system info (CPU, memory) persistence frequency and TTL.
 metrics:
   # Enable/disable actuator metrics.
   enabled: "${METRICS_ENABLED:false}"
@@ -2086,6 +2154,7 @@ metrics:
     ttl: "${METRICS_SYSTEM_INFO_TTL_DAYS:7}"
 
 # Version control parameters
+# Configures thread pools and Git repository folder for entity version control (export/import) operations.
 vc:
   # Pool size for handling export tasks
   thread_pool_size: "${TB_VC_POOL_SIZE:6}"
@@ -2096,6 +2165,7 @@ vc:
     repositories-folder: "${TB_VC_GIT_REPOSITORIES_FOLDER:${java.io.tmpdir}/repositories}"
 
 # Notification system parameters
+# Configures thread pool size and deduplication intervals for the notification rule processing engine.
 notification_system:
   # Specify thread pool size for Notification System processing notification rules and notification sending. Recommend value <= 10
   thread_pool_size: "${TB_NOTIFICATION_SYSTEM_THREAD_POOL_SIZE:10}"
@@ -2104,6 +2174,7 @@ notification_system:
     deduplication_durations: "${TB_NOTIFICATION_RULES_DEDUPLICATION_DURATIONS:NEW_PLATFORM_VERSION:0;RATE_LIMITS:14400000;}"
 
 # General management parameters
+# Configures Spring Boot Actuator endpoint exposure and health indicator settings.
 management:
   endpoints:
     web:
@@ -2116,6 +2187,7 @@ management:
       enabled: "false"
 
 # Mobile application settings for Thingsboard mobile application
+# Specifies domain name and store links used for the ThingsBoard Live mobile application QR code and deep links.
 mobileApp:
   # Server domain name for Thingsboard Live mobile application
   domain: "${TB_MOBILE_APP_DOMAIN:demo.thingsboard.io}"
@@ -2124,6 +2196,8 @@ mobileApp:
   # Link to App Store for Thingsboard Live mobile application
   appStoreLink: "${TB_MOBILE_APP_APP_STORE_LINK:https://apps.apple.com/us/app/thingsboard-live/id1594355695}"
 
+# MQTT client parameters
+# Configures MQTT client retransmission behavior including max attempts, initial delay, and jitter factor.
 mqtt:
   # MQTT client configuration parameters
   client:

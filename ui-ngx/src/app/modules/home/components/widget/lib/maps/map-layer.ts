@@ -20,12 +20,15 @@ import {
   defaultGoogleMapLayerSettings,
   defaultHereMapLayerSettings,
   defaultLayerTitle,
+  defaultOpenFreeMapLayerSettings,
   defaultOpenStreetMapLayerSettings,
   defaultTencentMapLayerSettings,
   GoogleMapLayerSettings,
   HereMapLayerSettings,
   MapLayerSettings,
   MapProvider,
+  OpenFreeMapLayerSettings,
+  OpenFreeMapStyleType,
   OpenStreetMapLayerSettings,
   ReferenceLayerType,
   TencentMapLayerSettings
@@ -61,6 +64,8 @@ export abstract class TbMapLayer<S extends MapLayerSettings> {
                       inputSettings: DeepPartial<MapLayerSettings>) {
 
     switch (inputSettings.provider) {
+      case MapProvider.openfreemap:
+        return new TbOpenFreeMapLayer(ctx, inputSettings);
       case MapProvider.openstreet:
         return new TbOpenStreetMapLayer(ctx, inputSettings);
       case MapProvider.google:
@@ -219,6 +224,32 @@ class TbOpenStreetMapLayer extends TbMapLayer<OpenStreetMapLayerSettings> {
 
 }
 
+const openFreeMapStyleUrl = (style: OpenFreeMapStyleType): string =>
+  `https://tiles.openfreemap.org/styles/${style}`;
+
+class TbOpenFreeMapLayer extends TbMapLayer<OpenFreeMapLayerSettings> {
+
+  constructor(protected ctx: WidgetContext,
+              protected inputSettings: DeepPartial<MapLayerSettings>) {
+    super(ctx, inputSettings);
+  }
+
+  protected defaultSettings(): OpenFreeMapLayerSettings {
+    return defaultOpenFreeMapLayerSettings;
+  }
+
+  protected createLayer(): Observable<L.Layer> {
+    const styleUrl = openFreeMapStyleUrl(this.settings.layerType);
+    const layer = L.TB.MapLibreGL.mapLibreGLLayer({
+      style: styleUrl,
+      attributionControl: {
+        customAttribution: 'OpenFreeMap, &copy; OpenMapTiles, Data from OpenStreetMap'
+      }
+    });
+    return of(layer);
+  }
+}
+
 class TbGoogleMapLayer extends TbMapLayer<GoogleMapLayerSettings> {
 
   static loadedApiKeysGlobal: {[key: string]: boolean} = {};
@@ -318,7 +349,20 @@ class TbCustomMapLayer extends TbMapLayer<CustomMapLayerSettings> {
   }
 
   protected createLayer(): Observable<L.Layer> {
-    const layer = L.tileLayer(this.settings.tileUrl);
+    if (this.settings.vectorTiles) {
+      const options: any = {
+        style: this.settings.tileUrl
+      };
+      if (this.settings.customAttribution) {
+        options.attributionControl = {
+          customAttribution: this.settings.customAttribution
+        };
+      }
+      return of(L.TB.MapLibreGL.mapLibreGLLayer(options));
+    }
+    const layer = L.tileLayer(this.settings.tileUrl, this.settings.customAttribution ? {
+      attribution: this.settings.customAttribution
+    } : undefined);
     return of(layer);
   }
 

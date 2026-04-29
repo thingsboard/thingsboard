@@ -25,16 +25,22 @@
   </button>
 </mat-toolbar>
 <div mat-dialog-content>
-  <div *ngFor="let errorStat of errorStats | keyvalue; last as isLast">
-    <h6>{{ NotificationDeliveryMethodInfoMap.get(errorStat.key).name | translate }}</h6>
-    <table class="tb-table-list">
-      <tr *ngFor="let error of errorStat.value | keyvalue">
-        <td>
-          <mat-chip>{{ error.key }}</mat-chip>
-        </td>
-        <td class="tb-row-error">{{ error.value }}</td>
-      </tr>
-    </table>
-    <mat-divider *ngIf="!isLast"></mat-divider>
-  </div>
+  @for (errorStat of errorStatEntries; track errorStat; let isLast = $last) {
+    <div>
+      <h6>{{ NotificationDeliveryMethodInfoMap.get(errorStat.key).name | translate }}</h6>
+      <table class="tb-table-list">
+        @for (error of (errorStat.value | keyvalue); track error) {
+          <tr>
+            <td>
+              <mat-chip>{{ error.key }}</mat-chip>
+            </td>
+            <td class="tb-row-error">{{ error.value }}</td>
+          </tr>
+        }
+      </table>
+      @if (!isLast) {
+        <mat-divider></mat-divider>
+      }
+    </div>
+  }
 </div>

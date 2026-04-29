@@ -15,40 +15,45 @@
     limitations under the License.
 
 -->
-<ng-container *ngIf="simpleList; else complexEntityReferences">
+@if (simpleList) {
   <ng-container *ngTemplateOutlet="referencesList; context:{entriesList: referencedEntitiesList, showDetailsLink: true}"></ng-container>
-</ng-container>
-<ng-template #complexEntityReferences>
-  <ng-container *ngIf="contentReady; else loading">
+} @else {
+  @if (contentReady) {
     <ul class="tb-references">
-      <ng-container *ngFor="let entry of referencedEntitiesEntries">
-        <li class="tb-entities-container tb-primary-fill" *ngIf="isSystem(entry[0]); else tenantEntities">
-          <div class="tb-entities-title">{{ 'image.system-entities' | translate }}</div>
-          <ng-container *ngTemplateOutlet="referencesList; context:{entriesList: entry[1].entities, showDetailsLink: true}"></ng-container>
-        </li>
-        <ng-template #tenantEntities>
+      @for (entry of referencedEntitiesEntries; track entry) {
+        @if (isSystem(entry[0])) {
+          <li class="tb-entities-container tb-primary-fill">
+            <div class="tb-entities-title">{{ 'image.system-entities' | translate }}</div>
+            <ng-container *ngTemplateOutlet="referencesList; context:{entriesList: entry[1].entities, showDetailsLink: true}"></ng-container>
+          </li>
+        } @else {
           <li class="tb-entities-container tb-primary-fill">
             <div class="tb-entities-title">
               {{ 'tenant.tenant' | translate }} <a class="tb-reference" [routerLink]="entry[1].tenantDetailsUrl">{{ entry[1].tenantName }}</a> {{ 'image.entities' | translate }}
             </div>
             <ng-container *ngTemplateOutlet="referencesList; context:{entriesList: entry[1].entities, showDetailsLink: false}"></ng-container>
           </li>
-        </ng-template>
-      </ng-container>
+        }
+      }
     </ul>
-  </ng-container>
-</ng-template>
+  } @else {
+    <mat-spinner [diameter]="32" strokeWidth="2"></mat-spinner>
+  }
+}
 <ng-template #referencesList let-entriesList="entriesList" let-showDetailsLink="showDetailsLink">
   <table class="tb-entities-list-table">
-    <tr *ngFor="let referencedEntity of entriesList">
-      <td class="tb-entity-type">{{ referencedEntity.typeName }}</td>
-      <td class="tb-entity-name">
-        <a *ngIf="showDetailsLink" class="tb-reference" [routerLink]="referencedEntity.detailsUrl">{{ referencedEntity.entity.name }}</a>
-        <span *ngIf="!showDetailsLink">{{ referencedEntity.entity.name }}</span>
-      </td>
-    </tr>
+    @for (referencedEntity of entriesList; track referencedEntity) {
+      <tr>
+        <td class="tb-entity-type">{{ referencedEntity.typeName }}</td>
+        <td class="tb-entity-name">
+          @if (showDetailsLink) {
+            <a class="tb-reference" [routerLink]="referencedEntity.detailsUrl">{{ referencedEntity.entity.name }}</a>
+          }
+          @if (!showDetailsLink) {
+            <span>{{ referencedEntity.entity.name }}</span>
+          }
+        </td>
+      </tr>
+    }
   </table>
-</ng-template>
-<ng-template #loading>
-  <mat-spinner [diameter]="32" strokeWidth="2"></mat-spinner>
 </ng-template>

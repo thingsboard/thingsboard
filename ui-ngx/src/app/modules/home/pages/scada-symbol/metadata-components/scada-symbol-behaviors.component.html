@@ -23,43 +23,51 @@
       <div class="tb-form-table-header-cell tb-type-header" translate>scada.behavior.type</div>
       <div class="tb-form-table-header-cell tb-actions-header" [class.disabled]="disabled"></div>
     </div>
-    <div *ngIf="behaviorsFormArray().controls.length; else noBehaviors" class="tb-form-table-body tb-drop-list"
-         cdkDropList cdkDropListOrientation="vertical"
-         [cdkDropListDisabled]="!dragEnabled"
-         (cdkDropListDropped)="behaviorDrop($event)">
-      <div cdkDrag [cdkDragDisabled]="!dragEnabled"
-           [class.tb-draggable]="!disabled"
-           [class.tb-draggable-form-table-row]="!disabled"
-           *ngFor="let behaviorControl of behaviorsFormArray().controls; trackBy: trackByBehavior; let $index = index;">
-        <tb-scada-symbol-metadata-behavior-row class="flex-1"
-          [index]="$index"
-          [formControl]="behaviorControl"
-          [aliasController]="aliasController"
-          [callbacks]="callbacks"
-          (behaviorRemoved)="removeBehavior($index)">
-        </tb-scada-symbol-metadata-behavior-row>
-        <div class="tb-form-table-row-cell-buttons">
-          <button mat-icon-button
-                  *ngIf="!disabled"
-                  type="button"
-                  cdkDragHandle
-                  [class.tb-hidden]="!dragEnabled"
-                  matTooltip="{{ 'action.drag' | translate }}"
-                  matTooltipPosition="above">
-            <mat-icon>drag_indicator</mat-icon>
-          </button>
-        </div>
+    @if (behaviorsFormArray().controls.length) {
+      <div class="tb-form-table-body tb-drop-list"
+           cdkDropList cdkDropListOrientation="vertical"
+           [cdkDropListDisabled]="!dragEnabled"
+           (cdkDropListDropped)="behaviorDrop($event)">
+        @for (behaviorControl of behaviorsFormArray().controls; track trackByBehavior($index, behaviorControl)) {
+          <div cdkDrag [cdkDragDisabled]="!dragEnabled"
+               [class.tb-draggable]="!disabled"
+               [class.tb-draggable-form-table-row]="!disabled"
+               >
+            <tb-scada-symbol-metadata-behavior-row class="flex-1"
+                                                   [index]="$index"
+                                                   [formControl]="behaviorControl"
+                                                   [aliasController]="aliasController"
+                                                   [callbacks]="callbacks"
+                                                   (behaviorRemoved)="removeBehavior($index)">
+            </tb-scada-symbol-metadata-behavior-row>
+            <div class="tb-form-table-row-cell-buttons">
+              @if (!disabled) {
+                <button mat-icon-button
+                        type="button"
+                        cdkDragHandle
+                        [class.tb-hidden]="!dragEnabled"
+                        matTooltip="{{ 'action.drag' | translate }}"
+                        matTooltipPosition="above">
+                  <mat-icon>drag_indicator</mat-icon>
+                </button>
+              }
+            </div>
+          </div>
+        }
       </div>
+    } @else {
+      <span class="tb-prompt flex items-center justify-center">{{ 'scada.behavior.no-behaviors' | translate }}</span>
+    }
+    @if (errorText) {
+      <tb-error noMargin [error]="errorText" style="padding-left: 12px;"></tb-error>
+    }
+  </div>
+  @if (!disabled) {
+    <div>
+      <button type="button" mat-stroked-button color="primary" (click)="addBehavior()">
+        {{ 'scada.behavior.add-behavior' | translate }}
+      </button>
     </div>
-    <tb-error *ngIf="errorText" noMargin [error]="errorText" style="padding-left: 12px;"></tb-error>
-  </div>
-  <div *ngIf="!disabled">
-    <button type="button" mat-stroked-button color="primary" (click)="addBehavior()">
-      {{ 'scada.behavior.add-behavior' | translate }}
-    </button>
-  </div>
+  }
 </div>
 
-<ng-template #noBehaviors>
-  <span class="tb-prompt flex items-center justify-center">{{ 'scada.behavior.no-behaviors' | translate }}</span>
-</ng-template>

@@ -16,12 +16,14 @@
 
 -->
 <div [formGroup]="deviceConfigurationFormGroup">
-  <div [ngSwitch]="type">
-    <ng-template [ngSwitchCase]="deviceProfileType.DEFAULT">
-      <tb-default-device-configuration
-        [required]="required"
-        formControlName="configuration">
-      </tb-default-device-configuration>
-    </ng-template>
+  <div>
+    @switch (type) {
+      @case (deviceProfileType.DEFAULT) {
+        <tb-default-device-configuration
+          [required]="required"
+          formControlName="configuration">
+        </tb-default-device-configuration>
+      }
+    }
   </div>
 </div>

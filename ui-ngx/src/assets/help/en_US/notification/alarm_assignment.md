@@ -15,6 +15,7 @@ Available template parameters:
 * `alarmStatus` - the alarm status;
 * `alarmOriginatorEntityType` - the entity type of the alarm originator, e.g. 'Device';
 * `alarmOriginatorName` - the name of the alarm originator, e.g. 'Sensor T1';
+* `alarmOriginatorLabel` - the label of the alarm originator, e.g. 'Sensor T1';
 * `alarmOriginatorId` - the alarm originator entity id as uuid string;
 * `assigneeTitle` - title of the assignee;
 * `assigneeEmail` - email of the assignee;

@@ -25,15 +25,23 @@
       <div class="tb-form-table-header-cell tb-state-source-value-header" translate>widgets.time-series-chart.state.value-range</div>
       <div class="tb-form-table-header-cell tb-actions-header"></div>
     </div>
-    <div *ngIf="statesFormArray().controls.length; else noStates" class="tb-form-table-body">
-      <div *ngFor="let stateControl of statesFormArray().controls; trackBy: trackByState; let $index = index; let $last = last">
-        <tb-time-series-chart-state-row class="flex-1"
-                                        [formControl]="stateControl"
-                                        (stateRemoved)="removeState($index)">
-        </tb-time-series-chart-state-row>
-        <mat-divider *ngIf="!$last"></mat-divider>
+    @if (statesFormArray().controls.length) {
+      <div class="tb-form-table-body">
+        @for (stateControl of statesFormArray().controls; track trackByState($index, stateControl)) {
+          <div>
+            <tb-time-series-chart-state-row class="flex-1"
+                                            [formControl]="stateControl"
+                                            (stateRemoved)="removeState($index)">
+            </tb-time-series-chart-state-row>
+            @if (!$last) {
+              <mat-divider></mat-divider>
+            }
+          </div>
+        }
       </div>
-    </div>
+    } @else {
+      <span class="tb-prompt flex items-center justify-center">{{ 'widgets.time-series-chart.state.no-states' | translate }}</span>
+    }
   </div>
   <div>
     <button type="button" mat-stroked-button color="primary" (click)="addState()">
@@ -41,6 +49,3 @@
     </button>
   </div>
 </div>
-<ng-template #noStates>
-  <span class="tb-prompt flex items-center justify-center">{{ 'widgets.time-series-chart.state.no-states' | translate }}</span>
-</ng-template>

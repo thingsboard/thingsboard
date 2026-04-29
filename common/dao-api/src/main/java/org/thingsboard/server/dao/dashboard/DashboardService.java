@@ -80,4 +80,6 @@ public interface DashboardService extends EntityDaoService {
 
     PageData<DashboardId> findAllDashboardsIds(PageLink pageLink);
 
+    List<DashboardInfo> findDashboardInfoByIds(TenantId tenantId, List<DashboardId> dashboardIds);
+
 }

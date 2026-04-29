@@ -113,6 +113,11 @@ public class JpaRuleChainDao extends JpaAbstractDao<RuleChainEntity, RuleChain> 
     }
 
     @Override
+    public List<RuleChain> findRuleChainsByTenantIdAndIds(UUID tenantId, List<UUID> ruleChainIds) {
+        return DaoUtil.convertDataList(ruleChainRepository.findRuleChainsByTenantIdAndIdIn(tenantId, ruleChainIds));
+    }
+
+    @Override
     public Long countByTenantId(TenantId tenantId) {
         return ruleChainRepository.countByTenantId(tenantId.getId());
     }

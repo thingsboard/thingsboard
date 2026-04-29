@@ -22,15 +22,21 @@
       <div class="tb-form-table-header-cell tb-filter-header" translate>widgets.maps.data-layer.filter</div>
       <div class="tb-form-table-header-cell tb-actions-header"></div>
     </div>
-    <div *ngIf="dataSourcesFormArray().controls.length; else noDataSources" class="tb-form-table-body">
-      <div *ngFor="let dataSourceControl of dataSourcesFormArray().controls; trackBy: trackByDataSource; let $index = index;">
-        <tb-map-data-source-row class="flex-1"
-                                [context]="context"
-                                [formControl]="dataSourceControl"
-                                (dataSourceRemoved)="removeDataSource($index)">
-        </tb-map-data-source-row>
+    @if (dataSourcesFormArray().controls.length) {
+      <div class="tb-form-table-body">
+        @for (dataSourceControl of dataSourcesFormArray().controls; track trackByDataSource($index, dataSourceControl)) {
+          <div>
+            <tb-map-data-source-row class="flex-1"
+                                    [context]="context"
+                                    [formControl]="dataSourceControl"
+                                    (dataSourceRemoved)="removeDataSource($index)">
+            </tb-map-data-source-row>
+          </div>
+        }
       </div>
-    </div>
+    } @else {
+      <span class="tb-prompt flex items-center justify-center">{{ 'widgets.maps.data-layer.no-datasources' | translate }}</span>
+    }
   </div>
   <div>
     <button type="button" mat-stroked-button color="primary" (click)="addDataSource()">
@@ -38,6 +44,3 @@
     </button>
   </div>
 </div>
-<ng-template #noDataSources>
-  <span class="tb-prompt flex items-center justify-center">{{ 'widgets.maps.data-layer.no-datasources' | translate }}</span>
-</ng-template>

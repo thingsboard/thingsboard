@@ -16,6 +16,7 @@
 package org.thingsboard.server.msa;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.restassured.RestAssured;
 import io.restassured.common.mapper.TypeRef;
@@ -33,10 +34,12 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
@@ -231,9 +234,9 @@ public class TestRestClient {
                 .statusCode(anyOf(is(HTTP_OK), is(HTTP_NOT_FOUND)));
     }
 
-    public ValidatableResponse postTelemetryAttribute(EntityId entityId, String scope, JsonNode attribute) {
+    public ValidatableResponse postTelemetryAttribute(EntityId entityId, AttributeScope scope, JsonNode attribute) {
         return given().spec(requestSpec).body(attribute)
-                .post("/api/plugins/telemetry/{entityType}/{entityId}/attributes/{scope}", entityId.getEntityType(), entityId.getId(), scope)
+                .post("/api/plugins/telemetry/{entityType}/{entityId}/attributes/{scope}", entityId.getEntityType(), entityId.getId(), scope.name())
                 .then()
                 .statusCode(HTTP_OK);
     }
@@ -256,13 +259,40 @@ public class TestRestClient {
                 .as(JsonNode.class);
     }
 
-    public JsonNode getAttributes(EntityId entityId, AttributeScope scope, String keys) {
+    public ArrayNode getAttributes(EntityId entityId, AttributeScope scope, String keys) {
         return given().spec(requestSpec)
                 .get("/api/plugins/telemetry/{entityType}/{entityId}/values/attributes/{scope}?keys={keys}", entityId.getEntityType(), entityId.getId(), scope, keys)
                 .then()
                 .statusCode(HTTP_OK)
                 .extract()
-                .as(JsonNode.class);
+                .as(ArrayNode.class);
+    }
+
+
+    public ValidatableResponse deleteEntityAttributes(EntityId entityId, AttributeScope scope, String keys) {
+        Map<String, String> pathParams = new HashMap<>();
+        pathParams.put("entityId", entityId.getId().toString());
+        pathParams.put("entityType", entityId.getEntityType().name());
+        pathParams.put("scope", scope.name());
+        return given().spec(requestSpec)
+                .pathParams(pathParams)
+                .queryParam("keys", keys)
+                .delete("/api/plugins/telemetry/{entityType}/{entityId}/{scope}")
+                .then()
+                .statusCode(HTTP_OK);
+    }
+
+    public ValidatableResponse deleteEntityTimeseries(EntityId entityId, String keys, boolean deleteAllDataForKeys) {
+        Map<String, String> pathParams = new HashMap<>();
+        pathParams.put("entityType", entityId.getEntityType().name());
+        pathParams.put("entityId", entityId.getId().toString());
+        return given().spec(requestSpec)
+                .pathParams(pathParams)
+                .queryParam("keys", keys)
+                .queryParam("deleteAllDataForKeys", Boolean.toString(deleteAllDataForKeys))
+                .delete("/api/plugins/telemetry/{entityType}/{entityId}/timeseries/delete")
+                .then()
+                .statusCode(HTTP_OK);
     }
 
     public JsonNode getLatestTelemetry(EntityId entityId) {
@@ -367,6 +397,33 @@ public class TestRestClient {
                 });
     }
 
+    public EntityRelation postEntityRelation(EntityRelation entityRelation) {
+        return given().spec(requestSpec)
+                .body(entityRelation)
+                .post("/api/v2/relation")
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(EntityRelation.class);
+    }
+
+
+    public EntityRelation deleteEntityRelation(EntityId fromId, String relationType, EntityId toId) {
+        Map<String, String> queryParams = new HashMap<>();
+        queryParams.put("fromId", fromId.getId().toString());
+        queryParams.put("fromType", fromId.getEntityType().name());
+        queryParams.put("relationType", relationType);
+        queryParams.put("toId", toId.getId().toString());
+        queryParams.put("toType", toId.getEntityType().name());
+        return given().spec(requestSpec)
+                .queryParams(queryParams)
+                .delete("/api/v2/relation")
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(EntityRelation.class);
+    }
+
     public JsonNode postServerSideRpc(DeviceId deviceId, JsonNode serverRpcPayload) {
         return given().spec(requestSpec)
                 .body(serverRpcPayload)
@@ -428,7 +485,7 @@ public class TestRestClient {
                 .as(DeviceProfile.class);
     }
 
-    public void deleteDeviseProfile(DeviceProfileId deviceProfileId) {
+    public void deleteDeviceProfile(DeviceProfileId deviceProfileId) {
         given().spec(requestSpec)
                 .delete("/api/deviceProfile/{deviceProfileId}", deviceProfileId.getId())
                 .then()
@@ -761,4 +818,33 @@ public class TestRestClient {
                 .then()
                 .statusCode(HTTP_OK);
     }
+
+    public TenantProfile postTenantProfile(TenantProfile tenantProfile) {
+        return given().spec(requestSpec).body(tenantProfile)
+                .post("/api/tenantProfile")
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(TenantProfile.class);
+    }
+
+    public EntityInfo getDefaultTenantProfileInfo() {
+        return given().spec(requestSpec)
+                .get("/api/tenantProfileInfo/default")
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(EntityInfo.class);
+    }
+
+    public TenantProfile getTenantProfileById(String tenantProfileId) {
+        return given().spec(requestSpec)
+                .pathParams("tenantProfileId", tenantProfileId)
+                .get("/api/tenantProfile/{tenantProfileId}")
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(TenantProfile.class);
+    }
+
 }

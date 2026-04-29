@@ -15,48 +15,54 @@
     limitations under the License.
 
 -->
-<div class="tb-details-buttons xs:flex xs:flex-col" *ngIf="!standalone">
-  <button mat-raised-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'open')"
-          [class.!hidden]="isEdit || isDetailsPage">
-    {{'common.open-details-page' | translate }}
-  </button>
-  <button mat-raised-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'setDefault')"
-          [class.!hidden]="isEdit || entity?.default">
-    {{'tenant-profile.set-default' | translate }}
-  </button>
-  <button mat-raised-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'delete')"
-          [class.!hidden]="hideDelete() || isEdit">
-    {{'tenant-profile.delete' | translate }}
-  </button>
-  <div class="flex flex-row xs:flex-col">
-    <button mat-raised-button
-            ngxClipboard
-            (cbOnSuccess)="onTenantProfileIdCopied($event)"
-            [cbContent]="entity?.id?.id"
-            [class.!hidden]="isEdit">
-      <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
-      <span translate>tenant-profile.copyId</span>
+@if (!standalone) {
+  <div class="tb-details-buttons xs:flex xs:flex-col">
+    <button mat-raised-button color="primary"
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'open')"
+            [class.!hidden]="isEdit || isDetailsPage">
+      {{'common.open-details-page' | translate }}
     </button>
+    <button mat-raised-button color="primary"
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'setDefault')"
+            [class.!hidden]="isEdit || entity?.default">
+      {{'tenant-profile.set-default' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'delete')"
+            [class.!hidden]="hideDelete() || isEdit">
+      {{'tenant-profile.delete' | translate }}
+    </button>
+    <div class="flex flex-row xs:flex-col">
+      <button mat-raised-button
+              ngxClipboard
+              (cbOnSuccess)="onTenantProfileIdCopied($event)"
+              [cbContent]="entity?.id?.id"
+              [class.!hidden]="isEdit">
+        <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+        <span translate>tenant-profile.copyId</span>
+      </button>
+    </div>
   </div>
-</div>
+}
 <div class="mat-padding flex flex-col">
   <form [formGroup]="entityForm">
     <fieldset [disabled]="(isLoading$ | async) || !isEdit">
-      <mat-form-field class="mat-block" appearance="fill">
+      <mat-form-field class="mat-block" appearance="outline">
         <mat-label translate>tenant-profile.name</mat-label>
         <input matInput formControlName="name" required/>
-        <mat-error *ngIf="entityForm.get('name').hasError('required')">
-          {{ 'tenant-profile.name-required' | translate }}
-        </mat-error>
-        <mat-error *ngIf="entityForm.get('name').hasError('maxlength')">
-          {{ 'tenant-profile.name-max-length' | translate }}
-        </mat-error>
+        @if (entityForm.get('name').hasError('required')) {
+          <mat-error>
+            {{ 'tenant-profile.name-required' | translate }}
+          </mat-error>
+        }
+        @if (entityForm.get('name').hasError('maxlength')) {
+          <mat-error>
+            {{ 'tenant-profile.name-max-length' | translate }}
+          </mat-error>
+        }
       </mat-form-field>
       <div class="flex flex-col">
         <mat-checkbox class="hinted-checkbox" formControlName="isolatedTbRuleEngine">
@@ -66,20 +72,22 @@
       </div>
       <div class="expansion-panel-block">
         <mat-accordion formGroupName="profileData" multi>
-          <mat-expansion-panel [expanded]="true" *ngIf="entityForm.get('isolatedTbRuleEngine').value">
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                {{'tenant-profile.queues-with-count' | translate:
+          @if (entityForm.get('isolatedTbRuleEngine').value) {
+            <mat-expansion-panel [expanded]="true">
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  {{'tenant-profile.queues-with-count' | translate:
                   {count: entityForm.get('profileData').get('queueConfiguration').value ?
-                      entityForm.get('profileData').get('queueConfiguration').value.length : 0} }}
-              </mat-panel-title>
-            </mat-expansion-panel-header>
-            <ng-template matExpansionPanelContent>
-              <tb-tenant-profile-queues
-                formControlName="queueConfiguration"
-              ></tb-tenant-profile-queues>
-            </ng-template>
-          </mat-expansion-panel>
+                  entityForm.get('profileData').get('queueConfiguration').value.length : 0} }}
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+              <ng-template matExpansionPanelContent>
+                <tb-tenant-profile-queues
+                  formControlName="queueConfiguration"
+                ></tb-tenant-profile-queues>
+              </ng-template>
+            </mat-expansion-panel>
+          }
           <mat-expansion-panel [expanded]="true">
             <mat-expansion-panel-header>
               <mat-panel-title>
@@ -95,9 +103,9 @@
           </mat-expansion-panel>
         </mat-accordion>
       </div>
-      <mat-form-field class="mat-block" appearance="fill">
+      <mat-form-field class="mat-block" appearance="outline">
         <mat-label translate>tenant-profile.description</mat-label>
-        <textarea matInput formControlName="description" rows="2"></textarea>
+        <textarea matInput formControlName="description" cdkTextareaAutosize cdkAutosizeMinRows="1" rows="1"></textarea>
       </mat-form-field>
     </fieldset>
   </form>

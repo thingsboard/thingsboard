@@ -38,6 +38,11 @@ export class AssetProfileService {
     return this.http.get<PageData<AssetProfile>>(`/api/assetProfiles${pageLink.toQuery()}`, defaultHttpOptionsFromConfig(config));
   }
 
+  public getAssetProfilesByIds(assetProfileIds: Array<string>, config?: RequestConfig): Observable<Array<AssetProfileInfo>> {
+    return this.http.get<Array<AssetProfileInfo>>(`/api/assetProfileInfos?assetProfileIds=${assetProfileIds.join(',')}`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
   public getAssetProfile(assetProfileId: string, config?: RequestConfig): Observable<AssetProfile> {
     return this.http.get<AssetProfile>(`/api/assetProfile/${assetProfileId}`, defaultHttpOptionsFromConfig(config));
   }

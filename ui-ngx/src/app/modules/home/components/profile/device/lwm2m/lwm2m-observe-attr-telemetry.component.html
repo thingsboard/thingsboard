@@ -17,31 +17,33 @@
 -->
 <section [formGroup]="modelsFormGroup">
   <mat-accordion multi="true" formArrayName="models">
-    <mat-expansion-panel
-      *ngFor="let objectLwM2M of modelsFormArray.controls; let $index = index; trackBy: trackByParams"
-      [formGroupName]="$index">
-      <mat-expansion-panel-header >
-        <mat-panel-title class="flex items-center justify-start">
-          <span class="tb-panel-title">{{ objectLwM2M.get('name').value}}</span>&nbsp;#{{ objectLwM2M.get('keyId').value}}
-          <span class="flex-1"></span>
-          <tb-profile-lwm2m-attributes
-            formControlName="attributes"
-            [modelName]="getNameObject(objectLwM2M.value)">
-          </tb-profile-lwm2m-attributes>
-          <button type="button"
-                  *ngIf="!disabled && objectLwM2M.get('multiple').value"
-                  mat-icon-button (click)="addInstances($event, objectLwM2M)"
-                  matTooltip="{{'device-profile.lwm2m.add-new-instances' | translate}}"
-                  matTooltipPosition="above">
-            <mat-icon class="material-icons">note_add</mat-icon>
-          </button>
-        </mat-panel-title>
-      </mat-expansion-panel-header>
-      <ng-template matExpansionPanelContent>
-        <tb-profile-lwm2m-observe-attr-telemetry-instances
-          formControlName="instances">
-        </tb-profile-lwm2m-observe-attr-telemetry-instances>
-      </ng-template>
-    </mat-expansion-panel>
+    @for (objectLwM2M of modelsFormArray.controls; track trackByParams($index, objectLwM2M.value)) {
+      <mat-expansion-panel [formGroupName]="$index">
+        <mat-expansion-panel-header>
+          <mat-panel-title class="flex items-center justify-start">
+            <span class="tb-panel-title">{{ objectLwM2M.get('name').value }}</span>&nbsp;#{{ objectLwM2M.get('keyId').value }}
+            <span class="flex-1"></span>
+            <tb-profile-lwm2m-attributes
+              formControlName="attributes"
+              [modelName]="getNameObject(objectLwM2M.value)">
+            </tb-profile-lwm2m-attributes>
+            @if (!disabled && objectLwM2M.get('multiple').value) {
+              <button type="button"
+                      mat-icon-button
+                      (click)="addInstances($event, objectLwM2M)"
+                      matTooltip="{{ 'device-profile.lwm2m.add-new-instances' | translate }}"
+                      matTooltipPosition="above">
+                <mat-icon class="material-icons">note_add</mat-icon>
+              </button>
+            }
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+        <ng-template matExpansionPanelContent>
+          <tb-profile-lwm2m-observe-attr-telemetry-instances
+            formControlName="instances">
+          </tb-profile-lwm2m-observe-attr-telemetry-instances>
+        </ng-template>
+      </mat-expansion-panel>
+    }
   </mat-accordion>
 </section>

@@ -18,6 +18,6 @@
 <ng-container [formGroup]="entityCountWidgetSettingsForm">
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widgets.entity-count.entity-count-card-style</div>
-    <tb-count-widget-settings alarmElseEntity="false" formControlName="entityCountSettings"></tb-count-widget-settings>
+    <tb-count-widget-settings alarmElseEntity="false" [predefinedValues]="predefinedValues" formControlName="entityCountSettings"></tb-count-widget-settings>
   </div>
 </ng-container>

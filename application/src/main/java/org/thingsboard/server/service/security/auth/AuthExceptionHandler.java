@@ -18,8 +18,10 @@ package org.thingsboard.server.service.security.auth;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -32,6 +34,10 @@ public class AuthExceptionHandler extends OncePerRequestFilter {
 
     private final ThingsboardErrorResponseHandler errorResponseHandler;
 
+    @Value("${server.log_controller_error_stack_trace}")
+    @Getter
+    private boolean logControllerErrorStackTrace;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) {
         try {
@@ -39,7 +45,14 @@ public class AuthExceptionHandler extends OncePerRequestFilter {
         } catch (AuthenticationException e) {
             throw e;
         } catch (Exception e) {
+            log(e);
             errorResponseHandler.handle(e, response);
+        }
+    }
+
+    private void log(Exception e) {
+        if (logControllerErrorStackTrace) {
+            log.error("Auth error", e);
         }
     }
 

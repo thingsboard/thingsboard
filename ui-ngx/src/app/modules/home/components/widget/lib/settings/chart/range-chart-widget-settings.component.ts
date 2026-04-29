@@ -30,7 +30,7 @@ import { rangeChartDefaultSettings } from '@home/components/widget/lib/chart/ran
 import { DateFormatProcessor, DateFormatSettings } from '@shared/models/widget-settings.models';
 import {
   lineSeriesStepTypes,
-  lineSeriesStepTypeTranslations
+  lineSeriesStepTypeTranslations, updateLatestDataKeys
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import {
   chartLabelPositions,
@@ -267,6 +267,11 @@ export class RangeChartWidgetSettingsComponent extends WidgetSettingsComponent {
       this.rangeChartWidgetSettingsForm.get('tooltipBackgroundColor').disable();
       this.rangeChartWidgetSettingsForm.get('tooltipBackgroundBlur').disable();
     }
+  }
+
+  protected onSettingsChanged(updated: WidgetSettings) {
+    updateLatestDataKeys([updated.yAxis], this.datasource, this.dataKeyCallbacks);
+    super.onSettingsChanged(updated);
   }
 
   private _pointLabelPreviewFn(): string {

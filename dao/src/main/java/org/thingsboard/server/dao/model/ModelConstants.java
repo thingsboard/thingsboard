@@ -26,8 +26,7 @@ import java.util.UUID;
 
 public class ModelConstants {
 
-    private ModelConstants() {
-    }
+    private ModelConstants() {}
 
     public static final UUID NULL_UUID = Uuids.startOf(0);
     public static final TenantId SYSTEM_TENANT = TenantId.fromUUID(ModelConstants.NULL_UUID);
@@ -258,6 +257,7 @@ public class ModelConstants {
     public static final String ALARM_ORIGINATOR_NAME_PROPERTY = "originator_name";
     public static final String ALARM_ORIGINATOR_LABEL_PROPERTY = "originator_label";
     public static final String ALARM_ORIGINATOR_TYPE_PROPERTY = "originator_type";
+    public static final String ALARM_ORIGINATOR_DISPLAY_NAME_PROPERTY = "originator_display_name";
     public static final String ALARM_SEVERITY_PROPERTY = "severity";
     public static final String ALARM_ASSIGNEE_ID_PROPERTY = "assignee_id";
     public static final String ALARM_ASSIGNEE_FIRST_NAME_PROPERTY = "assignee_first_name";
@@ -420,6 +420,7 @@ public class ModelConstants {
     public static final String RULE_CHAIN_FIRST_RULE_NODE_ID_PROPERTY = "first_rule_node_id";
     public static final String RULE_CHAIN_ROOT_PROPERTY = "root";
     public static final String RULE_CHAIN_CONFIGURATION_PROPERTY = "configuration";
+    public static final String RULE_CHAIN_NOTES_PROPERTY = "notes";
 
     /**
      * Rule node constants.
@@ -730,15 +731,7 @@ public class ModelConstants {
     public static final String CALCULATED_FIELD_CONFIGURATION_VERSION = "configuration_version";
     public static final String CALCULATED_FIELD_CONFIGURATION = "configuration";
     public static final String CALCULATED_FIELD_VERSION = "version";
-
-    /**
-     * Calculated field links constants.
-     */
-    public static final String CALCULATED_FIELD_LINK_TABLE_NAME = "calculated_field_link";
-    public static final String CALCULATED_FIELD_LINK_TENANT_ID_COLUMN = TENANT_ID_COLUMN;
-    public static final String CALCULATED_FIELD_LINK_ENTITY_TYPE = ENTITY_TYPE_COLUMN;
-    public static final String CALCULATED_FIELD_LINK_ENTITY_ID = ENTITY_ID_COLUMN;
-    public static final String CALCULATED_FIELD_LINK_CALCULATED_FIELD_ID = "calculated_field_id";
+    public static final String CALCULATED_FIELD_ADDITIONAL_INFO = ADDITIONAL_INFO_PROPERTY;
 
     /**
      * Tasks constants.
@@ -759,6 +752,17 @@ public class ModelConstants {
     public static final String AI_MODEL_TENANT_ID_COLUMN_NAME = TENANT_ID_COLUMN;
     public static final String AI_MODEL_NAME_COLUMN_NAME = NAME_PROPERTY;
     public static final String AI_MODEL_CONFIGURATION_COLUMN_NAME = "configuration";
+
+    /**
+     * Api Key constants.
+     */
+    public static final String API_KEY_TABLE_NAME = "api_key";
+    public static final String API_KEY_TENANT_ID_COLUMN_NAME = TENANT_ID_COLUMN;
+    public static final String API_KEY_USER_ID_COLUMN_NAME = USER_ID_PROPERTY;
+    public static final String API_KEY_VALUE_COLUMN_NAME = "value";
+    public static final String API_KEY_EXPIRATION_TIME_COLUMN_NAME = "expiration_time";
+    public static final String API_KEY_ENABLED_COLUMN_NAME = "enabled";
+    public static final String API_KEY_DESCRIPTION_COLUMN_NAME = "description";
 
     protected static final String[] NONE_AGGREGATION_COLUMNS = new String[]{LONG_VALUE_COLUMN, DOUBLE_VALUE_COLUMN, BOOLEAN_VALUE_COLUMN, STRING_VALUE_COLUMN, JSON_VALUE_COLUMN, KEY_COLUMN, TS_COLUMN};
 

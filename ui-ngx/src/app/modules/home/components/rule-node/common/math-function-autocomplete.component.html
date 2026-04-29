@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="mathFunctionForm" class="mat-block">
+<mat-form-field [formGroup]="mathFunctionForm" class="mat-block" [appearance]="appearance">
   <mat-label translate>rule-node-config.functions-field-input</mat-label>
   <input [required]="required"
          (focusin)="onFocus()"
@@ -23,21 +23,27 @@
          #operationInput matInput
          formControlName="operation"
          [matAutocomplete]="auto">
-  <button *ngIf="mathFunctionForm.get('operation').value"
-          type="button"
-          matSuffix mat-icon-button aria-label="Clear"
-          (click)="clear()">
-    <mat-icon class="material-icons">close</mat-icon>
-  </button>
+  @if (mathFunctionForm.get('operation').value) {
+    <button
+      type="button"
+      matSuffix mat-icon-button aria-label="Clear"
+      (click)="clear()">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  }
   <mat-autocomplete #auto="matAutocomplete" class="tb-autocomplete" [displayWith]="mathFunctionDisplayFn">
-    <mat-option *ngFor="let option of filteredOptions | async" [value]="option.value">
-      <span [innerHTML]="option.value + ' | ' + option.name | highlight:searchText"></span>
-      <small style="display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-        {{ option.description }}
-      </small>
-    </mat-option>
-    <mat-option *ngIf="!(filteredOptions | async)?.length" [value]="null">
-      <span translate>rule-node-config.no-option-found</span>
-    </mat-option>
+    @for (option of filteredOptions | async; track option) {
+      <mat-option [value]="option.value">
+        <span [innerHTML]="option.value + ' | ' + option.name | highlight:searchText"></span>
+        <small style="display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+          {{ option.description }}
+        </small>
+      </mat-option>
+    }
+    @if (!(filteredOptions | async)?.length) {
+      <mat-option [value]="null">
+        <span translate>rule-node-config.no-option-found</span>
+      </mat-option>
+    }
   </mat-autocomplete>
 </mat-form-field>

@@ -37,10 +37,12 @@ import { isDefinedAndNotNull, objectHashCode, parseTbFunction, safeExecuteTbFunc
 import { CompiledTbFunction } from '@shared/models/js-function.models';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 
-export type ShapePatternStorage = {[id: string]: {
-  pattern: L.TB.Pattern;
-  refCount: number;
-}};
+export type ShapePatternStorage = {
+  [id: string]: {
+    pattern: L.TB.Pattern;
+    refCount: number;
+  }
+};
 
 interface ShapePatternInfo {
   type: ShapeFillType;
@@ -309,6 +311,23 @@ export abstract class TbShapesDataLayer<S extends ShapeDataLayerSettings, L exte
   protected constructor(protected map: TbMap<any>,
                         inputSettings: S) {
     super(map, inputSettings);
+  }
+
+  public getStrokeStyle(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[], fillPatternId: string): Observable<ShapeStyleInfo> {
+    return this.shapePatternProcessor.processPattern(data, dsData, fillPatternId).pipe(
+      map((patternWithId) => {
+        const stroke = this.strokeColorProcessor.processColor(data, dsData);
+        const style: L.PathOptions = {
+          color: stroke,
+          weight: this.settings.strokeWeight,
+          opacity: 1
+        };
+        return {
+          patternId: patternWithId.patternId,
+          style
+        }
+      })
+    );
   }
 
   public getShapeStyle(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[], fillPatternId: string): Observable<ShapeStyleInfo> {

@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM thingsboard/openjdk17:bookworm-slim
+FROM ${docker.base.image}
 
 ENV PG_MAJOR=16
 
@@ -40,19 +40,33 @@ ENV PATH=$PATH:/usr/lib/postgresql/$PG_MAJOR/bin
 ENV PGLOG=/var/log/postgres
 ENV CASSANDRA_LOG=/var/log/cassandra
 
+# For SVG renderer Debian Trixie slim fonts should be installed explicitly
+RUN echo "Previously installed font libraries:" \
+ && (dpkg -l | grep -E 'font|dejavu|harfbuzz' || echo "  (none)") \
+ && apt-get update \
+ && apt-get install -y --no-install-recommends \
+      libharfbuzz0b fontconfig fonts-dejavu-core \
+ && rm -rf /var/lib/apt/lists/* \
+ && echo "Current fonts libraries:" \
+ && (dpkg -l | grep -E 'font|dejavu|harfbuzz') \
+ && echo "Font config list:" \
+ && fc-list && test -n "$(fc-list)" \
+ && (fc-list | grep -i dejavu) \
+ && echo "Harfbuzz library test with ldconfig:" \
+ && (ldconfig -p | grep harfbuzz)
+
 COPY logback.xml ${pkg.name}.conf start-db.sh stop-db.sh start-tb.sh upgrade-tb.sh install-tb.sh ${pkg.name}.deb /tmp/
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends wget nmap procps gnupg2 \
-    && echo "deb http://apt.postgresql.org/pub/repos/apt/ $(. /etc/os-release && echo -n $VERSION_CODENAME)-pgdg main" | tee --append /etc/apt/sources.list.d/pgdg.list > /dev/null \
-    && wget -q https://www.postgresql.org/media/keys/ACCC4CF8.asc -O- | apt-key add - \
-    && echo "deb https://debian.cassandra.apache.org 40x main" | tee -a /etc/apt/sources.list.d/cassandra.sources.list > /dev/null \
-    && wget -q https://downloads.apache.org/cassandra/KEYS -O- | apt-key add - \
+    && mkdir -p /etc/apt/keyrings \
+    && wget -q https://www.postgresql.org/media/keys/ACCC4CF8.asc -O- | gpg --dearmor -o /etc/apt/keyrings/postgresql.gpg \
+    && echo "deb [signed-by=/etc/apt/keyrings/postgresql.gpg] http://apt.postgresql.org/pub/repos/apt/ $(. /etc/os-release && echo -n $VERSION_CODENAME)-pgdg main" | tee /etc/apt/sources.list.d/pgdg.list > /dev/null \
+    && wget -q https://downloads.apache.org/cassandra/KEYS -O- | gpg --dearmor -o /etc/apt/keyrings/cassandra.gpg \
+    && echo "deb [signed-by=/etc/apt/keyrings/cassandra.gpg] https://debian.cassandra.apache.org 40x main" | tee /etc/apt/sources.list.d/cassandra.sources.list > /dev/null \
     && apt-get update \
     && apt-get install -y --no-install-recommends cassandra cassandra-tools postgresql-${PG_MAJOR} \
     && rm -rf /var/lib/apt/lists/* \
-    && update-rc.d cassandra disable \
-    && update-rc.d postgresql disable \
     && apt-get purge -y --auto-remove \
     && sed -i.old '/ulimit/d' /etc/init.d/cassandra \
     && chmod a+x /tmp/*.sh \

@@ -15,10 +15,12 @@
  */
 package org.thingsboard.server.common.data.notification.targets.platform;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+@Schema
 @Data
-public class AllUsersFilter implements UsersFilter {
+public class AllUsersFilter implements SystemLevelUsersFilter {
 
     @Override
     public UsersFilterType getType() {

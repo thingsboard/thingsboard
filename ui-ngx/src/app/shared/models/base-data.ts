@@ -16,7 +16,9 @@
 
 import { EntityId } from '@shared/models/id/entity-id';
 import { HasUUID } from '@shared/models/id/has-uuid';
-import { isDefinedAndNotNull } from '@core/utils';
+import { isDefinedAndNotNull, isNotEmptyStr } from '@core/utils';
+import { EntityType } from '@shared/models/entity-type.models';
+import { User } from '@shared/models/user.model';
 
 export declare type HasId = EntityId | HasUUID;
 
@@ -48,4 +50,13 @@ export function hasIdEquals(id1: HasId, id2: HasId): boolean {
   } else {
     return id1 === id2;
   }
+}
+
+export function getEntityDisplayName(entity: BaseData<EntityId>): string {
+  if (entity?.id?.entityType === EntityType.USER) {
+    const user = entity as User;
+    const userName = (user?.firstName ?? '') + " " + (user?.lastName ?? '');
+    return isNotEmptyStr(userName) ? userName.trim() : entity?.name;
+  }
+  return isNotEmptyStr(entity?.label) ? entity.label : entity?.name;
 }

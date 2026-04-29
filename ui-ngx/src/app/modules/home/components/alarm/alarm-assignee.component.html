@@ -20,12 +20,13 @@
                 subscriptSizing="dynamic">
   <mat-label translate>alarm.assignee</mat-label>
   <input matInput readonly [value]="getAssignee()">
-  <span *ngIf="userAssigned; else unassigned" matPrefix class="user-avatar"
-        [style.background-color]="getAvatarBgColor(alarm.assignee)">
-    {{ getUserInitials(alarm.assignee) }}
-  </span>
-  <ng-template #unassigned>
+  @if (userAssigned) {
+    <span matPrefix class="user-avatar"
+          [style.background-color]="getAvatarBgColor(alarm.assignee)">
+      {{ getUserInitials(alarm.assignee) }}
+    </span>
+  } @else {
     <mat-icon matPrefix class="material-icons unassigned-icon">{{ alarm?.assigneeId ? 'no_accounts' : 'account_circle' }}</mat-icon>
-  </ng-template>
+  }
   <mat-icon matSuffix>arrow_drop_down</mat-icon>
 </mat-form-field>

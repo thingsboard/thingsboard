@@ -70,11 +70,10 @@ public class TbCaffeineCacheConfiguration {
     }
 
     private CaffeineCache buildCache(String name, CacheSpecs cacheSpec) {
-
-        final Caffeine<Object, Object> caffeineBuilder
-                = Caffeine.newBuilder()
+        Caffeine<Object, Object> caffeineBuilder = Caffeine.newBuilder()
                 .weigher(collectionSafeWeigher())
                 .maximumWeight(cacheSpec.getMaxSize())
+                .recordStats()
                 .ticker(ticker());
         if (!cacheSpec.getTimeToLiveInMinutes().equals(0)) {
             caffeineBuilder.expireAfterWrite(cacheSpec.getTimeToLiveInMinutes(), TimeUnit.MINUTES);

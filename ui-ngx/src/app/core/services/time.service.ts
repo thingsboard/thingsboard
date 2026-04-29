@@ -146,8 +146,8 @@ export class TimeService {
     return this.boundMaxInterval(max);
   }
 
-  public defaultTimewindow(): Timewindow {
-    return defaultTimewindow(this);
+  public defaultTimewindow(isDashboard = false): Timewindow {
+    return defaultTimewindow(this, isDashboard);
   }
 
   private toBound(value: number, min: number, max: number, defValue: number): number {

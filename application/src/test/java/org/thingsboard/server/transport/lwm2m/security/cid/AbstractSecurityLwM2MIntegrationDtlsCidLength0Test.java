@@ -29,10 +29,12 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 public abstract class AbstractSecurityLwM2MIntegrationDtlsCidLength0Test extends AbstractSecurityLwM2MIntegrationDtlsCidLengthTest {
 
 
+    private static final Integer serverDtlsCidLength = 0;
+
     protected void  testNoSecDtlsCidLength(Integer dtlsCidLength) throws Exception {
-        testNoSecDtlsCidLength(dtlsCidLength, 0);
+        testNoSecDtlsCidLength(dtlsCidLength, serverDtlsCidLength);
     }
     protected void  testPskDtlsCidLength(Integer dtlsCidLength) throws Exception {
-        testPskDtlsCidLength(dtlsCidLength, 0);
+        testPskDtlsCidLength(dtlsCidLength, serverDtlsCidLength);
     }
 }

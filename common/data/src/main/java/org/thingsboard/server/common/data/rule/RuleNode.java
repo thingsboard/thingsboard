@@ -105,7 +105,12 @@ public class RuleNode extends BaseDataWithAdditionalInfo<RuleNodeId> implements 
         return super.getCreatedTime();
     }
 
-    @Schema(description = "Additional parameters of the rule node. Contains 'layoutX' and 'layoutY' properties for visualization.", implementation = JsonNode.class)
+    @Schema(description = "Additional parameters of the rule node. " +
+            "May include: 'layoutX' (number, X coordinate for visualization), " +
+            "'layoutY' (number, Y coordinate for visualization), " +
+            "'description' (string).",
+            implementation = JsonNode.class,
+            example = "{\"layoutX\":320,\"layoutY\":160,\"description\":\"Filter temperature data\"}")
     @Override
     public JsonNode getAdditionalInfo() {
         return super.getAdditionalInfo();

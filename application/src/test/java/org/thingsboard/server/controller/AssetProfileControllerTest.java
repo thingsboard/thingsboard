@@ -42,13 +42,17 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.asset.AssetProfileDao;
-import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.containsString;
@@ -193,6 +197,38 @@ public class AssetProfileControllerTest extends AbstractControllerTest {
         Assert.assertNotNull(foundAssetProfileInfo);
         Assert.assertEquals(savedAssetProfile.getId(), foundAssetProfileInfo.getId());
         Assert.assertEquals(savedAssetProfile.getName(), foundAssetProfileInfo.getName());
+    }
+
+    @Test
+    public void testFindAssetProfileInfoByIds() throws Exception {
+        List<AssetProfileInfo> assetProfiles = new ArrayList<>();
+        for (int i = 0; i < 20; i++) {
+            AssetProfile assetProfile = this.createAssetProfile("Asset Profile" + i);
+            assetProfile.setTenantId(savedTenant.getId());
+            assetProfiles.add(doPost("/api/assetProfile", assetProfile, AssetProfileInfo.class));
+        }
+
+        List<AssetProfileInfo> expected = assetProfiles.subList(5, 15);
+
+        String idsParam = expected.stream()
+                .map(ap -> ap.getId().getId().toString())
+                .collect(Collectors.joining(","));
+        AssetProfileInfo[] foundAssetProfileInfos = doGet("/api/assetProfileInfos?assetProfileIds=" + idsParam, AssetProfileInfo[].class);
+
+        Assert.assertNotNull(foundAssetProfileInfos);
+        Assert.assertEquals(expected.size(), foundAssetProfileInfos.length);
+
+        Map<UUID, AssetProfileInfo> infoById = Arrays.stream(foundAssetProfileInfos)
+                .collect(Collectors.toMap(info -> info.getId().getId(), Function.identity()));
+
+        for (AssetProfileInfo assetProfileInfo : expected) {
+            UUID id = assetProfileInfo.getId().getId();
+            AssetProfileInfo info = infoById.get(id);
+            Assert.assertNotNull("AssetProfileInfo not found for id " + id, info);
+
+            Assert.assertEquals(assetProfileInfo.getId(), info.getId());
+            Assert.assertEquals(assetProfileInfo.getName(), info.getName());
+        }
     }
 
     @Test

@@ -17,10 +17,15 @@ package org.thingsboard.server.utils;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import lombok.SneakyThrows;
 import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.input.CharSequenceReader;
 
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -41,6 +46,20 @@ public class CsvUtils {
                         .map(record::get)
                         .collect(Collectors.toList()))
                 .collect(Collectors.toList());
+    }
+
+    @SneakyThrows
+    public static byte[] generateCsv(List<List<String>> rows) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try (OutputStreamWriter writer = new OutputStreamWriter(out, StandardCharsets.UTF_8);
+             CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT)) {
+
+            for (List<String> row : rows) {
+                csvPrinter.printRecord(row);
+            }
+            csvPrinter.flush();
+        }
+        return out.toByteArray();
     }
 
 }

@@ -15,5 +15,17 @@
     limitations under the License.
 
 -->
-<img (click)="gotoThingsboard()" [src]="logo"
-         aria-label="logo" class="tb-logo-title flex-1"/>
+@if (isExternal) {
+  <a [href]="link" [target]="target">
+    <ng-container *ngTemplateOutlet="logo"></ng-container>
+  </a>
+} @else {
+  <a [routerLink]="link" [target]="target">
+    <ng-container *ngTemplateOutlet="logo"></ng-container>
+  </a>
+}
+
+<ng-template #logo>
+  <img [src]="src" aria-label="logo" alt="Logo"/>
+</ng-template>
+

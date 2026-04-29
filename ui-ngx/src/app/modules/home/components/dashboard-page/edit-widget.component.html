@@ -28,56 +28,63 @@
       [isDefaultBreakpoint]="isDefaultBreakpoint"
       formControlName="widgetConfig">
       <div class="tb-widget-config-header-prefix">
-        <button mat-button
-                *ngIf="previewMode"
-                (click)="previewMode = false">
-          <mat-icon>chevron_left</mat-icon>
-          {{ 'action.back' | translate }}
-        </button>
-        <button *ngIf="!previewMode"
-                class="gt-sm:!hidden"
-                [disabled]="!widgetFormGroup.valid"
-                mat-button color="primary"
-                (click)="previewMode = true">
-          <mat-icon>visibility</mat-icon>
-          {{ 'widget-config.preview' | translate }}
-        </button>
+        @if (previewMode) {
+          <button mat-button
+                  (click)="previewMode = false">
+            <mat-icon>chevron_left</mat-icon>
+            {{ 'action.back' | translate }}
+          </button>
+        }
+        @if (!previewMode) {
+          <button
+            class="gt-sm:!hidden"
+            [disabled]="!widgetFormGroup.valid"
+            mat-button color="primary"
+            (click)="previewMode = true">
+            <mat-icon>visibility</mat-icon>
+            {{ 'widget-config.preview' | translate }}
+          </button>
+        }
       </div>
       <div class="tb-widget-config-header-suffix flex flex-row items-center justify-end gap-3 lt-md:flex-1">
-        <button *ngIf="!previewMode"
-                class="lt-md:!hidden"
-                [disabled]="!widgetFormGroup.valid"
-                mat-button color="primary"
-                (click)="previewMode = true">
-          <mat-icon>visibility</mat-icon>
-          {{ 'widget-config.preview' | translate }}
-        </button>
+        @if (!previewMode) {
+          <button
+            class="lt-md:!hidden"
+            [disabled]="!widgetFormGroup.valid"
+            mat-button color="primary"
+            (click)="previewMode = true">
+            <mat-icon>visibility</mat-icon>
+            {{ 'widget-config.preview' | translate }}
+          </button>
+        }
         <div class="flex flex-row items-center justify-start gap-3">
           <button [disabled]="!widgetFormGroup.dirty"
-            mat-stroked-button color="primary"
-            (click)="onRevertWidgetConfig()">
+                  mat-stroked-button color="primary"
+                  (click)="onRevertWidgetConfig()">
             <mat-icon>close</mat-icon>
             {{ 'action.decline' | translate }}
           </button>
           <button [disabled]="!widgetFormGroup.valid || !widgetFormGroup.dirty"
-            mat-flat-button color="primary"
-            (click)="onApplyWidgetConfig()">
+                  mat-flat-button color="primary"
+                  (click)="onApplyWidgetConfig()">
             <mat-icon>done</mat-icon>
             {{ 'action.apply' | translate }}
           </button>
         </div>
       </div>
     </tb-widget-config>
-    <div *ngIf="previewMode" class="widget-preview-background">
-      <tb-widget-preview class="widget-preview-section"
-                         [aliasController]="aliasController"
-                         [stateController]="stateController"
-                         [dashboardTimewindow]="dashboard.configuration.timewindow"
-                         [widget]="widget"
-                         [widgetConfig]="widgetFormGroup.get('widgetConfig').value.config"
-                         [previewWidth]="widgetConfig.typeParameters.previewWidth"
-                         [previewHeight]="widgetConfig.typeParameters.previewHeight">
-      </tb-widget-preview>
-    </div>
+    @if (previewMode) {
+      <div class="widget-preview-background">
+        <tb-widget-preview class="widget-preview-section"
+                           [aliasController]="aliasController"
+                           [stateController]="stateController"
+                           [dashboardTimewindow]="dashboard.configuration.timewindow"
+                           [widget]="widget"
+                           [widgetConfig]="widgetFormGroup.get('widgetConfig').value.config"
+                           [previewWidth]="widgetConfig.typeParameters.previewWidth"
+                           [previewHeight]="widgetConfig.typeParameters.previewHeight">
+        </tb-widget-preview>
+      </div>
+    }
   </fieldset>
 </form>

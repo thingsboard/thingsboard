@@ -26,9 +26,12 @@
       <mat-icon class="material-icons">close</mat-icon>
     </button>
   </mat-toolbar>
-  <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
-  </mat-progress-bar>
-  <div *ngIf="!(isLoading$ | async)"></div>
+  @if (isLoading$ | async) {
+    <mat-progress-bar color="warn" mode="indeterminate">
+    </mat-progress-bar>
+  } @else {
+    <div></div>
+  }
   <div mat-dialog-content class="!p-0">
     <tb-mobile-app #mobileAppComponent></tb-mobile-app>
   </div>

@@ -29,6 +29,7 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 @Slf4j
+@Deprecated
 public class DynamicPredicateValueCtxImpl implements DynamicPredicateValueCtx {
     private final TenantId tenantId;
     private CustomerId customerId;

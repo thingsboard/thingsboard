@@ -25,10 +25,9 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EntityId;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-
-import static org.thingsboard.server.common.data.util.CollectionsUtil.mapOf;
 
 @Data
 @NoArgsConstructor
@@ -41,25 +40,28 @@ public class AlarmNotificationInfo implements RuleOriginatedNotificationInfo {
     private UUID alarmId;
     private EntityId alarmOriginator;
     private String alarmOriginatorName;
+    private String alarmOriginatorLabel;
     private AlarmSeverity alarmSeverity;
     private AlarmStatus alarmStatus;
     private boolean acknowledged;
     private boolean cleared;
     private CustomerId alarmCustomerId;
     private DashboardId dashboardId;
+    private Map<String, String> details;
 
     @Override
     public Map<String, String> getTemplateData() {
-        return mapOf(
-                "alarmType", alarmType,
-                "action", action,
-                "alarmId", alarmId.toString(),
-                "alarmSeverity", alarmSeverity.name().toLowerCase(),
-                "alarmStatus", alarmStatus.toString(),
-                "alarmOriginatorEntityType", alarmOriginator.getEntityType().getNormalName(),
-                "alarmOriginatorName", alarmOriginatorName,
-                "alarmOriginatorId", alarmOriginator.getId().toString()
-        );
+        Map<String, String> templateData = details != null ? new HashMap<>(details) : new HashMap<>();
+        templateData.put("alarmType", alarmType);
+        templateData.put("action", action);
+        templateData.put("alarmId", alarmId.toString());
+        templateData.put("alarmSeverity", alarmSeverity.name().toLowerCase());
+        templateData.put("alarmStatus", alarmStatus.toString());
+        templateData.put("alarmOriginatorEntityType", alarmOriginator.getEntityType().getNormalName());
+        templateData.put("alarmOriginatorName", alarmOriginatorName);
+        templateData.put("alarmOriginatorLabel", alarmOriginatorLabel);
+        templateData.put("alarmOriginatorId", alarmOriginator.getId().toString());
+        return templateData;
     }
 
     @Override

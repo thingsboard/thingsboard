@@ -19,80 +19,51 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.EqualsAndHashCode;
+import net.objecthunter.exp4j.Expression;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.script.api.tbel.TbUtils;
+import org.thingsboard.common.util.NumberUtils;
+import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Output;
-import org.thingsboard.server.common.data.cf.configuration.OutputType;
-import org.thingsboard.server.common.data.kv.BasicKvEntry;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
+import org.thingsboard.server.service.cf.TelemetryCalculatedFieldResult;
 
-import java.util.List;
 import java.util.Map;
 
-@Data
-@NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
 
-    public SimpleCalculatedFieldState(List<String> requiredArguments) {
-        super(requiredArguments);
+    private ThreadLocal<Expression> expression;
+
+    public SimpleCalculatedFieldState(EntityId entityId) {
+        super(entityId);
     }
 
     @Override
-    public CalculatedFieldType getType() {
-        return CalculatedFieldType.SIMPLE;
+    public void setCtx(CalculatedFieldCtx ctx, TbActorRef actorCtx) {
+        super.setCtx(ctx, actorCtx);
+        this.expression = ctx.getSimpleExpressions().get(ctx.getExpression());
     }
 
     @Override
-    protected void validateNewEntry(ArgumentEntry newEntry) {
-        if (newEntry instanceof TsRollingArgumentEntry) {
-            throw new IllegalArgumentException("Rolling argument entry is not supported for simple calculated fields.");
-        }
-    }
-
-    @Override
-    public ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx) {
-        var expr = ctx.getCustomExpression().get();
-
-        for (Map.Entry<String, ArgumentEntry> entry : this.arguments.entrySet()) {
-            try {
-                BasicKvEntry kvEntry = ((SingleValueArgumentEntry) entry.getValue()).getKvEntryValue();
-                double value = switch (kvEntry.getDataType()) {
-                    case LONG -> kvEntry.getLongValue().map(Long::doubleValue).orElseThrow();
-                    case DOUBLE -> kvEntry.getDoubleValue().orElseThrow();
-                    case BOOLEAN -> kvEntry.getBooleanValue().map(b -> b ? 1.0 : 0.0).orElseThrow();
-                    case STRING, JSON -> Double.parseDouble(kvEntry.getValueAsString());
-                };
-                expr.setVariable(entry.getKey(), value);
-            } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("Argument '" + entry.getKey() + "' is not a number.");
-            }
-        }
-
-        double expressionResult = expr.evaluate();
+    public ListenableFuture<CalculatedFieldResult> performCalculation(Map<String, ArgumentEntry> updatedArgs, CalculatedFieldCtx ctx) {
+        double expressionResult = ctx.evaluateSimpleExpression(expression.get(), this);
 
         Output output = ctx.getOutput();
-        Object result = formatResult(expressionResult, output.getDecimalsByDefault());
-        JsonNode outputResult = createResultJson(ctx, result);
+        Object result = NumberUtils.roundResult(expressionResult, output.getDecimalsByDefault());
+        JsonNode outputResult = createResultJson(output.getName(), result);
 
-        return Futures.immediateFuture(new CalculatedFieldResult(output.getType(), output.getScope(), outputResult));
+        return Futures.immediateFuture(TelemetryCalculatedFieldResult.builder()
+                .outputStrategy(output.getStrategy())
+                .type(output.getType())
+                .scope(output.getScope())
+                .result(outputResult)
+                .build());
     }
 
-    private Object formatResult(double expressionResult, Integer decimals) {
-        if (decimals == null) {
-            return expressionResult;
-        }
-        if (decimals.equals(0)) {
-            return TbUtils.toInt(expressionResult);
-        }
-        return TbUtils.toFixed(expressionResult, decimals);
-    }
-
-    private JsonNode createResultJson(CalculatedFieldCtx ctx, Object result) {
-        Output output = ctx.getOutput();
-        String outputName = output.getName();
+    private JsonNode createResultJson(String outputName, Object result) {
         ObjectNode valuesNode = JacksonUtil.newObjectNode();
         if (result instanceof Double doubleValue) {
             valuesNode.put(outputName, doubleValue);
@@ -101,17 +72,20 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
         } else {
             valuesNode.set(outputName, JacksonUtil.valueToTree(result));
         }
-        if (output.getType() == OutputType.ATTRIBUTES || !ctx.isUseLatestTs()) {
-            return valuesNode;
+        return toResultNode(valuesNode);
+    }
+
+    @Override
+    protected void validateNewEntry(String key, ArgumentEntry newEntry) {
+        if (newEntry instanceof TsRollingArgumentEntry) {
+            throw new IllegalArgumentException("Unsupported argument type detected for argument: " + key + ". " +
+                                               "Rolling argument entry is not supported for simple calculated fields.");
         }
-        long latestTs = getLatestTimestamp();
-        if (latestTs == DEFAULT_LAST_UPDATE_TS) {
-            return valuesNode;
-        }
-        ObjectNode resultNode = JacksonUtil.newObjectNode();
-        resultNode.put("ts", latestTs);
-        resultNode.set("values", valuesNode);
-        return resultNode;
+    }
+
+    @Override
+    public CalculatedFieldType getType() {
+        return CalculatedFieldType.SIMPLE;
     }
 
 }

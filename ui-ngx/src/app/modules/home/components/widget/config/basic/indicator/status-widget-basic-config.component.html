@@ -16,7 +16,7 @@
 
 -->
 <ng-container [formGroup]="statusWidgetConfigForm">
-  <tb-target-device formControlName="targetDevice"></tb-target-device>
+  <tb-target-device formControlName="targetDevice" appearance="outline"></tb-target-device>
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widgets.status-widget.behavior</div>
     <div class="tb-form-row">
@@ -30,7 +30,7 @@
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
                                     [widgetType]="widgetType"
-                                    formControlName="initialState"></tb-get-value-action-settings>
+      formControlName="initialState"></tb-get-value-action-settings>
     </div>
     <div class="tb-form-row">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.disabled-state-hint' | translate}}" translate>widgets.rpc-state.disabled-state</div>
@@ -41,7 +41,7 @@
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
                                     [widgetType]="widgetType"
-                                    formControlName="disabledState"></tb-get-value-action-settings>
+      formControlName="disabledState"></tb-get-value-action-settings>
     </div>
   </div>
   <div class="tb-form-panel">
@@ -52,12 +52,14 @@
                                       'lt-sm': 1,
                                       'lt-md': 2
                                     }}"
-                           label="{{ 'widgets.status-widget.layout' | translate }}" formControlName="layout">
-      <tb-image-cards-select-option *ngFor="let layout of statusWidgetLayouts"
-                                    [value]="layout"
-                                    [image]="statusWidgetLayoutImageMap.get(layout)">
-        {{ statusWidgetLayoutTranslationMap.get(layout) | translate }}
-      </tb-image-cards-select-option>
+      label="{{ 'widgets.status-widget.layout' | translate }}" formControlName="layout">
+      @for (layout of statusWidgetLayouts; track layout) {
+        <tb-image-cards-select-option
+          [value]="layout"
+          [image]="statusWidgetLayoutImageMap.get(layout)">
+          {{ statusWidgetLayoutTranslationMap.get(layout) | translate }}
+        </tb-image-cards-select-option>
+      }
     </tb-image-cards-select>
   </div>
   <div class="tb-form-panel">
@@ -69,16 +71,18 @@
         <tb-toggle-option value="off">{{ 'widgets.status-widget.off' | translate }}</tb-toggle-option>
       </tb-toggle-select>
     </div>
-    <tb-status-widget-state-settings
-        *ngIf="cardStyleMode === 'on'"
+    @if (cardStyleMode === 'on') {
+      <tb-status-widget-state-settings
         [layout]="statusWidgetConfigForm.get('layout').value"
         formControlName="onState">
-    </tb-status-widget-state-settings>
-    <tb-status-widget-state-settings
-        *ngIf="cardStyleMode === 'off'"
+      </tb-status-widget-state-settings>
+    }
+    @if (cardStyleMode === 'off') {
+      <tb-status-widget-state-settings
         [layout]="statusWidgetConfigForm.get('layout').value"
         formControlName="offState">
-    </tb-status-widget-state-settings>
+      </tb-status-widget-state-settings>
+    }
   </div>
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widget-config.card-appearance</div>
@@ -102,6 +106,6 @@
     </div>
   </div>
   <tb-widget-actions-panel
-      formControlName="actions">
+    formControlName="actions">
   </tb-widget-actions-panel>
 </ng-container>

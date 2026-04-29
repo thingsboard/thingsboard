@@ -16,10 +16,12 @@
 
 -->
 <ng-container [formGroup]="entitiesTableWidgetConfigForm">
-  <tb-timewindow-config-panel *ngIf="displayTimewindowConfig"
-                              [onlyHistoryTimewindow]="onlyHistoryTimewindow()"
-                              formControlName="timewindowConfig">
-  </tb-timewindow-config-panel>
+  @if (displayTimewindowConfig) {
+    <tb-timewindow-config-panel
+      [onlyHistoryTimewindow]="onlyHistoryTimewindow()"
+      formControlName="timewindowConfig">
+    </tb-timewindow-config-panel>
+  }
   <tb-datasources
     [configMode]="basicMode"
     hideDataKeys
@@ -44,9 +46,16 @@
         {{ 'widget-config.card-title' | translate }}
       </mat-slide-toggle>
       <div class="flex flex-1 flex-row items-center justify-start gap-2">
-        <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
-          <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
-        </mat-form-field>
+        <tb-string-pattern-autocomplete class="flex-1"
+                                        appearance="outline"
+                                        brackets="curly"
+                                        subscriptSizing="dynamic"
+                                        predefinedValuesButton="true"
+                                        [disabled]="!entitiesTableWidgetConfigForm.get('showTitle').value"
+                                        [predefinedValues]="predefinedValues"
+                                        placeholderText="{{ 'widget-config.set' | translate }}"
+                                        formControlName="title"
+        ></tb-string-pattern-autocomplete>
         <tb-font-settings formControlName="titleFont"
                           clearButton
                           [previewText]="entitiesTableWidgetConfigForm.get('title').value"

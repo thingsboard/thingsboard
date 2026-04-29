@@ -15,13 +15,17 @@
  */
 package org.thingsboard.server.dao.sql.cf;
 
+import com.google.common.base.Strings;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldFilter;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -34,6 +38,7 @@ import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -66,8 +71,8 @@ public class JpaCalculatedFieldDao extends JpaAbstractDao<CalculatedFieldEntity,
     }
 
     @Override
-    public CalculatedField findByEntityIdAndName(EntityId entityId, String name) {
-        return DaoUtil.getData(calculatedFieldRepository.findByEntityIdAndName(entityId.getId(), name));
+    public CalculatedField findByEntityIdAndTypeAndName(EntityId entityId, CalculatedFieldType type, String name) {
+        return DaoUtil.getData(calculatedFieldRepository.findByEntityIdAndTypeAndName(entityId.getId(), type.name(), name));
     }
 
     @Override
@@ -83,9 +88,10 @@ public class JpaCalculatedFieldDao extends JpaAbstractDao<CalculatedFieldEntity,
     }
 
     @Override
-    public PageData<CalculatedField> findAllByEntityId(TenantId tenantId, EntityId entityId, PageLink pageLink) {
-        log.debug("Try to find calculated fields by entityId[{}] and pageLink [{}]", entityId, pageLink);
-        return DaoUtil.toPageData(calculatedFieldRepository.findAllByTenantIdAndEntityId(tenantId.getId(), entityId.getId(), pageLink.getTextSearch(), DaoUtil.toPageable(pageLink)));
+    public PageData<CalculatedField> findByEntityIdAndTypes(TenantId tenantId, EntityId entityId, Set<CalculatedFieldType> types, PageLink pageLink) {
+        log.debug("Try to find calculated fields by entityId [{}] and type [{}] and pageLink [{}]", entityId, types, pageLink);
+        return DaoUtil.toPageData(calculatedFieldRepository.findByTenantIdAndEntityIdAndTypes(tenantId.getId(), entityId.getId(),
+                types.stream().map(Enum::name).toList(), pageLink.getTextSearch(), DaoUtil.toPageable(pageLink)));
     }
 
     @Override
@@ -95,8 +101,24 @@ public class JpaCalculatedFieldDao extends JpaAbstractDao<CalculatedFieldEntity,
     }
 
     @Override
-    public long countCFByEntityId(TenantId tenantId, EntityId entityId) {
-        return calculatedFieldRepository.countByTenantIdAndEntityId(tenantId.getId(), entityId.getId());
+    public long countByEntityIdAndTypeNot(TenantId tenantId, EntityId entityId, CalculatedFieldType type) {
+        return calculatedFieldRepository.countByTenantIdAndEntityIdAndTypeNot(tenantId.getId(), entityId.getId(), type.name());
+    }
+
+    @Override
+    public PageData<CalculatedField> findByTenantIdAndFilter(TenantId tenantId, CalculatedFieldFilter filter, PageLink pageLink) {
+        return DaoUtil.toPageData(calculatedFieldRepository.findByTenantIdAndFilter(tenantId.getId(),
+                filter.getTypes().stream().map(Enum::name).toList(),
+                filter.getEntityTypes().stream().map(Enum::name).toList(),
+                CollectionUtils.isNotEmpty(filter.getEntityIds()) ? filter.getEntityIds() : null,
+                CollectionUtils.isNotEmpty(filter.getNames()) ? filter.getNames() : null,
+                pageLink.getTextSearch(), DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public PageData<String> findNamesByTenantIdAndType(TenantId tenantId, CalculatedFieldType type, PageLink pageLink) {
+        return DaoUtil.pageToPageData(calculatedFieldRepository.findNamesByTenantIdAndType(tenantId.getId(), type.name(),
+                Strings.emptyToNull(pageLink.getTextSearch()), DaoUtil.toPageable(pageLink, false)));
     }
 
     @Override

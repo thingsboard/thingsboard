@@ -152,8 +152,8 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
     this.widget.widgetContext.containerChangeDetector = this.cd;
     const cssString = this.widget.widget.config.widgetCss;
     if (isNotEmptyStr(cssString)) {
-      this.cssClass =
-        this.utils.applyCssToElement(this.renderer, this.gridsterItem.el, 'tb-widget-css', cssString);
+      this.cssClass = this.utils.applyCssToElement(this.renderer, this.gridsterItem.el, 'tb-widget-css', cssString, true);
+      this.widget.widgetContext.widgetCssClass = this.cssClass;
     }
     $(this.gridsterItem.el).on('mousedown', (e) => this.onMouseDown(e.originalEvent));
     $(this.gridsterItem.el).on('click', (e) => this.onClicked(e.originalEvent));
@@ -221,7 +221,7 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
   widgetActionAbsolute(widgetComponent: WidgetComponent, absolute = false) {
     return absolute ? true :
       !(this.widget.showWidgetTitlePanel && !widgetComponent.widgetContext?.embedTitlePanel &&
-        (this.widget.showTitle||this.widget.hasAggregation)) && !widgetComponent.widgetContext?.embedActionsPanel;
+        (this.widget.showTitle||this.widget.hasTimewindow)) && !widgetComponent.widgetContext?.embedActionsPanel;
   }
 
   onClicked(event: MouseEvent): void {
@@ -397,37 +397,39 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
 @Component({
     template: `
     <div class="tb-widget-action-container">
-      <div class="tb-widget-reference-panel tb-primary-fill" *ngIf="container.widget.isReference">
-        {{ 'widget.reference' | translate }}
-        <button mat-icon-button class="tb-mat-16"
-                color="primary"
-                [class.!hidden]="!container.isEditActionEnabled"
-                (click)="container.onReplaceReferenceWithWidgetCopy($event)"
-                matTooltip="{{ 'widget.replace-reference-with-widget-copy' | translate }}"
-                matTooltipPosition="above">
-          <tb-icon matButtonIcon>mdi:file-replace-outline</tb-icon>
-        </button>
-      </div>
+      @if (container.widget.isReference) {
+        <div class="tb-widget-reference-panel tb-primary-fill">
+          {{ 'widget.reference' | translate }}
+          <button mat-icon-button class="tb-mat-16"
+            color="primary"
+            [class.!hidden]="!container.isEditActionEnabled"
+            (click)="container.onReplaceReferenceWithWidgetCopy($event)"
+            matTooltip="{{ 'widget.replace-reference-with-widget-copy' | translate }}"
+            matTooltipPosition="above">
+            <tb-icon matButtonIcon>mdi:file-replace-outline</tb-icon>
+          </button>
+        </div>
+      }
       <div class="tb-widget-actions-panel">
         <button mat-icon-button class="tb-mat-20"
-                [class.!hidden]="!container.isEditActionEnabled"
-                (click)="container.onEdit($event)"
-                matTooltip="{{ 'widget.edit' | translate }}"
-                matTooltipPosition="above">
+          [class.!hidden]="!container.isEditActionEnabled"
+          (click)="container.onEdit($event)"
+          matTooltip="{{ 'widget.edit' | translate }}"
+          matTooltipPosition="above">
           <tb-icon>edit</tb-icon>
         </button>
         <button mat-icon-button class="tb-mat-20"
-                [class.!hidden]="!container.isExportActionEnabled"
-                (click)="container.onExport($event)"
-                matTooltip="{{ 'widget.export' | translate }}"
-                matTooltipPosition="above">
+          [class.!hidden]="!container.isExportActionEnabled"
+          (click)="container.onExport($event)"
+          matTooltip="{{ 'widget.export' | translate }}"
+          matTooltipPosition="above">
           <tb-icon>file_download</tb-icon>
         </button>
         <button mat-icon-button class="tb-mat-20"
-                [class.!hidden]="!container.isRemoveActionEnabled"
-                (click)="container.onRemove($event);"
-                matTooltip="{{ 'widget.remove' | translate }}"
-                matTooltipPosition="above">
+          [class.!hidden]="!container.isRemoveActionEnabled"
+          (click)="container.onRemove($event);"
+          matTooltip="{{ 'widget.remove' | translate }}"
+          matTooltipPosition="above">
           <tb-icon>close</tb-icon>
         </button>
       </div>

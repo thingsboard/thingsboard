@@ -19,12 +19,14 @@
   <tb-template-autocomplete
     required
     allowCreate
+    appearance="outline"
     formControlName="templateId"
     [notificationTypes]="notificationType.RULE_NODE">
   </tb-template-autocomplete>
   <tb-entity-list
     required
     formControlName="targets"
+    appearance="outline"
     labelText="{{ 'notification.recipients' | translate }}"
     placeholderText="{{ 'notification.recipient' | translate }}"
     requiredText="{{ 'notification.recipients-required' | translate }}"

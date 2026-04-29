@@ -59,6 +59,7 @@ import org.thingsboard.server.queue.provider.KafkaMonolithQueueFactory;
 import org.thingsboard.server.queue.provider.KafkaTbRuleEngineQueueFactory;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.provider.TbRuleEngineQueueFactory;
+import org.thingsboard.server.service.queue.TbMsgPackProcessingContextFactory;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingStrategyFactory;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineSubmitStrategyFactory;
 import org.thingsboard.server.service.stats.RuleEngineStatisticsService;
@@ -194,6 +195,7 @@ public class TbRuleEngineQueueConsumerManagerTest {
                 .consumerExecutor(consumersExecutor)
                 .scheduler(scheduler)
                 .taskExecutor(mgmtExecutor)
+                .packProcessingContextFactory(new TbMsgPackProcessingContextFactory.DefaultTbMsgPackProcessingContextFactory())
                 .build();
     }
 
@@ -595,7 +597,7 @@ public class TbRuleEngineQueueConsumerManagerTest {
             await().atMost(5, TimeUnit.SECONDS).until(() -> {
                 for (TopicPartitionInfo partition : expectedPartitions) {
                     if (consumers.stream().noneMatch(consumer -> consumer.subscribed &&
-                            consumer.pollingStarted && Set.of(partition).equals(consumer.getPartitions()))) {
+                                                                 consumer.pollingStarted && Set.of(partition).equals(consumer.getPartitions()))) {
                         return false;
                     }
                 }
@@ -605,7 +607,7 @@ public class TbRuleEngineQueueConsumerManagerTest {
             await().atMost(5, TimeUnit.SECONDS).until(() -> {
                 return consumers.size() == 1 && consumers.stream()
                         .anyMatch(consumer -> consumer.subscribed && consumer.pollingStarted &&
-                                expectedPartitions.equals(consumer.getPartitions()));
+                                              expectedPartitions.equals(consumer.getPartitions()));
             });
         }
         Mockito.reset(ruleEngineConsumerContext.getSubmitStrategyFactory());
@@ -667,8 +669,8 @@ public class TbRuleEngineQueueConsumerManagerTest {
         return await().atMost(5, TimeUnit.SECONDS)
                 .until(() -> consumers.stream()
                         .filter(consumer -> consumer.getPartitions() != null &&
-                                consumer.getPartitions().size() == 1 &&
-                                consumer.getPartitions().contains(tpi))
+                                            consumer.getPartitions().size() == 1 &&
+                                            consumer.getPartitions().contains(tpi))
                         .findFirst().orElse(null), Objects::nonNull);
     }
 
@@ -676,9 +678,9 @@ public class TbRuleEngineQueueConsumerManagerTest {
         return await().atMost(5, TimeUnit.SECONDS)
                 .until(() -> consumers.stream()
                         .filter(consumer -> consumer.getPartitions() != null &&
-                                consumer.getPartitions().size() == 1 &&
-                                consumer.getPartitions().stream()
-                                        .anyMatch(tpi -> tpi.getPartition().get().equals(partition)))
+                                            consumer.getPartitions().size() == 1 &&
+                                            consumer.getPartitions().stream()
+                                                    .anyMatch(tpi -> tpi.getPartition().get().equals(partition)))
                         .findFirst().orElse(null), Objects::nonNull);
     }
 
@@ -778,10 +780,6 @@ public class TbRuleEngineQueueConsumerManagerTest {
             return false;
         }
 
-        public Set<TopicPartitionInfo> getPartitions() {
-            return partitions;
-        }
-
         public void setUpTestMsg() {
             testMsg = TbMsg.newMsg()
                     .type(TbMsgType.POST_TELEMETRY_REQUEST)
@@ -790,6 +788,7 @@ public class TbRuleEngineQueueConsumerManagerTest {
                     .data("{}")
                     .build();
         }
+
     }
 
 }

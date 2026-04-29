@@ -44,27 +44,27 @@
 <div class="mat-padding flex flex-col">
   <form [formGroup]="entityForm">
     <fieldset [disabled]="(isLoading$ | async) || !isEdit">
-      <mat-form-field class="mat-block">
+      <mat-form-field class="mat-block" appearance="outline">
         <mat-label translate>widget.title</mat-label>
         <input matInput formControlName="name" required>
-        <mat-error *ngIf="entityForm.get('name').hasError('required')">
-          {{ 'widget.title-required' | translate }}
-        </mat-error>
-        <mat-error *ngIf="entityForm.get('name').hasError('maxlength')">
-          {{ 'widget.title-max-length' | translate }}
-        </mat-error>
+        @if (entityForm.get('name').hasError('required')) {
+          <mat-error>
+            {{ 'widget.title-required' | translate }}
+          </mat-error>
+        }
+        @if (entityForm.get('name').hasError('maxlength')) {
+          <mat-error>
+            {{ 'widget.title-max-length' | translate }}
+          </mat-error>
+        }
       </mat-form-field>
       <tb-gallery-image-input class="flex-1"
                       label="{{'widget.image-preview' | translate}}"
                       formControlName="image">
       </tb-gallery-image-input>
-      <mat-form-field class="mat-block">
-        <mat-label translate>widget.description</mat-label>
-        <textarea matInput formControlName="description" rows="2" maxlength="1024" #descriptionInput></textarea>
-        <mat-hint align="end">{{descriptionInput.value?.length || 0}}/1024</mat-hint>
-      </mat-form-field>
       <tb-string-items-list
         label="{{ 'widget.tags' | translate }}"
+        appearance="outline"
         formControlName="tags">
       </tb-string-items-list>
       <div class="flex flex-col gap-4">
@@ -75,6 +75,11 @@
           {{ 'widget.deprecated' | translate }}
         </mat-slide-toggle>
       </div>
+      <mat-form-field class="mat-block mt-5" appearance="outline">
+        <mat-label translate>widget.description</mat-label>
+        <textarea matInput formControlName="description" cdkTextareaAutosize cdkAutosizeMinRows="1" rows="1" maxlength="1024" #descriptionInput></textarea>
+        <mat-hint align="end">{{descriptionInput.value?.length || 0}}/1024</mat-hint>
+      </mat-form-field>
     </fieldset>
   </form>
 </div>

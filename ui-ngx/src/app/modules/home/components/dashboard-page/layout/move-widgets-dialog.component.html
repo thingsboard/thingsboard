@@ -25,8 +25,10 @@
       <mat-icon class="material-icons">close</mat-icon>
     </button>
   </mat-toolbar>
-  <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
-  </mat-progress-bar>
+  @if (isLoading$ | async) {
+    <mat-progress-bar color="warn" mode="indeterminate">
+    </mat-progress-bar>
+  }
   <div mat-dialog-content class="tb-form-panel no-border no-padding" [formGroup]="moveWidgetsFormGroup">
     <div class="tb-form-row space-between column-xs">
       <div translate>dashboard.move-by</div>

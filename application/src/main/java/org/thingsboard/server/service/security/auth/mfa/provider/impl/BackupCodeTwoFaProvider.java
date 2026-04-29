@@ -58,7 +58,7 @@ public class BackupCodeTwoFaProvider implements TwoFaProvider<BackupCodeTwoFaPro
     public boolean checkVerificationCode(SecurityUser user, String code, BackupCodeTwoFaProviderConfig providerConfig, BackupCodeTwoFaAccountConfig accountConfig) {
         if (CollectionsUtil.contains(accountConfig.getCodes(), code)) {
             accountConfig.getCodes().remove(code);
-            twoFaConfigManager.saveTwoFaAccountConfig(user.getTenantId(), user.getId(), accountConfig);
+            twoFaConfigManager.saveTwoFaAccountConfig(user.getTenantId(), user, accountConfig);
             return true;
         } else {
             return false;

@@ -55,34 +55,36 @@
             <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
               <input matInput formControlName="pageStepIncrement" type="number" min="1" step="1" required
                      placeholder="{{ 'widget-config.set' | translate }}">
-              <mat-icon matSuffix
-                        matTooltipPosition="above"
-                        matTooltipClass="tb-error-tooltip"
+              @if (persistentTableWidgetSettingsForm.get('pageStepIncrement').invalid
+                && persistentTableWidgetSettingsForm.get('pageStepIncrement').touched) {
+                <mat-icon matSuffix
+                          matTooltipPosition="above"
+                          matTooltipClass="tb-error-tooltip"
                         [matTooltip]="(persistentTableWidgetSettingsForm.get('pageStepIncrement').hasError('required')
                                      ? 'widgets.value-source.value-required'
                                      : 'widgets.table.page-step-increment-format-message') | translate"
-                        *ngIf="persistentTableWidgetSettingsForm.get('pageStepIncrement').invalid
-                        && persistentTableWidgetSettingsForm.get('pageStepIncrement').touched"
-                        class="tb-error">
-                warning
-              </mat-icon>
+                  class="tb-error">
+                  warning
+                </mat-icon>
+              }
             </mat-form-field>
             <mat-divider vertical class="xs:hidden"></mat-divider>
             <div class="tb-small-label" translate>widgets.table.page-step-count</div>
             <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
               <input matInput formControlName="pageStepCount" type="number" min="1" max="100" step="1" required
                      placeholder="{{ 'widget-config.set' | translate }}">
-              <mat-icon matSuffix
-                        matTooltipPosition="above"
-                        matTooltipClass="tb-error-tooltip"
+              @if (persistentTableWidgetSettingsForm.get('pageStepCount').invalid
+                && persistentTableWidgetSettingsForm.get('pageStepCount').touched) {
+                <mat-icon matSuffix
+                          matTooltipPosition="above"
+                          matTooltipClass="tb-error-tooltip"
                         [matTooltip]="(persistentTableWidgetSettingsForm.get('pageStepCount').hasError('required')
                                      ? 'widgets.value-source.value-required'
                                      : 'widgets.table.page-step-count-format-message') | translate"
-                        *ngIf="persistentTableWidgetSettingsForm.get('pageStepCount').invalid
-                        && persistentTableWidgetSettingsForm.get('pageStepCount').touched"
-                        class="tb-error">
-                warning
-              </mat-icon>
+                  class="tb-error">
+                  warning
+                </mat-icon>
+              }
             </mat-form-field>
           </div>
         </div>
@@ -90,14 +92,16 @@
           <div translate>widgets.table.default-page-size</div>
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="defaultPageSize" placeholder="{{ 'widget-config.set' | translate }}">
-              <mat-option *ngFor="let size of pageStepSizeValues" [value]="size">
-                {{ size }}
-              </mat-option>
+              @for (size of pageStepSizeValues; track size) {
+                <mat-option [value]="size">
+                  {{ size }}
+                </mat-option>
+              }
             </mat-select>
           </mat-form-field>
         </div>
       </div>
-      <mat-form-field class="mat-block flex-1">
+      <mat-form-field class="mat-block flex-1" appearance="outline">
         <mat-label translate>widgets.table.default-sort-order</mat-label>
         <input matInput formControlName="defaultSortOrder">
       </mat-form-field>
@@ -105,18 +109,20 @@
   </fieldset>
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.persistent-table.columns-settings</legend>
-    <mat-form-field class="mat-block flex-1">
+    <mat-form-field class="mat-block flex-1" appearance="outline">
       <mat-label translate>widgets.persistent-table.display-columns</mat-label>
       <mat-chip-grid #columnsChipList class="tb-drop-list"
                      required
                      cdkDropList
                      cdkDropListOrientation="horizontal"
                      (cdkDropListDropped)="columnDrop($event)">
-        <mat-chip-row class="tb-draggable" cdkDrag *ngFor="let column of persistentTableWidgetSettingsForm.get('displayColumns').value"
-                  [removable]="true" (removed)="onColumnRemoved(column)">
-          {{ displayColumnFromValue(column)?.name }}
-          <mat-icon matChipRemove>cancel</mat-icon>
-        </mat-chip-row>
+        @for (column of persistentTableWidgetSettingsForm.get('displayColumns').value; track column) {
+          <mat-chip-row class="tb-draggable" cdkDrag
+                        [removable]="true" (removed)="onColumnRemoved(column)">
+            {{ displayColumnFromValue(column)?.name }}
+            <mat-icon matChipRemove>cancel</mat-icon>
+          </mat-chip-row>
+        }
         <input matInput type="text" placeholder="{{ 'widgets.persistent-table.column' | translate }}"
                style="max-width: 200px;"
                #columnInput
@@ -134,22 +140,27 @@
                         class="tb-autocomplete"
                         (optionSelected)="columnSelected($event)"
                         [displayWith]="displayColumnFn">
-        <mat-option *ngFor="let column of filteredDisplayColumns | async" [value]="column">
-          <span [innerHTML]="column.name | highlight:columnSearchText"></span>
-        </mat-option>
-        <mat-option *ngIf="(filteredDisplayColumns | async)?.length === 0" [value]="null" class="tb-not-found">
-          <div class="tb-not-found-content" (click)="$event.stopPropagation()">
-            <div *ngIf="!textIsNotEmpty(columnSearchText); else searchNotEmpty">
-              <span translate>widgets.persistent-table.no-columns-found</span>
-            </div>
-            <ng-template #searchNotEmpty>
+        @for (column of filteredDisplayColumns | async; track column) {
+          <mat-option [value]="column">
+            <span [innerHTML]="column.name | highlight:columnSearchText"></span>
+          </mat-option>
+        }
+        @if ((filteredDisplayColumns | async)?.length === 0) {
+          <mat-option [value]="null" class="tb-not-found">
+            <div class="tb-not-found-content" (click)="$event.stopPropagation()">
+              @if (!textIsNotEmpty(columnSearchText)) {
+                <div>
+                  <span translate>widgets.persistent-table.no-columns-found</span>
+                </div>
+              } @else {
                 <span>
                   {{ translate.get('widgets.persistent-table.no-columns-matching',
                   {column: truncate.transform(columnSearchText, true, 6, &apos;...&apos;)}) | async }}
                 </span>
-            </ng-template>
-          </div>
-        </mat-option>
+              }
+            </div>
+          </mat-option>
+        }
       </mat-autocomplete>
     </mat-form-field>
   </fieldset>

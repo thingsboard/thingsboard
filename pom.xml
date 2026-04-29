@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.thingsboard</groupId>
     <artifactId>thingsboard</artifactId>
-    <version>4.2.2.2-SNAPSHOT</version>
+    <version>4.4.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Thingsboard</name>
@@ -28,8 +28,8 @@
     <inceptionYear>2016</inceptionYear>
 
     <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.source>25</maven.compiler.source>
+        <maven.compiler.target>25</maven.compiler.target>
         <main.dir>${basedir}</main.dir>
         <pkg.process-resources.phase>none</pkg.process-resources.phase>
         <pkg.package.phase>none</pkg.package.phase>
@@ -62,6 +62,7 @@
         <pkg.implementationTitle>${project.name}</pkg.implementationTitle>
         <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
+        <thingsboard.client.version>4.3.1.2-SNAPSHOT</thingsboard.client.version> <!-- TODO: update to 4.4.0-SNAPSHOT -->
         <spring-boot.version>3.5.13</spring-boot.version>
         <javax.xml.bind-api.version>2.4.0-b180830.0359</javax.xml.bind-api.version>
         <jjwt.version>0.12.5</jjwt.version>
@@ -137,6 +138,7 @@
         <jakarta.el.version>4.0.2</jakarta.el.version>
         <antisamy.version>1.7.5</antisamy.version>
         <snmp4j.version>3.8.0</snmp4j.version>
+        <bytebuddy.version>1.18.4</bytebuddy.version>
         <langchain4j.version>1.8.0-TB</langchain4j.version>
         <error_prone_annotations.version>2.38.0</error_prone_annotations.version>
         <animal-sniffer-annotations.version>1.24</animal-sniffer-annotations.version>
@@ -165,7 +167,7 @@
         <exp4j.version>0.4.8</exp4j.version>
         <aerogear-otp.version>1.0.0</aerogear-otp.version>
 
-        <slack-api.version>1.39.0</slack-api.version>
+        <slack-api.version>1.48.0</slack-api.version>
         <oshi.version>6.6.0</oshi.version>
         <google-oauth-client.version>1.35.0</google-oauth-client.version>
         <weisj-jsvg.version>1.6.1</weisj-jsvg.version>
@@ -619,7 +621,6 @@
                             <groupId>org.apache.maven.plugins</groupId>
                             <artifactId>maven-assembly-plugin</artifactId>
                             <configuration>
-                                <skipAssembly>${pkg.skip.zip}</skipAssembly>
                                 <finalName>${pkg.name}</finalName>
                                 <descriptors>
                                     <descriptor>${main.dir}/packaging/${pkg.type}/assembly/windows.xml</descriptor>
@@ -632,6 +633,9 @@
                                     <goals>
                                         <goal>single</goal>
                                     </goals>
+                                    <configuration>
+                                        <skipAssembly>${pkg.skip.zip}</skipAssembly>
+                                    </configuration>
                                 </execution>
                             </executions>
                         </plugin>
@@ -678,7 +682,7 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.11.0</version>
                     <configuration>
-                        <release>17</release>
+                        <release>25</release>
                         <compilerArgs>
                             <arg>-Xlint:deprecation</arg>
                             <arg>-Xlint:removal</arg>
@@ -722,7 +726,7 @@
                 <plugin>
                     <groupId>org.thingsboard</groupId>
                     <artifactId>gradle-maven-plugin</artifactId>
-                    <version>1.0.12</version>
+                    <version>1.0.15</version>
                 </plugin>
                 <plugin>
                     <groupId>com.github.eirslett</groupId>
@@ -736,6 +740,7 @@
                     <configuration>
                         <argLine>
                             -XX:+UseStringDeduplication -XX:MaxGCPauseMillis=200
+                            -XX:+EnableDynamicAgentLoading
                             --add-opens=java.base/java.lang.reflect=ALL-UNNAMED
                             -Dqueue.edqs.local.rocksdb_path="target/rocksdb/fork_${surefire.forkNumber}/edqs"
                             -Dqueue.calculated_fields.rocks_db_path="target/rocksdb/fork_${surefire.forkNumber}/cf"
@@ -1027,6 +1032,16 @@
                 <scope>import</scope>
             </dependency>
             <dependency>
+                <groupId>net.bytebuddy</groupId>
+                <artifactId>byte-buddy</artifactId>
+                <version>${bytebuddy.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.bytebuddy</groupId>
+                <artifactId>byte-buddy-agent</artifactId>
+                <version>${bytebuddy.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.thingsboard.langchain4j</groupId>
                 <artifactId>langchain4j-bom</artifactId>
                 <version>${langchain4j.version}</version>
@@ -1183,6 +1198,12 @@
                 <groupId>org.thingsboard</groupId>
                 <artifactId>rest-client</artifactId>
                 <version>${project.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.client</groupId>
+                <artifactId>thingsboard-ce-client</artifactId>
+                <version>${thingsboard.client.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
@@ -2026,7 +2047,7 @@
             <url>https://repo1.maven.org/maven2/</url>
         </repository>
         <repository>
-            <id>thingsboard-repo</id>
+            <id>thingsboard-public-repo</id>
             <url>https://repo.thingsboard.io/artifactory/libs-release-public</url>
         </repository>
         <repository>
@@ -2052,4 +2073,10 @@
         </repository>
     </repositories>
 
+    <pluginRepositories>
+        <pluginRepository>
+            <id>thingsboard-repo</id>
+            <url>https://repo.thingsboard.io/artifactory/libs-release-public</url>
+        </pluginRepository>
+    </pluginRepositories>
 </project>

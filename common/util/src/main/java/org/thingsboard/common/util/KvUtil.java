@@ -61,6 +61,37 @@ public class KvUtil {
         }
     }
 
+    public static Long getLongValue(KvEntry entry) {
+        switch (entry.getDataType()) {
+            case LONG -> {
+                return entry.getLongValue().orElse(null);
+            }
+            case DOUBLE -> {
+                return entry.getDoubleValue().map(Double::longValue).orElse(null);
+            }
+            case BOOLEAN -> {
+                return entry.getBooleanValue().map(b -> b ? 1L : 0L).orElse(null);
+            }
+            case STRING -> {
+                try {
+                    return Long.parseLong(entry.getStrValue().orElse(""));
+                } catch (RuntimeException e) {
+                    return null;
+                }
+            }
+            case JSON -> {
+                try {
+                    return Long.parseLong(entry.getJsonValue().orElse(""));
+                } catch (RuntimeException e) {
+                    return null;
+                }
+            }
+            default -> {
+                return null;
+            }
+        }
+    }
+
     public static Boolean getBoolValue(KvEntry entry) {
         switch (entry.getDataType()) {
             case LONG:

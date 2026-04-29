@@ -21,13 +21,14 @@
       <div class="fixed-title-width" translate>widgets.notification.notification-types</div>
       <mat-form-field floatLabel="auto" appearance="outline" subscriptSizing="dynamic" class="fb-chips flex">
         <mat-chip-grid #chipList>
-          <mat-chip-row
-            *ngFor="let type of selectedNotificationTypes"
-            removable
-            (removed)="remove(type)">
-            {{ notificationTypesTranslateMap.get(type).name | translate }}
-            <mat-icon matChipRemove>close</mat-icon>
-          </mat-chip-row>
+          @for (type of selectedNotificationTypes; track type) {
+            <mat-chip-row
+              removable
+              (removed)="remove(type)">
+              {{ notificationTypesTranslateMap.get(type).name | translate }}
+              <mat-icon matChipRemove>close</mat-icon>
+            </mat-chip-row>
+          }
           <input matInput type="text"
                  placeholder="{{ ( selectedNotificationTypes.length ? 'widgets.notification.notification-type' : 'widgets.notification.any-type' ) | translate }}"
                  style="max-width: 200px;"
@@ -46,9 +47,11 @@
                           class="tb-autocomplete"
                           (optionSelected)="selected($event)"
                           [displayWith]="displayTypeFn">
-          <mat-option *ngFor="let type of filteredNotificationTypesList | async" [value]="type">
-            <span [innerHTML]="notificationTypesTranslateMap.get(type).name | translate | highlight:searchText"></span>
-          </mat-option>
+          @for (type of filteredNotificationTypesList | async; track type) {
+            <mat-option [value]="type">
+              <span [innerHTML]="notificationTypesTranslateMap.get(type).name | translate | highlight:searchText"></span>
+            </mat-option>
+          }
         </mat-autocomplete>
       </mat-form-field>
     </div>

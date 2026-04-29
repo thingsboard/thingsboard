@@ -28,71 +28,124 @@
       <div class="fixed-title-width" translate>widgets.maps.layer.provider.provider</div>
       <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
         <mat-select formControlName="provider" required>
-          <mat-option *ngFor="let provider of mapProviders" [value]="provider">
-            {{ mapProviderTranslationMap.get(provider) | translate }}
-          </mat-option>
+          @for (provider of mapProviders; track provider) {
+            <mat-option [value]="provider">
+              {{ mapProviderTranslationMap.get(provider) | translate }}
+            </mat-option>
+          }
         </mat-select>
       </mat-form-field>
     </div>
-    <div class="tb-form-row space-between column-xs">
-      <div class="fixed-title-width"> {{ (MapProvider.custom === layerFormGroup.get('provider').value ? 'widgets.maps.layer.provider.custom.tile-url' : 'widgets.maps.layer.layer') | translate }}</div>
-      <mat-form-field *ngIf="MapProvider.openstreet === layerFormGroup.get('provider').value"
-                      class="flex"  appearance="outline" subscriptSizing="dynamic">
-        <mat-select formControlName="layerType" required>
-          <mat-option *ngFor="let layerType of openStreetLayerTypes" [value]="layerType">
-            {{ openStreetMapLayerTranslationMap.get(layerType) | translate }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-      <mat-form-field *ngIf="MapProvider.google === layerFormGroup.get('provider').value"
-                      class="flex"  appearance="outline" subscriptSizing="dynamic">
-        <mat-select formControlName="layerType" required>
-          <mat-option *ngFor="let layerType of googleMapLayerTypes" [value]="layerType">
-            {{ googleMapLayerTranslationMap.get(layerType) | translate }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-      <mat-form-field *ngIf="MapProvider.here === layerFormGroup.get('provider').value"
-                      class="flex"  appearance="outline" subscriptSizing="dynamic">
-        <mat-select formControlName="layerType" required>
-          <mat-option *ngFor="let layerType of hereLayerTypes" [value]="layerType">
-            {{ hereLayerTranslationMap.get(layerType) | translate }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-      <mat-form-field *ngIf="MapProvider.tencent === layerFormGroup.get('provider').value"
-                      class="flex"  appearance="outline" subscriptSizing="dynamic">
-        <mat-select formControlName="layerType" required>
-          <mat-option *ngFor="let layerType of tencentLayerTypes" [value]="layerType">
-            {{ tencentLayerTranslationMap.get(layerType) | translate }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-      <mat-form-field *ngIf="MapProvider.custom === layerFormGroup.get('provider').value"
-                      class="flex" appearance="outline" subscriptSizing="dynamic">
-        <input matInput formControlName="tileUrl" required placeholder="{{ 'widget-config.set' | translate }}">
-      </mat-form-field>
-    </div>
-    <div *ngIf="[MapProvider.google, MapProvider.here].includes(layerFormGroup.get('provider').value)" class="tb-form-panel stroked">
-      <div class="tb-form-panel-title" translate>widgets.maps.layer.credentials.credentials</div>
+    @if (MapProvider.custom === layerFormGroup.get('provider').value) {
       <div class="tb-form-row space-between column-xs">
-        <div class="fixed-title-width" translate>widgets.maps.layer.credentials.api-key</div>
-        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
-          <input matInput formControlName="apiKey" required placeholder="{{ 'widget-config.set' | translate }}">
-        </mat-form-field>
+        <mat-slide-toggle class="mat-slide" formControlName="vectorTiles">
+          <div tb-hint-tooltip-icon="{{ 'widgets.maps.layer.provider.custom.vector-tiles-hint' | translate }}">
+            {{ 'widgets.maps.layer.provider.custom.vector-tiles' | translate }}
+          </div>
+        </mat-slide-toggle>
       </div>
+    }
+    <div class="tb-form-row space-between column-xs">
+      <div class="fixed-title-width"> {{ (MapProvider.custom === layerFormGroup.get('provider').value ? (layerFormGroup.get('vectorTiles').value ? 'widgets.maps.layer.provider.custom.style-url' : 'widgets.maps.layer.provider.custom.tile-url') : 'widgets.maps.layer.layer') | translate }}</div>
+      @if (MapProvider.openfreemap === layerFormGroup.get('provider').value) {
+        <mat-form-field
+          class="flex" appearance="outline" subscriptSizing="dynamic">
+          <mat-select formControlName="layerType" required>
+            @for (styleType of openFreeMapStyleTypes; track styleType) {
+              <mat-option [value]="styleType">
+                {{ openFreeMapStyleTranslationMap.get(styleType) | translate }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+      @if (MapProvider.openstreet === layerFormGroup.get('provider').value) {
+        <mat-form-field
+          class="flex"  appearance="outline" subscriptSizing="dynamic">
+          <mat-select formControlName="layerType" required>
+            @for (layerType of openStreetLayerTypes; track layerType) {
+              <mat-option [value]="layerType">
+                {{ openStreetMapLayerTranslationMap.get(layerType) | translate }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+      @if (MapProvider.google === layerFormGroup.get('provider').value) {
+        <mat-form-field
+          class="flex"  appearance="outline" subscriptSizing="dynamic">
+          <mat-select formControlName="layerType" required>
+            @for (layerType of googleMapLayerTypes; track layerType) {
+              <mat-option [value]="layerType">
+                {{ googleMapLayerTranslationMap.get(layerType) | translate }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+      @if (MapProvider.here === layerFormGroup.get('provider').value) {
+        <mat-form-field
+          class="flex"  appearance="outline" subscriptSizing="dynamic">
+          <mat-select formControlName="layerType" required>
+            @for (layerType of hereLayerTypes; track layerType) {
+              <mat-option [value]="layerType">
+                {{ hereLayerTranslationMap.get(layerType) | translate }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+      @if (MapProvider.tencent === layerFormGroup.get('provider').value) {
+        <mat-form-field
+          class="flex"  appearance="outline" subscriptSizing="dynamic">
+          <mat-select formControlName="layerType" required>
+            @for (layerType of tencentLayerTypes; track layerType) {
+              <mat-option [value]="layerType">
+                {{ tencentLayerTranslationMap.get(layerType) | translate }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+      @if (MapProvider.custom === layerFormGroup.get('provider').value) {
+        <mat-form-field
+          class="flex" appearance="outline" subscriptSizing="dynamic">
+          <input matInput formControlName="tileUrl" required placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+      }
     </div>
+    @if ([MapProvider.google, MapProvider.here].includes(layerFormGroup.get('provider').value)) {
+      <div class="tb-form-panel stroked">
+        <div class="tb-form-panel-title" translate>widgets.maps.layer.credentials.credentials</div>
+        <div class="tb-form-row space-between column-xs">
+          <div class="fixed-title-width" translate>widgets.maps.layer.credentials.api-key</div>
+          <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="apiKey" required placeholder="{{ 'widget-config.set' | translate }}">
+          </mat-form-field>
+        </div>
+      </div>
+    }
     <div class="tb-form-row space-between column-xs">
       <div class="fixed-title-width" translate>widgets.maps.layer.reference.reference-layer</div>
       <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
         <mat-select formControlName="referenceLayer" placeholder="{{'widgets.maps.layer.reference.no-layer' | translate}}">
           <mat-option [value]="null">{{ 'widgets.maps.layer.reference.no-layer' | translate }}</mat-option>
-          <mat-option *ngFor="let layer of referenceLayerTypes" [value]="layer">
-            {{ referenceLayerTypeTranslationMap.get(layer) | translate }}
-          </mat-option>
+          @for (layer of referenceLayerTypes; track layer) {
+            <mat-option [value]="layer">
+              {{ referenceLayerTypeTranslationMap.get(layer) | translate }}
+            </mat-option>
+          }
         </mat-select>
       </mat-form-field>
     </div>
+    @if (MapProvider.custom === layerFormGroup.get('provider').value) {
+      <div class="tb-form-row space-between column-xs">
+        <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'widgets.maps.layer.provider.custom.attribution-hint' | translate }}" translate>widgets.maps.layer.provider.custom.attribution</div>
+        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+          <input matInput formControlName="customAttribution" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+      </div>
+    }
   </div>
   <div class="tb-map-layer-settings-panel-buttons">
     <button mat-button

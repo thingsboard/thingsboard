@@ -16,11 +16,13 @@
 
 -->
 <div class="tb-container" [class.tb-button]="asButton">
-  <label class="tb-title" *ngIf="label"
-         [class.tb-required]="!disabled && required"
-         [class.pointer-event]="hint"
-         tb-hint-tooltip-icon="{{ hint }}">{{ label }}
-  </label>
+  @if (label) {
+    <label class="tb-title"
+           [class.tb-required]="!disabled && required"
+           [class.pointer-event]="hint"
+           tb-hint-tooltip-icon="{{ hint }}">{{ label }}
+    </label>
+  }
   <ng-container #flow="flow"
                 [flowConfig]="{allowDuplicateUploads: true}">
     <div class="tb-file-select-container">
@@ -43,7 +45,7 @@
             <span class="drop-label-text">{{ dropLabel }}</span>
             <button type="button" mat-button color="primary" class="browse-file" [class]="uploadButtonClass">
               <label
-                for="{{inputId}}">{{ uploadButtonText ? uploadButtonText : ((multipleFile ? 'file-input.browse-files' : 'file-input.browse-file') | translate) }}</label>
+              for="{{inputId}}">{{ uploadButtonText ? uploadButtonText : ((multipleFile ? 'file-input.browse-files' : 'file-input.browse-file') | translate) }}</label>
             </button>
           </div>
           <input class="file-input" flowButton #flowInput type="file" [flow]="flow.flowJs"
@@ -53,9 +55,17 @@
     </div>
   </ng-container>
   <div class="tb-file-info-container">
-    <tb-error *ngIf="!fileName && required && requiredAsError" class="font-medium" error="{{ noFileText | translate }}"></tb-error>
-    <div *ngIf="!fileName && !requiredAsError" class="tb-file-name" tbTruncateWithTooltip translate>{{ noFileText }}</div>
-    <div *ngIf="fileName" class="tb-file-name" tbTruncateWithTooltip>{{ fileName }}</div>
-    <div *ngIf="maxSizeByte && !disabled" class="tb-file-hint" tbTruncateWithTooltip translate [translateParams]="{ size: maxSizeByte | fileSize }">dashboard.maximum-upload-file-size</div>
+    @if (!fileName && required && requiredAsError) {
+      <tb-error class="font-medium" error="{{ noFileText | translate }}"></tb-error>
+    }
+    @if (!fileName && !requiredAsError) {
+      <div class="tb-file-name" tbTruncateWithTooltip translate>{{ noFileText }}</div>
+    }
+    @if (fileName) {
+      <div class="tb-file-name" tbTruncateWithTooltip>{{ fileName }}</div>
+    }
+    @if (maxSizeByte && !disabled) {
+      <div class="tb-file-hint" tbTruncateWithTooltip translate [translateParams]="{ size: maxSizeByte | fileSize }">dashboard.maximum-upload-file-size</div>
+    }
   </div>
 </div>

@@ -16,39 +16,49 @@
 
 -->
 <div class="trip-animation-control-panel">
-    <div class="flex flex-row">
-        <button mat-icon-button class="mat-icon-button" aria-label="Start" (click)="moveStart()">
-            <mat-icon class="material-icons" [style.color]="settings.buttonColor">fast_rewind</mat-icon>
-        </button>
-        <button mat-icon-button class="mat-icon-button" aria-label="Previous" (click)="movePrev()">
-            <mat-icon class="material-icons" [style.color]="settings.buttonColor">skip_previous</mat-icon>
-        </button>
-        <div class="flex flex-full flex-col">
-            <mat-slider [min]="minTimeIndex" [max]="maxTimeIndex" #ngSlider><input matSliderThumb [(ngModel)]="index"  (input)="changeIndex({source: ngSliderThumb, parent: ngSlider, value: ngSliderThumb.value}.value)" #ngSliderThumb="matSliderThumb" />
-            </mat-slider>
-            <div class="panel-timer">
-                <span *ngIf="currentTime">{{ currentTime | date:'medium'}}</span>
-                <span *ngIf="!currentTime">{{ "widget.no-data-found" | translate}}</span>
-            </div>
-        </div>
-        <button mat-icon-button class="mat-icon-button" aria-label="Next" (click)="moveNext()">
-            <mat-icon class="material-icons" [style.color]="settings.buttonColor">skip_next</mat-icon>
-        </button>
-        <button mat-icon-button class="mat-icon-button" aria-label="End" (click)="moveEnd()">
-            <mat-icon class="material-icons" [style.color]="settings.buttonColor">fast_forward</mat-icon>
-        </button>
-        <button mat-icon-button class="mat-icon-button" *ngIf="!playing" (click)="play()" aria-label="Play">
-            <mat-icon class="material-icons" [style.color]="settings.buttonColor">
-                play_circle_outline
-            </mat-icon>
-        </button>
-        <button mat-icon-button class="mat-icon-button" *ngIf="playing" (click)="pause()" aria-label="Stop">
-            <mat-icon class="material-icons" [style.color]="settings.buttonColor">
-                pause_circle_outline
-            </mat-icon>
-        </button>
-        <mat-select [(ngModel)]="speed" (selectionChange)="reInit()" class="speed-select" aria-label="Speed selector">
-            <mat-option [value]="speedValue" *ngFor="let speedValue of speeds">{{speedValue}} </mat-option>
-        </mat-select>
+  <div class="flex flex-row">
+    <button mat-icon-button class="mat-icon-button" aria-label="Start" (click)="moveStart()">
+      <mat-icon class="material-icons" [style.color]="settings.buttonColor">fast_rewind</mat-icon>
+    </button>
+    <button mat-icon-button class="mat-icon-button" aria-label="Previous" (click)="movePrev()">
+      <mat-icon class="material-icons" [style.color]="settings.buttonColor">skip_previous</mat-icon>
+    </button>
+    <div class="flex flex-full flex-col">
+      <mat-slider [min]="minTimeIndex" [max]="maxTimeIndex" #ngSlider><input matSliderThumb [(ngModel)]="index"  (input)="changeIndex({source: ngSliderThumb, parent: ngSlider, value: ngSliderThumb.value}.value)" #ngSliderThumb="matSliderThumb" />
+      </mat-slider>
+      <div class="panel-timer">
+        @if (currentTime) {
+          <span>{{ currentTime | date:'medium'}}</span>
+        }
+        @if (!currentTime) {
+          <span>{{ "widget.no-data-found" | translate}}</span>
+        }
+      </div>
     </div>
+    <button mat-icon-button class="mat-icon-button" aria-label="Next" (click)="moveNext()">
+      <mat-icon class="material-icons" [style.color]="settings.buttonColor">skip_next</mat-icon>
+    </button>
+    <button mat-icon-button class="mat-icon-button" aria-label="End" (click)="moveEnd()">
+      <mat-icon class="material-icons" [style.color]="settings.buttonColor">fast_forward</mat-icon>
+    </button>
+    @if (!playing) {
+      <button mat-icon-button class="mat-icon-button" (click)="play()" aria-label="Play">
+        <mat-icon class="material-icons" [style.color]="settings.buttonColor">
+          play_circle_outline
+        </mat-icon>
+      </button>
+    }
+    @if (playing) {
+      <button mat-icon-button class="mat-icon-button" (click)="pause()" aria-label="Stop">
+        <mat-icon class="material-icons" [style.color]="settings.buttonColor">
+          pause_circle_outline
+        </mat-icon>
+      </button>
+    }
+    <mat-select [(ngModel)]="speed" (selectionChange)="reInit()" class="speed-select" aria-label="Speed selector">
+      @for (speedValue of speeds; track speedValue) {
+        <mat-option [value]="speedValue">{{speedValue}} </mat-option>
+      }
+    </mat-select>
+  </div>
 </div>

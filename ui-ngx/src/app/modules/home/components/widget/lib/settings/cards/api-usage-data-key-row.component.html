@@ -1,0 +1,85 @@
+<!--
+
+    Copyright © 2016-2026 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div [formGroup]="dataKeyFormGroup" class="tb-form-table-row tb-api-usage-data-key-row">
+  <div class="tb-source-field">
+    <mat-form-field
+      class="tb-label-field tb-inline-field" appearance="outline" subscriptSizing="dynamic">
+      <input matInput formControlName="label" placeholder="{{ 'widget-config.set' | translate }}">
+    </mat-form-field>
+    <tb-string-autocomplete [fetchOptionsFn]="fetchDashboardStates.bind(this)"
+                            placeholderText="{{ 'widget-config.set' | translate }}"
+                            style="flex: 1"
+                            formControlName="state">
+    </tb-string-autocomplete>
+  </div>
+  <div class="tb-data-key-fields">
+    <tb-data-key-input
+      class="tb-data-key-field"
+      required
+      requiredText="{{ 'widgets.api-usage.status-required'}}"
+      [datasourceType]="DatasourceType.entity"
+      [entityAliasId]="dsEntityAliasId"
+      [aliasController]="context.aliasController"
+      [widgetType]="widgetType.latest"
+      [dataKeyTypes]="[DataKeyType.attribute, DataKeyType.timeseries]"
+      [callbacks]="context.callbacks"
+      [generateKey]="context.generateDataKey"
+      (keyEdit)="editKey('status')"
+      formControlName="status">
+    </tb-data-key-input>
+    <tb-data-key-input
+      class="tb-data-key-field"
+      required
+      requiredText="{{ 'widgets.api-usage.limit-required'}}"
+      [datasourceType]="DatasourceType.entity"
+      [entityAliasId]="dsEntityAliasId"
+      [aliasController]="context.aliasController"
+      [widgetType]="widgetType.latest"
+      [dataKeyTypes]="[DataKeyType.attribute, DataKeyType.timeseries]"
+      [callbacks]="context.callbacks"
+      [generateKey]="context.generateDataKey"
+      (keyEdit)="editKey('maxLimit')"
+      formControlName="maxLimit">
+    </tb-data-key-input>
+    <tb-data-key-input
+      class="tb-data-key-field"
+      required
+      requiredText="{{ 'widgets.api-usage.current-number-required'}}"
+      [datasourceType]="DatasourceType.entity"
+      [entityAliasId]="dsEntityAliasId"
+      [aliasController]="context.aliasController"
+      [widgetType]="widgetType.latest"
+      [dataKeyTypes]="[DataKeyType.attribute, DataKeyType.timeseries]"
+      [callbacks]="context.callbacks"
+      [generateKey]="context.generateDataKey"
+      (keyEdit)="editKey('current')"
+      formControlName="current">
+    </tb-data-key-input>
+  </div>
+  <div class="tb-form-table-row-cell-buttons">
+    <div class="tb-remove-button">
+      <button type="button"
+              mat-icon-button
+              (click)="dataKeyRemoved.emit()"
+              matTooltip="{{ 'widgets.api-usage.delete-key' | translate }}"
+              matTooltipPosition="above">
+        <mat-icon>delete</mat-icon>
+      </button>
+    </div>
+  </div>
+</div>

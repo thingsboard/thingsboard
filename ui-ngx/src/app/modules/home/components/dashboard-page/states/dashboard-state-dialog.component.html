@@ -25,26 +25,34 @@
       <mat-icon class="material-icons">close</mat-icon>
     </button>
   </mat-toolbar>
-  <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
-  </mat-progress-bar>
+  @if (isLoading$ | async) {
+    <mat-progress-bar color="warn" mode="indeterminate">
+    </mat-progress-bar>
+  }
   <div mat-dialog-content>
     <fieldset [disabled]="isLoading$ | async" class="flex flex-col">
-      <mat-form-field class="mat-block">
+      <mat-form-field class="mat-block" appearance="outline">
         <mat-label translate>dashboard.state-name</mat-label>
         <input required matInput formControlName="name">
-        <mat-error *ngIf="stateFormGroup.get('name').hasError('required')">
-          {{ 'dashboard.state-name-required' | translate }}
-        </mat-error>
+        @if (stateFormGroup.get('name').hasError('required')) {
+          <mat-error>
+            {{ 'dashboard.state-name-required' | translate }}
+          </mat-error>
+        }
       </mat-form-field>
-      <mat-form-field class="mat-block">
+      <mat-form-field class="mat-block" appearance="outline">
         <mat-label translate>dashboard.state-id</mat-label>
         <input required matInput formControlName="id">
-        <mat-error *ngIf="stateFormGroup.get('id').hasError('required')">
-          {{ 'dashboard.state-id-required' | translate }}
-        </mat-error>
-        <mat-error *ngIf="stateFormGroup.get('id').hasError('stateExists')">
-          {{ 'dashboard.state-id-exists' | translate }}
-        </mat-error>
+        @if (stateFormGroup.get('id').hasError('required')) {
+          <mat-error>
+            {{ 'dashboard.state-id-required' | translate }}
+          </mat-error>
+        }
+        @if (stateFormGroup.get('id').hasError('stateExists')) {
+          <mat-error>
+            {{ 'dashboard.state-id-exists' | translate }}
+          </mat-error>
+        }
       </mat-form-field>
       <mat-checkbox formControlName="root">
         {{ 'dashboard.is-root-state' | translate }}

@@ -15,9 +15,11 @@
     limitations under the License.
 
 -->
-<mat-tab *ngIf="isTenantWidgetsBundle() && authUser.authority === authorities.TENANT_ADMIN"
-         label="{{ 'version-control.version-control' | translate }}" #versionControlTab="matTab">
-  <tb-version-control detailsMode="true" singleEntityMode="true"
-                      (versionRestored)="entitiesTableConfig.updateData()"
-                      [active]="versionControlTab.isActive" [entityId]="entity.id" [entityName]="entity.title" [externalEntityId]="entity.externalId || entity.id"></tb-version-control>
-</mat-tab>
+@if (isTenantWidgetsBundle() && authUser.authority === authorities.TENANT_ADMIN) {
+  <mat-tab
+    label="{{ 'version-control.version-control' | translate }}" #versionControlTab="matTab">
+    <tb-version-control detailsMode="true" singleEntityMode="true"
+                        (versionRestored)="entitiesTableConfig.updateData()"
+    [active]="versionControlTab.isActive" [entityId]="entity.id" [entityName]="entity.title" [externalEntityId]="entity.externalId || entity.id"></tb-version-control>
+  </mat-tab>
+}

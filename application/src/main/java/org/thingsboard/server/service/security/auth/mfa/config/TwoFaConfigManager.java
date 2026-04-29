@@ -15,9 +15,9 @@
  */
 package org.thingsboard.server.service.security.auth.mfa.config;
 
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.model.mfa.PlatformTwoFaSettings;
 import org.thingsboard.server.common.data.security.model.mfa.account.AccountTwoFaSettings;
 import org.thingsboard.server.common.data.security.model.mfa.account.TwoFaAccountConfig;
@@ -27,14 +27,14 @@ import java.util.Optional;
 
 public interface TwoFaConfigManager {
 
-    Optional<AccountTwoFaSettings> getAccountTwoFaSettings(TenantId tenantId, UserId userId);
+    Optional<AccountTwoFaSettings> getAccountTwoFaSettings(TenantId tenantId, User user);
 
 
-    Optional<TwoFaAccountConfig> getTwoFaAccountConfig(TenantId tenantId, UserId userId, TwoFaProviderType providerType);
+    Optional<TwoFaAccountConfig> getTwoFaAccountConfig(TenantId tenantId, User user, TwoFaProviderType providerType);
 
-    AccountTwoFaSettings saveTwoFaAccountConfig(TenantId tenantId, UserId userId, TwoFaAccountConfig accountConfig);
+    AccountTwoFaSettings saveTwoFaAccountConfig(TenantId tenantId, User user, TwoFaAccountConfig accountConfig);
 
-    AccountTwoFaSettings deleteTwoFaAccountConfig(TenantId tenantId, UserId userId, TwoFaProviderType providerType);
+    AccountTwoFaSettings deleteTwoFaAccountConfig(TenantId tenantId, User user, TwoFaProviderType providerType);
 
 
     Optional<PlatformTwoFaSettings> getPlatformTwoFaSettings(TenantId tenantId, boolean sysadminSettingsAsDefault);

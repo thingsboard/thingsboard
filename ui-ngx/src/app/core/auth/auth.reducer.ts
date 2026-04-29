@@ -33,10 +33,17 @@ const emptyUserAuthState: AuthPayload = {
   mobileQrEnabled: false,
   maxResourceSize: 0,
   maxArgumentsPerCF: 0,
+  minAllowedDeduplicationIntervalInSecForCF: 0,
+  minAllowedAggregationIntervalInSecForCF: 0,
+  minAllowedScheduledUpdateIntervalInSecForCF: 0,
+  maxRelationLevelPerCfArgument: 0,
+  maxRelatedEntitiesToReturnPerCfArgument: 0,
   maxDataPointsPerRollingArg: 0,
   maxDebugModeDurationMinutes: 0,
+  intermediateAggregationIntervalInSecForCF: 0,
   userSettings: initialUserSettings,
-  trendzSettings: initialTrendzSettings
+  trendzSettings: initialTrendzSettings,
+  allowKeyFiltersOrConditions: true
 };
 
 export const initialState: AuthState = {

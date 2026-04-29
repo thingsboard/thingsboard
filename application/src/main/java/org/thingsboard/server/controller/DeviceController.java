@@ -19,6 +19,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -29,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -46,8 +48,11 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
 import org.thingsboard.server.common.data.DeviceInfoFilter;
 import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.NameConflictPolicy;
+import org.thingsboard.server.common.data.NameConflictStrategy;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.UniquifyStrategy;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
@@ -108,6 +113,8 @@ import static org.thingsboard.server.controller.ControllerConstants.EDGE_ASSIGN_
 import static org.thingsboard.server.controller.ControllerConstants.EDGE_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.EDGE_UNASSIGN_ASYNC_FIRST_STEP_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.EDGE_UNASSIGN_RECEIVE_STEP_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.NAME_CONFLICT_POLICY_DESC;
+import static org.thingsboard.server.controller.ControllerConstants.UNIQUIFY_SEPARATOR_DESC;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
@@ -117,6 +124,7 @@ import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHO
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_ID;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.UNIQUIFY_STRATEGY_DESC;
 import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
 import static org.thingsboard.server.controller.EdgeController.EDGE_ID;
 
@@ -177,30 +185,37 @@ public class DeviceController extends BaseController {
     @ResponseBody
     public Device saveDevice(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON value representing the device.") @RequestBody Device device,
                              @Parameter(description = "Optional value of the device credentials to be used during device creation. " +
-                                     "If omitted, access token will be auto-generated.") @RequestParam(name = "accessToken", required = false) String accessToken) throws Exception {
+                                     "If omitted, access token will be auto-generated.")
+                             @RequestParam(name = "accessToken", required = false) String accessToken,
+                             @Parameter(description = NAME_CONFLICT_POLICY_DESC)
+                             @RequestParam(name = "nameConflictPolicy", defaultValue = "FAIL") NameConflictPolicy nameConflictPolicy,
+                             @Parameter(description = UNIQUIFY_SEPARATOR_DESC)
+                             @RequestParam(name = "uniquifySeparator", defaultValue = "_") String uniquifySeparator,
+                             @Parameter(description = UNIQUIFY_STRATEGY_DESC)
+                             @RequestParam(name = "uniquifyStrategy", defaultValue = "RANDOM") UniquifyStrategy uniquifyStrategy) throws Exception {
         device.setTenantId(getCurrentUser().getTenantId());
         if (device.getId() != null) {
             checkDeviceId(device.getId(), Operation.WRITE);
         } else {
             checkEntity(null, device, Resource.DEVICE);
         }
-        return tbDeviceService.save(device, accessToken, getCurrentUser());
+        return tbDeviceService.save(device, accessToken, new NameConflictStrategy(nameConflictPolicy, uniquifySeparator, uniquifyStrategy), getCurrentUser());
     }
 
     @ApiOperation(value = "Create Device (saveDevice) with credentials ",
             notes = "Create or update the Device. When creating device, platform generates Device Id as " + UUID_WIKI_LINK +
                     "Requires to provide the Device Credentials object as well as an existing device profile ID or use \"default\".\n" +
                     "You may find the example of device with different type of credentials below: \n\n" +
-                    "- Credentials type: <b>\"Access token\"</b> with <b>device profile ID</b> below: \n\n" +
+                    "- Credentials type: **\"Access token\"** with **device profile ID** below: \n\n" +
                     DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_ACCESS_TOKEN_DESCRIPTION_MARKDOWN + "\n\n" +
-                    "- Credentials type: <b>\"Access token\"</b> with  <b>device profile default</b> below: \n\n" +
+                    "- Credentials type: **\"Access token\"** with  **device profile default** below: \n\n" +
                     DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_ACCESS_TOKEN_DEFAULT_DESCRIPTION_MARKDOWN + "\n\n" +
-                    "- Credentials type: <b>\"X509\"</b> with <b>device profile ID</b> below: \n\n" +
-                    "Note: <b>credentialsId</b> -  format <b>Sha3Hash</b>, <b>certificateValue</b> - format <b>PEM</b> (with \"--BEGIN CERTIFICATE----\" and  -\"----END CERTIFICATE-\").\n\n" +
+                    "- Credentials type: **\"X509\"** with **device profile ID** below: \n\n" +
+                    "Note: **credentialsId** -  format **Sha3Hash**, **certificateValue** - format **PEM** (with \"--BEGIN CERTIFICATE----\" and  -\"----END CERTIFICATE-\").\n\n" +
                     DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_X509_CERTIFICATE_DESCRIPTION_MARKDOWN + "\n\n" +
-                    "- Credentials type: <b>\"MQTT_BASIC\"</b> with <b>device profile ID</b> below: \n\n" +
+                    "- Credentials type: **\"MQTT_BASIC\"** with **device profile ID** below: \n\n" +
                     DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_MQTT_BASIC_DESCRIPTION_MARKDOWN + "\n\n" +
-                    "- You may find the example of <b>LwM2M</b> device and <b>RPK</b> credentials below: \n\n" +
+                    "- You may find the example of **LwM2M** device and **RPK** credentials below: \n\n" +
                     "Note: LwM2M device - only existing device profile ID (Transport configuration -> Transport type: \"LWM2M\".\n\n" +
                     DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_LVM2M_RPK_DESCRIPTION_MARKDOWN + "\n\n" +
                     "Remove 'id', 'tenantId' and optionally 'customerId' from the request body example (below) to create new Device entity. " +
@@ -209,12 +224,18 @@ public class DeviceController extends BaseController {
     @RequestMapping(value = "/device-with-credentials", method = RequestMethod.POST)
     @ResponseBody
     public Device saveDeviceWithCredentials(@Parameter(description = "The JSON object with device and credentials. See method description above for example.")
-                                            @Valid @RequestBody SaveDeviceWithCredentialsRequest deviceAndCredentials) throws ThingsboardException {
+                                            @Valid @RequestBody SaveDeviceWithCredentialsRequest deviceAndCredentials,
+                                            @Parameter(description = NAME_CONFLICT_POLICY_DESC)
+                                            @RequestParam(name = "nameConflictPolicy", defaultValue = "FAIL") NameConflictPolicy nameConflictPolicy,
+                                            @Parameter(description = UNIQUIFY_SEPARATOR_DESC)
+                                            @RequestParam(name = "uniquifySeparator", defaultValue = "_") String uniquifySeparator,
+                                            @Parameter(description = UNIQUIFY_STRATEGY_DESC)
+                                            @RequestParam(name = "uniquifyStrategy", defaultValue = "RANDOM") UniquifyStrategy uniquifyStrategy) throws ThingsboardException {
         Device device = deviceAndCredentials.getDevice();
         DeviceCredentials credentials = deviceAndCredentials.getCredentials();
         device.setTenantId(getCurrentUser().getTenantId());
         checkEntity(device.getId(), device, Resource.DEVICE);
-        return tbDeviceService.saveDeviceWithCredentials(device, credentials, getCurrentUser());
+        return tbDeviceService.saveDeviceWithCredentials(device, credentials, new NameConflictStrategy(nameConflictPolicy, uniquifySeparator, uniquifyStrategy), getCurrentUser());
     }
 
     @ApiOperation(value = "Delete device (deleteDevice)",
@@ -301,14 +322,14 @@ public class DeviceController extends BaseController {
                     "Then use current method to update the credentials type and value. It is not possible to create multiple device credentials for the same device.\n" +
                     "The structure of device credentials id and value is simple for the 'ACCESS_TOKEN' but is much more complex for the 'MQTT_BASIC' or 'LWM2M_CREDENTIALS'.\n" +
                     "You may find the example of device with different type of credentials below: \n\n" +
-                    "- Credentials type: <b>\"Access token\"</b> with <b>device ID</b> and with <b>device ID</b> below: \n\n" +
+                    "- Credentials type: **\"Access token\"** with **device ID** and with **device ID** below: \n\n" +
                     DEVICE_UPDATE_CREDENTIALS_PARAM_ACCESS_TOKEN_DESCRIPTION_MARKDOWN + "\n\n" +
-                    "- Credentials type: <b>\"X509\"</b> with <b>device profile ID</b> below: \n\n" +
-                    "Note: <b>credentialsId</b> -  format <b>Sha3Hash</b>, <b>certificateValue</b> - format <b>PEM</b> (with \"--BEGIN CERTIFICATE----\" and  -\"----END CERTIFICATE-\").\n\n" +
+                    "- Credentials type: **\"X509\"** with **device profile ID** below: \n\n" +
+                    "Note: **credentialsId** -  format **Sha3Hash**, **certificateValue** - format **PEM** (with \"--BEGIN CERTIFICATE----\" and  -\"----END CERTIFICATE-\").\n\n" +
                     DEVICE_UPDATE_CREDENTIALS_PARAM_X509_CERTIFICATE_DESCRIPTION_MARKDOWN + "\n\n" +
-                    "- Credentials type: <b>\"MQTT_BASIC\"</b> with <b>device profile ID</b> below: \n\n" +
+                    "- Credentials type: **\"MQTT_BASIC\"** with **device profile ID** below: \n\n" +
                     DEVICE_UPDATE_CREDENTIALS_PARAM_MQTT_BASIC_DESCRIPTION_MARKDOWN + "\n\n" +
-                    "- You may find the example of <b>LwM2M</b> device and <b>RPK</b> credentials below: \n\n" +
+                    "- You may find the example of **LwM2M** device and **RPK** credentials below: \n\n" +
                     "Note: LwM2M device - only existing device profile ID (Transport configuration -> Transport type: \"LWM2M\".\n\n" +
                     DEVICE_UPDATE_CREDENTIALS_PARAM_LVM2M_RPK_DESCRIPTION_MARKDOWN + "\n\n" +
                     "Update to real value:\n" +
@@ -331,8 +352,7 @@ public class DeviceController extends BaseController {
             notes = "Returns a page of devices owned by tenant. " +
                     PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/devices", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/tenant/devices")
     public PageData<Device> getTenantDevices(
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
@@ -359,8 +379,7 @@ public class DeviceController extends BaseController {
             notes = "Returns a page of devices info objects owned by tenant. " +
                     PAGE_DATA_PARAMETERS + DEVICE_INFO_DESCRIPTION + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/deviceInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/tenant/deviceInfos")
     public PageData<DeviceInfo> getTenantDeviceInfos(
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
@@ -392,25 +411,31 @@ public class DeviceController extends BaseController {
         return checkNotNull(deviceService.findDeviceInfosByFilter(filter.build(), pageLink));
     }
 
-    @ApiOperation(value = "Get Tenant Device (getTenantDevice)",
-            notes = "Requested device must be owned by tenant that the user belongs to. " +
-                    "Device name is an unique property of device. So it can be used to identify the device." + TENANT_AUTHORITY_PARAGRAPH)
+    @Hidden
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/devices", params = {"deviceName"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/tenant/devices", params = {"deviceName"})
     public Device getTenantDevice(
-            @Parameter(description = DEVICE_NAME_DESCRIPTION)
             @RequestParam String deviceName) throws ThingsboardException {
         TenantId tenantId = getCurrentUser().getTenantId();
         return checkNotNull(deviceService.findDeviceByTenantIdAndName(tenantId, deviceName));
+    }
+
+    @ApiOperation(value = "Get Tenant Device (getTenantDeviceByName)",
+            notes = "Requested device must be owned by tenant that the user belongs to. " +
+                    "Device name is an unique property of device. So it can be used to identify the device." + TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @GetMapping(value = "/tenant/device")
+    public Device getTenantDeviceByName(
+            @Parameter(description = DEVICE_NAME_DESCRIPTION)
+            @RequestParam String deviceName) throws ThingsboardException {
+        return getTenantDevice(deviceName);
     }
 
     @ApiOperation(value = "Get Customer Devices (getCustomerDevices)",
             notes = "Returns a page of devices objects assigned to customer. " +
                     PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/customer/{customerId}/devices", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/customer/{customerId}/devices")
     public PageData<Device> getCustomerDevices(
             @Parameter(description = CUSTOMER_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(CUSTOMER_ID) String strCustomerId,
@@ -442,8 +467,7 @@ public class DeviceController extends BaseController {
             notes = "Returns a page of devices info objects assigned to customer. " +
                     PAGE_DATA_PARAMETERS + DEVICE_INFO_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/customer/{customerId}/deviceInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/customer/{customerId}/deviceInfos")
     public PageData<DeviceInfo> getCustomerDeviceInfos(
             @Parameter(description = CUSTOMER_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable("customerId") String strCustomerId,
@@ -483,8 +507,7 @@ public class DeviceController extends BaseController {
     @ApiOperation(value = "Get Devices By Ids (getDevicesByIds)",
             notes = "Requested devices must be owned by tenant or assigned to customer which user is performing the request. " + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/devices", params = {"deviceIds"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/devices")
     public List<Device> getDevicesByIds(
             @Parameter(description = "A list of devices ids, separated by comma ','",  array = @ArraySchema(schema = @Schema(type = "string")))
             @RequestParam("deviceIds") String[] strDeviceIds) throws ThingsboardException, ExecutionException, InterruptedException {
@@ -505,14 +528,14 @@ public class DeviceController extends BaseController {
         return checkNotNull(devices.get());
     }
 
-    @ApiOperation(value = "Find related devices (findByQuery)",
+    @ApiOperation(value = "Find related devices (findDevicesByQuery)",
             notes = "Returns all devices that are related to the specific entity. " +
                     "The entity id, relation type, device types, depth of the search, and other query parameters defined using complex 'DeviceSearchQuery' object. " +
                     "See 'Model' tab of the Parameters for more info." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/devices", method = RequestMethod.POST)
     @ResponseBody
-    public List<Device> findByQuery(
+    public List<Device> findDevicesByQuery(
             @Parameter(description = "The device search query JSON")
             @RequestBody DeviceSearchQuery query) throws ThingsboardException, ExecutionException, InterruptedException {
         checkNotNull(query);
@@ -711,8 +734,7 @@ public class DeviceController extends BaseController {
             notes = "Returns a page of devices assigned to edge. " +
                     PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/edge/{edgeId}/devices", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/edge/{edgeId}/devices")
     public PageData<DeviceInfo> getEdgeDevices(
             @Parameter(description = EDGE_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(EDGE_ID) String strEdgeId,

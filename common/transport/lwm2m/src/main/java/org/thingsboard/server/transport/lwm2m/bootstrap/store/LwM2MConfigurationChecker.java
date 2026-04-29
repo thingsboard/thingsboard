@@ -21,6 +21,10 @@ import org.eclipse.leshan.server.bootstrap.InvalidConfigurationException;
 
 import java.util.Map;
 
+import static org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mServerIdentifier.NOT_USED_IDENTIFYING_LWM2M_SERVER_MIN;
+import static org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mServerIdentifier.NOT_USED_IDENTIFYING_LWM2M_SERVER_MAX;
+import static org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mServerIdentifier.isNotLwm2mServer;
+
 public class LwM2MConfigurationChecker extends ConfigurationChecker {
 
     @Override
@@ -74,15 +78,16 @@ public class LwM2MConfigurationChecker extends ConfigurationChecker {
              * This Resource MUST be set when the Bootstrap-Server Resource has false value.
              * Specific ID:0 and ID:65535 values MUST NOT be used for identifying the LwM2M Server (Section 6.3 of the LwM2M version 1.0 specification).
              */
-            if (!security.bootstrapServer && (srvCfg.shortId < 1 && srvCfg.shortId > 65534 )) {
-                throw new InvalidConfigurationException("Specific ID:0 and ID:65535 values MUST NOT be used for identifying the LwM2M Server");
+            if (!security.bootstrapServer && isNotLwm2mServer(srvCfg.shortId)) {
+                throw new InvalidConfigurationException("Specific ID:" + NOT_USED_IDENTIFYING_LWM2M_SERVER_MIN.getId() + " and ID:" + NOT_USED_IDENTIFYING_LWM2M_SERVER_MAX.getId() + " values MUST NOT be used for identifying the LwM2M Server");
             }
         }
     }
 
     protected static BootstrapConfig.ServerSecurity getSecurityEntry(BootstrapConfig config, int shortId) {
         for (Map.Entry<Integer, BootstrapConfig.ServerSecurity> es : config.security.entrySet()) {
-            if (es.getValue().serverId == shortId) {
+            if ((es.getValue().serverId == null && shortId == 0) ||
+                    (es.getValue().serverId != null && es.getValue().serverId == shortId)) {
                 return es.getValue();
             }
         }

@@ -55,6 +55,8 @@ export class MarkdownEditorComponent implements OnInit, ControlValueAccessor, On
 
   @Input() helpId: string;
 
+  @Input() helpPopupStyle: { [klass: string]: any } = {};
+
   @Input()
   @coerceBoolean()
   required: boolean;

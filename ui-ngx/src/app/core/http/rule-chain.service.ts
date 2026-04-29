@@ -68,6 +68,11 @@ export class RuleChainService {
       defaultHttpOptionsFromConfig(config));
   }
 
+  public getRuleChainsByIds(ruleChainIds: Array<string>, config?: RequestConfig): Observable<Array<RuleChain>> {
+    return this.http.get<Array<RuleChain>>(`/api/ruleChains?&ruleChainIds=${ruleChainIds.join(',')}`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
   public getRuleChain(ruleChainId: string, config?: RequestConfig): Observable<RuleChain> {
     return this.http.get<RuleChain>(`/api/ruleChain/${ruleChainId}`, defaultHttpOptionsFromConfig(config));
   }

@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
@@ -40,15 +41,22 @@ import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
+import org.thingsboard.server.service.profile.TbAssetProfileCache;
+import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -56,6 +64,12 @@ public class DefaultCalculatedFieldCacheTest {
 
     @Mock
     private CalculatedFieldService calculatedFieldService;
+    @Mock
+    private TbAssetProfileCache assetProfileCache;
+    @Mock
+    private TbDeviceProfileCache deviceProfileCache;
+    @Mock
+    private TbTenantProfileCache tenantProfileCache;
     @Mock
     private DeviceService deviceService;
     @Mock
@@ -67,7 +81,11 @@ public class DefaultCalculatedFieldCacheTest {
 
     @BeforeEach
     public void setUp() {
-        cache = new DefaultCalculatedFieldCache(calculatedFieldService, null, null);
+        // ActorSystemContext is only used in getCalculatedFieldCtx (not tested here), so null is safe
+        OwnerService ownerService = new OwnerService(deviceService, assetService, customerService);
+        cache = new DefaultCalculatedFieldCache(calculatedFieldService, assetProfileCache,
+                deviceProfileCache, tenantProfileCache, null, ownerService);
+
     }
 
     // --- Tenant deletion tests ---
@@ -88,6 +106,21 @@ public class DefaultCalculatedFieldCacheTest {
         assertThat(cache.getCalculatedFieldsByEntityId(device1)).isEmpty();
         assertThat(cache.getCalculatedField(cf2.getId())).isEqualTo(cf2);
         assertThat(cache.getCalculatedFieldsByEntityId(device2)).containsExactly(cf2);
+    }
+
+    @Test
+    public void onComponentLifecycleEvent_tenantDeleted_evictsOwnerEntities() {
+        TenantId tenant = new TenantId(UUID.randomUUID());
+        DeviceId device = new DeviceId(UUID.randomUUID());
+        stubDeviceOwner(tenant, device, tenant);
+
+        cache.addOwnerEntity(tenant, device);
+        assertThat(cache.getDynamicEntities(tenant, tenant)).contains(device);
+
+        cache.onComponentLifecycleEvent(new ComponentLifecycleMsg(tenant, tenant, ComponentLifecycleEvent.DELETED));
+
+        // After eviction, getDynamicEntities triggers a fresh load from ownerService (empty)
+        assertThat(cache.getDynamicEntities(tenant, tenant)).doesNotContain(device);
     }
 
     @Test
@@ -142,6 +175,21 @@ public class DefaultCalculatedFieldCacheTest {
     }
 
     @Test
+    public void onComponentLifecycleEvent_deviceDeleted_evictsDeviceFromOwnerEntities() {
+        TenantId tenant = new TenantId(UUID.randomUUID());
+        CustomerId customer = new CustomerId(UUID.randomUUID());
+        DeviceId device = new DeviceId(UUID.randomUUID());
+        stubDeviceOwner(tenant, device, customer);
+
+        cache.addOwnerEntity(tenant, device);
+        assertThat(cache.getDynamicEntities(tenant, customer)).contains(device);
+
+        cache.onComponentLifecycleEvent(new ComponentLifecycleMsg(tenant, device, ComponentLifecycleEvent.DELETED));
+
+        assertThat(cache.getDynamicEntities(tenant, customer)).doesNotContain(device);
+    }
+
+    @Test
     public void onComponentLifecycleEvent_assetDeleted_evictsCfsForThatAsset() {
         TenantId tenant = new TenantId(UUID.randomUUID());
         AssetId asset = new AssetId(UUID.randomUUID());
@@ -151,6 +199,36 @@ public class DefaultCalculatedFieldCacheTest {
 
         assertThat(cache.getCalculatedField(cf.getId())).isNull();
         assertThat(cache.getCalculatedFieldsByEntityId(asset)).isEmpty();
+    }
+
+    @Test
+    public void onComponentLifecycleEvent_deviceCreated_addsDeviceToOwnerEntities() {
+        TenantId tenant = new TenantId(UUID.randomUUID());
+        CustomerId customer = new CustomerId(UUID.randomUUID());
+        DeviceId device = new DeviceId(UUID.randomUUID());
+        stubDeviceOwner(tenant, device, customer);
+
+        cache.onComponentLifecycleEvent(new ComponentLifecycleMsg(tenant, device, ComponentLifecycleEvent.CREATED));
+
+        assertThat(cache.getDynamicEntities(tenant, customer)).contains(device);
+    }
+
+    // --- Customer deletion tests ---
+
+    @Test
+    public void onComponentLifecycleEvent_customerDeleted_evictsCustomerOwnerEntries() {
+        TenantId tenant = new TenantId(UUID.randomUUID());
+        CustomerId customer = new CustomerId(UUID.randomUUID());
+        DeviceId device = new DeviceId(UUID.randomUUID());
+        stubDeviceOwner(tenant, device, customer);
+
+        cache.addOwnerEntity(tenant, device);
+        assertThat(cache.getDynamicEntities(tenant, customer)).contains(device);
+
+        cache.onComponentLifecycleEvent(new ComponentLifecycleMsg(tenant, customer, ComponentLifecycleEvent.DELETED));
+
+        // The customer's owned-entities entry is evicted; fresh load returns empty
+        assertThat(cache.getDynamicEntities(tenant, customer)).doesNotContain(device);
     }
 
     // --- DeviceProfile/AssetProfile deletion tests ---
@@ -302,6 +380,96 @@ public class DefaultCalculatedFieldCacheTest {
         assertThat(cache.getCalculatedField(cf.getId())).isEqualTo(updatedCf);
     }
 
+    // --- evictOwner recursive traversal tests ---
+
+    @Test
+    public void evictOwner_customerDeleted_recursivelyEvictsDevicesOwnedByThatCustomer() {
+        TenantId tenant = new TenantId(UUID.randomUUID());
+        CustomerId customer = new CustomerId(UUID.randomUUID());
+        DeviceId device = new DeviceId(UUID.randomUUID());
+
+        stubDeviceOwner(tenant, device, customer);
+        when(customerService.findCustomersByTenantId(any(), any())).thenReturn(PageData.emptyPageData());
+
+        // tenant owns customer (getOwner for CUSTOMER returns tenantId)
+        cache.addOwnerEntity(tenant, customer);         // ownerEntities[tenant] = {customer}
+        cache.addOwnerEntity(tenant, device);           // ownerEntities[customer] = {device}
+
+        assertThat(cache.getDynamicEntities(tenant, tenant)).contains(customer);
+        assertThat(cache.getDynamicEntities(tenant, customer)).contains(device);
+
+        // deleting the customer evicts the customer key and recursively cleans its owned set
+        cache.onComponentLifecycleEvent(new ComponentLifecycleMsg(tenant, customer, ComponentLifecycleEvent.DELETED));
+
+        assertThat(cache.getDynamicEntities(tenant, customer)).doesNotContain(device);
+    }
+
+    @Test
+    public void evictOwner_tenantDeleted_recursivelyEvictsCustomerAndItsOwnedDevices() {
+        TenantId tenant = new TenantId(UUID.randomUUID());
+        CustomerId customer = new CustomerId(UUID.randomUUID());
+        DeviceId device = new DeviceId(UUID.randomUUID());
+
+        stubDeviceOwner(tenant, device, customer);
+        when(customerService.findCustomersByTenantId(any(), any())).thenReturn(PageData.emptyPageData());
+
+        cache.addOwnerEntity(tenant, customer);         // ownerEntities[tenant] = {customer}
+        cache.addOwnerEntity(tenant, device);           // ownerEntities[customer] = {device}
+
+        assertThat(cache.getDynamicEntities(tenant, tenant)).contains(customer);
+        assertThat(cache.getDynamicEntities(tenant, customer)).contains(device);
+
+        // deleting the tenant: evictOwner(tenant) finds customer (CUSTOMER type) and recurses into it
+        cache.onComponentLifecycleEvent(new ComponentLifecycleMsg(tenant, tenant, ComponentLifecycleEvent.DELETED));
+
+        // both levels must be gone
+        assertThat(cache.getDynamicEntities(tenant, tenant)).doesNotContain(customer);
+        assertThat(cache.getDynamicEntities(tenant, customer)).doesNotContain(device);
+    }
+
+    // --- TenantProfile lifecycle tests ---
+
+    @Test
+    public void onComponentLifecycleEvent_tenantProfileUpdated_callsHandleTenantProfileUpdate() {
+        TenantId tenant = new TenantId(UUID.randomUUID());
+        TenantProfileId profileId = new TenantProfileId(UUID.randomUUID());
+        DefaultCalculatedFieldCache spyCache = spy(cache);
+
+        spyCache.onComponentLifecycleEvent(new ComponentLifecycleMsg(tenant, profileId, ComponentLifecycleEvent.UPDATED));
+
+        verify(spyCache).handleTenantProfileUpdate(profileId);
+    }
+
+    @Test
+    public void onComponentLifecycleEvent_tenantProfileDeleted_doesNotCallHandleTenantProfileUpdate() {
+        TenantId tenant = new TenantId(UUID.randomUUID());
+        TenantProfileId profileId = new TenantProfileId(UUID.randomUUID());
+        DefaultCalculatedFieldCache spyCache = spy(cache);
+
+        spyCache.onComponentLifecycleEvent(new ComponentLifecycleMsg(tenant, profileId, ComponentLifecycleEvent.DELETED));
+
+        verify(spyCache, never()).handleTenantProfileUpdate(any());
+    }
+
+    // --- Helpers ---
+
+    private void stubDeviceOwner(TenantId tenantId, DeviceId deviceId, EntityId ownerId) {
+        Device device = new Device();
+        device.setId(deviceId);
+        device.setTenantId(tenantId);
+        if (ownerId instanceof CustomerId customerId) {
+            device.setCustomerId(customerId);
+        }
+        // If ownerId is a TenantId, leaving customerId null means getOwnerId() returns tenantId
+        when(deviceService.findDeviceById(tenantId, deviceId)).thenReturn(device);
+        // Stubs for getOwnedEntities iteration (empty pages — device is added explicitly)
+        when(deviceService.findDeviceInfosByFilter(any(), any())).thenReturn(PageData.emptyPageData());
+        when(assetService.findAssetsByTenantIdAndCustomerId(any(), any(), any())).thenReturn(PageData.emptyPageData());
+        if (ownerId instanceof TenantId) {
+            when(customerService.findCustomersByTenantId(any(), any())).thenReturn(PageData.emptyPageData());
+        }
+    }
+
     private CalculatedField addCfToCache(TenantId tenantId, EntityId entityId) {
         CalculatedFieldId cfId = new CalculatedFieldId(UUID.randomUUID());
         CalculatedField cf = buildCalculatedField(cfId, tenantId, entityId, simpleCfConfig());
@@ -332,7 +500,7 @@ public class DefaultCalculatedFieldCacheTest {
 
     private CalculatedFieldConfiguration simpleCfConfig() {
         CalculatedFieldConfiguration config = mock(CalculatedFieldConfiguration.class);
-        when(config.getReferencedEntities()).thenReturn(Collections.emptyList());
+        when(config.getReferencedEntities()).thenReturn(Collections.emptySet());
         when(config.buildCalculatedFieldLinks(any(), any(), any())).thenReturn(Collections.emptyList());
         return config;
     }
@@ -340,7 +508,7 @@ public class DefaultCalculatedFieldCacheTest {
     private CalculatedFieldConfiguration linkedEntityCfConfig(TenantId tenantId, CalculatedFieldId cfId, EntityId linkedEntity) {
         CalculatedFieldConfiguration config = mock(CalculatedFieldConfiguration.class);
         CalculatedFieldLink link = new CalculatedFieldLink(tenantId, linkedEntity, cfId);
-        when(config.getReferencedEntities()).thenReturn(List.of(linkedEntity));
+        when(config.getReferencedEntities()).thenReturn(Set.of(linkedEntity));
         when(config.buildCalculatedFieldLinks(any(), any(), any())).thenReturn(List.of(link));
         when(config.buildCalculatedFieldLink(any(), eq(linkedEntity), any())).thenReturn(link);
         return config;

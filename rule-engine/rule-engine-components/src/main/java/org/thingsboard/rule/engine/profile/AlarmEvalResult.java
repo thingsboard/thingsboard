@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.profile;
 
+@Deprecated
 public enum AlarmEvalResult {
 
     FALSE, NOT_YET_TRUE, TRUE;

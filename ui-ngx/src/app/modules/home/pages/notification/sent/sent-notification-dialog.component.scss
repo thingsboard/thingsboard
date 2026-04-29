@@ -218,6 +218,7 @@
         width: 100%;;
         overflow-y: auto;
         scrollbar-gutter: stable;
+        padding-top: 4px;
         @media #{$mat-gt-sm} {
           min-width: 500px;
         }

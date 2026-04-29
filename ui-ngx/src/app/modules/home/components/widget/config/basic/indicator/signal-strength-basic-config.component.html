@@ -16,10 +16,12 @@
 
 -->
 <ng-container [formGroup]="signalStrengthWidgetConfigForm">
-  <tb-timewindow-config-panel *ngIf="displayTimewindowConfig"
-                              [onlyHistoryTimewindow]="onlyHistoryTimewindow()"
-                              formControlName="timewindowConfig">
-  </tb-timewindow-config-panel>
+  @if (displayTimewindowConfig) {
+    <tb-timewindow-config-panel
+      [onlyHistoryTimewindow]="onlyHistoryTimewindow()"
+      formControlName="timewindowConfig">
+    </tb-timewindow-config-panel>
+  }
   <tb-datasources
     [configMode]="basicMode"
     hideDataKeyLabel
@@ -35,21 +37,30 @@
                                     breakpoints: {
                                       'lt-sm': 1
                                     }}"
-                           label="{{ 'widgets.signal-strength.layout' | translate }}" formControlName="layout">
-      <tb-image-cards-select-option *ngFor="let layout of signalStrengthLayouts"
-                                    [value]="layout"
-                                    [image]="signalStrengthLayoutImageMap.get(layout)">
-        {{ signalStrengthLayoutTranslationMap.get(layout) | translate }}
-      </tb-image-cards-select-option>
+      label="{{ 'widgets.signal-strength.layout' | translate }}" formControlName="layout">
+      @for (layout of signalStrengthLayouts; track layout) {
+        <tb-image-cards-select-option
+          [value]="layout"
+          [image]="signalStrengthLayoutImageMap.get(layout)">
+          {{ signalStrengthLayoutTranslationMap.get(layout) | translate }}
+        </tb-image-cards-select-option>
+      }
     </tb-image-cards-select>
     <div class="tb-form-row column-xs">
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showTitle">
         {{ 'widget-config.title' | translate }}
       </mat-slide-toggle>
       <div class="flex flex-1 flex-row items-center justify-start gap-2">
-        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
-          <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
-        </mat-form-field>
+        <tb-string-pattern-autocomplete class="flex-1"
+                                        appearance="outline"
+                                        brackets="curly"
+                                        subscriptSizing="dynamic"
+                                        predefinedValuesButton="true"
+                                        [disabled]="!signalStrengthWidgetConfigForm.get('showTitle').value"
+                                        [predefinedValues]="predefinedValues"
+                                        placeholderText="{{ 'widget-config.set' | translate }}"
+                                        formControlName="title"
+        ></tb-string-pattern-autocomplete>
         <tb-font-settings formControlName="titleFont"
                           clearButton
                           [previewText]="signalStrengthWidgetConfigForm.get('title').value"

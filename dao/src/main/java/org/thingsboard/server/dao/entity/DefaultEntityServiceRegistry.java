@@ -43,9 +43,6 @@ public class DefaultEntityServiceRegistry implements EntityServiceRegistry {
             if (EntityType.RULE_CHAIN.equals(entityType)) {
                 entityDaoServicesMap.put(EntityType.RULE_NODE, entityDaoService);
             }
-            if (EntityType.CALCULATED_FIELD.equals(entityType)) {
-                entityDaoServicesMap.put(EntityType.CALCULATED_FIELD_LINK, entityDaoService);
-            }
         });
         log.debug("Initialized EntityServiceRegistry total [{}] entries", entityDaoServicesMap.size());
     }

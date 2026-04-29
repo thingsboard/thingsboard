@@ -1,0 +1,60 @@
+<!--
+
+    Copyright © 2016-2026 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<form>
+  <mat-toolbar color="primary">
+    <h2>{{ (readonly ? 'alarm-rule.schedule-title' : 'alarm-rule.edit-schedule') | translate }}</h2>
+    <span class="flex-1"></span>
+    <button mat-icon-button
+            (click)="cancel()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <div mat-dialog-content>
+    <div class="tb-form-panel no-padding no-border">
+      <div class="tb-form-panel stroked no-padding-bottom">
+        <div class="flex flex-row items-center justify-between">
+          <div class="tb-form-panel-title">{{ 'alarm-rule.mode' | translate }}</div>
+          <tb-toggle-select [formControl]="dynamicModeControl" selectMediaBreakpoint="xs">
+            <tb-toggle-option [value]="false">{{ 'alarm-rule.static-schedule' | translate }}</tb-toggle-option>
+            <tb-toggle-option [value]="true">{{ 'alarm-rule.dynamic-schedule' | translate }}</tb-toggle-option>
+          </tb-toggle-select>
+        </div>
+        <tb-cf-alarm-schedule [arguments]="arguments"
+                              [dynamicMode]="dynamicModeControl.value"
+                              [formControl]="alarmScheduleControl">
+        </tb-cf-alarm-schedule>
+      </div>
+    </div>
+  </div>
+  <div mat-dialog-actions class="justify-end">
+    <button mat-button color="primary"
+            type="button"
+            (click)="cancel()" cdkFocusInitial>
+      {{ (readonly ? 'action.close' : 'action.cancel') | translate }}
+    </button>
+    @if (!readonly) {
+      <button mat-raised-button color="primary"
+              type="button"
+              (click)="save()"
+              [disabled]="alarmScheduleControl.invalid || !alarmScheduleControl.dirty">
+        {{ 'action.save' | translate }}
+      </button>
+    }
+  </div>
+</form>

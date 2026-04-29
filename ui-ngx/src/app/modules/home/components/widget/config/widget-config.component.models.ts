@@ -23,11 +23,19 @@ import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { AbstractControl, UntypedFormGroup } from '@angular/forms';
-import { DataKey, DatasourceType, Widget, WidgetConfigMode, widgetType } from '@shared/models/widget.models';
+import {
+  DataKey,
+  DatasourceType,
+  Widget,
+  widgetTypeCanHaveTimewindow,
+  WidgetConfigMode,
+  widgetType
+} from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
-import { isDefinedAndNotNull } from '@core/utils';
+import { isDefinedAndNotNull, isUndefinedOrNull } from '@core/utils';
 import { IAliasController } from '@core/api/widget-api.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { initModelFromDefaultTimewindow } from '@shared/models/time/time.models';
 
 export type WidgetConfigCallbacks = DatasourceCallbacks & WidgetActionCallbacks;
 
@@ -106,6 +114,11 @@ export abstract class BasicWidgetConfigComponent extends PageComponent implement
   protected setupConfig(widgetConfig: WidgetConfigComponentData) {
     if (this.isAdd) {
       this.setupDefaults(widgetConfig);
+    }
+    if (widgetTypeCanHaveTimewindow(widgetConfig.widgetType) && isUndefinedOrNull(widgetConfig.config.timewindow)) {
+      widgetConfig.config.timewindow = initModelFromDefaultTimewindow(null,
+        widgetConfig.widgetType === widgetType.latest, false, this.widgetConfigComponent.timeService,
+        widgetConfig.widgetType === widgetType.timeseries);
     }
     this.onConfigSet(widgetConfig);
     this.updateValidators(false);

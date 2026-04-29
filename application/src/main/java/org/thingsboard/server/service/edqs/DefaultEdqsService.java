@@ -73,6 +73,7 @@ import org.thingsboard.server.queue.util.AfterStartUp;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -150,12 +151,10 @@ public class DefaultEdqsService implements EdqsService {
         executor.submit(() -> {
             try {
                 EdqsSyncState syncState = getSyncState();
-                if (edqsSyncService.isSyncNeeded() || syncState == null || syncState.getStatus() != EdqsSyncStatus.FINISHED) {
-                    if (hashPartitionService.isSystemPartitionMine(ServiceType.TB_CORE)) {
-                        processSystemRequest(ToCoreEdqsRequest.builder()
-                                .syncRequest(new EdqsSyncRequest())
-                                .build());
-                    }
+                if (edqsSyncService.isSyncNeeded() || syncState == null) {
+                    requestEdqsSync(new EdqsSyncRequest());
+                } else if (syncState.getStatus() != EdqsSyncStatus.FINISHED) {
+                    requestEdqsSync(new EdqsSyncRequest(syncState.getObjectTypes()));
                 } else {
                     // only if topic/RocksDB is not empty and sync is finished
                     onSyncStatusUpdate(EdqsSyncStatus.FINISHED);
@@ -166,11 +165,19 @@ public class DefaultEdqsService implements EdqsService {
         });
     }
 
+    private void requestEdqsSync(EdqsSyncRequest syncRequest) {
+        if (hashPartitionService.isSystemPartitionMine(ServiceType.TB_CORE)) {
+            processSystemRequest(ToCoreEdqsRequest.builder()
+                    .syncRequest(syncRequest)
+                    .build());
+        }
+    }
+
     @Override
     public void processSystemRequest(ToCoreEdqsRequest request) {
         log.info("Processing system request {}", request);
         if (request.getSyncRequest() != null) {
-            saveSyncState(EdqsSyncStatus.REQUESTED);
+            saveSyncState(EdqsSyncStatus.REQUESTED, request.getSyncRequest().getObjectTypes());
         }
         broadcast(ToCoreEdqsMsg.builder()
                 .syncRequest(request.getSyncRequest())
@@ -198,7 +205,8 @@ public class DefaultEdqsService implements EdqsService {
                     onSyncStatusUpdate(msg.getSyncStatus());
                 }
 
-                if (msg.getSyncRequest() != null) {
+                EdqsSyncRequest syncRequest = msg.getSyncRequest();
+                if (syncRequest != null) {
                     syncLock.lock();
                     try {
                         EdqsSyncState syncState = getSyncState();
@@ -209,15 +217,15 @@ public class DefaultEdqsService implements EdqsService {
                                 return;
                             }
                         }
-                        saveSyncState(EdqsSyncStatus.STARTED);
+                        saveSyncState(EdqsSyncStatus.STARTED, syncRequest.getObjectTypes());
 
-                        edqsSyncService.sync();
+                        edqsSyncService.sync(syncRequest);
 
                         saveSyncState(EdqsSyncStatus.FINISHED);
                         broadcastSyncStatusUpdate(EdqsSyncStatus.FINISHED);
                     } catch (Exception e) {
                         log.error("Failed to complete sync", e);
-                        saveSyncState(EdqsSyncStatus.FAILED);
+                        saveSyncState(EdqsSyncStatus.FAILED, syncRequest.getObjectTypes());
                         broadcastSyncStatusUpdate(EdqsSyncStatus.FAILED);
                     } finally {
                         syncLock.unlock();
@@ -369,7 +377,12 @@ public class DefaultEdqsService implements EdqsService {
 
     @SneakyThrows
     private void saveSyncState(EdqsSyncStatus status) {
-        EdqsSyncState state = new EdqsSyncState(status);
+        saveSyncState(status, null);
+    }
+
+    @SneakyThrows
+    private void saveSyncState(EdqsSyncStatus status, Set<ObjectType> objectTypes) {
+        EdqsSyncState state = new EdqsSyncState(status, objectTypes);
         log.info("New EDQS sync state: {}", state);
         attributesService.save(TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID, AttributeScope.SERVER_SCOPE, new BaseAttributeKvEntry(
                 new JsonDataEntry("edqsSyncState", JacksonUtil.toString(state)),
@@ -381,13 +394,6 @@ public class DefaultEdqsService implements EdqsService {
         executor.shutdown();
         scheduler.shutdownNow();
         eventsProducer.stop();
-    }
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    private static class EdqsSyncState {
-        private EdqsSyncStatus status;
     }
 
 }

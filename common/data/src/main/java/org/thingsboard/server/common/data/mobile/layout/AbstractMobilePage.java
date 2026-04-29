@@ -20,6 +20,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.thingsboard.server.common.data.Views;
 
+@Schema
 @Data
 public abstract class AbstractMobilePage implements MobilePage {
 

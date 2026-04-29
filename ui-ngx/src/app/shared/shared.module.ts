@@ -220,15 +220,28 @@ import { CountryData } from '@shared/models/country.models';
 import { SvgXmlComponent } from '@shared/components/svg-xml.component';
 import { DatapointsLimitComponent } from '@shared/components/time/datapoints-limit.component';
 import { AggregationTypeSelectComponent } from '@shared/components/time/aggregation/aggregation-type-select.component';
-import { AggregationOptionsConfigPanelComponent } from '@shared/components/time/aggregation/aggregation-options-config-panel.component';
+import {
+  AggregationOptionsConfigPanelComponent
+} from '@shared/components/time/aggregation/aggregation-options-config-panel.component';
 import { IntervalOptionsConfigPanelComponent } from '@shared/components/time/interval-options-config-panel.component';
-import { GroupingIntervalOptionsComponent } from '@shared/components/time/aggregation/grouping-interval-options.component';
+import {
+  GroupingIntervalOptionsComponent
+} from '@shared/components/time/aggregation/grouping-interval-options.component';
 import { JsFuncModulesComponent } from '@shared/components/js-func-modules.component';
 import { JsFuncModuleRowComponent } from '@shared/components/js-func-module-row.component';
 import { EntityKeyAutocompleteComponent } from '@shared/components/entity/entity-key-autocomplete.component';
 import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
 import { MqttVersionSelectComponent } from '@shared/components/mqtt-version-select.component';
+import { PasswordRequirementsTooltipComponent } from '@shared/components/password-requirements-tooltip.component';
+import { StringPatternAutocompleteComponent } from '@shared/components/string-pattern-autocomplete.component';
+import { TimeUnitInputComponent } from '@shared/components/time-unit-input.component';
+import { DateExpirationPipe } from '@shared/pipe/date-expiration.pipe';
+import { EntityLimitExceededDialogComponent } from '@shared/components/dialog/entity-limit-exceeded-dialog.component';
+import { DynamicMatDialogModule } from '@shared/components/dialog/dynamic/dynamic-dialog.module';
 import { MAT_BUTTON_TOGGLE_DEFAULT_OPTIONS } from '@angular/material/button-toggle';
+import { RgbaInputComponent } from '@shared/components/color-picker/rgba-input.component';
+import { HslaInputComponent } from '@shared/components/color-picker/hsla-input.component';
+import { InputChangeDirective } from '@shared/components/color-picker/input-change.directive';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -237,6 +250,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
 @NgModule({
   providers: [
     DatePipe,
+    SelectableColumnsPipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,
     HighlightPipe,
@@ -373,6 +387,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TodoDialogComponent,
     ColorPickerDialogComponent,
     MaterialIconsDialogComponent,
+    EntityLimitExceededDialogComponent,
     ColorInputComponent,
     MaterialIconSelectComponent,
     NodeScriptTestDialogComponent,
@@ -400,6 +415,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ShortNumberPipe,
     SelectableColumnsPipe,
     KeyboardShortcutPipe,
+    DateExpirationPipe,
     TbJsonToStringDirective,
     JsonObjectEditDialogComponent,
     HistorySelectorComponent,
@@ -451,6 +467,12 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ScadaSymbolInputComponent,
     EntityKeyAutocompleteComponent,
     MqttVersionSelectComponent,
+    PasswordRequirementsTooltipComponent,
+    TimeUnitInputComponent,
+    StringPatternAutocompleteComponent,
+    RgbaInputComponent,
+    HslaInputComponent,
+    InputChangeDirective
   ],
   imports: [
     CommonModule,
@@ -513,7 +535,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
         useFactory: MarkedOptionsFactory,
         deps: [MarkedOptionsService]
       }
-    })
+    }),
+    DynamicMatDialogModule
   ],
   exports: [
     FooterComponent,
@@ -638,6 +661,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TodoDialogComponent,
     ColorPickerDialogComponent,
     MaterialIconsDialogComponent,
+    EntityLimitExceededDialogComponent,
     ColorInputComponent,
     MaterialIconSelectComponent,
     NodeScriptTestDialogComponent,
@@ -665,6 +689,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     SafePipe,
     ShortNumberPipe,
     SelectableColumnsPipe,
+    DateExpirationPipe,
     RouterModule,
     TranslateModule,
     JsonObjectEditDialogComponent,
@@ -715,6 +740,10 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ScadaSymbolInputComponent,
     EntityKeyAutocompleteComponent,
     MqttVersionSelectComponent,
+    PasswordRequirementsTooltipComponent,
+    TimeUnitInputComponent,
+    StringPatternAutocompleteComponent,
+    DynamicMatDialogModule
   ]
 })
 export class SharedModule { }
