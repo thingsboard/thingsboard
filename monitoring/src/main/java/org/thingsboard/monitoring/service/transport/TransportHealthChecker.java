@@ -17,8 +17,11 @@ package org.thingsboard.monitoring.service.transport;
 
 import com.fasterxml.jackson.databind.node.TextNode;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.monitoring.client.TbClient;
+import org.thingsboard.monitoring.config.transport.RpcInfo;
 import org.thingsboard.monitoring.config.transport.TransportInfo;
 import org.thingsboard.monitoring.config.transport.TransportMonitoringConfig;
 import org.thingsboard.monitoring.config.transport.TransportMonitoringTarget;
@@ -31,8 +34,20 @@ public abstract class TransportHealthChecker<C extends TransportMonitoringConfig
     @Value("${monitoring.calculated_fields.enabled:true}")
     private boolean calculatedFieldsMonitoringEnabled;
 
+    @Autowired
+    protected TbClient tbClient;
+
     public TransportHealthChecker(C config, TransportMonitoringTarget target) {
         super(config, target);
+    }
+
+    protected RpcInfo getRpcInfo() {
+        return new RpcInfo(new TransportInfo(getTransportType(), target));
+    }
+
+    protected int getRpcTimeoutMs() {
+        Integer perTarget = target.getRpc() != null ? target.getRpc().getRequestTimeoutMs() : null;
+        return perTarget != null ? perTarget : config.getRequestTimeoutMs();
     }
 
     @Override

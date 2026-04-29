@@ -15,7 +15,10 @@
  */
 package org.thingsboard.monitoring.service.transport.impl;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.paho.client.mqttv3.IMqttToken;
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.MqttClient;
@@ -25,19 +28,30 @@ import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.monitoring.config.transport.MqttTransportMonitoringConfig;
+import org.thingsboard.monitoring.config.transport.RpcInfo;
 import org.thingsboard.monitoring.config.transport.TransportMonitoringTarget;
 import org.thingsboard.monitoring.config.transport.TransportType;
+import org.thingsboard.monitoring.data.Latencies;
+import org.thingsboard.monitoring.data.ServiceFailureException;
 import org.thingsboard.monitoring.service.transport.TransportHealthChecker;
+import org.thingsboard.server.common.data.id.DeviceId;
+
+import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 @Slf4j
 public class MqttTransportHealthChecker extends TransportHealthChecker<MqttTransportMonitoringConfig> {
 
-    private MqttClient mqttClient;
+    MqttClient mqttClient;
+    private boolean rpcSubscribed;
 
     private static final String DEVICE_TELEMETRY_TOPIC = "v1/devices/me/telemetry";
+    private static final String DEVICE_RPC_REQUEST_SUB_TOPIC = "v1/devices/me/rpc/request/+";
+    private static final String DEVICE_RPC_RESPONSE_TOPIC_PREFIX = "v1/devices/me/rpc/response/";
 
     protected MqttTransportHealthChecker(MqttTransportMonitoringConfig config, TransportMonitoringTarget target) {
         super(config, target);
@@ -59,7 +73,24 @@ public class MqttTransportHealthChecker extends TransportHealthChecker<MqttTrans
                 throw result.getException();
             }
             log.debug("Initialized MQTT client for URI {}", mqttClient.getServerURI());
+            rpcSubscribed = false;
         }
+        if (target.isRpcEnabled() && !rpcSubscribed) {
+            mqttClient.subscribe(DEVICE_RPC_REQUEST_SUB_TOPIC, config.getQos(), this::echoRpcRequest);
+            rpcSubscribed = true;
+            log.debug("Subscribed for RPC requests on {}", DEVICE_RPC_REQUEST_SUB_TOPIC);
+        }
+    }
+
+    void echoRpcRequest(String topic, MqttMessage request) throws Exception {
+        String requestId = StringUtils.substringAfterLast(topic, "/");
+        JsonNode body = JacksonUtil.toJsonNode(new String(request.getPayload(), StandardCharsets.UTF_8));
+        JsonNode params = body == null ? null : body.get("params");
+        byte[] responsePayload = (params == null ? "{}" : JacksonUtil.toString(params))
+                .getBytes(StandardCharsets.UTF_8);
+        MqttMessage response = new MqttMessage(responsePayload);
+        response.setQos(config.getQos());
+        mqttClient.publish(DEVICE_RPC_RESPONSE_TOPIC_PREFIX + requestId, response);
     }
 
     @Override
@@ -71,10 +102,39 @@ public class MqttTransportHealthChecker extends TransportHealthChecker<MqttTrans
     }
 
     @Override
+    protected void doRpcCheck() throws Exception {
+        if (!target.isRpcEnabled()) {
+            return;
+        }
+        RpcInfo rpcInfo = getRpcInfo();
+        String testValue = UUID.randomUUID().toString();
+        ObjectNode body = JacksonUtil.newObjectNode();
+        body.put("method", "monitoringCheck");
+        body.set("params", JacksonUtil.newObjectNode().put("value", testValue));
+        body.put("timeout", getRpcTimeoutMs());
+
+        long start = System.nanoTime();
+        JsonNode response;
+        try {
+            response = tbClient.handleTwoWayDeviceRPCRequest(new DeviceId(target.getDeviceId()), body);
+        } catch (Throwable e) {
+            throw new ServiceFailureException(rpcInfo, e);
+        }
+        String actual = response == null ? null : response.path("value").asText(null);
+        if (!testValue.equals(actual)) {
+            throw new ServiceFailureException(rpcInfo,
+                    "RPC echo mismatch: expected " + testValue + " but got " + actual);
+        }
+        reportRpcLatency(System.nanoTime() - start);
+        log.trace("RPC round-trip latency reported under {}", Latencies.rpcRoundTrip(getKey()));
+    }
+
+    @Override
     protected void destroyClient() throws Exception {
         if (mqttClient != null) {
             mqttClient.disconnect();
             mqttClient = null;
+            rpcSubscribed = false;
             log.info("Disconnected MQTT client");
         }
     }

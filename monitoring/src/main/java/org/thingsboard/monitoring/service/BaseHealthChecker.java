@@ -54,6 +54,10 @@ public abstract class BaseHealthChecker<C extends MonitoringConfig, T extends Mo
     @Value("${monitoring.check_timeout_ms}")
     private int resultCheckTimeoutMs;
 
+    protected final void reportRpcLatency(long latencyNanos) {
+        reporter.reportLatency(Latencies.rpcRoundTrip(getKey()), latencyNanos);
+    }
+
     @Getter
     private final Map<String, BaseHealthChecker<C, T>> associates = new HashMap<>();
 
