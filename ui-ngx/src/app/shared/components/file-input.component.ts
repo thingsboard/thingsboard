@@ -205,37 +205,69 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
 
   private readerAsFile(file: flowjs.FlowFile): Promise<any> {
     return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        let fileName = null;
-        let fileContent = null;
-        let files = null;
-        let mediaType = null;
-        if (reader.readyState === reader.DONE) {
-          if (!this.workFromFileObj) {
-            fileContent = reader.result;
-            if (fileContent && fileContent.length > 0) {
-              if (this.contentConvertFunction) {
-                fileContent = this.contentConvertFunction(fileContent);
-              }
-              fileName = fileContent ? file.name : null;
-              mediaType = file?.file?.type || null;
-            }
-          } else if (file.name || file.file){
-            files = file.file;
-            fileName = file.name;
-            mediaType = file.file.type || null;
-          }
-        }
-        resolve({fileContent, fileName, files, mediaType});
-      };
-      reader.onerror = () => {
-        resolve({fileContent: null, fileName: null, files: null, mediaType: null});
-      };
       if (this.readAsBinary) {
+       const reader = new FileReader();
+        reader.onload = () => {
+          let fileName = null;
+          let fileContent = null;
+          let files = null;
+          let mediaType = null;
+          if (reader.readyState === reader.DONE) {
+            if (!this.workFromFileObj) {
+              fileContent = reader.result;
+              if (fileContent && fileContent.length > 0) {
+                if (this.contentConvertFunction) {
+                  fileContent = this.contentConvertFunction(fileContent as string);
+                }
+                fileName = fileContent ? file.name : null;
+                mediaType = file?.file?.type || null;
+              }
+            } else if (file.name || file.file) {
+              files = file.file;
+              fileName = file.name;
+              mediaType = file.file.type || null;
+            }
+          }
+          resolve({fileContent, fileName, files, mediaType});
+        };
+        reader.onerror = () => {
+          resolve({fileContent: null, fileName: null, files: null, mediaType: null});
+        };
         reader.readAsBinaryString(file.file);
       } else {
-        reader.readAsText(file.file, 'ISO-8859-1');
+        if (this.workFromFileObj) {
+          resolve({
+            fileContent: null,
+            fileName: file.name,
+            files: file.file,
+            mediaType: file.file?.type || null
+          });
+          return;
+        }
+        file.file.arrayBuffer().then(buf => {
+          const bytes = new Uint8Array(buf);
+          let text: string;
+          try {
+            text = new TextDecoder('utf-8', {fatal: true}).decode(bytes);
+          } catch {
+            text = new TextDecoder('iso-8859-1').decode(bytes);
+          }
+
+          let fileContent: any = text && text.length > 0 ? text : null;
+          let fileName: string = null;
+          const mediaType: string = file?.file?.type || null;
+
+          if (fileContent) {
+            if (this.contentConvertFunction) {
+              fileContent = this.contentConvertFunction(fileContent);
+            }
+            fileName = fileContent ? file.name : null;
+          }
+
+          resolve({fileContent, fileName, files: null, mediaType});
+        }).catch(() => {
+          resolve({fileContent: null, fileName: null, files: null, mediaType: null});
+        });
       }
     });
   }
