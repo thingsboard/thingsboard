@@ -376,7 +376,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         if (previousResolved != null && previousResolved == resolvedNew) {
             return;
         }
-        deviceStateCallbackExecutor.submit(() -> deviceStates.forEach((deviceId, stateData) -> {
+        deviceStates.forEach((deviceId, stateData) -> {
             if (!profileId.equals(stateData.getDeviceProfileId())) {
                 return;
             }
@@ -388,7 +388,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
             }
             stateData.getState().setInactivityTimeout(resolvedNew);
             checkAndUpdateState(deviceId, stateData);
-        }));
+        });
     }
 
     @Override
