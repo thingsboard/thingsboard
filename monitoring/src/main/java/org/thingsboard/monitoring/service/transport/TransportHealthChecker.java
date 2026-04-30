@@ -40,6 +40,9 @@ public abstract class TransportHealthChecker<C extends TransportMonitoringConfig
     @Value("${monitoring.calculated_fields.enabled:true}")
     private boolean calculatedFieldsMonitoringEnabled;
 
+    @Value("${monitoring.rest.request_timeout_ms}")
+    private int restRequestTimeoutMs;
+
     @Autowired
     protected TbClient tbClient;
 
@@ -86,6 +89,15 @@ public abstract class TransportHealthChecker<C extends TransportMonitoringConfig
     @Override
     protected void initialize() {
         entityService.checkEntities(config, target);
+        if (target.isRpcEnabled()) {
+            int rpcTimeoutMs = getRpcTimeoutMs();
+            if (rpcTimeoutMs >= restRequestTimeoutMs) {
+                throw new IllegalStateException("RPC request timeout (" + rpcTimeoutMs + " ms) for "
+                        + getTransportType() + " target " + target.getBaseUrl()
+                        + " must be < monitoring.rest.request_timeout_ms (" + restRequestTimeoutMs
+                        + " ms); otherwise tbClient times out before TB times out the RPC, producing false negatives.");
+            }
+        }
     }
 
     @Override

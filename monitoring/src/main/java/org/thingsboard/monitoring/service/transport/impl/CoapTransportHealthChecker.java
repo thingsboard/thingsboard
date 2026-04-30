@@ -76,6 +76,9 @@ public class CoapTransportHealthChecker extends TransportHealthChecker<CoapTrans
 
                 @Override
                 public void onError() {
+                    // Sustained observe failure surfaces indirectly: doRpcCheck()'s
+                    // server-side RPC send will time out without an echo from this
+                    // device, which is the actual signal we want to report.
                     log.debug("CoAP RPC observe failed");
                 }
             });
@@ -91,7 +94,8 @@ public class CoapTransportHealthChecker extends TransportHealthChecker<CoapTrans
             }
             JsonNode rpc = JacksonUtil.toJsonNode(body);
             JsonNode idNode = rpc == null ? null : rpc.get("id");
-            if (idNode == null) {
+            if (idNode == null || !idNode.isNumber()) {
+                log.debug("CoAP RPC notification missing or non-numeric id: {}", body);
                 return;
             }
             JsonNode params = rpc.get("params");
@@ -99,11 +103,15 @@ public class CoapTransportHealthChecker extends TransportHealthChecker<CoapTrans
             String responseUri = target.getBaseUrl() + "/api/v1/" + accessToken + "/rpc/" + idNode.asLong();
             String payload = params == null ? "{}" : JacksonUtil.toString(params);
             postRpcResponse(responseUri, payload);
-        } catch (Throwable e) {
-            log.debug("CoAP RPC echo failed: {}", e.getMessage());
+        } catch (Exception e) {
+            log.warn("CoAP RPC echo failed: {}", e.getMessage());
         }
     }
 
+    // Allocates a fresh CoapClient per echo because the observe relation owns
+    // rpcCoapClient and reusing it via setURI(...) would race with incoming
+    // observe notifications on the same client. The cost is one short-lived
+    // client per RPC (rare event).
     void postRpcResponse(String uri, String payload) {
         CoapClient client = new CoapClient(uri);
         try {
@@ -125,6 +133,9 @@ public class CoapTransportHealthChecker extends TransportHealthChecker<CoapTrans
         }
     }
 
+    // Package-access bridge: TransportHealthChecker#doRpcCheck is `protected` and lives in
+    // a different package than the test, so the unit test can only call it via a same-package
+    // subclass override. Keep this delegating override to preserve that test seam.
     @Override
     protected void doRpcCheck() throws Exception {
         super.doRpcCheck();

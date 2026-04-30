@@ -62,6 +62,18 @@ class RpcInfoTest {
         assertThat(a).isNotEqualTo(b);
     }
 
+    // IncidentManager dedups by toString() — RpcInfo for a target must produce a
+    // different incident row than TransportInfo for the same target so the RPC
+    // row and the telemetry row don't collapse into one.
+    @Test
+    void rpcInfoIncidentKeyDiffersFromTelemetryInfoForSameTarget() {
+        TransportInfo telemetry = transportInfo("Main");
+        RpcInfo rpc = new RpcInfo(telemetry);
+
+        assertThat(rpc.toString()).isNotEqualTo(telemetry.toString());
+        assertThat(rpc).isNotEqualTo(telemetry);
+    }
+
     private static TransportInfo transportInfo(String queue) {
         TransportMonitoringTarget target = new TransportMonitoringTarget();
         target.setBaseUrl("tcp://host:1883");
