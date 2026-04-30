@@ -50,6 +50,11 @@ public class DeviceConnectivityUtil {
     public static final String MQTT_IMAGE = "thingsboard/mosquitto-clients ";
     public static final String COAP_IMAGE = "thingsboard/coap-clients ";
     private final static Pattern VALID_URL_PATTERN = Pattern.compile("^(https?)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]");
+    private final static Pattern CONTROL_CHARS = Pattern.compile("[\\r\\n\\t\\x00-\\x1F\\x7F]");
+
+    private static String sanitize(String value) {
+        return value == null ? null : CONTROL_CHARS.matcher(value).replaceAll("_");
+    }
 
     public static String getHttpPublishCommand(String protocol, String host, String port, DeviceCredentials deviceCredentials) {
         return String.format("curl -v -X POST %s://%s%s/api/v1/%s/telemetry --header Content-Type:application/json --data " + JSON_EXAMPLE_PAYLOAD,
@@ -122,7 +127,7 @@ public class DeviceConnectivityUtil {
         switch (deviceCredentials.getCredentialsType()) {
             case ACCESS_TOKEN:
                 dockerComposeBuilder.append("      - TB_GW_SECURITY_TYPE=accessToken\n");
-                dockerComposeBuilder.append("      - TB_GW_ACCESS_TOKEN=").append(deviceCredentials.getCredentialsId()).append("\n");
+                dockerComposeBuilder.append("      - TB_GW_ACCESS_TOKEN=").append(sanitize(deviceCredentials.getCredentialsId())).append("\n");
                 break;
             case MQTT_BASIC:
                 dockerComposeBuilder.append("      - TB_GW_SECURITY_TYPE=usernamePassword\n");
@@ -130,13 +135,13 @@ public class DeviceConnectivityUtil {
                         BasicMqttCredentials.class);
                 if (credentials != null) {
                     if (StringUtils.isNotEmpty(credentials.getClientId())) {
-                        dockerComposeBuilder.append("      - TB_GW_CLIENT_ID=").append(credentials.getClientId()).append("\n");
+                        dockerComposeBuilder.append("      - TB_GW_CLIENT_ID=").append(sanitize(credentials.getClientId())).append("\n");
                     }
                     if (StringUtils.isNotEmpty(credentials.getUserName())) {
-                        dockerComposeBuilder.append("      - TB_GW_USERNAME=").append(credentials.getUserName()).append("\n");
+                        dockerComposeBuilder.append("      - TB_GW_USERNAME=").append(sanitize(credentials.getUserName())).append("\n");
                     }
                     if (StringUtils.isNotEmpty(credentials.getPassword())) {
-                        dockerComposeBuilder.append("      - TB_GW_PASSWORD=").append(credentials.getPassword()).append("\n");
+                        dockerComposeBuilder.append("      - TB_GW_PASSWORD=").append(sanitize(credentials.getPassword())).append("\n");
                     }
                 }
                 break;
