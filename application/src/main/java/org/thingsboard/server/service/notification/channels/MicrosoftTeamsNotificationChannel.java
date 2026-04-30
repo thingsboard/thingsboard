@@ -18,6 +18,7 @@ package org.thingsboard.server.service.notification.channels;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Strings;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +47,7 @@ import org.thingsboard.server.common.data.notification.template.MicrosoftTeamsDe
 import org.thingsboard.server.service.notification.NotificationProcessingContext;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Duration;
@@ -63,21 +65,31 @@ public class MicrosoftTeamsNotificationChannel implements NotificationChannel<Mi
 
     private final SystemSecurityService systemSecurityService;
 
-    @Setter
-    private RestTemplate restTemplate = buildRestTemplate();
+    private final CloseableHttpClient httpClient = buildHttpClient();
 
-    private static RestTemplate buildRestTemplate() {
+    @Setter
+    private RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory(httpClient));
+
+    private static CloseableHttpClient buildHttpClient() {
         // Teams webhook endpoints (*.webhook.office.com, *.logic.azure.com) respond directly without 3xx redirects.
         // Disabling redirect handling prevents SSRF bypass via attacker-controlled 3xx -> internal host.
         RequestConfig requestConfig = RequestConfig.custom()
                 .setConnectTimeout(TIMEOUT.toMillis(), TimeUnit.MILLISECONDS)
                 .setResponseTimeout(TIMEOUT.toMillis(), TimeUnit.MILLISECONDS)
                 .build();
-        CloseableHttpClient httpClient = HttpClientBuilder.create()
+        return HttpClientBuilder.create()
                 .disableRedirectHandling()
                 .setDefaultRequestConfig(requestConfig)
                 .build();
-        return new RestTemplate(new HttpComponentsClientHttpRequestFactory(httpClient));
+    }
+
+    @PreDestroy
+    public void shutdown() {
+        try {
+            httpClient.close();
+        } catch (IOException e) {
+            log.warn("Failed to close Microsoft Teams HTTP client", e);
+        }
     }
 
     @Override
@@ -170,22 +182,24 @@ public class MicrosoftTeamsNotificationChannel implements NotificationChannel<Mi
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> request = new HttpEntity<>(JacksonUtil.toString(body), headers);
 
+        // Webhook URL contains a secret token in its path — log host only to keep credentials out of log aggregators.
+        String webhookHost = webhookUri.getHost();
         ResponseEntity<String> response;
         try {
             response = restTemplate.postForEntity(webhookUri, request, String.class);
         } catch (RestClientResponseException e) {
             log.warn("Microsoft Teams webhook returned non-success status {}", e.getStatusCode());
-            log.debug("Microsoft Teams webhook error response for [{}]", webhookUri, e);
+            log.debug("Microsoft Teams webhook error response from host [{}]", webhookHost, e);
             throw new RuntimeException(GENERIC_FAILURE_MESSAGE);
         } catch (RestClientException e) {
             log.warn("Microsoft Teams webhook is unreachable");
-            log.debug("Failed to send message to Microsoft Teams webhook [{}]", webhookUri, e);
+            log.debug("Failed to send message to Microsoft Teams webhook host [{}]", webhookHost, e);
             throw new RuntimeException(GENERIC_FAILURE_MESSAGE);
         }
         if (!response.getStatusCode().is2xxSuccessful()) {
             log.warn("Microsoft Teams webhook returned unexpected status {}", response.getStatusCode());
-            log.debug("Microsoft Teams webhook returned status {} for [{}], headers: {}",
-                    response.getStatusCode(), webhookUri, response.getHeaders());
+            log.debug("Microsoft Teams webhook returned status {} from host [{}]",
+                    response.getStatusCode(), webhookHost);
             throw new RuntimeException(GENERIC_FAILURE_MESSAGE);
         }
     }

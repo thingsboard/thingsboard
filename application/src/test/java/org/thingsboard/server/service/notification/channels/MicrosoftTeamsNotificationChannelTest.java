@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.notification.channels;
 
+import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,8 +31,10 @@ import org.thingsboard.server.common.data.notification.targets.MicrosoftTeamsNot
 import org.thingsboard.server.common.data.notification.template.MicrosoftTeamsDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -133,6 +136,50 @@ class MicrosoftTeamsNotificationChannelTest {
                 .doesNotContain("127.0.0.1")
                 .doesNotContain("302")
                 .doesNotContain("redirect");
+    }
+
+    // Verifies that the RestTemplate built by the channel does not follow 3xx responses at the HTTP-client layer.
+    // The mocked-RestTemplate test above only exercises the response-status check; this one guards against a
+    // refactor that accidentally drops disableRedirectHandling() and reopens the SSRF bypass.
+    @Test
+    void disableRedirectHandlingPreventsFollowUpToInternalHost() throws Exception {
+        AtomicInteger redirectTargetHits = new AtomicInteger();
+        HttpServer redirectTarget = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        redirectTarget.createContext("/internal", exchange -> {
+            redirectTargetHits.incrementAndGet();
+            exchange.sendResponseHeaders(200, -1);
+            exchange.close();
+        });
+        redirectTarget.start();
+
+        HttpServer redirector = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        redirector.createContext("/hook", exchange -> {
+            exchange.getResponseHeaders().add("Location",
+                    "http://127.0.0.1:" + redirectTarget.getAddress().getPort() + "/internal");
+            exchange.sendResponseHeaders(302, -1);
+            exchange.close();
+        });
+        redirector.start();
+
+        try {
+            // Use the channel's own RestTemplate (default-initialized via buildHttpClient()) — do NOT call setRestTemplate.
+            MicrosoftTeamsNotificationChannel realChannel = new MicrosoftTeamsNotificationChannel(systemSecurityService);
+            try {
+                targetConfig.setWebhookUrl("http://127.0.0.1:" + redirector.getAddress().getPort() + "/hook");
+
+                Throwable thrown = catchThrowable(() -> realChannel.sendNotification(targetConfig, template, null));
+                assertThat(thrown).isInstanceOf(RuntimeException.class);
+                assertThat(thrown.getMessage()).isEqualTo(GENERIC_FAILURE);
+                assertThat(redirectTargetHits.get())
+                        .as("HttpClient5 must not follow 3xx — disableRedirectHandling() regression?")
+                        .isZero();
+            } finally {
+                realChannel.shutdown();
+            }
+        } finally {
+            redirector.stop(0);
+            redirectTarget.stop(0);
+        }
     }
 
 }
