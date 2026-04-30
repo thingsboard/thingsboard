@@ -16,9 +16,10 @@
 package org.thingsboard.server.dao.service.validator;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
@@ -36,14 +37,14 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.willReturn;
 
-@SpringBootTest(classes = DeviceCredentialsDataValidator.class)
+@ExtendWith(MockitoExtension.class)
 class DeviceCredentialsDataValidatorTest {
 
-    @MockBean
+    @Mock
     DeviceCredentialsDao deviceCredentialsDao;
-    @MockBean
+    @Mock
     DeviceService deviceService;
-    @SpyBean
+    @InjectMocks
     DeviceCredentialsDataValidator validator;
 
     final TenantId tenantId = TenantId.fromUUID(UUID.fromString("9ef79cdf-37a8-4119-b682-2e7ed4e018da"));

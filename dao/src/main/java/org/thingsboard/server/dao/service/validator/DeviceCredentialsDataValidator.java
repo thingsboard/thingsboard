@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
 @Component
 public class DeviceCredentialsDataValidator extends DataValidator<DeviceCredentials> {
 
-    private static final Pattern CONTROL_CHARS = Pattern.compile("[\\r\\n\\t\\x00-\\x1F\\x7F]");
+    private static final Pattern CONTROL_CHARS = Pattern.compile("[\\x00-\\x1F\\x7F]");
 
     @Autowired
     private DeviceCredentialsDao deviceCredentialsDao;

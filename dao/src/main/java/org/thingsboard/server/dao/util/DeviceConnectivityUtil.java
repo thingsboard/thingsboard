@@ -50,7 +50,7 @@ public class DeviceConnectivityUtil {
     public static final String MQTT_IMAGE = "thingsboard/mosquitto-clients ";
     public static final String COAP_IMAGE = "thingsboard/coap-clients ";
     private final static Pattern VALID_URL_PATTERN = Pattern.compile("^(https?)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]");
-    private final static Pattern CONTROL_CHARS = Pattern.compile("[\\r\\n\\t\\x00-\\x1F\\x7F]");
+    private final static Pattern CONTROL_CHARS = Pattern.compile("[\\x00-\\x1F\\x7F]");
 
     private static String sanitize(String value) {
         return value == null ? null : CONTROL_CHARS.matcher(value).replaceAll("_");
