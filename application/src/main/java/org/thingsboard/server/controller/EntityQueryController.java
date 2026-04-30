@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.server.common.data.edqs.EdqsState;
 import org.thingsboard.server.common.data.edqs.ToCoreEdqsRequest;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
@@ -165,7 +166,7 @@ public class EntityQueryController extends BaseController {
         checkNotNull(request.getAggHistoryCmd());
         AggHistoryCmd cmd = request.getAggHistoryCmd();
         if (cmd.getEndTs() < cmd.getStartTs()) {
-            throw new IllegalArgumentException("endTs must be >= startTs");
+            throw new ThingsboardException("endTs must be >= startTs", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
         EntityDataPageLink pageLink = request.getQuery().getPageLink();
         if (pageLink != null && pageLink.getPageSize() > MAX_PAGE_SIZE) {
