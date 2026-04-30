@@ -16,6 +16,7 @@
 package org.thingsboard.monitoring.service.transport.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.annotations.VisibleForTesting;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.paho.client.mqttv3.IMqttToken;
@@ -40,6 +41,7 @@ import java.nio.charset.StandardCharsets;
 @Slf4j
 public class MqttTransportHealthChecker extends TransportHealthChecker<MqttTransportMonitoringConfig> {
 
+    @VisibleForTesting
     MqttClient mqttClient;
     private boolean rpcSubscribed;
 
@@ -76,15 +78,25 @@ public class MqttTransportHealthChecker extends TransportHealthChecker<MqttTrans
         }
     }
 
-    void echoRpcRequest(String topic, MqttMessage request) throws Exception {
-        String requestId = StringUtils.substringAfterLast(topic, "/");
-        JsonNode body = JacksonUtil.toJsonNode(new String(request.getPayload(), StandardCharsets.UTF_8));
-        JsonNode params = body == null ? null : body.get("params");
-        byte[] responsePayload = (params == null ? "{}" : JacksonUtil.toString(params))
-                .getBytes(StandardCharsets.UTF_8);
-        MqttMessage response = new MqttMessage(responsePayload);
-        response.setQos(config.getQos());
-        mqttClient.publish(DEVICE_RPC_RESPONSE_TOPIC_PREFIX + requestId, response);
+    // Registered as IMqttMessageListener; must not propagate exceptions to Paho's
+    // callback dispatcher. A leaked exception (malformed payload, broken JSON,
+    // transient publish failure) can disconnect the session or leave the listener
+    // in a bad state, masking the very telemetry uplink the rest of this checker
+    // depends on. Match CoapTransportHealthChecker.handleRpcNotification: log + skip.
+    @VisibleForTesting
+    void echoRpcRequest(String topic, MqttMessage request) {
+        try {
+            String requestId = StringUtils.substringAfterLast(topic, "/");
+            JsonNode body = JacksonUtil.toJsonNode(new String(request.getPayload(), StandardCharsets.UTF_8));
+            JsonNode params = body == null ? null : body.get("params");
+            byte[] responsePayload = (params == null ? "{}" : JacksonUtil.toString(params))
+                    .getBytes(StandardCharsets.UTF_8);
+            MqttMessage response = new MqttMessage(responsePayload);
+            response.setQos(config.getQos());
+            mqttClient.publish(DEVICE_RPC_RESPONSE_TOPIC_PREFIX + requestId, response);
+        } catch (Exception e) {
+            log.warn("MQTT RPC echo failed for {}: {}", topic, e.getMessage());
+        }
     }
 
     @Override
@@ -95,6 +107,7 @@ public class MqttTransportHealthChecker extends TransportHealthChecker<MqttTrans
         mqttClient.publish(DEVICE_TELEMETRY_TOPIC, message);
     }
 
+    @VisibleForTesting
     @Override
     protected void doRpcCheck() throws Exception {
         super.doRpcCheck();

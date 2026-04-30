@@ -16,6 +16,7 @@
 package org.thingsboard.monitoring.service.transport.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.annotations.VisibleForTesting;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -47,8 +48,18 @@ public class HttpTransportHealthChecker extends TransportHealthChecker<HttpTrans
 
     static final long POLL_TIMEOUT_MS = 1000L;
     private static final long POLL_READ_TIMEOUT_SLACK_MS = 1000L;
+    // Inter-poll delay. The effective rate is dominated by the long-poll's
+    // server-side wait window (POLL_TIMEOUT_MS). This value only acts as a
+    // rate-limiter when the server returns immediately (204, bodyless 200,
+    // 408) — without it, the loop would tight-spin in those cases.
+    private static final long POLL_INTERVAL_MS = POLL_TIMEOUT_MS / 4;
     private static final long POLL_BACKOFF_INITIAL_MS = 500L;
     private static final long POLL_BACKOFF_MAX_MS = 5_000L;
+    // Must exceed POLL_TIMEOUT_MS + POLL_READ_TIMEOUT_SLACK_MS so that destroyClient()
+    // can wait out the worst-case in-flight read. The default JDK HttpURLConnection
+    // does not honor Thread.interrupt() on a blocking read, so cancel(true) only
+    // unblocks the poller once the read timeout fires. If POLL_READ_TIMEOUT_SLACK_MS
+    // is bumped, this value must move with it.
     private static final long SHUTDOWN_TIMEOUT_MS = 5_000L;
     private static final AtomicInteger POOL_COUNTER = new AtomicInteger();
 
@@ -75,7 +86,7 @@ public class HttpTransportHealthChecker extends TransportHealthChecker<HttpTrans
                 rpcPoller = Executors.newSingleThreadScheduledExecutor(daemonThreadFactory());
             }
             backoffMs = 0L;
-            rpcPollFuture = rpcPoller.scheduleWithFixedDelay(this::pollTask, 0L, 1L, TimeUnit.MILLISECONDS);
+            rpcPollFuture = rpcPoller.scheduleWithFixedDelay(this::pollTask, 0L, POLL_INTERVAL_MS, TimeUnit.MILLISECONDS);
             log.debug("Started HTTP RPC poll loop for device {}", target.getDeviceId());
         }
     }
@@ -89,6 +100,7 @@ public class HttpTransportHealthChecker extends TransportHealthChecker<HttpTrans
         };
     }
 
+    @VisibleForTesting
     void pollTask() {
         try {
             pollOnce();
@@ -112,6 +124,7 @@ public class HttpTransportHealthChecker extends TransportHealthChecker<HttpTrans
         return base + jitter;
     }
 
+    @VisibleForTesting
     void pollOnce() throws InterruptedException {
         String accessToken = target.getDevice().getCredentials().getCredentialsId();
         // POLL_TIMEOUT_MS is sent to the server as the long-poll wait window.
@@ -149,9 +162,7 @@ public class HttpTransportHealthChecker extends TransportHealthChecker<HttpTrans
         restTemplate.postForObject(target.getBaseUrl() + "/api/v1/" + accessToken + "/telemetry", payload, String.class);
     }
 
-    // Package-access bridge: TransportHealthChecker#doRpcCheck is `protected` and lives in
-    // a different package than the test, so the unit test can only call it via a same-package
-    // subclass override. Keep this delegating override to preserve that test seam.
+    @VisibleForTesting
     @Override
     protected void doRpcCheck() throws Exception {
         super.doRpcCheck();

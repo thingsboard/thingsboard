@@ -36,6 +36,8 @@ import org.thingsboard.server.common.data.id.DeviceId;
 @Slf4j
 public class Lwm2mTransportHealthChecker extends TransportHealthChecker<Lwm2mTransportMonitoringConfig> {
 
+    private static final String READ_RESOURCE_PATH = "/3/0/0";
+
     private Lwm2mClient lwm2mClient;
 
     protected Lwm2mTransportHealthChecker(Lwm2mTransportMonitoringConfig config, TransportMonitoringTarget target) {
@@ -61,8 +63,6 @@ public class Lwm2mTransportHealthChecker extends TransportHealthChecker<Lwm2mTra
     protected String createTestPayload(String testValue) {
         return testValue;
     }
-
-    private static final String READ_RESOURCE_PATH = "/3/0/0";
 
     @Override
     protected void doRpcCheck() throws Exception {

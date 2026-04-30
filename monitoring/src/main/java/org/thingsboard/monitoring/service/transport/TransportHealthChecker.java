@@ -59,6 +59,14 @@ public abstract class TransportHealthChecker<C extends TransportMonitoringConfig
         return perTarget != null ? perTarget : config.getRequestTimeoutMs();
     }
 
+    /**
+     * Default RPC sub-check: send a uuid via two-way RPC and assert the device echoes it back.
+     *
+     * <p>Declared {@code protected} in this package; per-transport impls in
+     * {@code org.thingsboard.monitoring.service.transport.impl} expose narrow {@code @VisibleForTesting}
+     * delegating overrides so that same-package unit tests can drive {@code doRpcCheck()} directly
+     * without resorting to {@code ReflectionTestUtils.invokeMethod(...)}.
+     */
     @Override
     protected void doRpcCheck() throws Exception {
         if (!target.isRpcEnabled()) {
@@ -92,10 +100,14 @@ public abstract class TransportHealthChecker<C extends TransportMonitoringConfig
         if (target.isRpcEnabled()) {
             int rpcTimeoutMs = getRpcTimeoutMs();
             if (rpcTimeoutMs >= restRequestTimeoutMs) {
+                String transportName = getTransportType().name().toLowerCase();
                 throw new IllegalStateException("RPC request timeout (" + rpcTimeoutMs + " ms) for "
                         + getTransportType() + " target " + target.getBaseUrl()
                         + " must be < monitoring.rest.request_timeout_ms (" + restRequestTimeoutMs
-                        + " ms); otherwise tbClient times out before TB times out the RPC, producing false negatives.");
+                        + " ms); otherwise tbClient times out before TB times out the RPC, producing false negatives."
+                        + " Either raise REST_REQUEST_TIMEOUT_MS above " + rpcTimeoutMs
+                        + " ms or lower monitoring.transports." + transportName + ".targets[*].rpc.request_timeout_ms"
+                        + " (env: " + getTransportType() + "_RPC_REQUEST_TIMEOUT_MS).");
             }
         }
     }

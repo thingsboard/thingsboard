@@ -31,6 +31,7 @@ import org.thingsboard.monitoring.client.TbClient;
 import org.thingsboard.monitoring.config.transport.DeviceConfig;
 import org.thingsboard.monitoring.config.transport.HttpTransportMonitoringConfig;
 import org.thingsboard.monitoring.config.transport.RpcCheckConfig;
+import org.thingsboard.monitoring.config.transport.RpcInfo;
 import org.thingsboard.monitoring.config.transport.TransportMonitoringTarget;
 import org.thingsboard.monitoring.data.ServiceFailureException;
 import org.thingsboard.monitoring.service.MonitoringReporter;
@@ -46,12 +47,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 class HttpTransportHealthCheckerRpcTest {
@@ -107,7 +108,7 @@ class HttpTransportHealthCheckerRpcTest {
         assertThatThrownBy(() -> checker.doRpcCheck())
                 .isInstanceOf(ServiceFailureException.class)
                 .extracting(t -> ((ServiceFailureException) t).getServiceKey())
-                .satisfies(key -> assertThat(key.toString()).endsWith("RPC"));
+                .satisfies(key -> assertThat(key.toString()).endsWith(RpcInfo.RPC_SUFFIX));
     }
 
     @Test
@@ -158,8 +159,9 @@ class HttpTransportHealthCheckerRpcTest {
     void initClientDoesNotStartPollingWhenRpcDisabled() throws Exception {
         checker.initClient();
 
-        Thread.sleep(100);
-        verify(restTemplate, never()).getForEntity(any(String.class), eq(JsonNode.class));
+        // Mockito#after waits for the window then asserts no invocation occurred —
+        // deterministic on slow CI runners, unlike Thread.sleep + verify(never()).
+        verify(restTemplate, after(200).never()).getForEntity(any(String.class), eq(JsonNode.class));
         Future<?> future = (Future<?>) ReflectionTestUtils.getField(checker, "rpcPollFuture");
         assertThat(future).isNull();
     }
@@ -190,11 +192,12 @@ class HttpTransportHealthCheckerRpcTest {
                 .getForEntity(contains("/rpc?timeout="), eq(JsonNode.class));
 
         checker.destroyClient();
-        Thread.sleep(100);
         clearInvocations(restTemplate);
-        Thread.sleep(200);
 
-        verifyNoMoreInteractions(restTemplate);
+        // Wait the window and verify no further polls fire — replaces brittle
+        // Thread.sleep + verifyNoMoreInteractions which races on slow runners.
+        verify(restTemplate, after(200).never())
+                .getForEntity(any(String.class), eq(JsonNode.class));
         assertThat(ReflectionTestUtils.getField(checker, "rpcPollFuture")).isNull();
         assertThat(ReflectionTestUtils.getField(checker, "rpcPoller")).isNull();
     }

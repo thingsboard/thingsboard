@@ -30,7 +30,11 @@ monitoring:
 | `rpc.request_timeout_ms` | int | transport `request_timeout_ms` | Sent through to ThingsBoard as the RPC `timeout`. Must be `< monitoring.rest.request_timeout_ms`. |
 
 For LwM2M the default is `6000` ms because the Read goes through rule engine +
-Leshan registration; the other transports default to `4000`.
+Leshan registration; the other transports default to `4000`. The default
+`monitoring.rest.request_timeout_ms` is `8000` ms, leaving 2 s margin above
+LwM2M; if you raise any per-target `rpc.request_timeout_ms` near or above the
+REST timeout, raise `REST_REQUEST_TIMEOUT_MS` first or `initialize()` will
+fail-fast at startup.
 
 ## Per-transport behaviour
 

@@ -21,16 +21,18 @@ import org.thingsboard.monitoring.data.notification.ShortNameProvider;
 @Data
 public class RpcInfo implements ShortNameProvider {
 
+    public static final String RPC_SUFFIX = " RPC";
+
     private final TransportInfo transportInfo;
 
     @Override
     public String getShortName() {
-        return transportInfo.getShortName() + " RPC";
+        return transportInfo.getShortName() + RPC_SUFFIX;
     }
 
     @Override
     public String toString() {
-        return transportInfo.toString() + " RPC";
+        return transportInfo.toString() + RPC_SUFFIX;
     }
 
 }

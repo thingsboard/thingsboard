@@ -24,8 +24,10 @@ monitoring:
     username: '${REST_AUTH_USERNAME:tenant@thingsboard.org}'
     # Authentication password
     password: '${REST_AUTH_PASSWORD:tenant}'
-    # REST request timeout in milliseconds
-    request_timeout_ms: '${REST_REQUEST_TIMEOUT_MS:5000}'
+    # REST request timeout in milliseconds. Must be greater than every per-target
+    # rpc.request_timeout_ms — see TransportHealthChecker.initialize() fail-fast.
+    # Default leaves a 2 s margin above the slowest built-in default (LwM2M 6000 ms).
+    request_timeout_ms: '${REST_REQUEST_TIMEOUT_MS:8000}'
   ws:
     # WebSocket url, wss://DOMAIN by default
     base_url: '${WS_BASE_URL:wss://${monitoring.domain}}'

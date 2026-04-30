@@ -29,6 +29,7 @@ import org.thingsboard.monitoring.client.TbClient;
 import org.thingsboard.monitoring.config.transport.CoapTransportMonitoringConfig;
 import org.thingsboard.monitoring.config.transport.DeviceConfig;
 import org.thingsboard.monitoring.config.transport.RpcCheckConfig;
+import org.thingsboard.monitoring.config.transport.RpcInfo;
 import org.thingsboard.monitoring.config.transport.TransportMonitoringTarget;
 import org.thingsboard.monitoring.data.ServiceFailureException;
 import org.thingsboard.monitoring.service.MonitoringReporter;
@@ -110,7 +111,7 @@ class CoapTransportHealthCheckerRpcTest {
         assertThatThrownBy(() -> checker.doRpcCheck())
                 .isInstanceOf(ServiceFailureException.class)
                 .extracting(t -> ((ServiceFailureException) t).getServiceKey())
-                .satisfies(key -> assertThat(key.toString()).endsWith("RPC"));
+                .satisfies(key -> assertThat(key.toString()).endsWith(RpcInfo.RPC_SUFFIX));
     }
 
     @Test

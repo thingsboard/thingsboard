@@ -16,6 +16,7 @@
 package org.thingsboard.monitoring.service.transport.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.annotations.VisibleForTesting;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.CoapClient;
 import org.eclipse.californium.core.CoapHandler;
@@ -45,7 +46,9 @@ public class CoapTransportHealthChecker extends TransportHealthChecker<CoapTrans
     }
 
     private CoapClient coapClient;
+    @VisibleForTesting
     CoapClient rpcCoapClient;
+    @VisibleForTesting
     CoapObserveRelation rpcObserveRelation;
 
     protected CoapTransportHealthChecker(CoapTransportMonitoringConfig config, TransportMonitoringTarget target) {
@@ -86,6 +89,7 @@ public class CoapTransportHealthChecker extends TransportHealthChecker<CoapTrans
         }
     }
 
+    @VisibleForTesting
     void handleRpcNotification(CoapResponse response) {
         try {
             String body = response == null ? null : response.getResponseText();
@@ -111,16 +115,22 @@ public class CoapTransportHealthChecker extends TransportHealthChecker<CoapTrans
     // Allocates a fresh CoapClient per echo because the observe relation owns
     // rpcCoapClient and reusing it via setURI(...) would race with incoming
     // observe notifications on the same client. The cost is one short-lived
-    // client per RPC (rare event).
+    // client per RPC (rare event). Construction is inside the try block so a
+    // future ctor change that opens a socket can't leak it on init failure —
+    // the null-guarded shutdown() in finally still runs.
+    @VisibleForTesting
     void postRpcResponse(String uri, String payload) {
-        CoapClient client = new CoapClient(uri);
+        CoapClient client = null;
         try {
+            client = new CoapClient(uri);
             client.setTimeout((long) config.getRequestTimeoutMs());
             client.post(payload, MediaTypeRegistry.APPLICATION_JSON);
         } catch (Exception e) {
             log.debug("CoAP RPC response post failed for {}: {}", uri, e.getMessage());
         } finally {
-            client.shutdown();
+            if (client != null) {
+                client.shutdown();
+            }
         }
     }
 
@@ -133,9 +143,7 @@ public class CoapTransportHealthChecker extends TransportHealthChecker<CoapTrans
         }
     }
 
-    // Package-access bridge: TransportHealthChecker#doRpcCheck is `protected` and lives in
-    // a different package than the test, so the unit test can only call it via a same-package
-    // subclass override. Keep this delegating override to preserve that test seam.
+    @VisibleForTesting
     @Override
     protected void doRpcCheck() throws Exception {
         super.doRpcCheck();

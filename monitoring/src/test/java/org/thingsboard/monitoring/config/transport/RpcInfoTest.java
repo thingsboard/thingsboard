@@ -42,7 +42,7 @@ class RpcInfoTest {
         assertThat(rpc.toString())
                 .contains("*MQTT*")
                 .contains("(tcp://host:1883)")
-                .endsWith("RPC");
+                .endsWith(RpcInfo.RPC_SUFFIX);
     }
 
     @Test
