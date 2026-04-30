@@ -36,7 +36,7 @@
   <!-- Filter panel template (reused in sidebar and drawer) -->
   <ng-template #filterPanelContent>
     <div class="tb-iot-hub-filters-inner">
-      @if (!fixedSubType && subtypeOptions.length > 0) {
+      @if (!fixedSubType && subtypeOptions.length > 0 && activeType !== ItemType.ALARM_RULE) {
         <mat-expansion-panel [expanded]="true" class="tb-iot-hub-filter-panel">
           <mat-expansion-panel-header>
             <mat-panel-title>{{ 'iot-hub.type-filter-label' | translate }}</mat-panel-title>

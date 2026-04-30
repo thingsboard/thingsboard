@@ -85,7 +85,9 @@ export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubI
   }
 
   isCompactLayout(): boolean {
-    return this.item.type === ItemType.CALCULATED_FIELD || this.item.type === ItemType.RULE_CHAIN;
+    return this.item.type === ItemType.CALCULATED_FIELD
+        || this.item.type === ItemType.ALARM_RULE
+        || this.item.type === ItemType.RULE_CHAIN;
   }
 
   getPreviewUrl(): string | null {
@@ -107,6 +109,7 @@ export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubI
       case ItemType.DASHBOARD: return 'dashboard';
       case ItemType.SOLUTION_TEMPLATE: return 'integration_instructions';
       case ItemType.CALCULATED_FIELD: return 'functions';
+      case ItemType.ALARM_RULE: return 'notification_important';
       case ItemType.RULE_CHAIN: return 'account_tree';
       case ItemType.DEVICE: return 'memory';
       default: return 'category';
@@ -121,6 +124,9 @@ export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubI
       const cfType = this.item.dataDescriptor?.cfType;
       return cfTypeIcons.get(cfType) || 'functions';
     }
+    if (this.item.type === ItemType.ALARM_RULE) {
+      return 'notification_important';
+    }
     switch (this.item.dataDescriptor?.ruleChainType) {
       case 'CORE': return 'device_hub';
       case 'EDGE': return 'router';
@@ -129,7 +135,7 @@ export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubI
   }
 
   getCompactSubtypeLabel(): string {
-    if (this.item.type === ItemType.CALCULATED_FIELD) {
+    if (this.item.type === ItemType.CALCULATED_FIELD || this.item.type === ItemType.ALARM_RULE) {
       const cfType = this.item.dataDescriptor?.cfType;
       const key = cfType ? cfTypeTranslations.get(cfType) : null;
       return key ? this.translate.instant(key) : cfType || '';
@@ -142,7 +148,7 @@ export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubI
   getSubtypeLabel(): string {
     switch (this.item.type) {
       case ItemType.CALCULATED_FIELD:
-        return this.getCompactSubtypeLabel();
+      case ItemType.ALARM_RULE:
       case ItemType.RULE_CHAIN:
         return this.getCompactSubtypeLabel();
       case ItemType.WIDGET: {
@@ -213,6 +219,7 @@ export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubI
       case 'WIDGET': entityId = descriptor.widgetTypeId?.id; entityType = EntityType.WIDGET_TYPE; break;
       case 'DASHBOARD': entityId = descriptor.dashboardId?.id; entityType = EntityType.DASHBOARD; break;
       case 'CALCULATED_FIELD':
+      case 'ALARM_RULE':
         entityId = descriptor.calculatedFieldId?.id;
         entityType = EntityType.CALCULATED_FIELD;
         break;

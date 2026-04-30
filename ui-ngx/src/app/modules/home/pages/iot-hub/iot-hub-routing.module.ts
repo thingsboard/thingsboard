@@ -85,6 +85,16 @@ const routes: Routes = [
         }
       },
       {
+        path: 'alarm-rules',
+        component: TbIotHubItemsPageComponent,
+        data: {
+          auth: [Authority.TENANT_ADMIN],
+          title: 'item.type-alarm-rule-plural',
+          itemType: 'ALARM_RULE',
+          breadcrumb: { label: 'item.type-alarm-rule-plural', icon: 'notification_important' }
+        }
+      },
+      {
         path: 'rule-chains',
         component: TbIotHubItemsPageComponent,
         data: {
