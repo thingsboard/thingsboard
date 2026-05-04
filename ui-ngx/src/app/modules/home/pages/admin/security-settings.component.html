@@ -58,7 +58,7 @@
                    [max]="maxActivationLinkTtl"/>
             <mat-error *ngIf="securitySettingsFormGroup.get('userActivationTokenTtl').hasError('min') ||
                               securitySettingsFormGroup.get('userActivationTokenTtl').hasError('max')">
-              {{ 'admin.user-activation-token-ttl-range' | translate: {max: maxActivationLinkTtl} }}
+              {{ 'admin.user-activation-token-ttl-range' | translate: {max: maxActivationLinkTtl ?? 24} }}
             </mat-error>
           </mat-form-field>
            <mat-form-field class="mat-block">
