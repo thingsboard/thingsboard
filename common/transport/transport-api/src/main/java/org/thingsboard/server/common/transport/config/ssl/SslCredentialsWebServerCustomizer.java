@@ -15,11 +15,14 @@
  */
 package org.thingsboard.server.common.transport.config.ssl;
 
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.ssl.NoSuchSslBundleException;
 import org.springframework.boot.ssl.SslBundle;
 import org.springframework.boot.ssl.SslBundles;
 import org.springframework.boot.ssl.SslStoreBundle;
@@ -30,12 +33,30 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+@Slf4j
 @Component
 @ConditionalOnExpression("'${spring.main.web-environment:true}'=='true' && '${server.ssl.enabled:false}'=='true'")
-public class SslCredentialsWebServerCustomizer implements WebServerFactoryCustomizer<ConfigurableServletWebServerFactory> {
+public class SslCredentialsWebServerCustomizer implements WebServerFactoryCustomizer<ConfigurableServletWebServerFactory>, SmartInitializingSingleton {
+
+    private static final String DEFAULT_BUNDLE_NAME = "default";
+
+    private final ServerProperties serverProperties;
+    private final List<Consumer<SslBundle>> updateHandlers = new CopyOnWriteArrayList<>();
+
+    @Autowired
+    @Qualifier("httpServerSslCredentials")
+    private SslCredentialsConfig httpServerSslCredentialsConfig;
+
+    @Autowired
+    private SslBundles sslBundles;
+
+    public SslCredentialsWebServerCustomizer(ServerProperties serverProperties) {
+        this.serverProperties = serverProperties;
+    }
 
     @Bean
     @ConfigurationProperties(prefix = "server.ssl.credentials")
@@ -43,58 +64,93 @@ public class SslCredentialsWebServerCustomizer implements WebServerFactoryCustom
         return new SslCredentialsConfig("HTTP Server SSL Credentials", false);
     }
 
-    @Autowired
-    @Qualifier("httpServerSslCredentials")
-    private SslCredentialsConfig httpServerSslCredentialsConfig;
-
-    @Autowired
-    SslBundles sslBundles;
-
-    private final ServerProperties serverProperties;
-
-    public SslCredentialsWebServerCustomizer(ServerProperties serverProperties) {
-        this.serverProperties = serverProperties;
+    @Bean
+    public SslBundles sslBundles() {
+        return new DynamicSslBundles();
     }
 
     @Override
     public void customize(ConfigurableServletWebServerFactory factory) {
-        SslCredentials sslCredentials = this.httpServerSslCredentialsConfig.getCredentials();
+        SslCredentials credentials = httpServerSslCredentialsConfig.getCredentials();
+
         Ssl ssl = serverProperties.getSsl();
-        ssl.setBundle("default");
-        ssl.setKeyAlias(sslCredentials.getKeyAlias());
-        ssl.setKeyPassword(sslCredentials.getKeyPassword());
+        ssl.setBundle(DEFAULT_BUNDLE_NAME);
+        ssl.setKeyAlias(credentials.getKeyAlias());
+        ssl.setKeyPassword(credentials.getKeyPassword());
+
         factory.setSsl(ssl);
         factory.setSslBundles(sslBundles);
     }
 
-    @Bean
-    public SslBundles sslBundles() {
+    @Override
+    public void afterSingletonsInstantiated() {
+        httpServerSslCredentialsConfig.registerReloadCallback(this::reloadSslCertificates);
+    }
+
+    private void reloadSslCertificates() {
+        try {
+            log.info("Reloading HTTP Server SSL certificates...");
+
+            SslBundle newBundle = createSslBundle();
+            notifyUpdateHandlers(newBundle);
+
+            log.info("HTTP Server SSL certificates reloaded successfully");
+        } catch (Exception e) {
+            log.error("Failed to reload HTTP Server SSL certificates", e);
+        }
+    }
+
+    private SslBundle createSslBundle() {
+        SslCredentials credentials = httpServerSslCredentialsConfig.getCredentials();
+
         SslStoreBundle storeBundle = SslStoreBundle.of(
-                httpServerSslCredentialsConfig.getCredentials().getKeyStore(),
-                httpServerSslCredentialsConfig.getCredentials().getKeyPassword(),
+                credentials.getKeyStore(),
+                credentials.getKeyPassword(),
                 null
         );
-        return new SslBundles() {
-            @Override
-            public SslBundle getBundle(String name) {
-                return SslBundle.of(storeBundle);
-            }
+        return SslBundle.of(storeBundle);
+    }
 
-            @Override
-            public List<String> getBundleNames() {
-                return List.of("default");
+    private void notifyUpdateHandlers(SslBundle newBundle) {
+        for (Consumer<SslBundle> handler : updateHandlers) {
+            try {
+                handler.accept(newBundle);
+            } catch (Exception e) {
+                log.error("Failed to notify SSL bundle update handler", e);
             }
+        }
+    }
 
-            @Override
-            public void addBundleUpdateHandler(String name, Consumer<SslBundle> handler) {
-                // no-op
-            }
+    private class DynamicSslBundles implements SslBundles {
 
-            @Override
-            public void addBundleRegisterHandler(BiConsumer<String, SslBundle> handler) {
-                // no-op
+        @Override
+        public SslBundle getBundle(String name) {
+            if (!DEFAULT_BUNDLE_NAME.equals(name)) {
+                throw new NoSuchSslBundleException(name, "Unknown SSL bundle: " + name);
             }
-        };
+            return createSslBundle();
+        }
+
+        @Override
+        public List<String> getBundleNames() {
+            return List.of(DEFAULT_BUNDLE_NAME);
+        }
+
+        @Override
+        public void addBundleUpdateHandler(String name, Consumer<SslBundle> handler) {
+            if (DEFAULT_BUNDLE_NAME.equals(name)) {
+                updateHandlers.add(handler);
+                log.debug("Registered SSL bundle update handler for bundle: {}", name);
+            } else {
+                log.warn("Attempted to register update handler for unknown bundle: {}", name);
+            }
+        }
+
+        @Override
+        public void addBundleRegisterHandler(BiConsumer<String, SslBundle> registerHandler) {
+            log.debug("addBundleRegisterHandler is not supported for dynamic SSL bundles");
+        }
+
     }
 
 }

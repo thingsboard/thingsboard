@@ -15,82 +15,67 @@
     limitations under the License.
 
 -->
-<section class="flex flex-col" [formGroup]="filterListFormGroup">
-  <mat-expansion-panel [expanded]="true">
-    <mat-expansion-panel-header>
-      <mat-panel-title>
-        <div translate>filter.filters</div>
-      </mat-panel-title>
-    </mat-expansion-panel-header>
-    <div class="flex flex-row">
-      <span class="max-w-8% flex-full"></span>
-      <div class="flex max-w-92% flex-full flex-row items-center justify-start gap-2">
-        <div class="flex flex-1 flex-row gap-2">
-          <div class="flex max-w-30% flex-full flex-row items-center justify-start gap-2">
-            <label translate class="tb-title no-padding flex-1">filter.operation.operation</label>
-            @if (valueType === valueTypeEnum.STRING) {
-              <label
-              translate class="tb-title no-padding" style="min-width: 70px;">filter.ignore-case</label>
-            }
+<section class="flex flex-col gap-4" [formGroup]="filterListFormGroup">
+  @if (predicatesFormArray.length) {
+    <div class="tb-form-panel no-padding no-gap stroked">
+      <div class="flex flex-row">
+        <div class="flex flex-full flex-row items-center justify-start gap-2">
+          <div class="flex flex-1 flex-row pl-2">
+            <label translate class="filter-title max-w-30% flex-full">filter.operation.operation</label>
+            <label translate class="filter-title max-w-70% flex-full">filter.value</label>
           </div>
-          <label translate class="tb-title no-padding max-w-70% flex-full">filter.value</label>
+          @if (displayUserParameters) {
+            <span [class.!hidden]="disabled" class="min-w-12">&nbsp;</span>
+          }
         </div>
-        @if (displayUserParameters) {
-          <label
-          translate class="tb-title no-padding" style="width: 60px;">filter.user-parameters</label>
-        }
-        <span [class.!hidden]="disabled" style="min-width: 40px;">&nbsp;</span>
       </div>
-    </div>
-    <mat-divider style="padding-bottom: 5px;"></mat-divider>
-    <div class="predicate-list">
-      @for (predicateControl of predicatesFormArray.controls; track predicateControl) {
-        <div class="flex flex-row items-stretch justify-start h-full min-h-19 max-h-24"
-             formArrayName="predicates"
-             >
-          <div class="filters-operation flex max-w-8% flex-full flex-row items-stretch justify-center">
-            @if ($index > 0) {
-              <span>{{ complexOperationTranslations.get(operation) | translate }}</span>
+      <mat-divider style="padding-bottom: 5px;"></mat-divider>
+      <div class="predicate-list">
+        @for (predicateControl of predicatesFormArray.controls; track predicateControl) {
+          <div class="relative flex flex-row items-stretch justify-start" [class.key-filter-list-divider]="$index">
+            @if ($index) {
+              <div class="filters-operation-container">
+                <span class="filters-operation-label">{{ complexOperationTranslations.get(operation) | translate }}</span>
+              </div>
             }
-          </div>
-          <div class="flex max-w-92% min-w-147.5 flex-full flex-col">
-            <div class="flex flex-1 flex-row items-center justify-start gap-2">
-              <tb-filter-predicate
-                class="flex-1"
-                [valueType]="valueType"
-                [displayUserParameters]="displayUserParameters"
-                [allowUserDynamicSource]="allowUserDynamicSource"
-                [onlyUserDynamicSource]="onlyUserDynamicSource"
-                [key]="key"
-                [formControl]="predicateControl">
-              </tb-filter-predicate>
-              <button mat-icon-button color="primary"
-                      [class.!hidden]="disabled"
-                      type="button"
-                      (click)="removePredicate($index)"
-                      matTooltip="{{ 'filter.remove-filter' | translate }}"
-                      matTooltipPosition="above">
-                <mat-icon>close</mat-icon>
-              </button>
+            <div class="flex flex-full flex-col">
+              <div class="flex flex-1 flex-row items-center justify-start">
+                <tb-filter-predicate
+                  class="flex-1"
+                  [valueType]="valueType"
+                  [displayUserParameters]="displayUserParameters"
+                  [allowUserDynamicSource]="allowUserDynamicSource"
+                  [onlyUserDynamicSource]="onlyUserDynamicSource"
+                  [key]="key"
+                  [formControl]="predicateControl">
+                </tb-filter-predicate>
+                <button mat-icon-button color="primary"
+                        [class.!hidden]="disabled"
+                        type="button"
+                        (click)="removePredicate($index)"
+                        matTooltip="{{ 'filter.remove-filter' | translate }}"
+                        matTooltipPosition="above">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      }
-      <span [class.!hidden]="!!predicatesFormArray.length"
-            [class.disabled]="disabled"
-      class="no-data-found flex items-center justify-center" translate>filter.no-filters</span>
+        }
+      </div>
     </div>
-    <div style="margin-top: 16px;" class="flex flex-row gap-2">
-      <button mat-button mat-raised-button color="primary"
-              [class.!hidden]="disabled"
+  } @else {
+    <span [class.disabled]="disabled" class="no-data-found tb-prompt flex items-center justify-center" translate>filter.no-filters</span>
+  }
+  <div class="flex flex-row gap-2" [class.!hidden]="disabled">
+      <button mat-button mat-stroked-button color="primary"
               (click)="addPredicate(false)"
               type="button"
               matTooltip="{{ 'filter.add-filter' | translate }}"
               matTooltipPosition="above">
         {{ 'action.add' | translate }}
       </button>
-      <button mat-button mat-raised-button color="primary"
-              [class.!hidden]="disabled"
+      <button mat-button
+              color="primary"
               (click)="addPredicate(true)"
               type="button"
               matTooltip="{{ 'filter.add-complex-filter' | translate }}"
@@ -98,5 +83,4 @@
         {{ 'filter.add-complex' | translate }}
       </button>
     </div>
-  </mat-expansion-panel>
 </section>

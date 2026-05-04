@@ -3610,6 +3610,7 @@
          "order-priority": "Display order",
          "key-filter": "Key filter",
          "key-filters": "Key filters",
+         "or-conditions-disabled": "OR conditions between key filters are disabled by the system administrator.",
          "key-name": "Key name",
          "key-name-required": "Key name is required.",
          "key-type": {

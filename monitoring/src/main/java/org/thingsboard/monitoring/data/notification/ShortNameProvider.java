@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.alarm.rule.condition.expression;
+package org.thingsboard.monitoring.data.notification;
 
-import io.swagger.v3.oas.annotations.media.Schema;
+public interface ShortNameProvider {
 
-@Schema(name = "AlarmRuleComplexOperation")
-public enum ComplexOperation {
-    AND,
-    OR
+    String getShortName();
+
 }

@@ -117,28 +117,60 @@ public abstract class BaseMonitoringService<C extends MonitoringConfig<T>, T ext
         }
         try {
             log.info("Starting {}", getName());
-            stopWatch.start();
-            String accessToken = tbClient.logIn();
-            reporter.reportLatency(Latencies.LOG_IN, stopWatch.getTime());
 
-            try (WsClient wsClient = wsClientFactory.createClient(accessToken)) {
+            String accessToken;
+            try {
                 stopWatch.start();
-                wsClient.subscribeForTelemetry(devices, getTestTelemetryKeys()).waitForReply();
-                reporter.reportLatency(Latencies.WS_SUBSCRIBE, stopWatch.getTime());
+                accessToken = tbClient.logIn();
+                reporter.reportLatency(Latencies.LOG_IN, stopWatch.getTime());
+                reporter.serviceIsOk(MonitoredServiceKey.LOGIN);
+            } catch (Exception e) {
+                reporter.serviceFailure(MonitoredServiceKey.LOGIN, e);
+                return;
+            }
+
+            WsClient wsClient;
+            try {
+                wsClient = wsClientFactory.createClient(accessToken);
+                reporter.serviceIsOk(MonitoredServiceKey.WS_CONNECT);
+            } catch (Exception e) {
+                reporter.serviceFailure(MonitoredServiceKey.WS_CONNECT, e);
+                return;
+            }
+
+            try (WsClient ws = wsClient) {
+                try {
+                    stopWatch.start();
+                    ws.subscribeForTelemetry(devices, getTestTelemetryKeys()).waitForReply();
+                    reporter.reportLatency(Latencies.WS_SUBSCRIBE, stopWatch.getTime());
+                    reporter.serviceIsOk(MonitoredServiceKey.WS_SUBSCRIBE);
+                } catch (Exception e) {
+                    reporter.serviceFailure(MonitoredServiceKey.WS_SUBSCRIBE, e);
+                    return;
+                }
 
                 for (BaseHealthChecker<C, T> healthChecker : healthCheckers) {
-                    check(healthChecker, wsClient);
+                    check(healthChecker, ws);
                 }
             }
 
             if (checkEdqs) {
-                stopWatch.start();
-                checkEdqs();
-                reporter.reportLatency(Latencies.EDQS_QUERY, stopWatch.getTime());
-                reporter.serviceIsOk(MonitoredServiceKey.EDQS);
+                try {
+                    stopWatch.start();
+                    checkEdqs();
+                    reporter.reportLatency(Latencies.EDQS_QUERY, stopWatch.getTime());
+                    reporter.serviceIsOk(MonitoredServiceKey.EDQS);
+                } catch (ServiceFailureException e) {
+                    reporter.serviceFailure(e.getServiceKey(), e);
+                    return;
+                } catch (Exception e) {
+                    reporter.serviceFailure(MonitoredServiceKey.EDQS, e);
+                    return;
+                }
             }
 
             reporter.reportLatencies();
+            reporter.serviceIsOk(MonitoredServiceKey.GENERAL);
             log.debug("Finished {}", getName());
         } catch (ServiceFailureException e) {
             reporter.serviceFailure(e.getServiceKey(), e);

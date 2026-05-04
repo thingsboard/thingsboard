@@ -28,7 +28,7 @@ import { Circle, Effect, Element, G, Gradient, Path, Runner, Svg, Text, Timeline
 import '@svgdotjs/svg.filter.js';
 import tinycolor from 'tinycolor2';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { Observable, of, shareReplay } from 'rxjs';
+import { from, Observable, of, shareReplay } from 'rxjs';
 import { isSvgIcon, splitIconName } from '@shared/models/icon.models';
 import { catchError, map, take } from 'rxjs/operators';
 import { MatIconRegistry } from '@angular/material/icon';
@@ -392,7 +392,15 @@ export abstract class PowerButtonShape {
       tspan.attr({
         'dominant-baseline': 'hanging'
       });
-      return of(textElement);
+      return from(document.fonts.ready).pipe(
+        map(() => {
+          const iconGroup = this.svgShape.group();
+          textElement.addTo(iconGroup);
+          const box = iconGroup.bbox();
+          iconGroup.translate(-box.cx, -box.cy);
+          return iconGroup;
+        })
+      );
     }
   }
 

@@ -289,7 +289,7 @@ export default abstract class LeafletMap {
     }
 
     private toggleDrawMode(type: string) {
-      this.map.pm.Draw[type].toggle();
+      (this.map.pm.Draw[type] as any).toggle();
     }
 
     addEditControl() {
@@ -373,7 +373,7 @@ export default abstract class LeafletMap {
           },
           // @ts-ignore
           afterClick: (e, ctx) => {
-            this.map.pm.Draw[ctx.button._button.jsClass].toggle({
+            (this.map.pm.Draw[ctx.button._button.jsClass] as any).toggle({
               snappable: this.options.snappable,
               cursorMarker: true,
               allowSelfIntersection: false,

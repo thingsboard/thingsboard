@@ -40,6 +40,7 @@ export interface SysParamsState {
   calculatedFieldDebugPerTenantLimitsConfiguration?: string;
   intermediateAggregationIntervalInSecForCF: number;
   trendzSettings: TrendzSettings;
+  allowKeyFiltersOrConditions: boolean;
 }
 
 export interface SysParams extends SysParamsState {

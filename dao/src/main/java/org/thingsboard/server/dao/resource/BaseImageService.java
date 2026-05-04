@@ -189,6 +189,12 @@ public class BaseImageService extends BaseResourceService implements ImageServic
     }
 
     @Override
+    public Set<String> getAllImageKeysByTenantId(TenantId tenantId) {
+        log.trace("Executing getAllImageKeysByTenantId [{}]", tenantId);
+        return resourceInfoDao.findKeysByTenantIdAndResourceTypeAndResourceKeyPrefix(tenantId, ResourceType.IMAGE, "");
+    }
+
+    @Override
     public TbResourceInfo getPublicImageInfoByKey(String publicResourceKey) {
         return resourceInfoDao.findPublicResourceByKey(ResourceType.IMAGE, publicResourceKey);
     }

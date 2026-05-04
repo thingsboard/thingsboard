@@ -59,6 +59,14 @@ server:
   http2:
     # Enable/disable HTTP/2 support
     enabled: "${HTTP2_ENABLED:true}"
+  # HTTP response compression
+  compression:
+    # Enable/disable HTTP response compression
+    enabled: "${HTTP_COMPRESSION_ENABLED:false}"
+    # Minimum size (in bytes) required for a response before compression is applied
+    min_response_size: "${HTTP_COMPRESSION_MIN_RESPONSE_SIZE:2048}"
+    # Comma-separated list of MIME types that should be compressed
+    mime_types: "${HTTP_COMPRESSION_MIME_TYPES:text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json,application/xml}"
   # Log errors with stacktrace when REST API throws an exception with the message "Please contact sysadmin"
   log_controller_error_stack_trace: "${HTTP_LOG_CONTROLLER_ERROR_STACK_TRACE:false}"
   ws:
@@ -469,6 +477,10 @@ sql:
   log_tenant_stats: "${SQL_LOG_TENANT_STATS:true}"
   # Interval in milliseconds for printing the latest statistic information about the tenant
   log_tenant_stats_interval_ms: "${SQL_LOG_TENANT_STATS_INTERVAL_MS:60000}"
+  query:
+    key-filters-or-conditions:
+      # Enable/disable OR conditions between key filters in entity data queries
+      enabled: "${SQL_QUERY_KEY_FILTERS_OR_CONDITIONS_ENABLED:true}"
   postgres:
     # Specify partitioning size for timestamp key-value storage. Example: DAYS, MONTHS, YEARS, INDEFINITE.
     ts_key_value_partitioning: "${SQL_POSTGRES_TS_KV_PARTITIONING:MONTHS}"
@@ -1451,6 +1463,15 @@ transport:
         branch: "${TB_GATEWAY_DASHBOARD_SYNC_BRANCH:release/4.3.0}"
         # Fetch frequency in hours for gateways dashboard repository
         fetch_frequency: "${TB_GATEWAY_DASHBOARD_SYNC_FETCH_FREQUENCY:24}"
+  ssl:
+    # SSL/TLS settings for the transport layer
+    certificate:
+      # X.509 certificate configuration to auto-detect and reload certificate used by transport protocols in real-time (MQTT, CoAP, LwM2M, etc.)
+      reload:
+        # Enable/disable automatic SSL certificates reload
+        enabled: "${TB_TRANSPORT_SSL_CERTIFICATE_RELOAD_ENABLED:true}"
+        # Interval in seconds for certificate reload
+        check_interval_seconds: "${TB_TRANSPORT_SSL_CERTIFICATE_RELOAD_CHECK_INTERVAL_SECONDS:60}"
 
 # CoAP server parameters
 # Configures the standalone CoAP server bind address, port, DTLS encryption, and credential settings.

@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.v3.core.converter.AnnotatedType;
 import io.swagger.v3.core.converter.ModelConverter;
 import io.swagger.v3.core.converter.ModelConverters;
+import io.swagger.v3.core.converter.ResolvedSchema;
 import io.swagger.v3.core.jackson.ModelResolver;
 import io.swagger.v3.core.util.Json;
 import io.swagger.v3.oas.models.Components;
@@ -165,6 +166,9 @@ public class SwaggerConfiguration {
         String apiVersion = version;
         if (StringUtils.isEmpty(apiVersion)) {
             apiVersion = appVersion;
+        }
+        if (apiVersion != null && apiVersion.endsWith("-SNAPSHOT")) {
+            apiVersion = apiVersion.substring(0, apiVersion.length() - "-SNAPSHOT".length());
         }
 
         Info info = new Info()
@@ -373,13 +377,26 @@ public class SwaggerConfiguration {
                 ._enum(Arrays.stream(ThingsboardErrorCode.values())
                         .map(ThingsboardErrorCode::getErrorCode)
                         .collect(Collectors.toList()));
-        openAPI.getComponents()
-                .addSchemas("LoginRequest", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(LoginRequest.class)).schema)
-                .addSchemas("LoginResponse", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(LoginResponse.class)).schema)
-                .addSchemas("ThingsboardErrorResponse", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(ThingsboardErrorResponse.class)).schema)
-                .addSchemas("ThingsboardCredentialsExpiredResponse", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(ThingsboardCredentialsExpiredResponse.class)).schema)
-                .addSchemas("ThingsboardErrorCode", errorCodeSchema)
-                .addSchemas("AiChatModelConfig", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(AiChatModelConfig.class)).schema);
+        Components components = openAPI.getComponents();
+        registerSchema(components, "LoginRequest", LoginRequest.class);
+        registerSchema(components, "LoginResponse", LoginResponse.class);
+        registerSchema(components, "ThingsboardErrorResponse", ThingsboardErrorResponse.class);
+        registerSchema(components, "ThingsboardCredentialsExpiredResponse", ThingsboardCredentialsExpiredResponse.class);
+        components.addSchemas("ThingsboardErrorCode", errorCodeSchema);
+        registerSchema(components, "AiChatModelConfig", AiChatModelConfig.class);
+    }
+
+    private static void registerSchema(Components components, String name, Class<?> cls) {
+        ResolvedSchema resolved = ModelConverters.getInstance()
+                .readAllAsResolvedSchema(new AnnotatedType().type(cls));
+        components.addSchemas(name, resolved.schema);
+        if (resolved.referencedSchemas != null) {
+            resolved.referencedSchemas.forEach((refName, refSchema) -> {
+                if (components.getSchemas() == null || !components.getSchemas().containsKey(refName)) {
+                    components.addSchemas(refName, refSchema);
+                }
+            });
+        }
     }
 
     private OperationCustomizer operationCustomizer() {
@@ -527,6 +544,12 @@ public class SwaggerConfiguration {
                     List<String> propOrder = schemaPropertyOrders.getOrDefault(schemaName, List.of());
                     reorderSchemaProperties(schema, propOrder);
                 });
+
+                // Synthesize a request-body example for every schema that uses a discriminator.
+                // Without this, Swagger UI shows only the discriminator-property field for
+                // polymorphic types (the parent schema doesn't know which oneOf branch to pick).
+                // We resolve the first declared subtype and inline its full property tree.
+                schemas.forEach((schemaName, schema) -> fillDiscriminatorExample(schema, schemas));
 
                 // Fix polymorphic request/response bodies: replace inline oneOf with base type $ref
                 paths.values().stream()
@@ -856,6 +879,145 @@ public class SwaggerConfiguration {
                 }
             }
         }
+    }
+
+    private static final int MAX_EXAMPLE_DEPTH = 4;
+
+    /**
+     * If {@code schema} has a discriminator, populate examples for the parent and every
+     * concrete subtype it maps to. Each subtype gets its own example with the discriminator
+     * field set to the mapping value that points at it, so fields typed as a specific
+     * subtype (e.g. {@code EntityView.id} → {@code EntityViewId}) resolve to a correct
+     * example without falling back to the parent's.
+     */
+    @SuppressWarnings("unchecked")
+    private void fillDiscriminatorExample(Schema<?> schema, Map<String, Schema> allSchemas) {
+        var discriminator = schema.getDiscriminator();
+        if (discriminator == null || discriminator.getMapping() == null || discriminator.getMapping().isEmpty()) {
+            return;
+        }
+        // 1. Populate an example on each mapped subtype.
+        for (var entry : discriminator.getMapping().entrySet()) {
+            String discriminatorValue = entry.getKey();
+            String subtypeRef = entry.getValue();
+            String subtypeName = subtypeRef.substring(subtypeRef.lastIndexOf('/') + 1);
+            Schema<?> subtype = allSchemas.get(subtypeName);
+            if (subtype == null || subtype.getExample() != null) {
+                continue;
+            }
+            Map<String, Object> example = new LinkedHashMap<>();
+            buildSchemaExample(subtypeName, allSchemas, example, new HashSet<>(), 0);
+            if (example.isEmpty()) {
+                continue;
+            }
+            example.put(discriminator.getPropertyName(), discriminatorValue);
+            subtype.setExample(example);
+        }
+        // 2. Mirror a subtype's example onto the parent so a field typed as the parent
+        //    interface still gets a complete example. Prefer the subtype whose mapping key
+        //    matches the example declared on the discriminator property itself
+        //    (e.g. EntityId.getEntityType() has example = "DEVICE" → mirror DeviceId, not
+        //    the alphabetically first AdminSettingsId). Fall back to the first mapping entry.
+        if (schema.getExample() == null) {
+            String preferredValue = null;
+            if (schema.getProperties() != null) {
+                Schema<?> discProp = (Schema<?>) schema.getProperties().get(discriminator.getPropertyName());
+                if (discProp != null && discProp.getExample() != null) {
+                    preferredValue = discProp.getExample().toString();
+                }
+            }
+            String chosenRef = preferredValue != null ? discriminator.getMapping().get(preferredValue) : null;
+            if (chosenRef == null) {
+                chosenRef = discriminator.getMapping().values().iterator().next();
+            }
+            String chosenSubtypeName = chosenRef.substring(chosenRef.lastIndexOf('/') + 1);
+            Schema<?> chosenSubtype = allSchemas.get(chosenSubtypeName);
+            if (chosenSubtype != null && chosenSubtype.getExample() != null) {
+                schema.setExample(chosenSubtype.getExample());
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void buildSchemaExample(String schemaName, Map<String, Schema> allSchemas,
+                                    Map<String, Object> result, Set<String> visited, int depth) {
+        if (depth > MAX_EXAMPLE_DEPTH || !visited.add(schemaName)) {
+            return;
+        }
+        Schema<?> schema = allSchemas.get(schemaName);
+        if (schema == null) {
+            return;
+        }
+        // Walk parents first so own properties (added later) override inherited entries.
+        if (schema.getAllOf() != null) {
+            String selfRef = "#/components/schemas/" + schemaName;
+            for (Schema<?> allOfElement : schema.getAllOf()) {
+                String ref = allOfElement.get$ref();
+                if (ref != null) {
+                    String refName = ref.substring(ref.lastIndexOf('/') + 1);
+                    buildSchemaExample(refName, allSchemas, result, visited, depth);
+                    // If the parent uses a discriminator, this schema is one of its mapping
+                    // targets — override the discriminator field with the value that points
+                    // back at us (e.g. EntityViewId → entityType: "ENTITY_VIEW", not "ADMIN_SETTINGS").
+                    Schema<?> parentSchema = allSchemas.get(refName);
+                    if (parentSchema != null && parentSchema.getDiscriminator() != null
+                            && parentSchema.getDiscriminator().getMapping() != null) {
+                        parentSchema.getDiscriminator().getMapping().entrySet().stream()
+                                .filter(e -> selfRef.equals(e.getValue()))
+                                .map(Map.Entry::getKey)
+                                .findFirst()
+                                .ifPresent(value -> result.put(parentSchema.getDiscriminator().getPropertyName(), value));
+                    }
+                } else if (allOfElement.getProperties() != null) {
+                    allOfElement.getProperties().forEach((k, v) ->
+                            result.put(k, sampleValue((Schema<?>) v, allSchemas, visited, depth + 1)));
+                }
+            }
+        }
+        if (schema.getProperties() != null) {
+            schema.getProperties().forEach((k, v) ->
+                    result.put(k, sampleValue((Schema<?>) v, allSchemas, visited, depth + 1)));
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Object sampleValue(Schema<?> propSchema, Map<String, Schema> allSchemas,
+                               Set<String> visited, int depth) {
+        if (propSchema == null) {
+            return null;
+        }
+        if (propSchema.getExample() != null) {
+            return propSchema.getExample();
+        }
+        String ref = propSchema.get$ref();
+        if (ref != null) {
+            String refName = ref.substring(ref.lastIndexOf('/') + 1);
+            Schema<?> refSchema = allSchemas.get(refName);
+            if (refSchema != null && refSchema.getExample() != null) {
+                return refSchema.getExample();
+            }
+            if (depth >= MAX_EXAMPLE_DEPTH) {
+                return Map.of();
+            }
+            Map<String, Object> nested = new LinkedHashMap<>();
+            buildSchemaExample(refName, allSchemas, nested, new HashSet<>(visited), depth + 1);
+            return nested;
+        }
+        if (propSchema.getEnum() != null && !propSchema.getEnum().isEmpty()) {
+            return propSchema.getEnum().get(0);
+        }
+        String type = propSchema.getType();
+        if (type == null) {
+            return null;
+        }
+        return switch (type) {
+            case "string" -> "string";
+            case "integer", "number" -> 0;
+            case "boolean" -> false;
+            case "array" -> List.of();
+            case "object" -> Map.of();
+            default -> null;
+        };
     }
 
     @SuppressWarnings("unchecked")

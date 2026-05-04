@@ -15,70 +15,61 @@
     limitations under the License.
 
 -->
-<form [formGroup]="userFilterFormGroup" (ngSubmit)="save()" style="width: 400px;" class="user-filter-dialog">
-  <mat-toolbar color="primary">
+<form (ngSubmit)="save()" style="width: 400px;" class="user-filter-dialog">
+  <mat-toolbar color="primary" class="justify-between">
     <h2>{{ filter.filter | customTranslate }}</h2>
-    <span class="flex-1"></span>
     <button mat-icon-button
             (click)="cancel()"
             type="button">
       <mat-icon class="material-icons">close</mat-icon>
     </button>
   </mat-toolbar>
-  @if (isLoading$ | async) {
-    <mat-progress-bar color="warn" mode="indeterminate">
-    </mat-progress-bar>
-  }
   <div mat-dialog-content>
-    <fieldset [disabled]="isLoading$ | async">
-      @for (userInputControl of userInputsFormArray().controls; track userInputControl) {
-        <div formArrayName="userInputs"
-             >
-          <div>
-            @switch (userInputControl.get('valueType').value) {
-              @case (valueTypeEnum.STRING) {
-                <mat-form-field class="mat-block" appearance="outline">
-                  <mat-label>{{ userInputControl.get('label').value  | customTranslate }}</mat-label>
-                  <input matInput [formControl]="userInputControl.get('value')">
-                </mat-form-field>
-              }
-              @case (valueTypeEnum.NUMERIC) {
-                <mat-form-field class="mat-block" appearance="outline">
-                  <mat-label>{{ userInputControl.get('label').value  | customTranslate }}</mat-label>
-                  <input required type="number" matInput [formControl]="userInputControl.get('value')">
-                  <div matSuffix class="mr-2"
-                       [class.!hidden]="!userInputControl.get('unitSymbol').value">
-                    {{ userInputControl.get('unitSymbol').value }}
-                  </div>
-                </mat-form-field>
-              }
-              @case (valueTypeEnum.DATE_TIME) {
-                <label class="tb-title no-padding tb-required">{{ userInputControl.get('label').value  | customTranslate }}</label>
-                <tb-datetime [formControl]="userInputControl.get('value')"
-                             dateText="{{ 'filter.date' | translate }}"
-                required [showLabel]="false"></tb-datetime>
-              }
-              @case (valueTypeEnum.BOOLEAN) {
-                <mat-checkbox labelPosition="before" [formControl]="userInputControl.get('value')">
-                  {{ userInputControl.get('label').value  | customTranslate }}
-                </mat-checkbox>
-              }
+    @for (userInputControl of userInputsFormArray.controls; track userInputControl) {
+      @switch (userInputControl.controls.valueType.value) {
+        @case (valueTypeEnum.STRING) {
+          <mat-form-field class="mat-block" appearance="outline">
+            <mat-label>{{ userInputControl.controls.label.value | customTranslate }}</mat-label>
+            <input matInput [formControl]="userInputControl.controls.value">
+          </mat-form-field>
+        }
+        @case (valueTypeEnum.NUMERIC) {
+          <mat-form-field class="mat-block numeric-field" appearance="outline">
+            <mat-label>{{ userInputControl.controls.label.value | customTranslate }}</mat-label>
+            <input required type="number" matInput [formControl]="userInputControl.controls.value">
+            @if (userInputControl.controls.unitSymbol.value) {
+              <div matSuffix class="mr-2">
+                {{ userInputControl.controls.unitSymbol.value }}
+              </div>
             }
-          </div>
-        </div>
+          </mat-form-field>
+        }
+        @case (valueTypeEnum.DATE_TIME) {
+          <tb-datetime [formControl]="userInputControl.controls.value"
+                       [fieldClass]="'mat-block'"
+                       [dateText]="userInputControl.controls.label.value | customTranslate"
+                       appearance="outline"
+                       required></tb-datetime>
+        }
+        @case (valueTypeEnum.BOOLEAN) {
+          <mat-slide-toggle [formControl]="userInputControl.controls.value">
+            <span class="inline-block max-w-72" tbTruncateWithTooltip>
+              {{ userInputControl.controls.label.value | customTranslate }}
+            </span>
+          </mat-slide-toggle>
+        }
       }
-    </fieldset>
+    }
   </div>
   <div mat-dialog-actions class="flex items-center justify-end">
     <button mat-button color="primary"
             type="button"
-            [disabled]="(isLoading$ | async)"
             (click)="cancel()" cdkFocusInitial>
       {{ 'action.cancel' | translate }}
     </button>
     <button mat-raised-button color="primary"
             type="submit"
-            [disabled]="(isLoading$ | async) || userFilterFormGroup.invalid || !userFilterFormGroup.dirty">
+            [disabled]="userInputsFormArray.invalid || !userInputsFormArray.dirty">
       {{ 'action.update' | translate }}
     </button>
   </div>

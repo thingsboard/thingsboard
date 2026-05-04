@@ -51,7 +51,7 @@ public class NotificationService {
         return notificationChannels.stream().map(notificationChannel ->
             notificationExecutor.submit(() -> {
                 try {
-                    notificationChannel.sendNotification(message);
+                    notificationChannel.sendNotification(message, notification);
                 } catch (Exception e) {
                     log.error("Failed to send notification to {}", notificationChannel.getClass().getSimpleName(), e);
                 }

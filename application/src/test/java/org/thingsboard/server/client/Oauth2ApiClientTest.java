@@ -90,7 +90,7 @@ public class Oauth2ApiClientTest extends AbstractApiClientTest {
         }
 
         // list tenant OAuth2 client infos
-        PageDataOAuth2ClientInfo clientInfos = client.findTenantOAuth2ClientInfos(100, 0,
+        PageDataOAuth2ClientInfo clientInfos = client.findOAuth2ClientInfos(100, 0,
                 TEST_PREFIX + "OAuth2_" + timestamp, null, null);
         assertNotNull(clientInfos);
         assertEquals(5, clientInfos.getData().size());
@@ -130,7 +130,7 @@ public class Oauth2ApiClientTest extends AbstractApiClientTest {
                 client.getOAuth2ClientById(clientToDeleteId)
         );
 
-        PageDataOAuth2ClientInfo clientsAfterDelete = client.findTenantOAuth2ClientInfos(100, 0,
+        PageDataOAuth2ClientInfo clientsAfterDelete = client.findOAuth2ClientInfos(100, 0,
                 TEST_PREFIX + "OAuth2_" + timestamp, null, null);
         assertEquals(4, clientsAfterDelete.getData().size());
     }
