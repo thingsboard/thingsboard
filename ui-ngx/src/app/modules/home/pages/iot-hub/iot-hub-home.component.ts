@@ -44,8 +44,7 @@ interface HeroTypeConfig {
   type: ItemType;
   labelKey: string;
   color: string;
-  gradientColor: string;
-  icons: string[];
+  icon: string;
 }
 
 interface SearchResultGroup {
@@ -76,34 +75,28 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
 
   heroTypes: HeroTypeConfig[] = [
     {
+      type: ItemType.DEVICE, labelKey: 'item.type-device-plural', color: '#4b63cc',
+      icon: 'assets/iot-hub/hero-device-cluster.svg'
+    },
+    {
+      type: ItemType.SOLUTION_TEMPLATE, labelKey: 'item.type-solution-template-plural', color: '#2b6bb4',
+      icon: 'assets/iot-hub/hero-solution-template-cluster.svg'
+    },
+    {
       type: ItemType.WIDGET, labelKey: 'item.type-widget-plural', color: '#2c9755',
-      gradientColor: 'rgba(44, 151, 85, 0.1)',
-      icons: ['assets/iot-hub/hero-widget-icon-1.svg', 'assets/iot-hub/hero-widget-icon-2.svg', 'assets/iot-hub/hero-widget-icon-3.svg', 'assets/iot-hub/hero-widget-icon-4.svg']
+      icon: 'assets/iot-hub/hero-widget-cluster.svg'
     },
     {
-      type: ItemType.SOLUTION_TEMPLATE, labelKey: 'item.type-solution-template-plural', color: '#2666a9',
-      gradientColor: 'rgba(38, 102, 169, 0.1)',
-      icons: ['assets/iot-hub/hero-solution-template-icon-1.svg', 'assets/iot-hub/hero-solution-template-icon-2.svg', 'assets/iot-hub/hero-solution-template-icon-3.svg', 'assets/iot-hub/hero-solution-template-icon-4.svg']
+      type: ItemType.CALCULATED_FIELD, labelKey: 'item.type-calculated-field-plural', color: '#3cb4e0',
+      icon: 'assets/iot-hub/hero-calculated-field-cluster.svg'
     },
     {
-      type: ItemType.DEVICE, labelKey: 'item.type-device-plural', color: '#4b8a79',
-      gradientColor: 'rgba(75, 138, 121, 0.1)',
-      icons: ['assets/iot-hub/hero-device-icon-1.svg', 'assets/iot-hub/hero-device-icon-2.svg', 'assets/iot-hub/hero-device-icon-3.svg', 'assets/iot-hub/hero-device-icon-4.svg']
+      type: ItemType.ALARM_RULE, labelKey: 'item.type-alarm-rule-plural', color: '#d66f2e',
+      icon: 'assets/iot-hub/hero-alarm-rule-cluster.svg'
     },
     {
-      type: ItemType.CALCULATED_FIELD, labelKey: 'item.type-calculated-field-plural', color: '#006d92',
-      gradientColor: 'rgba(0, 109, 146, 0.1)',
-      icons: ['assets/iot-hub/hero-calculated-field-icon-1.svg', 'assets/iot-hub/hero-calculated-field-icon-2.svg', 'assets/iot-hub/hero-calculated-field-icon-3.svg', 'assets/iot-hub/hero-calculated-field-icon-4.svg']
-    },
-    {
-      type: ItemType.ALARM_RULE, labelKey: 'item.type-alarm-rule-plural', color: '#4d5fd0',
-      gradientColor: 'rgba(77, 95, 208, 0.1)',
-      icons: ['assets/iot-hub/hero-dashboard-icon-1.svg', 'assets/iot-hub/hero-dashboard-icon-2.svg', 'assets/iot-hub/hero-dashboard-icon-3.svg', 'assets/iot-hub/hero-dashboard-icon-4.svg']
-    },
-    {
-      type: ItemType.RULE_CHAIN, labelKey: 'item.type-rule-chain-plural', color: '#95694b',
-      gradientColor: 'rgba(149, 105, 75, 0.1)',
-      icons: ['assets/iot-hub/hero-rule-chain-icon-1.svg', 'assets/iot-hub/hero-rule-chain-icon-2.svg', 'assets/iot-hub/hero-rule-chain-icon-3.svg', 'assets/iot-hub/hero-rule-chain-icon-4.svg']
+      type: ItemType.RULE_CHAIN, labelKey: 'item.type-rule-chain-plural', color: '#a95ae2',
+      icon: 'assets/iot-hub/hero-rule-chain-cluster.svg'
     }
   ];
 

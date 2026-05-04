@@ -16,6 +16,13 @@
 
 -->
 <div class="tb-iot-hub-home">
+  <!-- Soft colored glows (left + right) tinted with the active type's color.
+       Sit on the page background, behind the hero/cards content. -->
+  <div class="tb-iot-hub-blob tb-iot-hub-blob-left"
+       [style.color]="activeHeroType.color"></div>
+  <div class="tb-iot-hub-blob tb-iot-hub-blob-right"
+       [style.color]="activeHeroType.color"></div>
+
   <!-- Installed Items button -->
   @if (installedItemsCount > 0) {
     <button mat-stroked-button color="primary" class="tb-iot-hub-installed-btn" (click)="navigateToInstalledItems()">
@@ -26,23 +33,12 @@
 
   <!-- Hero section -->
   <div class="tb-iot-hub-hero">
-    <!-- Background gradient overlay -->
-    <div class="tb-iot-hub-hero-gradient"
-         [style.background]="'radial-gradient(ellipse at 50% 0%, ' + activeHeroType.gradientColor + ' 0%, transparent 60%)'"></div>
-
-    <!-- Floating icons -->
+    <!-- Floating icons cluster (one composite SVG per type, fade between types) -->
     @for (heroType of heroTypes; track heroType.type) {
-      @if (heroType.icons.length) {
-        <div class="tb-iot-hub-hero-icons"
-             [class.active]="heroIconsReady && activeHeroType === heroType">
-          @for (iconUrl of heroType.icons; track iconUrl; let i = $index) {
-            <div class="tb-iot-hub-hero-float-icon"
-                 [class]="'icon-pos-' + (i + 1)">
-              <img [src]="iconUrl" alt="">
-            </div>
-          }
-        </div>
-      }
+      <div class="tb-iot-hub-hero-icons"
+           [class.active]="heroIconsReady && activeHeroType === heroType">
+        <img class="tb-iot-hub-hero-cluster" [src]="heroType.icon" alt="">
+      </div>
     }
 
     <div class="tb-iot-hub-hero-content">
