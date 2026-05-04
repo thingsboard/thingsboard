@@ -27,9 +27,15 @@ import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.security.model.UserPrincipal;
+
+import java.util.Set;
 
 @Component(value = "customerUserPermissions")
 public class CustomerUserPermissions extends AbstractPermissions {
+
+    private static final Set<Operation> PUBLIC_CUSTOMER_ALLOWED_OPERATIONS = Set.of(
+            Operation.READ, Operation.READ_ATTRIBUTES, Operation.READ_TELEMETRY);
 
     public CustomerUserPermissions() {
         super();
@@ -59,6 +65,9 @@ public class CustomerUserPermissions extends AbstractPermissions {
             if (!(entity instanceof HasCustomerId)) {
                 return false;
             }
+            if (isPublicSession(user) && !PUBLIC_CUSTOMER_ALLOWED_OPERATIONS.contains(operation)) {
+                return false;
+            }
             return user.getCustomerId().equals(((HasCustomerId) entity).getCustomerId());
         }
     };
@@ -79,6 +88,9 @@ public class CustomerUserPermissions extends AbstractPermissions {
                         return false;
                     }
                     if (!(entity instanceof HasCustomerId)) {
+                        return false;
+                    }
+                    if (isPublicSession(user) && !PUBLIC_CUSTOMER_ALLOWED_OPERATIONS.contains(operation)) {
                         return false;
                     }
                     return operation.equals(Operation.CLAIM_DEVICES) || user.getCustomerId().equals(((HasCustomerId) entity).getCustomerId());
@@ -202,4 +214,9 @@ public class CustomerUserPermissions extends AbstractPermissions {
             return user.getTenantId().equals(entity.getTenantId());
         }
     };
+
+    private static boolean isPublicSession(SecurityUser user) {
+        return user.getUserPrincipal() != null
+                && UserPrincipal.Type.PUBLIC_ID.equals(user.getUserPrincipal().getType());
+    }
 }

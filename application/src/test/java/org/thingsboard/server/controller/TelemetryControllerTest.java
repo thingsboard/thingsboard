@@ -15,11 +15,13 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
@@ -217,6 +219,64 @@ public class TelemetryControllerTest extends AbstractControllerTest {
         doPost("/api/plugins/telemetry/DEVICE/20b559f5-849f-4361-b4f6-b6d0b76687e9/INVALID_SCOPE", content, (String) null)
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> assertThat(result.getResolvedException()).isInstanceOf(MethodArgumentTypeMismatchException.class));
+    }
+
+    @Test
+    public void testPublicCustomerCannotUpdateServerScopeAttributeOfPublicDevice() throws Exception {
+        Device device = createPublicDeviceAndLoginAsPublicCustomer();
+
+        String updatedAttributeBody = "{\"attribute1\": \"updatedValue\"}";
+        doPostAsync("/api/plugins/telemetry/" + device.getId() + "/SERVER_SCOPE", updatedAttributeBody, String.class, status().isForbidden());
+    }
+
+    @Test
+    public void testPublicCustomerCannotPostTelemetryToPublicDevice() throws Exception {
+        Device device = createPublicDeviceAndLoginAsPublicCustomer();
+
+        String telemetryBody = "{\"key\": \"value\"}";
+        doPostAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/timeseries/ANY", telemetryBody, String.class, status().isForbidden());
+    }
+
+    @Test
+    public void testPublicCustomerCannotDeleteAttributesOfPublicDevice() throws Exception {
+        Device device = createPublicDeviceAndLoginAsPublicCustomer();
+
+        doDeleteAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/SERVER_SCOPE?keys=attribute1", -1L)
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    public void testPublicCustomerCannotReadCredentialsOfPublicDevice() throws Exception {
+        Device device = createPublicDeviceAndLoginAsPublicCustomer();
+
+        doGet("/api/device/" + device.getId().getId() + "/credentials")
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    public void testPublicCustomerCannotInvokeRpcOnPublicDevice() throws Exception {
+        Device device = createPublicDeviceAndLoginAsPublicCustomer();
+
+        String rpcRequest = "{\"method\": \"setGpio\", \"params\": {\"pin\": 1}}";
+        doPostAsync("/api/rpc/oneway/" + device.getId().getId(), rpcRequest, String.class, status().isForbidden());
+    }
+
+    private Device createPublicDeviceAndLoginAsPublicCustomer() throws Exception {
+        loginTenantAdmin();
+        Device device = createDevice();
+
+        String attributeBody = "{\"attribute1\": \"value1\"}";
+        doPostAsync("/api/plugins/telemetry/" + device.getId() + "/SERVER_SCOPE", attributeBody, String.class, status().isOk());
+
+        Device publicDevice = doPost("/api/customer/public/device/" + device.getUuidId(), Device.class);
+        String publicId = publicDevice.getCustomerId().toString();
+
+        resetTokens();
+
+        JsonNode publicLoginRequest = JacksonUtil.toJsonNode("{\"publicId\": \"" + publicId + "\"}");
+        JsonNode tokens = doPost("/api/auth/login/public", publicLoginRequest, JsonNode.class);
+        this.token = tokens.get("token").asText();
+        return device;
     }
 
     @Test
