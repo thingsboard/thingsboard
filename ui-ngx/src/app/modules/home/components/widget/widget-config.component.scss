@@ -43,6 +43,7 @@
   }
   .tb-widget-config-content {
     & > .mat-content {
+      height: 100%;
       padding-top: 8px;
       @media #{$mat-xs} {
         padding-left: 8px;

@@ -1,0 +1,98 @@
+<!--
+
+    Copyright © 2016-2026 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<ng-container [formGroup]="htmlContainerSettingsForm">
+  <div class="tb-form-panel no-padding no-border relative h-full">
+    <div class="flex flex-row items-center gap-4">
+      <div class="tb-form-panel-title" translate>widgets.html-container.container-type</div>
+      <tb-toggle-select formControlName="type">
+        <tb-toggle-option [value]="HtmlContainerWidgetType.PLAIN">{{ 'widgets.html-container.type-plain' | translate }}</tb-toggle-option>
+        <tb-toggle-option [value]="HtmlContainerWidgetType.ANGULAR">{{ 'widgets.html-container.type-angular' | translate }}</tb-toggle-option>
+      </tb-toggle-select>
+    </div>
+    <mat-tab-group [mat-stretch-tabs]="false" selectedIndex="3" class="flex-1">
+      <mat-tab #resourceTab="matTab">
+        <ng-template mat-tab-label>
+          <div [matBadge]="resourcesFormArray.length" [matBadgeHidden]="resourceTab.isActive || !resourcesFormArray.length"
+               matBadgeSize="small">{{ 'widgets.html-container.resources' | translate }}</div>
+        </ng-template>
+        <div class="flex flex-col gap-2 pt-4">
+          @if (resourcesFormArray.length) {
+            @for (resourceControl of resourcesControls; track resourceControl; let i = $index) {
+              <div class="tb-form-row no-border no-padding" [formGroup]="resourceControl">
+                <tb-resource-autocomplete class="flex-1"
+                                          formControlName="url"
+                                          inlineField
+                                          hideRequiredMarker required
+                                          [allowAutocomplete]="resourceControl.get('isModule').value && htmlContainerSettingsForm.get('type').value === HtmlContainerWidgetType.ANGULAR"
+                                          placeholder="{{ 'widget.resource-url' | translate }}">
+                </tb-resource-autocomplete>
+                @if (htmlContainerSettingsForm.get('type').value === HtmlContainerWidgetType.ANGULAR) {
+                  <mat-checkbox formControlName="isModule">
+                    {{ 'widget.resource-is-extension' | translate }}
+                  </mat-checkbox>
+                }
+                <button mat-icon-button color="primary"
+                        (click)="removeResource(i)"
+                        matTooltip="{{'widget.remove-resource' | translate}}"
+                        matTooltipPosition="above">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            }
+          } @else {
+            <span translate
+                  class="tb-prompt flex items-center justify-center">widgets.html-container.no-resources</span>
+          }
+          <div>
+            <button mat-raised-button color="primary"
+                    (click)="addResource()"
+                    matTooltip="{{'widget.add-resource' | translate}}"
+                    matTooltipPosition="above">
+              <span translate>action.add</span>
+            </button>
+          </div>
+        </div>
+      </mat-tab>
+      <mat-tab label="{{ (htmlContainerSettingsForm.get('type').value === HtmlContainerWidgetType.ANGULAR ? 'widgets.html-container.angular-html-template' : 'widgets.html-container.html') | translate }}">
+        <tb-html class="flex-1"
+                 [fillHeight]="true"
+                 formControlName="html"
+                 label="{{ (htmlContainerSettingsForm.get('type').value === HtmlContainerWidgetType.ANGULAR ? 'widgets.html-container.angular-html-template' : 'widgets.html-container.html') | translate }}">
+        </tb-html>
+      </mat-tab>
+      <mat-tab label="{{ 'widgets.html-container.css' | translate }}">
+        <tb-css class="flex-1"
+                [fillHeight]="true"
+                formControlName="css"
+                label="{{ 'widgets.html-container.css' | translate }}">
+        </tb-css>
+      </mat-tab>
+      <mat-tab label="{{ 'widgets.html-container.java-script' | translate }}">
+        <tb-js-func class="flex-1"
+                    [fillHeight]="true"
+                    formControlName="js"
+                    [globalVariables]="functionScopeVariables"
+                    [editorCompleter]="containerFunctionEditorCompleter"
+                    [functionArgs]="htmlContainerSettingsForm.get('type').value === HtmlContainerWidgetType.ANGULAR ? ['ctx'] : ['ctx', 'container']"
+                    withModules
+                    functionTitle="{{ 'widgets.html-container.js-function' | translate }}">
+        </tb-js-func>
+      </mat-tab>
+    </mat-tab-group>
+  </div>
+</ng-container>

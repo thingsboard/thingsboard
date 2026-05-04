@@ -15,11 +15,6 @@
     limitations under the License.
 
 -->
-<div [formGroup]="widgetSettingsFormGroup" class="h-full">
-  <ng-container #definedSettingsContent></ng-container>
-  <div class="tb-settings-directive-error" *ngIf="definedDirectiveError">{{definedDirectiveError}}</div>
-  <tb-dynamic-form *ngIf="useDynamicForm()"
-    [properties]="settingsForm"
-    formControlName="settings">
-  </tb-dynamic-form>
-</div>
+<ng-container [formGroup]="htmlContainerWidgetConfigForm">
+  <tb-html-container-settings formControlName="settings"></tb-html-container-settings>
+</ng-container>
