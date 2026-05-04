@@ -21,9 +21,6 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.util.concurrent.ScheduledFuture;
 
-/**
- * Created by ashvayka on 15.10.18.
- */
 @Data
 public class SessionMetaData {
 
@@ -47,11 +44,8 @@ public class SessionMetaData {
         this.scheduledFuture = scheduledFuture;
     }
 
-    public ScheduledFuture getScheduledFuture() {
-        return scheduledFuture;
-    }
-
     public boolean hasScheduledFuture() {
         return null != this.scheduledFuture;
     }
+
 }
