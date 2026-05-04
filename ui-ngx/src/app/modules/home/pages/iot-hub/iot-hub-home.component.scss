@@ -441,7 +441,10 @@
   width: 100%;
 }
 
-// Card — Design: flex-col, gap=24, pt=24, rounded-8, border, overflow-clip, h=220
+// Card — design: flex-col, gap=24, pt=24, rounded-8, h=220, overflow clipped
+// to crop the scaled hover image. The hover state mirrors the design's
+// SMART_ANIMATE on hover (200ms ease-out): the image scales up slightly
+// and the title chevron fades+slides in.
 .tb-iot-hub-category-card {
   border-radius: 8px;
   cursor: pointer;
@@ -450,62 +453,93 @@
   align-items: center;
   gap: 24px;
   padding-top: 24px;
-  transition: transform 0.2s, box-shadow 0.2s;
+  height: 220px;
   border: 1px solid rgba(0, 0, 0, 0.12);
   overflow: hidden;
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    .tb-iot-hub-category-img img {
+      // 408 / 387 ≈ 1.054 — design grows the img frame from 387×148 → 408×156
+      transform: scale(1.054);
+    }
+    .tb-iot-hub-category-chevron {
+      opacity: 1;
+      width: 24px;
+      margin-left: 4px;
+      transform: translateX(0);
+    }
   }
 }
 
-// Title — Design: 18px Medium, centered, tracking=0.15, flex child
+// Title — design: 18px Medium, centered horizontally with chevron, 4px gap
 .tb-iot-hub-category-title {
   font-size: 18px;
   font-weight: 500;
   line-height: 24px;
   letter-spacing: 0.15px;
   color: rgba(0, 0, 0, 0.87);
-  text-align: center;
-  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
 
-// Card image — Design: h=148, w=full, overflow-clip, fills remaining space
+.tb-iot-hub-category-title-text {
+  white-space: nowrap;
+}
+
+// Chevron — hidden in default state, slides in on card hover (200ms ease-out)
+.tb-iot-hub-category-chevron {
+  width: 0;
+  height: 24px;
+  margin-left: 0;
+  opacity: 0;
+  overflow: hidden;
+  transform: translateX(-4px);
+  font-size: 24px;
+  color: rgba(0, 0, 0, 0.87);
+  transition:
+    opacity 0.2s ease-out,
+    transform 0.2s ease-out,
+    width 0.2s ease-out,
+    margin-left 0.2s ease-out;
+}
+
+// Card image wrapper — fixed 148px tall; overflow visible lets the 5.4%
+// hover scale bleed past the wrapper. The card itself has overflow:
+// hidden, so the bleed is still clipped at the card edges.
 .tb-iot-hub-category-img {
   width: 100%;
-  object-fit: contain;
+  height: 148px;
   flex-shrink: 0;
+  overflow: visible;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+    transition: transform 0.2s ease-out;
+  }
 }
 
-// Exact Design gradients (104.75deg angle)
-.category-widgets {
-  background: linear-gradient(104.75deg, rgb(240, 255, 245) 0%, rgb(147, 246, 182) 100%);
-}
+// Per-card flat background colors sampled from the design.
+.category-devices         { background: #ccd5ff; }
+.category-solutions       { background: #b7d8ff; }
+.category-widgets         { background: #a3ffc3; }
+.category-calc-fields     { background: #bcedff; }
+.category-alarm-rules     { background: #ffe6cc; }
+.category-rule-chains     { background: #ebd1ff; }
 
-.category-dashboards {
-  background: linear-gradient(104.75deg, rgb(245, 246, 255) 0%, rgb(189, 197, 255) 100%);
-}
-
-.category-solutions {
-  background: linear-gradient(104.75deg, rgb(245, 250, 255) 0%, rgb(149, 200, 255) 100%);
-}
-
-.category-calc-fields {
-  background: linear-gradient(104.75deg, rgb(245, 252, 255) 0%, rgb(149, 222, 248) 100%);
-}
-
-.category-alarm-rules {
-  background: linear-gradient(104.75deg, rgb(245, 246, 255) 0%, rgb(189, 197, 255) 100%);
-}
-
-.category-rule-chains {
-  background: linear-gradient(104.75deg, rgb(255, 252, 245) 0%, rgb(255, 238, 194) 100%);
-}
-
-.category-devices {
-  background: linear-gradient(104.75deg, rgb(245, 255, 252) 0%, rgb(147, 240, 213) 100%);
+// "Most popular in IoT Hub" title — design: 28/36 Medium, sits between
+// the post-cards divider and the first popular section.
+.tb-iot-hub-most-popular-title {
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 36px;
+  letter-spacing: 0.15px;
+  color: rgba(0, 0, 0, 0.87);
+  margin: 0;
 }
 
 // Sections — inside main-content, no individual padding needed
@@ -547,6 +581,12 @@
 .tb-iot-hub-divider {
   height: 1px;
   background: rgba(0, 0, 0, 0.12);
+}
+
+// Bleed variant — used inside main-content (which has 40px horizontal
+// padding) to span the full page-container width like in the design.
+.tb-iot-hub-divider-bleed {
+  margin: 0 -40px;
 }
 
 // Become a Creator — matches Design (pt=64, text centered, button at y=156)

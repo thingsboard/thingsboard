@@ -105,12 +105,12 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
   private heroInterval: any;
 
   categoryCards: CategoryCard[] = [
-    { type: ItemType.WIDGET, titleKey: 'item.type-widget-plural', icon: 'widgets', cssClass: 'category-widgets', image: 'assets/iot-hub/category-widgets-img.svg' },
+    { type: ItemType.DEVICE, titleKey: 'iot-hub.device-library', icon: 'memory', cssClass: 'category-devices', image: 'assets/iot-hub/category-device-library-img.png' },
     { type: ItemType.SOLUTION_TEMPLATE, titleKey: 'item.type-solution-template-plural', icon: 'integration_instructions', cssClass: 'category-solutions', image: 'assets/iot-hub/category-solution-templates-img.png' },
-    { type: ItemType.DEVICE, titleKey: 'iot-hub.device-library', icon: 'memory', cssClass: 'category-devices', image: 'assets/iot-hub/category-device-library-img.svg' },
-    { type: ItemType.CALCULATED_FIELD, titleKey: 'item.type-calculated-field-plural', icon: 'functions', cssClass: 'category-calc-fields', image: 'assets/iot-hub/category-calculated-fields-img.svg' },
-    { type: ItemType.ALARM_RULE, titleKey: 'item.type-alarm-rule-plural', icon: 'notification_important', cssClass: 'category-alarm-rules', image: 'assets/iot-hub/category-dashboards-img.svg' },
-    { type: ItemType.RULE_CHAIN, titleKey: 'item.type-rule-chain-plural', icon: 'account_tree', cssClass: 'category-rule-chains', image: 'assets/iot-hub/category-rule-chains-img.svg' }
+    { type: ItemType.WIDGET, titleKey: 'item.type-widget-plural', icon: 'widgets', cssClass: 'category-widgets', image: 'assets/iot-hub/category-widgets-img.png' },
+    { type: ItemType.CALCULATED_FIELD, titleKey: 'item.type-calculated-field-plural', icon: 'functions', cssClass: 'category-calc-fields', image: 'assets/iot-hub/category-calculated-fields-img.png' },
+    { type: ItemType.ALARM_RULE, titleKey: 'item.type-alarm-rule-plural', icon: 'notification_important', cssClass: 'category-alarm-rules', image: 'assets/iot-hub/category-alarm-rules-img.png' },
+    { type: ItemType.RULE_CHAIN, titleKey: 'item.type-rule-chain-plural', icon: 'account_tree', cssClass: 'category-rule-chains', image: 'assets/iot-hub/category-rule-chains-img.png' }
   ];
 
   popularWidgets: MpItemVersionView[] = [];
@@ -292,6 +292,15 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
 
   navigateToBrowse(type: ItemType): void {
     void this.router.navigate(['/iot-hub', this.getTypeRoute(type)]);
+  }
+
+  hasAnyPopularItems(): boolean {
+    return this.popularDevices.length > 0
+      || this.popularSolutionTemplates.length > 0
+      || this.popularWidgets.length > 0
+      || this.popularCalcFields.length > 0
+      || this.popularAlarmRules.length > 0
+      || this.popularRuleChains.length > 0;
   }
 
   private getTypeRoute(type: ItemType): string {
