@@ -52,6 +52,11 @@ interface SearchResultGroup {
   items: MpItemVersionView[];
 }
 
+const SEARCH_GROUP_ORDER: ItemType[] = [
+  ItemType.DEVICE, ItemType.SOLUTION_TEMPLATE, ItemType.WIDGET,
+  ItemType.CALCULATED_FIELD, ItemType.ALARM_RULE, ItemType.RULE_CHAIN
+];
+
 @Component({
   selector: 'tb-iot-hub-home',
   standalone: false,
@@ -524,6 +529,9 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
   private groupSearchResults(items: MpItemVersionView[]): SearchResultGroup[] {
     const groupMap = new Map<ItemType, MpItemVersionView[]>();
     for (const item of items) {
+      if (!SEARCH_GROUP_ORDER.includes(item.type)) {
+        continue;
+      }
       let list = groupMap.get(item.type);
       if (!list) {
         list = [];
@@ -531,6 +539,8 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
       }
       list.push(item);
     }
-    return Array.from(groupMap.entries()).map(([type, groupItems]) => ({ type, items: groupItems }));
+    return SEARCH_GROUP_ORDER
+      .filter(type => groupMap.has(type))
+      .map(type => ({ type, items: groupMap.get(type) }));
   }
 }

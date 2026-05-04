@@ -39,8 +39,8 @@ interface SortOption {
 }
 
 const TYPE_ORDER: ItemType[] = [
-  ItemType.WIDGET, ItemType.DASHBOARD, ItemType.SOLUTION_TEMPLATE, ItemType.DEVICE,
-  ItemType.CALCULATED_FIELD, ItemType.RULE_CHAIN
+  ItemType.DEVICE, ItemType.SOLUTION_TEMPLATE, ItemType.WIDGET,
+  ItemType.CALCULATED_FIELD, ItemType.ALARM_RULE, ItemType.RULE_CHAIN
 ];
 
 @Component({
@@ -80,8 +80,8 @@ export class TbIotHubSearchComponent implements OnInit, OnDestroy {
   installedWidgets: IotHubInstalledItem[] = [];
   installedSolutionTemplates: IotHubInstalledItem[] = [];
   installedDeviceCounts: Record<string, number> = {};
-  installedDashboardCounts: Record<string, number> = {};
   installedCalcFieldCounts: Record<string, number> = {};
+  installedAlarmRuleCounts: Record<string, number> = {};
   installedRuleChainCounts: Record<string, number> = {};
 
   private searchSubject = new Subject<string>();
@@ -176,7 +176,9 @@ export class TbIotHubSearchComponent implements OnInit, OnDestroy {
 
   // Type helpers
   isCompactType(type: ItemType): boolean {
-    return type === ItemType.CALCULATED_FIELD || type === ItemType.RULE_CHAIN;
+    return type === ItemType.CALCULATED_FIELD
+      || type === ItemType.ALARM_RULE
+      || type === ItemType.RULE_CHAIN;
   }
 
   getTypeLabel(type: ItemType): string {
@@ -187,9 +189,9 @@ export class TbIotHubSearchComponent implements OnInit, OnDestroy {
   getTypeRoute(type: ItemType): string {
     switch (type) {
       case ItemType.WIDGET: return 'widgets';
-      case ItemType.DASHBOARD: return 'dashboards';
       case ItemType.SOLUTION_TEMPLATE: return 'solution-templates';
       case ItemType.CALCULATED_FIELD: return 'calculated-fields';
+      case ItemType.ALARM_RULE: return 'alarm-rules';
       case ItemType.RULE_CHAIN: return 'rule-chains';
       case ItemType.DEVICE: return 'devices';
       default: return 'widgets';
@@ -217,10 +219,10 @@ export class TbIotHubSearchComponent implements OnInit, OnDestroy {
     switch (item.type) {
       case ItemType.DEVICE:
         return this.installedDeviceCounts[item.itemId] || 0;
-      case ItemType.DASHBOARD:
-        return this.installedDashboardCounts[item.itemId] || 0;
       case ItemType.CALCULATED_FIELD:
         return this.installedCalcFieldCounts[item.itemId] || 0;
+      case ItemType.ALARM_RULE:
+        return this.installedAlarmRuleCounts[item.itemId] || 0;
       case ItemType.RULE_CHAIN:
         return this.installedRuleChainCounts[item.itemId] || 0;
       default:
@@ -311,15 +313,15 @@ export class TbIotHubSearchComponent implements OnInit, OnDestroy {
       widgets: this.iotHubApiService.getInstalledItems(pageLink, ItemType.WIDGET, undefined, config),
       solutionTemplates: this.iotHubApiService.getInstalledItems(pageLink, ItemType.SOLUTION_TEMPLATE, undefined, config),
       deviceCounts: this.iotHubApiService.getInstalledItemCounts(ItemType.DEVICE, config),
-      dashboardCounts: this.iotHubApiService.getInstalledItemCounts(ItemType.DASHBOARD, config),
       calcFieldCounts: this.iotHubApiService.getInstalledItemCounts(ItemType.CALCULATED_FIELD, config),
+      alarmRuleCounts: this.iotHubApiService.getInstalledItemCounts(ItemType.ALARM_RULE, config),
       ruleChainCounts: this.iotHubApiService.getInstalledItemCounts(ItemType.RULE_CHAIN, config)
     }).subscribe(results => {
       this.installedWidgets = results.widgets.data;
       this.installedSolutionTemplates = results.solutionTemplates.data;
       this.installedDeviceCounts = results.deviceCounts;
-      this.installedDashboardCounts = results.dashboardCounts;
       this.installedCalcFieldCounts = results.calcFieldCounts;
+      this.installedAlarmRuleCounts = results.alarmRuleCounts;
       this.installedRuleChainCounts = results.ruleChainCounts;
     });
   }

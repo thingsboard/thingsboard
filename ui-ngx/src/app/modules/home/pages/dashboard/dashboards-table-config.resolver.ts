@@ -77,9 +77,6 @@ import {
   EntityAliasesDialogComponent,
   EntityAliasesDialogData
 } from '@home/components/alias/entity-aliases-dialog.component';
-import { ItemType } from '@shared/models/iot-hub/iot-hub-item.models';
-import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
-
 @Injectable()
 export class DashboardsTableConfigResolver  {
 
@@ -92,7 +89,6 @@ export class DashboardsTableConfigResolver  {
               private dialogService: DialogService,
               private homeDialogs: HomeDialogsService,
               private importExport: ImportExportService,
-              private iotHubActions: IotHubActionsService,
               private translate: TranslateService,
               private datePipe: DatePipe,
               private router: Router,
@@ -352,12 +348,6 @@ export class DashboardsTableConfigResolver  {
           icon: 'file_upload',
           isEnabled: () => true,
           onAction: ($event) => this.importDashboard($event)
-        },
-        {
-          name: this.translate.instant('iot-hub.add-from-iot-hub'),
-          icon: 'store',
-          isEnabled: () => true,
-          onAction: ($event) => this.addDashboardFromIotHub($event)
         }
       );
     }
@@ -395,14 +385,6 @@ export class DashboardsTableConfigResolver  {
     } else {
       this.router.navigateByUrl(`dashboards/${dashboard.id.id}`);
     }
-  }
-
-  addDashboardFromIotHub(_$event: Event) {
-    this.iotHubActions.addItem(ItemType.DASHBOARD).subscribe(result => {
-      if (result?.descriptor?.type === 'DASHBOARD' && result.descriptor.dashboardId?.id) {
-        this.router.navigateByUrl(`dashboards/${result.descriptor.dashboardId.id}`);
-      }
-    });
   }
 
   importDashboard(_$event: Event) {
