@@ -17,13 +17,25 @@ package org.thingsboard.server.service.ai;
 
 import com.google.cloud.vertexai.api.GenerationConfig;
 import dev.langchain4j.model.chat.ChatModel;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ResourceLock;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.thingsboard.common.util.SsrfProtectionValidator;
+import org.thingsboard.server.common.data.ai.model.chat.AzureOpenAiChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.chat.GoogleVertexAiGeminiChatModelConfig;
+import org.thingsboard.server.common.data.ai.model.chat.OllamaChatModelConfig;
+import org.thingsboard.server.common.data.ai.model.chat.OpenAiChatModelConfig;
+import org.thingsboard.server.common.data.ai.provider.AzureOpenAiProviderConfig;
 import org.thingsboard.server.common.data.ai.provider.GoogleVertexAiGeminiProviderConfig;
+import org.thingsboard.server.common.data.ai.provider.OllamaProviderConfig;
+import org.thingsboard.server.common.data.ai.provider.OpenAiProviderConfig;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@ResourceLock("SsrfProtectionValidator")
 class Langchain4jChatModelConfigurerImplTest {
 
     private static final String TEST_SERVICE_ACCOUNT_KEY = """
@@ -40,6 +52,72 @@ class Langchain4jChatModelConfigurerImplTest {
             """;
 
     private final Langchain4jChatModelConfigurerImpl configurer = new Langchain4jChatModelConfigurerImpl();
+
+    @BeforeEach
+    void enableSsrfProtection() {
+        SsrfProtectionValidator.setEnabled(true);
+    }
+
+    @AfterEach
+    void disableSsrfProtection() {
+        SsrfProtectionValidator.setEnabled(false);
+    }
+
+    @Test
+    void configureChatModel_openAi_withPrivateIp_shouldThrow() {
+        var config = OpenAiChatModelConfig.builder()
+                .providerConfig(OpenAiProviderConfig.builder()
+                        .baseUrl("http://172.17.0.1:8080/")
+                        .apiKey("test")
+                        .build())
+                .modelId("gpt-4o")
+                .build();
+
+        assertThatThrownBy(() -> configurer.configureChatModel(config))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("URI is invalid");
+    }
+
+    @Test
+    void configureChatModel_openAi_withLocalhostUrl_shouldThrow() {
+        var config = OpenAiChatModelConfig.builder()
+                .providerConfig(OpenAiProviderConfig.builder()
+                        .baseUrl("http://localhost:22/")
+                        .apiKey("test")
+                        .build())
+                .modelId("gpt-4o")
+                .build();
+
+        assertThatThrownBy(() -> configurer.configureChatModel(config))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("URI is invalid");
+    }
+
+    @Test
+    void configureChatModel_azureOpenAi_withPrivateIp_shouldThrow() {
+        var config = AzureOpenAiChatModelConfig.builder()
+                .providerConfig(new AzureOpenAiProviderConfig(
+                        "http://10.0.0.1:8080/", null, "test-key"))
+                .modelId("gpt-4o")
+                .build();
+
+        assertThatThrownBy(() -> configurer.configureChatModel(config))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("URI is invalid");
+    }
+
+    @Test
+    void configureChatModel_ollama_withPrivateIp_shouldThrow() {
+        var config = OllamaChatModelConfig.builder()
+                .providerConfig(new OllamaProviderConfig(
+                        "http://192.168.1.100:11434/", new OllamaProviderConfig.OllamaAuth.None()))
+                .modelId("llama3")
+                .build();
+
+        assertThatThrownBy(() -> configurer.configureChatModel(config))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("URI is invalid");
+    }
 
     @Test
     void configureChatModel_vertexAi_setsFrequencyAndPresencePenaltyFromCorrectConfigFields() {

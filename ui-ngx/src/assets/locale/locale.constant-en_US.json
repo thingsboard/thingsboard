@@ -10390,6 +10390,18 @@
                 }
             }
         },
+        "html-container": {
+            "java-script": "JavaScript",
+            "js-function": "JavaScript function",
+            "html": "HTML",
+            "angular-html-template": "Angular HTML template",
+            "css": "CSS",
+            "container-type": "Container type",
+            "type-plain": "Plain HTML",
+            "type-angular": "Angular",
+            "resources": "Resources",
+            "no-resources": "No resources configured"
+        },
         "api-usage": {
             "api-usage": "API usage",
             "label": "Label",

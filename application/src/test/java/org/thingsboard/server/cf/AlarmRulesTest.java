@@ -402,6 +402,57 @@ public class AlarmRulesTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testChangeDurationConditionFromStaticToDynamic() throws Exception {
+        Argument temperatureArgument = new Argument();
+        temperatureArgument.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
+        temperatureArgument.setDefaultValue("0");
+        Map<String, Argument> arguments = Map.of(
+                "temperature", temperatureArgument
+        );
+
+        long staticDurationMs = 5000L;
+        Map<AlarmSeverity, Condition> createRules = Map.of(
+                AlarmSeverity.CRITICAL, new Condition("return temperature >= 50;", null, staticDurationMs)
+        );
+
+        AlarmRuleDefinition alarmRule = createAlarmRule(deviceId, "High Temperature Alarm",
+                arguments, createRules, null);
+        CalculatedFieldId alarmRuleId = alarmRule.getId();
+
+        // post telemetry to trigger condition and wait for the static-phase eval to produce a debug event,
+        // which guarantees firstEventTs > 0 in AlarmRuleState before we trigger REINIT
+        postTelemetry(deviceId, "{\"temperature\":50}");
+        await().atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> getDebugEvents(alarmRuleId, 1),
+                        events -> !events.isEmpty() && !events.get(0).getId().equals(latestEventId));
+
+        // update CF: add attribute argument and switch duration from static to dynamic
+        AlarmCalculatedFieldConfiguration configuration = alarmRule.getConfiguration();
+
+        Argument durationArgument = new Argument();
+        durationArgument.setRefEntityKey(new ReferencedEntityKey("durationThreshold",
+                ArgumentType.ATTRIBUTE, AttributeScope.SERVER_SCOPE));
+        durationArgument.setDefaultValue("-1");
+        configuration.getArguments().put("durationThreshold", durationArgument);
+
+        DurationAlarmCondition durationCondition = (DurationAlarmCondition)
+                configuration.getCreateRules().get(AlarmSeverity.CRITICAL).getCondition();
+        durationCondition.setValue(new AlarmConditionValue<>(null, "durationThreshold"));
+
+        alarmRule = saveAlarmRule(alarmRule);
+
+        long dynamicDurationMs = 3000L;
+        postAttributes(deviceId, AttributeScope.SERVER_SCOPE,
+                "{\"durationThreshold\":" + dynamicDurationMs + "}");
+
+        checkAlarmResult(alarmRule, alarmResult -> {
+            assertThat(alarmResult.isCreated()).isTrue();
+            assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.CRITICAL);
+            assertThat(alarmResult.getAlarm().getStatus()).isEqualTo(AlarmStatus.ACTIVE_UNACK);
+        });
+    }
+
+    @Test
     public void testCreateAlarm_currentOwnerArgument() throws Exception {
         Argument temperatureArgument = new Argument();
         temperatureArgument.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));

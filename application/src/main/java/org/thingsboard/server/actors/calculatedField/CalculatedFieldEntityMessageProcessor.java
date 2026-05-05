@@ -485,7 +485,6 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
 
     private void initState(CalculatedFieldState state, CalculatedFieldCtx ctx) {
         state.setCtx(ctx, actorCtx);
-        state.init(false);
 
         if (ctx.getCfType() == CalculatedFieldType.GEOFENCING && ctx.isCfHasRelationPathQuerySource()) {
             GeofencingCalculatedFieldState geofencingState = (GeofencingCalculatedFieldState) state;
@@ -494,6 +493,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
 
         Map<String, ArgumentEntry> arguments = fetchArguments(ctx);
         state.update(arguments, ctx);
+        state.init(false);
 
         state.checkStateSize(new CalculatedFieldEntityCtxId(tenantId, ctx.getCfId(), entityId), ctx.getMaxStateSize());
         states.put(ctx.getCfId(), state);

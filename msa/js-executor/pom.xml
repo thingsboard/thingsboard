@@ -52,6 +52,29 @@
             <type>exe</type>
             <scope>provided</scope>
         </dependency>
+        <!--
+            Reactor-only ordering dep (NOT a real classpath dependency).
+            Forces `mvn -T<n>` to serialize this module after web-ui so that
+            no two `yarn install` / `yarn run pkg` invocations can overlap on
+            the same agent. Concurrent yarn 1.x processes share ~/.cache/yarn
+            and have intermittently produced `tsc: not found` failures during
+            yarn pkg (incomplete typescript extraction in node_modules).
+            The chain is: ui-ngx -> msa/web-ui -> msa/js-executor.
+            type=pom + provided + wildcard exclusions keep nothing on the classpath.
+        -->
+        <dependency>
+            <groupId>org.thingsboard.msa</groupId>
+            <artifactId>web-ui</artifactId>
+            <version>${project.version}</version>
+            <type>pom</type>
+            <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
     </dependencies>
 
     <build>
@@ -90,7 +113,7 @@
                         </goals>
                         <phase>compile</phase>
                         <configuration>
-                            <arguments>run pkg</arguments>
+                            <arguments>--mutex network run pkg</arguments>
                         </configuration>
                     </execution>
                 </executions>
