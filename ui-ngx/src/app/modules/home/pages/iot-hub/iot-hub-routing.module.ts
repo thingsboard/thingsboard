@@ -32,7 +32,7 @@ const routes: Routes = [
       auth: [Authority.TENANT_ADMIN],
       breadcrumb: {
         label: 'iot-hub.iot-hub',
-        icon: 'store'
+        icon: 'hub'
       }
     },
     children: [

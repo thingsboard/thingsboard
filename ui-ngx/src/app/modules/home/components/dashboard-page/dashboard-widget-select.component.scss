@@ -64,6 +64,41 @@ tb-dashboard-widget-select {
     }
   }
 
+  .tb-top-level-widget-mode-toggle {
+    .tb-toggle-container {
+      .mat-button-toggle-group.mat-button-toggle-group-appearance-standard.tb-toggle-header {
+        height: 42px;
+        border-radius: 8px;
+        overflow: hidden;
+        padding: 0;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        .mat-button-toggle.mat-button-toggle-appearance-standard {
+          .mat-button-toggle-focus-overlay, .mat-button-toggle-ripple {
+            border-radius: 0;
+          }
+          .mat-button-toggle-button {
+            height: 40px;
+            .mat-button-toggle-label-content {
+              line-height: 36px;
+              font-weight: 500;
+            }
+          }
+          &.mat-button-toggle-checked {
+            .mat-button-toggle-button {
+              border: none;
+              border-radius: 0;
+            }
+          }
+        }
+        &.tb-fill.tb-invert {
+          .mat-button-toggle.mat-button-toggle-appearance-standard {
+            color: #FFF;
+          }
+        }
+      }
+    }
+  }
+
   .tb-widget-select-search-row {
     width: 100%;
     gap: 8px;

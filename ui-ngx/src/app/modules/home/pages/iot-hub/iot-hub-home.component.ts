@@ -44,14 +44,18 @@ interface HeroTypeConfig {
   type: ItemType;
   labelKey: string;
   color: string;
-  gradientColor: string;
-  icons: string[];
+  icon: string;
 }
 
 interface SearchResultGroup {
   type: ItemType;
   items: MpItemVersionView[];
 }
+
+const SEARCH_GROUP_ORDER: ItemType[] = [
+  ItemType.DEVICE, ItemType.SOLUTION_TEMPLATE, ItemType.WIDGET,
+  ItemType.CALCULATED_FIELD, ItemType.ALARM_RULE, ItemType.RULE_CHAIN
+];
 
 @Component({
   selector: 'tb-iot-hub-home',
@@ -76,34 +80,28 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
 
   heroTypes: HeroTypeConfig[] = [
     {
+      type: ItemType.DEVICE, labelKey: 'item.type-device-plural', color: '#4b63cc',
+      icon: 'assets/iot-hub/hero-device-cluster.svg'
+    },
+    {
+      type: ItemType.SOLUTION_TEMPLATE, labelKey: 'item.type-solution-template-plural', color: '#2b6bb4',
+      icon: 'assets/iot-hub/hero-solution-template-cluster.svg'
+    },
+    {
       type: ItemType.WIDGET, labelKey: 'item.type-widget-plural', color: '#2c9755',
-      gradientColor: 'rgba(44, 151, 85, 0.1)',
-      icons: ['assets/iot-hub/hero-widget-icon-1.svg', 'assets/iot-hub/hero-widget-icon-2.svg', 'assets/iot-hub/hero-widget-icon-3.svg', 'assets/iot-hub/hero-widget-icon-4.svg']
+      icon: 'assets/iot-hub/hero-widget-cluster.svg'
     },
     {
-      type: ItemType.SOLUTION_TEMPLATE, labelKey: 'item.type-solution-template-plural', color: '#2666a9',
-      gradientColor: 'rgba(38, 102, 169, 0.1)',
-      icons: ['assets/iot-hub/hero-solution-template-icon-1.svg', 'assets/iot-hub/hero-solution-template-icon-2.svg', 'assets/iot-hub/hero-solution-template-icon-3.svg', 'assets/iot-hub/hero-solution-template-icon-4.svg']
+      type: ItemType.CALCULATED_FIELD, labelKey: 'item.type-calculated-field-plural', color: '#3cb4e0',
+      icon: 'assets/iot-hub/hero-calculated-field-cluster.svg'
     },
     {
-      type: ItemType.DEVICE, labelKey: 'item.type-device-plural', color: '#4b8a79',
-      gradientColor: 'rgba(75, 138, 121, 0.1)',
-      icons: ['assets/iot-hub/hero-device-icon-1.svg', 'assets/iot-hub/hero-device-icon-2.svg', 'assets/iot-hub/hero-device-icon-3.svg', 'assets/iot-hub/hero-device-icon-4.svg']
+      type: ItemType.ALARM_RULE, labelKey: 'item.type-alarm-rule-plural', color: '#d66f2e',
+      icon: 'assets/iot-hub/hero-alarm-rule-cluster.svg'
     },
     {
-      type: ItemType.CALCULATED_FIELD, labelKey: 'item.type-calculated-field-plural', color: '#006d92',
-      gradientColor: 'rgba(0, 109, 146, 0.1)',
-      icons: ['assets/iot-hub/hero-calculated-field-icon-1.svg', 'assets/iot-hub/hero-calculated-field-icon-2.svg', 'assets/iot-hub/hero-calculated-field-icon-3.svg', 'assets/iot-hub/hero-calculated-field-icon-4.svg']
-    },
-    {
-      type: ItemType.ALARM_RULE, labelKey: 'item.type-alarm-rule-plural', color: '#4d5fd0',
-      gradientColor: 'rgba(77, 95, 208, 0.1)',
-      icons: ['assets/iot-hub/hero-dashboard-icon-1.svg', 'assets/iot-hub/hero-dashboard-icon-2.svg', 'assets/iot-hub/hero-dashboard-icon-3.svg', 'assets/iot-hub/hero-dashboard-icon-4.svg']
-    },
-    {
-      type: ItemType.RULE_CHAIN, labelKey: 'item.type-rule-chain-plural', color: '#95694b',
-      gradientColor: 'rgba(149, 105, 75, 0.1)',
-      icons: ['assets/iot-hub/hero-rule-chain-icon-1.svg', 'assets/iot-hub/hero-rule-chain-icon-2.svg', 'assets/iot-hub/hero-rule-chain-icon-3.svg', 'assets/iot-hub/hero-rule-chain-icon-4.svg']
+      type: ItemType.RULE_CHAIN, labelKey: 'item.type-rule-chain-plural', color: '#a95ae2',
+      icon: 'assets/iot-hub/hero-rule-chain-cluster.svg'
     }
   ];
 
@@ -112,12 +110,12 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
   private heroInterval: any;
 
   categoryCards: CategoryCard[] = [
-    { type: ItemType.WIDGET, titleKey: 'item.type-widget-plural', icon: 'widgets', cssClass: 'category-widgets', image: 'assets/iot-hub/category-widgets-img.svg' },
+    { type: ItemType.DEVICE, titleKey: 'iot-hub.device-library', icon: 'memory', cssClass: 'category-devices', image: 'assets/iot-hub/category-device-library-img.png' },
     { type: ItemType.SOLUTION_TEMPLATE, titleKey: 'item.type-solution-template-plural', icon: 'integration_instructions', cssClass: 'category-solutions', image: 'assets/iot-hub/category-solution-templates-img.png' },
-    { type: ItemType.DEVICE, titleKey: 'iot-hub.device-library', icon: 'memory', cssClass: 'category-devices', image: 'assets/iot-hub/category-device-library-img.svg' },
-    { type: ItemType.CALCULATED_FIELD, titleKey: 'item.type-calculated-field-plural', icon: 'functions', cssClass: 'category-calc-fields', image: 'assets/iot-hub/category-calculated-fields-img.svg' },
-    { type: ItemType.ALARM_RULE, titleKey: 'item.type-alarm-rule-plural', icon: 'notification_important', cssClass: 'category-alarm-rules', image: 'assets/iot-hub/category-dashboards-img.svg' },
-    { type: ItemType.RULE_CHAIN, titleKey: 'item.type-rule-chain-plural', icon: 'account_tree', cssClass: 'category-rule-chains', image: 'assets/iot-hub/category-rule-chains-img.svg' }
+    { type: ItemType.WIDGET, titleKey: 'item.type-widget-plural', icon: 'widgets', cssClass: 'category-widgets', image: 'assets/iot-hub/category-widgets-img.png' },
+    { type: ItemType.CALCULATED_FIELD, titleKey: 'item.type-calculated-field-plural', icon: 'functions', cssClass: 'category-calc-fields', image: 'assets/iot-hub/category-calculated-fields-img.png' },
+    { type: ItemType.ALARM_RULE, titleKey: 'item.type-alarm-rule-plural', icon: 'notification_important', cssClass: 'category-alarm-rules', image: 'assets/iot-hub/category-alarm-rules-img.png' },
+    { type: ItemType.RULE_CHAIN, titleKey: 'item.type-rule-chain-plural', icon: 'account_tree', cssClass: 'category-rule-chains', image: 'assets/iot-hub/category-rule-chains-img.png' }
   ];
 
   popularWidgets: MpItemVersionView[] = [];
@@ -299,6 +297,15 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
 
   navigateToBrowse(type: ItemType): void {
     void this.router.navigate(['/iot-hub', this.getTypeRoute(type)]);
+  }
+
+  hasAnyPopularItems(): boolean {
+    return this.popularDevices.length > 0
+      || this.popularSolutionTemplates.length > 0
+      || this.popularWidgets.length > 0
+      || this.popularCalcFields.length > 0
+      || this.popularAlarmRules.length > 0
+      || this.popularRuleChains.length > 0;
   }
 
   private getTypeRoute(type: ItemType): string {
@@ -522,6 +529,9 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
   private groupSearchResults(items: MpItemVersionView[]): SearchResultGroup[] {
     const groupMap = new Map<ItemType, MpItemVersionView[]>();
     for (const item of items) {
+      if (!SEARCH_GROUP_ORDER.includes(item.type)) {
+        continue;
+      }
       let list = groupMap.get(item.type);
       if (!list) {
         list = [];
@@ -529,6 +539,8 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
       }
       list.push(item);
     }
-    return Array.from(groupMap.entries()).map(([type, groupItems]) => ({ type, items: groupItems }));
+    return SEARCH_GROUP_ORDER
+      .filter(type => groupMap.has(type))
+      .map(type => ({ type, items: groupMap.get(type) }));
   }
 }

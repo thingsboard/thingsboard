@@ -203,8 +203,25 @@
   }
 }
 
-.tb-installed-empty {
-  color: rgba(0, 0, 0, 0.54);
+// Empty state — mirrors the browse component's tb-iot-hub-empty-state
+.tb-iot-hub-empty-state {
+  .tb-no-data-bg {
+    flex: auto;
+    height: 100px;
+  }
+
+  h3 {
+    font-size: 18px;
+    font-weight: 500;
+    color: rgba(0, 0, 0, 0.87);
+    margin: 16px 0 8px;
+  }
+
+  p {
+    font-size: 14px;
+    color: rgba(0, 0, 0, 0.54);
+    margin: 0 0 24px;
+  }
 }
 
 :host(:not(.tb-installed-with-version)) {

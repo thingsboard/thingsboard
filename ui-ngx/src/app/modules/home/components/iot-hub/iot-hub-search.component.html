@@ -25,22 +25,25 @@
 </div>
 <!-- Search + Sort row -->
 <div class="flex items-center gap-4">
-  <div class="tb-search-input-field">
-    <mat-icon class="tb-search-input-icon">search</mat-icon>
+  <div class="tb-search-input-field flex flex-1 items-center">
     <input class="tb-search-input"
-           [placeholder]="'iot-hub.search' | translate"
+           [placeholder]="searchPlaceholderKey | translate"
            [(ngModel)]="searchText"
            (input)="onSearchInput()"
            (keyup.enter)="onSearchEnter()">
     @if (searchText) {
-      <button mat-icon-button class="tb-search-input-clear" (click)="clearSearch()">
+      <button mat-icon-button class="tb-search-input-action" (click)="clearSearch()">
         <mat-icon>close</mat-icon>
       </button>
+    } @else {
+      <span class="tb-search-input-action tb-search-input-action-static" aria-hidden="true">
+        <mat-icon>search</mat-icon>
+      </span>
     }
   </div>
   <button mat-button color="primary" class="tb-search-sort-btn tb-search-sort-btn-full" [matMenuTriggerFor]="sortMenu">
-    <mat-icon>filter_list</mat-icon>
     {{ sortOptions[selectedSortIndex].label | translate }}
+    <mat-icon iconPositionEnd>arrow_drop_down</mat-icon>
   </button>
   <button mat-icon-button color="primary" class="tb-search-sort-btn tb-search-sort-btn-icon" [matMenuTriggerFor]="sortMenu">
     <mat-icon>filter_list</mat-icon>

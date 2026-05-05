@@ -325,27 +325,49 @@
 }
 
 .tb-iot-hub-search-field {
-  @include tb-iot-hub-search-container;
-  width: 320px;
-}
-
-.tb-iot-hub-search-icon {
-  @include tb-iot-hub-search-icon;
+  @include tb-iot-hub-page-search-container;
 }
 
 .tb-iot-hub-search-input {
-  @include tb-iot-hub-search-input-text;
+  @include tb-iot-hub-page-search-input;
 }
 
-.tb-iot-hub-search-clear.mat-mdc-icon-button {
-  @include tb-iot-hub-search-clear;
+.tb-iot-hub-search-action {
+  @include tb-iot-hub-page-search-action;
 }
 
-// Sort button — Design: 14px Medium, primary color, with filter_list icon
+// Sort button — Design: same row as search, 40px h, 88px min-w, 4px radius,
+// 14px Medium primary color, trailing arrow_drop_down 24px icon
 .tb-iot-hub-sort-btn {
   flex-shrink: 0;
+  height: 40px;
+  min-width: 88px;
+  padding: 8px;
   font-size: 14px;
   font-weight: 500;
+  line-height: 20px;
+  letter-spacing: 0.25px;
+  border-radius: 4px;
+
+  .mat-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+  }
+}
+
+// Filter chips row — Design: 32px tall, no padding, centered
+.tb-iot-hub-sort-row {
+  height: 32px;
+  align-items: center;
+  padding: 0;
+  margin-top: 16px;
+  margin-bottom: 12px;
+
+  .mat-mdc-chip {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
 }
 
 // Active filter chips — Design: mat-chip-set, gap-8, chip bg rgba(0,0,0,0.04)
@@ -556,10 +578,6 @@
   .tb-iot-hub-filter-drawer {
     width: 100%;
     max-width: 100%;
-  }
-
-  .tb-iot-hub-search-field {
-    width: 200px;
   }
 }
 

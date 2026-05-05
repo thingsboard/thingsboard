@@ -15,6 +15,7 @@
  */
 
 @import "../../../../../scss/constants";
+@import "../../components/iot-hub/iot-hub-common";
 
 :host {
   display: block;
@@ -49,11 +50,24 @@
   margin: 0;
 }
 
-// Toolbar: filter + search
-.tb-installed-toolbar {
+// Filter row — filter button + active chips on top
+.tb-installed-filter-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+  margin-bottom: 16px;
+
+  .mat-mdc-chip {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+}
+
+// Search row — full-width search input below the filter row
+.tb-installed-search-row {
+  display: flex;
+  align-items: center;
   margin-bottom: 16px;
 }
 
@@ -104,67 +118,19 @@
   }
 }
 
-// Search field
 .tb-installed-search {
-  width: 320px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  background: white;
-}
-
-.tb-installed-search-icon {
-  font-size: 24px;
-  width: 24px;
-  height: 24px;
-  color: rgba(0, 0, 0, 0.38);
-  flex-shrink: 0;
+  @include tb-iot-hub-page-search-container;
 }
 
 .tb-installed-search-input {
-  flex: 1;
-  border: none;
-  outline: none;
-  font-size: 14px;
-  font-weight: 400;
-  color: rgba(0, 0, 0, 0.87);
-  background: transparent;
-  font-family: inherit;
+  @include tb-iot-hub-page-search-input;
+}
 
-  &::placeholder {
-    color: rgba(0, 0, 0, 0.38);
-  }
+.tb-installed-search-action {
+  @include tb-iot-hub-page-search-action;
 }
 
 // Responsive
-@media #{$mat-lt-lg} {
-  .tb-installed-toolbar {
-    flex-wrap: wrap;
-  }
-
-  .tb-installed-search {
-    order: 1;
-  }
-
-  .tb-installed-filter-chips {
-    order: 10;
-  }
-
-  .tb-installed-clear-btn {
-    order: 11;
-  }
-
-  .tb-installed-toolbar::before {
-    content: '';
-    width: 100%;
-    order: 9;
-  }
-}
-
 @media #{$mat-lt-md} {
   .tb-installed-items-page {
     padding: 40px 24px;
@@ -181,9 +147,5 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
-  }
-
-  .tb-installed-search {
-    width: 200px;
   }
 }

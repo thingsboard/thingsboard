@@ -16,6 +16,13 @@
 
 -->
 <div class="tb-iot-hub-home">
+  <!-- Soft colored glows (left + right) tinted with the active type's color.
+       Sit on the page background, behind the hero/cards content. -->
+  <div class="tb-iot-hub-blob tb-iot-hub-blob-left"
+       [style.color]="activeHeroType.color"></div>
+  <div class="tb-iot-hub-blob tb-iot-hub-blob-right"
+       [style.color]="activeHeroType.color"></div>
+
   <!-- Installed Items button -->
   @if (installedItemsCount > 0) {
     <button mat-stroked-button color="primary" class="tb-iot-hub-installed-btn" (click)="navigateToInstalledItems()">
@@ -26,23 +33,12 @@
 
   <!-- Hero section -->
   <div class="tb-iot-hub-hero">
-    <!-- Background gradient overlay -->
-    <div class="tb-iot-hub-hero-gradient"
-         [style.background]="'radial-gradient(ellipse at 50% 0%, ' + activeHeroType.gradientColor + ' 0%, transparent 60%)'"></div>
-
-    <!-- Floating icons -->
+    <!-- Floating icons cluster (one composite SVG per type, fade between types) -->
     @for (heroType of heroTypes; track heroType.type) {
-      @if (heroType.icons.length) {
-        <div class="tb-iot-hub-hero-icons"
-             [class.active]="heroIconsReady && activeHeroType === heroType">
-          @for (iconUrl of heroType.icons; track iconUrl; let i = $index) {
-            <div class="tb-iot-hub-hero-float-icon"
-                 [class]="'icon-pos-' + (i + 1)">
-              <img [src]="iconUrl" alt="">
-            </div>
-          }
-        </div>
-      }
+      <div class="tb-iot-hub-hero-icons"
+           [class.active]="heroIconsReady && activeHeroType === heroType">
+        <img class="tb-iot-hub-hero-cluster" [src]="heroType.icon" alt="">
+      </div>
     }
 
     <div class="tb-iot-hub-hero-content">
@@ -146,43 +142,51 @@
              [ngClass]="card.cssClass"
              (click)="navigateToBrowse(card.type)"
              (keyup.enter)="navigateToBrowse(card.type)">
-          <span class="tb-iot-hub-category-title">{{ card.titleKey | translate }}</span>
-          <img class="tb-iot-hub-category-img" [src]="card.image" alt="">
+          <span class="tb-iot-hub-category-title">
+            <span class="tb-iot-hub-category-title-text">{{ card.titleKey | translate }}</span>
+            <mat-icon class="tb-iot-hub-category-chevron">chevron_right</mat-icon>
+          </span>
+          <div class="tb-iot-hub-category-img">
+            <img [src]="card.image" alt="">
+          </div>
         </div>
       }
     </div>
 
     @if (!isLoading) {
-      <!-- Popular Widgets -->
-      @if (popularWidgets.length) {
+      @if (hasAnyPopularItems()) {
+        <div class="tb-iot-hub-divider tb-iot-hub-divider-bleed"></div>
+        <h2 class="tb-iot-hub-most-popular-title">{{ 'iot-hub.most-popular-in-iot-hub' | translate }}</h2>
+      }
+
+      <!-- Devices -->
+      @if (popularDevices.length) {
         <div class="tb-iot-hub-section">
-          <button mat-button class="tb-iot-hub-section-header" (click)="navigateToBrowse(ItemType.WIDGET)">
-            {{ 'iot-hub.popular-widgets' | translate }}
+          <button mat-button class="tb-iot-hub-section-header" (click)="navigateToBrowse(ItemType.DEVICE)">
+            {{ 'item.type-device-plural' | translate }}
             <mat-icon iconPositionEnd>chevron_right</mat-icon>
           </button>
           <div class="tb-iot-hub-big-cards-row">
-            @for (item of popularWidgets; track item.id) {
+            @for (item of popularDevices; track item.id) {
               <tb-iot-hub-item-card
                 [item]="item"
-                [installedItem]="getInstalledWidget(item)"
+                [installedItemsCount]="findInstalledItemsCount(item)"
                 [showTypeChip]="false"
                 [showCreator]="true"
                 (cardClick)="openItemDetail($event)"
                 (creatorClick)="navigateToCreator($event)"
-                (installClick)="installItem($event)"
-                (updateClick)="updateItem($event)"
-                (deleteClick)="deleteInstalledItem($event)">
+                (installClick)="installItem($event)">
               </tb-iot-hub-item-card>
             }
           </div>
         </div>
       }
 
-      <!-- Popular Solution Templates -->
+      <!-- Solution Templates -->
       @if (popularSolutionTemplates.length) {
         <div class="tb-iot-hub-section">
           <button mat-button class="tb-iot-hub-section-header" (click)="navigateToBrowse(ItemType.SOLUTION_TEMPLATE)">
-            {{ 'iot-hub.popular-solution-templates' | translate }}
+            {{ 'item.type-solution-template-plural' | translate }}
             <mat-icon iconPositionEnd>chevron_right</mat-icon>
           </button>
           <div class="tb-iot-hub-big-cards-row">
@@ -203,34 +207,36 @@
         </div>
       }
 
-      <!-- Popular Devices -->
-      @if (popularDevices.length) {
+      <!-- Widgets -->
+      @if (popularWidgets.length) {
         <div class="tb-iot-hub-section">
-          <button mat-button class="tb-iot-hub-section-header" (click)="navigateToBrowse(ItemType.DEVICE)">
-            {{ 'iot-hub.popular-devices' | translate }}
+          <button mat-button class="tb-iot-hub-section-header" (click)="navigateToBrowse(ItemType.WIDGET)">
+            {{ 'item.type-widget-plural' | translate }}
             <mat-icon iconPositionEnd>chevron_right</mat-icon>
           </button>
           <div class="tb-iot-hub-big-cards-row">
-            @for (item of popularDevices; track item.id) {
+            @for (item of popularWidgets; track item.id) {
               <tb-iot-hub-item-card
                 [item]="item"
-                [installedItemsCount]="findInstalledItemsCount(item)"
+                [installedItem]="getInstalledWidget(item)"
                 [showTypeChip]="false"
                 [showCreator]="true"
                 (cardClick)="openItemDetail($event)"
                 (creatorClick)="navigateToCreator($event)"
-                (installClick)="installItem($event)">
+                (installClick)="installItem($event)"
+                (updateClick)="updateItem($event)"
+                (deleteClick)="deleteInstalledItem($event)">
               </tb-iot-hub-item-card>
             }
           </div>
         </div>
       }
 
-      <!-- Popular Calculated Fields -->
+      <!-- Calculated Fields -->
       @if (popularCalcFields.length) {
         <div class="tb-iot-hub-section">
           <button mat-button class="tb-iot-hub-section-header" (click)="navigateToBrowse(ItemType.CALCULATED_FIELD)">
-            {{ 'iot-hub.popular-calculated-fields' | translate }}
+            {{ 'item.type-calculated-field-plural' | translate }}
             <mat-icon iconPositionEnd>chevron_right</mat-icon>
           </button>
           <div class="tb-iot-hub-compact-cards-grid">
@@ -248,11 +254,11 @@
         </div>
       }
 
-      <!-- Popular Alarm Rules -->
+      <!-- Alarm Rules -->
       @if (popularAlarmRules.length) {
         <div class="tb-iot-hub-section">
           <button mat-button class="tb-iot-hub-section-header" (click)="navigateToBrowse(ItemType.ALARM_RULE)">
-            {{ 'iot-hub.popular-alarm-rules' | translate }}
+            {{ 'item.type-alarm-rule-plural' | translate }}
             <mat-icon iconPositionEnd>chevron_right</mat-icon>
           </button>
           <div class="tb-iot-hub-compact-cards-grid">
@@ -270,11 +276,11 @@
         </div>
       }
 
-      <!-- Popular Rule Chains -->
+      <!-- Rule Chains -->
       @if (popularRuleChains.length) {
         <div class="tb-iot-hub-section">
           <button mat-button class="tb-iot-hub-section-header" (click)="navigateToBrowse(ItemType.RULE_CHAIN)">
-            {{ 'iot-hub.popular-rule-chains' | translate }}
+            {{ 'item.type-rule-chain-plural' | translate }}
             <mat-icon iconPositionEnd>chevron_right</mat-icon>
           </button>
           <div class="tb-iot-hub-compact-cards-grid">

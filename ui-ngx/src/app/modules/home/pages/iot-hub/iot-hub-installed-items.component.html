@@ -37,8 +37,8 @@
     }
   </div>
 
-  <!-- Filter + Search row -->
-  <div class="tb-installed-toolbar">
+  <!-- Filter + chips row -->
+  <div class="tb-installed-filter-row">
     <button mat-stroked-button color="primary" class="tb-installed-filter-btn" [matMenuTriggerFor]="filterMenu">
       <mat-icon>filter_list</mat-icon>
       {{ 'iot-hub.filter' | translate }}
@@ -71,18 +71,30 @@
         {{ 'iot-hub.clear-all' | translate }}
       </button>
     }
-    <span class="flex-1"></span>
-    <div class="tb-installed-search">
-      <mat-icon class="tb-installed-search-icon">search</mat-icon>
+  </div>
+
+  <!-- Search row -->
+  <div class="tb-installed-search-row">
+    <div class="tb-installed-search flex flex-1 items-center">
       <input class="tb-installed-search-input"
              [placeholder]="'iot-hub.search' | translate"
              [value]="textSearch"
              (input)="onSearchChange($any($event.target).value)">
+      @if (textSearch) {
+        <button mat-icon-button class="tb-installed-search-action" (click)="onSearchChange('')">
+          <mat-icon>close</mat-icon>
+        </button>
+      } @else {
+        <span class="tb-installed-search-action tb-installed-search-action-static" aria-hidden="true">
+          <mat-icon>search</mat-icon>
+        </span>
+      }
     </div>
   </div>
 
   <tb-iot-hub-installed-items-table
       [textSearch]="appliedTextSearch"
-      [typeFilters]="typeFilters">
+      [typeFilters]="typeFilters"
+      (clearFilters)="clearAllFilters()">
   </tb-iot-hub-installed-items-table>
 </div>

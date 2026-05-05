@@ -29,7 +29,8 @@
   border-radius: 8px;
   overflow: hidden;
 
-  // Dot grid pattern — covers top 800px, fades out via gradient mask
+  // Dot grid pattern — covers top 800px, fades out via gradient mask.
+  // Layered ABOVE the colored blobs so the dots overlay the glow.
   &::before {
     content: '';
     position: absolute;
@@ -42,12 +43,12 @@
     mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
     -webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
     pointer-events: none;
-    z-index: 0;
+    z-index: 1;
   }
 
-  > *:not(.tb-iot-hub-installed-btn) {
+  > *:not(.tb-iot-hub-installed-btn):not(.tb-iot-hub-blob) {
     position: relative;
-    z-index: 1;
+    z-index: 2;
   }
 }
 
@@ -56,7 +57,7 @@
   position: absolute;
   top: 24px;
   right: 24px;
-  z-index: 2;
+  z-index: 3;
   background: white;
   box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.08), 0 4px 8px 0 rgba(0, 0, 0, 0.08);
 
@@ -73,84 +74,80 @@
   overflow: hidden;
 }
 
-// Animated background gradient
-.tb-iot-hub-hero-gradient {
+// Soft colored glow blobs — direct CSS port of the design's two
+// 568×568 ellipses (Ellipse 399 right, Ellipse 400 left) with layer
+// opacity 0.16. Children of the page container so the halo spreads
+// across the whole page background, not just the hero. Fill comes
+// from the active hero type via `currentColor` (driven by
+// `[style.color]`).
+//
+// The design's "Layer Blur 240" is a Figma renderer parameter — when
+// translated to CSS `filter: blur(<σ>)` the visual match is around
+// σ=120 (Figma's radius is roughly twice the Gaussian σ used by CSS).
+// At σ=240 the kernel reaches well outside the 568px ellipse and peak
+// intensity collapses to ~58 % before opacity is applied, which
+// produced an almost invisible wash. σ=120 keeps the centre near
+// full strength while still spreading the halo across the page.
+.tb-iot-hub-blob {
   position: absolute;
-  inset: 0;
-  transition: background 0.6s ease;
+  width: 568px;
+  height: 568px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.16;
+  filter: blur(120px);
   pointer-events: none;
+  z-index: 0;
+  transition: color 0.6s ease;
+  will-change: filter;
 }
 
-// Floating icons container per type
+// Ellipse 400 — top-left corner at (-221, 56) inside the page-container.
+.tb-iot-hub-blob-left {
+  top: 56px;
+  left: -221px;
+}
+
+// Ellipse 399 — top-left corner at (1266, 259) inside a 1638-wide
+// page-container. Anchored to the right edge so it stays in place on
+// any viewport width: 1638 - (1266 + 568) = -196.
+.tb-iot-hub-blob-right {
+  top: 259px;
+  right: -196px;
+}
+
+// Floating icons cluster per type — one composite SVG with all icons baked in.
+// Active variant fades in expanding outward from the hero center; inactive
+// variants fade out collapsing back toward the center. This is achieved by
+// uniformly scaling the wrapper around its centre — peripheral icons travel
+// further than central ones, giving the "burst from / collapse to centre"
+// motion shown in the design prototype.
 .tb-iot-hub-hero-icons {
   position: absolute;
   inset: 0;
   pointer-events: none;
+  opacity: 0;
+  transform: scale(0.8);
+  transform-origin: 50% 50%;
+  transition: opacity 0.4s ease-out, transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 
-  // Icons start near center (translated toward center, scaled down, invisible)
-  .tb-iot-hub-hero-float-icon {
-    opacity: 0;
-    transform: translate(var(--start-x), var(--start-y)) scale(0.9);
-    transition: opacity 0.5s ease, transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-
-  // Active: icons move outward to final position, scale to 1, fully visible
-  &.active .tb-iot-hub-hero-float-icon {
+  &.active {
     opacity: 1;
-    transform: translate(0, 0) scale(1);
+    transform: scale(1);
   }
 }
 
-// Individual floating icon — SVG has rotation/bg/shadow baked in, CSS handles position + animation
-// Base: ≥1600px — 78px top icons (top: 40px), 87px bottom icons (top: 216px, bottom edge: 303px)
-.tb-iot-hub-hero-float-icon {
+// Cluster SVG — sits above the title, centered, scales with viewport.
+// Aspect ratio is preserved by the SVG's intrinsic dimensions.
+.tb-iot-hub-hero-cluster {
   position: absolute;
-  width: 78px;
-  height: 78px;
-
-  img {
-    width: 100%;
-    height: 100%;
-    display: block;
-  }
-
-  // Top-left
-  &.icon-pos-1 {
-    top: 40px;
-    left: calc(50% - 404px);
-    --start-x: 40px;
-    --start-y: 12px;
-  }
-
-  // Top-right — mirrors icon-pos-1
-  &.icon-pos-2 {
-    top: 40px;
-    left: auto;
-    right: calc(50% - 404px);
-    --start-x: -40px;
-    --start-y: 12px;
-  }
-
-  // Bottom-left — 87px bounding box
-  &.icon-pos-3 {
-    top: 216px;
-    left: calc(50% - 487px);
-    width: 87px;
-    height: 87px;
-    --start-x: 50px;
-    --start-y: -8px;
-  }
-
-  // Bottom-right — 87px bounding box, mirrors icon-pos-3
-  &.icon-pos-4 {
-    top: 216px;
-    left: auto;
-    right: calc(50% - 487px);
-    width: 87px;
-    height: 87px;
-    --start-x: -45px;
-    --start-y: -4px;
-  }
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(890px, calc(100% - 80px));
+  height: auto;
+  display: block;
+  pointer-events: none;
 }
 
 .tb-iot-hub-hero-content {
@@ -444,7 +441,10 @@
   width: 100%;
 }
 
-// Card — Design: flex-col, gap=24, pt=24, rounded-8, border, overflow-clip, h=220
+// Card — design: flex-col, gap=24, pt=24, rounded-8, h=220, overflow clipped
+// to crop the scaled hover image. The hover state mirrors the design's
+// SMART_ANIMATE on hover (200ms ease-out): the image scales up slightly
+// and the title chevron fades+slides in.
 .tb-iot-hub-category-card {
   border-radius: 8px;
   cursor: pointer;
@@ -453,62 +453,93 @@
   align-items: center;
   gap: 24px;
   padding-top: 24px;
-  transition: transform 0.2s, box-shadow 0.2s;
+  height: 220px;
   border: 1px solid rgba(0, 0, 0, 0.12);
   overflow: hidden;
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    .tb-iot-hub-category-img img {
+      // 408 / 387 ≈ 1.054 — design grows the img frame from 387×148 → 408×156
+      transform: scale(1.054);
+    }
+    .tb-iot-hub-category-chevron {
+      opacity: 1;
+      width: 24px;
+      margin-left: 4px;
+      transform: translateX(0);
+    }
   }
 }
 
-// Title — Design: 18px Medium, centered, tracking=0.15, flex child
+// Title — design: 18px Medium, centered horizontally with chevron, 4px gap
 .tb-iot-hub-category-title {
   font-size: 18px;
   font-weight: 500;
   line-height: 24px;
   letter-spacing: 0.15px;
   color: rgba(0, 0, 0, 0.87);
-  text-align: center;
-  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
 
-// Card image — Design: h=148, w=full, overflow-clip, fills remaining space
+.tb-iot-hub-category-title-text {
+  white-space: nowrap;
+}
+
+// Chevron — hidden in default state, slides in on card hover (200ms ease-out)
+.tb-iot-hub-category-chevron {
+  width: 0;
+  height: 24px;
+  margin-left: 0;
+  opacity: 0;
+  overflow: hidden;
+  transform: translateX(-4px);
+  font-size: 24px;
+  color: rgba(0, 0, 0, 0.87);
+  transition:
+    opacity 0.2s ease-out,
+    transform 0.2s ease-out,
+    width 0.2s ease-out,
+    margin-left 0.2s ease-out;
+}
+
+// Card image wrapper — fixed 148px tall; overflow visible lets the 5.4%
+// hover scale bleed past the wrapper. The card itself has overflow:
+// hidden, so the bleed is still clipped at the card edges.
 .tb-iot-hub-category-img {
   width: 100%;
-  object-fit: contain;
+  height: 148px;
   flex-shrink: 0;
+  overflow: visible;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+    transition: transform 0.2s ease-out;
+  }
 }
 
-// Exact Design gradients (104.75deg angle)
-.category-widgets {
-  background: linear-gradient(104.75deg, rgb(240, 255, 245) 0%, rgb(147, 246, 182) 100%);
-}
+// Per-card flat background colors sampled from the design.
+.category-devices         { background: #ccd5ff; }
+.category-solutions       { background: #b7d8ff; }
+.category-widgets         { background: #a3ffc3; }
+.category-calc-fields     { background: #bcedff; }
+.category-alarm-rules     { background: #ffe6cc; }
+.category-rule-chains     { background: #ebd1ff; }
 
-.category-dashboards {
-  background: linear-gradient(104.75deg, rgb(245, 246, 255) 0%, rgb(189, 197, 255) 100%);
-}
-
-.category-solutions {
-  background: linear-gradient(104.75deg, rgb(245, 250, 255) 0%, rgb(149, 200, 255) 100%);
-}
-
-.category-calc-fields {
-  background: linear-gradient(104.75deg, rgb(245, 252, 255) 0%, rgb(149, 222, 248) 100%);
-}
-
-.category-alarm-rules {
-  background: linear-gradient(104.75deg, rgb(245, 246, 255) 0%, rgb(189, 197, 255) 100%);
-}
-
-.category-rule-chains {
-  background: linear-gradient(104.75deg, rgb(255, 252, 245) 0%, rgb(255, 238, 194) 100%);
-}
-
-.category-devices {
-  background: linear-gradient(104.75deg, rgb(245, 255, 252) 0%, rgb(147, 240, 213) 100%);
+// "Most popular in IoT Hub" title — design: 28/36 Medium, sits between
+// the post-cards divider and the first popular section.
+.tb-iot-hub-most-popular-title {
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 36px;
+  letter-spacing: 0.15px;
+  color: rgba(0, 0, 0, 0.87);
+  margin: 0;
 }
 
 // Sections — inside main-content, no individual padding needed
@@ -550,6 +581,12 @@
 .tb-iot-hub-divider {
   height: 1px;
   background: rgba(0, 0, 0, 0.12);
+}
+
+// Bleed variant — used inside main-content (which has 40px horizontal
+// padding) to span the full page-container width like in the design.
+.tb-iot-hub-divider-bleed {
+  margin: 0 -40px;
 }
 
 // Become a Creator — matches Design (pt=64, text centered, button at y=156)
@@ -673,60 +710,18 @@
     padding: 64px 24px;
   }
 
-  // Icons: ≥1280px — 69px top (top: 90px), 77px bottom (top: 246px, bottom edge: 323px)
-  .tb-iot-hub-hero-float-icon {
-    width: 69px;
-    height: 69px;
-
-    &.icon-pos-1 {
-      top: 90px;
-      left: 106px;
-    }
-
-    &.icon-pos-2 {
-      top: 90px;
-      left: auto;
-      right: 106px;
-    }
-
-    &.icon-pos-3 {
-      top: 246px;
-      left: 28px;
-      width: 77px;
-      height: 77px;
-    }
-
-    &.icon-pos-4 {
-      top: 246px;
-      left: auto;
-      right: 28px;
-      width: 77px;
-      height: 77px;
-    }
+  // Cluster shrinks with viewport — keep some gutter on the sides
+  .tb-iot-hub-hero-cluster {
+    top: 30px;
+    width: min(900px, calc(100% - 48px));
   }
 }
 
-// ≤959px: only top pair, area width ≤160px (icon 51px + gap + icon 51px)
+// ≤959px: cluster sits closer to the title and uses the full content width
 @media #{$mat-lt-md} {
-  .tb-iot-hub-hero-float-icon {
-    width: 51px;
-    height: 51px;
-
-    &.icon-pos-1 {
-      top: 80px;
-      left: calc(50% - 80px);
-    }
-
-    &.icon-pos-2 {
-      top: 80px;
-      left: auto;
-      right: calc(50% - 80px);
-    }
-
-    &.icon-pos-3,
-    &.icon-pos-4 {
-      display: none;
-    }
+  .tb-iot-hub-hero-cluster {
+    top: 64px;
+    width: calc(100% - 32px);
   }
 }
 

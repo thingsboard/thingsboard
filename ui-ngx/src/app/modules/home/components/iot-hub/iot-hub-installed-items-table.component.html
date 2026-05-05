@@ -16,7 +16,7 @@
 
 -->
 <div class="tb-installed-table-container flex flex-1 flex-col overflow-hidden rounded-lg">
-  <div class="tb-installed-table-wrapper flex-1 overflow-auto">
+  <div class="tb-installed-table-wrapper flex flex-1 flex-col overflow-auto">
     <table mat-table [dataSource]="dataSource" matSort matSortActive="createdTime" matSortDirection="desc">
       <!-- Name -->
       <ng-container matColumnDef="itemName">
@@ -134,19 +134,26 @@
       <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
       <tr mat-row *matRowDef="let _row; columns: displayedColumns;"></tr>
     </table>
+
+    @if (isLoading) {
+      <div class="flex flex-1 items-center justify-center py-12">
+        <mat-spinner diameter="40"></mat-spinner>
+      </div>
+    }
+
+    @if (!isLoading && dataSource.length === 0) {
+      <div class="tb-iot-hub-empty-state flex flex-1 flex-col items-center justify-center py-20 text-center">
+        <div class="tb-no-data-bg"></div>
+        <h3>{{ 'iot-hub.no-installed-items' | translate }}</h3>
+        <p>{{ 'iot-hub.no-installed-items-text' | translate }}</p>
+        @if (hasActiveFilters()) {
+          <button mat-flat-button color="primary" (click)="clearFilters.emit()">
+            {{ 'iot-hub.clear-all-filters' | translate }}
+          </button>
+        }
+      </div>
+    }
   </div>
-
-  @if (isLoading) {
-    <div class="flex justify-center py-12">
-      <mat-spinner diameter="40"></mat-spinner>
-    </div>
-  }
-
-  @if (!isLoading && dataSource.length === 0) {
-    <div class="tb-installed-empty py-12 text-center text-sm">
-      {{ 'iot-hub.no-installed-items' | translate }}
-    </div>
-  }
 
   <!-- Paginator inside border -->
   <mat-divider></mat-divider>

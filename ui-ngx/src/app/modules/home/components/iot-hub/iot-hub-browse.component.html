@@ -322,28 +322,36 @@
 
       <!-- Right content area -->
       <div class="tb-iot-hub-results">
-      <!-- Top bar: search + filter button (mobile) -->
-      <div class="tb-iot-hub-results-top flex shrink-0 items-center justify-between pt-6">
-        <div class="tb-iot-hub-search-field flex items-center gap-2">
-          <mat-icon class="tb-iot-hub-search-icon">search</mat-icon>
+      <!-- Top bar: search + sort + filter button (mobile) -->
+      <div class="tb-iot-hub-results-top flex shrink-0 items-center gap-4 pt-6">
+        <div class="tb-iot-hub-search-field flex flex-1 items-center">
           <input class="tb-iot-hub-search-input"
-                 [placeholder]="'iot-hub.search' | translate"
+                 [placeholder]="searchPlaceholderKey | translate"
                  [value]="textSearch"
                  (input)="onSearchChange($any($event.target).value)">
           @if (textSearch) {
-            <button mat-icon-button class="tb-iot-hub-search-clear" (click)="onSearchChange('')">
+            <button mat-icon-button class="tb-iot-hub-search-action" (click)="onSearchChange('')">
               <mat-icon>close</mat-icon>
             </button>
+          } @else {
+            <span class="tb-iot-hub-search-action tb-iot-hub-search-action-static" aria-hidden="true">
+              <mat-icon>search</mat-icon>
+            </span>
           }
         </div>
-        <button mat-stroked-button color="primary" class="tb-iot-hub-filter-toggle-btn" (click)="filterDrawerOpened = true">
-          <mat-icon>filter_list</mat-icon>
-          {{ 'iot-hub.filter' | translate }}@if (activeFilterCount) {: {{ activeFilterCount }}}
+        <button mat-button color="primary" class="tb-iot-hub-sort-btn" [matMenuTriggerFor]="sortMenu">
+          {{ sortOptions[selectedSortIndex].label | translate }}
+          <mat-icon iconPositionEnd>arrow_drop_down</mat-icon>
         </button>
+        <mat-menu #sortMenu="matMenu">
+          @for (option of sortOptions; track option.value; let i = $index) {
+            <button mat-menu-item (click)="onSortChange(i)">{{ option.label | translate }}</button>
+          }
+        </mat-menu>
       </div>
 
-      <!-- Sort row: results count + filter chips + sort -->
-      <div class="tb-iot-hub-sort-row flex shrink-0 flex-wrap items-center gap-2 py-2">
+      <!-- Filter chips row: results count + filter chips -->
+      <div class="tb-iot-hub-sort-row flex shrink-0 flex-wrap items-center gap-2">
         <span class="tb-iot-hub-results-count">
           {{ 'iot-hub.results-count' | translate:{ count: totalElements } }}
         </span>
@@ -391,16 +399,10 @@
             {{ 'iot-hub.clear-all' | translate }}
           </button>
         }
-        <span class="flex-1"></span>
-        <button mat-button color="primary" class="tb-iot-hub-sort-btn" [matMenuTriggerFor]="sortMenu">
+        <button mat-stroked-button color="primary" class="tb-iot-hub-filter-toggle-btn ml-auto" (click)="filterDrawerOpened = true">
           <mat-icon>filter_list</mat-icon>
-          {{ sortOptions[selectedSortIndex].label | translate }}
+          {{ 'iot-hub.filter' | translate }}@if (activeFilterCount) {: {{ activeFilterCount }}}
         </button>
-        <mat-menu #sortMenu="matMenu">
-          @for (option of sortOptions; track option.value; let i = $index) {
-            <button mat-menu-item (click)="onSortChange(i)">{{ option.label | translate }}</button>
-          }
-        </mat-menu>
       </div>
 
       <!-- Loading -->

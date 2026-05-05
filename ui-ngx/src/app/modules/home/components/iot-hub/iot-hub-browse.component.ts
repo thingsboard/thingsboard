@@ -93,6 +93,19 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
         || this._activeType === ItemType.RULE_CHAIN;
   }
 
+  get searchPlaceholderKey(): string {
+    switch (this._activeType) {
+      case ItemType.WIDGET: return 'iot-hub.search-widgets';
+      case ItemType.DASHBOARD: return 'iot-hub.search-dashboards';
+      case ItemType.SOLUTION_TEMPLATE: return 'iot-hub.search-solution-templates';
+      case ItemType.CALCULATED_FIELD: return 'iot-hub.search-calculated-fields';
+      case ItemType.ALARM_RULE: return 'iot-hub.search-alarm-rules';
+      case ItemType.RULE_CHAIN: return 'iot-hub.search-rule-chains';
+      case ItemType.DEVICE: return 'iot-hub.search-devices';
+      default: return 'iot-hub.search';
+    }
+  }
+
   items: MpItemVersionView[] = [];
   totalElements = 0;
   pageSize = 12;
