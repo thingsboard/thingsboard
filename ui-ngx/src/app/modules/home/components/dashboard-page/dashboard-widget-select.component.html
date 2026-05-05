@@ -19,13 +19,26 @@
   <mat-toolbar color="primary" class="tb-widget-select-header flex flex-col">
     <div class="tb-widget-select-title-row flex flex-row items-center">
       @if (showTopLevelWidgetModeToggle()) {
-        <tb-toggle-select appearance="fill-invert"
+        <tb-toggle-select class="tb-top-level-widget-mode-toggle"
+                          appearance="fill-invert"
                           [disablePagination]="true"
                           selectMediaBreakpoint="xs"
                           [(ngModel)]="selectWidgetMode">
-          <tb-toggle-option value="installed">{{ 'widget.installed' | translate }}</tb-toggle-option>
-          <tb-toggle-option value="iotHub">{{ 'iot-hub.iot-hub' | translate }}</tb-toggle-option>
+          <tb-toggle-option value="installed" [template]="installedWidgetsOption"></tb-toggle-option>
+          <tb-toggle-option value="iotHub" [template]="iotHubWidgetsOption"></tb-toggle-option>
         </tb-toggle-select>
+        <ng-template #installedWidgetsOption>
+          <div class="flex items-center gap-2">
+            <tb-icon>now_widgets</tb-icon>
+            <div>{{ 'widget.installed' | translate }}</div>
+          </div>
+        </ng-template>
+        <ng-template #iotHubWidgetsOption>
+          <div class="flex items-center gap-2">
+            <tb-icon>hub</tb-icon>
+            <div>{{ 'iot-hub.iot-hub' | translate }}</div>
+          </div>
+        </ng-template>
       } @else if (showBackButton()) {
         <button mat-icon-button type="button" (click)="onBackClick()">
           <mat-icon>arrow_back</mat-icon>
