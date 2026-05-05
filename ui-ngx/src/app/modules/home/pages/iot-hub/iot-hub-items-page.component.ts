@@ -67,7 +67,7 @@ const PAGE_CONFIGS: Record<string, ItemTypePageConfig> = {
     type: ItemType.ALARM_RULE,
     titleKey: 'item.type-alarm-rule-plural',
     descriptionKey: 'iot-hub.items-page-desc-alarm-rules',
-    image: 'assets/iot-hub/items-page-dashboards-hero.svg',
+    image: 'assets/iot-hub/items-page-alarm-rules-hero.svg',
     routeSegment: 'alarm-rules'
   },
   RULE_CHAIN: {
