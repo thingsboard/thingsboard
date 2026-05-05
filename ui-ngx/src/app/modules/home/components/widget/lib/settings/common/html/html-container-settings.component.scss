@@ -14,15 +14,115 @@
  * limitations under the License.
  */
 
-  :host {
-    &.tb-html-container-settings {
+.tb-html-container-settings {
+    height: 100%;
+}
+
+.tb-html-container-settings .tb-html-container-settings-panel, .tb-html-container-settings-panel {
+  position: relative;
+  background: #fff;
+  .mat-mdc-tab-body-wrapper {
+    position: relative;
+    top: 0;
+    flex: 1;
+  }
+  .tb-action-expand-button {
+    position: absolute;
+    top: 4px;
+    right: 0;
+    z-index: 2;
+  }
+  .gutter {
+    display: none;
+    background-color: #eee;
+    background-repeat: no-repeat;
+    background-position: 50%;
+    &.gutter-horizontal {
+      cursor: col-resize;
+      background-image: url("../../../../../../../../../assets/split.js/grips/vertical.png");
+    }
+  }
+  .tb-js-func {
+    &:not(.tb-fullscreen) {
+      &.tb-hide-brackets {
+        padding-bottom: 0;
+      }
+    }
+  }
+  .tb-html {
+    position: relative;
+    &:not(.tb-fullscreen) {
+      padding-bottom: 0;
+    }
+    .tb-html-toolbar {
+      position: absolute;
+      top: 0;
+      right: 8px;
+      z-index: 8;
+      .tb-title {
+        display: none;
+      }
+    }
+    .tb-html-content-panel {
+      border-top: none;
       height: 100%;
-      ::ng-deep {
-        .mat-mdc-tab-body-wrapper {
-          position: relative;
-          top: 0;
-          flex: 1;
+    }
+  }
+  .tb-css {
+    position: relative;
+    &:not(.tb-fullscreen) {
+      .tb-css-content-panel {
+        margin: 0;
+      }
+    }
+    .tb-css-toolbar {
+      position: absolute;
+      top: 0;
+      right: 8px;
+      z-index: 8;
+      .tb-title {
+        display: none;
+      }
+    }
+    .tb-css-content-panel {
+      border-top: none;
+      height: 100%;
+    }
+  }
+  &.tb-fullscreen {
+    padding: 8px;
+    gap: 8px;
+    .tb-action-expand-button {
+      position: relative;
+      top: 0;
+      right: 0;
+    }
+    .gutter {
+      display: block;
+    }
+    .tb-content {
+      border: 1px solid #c0c0c0;
+      .tb-html {
+        .tb-html-content-panel {
+          border: none;
+        }
+      }
+      .tb-css {
+        .tb-css-content-panel {
+          border: none;
+        }
+      }
+      .tb-js-func {
+        padding-top: 8px;
+        .tb-js-func-toolbar {
+          padding: 0 5px;
+        }
+        .tb-js-func-panel {
+          border-left: none;
+          border-right: none;
+          border-bottom: none;
         }
       }
     }
+  }
 }

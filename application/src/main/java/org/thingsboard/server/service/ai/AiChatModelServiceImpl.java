@@ -17,6 +17,7 @@ package org.thingsboard.server.service.ai;
 
 import com.fasterxml.jackson.core.io.JsonStringEncoder;
 import com.google.common.util.concurrent.FluentFuture;
+import com.google.common.util.concurrent.Futures;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.Content;
 import dev.langchain4j.data.message.TextContent;
@@ -42,7 +43,12 @@ class AiChatModelServiceImpl implements AiChatModelService {
 
     @Override
     public <C extends AiChatModelConfig<C>> FluentFuture<ChatResponse> sendChatRequestAsync(AiChatModelConfig<C> chatModelConfig, ChatRequest chatRequest) {
-        ChatModel langChainChatModel = chatModelConfig.configure(chatModelConfigurer);
+        ChatModel langChainChatModel;
+        try {
+            langChainChatModel = chatModelConfig.configure(chatModelConfigurer);
+        } catch (Throwable t) {
+            return FluentFuture.from(Futures.immediateFailedFuture(t));
+        }
         if (langChainChatModel.provider() == ModelProvider.GITHUB_MODELS) {
             chatRequest = prepareGithubChatRequest(chatRequest);
         }

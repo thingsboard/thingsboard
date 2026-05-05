@@ -51,13 +51,18 @@ const containerFunctionCompletions: TbEditorCompletions = {
       type: widgetContextCompletions.ctx.type,
       description: widgetContextCompletions.ctx.description,
       children: widgetContextCompletions.ctx.children
-    },
+    }
+  }
+};
+
+export const AngularContainerFunctionEditorCompleter = new TbEditorCompleter(containerFunctionCompletions);
+
+export const HTMLContainerFunctionEditorCompleter = new TbEditorCompleter(
+  {...containerFunctionCompletions,
     container: {
       meta: 'argument',
       type: 'HTMLElement',
       description: 'Container element of the widget'
-    },
-  }
-};
+    }}
+);
 
-export const ContainerFunctionEditorCompleter = new TbEditorCompleter(containerFunctionCompletions);

@@ -14,7 +14,18 @@
 /// limitations under the License.
 ///
 
-import { Component, DestroyRef, forwardRef, HostBinding, Input, OnInit } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  DestroyRef,
+  ElementRef,
+  forwardRef,
+  HostBinding,
+  Input,
+  OnInit,
+  ViewChild,
+  ViewEncapsulation
+} from '@angular/core';
 import { WidgetResource } from '@shared/models/widget.models';
 import {
   ControlValueAccessor,
@@ -28,7 +39,8 @@ import {
   Validators
 } from '@angular/forms';
 import {
-  ContainerFunctionEditorCompleter,
+  AngularContainerFunctionEditorCompleter,
+  HTMLContainerFunctionEditorCompleter,
   HtmlContainerWidgetSettings,
   HtmlContainerWidgetType
 } from '@home/components/widget/lib/html/html-container-widget.models';
@@ -52,23 +64,39 @@ import { WidgetService } from '@core/http/widget.service';
       multi: true,
     }
   ],
+  encapsulation: ViewEncapsulation.None,
   standalone: false
 })
-export class HtmlContainerSettingsComponent implements OnInit, ControlValueAccessor, Validator {
+export class HtmlContainerSettingsComponent implements OnInit, AfterViewInit, ControlValueAccessor, Validator {
 
   HtmlContainerWidgetType = HtmlContainerWidgetType;
 
   functionScopeVariables = this.widgetService.getWidgetScopeVariables();
 
-  containerFunctionEditorCompleter = ContainerFunctionEditorCompleter;
+  get containerFunctionEditorCompleter() {
+    return this.htmlContainerSettingsForm.get('type').value === HtmlContainerWidgetType.ANGULAR
+      ? AngularContainerFunctionEditorCompleter
+      : HTMLContainerFunctionEditorCompleter;
+  }
 
   @HostBinding('class')
   hostClass = 'tb-html-container-settings';
 
+  @ViewChild('leftPanel', { read: ElementRef })
+  leftPanelElmRef!: ElementRef;
+
+  @ViewChild('rightPanel', { read: ElementRef })
+  rightPanelElmRef!: ElementRef;
+
   @Input()
   disabled: boolean;
 
+  fullscreen = false;
+
+  tabsAnimationDuration = '500ms';
+
   htmlContainerSettingsForm: UntypedFormGroup;
+
   private modelValue: HtmlContainerWidgetSettings;
 
   constructor(private fb: UntypedFormBuilder,
@@ -102,11 +130,26 @@ export class HtmlContainerSettingsComponent implements OnInit, ControlValueAcces
     });
   }
 
+  ngAfterViewInit(): void {
+    if (this.leftPanelElmRef && this.rightPanelElmRef) {
+      this.initSplitLayout(this.leftPanelElmRef.nativeElement,
+        this.rightPanelElmRef.nativeElement);
+    }
+  }
+
+  private initSplitLayout(leftPanel: any, rightPanel: any) {
+    Split([leftPanel, rightPanel], {
+      sizes: [50, 50],
+      gutterSize: 8,
+      cursor: 'col-resize'
+    });
+  }
+
   registerOnChange(fn: any): void {
     this.propagateChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(_fn: any): void {
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -150,7 +193,15 @@ export class HtmlContainerSettingsComponent implements OnInit, ControlValueAcces
     this.resourcesFormArray.removeAt(index);
   }
 
-  private propagateChange = (v: any) => { };
+  toggleFullScreen(): void {
+    this.fullscreen = !this.fullscreen;
+    this.tabsAnimationDuration = '0ms';
+    setTimeout(() => {
+      this.tabsAnimationDuration = '500ms';
+    });
+  }
+
+  private propagateChange = (_v: any) => { };
 
   private updateModel() {
     this.modelValue = this.htmlContainerSettingsForm.value;

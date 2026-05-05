@@ -11,7 +11,7 @@
     "resources": [],
     "templateHtml": "<tb-html-container-widget \n    [ctx]=\"ctx\">\n</tb-html-container-widget>",
     "templateCss": "",
-    "controllerScript": "self.onInit = function() {\n    \n}\n",
+    "controllerScript": "self.onInit = function() {\n    \n}\n\nself.typeParameters = function() {\n    return {\n        previewWidth: '100%',\n        previewHeight: '100%',\n        overflowVisible: true\n    };\n};\n",
     "settingsDirective": "tb-html-container-widget-settings",
     "hasBasicMode": true,
     "basicModeDirective": "tb-html-container-basic-config",

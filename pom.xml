@@ -62,9 +62,13 @@
         <pkg.implementationTitle>${project.name}</pkg.implementationTitle>
         <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
-        <spring-boot.version>3.5.13</spring-boot.version>
-        <tomcat.version>10.1.54</tomcat.version> <!-- to fix CVE-2026-34487, CVE-2026-34486, CVE-2026-34483. TODO: remove when fixed in spring-boot-dependencies -->
+        <spring-boot.version>3.5.14</spring-boot.version>
+        <!-- TODO: remove spring-boot-test.version override and the matching dependencyManagement entries below
+             once Spring Boot 3.5.15+ is released with a fix for the ImportsContextCustomizer regression in 3.5.14
+             that causes "Duplicate spy definition" failures on legacy @SpyBean fields (see PR #15557). -->
+        <spring-boot-test.version>3.5.13</spring-boot-test.version>
         <commons-lang3.version>3.18.0</commons-lang3.version> <!-- to fix CVE-2025-48924. TODO: remove when fixed in spring-boot-dependencies -->
+        <postgresql.version>42.7.11</postgresql.version> <!-- to fix CVE-2026-42198. TODO: remove when fixed in spring-boot-dependencies -->
         <javax.xml.bind-api.version>2.4.0-b180830.0359</javax.xml.bind-api.version>
         <jjwt.version>0.12.5</jjwt.version>
         <rat.version>0.10</rat.version> <!-- unused -->
@@ -89,7 +93,7 @@
         <protobuf.version>3.25.5</protobuf.version> <!-- A Major v4 does not support by the pubsub yet-->
         <grpc.version>1.76.0</grpc.version>
         <tbel.version>1.2.9</tbel.version>
-        <lombok.version>1.18.44</lombok.version> <!-- must be in sync with spring-boot-dependencies; needed for maven-compiler-plugin annotationProcessorPaths -->
+        <lombok.version>1.18.46</lombok.version> <!-- must be in sync with spring-boot-dependencies; needed for maven-compiler-plugin annotationProcessorPaths -->
         <paho.client.version>1.2.5</paho.client.version>
         <paho.mqttv5.client.version>1.2.5</paho.mqttv5.client.version>
         <os-maven-plugin.version>1.7.1</os-maven-plugin.version>
@@ -1001,25 +1005,6 @@
 
     <dependencyManagement>
         <dependencies>
-            <!-- Temporary tomcat version override to fix CVE-2026-34487, CVE-2026-34486, CVE-2026-34483.
-                 Must be declared before the spring-boot-dependencies BOM import to take precedence.
-                 TODO: remove when fixed in spring-boot-dependencies -->
-            <dependency>
-                <groupId>org.apache.tomcat.embed</groupId>
-                <artifactId>tomcat-embed-core</artifactId>
-                <version>${tomcat.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.tomcat.embed</groupId>
-                <artifactId>tomcat-embed-el</artifactId>
-                <version>${tomcat.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.tomcat.embed</groupId>
-                <artifactId>tomcat-embed-websocket</artifactId>
-                <version>${tomcat.version}</version>
-            </dependency>
-            <!-- End of tomcat version override -->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
@@ -1266,6 +1251,19 @@
                     </exclusion>
                 </exclusions>
             </dependency>
+            <!-- TODO: remove these two pins once Spring Boot 3.5.15+ ships the fix for the
+                 ImportsContextCustomizer regression in 3.5.14 (see PR #15557). Test artifacts are not
+                 packaged in the runtime image, so pinning them does not affect the CVE fixes. -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-test</artifactId>
+                <version>${spring-boot-test.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-test-autoconfigure</artifactId>
+                <version>${spring-boot-test.version}</version>
+            </dependency>
             <dependency>
                 <groupId>org.apache.kafka</groupId>
                 <artifactId>kafka-clients</artifactId>
@@ -1343,6 +1341,11 @@
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
                 <version>${commons-lang3.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.postgresql</groupId>
+                <artifactId>postgresql</artifactId>
+                <version>${postgresql.version}</version>
             </dependency>
             <dependency>
                 <groupId>commons-io</groupId>
