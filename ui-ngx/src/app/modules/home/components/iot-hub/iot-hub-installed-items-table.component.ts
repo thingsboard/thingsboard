@@ -19,12 +19,14 @@ import {
   ChangeDetectorRef,
   Component,
   ElementRef,
+  EventEmitter,
   HostBinding,
   Input,
   NgZone,
   OnChanges,
   OnDestroy,
   OnInit,
+  Output,
   SimpleChanges,
   ViewChild
 } from '@angular/core';
@@ -58,6 +60,12 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
   @Input() textSearch = '';
   @Input() typeFilters: string[] = [];
   @Input() itemVersion: MpItemVersionView;
+
+  @Output() clearFilters = new EventEmitter<void>();
+
+  hasActiveFilters(): boolean {
+    return !!this.textSearch || (this.typeFilters?.length ?? 0) > 0;
+  }
 
   @HostBinding('class.tb-installed-with-version') get withVersionClass() {
     return !!this.itemVersion;

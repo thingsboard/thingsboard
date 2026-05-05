@@ -146,6 +146,11 @@
         <div class="tb-no-data-bg"></div>
         <h3>{{ 'iot-hub.no-installed-items' | translate }}</h3>
         <p>{{ 'iot-hub.no-installed-items-text' | translate }}</p>
+        @if (hasActiveFilters()) {
+          <button mat-flat-button color="primary" (click)="clearFilters.emit()">
+            {{ 'iot-hub.clear-all-filters' | translate }}
+          </button>
+        }
       </div>
     }
   </div>

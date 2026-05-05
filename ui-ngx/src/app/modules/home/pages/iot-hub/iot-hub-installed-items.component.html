@@ -94,6 +94,7 @@
 
   <tb-iot-hub-installed-items-table
       [textSearch]="appliedTextSearch"
-      [typeFilters]="typeFilters">
+      [typeFilters]="typeFilters"
+      (clearFilters)="clearAllFilters()">
   </tb-iot-hub-installed-items-table>
 </div>

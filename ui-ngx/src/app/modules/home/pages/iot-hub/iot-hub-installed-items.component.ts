@@ -35,7 +35,7 @@ export class TbIotHubInstalledItemsComponent implements OnInit, OnDestroy {
   typeFilters: string[] = [];
 
   activeTypeFilters = new Set<string>();
-  allItemTypes: string[] = ['WIDGET', 'DASHBOARD', 'SOLUTION_TEMPLATE', 'CALCULATED_FIELD', 'RULE_CHAIN', 'DEVICE'];
+  allItemTypes: string[] = ['DEVICE', 'SOLUTION_TEMPLATE', 'WIDGET', 'CALCULATED_FIELD', 'ALARM_RULE', 'RULE_CHAIN'];
 
   @ViewChild(TbIotHubInstalledItemsTableComponent) tableComponent: TbIotHubInstalledItemsTableComponent;
 
@@ -97,6 +97,8 @@ export class TbIotHubInstalledItemsComponent implements OnInit, OnDestroy {
   clearAllFilters(): void {
     this.activeTypeFilters.clear();
     this.typeFilters = [];
+    this.textSearch = '';
+    this.appliedTextSearch = '';
   }
 
   hasActiveFilters(): boolean {
