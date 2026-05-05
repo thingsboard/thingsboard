@@ -3854,6 +3854,7 @@
         "item-version": "Version",
         "installed-date": "Installed",
         "no-installed-items": "No installed items found",
+        "no-installed-items-text": "Try adjusting your search or filters.",
         "remove-installed-item-title": "Remove Installed Item",
         "remove-installed-item-text": "Are you sure you want to remove '{{name}}'? The installed entity will also be removed.",
         "installed-item-removed": "'{{name}}' has been removed",
