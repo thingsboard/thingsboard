@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-06
 **Status:** Approved
-**Branch:** `feature/lts-4.3-iot-hub`
+**Branch:** `feature/iot-hub`
 
 ## Summary
 
