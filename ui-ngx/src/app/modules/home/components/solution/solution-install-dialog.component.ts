@@ -14,10 +14,16 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, Type } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { SolutionTemplateInstalledItemDescriptor } from '@shared/models/iot-hub/iot-hub-installed-item.models';
+import {
+  IotHubItemLinkModule
+} from '@home/components/iot-hub/iot-hub-item-link-card/iot-hub-item-link.module';
+import {
+  replaceItemLinkPlaceholders
+} from '@home/components/iot-hub/iot-hub-markdown.utils';
 
 export interface SolutionInstallDialogData {
   descriptor: SolutionTemplateInstalledItemDescriptor;
@@ -36,12 +42,14 @@ export class SolutionInstallDialogComponent {
   dashboardId: string | null;
   instructions: boolean;
 
+  readonly itemLinkCompileModules: Type<any>[] = [IotHubItemLinkModule];
+
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: SolutionInstallDialogData,
     private dialogRef: MatDialogRef<SolutionInstallDialogComponent>,
     private router: Router
   ) {
-    this.details = data.descriptor.details || '';
+    this.details = replaceItemLinkPlaceholders(data.descriptor.details || '');
     this.dashboardId = data.descriptor.dashboardId?.id || null;
     this.instructions = !!data.instructions;
   }
