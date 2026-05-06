@@ -260,7 +260,9 @@ public class RuleEngineController extends BaseController {
             @RequestBody EnrichedRuleEngineRequest request) throws ThingsboardException {
         try {
             SecurityUser currentUser = getCurrentUser();
-            if (request == null || request.getPayload() == null) {
+            // Jackson decodes JSON `"payload": null` as NullNode (not Java null),
+            // so check both the absent-field case and the explicit-null case.
+            if (request == null || request.getPayload() == null || request.getPayload().isNull()) {
                 throw new ThingsboardException("Request body with 'payload' is required",
                         ThingsboardErrorCode.BAD_REQUEST_PARAMS);
             }
