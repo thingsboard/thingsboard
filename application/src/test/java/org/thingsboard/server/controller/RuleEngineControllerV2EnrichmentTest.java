@@ -24,6 +24,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.rule.engine.EnrichedRuleEngineRequest;
@@ -141,6 +142,46 @@ public class RuleEngineControllerV2EnrichmentTest extends AbstractControllerTest
     }
 
     @Test
+    public void testV2RejectsRequestWithoutPayload() throws Exception {
+        loginTenantAdmin();
+
+        // payload is required; an empty body returns 400.
+        EnrichedRuleEngineRequest body = new EnrichedRuleEngineRequest();
+
+        // Pass the typed object (not its serialized String) so Java picks
+        // doPost(String, T, String...) — passing a String would land it in the
+        // varargs of doPost(String, String...) and fail params validation.
+        doPost(V2_URL, body)
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void testV2UnmappedEntityTypeProducesEmptyRoleAllowed() throws Exception {
+        loginTenantAdmin();
+        mockRestApiCallToRuleEngine(newReplyMsg());
+
+        EnrichedRuleEngineRequest body = new EnrichedRuleEngineRequest();
+        body.setPayload(JacksonUtil.toJsonNode("{}"));
+        // RULE_NODE has no entry in the Resource enum — rule nodes are managed through
+        // their parent RuleChain rather than as standalone permissioned entities, so
+        // Resource.of(RULE_NODE) throws and the ACL entry must come back empty.
+        body.setEnrichEntities(List.of(new RuleNodeId(UUID.randomUUID())));
+
+        doPostAsyncWithTypedResponse(
+                V2_URL, JacksonUtil.toString(body),
+                new TypeReference<JsonNode>() {}, status().isOk());
+
+        TbMsg sent = captureForwardedMsg();
+        List<EntityAclEntry> acl = JacksonUtil.fromString(
+                sent.getMetaData().getValue(TbMsgMetaData.TB_ACL_KEY),
+                new TypeReference<List<EntityAclEntry>>() {});
+        assertThat(acl).hasSize(1);
+        assertThat(acl.get(0).getEntityType()).isEqualTo(EntityType.RULE_NODE);
+        assertThat(acl.get(0).getRoleAllowed())
+                .as("unmapped EntityType must yield an empty roleAllowed list").isEmpty();
+    }
+
+    @Test
     public void testV2RejectsRequestsExceedingMaxEntities() throws Exception {
         loginTenantAdmin();
 
@@ -153,7 +194,8 @@ public class RuleEngineControllerV2EnrichmentTest extends AbstractControllerTest
         body.setPayload(JacksonUtil.toJsonNode("{}"));
         body.setEnrichEntities(tooMany);
 
-        doPost(V2_URL, JacksonUtil.toString(body))
+        // Pass the typed object (see comment in testV2RejectsRequestWithoutPayload).
+        doPost(V2_URL, body)
                 .andExpect(status().isBadRequest());
     }
 

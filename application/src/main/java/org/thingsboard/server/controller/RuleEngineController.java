@@ -321,10 +321,10 @@ public class RuleEngineController extends BaseController {
      * Computes the role-level ACL snapshot for the requested entities under the given user.
      * For each entity, {@link Resource#of(org.thingsboard.server.common.data.EntityType)}
      * resolves the target Resource; then every {@link Operation} value is probed via
-     * {@link AccessControlService#checkPermission(SecurityUser, Resource, Operation)}.
-     * Operation names for which the call does not throw are accumulated into
-     * {@link EntityAclEntry#getRoleAllowed()}. Unmapped EntityTypes produce an entry with
-     * {@code roleAllowed=[]} — no error.
+     * {@link AccessControlService#hasPermission(SecurityUser, Resource, Operation)} and
+     * those returning {@code true} are accumulated into {@link EntityAclEntry#getRoleAllowed()}.
+     * Unmapped EntityTypes — and authority/resource combinations with no registered
+     * permission checker — produce an entry with {@code roleAllowed=[]}, no error.
      *
      * @return serialized JSON array suitable for writing into {@link TbMsgMetaData#TB_ACL_KEY}.
      * @throws ThingsboardException with {@link ThingsboardErrorCode#BAD_REQUEST_PARAMS} if
@@ -349,13 +349,15 @@ public class RuleEngineController extends BaseController {
                 result.add(new EntityAclEntry(id.getEntityType(), id.getId(), roleAllowed));
                 continue;
             }
-            for (Operation op : Operation.values()) {
-                try {
-                    accessControlService.checkPermission(user, resource, op);
-                    roleAllowed.add(op.name());
-                } catch (ThingsboardException ignored) {
-                    // operation not allowed for this role/resource — skip
+            try {
+                for (Operation op : Operation.values()) {
+                    if (accessControlService.hasPermission(user, resource, op)) {
+                        roleAllowed.add(op.name());
+                    }
                 }
+            } catch (ThingsboardException ignored) {
+                // No checker registered for this authority on this resource —
+                // leave roleAllowed empty (same outcome as Resource.of failure).
             }
             result.add(new EntityAclEntry(id.getEntityType(), id.getId(), roleAllowed));
         }
