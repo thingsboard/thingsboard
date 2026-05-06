@@ -65,19 +65,16 @@ export class TbIotHubItemLinkCardComponent implements OnInit {
   }
 
   getImageUrl(): string | null {
-    return this.item?.image
-      ? this.iotHubApiService.resolveResourceUrl(this.item.image)
-      : null;
+    const item = this.item!;
+    return item.image ? this.iotHubApiService.resolveResourceUrl(item.image) : null;
   }
 
   getCompactIcon(): string {
-    if (!this.item) {
-      return 'category';
+    const item = this.item!;
+    if (item.icon) {
+      return item.icon;
     }
-    if (this.item.icon) {
-      return this.item.icon;
-    }
-    switch (this.item.type) {
+    switch (item.type) {
       case ItemType.CALCULATED_FIELD: return 'functions';
       case ItemType.ALARM_RULE: return 'notification_important';
       case ItemType.RULE_CHAIN: return 'account_tree';
@@ -86,10 +83,8 @@ export class TbIotHubItemLinkCardComponent implements OnInit {
   }
 
   getTypeIcon(): string {
-    if (!this.item) {
-      return 'category';
-    }
-    switch (this.item.type) {
+    const item = this.item!;
+    switch (item.type) {
       case ItemType.WIDGET: return 'widgets';
       case ItemType.DASHBOARD: return 'dashboard';
       case ItemType.SOLUTION_TEMPLATE: return 'integration_instructions';
@@ -102,7 +97,7 @@ export class TbIotHubItemLinkCardComponent implements OnInit {
   }
 
   getCompactColor(): string {
-    return this.item?.color || '#048ad3';
+    return this.item!.color || '#048ad3';
   }
 
   getHref(): string {
