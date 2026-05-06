@@ -86,18 +86,99 @@
 .tb-device-install-connectivity {
   p {
     color: rgba(0, 0, 0, 0.54);
-    font-size: 14px;
-    line-height: 20px;
+    font-size: 16px;
+    line-height: 24px;
     margin: 0;
   }
 
-  .tb-connectivity-button {
-    min-width: 100px;
+  // Card grid — design uses 276px cards with 12px gap, wrapping into rows.
+  .tb-connectivity-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
   }
 
-  .tb-connectivity-button.selected {
-    background: #305680;
-    color: #fff;
+  // Connection-card-vertical from the design: primary-tinted surface
+  // (4 % alpha), 6px radius, 1px subtle border that becomes primary on
+  // hover/select.
+  .tb-connectivity-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    height: 116px;
+    background: rgba($tb-primary-color, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.12s ease-out, box-shadow 0.12s ease-out;
+
+    &:hover,
+    &.selected {
+      border-color: $tb-primary-color;
+    }
+
+    &.selected {
+      box-shadow: 0 0 0 1px $tb-primary-color inset;
+    }
+  }
+
+  // 48×48 white icon container with subtle drop shadow + 4px radius,
+  // hosting a 40×40 mask-image rendered in the primary color.
+  .tb-connectivity-card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 4px;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow:
+      0 1px 2px 0 rgba(0, 0, 0, 0.06),
+      0 1px 3px 0 rgba(0, 0, 0, 0.10);
+  }
+
+  .tb-connectivity-card-icon-mask {
+    display: block;
+    width: 40px;
+    height: 40px;
+    background-color: $tb-primary-color;
+    -webkit-mask-image: var(--tb-icon-url);
+    mask-image: var(--tb-icon-url);
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+  }
+
+  .tb-connectivity-card-name {
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+    letter-spacing: 0.15px;
+    color: rgba(0, 0, 0, 0.87);
+  }
+
+  // PE-Only pill — primary 1px border + primary text on white background.
+  .tb-connectivity-card-badge {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    height: 24px;
+    padding: 0 8px;
+    border: 1px solid $tb-primary-color;
+    border-radius: 4px;
+    background: white;
+    color: $tb-primary-color;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 22px;
+    letter-spacing: 0.4px;
   }
 }
 

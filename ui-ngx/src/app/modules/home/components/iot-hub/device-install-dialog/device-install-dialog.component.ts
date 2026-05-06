@@ -16,13 +16,18 @@
 
 import { ChangeDetectorRef, Component, Inject, OnInit, Type, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
+import {
+  PeConnectivityMethodPromptData,
+  TbPeConnectivityMethodPromptComponent
+} from '@home/components/iot-hub/pe-connectivity-method-prompt.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { MatStepper } from '@angular/material/stepper';
 import { firstValueFrom } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
 import { PageLink } from '@shared/models/page/page-link';
 import { MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
@@ -37,6 +42,7 @@ import { generateSecret } from '@core/utils';
 import { IotHubItemLinkModule } from '../iot-hub-item-link-card/iot-hub-item-link.module';
 import { ITEM_LINK_KEY_REGEX, itemLinkCardTag } from '../iot-hub-markdown.utils';
 import {
+  installMethodIcons as INSTALL_METHOD_ICONS,
   installMethodLabels as INSTALL_METHOD_LABELS,
   peOnlyInstallMethods,
   DeviceInstallStep,
@@ -59,7 +65,7 @@ export interface DeviceInstallDialogData {
   installState?: Record<string, any>;
 }
 
-export type WizardStepType = 'instruction' | 'form' | 'progress';
+export type WizardStepType = 'connectivity' | 'placeholder' | 'instruction' | 'form' | 'progress';
 
 export interface WizardStep {
   type: WizardStepType;
@@ -98,15 +104,11 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   zipImages = new Map<string, string>();
 
   // Connectivity
-  showConnectivitySelector = false;
-  showPeOnlyPanel = false;
   availableInstallMethods: string[] = [];
   selectedInstallMethod: string | null = null;
   installMethodLabels = INSTALL_METHOD_LABELS;
-
-  get isSelectedPeOnly(): boolean {
-    return this.selectedInstallMethod !== null && peOnlyInstallMethods.has(this.selectedInstallMethod);
-  }
+  installMethodIcons = INSTALL_METHOD_ICONS;
+  peOnlyInstallMethods = peOnlyInstallMethods;
 
   // Wizard
   wizardSteps: WizardStep[] = [];
@@ -131,7 +133,9 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     private dashboardService: DashboardService,
     private ruleChainService: RuleChainService,
     private attributeService: AttributeService,
-    private iotHubApiService: IotHubApiService
+    private iotHubApiService: IotHubApiService,
+    private translate: TranslateService,
+    private dialog: MatDialog
   ) {
     super(store, router, dialogRef);
   }
@@ -179,19 +183,19 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     if (this.data.reviewMode && this.data.installState && this.data.selectedInstallMethod) {
       this.reviewMode = true;
       this.selectedInstallMethod = this.data.selectedInstallMethod;
-      this.showConnectivitySelector = false;
       this.restoreInstallState(this.data.installState);
       this.startWizard();
-    } else if (this.availableInstallMethods.length === 1) {
+    } else if (this.availableInstallMethods.length === 1
+        && !peOnlyInstallMethods.has(this.availableInstallMethods[0])) {
+      // Single non-PE method: skip the selector and start the wizard.
       this.selectedInstallMethod = this.availableInstallMethods[0];
-      this.showConnectivitySelector = false;
-      if (this.isSelectedPeOnly) {
-        this.showPeOnlyPanel = true;
-      } else {
-        this.startWizard();
-      }
+      this.startWizard();
     } else {
-      this.showConnectivitySelector = true;
+      // Multiple methods (or only PE-only ones): render the connection
+      // method step as the wizard's first step. PE-only cards open the
+      // pe-connectivity-method-prompt dialog and never set
+      // selectedInstallMethod.
+      this.startWizard();
     }
     this.loading = false;
     this.cdr.detectChanges();
@@ -200,7 +204,34 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   // --- Connectivity ---
 
   selectConnectivity(ct: string): void {
+    // PE-only methods open the upgrade prompt dialog instead of being
+    // selectable — they never become the active install method.
+    if (peOnlyInstallMethods.has(ct)) {
+      this.openPeConnectivityPrompt(ct);
+      return;
+    }
+    if (this.selectedInstallMethod === ct) {
+      // Re-clicking the already-selected card is a no-op; users who
+      // want to proceed without changing selection use the Next button.
+      return;
+    }
     this.selectedInstallMethod = ct;
+    // Auto-advance: configure the wizard for the chosen method and
+    // jump to the next step.
+    if (this.currentWizardStep?.type === 'connectivity') {
+      this.confirmConnectivity();
+    }
+  }
+
+  private openPeConnectivityPrompt(ct: string): void {
+    this.dialog.open<TbPeConnectivityMethodPromptComponent, PeConnectivityMethodPromptData>(
+      TbPeConnectivityMethodPromptComponent,
+      {
+        data: { connectorName: this.installMethodLabels.get(ct) || ct },
+        autoFocus: false,
+        panelClass: ['tb-dialog']
+      }
+    );
   }
 
   onTabChanged(index: number): void {
@@ -218,9 +249,22 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     if (!this.selectedInstallMethod) {
       return;
     }
-    if (this.isSelectedPeOnly) {
-      this.showPeOnlyPanel = true;
+    // If we are already inside the wizard (connectivity step is the
+    // first one), append the remaining steps and advance the stepper.
+    const onConnectivityStep = this.currentWizardStep?.type === 'connectivity';
+    if (onConnectivityStep) {
+      const connectivityStep = this.currentWizardStep;
+      // Drop anything that may have been appended on a previous pass
+      // (user came back to pick a different method).
+      this.wizardSteps.length = 1;
+      this.appendInstallSteps();
+      connectivityStep.completed = true;
       this.cdr.detectChanges();
+      // Wait for new mat-step children to register before advancing.
+      setTimeout(() => {
+        this.stepper?.next();
+        this.onStepActivated();
+      }, 0);
       return;
     }
     this.startWizard();
@@ -550,8 +594,38 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   }
 
   private buildWizardSteps(): void {
-    const rawSteps = this.packageInfo.installSteps[this.selectedInstallMethod] || [];
     this.wizardSteps = [];
+    if (!this.reviewMode && this.availableInstallMethods.length > 1 && !this.selectedInstallMethod) {
+      // First step: connection method selector. Remaining steps are
+      // appended via appendInstallSteps() once a method is confirmed.
+      this.wizardSteps.push({
+        type: 'connectivity',
+        label: this.translate.instant('iot-hub.connection-method'),
+        rawSteps: [],
+        completed: false
+      });
+      // Dummy placeholder steps shown in the indicator until the user
+      // picks a method. They are replaced with real steps for the
+      // chosen connectivity in confirmConnectivity().
+      for (const key of [
+        'iot-hub.step-prerequisites',
+        'iot-hub.step-configuration',
+        'iot-hub.step-provisioning'
+      ]) {
+        this.wizardSteps.push({
+          type: 'placeholder',
+          label: this.translate.instant(key),
+          rawSteps: [],
+          completed: false
+        });
+      }
+      return;
+    }
+    this.appendInstallSteps();
+  }
+
+  private appendInstallSteps(): void {
+    const rawSteps = this.packageInfo.installSteps[this.selectedInstallMethod] || [];
     let i = 0;
     while (i < rawSteps.length) {
       const step = rawSteps[i];
@@ -591,7 +665,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     }
     // Initialize form groups
     for (const ws of this.wizardSteps) {
-      if (ws.type === 'form') {
+      if (ws.type === 'form' && !ws.formGroup) {
         this.initFormStep(ws);
       }
     }
