@@ -115,7 +115,7 @@
     padding: 16px;
     height: 116px;
     background: rgba($tb-primary-color, 0.04);
-    border: 1px solid rgba(0, 0, 0, 0.12);
+    border: 1px solid transparent;
     border-radius: 6px;
     cursor: pointer;
     text-align: left;
@@ -128,6 +128,16 @@
 
     &.selected {
       box-shadow: 0 0 0 1px $tb-primary-color inset;
+
+      // Selected state inverts the icon: primary-coloured container
+      // with the masked glyph painted in white.
+      .tb-connectivity-card-icon {
+        background: $tb-primary-color;
+      }
+
+      .tb-connectivity-card-icon-mask {
+        background-color: white;
+      }
     }
   }
 
