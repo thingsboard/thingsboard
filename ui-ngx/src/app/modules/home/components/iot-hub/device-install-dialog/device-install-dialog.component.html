@@ -64,7 +64,7 @@
       @case ('form') {
         <div class="tb-device-install-form flex flex-col gap-2 p-6">
           @if (ws.formGroup) {
-            <form [formGroup]="ws.formGroup">
+            <form [formGroup]="ws.formGroup" class="flex flex-col gap-4">
               @for (field of ws.formFields; track field.key) {
                 @switch (field.type) {
                   @case ('BOOLEAN') {
@@ -80,6 +80,9 @@
                           <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
                         }
                       </mat-select>
+                      @if (field.helpText) {
+                        <mat-hint>{{ field.helpText }}</mat-hint>
+                      }
                       @if (ws.formGroup.controls[field.key]?.hasError('required')) {
                         <mat-error>{{ field.label + ' is required' }}</mat-error>
                       }
@@ -102,6 +105,9 @@
                           <mat-icon>autorenew</mat-icon>
                         </button>
                       }
+                      @if (field.helpText) {
+                        <mat-hint>{{ field.helpText }}</mat-hint>
+                      }
                       @if (ws.formGroup.controls[field.key]?.hasError('required')) {
                         <mat-error>{{ field.label + ' is required' }}</mat-error>
                       }
@@ -114,6 +120,9 @@
                     <mat-form-field appearance="outline">
                       <mat-label>{{ field.label }}</mat-label>
                       <input matInput type="number" [formControlName]="field.key">
+                      @if (field.helpText) {
+                        <mat-hint>{{ field.helpText }}</mat-hint>
+                      }
                       @if (ws.formGroup.controls[field.key]?.hasError('required')) {
                         <mat-error>{{ field.label + ' is required' }}</mat-error>
                       }
@@ -134,6 +143,9 @@
                           <mat-icon>autorenew</mat-icon>
                         </button>
                       }
+                      @if (field.helpText) {
+                        <mat-hint>{{ field.helpText }}</mat-hint>
+                      }
                       @if (ws.formGroup.controls[field.key]?.hasError('required')) {
                         <mat-error>{{ field.label + ' is required' }}</mat-error>
                       }
@@ -143,7 +155,7 @@
                     </mat-form-field>
                   }
                 }
-                @if (field.helpText) {
+                @if (field.type === 'BOOLEAN' && field.helpText) {
                   <div class="tb-form-field-help">{{ field.helpText }}</div>
                 }
                 @if (field.helpImage) {

@@ -14,13 +14,10 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, Type } from '@angular/core';
+import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { SolutionTemplateInstalledItemDescriptor } from '@shared/models/iot-hub/iot-hub-installed-item.models';
-import {
-  IotHubItemLinkModule
-} from '@home/components/iot-hub/iot-hub-item-link-card/iot-hub-item-link.module';
 import {
   replaceItemLinkPlaceholders
 } from '@home/components/iot-hub/iot-hub-markdown.utils';
@@ -41,8 +38,6 @@ export class SolutionInstallDialogComponent {
   details: string;
   dashboardId: string | null;
   instructions: boolean;
-
-  readonly itemLinkCompileModules: Type<any>[] = [IotHubItemLinkModule];
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: SolutionInstallDialogData,

@@ -1,0 +1,378 @@
+/**
+ * Copyright © 2016-2026 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// Shared markdown styles for IoT Hub readme/description content.
+// Originally in iot-hub-item-detail-dialog.component.scss (.dlg-readme).
+:host {
+  display: block;
+  font-size: 14px;
+  line-height: 24px;
+  letter-spacing: 0.2px;
+  color: rgba(0, 0, 0, 0.76);
+
+  ::ng-deep tb-markdown .tb-markdown-view {
+    padding: 16px 24px 24px;
+    &.table-wrapper {
+      padding: 0;
+    }
+    &:not(.table-wrapper) {
+      > :first-child {
+        margin-top: 0;
+      }
+    }
+
+    // Headings: design 20px SemiBold, line-height 24, tracking 0.1.
+    h1, h2, h3, h4, h5, h6 {
+      font-size: 20px;
+      font-weight: 600;
+      line-height: 24px;
+      letter-spacing: 0.1px;
+      color: rgba(0, 0, 0, 0.76);
+      margin: 0;
+      padding: 0;
+    }
+
+    > h1, > h2, > h3, > h4, > h5, > h6 {
+      padding: 0 0 6px;
+      margin-top: 20px;
+    }
+
+    h1 {
+      font-size: 24px;
+      line-height: 32px;
+      padding-right: 0;
+    }
+
+    // Paragraphs: design 14px Regular, tracking 0.2, line-height 24.
+    p {
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 24px;
+      letter-spacing: 0.2px;
+      color: rgba(0, 0, 0, 0.76);
+      margin: 0;
+    }
+
+    > p, > div {
+      padding-left: 0;
+      padding-right: 0;
+    }
+
+    p + p {
+      margin-top: 8px;
+    }
+
+    h1 + p, h2 + p, h3 + p,
+    h1 + ul, h2 + ul, h3 + ul,
+    h1 + ol, h2 + ol, h3 + ol {
+      margin-top: 8px;
+    }
+
+    // Lists: design ms-21 per li, 14px, line-height 24.
+    ul, ol {
+      padding-left: 21px;
+      padding-right: 0;
+      margin: 0;
+      font-size: 14px;
+      line-height: 24px;
+      letter-spacing: 0.2px;
+      color: rgba(0, 0, 0, 0.76);
+
+      + h1, + h2, + h3, + h4, + h5, + h6 {
+        padding-top: 0;
+        margin-top: 20px;
+      }
+    }
+
+    ul {
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+
+    li {
+      padding-bottom: 4px;
+      margin-bottom: 0;
+      line-height: 24px;
+    }
+
+    // Images — ported from markdown.component.scss.
+    img {
+      max-width: 100%;
+    }
+
+    // Links — ported from markdown.component.scss.
+    a {
+      font-weight: 500;
+      color: #2a7dec;
+      text-decoration: none;
+      border: none;
+
+      &:hover {
+        color: #2a7dec;
+        text-decoration: underline;
+        border: none;
+      }
+    }
+
+    // Inline code — ported from markdown.component.scss.
+    code:not([class*=language-]) {
+      color: #eb5757;
+      font-family: monospace;
+      font-size: 14px;
+    }
+
+    // Code-wrapper + clipboard button — ported from markdown.component.scss
+    // so the inline copy affordance and hover state work without
+    // depending on the default markdown styles.
+    div.code-wrapper {
+      position: relative;
+
+      button.clipboard-btn {
+        pointer-events: none;
+        outline: none;
+        position: absolute;
+        width: 206px;
+        height: 32px;
+        top: 0;
+        right: 0;
+        background: 0 0;
+        border: none;
+        user-select: none;
+
+        &.multiline {
+          right: 6px;
+        }
+
+        p {
+          padding: 6px 8px 0;
+          top: 1px;
+          transition: .2s;
+          color: #2a7dec;
+          background: rgba(255, 255, 255, .85);
+          backdrop-filter: blur(4px);
+          opacity: 0;
+          font-weight: 500;
+          right: 32px;
+          position: absolute;
+        }
+
+        div {
+          background-color: #fff;
+          position: absolute;
+          width: 38px;
+          height: 28px;
+          top: 3px;
+          right: 3px;
+          padding: 8px 10px 0;
+
+          img {
+            position: initial;
+            width: 18px;
+            height: 18px;
+            filter: invert(51%) sepia(6%) saturate(172%) hue-rotate(177deg) brightness(94%) contrast(92%);
+          }
+        }
+      }
+
+      &:hover {
+        cursor: pointer;
+
+        pre[class*="language-"] {
+          border: solid 1px #2a7dec;
+        }
+
+        button.clipboard-btn {
+          p {
+            opacity: 1;
+          }
+
+          div img {
+            filter: invert(49%) sepia(97%) saturate(3730%) hue-rotate(200deg) brightness(95%) contrast(95%);
+          }
+        }
+      }
+    }
+
+    th, td {
+      div.code-wrapper {
+        display: inline-block;
+        width: 100%;
+
+        button.clipboard-btn {
+          top: -6px;
+          padding: 0 3px;
+        }
+      }
+    }
+
+    // Code blocks (Prism) — ported from markdown.component.scss.
+    pre[class*="language-"] {
+      font-size: 14px;
+      border: 1px solid rgba(42, 125, 236, .2);
+      border-radius: 4px;
+      background: 0 0;
+      padding: 8px 16px;
+      color: #212529;
+
+      .token.atrule, .token.attr-value, .token.keyword {
+        color: #2a7dec;
+      }
+
+      .token.selector, .token.attr-name, .token.string, .token.char, .token.builtin, .token.inserted {
+        color: #eb5757;
+      }
+
+      .token.punctuation {
+        color: #212529;
+      }
+
+      &.line-numbers {
+        padding-left: 66px;
+
+        > code span.line-numbers-rows {
+          top: -11px;
+          bottom: -11px;
+          left: -66px;
+          width: 50px;
+          border: none;
+          padding: 8px 12px 8px 18px;
+          text-align: right;
+          background: #f9fbff;
+
+          > span:before {
+            color: rgba(33, 37, 41, .6);
+            padding-right: 0;
+          }
+        }
+
+        &.no-line-numbers {
+          padding-left: 16px;
+
+          > code span.line-numbers-rows {
+            display: none;
+          }
+        }
+      }
+    }
+
+    // Tables — ported from markdown.component.scss since
+    // applyDefaultMarkdownStyle is false on tb-markdown.
+    > table {
+      width: 100%;
+      border: 1px solid rgba(42, 125, 236, .2);
+      border-radius: 4px;
+      border-collapse: unset;
+      border-spacing: 0;
+      margin-top: 20px;
+      margin-bottom: 20px;
+      overflow: hidden;
+      table-layout: fixed;
+
+      &.auto {
+        table-layout: auto;
+      }
+
+      > thead {
+        background-color: #f9fbff;
+        color: rgba(33, 37, 41, .6);
+
+        > tr > th {
+          border-bottom: 1px solid rgba(42, 125, 236, .2);
+          font-size: 14px;
+          padding: 8px 12px;
+          text-align: left;
+          margin: 0;
+          @media screen and (max-width: 400px) {
+            font-size: 12px;
+            padding: 8px 4px;
+            code:not([class*=language-]) {
+              font-size: 12px;
+            }
+          }
+        }
+      }
+
+      > tbody {
+        > tr:not(:last-child) > td {
+          border-bottom: 1px solid rgba(42, 125, 236, .2);
+        }
+
+        > tr > td {
+          font-size: 14px;
+          padding: 8px 12px;
+          text-align: left;
+          margin: 0;
+          color: rgba(15, 22, 29, 0.8);
+          @media screen and (max-width: 400px) {
+            font-size: 12px;
+            padding: 8px 4px;
+            code:not([class*=language-]) {
+              font-size: 12px;
+            }
+          }
+        }
+      }
+
+      th, td {
+        font-size: 14px;
+        padding: 8px;
+        margin: 0;
+        text-align: left;
+      }
+
+      td[align=center], th[align=center] {
+        text-align: center;
+      }
+
+      td[align=right], th[align=right] {
+        text-align: right;
+      }
+
+      tr td div {
+        padding-left: 0;
+        padding-right: 0;
+      }
+    }
+
+    .tb-doc-link-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      margin: 4px 8px 4px 0;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      border-radius: 6px;
+      background: #fff;
+      color: rgba(0, 0, 0, 0.76);
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 20px;
+      text-decoration: none;
+      cursor: pointer;
+
+      i.material-icons {
+        font-size: 18px;
+        line-height: 18px;
+        color: rgba(0, 0, 0, 0.54);
+      }
+
+      &:hover {
+        background: rgba(0, 0, 0, 0.04);
+        border-color: rgba(0, 0, 0, 0.24);
+      }
+    }
+  }
+}
