@@ -3717,6 +3717,7 @@
         "all-widgets": "All widgets",
         "all-iot-hub-widgets": "All IoT Hub widgets",
         "installed-from-iot-hub": "Installed from IoT Hub",
+        "item-link-unavailable": "Item unavailable",
         "include-deprecated": "Include deprecated",
         "widget-category-value": "{{ category }} widgets",
         "search-categories": "Search categories...",
