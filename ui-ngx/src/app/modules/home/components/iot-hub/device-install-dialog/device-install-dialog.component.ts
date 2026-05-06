@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, Inject, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject, OnInit, Type, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
@@ -34,6 +34,8 @@ import { AttributeService } from '@core/http/attribute.service';
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { generateSecret } from '@core/utils';
+import { IotHubItemLinkModule } from '../iot-hub-item-link-card/iot-hub-item-link.module';
+import { ITEM_LINK_KEY_REGEX, itemLinkCardTag } from '../iot-hub-markdown.utils';
 import {
   installMethodLabels as INSTALL_METHOD_LABELS,
   peOnlyInstallMethods,
@@ -87,6 +89,8 @@ const DEFAULT_RANDOM_SIZE = 20;
 export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInstallDialogComponent> implements OnInit {
 
   @ViewChild('installStepper', {static: false}) stepper: MatStepper;
+
+  readonly itemLinkCompileModules: Type<any>[] = [IotHubItemLinkModule];
 
   loading = true;
   packageInfo: DevicePackageInfo;
@@ -443,6 +447,11 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       // Special action placeholders
       if (key === 'gateway.downloadButton') {
         return '<a href="#" data-action="download-gateway-docker-compose" class="tb-download-btn">⬇ Download docker-compose.yml</a>';
+      }
+      // IoT Hub item link card: ${item-link:<uuid>}
+      const itemLinkMatch = key.match(ITEM_LINK_KEY_REGEX);
+      if (itemLinkMatch) {
+        return itemLinkCardTag(itemLinkMatch[1]);
       }
       // Callout boxes: ${note(...)}, ${warn(...)}, ${error(...)}
       const calloutMatch = key.match(/^(note|warn|error)\((.+)\)$/s);

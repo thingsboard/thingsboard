@@ -30,6 +30,7 @@ import { TbIotHubSearchComponent } from './iot-hub-search.component';
 import { TbIotHubInstalledItemsTableComponent } from './iot-hub-installed-items-table.component';
 import { TbIotHubInstalledItemsDialogComponent } from './iot-hub-installed-items-dialog.component';
 import { IotHubActionsService } from './iot-hub-actions.service';
+import { IotHubItemLinkModule } from './iot-hub-item-link-card/iot-hub-item-link.module';
 
 @NgModule({
   declarations: [
@@ -48,7 +49,8 @@ import { IotHubActionsService } from './iot-hub-actions.service';
   ],
   imports: [
     CommonModule,
-    SharedModule
+    SharedModule,
+    IotHubItemLinkModule
   ],
   providers: [
     IotHubActionsService

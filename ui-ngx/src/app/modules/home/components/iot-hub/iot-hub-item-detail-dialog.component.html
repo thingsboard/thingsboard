@@ -299,7 +299,8 @@
     @if (readmeContent || shouldShowChangelog()) {
       <div class="dlg-readme">
         @if (readmeContent) {
-          <tb-markdown [data]="readmeContent"></tb-markdown>
+          <tb-markdown [data]="readmeContent"
+                       [additionalCompileModules]="itemLinkCompileModules"></tb-markdown>
         }
         @if (shouldShowChangelog()) {
           <h3>{{ 'iot-hub.changelog' | translate }}</h3>

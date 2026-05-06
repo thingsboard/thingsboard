@@ -24,6 +24,7 @@
       @case ('instruction') {
         <div class="tb-device-install-instruction" #instructionContainer>
           <tb-markdown [data]="ws.markdown"
+                       [additionalCompileModules]="itemLinkCompileModules"
                        (ready)="onMarkdownReady(instructionContainer)">
           </tb-markdown>
         </div>

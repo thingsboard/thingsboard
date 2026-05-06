@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, Type } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
@@ -31,6 +31,8 @@ import { getEntityDetailsPageURL } from '@core/utils';
 import { SolutionInstallDialogComponent } from '@home/components/solution/solution-install-dialog.component';
 import { SolutionTemplateInstalledItemDescriptor } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
+import { replaceItemLinkPlaceholders } from './iot-hub-markdown.utils';
+import { IotHubItemLinkModule } from './iot-hub-item-link-card/iot-hub-item-link.module';
 
 export type IotHubItemDetailDialogMode = 'default' | 'add';
 
@@ -52,6 +54,7 @@ export interface IotHubItemDetailDialogData {
 export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubItemDetailDialogComponent> {
 
   readonly ItemType = ItemType;
+  readonly itemLinkCompileModules: Type<any>[] = [IotHubItemLinkModule];
   item: MpItemVersionView;
   mode: IotHubItemDetailDialogMode;
   showCreator: boolean;
@@ -307,7 +310,9 @@ export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubI
   private loadReadme(): void {
     const versionId = this.item.id as string;
     this.iotHubApiService.getVersionReadme(versionId, { ignoreLoading: true }).subscribe(
-      content => this.readmeContent = this.resolveDocLinks(this.prefixResourceUrls(content || ''))
+      content => this.readmeContent = replaceItemLinkPlaceholders(
+        this.resolveDocLinks(this.prefixResourceUrls(content || ''))
+      )
     );
   }
 

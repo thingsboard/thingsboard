@@ -26,7 +26,10 @@
     </button>
   </mat-toolbar>
   <div mat-dialog-content>
-    <tb-markdown [data]="details" lineNumbers fallbackToPlainMarkdown></tb-markdown>
+    <tb-markdown [data]="details"
+                 [additionalCompileModules]="itemLinkCompileModules"
+                 lineNumbers
+                 fallbackToPlainMarkdown></tb-markdown>
   </div>
   <div mat-dialog-actions class="flex flex-row items-center justify-end">
     <button mat-button color="primary"
