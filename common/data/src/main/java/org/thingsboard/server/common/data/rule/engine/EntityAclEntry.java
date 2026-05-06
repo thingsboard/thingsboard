@@ -24,11 +24,19 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * One element of the {@code tb_acl} metadata JSON array. Describes which
- * {@code Operation} names (see the permission module) the calling user is allowed
- * to perform on the referenced entity. An empty {@link #allowed} list means the
- * caller has no role-level access to the entity's resource (or the entity's type
- * does not map to any known permission Resource).
+ * One element of the {@code tb_acl} metadata JSON array.
+ *
+ * <p><strong>Important — role-level only.</strong> {@link #roleAllowed} lists the
+ * {@code Operation} names the caller's role is permitted to perform on the
+ * <em>resource type</em> ({@link #entityType}); it is <em>not</em> a per-entity
+ * access decision. For Customer Users whose access depends on entity assignment,
+ * this list reports capabilities, not actual access to the specific
+ * {@link #entityId}. Per-entity (instance-level) checks are out of scope for the
+ * PoC — see the design doc, §13 Future Work.
+ *
+ * <p>An empty {@code roleAllowed} list means the caller's role has no access to
+ * the entity's resource type, or the {@link #entityType} does not map to any
+ * known permission {@code Resource}.
  */
 @Data
 @NoArgsConstructor
@@ -37,6 +45,6 @@ public class EntityAclEntry {
 
     private EntityType entityType;
     private UUID entityId;
-    private List<String> allowed;
+    private List<String> roleAllowed;
 
 }

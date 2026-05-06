@@ -17,11 +17,13 @@ package org.thingsboard.server.common.data.rule.engine;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
+import org.thingsboard.server.common.data.id.EntityId;
 
 import java.util.List;
 
 /**
- * Body of a {@code POST /api/ruleEngine/v2/...} request.
+ * Body of a {@code POST /api/ruleEngine/v2/} request. All routing parameters
+ * live in the body; the controller exposes a single endpoint.
  *
  * <p>{@link #payload} becomes the {@code TbMsg.data} forwarded to the Rule Engine.
  * {@link #enrichEntities} is an optional list (size bounded by configuration
@@ -31,7 +33,11 @@ import java.util.List;
 @Data
 public class EnrichedRuleEngineRequest {
 
+    private EntityId originator;
+    private String messageType;
+    private String queueName;
+    private Integer timeout;
     private JsonNode payload;
-    private List<EnrichEntityDescriptor> enrichEntities;
+    private List<EntityId> enrichEntities;
 
 }
