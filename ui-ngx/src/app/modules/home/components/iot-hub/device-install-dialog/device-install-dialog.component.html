@@ -30,7 +30,8 @@
       @case ('connectivity') {
         <div class="tb-device-install-connectivity flex flex-col gap-5 p-6">
           <p>{{ 'iot-hub.device-install-select-connectivity' | translate }}</p>
-          <div class="tb-connectivity-cards">
+          <div class="tb-connectivity-cards"
+               [class.tb-connectivity-cards-pair]="availableInstallMethods.length === 2">
             @for (ct of availableInstallMethods; track ct) {
               <button type="button"
                       class="tb-connectivity-card"

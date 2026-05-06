@@ -92,10 +92,15 @@
   }
 
   // Card grid — design uses 276px cards with 12px gap, wrapping into rows.
+  // The 2-card variant uses a wider min-track so they don't squeeze.
   .tb-connectivity-cards {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
     gap: 12px;
+
+    &.tb-connectivity-cards-pair {
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    }
   }
 
   // Connection-card-vertical from the design: primary-tinted surface
