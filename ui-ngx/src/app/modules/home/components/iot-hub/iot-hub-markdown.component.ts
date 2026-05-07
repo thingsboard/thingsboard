@@ -34,6 +34,8 @@ import {
   resolveDocLinkPlaceholders
 } from '@home/components/iot-hub/iot-hub-markdown.utils';
 import { DevicePackageInfo } from '@shared/models/iot-hub/device-package.models';
+import PhotoSwipeLightbox from 'photoswipe/lightbox';
+import PhotoSwipe from 'photoswipe';
 
 @Component({
   selector: 'tb-iot-hub-markdown',
@@ -97,13 +99,82 @@ export class TbIotHubMarkdownComponent implements OnInit, OnChanges {
 
   onReady() {
     const container = this.elementRef.nativeElement;
-    // Gallery image click-to-expand
-    const galleryImages = container.querySelectorAll('.tb-gallery-img');
-    galleryImages.forEach(img => {
-      img.addEventListener('click', () => {
-        img.classList.toggle('tb-gallery-img-expanded');
+    const galleryImages = container.querySelectorAll<HTMLElement>('.tb-gallery-images');
+    const lightbox = new PhotoSwipeLightbox({
+      gallery: galleryImages,
+      children: '.tb-gallery-image',
+      pswpModule: PhotoSwipe,
+      counter: false,
+      bgOpacity: 0
+    });
+    lightbox.addFilter('domItemData', (itemData, element) => {
+      const image = element.querySelector('img');
+      itemData.src = image.src;
+      itemData.width = image.naturalWidth;
+      itemData.height = image.naturalHeight;
+      itemData.thumbCropped = true;
+      return itemData;
+    });
+    lightbox.on('change', () => {
+      const item = lightbox.pswp.currSlide.content.element;// element.querySelector('img');
+      item.style.display = 'block';
+      item.style.maxWidth = '90vw';
+      item.style.maxHeight = '78vh';
+      item.style.objectFit = 'contain';
+      item.style.borderRadius = '4px';
+      item.style.boxShadow = '0 20px 60px #00000080';
+    });
+    lightbox.on('uiRegister', () => {
+      lightbox.pswp.element.style.background = '#0a0a148c';
+      lightbox.pswp.element.style.backdropFilter = 'blur(18px)';
+      lightbox.pswp.element.style.setProperty('-webkit-backdrop-filter', 'blur(18px)');
+      lightbox.pswp.ui.registerElement({
+        name: 'custom-caption',
+        order: 9,
+        isButton: false,
+        appendTo: 'root',
+        html: '<span class="tb-gallery-caption"></span><span class="tb-gallery-counter"></span>',
+        onInit: (el, pswp) => {
+          el.style.position = 'fixed';
+          el.style.bottom = '1.5rem';
+          el.style.left = '50%';
+          el.style.transform = 'translate(-50%)';
+          el.style.zIndex = '10000';
+          el.style.display = 'flex';
+          el.style.flexDirection = 'column';
+          el.style.alignItems = 'center';
+          el.style.gap = '.25rem';
+          el.style.maxWidth = '80vw';
+          el.style.textAlign = 'center';
+          el.style.pointerEvents = 'none';
+          const caption = el.querySelector<HTMLElement>('.tb-gallery-caption');
+          caption.style.color = '#fff';
+          caption.style.fontSize = '1.125rem';
+          caption.style.lineHeight = '1.5';
+          caption.style.background = '#000000a6';
+          caption.style.padding = '.5rem 1.25rem';
+          caption.style.borderRadius = '8px';
+          caption.style.backdropFilter = 'blur(8px)';
+          caption.style.setProperty('-webkit-backdrop-filter', 'blur(8px)');
+          const counter = el.querySelector<HTMLElement>('.tb-gallery-counter');
+          counter.style.color = '#fff9';
+          counter.style.fontSize = '.8rem';
+          lightbox.pswp.on('change', () => {
+            counter.innerText = pswp.currIndex + 1 + pswp.options.indexIndicatorSep + pswp.getNumItems();
+            const currSlideElement = lightbox.pswp.currSlide.data.element;
+            let captionHTML = '';
+            if (currSlideElement) {
+              const imageTooltip = currSlideElement.querySelector('.tb-image-tooltip');
+              if (imageTooltip) {
+                captionHTML = imageTooltip.innerHTML;
+              }
+            }
+            caption.innerHTML = captionHTML || '';
+          });
+        }
       });
     });
+    lightbox.init();
     this.ready.emit(container);
   }
 
@@ -178,9 +249,11 @@ export class TbIotHubMarkdownComponent implements OnInit, OnChanges {
         const images = paths
         .map((p: string) => this.resolveImage(p))
         .filter((src: string | undefined) => !!src)
-        .map((src: string) => `<img src="${src}" alt="" class="tb-gallery-img" />`)
+        .map((src: string) => `<button class="tb-gallery-image"><span class="tb-image-container">
+              <img src="${src}" alt=""/>
+        </span><span class="tb-image-tooltip">Placeholder!</span></button>`)
         .join('');
-        return `<div class="tb-gallery">${images}</div>`;
+        return `<div class="tb-gallery-images">${images}</div>`;
       }
 
       // Special variables
