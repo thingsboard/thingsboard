@@ -30,3 +30,50 @@ export function replaceItemLinkPlaceholders(markdown: string): string {
   }
   return markdown.replace(ITEM_LINK_PLACEHOLDER_REGEX, (_match, uuid) => itemLinkCardTag(uuid));
 }
+
+export interface DocLinks {
+  productURL?: string;
+  datasheetURL?: string;
+}
+
+export interface DocLinkLabels {
+  productPage: string;
+  datasheet: string;
+}
+
+export function resolveDocLinkPlaceholders(
+  markdown: string,
+  name: string,
+  links: DocLinks,
+  labels: DocLinkLabels
+): string {
+  return markdown
+  .replace(/\$\{product\.button}/g, () =>
+    links.productURL ? buildDocLinkButton(links.productURL, `${name} ${labels.productPage}`, 'open_in_new') : '')
+  .replace(/\$\{datasheet\.button}/g, () =>
+    links.datasheetURL ? buildDocLinkButton(links.datasheetURL, `${name} ${labels.datasheet}`, 'description') : '');
+}
+
+function buildDocLinkButton(url: string, text: string, icon: string): string {
+  const safeUrl = escapeHtmlAttr(url);
+  const safeText = escapeHtml(text);
+  return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="mr-2" mat-stroked-button>` +
+    `<tb-icon matButtonIcon>${icon}</tb-icon><span>${safeText}</span></a>`;
+}
+
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>]/g, ch => ch === '&' ? '&amp;' : ch === '<' ? '&lt;' : '&gt;');
+}
+
+function escapeHtmlAttr(value: string): string {
+  return value.replace(/[&<>"']/g, ch => {
+    switch (ch) {
+      case '&': return '&amp;';
+      case '<': return '&lt;';
+      case '>': return '&gt;';
+      case '"': return '&quot;';
+      default: return '&#39;';
+    }
+  });
+}
+

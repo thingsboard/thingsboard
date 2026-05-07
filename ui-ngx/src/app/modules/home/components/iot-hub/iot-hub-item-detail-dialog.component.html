@@ -299,11 +299,11 @@
     @if (readmeContent || shouldShowChangelog()) {
       <div class="dlg-readme">
         @if (readmeContent) {
-          <tb-iot-hub-markdown [data]="readmeContent"></tb-iot-hub-markdown>
+          <tb-iot-hub-markdown [data]="readmeContent" [item]="item"></tb-iot-hub-markdown>
         }
         @if (shouldShowChangelog()) {
           <h3>{{ 'iot-hub.changelog' | translate }}</h3>
-          <tb-iot-hub-markdown [data]="item.changelog"></tb-iot-hub-markdown>
+          <tb-iot-hub-markdown [data]="item.changelog" [item]="item"></tb-iot-hub-markdown>
         }
       </div>
     }

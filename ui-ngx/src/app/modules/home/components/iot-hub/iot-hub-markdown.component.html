@@ -15,9 +15,11 @@
     limitations under the License.
 
 -->
-<tb-markdown [data]="data"
+<tb-markdown [data]="parsedData"
              [applyDefaultMarkdownStyle]="false"
+             [additionalStyles]="additionalStyles"
              [additionalCompileModules]="itemLinkCompileModules"
              [lineNumbers]="lineNumbers"
-             [fallbackToPlainMarkdown]="fallbackToPlainMarkdown">
+             [fallbackToPlainMarkdown]="fallbackToPlainMarkdown"
+             (ready)="onReady()">
 </tb-markdown>

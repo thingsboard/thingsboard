@@ -53,12 +53,13 @@
       }
 
       @case ('instruction') {
-        <div class="tb-device-install-instruction" #instructionContainer>
-          <tb-markdown [data]="ws.markdown"
-                       [additionalCompileModules]="itemLinkCompileModules"
-                       (ready)="onMarkdownReady(instructionContainer)">
-          </tb-markdown>
-        </div>
+        <tb-iot-hub-markdown [data]="ws.markdown"
+                             [packageInfo]="packageInfo"
+                             [imageMap]="zipImages"
+                             [onResolveVariable]="resolveMarkdownVariable"
+                             [codeBlockMaxHeightPx]="400"
+                             (ready)="onMarkdownReady($event)">
+        </tb-iot-hub-markdown>
       }
 
       @case ('form') {
@@ -277,9 +278,7 @@
         @for (ws of wizardSteps; track ws.label) {
           <mat-tab [label]="ws.label">
             <ng-template matTabContent>
-              <div class="tb-tab-content">
-                <ng-container *ngTemplateOutlet="stepContent; context: { $implicit: ws }"></ng-container>
-              </div>
+              <ng-container *ngTemplateOutlet="stepContent; context: { $implicit: ws }"></ng-container>
             </ng-template>
           </mat-tab>
         }

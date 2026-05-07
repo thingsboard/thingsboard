@@ -14,14 +14,28 @@
  * limitations under the License.
  */
 
-// Shared markdown styles for IoT Hub readme/description content.
-// Originally in iot-hub-item-detail-dialog.component.scss (.dlg-readme).
+$text-color: rgba(0,0,0,0.76);
+$link-color: #2a7dec;
+$copy-button-color: #2a7dec;
+
+$code-block-border-color: rgba(42, 125, 236, .2);
+$code-default-color: #212529;
+$code-text-color: #eb5757;
+$code-keyword-color: #2a7dec;
+
+$table-border-color: rgba(42, 125, 236, .2);
+$table-header-background-color: #f9fbff;
+$table-header-text-color: rgba(33, 37, 41, .6);
+$table-text-color: rgba(15, 22, 29, 0.8);
+
 :host {
   display: block;
   font-size: 14px;
   line-height: 24px;
   letter-spacing: 0.2px;
-  color: rgba(0, 0, 0, 0.76);
+  color: $text-color;
+
+  --mat-button-outlined-label-text-color: #{$text-color};
 
   ::ng-deep tb-markdown .tb-markdown-view {
     padding: 16px 24px 24px;
@@ -40,7 +54,7 @@
       font-weight: 600;
       line-height: 24px;
       letter-spacing: 0.1px;
-      color: rgba(0, 0, 0, 0.76);
+      color: $text-color;
       margin: 0;
       padding: 0;
     }
@@ -62,7 +76,7 @@
       font-weight: 400;
       line-height: 24px;
       letter-spacing: 0.2px;
-      color: rgba(0, 0, 0, 0.76);
+      color: $text-color;
       margin: 0;
     }
 
@@ -89,7 +103,7 @@
       font-size: 14px;
       line-height: 24px;
       letter-spacing: 0.2px;
-      color: rgba(0, 0, 0, 0.76);
+      color: $text-color;
 
       + h1, + h2, + h3, + h4, + h5, + h6 {
         padding-top: 0;
@@ -108,35 +122,30 @@
       line-height: 24px;
     }
 
-    // Images — ported from markdown.component.scss.
     img {
       max-width: 100%;
     }
 
-    // Links — ported from markdown.component.scss.
-    a {
+    a:not(.mdc-button) {
       font-weight: 500;
-      color: #2a7dec;
+      color: $link-color;
       text-decoration: none;
       border: none;
 
       &:hover {
-        color: #2a7dec;
+        color: $link-color;
         text-decoration: underline;
         border: none;
       }
     }
 
-    // Inline code — ported from markdown.component.scss.
     code:not([class*=language-]) {
-      color: #eb5757;
+      color: $code-text-color;
       font-family: monospace;
       font-size: 14px;
     }
 
-    // Code-wrapper + clipboard button — ported from markdown.component.scss
-    // so the inline copy affordance and hover state work without
-    // depending on the default markdown styles.
+    // Code-wrapper + clipboard button
     div.code-wrapper {
       position: relative;
 
@@ -160,7 +169,7 @@
           padding: 6px 8px 0;
           top: 1px;
           transition: .2s;
-          color: #2a7dec;
+          color: $copy-button-color;
           background: rgba(255, 255, 255, .85);
           backdrop-filter: blur(4px);
           opacity: 0;
@@ -191,7 +200,7 @@
         cursor: pointer;
 
         pre[class*="language-"] {
-          border: solid 1px #2a7dec;
+          border: solid 1px $copy-button-color;
         }
 
         button.clipboard-btn {
@@ -218,25 +227,25 @@
       }
     }
 
-    // Code blocks (Prism) — ported from markdown.component.scss.
+    // Code blocks (Prism)
     pre[class*="language-"] {
       font-size: 14px;
-      border: 1px solid rgba(42, 125, 236, .2);
+      border: 1px solid $code-block-border-color;
       border-radius: 4px;
       background: 0 0;
       padding: 8px 16px;
-      color: #212529;
+      color: $code-default-color;
 
       .token.atrule, .token.attr-value, .token.keyword {
-        color: #2a7dec;
+        color: $code-keyword-color;
       }
 
       .token.selector, .token.attr-name, .token.string, .token.char, .token.builtin, .token.inserted {
-        color: #eb5757;
+        color: $code-text-color;
       }
 
       .token.punctuation {
-        color: #212529;
+        color: $code-default-color;
       }
 
       &.line-numbers {
@@ -268,11 +277,10 @@
       }
     }
 
-    // Tables — ported from markdown.component.scss since
-    // applyDefaultMarkdownStyle is false on tb-markdown.
+    // Tables
     > table {
       width: 100%;
-      border: 1px solid rgba(42, 125, 236, .2);
+      border: 1px solid $table-border-color;
       border-radius: 4px;
       border-collapse: unset;
       border-spacing: 0;
@@ -286,11 +294,11 @@
       }
 
       > thead {
-        background-color: #f9fbff;
-        color: rgba(33, 37, 41, .6);
+        background-color: $table-header-background-color;
+        color: $table-header-text-color;
 
         > tr > th {
-          border-bottom: 1px solid rgba(42, 125, 236, .2);
+          border-bottom: 1px solid $table-border-color;
           font-size: 14px;
           padding: 8px 12px;
           text-align: left;
@@ -307,7 +315,7 @@
 
       > tbody {
         > tr:not(:last-child) > td {
-          border-bottom: 1px solid rgba(42, 125, 236, .2);
+          border-bottom: 1px solid $table-border-color;
         }
 
         > tr > td {
@@ -315,7 +323,7 @@
           padding: 8px 12px;
           text-align: left;
           margin: 0;
-          color: rgba(15, 22, 29, 0.8);
+          color: $table-text-color;
           @media screen and (max-width: 400px) {
             font-size: 12px;
             padding: 8px 4px;
@@ -347,31 +355,63 @@
       }
     }
 
-    .tb-doc-link-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 16px;
-      margin: 4px 8px 4px 0;
-      border: 1px solid rgba(0, 0, 0, 0.12);
-      border-radius: 6px;
-      background: #fff;
-      color: rgba(0, 0, 0, 0.76);
+    .tb-callout {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px 16px;
+      border-radius: 4px;
+      border: 1px solid;
+      margin: 12px 0;
       font-size: 14px;
-      font-weight: 500;
       line-height: 20px;
-      text-decoration: none;
-      cursor: pointer;
 
-      i.material-icons {
-        font-size: 18px;
-        line-height: 18px;
-        color: rgba(0, 0, 0, 0.54);
+      .tb-callout-icon {
+        font-size: 20px;
+        flex-shrink: 0;
       }
 
+      &.tb-callout-note {
+        background: #e3f2fd;
+        border-color: #90caf9;
+        color: #1565c0;
+      }
+
+      &.tb-callout-warn {
+        background: #fff8e1;
+        border-color: #ffe082;
+        color: #f57f17;
+      }
+
+      &.tb-callout-error {
+        background: #fce4ec;
+        border-color: #ef9a9a;
+        color: #c62828;
+      }
+    }
+
+    .tb-gallery {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 12px 0;
+    }
+
+    .tb-gallery-img {
+      max-height: 160px;
+      border-radius: 4px;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      cursor: pointer;
+      transition: max-height 0.2s ease;
+      object-fit: contain;
+
       &:hover {
-        background: rgba(0, 0, 0, 0.04);
         border-color: rgba(0, 0, 0, 0.24);
+      }
+
+      &.tb-gallery-img-expanded {
+        max-height: none;
+        max-width: 100%;
       }
     }
   }

@@ -39,8 +39,6 @@ import { AttributeService } from '@core/http/attribute.service';
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { generateSecret } from '@core/utils';
-import { IotHubItemLinkModule } from '../iot-hub-item-link-card/iot-hub-item-link.module';
-import { ITEM_LINK_KEY_REGEX, itemLinkCardTag } from '../iot-hub-markdown.utils';
 import {
   installMethodIcons as INSTALL_METHOD_ICONS,
   installMethodLabels as INSTALL_METHOD_LABELS,
@@ -53,7 +51,6 @@ import {
   FormFieldDefinition,
   FormFieldType,
   InstallStepType,
-  resolveDocLinkPlaceholders,
   stepTypeAliasMap
 } from '@shared/models/iot-hub/device-package.models';
 
@@ -96,8 +93,6 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
 
   @ViewChild('installStepper', {static: false}) stepper: MatStepper;
 
-  readonly itemLinkCompileModules: Type<any>[] = [IotHubItemLinkModule];
-
   loading = true;
   packageInfo: DevicePackageInfo;
   zipFiles = new Map<string, string>();
@@ -121,6 +116,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   entityOutputs = new Map<string, EntityStepOutput>();
   transportVars: Record<string, string> = {};
   gatewayDockerComposeContent: string | null = null;
+
+  resolveMarkdownVariable: (key: string) => string | undefined = this._resolveMarkdownVariable.bind(this);
 
   constructor(
     protected store: Store<AppState>,
@@ -239,7 +236,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     if (!ws) return;
     if (ws.type === 'instruction' && !ws.markdown) {
       const raw = this.zipFiles.get(ws.rawSteps[0].file) || '';
-      ws.markdown = this.resolveImages(this.resolveVariables(raw));
+      ws.markdown = raw;
     } else if (ws.type === 'progress' && !ws.progressDone) {
       this.showCompletedEntitySteps(ws);
     }
@@ -450,13 +447,6 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         }
       });
     });
-    // Gallery image click-to-expand
-    const galleryImages = container.querySelectorAll('.tb-gallery-img');
-    galleryImages.forEach(img => {
-      img.addEventListener('click', () => {
-        img.classList.toggle('tb-gallery-img-expanded');
-      });
-    });
   }
 
   resolveImagePath(path: string): string {
@@ -473,70 +463,44 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   // --- Variable Resolution ---
 
   resolveVariables(content: string): string {
-    if (this.packageInfo) {
-      content = resolveDocLinkPlaceholders(
-        content,
-        this.packageInfo.name || '',
-        { productURL: this.packageInfo.productURL, datasheetURL: this.packageInfo.datasheetURL },
-        { productPage: 'Product page', datasheet: 'Datasheet' }
-      );
-    }
     return content.replace(/\$\{([^}]+)}/g, (_match, key) => {
-      if (key in this.formValues) {
-        return String(this.formValues[key]);
-      }
-      if (key in this.transportVars) {
-        return this.transportVars[key];
-      }
-      // Special action placeholders
-      if (key === 'gateway.downloadButton') {
-        return '<a href="#" data-action="download-gateway-docker-compose" class="tb-download-btn">⬇ Download docker-compose.yml</a>';
-      }
-      // IoT Hub item link card: ${item-link:<uuid>}
-      const itemLinkMatch = key.match(ITEM_LINK_KEY_REGEX);
-      if (itemLinkMatch) {
-        return itemLinkCardTag(itemLinkMatch[1]);
-      }
-      // Callout boxes: ${note(...)}, ${warn(...)}, ${error(...)}
-      const calloutMatch = key.match(/^(note|warn|error)\((.+)\)$/s);
-      if (calloutMatch) {
-        const type = calloutMatch[1];
-        const text = calloutMatch[2];
-        const icons: Record<string, string> = { note: 'info_outline', warn: 'warning_amber', error: 'error_outline' };
-        return `<div class="tb-callout tb-callout-${type}"><i class="material-icons tb-callout-icon">${icons[type]}</i><span class="tb-callout-text">${text}</span></div>`;
-      }
-      // Image gallery: ${images.gallery(path1,path2,path3)}
-      const galleryMatch = key.match(/^images\.gallery\((.+)\)$/);
-      if (galleryMatch) {
-        const paths = galleryMatch[1].split(',').map((p: string) => p.trim());
-        const images = paths
-          .map((p: string) => this.zipImages.get(p))
-          .filter((src: string | undefined) => !!src)
-          .map((src: string) => `<img src="${src}" alt="" class="tb-gallery-img" />`)
-          .join('');
-        return `<div class="tb-gallery">${images}</div>`;
-      }
-      const dotIdx = key.indexOf('.');
-      if (dotIdx > 0) {
-        const alias = key.substring(0, dotIdx);
-        const prop = key.substring(dotIdx + 1);
-        const output = this.entityOutputs.get(alias);
-        if (output && prop in output) {
-          return String((output as any)[prop]);
-        }
+      const res = this.resolveVariable(key);
+      if (res) {
+        return res;
       }
       return '${' + key + '}';
     });
   }
 
-  resolveImages(content: string): string {
-    return content.replace(/!\[([^\]]*)]\(([^)]+)\)/g, (match, alt, path) => {
-      if (path.startsWith('data:') || path.startsWith('http')) {
-        return match;
+  resolveVariable(key: string): string | undefined {
+    if (key in this.formValues) {
+      return String(this.formValues[key]);
+    }
+    if (key in this.transportVars) {
+      return this.transportVars[key];
+    }
+    const dotIdx = key.indexOf('.');
+    if (dotIdx > 0) {
+      const alias = key.substring(0, dotIdx);
+      const prop = key.substring(dotIdx + 1);
+      const output = this.entityOutputs.get(alias);
+      if (output && prop in output) {
+        return String((output as any)[prop]);
       }
-      const dataUri = this.zipImages.get(path);
-      return dataUri ? `![${alt}](${dataUri})` : match;
-    });
+    }
+    return undefined;
+  }
+
+  private _resolveMarkdownVariable(key: string): string | undefined {
+    const res = this.resolveVariable(key);
+    if (res) {
+      return res;
+    }
+    // Special action placeholders
+    if (key === 'gateway.downloadButton') {
+      return '<a href="#" data-action="download-gateway-docker-compose" mat-stroked-button color="primary">⬇ Download docker-compose.yml</a>';
+    }
+    return undefined;
   }
 
   // --- Private ---
@@ -582,7 +546,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       for (const ws of this.wizardSteps) {
         if (ws.type === 'instruction') {
           const raw = this.zipFiles.get(ws.rawSteps[0].file) || '';
-          ws.markdown = this.resolveImages(this.resolveVariables(raw));
+          ws.markdown = raw;
         } else if (ws.type === 'progress') {
           this.showCompletedEntitySteps(ws);
         }
@@ -725,7 +689,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     }
     if (step.type === 'instruction') {
       const raw = this.zipFiles.get(step.rawSteps[0].file) || '';
-      step.markdown = this.resolveImages(this.resolveVariables(raw));
+      step.markdown = raw;
     } else if (step.type === 'progress' && !step.progressDone) {
       if (this.reviewMode) {
         this.showCompletedEntitySteps(step);
