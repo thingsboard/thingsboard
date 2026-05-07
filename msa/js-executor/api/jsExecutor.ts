@@ -56,9 +56,15 @@ export class JsExecutor {
     private invokeScript(script: Script, args: string[], timeout: number | undefined): Promise<any> {
         return new Promise((resolve, reject) => {
             try {
-                const sandbox = Object.create(null);
-                sandbox.args = args;
-                const result = script.runInNewContext(sandbox, {timeout: timeout});
+                const sandbox = vm.createContext(Object.create(null));
+                // Construct args inside the sandbox context so it inherits sandbox-realm
+                // prototypes; prevents prototype-based escapes from the host realm.
+                const ctxArgs = vm.runInContext('[]', sandbox) as string[];
+                for (let i = 0; i < args.length; i++) {
+                    ctxArgs[i] = String(args[i]);
+                }
+                sandbox.args = ctxArgs;
+                const result = script.runInContext(sandbox, {timeout: timeout});
                 resolve(result);
             } catch (err) {
                 reject(err);
