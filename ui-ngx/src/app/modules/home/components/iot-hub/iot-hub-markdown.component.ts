@@ -30,12 +30,13 @@ import { IotHubItemLinkModule } from './iot-hub-item-link-card/iot-hub-item-link
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
 import {
+  escapeHtmlAttr,
   replaceItemLinkPlaceholders,
-  resolveDocLinkPlaceholders
+  resolveDocLinkPlaceholders,
+  sanitizeInlineHtml
 } from '@home/components/iot-hub/iot-hub-markdown.utils';
 import { DevicePackageInfo } from '@shared/models/iot-hub/device-package.models';
-import PhotoSwipeLightbox from 'photoswipe/lightbox';
-import PhotoSwipe from 'photoswipe';
+import { isNotEmptyStr } from '@core/utils';
 
 @Component({
   selector: 'tb-iot-hub-markdown',
@@ -99,82 +100,6 @@ export class TbIotHubMarkdownComponent implements OnInit, OnChanges {
 
   onReady() {
     const container = this.elementRef.nativeElement;
-    const galleryImages = container.querySelectorAll<HTMLElement>('.tb-gallery-images');
-    const lightbox = new PhotoSwipeLightbox({
-      gallery: galleryImages,
-      children: '.tb-gallery-image',
-      pswpModule: PhotoSwipe,
-      counter: false,
-      bgOpacity: 0
-    });
-    lightbox.addFilter('domItemData', (itemData, element) => {
-      const image = element.querySelector('img');
-      itemData.src = image.src;
-      itemData.width = image.naturalWidth;
-      itemData.height = image.naturalHeight;
-      itemData.thumbCropped = true;
-      return itemData;
-    });
-    lightbox.on('change', () => {
-      const item = lightbox.pswp.currSlide.content.element;// element.querySelector('img');
-      item.style.display = 'block';
-      item.style.maxWidth = '90vw';
-      item.style.maxHeight = '78vh';
-      item.style.objectFit = 'contain';
-      item.style.borderRadius = '4px';
-      item.style.boxShadow = '0 20px 60px #00000080';
-    });
-    lightbox.on('uiRegister', () => {
-      lightbox.pswp.element.style.background = '#0a0a148c';
-      lightbox.pswp.element.style.backdropFilter = 'blur(18px)';
-      lightbox.pswp.element.style.setProperty('-webkit-backdrop-filter', 'blur(18px)');
-      lightbox.pswp.ui.registerElement({
-        name: 'custom-caption',
-        order: 9,
-        isButton: false,
-        appendTo: 'root',
-        html: '<span class="tb-gallery-caption"></span><span class="tb-gallery-counter"></span>',
-        onInit: (el, pswp) => {
-          el.style.position = 'fixed';
-          el.style.bottom = '1.5rem';
-          el.style.left = '50%';
-          el.style.transform = 'translate(-50%)';
-          el.style.zIndex = '10000';
-          el.style.display = 'flex';
-          el.style.flexDirection = 'column';
-          el.style.alignItems = 'center';
-          el.style.gap = '.25rem';
-          el.style.maxWidth = '80vw';
-          el.style.textAlign = 'center';
-          el.style.pointerEvents = 'none';
-          const caption = el.querySelector<HTMLElement>('.tb-gallery-caption');
-          caption.style.color = '#fff';
-          caption.style.fontSize = '1.125rem';
-          caption.style.lineHeight = '1.5';
-          caption.style.background = '#000000a6';
-          caption.style.padding = '.5rem 1.25rem';
-          caption.style.borderRadius = '8px';
-          caption.style.backdropFilter = 'blur(8px)';
-          caption.style.setProperty('-webkit-backdrop-filter', 'blur(8px)');
-          const counter = el.querySelector<HTMLElement>('.tb-gallery-counter');
-          counter.style.color = '#fff9';
-          counter.style.fontSize = '.8rem';
-          lightbox.pswp.on('change', () => {
-            counter.innerText = pswp.currIndex + 1 + pswp.options.indexIndicatorSep + pswp.getNumItems();
-            const currSlideElement = lightbox.pswp.currSlide.data.element;
-            let captionHTML = '';
-            if (currSlideElement) {
-              const imageTooltip = currSlideElement.querySelector('.tb-image-tooltip');
-              if (imageTooltip) {
-                captionHTML = imageTooltip.innerHTML;
-              }
-            }
-            caption.innerHTML = captionHTML || '';
-          });
-        }
-      });
-    });
-    lightbox.init();
     this.ready.emit(container);
   }
 
@@ -233,6 +158,39 @@ export class TbIotHubMarkdownComponent implements OnInit, OnChanges {
   }
 
   private resolveVariables(content: string): string {
+    // Image gallery is handled first because its inner ${...} contents
+    // may include nested braces and span multiple lines, which the
+    // generic ${key} regex below cannot parse.
+    //
+    // Format: ${images.gallery({src: 'p1', alt: 'a1', caption: 'c1'}, {src: 'p2'}, ...)}
+    // Each image entry is a JS object literal with a required `src`
+    // and optional `alt` / `caption` string fields.
+    content = content.replace(/\$\{\s*images\.gallery\(([\s\S]*?)\)\s*}/g, (_match, inner: string) => {
+      const objects: string[] = inner.match(/\{[\s\S]*?}/g) || [];
+      const items = objects
+        .map((obj: string) => {
+          const src = (obj.match(/src\s*:\s*(['"])((?:(?!\1).)*)\1/) || [])[2] || '';
+          const alt = (obj.match(/alt\s*:\s*(['"])((?:(?!\1).)*)\1/) || [])[2] || '';
+          const caption = (obj.match(/caption\s*:\s*(['"])((?:(?!\1).)*)\1/) || [])[2] || '';
+          return { src: this.resolveImage(src), alt, caption };
+        })
+        .filter((item: { src?: string }) => !!item.src);
+      const images = items
+        .map(item => {
+          let galleryImageHtml =  `<button class="tb-gallery-image">
+                                            <span class="tb-image-container">
+                                               <img src="${item.src}" alt="${escapeHtmlAttr(item.alt)}"/>
+                                            </span>`;
+          if (isNotEmptyStr(item.caption)) {
+            galleryImageHtml += `<span class="tb-image-tooltip">${sanitizeInlineHtml(item.caption)}</span>`;
+          }
+          galleryImageHtml += `</button>`;
+          return galleryImageHtml;
+        })
+        .join('');
+      return `<div class="tb-gallery-images" tbPhotoSwipeGallery galleryChildrenSelector=".tb-gallery-image" imageCaptionSelector=".tb-image-tooltip">${images}</div>`;
+    });
+
     return content.replace(/\$\{([^}]+)}/g, (_match, key) => {
       // Callout boxes: ${note(...)}, ${warn(...)}, ${error(...)}
       const calloutMatch = key.match(/^(note|warn|error)\((.+)\)$/s);
@@ -241,19 +199,6 @@ export class TbIotHubMarkdownComponent implements OnInit, OnChanges {
         const text = calloutMatch[2];
         const icons: Record<string, string> = { note: 'info_outline', warn: 'warning_amber', error: 'error_outline' };
         return `<div class="tb-callout tb-callout-${type}"><i class="material-icons tb-callout-icon">${icons[type]}</i><span class="tb-callout-text">${text}</span></div>`;
-      }
-      // Image gallery: ${images.gallery(path1,path2,path3)}
-      const galleryMatch = key.match(/^images\.gallery\((.+)\)$/);
-      if (galleryMatch) {
-        const paths = galleryMatch[1].split(',').map((p: string) => p.trim());
-        const images = paths
-        .map((p: string) => this.resolveImage(p))
-        .filter((src: string | undefined) => !!src)
-        .map((src: string) => `<button class="tb-gallery-image"><span class="tb-image-container">
-              <img src="${src}" alt=""/>
-        </span><span class="tb-image-tooltip">Placeholder!</span></button>`)
-        .join('');
-        return `<div class="tb-gallery-images">${images}</div>`;
       }
 
       // Special variables

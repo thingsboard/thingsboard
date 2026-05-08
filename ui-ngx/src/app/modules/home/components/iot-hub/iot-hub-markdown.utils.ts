@@ -15,10 +15,7 @@
 ///
 
 export const ITEM_LINK_PLACEHOLDER_REGEX =
-  /\$\{item-link:([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})\}/g;
-
-export const ITEM_LINK_KEY_REGEX =
-  /^item-link:([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$/;
+  /\$\{item-link:([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})}/g;
 
 export function itemLinkCardTag(itemId: string): string {
   return `<tb-iot-hub-item-link-card itemId="${itemId}"></tb-iot-hub-item-link-card>`;
@@ -61,11 +58,11 @@ function buildDocLinkButton(url: string, text: string, icon: string): string {
     `<tb-icon matButtonIcon>${icon}</tb-icon><span>${safeText}</span></a>`;
 }
 
-function escapeHtml(value: string): string {
+export function escapeHtml(value: string): string {
   return value.replace(/[&<>]/g, ch => ch === '&' ? '&amp;' : ch === '<' ? '&lt;' : '&gt;');
 }
 
-function escapeHtmlAttr(value: string): string {
+export function escapeHtmlAttr(value: string): string {
   return value.replace(/[&<>"']/g, ch => {
     switch (ch) {
       case '&': return '&amp;';
@@ -75,5 +72,53 @@ function escapeHtmlAttr(value: string): string {
       default: return '&#39;';
     }
   });
+}
+
+// Inline-only tags + a small attribute whitelist that are safe to keep
+// in caption strings (or other small bits of user-authored HTML inside
+// generated markdown). Anything else is dropped — disallowed tags are
+// replaced by their text content and disallowed attributes are removed.
+const SAFE_INLINE_TAGS: ReadonlySet<string> = new Set([
+  'B', 'STRONG', 'I', 'EM', 'U', 'S', 'MARK',
+  'SMALL', 'SUB', 'SUP', 'BR', 'CODE', 'SPAN'
+]);
+
+const SAFE_INLINE_ATTRS: ReadonlySet<string> = new Set(['class', 'style']);
+
+export function sanitizeInlineHtml(value: string): string {
+  if (!value) {
+    return '';
+  }
+  const doc = new DOMParser().parseFromString(`<div>${value}</div>`, 'text/html');
+  const root = doc.body.firstElementChild as HTMLElement | null;
+  if (!root) {
+    return '';
+  }
+  const sanitize = (parent: Element): void => {
+    const children = Array.from(parent.childNodes);
+    for (const node of children) {
+      if (node.nodeType !== Node.ELEMENT_NODE) {
+        continue;
+      }
+      const el = node as Element;
+      if (!SAFE_INLINE_TAGS.has(el.tagName)) {
+        // Replace disallowed elements with their plain text content.
+        parent.replaceChild(doc.createTextNode(el.textContent || ''), el);
+        continue;
+      }
+      for (const attr of Array.from(el.attributes)) {
+        if (!SAFE_INLINE_ATTRS.has(attr.name)) {
+          el.removeAttribute(attr.name);
+          continue;
+        }
+        if (attr.name === 'style' && /(expression\s*\(|javascript:|url\s*\()/i.test(attr.value)) {
+          el.removeAttribute(attr.name);
+        }
+      }
+      sanitize(el);
+    }
+  };
+  sanitize(root);
+  return root.innerHTML;
 }
 

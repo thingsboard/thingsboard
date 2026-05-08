@@ -28,6 +28,8 @@ $table-header-background-color: #f9fbff;
 $table-header-text-color: rgba(33, 37, 41, .6);
 $table-text-color: rgba(15, 22, 29, 0.8);
 
+$gallery-border-hover-color: #2a7dec;
+
 :host {
   display: block;
   font-size: 14px;
@@ -392,8 +394,10 @@ $table-text-color: rgba(15, 22, 29, 0.8);
 
     .tb-gallery-images {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
       gap: 12px;
+      margin-top: 8px;
+      margin-bottom: 8px;
 
       .tb-gallery-image {
         position: relative;
@@ -407,7 +411,7 @@ $table-text-color: rgba(15, 22, 29, 0.8);
         transition: border-color .2s ease, transform .2s ease, box-shadow .2s ease;
         display: block;
         &:hover {
-          border-color: #3d50f5;
+          border-color: $gallery-border-hover-color;
           transform: translateY(-2px);
           box-shadow: 0 6px 18px #0000002e;
           outline: none;
@@ -451,31 +455,6 @@ $table-text-color: rgba(15, 22, 29, 0.8);
           transition: opacity .2s ease, transform .2s ease;
           pointer-events: none;
         }
-      }
-    }
-
-    .tb-gallery {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin: 12px 0;
-    }
-
-    .tb-gallery-img {
-      max-height: 160px;
-      border-radius: 4px;
-      border: 1px solid rgba(0, 0, 0, 0.12);
-      cursor: pointer;
-      transition: max-height 0.2s ease;
-      object-fit: contain;
-
-      &:hover {
-        border-color: rgba(0, 0, 0, 0.24);
-      }
-
-      &.tb-gallery-img-expanded {
-        max-height: none;
-        max-width: 100%;
       }
     }
   }

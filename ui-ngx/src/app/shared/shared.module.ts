@@ -229,6 +229,7 @@ import { EntityKeyAutocompleteComponent } from '@shared/components/entity/entity
 import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
 import { MqttVersionSelectComponent } from '@shared/components/mqtt-version-select.component';
 import { MAT_BUTTON_TOGGLE_DEFAULT_OPTIONS } from '@angular/material/button-toggle';
+import { PhotoSwipeGalleryDirective } from '@shared/directives/photoswipe-gallery.directive';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -387,6 +388,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TruncateWithTooltipDirective,
     ContextMenuDirective,
     ChipOverflowDirective,
+    PhotoSwipeGalleryDirective,
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,
@@ -652,6 +654,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TruncateWithTooltipDirective,
     ContextMenuDirective,
     ChipOverflowDirective,
+    PhotoSwipeGalleryDirective,
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,
