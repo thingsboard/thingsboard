@@ -146,30 +146,49 @@ public class ProtoConverter {
     }
 
     private static List<TransportProtos.KeyValueProto> validateKeyValueProtos(List<TransportProtos.KeyValueProto> kvList) {
-        kvList.forEach(keyValueProto -> {
+        List<TransportProtos.KeyValueProto> validList = new ArrayList<>();
+
+        for (TransportProtos.KeyValueProto keyValueProto : kvList) {
             String key = keyValueProto.getKey();
+
             if (StringUtils.isEmpty(key)) {
-                throw new IllegalArgumentException("Invalid key value: " + key + "!");
+                log.warn("Skipping metric: Invalid empty key value!");
+                continue;
             }
+
             TransportProtos.KeyValueType type = keyValueProto.getType();
+            boolean isValid = true;
+
             switch (type) {
                 case BOOLEAN_V:
                 case LONG_V:
                 case DOUBLE_V:
+                    break;
                 case STRING_V:
+                    if (StringUtils.isEmpty(keyValueProto.getStringV())) {
+                        log.warn("Skipping metric: String value is empty for key: {}", key);
+                        isValid = false;
+                    }
                     break;
                 case JSON_V:
                     try {
                         JsonParser.parseString(keyValueProto.getJsonV());
                     } catch (Exception e) {
-                        throw new IllegalArgumentException("Can't parse value: " + keyValueProto.getJsonV() + " for key: " + key + "!");
+                        log.warn("Skipping metric: Can't parse JSON value: {} for key: {}", keyValueProto.getJsonV(), key);
+                        isValid = false;
                     }
                     break;
                 case UNRECOGNIZED:
-                    throw new IllegalArgumentException("Unsupported keyValueType: " + type + "!");
+                    log.warn("Skipping metric: Unsupported keyValueType: {}", type);
+                    isValid = false;
+                    break;
             }
-        });
-        return kvList;
+
+            if (isValid) {
+                validList.add(keyValueProto);
+            }
+        }
+        return validList;
     }
 
     public static byte[] convertToRpcRequest(TransportProtos.ToDeviceRpcRequestMsg toDeviceRpcRequestMsg, DynamicMessage.Builder rpcRequestDynamicMessageBuilder) throws AdaptorException {
