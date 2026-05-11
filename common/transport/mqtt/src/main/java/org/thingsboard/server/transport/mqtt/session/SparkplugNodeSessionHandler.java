@@ -48,7 +48,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -61,8 +60,8 @@ import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetr
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil.createMetric;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil.fromSparkplugBMetricToKeyValueProto;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil.validatedValueByTypeMetric;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicService.TOPIC_SPLIT_REGEXP;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicService.TOPIC_STATE_REGEXP;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicService.TOPIC_SPLIT_SEPARATOR;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicService.TOPIC_STATE_SEPARATOR;
 
 @Slf4j
 @SpecVersion(spec = "sparkplug", version = "3.0.0")
@@ -117,18 +116,23 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
             contextListenableFuture = Futures.immediateFuture(this.deviceSessionCtx);
         } else {
             try {
+                deviceName = checkDeviceName(topic.getNodeDeviceNameAllPath());
                 ListenableFuture<SparkplugDeviceSessionContext> deviceCtx = this.onDeviceConnectProto(topic);
-                deviceName = checkDeviceName(deviceCtx.get().getDeviceInfo().getDeviceName());
                 String finalDeviceName = deviceName;
                 contextListenableFuture = Futures.transform(deviceCtx, ctx -> {
                     if (topic.isType(DBIRTH)) {
                         sendSparkplugStateOnTelemetry(ctx.getSessionInfo(), finalDeviceName, ONLINE,
                                 sparkplugBProto.getTimestamp());
+                        try {
                             ctx.setDeviceBirthMetrics(sparkplugBProto.getMetricsList());
+                        } catch (IllegalArgumentException | DuplicateKeyException e) {
+                            log.error("[{}] Failed to set birth metrics", finalDeviceName, e);
+                            throw new RuntimeException(e);
+                        }
                     }
                     return ctx;
                 }, MoreExecutors.directExecutor());
-            }  catch (IllegalArgumentException | DuplicateKeyException | ExecutionException | InterruptedException e) {
+            }  catch (IllegalArgumentException | DuplicateKeyException e) {
                 throw new RuntimeException(e);
             }
         }
@@ -200,7 +204,7 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
      */
     public void handleSparkplugSubscribeMsg(MqttTopicSubscription subscription) throws ThingsboardException {
         String topic = subscription.topicFilter();
-        if (topic != null && topic.startsWith(TOPIC_STATE_REGEXP)) {
+        if (topic != null && topic.startsWith(TOPIC_STATE_SEPARATOR)) {
             log.trace("Subscribing on it’s own spBv1.0/STATE/[the Sparkplug Host Application] - Implemented as status via checkSparkplugNodeSession");
         } else if (this.validateTopicDataSubscribe(topic)) {
             // TODO if need subscription DATA
@@ -384,7 +388,7 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
      * @throws ThingsboardException if an error occurs while parsing
      */
     public boolean validateTopicDataSubscribe(String topic) throws ThingsboardException {
-        String[] splitTopic = topic.split(TOPIC_SPLIT_REGEXP);
+        String[] splitTopic = topic.split(TOPIC_SPLIT_SEPARATOR);
         if (splitTopic.length >= 4 && splitTopic.length <= 5 &&
                 splitTopic[0].equals(this.sparkplugTopicNode.getNamespace()) &&
                 splitTopic[1].equals(this.sparkplugTopicNode.getGroupId()) &&

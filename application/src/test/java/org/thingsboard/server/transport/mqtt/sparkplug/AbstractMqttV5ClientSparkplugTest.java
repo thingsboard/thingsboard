@@ -71,9 +71,9 @@ import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugConn
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.STATE;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.messageName;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil.createMetric;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicService.DEVICE_NAME_SPLIT_REGEXP;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicService.DEVICE_NAME_SPLIT_SEPARATOR;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicService.TOPIC_ROOT_SPB_V_1_0;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicService.TOPIC_SPLIT_REGEXP;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicService.TOPIC_SPLIT_SEPARATOR;
 
 /**
  * Created by nickAS21 on 12.01.23
@@ -115,7 +115,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         if (isCreateDevices) {
             String deviceName = deviceId + "_1";
             createDevice(deviceName, deviceProfile.getName(), false);
-            deviceName = groupId + DEVICE_NAME_SPLIT_REGEXP + edgeNode + DEVICE_NAME_SPLIT_REGEXP + deviceId + "_2";
+            deviceName = groupId + DEVICE_NAME_SPLIT_SEPARATOR + edgeNode + DEVICE_NAME_SPLIT_SEPARATOR + deviceId + "_2";
             createDevice(deviceName, deviceProfile.getName(), false);
         }
     }
@@ -158,7 +158,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         options.setSessionExpiryInterval(0L);
         options.setUserName(gatewayAccessToken);
         String nameSpace = nameSpaceBad.length == 0 ? TOPIC_ROOT_SPB_V_1_0 : nameSpaceBad[0];
-        String topic = nameSpace + TOPIC_SPLIT_REGEXP + groupId + TOPIC_SPLIT_REGEXP + SparkplugMessageType.NDEATH.name() + TOPIC_SPLIT_REGEXP + edgeNode;
+        String topic = nameSpace + TOPIC_SPLIT_SEPARATOR + groupId + TOPIC_SPLIT_SEPARATOR + SparkplugMessageType.NDEATH.name() + TOPIC_SPLIT_SEPARATOR + edgeNode;
         // The NDEATH message MUST set the MQTT Will QoS to 1 and Retained flag to false
         MqttMessage msg = new MqttMessage();
         msg.setId(0);
@@ -181,7 +181,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         payloadBirthNode.addMetrics(metric);
         payloadBirthNode.setTimestamp(ts);
         if (client.isConnected()) {
-            client.publish(TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_REGEXP + groupId + TOPIC_SPLIT_REGEXP + SparkplugMessageType.NBIRTH.name() + TOPIC_SPLIT_REGEXP + edgeNode,
+            client.publish(TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_SEPARATOR + groupId + TOPIC_SPLIT_SEPARATOR + SparkplugMessageType.NBIRTH.name() + TOPIC_SPLIT_SEPARATOR + edgeNode,
                     payloadBirthNode.build().toByteArray(), 0, false);
         }
 
@@ -192,14 +192,14 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
                     .setTimestamp(ts)
                     .setSeq(getSeqNum());
             String deviceIdName = deviceId + "_" + i;
-            String deviceName =  groupId +  ":" + edgeNode +  ":" + deviceIdName;
+            String deviceName = groupId +  ":" + edgeNode +  ":" + deviceIdName;
             payloadBirthDevice.addMetrics(metric);
             if (client.isConnected()) {
-                client.publish(TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_REGEXP + groupId + TOPIC_SPLIT_REGEXP + SparkplugMessageType.DBIRTH.name() + TOPIC_SPLIT_REGEXP + edgeNode + TOPIC_SPLIT_REGEXP + deviceIdName,
+                client.publish(TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_SEPARATOR + groupId + TOPIC_SPLIT_SEPARATOR + SparkplugMessageType.DBIRTH.name() + TOPIC_SPLIT_SEPARATOR + edgeNode + TOPIC_SPLIT_SEPARATOR + deviceIdName,
                         payloadBirthDevice.build().toByteArray(), 0, false);
                 AtomicReference<Device> device = new AtomicReference<>();
                 await(alias + "find device [" + deviceIdName + "] after created")
-                        .atMost(200, TimeUnit.SECONDS)
+                        .atMost(40, TimeUnit.SECONDS)
                         .ignoreExceptions()
                         .until(() -> {
                             device.set(doGet("/api/tenant/devices?deviceName=" + deviceName, Device.class));
@@ -227,7 +227,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         payloadBirthNode.addMetrics(metric);
         payloadBirthNode.setTimestamp(ts);
         if (client.isConnected()) {
-            client.publish(TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_REGEXP + groupId + TOPIC_SPLIT_REGEXP + SparkplugMessageType.NBIRTH.name() + TOPIC_SPLIT_REGEXP + edgeNode,
+            client.publish(TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_SEPARATOR + groupId + TOPIC_SPLIT_SEPARATOR + SparkplugMessageType.NBIRTH.name() + TOPIC_SPLIT_SEPARATOR + edgeNode,
                     payloadBirthNode.build().toByteArray(), 0, false);
         }
 
@@ -241,14 +241,14 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
                     .setTimestamp(ts)
                     .setSeq(getSeqNum());
             payloadBirthDevice1.addMetrics(metric);
-            client.publish(TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_REGEXP + groupId + TOPIC_SPLIT_REGEXP + SparkplugMessageType.DBIRTH.name() + TOPIC_SPLIT_REGEXP + edgeNode + TOPIC_SPLIT_REGEXP + deviceIdNameLabel1,
+            client.publish(TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_SEPARATOR + groupId + TOPIC_SPLIT_SEPARATOR + SparkplugMessageType.DBIRTH.name() + TOPIC_SPLIT_SEPARATOR + edgeNode + TOPIC_SPLIT_SEPARATOR + deviceIdNameLabel1,
                     payloadBirthDevice1.build().toByteArray(), 0, false);
 
         }
-        String deviceName1 = groupId + DEVICE_NAME_SPLIT_REGEXP + edgeNode + DEVICE_NAME_SPLIT_REGEXP + deviceIdNameLabel1;;
+        String deviceName1 = groupId + DEVICE_NAME_SPLIT_SEPARATOR + edgeNode + DEVICE_NAME_SPLIT_SEPARATOR + deviceIdNameLabel1;
         AtomicReference<Device> device1 = new AtomicReference<>();
         await(alias + "find device [" + deviceName1 + "] before connecting")
-                .atMost(200, TimeUnit.SECONDS)
+                .atMost(40, TimeUnit.SECONDS)
                 .until(() -> {
                     device1.set(doGet("/api/tenant/devices?deviceName=" + deviceName1, Device.class));
                     return device1.get() != null;
@@ -262,13 +262,13 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
                     .setTimestamp(ts)
                     .setSeq(getSeqNum());
             payloadBirthDevice2.addMetrics(metric);
-            client.publish(TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_REGEXP + groupId + TOPIC_SPLIT_REGEXP + SparkplugMessageType.DBIRTH.name() + TOPIC_SPLIT_REGEXP + edgeNode + TOPIC_SPLIT_REGEXP + deviceIdName2,
+            client.publish(TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_SEPARATOR + groupId + TOPIC_SPLIT_SEPARATOR + SparkplugMessageType.DBIRTH.name() + TOPIC_SPLIT_SEPARATOR + edgeNode + TOPIC_SPLIT_SEPARATOR + deviceIdName2,
                     payloadBirthDevice2.build().toByteArray(), 0, false);
         }
-        String deviceName2 = groupId + DEVICE_NAME_SPLIT_REGEXP + edgeNode + DEVICE_NAME_SPLIT_REGEXP + deviceIdName2;
+        String deviceName2 = groupId + DEVICE_NAME_SPLIT_SEPARATOR + edgeNode + DEVICE_NAME_SPLIT_SEPARATOR + deviceIdName2;
         AtomicReference<Device> device2 = new AtomicReference<>();
         await(alias + "find device [" + deviceName2 + "] before connecting")
-                .atMost(200, TimeUnit.SECONDS)
+                .atMost(40, TimeUnit.SECONDS)
                 .until(() -> {
                     device2.set(doGet("/api/tenant/devices?deviceName=" + deviceName2, Device.class));
                     return device2.get() != null;
@@ -323,7 +323,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         payloadBirthNode.addMetrics(metric);
         payloadBirthNode.setTimestamp(ts);
         if (client.isConnected()) {
-            client.publish(TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_REGEXP + groupId + TOPIC_SPLIT_REGEXP + SparkplugMessageType.NBIRTH.name() + TOPIC_SPLIT_REGEXP + edgeNode,
+            client.publish(TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_SEPARATOR + groupId + TOPIC_SPLIT_SEPARATOR + SparkplugMessageType.NBIRTH.name() + TOPIC_SPLIT_SEPARATOR + edgeNode,
                     payloadBirthNode.build().toByteArray(), 0, false);
         }
 
@@ -333,15 +333,15 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
                 .setTimestamp(ts)
                 .setSeq(getSeqNum());
         String deviceIdName = deviceId + "_1";
-        String deviceName =  groupId +  ":" + edgeNode +  ":" + deviceIdName;
+        String deviceName = groupId +  ":" + edgeNode +  ":" + deviceIdName;
 
         payloadBirthDevice.addMetrics(metric);
         if (client.isConnected()) {
-            client.publish(TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_REGEXP + groupId + TOPIC_SPLIT_REGEXP + SparkplugMessageType.DBIRTH.name() + TOPIC_SPLIT_REGEXP + edgeNode + TOPIC_SPLIT_REGEXP + deviceIdName,
+            client.publish(TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_SEPARATOR + groupId + TOPIC_SPLIT_SEPARATOR + SparkplugMessageType.DBIRTH.name() + TOPIC_SPLIT_SEPARATOR + edgeNode + TOPIC_SPLIT_SEPARATOR + deviceIdName,
                     payloadBirthDevice.build().toByteArray(), 0, false);
             AtomicReference<Device> device = new AtomicReference<>();
             await(alias + "find device [" + deviceName + "] after created")
-                    .atMost(200, TimeUnit.SECONDS)
+                    .atMost(40, TimeUnit.SECONDS)
                     .ignoreExceptions()
                     .until(() -> {
                         device.set(doGet("/api/tenant/devices?deviceName=" + deviceName, Device.class));
@@ -387,7 +387,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         listKeys.add(metricKey);
 
         if (client.isConnected()) {
-            client.publish(TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_REGEXP + groupId + TOPIC_SPLIT_REGEXP + SparkplugMessageType.NBIRTH.name() + TOPIC_SPLIT_REGEXP + edgeNode,
+            client.publish(TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_SEPARATOR + groupId + TOPIC_SPLIT_SEPARATOR + SparkplugMessageType.NBIRTH.name() + TOPIC_SPLIT_SEPARATOR + edgeNode,
                     payloadBirthNode.build().toByteArray(), 0, false);
         }
         return listKeys;

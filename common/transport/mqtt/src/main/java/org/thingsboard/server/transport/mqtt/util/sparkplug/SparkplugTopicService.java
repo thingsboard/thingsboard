@@ -34,9 +34,9 @@ public class SparkplugTopicService {
     private static final Map<String, SparkplugTopic> SPLIT_TOPIC_CACHE = new HashMap<>();
     public static final String TOPIC_ROOT_SPB_V_1_0 = "spBv1.0";
     public static final String TOPIC_ROOT_CERT_SP = "$sparkplug/certificates/";
-    public static final String TOPIC_SPLIT_REGEXP = "/";
-    public static final String DEVICE_NAME_SPLIT_REGEXP = ":";
-    public static final String TOPIC_STATE_REGEXP = TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_REGEXP + STATE.name() + TOPIC_SPLIT_REGEXP;
+    public static final String TOPIC_SPLIT_SEPARATOR = "/";
+    public static final String DEVICE_NAME_SPLIT_SEPARATOR = ":";
+    public static final String TOPIC_STATE_SEPARATOR = TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_SEPARATOR + STATE.name() + TOPIC_SPLIT_SEPARATOR;
 
     public static SparkplugTopic getSplitTopic(String topic) throws ThingsboardException {
         SparkplugTopic sparkplugTopic = SPLIT_TOPIC_CACHE.get(topic);

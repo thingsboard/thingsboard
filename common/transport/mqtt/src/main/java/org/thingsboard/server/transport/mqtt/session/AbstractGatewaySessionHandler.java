@@ -298,11 +298,22 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
     }
 
     ListenableFuture<T> onDeviceConnectSparkplug(SparkplugTopic topic, String deviceType) {
-        T result = devices.get(topic.getNodeDeviceName());
+        String fullPath = topic.getNodeDeviceNameAllPath();
+        // Primary lookup: try to find the device by its full-path name (standard for new devices)
+        T result = devices.get(fullPath);
+
         if (result == null) {
-            return onDeviceConnect(topic.getNodeDeviceNameAllPath(), deviceType, true);
-        } else {
+            // Secondary lookup (Legacy Fallback): check for the short name if full path is not found.
+            // This supports devices migrated from older versions.
+            String shortName = topic.getNodeDeviceName();
+            result = devices.get(shortName);
+        }
+
+        if (result != null) {
             return Futures.immediateFuture(result);
+        } else {
+            // If not found in cache at all, proceed with connection/creation using full path
+            return onDeviceConnect(fullPath, deviceType, true);
         }
     }
 
@@ -855,8 +866,16 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
                                 deviceSessionCtx, msgId, MqttReasonCodes.PubAck.UNSPECIFIED_ERROR.byteValue()));
                     }
                 }
-                if (!deviceSessionCtx.isSparkplug() && msgId <= 0) {
-                    closeDeviceSession(deviceName, MqttReasonCodes.Disconnect.MALFORMED_PACKET);
+                // Check for malformed packets (msgId <= 0)
+                if (msgId <= 0) {
+                    if (deviceSessionCtx.isSparkplug()) {
+                        // Sparkplug devices may use msgId = 0 during the initial connection or for QoS 0 messages.
+                        // We bypass the MALFORMED_PACKET check to allow these sessions to proceed.
+                        log.trace("[{}] Sparkplug session: allowed msgId [{}] for device: [{}]", sessionId, msgId, deviceName);
+                    } else {
+                        // Standard MQTT defense: close session for invalid message IDs
+                        closeDeviceSession(deviceName, MqttReasonCodes.Disconnect.MALFORMED_PACKET);
+                    }
                 }
             }
 

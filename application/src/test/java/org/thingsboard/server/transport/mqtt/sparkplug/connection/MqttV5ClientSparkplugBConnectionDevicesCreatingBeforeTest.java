@@ -47,4 +47,5 @@ public class MqttV5ClientSparkplugBConnectionDevicesCreatingBeforeTest extends A
     @Test
     public void testClientWithCorrectAccessTokenWithNDEATHTwoDevicesCreatingBeforeFirstNameDeviceIdSecondNameFull() throws Exception {
         connectClientWithCorrectAccessTokenWithNDEATHDevicesCreatingBefore_Test(2);
-    }}
+    }
+}

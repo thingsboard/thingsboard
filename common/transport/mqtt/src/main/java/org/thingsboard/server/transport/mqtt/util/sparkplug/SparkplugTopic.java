@@ -21,9 +21,9 @@ import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.parseMessageType;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicService.DEVICE_NAME_SPLIT_REGEXP;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicService.DEVICE_NAME_SPLIT_SEPARATOR;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicService.TOPIC_ROOT_SPB_V_1_0;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicService.TOPIC_SPLIT_REGEXP;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicService.TOPIC_SPLIT_SEPARATOR;
 
 /**
  * Created by nickAS21 on 12.12.22
@@ -197,7 +197,7 @@ public class SparkplugTopic {
         try {
             if (isValidIdElementToUTF8(topicString)) {
                 SparkplugMessageType messageType;
-                String[] splitTopic = topicString.split(TOPIC_SPLIT_REGEXP);
+                String[] splitTopic = topicString.split(TOPIC_SPLIT_SEPARATOR);
                 if (TOPIC_ROOT_SPB_V_1_0.equals(splitTopic[0])) {
                     if (splitTopic.length == 3) {
                         messageType = parseMessageType(splitTopic[1]);
@@ -333,9 +333,9 @@ public class SparkplugTopic {
     public String getNodeDeviceNameAllPath() {
         StringBuilder sb = new StringBuilder();
         if (hostApplicationId == null) {
-            sb.append(getGroupId()).append(DEVICE_NAME_SPLIT_REGEXP).append(getEdgeNodeId());
+            sb.append(getGroupId()).append(DEVICE_NAME_SPLIT_SEPARATOR).append(getEdgeNodeId());
             if (getDeviceId() != null) {
-                sb.append(DEVICE_NAME_SPLIT_REGEXP).append(getDeviceId());
+                sb.append(DEVICE_NAME_SPLIT_SEPARATOR).append(getDeviceId());
             }
         }
         return sb.toString();

@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.exception.EntitiesLimitExceededException;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -114,7 +115,7 @@ import java.util.stream.Collectors;
 
 import static org.thingsboard.server.service.transport.BasicCredentialsValidationResult.PASSWORD_MISMATCH;
 import static org.thingsboard.server.service.transport.BasicCredentialsValidationResult.VALID;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicService.DEVICE_NAME_SPLIT_REGEXP;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicService.DEVICE_NAME_SPLIT_SEPARATOR;
 
 /**
  * Created by ashvayka on 05.10.18.
@@ -347,7 +348,6 @@ public class DefaultTransportApiService implements TransportApiService {
             return buildLimitErrorResponse(e, gatewayId);
         } finally {
             lock.unlock();
-            deviceCreationLocks.remove(deviceName, lock);
         }
     }
 
@@ -367,45 +367,87 @@ public class DefaultTransportApiService implements TransportApiService {
         if (device != null) {
             return device;
         }
-        device = tryRenameSparkplugDevice(requestMsg, gateway);
+        String[] topicPath = requestMsg.getDeviceName().split(DEVICE_NAME_SPLIT_SEPARATOR);
+        device = tryRenameSparkplugDevice(requestMsg, gateway, topicPath);
         if (device != null) {
             return device;
         }
-        device = createNewDevice(requestMsg, gateway, gatewayId);
+        device = createNewDevice(requestMsg, gateway, gatewayId, topicPath);
         pushCreatedEvent(device, gateway);
         return device;
     }
 
-    private Device tryRenameSparkplugDevice(GetOrCreateDeviceFromGatewayRequestMsg requestMsg,
-                                            Device gateway) {
+    private Device tryRenameSparkplugDevice(GetOrCreateDeviceFromGatewayRequestMsg requestMsg, Device gateway, String[] topicPath) {
         if (!requestMsg.getIsSparkplug()) {
             return null;
         }
-        String[] topicPath = requestMsg.getDeviceName().split(DEVICE_NAME_SPLIT_REGEXP);
+
         if (topicPath.length != 3) {
             return null;
         }
+
         String deviceId = topicPath[2];
-        Device existingDevice =
-                deviceService.findDeviceByTenantIdAndName(gateway.getTenantId(), deviceId);
+        Device existingDevice = deviceService.findDeviceByTenantIdAndName(gateway.getTenantId(), deviceId);
+
         if (existingDevice == null) {
             return null;
         }
-        existingDevice.setName(requestMsg.getDeviceName());
-        existingDevice.setLabel(deviceId);
-        return deviceService.saveDevice(existingDevice);
+
+        // Security check: verify that the device was created by this gateway
+        try {
+            boolean isRelated = relationService.checkRelation(
+                    gateway.getTenantId(),
+                    gateway.getId(),
+                    existingDevice.getId(),
+                    "Created",
+                    RelationTypeGroup.COMMON
+            );
+
+            if (!isRelated) {
+                log.warn("[{}] Security breach attempt! Gateway tried to rename device [{}] without 'Created' relation.",
+                        gateway.getId(), existingDevice.getId());
+                return null;
+            }
+        } catch (Exception e) {
+            log.error("[{}] Error checking relation for device {}", gateway.getId(), existingDevice.getId(), e);
+            return null;
+        }
+
+        boolean changed = false;
+        String newName = requestMsg.getDeviceName();
+
+        if (!newName.equals(existingDevice.getName())) {
+            // Check if the new name is already taken by another device
+            Device conflictDevice = deviceService.findDeviceByTenantIdAndName(gateway.getTenantId(), newName);
+
+            if (conflictDevice != null) {
+                log.warn("[{}] Cannot rename device [{}] to [{}]: name already exists!",
+                        gateway.getId(), existingDevice.getId(), newName);
+                return existingDevice;
+            }
+
+            existingDevice.setName(newName);
+
+            // Update label only if it's empty to avoid overwriting user changes
+            if (existingDevice.getLabel() == null || existingDevice.getLabel().isEmpty()) {
+                existingDevice.setLabel(deviceId);
+            }
+
+            changed = true;
+        }
+
+        return changed ? deviceService.saveDevice(existingDevice) : existingDevice;
     }
 
     private Device createNewDevice(GetOrCreateDeviceFromGatewayRequestMsg requestMsg,
                                    Device gateway,
-                                   DeviceId gatewayId) {
+                                   DeviceId gatewayId,  String[] topicPath) {
         TenantId tenantId = gateway.getTenantId();
         Device device = new Device();
         device.setTenantId(tenantId);
         device.setName(requestMsg.getDeviceName());
-        if (requestMsg.getIsSparkplug()){
-            String [] topicDevice = requestMsg.getDeviceName().split(DEVICE_NAME_SPLIT_REGEXP);
-            if (topicDevice.length == 3) device.setLabel(topicDevice[2]);
+        if (requestMsg.getIsSparkplug()) {
+            if (topicPath.length == 3) device.setLabel(topicPath[2]);
         }
         device.setType(requestMsg.getDeviceType());
         device.setCustomerId(gateway.getCustomerId());
