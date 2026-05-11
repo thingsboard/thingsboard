@@ -141,10 +141,14 @@ export class AliasController implements IAliasController {
   }
 
   dashboardStateChanged() {
+    const stateController = this.stateControllerHolder();
+    if (!stateController) {
+      return;
+    }
     const changedAliasIds: Array<string> = [];
     for (const aliasId of Object.keys(this.resolvedAliasesToStateEntities)) {
       const stateEntityInfo = this.resolvedAliasesToStateEntities[aliasId];
-      const newEntityId = this.stateControllerHolder().getEntityId(stateEntityInfo.entityParamName);
+      const newEntityId = stateController.getEntityId(stateEntityInfo.entityParamName);
       const prevEntityId = stateEntityInfo.entityId;
       if (!isEqual(newEntityId, prevEntityId)) {
         changedAliasIds.push(aliasId);
@@ -212,14 +216,16 @@ export class AliasController implements IAliasController {
       this.resolvedAliasesObservable[aliasId] = resolvedAliasSubject.asObservable();
       const entityAlias = this.entityAliases[aliasId];
       if (entityAlias) {
-        this.entityService.resolveAlias(entityAlias, this.stateControllerHolder().getStateParams()).subscribe(
+        const stateController = this.stateControllerHolder();
+        const stateParams = stateController ? stateController.getStateParams() : null;
+        this.entityService.resolveAlias(entityAlias, stateParams).subscribe(
           (resolvedAliasInfo) => {
             this.resolvedAliases[aliasId] = resolvedAliasInfo;
             delete this.resolvedAliasesObservable[aliasId];
             if (resolvedAliasInfo.stateEntity) {
               this.resolvedAliasesToStateEntities[aliasId] = {
                 entityParamName: resolvedAliasInfo.entityParamName,
-                entityId: this.stateControllerHolder().getEntityId(resolvedAliasInfo.entityParamName)
+                entityId: stateController ? stateController.getEntityId(resolvedAliasInfo.entityParamName) : null
               };
             }
             this.entityAliasResolvedSubject.next(aliasId);
