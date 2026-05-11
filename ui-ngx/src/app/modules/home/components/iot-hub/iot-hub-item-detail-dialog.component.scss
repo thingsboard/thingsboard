@@ -166,23 +166,11 @@
 }
 
 
-// Description — rendered via tb-markdown, same overrides as dlg-readme
+// Description — strip padding from tb-iot-hub-markdown so the body
+// sits flush with the surrounding info layout.
 .dlg-description {
-  ::ng-deep tb-markdown .tb-markdown-view {
+  ::ng-deep tb-iot-hub-markdown .tb-markdown-view {
     padding: 0;
-
-    > p, > div {
-      padding: 0;
-    }
-
-    p {
-      font-size: 14px;
-      font-weight: 400;
-      line-height: 24px;
-      letter-spacing: 0.2px;
-      color: rgba(0, 0, 0, 0.76);
-      margin: 0;
-    }
   }
 }
 
@@ -451,134 +439,11 @@
   color: #198038;
 }
 
-// Readme content — Design: px-24, pt-16, pb-24, gap-20
+// Readme content — wraps tb-iot-hub-markdown, which carries the
+// markdown-view styles. Only the changelog heading layout lives here.
 .dlg-readme {
-  font-size: 14px;
-  line-height: 24px;
-  letter-spacing: 0.2px;
-  color: rgba(0, 0, 0, 0.76);
-
   > h3 {
     padding-left: 24px;
-  }
-
-  // Override markdown-view styles to match Design: px-24, pt-16, pb-24, gap-20
-  ::ng-deep tb-markdown .tb-markdown-view {
-    padding: 16px 24px 24px;
-
-    // Headings: Design:20px SemiBold, line-height 24, tracking 0.1
-    // Override markdown-view's padding: 30px 32px 10px on direct headings
-    h1, h2, h3, h4, h5, h6 {
-      font-size: 20px;
-      font-weight: 600;
-      line-height: 24px;
-      letter-spacing: 0.1px;
-      color: rgba(0, 0, 0, 0.76);
-      margin: 0;
-      padding: 0;
-    }
-
-    // Direct child headings: override markdown-view's > h padding
-    > h1, > h2, > h3, > h4, > h5, > h6 {
-      padding: 0;
-      margin-top: 20px;
-    }
-
-    // First heading: no top margin
-    > :first-child {
-      margin-top: 0;
-    }
-
-    h1 {
-      font-size: 24px;
-      line-height: 32px;
-      padding-right: 0;
-    }
-
-    // Paragraphs: Design:14px Regular, tracking 0.2, line-height 24
-    // Override markdown-view's font-size: 16px and padding
-    p {
-      font-size: 14px;
-      font-weight: 400;
-      line-height: 24px;
-      letter-spacing: 0.2px;
-      color: rgba(0, 0, 0, 0.76);
-      margin: 0;
-    }
-
-    > p, > div {
-      padding-left: 0;
-      padding-right: 0;
-    }
-
-    p + p {
-      margin-top: 8px;
-    }
-
-    // Heading followed by content: 8px gap
-    h1 + p, h2 + p, h3 + p,
-    h1 + ul, h2 + ul, h3 + ul,
-    h1 + ol, h2 + ol, h3 + ol {
-      margin-top: 8px;
-    }
-
-    // Lists: Design:ms-21 per li, 14px, line-height 24, no extra margin/padding
-    // Override markdown-view's padding-left: 62px, margin: 16px
-    ul, ol {
-      padding-left: 21px;
-      padding-right: 0;
-      margin: 0;
-      font-size: 14px;
-      line-height: 24px;
-      letter-spacing: 0.2px;
-      color: rgba(0, 0, 0, 0.76);
-
-      // Override markdown-view's heading-after-list padding
-      + h1, + h2, + h3, + h4, + h5, + h6 {
-        padding-top: 0;
-        margin-top: 20px;
-      }
-    }
-
-    // List items: override markdown-view's padding-bottom: .75em
-    li {
-      padding-bottom: 0;
-      margin-bottom: 0;
-      line-height: 24px;
-    }
-
-    // Code blocks: keep smaller font
-    code:not([class*=language-]) {
-      font-size: 14px;
-    }
-
-    .tb-doc-link-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 16px;
-      margin: 4px 8px 4px 0;
-      border: 1px solid rgba(0, 0, 0, 0.12);
-      border-radius: 6px;
-      background: #fff;
-      color: rgba(0, 0, 0, 0.76);
-      font-size: 14px;
-      font-weight: 500;
-      line-height: 20px;
-      text-decoration: none;
-      cursor: pointer;
-
-      i.material-icons {
-        font-size: 18px;
-        line-height: 18px;
-        color: rgba(0, 0, 0, 0.54);
-      }
-
-      &:hover {
-        background: rgba(0, 0, 0, 0.04);
-        border-color: rgba(0, 0, 0, 0.24);
-      }
-    }
   }
 }
 

@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, Type } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
@@ -24,11 +24,10 @@ import { MpItemVersionView, cfTypeTranslations, cfTypeIcons, ruleChainTypeTransl
 import { ItemType, itemTypeTranslations } from '@shared/models/iot-hub/iot-hub-item.models';
 import { IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
-import { resolveDocLinkPlaceholders } from '@shared/models/iot-hub/device-package.models';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityType } from '@shared/models/entity-type.models';
 import { getEntityDetailsPageURL } from '@core/utils';
-import { SolutionInstallDialogComponent } from '@home/components/solution/solution-install-dialog.component';
+import { SolutionInstallDialogComponent } from '@home/components/iot-hub/solution-install-dialog.component';
 import { SolutionTemplateInstalledItemDescriptor } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
 
@@ -307,22 +306,8 @@ export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubI
   private loadReadme(): void {
     const versionId = this.item.id as string;
     this.iotHubApiService.getVersionReadme(versionId, { ignoreLoading: true }).subscribe(
-      content => this.readmeContent = this.resolveDocLinks(this.prefixResourceUrls(content || ''))
+      content => this.readmeContent = content
     );
   }
 
-  private prefixResourceUrls(markdown: string): string {
-    const baseUrl = this.iotHubApiService.baseUrl;
-    return markdown.replace(/([("])(\/api\/resources\/[^)"]*)/g, `$1${baseUrl}$2`);
-  }
-
-  private resolveDocLinks(markdown: string): string {
-    const dd = this.item.dataDescriptor;
-    return resolveDocLinkPlaceholders(
-      markdown,
-      this.item.name || dd?.name || '',
-      { productURL: dd?.productURL, datasheetURL: dd?.datasheetURL },
-      { productPage: 'Product page', datasheet: 'Datasheet' }
-    );
-  }
 }

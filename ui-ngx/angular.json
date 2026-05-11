@@ -109,7 +109,8 @@
               "node_modules/@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css",
               "node_modules/prismjs/themes/prism.css",
               "node_modules/prismjs/plugins/line-numbers/prism-line-numbers.css",
-              "node_modules/ace-diff/dist/ace-diff.min.css"
+              "node_modules/ace-diff/dist/ace-diff.min.css",
+              "node_modules/photoswipe/dist/photoswipe.css"
             ],
             "stylePreprocessorOptions": {
               "includePaths": [

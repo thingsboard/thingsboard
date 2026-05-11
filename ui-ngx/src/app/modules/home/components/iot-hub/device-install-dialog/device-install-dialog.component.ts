@@ -14,15 +14,20 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, Inject, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject, OnInit, Type, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
+import {
+  PeConnectivityMethodPromptData,
+  TbPeConnectivityMethodPromptComponent
+} from '@home/components/iot-hub/pe-connectivity-method-prompt.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { MatStepper } from '@angular/material/stepper';
 import { firstValueFrom } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
 import { PageLink } from '@shared/models/page/page-link';
 import { MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
@@ -35,6 +40,7 @@ import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { generateSecret } from '@core/utils';
 import {
+  installMethodIcons as INSTALL_METHOD_ICONS,
   installMethodLabels as INSTALL_METHOD_LABELS,
   peOnlyInstallMethods,
   DeviceInstallStep,
@@ -45,7 +51,6 @@ import {
   FormFieldDefinition,
   FormFieldType,
   InstallStepType,
-  resolveDocLinkPlaceholders,
   stepTypeAliasMap
 } from '@shared/models/iot-hub/device-package.models';
 
@@ -57,7 +62,7 @@ export interface DeviceInstallDialogData {
   installState?: Record<string, any>;
 }
 
-export type WizardStepType = 'instruction' | 'form' | 'progress';
+export type WizardStepType = 'connectivity' | 'placeholder' | 'instruction' | 'form' | 'progress';
 
 export interface WizardStep {
   type: WizardStepType;
@@ -94,20 +99,15 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   zipImages = new Map<string, string>();
 
   // Connectivity
-  showConnectivitySelector = false;
-  showPeOnlyPanel = false;
   availableInstallMethods: string[] = [];
   selectedInstallMethod: string | null = null;
   installMethodLabels = INSTALL_METHOD_LABELS;
-
-  get isSelectedPeOnly(): boolean {
-    return this.selectedInstallMethod !== null && peOnlyInstallMethods.has(this.selectedInstallMethod);
-  }
+  installMethodIcons = INSTALL_METHOD_ICONS;
+  peOnlyInstallMethods = peOnlyInstallMethods;
 
   // Wizard
   wizardSteps: WizardStep[] = [];
   wizardStarted = false;
-  passwordVisible: Record<string, boolean> = {};
   reviewMode = false;
 
   // Variable resolution state
@@ -115,6 +115,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   entityOutputs = new Map<string, EntityStepOutput>();
   transportVars: Record<string, string> = {};
   gatewayDockerComposeContent: string | null = null;
+
+  resolveMarkdownVariable: (key: string) => string | undefined = this._resolveMarkdownVariable.bind(this);
 
   constructor(
     protected store: Store<AppState>,
@@ -127,7 +129,9 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     private dashboardService: DashboardService,
     private ruleChainService: RuleChainService,
     private attributeService: AttributeService,
-    private iotHubApiService: IotHubApiService
+    private iotHubApiService: IotHubApiService,
+    private translate: TranslateService,
+    private dialog: MatDialog
   ) {
     super(store, router, dialogRef);
   }
@@ -175,19 +179,19 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     if (this.data.reviewMode && this.data.installState && this.data.selectedInstallMethod) {
       this.reviewMode = true;
       this.selectedInstallMethod = this.data.selectedInstallMethod;
-      this.showConnectivitySelector = false;
       this.restoreInstallState(this.data.installState);
       this.startWizard();
-    } else if (this.availableInstallMethods.length === 1) {
+    } else if (this.availableInstallMethods.length === 1
+        && !peOnlyInstallMethods.has(this.availableInstallMethods[0])) {
+      // Single non-PE method: skip the selector and start the wizard.
       this.selectedInstallMethod = this.availableInstallMethods[0];
-      this.showConnectivitySelector = false;
-      if (this.isSelectedPeOnly) {
-        this.showPeOnlyPanel = true;
-      } else {
-        this.startWizard();
-      }
+      this.startWizard();
     } else {
-      this.showConnectivitySelector = true;
+      // Multiple methods (or only PE-only ones): render the connection
+      // method step as the wizard's first step. PE-only cards open the
+      // pe-connectivity-method-prompt dialog and never set
+      // selectedInstallMethod.
+      this.startWizard();
     }
     this.loading = false;
     this.cdr.detectChanges();
@@ -196,7 +200,34 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   // --- Connectivity ---
 
   selectConnectivity(ct: string): void {
+    // PE-only methods open the upgrade prompt dialog instead of being
+    // selectable — they never become the active install method.
+    if (peOnlyInstallMethods.has(ct)) {
+      this.openPeConnectivityPrompt(ct);
+      return;
+    }
+    if (this.selectedInstallMethod === ct) {
+      // Re-clicking the already-selected card is a no-op; users who
+      // want to proceed without changing selection use the Next button.
+      return;
+    }
     this.selectedInstallMethod = ct;
+    // Auto-advance: configure the wizard for the chosen method and
+    // jump to the next step.
+    if (this.currentWizardStep?.type === 'connectivity') {
+      this.confirmConnectivity();
+    }
+  }
+
+  private openPeConnectivityPrompt(ct: string): void {
+    this.dialog.open<TbPeConnectivityMethodPromptComponent, PeConnectivityMethodPromptData>(
+      TbPeConnectivityMethodPromptComponent,
+      {
+        data: { connectorName: this.installMethodLabels.get(ct) || ct },
+        autoFocus: false,
+        panelClass: ['tb-dialog']
+      }
+    );
   }
 
   onTabChanged(index: number): void {
@@ -204,7 +235,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     if (!ws) return;
     if (ws.type === 'instruction' && !ws.markdown) {
       const raw = this.zipFiles.get(ws.rawSteps[0].file) || '';
-      ws.markdown = this.resolveImages(this.resolveVariables(raw));
+      ws.markdown = raw;
     } else if (ws.type === 'progress' && !ws.progressDone) {
       this.showCompletedEntitySteps(ws);
     }
@@ -214,9 +245,22 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     if (!this.selectedInstallMethod) {
       return;
     }
-    if (this.isSelectedPeOnly) {
-      this.showPeOnlyPanel = true;
+    // If we are already inside the wizard (connectivity step is the
+    // first one), append the remaining steps and advance the stepper.
+    const onConnectivityStep = this.currentWizardStep?.type === 'connectivity';
+    if (onConnectivityStep) {
+      const connectivityStep = this.currentWizardStep;
+      // Drop anything that may have been appended on a previous pass
+      // (user came back to pick a different method).
+      this.wizardSteps.length = 1;
+      this.appendInstallSteps();
+      connectivityStep.completed = true;
       this.cdr.detectChanges();
+      // Wait for new mat-step children to register before advancing.
+      setTimeout(() => {
+        this.stepper?.next();
+        this.onStepActivated();
+      }, 0);
       return;
     }
     this.startWizard();
@@ -402,13 +446,6 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         }
       });
     });
-    // Gallery image click-to-expand
-    const galleryImages = container.querySelectorAll('.tb-gallery-img');
-    galleryImages.forEach(img => {
-      img.addEventListener('click', () => {
-        img.classList.toggle('tb-gallery-img-expanded');
-      });
-    });
   }
 
   resolveImagePath(path: string): string {
@@ -418,72 +455,51 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     return this.zipImages.get(path) || path;
   }
 
-  getPatternErrorMessage(field: FormFieldDefinition): string {
-    return field.validators?.[0]?.message || 'Invalid format';
-  }
+  // Bound function reference passed to <tb-install-form-renderer>'s [resolveImagePath] input.
+  // Defined as a property so the template binding stays stable across change detection.
+  readonly resolveImagePathFn: (path: string) => string = (path: string) => this.resolveImagePath(path);
 
   // --- Variable Resolution ---
 
   resolveVariables(content: string): string {
-    if (this.packageInfo) {
-      content = resolveDocLinkPlaceholders(
-        content,
-        this.packageInfo.name || '',
-        { productURL: this.packageInfo.productURL, datasheetURL: this.packageInfo.datasheetURL },
-        { productPage: 'Product page', datasheet: 'Datasheet' }
-      );
-    }
     return content.replace(/\$\{([^}]+)}/g, (_match, key) => {
-      if (key in this.formValues) {
-        return String(this.formValues[key]);
-      }
-      if (key in this.transportVars) {
-        return this.transportVars[key];
-      }
-      // Special action placeholders
-      if (key === 'gateway.downloadButton') {
-        return '<a href="#" data-action="download-gateway-docker-compose" class="tb-download-btn">⬇ Download docker-compose.yml</a>';
-      }
-      // Callout boxes: ${note(...)}, ${warn(...)}, ${error(...)}
-      const calloutMatch = key.match(/^(note|warn|error)\((.+)\)$/s);
-      if (calloutMatch) {
-        const type = calloutMatch[1];
-        const text = calloutMatch[2];
-        const icons: Record<string, string> = { note: 'info_outline', warn: 'warning_amber', error: 'error_outline' };
-        return `<div class="tb-callout tb-callout-${type}"><i class="material-icons tb-callout-icon">${icons[type]}</i><span class="tb-callout-text">${text}</span></div>`;
-      }
-      // Image gallery: ${images.gallery(path1,path2,path3)}
-      const galleryMatch = key.match(/^images\.gallery\((.+)\)$/);
-      if (galleryMatch) {
-        const paths = galleryMatch[1].split(',').map((p: string) => p.trim());
-        const images = paths
-          .map((p: string) => this.zipImages.get(p))
-          .filter((src: string | undefined) => !!src)
-          .map((src: string) => `<img src="${src}" alt="" class="tb-gallery-img" />`)
-          .join('');
-        return `<div class="tb-gallery">${images}</div>`;
-      }
-      const dotIdx = key.indexOf('.');
-      if (dotIdx > 0) {
-        const alias = key.substring(0, dotIdx);
-        const prop = key.substring(dotIdx + 1);
-        const output = this.entityOutputs.get(alias);
-        if (output && prop in output) {
-          return String((output as any)[prop]);
-        }
+      const res = this.resolveVariable(key);
+      if (res) {
+        return res;
       }
       return '${' + key + '}';
     });
   }
 
-  resolveImages(content: string): string {
-    return content.replace(/!\[([^\]]*)]\(([^)]+)\)/g, (match, alt, path) => {
-      if (path.startsWith('data:') || path.startsWith('http')) {
-        return match;
+  resolveVariable(key: string): string | undefined {
+    if (key in this.formValues) {
+      return String(this.formValues[key]);
+    }
+    if (key in this.transportVars) {
+      return this.transportVars[key];
+    }
+    const dotIdx = key.indexOf('.');
+    if (dotIdx > 0) {
+      const alias = key.substring(0, dotIdx);
+      const prop = key.substring(dotIdx + 1);
+      const output = this.entityOutputs.get(alias);
+      if (output && prop in output) {
+        return String((output as any)[prop]);
       }
-      const dataUri = this.zipImages.get(path);
-      return dataUri ? `![${alt}](${dataUri})` : match;
-    });
+    }
+    return undefined;
+  }
+
+  private _resolveMarkdownVariable(key: string): string | undefined {
+    const res = this.resolveVariable(key);
+    if (res) {
+      return res;
+    }
+    // Special action placeholders
+    if (key === 'gateway.downloadButton') {
+      return '<a href="#" data-action="download-gateway-docker-compose" mat-stroked-button color="primary">⬇ Download docker-compose.yml</a>';
+    }
+    return undefined;
   }
 
   // --- Private ---
@@ -520,7 +536,6 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       this.formValues = {};
       this.entityOutputs.clear();
     }
-    this.passwordVisible = {};
     this.buildWizardSteps();
     this.wizardStarted = true;
 
@@ -529,7 +544,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       for (const ws of this.wizardSteps) {
         if (ws.type === 'instruction') {
           const raw = this.zipFiles.get(ws.rawSteps[0].file) || '';
-          ws.markdown = this.resolveImages(this.resolveVariables(raw));
+          ws.markdown = raw;
         } else if (ws.type === 'progress') {
           this.showCompletedEntitySteps(ws);
         }
@@ -541,8 +556,38 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   }
 
   private buildWizardSteps(): void {
-    const rawSteps = this.packageInfo.installSteps[this.selectedInstallMethod] || [];
     this.wizardSteps = [];
+    if (!this.reviewMode && this.availableInstallMethods.length > 1 && !this.selectedInstallMethod) {
+      // First step: connection method selector. Remaining steps are
+      // appended via appendInstallSteps() once a method is confirmed.
+      this.wizardSteps.push({
+        type: 'connectivity',
+        label: this.translate.instant('iot-hub.connection-method'),
+        rawSteps: [],
+        completed: false
+      });
+      // Dummy placeholder steps shown in the indicator until the user
+      // picks a method. They are replaced with real steps for the
+      // chosen connectivity in confirmConnectivity().
+      for (const key of [
+        'iot-hub.step-prerequisites',
+        'iot-hub.step-configuration',
+        'iot-hub.step-provisioning'
+      ]) {
+        this.wizardSteps.push({
+          type: 'placeholder',
+          label: this.translate.instant(key),
+          rawSteps: [],
+          completed: false
+        });
+      }
+      return;
+    }
+    this.appendInstallSteps();
+  }
+
+  private appendInstallSteps(): void {
+    const rawSteps = this.packageInfo.installSteps[this.selectedInstallMethod] || [];
     let i = 0;
     while (i < rawSteps.length) {
       const step = rawSteps[i];
@@ -582,7 +627,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     }
     // Initialize form groups
     for (const ws of this.wizardSteps) {
-      if (ws.type === 'form') {
+      if (ws.type === 'form' && !ws.formGroup) {
         this.initFormStep(ws);
       }
     }
@@ -604,9 +649,6 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       }
       const initialValue = this.resolveInitialFieldValue(field, storedValues?.[field.key]);
       controls[field.key] = new UntypedFormControl(initialValue, validators);
-      if (field.type === FormFieldType.PASSWORD) {
-        this.passwordVisible[field.key] = true; // Show passwords in review mode
-      }
     }
     ws.formGroup = new UntypedFormGroup(controls);
     if (this.reviewMode) {
@@ -626,15 +668,6 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     return field.defaultValue ?? (field.type === FormFieldType.BOOLEAN ? false : '');
   }
 
-  regenerateFieldValue(ws: WizardStep, field: FormFieldDefinition): void {
-    const control = ws.formGroup?.controls[field.key];
-    if (!control) {
-      return;
-    }
-    control.patchValue(generateSecret(field.randomSize ?? DEFAULT_RANDOM_SIZE));
-    control.markAsDirty();
-  }
-
   private onStepActivated(): void {
     const step = this.currentWizardStep;
     if (!step) {
@@ -642,7 +675,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     }
     if (step.type === 'instruction') {
       const raw = this.zipFiles.get(step.rawSteps[0].file) || '';
-      step.markdown = this.resolveImages(this.resolveVariables(raw));
+      step.markdown = raw;
     } else if (step.type === 'progress' && !step.progressDone) {
       if (this.reviewMode) {
         this.showCompletedEntitySteps(step);

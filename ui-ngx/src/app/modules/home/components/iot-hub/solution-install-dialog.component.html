@@ -16,22 +16,25 @@
 
 -->
 <div style="min-width:400px;" class="tb-dialog-content">
-  <mat-toolbar color="primary">
-    <h2>@if (instructions) {<mat-icon>info_outline</mat-icon>}{{ (instructions ? 'iot-hub.solution-instructions' : 'iot-hub.solution-install-title') | translate }}</h2>
+  <div class="dlg-header">
+    @if (instructions) {<mat-icon>info_outline</mat-icon>}
+    <div class="dlg-title">{{ (instructions ? 'iot-hub.solution-instructions' : 'iot-hub.solution-install-title') | translate }}</div>
     <span class="flex-1"></span>
     <button mat-icon-button
             (click)="close()"
             type="button">
       <mat-icon class="material-icons">close</mat-icon>
     </button>
-  </mat-toolbar>
+  </div>
   <div mat-dialog-content>
-    <tb-markdown [data]="details" lineNumbers fallbackToPlainMarkdown></tb-markdown>
+    <tb-iot-hub-markdown [data]="details"
+                         [lineNumbers]="true"
+                         [fallbackToPlainMarkdown]="true"></tb-iot-hub-markdown>
   </div>
   <div mat-dialog-actions class="flex flex-row items-center justify-end">
-    <button mat-button color="primary"
+    <button mat-button
             type="button"
-            (click)="close()" cdkFocusInitial>
+            (click)="close()">
       {{ 'action.close' | translate }}
     </button>
     @if (dashboardId) {

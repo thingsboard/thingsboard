@@ -85,7 +85,7 @@
           <div class="dlg-info-text">
             @if (item.description) {
               <div class="dlg-description">
-                <tb-markdown [data]="item.description"></tb-markdown>
+                <tb-iot-hub-markdown [data]="item.description"></tb-iot-hub-markdown>
               </div>
             }
           </div>
@@ -150,7 +150,7 @@
             <div class="dlg-info-text">
               @if (item.description) {
                 <div class="dlg-description">
-                  <tb-markdown [data]="item.description"></tb-markdown>
+                  <tb-iot-hub-markdown [data]="item.description"></tb-iot-hub-markdown>
                 </div>
               }
             </div>
@@ -299,11 +299,11 @@
     @if (readmeContent || shouldShowChangelog()) {
       <div class="dlg-readme">
         @if (readmeContent) {
-          <tb-markdown [data]="readmeContent"></tb-markdown>
+          <tb-iot-hub-markdown [data]="readmeContent" [item]="item"></tb-iot-hub-markdown>
         }
         @if (shouldShowChangelog()) {
           <h3>{{ 'iot-hub.changelog' | translate }}</h3>
-          <tb-markdown [data]="item.changelog"></tb-markdown>
+          <tb-iot-hub-markdown [data]="item.changelog" [item]="item"></tb-iot-hub-markdown>
         }
       </div>
     }

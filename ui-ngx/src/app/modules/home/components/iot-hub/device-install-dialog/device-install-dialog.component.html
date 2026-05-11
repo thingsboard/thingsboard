@@ -21,105 +21,55 @@
   <div class="tb-wizard-step-content">
     @switch (ws.type) {
 
-      @case ('instruction') {
-        <div class="tb-device-install-instruction" #instructionContainer>
-          <tb-markdown [data]="ws.markdown"
-                       (ready)="onMarkdownReady(instructionContainer)">
-          </tb-markdown>
+      @case ('placeholder') {
+        <!-- Inert placeholder shown in the stepper indicator while the
+             user is on the connectivity step. Linear mode prevents
+             navigation; this case never renders body content. -->
+      }
+
+      @case ('connectivity') {
+        <div class="tb-device-install-connectivity flex flex-col gap-5 p-6">
+          <p>{{ 'iot-hub.device-install-select-connectivity' | translate }}</p>
+          <div class="tb-connectivity-cards"
+               [class.tb-connectivity-cards-pair]="availableInstallMethods.length === 2">
+            @for (ct of availableInstallMethods; track ct) {
+              <button type="button"
+                      class="tb-connectivity-card"
+                      [class.selected]="selectedInstallMethod === ct"
+                      (click)="selectConnectivity(ct)">
+                <div class="tb-connectivity-card-icon">
+                  @if (installMethodIcons.get(ct); as iconUrl) {
+                    <span class="tb-connectivity-card-icon-mask" [style.--tb-icon-url]="'url(' + iconUrl + ')'"></span>
+                  }
+                </div>
+                <span class="tb-connectivity-card-name">{{ installMethodLabels.get(ct) || ct }}</span>
+                @if (peOnlyInstallMethods.has(ct)) {
+                  <span class="tb-connectivity-card-badge">{{ 'iot-hub.pe-only' | translate }}</span>
+                }
+              </button>
+            }
+          </div>
         </div>
+      }
+
+      @case ('instruction') {
+        <tb-iot-hub-markdown [data]="ws.markdown"
+                             [packageInfo]="packageInfo"
+                             [imageMap]="zipImages"
+                             [onResolveVariable]="resolveMarkdownVariable"
+                             [codeBlockMaxHeightPx]="400"
+                             (ready)="onMarkdownReady($event)">
+        </tb-iot-hub-markdown>
       }
 
       @case ('form') {
         <div class="tb-device-install-form flex flex-col gap-2 p-6">
-          @if (ws.formGroup) {
-            <form [formGroup]="ws.formGroup">
-              @for (field of ws.formFields; track field.key) {
-                @switch (field.type) {
-                  @case ('BOOLEAN') {
-                    <mat-checkbox [formControlName]="field.key">
-                      {{ field.label }}
-                    </mat-checkbox>
-                  }
-                  @case ('SELECT') {
-                    <mat-form-field appearance="outline">
-                      <mat-label>{{ field.label }}</mat-label>
-                      <mat-select [formControlName]="field.key">
-                        @for (opt of field.options; track opt.value) {
-                          <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
-                        }
-                      </mat-select>
-                      @if (ws.formGroup.controls[field.key]?.hasError('required')) {
-                        <mat-error>{{ field.label + ' is required' }}</mat-error>
-                      }
-                    </mat-form-field>
-                  }
-                  @case ('PASSWORD') {
-                    <mat-form-field appearance="outline">
-                      <mat-label>{{ field.label }}</mat-label>
-                      <input matInput [type]="passwordVisible[field.key] ? 'text' : 'password'"
-                             [formControlName]="field.key">
-                      <button mat-icon-button matSuffix type="button"
-                              (click)="passwordVisible[field.key] = !passwordVisible[field.key]">
-                        <mat-icon>{{ passwordVisible[field.key] ? 'visibility_off' : 'visibility' }}</mat-icon>
-                      </button>
-                      @if (field.randomGenerator) {
-                        <button mat-icon-button matSuffix type="button"
-                                [matTooltip]="'iot-hub.generate-random-value' | translate"
-                                matTooltipPosition="above"
-                                (click)="regenerateFieldValue(ws, field)">
-                          <mat-icon>autorenew</mat-icon>
-                        </button>
-                      }
-                      @if (ws.formGroup.controls[field.key]?.hasError('required')) {
-                        <mat-error>{{ field.label + ' is required' }}</mat-error>
-                      }
-                      @if (ws.formGroup.controls[field.key]?.hasError('pattern')) {
-                        <mat-error>{{ getPatternErrorMessage(field) }}</mat-error>
-                      }
-                    </mat-form-field>
-                  }
-                  @case ('INTEGER') {
-                    <mat-form-field appearance="outline">
-                      <mat-label>{{ field.label }}</mat-label>
-                      <input matInput type="number" [formControlName]="field.key">
-                      @if (ws.formGroup.controls[field.key]?.hasError('required')) {
-                        <mat-error>{{ field.label + ' is required' }}</mat-error>
-                      }
-                      @if (ws.formGroup.controls[field.key]?.hasError('pattern')) {
-                        <mat-error>{{ getPatternErrorMessage(field) }}</mat-error>
-                      }
-                    </mat-form-field>
-                  }
-                  @default {
-                    <mat-form-field appearance="outline">
-                      <mat-label>{{ field.label }}</mat-label>
-                      <input matInput [formControlName]="field.key">
-                      @if (field.randomGenerator) {
-                        <button mat-icon-button matSuffix type="button"
-                                [matTooltip]="'iot-hub.generate-random-value' | translate"
-                                matTooltipPosition="above"
-                                (click)="regenerateFieldValue(ws, field)">
-                          <mat-icon>autorenew</mat-icon>
-                        </button>
-                      }
-                      @if (ws.formGroup.controls[field.key]?.hasError('required')) {
-                        <mat-error>{{ field.label + ' is required' }}</mat-error>
-                      }
-                      @if (ws.formGroup.controls[field.key]?.hasError('pattern')) {
-                        <mat-error>{{ getPatternErrorMessage(field) }}</mat-error>
-                      }
-                    </mat-form-field>
-                  }
-                }
-                @if (field.helpText) {
-                  <div class="tb-form-field-help">{{ field.helpText }}</div>
-                }
-                @if (field.helpImage) {
-                  <img class="tb-form-field-help-image" [src]="resolveImagePath(field.helpImage)" [alt]="field.label">
-                }
-              }
-            </form>
-          }
+          <tb-install-form-renderer
+            [fields]="ws.formFields"
+            [formGroup]="ws.formGroup"
+            [resolveImagePath]="resolveImagePathFn"
+            [reviewMode]="reviewMode">
+          </tb-install-form-renderer>
         </div>
       }
 
@@ -226,64 +176,14 @@
   </div>
   <mat-divider></mat-divider>
 
-  @if (!wizardStarted && !showPeOnlyPanel) {
-    <!-- Connectivity selector -->
-    <div mat-dialog-content>
-      <div class="tb-device-install-connectivity flex flex-col gap-3">
-        <p>{{ 'iot-hub.device-install-select-connectivity' | translate }}</p>
-        <div class="flex flex-wrap gap-2">
-          @for (ct of availableInstallMethods; track ct) {
-            <button mat-stroked-button
-                    class="tb-connectivity-button"
-                    [class.selected]="selectedInstallMethod === ct"
-                    (click)="selectConnectivity(ct)">
-              {{ installMethodLabels.get(ct) || ct }}
-            </button>
-          }
-        </div>
-      </div>
-    </div>
-    <mat-dialog-actions align="end">
-      <button mat-button (click)="cancel()">{{ 'action.cancel' | translate }}</button>
-      <button mat-stroked-button color="primary"
-              [disabled]="!selectedInstallMethod"
-              (click)="confirmConnectivity()">
-        {{ 'action.next' | translate }}
-      </button>
-    </mat-dialog-actions>
-
-  } @else if (showPeOnlyPanel) {
-    <!-- PE-only gate -->
-    <div mat-dialog-content>
-      <div class="tb-device-install-pe-only flex flex-col items-center gap-3 py-6 text-center">
-        <mat-icon class="tb-device-install-pe-only-icon">workspace_premium</mat-icon>
-        <h3 class="tb-device-install-pe-only-title">
-          {{ 'iot-hub.device-install-pe-only-title' | translate }}
-        </h3>
-        <p class="tb-device-install-pe-only-message">
-          {{ 'iot-hub.device-install-pe-only-message' | translate:{ method: installMethodLabels.get(selectedInstallMethod) || selectedInstallMethod } }}
-        </p>
-        <a mat-stroked-button color="primary"
-           href="https://thingsboard.io/products/thingsboard-pe/"
-           target="_blank" rel="noopener">
-          {{ 'iot-hub.device-install-pe-only-learn-more' | translate }}
-        </a>
-      </div>
-    </div>
-    <mat-dialog-actions align="end">
-      <button mat-button (click)="cancel()">{{ 'action.close' | translate }}</button>
-    </mat-dialog-actions>
-
-  } @else if (reviewMode) {
+  @if (reviewMode) {
     <!-- Review mode: tabs -->
     <div mat-dialog-content>
       <mat-tab-group (selectedIndexChange)="onTabChanged($event)">
         @for (ws of wizardSteps; track ws.label) {
           <mat-tab [label]="ws.label">
             <ng-template matTabContent>
-              <div class="tb-tab-content">
-                <ng-container *ngTemplateOutlet="stepContent; context: { $implicit: ws }"></ng-container>
-              </div>
+              <ng-container *ngTemplateOutlet="stepContent; context: { $implicit: ws }"></ng-container>
             </ng-template>
           </mat-tab>
         }
@@ -334,6 +234,14 @@
       <span class="flex-1"></span>
       @if (currentWizardStep; as step) {
         @switch (step.type) {
+          @case ('connectivity') {
+            <ng-container *ngTemplateOutlet="closeOrCancel"></ng-container>
+            <button mat-stroked-button color="primary"
+                    [disabled]="!selectedInstallMethod"
+                    (click)="confirmConnectivity()">
+              {{ 'action.next' | translate }}@if (nextWizardStepLabel) {: {{ nextWizardStepLabel }}}
+            </button>
+          }
           @case ('instruction') {
             @if (isLastWizardStep) {
               <button mat-button (click)="done()">{{ 'action.close' | translate }}</button>

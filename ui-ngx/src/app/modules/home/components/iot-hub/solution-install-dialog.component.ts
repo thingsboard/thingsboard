@@ -18,6 +18,9 @@ import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { SolutionTemplateInstalledItemDescriptor } from '@shared/models/iot-hub/iot-hub-installed-item.models';
+import {
+  replaceItemLinkPlaceholders
+} from '@home/components/iot-hub/iot-hub-markdown.utils';
 
 export interface SolutionInstallDialogData {
   descriptor: SolutionTemplateInstalledItemDescriptor;
@@ -41,7 +44,7 @@ export class SolutionInstallDialogComponent {
     private dialogRef: MatDialogRef<SolutionInstallDialogComponent>,
     private router: Router
   ) {
-    this.details = data.descriptor.details || '';
+    this.details = replaceItemLinkPlaceholders(data.descriptor.details || '');
     this.dashboardId = data.descriptor.dashboardId?.id || null;
     this.instructions = !!data.instructions;
   }

@@ -26,7 +26,7 @@ import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
 import { resolveEntityDetailsUrl } from './iot-hub-components.models';
-import { SolutionInstallDialogComponent } from '@home/components/solution/solution-install-dialog.component';
+import { SolutionInstallDialogComponent } from '@home/components/iot-hub/solution-install-dialog.component';
 
 export interface IotHubUpdateDialogData {
   installedItemId: string;

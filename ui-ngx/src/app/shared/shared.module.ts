@@ -242,6 +242,7 @@ import { MAT_BUTTON_TOGGLE_DEFAULT_OPTIONS } from '@angular/material/button-togg
 import { RgbaInputComponent } from '@shared/components/color-picker/rgba-input.component';
 import { HslaInputComponent } from '@shared/components/color-picker/hsla-input.component';
 import { InputChangeDirective } from '@shared/components/color-picker/input-change.directive';
+import { PhotoSwipeGalleryDirective } from '@shared/directives/photoswipe-gallery.directive';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -402,6 +403,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TruncateWithTooltipDirective,
     ContextMenuDirective,
     ChipOverflowDirective,
+    PhotoSwipeGalleryDirective,
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,
@@ -676,6 +678,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TruncateWithTooltipDirective,
     ContextMenuDirective,
     ChipOverflowDirective,
+    PhotoSwipeGalleryDirective,
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,

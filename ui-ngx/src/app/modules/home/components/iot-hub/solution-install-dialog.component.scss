@@ -17,19 +17,42 @@
 @import "../../../../../scss/constants";
 
 :host {
-  h2 {
-    .mat-icon {
-      padding-right: 8px;
-      box-sizing: initial;
-      vertical-align: sub;
-    }
+  .dlg-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 12px 8px 24px;
+    flex-shrink: 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  }
+  .dlg-title {
+    font-size: 24px;
+    font-weight: 500;
+    line-height: 32px;
+    color: rgba(0, 0, 0, 0.87);
+  }
+  .mat-mdc-dialog-actions {
+    border-top: 1px solid rgba(0, 0, 0, 0.12);
   }
 }
 
 .tb-dialog-content {
   max-width: 100%;
+  width: 1200px;
   display: flex;
   flex-direction: column;
+
+  @media #{$mat-lt-xxl} {
+    width: 900px;
+  }
+
+  @media #{$mat-lt-lg} {
+    width: 768px;
+  }
+
+  @media #{$mat-lt-md} {
+    width: 100%;
+  }
 
   @media #{$mat-xs} {
     min-width: 100% !important;
@@ -37,27 +60,6 @@
   }
 }
 
-:host ::ng-deep {
-  .mat-mdc-dialog-content {
-    tb-markdown {
-      .tb-markdown-view {
-        .table-wrapper {
-          overflow-y: auto;
-          margin: 30px 32px;
-          border: 1px solid rgba(42, 125, 236, .2);
-          border-radius: 4px;
-          padding: 0;
-          width: calc(100% - 64px);
-          table {
-            width: 100%;
-            table-layout: auto;
-            white-space: nowrap;
-            margin: 0;
-            border: 0;
-            border-radius: 0;
-          }
-        }
-      }
-    }
-  }
+:host .tb-dialog-content ::ng-deep tb-iot-hub-markdown .tb-markdown-view {
+  padding: 0;
 }

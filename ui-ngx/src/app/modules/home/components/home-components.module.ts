@@ -202,7 +202,6 @@ import { ApiKeyGeneratedDialogComponent } from '@home/components/api-key/api-key
 import { ApiKeysTableDialogComponent } from '@home/components/api-key/api-keys-table-dialog.component';
 import { AuditLogFilterComponent } from "@home/components/audit-log/audit-log-filter.component";
 import { EventsDialogComponent } from '@home/dialogs/events-dialog.component';
-import { SolutionInstallDialogComponent } from '@home/components/solution/solution-install-dialog.component';
 
 @NgModule({
   declarations:
@@ -360,7 +359,6 @@ import { SolutionInstallDialogComponent } from '@home/components/solution/soluti
       AuditLogHeaderComponent,
       AuditLogFilterComponent,
       EventsDialogComponent,
-      SolutionInstallDialogComponent,
     ],
   imports: [
     CommonModule,
@@ -511,7 +509,6 @@ import { SolutionInstallDialogComponent } from '@home/components/solution/soluti
     ApiKeysTableComponent,
     ApiKeysTableDialogComponent,
     EventsDialogComponent,
-    SolutionInstallDialogComponent,
   ],
   providers: [
     WidgetComponentService,

@@ -33,7 +33,7 @@
       <h2 class="tb-iot-hub-install-title">{{ 'iot-hub.update-error-title' | translate }}</h2>
       <p class="tb-iot-hub-install-desc">{{ 'iot-hub.update-error-message' | translate:{ name: data.itemName } }}</p>
       @if (data?.itemType === ItemType.SOLUTION_TEMPLATE) {
-        <tb-markdown class="tb-iot-hub-error-details-markdown" [data]="errorMessage"></tb-markdown>
+        <tb-iot-hub-markdown class="tb-iot-hub-error-details-markdown" [data]="errorMessage"></tb-iot-hub-markdown>
       } @else {
         <div class="tb-iot-hub-error-details">
           {{ errorMessage }}

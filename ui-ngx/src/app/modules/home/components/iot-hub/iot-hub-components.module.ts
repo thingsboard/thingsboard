@@ -26,11 +26,16 @@ import { TbIotHubUpdateDialogComponent } from './iot-hub-update-dialog.component
 import { TbIotHubDeleteDialogComponent } from './iot-hub-delete-dialog.component';
 import { TbIotHubUnpublishedWarningDialogComponent } from './iot-hub-unpublished-warning-dialog.component';
 import { TbDeviceInstallDialogComponent } from './device-install-dialog/device-install-dialog.component';
+import { InstallFormRendererComponent } from './device-install-dialog/install-form-renderer/install-form-renderer.component';
 import { TbIotHubSearchComponent } from './iot-hub-search.component';
 import { TbIotHubInstalledItemsTableComponent } from './iot-hub-installed-items-table.component';
 import { TbIotHubInstalledItemsDialogComponent } from './iot-hub-installed-items-dialog.component';
 import { TbIotHubSelectCfEntityDialogComponent } from './iot-hub-select-cf-entity-dialog.component';
+import { TbPeConnectivityMethodPromptComponent } from './pe-connectivity-method-prompt.component';
+import { TbIotHubMarkdownComponent } from './iot-hub-markdown.component';
+import { SolutionInstallDialogComponent } from './solution-install-dialog.component';
 import { IotHubActionsService } from './iot-hub-actions.service';
+import { IotHubItemLinkModule } from './iot-hub-item-link-card/iot-hub-item-link.module';
 
 @NgModule({
   declarations: [
@@ -46,11 +51,16 @@ import { IotHubActionsService } from './iot-hub-actions.service';
     TbIotHubSearchComponent,
     TbIotHubInstalledItemsTableComponent,
     TbIotHubInstalledItemsDialogComponent,
-    TbIotHubSelectCfEntityDialogComponent
+    TbIotHubSelectCfEntityDialogComponent,
+    TbPeConnectivityMethodPromptComponent,
+    TbIotHubMarkdownComponent,
+    SolutionInstallDialogComponent,
+    InstallFormRendererComponent
   ],
   imports: [
     CommonModule,
-    SharedModule
+    SharedModule,
+    IotHubItemLinkModule
   ],
   providers: [
     IotHubActionsService
@@ -68,7 +78,10 @@ import { IotHubActionsService } from './iot-hub-actions.service';
     TbIotHubSearchComponent,
     TbIotHubInstalledItemsTableComponent,
     TbIotHubInstalledItemsDialogComponent,
-    TbIotHubSelectCfEntityDialogComponent
+    TbIotHubSelectCfEntityDialogComponent,
+    TbPeConnectivityMethodPromptComponent,
+    TbIotHubMarkdownComponent,
+    SolutionInstallDialogComponent
   ]
 })
 export class IotHubComponentsModule { }
