@@ -26,6 +26,7 @@ import { TbIotHubUpdateDialogComponent } from './iot-hub-update-dialog.component
 import { TbIotHubDeleteDialogComponent } from './iot-hub-delete-dialog.component';
 import { TbIotHubUnpublishedWarningDialogComponent } from './iot-hub-unpublished-warning-dialog.component';
 import { TbDeviceInstallDialogComponent } from './device-install-dialog/device-install-dialog.component';
+import { InstallFormRendererComponent } from './device-install-dialog/install-form-renderer/install-form-renderer.component';
 import { TbIotHubSearchComponent } from './iot-hub-search.component';
 import { TbIotHubInstalledItemsTableComponent } from './iot-hub-installed-items-table.component';
 import { TbIotHubInstalledItemsDialogComponent } from './iot-hub-installed-items-dialog.component';
@@ -51,7 +52,8 @@ import { IotHubItemLinkModule } from './iot-hub-item-link-card/iot-hub-item-link
     TbIotHubInstalledItemsDialogComponent,
     TbPeConnectivityMethodPromptComponent,
     TbIotHubMarkdownComponent,
-    SolutionInstallDialogComponent
+    SolutionInstallDialogComponent,
+    InstallFormRendererComponent
   ],
   imports: [
     CommonModule,

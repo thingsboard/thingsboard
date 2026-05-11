@@ -108,7 +108,6 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   // Wizard
   wizardSteps: WizardStep[] = [];
   wizardStarted = false;
-  passwordVisible: Record<string, boolean> = {};
   reviewMode = false;
 
   // Variable resolution state
@@ -456,9 +455,9 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     return this.zipImages.get(path) || path;
   }
 
-  getPatternErrorMessage(field: FormFieldDefinition): string {
-    return field.validators?.[0]?.message || 'Invalid format';
-  }
+  // Bound function reference passed to <tb-install-form-renderer>'s [resolveImagePath] input.
+  // Defined as a property so the template binding stays stable across change detection.
+  readonly resolveImagePathFn: (path: string) => string = (path: string) => this.resolveImagePath(path);
 
   // --- Variable Resolution ---
 
@@ -537,7 +536,6 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       this.formValues = {};
       this.entityOutputs.clear();
     }
-    this.passwordVisible = {};
     this.buildWizardSteps();
     this.wizardStarted = true;
 
@@ -651,9 +649,6 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       }
       const initialValue = this.resolveInitialFieldValue(field, storedValues?.[field.key]);
       controls[field.key] = new UntypedFormControl(initialValue, validators);
-      if (field.type === FormFieldType.PASSWORD) {
-        this.passwordVisible[field.key] = true; // Show passwords in review mode
-      }
     }
     ws.formGroup = new UntypedFormGroup(controls);
     if (this.reviewMode) {
@@ -671,15 +666,6 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       return generateSecret(field.randomSize ?? DEFAULT_RANDOM_SIZE);
     }
     return field.defaultValue ?? (field.type === FormFieldType.BOOLEAN ? false : '');
-  }
-
-  regenerateFieldValue(ws: WizardStep, field: FormFieldDefinition): void {
-    const control = ws.formGroup?.controls[field.key];
-    if (!control) {
-      return;
-    }
-    control.patchValue(generateSecret(field.randomSize ?? DEFAULT_RANDOM_SIZE));
-    control.markAsDirty();
   }
 
   private onStepActivated(): void {
