@@ -394,25 +394,31 @@ public class DefaultTransportApiService implements TransportApiService {
         }
 
         // Security check: verify that the device was created by this gateway
+        boolean isRelated = false;
         try {
-            boolean isRelated = relationService.checkRelation(
+            // Security check: verify that the device was originally created by this gateway
+            isRelated = relationService.checkRelation(
                     gateway.getTenantId(),
                     gateway.getId(),
                     existingDevice.getId(),
                     "Created",
                     RelationTypeGroup.COMMON
             );
-
-            if (!isRelated) {
-                log.warn("[{}] Security breach attempt! Gateway tried to rename device [{}] without 'Created' relation.",
-                        gateway.getId(), existingDevice.getId());
-                return null;
-            }
         } catch (Exception e) {
+            // Log the error from the relation service but return null to allow potential recovery
             log.error("[{}] Error checking relation for device {}", gateway.getId(), existingDevice.getId(), e);
             return null;
         }
 
+        // If the device is found but not related to this gateway, it's a security breach
+        if (!isRelated) {
+            log.error("[{}] Security breach attempt! Gateway tried to rename device [{}] without 'Created' relation.",
+                    gateway.getId(), existingDevice.getId());
+            // Throwing exception to halt the entire connection process
+            throw new RuntimeException("Security breach attempt! Unauthorized device rename.");
+        }
+
+        // Logic for renaming the device if it's related and no naming conflicts exist
         boolean changed = false;
         String newName = requestMsg.getDeviceName();
 

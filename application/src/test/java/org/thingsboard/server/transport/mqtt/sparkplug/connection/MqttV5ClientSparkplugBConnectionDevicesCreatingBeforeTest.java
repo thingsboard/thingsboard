@@ -48,4 +48,24 @@ public class MqttV5ClientSparkplugBConnectionDevicesCreatingBeforeTest extends A
     public void testClientWithCorrectAccessTokenWithNDEATHTwoDevicesCreatingBeforeFirstNameDeviceIdSecondNameFull() throws Exception {
         connectClientWithCorrectAccessTokenWithNDEATHDevicesCreatingBefore_Test(2);
     }
+
+    @Test
+    public void testRenameWhenDeviceFullPathAlreadyExists_Collision() throws Exception {
+        renameCollisionWhenTargetNameAlreadyExists_Test();
+    }
+
+    @Test
+    public void testUnauthorizedRenameAttempt() throws Exception {
+        unauthorizedRenameAttempt_Test();
+    }
+
+    @Test
+    public void testConcurrentFirstMessageRegistration() throws Exception {
+        concurrentFirstMessageRegistration_Test();
+    }
+
+    @Test
+    public void testSparkplugSessionStaysAliveWithZeroMsgId() throws Exception {
+        sparkplugSessionStaysAliveWithZeroMsgId_Test();
+    }
 }
