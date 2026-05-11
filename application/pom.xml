@@ -574,6 +574,29 @@
                     </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-enforcer-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>verify-openapi-spec-generated</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>enforce</goal>
+                                </goals>
+                                <configuration>
+                                    <rules>
+                                        <requireFilesExist>
+                                            <files>
+                                                <file>${project.build.directory}/openapi.json</file>
+                                            </files>
+                                            <message>OpenAPI spec was not generated — target/openapi.json is missing. The springdoc-openapi-maven-plugin logs HTTP failures but does not fail the build; scan the log above for "An error has occured" or a 5xx response from /v3/api-docs/thingsboard and fix the underlying issue (e.g. duplicate @Schema names rejected by SwaggerConfiguration).</message>
+                                        </requireFilesExist>
+                                    </rules>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
                         <configuration>
                             <skip>true</skip>

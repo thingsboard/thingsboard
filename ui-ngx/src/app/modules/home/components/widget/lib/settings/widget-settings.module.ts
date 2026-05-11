@@ -376,6 +376,9 @@ import {
 } from '@home/components/widget/lib/settings/control/value-stepper-widget-settings.component';
 import { MapWidgetSettingsComponent } from '@home/components/widget/lib/settings/map/map-widget-settings.component';
 import {
+  HtmlContainerWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/html/html-container-widget-settings.component';
+import {
   ApiUsageWidgetSettingsComponent
 } from "@home/components/widget/lib/settings/cards/api-usage-widget-settings.component";
 import {
@@ -515,6 +518,7 @@ import {
     UnreadNotificationWidgetSettingsComponent,
     ScadaSymbolWidgetSettingsComponent,
     MapWidgetSettingsComponent,
+    HtmlContainerWidgetSettingsComponent,
     ApiUsageWidgetSettingsComponent,
     ApiUsageDataKeyRowComponent
   ],
@@ -656,6 +660,7 @@ import {
     UnreadNotificationWidgetSettingsComponent,
     ScadaSymbolWidgetSettingsComponent,
     MapWidgetSettingsComponent,
+    HtmlContainerWidgetSettingsComponent,
     ApiUsageWidgetSettingsComponent
   ]
 })

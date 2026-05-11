@@ -22,7 +22,7 @@
       <div class="tb-form-panel">
         <div class="tb-form-panel-title" translate>datakey.general</div>
         @if (modelValue.type !== dataKeyTypes.function && !hideDataKeyName) {
-          <mat-form-field subscriptSizing="dynamic">
+          <mat-form-field subscriptSizing="dynamic" appearance="outline">
             <mat-label>{{ 'entity.key' | translate }}</mat-label>
             <input matInput type="text" placeholder="{{ 'entity.key-name' | translate }}"
                    #keyInput
@@ -49,7 +49,7 @@
           </mat-form-field>
         }
         @if (!hideDataKeyLabel) {
-          <mat-form-field subscriptSizing="dynamic">
+          <mat-form-field subscriptSizing="dynamic" appearance="outline">
             <mat-label translate>datakey.label</mat-label>
             <input matInput formControlName="label" required>
           </mat-form-field>

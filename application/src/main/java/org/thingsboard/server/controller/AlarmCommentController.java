@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.AlarmCommentInfo;
+import org.thingsboard.server.common.data.alarm.AlarmCommentType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AlarmCommentId;
 import org.thingsboard.server.common.data.id.AlarmId;
@@ -77,6 +78,7 @@ public class AlarmCommentController extends BaseController {
         AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
         Alarm alarm = checkAlarmInfoId(alarmId, Operation.WRITE);
         alarmComment.setAlarmId(alarmId);
+        alarmComment.setType(AlarmCommentType.OTHER);
         return tbAlarmCommentService.saveAlarmComment(alarm, alarmComment, getCurrentUser());
     }
 

@@ -53,7 +53,7 @@ import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionValue;
 import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmCondition;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.AlarmConditionFilter;
-import org.thingsboard.server.common.data.alarm.rule.condition.expression.ComplexOperation;
+import org.thingsboard.server.common.data.query.ComplexOperation;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.SimpleAlarmConditionExpression;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate.BooleanFilterPredicate;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate.NumericFilterPredicate;

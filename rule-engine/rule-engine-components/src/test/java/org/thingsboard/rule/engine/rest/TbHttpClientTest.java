@@ -28,6 +28,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
 import org.springframework.util.LinkedMultiValueMap;
+import org.thingsboard.common.util.DirectListeningExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -210,6 +211,7 @@ public class TbHttpClientTest {
     private void processMessageAndWait(TbRestApiCallNodeConfiguration config, TbMsg msg) throws Exception {
         var httpClient = new TbHttpClient(config, eventLoop);
         var ctx = mock(TbContext.class);
+        when(ctx.getExternalCallExecutor()).thenReturn(DirectListeningExecutor.INSTANCE);
         when(ctx.transformMsg(eq(msg), any(), any())).thenReturn(msg);
 
         var latch = new CountDownLatch(1);

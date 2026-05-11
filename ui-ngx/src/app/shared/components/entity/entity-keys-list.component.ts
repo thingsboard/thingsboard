@@ -64,6 +64,9 @@ export class EntityKeysListComponent implements ControlValueAccessor, OnInit, Af
   keysText: string;
 
   @Input()
+  label: string;
+
+  @Input()
   dataKeyType: DataKeyType;
 
   @Input()

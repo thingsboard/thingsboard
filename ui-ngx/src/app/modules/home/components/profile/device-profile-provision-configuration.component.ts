@@ -62,7 +62,7 @@ export class DeviceProfileProvisionConfigurationComponent implements ControlValu
   provisionConfigurationFormGroup: UntypedFormGroup;
 
   deviceProvisionType = DeviceProvisionType;
-  deviceProvisionTypes = Object.keys(DeviceProvisionType);
+  deviceProvisionTypes = Object.values(DeviceProvisionType);
   deviceProvisionTypeTranslateMap = deviceProvisionTypeTranslationMap;
 
   private requiredValue: boolean;
@@ -212,9 +212,5 @@ export class DeviceProfileProvisionConfigurationComponent implements ControlValu
       this.provisionConfigurationFormGroup.get('provisionDeviceSecret').reset({value: null, disabled: true}, {emitEvent: false});
       this.provisionConfigurationFormGroup.get('provisionDeviceKey').reset({value: null, disabled: true}, {emitEvent: false});
     }
-  }
-
-  getDeviceProvisionType(type: string): string {
-    return this.deviceProvisionTypeTranslateMap.get(type as DeviceProvisionType);
   }
 }

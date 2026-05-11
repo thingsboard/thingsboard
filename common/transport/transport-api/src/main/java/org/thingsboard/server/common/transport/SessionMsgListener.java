@@ -30,9 +30,6 @@ import org.thingsboard.server.gen.transport.TransportProtos.UplinkNotificationMs
 import java.util.Optional;
 import java.util.UUID;
 
-/**
- * Created by ashvayka on 04.10.18.
- */
 public interface SessionMsgListener {
 
     void onGetAttributesResponse(GetAttributeResponseMsg getAttributesResponse);

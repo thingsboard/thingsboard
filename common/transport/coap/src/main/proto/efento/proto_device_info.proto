@@ -18,185 +18,330 @@ syntax = "proto3";
 option java_package = "org.thingsboard.server.gen.transport.coap";
 option java_outer_classname = "DeviceInfoProtos";
 
-enum ModemType
-{
-
-  /* Invalid value                                                                                                              */
-  MODEM_TYPE_UNSPECIFIED = 0;
-
-  /* Quectel BC66 modem                                                                                                         */
-  MODEM_TYPE_BC66 = 1;
-
-  /* Quectel BC66-NA modem                                                                                                      */
-  MODEM_TYPE_BC66NA = 2;
-}
-
 message ProtoRuntime
 {
 
-  /* Up-time in seconds (since reset)                                                                                           */
+  /* Up-time in seconds (since reset).                                                                                          *
+   * Status: In use [06.00 - LATEST]                                                                                            */
   uint32 up_time = 1;
 
-  /* Message counters (since reset). There are 3 counters:                                                                      */
-  /*   message_counters[0] - Counter of confirmable messages attempts                                                           */
-  /*   message_counters[1] - Counter of non-confirmable messages attempts                                                       */
-  /*   message_counters[2] - Counter of succeeded messages                                                                      */
+  /* Message counters (since reset).                                                                                            *
+   * 1st item - Confirmable message attempts counter.                                                                           *
+   * 2nd item - Non-confirmable message attempts counter.                                                                       *
+   * 3rd item - Successful message counter.                                                                                     *
+   * Status: In use [06.00 - LATEST]                                                                                            */
   repeated uint32 message_counters = 2;
 
-  /* MCU temperature in Celsius                                                                                                 */
+  /* MCU temperature in Celsius.                                                                                                *
+   * Status: In use [06.00 - LATEST]                                                                                            */
   sint32 mcu_temperature = 3;
 
-  /* Minimum battery voltage in mV                                                                                              */
-  uint32 min_battery_voltage = 4;
+  /* Battery voltage in mV.                                                                                                     *
+   *   - [0:65534] - Battery voltage in millivolts                                                                              *
+   *   - 65535 - No measurement                                                                                                 *
+   * Status: In use [07.00.00 - LATEST] / Previously as min_battery_voltage [06.00 - 06.xx.xx]                                  */
+  uint32 battery_voltage = 4;
 
-  /* MCU temperature in Celsius, while the minimum battery voltage was reached                                                  */
+  /* MCU temperature in Celsius when minimum battery voltage was reached.                                                       *
+   * Status: Deprecated [06.00 - 06.xx.xx]                                                                                      */
   sint32 min_battery_mcu_temperature = 5;
 
-  /* Battery reset timestamp (Unix timestamp)                                                                                   */
+  /* Battery reset timestamp in seconds since 1st of January 1970 (epoch time).                                                 *
+   * Status: Deprecated [06.00 - 06.xx.xx]                                                                                      */
   uint32 battery_reset_timestamp = 6;
 
-  /* Max MCU temperature in Celsius                                                                                             */
+  /* Maximum MCU temperature in Celsius.                                                                                        *
+   * Status: In use [06.00 - LATEST]                                                                                            */
   sint32 max_mcu_temperature = 7;
 
-  /* Min MCU temperature in Celsius                                                                                             */
+  /* Minimum MCU temperature in Celsius                                                                                         *
+   * Status: In use [06.00 - LATEST]                                                                                            */
   sint32 min_mcu_temperature = 8;
 
-  /* Table of runtime errors. Max length: 20                                                                                    */
+  /* Device's runtime errors.                                                                                                   *
+   * Up to 20 error items supported.                                                                                            *
+   * Status: In use [06.02 - LATEST]                                                                                            */
   repeated uint32 runtime_errors = 9;
-}
 
-message ProtoModem
-{
-
-  ModemType type = 1;
-
-  /* Parameters for BC66 modem:                                                                                                 */
-  /*   parameters[0] - sc_EARFCN - Range: [0:262143]. Unknown value: -1                                                         */
-  /*   parameters[1] - sc_EARNFCN_offset - Range: [0:4] mapped to [-2, -1, -0.5, 0, 1]. Unknown value: -1                       */
-  /*   parameters[2] - sc_PCI - Range: [0:502]. Unknown value: -1                                                               */
-  /*   parameters[3] - sc_Cell id - Range: [1:268435456]. Unknown value: 0                                                      */
-  /*   parameters[4] - sc_RSRP - [dBm] - Range: [-140:-44]. Unknown value: 0                                                    */
-  /*   parameters[5] - sc_RSRQ - [dB] - Range: [-20:-3]. Unknown value: 0                                                       */
-  /*   parameters[6] - sc_RSSI - [dBm] - Range: [-110:-3] Unknown value: 0                                                      */
-  /*   parameters[7] - sc_SINR - [dB] - Range: [-10:30]. Unknown value: 31                                                      */
-  /*   parameters[8] - sc_Band - Range: [see module supported bands]. The current serving cell band. Unknown value: -1          */
-  /*   parameters[9] - sc_TAC - Range: [0:65536]. Unknown value: -1                                                             */
-  /*   parameters[10] - sc_ECL - Range: [0:2]. Unknown value: -1                                                                */
-  /*   parameters[11] - sc_TX_PWR - [0.1cBm] - Range [-440:230]. Unknown value: -1000                                           */
-  /*   parameters[12] - OP_MODE - Range: [0:3]. Unknown value: -1                                                               */
-  /*   parameters[13] - nc_EARFCN - Range: [0:262143]. Unknown value: -1                                                        */
-  /*   parameters[14] - nc_EARNFCN_offset - Range: [0:4] mapped to [-2, -1, -0.5, 0, 1]. Unknown value: -1                      */
-  /*   parameters[15] - nc_PCI - Range: [0:502]. Unknown value: -1                                                              */
-  /*   parameters[16] - nc_RSRP - [dBm] - Range: [-140:-44]. Unknown value: 0                                                   */
-  /*   parameters[17] - RLC_UL_BLER - Range: [0:100]. Unknown value: -1                                                         */
-  /*   parameters[18] - RLC_DL_BLER - Range: [0:100]. Unknown value: -1                                                         */
-  /*   parameters[19] - MAC_UL_BLER - Range: [0:100]. Unknown value: -1                                                         */
-  /*   parameters[20] - MAC_DL_BLER - Range: [0:100]. Unknown value: -1                                                         */
-  /*   parameters[21] - MAC_UL_TOTAL_BYTES - Range: [0:2147483647]. Unknown value: -1                                           */
-  /*   parameters[22] - MAC_DL_TOTAL_BYTES - Range: [0:2147483647]. Unknown value: -1                                           */
-  /*   parameters[23] - MAC_UL_total_HARQ_Tx - Range: [0:2147483647]. Unknown value: -1                                         */
-  /*   parameters[24] - MAC_DL_total_HARQ_Tx - Range: [0:2147483647]. Unknown value: -1                                         */
-  /*   parameters[25] - MAC_UL_HARQ_re_Tx - Range: [0:2147483647]. Unknown value: -1                                            */
-  /*   parameters[26] - MAC_DL_HARQ_re_Tx - Range: [0:2147483647]. Unknown value: -1                                            */
-  /*   parameters[27] - RLC_UL_tput - Range: [0:2147483647]. Unknown value: -1                                                  */
-  /*   parameters[28] - RLC_DL_tput - Range: [0:2147483647]. Unknown value: -1                                                  */
-  /*   parameters[29] - MAC_UL_tput - Range: [0:2147483647]. Unknown value: -1                                                  */
-  /*   parameters[30] - MAC_DL_tput - Range: [0:2147483647]. Unknown value: -1                                                  */
-  /*   parameters[31] - sleep_duration - [0.1s] - Range: [0:2147483647]. Unknown value: -1                                      */
-  /*   parameters[32] - Rx_time - [0.1s] - Range: [0:2147483647]. Unknown value: -1                                             */
-  /*   parameters[33] - Tx_time - [0.1s] - Range: [0:2147483647]. Unknown value: -1                                             */
-  repeated sint32 parameters = 2;
-
-  /* ICCID of inserted/soldered sim card. String up to 22 characters long.                                                      */
-  /* 0x7F if sim card is not detected, empty (not sent) if device does not have modem.                                          */
-  /* This field is only sent by device                                                                                          */
-  string sim_card_identification = 3;
+  /* Number of sensor resets (since power-up).                                                                                  *
+   * Status: In use [06.21.00 - LATEST]                                                                                         */
+  uint32 reset_counter = 10;
 }
 
 message ProtoUpdateInfo
 {
 
-  /* Timestamp of update (Unix timestamp)                                                                                       */
+  /* Timestamp of the last update check in seconds since 1st of January 1970 (epoch time).                                      *
+   * Status: In use [06.00 - LATEST]                                                                                            */
   uint32 timestamp = 1;
 
-  /* Update status, possible values:                                                                                            */
-  /*    - 1 - No update yet                                                                                                     */
-  /*    - 2 - No error                                                                                                          */
-  /*    - 3 - UDP socekt error                                                                                                  */
-  /*    - 4 - Hash error                                                                                                        */
-  /*    - 5 - Missing packet error                                                                                              */
-  /*    - 6 - Invalid data error                                                                                                */
-  /*    - 7 - Sending timeout error                                                                                             */
-  /*    - 8 - No SW to update error                                                                                             */
-  /*    - 9 - Sending unexpected error                                                                                          */
-  /*    - 10 - Unexpected error                                                                                                 */
+  /* Status of the last update check:                                                                                           *
+   *   - 1 - No update check                                                                                                    *
+   *   - 2 - No error                                                                                                           *
+   *   - 3 - UDP socekt error                                                                                                   *
+   *   - 4 - Invalid hash                                                                                                       *
+   *   - 5 - Missing packet                                                                                                     *
+   *   - 6 - Invalid data                                                                                                       *
+   *   - 7 - Sending timeout                                                                                                    *
+   *   - 8 - No software to update                                                                                              *
+   *   - 9 - Sending unexpected error                                                                                           *
+   *   - 10 - Unexpected error                                                                                                  *
+   * Status: In use [06.00 - LATEST]                                                                                            */
   uint32 status = 2;
+}
+
+enum ModemType
+{
+
+  /* Invalid value.                                                                                                             */
+  MODEM_TYPE_UNSPECIFIED = 0;
+
+  /* Quectel BC66 modem.                                                                                                        */
+  MODEM_TYPE_BC66 = 1;
+
+  /* Quectel BC66-NA modem.                                                                                                     */
+  MODEM_TYPE_BC66NA = 2;
+
+  /* Uses a shared modem from another sensor.                                                                                   */
+  MODEM_TYPE_SHARED_MODEM = 3;
+
+  /* Quectel BC660 modem.                                                                                                       */
+  MODEM_TYPE_BC660 = 4;
+}
+
+enum ModemFirmwareVersion
+{
+  /* Invalid value.                                                                                                             */
+  MODEM_FIRMWARE_VERSION_UNSPECIFIED = 0;
+
+  /* Unable to read firmware version from device.                                                                               */
+  MODEM_FIRMWARE_VERSION_READING_ERROR = 1;
+
+  /* Unknown firmware version.                                                                                                  */
+  MODEM_FIRMWARE_VERSION_UNKNOWN = 2;
+
+  /* BC660KGLAAR01A05_01.002.01.002.                                                                                            */
+  MODEM_FIRMWARE_VERSION_BC660_V1 = 3;
+
+  /* BC660KGLAAR01A05_01.200.01.200.                                                                                            */
+  MODEM_FIRMWARE_VERSION_BC660_V2 = 4;
+
+  /* BC660KGLAAR01A05_01.202.01.202.                                                                                            */
+  MODEM_FIRMWARE_VERSION_BC660_V3 = 5;
+
+  /* BC660KGLAAR01A05_01.203.01.203.                                                                                            */
+  MODEM_FIRMWARE_VERSION_BC660_V4 = 6;
+
+  /* BC660KGLAAR01A05_01.204.01.204.                                                                                            */
+  MODEM_FIRMWARE_VERSION_BC660_V5 = 7;
+
+  /* BC660KGLAAR01A05_01.205.01.205.                                                                                            */
+  MODEM_FIRMWARE_VERSION_BC660_V6 = 8;
+
+  /* BC660KGLAAR01A05_01.301.01.301.                                                                                            */
+  MODEM_FIRMWARE_VERSION_BC660_V7 = 9;
+
+  /* BC660KGLAAR01A05_01.303.01.303.                                                                                            */
+  MODEM_FIRMWARE_VERSION_BC660_V8 = 10;
+}
+
+message ProtoModem
+{
+
+  /* Modem type.                                                                                                                *
+   * Status: In use [06.00 - LATEST]                                                                                            */
+  ModemType type = 1;
+
+  /* Modem runtime parameters.                                                                                                  *
+   * For BC66 modem (34 parameters):                                                                                            *
+   *   - 1st item - sc_EARFCN. Range: [0:262143]. Unknown value: -1                                                             *
+   *   - 2nd item - sc_EARNFCN_offset. Range: [0:4] mapped to [-2, -1, -0.5, 0, 1]. Unknown value: -1                           *
+   *   - 3rd item - sc_PCI. Range: [0:502]. Unknown value: -1                                                                   *
+   *   - 4th item - sc_Cell_Id. Range: [1:268435456]. Unknown value: 0                                                          *
+   *   - 5th item - sc_RSRP [dBm]. Range: [-140:-44]. Unknown value: 0                                                          *
+   *   - 6th item - sc_RSRQ [dB]. Range: [-20:-3]. Unknown value: 0                                                             *
+   *   - 7th item - sc_RSSI [dBm]. Range: [-110:-3] Unknown value: 0                                                            *
+   *   - 8th item - sc_SINR [dB]. Range: [-10:30]. Unknown value: 31                                                            *
+   *   - 9th item - sc_Band. Range: [see module supported bands]. The current serving cell band. Unknown value: -1              *
+   *   - 10th item - sc_TAC. Range: [0:65536]. Unknown value: -1                                                                *
+   *   - 11th item - sc_ECL. Range: [0:2]. Unknown value: -1                                                                    *
+   *   - 12th item - sc_TX_PWR [0.1dBm]. Range [-440:230]. Unknown value: -1000                                                 *
+   *   - 13th item - OP_MODE. Range: [0:3]. Unknown value: -1                                                                   *
+   *   - 14th item - nc_EARFCN. Range: [0:262143]. Unknown value: -1                                                            *
+   *   - 15th item - nc_EARNFCN_offset. Range: [0:4] mapped to [-2, -1, -0.5, 0, 1]. Unknown value: -1                          *
+   *   - 16th item - nc_PCI. Range: [0:502]. Unknown value: -1                                                                  *
+   *   - 17th item - nc_RSRP [dBm]. Range: [-140:-44]. Unknown value: 0                                                         *
+   *   - 18th item - RLC_UL_BLER. Range: [0:100]. Unknown value: -1                                                             *
+   *   - 19th item - RLC_DL_BLER. Range: [0:100]. Unknown value: -1                                                             *
+   *   - 20th item - MAC_UL_BLER. Range: [0:100]. Unknown value: -1                                                             *
+   *   - 21th item - MAC_DL_BLER. Range: [0:100]. Unknown value: -1                                                             *
+   *   - 22th item - MAC_UL_TOTAL_BYTES. Range: [0:2147483647]. Unknown value: -1                                               *
+   *   - 23th item - MAC_DL_TOTAL_BYTES. Range: [0:2147483647]. Unknown value: -1                                               *
+   *   - 24th item - MAC_UL_total_HARQ_Tx. Range: [0:2147483647]. Unknown value: -1                                             *
+   *   - 25th item - MAC_DL_total_HARQ_Tx. Range: [0:2147483647]. Unknown value: -1                                             *
+   *   - 26th item - MAC_UL_HARQ_re_Tx. Range: [0:2147483647]. Unknown value: -1                                                *
+   *   - 27th item - MAC_DL_HARQ_re_Tx. Range: [0:2147483647]. Unknown value: -1                                                *
+   *   - 28th item - RLC_UL_tput. Range: [0:2147483647]. Unknown value: -1                                                      *
+   *   - 29th item - RLC_DL_tput. Range: [0:2147483647]. Unknown value: -1                                                      *
+   *   - 30th item - MAC_UL_tput. Range: [0:2147483647]. Unknown value: -1                                                      *
+   *   - 31th item - MAC_DL_tput. Range: [0:2147483647]. Unknown value: -1                                                      *
+   *   - 32th item - sleep_duration [0.1s]. Range: [0:2147483647]. Unknown value: -1                                            *
+   *   - 33th item - Rx_time [0.1s]. Range: [0:2147483647]. Unknown value: -1                                                   *
+   *   - 34th item - Tx_time [0.1s]. Range: [0:2147483647]. Unknown value: -1                                                   *
+   * For BC660 modem (22 parameters):                                                                                           *
+   *   - 1st item - sc_EARFCN. Range: [0:262143]. Unknown value: -1                                                             *
+   *   - 2nd item - sc_EARNFCN_offset. Range: [0:21] mapped to                                                                  *
+   *                   [Invalid, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, -0.5, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9].                  *
+   *                   Unknown value: -1                                                                                        *
+   *   - 3rd item - sc_PCI. Range: [0:503]. Unknown value: -1                                                                   *
+   *   - 4th item - sc_Cell_Id. Range: [1:268435456]. Unknown value: 0                                                          *
+   *   - 5th item - sc_RSRP [dBm]. Range: [-140:-44]. Unknown value: 0                                                          *
+   *   - 6th item - sc_RSRQ [dB]. Range: [-20:-3]. Unknown value: 0                                                             *
+   *   - 7th item - sc_RSSI [dBm]. Range: [-110:-3] Unknown value: 0                                                            *
+   *   - 8th item - sc_SINR [dB]. Range: [-10:30]. Unknown value: 31                                                            *
+   *   - 9th item - sc_Band. Range: [see module supported bands]. The current serving cell band. Unknown value: -1              *
+   *   - 10th item - sc_TAC. Range: [0:65536]. Unknown value: -1                                                                *
+   *   - 11th item - sc_ECL. Range: [0:2]. Unknown value: -1                                                                    *
+   *   - 12th item - sc_TX_PWR [dBm]. Range [-45:23]. Unknown value: 128                                                        *
+   *   - 13th item - OP_MODE. Range: [0:3] mapped to [In-band same PCI, In-band different PCI, Guard band, Stand alone].        *
+   *                 Unknown value: -1                                                                                          *
+   *   - 14th item - nc_EARFCN. Range: [0:262143]. Unknown value: -1                                                            *
+   *   - 15th item - nc_PCI. Range: [0:503]. Unknown value: -1                                                                  *
+   *   - 16th item - nc_RSRP [dBm]. Range: [-140:-44]. Unknown value: 0                                                         *
+   *   - 17th item - nc_RSRQ [dBm]. Range: [-140:-44]. Unknown value: 0                                                         *
+   *   - 18th item - sleep_duration [0.1s]. Range: [0:2147483647]. Unknown value: -1                                            *
+   *   - 19th item - Rx_time [0.1s]. Range: [0:2147483647]. Unknown value: -1                                                   *
+   *   - 20th item - Tx_time [0.1s]. Range: [0:2147483647]. Unknown value: -1                                                   *
+   *   - 21st item - PLMN_state. Range: [0:3] mapped to [No PLMN, Searching, Selected, Unknown]. Unknown value: 3               *
+   *   - 22nd item - select_PLMN. Range: [100:999999]. Unknown value: -1                                                        *
+   * For shared modem client (4 parameters):                                                                                    *
+   *   - 1st item - RSRP [dBm]. Range: [-140:-44]. Unknown value: 0                                                             *
+   *   - 2nd item - RSRQ [dB]. Range: [-20:-3]. Unknown value: 0                                                                *
+   *   - 3rd item - RSSI [dBm]. Range: [-110:-3] Unknown value: 0                                                               *
+   *   - 4th item - SINR [dB]. Range: [-10:30]. Unknown value: 31                                                               *
+   * Status: In use [06.00 - LATEST]                                                                                            */
+  repeated sint32 parameters = 2;
+
+  /* Integrated Circuit Card Identifier (ICCID) of the inserted/soldered SIM card.                                              *
+   * String up to 22 characters:                                                                                                *
+   * A string containing only the special character 0x7F (DEL) indicates that the SIM card is not detected.                     *
+   * Status: In use [06.07.04/06.09.09/06.10.10/06.11.09/06.12.06/06.13.00/06.21.00 - LATEST]                                   */
+  string sim_card_identification = 3;
+
+  /* Modem firmware version.                                                                                                    *
+   * Status: In use [06.20.05/06.21.00 - LATEST]                                                                                */
+  ModemFirmwareVersion firmware_version = 4;
+
+  /* Modem identification:                                                                                                      *
+   *   - IMEI (International Mobile Equipment Identity) of the modem                                                            *
+   *   - Serial number of the most recently used modem-sharing sensor                                                           *
+   * String up to 15 characters.                                                                                                *
+   * Status: In use [07.00.00 - LATEST]                                                                                         */
+  string modem_identification = 5;
+
+  /* Modem statistics.                                                                                                          *
+   * 1st item - Number of transmissions since the last device information message. Undefined value: 0.                          *
+   * 2nd item - Time in seconds since the last device information message. Undefined value: 0.                                  *
+   * 3rd item - Total time in the power saving mode, in seconds. Undefined value: 0.                                            *
+   * 4th item - Total time in the active state in seconds. Undefined value: 0.                                                  *
+   * Status: In use [07.00.00 - LATEST]                                                                                         */
+  repeated uint32 modem_statistics = 6;
 }
 
 message ProtoDeviceInfo
 {
 
-  /* Serial number of device                                                                                                    */
-  bytes serial_num = 1;
+  /* RESERVED FIELDS ---------------------------------------------------------------------------------------------------------- */
 
-  /* Deprecated field                                                                                                           */
-  reserved 2;
+  reserved 2,4,5,6,7,8,9,10,11,12;
 
-  /* Software version e.g ver 06.10 -> 0x060A -> 1546                                                                           */
+  /* DEVICE STATUS FIELDS ----------------------------------------------------------------------------------------------------- */
+
+  /* Serial number of the device.                                                                                               *
+   * Length: 6 bytes.                                                                                                           *
+   * Status: In use [07.00.00 - LATEST] / Previously as serial_num [06.00 - 06.xx.xx]                                           */
+  bytes serial_number = 1;
+
+  /* DEVICE INFORMATION FIELDS ------------------------------------------------------------------------------------------------ */
+
+  /* Software version (excluding LTS).                                                                                          *
+   * Example: 1546 -> 0x060A -> SW version 06.10                                                                                *
+   * Status: In use [06.00 - LATEST]                                                                                            */
   uint32 sw_version = 3;
 
-  /* Deprecated fields                                                                                                          */
-  reserved 4,5,6,7,8,9,10,11,12;
-
-  /* Structure with battery and temperature information                                                                         */
-  ProtoRuntime runtime_info = 13;
-
-  /* Structure with modem specific runtime information                                                                          */
-  ProtoModem modem = 14;
-
-  /* String up to 7 bytes long. Software commit id e.g. "e0e8556"                                                               */
-  /* From version 06.07 the first two characters indicate the LTS version.                                                      */
-  /* For example: the value "0bdd23f" means LTS version 11 and the beginning of the commit ID "dd23f"                           */
+  /* Software commit ID and LTS version.                                                                                        *
+   * String of 7 characters:                                                                                                    *
+   *   - Commit ID (examples: "fa02cd0" means the beginning of the commit ID "fa02cd0") [06.00 - 06.06.xx]                      *
+   *   - LTS version and commit ID (examples: "0bdd23f" means LTS version 11 and the beginning of the commit ID "dd23f")        *
+         [06.07.00 - LATEST]                                                                                                    *
+   * Status: In use [06.00 - LATEST]                                                                                            */
   string commit_id = 15;
 
-  /* Optional string up to 36 bytes long. Can be set to any user define value or hold device's IMEI                             */
-  string cloud_token = 16;
+  /* Device runtime information.                                                                                                *
+   * Status: In use [06.00 - LATEST]                                                                                            */
+  ProtoRuntime runtime_info = 13;
 
-  /* Memory statistics:                                                                                                         */
-  /*   memory_statistics[0] - Status of Nv storage:                                                                             */
-  /*     - 0 - Nv storage hasn't errors                                                                                         */
-  /*     - 1 - Nv storage has some corrupted packet. Memory is read-only                                                        */
-  /*     - 2 - Nv storage is corrupted. Memory is unavailable                                                                   */
-  /*   memory_statistics[1] - Timestamp of the end of collecting statistics.                                                    */
-  /*                          Value in seconds since UNIX EPOCH 01-01-1970. Undefined value: 4294967295                         */
-  /*   memory_statistics[2] - Capacity of memory in bytes                                                                       */
-  /*   memory_statistics[3] - Used space in bytes                                                                               */
-  /*   memory_statistics[4] - Size of invalid (outdated) packets in bytes                                                       */
-  /*   memory_statistics[5] - Size of corrupted packets in bytes                                                                */
-  /*   memory_statistics[6] - Number of valid packets                                                                           */
-  /*   memory_statistics[7] - Number of invalid (outdated) packets                                                              */
-  /*   memory_statistics[8] - Number of corrupted packets                                                                       */
-  /*   memory_statistics[9] - Number of all samples for channel 1 (valid packets)                                               */
-  /*   memory_statistics[10] - Number of all samples for channel 2 (valid packets)                                              */
-  /*   memory_statistics[11] - Number of all samples for channel 3 (valid packets)                                              */
-  /*   memory_statistics[12] - Number of all samples for channel 4 (valid packets)                                              */
-  /*   memory_statistics[13] - Number of all samples for channel 5 (valid packets)                                              */
-  /*   memory_statistics[14] - Number of all samples for channel 6 (valid packets)                                              */
-  /*   memory_statistics[15] - Timestamp of the first binary measurement.                                                       */
-  /*                           Value in seconds since UNIX EPOCH 01-01-1970. Undefined value: 4294967295                        */
-  /*   memory_statistics[16] - Timestamp of the last binary measurement.                                                        */
-  /*                           Value in seconds since UNIX EPOCH 01-01-1970. Undefined value: 4294967295                        */
-  /*   memory_statistics[17] - Timestamp of the last binary measurement, that marked as sent.                                   */
-  /*                           Value in seconds since UNIX EPOCH 01-01-1970. Undefined value: 4294967295                        */
-  /*   memory_statistics[18] - Timestamp of the first continuous measurement.                                                   */
-  /*                           Value in seconds since UNIX EPOCH 01-01-1970. Undefined value: 4294967295                        */
-  /*   memory_statistics[19] - Timestamp of the last continuous measurement.                                                    */
-  /*                           Value in seconds since UNIX EPOCH 01-01-1970. Undefined value: 4294967295                        */
-  /*   memory_statistics[20] - Timestamp of the last continuous measurement, that marked as sent.                               */
-  /*                           Value in seconds since UNIX EPOCH 01-01-1970. Undefined value: 4294967295                        */
-  /*   memory_statistics[21] - NVM write counter                                                                                */
+  /* Memory statistics:                                                                                                         *
+   * 1st item - Status of the non-volatile storage:                                                                             *
+   *   - 0 - Non-volatile storage works properly                                                                                *
+   *   - 1 - Non-volatile storage has some corrupt packets. Memory is read-only                                                 *
+   *   - 2 - Non-volatile storage is corrupted. Memory is unavailable                                                           *
+   * 2nd item - Timestamp of the end of collecting statistics in seconds since 1st of January 1970 (epoch time).                *
+                Undefined value: 4294967295.                                                                                    *
+   * 3rd item - Capacity of the memory in bytes.                                                                                *
+   * 4th item - Used space in bytes.                                                                                            *
+   * 5th item - Size of invalid (outdated) packets in bytes.                                                                    *
+   * 6th item - Size of corrupt packets in bytes.                                                                               *
+   * 7th item - Number of valid packets.                                                                                        *
+   * 8th item - Number of invalid (outdated) packets.                                                                           *
+   * 9th item - Number of corrupt packets.                                                                                      *
+   * 10th item - Number of all samples for channel 1 (valid packets).                                                           *
+   * 11th item - Number of all samples for channel 2 (valid packets).                                                           *
+   * 12th item - Number of all samples for channel 3 (valid packets).                                                           *
+   * 13th item - Number of all samples for channel 4 (valid packets).                                                           *
+   * 14th item - Number of all samples for channel 5 (valid packets).                                                           *
+   * 15th item - Number of all samples for channel 6 (valid packets).                                                           *
+   * 16th item - Timestamp of the first binary measurement in seconds since 1st of January 1970 (epoch time).                   *
+   *             Undefined value: 4294967295.                                                                                   *
+   * 17th item - Timestamp of the last binary measurement in seconds since 1st of January 1970 (epoch time).                    *
+   *             Undefined value: 4294967295.                                                                                   *
+   * 18th item - Timestamp of the last binary measurement marked as sent, in seconds since 1st of January 1970 (epoch time).    *
+   *             Undefined value: 4294967295.                                                                                   *
+   * 19th item - Timestamp of the first continuous measurement in seconds since 1st of January 1970 (epoch time).               *
+   *             Undefined value: 4294967295.                                                                                   *
+   * 20th item - Timestamp of the last continuous measurement in seconds since 1st of January 1970 (epoch time).                *
+   *             Undefined value: 4294967295.                                                                                   *
+   * 21th item - Timestamp of the last continuous measurement marked as sent, in seconds since 1st of January 1970 (epoch time).*
+   *             Undefined value: 4294967295.                                                                                   *
+   * 22th item - NvM write counter.                                                                                             *
+   * Status: In use [06.02 - LATEST]                                                                                            */
   repeated uint32 memory_statistics = 17;
 
-  /* Information about last sensor SW update                                                                                    */
+  /* Last update check information.                                                                                             *
+   * Status: In use [06.08.00 - LATEST]                                                                                         */
   ProtoUpdateInfo last_update_info = 18;
+
+  /* Modem information.                                                                                                         *
+   * Only used if the sensor has a modem.                                                                                       *
+   * Status: In use [06.00 - LATEST]                                                                                            */
+  ProtoModem modem = 14;
+
+  /* SERVER COMMUNICATION FIELDS ---------------------------------------------------------------------------------------------- */
+
+  /* Cloud token.                                                                                                               *
+   * Can be empty, set to any user-defined value, or hold device IMEI.                                                          *
+   * String up to 36 characters.                                                                                                *
+   * This field is only sent during server communication.                                                                       *
+   * Status: In use [06.00 - LATEST]                                                                                            */
+  string cloud_token = 16;
+
+  /* Enclosure tamper alert:                                                                                                    *
+   *   - 0 - Inactive                                                                                                           *
+   *   - 1 - Active (enclosure opened)                                                                                          *
+   *   - 2 - Inactive, was active (enclosure closed)                                                                            *
+   * The transition from 'Inactive, was active' to 'Inactive' occurs after the alert has been successfully sent to the server   *
+   * or the user has reset the alert via Bluetooth.                                                                             *
+   * This field is only sent during server communication.                                                                       *
+   * Status: In use [07.00.01 - LATEST]                                                                                         */
+  uint32 enclosure_tamper_alert = 19;
 }

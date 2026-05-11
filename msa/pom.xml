@@ -44,7 +44,16 @@
     </properties>
 
     <modules>
-        <!--Modules order is important to speedup parallel build and avoid yarn pgk parallel execution-->
+        <!--
+            Module order below is informational only. Yarn-using modules
+            (web-ui, js-executor) are serialized via reactor-only
+            <dependency> entries in their own poms, forming the chain
+            ui-ngx -> web-ui -> js-executor. This prevents
+            concurrent yarn install / yarn run pkg invocations under `mvn -T<n>`,
+            which previously caused intermittent `tsc: not found` failures
+            (incomplete typescript extraction in node_modules from racing
+            yarn 1.x processes against the shared ~/.cache/yarn).
+        -->
         <module>tb</module>
         <module>web-ui</module>
         <module>vc-executor</module>

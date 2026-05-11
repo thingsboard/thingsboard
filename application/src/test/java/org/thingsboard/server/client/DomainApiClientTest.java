@@ -69,7 +69,7 @@ public class DomainApiClientTest extends AbstractApiClientTest {
         }
 
         // list tenant domains with text search
-        PageDataDomainInfo filteredDomains = client.getTenantDomainInfos(100, 0,
+        PageDataDomainInfo filteredDomains = client.getDomainInfos(100, 0,
                 "domain.", null, null);
         assertNotNull(filteredDomains);
         assertEquals(5, filteredDomains.getData().size());
@@ -97,7 +97,7 @@ public class DomainApiClientTest extends AbstractApiClientTest {
                 client.getDomainInfoById(domainToDeleteId)
         );
 
-        PageDataDomainInfo domainsAfterDelete = client.getTenantDomainInfos(100, 0,
+        PageDataDomainInfo domainsAfterDelete = client.getDomainInfos(100, 0,
                 "domain.", null, null);
         assertEquals(4, domainsAfterDelete.getData().size());
     }

@@ -50,7 +50,7 @@ import java.util.List;
 import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "entityType", include = As.EXISTING_PROPERTY, visible = true)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "entityType", include = As.EXISTING_PROPERTY, visible = true, defaultImpl = EntityExportData.class)
 @JsonSubTypes({
         @Type(name = "DEVICE", value = DeviceExportData.class),
         @Type(name = "RULE_CHAIN", value = RuleChainExportData.class),

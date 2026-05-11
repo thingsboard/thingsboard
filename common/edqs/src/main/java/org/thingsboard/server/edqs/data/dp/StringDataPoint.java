@@ -34,6 +34,11 @@ public class StringDataPoint extends AbstractDataPoint {
     }
 
     @Override
+    public boolean getBool() {
+        return Boolean.parseBoolean(value);
+    }
+
+    @Override
     public double getDouble() {
         return Double.parseDouble(value);
     }

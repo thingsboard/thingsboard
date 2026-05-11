@@ -15,338 +15,471 @@
  */
 syntax = "proto3";
 
-import "efento/proto_measurement_types.proto";
 import "efento/proto_rule.proto";
+import "efento/proto_config_types.proto";
+import "efento/proto_measurement_types.proto";
 
 option java_package = "org.thingsboard.server.gen.transport.coap";
 option java_outer_classname = "ConfigProtos";
 
-/* Message containing optional channels control parameters                                                                      */
-message ProtoOutputControlState {
-
-  /* Channel index                                                                                                              */
-  uint32 channel_index = 1;
-
-  /* Channel state ON/OFF. Range (1 - OFF; 2 - ON)                                                                              */
-  uint32 channel_state = 2;
-}
-
-/* Message containing request data for accessing calibration parameters                                                         */
-message ProtoCalibrationParameters {
-
-  /* Request details. Bitmask:                                                                                                  */
-  /*      - calibration_request[0:2] - requested channel number.                                                                */
-  uint32 calibration_request = 1;
-
-  /* Assignment of a channel.                                                                                                   */
-  uint32 channel_assignment = 2;
-
-  /* Table of calibration parameters. Max size = 8.                                                                             */
-  repeated int32 parameters = 3;
-}
-
-enum BleAdvertisingPeriodMode {
-
-  /* Invalid value                                                                                                              */
-  BLE_ADVERTISING_PERIOD_MODE_UNSPECIFIED = 0;
-
-  /* Default behavior - faster advertising when measurement period is < 15s.                                                    */
-  BLE_ADVERTISING_PERIOD_MODE_DEFAULT = 1;
-
-  /* User-configured normal interval is used.                                                                                   */
-  BLE_ADVERTISING_PERIOD_MODE_NORMAL = 2;
-
-  /* User-configured fast interval is used.                                                                                     */
-  BLE_ADVERTISING_PERIOD_MODE_FAST = 3;
-}
-
-/* Message containing BLE advertising period configuration                                                                      */
-message ProtoBleAdvertisingPeriod {
-
-  /* BLE advertising mode:                                                                                                      */
-  /*   - 1: Default, BLE advertising interval is set to 1022.5ms or some lower value, based on continuous measurement period.   */
-  /*   - 2: Normal, uses user-configured value from 'normal' field.                                                             */
-  /*   - 3: Fast, uses user-configured value from 'fast' field (must be lower than or equal to 'normal' field).                 */
-  BleAdvertisingPeriodMode mode = 1;
-
-  /* BLE advertising interval when in normal mode, configured in 0.625ms steps.                                                 */
-  /* Range: [32:16384]                                                                                                          */
-  uint32 normal = 2;
-
-  /* BLE advertising interval when in fast mode, configured in 0.625ms steps.                                                   */
-  /* Range: [32:16384]                                                                                                          */
-  uint32 fast = 3;
-}
-
-/* Main message sent in the payload. Each field in this message is independent of the others - only parameters that should be   */
-/* changed need to be sent in the payload.                                                                                      */
-/* If the value of a selected parameter shall not be changed, do not include it in the payload                                  */
 message ProtoConfig {
 
-  /* DEPRECATED - Used for backward compatibility with fw versions 5.x                                                          */
-  /* repeated Threshold thresholds = 1;                                                                                         */
+  /* RESERVED FIELDS ---------------------------------------------------------------------------------------------------------- */
 
-  /* 'Measurement_period_base' and 'measurement_period_factor' define how often the measurements are taken.                     */
-  /* Sensors of 'Continuous' type take measurement each Measurement_period_base * measurement_period_factor.                    */
-  /* Sensors of 'Binary' type take measurement each Measurement_period_base.                                                    */
-  /* For backward compatibility with versions 5.x in case of binary/mixed sensors, if the 'measurement_period_factor' is        */
-  /* not sent (equal to 0), then the default value '14' shall be used for period calculation.                                   */
-  /* For backward compatibility with versions 5.x in case of continues sensors, if the measurement_period_factor is             */
-  /* not sent (equal to 0), then the default value '1' shall be used for period calculation.                                    */
-  /* measurement period base in seconds                                                                                         */
-  /* Range [1:65535] - minimum value can vary depends on installed sensors */
-  uint32 measurement_period_base = 2;
+  reserved 1,48;
 
-  /* Measurement period factor                                                                                                  */
-  /* Range [1:65535] - minimum value can vary depends on installed sensors */
-  uint32 measurement_period_factor = 26;
+  /* DEVICE STATUS FIELDS ----------------------------------------------------------------------------------------------------- */
 
-  /* Transmission interval in seconds. Range: [60:604800]                                                                       */
-  uint32 transmission_interval = 3;
-
-  /* BLE turnoff time in seconds. Once receiving this setting, BLE will be switched off after the set number of seconds.        */
-  /* If BLE is already switched off, it will switch on for the set number of seconds and switch off afterwards.                 */
-  /* Range [60:604800] and 0xFFFFFFFF                                                                                           */
-  /* 0xFFFFFFFF  - always on                                                                                                    */
-  uint32 ble_turnoff_time = 4;
-
-  /* ACK interval in seconds                                                                                                    */
-  /* Range [180:2592000] and 0xFFFFFFFF                                                                                         */
-  /* 0xFFFFFFFF  - always request ACK                                                                                           */
-  uint32 ack_interval = 5;
-
-  /* Specifies, if the additional device info is requested. If true, sensor will send a message to endpoint '/i' with the       */
-  /* device info. This field is only sent by server                                                                             */
-  bool request_device_info = 6;
-
-  /* Specifies, if software update is available. This field is only sent by server                                              */
-  bool request_fw_update = 7;
-
-  /* Current time in seconds sine 1st of January 1970 (epoch time).                                                             */
-  uint32 current_time = 8;
-
-  /* NB-IoT transfer limit                                                                                                      */
-  /* Range: [1:65535]                                                                                                           */
-  /* 65535 - disable transfer limit function                                                                                    */
-  uint32 transfer_limit = 9;
-
-  /* NB-IoT transfer limit timer in seconds                                                                                     */
-  /* Range: [1:65535]                                                                                                           */
-  /* 65535 - disable transfer limit function                                                                                    */
-  uint32 transfer_limit_timer = 10;
-
-  /* For firmware >= 6.07.00:                                                                                                   */
-  /* IP or URL address of the data (measurements) server                                                                        */
-  /* The IP or URL of the data server, provided as string with a maximum length of 31 characters                                */
-  /* For example, use "18.184.24.239" for an IP address or "efento.test.io" for a URL                                           */
-  /* For firmware < 6.07.00:                                                                                                    */
-  /* IP address of the data (measurements) server                                                                               */
-  /* For example, use "18.184.24.239"                                                                                           */
-  string data_server_ip = 11;
-
-  /* Data (measurements) server port                                                                                            */
-  /* Range: [1:65535]                                                                                                           */
-  uint32 data_server_port = 12;
-
-  /* For firmware >= 6.07.00:                                                                                                   */
-  /* IP or URL address of the update server                                                                                     */
-  /* The IP or URL of the update server, provided as string with a maximum length of 31 characters                              */
-  /* For example, use "18.184.24.239" for an IP address or "efento.test.io" for a URL                                           */
-  /* For firmware < 6.07.00:                                                                                                    */
-  /* IP address of the update server                                                                                            */
-  /* For example, use "18.184.24.239"                                                                                           */
-  string update_server_ip = 13;
-
-  /* Update server port for UDP transmission                                                                                    */
-  /* Range: [1:65535]                                                                                                           */
-  uint32 update_server_port_udp = 14;
-
-  /* Update server port for CoAP transmission                                                                                   */
-  /* Range: [1:65535]                                                                                                           */
-  uint32 update_server_port_coap = 15;
-
-  /* APN as string. Max length 49                                                                                               */
-  /* String with special character 0x7F (DEL) only indicates that automatic apn is turn on                                      */
-  string apn = 16;
-
-  /* PLMN selection                                                                                                             */
-  /* Range: [100:999999]                                                                                                        */
-  /* 0xFFFFFFFF or 1000000 - automatic selection                                                                                */
-  uint32 plmn_selection = 17;
-
-  /* Device will power off its cellular modem for requested number of seconds.                                                  */
-  /* Range: [60:604800] (1 minute : 7 days)                                                                                     */
-  /* This field is only sent by server                                                                                          */
-  uint32 disable_modem_request = 18;
-
-  /* If set, the device will send its configuration to the endpoint '/c' as a confirmable message                               */
-  /* This field is only sent by server                                                                                          */
-  bool request_configuration = 19;
-
-  /* Device's error codes.                                                                                                      */
-  /* This field is only sent by device                                                                                          */
-  repeated uint32 errors = 20;
-
-  /* Identifier of current configuration - Every change of the configuration results in change of the value of this field       */
-  /* This field is only sent by device                                                                                          */
-  uint32 hash = 21;
-
-  /* If true, the device will accept the configuration without functional testing (eg. network connection)                      */
-  bool accept_without_testing = 22;
-
-  /* Cloud token configuration:                                                                                                 */
-  /*   - 1: cloud token set to the value of cloud_token field                                                                   */
-  /*   - 2: cloud token set to IMEI of the cellular module                                                                      */
-  /*   - 255: do not send cloud_token field                                                                                     */
-  uint32 cloud_token_config = 23;
-
-  /* Cloud token that should be sent with each measurement frame                                                                */
-  string cloud_token = 24;
-
-  /* Serial number of the device                                                                                                */
-  /* This field is only sent by device                                                                                          */
+  /* Serial number of the device.                                                                                               *
+   * Length: 6 bytes.                                                                                                           *
+   * This field is only sent by the device.                                                                                     *
+   * Status: In use [06.00 - LATEST]                                                                                            */
   bytes serial_number = 25;
 
-  /* Type of channel                                                                                                            */
-  /* This field is only sent by device                                                                                          */
-  repeated MeasurementType channel_types = 27;
-
-  /* Edge logic rules set on the device. Up to 12 rules are supported                                                           */
-  repeated ProtoRule rules = 28;
-
-  /* Supervision period                                                                                                         */
-  /* Range: [180:604800]                                                                                                        */
-  /* 0xFFFFFFFF - Functionality disabled                                                                                        */
-  uint32 supervision_period = 29;
-
-  /* If true, sensor's measurement memory will be erased                                                                        */
-  bool memory_reset_request = 30;
-
-  /* Bytes 0-4 - Band selection mask. Mask =  1 << position                                                                     */
-  /* Band       | 1 | 2 | 3 | 4 | 5 | 8 | 12 | 13 | 17 | 18 | 19 | 20 | 25 | 26 | 28 | 66 | 71 | 85 |                           */
-  /* Position:  | 0 | 1 | 2 | 3 | 4 | 5 | 6  |  7 |  8 |  9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 |                           */
-  /* example: To enable band 3, 8 and 20 set to  (1 << 2) + (1 << 5) + (1 << 11) = 2084                                         */
-  uint32 modem_bands_mask = 31;
-
-  /* Data endpoint (string - max length 16)                                                                                     */
-  string data_endpoint = 32;
-
-  /* Configuration endpoint (string - max length 16)                                                                            */
-  string configuration_endpoint = 33;
-
-  /* Device info endpoint (string - max length 16)                                                                              */
-  string device_info_endpoint = 34;
-
-  /* Time endpoint (string - max length 16)                                                                                     */
-  string time_endpoint = 35;
-
-  /* Bluetooth TX power level. Value is the index of the absolute value of TX power, that depends on the BLE module             */
-  /* Range: [1:4]                                                                                                               */
-  uint32 ble_tx_power_level = 36;
-
-  /* Deprecated field                                                                                                           */
-  /* If true, the sensor's runtime errors will be cleared                                                                       */
-  bool request_runtime_errors_clear = 37;
-
-  /* Timestamp when a new error code was reported                                                                               */
-  uint32 error_timestamp = 38;
-
-  /* Timestamp when the new configuration was set                                                                               */
-  uint32 hash_timestamp = 39;
-
-  /* Cloud token CoAP option ID:                                                                                                */
-  /*   - [1:64999] - CoAP option ID containing cloud token                                                                      */
-  /*   - 65000 - cloud token sent in the payload                                                                                */
-  uint32 cloud_token_coap_option = 40;
-
-  /* ECDSA payload signature CoAP option ID:                                                                                    */
-  /*   - [1:64999] - CoAP option ID containing ECDSA payload signature                                                          */
-  /*   - 65000 - no payload signature in CoAP option                                                                            */
-  uint32 payload_signature_coap_option = 41;
-
-  /* DNS server IP address grouped in the array as four octets. Set 255.255.255.255 to use a network DNS server                 */
-  /* Note: when setting less than four octets the remaining will be filled with zeros.                                          */
-  repeated uint32 dns_server_ip = 42;
-
-  /* DNS TTL configuration:                                                                                                     */
-  /*   - [1:864000] - custom TTL in seconds (additionally, the DNS request when communication has failed)                       */
-  /*   - 864001 - accept TTL from the DNS server (additionally, the DNS request when communication has failed)                  */
-  /*   - 864002 - DNS request is only after communication failed                                                                */
-  uint32 dns_ttl_config = 43;
-
-  /* Configuration payload split information. Information about dividing the payload into parts                                 */
-  /* values < 0 - payload has been split, expect another part of the payload in the next message.                               */
-  /*             The absolute value indicates an index of the current message.                                                  */
-  /* value = 0 - payload has not been splitted                                                                                  */
-  /* values > 0 - last part of the split payload, the value indicates the total number of the messages sent                     */
+  /* Configuration payload split information:                                                                                   *
+   *   - Values < 0 - Payload split, expect another part of the payload in the next message.                                    *
+   *                  The absolute value indicates an index of the current message                                              *
+   *   - Values = 0 - Payload not split                                                                                         *
+   *   - Values > 0 - Last part of the split payload, the value indicates the total number of the messages sent                 *
+   * This field is only sent by the device.                                                                                     *
+   * Status: In use [06.08.00 - LATEST]                                                                                         */
   sint32 payload_split_info = 44;
 
-  /* Modem update request (string - max length 48)                                                                              */
-  /* This field is only sent by server                                                                                          */
-  /* For BC66 module, this field is a DFOTA URL                                                                                 */
-  string modem_update_request = 45;
+  /* Identifier of the current configuration.                                                                                   *
+   * The value of this field changes with every configuration change.                                                           *
+   * This field is only sent by the device.                                                                                     *
+   * Status: In use [07.00.00 - LATEST] / Previously as hash [06.00 - 06.xx.xx]                                                 */
+  uint32 configuration_hash = 21;
 
-  /* Cellular configuration parameters.                                                                                         */
-  /* 1st item - Number of used cellular parameters                                                                              */
-  /* 2nd - 12th items - Cellular parameters                                                                                     */
-  repeated uint32 cellular_config_params = 46;
+  /* Timestamp when the new configuration was set.                                                                              *
+   * This field is only sent by the device.                                                                                     *
+   * Status: In use [07.00.00 - LATEST] / Previously as hash_timestamp [06.02 - 06.xx.xx]                                       */
+  uint32 configuration_hash_timestamp = 39;
 
-  /* Calendar configuration. Up to 6 calendars are supported                                                                    */
-  repeated ProtoCalendar calendars = 47;
+  /* Configuration errors.                                                                                                      *
+   * Up to 20 error codes supported.                                                                                            *
+   * This field is only sent by the device.                                                                                     *
+   * Status: In use [07.00.00 - LATEST] / Previously as errors [06.00 - 06.xx.xx]                                               */
+  repeated uint32 configuration_errors = 20;
 
-  /* DEPRECATED - Used for backward compatibility                                                                               */
-  reserved 48;
+  /* Timestamp when a new configuration error was reported.                                                                     *
+   * This field is only sent by the device.                                                                                     *
+   * Status: In use [07.00.00 - LATEST] / Previously as timestamp [06.02 - 06.xx.xx]                                            */
+  uint32 configuration_error_timestamp = 38;
 
-  /* Set/get calibration parameters for single channel.                                                                         */
-  ProtoCalibrationParameters calibration_parameters_request = 49;
+  /* Measurement channel types.                                                                                                 *
+   * This field is only sent by the device.                                                                                     *
+   * Status: In use [06.00 - LATEST]                                                                                            */
+  repeated MeasurementType channel_types = 27;
 
-  /* LED behaviour configuration:                                                                                               */
-  /*    Period of LEDs flashing (5-600 seconds in 5 seconds resolution):                                                        */
-  /*        - led_config[0] - green LED                                                                                         */
-  /*        - led_config[1] - red LED                                                                                           */
-  /*    Time from entering the normal state, after which the LED indication is turned off                                       */
-  /*    (0-240 minutes in 1 minute resolution, or 255 for always turned on):                                                    */
-  /*        - led_config[2] - flashing red led on communication problem                                                         */
-  /*        - led_config[3] - flashing red led on a sensor problem                                                              */
-  /*        - led_config[4] - flashing red led on a low power                                                                   */
-  /*        - led_config[5] - flashing green led on measurement                                                                 */
-  /*        - led_config[6] - flashing green led on transmission                                                                */
-  /*        - led_config[7] - flashing green led to indicate sensor's proper operation                                          */
-  /*    - led_config[8] - Blink duration (20-1000ms in 5 ms resolution)                                                         */
-  repeated uint32 led_config = 50;
+  /* NvM status:                                                                                                                *
+   *   - 1 - Defaults restored on CRC error: default sensor configuration restored due to the non-volatile memory configuration *
+   *                                         data integrity failure                                                             *
+   *   - 2 - NvM initialization error: changes in the sensor configuration won't be stored in the non-volatile memory, a power  *
+   *                                   reset of the sensor is required                                                          *
+   * When empty field is sent by the sensor NvM status is OK.                                                                   *
+   * NvM status can be cleared by sending to the sensor value 0x7F.                                                             *
+   * Status: In use [07.00.00 - LATEST]                                                                                         */
+  uint32 nvm_status = 62;
 
-  /* Network troubleshooting configuration, if bluetooth is turned off and communication with the server is faulty,             */
-  /* bluetooth will be automatically turned on until the connection is stabilized                                               */
-  /*   - 1: network troubleshooting disabled                                                                                    */
-  /*   - 2: network troubleshooting enabled                                                                                     */
-  uint32 network_troubleshooting = 51;
+  /* SERVER STATUS FIELDS ----------------------------------------------------------------------------------------------------- */
 
-  /* Reserved by gateway client                                                                                                 */
-  reserved 52, 53;
+  /* Current time in seconds since 1st of January 1970 (epoch time).                                                            *
+   * This field is only sent by the server.                                                                                     *
+   * Status: In use [06.00 - LATEST]                                                                                            */
+  uint32 current_time = 8;
 
-  /* Encryption key configuration. Sensor sends in this field two last bytes of SHA256 hash calculated from its current         */
-  /* encryption_key configuration. When encryption key is disabled one byte 0x7F (DEL) is sent.                                 */
-  /* Max length: 16 bytes.                                                                                                      */
-  /* 0x7F - encryption key disabled.                                                                                            */
+  /* REQUEST FIELDS ----------------------------------------------------------------------------------------------------------- */
+
+  /* Specifies whether the device should accept the configuration without functional testing (e.g., network connection).        *
+   * This field is only sent by the user/server.                                                                                *
+   * Status: In use [07.00.00 - LATEST] / Previously as accept_without_testing [06.00 - 06.xx.xx]                               */
+  bool accept_without_testing_request = 22;
+
+  /* Specifies whether to send the configuration from the sensor to the configuration endpoint.                                 *
+   * This field is only sent by the user/server.                                                                                *
+   * Status: In use [07.00.00 - LATEST] / Previously as request_configuration [06.00 - 06.xx.xx]                                */
+  bool configuration_request = 19;
+
+  /* Specifies whether to send the device information from the sensor to the device information endpoint.                       *
+   * This field is only sent by the user/server.                                                                                *
+   * Status: In use [07.00.00 - LATEST] / Previously as request_device_info [06.00 - 06.xx.xx]                                  */
+  bool device_info_request = 6;
+
+  /* Specifies whether to send the extended configuration from the sensor to the extended configuration endpoint.               *
+   * This field is only sent by the user/server.                                                                                *
+   * Status: In use [07.00.00 - LATEST]                                                                                         */
+  bool extended_configuration_request = 63;
+
+  /* Specifies, if software update is available.                                                                                *
+   * This field is only sent by the user/server.                                                                                *
+   * Status: In use [07.00.00 - LATEST] / Previously as request_fw_update [06.00 - 06.xx.xx]                                    */
+  bool update_software_request = 7;
+
+  /* Device will clear all runtime errors.                                                                                      *
+   * This field is only sent by the user/server.                                                                                *
+   * Status: In use [07.00.00 - LATEST] / Previously as request_runtime_errors_clear [06.02 - 06.xx.xx]                         */
+  bool clear_runtime_errors_request = 37;
+
+  /* Device will power off its cellular modem for requested number of seconds.                                                  *
+   * Range: [60:604800] (1 minute : 7 days)                                                                                     *
+   * This field is only sent by the user/server.                                                                                *
+   * Status: In use [06.00 - LATEST]                                                                                            */
+  uint32 disable_modem_request = 18;
+
+  /* Specifies, if the modem firmware update is available.                                                                      *
+   * String up to 48 characters:                                                                                                *
+   *   - DFOTA URL - For use by BC66/BC660 modem.                                                                               *
+   * This field is only sent by the user/server.                                                                                *
+   * Status: In use [07.00.00 - LATEST] / Previously as modem_update_request [06.08.00 - 06.xx.xx]                              */
+  string update_modem_request = 45;
+
+  /* Device will erase all measurements from memory.                                                                            *
+   * This field is only sent by the user/server.                                                                                *
+   * Status: In use [07.00.00 - LATEST] / Previously as memory_reset_request [06.00 - 06.xx.xx]                                 */
+  bool reset_memory_request = 30;
+
+  /* Device will restart the collection of memory statistics.                                                                   *
+   * This field is only sent by the user/server.                                                                                *
+   * Status: In use [07.00.00 - LATEST]                                                                                         */
+  bool restart_memory_stats_request = 64;
+
+  /* Specifies whether to send measurements from the sensor starting at the specified timestamp.                                *
+   * Tiemstamp in seconds since 1st of January 1970 (epoch time).                                                               *
+   * All previous measurements will be marked as sent.                                                                          *
+   * This field is only sent by the user/server.                                                                                *
+   * Status: In use [07.00.00 - LATEST]                                                                                         */
+  uint32 data_transfer_start_timestamp_request = 65;
+
+  /* Device will set new calibration parameters or will send the current set of parameters to the configuration endpoint.       *
+   * Status: Deprecated [06.10.00 - 06.xx.xx]                                                                                   */
+  ProtoCalibrationParametersRequest calibration_parameters_request = 49;
+
+  /* Device will set the new output state of the output control channel pins.                                                   *
+   * Up to 3 channels supported in the one request.                                                                             *
+   * This field is only sent by the user/server.                                                                                *
+   * Status: In use [07.00.00 - LATEST] / Previously as output_control_state_request [06.13.00/06.21.00 - 06.xx.xx]             */
+  repeated ProtoOutputControlState set_output_control_state_request = 58;
+
+  /* MEASUREMENTS CONFIGURATION ----------------------------------------------------------------------------------------------- */
+
+  /* Measurement period defines how often the measurements are to be taken.                                                     *
+   * Sensors of 'Continuous' type take measurement each 'measurement_period_base' * 'measurement_period_factor'.                *
+   * Sensors of 'Binary' type take measurement each 'measurement_period_base'.                                                  *
+   * For backward compatibility with versions 5.xx in case of 'Binary/Mixed' sensors, if the 'measurement_period_factor' is     *
+   * not sent (equal to 0), then the default value '14' shall be used for the period calculation.                               *
+   * For backward compatibility with versions 5.xx in case of 'Continuous' sensors, if the 'measurement_period_factor' is       *
+   * not sent (equal to 0), then the default value '1' shall be used for the period calculation.                                */
+
+  /* Measurement period base in seconds.                                                                                        *
+   * Range: [1:65535] (minimum value may vary depending on sensors installed)                                                   *
+   * Group: Measurement Period                                                                                                  *
+   * Status: In use [06.00 - LATEST]                                                                                            */
+  uint32 measurement_period_base = 2;
+
+  /* Measurement period factor.                                                                                                 *
+   * Range: [1:65535] (minimum value may vary depending on sensors installed)                                                   *
+   * Group: Measurement Period                                                                                                  *
+   * Status: In use [06.00 - LATEST]                                                                                            */
+  uint32 measurement_period_factor = 26;
+
+  /* BLUETOOTH CONFIGURATION -------------------------------------------------------------------------------------------------- */
+
+  /* Bluetooth turn-off time:                                                                                                   *
+   *   - [60:604800] - Time in seconds after which Bluetooth is turned off                                                      *
+   *   - 0xFFFFFFFF - Bluetooth is always on                                                                                    *
+   * When this setting is received, Bluetooth is turned off after the set number of seconds.                                    *
+   * If Bluetooth is already off, it will turn on for the set number of seconds and then turn off.                              *
+   * Group: Bluetooth Turn-Off                                                                                                  *
+   * Status: In use [06.00 - LATEST]                                                                                            */
+  uint32 ble_turnoff_time = 4;
+
+  /* Bluetooth Tx power level.                                                                                                  *
+   * Value is the index of the absolute value of the Tx power, which depends on the BLE module.                                 *
+   * Range: [1:4]                                                                                                               *
+   * Group: Bluetooth Tx Power                                                                                                  *
+   * Status: In use [06.02 - LATEST]                                                                                            */
+  uint32 ble_tx_power_level = 36;
+
+  /* Encryption key.                                                                                                            *
+   * Max length: 16 bytes.                                                                                                      *
+   * A one-element array containing only one 0x7F (DEL) byte disables encryption.                                               *
+   * Device sends two last bytes of SHA256 hash of current key in this field.                                                   *
+   * When the encryption key is disabled, the device sends a 0x7F (DEL) byte.                                                   *
+   * Group: Encryption                                                                                                          *
+   * Status: In use [06.11.00 - LATEST]                                                                                         */
   bytes encryption_key = 54;
 
-  /* User name as string. Max length 31                                                                                         */
-  /* String with special character 0x7F (DEL) only indicates that automatic user name is turn on                                */
-  /* User name can only be set to custom value if apn has been configured (is not automatic)                                    */
-  string apn_user_name = 55;
+  /* Bluetooth advertising period.                                                                                              *
+   * Group: Bluetooth Advertising Period                                                                                        *
+   * Status: In use [06.13.00/06.21.00 - LATEST]                                                                                */
+  ProtoBleAdvertisingPeriod ble_advertising_period = 59;
 
-  /* Password as string. Max length 31                                                                                          */
-  /* String with special character 0x7F (DEL) only indicates that automatic password is turn on                                 */
-  /* Password can only be set to custom value if apn_user_name has been configured (is not automatic)                           */
+  /* Advertisement manufacturer specific data format.                                                                           *
+   * Group: Advertisement Manufacturer Data Format                                                                              *
+   * Status: In use [07.00.00 - LATEST]                                                                                         */
+  AdvertisementManufacturerDataFormat advertisement_manufacturer_data_format = 60;
+
+  /* EDGE LOGIC CONFIGURATION ------------------------------------------------------------------------------------------------- */
+
+  /* Edge logic rules set on the device.                                                                                        *
+   * Up to 16 rules supported (previously 12 rules [06.00 - 07.01.xx]).                                                         *
+   * Group: Edge Logic Rule No. #                                                                                               *
+   * Status: In use [06.00 - LATEST]                                                                                            */
+  repeated ProtoRule rules = 28;
+
+  /* Calendars set on the device.                                                                                               *
+   * Up to 6 calendars supported.                                                                                               *
+   * Group: Calendar No. #                                                                                                      *
+   * Status: In use [06.08.00 - LATEST]                                                                                         */
+  repeated ProtoCalendar calendars = 47;
+
+  /* SERVER COMMUNICATION CONFIGURATION --------------------------------------------------------------------------------------- */
+
+  /* Transmission interval in seconds.                                                                                          *
+   * Range: [60:604800]                                                                                                         *
+   * Group: Server Intervals                                                                                                    *
+   * Status: In use [06.00 - LATEST]                                                                                            */
+  uint32 transmission_interval = 3;
+
+  /* ACK interval:                                                                                                              *
+   *   - [180:2592000] - Time in seconds after which the device will request an ACK                                             *
+   *   - 0xFFFFFFFF - Always request ACK                                                                                        *
+   * Group: Server Intervals                                                                                                    *
+   * Status: In use [06.00 - LATEST]                                                                                            */
+  uint32 ack_interval = 5;
+
+  /* Server transfer limit:                                                                                                     *
+   *   - [1:65534] - Number of transfers                                                                                        *
+   *   - 65535 - Transfer limit disabled                                                                                        *
+   * Group: Server Transfer Limit                                                                                               *
+   * Status: In use [06.00 - LATEST]                                                                                            */
+  uint32 transfer_limit = 9;
+
+  /* Server transfer limit timer:                                                                                               *
+   *   - [1:65534] - Time in seconds after which the transfer is renewed                                                        *
+   *   - 65535 - Transfer limit disabled                                                                                        *
+   * Group: Server Transfer Limit                                                                                               *
+   * Status: In use [06.00 - LATEST]                                                                                            */
+  uint32 transfer_limit_timer = 10;
+
+  /* Server supervision period:                                                                                                 *
+   *   - [180:604800] - Time in seconds after which the device resets itself if there is no communication with the server       *
+   *   - 0xFFFFFFFF - Server supervision disabled                                                                               *
+   * Group: Server Supervision                                                                                                  *
+   * Status: In use [06.00 - LATEST]                                                                                            */
+  uint32 supervision_period = 29;
+
+  /* DATA SERVER CONFIGURATION ------------------------------------------------------------------------------------------------ */
+
+  /* Data server address.                                                                                                       *
+   * String up to 31 characters:                                                                                                *
+   *   - IPv4 address (examples: "18.184.24.239") [06.00 - 06.06.xx]                                                            *
+   *   - IPv4/URL address (examples: "18.184.24.239", "efento.test.io") [06.07.00 - LATEST]                                     *
+   * Group: Data Server                                                                                                         *
+   * Status: In use [06.00 - LATEST]                                                                                            */
+  string data_server_ip = 11;
+
+  /* Data server port.                                                                                                          *
+   * Range: [1:65535]                                                                                                           *
+   * Group: Data Server                                                                                                         *
+   * Status: In use [06.00 - LATEST]                                                                                            */
+  uint32 data_server_port = 12;
+
+  /* Data endpoint.                                                                                                             *
+   * String up to 11 characters.                                                                                                *
+   * Group: Data Server                                                                                                         *
+   * Status: In use [06.02 - LATEST]                                                                                            */
+  string data_endpoint = 32;
+
+  /* Configuration endpoint.                                                                                                    *
+   * String up to 11 characters.                                                                                                *
+   * Group: Data Server                                                                                                         *
+   * Status: In use [06.02 - LATEST]                                                                                            */
+  string configuration_endpoint = 33;
+
+  /* Extended configuration endpoint.                                                                                           *
+   * String up to 11 characters.                                                                                                *
+   * Group: Data Server                                                                                                         *
+   * Status: In use [07.00.00 - LATEST]                                                                                         */
+  string extended_configuration_endpoint = 61;
+
+  /* Device information endpoint.                                                                                               *
+   * String up to 11 characters.                                                                                                *
+   * Group: Device Information Endpoint                                                                                         *
+   * Status: In use [06.02 - LATEST]                                                                                            */
+  string device_info_endpoint = 34;
+
+  /* Time endpoint.                                                                                                             *
+   * String up to 11 characters.                                                                                                *
+   * Group: Time Endpoint                                                                                                       *
+   * Status: In use [06.02 - LATEST]                                                                                            */
+  string time_endpoint = 35;
+
+  /* UPDATE SERVER CONFIGURATION ---------------------------------------------------------------------------------------------- */
+
+  /* Update server address.                                                                                                     *
+   * String up to 31 characters:                                                                                                *
+   *   - IPv4 address (examples: "18.184.24.239") [06.00 - 06.06.xx]                                                            *
+   *   - IPv4/URL address (examples: "18.184.24.239", "efento.test.io") [06.07.00 - LATEST]                                     *
+   * Group: Update Server                                                                                                       *
+   * Status: In use [06.00 - LATEST]                                                                                            */
+  string update_server_ip = 13;
+
+  /* Update server port for UDP transfer.                                                                                       *
+   * Range: [1:65535]                                                                                                           *
+   * Group: Update Server                                                                                                       *
+   * Status: In use [06.00 - LATEST]                                                                                            */
+  uint32 update_server_port_udp = 14;
+
+  /* Update server port for CoAP transfer.                                                                                      *
+   * Range: [1:65535]                                                                                                           *
+   * Group: Update Server                                                                                                       *
+   * Status: In use [06.00 - LATEST]                                                                                            */
+  uint32 update_server_port_coap = 15;
+
+  /* CLOUD CONFIGURATION ------------------------------------------------------------------------------------------------------ */
+
+  /* Cloud token configuration:                                                                                                 *
+   *   - 1 - Cloud token set to the value of the 'cloud_token' field                                                            *
+   *   - 2 - Cloud token set to the modem identification (IMEI for cellular modems)                                             *
+   *   - 255 - Do not send 'cloud_token' field                                                                                  *
+   * Group: Cloud Token                                                                                                         *
+   * Status: In use [06.00 - LATEST]                                                                                            */
+  uint32 cloud_token_config = 23;
+
+  /* Cloud token that should be sent with each measurement frame.                                                               *
+   * String up to 36 characters.                                                                                                *
+   * Group: Cloud Token                                                                                                         *
+   * Status: In use [06.00 - LATEST]                                                                                            */
+  string cloud_token = 24;
+
+  /* Cloud token CoAP option ID:                                                                                                *
+   *   - [1:64999] - CoAP option ID with cloud token                                                                            *
+   *   - 65000 - Cloud token sent in the payload                                                                                *
+   * Group: Cloud Token                                                                                                         *
+   * Status: In use [06.07.00 - LATEST]                                                                                         */
+  uint32 cloud_token_coap_option = 40;
+
+  /* ECDSA payload signature CoAP option ID:                                                                                    *
+   *   - [1:64999] - CoAP option ID with payload signature                                                                      *
+   *   - 65000 - Payload signature is not sent                                                                                  *
+   * Group: Cloud Token                                                                                                         *
+   * Status: In use [06.07.00 - LATEST]                                                                                         */
+  uint32 payload_signature_coap_option = 41;
+
+  /* Modem identification CoAP option ID:                                                                                       *
+   *   - [1:64999] - CoAP option ID with modem identification                                                                   *
+   *   - 65000 - Modem identification is not sent                                                                               *
+   * Group: Cloud Token                                                                                                         *
+   * Status: In use [07.00.00 - LATEST]                                                                                         */
+  uint32 modem_identification_coap_option = 52;
+
+  /* NETWORK CONFIGURATION ---------------------------------------------------------------------------------------------------- */
+
+  /* DNS server IP address.                                                                                                     *
+   * Grouped in the array as four octets. Set 255.255.255.255 to use a cellular network DNS server.                             *
+   * Note: when setting less than four octets the remaining will be filled with zeros.                                          *
+   * Group: Data Server                                                                                                         *
+   * Status: In use [06.07.00 - LATEST]                                                                                         */
+  repeated uint32 dns_server_ip = 42;
+
+  /* DNS TTL configuration:                                                                                                     *
+   *   - [1:864000] - Custom TTL in seconds (if communication fails, DNS is also queried)                                       *
+   *   - 864001 - Accept TTL from the DNS server (if communication fails, DNS is also queried)                                  *
+   *   - 864002 - DNS query only after communication failure                                                                    *
+   * Group: DNS                                                                                                                 *
+   * Status: In use [06.07.00 - LATEST]                                                                                         */
+  uint32 dns_ttl_config = 43;
+
+  /* Network troubleshooting:
+   *   - 1 - Network troubleshooting disabled                                                                                   *
+   *   - 2 - Network troubleshooting enabled                                                                                    *
+   * If Bluetooth is turned off and communication with the server is faulty, Bluetooth will be automatically turned on until    *
+   * the connection is stabilized.                                                                                              *
+   * Group: Network                                                                                                             *
+   * Status: In use [06.10.00 - LATEST]                                                                                         */
+  uint32 network_troubleshooting = 51;
+
+  /* Network key.                                                                                                               *
+   * Max length: 16 bytes.                                                                                                      *
+   * A one-element array containing only one 0x7F (DEL) byte disables network key.                                              *
+   * Device sends two last bytes of SHA256 hash of current key in this field.                                                   *
+   * When the network key is disabled, the device sends a 0x7F (DEL) byte.                                                      *
+   * Group: Local Network                                                                                                       *
+   * Status: In use [07.00.00 - LATEST]                                                                                         */
+  bytes network_key = 53;
+
+  /* MODEM CONFIGURATION ------------------------------------------------------------------------------------------------------ */
+
+  /* APN (Access Point Name).                                                                                                   *
+   * String up to 49 characters.                                                                                                *
+   * A string containing only the special character 0x7F (DEL) indicates that automatic APN is enabled.                         *
+   * Group: Data Server                                                                                                         *
+   * Status: In use [06.00 - LATEST]                                                                                            */
+  string apn = 16;
+
+  /* APN username.                                                                                                              *
+   * String up to 31 characters.                                                                                                *
+   * A string containing only the special character 0x7F (DEL) indicates that the username is not being used.                   *
+   * The username can only be set to a custom value if APN has been configured.                                                 *
+   * Group: Data Server                                                                                                         *
+   * Status: In use [07.00.00 - LATEST] / Previously as apn_user_name [06.11.00 - 06.xx.xx]                                     */
+  string apn_username = 55;
+
+  /* APN password.                                                                                                              *
+   * String up to 31 characters.                                                                                                *
+   * A string containing only the special character 0x7F (DEL) indicates that the password is not being used.                   *
+   * The password can only be set to a custom value if APN username has been configured.                                        *
+   * Group: Data Server                                                                                                         *
+   * Status: In use [06.11.00 - LATEST]                                                                                         */
   string apn_password = 56;
 
-  /* Reserved by versions above 06.20.00                                                                                        */
-  reserved 57;
+  /* PLMN selection:                                                                                                            *
+   *   - [100:999999] - Selected operator code                                                                                  *
+   *   - 1000000 - Automatic selection                                                                                          *
+   *   - 0xFFFFFFFF - Automatic selection (legacy)                                                                              *
+   * Group: Data Server                                                                                                         *
+   * Status: In use [06.00 - LATEST]                                                                                            */
+  uint32 plmn_selection = 17;
 
-  /* Control output state on channel pin. Maximal number of requests equals 3                                                   */
-  /* This field is only sent by server                                                                                          */
-  repeated ProtoOutputControlState output_control_state_request = 58;
+  /* Modem bands mask.                                                                                                          *
+   * 4-byte bit mask, where each bit represents a specific band:                                                                *
+   * Band: | 1 | 2 | 3 | 4 | 5 | 8 | 12 | 13 | 17 | 18 | 19 | 20 | 25 | 26 | 28 | 66 | 71 | 85 | 70 |                           *
+   * Bit:  | 0 | 1 | 2 | 3 | 4 | 5 |  6 |  7 |  8 |  9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 |                           *
+   * Example: To enable band 3, 8 and 20 set to 2084 = (1 << 2) + (1 << 5) + (1 << 11)                                          *
+   * Group: Data Server                                                                                                         *
+   * Status: In use [06.00 - LATEST]                                                                                            */
+  uint32 modem_bands_mask = 31;
 
-  /* BLE advertising period configuration.                                                                                      */
-  ProtoBleAdvertisingPeriod ble_advertising_period = 59;
+  /* Modem configuration parameters.                                                                                            *
+   * 1st item - The number of cellular parameters that are used (depending on the modem in use).                                *
+   * 2nd - 16th item - Cellular parameters.                                                                                     *
+   * Group: Cellular Configuration                                                                                              *
+   * Status: In use [06.08.00 - LATEST]                                                                                         */
+  repeated uint32 cellular_config_params = 46;
+
+  /* Network search schema.                                                                                                     *
+   * Group: Network Search                                                                                                      *
+   * Status: In use [06.20.00 - LATEST]                                                                                         */
+  ProtoNetworkSearch network_search = 57;
+
+  /* USER INTERFACE CONFIGURATION --------------------------------------------------------------------------------------------- */
+
+  /* LEDs behavior.                                                                                                             *
+   * Period of LED blinking in 5-second unit (value is multiplied by 5). Range: [1:120]:                                        *
+   *   - 1st item - Period of GREEN LED blinking                                                                                *
+   *   - 2nd item - Period of RED LED blinking                                                                                  *
+   * Time elapsing from the entry into the normal state, after which the LED indicator is switched off, in minutes.             *
+   * Range: [0:240; 255]. Value of 255 means always on:                                                                         *
+   *   - 3rd item - Blinking RED LED on communication problem                                                                   *
+   *   - 4th item - Blinking RED LED on a sensor problem                                                                        *
+   *   - 5th item - Blinking RED LED on a low power                                                                             *
+   *   - 6th item - Blinking GREEN LED on measurement                                                                           *
+   *   - 7th item - Blinking GREEN LED on transmission                                                                          *
+   *   - 8th item - Blinking GREEN LED to indicate sensor's proper operation                                                    *
+   * 9th item - Duration of LED blinking in 5-millisecond unit. Range: [4:200]                                                  *
+   * Group: LED                                                                                                                 *
+   * Status: In use [06.10.00 - LATEST]                                                                                         */
+  repeated uint32 led_config = 50;
 }

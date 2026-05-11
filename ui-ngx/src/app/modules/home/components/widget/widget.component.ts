@@ -334,6 +334,7 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
     if (customHeaderActions$.length) {
       forkJoin(customHeaderActions$).subscribe((customHeaderActions) => {
         this.widgetContext.customHeaderActions.push(...customHeaderActions);
+        this.dashboardWidget.updateParamsFromData(true);
       });
     }
 

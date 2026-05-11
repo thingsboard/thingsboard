@@ -66,7 +66,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 export class DynamicFormSelectItemsComponent implements ControlValueAccessor, OnInit, Validator {
 
   @HostBinding('style.display') styleDisplay = 'flex';
-  @HostBinding('style.overflow') styleOverflow = 'hidden';
 
   @ViewChildren(DynamicFormSelectItemRowComponent)
   selectItemRows: QueryList<DynamicFormSelectItemRowComponent>;

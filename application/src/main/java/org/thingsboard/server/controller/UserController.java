@@ -549,13 +549,20 @@ public class UserController extends BaseController {
         userSettingsService.deleteUserSettings(currentUser.getTenantId(), currentUser.getId(), type, Arrays.asList(paths.split(",")));
     }
 
-    @ApiOperation(value = "Get information about last visited and starred dashboards (getUserDashboardsInfo)",
-            notes = "Fetch the list of last visited and starred dashboards. Both lists are limited to 10 items." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @Hidden
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/user/dashboards")
     public UserDashboardsInfo getUserDashboardsInfo() throws ThingsboardException {
         SecurityUser currentUser = getCurrentUser();
         return userSettingsService.findUserDashboardsInfo(currentUser.getTenantId(), currentUser.getId());
+    }
+
+    @ApiOperation(value = "Get information about last visited and starred dashboards (getLastVisitedDashboards)",
+            notes = "Fetch the list of last visited and starred dashboards. Both lists are limited to 10 items." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping(value = "/user/lastVisitedDashboards")
+    public UserDashboardsInfo getLastVisitedDashboards() throws ThingsboardException {
+        return getUserDashboardsInfo();
     }
 
     @ApiOperation(value = "Report action of User over the dashboard (reportUserDashboardAction)",

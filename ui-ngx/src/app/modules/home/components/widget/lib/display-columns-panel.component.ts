@@ -61,6 +61,6 @@ export class DisplayColumnsPanelComponent {
   }
 
   public update() {
-    this.data.columnsUpdated(this.columns);
+    this.data.columnsUpdated(this.data.columns);
   }
 }

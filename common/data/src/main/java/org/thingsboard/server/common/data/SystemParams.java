@@ -45,4 +45,5 @@ public class SystemParams {
     long minAllowedAggregationIntervalInSecForCF;
     long intermediateAggregationIntervalInSecForCF;
     TrendzSettings trendzSettings;
+    boolean allowKeyFiltersOrConditions;
 }

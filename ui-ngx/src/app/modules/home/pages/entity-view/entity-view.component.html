@@ -110,27 +110,24 @@
               </mat-panel-title>
             </mat-expansion-panel-header>
             <div translate class="tb-hint">entity-view.attributes-propagation-hint</div>
-            <label translate class="tb-title no-padding">entity-view.client-attributes</label>
             <tb-entity-keys-list
               [entityId]="selectedEntityId | async"
               formControlName="cs"
-              keysText="entity-view.client-attributes-placeholder"
+              label="entity-view.client-attributes"
               [dataKeyType]="dataKeyType.attribute"
               appearance="outline">
             </tb-entity-keys-list>
-            <label translate class="tb-title no-padding">entity-view.shared-attributes</label>
             <tb-entity-keys-list
               [entityId]="selectedEntityId | async"
               formControlName="sh"
-              keysText="entity-view.shared-attributes-placeholder"
+              label="entity-view.shared-attributes"
               [dataKeyType]="dataKeyType.attribute"
               appearance="outline">
             </tb-entity-keys-list>
-            <label translate class="tb-title no-padding">entity-view.server-attributes</label>
             <tb-entity-keys-list
               [entityId]="selectedEntityId | async"
               formControlName="ss"
-              keysText="entity-view.server-attributes-placeholder"
+              label="entity-view.server-attributes"
               [dataKeyType]="dataKeyType.attribute"
               appearance="outline">
             </tb-entity-keys-list>
@@ -142,11 +139,10 @@
               </mat-panel-title>
             </mat-expansion-panel-header>
             <div translate class="tb-hint">entity-view.timeseries-data-hint</div>
-            <label translate class="tb-title no-padding">entity-view.timeseries</label>
             <tb-entity-keys-list
               [entityId]="selectedEntityId | async"
               formControlName="timeseries"
-              keysText="entity-view.timeseries-placeholder"
+              label="entity-view.timeseries"
               [dataKeyType]="dataKeyType.timeseries"
               appearance="outline">
             </tb-entity-keys-list>

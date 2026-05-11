@@ -48,7 +48,7 @@ import java.util.UUID;
                 @DiscriminatorMapping(value = "RESOURCES_SHORTAGE", schema = DefaultNotificationRuleRecipientsConfig.ResourceShortageRecipientsConfig.class)
         })
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "triggerType", include = JsonTypeInfo.As.EXISTING_PROPERTY)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "triggerType", include = JsonTypeInfo.As.EXISTING_PROPERTY, defaultImpl = DefaultNotificationRuleRecipientsConfig.class)
 @JsonSubTypes({
         @Type(name = "ALARM", value = EscalatedNotificationRuleRecipientsConfig.class),
         @Type(name = "ENTITY_ACTION", value = DefaultNotificationRuleRecipientsConfig.EntityActionRecipientsConfig.class),

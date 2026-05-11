@@ -46,7 +46,6 @@ import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
-import org.thingsboard.server.service.cf.CalculatedFieldCache;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.queue.processing.AbstractPartitionBasedConsumerService;
@@ -86,9 +85,8 @@ public class DefaultTbRuleEngineConsumerService extends AbstractPartitionBasedCo
                                               PartitionService partitionService,
                                               ApplicationEventPublisher eventPublisher,
                                               JwtSettingsService jwtSettingsService,
-                                              CalculatedFieldCache calculatedFieldCache,
                                               TbMsgPackProcessingContextFactory packProcessingContextFactory) {
-        super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, tbResourceDataCache, calculatedFieldCache, apiUsageStateService, partitionService, eventPublisher, jwtSettingsService);
+        super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, tbResourceDataCache, apiUsageStateService, partitionService, eventPublisher, jwtSettingsService);
         this.ctx = ctx;
         this.tbDeviceRpcService = tbDeviceRpcService;
         this.queueService = queueService;

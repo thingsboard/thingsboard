@@ -99,7 +99,7 @@
                         </goals>
                         <phase>compile</phase>
                         <configuration>
-                            <arguments>run pkg</arguments>
+                            <arguments>--mutex network run pkg</arguments>
                         </configuration>
                     </execution>
                 </executions>

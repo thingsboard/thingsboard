@@ -17,6 +17,7 @@ package org.thingsboard.rule.engine.rest;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.thingsboard.rule.engine.api.TbHttpClientSettings;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -66,7 +67,8 @@ public class TbRestApiCallNode extends TbAbstractExternalNode {
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         super.init(ctx);
 
-        var config = TbNodeUtils.convert(configuration, TbRestApiCallNodeConfiguration.class);
+        TbRestApiCallNodeConfiguration config = TbNodeUtils.convert(configuration, TbRestApiCallNodeConfiguration.class);
+
         String errorPrefix = "'" + ctx.getSelf().getName() + "' node configuration is invalid: ";
         try {
             validateFields(config, errorPrefix);
@@ -74,7 +76,11 @@ public class TbRestApiCallNode extends TbAbstractExternalNode {
             throw new TbNodeException(e, true);
         }
 
-        httpClient = new TbHttpClient(config, ctx.getSharedEventLoop());
+        TbHttpClientSettings httpClientSettings = ctx.getTbHttpClientSettings();
+        httpClient = new TbHttpClient(config, ctx.getSharedEventLoop(),
+                ctx.getTenantId() != null ? ctx.getTenantId().getId().toString() : "n/a",
+                ctx.getSelfId() != null ? ctx.getSelfId().getId().toString() : "n/a",
+                httpClientSettings != null ? httpClientSettings : TbHttpClientSettings.DEFAULT);
     }
 
     @Override

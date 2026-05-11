@@ -135,6 +135,10 @@ public class InstallScripts {
         return Paths.get(getDataDir(), JSON_DIR, SYSTEM_DIR, WIDGET_TYPES_DIR);
     }
 
+    public Path getWidgetBundlesDir() {
+        return Paths.get(getDataDir(), JSON_DIR, SYSTEM_DIR, WIDGET_BUNDLES_DIR);
+    }
+
     public String getDataDir() {
         if (!StringUtils.isEmpty(dataDir)) {
             if (!Paths.get(this.dataDir).toFile().isDirectory()) {
@@ -207,7 +211,7 @@ public class InstallScripts {
     public void loadSystemWidgets() {
         log.info("Loading system widgets");
         Map<Path, JsonNode> widgetsBundlesMap = new HashMap<>();
-        Path widgetBundlesDir = Paths.get(getDataDir(), JSON_DIR, SYSTEM_DIR, WIDGET_BUNDLES_DIR);
+        Path widgetBundlesDir = getWidgetBundlesDir();
         try (Stream<Path> dirStream = listDir(widgetBundlesDir).filter(path -> path.toString().endsWith(JSON_EXT))) {
             dirStream.forEach(
                     path -> {

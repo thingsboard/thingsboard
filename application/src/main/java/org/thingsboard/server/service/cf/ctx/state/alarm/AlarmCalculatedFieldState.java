@@ -40,7 +40,7 @@ import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionTyp
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionValue;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.AlarmConditionExpression;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.AlarmConditionFilter;
-import org.thingsboard.server.common.data.alarm.rule.condition.expression.ComplexOperation;
+import org.thingsboard.server.common.data.query.ComplexOperation;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.SimpleAlarmConditionExpression;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.TbelAlarmConditionExpression;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate.BooleanFilterPredicate;
@@ -179,6 +179,7 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
             ruleState.setActive(null);
             AlarmCondition condition = rule.getCondition();
             if (condition.hasSchedule() || (condition.getType() == AlarmConditionType.DURATION && !ruleState.isEmpty())) {
+                ruleState.cancelDurationCheckFuture();
                 reevalNeeded.set(true);
             }
         }

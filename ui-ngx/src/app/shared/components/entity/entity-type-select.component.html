@@ -28,6 +28,9 @@
       </mat-option>
     }
   </mat-select>
+  @if (!inlineField && subscriptSizing === 'dynamic') {
+    <mat-hint></mat-hint>
+  }
   @if (!inlineField && entityTypeFormGroup.get('entityType').hasError('required')) {
     <mat-error>
       {{ 'entity.type-required' | translate }}

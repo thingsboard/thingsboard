@@ -89,11 +89,10 @@ public abstract class BaseHealthChecker<C extends MonitoringConfig, T extends Mo
             checkWsUpdates(wsClient, testValue);
 
             reporter.serviceIsOk(info);
-            reporter.serviceIsOk(MonitoredServiceKey.GENERAL);
         } catch (ServiceFailureException e) {
             reporter.serviceFailure(e.getServiceKey(), e);
         } catch (Exception e) {
-            reporter.serviceFailure(MonitoredServiceKey.GENERAL, e);
+            reporter.serviceFailure(info, e);
         }
 
         associates.values().forEach(healthChecker -> {

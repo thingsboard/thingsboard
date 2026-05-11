@@ -363,15 +363,15 @@
       </div>
     }
     @if (displayAdvancedAppearance) {
-      <div style="height: 100%;" [formGroup]="advancedSettings">
+      <div class="flex-1" [formGroup]="advancedSettings">
         <tb-widget-settings
-          [aliasController]="aliasController"
-          [callbacks]="widgetConfigCallbacks"
-          [functionsOnly]="functionsOnly"
-          [dashboard]="dashboard"
-          [widget]="widget"
-          [widgetConfig]="modelValue"
-          formControlName="settings">
+            [aliasController]="aliasController"
+            [callbacks]="widgetConfigCallbacks"
+            [functionsOnly]="functionsOnly"
+            [dashboard]="dashboard"
+            [widget]="widget"
+            [widgetConfig]="modelValue"
+            formControlName="settings">
         </tb-widget-settings>
       </div>
     }

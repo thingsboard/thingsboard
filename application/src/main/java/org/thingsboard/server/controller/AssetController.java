@@ -518,11 +518,11 @@ public class AssetController extends BaseController {
         return checkNotNull(filteredResult);
     }
 
-    @ApiOperation(value = "Import the bulk of assets (processAssetsBulkImport)",
+    @ApiOperation(value = "Import the bulk of assets (processAssetBulkImport)",
             notes = "There's an ability to import the bulk of assets using the only .csv file.")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @PostMapping("/asset/bulk_import")
-    public BulkImportResult<Asset> processAssetsBulkImport(@RequestBody BulkImportRequest request) throws Exception {
+    public BulkImportResult<Asset> processAssetBulkImport(@RequestBody BulkImportRequest request) throws Exception {
         SecurityUser user = getCurrentUser();
         return assetBulkImportService.processBulkImport(request, user);
     }

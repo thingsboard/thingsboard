@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.query;
 
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,6 +31,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.permission.QueryContext;
 import org.thingsboard.server.common.data.query.ApiUsageStateFilter;
 import org.thingsboard.server.common.data.query.AssetSearchQueryFilter;
+import org.thingsboard.server.common.data.query.ComplexOperation;
 import org.thingsboard.server.common.data.query.AssetTypeFilter;
 import org.thingsboard.server.common.data.query.DeviceSearchQueryFilter;
 import org.thingsboard.server.common.data.query.DeviceTypeFilter;
@@ -54,12 +56,14 @@ import org.thingsboard.server.common.data.query.SingleEntityFilter;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -318,9 +322,18 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             .replace("$in", "from").replace("$out", "to")
             .replace("$rootIdCondition", "in (:relation_root_ids)");
 
+    private static final String NULLS_ORDER_DEFAULT = "default";
+    private static final String NULLS_ORDER_FIRST = "nulls_first";
+    private static final String NULLS_ORDER_LAST = "nulls_last";
+    private static final Set<String> ACCEPTED_NULLS_ORDER_STRATEGIES = Set.of(NULLS_ORDER_DEFAULT, NULLS_ORDER_FIRST, NULLS_ORDER_LAST);
+
     @Getter
     @Value("${sql.relations.max_level:50}")
     int maxLevelAllowed; //This value has to be reasonable small to prevent infinite recursion as early as possible
+
+    @Getter
+    @Value("${sql.entity_data_query_nulls_order_strategy:default}")
+    String nullsOrderStrategy;
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
     private final TransactionTemplate transactionTemplate;
@@ -330,6 +343,15 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         this.jdbcTemplate = jdbcTemplate;
         this.transactionTemplate = transactionTemplate;
         this.queryLog = queryLog;
+    }
+
+    @PostConstruct
+    void validateNullsOrderStrategy() {
+        if (!ACCEPTED_NULLS_ORDER_STRATEGIES.contains(nullsOrderStrategy)) {
+            log.error("Invalid value '{}' for sql.entity_data_query_nulls_order_strategy. Accepted values are: {}. Falling back to '{}'.",
+                    nullsOrderStrategy, ACCEPTED_NULLS_ORDER_STRATEGIES, NULLS_ORDER_DEFAULT);
+            nullsOrderStrategy = NULLS_ORDER_DEFAULT;
+        }
     }
 
     @Override
@@ -351,25 +373,56 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                 }
             });
         } else {
+            ComplexOperation operation = query.getKeyFiltersOperationOrDefault();
+            boolean isOr = operation == ComplexOperation.OR;
+
             List<EntityKeyMapping> mappings = EntityKeyMapping.prepareEntityCountKeyMapping(query);
 
-            List<EntityKeyMapping> selectionMapping = mappings.stream().filter(EntityKeyMapping::isSelection)
-                    .collect(Collectors.toList());
-            List<EntityKeyMapping> entityFieldsSelectionMapping = selectionMapping.stream().filter(mapping -> !mapping.isLatest())
-                    .collect(Collectors.toList());
-
+            List<EntityKeyMapping> selectionMapping = new ArrayList<>(mappings.stream().filter(EntityKeyMapping::isSelection)
+                    .collect(Collectors.toList()));
             List<EntityKeyMapping> filterMapping = mappings.stream().filter(EntityKeyMapping::hasFilter)
                     .collect(Collectors.toList());
             List<EntityKeyMapping> entityFieldsFiltersMapping = filterMapping.stream().filter(mapping -> !mapping.isLatest() && mapping.getEntityKeyColumn() != null)
                     .collect(Collectors.toList());
 
+            // Under OR: entity field filter columns must be in inner SELECT for outer WHERE reference.
+            // Mirror the ignore=true fix from findEntityDataByQuery so the inner subquery still emits the
+            // extra column but downstream response shape (benign for count) stays symmetric with the data path.
+            if (isOr) {
+                for (EntityKeyMapping m : entityFieldsFiltersMapping) {
+                    if (!selectionMapping.contains(m)) {
+                        m.setIgnore(true);
+                        selectionMapping.add(m);
+                    }
+                }
+            }
+
+            List<EntityKeyMapping> entityFieldsSelectionMapping = selectionMapping.stream().filter(mapping -> !mapping.isLatest())
+                    .collect(Collectors.toList());
+
             List<EntityKeyMapping> allLatestMappings = mappings.stream().filter(EntityKeyMapping::isLatest)
                     .collect(Collectors.toList());
 
+            // Under OR: entity field filters move to outer WHERE (not inner WHERE)
+            List<EntityKeyMapping> innerEntityFieldsFilters = isOr ? Collections.emptyList() : entityFieldsFiltersMapping;
 
-            String entityWhereClause = DefaultEntityQueryRepository.this.buildEntityWhere(ctx, query.getEntityFilter(), entityFieldsFiltersMapping);
-            String aliasWhereQuery = DefaultEntityQueryRepository.this.buildAliasWhereQuery(ctx, query.getEntityFilter(), selectionMapping, "");
-            String latestJoinsCnt = EntityKeyMapping.buildLatestJoins(ctx, query.getEntityFilter(), entityType, allLatestMappings, true);
+            String entityWhereClause = DefaultEntityQueryRepository.this.buildEntityWhere(ctx, query.getEntityFilter(), innerEntityFieldsFilters);
+            String latestJoinsCnt = EntityKeyMapping.buildLatestJoins(ctx, query.getEntityFilter(), entityType, allLatestMappings, true, isOr);
+
+            // Under OR: combine ALL filter mappings (entity fields + aliases) with OR joiner
+            // Place at the middle layer (after JOINs) where alias table references are visible.
+            // Under AND: place at the outer result layer (existing behavior).
+            String aliasWhereQuery;
+            if (isOr) {
+                String combinedFilterQuery = EntityKeyMapping.buildQuery(ctx, filterMapping, query.getEntityFilter().getType(), ComplexOperation.OR);
+                if (!combinedFilterQuery.isEmpty()) {
+                    latestJoinsCnt += " where (" + combinedFilterQuery + ")";
+                }
+                aliasWhereQuery = "";
+            } else {
+                aliasWhereQuery = DefaultEntityQueryRepository.this.buildAliasWhereQuery(ctx, query.getEntityFilter(), selectionMapping, "");
+            }
+
             String entityFieldsSelection = EntityKeyMapping.buildSelections(entityFieldsSelectionMapping, query.getEntityFilter().getType(), entityType);
             String entityTypeStr;
             if (query.getEntityFilter().getType().equals(EntityFilterType.RELATIONS_QUERY)) {
@@ -419,13 +472,13 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             EntityType entityType = resolveEntityType(query.getEntityFilter());
             SqlQueryContext ctx = new SqlQueryContext(new QueryContext(tenantId, customerId, entityType, ignorePermissionCheck));
             EntityDataPageLink pageLink = query.getPageLink();
+            ComplexOperation operation = query.getKeyFiltersOperationOrDefault();
+            boolean isOr = operation == ComplexOperation.OR;
 
             List<EntityKeyMapping> mappings = EntityKeyMapping.prepareKeyMapping(entityType, query);
 
-            List<EntityKeyMapping> selectionMapping = mappings.stream().filter(EntityKeyMapping::isSelection)
-                    .collect(Collectors.toList());
-            List<EntityKeyMapping> entityFieldsSelectionMapping = selectionMapping.stream().filter(mapping -> !mapping.isLatest())
-                    .collect(Collectors.toList());
+            List<EntityKeyMapping> selectionMapping = new ArrayList<>(mappings.stream().filter(EntityKeyMapping::isSelection)
+                    .collect(Collectors.toList()));
             List<EntityKeyMapping> latestSelectionMapping = selectionMapping.stream().filter(EntityKeyMapping::isLatest)
                     .collect(Collectors.toList());
 
@@ -434,14 +487,52 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             List<EntityKeyMapping> entityFieldsFiltersMapping = filterMapping.stream().filter(mapping -> !mapping.isLatest() && mapping.getEntityKeyColumn() != null)
                     .collect(Collectors.toList());
 
+            // Under OR: entity field filter columns must be in inner SELECT for outer WHERE reference.
+            // Mark force-added filter-only mappings as ignored so EntityDataAdapter does not expose
+            // them in EntityData.latest — keeps the response shape identical to AND.
+            if (isOr) {
+                for (EntityKeyMapping m : entityFieldsFiltersMapping) {
+                    if (!selectionMapping.contains(m)) {
+                        m.setIgnore(true);
+                        selectionMapping.add(m);
+                    }
+                }
+            }
+
+            List<EntityKeyMapping> entityFieldsSelectionMapping = selectionMapping.stream().filter(mapping -> !mapping.isLatest())
+                    .collect(Collectors.toList());
+
             List<EntityKeyMapping> allLatestMappings = mappings.stream().filter(EntityKeyMapping::isLatest)
                     .collect(Collectors.toList());
 
+            // Under OR: entity field filters move to outer WHERE (not inner WHERE)
+            List<EntityKeyMapping> innerEntityFieldsFilters = isOr ? Collections.emptyList() : entityFieldsFiltersMapping;
 
-            String entityWhereClause = DefaultEntityQueryRepository.this.buildEntityWhere(ctx, query.getEntityFilter(), entityFieldsFiltersMapping);
-            String latestJoinsCnt = EntityKeyMapping.buildLatestJoins(ctx, query.getEntityFilter(), entityType, allLatestMappings, true);
-            String latestJoinsData = EntityKeyMapping.buildLatestJoins(ctx, query.getEntityFilter(), entityType, allLatestMappings, false);
-            String aliasWhereQuery = DefaultEntityQueryRepository.this.buildAliasWhereQuery(ctx, query.getEntityFilter(), selectionMapping, pageLink.getTextSearch());
+            String entityWhereClause = DefaultEntityQueryRepository.this.buildEntityWhere(ctx, query.getEntityFilter(), innerEntityFieldsFilters);
+            String latestJoinsCnt = EntityKeyMapping.buildLatestJoins(ctx, query.getEntityFilter(), entityType, allLatestMappings, true, isOr);
+            String latestJoinsData = EntityKeyMapping.buildLatestJoins(ctx, query.getEntityFilter(), entityType, allLatestMappings, false, isOr);
+
+            // Under OR: combine ALL filter mappings (entity fields + aliases) with OR joiner
+            // Place at the middle layer (after JOINs) where alias table references are visible.
+            // Under AND: place at the outer result layer (existing behavior).
+            String aliasWhereQuery;
+            if (isOr) {
+                String combinedFilterQuery = EntityKeyMapping.buildQuery(ctx, filterMapping, query.getEntityFilter().getType(), ComplexOperation.OR);
+                String middleWhere = "";
+                if (!combinedFilterQuery.isEmpty()) {
+                    middleWhere = " where (" + combinedFilterQuery + ")";
+                }
+                String searchTextQuery = buildTextSearchQuery(ctx, selectionMapping, pageLink.getTextSearch());
+                if (!searchTextQuery.isEmpty()) {
+                    middleWhere += (middleWhere.isEmpty() ? " where " : " and ") + "(" + searchTextQuery + ") ";
+                }
+                latestJoinsCnt += middleWhere;
+                latestJoinsData += middleWhere;
+                aliasWhereQuery = "";
+            } else {
+                aliasWhereQuery = DefaultEntityQueryRepository.this.buildAliasWhereQuery(ctx, query.getEntityFilter(), selectionMapping, pageLink.getTextSearch());
+            }
+
             String entityFieldsSelection = EntityKeyMapping.buildSelections(entityFieldsSelectionMapping, query.getEntityFilter().getType(), entityType);
             String entityTypeStr;
             if (query.getEntityFilter().getType().equals(EntityFilterType.RELATIONS_QUERY)) {
@@ -502,11 +593,12 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                 if (sortOrderMappingOpt.isPresent()) {
                     EntityKeyMapping sortOrderMapping = sortOrderMappingOpt.get();
                     String direction = sortOrder.getDirection() == EntityDataSortOrder.Direction.ASC ? "asc" : "desc";
+                    String nullsOrder = resolveNullsOrder();
                     if (sortOrderMapping.getEntityKey().getType() == EntityKeyType.ENTITY_FIELD) {
-                        dataQuery = String.format("%s order by %s %s, result.id %s", dataQuery, sortOrderMapping.getValueAlias(), direction, direction);
+                        dataQuery = String.format("%s order by %s %s%s, result.id %s", dataQuery, sortOrderMapping.getValueAlias(), direction, nullsOrder, direction);
                     } else {
-                        dataQuery = String.format("%s order by %s %s, %s %s, result.id %s", dataQuery,
-                                sortOrderMapping.getSortOrderNumAlias(), direction, sortOrderMapping.getSortOrderStrAlias(), direction, direction);
+                        dataQuery = String.format("%s order by %s %s%s, %s %s, result.id %s", dataQuery,
+                                sortOrderMapping.getSortOrderNumAlias(), direction, nullsOrder, sortOrderMapping.getSortOrderStrAlias(), direction, direction);
                     }
                 }
             }
@@ -523,6 +615,14 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             }
             return EntityDataAdapter.createEntityData(pageLink, selectionMapping, rows, totalElements);
         });
+    }
+
+    private String resolveNullsOrder() {
+        return switch (nullsOrderStrategy) {
+            case NULLS_ORDER_FIRST -> " NULLS FIRST";
+            case NULLS_ORDER_LAST -> " NULLS LAST";
+            default -> "";
+        };
     }
 
     private String buildEntityWhere(SqlQueryContext ctx, EntityFilter entityFilter, List<EntityKeyMapping> entityFieldsFilters) {

@@ -201,18 +201,6 @@ public final class TbMsg implements Serializable {
         return builder.build();
     }
 
-    @Deprecated(forRemoval = true, since = "4.1") // to be removed in 4.2
-    public static TbMsg fromProto(String queueName, TbMsgProto proto, ByteString data, TbMsgCallback callback) {
-        try {
-            if (!data.isEmpty()) {
-                proto = TbMsgProto.parseFrom(data);
-            }
-        } catch (InvalidProtocolBufferException e) {
-            throw new IllegalStateException("Could not parse protobuf for TbMsg", e);
-        }
-        return fromProto(queueName, proto, callback);
-    }
-
     public static TbMsg fromProto(String queueName, TbMsgProto proto, TbMsgCallback callback) {
         TbMsgMetaData metaData = new TbMsgMetaData(proto.getMetaData().getDataMap());
         EntityId entityId = EntityIdFactory.getByTypeAndUuid(proto.getEntityType(), new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB()));

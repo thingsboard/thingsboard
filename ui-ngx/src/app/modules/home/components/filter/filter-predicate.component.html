@@ -15,51 +15,84 @@
     limitations under the License.
 
 -->
-<div class="flex flex-1 flex-row items-center justify-start gap-2" [formGroup]="filterPredicateFormGroup">
-  <div class="flex flex-1 flex-col">
+<div class="flex flex-1 flex-row items-center justify-start gap-4" [formGroup]="filterPredicateFormGroup">
+  <div class="tb-form-panel no-border no-padding-right flex-1 items-center" style="flex-direction: row">
     @switch (type) {
       @case (filterPredicateType.STRING) {
-        <tb-string-filter-predicate
-          [allowUserDynamicSource]="allowUserDynamicSource"
-          [onlyUserDynamicSource]="onlyUserDynamicSource"
-          formControlName="predicate">
-        </tb-string-filter-predicate>
+        <div class="tb-form-row no-border no-padding w-full max-w-30%">
+          <mat-form-field hideRequiredMarker class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
+            <mat-select required formControlName="operation" placeholder="{{'filter.operation.operation' | translate}}">
+              @for (operation of stringOperations; track operation) {
+                <mat-option [value]="operation">
+                  {{stringOperationTranslations.get(stringOperationEnum[operation]) | translate}}
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-chip-listbox formControlName="ignoreCase" [hideSingleSelectionIndicator]="true">
+            <mat-chip-option color="primary" [value]="true">{{ 'alarm-rule.ignore-case' | translate }}</mat-chip-option>
+          </mat-chip-listbox>
+        </div>
       }
       @case (filterPredicateType.NUMERIC) {
-        <tb-numeric-filter-predicate
-          [allowUserDynamicSource]="allowUserDynamicSource"
-          [onlyUserDynamicSource]="onlyUserDynamicSource"
-          [valueType]="valueType"
-          formControlName="predicate">
-        </tb-numeric-filter-predicate>
+        <div class="tb-form-row no-border no-padding w-full max-w-30%">
+          <mat-form-field hideRequiredMarker class="flex-1" appearance="outline" subscriptSizing="dynamic">
+            <mat-select required formControlName="operation" placeholder="{{'filter.operation.operation' | translate}}">
+              @for (operation of numericOperations; track operation) {
+                <mat-option [value]="operation">
+                  {{numericOperationTranslations.get(numericOperationEnum[operation]) | translate}}
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
       }
       @case (filterPredicateType.BOOLEAN) {
-        <tb-boolean-filter-predicate
-          [allowUserDynamicSource]="allowUserDynamicSource"
-          [onlyUserDynamicSource]="onlyUserDynamicSource"
-          formControlName="predicate">
-        </tb-boolean-filter-predicate>
+        <div class="tb-form-row no-border no-padding w-full max-w-30%">
+          <mat-form-field hideRequiredMarker class="flex-1" appearance="outline" subscriptSizing="dynamic">
+            <mat-select required formControlName="operation" placeholder="{{'filter.operation.operation' | translate}}">
+              @for (operation of booleanOperations; track operation) {
+                <mat-option [value]="operation">
+                  {{booleanOperationTranslations.get(booleanOperationEnum[operation]) | translate}}
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
       }
       @case (filterPredicateType.COMPLEX) {
-        <tb-complex-filter-predicate
-          [allowUserDynamicSource]="allowUserDynamicSource"
-          [onlyUserDynamicSource]="onlyUserDynamicSource"
-          [key]="key"
-          [valueType]="valueType"
-          [displayUserParameters]="displayUserParameters"
-          formControlName="predicate">
-        </tb-complex-filter-predicate>
+        <div class="tb-form-row no-border no-padding flex-1">
+          <mat-label translate>filter.complex-filter</mat-label>
+          <button mat-icon-button color="primary"
+                  class="tb-mat-32"
+                  type="button"
+                  (click)="openComplexFilterDialog()"
+                  matTooltip="{{ (disabled ? 'filter.complex-filter' : 'filter.edit-complex-filter') | translate }}"
+                  matTooltipPosition="above">
+            <mat-icon>{{ disabled ? 'more_vert' : 'edit' }}</mat-icon>
+          </button>
+        </div>
       }
+    }
+    @if (type !== filterPredicateType.COMPLEX) {
+      <tb-filter-predicate-value
+        [allowUserDynamicSource]="allowUserDynamicSource"
+        [onlyUserDynamicSource]="onlyUserDynamicSource"
+        [operation]="filterPredicateFormGroup.get('operation').value"
+        class="max-w-70% flex-full"
+        [valueType]="valueType"
+        formControlName="value">
+      </tb-filter-predicate-value>
     }
   </div>
   @if (type !== filterPredicateType.COMPLEX && displayUserParameters) {
-    <tb-filter-user-info
-      style="width: 60px;"
-      class="flex flex-row items-stretch justify-center"
-      [valueType]="valueType"
-      [operation]="filterPredicateFormGroup.get('predicate').value?.operation"
-      [key]="key"
-      formControlName="userInfo">
-    </tb-filter-user-info>
+    <button mat-icon-button color="primary"
+            class="tb-mat-32"
+            type="button"
+            (click)="openFilterUserInfoDialog()"
+            matTooltip="{{ (disabled ? 'filter.filter-user-params' : 'filter.edit-filter-user-params') | translate }}"
+            matTooltipPosition="above">
+      <mat-icon>settings</mat-icon>
+    </button>
   }
 </div>
