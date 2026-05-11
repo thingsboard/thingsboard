@@ -13,6 +13,7 @@
     "build": "tsc"
   },
   "dependencies": {
+    "@2l/kafkajs-lz4": "^1.3.2",
     "config": "^4.1.1",
     "express": "^5.1.0",
     "js-yaml": "^4.1.1",
@@ -46,7 +47,8 @@
   },
   "pkg": {
     "assets": [
-      "node_modules/config/**/*.*"
+      "node_modules/config/**/*.*",
+      "node_modules/@antoniomuso/lz4-napi-*/**/*.node"
     ]
   }
 }

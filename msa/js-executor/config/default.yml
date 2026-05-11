@@ -40,7 +40,7 @@ kafka:
   partitions_consumed_concurrently: "1" # (EXPERIMENTAL) increase this value if you are planning to handle more than one partition (scale up, scale down) - this will decrease the latency
   requestTimeout: "30000" # Time in milliseconds to wait for a response to a Kafka request before timing out
   connectionTimeout: "1000" # Time in milliseconds to wait when establishing a connection to a Kafka broker
-  compression: "none" # Message compression codec for the producer: none, gzip
+  compression: "none" # Message compression codec for the producer: gzip, lz4 or none
   topic_properties: "retention.ms:604800000;segment.bytes:52428800;retention.bytes:104857600;partitions:100;min.insync.replicas:1" # Semicolon-separated Kafka topic configuration properties applied on topic creation
   use_confluent_cloud: false # Set to true to enable Confluent Cloud-specific configuration (SSL + SASL)
   client_id: "kafkajs" # Kafka client identifier; inject the pod name to easily identify the client via kafka-consumer-groups.sh
