@@ -29,6 +29,9 @@ public final class TbMsgMetaData implements Serializable {
 
     public static final TbMsgMetaData EMPTY = new TbMsgMetaData(0);
 
+    public static final String TB_ACL_KEY = "tb_acl";
+    public static final String TB_USER_ID_KEY = "tb_user_id";
+
     private final Map<String, String> data;
 
     public TbMsgMetaData() {
