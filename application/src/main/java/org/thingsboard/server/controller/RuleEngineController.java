@@ -49,7 +49,7 @@ import org.thingsboard.server.common.data.rule.engine.EntityAclEntry;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.config.annotations.ApiOperation;
-import org.thingsboard.server.dao.entity.EntityServiceRegistry;
+import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.exception.ToErrorResponseEntity;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.ruleengine.RuleEngineCallService;
@@ -90,7 +90,7 @@ public class RuleEngineController extends BaseController {
     @Autowired
     private AccessValidator accessValidator;
     @Autowired
-    private EntityServiceRegistry entityServiceRegistry;
+    private EntityService entityService;
 
     @Value("${server.rest.rule_engine.acl.max_entities:20}")
     private int maxAclEntities;
@@ -227,22 +227,22 @@ public class RuleEngineController extends BaseController {
 
     @ApiOperation(value = "Push enriched message to the rule engine (handleEnrichedRuleEngineRequest)",
             notes = MSG_DESCRIPTION_PREFIX +
-                    "All routing parameters (originator, messageType, queueName, timeout) are passed in the request body. " +
+                    "All routing parameters (originator, queueName, timeout) are passed in the request body. " +
                     "Optionally accepts an `enrichEntities` list. For each entity, the controller computes the set of " +
                     "operations the calling user is allowed to perform on that specific entity instance and writes the " +
-                    "result as a JSON array under the protected `tb_acl` metadata key. The calling user's id is written " +
-                    "under `tb_user_id`. Both metadata keys are server-authoritative — any value supplied via the payload " +
-                    "is overwritten. " +
+                    "result as a JSON array under the protected `tb_aclSnapshot` metadata key. The calling user's id is " +
+                    "written under `tb_userId`. Both metadata keys are server-authoritative — any value supplied via the " +
+                    "payload is overwritten. " +
                     "The `payload` field is optional; a null or missing payload is treated as an empty JSON object `{}` " +
                     "so probe-only requests (callers who want only the ACL snapshot) work without a body. " +
-                    MSG_DESCRIPTION
+                    MSG_DESCRIPTION +
+                    "\n\nNote: a `SYS_ADMIN` caller operates against the system tenant, so any tenant-scoped entity " +
+                    "(DEVICE, ASSET, CUSTOMER, …) passed in `enrichEntities` is not found by the tenant-filtered entity " +
+                    "lookup and produces `allowed=[]` for that entry. ACL enrichment is effectively a no-op for SYS_ADMIN."
                     + "\n\n" + ControllerConstants.SECURITY_WRITE_CHECK)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/v2/", method = RequestMethod.POST)
+    @RequestMapping(value = "/v2", method = RequestMethod.POST)
     @ResponseBody
-    // type(String) is the supported form for custom messageType supplied via the request body;
-    // the @Deprecated annotation on TbMsgBuilder.type(String) gates accidental misuse elsewhere.
-    @SuppressWarnings("deprecation")
     public DeferredResult<ResponseEntity> handleEnrichedRuleEngineRequest(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Enriched rule engine request", required = true)
             @RequestBody EnrichedRuleEngineRequest request) throws ThingsboardException {
@@ -255,7 +255,6 @@ public class RuleEngineController extends BaseController {
         }
 
         EntityId originator = request.getOriginator() != null ? request.getOriginator() : currentUser.getId();
-        String messageType = request.getMessageType() != null ? request.getMessageType() : TbMsgType.REST_API_REQUEST.name();
         String queueName = request.getQueueName();
         int timeout = request.getTimeout() != null ? request.getTimeout() : defaultResponseTimeout;
         JsonNode payload = request.getPayload();
@@ -271,13 +270,13 @@ public class RuleEngineController extends BaseController {
                 metaData.put("serviceId", serviceInfoProvider.getServiceId());
                 metaData.put("requestUUID", requestId.toString());
                 metaData.put("expirationTime", Long.toString(expTime));
-                // tb_user_id and tb_acl are written last so any caller-supplied value is overwritten.
+                // tb_userId and tb_aclSnapshot are written last so any caller-supplied value is overwritten.
                 metaData.put(TbMsgMetaData.TB_USER_ID_KEY, currentUser.getId().getId().toString());
                 metaData.put(TbMsgMetaData.TB_ACL_KEY, buildAclMetadata(currentUser, enrichEntities));
 
                 TbMsg msg = TbMsg.newMsg()
                         .queueName(queueName)
-                        .type(messageType)
+                        .type(TbMsgType.REST_API_REQUEST)
                         .originator(originator)
                         .customerId(currentUser.getCustomerId())
                         .copyMetaData(new TbMsgMetaData(metaData))
@@ -317,23 +316,21 @@ public class RuleEngineController extends BaseController {
         try {
             resource = Resource.of(entityId.getEntityType());
         } catch (IllegalArgumentException e) {
-            log.warn("[{}] tb_acl: no Resource mapping for EntityType {} (entity {}); returning empty allowed",
+            log.warn("[{}] tb_aclSnapshot: no Resource mapping for EntityType {} (entity {}); returning empty allowed",
                     user.getTenantId(), entityId.getEntityType(), entityId.getId());
             return new EntityAclEntry(entityId.getEntityType(), entityId.getId(), List.of());
         }
 
         Optional<HasId<?>> entityOpt;
         try {
-            entityOpt = entityServiceRegistry
-                    .getServiceByEntityType(entityId.getEntityType())
-                    .findEntity(user.getTenantId(), entityId);
+            entityOpt = entityService.fetchEntity(user.getTenantId(), entityId);
         } catch (IllegalArgumentException e) {
-            log.warn("[{}] tb_acl: no EntityDaoService for EntityType {} (entity {}); returning empty allowed",
+            log.warn("[{}] tb_aclSnapshot: no EntityDaoService for EntityType {} (entity {}); returning empty allowed",
                     user.getTenantId(), entityId.getEntityType(), entityId.getId());
             return new EntityAclEntry(entityId.getEntityType(), entityId.getId(), List.of());
         }
         if (entityOpt.isEmpty() || !(entityOpt.get() instanceof HasTenantId entity)) {
-            log.warn("[{}] tb_acl: entity {} {} not found (stale id, cross-tenant, or system-level); returning empty allowed",
+            log.warn("[{}] tb_aclSnapshot: entity {} {} not found (stale id, cross-tenant, or system-level); returning empty allowed",
                     user.getTenantId(), entityId.getEntityType(), entityId.getId());
             return new EntityAclEntry(entityId.getEntityType(), entityId.getId(), List.of());
         }

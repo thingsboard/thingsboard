@@ -52,7 +52,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DaoSqlTest
 public class RuleEngineControllerV2Test extends AbstractControllerTest {
 
-    private static final String URL = "/api/rule-engine/v2/";
+    private static final String URL = "/api/rule-engine/v2";
     private static final String RESPONSE_BODY = "{\"response\":\"ok\"}";
 
     @SpyBean
@@ -259,18 +259,17 @@ public class RuleEngineControllerV2Test extends AbstractControllerTest {
     }
 
     @Test
-    public void testV2HonorsBodyMessageTypeAndTimeout() throws Exception {
+    public void testV2ForwardsRestApiRequestTypeAndHonorsBodyTimeout() throws Exception {
         loginTenantAdmin();
 
         EnrichedRuleEngineRequest request = baseRequest();
-        request.setMessageType("MY_CUSTOM_TYPE");
         request.setTimeout(2000);
 
         long beforeMs = System.currentTimeMillis();
         TbMsg captured = doRequestAndCapture(request, tenantId);
         long afterMs = System.currentTimeMillis();
 
-        assertThat(captured.getType()).isEqualTo("MY_CUSTOM_TYPE");
+        assertThat(captured.getType()).isEqualTo(TbMsgType.REST_API_REQUEST.name());
         long expirationTime = Long.parseLong(captured.getMetaData().getValue("expirationTime"));
         assertThat(expirationTime).isBetween(beforeMs + 2000, afterMs + 2000);
     }

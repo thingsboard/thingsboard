@@ -29,7 +29,7 @@ Rule chains are free to ignore the metadata entirely — existing flows are unaf
 ## 3. Non-Goals
 
 - Denying the request at the API layer based on the ACL snapshot. Decisions live in the rule chain.
-- Modifying or replacing the existing `POST /api/rule-engine/...` v1 endpoints. This adds new `/v2/` endpoint alongside them.
+- Modifying or replacing the existing `POST /api/rule-engine/...` v1 endpoints. This adds new `/v2` endpoint alongside them.
 - Changing `AccessValidator`, `AccessControlService`, `Resource`, `Operation`, or permission-model semantics. We consume them as-is.
 - UI changes.
 - Extending enrichment to controllers other than `RuleEngineController` (see §13).
@@ -38,7 +38,7 @@ Rule chains are free to ignore the metadata entirely — existing flows are unaf
 
 A single new endpoint with all routing parameters in the request body:
 
-- `POST /api/rule-engine/v2/`
+- `POST /api/rule-engine/v2`
 
 Same authorization as v1: `hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')` and existing `AccessValidator` WRITE check on the originator.
 
@@ -47,7 +47,6 @@ Same authorization as v1: `hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOME
 ```json
 {
   "originator":   { "entityType": "DEVICE", "id": "784f394c-42b6-..." },
-  "messageType":  "REST_API_REQUEST",
   "queueName":    "Main",
   "timeout":      10000,
   "payload":      { "any": "user json" },
@@ -59,11 +58,11 @@ Same authorization as v1: `hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOME
 ```
 
 - `originator` — optional `EntityId`. If absent, defaults to the calling user's id (matches v1 behavior when path variables are omitted).
-- `messageType` — optional. Defaults to `REST_API_REQUEST` (matches v1's hardcoded type — and what the platform documentation references as the input type for `rest call reply`, see https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/action/rest-call-reply/). Custom strings are accepted.
+- The `TbMsg` type is hardcoded to `REST_API_REQUEST` (matches v1 across all four ruleEngine endpoints; this is the documented input type for the terminal `rest call reply` rule node, see https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/action/rest-call-reply/).
 - `queueName` — optional. When present, overrides the queue selected by the originator's profile (same semantics as v1).
 - `timeout` — optional, milliseconds. Defaults to `server.rest.rule_engine.response_timeout` (10s).
 - `payload` — optional JSON. A null or missing payload is treated as the empty JSON object `{}` so probe-only requests (callers who want only the ACL snapshot) work without a body.
-- `enrichEntities` — optional list of `EntityId` (uses the platform's existing polymorphic `EntityId` Jackson representation: `{entityType, id}`). If absent or empty, `tb_acl` is `"[]"`.
+- `enrichEntities` — optional list of `EntityId` (uses the platform's existing polymorphic `EntityId` Jackson representation: `{entityType, id}`). If absent or empty, `tb_aclSnapshot` is `"[]"`.
 - Size limit: configurable via `server.rest.rule_engine.acl.max_entities` (default **20**). Exceeding returns `400 Bad Request`.
 
 ### Response
@@ -74,9 +73,9 @@ Unchanged from v1: `DeferredResult<ResponseEntity>` populated by the Rule Engine
 
 Two new keys, both **always written last** when building `TbMsgMetaData`, so any user-supplied value (if a caller tried to sneak them in via the payload or elsewhere) is unconditionally overwritten.
 
-### 5.1 `tb_acl`
+### 5.1 `tb_aclSnapshot`
 
-- Key constant: `TbMsgMetaData.TB_ACL_KEY = "tb_acl"`
+- Key constant: `TbMsgMetaData.TB_ACL_KEY = "tb_aclSnapshot"`
 - Value: JSON string (serialized `List<EntityAclEntry>`).
 - Order: matches the order of `enrichEntities` in the request (deterministic).
 - Duplicate `EntityId` values in `enrichEntities` produce duplicate entries in the output in the same positions; the underlying entity is loaded only once (dedup cache per request).
@@ -101,9 +100,9 @@ Two new keys, both **always written last** when building `TbMsgMetaData`, so any
 - An empty `allowed` list means either: (a) the user has no operations on this entity, (b) the entity was not found / cross-tenant / not `HasTenantId`, or (c) the `EntityType` has no `Resource` mapping. Server-side WARN logs distinguish (b) and (c) for operations debugging; rule-chain authors can treat empty as a single "no access" signal.
 - Format deliberately an array of flat objects (no compound keys like `"DEVICE:uuid"`) so it iterates naturally in JS and TBEL rule nodes.
 
-### 5.2 `tb_user_id`
+### 5.2 `tb_userId`
 
-- Key constant: `TbMsgMetaData.TB_USER_ID_KEY = "tb_user_id"`
+- Key constant: `TbMsgMetaData.TB_USER_ID_KEY = "tb_userId"`
 - Value: UUID string of the calling user (`currentUser.getId().getId().toString()`).
 - Stable across rename/email changes.
 - `tenantId` and `customerId` are already recoverable from `TbMsg` (originator, customerId), so they are not duplicated here.
@@ -144,7 +143,7 @@ This is the core deviation from the original (role-level) design in issue #15496
 ### New files
 
 - `common/data/src/main/java/org/thingsboard/server/common/data/rule/engine/EnrichedRuleEngineRequest.java`
-  - Fields: `EntityId originator`, `String messageType`, `String queueName`, `Integer timeout`, `JsonNode payload`, `List<EntityId> enrichEntities`
+  - Fields: `EntityId originator`, `String queueName`, `Integer timeout`, `JsonNode payload`, `List<EntityId> enrichEntities`
   - `@Data` + `@JsonIgnoreProperties(ignoreUnknown = true)`
 - `common/data/src/main/java/org/thingsboard/server/common/data/rule/engine/EntityAclEntry.java`
   - Fields: `EntityType entityType`, `UUID entityId`, `List<String> allowed`
@@ -154,16 +153,16 @@ This is the core deviation from the original (role-level) design in issue #15496
 ### Modified files
 
 - `common/message/.../TbMsgMetaData.java`
-  - Add `public static final String TB_ACL_KEY = "tb_acl";`
-  - Add `public static final String TB_USER_ID_KEY = "tb_user_id";`
+  - Add `public static final String TB_ACL_KEY = "tb_aclSnapshot";`
+  - Add `public static final String TB_USER_ID_KEY = "tb_userId";`
 - `application/.../controller/RuleEngineController.java`
   - `AccessControlService accessControlService` is already inherited from `BaseController`.
-  - Inject `EntityServiceRegistry entityServiceRegistry` — required to load arbitrary entities by `EntityType` (the per-entity `hasPermission` form needs the entity object, not just the id).
+  - Inject `EntityService entityService` — required to load the target entity (the per-entity `hasPermission` form needs the entity object, not just the id). The internal call `entityService.fetchEntity(tenantId, entityId)` dispatches via `EntityServiceRegistry` and returns `Optional<HasId<?>>`.
   - Add `@Value("${server.rest.rule_engine.acl.max_entities:20}") int maxAclEntities;`
-  - Add a single `POST /api/rule-engine/v2/` endpoint method `handleEnrichedRuleEngineRequest(@RequestBody EnrichedRuleEngineRequest)`.
+  - Add a single `POST /api/rule-engine/v2` endpoint method `handleEnrichedRuleEngineRequest(@RequestBody EnrichedRuleEngineRequest)`.
   - Add private helpers `buildAclMetadata(SecurityUser, List<EntityId>)` and `computeEntry(SecurityUser, EntityId)`. The latter is the per-entity computation described in §6.
-  - Method-level `@SuppressWarnings("deprecation")` with an explanatory comment is required because `TbMsg.TbMsgBuilder.type(String)` is intentionally `@Deprecated` to gate accidental misuse — but our case (accepting an arbitrary `messageType` string from the request body) is exactly the use case the method is preserved for.
-  - The flow: parse `EnrichedRuleEngineRequest` → resolve `originator` (body or current user), `messageType` (body or `REST_API_REQUEST`), `queueName` (body or null), `timeout` (body or `defaultResponseTimeout`), `payload` (body or `{}`) → validate `enrichEntities.size() ≤ maxAclEntities` → existing `AccessValidator` WRITE check on originator → inside `onSuccess()`, compute ACL via `buildAclMetadata(...)` → populate metadata in the order `serviceId, requestUUID, expirationTime, tb_user_id, tb_acl` → build `TbMsg` with `data = payloadString` and the resolved `messageType` (via `type(String)`) → call `ruleEngineCallService.processRestApiCallToRuleEngine(...)` exactly as today.
+  - The forwarded `TbMsg` type is hardcoded to `TbMsgType.REST_API_REQUEST` — matches v1 behavior across all four ruleEngine endpoints. No custom `messageType` input from the body, so the deprecated `TbMsg.TbMsgBuilder.type(String)` form is not needed.
+  - The flow: parse `EnrichedRuleEngineRequest` → resolve `originator` (body or current user), `queueName` (body or null), `timeout` (body or `defaultResponseTimeout`), `payload` (body or `{}`) → validate `enrichEntities.size() ≤ maxAclEntities` → existing `AccessValidator` WRITE check on originator → inside `onSuccess()`, compute ACL via `buildAclMetadata(...)` → populate metadata in the order `serviceId, requestUUID, expirationTime, tb_userId, tb_aclSnapshot` → build `TbMsg` with `type = TbMsgType.REST_API_REQUEST` and `data = payloadString` → call `ruleEngineCallService.processRestApiCallToRuleEngine(...)` exactly as today.
 - `application/src/main/resources/thingsboard.yml`
   - Add the `acl.max_entities` property under the existing `server.rest.rule_engine` section (where `response_timeout` already lives). The original issue placed it under a top-level `rule-engine:` section, which does not exist in `thingsboard.yml`; co-locating it with `response_timeout` matches the local convention.
 
@@ -177,8 +176,8 @@ This is the core deviation from the original (role-level) design in issue #15496
 ## 8. Flow Diagram
 
 ```
-   ┌──────┐  POST /api/rule-engine/v2/
-   │      │  { originator, messageType, queueName, timeout,
+   ┌──────┐  POST /api/rule-engine/v2
+   │      │  { originator, queueName, timeout,
    │ User │    payload, enrichEntities:[{entityType,id},...] }
    │      │─────────────────────────┐
    │      │                         │
@@ -189,7 +188,7 @@ This is the core deviation from the original (role-level) design in issue #15496
                         └───────┬──────────────┘
                                 │ 1. parse JSON → EnrichedRuleEngineRequest
                                 │    (resolve defaults: originator,
-                                │     messageType, timeout, queueName,
+                                │     timeout, queueName,
                                 │     payload null/missing → "{}")
                                 │ 2. validate size ≤ maxAclEntities
                                 │ 3. AccessValidator WRITE on originator
@@ -216,8 +215,8 @@ This is the core deviation from the original (role-level) design in issue #15496
                         │  serviceId           │
                         │  requestUUID         │
                         │  expirationTime      │
-                        │  tb_user_id ◀──────── SERVER
-                        │  tb_acl     ◀──────── OVERWRITE (always last)
+                        │  tb_userId ◀──────── SERVER
+                        │  tb_aclSnapshot     ◀──────── OVERWRITE (always last)
                         └───────┬──────────────┘
                                 │ build TbMsg(data=payload, metaData=above)
                                 ▼
@@ -231,8 +230,8 @@ This is the core deviation from the original (role-level) design in issue #15496
                         │   Rule Engine        │
                         │   rule chain         │
                         │   script/switch nodes│
-                        │   read metadata.tb_acl│
-                        │   read metadata.tb_user_id│
+                        │   read metadata.tb_aclSnapshot│
+                        │   read metadata.tb_userId│
                         │   decide: pass/block │
                         │   → REST Call Reply  │
                         └───────┬──────────────┘
@@ -257,7 +256,7 @@ This is the core deviation from the original (role-level) design in issue #15496
 ### JS script node — gate by per-entity capability
 
 ```js
-var acl = JSON.parse(metadata.tb_acl);
+var acl = JSON.parse(metadata.tb_aclSnapshot);
 
 var canWriteTargetDevice = acl.some(function(e) {
     return e.entityType === 'DEVICE'
@@ -265,7 +264,7 @@ var canWriteTargetDevice = acl.some(function(e) {
         && e.allowed.indexOf('WRITE') >= 0;
 });
 
-var userId = metadata.tb_user_id;
+var userId = metadata.tb_userId;
 metadata.auditActor = userId;
 
 return { msg: msg, metadata: metadata, msgType: canWriteTargetDevice ? 'Allowed' : 'Denied' };
@@ -274,7 +273,7 @@ return { msg: msg, metadata: metadata, msgType: canWriteTargetDevice ? 'Allowed'
 ### TBEL script node
 
 ```
-var acl = JSON.parse(metadata.tb_acl);
+var acl = JSON.parse(metadata.tb_aclSnapshot);
 var canWriteTargetDevice = false;
 foreach (e : acl) {
     if (e.entityType == "DEVICE" && e.entityId == msg.targetDeviceId
@@ -283,14 +282,14 @@ foreach (e : acl) {
         break;
     }
 }
-metadata.auditActor = metadata.tb_user_id;
+metadata.auditActor = metadata.tb_userId;
 return {msg: msg, metadata: metadata, msgType: canWriteTargetDevice ? "Allowed" : "Denied"};
 ```
 
 ### Filter pattern (entities the caller can WRITE)
 
 ```js
-var writable = JSON.parse(metadata.tb_acl)
+var writable = JSON.parse(metadata.tb_aclSnapshot)
     .filter(function(e) { return e.allowed.indexOf('WRITE') >= 0; })
     .map(function(e) { return e.entityType + ':' + e.entityId; });
 ```
@@ -312,14 +311,14 @@ var writable = JSON.parse(metadata.tb_acl)
 
 ## 11. Security Considerations
 
-- **Immutable server fields.** `tb_acl` and `tb_user_id` are written by the controller after all other metadata population, so any caller-supplied value of the same key is overwritten. `TbMsgMetaData.putValue(...)` is replace semantics — no array/append path.
+- **Immutable server fields.** `tb_aclSnapshot` and `tb_userId` are written by the controller after all other metadata population, so any caller-supplied value of the same key is overwritten. `TbMsgMetaData.putValue(...)` is replace semantics — no array/append path.
 - **No privilege escalation.** The ACL snapshot reports *only* what the user already has on each specific entity. It can never grant more than the user can do directly.
-- **Information disclosure.** The snapshot tells the rule chain (which the user cannot read directly) what the caller is allowed to do on each listed entity. Since the caller supplied the list and the data is about themselves, this is not a new information leak.
+- **Information disclosure.** The snapshot tells the rule chain (which the user cannot read directly) what the caller is allowed to do on each listed entity. Since the caller supplied the list and the data is about themselves, this is not a new information leak. The response shape for an entity the caller cannot READ is **indistinguishable** from the shape for a nonexistent entity — both produce `{entityType, entityId, allowed: []}` — so the endpoint cannot be used as an existence probe for tenant-scoped entities outside the caller's access scope.
 - **DoS vector.** Bounded by:
   - up to `max-entities` entity loads from the DAO (≤20 SELECT statements per request — many DAOs have L2 cache, so repeated lookups within a session are essentially free);
   - `max-entities × Operation.values().length` in-memory permission checks (≤20 × 18 = 360 checks worst case).
   Dedup cache (§6) collapses repeated ids in a single request to one load + one check set.
-- **Audit.** `tb_user_id` inside rule chains lets authors emit richer audit events that today's `REST_API_RULE_ENGINE_CALL` audit log does not propagate.
+- **Audit.** `tb_userId` inside rule chains lets authors emit richer audit events that today's `REST_API_RULE_ENGINE_CALL` audit log does not propagate.
 
 ## 12. Test Plan
 
@@ -327,17 +326,17 @@ var writable = JSON.parse(metadata.tb_acl)
 
 All tests in `RuleEngineControllerV2Test`, `@DaoSqlTest`, extending `AbstractControllerTest`, with `@SpyBean RuleEngineCallService` to capture the forwarded `TbMsg`.
 
-- Tenant admin + own DEVICE → `allowed` contains at least READ/WRITE/DELETE/WRITE_TELEMETRY; `tb_user_id` equals caller UUID.
+- Tenant admin + own DEVICE → `allowed` contains at least READ/WRITE/DELETE/WRITE_TELEMETRY; `tb_userId` equals caller UUID.
 - Customer user + DEVICE assigned to the user's customer → `allowed` contains the customer-grade operations (WRITE, READ_TELEMETRY, etc.).
 - Customer user + DEVICE assigned to a DIFFERENT customer → `allowed` does not contain WRITE/READ/READ_TELEMETRY (per-entity check correctly denies). Note: the platform allows `CLAIM_DEVICES` on any tenant device by design — that is expected to be present.
 - Two-customer cross-scenario: deviceA on customer1, deviceB on customer2; customer1 user sees WRITE on A and not on B; customer2 user sees the inverse.
-- Empty or null `enrichEntities` → `tb_acl = "[]"`; `tb_user_id` still present.
+- Empty or null `enrichEntities` → `tb_aclSnapshot = "[]"`; `tb_userId` still present.
 - Duplicate ids in `enrichEntities` → output preserves order and multiplicity.
 - `enrichEntities.size() > max` → HTTP 400.
 - `RULE_NODE` (no `Resource` mapping) → entry with `allowed=[]`, no error.
 - Nonexistent UUID for a valid `EntityType` → entry with `allowed=[]`, no error.
-- Caller embeds `{"tb_acl": "attack", "tb_user_id": "intruder"}` in `payload` → forwarded metadata keeps server-computed values; the caller's keys never reach the rule engine.
-- Body `messageType=...` and `timeout=...` → forwarded `TbMsg.type` and `expirationTime` reflect the body values.
+- Caller embeds `{"tb_aclSnapshot": "attack", "tb_userId": "intruder"}` in `payload` → forwarded metadata keeps server-computed values; the caller's keys never reach the rule engine.
+- Body `timeout=...` → forwarded `expirationTime` reflects the body value; `TbMsg.type` is always `REST_API_REQUEST` (matches v1).
 - Null/missing `payload` → forwarded `TbMsg.data` is `"{}"`.
 - v1 endpoints regression suite (`RuleEngineControllerTest`) continues to pass.
 
@@ -345,6 +344,7 @@ All tests in `RuleEngineControllerV2Test`, `@DaoSqlTest`, extending `AbstractCon
 
 - **Extending enrichment to other controllers that push to the Rule Engine** (e.g., `TelemetryController`, `RpcController`). They have the same "message in RE has no user context" gap. Each would be its own additive v2 endpoint. If/when we need this in more than one controller, it would also motivate extracting `buildAclMetadata` / `computeEntry` into a shared `AclEnrichmentService` (Variant B from the original design — deferred until a real second caller exists).
 - **Additional enriched fields** (e.g., `tb_user_email`, `tb_user_authority`) if rule-chain authors ask for them. Each is a small additive change. We avoid speculative addition — extra fields mean larger metadata and more invariants to keep stable across renames.
+- **Batched / parallel entity load.** `buildAclMetadata` currently calls `entityService.fetchEntity(...)` sequentially on the validation-callback thread. With `max-entities=20` the worst case is 20 sequential DAO reads before the message is forwarded; many entity DAOs use L2 cache so warm-path cost is much lower. A batch API returning the `TenantEntity`-typed objects required by the per-entity `hasPermission` form (today's `fetchEntityInfos` returns `EntityInfo` only, which is insufficient) would let us collapse this to a single round trip. Deferred until the bound becomes a measured problem.
 
 ## 14. Open Questions
 
@@ -356,13 +356,13 @@ None at approval time.
 
 1. Start ThingsBoard locally (Postgres + core + rule-engine node).
 2. Log in as Tenant Admin. Create a simple rule chain:
-   - **Script** node reading `metadata.tb_acl` and setting `msgType` to `Allowed` or `Denied`.
+   - **Script** node reading `metadata.tb_aclSnapshot` and setting `msgType` to `Allowed` or `Denied`.
    - **REST Call Reply** node.
 3. Set this rule chain as root (or route via `queueName`).
 4. Call:
 
    ```bash
-   curl -X POST http://localhost:8080/api/rule-engine/v2/ \
+   curl -X POST http://localhost:8080/api/rule-engine/v2 \
      -H "Content-Type: application/json" \
      -H "X-Authorization: Bearer $JWT" \
      -d '{
@@ -374,4 +374,4 @@ None at approval time.
    ```
 
 5. Expected: HTTP 200 with body `{"msgType":"Allowed"}` (tenant admin) or `{"msgType":"Denied"}` (customer user without per-entity access).
-6. In Rule Chain debug mode, inspect the incoming `TbMsg` — `metadata.tb_acl` and `metadata.tb_user_id` are present and authoritative.
+6. In Rule Chain debug mode, inspect the incoming `TbMsg` — `metadata.tb_aclSnapshot` and `metadata.tb_userId` are present and authoritative.

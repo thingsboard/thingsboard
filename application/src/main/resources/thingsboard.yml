@@ -117,6 +117,8 @@ server:
       response_timeout: "${DEFAULT_RULE_ENGINE_RESPONSE_TIMEOUT:10000}"
       acl:
         # Maximum number of entities accepted in /api/rule-engine/v2 enrichEntities. Bounds DB load and permission checks per request.
+        # Note: setting this to 0 rejects any non-empty enrichEntities with HTTP 400 — it does NOT mean unlimited.
+        # Requests that omit enrichEntities (or pass an empty array) are always accepted, regardless of this value.
         max_entities: "${RULE_ENGINE_ACL_MAX_ENTITIES:20}"
 
 # Application info parameters
