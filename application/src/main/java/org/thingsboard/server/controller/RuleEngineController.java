@@ -63,6 +63,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
@@ -100,9 +101,9 @@ public class RuleEngineController extends BaseController {
      * Maximum number of entities accepted for ACL enrichment in a single
      * {@code /api/rule-engine/v2} request. Each entity triggers N permission checks
      * (one per {@link Operation} value), so the bound prevents excessive work per call.
-     * Set to 0 to disable the bound entirely.
+     * Set to 0 to disable the bound entirely (no upper limit).
      */
-    @Value("${rule-engine.acl.max-entities:20}")
+    @Value("${rule_engine.acl.max_entities:20}")
     private int maxAclEntities;
 
     @Autowired
@@ -128,7 +129,10 @@ public class RuleEngineController extends BaseController {
         EntityId originator = request.getOriginator();
         String entityTypeStr = originator != null ? originator.getEntityType().name() : null;
         String entityIdStr = originator != null ? originator.getId().toString() : null;
-        return handleRuleEngineRequest(entityTypeStr, entityIdStr, timeout, JacksonUtil.toString(request.getPayload()), request.getQueueName(), request.getAclEntities());
+        // Always non-null on the v2 path so the shared helper writes the server-authoritative
+        // tb_user_id / tb_acl_snapshot metadata keys. v1 wrappers pass null and skip those writes.
+        List<EntityId> aclEntities = request.getAclEntities() != null ? request.getAclEntities() : List.of();
+        return handleRuleEngineRequest(entityTypeStr, entityIdStr, timeout, JacksonUtil.toString(request.getPayload()), request.getQueueName(), aclEntities);
     }
 
     @ApiOperation(value = "Push user message to the rule engine (handleRuleEngineRequestForUser)",
@@ -253,9 +257,11 @@ public class RuleEngineController extends BaseController {
                     metaData.put("serviceId", serviceInfoProvider.getServiceId());
                     metaData.put("requestUUID", requestId.toString());
                     metaData.put("expirationTime", Long.toString(expTime));
-                    // Server-authoritative keys — written last so any caller value is overwritten.
-                    metaData.put(TbMsgMetaData.TB_USER_ID_KEY, currentUser.getId().getId().toString());
-                    metaData.put(TbMsgMetaData.TB_ACL_KEY, buildAclSnapshot(currentUser, aclEntities));
+                    if (aclEntities != null) {
+                        // v2 path: server-authoritative keys written last so any caller value is overwritten.
+                        metaData.put(TbMsgMetaData.TB_USER_ID_KEY, currentUser.getId().getId().toString());
+                        metaData.put(TbMsgMetaData.TB_ACL_SNAPSHOT_KEY, buildAclSnapshot(currentUser, aclEntities));
+                    }
 
                     TbMsg msg = TbMsg.newMsg()
                             .queueName(queueName)
@@ -289,53 +295,67 @@ public class RuleEngineController extends BaseController {
 
     /**
      * Computes the ACL snapshot for the requested entities under the given user.
-     * For each entity, the target is loaded via
+     * Repeated {@link EntityId} values are deduplicated via a per-request cache so the
+     * DB fetch and the per-operation permission probes happen once per unique id; the
+     * output list preserves duplicates and input order.
+     *
+     * <p>For each unique entity, the target is loaded via
      * {@link EntityService#fetchEntity(org.thingsboard.server.common.data.id.TenantId, EntityId)},
      * the target {@link Resource} is resolved via {@link Resource#of(org.thingsboard.server.common.data.EntityType)},
      * then every {@link Operation} value is probed via
      * {@link org.thingsboard.server.service.security.permission.AccessControlService#hasPermission(SecurityUser, Resource, Operation, EntityId, HasTenantId)}
      * so that ownership, customer hierarchy, and group membership of the specific
      * instance are taken into account. Operations returning {@code true} are accumulated
-     * into the entry. Entries with unmapped EntityTypes, missing entities, or entities
-     * that are not {@link HasTenantId} produce {@code allowed=[]}.
+     * into the entry. Entries with unmapped EntityTypes, missing entities, entities
+     * whose type has no registered {@link org.thingsboard.server.dao.entity.EntityDaoService},
+     * or entities that are not {@link HasTenantId} produce {@code allowed=[]}.
      *
      * <p>Note: a {@code SYS_ADMIN} caller operates against the system tenant, so tenant-scoped
      * entities (DEVICE, ASSET, ...) won't be resolved by the tenant-filtered lookup and the
      * entry resolves to {@code allowed=[]} — ACL enrichment is effectively a no-op for SYS_ADMIN.
      *
-     * @return serialized JSON array suitable for writing into {@link TbMsgMetaData#TB_ACL_KEY}.
+     * @return serialized JSON array suitable for writing into {@link TbMsgMetaData#TB_ACL_SNAPSHOT_KEY}.
      */
-    String buildAclSnapshot(SecurityUser user, List<EntityId> entities) {
+    private String buildAclSnapshot(SecurityUser user, List<EntityId> entities) {
         if (entities == null || entities.isEmpty()) {
             return "[]";
         }
+        Map<EntityId, EntityAclEntry> cache = new HashMap<>();
         List<EntityAclEntry> result = new ArrayList<>(entities.size());
         for (EntityId entityId : entities) {
-            Set<String> allowed = new LinkedHashSet<>();
-            Resource resource;
-            try {
-                resource = Resource.of(entityId.getEntityType());
-            } catch (IllegalArgumentException e) {
-                result.add(new EntityAclEntry(entityId, allowed));
-                continue;
-            }
-            HasId<?> entity = entityService.fetchEntity(user.getTenantId(), entityId).orElse(null);
-            if (!(entity instanceof HasTenantId tenantEntity)) {
-                result.add(new EntityAclEntry(entityId, allowed));
-                continue;
-            }
-            for (Operation op : EnumSet.allOf(Operation.class)) {
-                try {
-                    if (accessControlService.hasPermission(user, resource, op, entityId, tenantEntity)) {
-                        allowed.add(op.name());
-                    }
-                } catch (ThingsboardException e) {
-                    log.debug("[{}] ACL probe failed for {} {}: {}", user.getId(), op, entityId, e.getMessage());
-                }
-            }
-            result.add(new EntityAclEntry(entityId, allowed));
+            result.add(cache.computeIfAbsent(entityId, eid -> computeAclEntry(user, eid)));
         }
         return JacksonUtil.toString(result);
+    }
+
+    private EntityAclEntry computeAclEntry(SecurityUser user, EntityId entityId) {
+        Set<String> allowed = new LinkedHashSet<>();
+        Resource resource;
+        try {
+            resource = Resource.of(entityId.getEntityType());
+        } catch (IllegalArgumentException e) {
+            return new EntityAclEntry(entityId, allowed);
+        }
+        HasId<?> entity;
+        try {
+            entity = entityService.fetchEntity(user.getTenantId(), entityId).orElse(null);
+        } catch (IllegalArgumentException e) {
+            // EntityType has no registered EntityDaoService — treat as missing entity.
+            return new EntityAclEntry(entityId, allowed);
+        }
+        if (!(entity instanceof HasTenantId tenantEntity)) {
+            return new EntityAclEntry(entityId, allowed);
+        }
+        for (Operation op : EnumSet.allOf(Operation.class)) {
+            try {
+                if (accessControlService.hasPermission(user, resource, op, entityId, tenantEntity)) {
+                    allowed.add(op.name());
+                }
+            } catch (ThingsboardException e) {
+                log.debug("[{}] ACL probe failed for {} {}: {}", user.getId(), op, entityId, e.getMessage());
+            }
+        }
+        return new EntityAclEntry(entityId, allowed);
     }
 
     private void reply(LocalRequestMetaData rpcRequest, TbMsg response) {

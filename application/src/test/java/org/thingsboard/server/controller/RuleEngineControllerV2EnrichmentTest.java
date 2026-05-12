@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
@@ -32,6 +33,7 @@ import org.thingsboard.server.common.data.rule.engine.EntityAclEntry;
 import org.thingsboard.server.common.data.rule.engine.RuleEngineV2Request;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.service.ruleengine.RuleEngineCallService;
 
@@ -46,17 +48,23 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
+@TestPropertySource(properties = "rule_engine.acl.max_entities=5")
 public class RuleEngineControllerV2EnrichmentTest extends AbstractControllerTest {
 
+    private static final int MAX_ACL_ENTITIES = 5;
     private static final String URL = "/api/rule-engine/v2";
     private static final String RESPONSE_BODY = "{\"response\":\"ok\"}";
 
     @SpyBean
     private RuleEngineCallService ruleEngineCallService;
+
+    @SpyBean
+    private EntityService entityService;
 
     @Test
     public void testV2TenantAdminGetsFullAclOnOwnDevice() throws Exception {
@@ -152,20 +160,33 @@ public class RuleEngineControllerV2EnrichmentTest extends AbstractControllerTest
     }
 
     @Test
-    public void testV2EmptyAclEntitiesProducesEmptyAcl() throws Exception {
+    public void testV2NullAclEntitiesProducesEmptyAcl() throws Exception {
         loginTenantAdmin();
 
         RuleEngineV2Request request = baseRequest();
         // aclEntities left null
         TbMsg captured = doRequestAndCapture(request, tenantId);
 
-        assertThat(captured.getMetaData().getValue(TbMsgMetaData.TB_ACL_KEY)).isEqualTo("[]");
+        assertThat(captured.getMetaData().getValue(TbMsgMetaData.TB_ACL_SNAPSHOT_KEY)).isEqualTo("[]");
         assertThat(captured.getMetaData().getValue(TbMsgMetaData.TB_USER_ID_KEY))
                 .isEqualTo(tenantAdminUserId.getId().toString());
     }
 
     @Test
-    public void testV2DuplicateEntitiesPreservedInOutput() throws Exception {
+    public void testV2EmptyAclEntitiesListProducesEmptyAcl() throws Exception {
+        loginTenantAdmin();
+
+        RuleEngineV2Request request = baseRequest();
+        request.setAclEntities(List.of());
+        TbMsg captured = doRequestAndCapture(request, tenantId);
+
+        assertThat(captured.getMetaData().getValue(TbMsgMetaData.TB_ACL_SNAPSHOT_KEY)).isEqualTo("[]");
+        assertThat(captured.getMetaData().getValue(TbMsgMetaData.TB_USER_ID_KEY))
+                .isEqualTo(tenantAdminUserId.getId().toString());
+    }
+
+    @Test
+    public void testV2DuplicateEntitiesPreservedInOutputAndDedupedInWork() throws Exception {
         loginTenantAdmin();
         Device device = createDevice("dev-dup", "tok-dup");
         Device other = createDevice("dev-other", "tok-other");
@@ -180,13 +201,18 @@ public class RuleEngineControllerV2EnrichmentTest extends AbstractControllerTest
         assertThat(acl.get(0).getEntityId()).isEqualTo(device.getId());
         assertThat(acl.get(1).getEntityId()).isEqualTo(device.getId());
         assertThat(acl.get(2).getEntityId()).isEqualTo(other.getId());
+
+        // Dedup: the duplicated id triggers one fetchEntity, not two.
+        verify(entityService, times(1)).fetchEntity(eq(tenantId), eq(device.getId()));
+        verify(entityService, times(1)).fetchEntity(eq(tenantId), eq(other.getId()));
     }
 
     @Test
     public void testV2RejectsRequestExceedingMaxEntities() throws Exception {
         loginTenantAdmin();
+        // bound is set via @TestPropertySource — test is independent of production default.
         List<EntityId> tooMany = new ArrayList<>();
-        for (int i = 0; i < 21; i++) {
+        for (int i = 0; i < MAX_ACL_ENTITIES + 1; i++) {
             tooMany.add(new DeviceId(UUID.randomUUID()));
         }
 
@@ -235,14 +261,14 @@ public class RuleEngineControllerV2EnrichmentTest extends AbstractControllerTest
         Device device = createDevice("dev-inj", "tok-inj");
 
         RuleEngineV2Request request = baseRequest();
-        request.setPayload(JacksonUtil.toJsonNode("{\"" + TbMsgMetaData.TB_ACL_KEY + "\":\"attack\",\"" +
+        request.setPayload(JacksonUtil.toJsonNode("{\"" + TbMsgMetaData.TB_ACL_SNAPSHOT_KEY + "\":\"attack\",\"" +
                 TbMsgMetaData.TB_USER_ID_KEY + "\":\"intruder\"}"));
         request.setAclEntities(List.of(device.getId()));
 
         TbMsg captured = doRequestAndCapture(request, tenantId);
 
         // Server-computed values, not the attacker's.
-        assertThat(captured.getMetaData().getValue(TbMsgMetaData.TB_ACL_KEY)).contains("\"entityType\":\"DEVICE\"");
+        assertThat(captured.getMetaData().getValue(TbMsgMetaData.TB_ACL_SNAPSHOT_KEY)).contains("\"entityType\":\"DEVICE\"");
         assertThat(captured.getMetaData().getValue(TbMsgMetaData.TB_USER_ID_KEY))
                 .isEqualTo(tenantAdminUserId.getId().toString());
     }
@@ -298,7 +324,7 @@ public class RuleEngineControllerV2EnrichmentTest extends AbstractControllerTest
     }
 
     private List<EntityAclEntry> parseAcl(TbMsg msg) {
-        String acl = msg.getMetaData().getValue(TbMsgMetaData.TB_ACL_KEY);
+        String acl = msg.getMetaData().getValue(TbMsgMetaData.TB_ACL_SNAPSHOT_KEY);
         return JacksonUtil.fromString(acl, new TypeReference<List<EntityAclEntry>>() {
         });
     }
