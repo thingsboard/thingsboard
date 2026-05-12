@@ -185,6 +185,7 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainData;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
+import org.thingsboard.server.common.data.rule.engine.RuleEngineV2Request;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.data.security.model.JwtPair;
@@ -4361,6 +4362,15 @@ public class RestClient implements Closeable {
                 entityId.getId(),
                 queueName,
                 timeout).getBody();
+    }
+
+    public JsonNode handleRuleEngineRequestV2(RuleEngineV2Request request) {
+        return restTemplate.exchange(
+                baseURL + "/api/rule-engine/v2",
+                HttpMethod.POST,
+                new HttpEntity<>(request),
+                new ParameterizedTypeReference<JsonNode>() {
+                }).getBody();
     }
 
     public CalculatedField saveCalculatedField(CalculatedField calculatedField) {
