@@ -242,7 +242,7 @@ queue:
     acks: "${TB_KAFKA_ACKS:all}"
     # Number of retries. Resend any record whose send fails with a potentially transient error
     retries: "${TB_KAFKA_RETRIES:1}"
-    compression.type: "${TB_KAFKA_COMPRESSION_TYPE:none}" # none or gzip
+    compression.type: "${TB_KAFKA_COMPRESSION_TYPE:none}" # none, gzip or lz4
     # Default batch size. This setting gives the upper bound of the batch size to be sent
     batch.size: "${TB_KAFKA_BATCH_SIZE:16384}"
     # This variable creates a small amount of artificial delay—that is, rather than immediately sending out a record
