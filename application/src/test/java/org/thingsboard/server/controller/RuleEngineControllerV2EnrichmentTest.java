@@ -28,8 +28,8 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
-import org.thingsboard.server.common.data.rule.engine.EnrichedRuleEngineRequest;
 import org.thingsboard.server.common.data.rule.engine.EntityAclEntry;
+import org.thingsboard.server.common.data.rule.engine.RuleEngineV2Request;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.service.DaoSqlTest;
@@ -50,7 +50,7 @@ import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
-public class RuleEngineControllerV2Test extends AbstractControllerTest {
+public class RuleEngineControllerV2EnrichmentTest extends AbstractControllerTest {
 
     private static final String URL = "/api/rule-engine/v2";
     private static final String RESPONSE_BODY = "{\"response\":\"ok\"}";
@@ -63,8 +63,8 @@ public class RuleEngineControllerV2Test extends AbstractControllerTest {
         loginTenantAdmin();
         Device device = createDevice("dev-tenant", "tok-1");
 
-        EnrichedRuleEngineRequest request = baseRequest();
-        request.setEnrichEntities(List.of(device.getId()));
+        RuleEngineV2Request request = baseRequest();
+        request.setAclEntities(List.of(device.getId()));
 
         TbMsg captured = doRequestAndCapture(request, tenantId);
 
@@ -72,8 +72,8 @@ public class RuleEngineControllerV2Test extends AbstractControllerTest {
                 .isEqualTo(tenantAdminUserId.getId().toString());
         List<EntityAclEntry> acl = parseAcl(captured);
         assertThat(acl).hasSize(1);
-        assertThat(acl.get(0).getEntityId()).isEqualTo(device.getId().getId());
-        assertThat(acl.get(0).getEntityType()).isEqualTo(EntityType.DEVICE);
+        assertThat(acl.get(0).getEntityId()).isEqualTo(device.getId());
+        assertThat(acl.get(0).getEntityId().getEntityType()).isEqualTo(EntityType.DEVICE);
         assertThat(acl.get(0).getAllowed()).contains("READ", "WRITE", "DELETE", "WRITE_TELEMETRY");
     }
 
@@ -84,8 +84,8 @@ public class RuleEngineControllerV2Test extends AbstractControllerTest {
         assignDeviceToCustomer(device.getId(), customerId);
         loginCustomerUser();
 
-        EnrichedRuleEngineRequest request = baseRequest();
-        request.setEnrichEntities(List.of(device.getId()));
+        RuleEngineV2Request request = baseRequest();
+        request.setAclEntities(List.of(device.getId()));
 
         TbMsg captured = doRequestAndCapture(request, tenantId);
 
@@ -102,14 +102,14 @@ public class RuleEngineControllerV2Test extends AbstractControllerTest {
         assignDeviceToCustomer(foreignDevice.getId(), differentCustomerId);
         loginCustomerUser();
 
-        EnrichedRuleEngineRequest request = baseRequest();
-        request.setEnrichEntities(List.of(foreignDevice.getId()));
+        RuleEngineV2Request request = baseRequest();
+        request.setAclEntities(List.of(foreignDevice.getId()));
 
         TbMsg captured = doRequestAndCapture(request, tenantId);
 
         List<EntityAclEntry> acl = parseAcl(captured);
         assertThat(acl).hasSize(1);
-        assertThat(acl.get(0).getEntityId()).isEqualTo(foreignDevice.getId().getId());
+        assertThat(acl.get(0).getEntityId()).isEqualTo(foreignDevice.getId());
         // Platform allows CLAIM_DEVICES on any tenant device by design; everything else must be denied.
         assertThat(acl.get(0).getAllowed())
                 .doesNotContain("READ", "WRITE", "READ_TELEMETRY", "WRITE_TELEMETRY",
@@ -127,36 +127,36 @@ public class RuleEngineControllerV2Test extends AbstractControllerTest {
 
         // Customer 1 (own A, foreign B)
         loginCustomerUser();
-        EnrichedRuleEngineRequest req1 = baseRequest();
-        req1.setEnrichEntities(List.of(deviceA.getId(), deviceB.getId()));
+        RuleEngineV2Request req1 = baseRequest();
+        req1.setAclEntities(List.of(deviceA.getId(), deviceB.getId()));
         TbMsg captured1 = doRequestAndCapture(req1, tenantId);
         List<EntityAclEntry> acl1 = parseAcl(captured1);
         assertThat(acl1).hasSize(2);
-        assertThat(acl1.get(0).getEntityId()).isEqualTo(deviceA.getId().getId());
+        assertThat(acl1.get(0).getEntityId()).isEqualTo(deviceA.getId());
         assertThat(acl1.get(0).getAllowed()).contains("WRITE", "READ_TELEMETRY");
-        assertThat(acl1.get(1).getEntityId()).isEqualTo(deviceB.getId().getId());
+        assertThat(acl1.get(1).getEntityId()).isEqualTo(deviceB.getId());
         assertThat(acl1.get(1).getAllowed()).doesNotContain("WRITE", "READ", "READ_TELEMETRY");
 
         // Customer 2 (foreign A, own B). loginDifferentCustomer() helper has a bug on its
         // second invocation (uses the wrong password constant), so we log in directly.
         login(DIFFERENT_CUSTOMER_USER_EMAIL, "diffcustomer");
-        EnrichedRuleEngineRequest req2 = baseRequest();
-        req2.setEnrichEntities(List.of(deviceA.getId(), deviceB.getId()));
+        RuleEngineV2Request req2 = baseRequest();
+        req2.setAclEntities(List.of(deviceA.getId(), deviceB.getId()));
         TbMsg captured2 = doRequestAndCapture(req2, tenantId);
         List<EntityAclEntry> acl2 = parseAcl(captured2);
         assertThat(acl2).hasSize(2);
-        assertThat(acl2.get(0).getEntityId()).isEqualTo(deviceA.getId().getId());
+        assertThat(acl2.get(0).getEntityId()).isEqualTo(deviceA.getId());
         assertThat(acl2.get(0).getAllowed()).doesNotContain("WRITE", "READ", "READ_TELEMETRY");
-        assertThat(acl2.get(1).getEntityId()).isEqualTo(deviceB.getId().getId());
+        assertThat(acl2.get(1).getEntityId()).isEqualTo(deviceB.getId());
         assertThat(acl2.get(1).getAllowed()).contains("WRITE", "READ_TELEMETRY");
     }
 
     @Test
-    public void testV2EmptyEnrichEntitiesProducesEmptyAcl() throws Exception {
+    public void testV2EmptyAclEntitiesProducesEmptyAcl() throws Exception {
         loginTenantAdmin();
 
-        EnrichedRuleEngineRequest request = baseRequest();
-        // enrichEntities left null
+        RuleEngineV2Request request = baseRequest();
+        // aclEntities left null
         TbMsg captured = doRequestAndCapture(request, tenantId);
 
         assertThat(captured.getMetaData().getValue(TbMsgMetaData.TB_ACL_KEY)).isEqualTo("[]");
@@ -170,16 +170,16 @@ public class RuleEngineControllerV2Test extends AbstractControllerTest {
         Device device = createDevice("dev-dup", "tok-dup");
         Device other = createDevice("dev-other", "tok-other");
 
-        EnrichedRuleEngineRequest request = baseRequest();
-        request.setEnrichEntities(List.of(device.getId(), device.getId(), other.getId()));
+        RuleEngineV2Request request = baseRequest();
+        request.setAclEntities(List.of(device.getId(), device.getId(), other.getId()));
 
         TbMsg captured = doRequestAndCapture(request, tenantId);
 
         List<EntityAclEntry> acl = parseAcl(captured);
         assertThat(acl).hasSize(3);
-        assertThat(acl.get(0).getEntityId()).isEqualTo(device.getId().getId());
-        assertThat(acl.get(1).getEntityId()).isEqualTo(device.getId().getId());
-        assertThat(acl.get(2).getEntityId()).isEqualTo(other.getId().getId());
+        assertThat(acl.get(0).getEntityId()).isEqualTo(device.getId());
+        assertThat(acl.get(1).getEntityId()).isEqualTo(device.getId());
+        assertThat(acl.get(2).getEntityId()).isEqualTo(other.getId());
     }
 
     @Test
@@ -190,8 +190,8 @@ public class RuleEngineControllerV2Test extends AbstractControllerTest {
             tooMany.add(new DeviceId(UUID.randomUUID()));
         }
 
-        EnrichedRuleEngineRequest request = baseRequest();
-        request.setEnrichEntities(tooMany);
+        RuleEngineV2Request request = baseRequest();
+        request.setAclEntities(tooMany);
 
         doPost(URL, request).andExpect(status().isBadRequest());
     }
@@ -199,17 +199,17 @@ public class RuleEngineControllerV2Test extends AbstractControllerTest {
     @Test
     public void testV2UnmappedEntityTypeProducesEmptyAcl() throws Exception {
         loginTenantAdmin();
-        // RULE_NODE has no Resource mapping — Resource.of throws, allowed=[].
+        // RULE_NODE has no Resource mapping — Resource.of throws, entry resolves to allowed=[].
         RuleNodeId fakeRuleNode = new RuleNodeId(UUID.randomUUID());
 
-        EnrichedRuleEngineRequest request = baseRequest();
-        request.setEnrichEntities(List.of(fakeRuleNode));
+        RuleEngineV2Request request = baseRequest();
+        request.setAclEntities(List.of(fakeRuleNode));
 
         TbMsg captured = doRequestAndCapture(request, tenantId);
 
         List<EntityAclEntry> acl = parseAcl(captured);
         assertThat(acl).hasSize(1);
-        assertThat(acl.get(0).getEntityType()).isEqualTo(EntityType.RULE_NODE);
+        assertThat(acl.get(0).getEntityId().getEntityType()).isEqualTo(EntityType.RULE_NODE);
         assertThat(acl.get(0).getAllowed()).isEmpty();
     }
 
@@ -218,14 +218,14 @@ public class RuleEngineControllerV2Test extends AbstractControllerTest {
         loginTenantAdmin();
         DeviceId ghost = new DeviceId(UUID.randomUUID());
 
-        EnrichedRuleEngineRequest request = baseRequest();
-        request.setEnrichEntities(List.of(ghost));
+        RuleEngineV2Request request = baseRequest();
+        request.setAclEntities(List.of(ghost));
 
         TbMsg captured = doRequestAndCapture(request, tenantId);
 
         List<EntityAclEntry> acl = parseAcl(captured);
         assertThat(acl).hasSize(1);
-        assertThat(acl.get(0).getEntityId()).isEqualTo(ghost.getId());
+        assertThat(acl.get(0).getEntityId()).isEqualTo(ghost);
         assertThat(acl.get(0).getAllowed()).isEmpty();
     }
 
@@ -234,10 +234,10 @@ public class RuleEngineControllerV2Test extends AbstractControllerTest {
         loginTenantAdmin();
         Device device = createDevice("dev-inj", "tok-inj");
 
-        EnrichedRuleEngineRequest request = baseRequest();
+        RuleEngineV2Request request = baseRequest();
         request.setPayload(JacksonUtil.toJsonNode("{\"" + TbMsgMetaData.TB_ACL_KEY + "\":\"attack\",\"" +
                 TbMsgMetaData.TB_USER_ID_KEY + "\":\"intruder\"}"));
-        request.setEnrichEntities(List.of(device.getId()));
+        request.setAclEntities(List.of(device.getId()));
 
         TbMsg captured = doRequestAndCapture(request, tenantId);
 
@@ -248,21 +248,19 @@ public class RuleEngineControllerV2Test extends AbstractControllerTest {
     }
 
     @Test
-    public void testV2NullPayloadBecomesEmptyJsonObject() throws Exception {
+    public void testV2RequiresPayload() throws Exception {
         loginTenantAdmin();
-        EnrichedRuleEngineRequest request = new EnrichedRuleEngineRequest();
-        // payload deliberately not set — exercises the documented null/missing → "{}" path.
+        RuleEngineV2Request request = new RuleEngineV2Request();
+        // payload deliberately not set — the v2 contract now requires it.
 
-        TbMsg captured = doRequestAndCapture(request, tenantId);
-
-        assertThat(captured.getData()).isEqualTo("{}");
+        doPost(URL, request).andExpect(status().isBadRequest());
     }
 
     @Test
     public void testV2ForwardsRestApiRequestTypeAndHonorsBodyTimeout() throws Exception {
         loginTenantAdmin();
 
-        EnrichedRuleEngineRequest request = baseRequest();
+        RuleEngineV2Request request = baseRequest();
         request.setTimeout(2000);
 
         long beforeMs = System.currentTimeMillis();
@@ -274,13 +272,13 @@ public class RuleEngineControllerV2Test extends AbstractControllerTest {
         assertThat(expirationTime).isBetween(beforeMs + 2000, afterMs + 2000);
     }
 
-    private EnrichedRuleEngineRequest baseRequest() {
-        EnrichedRuleEngineRequest request = new EnrichedRuleEngineRequest();
+    private RuleEngineV2Request baseRequest() {
+        RuleEngineV2Request request = new RuleEngineV2Request();
         request.setPayload(JacksonUtil.toJsonNode("{\"k\":\"v\"}"));
         return request;
     }
 
-    private TbMsg doRequestAndCapture(EnrichedRuleEngineRequest request, TenantId expectedTenantId) throws Exception {
+    private TbMsg doRequestAndCapture(RuleEngineV2Request request, TenantId expectedTenantId) throws Exception {
         TbMsg responseMsg = TbMsg.newMsg()
                 .type(TbMsgType.REST_API_REQUEST)
                 .originator(currentUserId)
