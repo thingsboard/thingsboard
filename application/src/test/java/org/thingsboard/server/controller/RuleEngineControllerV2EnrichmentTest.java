@@ -145,9 +145,8 @@ public class RuleEngineControllerV2EnrichmentTest extends AbstractControllerTest
         assertThat(acl1.get(1).getEntityId()).isEqualTo(deviceB.getId());
         assertThat(acl1.get(1).getAllowed()).doesNotContain("WRITE", "READ", "READ_TELEMETRY");
 
-        // Customer 2 (foreign A, own B). loginDifferentCustomer() helper has a bug on its
-        // second invocation (uses the wrong password constant), so we log in directly.
-        login(DIFFERENT_CUSTOMER_USER_EMAIL, "diffcustomer");
+        // Customer 2 (foreign A, own B).
+        loginDifferentCustomer();
         RuleEngineV2Request req2 = baseRequest();
         req2.setAclEntities(List.of(deviceA.getId(), deviceB.getId()));
         TbMsg captured2 = doRequestAndCapture(req2, tenantId);
