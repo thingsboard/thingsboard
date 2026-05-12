@@ -1186,6 +1186,10 @@ public class TbUtils {
         return BigDecimal.valueOf(value).setScale(0, RoundingMode.HALF_UP).intValue();
     }
 
+    public static long toLong(double value) {
+        return BigDecimal.valueOf(value).setScale(0, RoundingMode.HALF_UP).longValue();
+    }
+
     public static boolean isNaN(double value) {
         return Double.isNaN(value);
     }
