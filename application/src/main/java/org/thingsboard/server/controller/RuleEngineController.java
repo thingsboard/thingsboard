@@ -132,7 +132,8 @@ public class RuleEngineController extends BaseController {
     }
 
     @ApiOperation(value = "Push user message to the rule engine (handleRuleEngineRequestForUser)",
-            notes = MSG_DESCRIPTION_PREFIX +
+            notes = "Deprecated since 4.3. Prefer `POST /api/rule-engine/v2` which accepts all routing parameters in the request body and supports optional ACL enrichment.\n\n" +
+                    MSG_DESCRIPTION_PREFIX +
                     "Uses current User Id ( the one which credentials is used to perform the request) as the Rule Engine message originator. " +
                     MSG_DESCRIPTION +
                     "The default timeout of the request processing is 10 seconds."
@@ -140,6 +141,7 @@ public class RuleEngineController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/", method = RequestMethod.POST)
     @ResponseBody
+    @Deprecated(since = "4.3")
     public DeferredResult<ResponseEntity> handleRuleEngineRequestForUser(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON object representing the message.", required = true,
                     content = @Content(mediaType = "text/plain", schema = @Schema(type = "string")))
@@ -148,7 +150,8 @@ public class RuleEngineController extends BaseController {
     }
 
     @ApiOperation(value = "Push entity message to the rule engine (handleRuleEngineRequestForEntity)",
-            notes = MSG_DESCRIPTION_PREFIX +
+            notes = "Deprecated since 4.3. Prefer `POST /api/rule-engine/v2` which accepts all routing parameters in the request body and supports optional ACL enrichment.\n\n" +
+                    MSG_DESCRIPTION_PREFIX +
                     "Uses specified Entity Id as the Rule Engine message originator. " +
                     MSG_DESCRIPTION +
                     "The default timeout of the request processing is 10 seconds."
@@ -156,6 +159,7 @@ public class RuleEngineController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{entityType}/{entityId}", method = RequestMethod.POST)
     @ResponseBody
+    @Deprecated(since = "4.3")
     public DeferredResult<ResponseEntity> handleRuleEngineRequestForEntity(
             @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
             @PathVariable("entityType") String entityType,
@@ -168,7 +172,8 @@ public class RuleEngineController extends BaseController {
     }
 
     @ApiOperation(value = "Push entity message with timeout to the rule engine (handleRuleEngineRequestForEntityWithTimeout)",
-            notes = MSG_DESCRIPTION_PREFIX +
+            notes = "Deprecated since 4.3. Prefer `POST /api/rule-engine/v2` which accepts all routing parameters in the request body and supports optional ACL enrichment.\n\n" +
+                    MSG_DESCRIPTION_PREFIX +
                     "Uses specified Entity Id as the Rule Engine message originator. " +
                     MSG_DESCRIPTION +
                     "The platform expects the timeout value in milliseconds."
@@ -176,6 +181,7 @@ public class RuleEngineController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{entityType}/{entityId}/{timeout}", method = RequestMethod.POST)
     @ResponseBody
+    @Deprecated(since = "4.3")
     public DeferredResult<ResponseEntity> handleRuleEngineRequestForEntityWithTimeout(
             @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
             @PathVariable("entityType") String entityType,
@@ -190,7 +196,8 @@ public class RuleEngineController extends BaseController {
     }
 
     @ApiOperation(value = "Push entity message with timeout and specified queue to the rule engine (handleRuleEngineRequestForEntityWithQueueAndTimeout)",
-            notes = MSG_DESCRIPTION_PREFIX +
+            notes = "Deprecated since 4.3. Prefer `POST /api/rule-engine/v2` which accepts all routing parameters in the request body and supports optional ACL enrichment.\n\n" +
+                    MSG_DESCRIPTION_PREFIX +
                     "Uses specified Entity Id as the Rule Engine message originator. " +
                     MSG_DESCRIPTION +
                     "If request sent for Device/Device Profile or Asset/Asset Profile entity, specified queue will be used instead of the queue selected in the device or asset profile. " +
@@ -199,6 +206,7 @@ public class RuleEngineController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{entityType}/{entityId}/{queueName}/{timeout}", method = RequestMethod.POST)
     @ResponseBody
+    @Deprecated(since = "4.3")
     public DeferredResult<ResponseEntity> handleRuleEngineRequestForEntityWithQueueAndTimeout(
             @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
             @PathVariable("entityType") String entityType,
