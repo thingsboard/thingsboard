@@ -45,6 +45,13 @@ public class NumberUtilsTest {
     }
 
     @Test
+    public void toInt() {
+        assertThat(NumberUtils.toInt(doubleVal)).isEqualTo(1729);
+        assertThat(NumberUtils.toInt(12.8)).isEqualTo(13);
+        assertThat(NumberUtils.toInt(28.0)).isEqualTo(28);
+    }
+
+    @Test
     public void toLong() {
         assertThat(NumberUtils.toLong(doubleVal)).isEqualTo(1729L);
         assertThat(NumberUtils.toLong(12.8)).isEqualTo(13L);

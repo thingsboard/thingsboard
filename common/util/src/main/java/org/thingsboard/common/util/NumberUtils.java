@@ -32,6 +32,10 @@ public class NumberUtils {
         return BigDecimal.valueOf(value).setScale(precision, RoundingMode.HALF_UP).floatValue();
     }
 
+    public static int toInt(double value) {
+        return BigDecimal.valueOf(value).setScale(0, RoundingMode.HALF_UP).intValue();
+    }
+
     public static long toLong(double value) {
         return BigDecimal.valueOf(value).setScale(0, RoundingMode.HALF_UP).longValue();
     }
