@@ -141,6 +141,12 @@ export class TbTimeSeriesChart {
   private hasVisualMap = false;
   private visualMapSelectedRanges: {[key: number]: boolean};
 
+  private dataZoomResetting = false;
+  private dataZoomUpdatePending = false;
+  private dataZoomDebounce: ReturnType<typeof setTimeout> | null = null;
+  private lastDataZoomStart = 0;
+  private lastDataZoomEnd = 100;
+
   private timeSeriesChart: ECharts;
   private timeSeriesChartOptions: EChartsOption;
 
@@ -265,6 +271,12 @@ export class TbTimeSeriesChart {
       if (this.highlightedDataKey) {
         this.keyEnter(this.highlightedDataKey);
       }
+      if (this.dataZoomUpdatePending) {
+        this.dataZoomUpdatePending = false;
+        this.dataZoomResetting = true;
+        this.timeSeriesChart.dispatchAction({ type: 'dataZoom', start: 0, end: 100 });
+        this.dataZoomResetting = false;
+      }
     }
   }
 
@@ -386,6 +398,10 @@ export class TbTimeSeriesChart {
   }
 
   public destroy(): void {
+    if (this.dataZoomDebounce !== null) {
+      clearTimeout(this.dataZoomDebounce);
+      this.dataZoomDebounce = null;
+    }
     if (this.shapeResize$) {
       this.shapeResize$.disconnect();
     }
@@ -848,21 +864,34 @@ export class TbTimeSeriesChart {
     if (this.settings.dataZoom) {
       this.timeSeriesChart.on('datazoom', (event: DataZoom) => {
         this.updateAxes();
-        if (this.settings.dataZoomUpdateTimewindow) {
-          const axis = getAxis(this.timeSeriesChart, 'xAxis', 'main');
-          if (axis) {
-            const extent = axis.scale.getExtent();
-            const startMs = Math.round(extent[0]);
-            const endMs = Math.round(extent[1]);
-            const evStart = event.batch?.length ? event.batch[0].start : event.start;
-            const evEnd   = event.batch?.length ? event.batch[0].end   : event.end;
-            if (Math.round(evStart) === 0 && Math.round(evEnd) === 100) {
-              this.ctx.defaultSubscription.onResetTimewindow();
-            } else if (startMs < endMs) {
-              this.ctx.defaultSubscription.onUpdateTimewindow(startMs, endMs);
-            }
-
+        if (this.settings.dataZoomUpdateTimewindow && !this.dataZoomResetting) {
+          const evStart = event.batch?.length ? event.batch[0].start : event.start;
+          const evEnd   = event.batch?.length ? event.batch[0].end   : event.end;
+          this.lastDataZoomStart = evStart;
+          this.lastDataZoomEnd = evEnd;
+          if (this.dataZoomDebounce !== null) {
+            clearTimeout(this.dataZoomDebounce);
           }
+          this.dataZoomDebounce = setTimeout(() => {
+            this.dataZoomDebounce = null;
+            if (this.timeSeriesChart?.isDisposed()) {
+              return;
+            }
+            if (Math.round(this.lastDataZoomStart) === 0 && Math.round(this.lastDataZoomEnd) === 100) {
+              this.ctx.defaultSubscription.onResetTimewindow();
+            } else {
+              const axis = getAxis(this.timeSeriesChart, 'xAxis', 'main');
+              if (axis) {
+                const extent = axis.scale.getExtent();
+                const startMs = Math.round(extent[0]);
+                const endMs = Math.round(extent[1]);
+                if (startMs < endMs) {
+                  this.dataZoomUpdatePending = true;
+                  this.ctx.defaultSubscription.onUpdateTimewindow(startMs, endMs);
+                }
+              }
+            }
+          }, 300);
         }
       });
     }

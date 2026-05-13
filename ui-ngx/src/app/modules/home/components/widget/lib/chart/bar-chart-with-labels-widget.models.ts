@@ -183,6 +183,7 @@ export const barChartWithLabelsDefaultSettings: BarChartWithLabelsWidgetSettings
 
 export const barChartWithLabelsTimeSeriesSettings = (settings: BarChartWithLabelsWidgetSettings): DeepPartial<TimeSeriesChartSettings> => ({
   dataZoom: settings.dataZoom,
+  dataZoomUpdateTimewindow: settings.dataZoomUpdateTimewindow,
   grid: settings.grid,
   yAxes: {
     default: settings.yAxis
