@@ -76,7 +76,7 @@ public class RuleEngineControllerV2EnrichmentTest extends AbstractControllerTest
 
         TbMsg captured = doRequestAndCapture(request, tenantId);
 
-        assertThat(captured.getMetaData().getValue(TbMsgMetaData.TB_USER_ID_KEY))
+        assertThat(captured.getMetaData().getValue(TbMsgMetaData.USER_ID_KEY))
                 .isEqualTo(tenantAdminUserId.getId().toString());
         List<EntityAclEntry> acl = parseAcl(captured);
         assertThat(acl).hasSize(1);
@@ -166,8 +166,8 @@ public class RuleEngineControllerV2EnrichmentTest extends AbstractControllerTest
         // aclEntities left null
         TbMsg captured = doRequestAndCapture(request, tenantId);
 
-        assertThat(captured.getMetaData().getValue(TbMsgMetaData.TB_ACL_SNAPSHOT_KEY)).isEqualTo("[]");
-        assertThat(captured.getMetaData().getValue(TbMsgMetaData.TB_USER_ID_KEY))
+        assertThat(captured.getMetaData().getValue(TbMsgMetaData.ACL_KEY)).isEqualTo("[]");
+        assertThat(captured.getMetaData().getValue(TbMsgMetaData.USER_ID_KEY))
                 .isEqualTo(tenantAdminUserId.getId().toString());
     }
 
@@ -179,8 +179,8 @@ public class RuleEngineControllerV2EnrichmentTest extends AbstractControllerTest
         request.setAclEntities(List.of());
         TbMsg captured = doRequestAndCapture(request, tenantId);
 
-        assertThat(captured.getMetaData().getValue(TbMsgMetaData.TB_ACL_SNAPSHOT_KEY)).isEqualTo("[]");
-        assertThat(captured.getMetaData().getValue(TbMsgMetaData.TB_USER_ID_KEY))
+        assertThat(captured.getMetaData().getValue(TbMsgMetaData.ACL_KEY)).isEqualTo("[]");
+        assertThat(captured.getMetaData().getValue(TbMsgMetaData.USER_ID_KEY))
                 .isEqualTo(tenantAdminUserId.getId().toString());
     }
 
@@ -260,15 +260,15 @@ public class RuleEngineControllerV2EnrichmentTest extends AbstractControllerTest
         Device device = createDevice("dev-inj", "tok-inj");
 
         RuleEngineV2Request request = baseRequest();
-        request.setPayload(JacksonUtil.toJsonNode("{\"" + TbMsgMetaData.TB_ACL_SNAPSHOT_KEY + "\":\"attack\",\"" +
-                TbMsgMetaData.TB_USER_ID_KEY + "\":\"intruder\"}"));
+        request.setPayload(JacksonUtil.toJsonNode("{\"" + TbMsgMetaData.ACL_KEY + "\":\"attack\",\"" +
+                TbMsgMetaData.USER_ID_KEY + "\":\"intruder\"}"));
         request.setAclEntities(List.of(device.getId()));
 
         TbMsg captured = doRequestAndCapture(request, tenantId);
 
         // Server-computed values, not the attacker's.
-        assertThat(captured.getMetaData().getValue(TbMsgMetaData.TB_ACL_SNAPSHOT_KEY)).contains("\"entityType\":\"DEVICE\"");
-        assertThat(captured.getMetaData().getValue(TbMsgMetaData.TB_USER_ID_KEY))
+        assertThat(captured.getMetaData().getValue(TbMsgMetaData.ACL_KEY)).contains("\"entityType\":\"DEVICE\"");
+        assertThat(captured.getMetaData().getValue(TbMsgMetaData.USER_ID_KEY))
                 .isEqualTo(tenantAdminUserId.getId().toString());
     }
 
@@ -323,7 +323,7 @@ public class RuleEngineControllerV2EnrichmentTest extends AbstractControllerTest
     }
 
     private List<EntityAclEntry> parseAcl(TbMsg msg) {
-        String acl = msg.getMetaData().getValue(TbMsgMetaData.TB_ACL_SNAPSHOT_KEY);
+        String acl = msg.getMetaData().getValue(TbMsgMetaData.ACL_KEY);
         return JacksonUtil.fromString(acl, new TypeReference<List<EntityAclEntry>>() {
         });
     }

@@ -35,14 +35,14 @@ public final class TbMsgMetaData implements Serializable {
      * treat this value as authoritative; the platform overwrites any caller-supplied
      * value of this key before the message is forwarded to the Rule Engine.
      */
-    public static final String TB_ACL_SNAPSHOT_KEY = "tb_aclSnapshot";
+    public static final String ACL_KEY = "acl";
 
     /**
      * Reserved metadata key. Populated by the platform with the UUID (as string) of
      * the user that initiated the request — intended for audit logging inside rule
      * chains. The platform overwrites any caller-supplied value of this key.
      */
-    public static final String TB_USER_ID_KEY = "tb_userId";
+    public static final String USER_ID_KEY = "userId";
 
     private final Map<String, String> data;
 

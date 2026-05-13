@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.FutureCallback;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -86,9 +87,9 @@ public class RuleEngineController extends BaseController {
 
     private static final String V2_DESCRIPTION = "Variant of the Rule Engine REST API that enriches the forwarded `TbMsg` with two " +
             "server-authoritative metadata keys before pushing it to the rule engine:\n\n" +
-            " * **`tb_aclSnapshot`** — a JSON array of `{entityId, allowed[]}` computed for every entity the caller lists in `aclEntities`. " +
+            " * **`acl`** — a JSON array of `{entityId, allowed[]}` computed for every entity the caller lists in `aclEntities`. " +
             "The `allowed` array contains the `Operation` values the caller has on the specific instance;\n" +
-            " * **`tb_userId`** — UUID of the calling user, intended for audit logging inside rule chains.\n\n" +
+            " * **`userId`** — UUID of the calling user, intended for audit logging inside rule chains.\n\n" +
             "Caller-supplied values for either key are overwritten by the platform. This endpoint preserves the existing v1 behavior " +
             "(timeout, queue routing, REST Call Reply) — the enrichment is additive.\n\n" +
             "Note: `SYS_ADMIN` callers operate against the system tenant, so tenant-scoped entities (DEVICE, ASSET, ...) " +
@@ -121,7 +122,9 @@ public class RuleEngineController extends BaseController {
     public DeferredResult<ResponseEntity> handleRuleEngineRequestV2(
             @Parameter(description = "Enriched request body containing `payload` and optional `aclEntities`.", required = true)
             @RequestBody RuleEngineV2Request request) throws ThingsboardException {
-        if (request == null || request.getPayload() == null) {
+        JsonNode payload = request != null ? request.getPayload() : null;
+        // Jackson maps JSON `null` to NullNode (not Java null), so check isNull() too.
+        if (payload == null || payload.isNull()) {
             throw new ThingsboardException("Request body with 'payload' is required",
                     ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
@@ -132,7 +135,7 @@ public class RuleEngineController extends BaseController {
         // Always non-null on the v2 path so the shared helper writes the server-authoritative
         // tb_user_id / tb_acl_snapshot metadata keys. v1 wrappers pass null and skip those writes.
         List<EntityId> aclEntities = request.getAclEntities() != null ? request.getAclEntities() : List.of();
-        return handleRuleEngineRequest(entityTypeStr, entityIdStr, timeout, JacksonUtil.toString(request.getPayload()), request.getQueueName(), aclEntities);
+        return handleRuleEngineRequest(entityTypeStr, entityIdStr, timeout, JacksonUtil.toString(payload), request.getQueueName(), aclEntities);
     }
 
     @ApiOperation(value = "Push user message to the rule engine (handleRuleEngineRequestForUser)",
@@ -259,8 +262,8 @@ public class RuleEngineController extends BaseController {
                     metaData.put("expirationTime", Long.toString(expTime));
                     if (aclEntities != null) {
                         // v2 path: server-authoritative keys written last so any caller value is overwritten.
-                        metaData.put(TbMsgMetaData.TB_USER_ID_KEY, currentUser.getId().getId().toString());
-                        metaData.put(TbMsgMetaData.TB_ACL_SNAPSHOT_KEY, buildAclSnapshot(currentUser, aclEntities));
+                        metaData.put(TbMsgMetaData.USER_ID_KEY, currentUser.getId().getId().toString());
+                        metaData.put(TbMsgMetaData.ACL_KEY, buildAclSnapshot(currentUser, aclEntities));
                     }
 
                     TbMsg msg = TbMsg.newMsg()
@@ -314,7 +317,7 @@ public class RuleEngineController extends BaseController {
      * entities (DEVICE, ASSET, ...) won't be resolved by the tenant-filtered lookup and the
      * entry resolves to {@code allowed=[]} — ACL enrichment is effectively a no-op for SYS_ADMIN.
      *
-     * @return serialized JSON array suitable for writing into {@link TbMsgMetaData#TB_ACL_SNAPSHOT_KEY}.
+     * @return serialized JSON array suitable for writing into {@link TbMsgMetaData#ACL_KEY}.
      */
     private String buildAclSnapshot(SecurityUser user, List<EntityId> entities) {
         if (entities == null || entities.isEmpty()) {
