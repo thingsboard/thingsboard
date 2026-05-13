@@ -57,7 +57,6 @@ import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.eclipse.jgit.transport.SshTransport;
 import org.eclipse.jgit.transport.URIish;
-import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.eclipse.jgit.transport.sshd.JGitKeyCache;
 import org.eclipse.jgit.transport.sshd.ServerKeyDatabase;
 import org.eclipse.jgit.transport.sshd.SshdSessionFactory;
@@ -129,6 +128,7 @@ public class GitRepository {
     }
 
     public static GitRepository clone(RepositorySettings settings, File directory) throws GitAPIException {
+        RepositoryUriValidator.validate(settings);
         log.debug("Executing clone [{}]", settings.getRepositoryUri());
         CloneCommand cloneCommand = Git.cloneRepository()
                 .setURI(settings.getRepositoryUri())
@@ -179,6 +179,7 @@ public class GitRepository {
         if (settings.isLocalOnly()) {
             return;
         }
+        RepositoryUriValidator.validate(settings);
         log.debug("Executing test [{}]", settings.getRepositoryUri());
         AuthHandler authHandler = AuthHandler.createFor(settings, directory);
         if (settings.isReadOnly()) {
@@ -206,6 +207,7 @@ public class GitRepository {
         if (settings.isLocalOnly()) {
             return false;
         }
+        RepositoryUriValidator.validate(settings);
         log.debug("Executing fetch [{}]", settings.getRepositoryUri());
         FetchResult result = execute(git.fetch()
                 .setRemoveDeletedRefs(true));
@@ -374,6 +376,7 @@ public class GitRepository {
         if (settings.isLocalOnly()) {
             return;
         }
+        RepositoryUriValidator.validate(settings);
         log.debug("Executing push [{}][{}]", settings.getRepositoryUri(), remoteBranch);
         Iterable<PushResult> result = execute(git.push()
                 .setRefSpecs(new RefSpec(localBranch + ":" + remoteBranch)));
@@ -536,7 +539,7 @@ public class GitRepository {
             CredentialsProvider credentialsProvider = null;
             SshdSessionFactory sshSessionFactory = null;
             if (RepositoryAuthMethod.USERNAME_PASSWORD.equals(settings.getAuthMethod())) {
-                credentialsProvider = newCredentialsProvider(settings.getUsername(), settings.getPassword());
+                credentialsProvider = newCredentialsProvider(settings.getUsername(), settings.getPassword(), extractHost(settings.getRepositoryUri()));
             } else if (RepositoryAuthMethod.PRIVATE_KEY.equals(settings.getAuthMethod())) {
                 if (StringUtils.startsWith(settings.getRepositoryUri(), "https://")) {
                     throw new IllegalArgumentException("Invalid URI format for private key authentication");
@@ -560,8 +563,16 @@ public class GitRepository {
             }
         }
 
-        private static CredentialsProvider newCredentialsProvider(String username, String password) {
-            return new UsernamePasswordCredentialsProvider(username, password == null ? "" : password);
+        private static CredentialsProvider newCredentialsProvider(String username, String password, String allowedHost) {
+            return new HostScopedCredentialsProvider(username, password, allowedHost);
+        }
+
+        private static String extractHost(String repositoryUri) {
+            try {
+                return new URIish(repositoryUri).getHost();
+            } catch (Exception e) {
+                return null;
+            }
         }
 
         private static SshdSessionFactory newSshdSessionFactory(String privateKey, String password, File directory) {

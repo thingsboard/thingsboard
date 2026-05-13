@@ -515,6 +515,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     @Override
     public ListenableFuture<RepositorySettings> saveVersionControlSettings(TenantId tenantId, RepositorySettings versionControlSettings) {
         checkBranchName(versionControlSettings.getDefaultBranch());
+        RepositoryUriValidator.validate(versionControlSettings);
         var restoredSettings = this.repositorySettingsService.restore(tenantId, versionControlSettings);
         try {
             var future = gitServiceQueue.initRepository(tenantId, restoredSettings);
@@ -535,6 +536,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     @Override
     public ListenableFuture<Void> checkVersionControlAccess(TenantId tenantId, RepositorySettings settings) throws ThingsboardException {
         checkBranchName(settings.getDefaultBranch());
+        RepositoryUriValidator.validate(settings);
         settings = this.repositorySettingsService.restore(tenantId, settings);
         try {
             return gitServiceQueue.testRepository(tenantId, settings);
