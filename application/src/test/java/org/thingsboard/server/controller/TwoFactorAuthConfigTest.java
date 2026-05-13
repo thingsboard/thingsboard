@@ -530,7 +530,9 @@ public class TwoFactorAuthConfigTest extends AbstractControllerTest {
                         "/api/audit/logs/entity/USER/" + currentUserId.getId() + "?",
                         new TypeReference<PageData<AuditLog>>() {},
                         new TimePageLink(100, 0, null, null, startTs, null)).getData().stream()
-                        .anyMatch(log -> log.getActionType() == ActionType.UPDATED)
+                        .anyMatch(log -> log.getActionType() == ActionType.SETTINGS_UPDATED
+                                && log.getActionData() != null
+                                && "twoFaSettings".equals(log.getActionData().path("settingsKey").asText(null)))
                 );
     }
 

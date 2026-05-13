@@ -225,7 +225,7 @@ public class AdminController extends BaseController {
     private void logSettingsAction(SecurityUser securityUser, Exception e, String key) {
         auditLogService.logEntityAction(securityUser.getTenantId(), securityUser.getCustomerId(),
                 securityUser.getId(), securityUser.getName(),
-                securityUser.getId(), securityUser, ActionType.UPDATED, e, key);
+                securityUser.getId(), securityUser, ActionType.SETTINGS_UPDATED, e, key);
     }
 
     @ApiOperation(value = "Send test email (sendTestMail)",

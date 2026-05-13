@@ -198,7 +198,7 @@ public class AdminControllerTest extends AbstractControllerTest {
         ((ObjectNode) adminSettings.getJsonValue()).put("baseUrl", "http://audit-test.org");
         doPost("/api/admin/settings", adminSettings).andExpect(status().isOk());
 
-        awaitAuditLog(ActionType.UPDATED, startTs);
+        awaitSettingsAuditLog("general", startTs);
 
         // cleanup
         ((ObjectNode) adminSettings.getJsonValue()).put("baseUrl", "http://localhost:8080");
@@ -213,7 +213,7 @@ public class AdminControllerTest extends AbstractControllerTest {
         SecuritySettings securitySettings = doGet("/api/admin/securitySettings", SecuritySettings.class);
         doPost("/api/admin/securitySettings", securitySettings).andExpect(status().isOk());
 
-        awaitAuditLog(ActionType.UPDATED, startTs);
+        awaitSettingsAuditLog("securitySettings", startTs);
     }
 
     @Test
@@ -225,17 +225,19 @@ public class AdminControllerTest extends AbstractControllerTest {
         doPost("/api/admin/jwtSettings", jwtSettings).andExpect(status().isOk());
 
         loginSysAdmin();
-        awaitAuditLog(ActionType.UPDATED, startTs);
+        awaitSettingsAuditLog("jwtSettings", startTs);
     }
 
-    private void awaitAuditLog(ActionType expectedAction, long startTs) {
-        Awaitility.await("Await audit log: " + expectedAction)
+    private void awaitSettingsAuditLog(String expectedSettingsKey, long startTs) {
+        Awaitility.await("Await audit log: SETTINGS_UPDATED/" + expectedSettingsKey)
                 .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() -> doGetTypedWithTimePageLink(
                         "/api/audit/logs/entity/USER/" + currentUserId.getId() + "?",
                         new TypeReference<PageData<AuditLog>>() {},
                         new TimePageLink(100, 0, null, null, startTs, null)).getData().stream()
-                        .anyMatch(log -> log.getActionType() == expectedAction)
+                        .anyMatch(log -> log.getActionType() == ActionType.SETTINGS_UPDATED
+                                && log.getActionData() != null
+                                && expectedSettingsKey.equals(log.getActionData().path("settingsKey").asText(null)))
                 );
     }
 
