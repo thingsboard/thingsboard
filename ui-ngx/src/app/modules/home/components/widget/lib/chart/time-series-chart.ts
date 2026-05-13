@@ -46,10 +46,10 @@ import {
   updateXAxisTimeWindow
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import {
-  calculateAxisSize,
+  calculateAxisSize, DataZoom,
   ECharts,
   echartsModule,
-  EChartsOption,
+  EChartsOption, getAxis,
   getAxisExtent,
   getFocusedSeriesIndex,
   measureAxisNameSize
@@ -846,8 +846,24 @@ export class TbTimeSeriesChart {
     this.updateAxes(false);
 
     if (this.settings.dataZoom) {
-      this.timeSeriesChart.on('datazoom', () => {
+      this.timeSeriesChart.on('datazoom', (event: DataZoom) => {
         this.updateAxes();
+        if (this.settings.dataZoomUpdateTimewindow) {
+          const axis = getAxis(this.timeSeriesChart, 'xAxis', 'main');
+          if (axis) {
+            const extent = axis.scale.getExtent();
+            const startMs = Math.round(extent[0]);
+            const endMs = Math.round(extent[1]);
+            const evStart = event.batch?.length ? event.batch[0].start : event.start;
+            const evEnd   = event.batch?.length ? event.batch[0].end   : event.end;
+            if (Math.round(evStart) === 0 && Math.round(evEnd) === 100) {
+              this.ctx.defaultSubscription.onResetTimewindow();
+            } else if (startMs < endMs) {
+              this.ctx.defaultSubscription.onUpdateTimewindow(startMs, endMs);
+            }
+
+          }
+        }
       });
     }
   }
