@@ -93,6 +93,12 @@ export class TbGeoMap extends TbMap<GeoMapSettings> {
       tap((layers: L.TB.LayerData[]) => {
         if (layers.length) {
           const layer = layers[0];
+          layer.layer.once('gl-error', () => {
+            this.ctx.showErrorToast(
+              this.ctx.translate.instant('widgets.maps.gl.webgl-not-available'),
+              'top', 'center', this.ctx.toastTargetId, true
+            );
+          });
           layer.layer.addTo(this.map);
           this.map.attributionControl.setPrefix(layer.attributionPrefix);
           if (layers.length > 1) {

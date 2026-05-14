@@ -8249,6 +8249,9 @@
                 "default-map-zoom-level": "Default map zoom level",
                 "entities-limit": "Limit of entities to load"
             },
+            "gl": {
+                "webgl-not-available": "The browser tried to use the GPU to draw the map, but the GPU is turned off or blocked."
+            },
             "layer": {
                 "label": "Label",
                 "layer": "Layer",

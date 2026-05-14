@@ -120,6 +120,9 @@ export abstract class TbMapLayer<S extends MapLayerSettings> {
                     let referenceLayerLoaded = false;
                     baseLayer.addTo(layer);
                     referenceLayer.addTo(layer);
+                    baseLayer.once('gl-error', (e: any) => {
+                      layer.fire('gl-error', e);
+                    });
                     baseLayer.once('load', () => {
                       baseLayerLoaded = true;
                       if (referenceLayerLoaded) {
