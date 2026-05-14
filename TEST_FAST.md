@@ -10,6 +10,7 @@ export SUREFIRE_JAVA_OPTS="-Xmx1200m -Xss256k -XX:+ExitOnOutOfMemoryError"
 mvn clean install -T6 -DskipTests -Dpkg.skip=true
 
 mvn test -pl='!application,!dao,!ui-ngx,!msa/js-executor,!msa/web-ui' -T4
+mvn test -pl='msa/js-executor'
 mvn test -pl dao -Dparallel=packages -DforkCount=4
 
 mvn test -pl application -Dtest='!**/nosql/**,org.thingsboard.server.controller.**'      -DforkCount=6 -Dparallel=classes  -Dsurefire.rerunFailingTestsCount=2 -Dsurefire.failOnFlakeCount=5

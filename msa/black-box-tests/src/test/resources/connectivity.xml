@@ -25,6 +25,7 @@
             <package name="org.thingsboard.server.msa.edqs"/>
             <package name="org.thingsboard.server.msa.cf"/>
             <package name="org.thingsboard.server.msa.rule.node"/>
+            <package name="org.thingsboard.server.msa.security"/>
         </packages>
     </test>
 </suite>
