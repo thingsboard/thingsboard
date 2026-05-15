@@ -32,6 +32,9 @@ DECLARE
     result    alarm_info;
     row_count integer;
 BEGIN
+    -- Serialize concurrent callers for the same (originator, type) so that the SELECT/INSERT
+    -- pair below cannot interleave and produce duplicate active alarms.
+    PERFORM pg_advisory_xact_lock(hashtext(a_o_id::text), hashtext(a_type));
     SELECT * INTO existing FROM alarm a WHERE a.originator_id = a_o_id AND a.type = a_type AND a.cleared = false ORDER BY a.start_ts DESC FOR UPDATE;
     IF existing.id IS NULL THEN
         IF a_creation_enabled = FALSE THEN
