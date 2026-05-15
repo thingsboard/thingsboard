@@ -19,19 +19,34 @@
   @switch (state) {
     @case ('confirm') {
       <h2 class="tb-iot-hub-install-title">{{ 'iot-hub.install-confirm-title' | translate:{ name: item.name } }}</h2>
-      <p class="tb-iot-hub-install-desc">{{ 'iot-hub.install-desc' | translate }}</p>
+      @if (item.type === ItemType.RULE_CHAIN) {
+        <p class="tb-iot-hub-install-desc">{{ 'iot-hub.rule-chain-install-desc' | translate }}</p>
+      } @else {
+        <p class="tb-iot-hub-install-desc">{{ 'iot-hub.install-desc' | translate }}</p>
+      }
     }
     @case ('select-entity') {
       <h2 class="tb-iot-hub-install-title">{{ 'iot-hub.install-confirm-title' | translate:{ name: item.name } }}</h2>
-      <p class="tb-iot-hub-install-desc">{{ 'iot-hub.select-entity-for-cf' | translate:{ name: item.name } }}</p>
+      @if (activeSelectEntityConfig?.promptKey) {
+        <p class="tb-iot-hub-install-desc"
+           [innerHTML]="activeSelectEntityConfig.promptKey | translate:{ name: item.name }"></p>
+      }
       <tb-entity-select
         [(ngModel)]="selectedEntityId"
-        [allowedEntityTypes]="cfEntityTypes"
-        [defaultEntityType]="defaultCfEntityType"
+        [allowedEntityTypes]="activeSelectEntityConfig.allowed"
+        [defaultEntityType]="activeSelectEntityConfig.defaultType"
         [filterAllowedEntityTypes]="false"
         appearance="outline"
-        required>
+        [required]="activeSelectEntityConfig.required">
       </tb-entity-select>
+    }
+    @case ('confirm-overwrite') {
+      <h2 class="tb-iot-hub-install-title">{{ 'iot-hub.rule-chain-overwrite-title' | translate }}</h2>
+      <p class="tb-iot-hub-install-desc"
+         [innerHTML]="'iot-hub.rule-chain-overwrite-body' | translate:{
+            profile: pendingOverwrite?.profileName,
+            existing: pendingOverwrite?.existingRuleChainName
+         }"></p>
     }
     @case ('installing') {
       <h2 class="tb-iot-hub-install-title">{{ 'iot-hub.install-confirm-title' | translate:{ name: item.name } }}</h2>
@@ -58,11 +73,37 @@
   @switch (state) {
     @case ('confirm') {
       <button mat-button (click)="cancel()">{{ 'action.cancel' | translate }}</button>
-      <button mat-flat-button color="primary" (click)="install()">{{ 'iot-hub.install' | translate }}</button>
+      @if (item.type === ItemType.RULE_CHAIN) {
+        <button mat-stroked-button (click)="install()">{{ 'iot-hub.install' | translate }}</button>
+        <button mat-flat-button color="primary" (click)="installAsEntityProfileDefault()">
+          {{ 'iot-hub.rule-chain-install-as-default' | translate }}
+        </button>
+      } @else {
+        <button mat-flat-button color="primary" (click)="install()">{{ 'iot-hub.install' | translate }}</button>
+      }
     }
     @case ('select-entity') {
       <button mat-button (click)="cancel()">{{ 'action.cancel' | translate }}</button>
-      <button mat-flat-button color="primary" [disabled]="!selectedEntityId" (click)="doInstall()">{{ 'iot-hub.install' | translate }}</button>
+      @if (item.type === ItemType.RULE_CHAIN) {
+        <button mat-button (click)="selectEntityBack()">{{ 'action.back' | translate }}</button>
+        <button mat-flat-button color="primary"
+                [disabled]="!selectedEntityId"
+                (click)="onSelectEntityInstall()">
+          {{ 'iot-hub.install' | translate }}
+        </button>
+      } @else {
+        <button mat-flat-button color="primary"
+                [disabled]="activeSelectEntityConfig?.required && !selectedEntityId"
+                (click)="onSelectEntityInstall()">
+          {{ 'iot-hub.install' | translate }}
+        </button>
+      }
+    }
+    @case ('confirm-overwrite') {
+      <button mat-button (click)="confirmOverwriteCancel()">{{ 'action.cancel' | translate }}</button>
+      <button mat-flat-button color="primary" (click)="confirmOverwriteReplace()">
+        {{ 'iot-hub.rule-chain-overwrite-replace' | translate }}
+      </button>
     }
     @case ('installing') {
       <button mat-button disabled>{{ 'action.cancel' | translate }}</button>

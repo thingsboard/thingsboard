@@ -29,12 +29,37 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { resolveEntityDetailsUrl } from './iot-hub-components.models';
 import { SolutionInstallDialogComponent } from '@home/components/iot-hub/solution-install-dialog.component';
+import { Observable, of } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
+import { DeviceProfileService } from '@core/http/device-profile.service';
+import { AssetProfileService } from '@core/http/asset-profile.service';
+import { RuleChainService } from '@core/http/rule-chain.service';
+import { RuleChainId } from '@shared/models/id/rule-chain-id';
+
+interface SelectEntityConfig {
+  allowed: EntityType[];
+  defaultType: EntityType;
+  required: boolean;
+  promptKey?: string;
+}
+
+interface PendingOverwrite {
+  entityId: EntityId;
+  profileName: string;
+  existingRuleChainName: string;
+}
 
 export interface IotHubInstallDialogData {
   item: MpItemVersionView;
 }
 
-export type InstallState = 'select-entity' | 'confirm' | 'installing' | 'success' | 'error';
+export type InstallState =
+  | 'select-entity'
+  | 'confirm-overwrite'
+  | 'confirm'
+  | 'installing'
+  | 'success'
+  | 'error';
 
 @Component({
   selector: 'tb-iot-hub-install-dialog',
@@ -53,8 +78,32 @@ export class TbIotHubInstallDialogComponent extends DialogComponent<TbIotHubInst
   entityDetailsUrl: string | null = null;
 
   selectedEntityId: EntityId | null = null;
-  cfEntityTypes: EntityType[] = [EntityType.DEVICE, EntityType.ASSET, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE];
-  defaultCfEntityType = EntityType.DEVICE_PROFILE;
+  pendingOverwrite: PendingOverwrite | null = null;
+
+  private readonly selectEntityConfig: Partial<Record<ItemType, SelectEntityConfig>> = {
+    [ItemType.CALCULATED_FIELD]: {
+      allowed: [EntityType.DEVICE, EntityType.ASSET, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE],
+      defaultType: EntityType.DEVICE_PROFILE,
+      required: true,
+      promptKey: 'iot-hub.select-entity-for-cf',
+    },
+    [ItemType.ALARM_RULE]: {
+      allowed: [EntityType.DEVICE, EntityType.ASSET, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE],
+      defaultType: EntityType.DEVICE_PROFILE,
+      required: true,
+      promptKey: 'iot-hub.select-entity-for-alarm-rule',
+    },
+    [ItemType.RULE_CHAIN]: {
+      allowed: [EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE],
+      defaultType: EntityType.DEVICE_PROFILE,
+      required: true,
+      promptKey: 'iot-hub.select-profile-for-rule-chain',
+    },
+  };
+
+  get activeSelectEntityConfig(): SelectEntityConfig | null {
+    return this.selectEntityConfig[this.item.type] ?? null;
+  }
 
   constructor(
     protected store: Store<AppState>,
@@ -63,7 +112,10 @@ export class TbIotHubInstallDialogComponent extends DialogComponent<TbIotHubInst
     @Inject(MAT_DIALOG_DATA) public data: IotHubInstallDialogData,
     private dialog: MatDialog,
     private translate: TranslateService,
-    private iotHubApiService: IotHubApiService
+    private iotHubApiService: IotHubApiService,
+    private deviceProfileService: DeviceProfileService,
+    private assetProfileService: AssetProfileService,
+    private ruleChainService: RuleChainService
   ) {
     super(store, router, dialogRef);
     this.item = data.item;
@@ -80,6 +132,76 @@ export class TbIotHubInstallDialogComponent extends DialogComponent<TbIotHubInst
       return;
     }
     this.doInstall();
+  }
+
+  installAsEntityProfileDefault(): void {
+    this.state = 'select-entity';
+  }
+
+  selectEntityBack(): void {
+    this.selectedEntityId = null;
+    this.state = 'confirm';
+  }
+
+  onSelectEntityInstall(): void {
+    if (!this.selectedEntityId) {
+      return;
+    }
+    if (this.item.type !== ItemType.RULE_CHAIN) {
+      this.doInstall();
+      return;
+    }
+    this.resolveOverwrite(this.selectedEntityId).subscribe({
+      next: (pending) => {
+        if (pending) {
+          this.pendingOverwrite = pending;
+          this.state = 'confirm-overwrite';
+        } else {
+          this.pendingOverwrite = null;
+          this.doInstall();
+        }
+      },
+      error: (err) => {
+        this.state = 'error';
+        this.errorMessage = err?.error?.message || err?.message ||
+          this.translate.instant('iot-hub.install-error', { name: this.item.name });
+      }
+    });
+  }
+
+  confirmOverwriteReplace(): void {
+    this.doInstall();
+  }
+
+  confirmOverwriteCancel(): void {
+    this.pendingOverwrite = null;
+    this.state = 'select-entity';
+  }
+
+  private resolveOverwrite(profileEntityId: EntityId): Observable<PendingOverwrite | null> {
+    const lookupProfile$: Observable<{ name: string; defaultRuleChainId: RuleChainId | null }> =
+      profileEntityId.entityType === EntityType.DEVICE_PROFILE
+        ? this.deviceProfileService.getDeviceProfile(profileEntityId.id, { ignoreLoading: true }).pipe(
+            map(p => ({ name: p.name, defaultRuleChainId: p.defaultRuleChainId ?? null }))
+          )
+        : this.assetProfileService.getAssetProfile(profileEntityId.id, { ignoreLoading: true }).pipe(
+            map(p => ({ name: p.name, defaultRuleChainId: p.defaultRuleChainId ?? null }))
+          );
+
+    return lookupProfile$.pipe(
+      switchMap(profile => {
+        if (!profile.defaultRuleChainId) {
+          return of<PendingOverwrite | null>(null);
+        }
+        return this.ruleChainService.getRuleChain(profile.defaultRuleChainId.id, { ignoreLoading: true }).pipe(
+          map(existing => ({
+            entityId: profileEntityId,
+            profileName: profile.name,
+            existingRuleChainName: existing.name,
+          }))
+        );
+      })
+    );
   }
 
   doInstall(): void {
