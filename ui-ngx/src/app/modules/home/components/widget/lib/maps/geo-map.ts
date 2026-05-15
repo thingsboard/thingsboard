@@ -96,7 +96,7 @@ export class TbGeoMap extends TbMap<GeoMapSettings> {
           layer.layer.once('gl-error', () => {
             this.ctx.showErrorToast(
               this.ctx.translate.instant('widgets.maps.gl.webgl-not-available'),
-              'top', 'center', this.ctx.toastTargetId, true
+              'bottom', 'left', this.ctx.toastTargetId, true
             );
           });
           layer.layer.addTo(this.map);
