@@ -36,6 +36,10 @@ import {
   ActivationLinkDialogComponent,
   ActivationLinkDialogData
 } from '@modules/home/pages/user/activation-link-dialog.component';
+import {
+  PasswordResetLinkDialogComponent,
+  PasswordResetLinkDialogData
+} from '@modules/home/pages/user/password-reset-link-dialog.component';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { TenantService } from '@app/core/http/tenant.service';
 import { TenantId } from '@app/shared/models/id/tenant-id';
@@ -282,6 +286,24 @@ export class UsersTableConfigResolver  {
     );
   }
 
+  private displayPasswordResetLink($event: Event, user: UserInfo) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.userService.getPasswordResetLinkInfo(user.id.id).subscribe(
+      (passwordResetLinkInfo) => {
+        this.dialog.open<PasswordResetLinkDialogComponent, PasswordResetLinkDialogData,
+          void>(PasswordResetLinkDialogComponent, {
+          disableClose: true,
+          panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+          data: {
+            passwordResetLinkInfo
+          }
+        });
+      }
+    );
+  }
+
   private resendActivation($event: Event, user: UserInfo) {
     if ($event) {
       $event.stopPropagation();
@@ -332,6 +354,9 @@ export class UsersTableConfigResolver  {
         return true;
       case 'displayActivationLink':
         this.displayActivationLink(action.event, action.entity);
+        return true;
+      case 'displayPasswordResetLink':
+        this.displayPasswordResetLink(action.event, action.entity);
         return true;
       case 'resendActivation':
         this.resendActivation(action.event, action.entity);
