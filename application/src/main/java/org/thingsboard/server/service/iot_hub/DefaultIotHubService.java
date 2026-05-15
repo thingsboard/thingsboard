@@ -21,12 +21,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -51,6 +53,7 @@ import org.thingsboard.server.common.data.rule.NodeConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
+import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
@@ -59,6 +62,7 @@ import org.thingsboard.server.dao.iot_hub.IotHubInstalledItemService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.entitiy.asset.profile.TbAssetProfileService;
 import org.thingsboard.server.service.entitiy.cf.TbCalculatedFieldService;
 import org.thingsboard.server.service.entitiy.dashboard.TbDashboardService;
 import org.thingsboard.server.service.entitiy.device.TbDeviceService;
@@ -88,6 +92,8 @@ public class DefaultIotHubService implements IotHubService {
     private final RuleChainService ruleChainService;
     private final TbRuleChainService tbRuleChainService;
     private final TbDeviceProfileService tbDeviceProfileService;
+    private final AssetProfileService assetProfileService;
+    private final TbAssetProfileService tbAssetProfileService;
     private final IotHubInstalledItemService iotHubInstalledItemService;
     private final WidgetTypeService widgetTypeService;
     private final DashboardService dashboardService;
@@ -118,7 +124,7 @@ public class DefaultIotHubService implements IotHubService {
                 case "DASHBOARD" -> installDashboard(user, tenantId, fileData);
                 case "CALCULATED_FIELD" -> installCalculatedField(user, tenantId, fileData, data);
                 case "ALARM_RULE" -> installAlarmRule(user, tenantId, fileData, data);
-                case "RULE_CHAIN" -> installRuleChain(tenantId, fileData);
+                case "RULE_CHAIN" -> installRuleChain(user, tenantId, fileData, data);
                 case "DEVICE" -> installDeviceProfile(user, tenantId, fileData);
                 case "SOLUTION_TEMPLATE" -> installSolution(user, tenantId, fileData, request);
                 default -> throw new IllegalArgumentException("Unsupported IoT Hub item type: " + itemType);
@@ -224,7 +230,8 @@ public class DefaultIotHubService implements IotHubService {
         return descriptor;
     }
 
-    private RuleChainInstalledItemDescriptor installRuleChain(TenantId tenantId, byte[] fileData) throws Exception {
+    private RuleChainInstalledItemDescriptor installRuleChain(
+            SecurityUser user, TenantId tenantId, byte[] fileData, JsonNode data) throws Exception {
         JsonNode json = JacksonUtil.toJsonNode(new String(fileData));
 
         RuleChain ruleChain;
@@ -250,9 +257,50 @@ public class DefaultIotHubService implements IotHubService {
         ruleChainService.saveRuleChainMetaData(tenantId, metadata, tbRuleChainService::updateRuleNodeConfiguration);
 
         log.debug("[{}] Rule chain installed: {}", tenantId, savedRuleChain.getName());
+
         RuleChainInstalledItemDescriptor descriptor = new RuleChainInstalledItemDescriptor();
         descriptor.setRuleChainId(savedRuleChain.getId());
+
+        if (data != null && data.has("entityId") && !data.get("entityId").isNull()) {
+            EntityId entityId = JacksonUtil.treeToValue(data.get("entityId"), EntityId.class);
+            setAsDefaultRuleChain(user, tenantId, entityId, savedRuleChain.getId());
+            descriptor.setTargetProfileId(entityId);
+        }
+
         return descriptor;
+    }
+
+    private void setAsDefaultRuleChain(SecurityUser user, TenantId tenantId,
+                                       EntityId entityId, RuleChainId ruleChainId) throws Exception {
+        switch (entityId.getEntityType()) {
+            case DEVICE_PROFILE -> {
+                DeviceProfile profile = deviceProfileService.findDeviceProfileById(
+                        tenantId, (DeviceProfileId) entityId);
+                if (profile == null) {
+                    throw new IllegalArgumentException(
+                            "Device profile not found: " + entityId.getId());
+                }
+                profile.setDefaultRuleChainId(ruleChainId);
+                tbDeviceProfileService.save(profile, user);
+                log.debug("[{}] Set rule chain {} as default on device profile {}",
+                        tenantId, ruleChainId.getId(), entityId.getId());
+            }
+            case ASSET_PROFILE -> {
+                AssetProfile profile = assetProfileService.findAssetProfileById(
+                        tenantId, (AssetProfileId) entityId);
+                if (profile == null) {
+                    throw new IllegalArgumentException(
+                            "Asset profile not found: " + entityId.getId());
+                }
+                profile.setDefaultRuleChainId(ruleChainId);
+                tbAssetProfileService.save(profile, user);
+                log.debug("[{}] Set rule chain {} as default on asset profile {}",
+                        tenantId, ruleChainId.getId(), entityId.getId());
+            }
+            default -> throw new IllegalArgumentException(
+                    "Rule chain can only be set as default on device or asset profile, got: "
+                            + entityId.getEntityType());
+        }
     }
 
     private DeviceInstalledItemDescriptor installDeviceProfile(SecurityUser user, TenantId tenantId, byte[] fileData) throws Exception {

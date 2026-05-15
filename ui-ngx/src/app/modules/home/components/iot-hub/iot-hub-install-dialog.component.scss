@@ -14,6 +14,14 @@
  * limitations under the License.
  */
 
+@import "../../../../../scss/constants";
+
+tb-entity-select {
+  @media #{$mat-gt-sm} {
+    min-width: 512px;
+  }
+}
+
 .tb-iot-hub-install-title {
   font-size: 20px;
   font-weight: 600;
