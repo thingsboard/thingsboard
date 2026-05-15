@@ -23,6 +23,7 @@ import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.UserActivationLink;
+import org.thingsboard.server.common.data.UserPasswordResetLink;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -95,6 +96,22 @@ public class DefaultUserService extends AbstractTbEntityService implements TbUse
         } else {
             throw new ThingsboardException("User is already activated!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
+    }
+
+    @Override
+    public UserPasswordResetLink getPasswordResetLink(TenantId tenantId, CustomerId customerId, UserId userId, HttpServletRequest request) throws ThingsboardException {
+        UserCredentials userCredentials = userService.findUserCredentialsByUserId(tenantId, userId);
+        if (!userCredentials.isEnabled()) {
+            if (userCredentials.getActivateToken() != null) {
+                throw new ThingsboardException("User is not yet activated!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+            }
+            throw new ThingsboardException("User account is disabled!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        }
+        userCredentials = userService.generatePasswordResetToken(userCredentials);
+        userCredentials = userService.saveUserCredentials(tenantId, userCredentials);
+        String baseUrl = systemSecurityService.getBaseUrl(tenantId, customerId, request);
+        String link = baseUrl + "/api/noauth/resetPassword?resetToken=" + userCredentials.getResetToken();
+        return new UserPasswordResetLink(link, userCredentials.getResetTokenTtl());
     }
 
 }

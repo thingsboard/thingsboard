@@ -16,8 +16,9 @@
 package org.thingsboard.server.service.entitiy.user;
 
 import jakarta.servlet.http.HttpServletRequest;
-import org.thingsboard.server.common.data.UserActivationLink;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.UserActivationLink;
+import org.thingsboard.server.common.data.UserPasswordResetLink;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -30,5 +31,7 @@ public interface TbUserService {
     void delete(TenantId tenantId, CustomerId customerId, User user, User responsibleUser) throws ThingsboardException;
 
     UserActivationLink getActivationLink(TenantId tenantId, CustomerId customerId, UserId userId, HttpServletRequest request) throws ThingsboardException;
+
+    UserPasswordResetLink getPasswordResetLink(TenantId tenantId, CustomerId customerId, UserId userId, HttpServletRequest request) throws ThingsboardException;
 
 }
