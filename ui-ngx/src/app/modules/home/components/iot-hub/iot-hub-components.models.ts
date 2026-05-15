@@ -22,7 +22,6 @@ export const ITEM_TYPE_TO_ENTITY_TYPE: Record<string, EntityType> = {
   'WIDGET': EntityType.WIDGET_TYPE,
   'DASHBOARD': EntityType.DASHBOARD,
   'CALCULATED_FIELD': EntityType.CALCULATED_FIELD,
-  'ALARM_RULE': EntityType.CALCULATED_FIELD,
   'RULE_CHAIN': EntityType.RULE_CHAIN,
   'DEVICE': EntityType.DEVICE_PROFILE
 };
@@ -30,6 +29,12 @@ export const ITEM_TYPE_TO_ENTITY_TYPE: Record<string, EntityType> = {
 export function resolveEntityDetailsUrl(descriptor: IotHubInstalledItemDescriptor, itemType: string): string | null {
   if (!descriptor) {
     return null;
+  }
+  // Alarm rules share the CalculatedField data structure but live at a different
+  // route, so resolve their URL directly instead of going through the entity-type map.
+  if (itemType === 'ALARM_RULE' && descriptor.type === 'ALARM_RULE') {
+    const id = descriptor.calculatedFieldId?.id;
+    return id ? `/alarms/alarm-rules/${id}` : null;
   }
   const entityType = ITEM_TYPE_TO_ENTITY_TYPE[itemType];
   if (!entityType) {
@@ -40,7 +45,6 @@ export function resolveEntityDetailsUrl(descriptor: IotHubInstalledItemDescripto
     case 'WIDGET': entityId = descriptor.widgetTypeId?.id; break;
     case 'DASHBOARD': entityId = descriptor.dashboardId?.id; break;
     case 'CALCULATED_FIELD': entityId = descriptor.calculatedFieldId?.id; break;
-    case 'ALARM_RULE': entityId = descriptor.calculatedFieldId?.id; break;
     case 'RULE_CHAIN': entityId = descriptor.ruleChainId?.id; break;
   }
   if (!entityId) {

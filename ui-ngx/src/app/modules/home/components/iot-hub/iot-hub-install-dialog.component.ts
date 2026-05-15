@@ -87,6 +87,12 @@ export class TbIotHubInstallDialogComponent extends DialogComponent<TbIotHubInst
       required: true,
       promptKey: 'iot-hub.select-entity-for-cf',
     },
+    [ItemType.ALARM_RULE]: {
+      allowed: [EntityType.DEVICE, EntityType.ASSET, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE],
+      defaultType: EntityType.DEVICE_PROFILE,
+      required: true,
+      promptKey: 'iot-hub.select-entity-for-alarm-rule',
+    },
     [ItemType.RULE_CHAIN]: {
       allowed: [EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE],
       defaultType: EntityType.DEVICE_PROFILE,
