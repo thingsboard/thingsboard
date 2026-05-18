@@ -106,26 +106,46 @@ public class DefaultCoapServerService implements CoapServerService, SmartInitial
     private CoapServer createCoapServer() throws UnknownHostException {
         Configuration networkConfig = createNetworkConfiguration();
         server = new CoapServer(networkConfig);
+        try {
+            CoapEndpoint.Builder noSecCoapEndpointBuilder = new CoapEndpoint.Builder();
+            InetAddress addr = InetAddress.getByName(coapServerContext.getHost());
+            InetSocketAddress sockAddr = new InetSocketAddress(addr, coapServerContext.getPort());
+            noSecCoapEndpointBuilder.setInetSocketAddress(sockAddr);
 
-        CoapEndpoint.Builder noSecCoapEndpointBuilder = new CoapEndpoint.Builder();
-        InetAddress addr = InetAddress.getByName(coapServerContext.getHost());
-        InetSocketAddress sockAddr = new InetSocketAddress(addr, coapServerContext.getPort());
-        noSecCoapEndpointBuilder.setInetSocketAddress(sockAddr);
+            noSecCoapEndpointBuilder.setConfiguration(networkConfig);
+            CoapEndpoint noSecCoapEndpoint = noSecCoapEndpointBuilder.build();
+            server.addEndpoint(noSecCoapEndpoint);
+            if (isDtlsEnabled()) {
+                createDtlsEndpoint(networkConfig);
+                dtlsSessionsExecutor = ThingsBoardExecutors.newSingleThreadScheduledExecutor(getClass().getSimpleName());
+                dtlsSessionsExecutor.scheduleAtFixedRate(this::evictTimeoutSessions, new Random().nextInt((int) getDtlsSessionReportTimeout()), getDtlsSessionReportTimeout(), TimeUnit.MILLISECONDS);
+            }
+            Resource root = server.getRoot();
+            TbCoapServerMessageDeliverer messageDeliverer = new TbCoapServerMessageDeliverer(root);
+            server.setMessageDeliverer(messageDeliverer);
 
-        noSecCoapEndpointBuilder.setConfiguration(networkConfig);
-        CoapEndpoint noSecCoapEndpoint = noSecCoapEndpointBuilder.build();
-        server.addEndpoint(noSecCoapEndpoint);
-        if (isDtlsEnabled()) {
-            createDtlsEndpoint(networkConfig);
-            dtlsSessionsExecutor = ThingsBoardExecutors.newSingleThreadScheduledExecutor(getClass().getSimpleName());
-            dtlsSessionsExecutor.scheduleAtFixedRate(this::evictTimeoutSessions, new Random().nextInt((int) getDtlsSessionReportTimeout()), getDtlsSessionReportTimeout(), TimeUnit.MILLISECONDS);
+            server.start();
+            return server;
+        } catch (RuntimeException | UnknownHostException e) {
+            log.error("Failed to start CoAP server, releasing resources", e);
+            try {
+                if (dtlsSessionsExecutor != null) {
+                    dtlsSessionsExecutor.shutdownNow();
+                }
+                if (server != null) {
+                    server.destroy();
+                }
+            } catch (Exception suppressed) {
+                e.addSuppressed(suppressed);
+            } finally {
+                server = null;
+                dtlsSessionsExecutor = null;
+                dtlsConnector = null;
+                dtlsCoapEndpoint = null;
+                tbDtlsCertificateVerifier = null;
+            }
+            throw e;
         }
-        Resource root = server.getRoot();
-        TbCoapServerMessageDeliverer messageDeliverer = new TbCoapServerMessageDeliverer(root);
-        server.setMessageDeliverer(messageDeliverer);
-
-        server.start();
-        return server;
     }
 
     private boolean isDtlsEnabled() {
