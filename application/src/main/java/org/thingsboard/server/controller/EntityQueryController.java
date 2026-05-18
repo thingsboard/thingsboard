@@ -168,10 +168,6 @@ public class EntityQueryController extends BaseController {
         if (cmd.getEndTs() < cmd.getStartTs()) {
             throw new ThingsboardException("endTs must be >= startTs", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
-        EntityDataPageLink pageLink = request.getQuery().getPageLink();
-        if (pageLink != null && pageLink.getPageSize() > MAX_PAGE_SIZE) {
-            pageLink.setPageSize(MAX_PAGE_SIZE);
-        }
         resolveQuery(request.getQuery());
         return entityQueryService.findEntityDataAggHistoryByQuery(getCurrentUser(), request.getQuery(), cmd);
     }
