@@ -466,9 +466,9 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     }
 
     private void forwardToCoreRpcService(FromDeviceRPCResponseProto proto, TbCallback callback) {
-        RpcError error = proto.getError() > 0 ? RpcError.values()[proto.getError()] : null;
+        RpcError error = proto.getError() >= 0 ? RpcError.values()[proto.getError()] : null;
         FromDeviceRpcResponse response = new FromDeviceRpcResponse(new UUID(proto.getRequestIdMSB(), proto.getRequestIdLSB())
-                , proto.getResponse(), error);
+                , proto.hasResponse() ? proto.getResponse() : null, error);
         tbCoreDeviceRpcService.processRpcResponseFromRuleEngine(response);
         callback.onSuccess();
     }
