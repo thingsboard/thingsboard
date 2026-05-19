@@ -22,7 +22,7 @@ import org.junit.runner.RunWith;
 import org.mockito.BDDMockito;
 import org.mockito.Mockito;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -52,7 +52,7 @@ public class DefaultQueryLogComponentTest {
     private TenantId tenantId;
     private SqlQueryContext ctx;
 
-    @SpyBean
+    @MockitoSpyBean
     private DefaultQueryLogComponent queryLog;
 
     @Before
