@@ -22,42 +22,203 @@ import java.util.Optional;
 
 public enum ActionType {
 
-    ADDED(TbMsgType.ENTITY_CREATED), // log entity
-    DELETED(TbMsgType.ENTITY_DELETED), // log string id
-    UPDATED(TbMsgType.ENTITY_UPDATED), // log entity
-    ATTRIBUTES_UPDATED(TbMsgType.ATTRIBUTES_UPDATED), // log attributes/values
-    ATTRIBUTES_DELETED(TbMsgType.ATTRIBUTES_DELETED), // log attributes
-    TIMESERIES_UPDATED(TbMsgType.TIMESERIES_UPDATED), // log timeseries update
-    TIMESERIES_DELETED(TbMsgType.TIMESERIES_DELETED), // log timeseries
-    RPC_CALL, // log method and params
-    CREDENTIALS_UPDATED, // log new credentials
-    ASSIGNED_TO_CUSTOMER(TbMsgType.ENTITY_ASSIGNED), // log customer name
-    UNASSIGNED_FROM_CUSTOMER(TbMsgType.ENTITY_UNASSIGNED), // log customer name
-    ACTIVATED, // log string id
-    SUSPENDED, // log string id
-    CREDENTIALS_READ(true), // log device id
-    ATTRIBUTES_READ(true), // log attributes
+    /**
+     * Entity created. Pushes {@link TbMsgType#ENTITY_CREATED} to rule engine.
+     * Audit log payload: full entity JSON.
+     */
+    ADDED(TbMsgType.ENTITY_CREATED),
+    /**
+     * Entity deleted. Pushes {@link TbMsgType#ENTITY_DELETED} to rule engine.
+     * Audit log payload: entity string id.
+     */
+    DELETED(TbMsgType.ENTITY_DELETED),
+    /**
+     * Entity updated. Pushes {@link TbMsgType#ENTITY_UPDATED} to rule engine.
+     * Audit log payload: full entity JSON.
+     */
+    UPDATED(TbMsgType.ENTITY_UPDATED),
+    /**
+     * Server-side or shared attributes updated via API.
+     * Pushes {@link TbMsgType#ATTRIBUTES_UPDATED} to rule engine.
+     * Rule engine msg metadata includes {@code scope} ({@code SERVER_SCOPE} or {@code SHARED_SCOPE}).
+     * Rule engine msg data: key-value pairs of the updated attributes.
+     * Audit log payload: updated attributes and their values.
+     */
+    ATTRIBUTES_UPDATED(TbMsgType.ATTRIBUTES_UPDATED),
+    /**
+     * Attributes deleted via API.
+     * Pushes {@link TbMsgType#ATTRIBUTES_DELETED} to rule engine.
+     * Rule engine msg metadata includes {@code scope} ({@code SERVER_SCOPE} or {@code SHARED_SCOPE}).
+     * Rule engine msg data: {@code {"attributes": ["key1", "key2"]}}.
+     * Audit log payload: list of deleted attribute keys.
+     */
+    ATTRIBUTES_DELETED(TbMsgType.ATTRIBUTES_DELETED),
+    /**
+     * Timeseries data saved via API (not from device transport).
+     * Pushes {@link TbMsgType#TIMESERIES_UPDATED} to rule engine.
+     * Rule engine msg data: {@code {"timeseries": [{"ts": ..., "values": {...}}, ...]}}.
+     * Audit log payload: timeseries entries.
+     */
+    TIMESERIES_UPDATED(TbMsgType.TIMESERIES_UPDATED),
+    /**
+     * Timeseries data deleted via API.
+     * Pushes {@link TbMsgType#TIMESERIES_DELETED} to rule engine.
+     * Rule engine msg data: {@code {"timeseries": ["key1", ...], "startTs": ..., "endTs": ...}}.
+     * Audit log payload: deleted timeseries keys.
+     */
+    TIMESERIES_DELETED(TbMsgType.TIMESERIES_DELETED),
+    /**
+     * RPC call to device. Does not push to rule engine (RPC has its own lifecycle messages).
+     * Audit log payload: RPC method and params.
+     */
+    RPC_CALL,
+    /**
+     * Device credentials updated. Does not push to rule engine.
+     * Audit log payload: new credentials value.
+     */
+    CREDENTIALS_UPDATED,
+    /**
+     * Entity assigned to a customer. Pushes {@link TbMsgType#ENTITY_ASSIGNED} to rule engine.
+     * Rule engine msg metadata includes {@code assignedCustomerId} and {@code assignedCustomerName}.
+     * Audit log payload: customer name.
+     */
+    ASSIGNED_TO_CUSTOMER(TbMsgType.ENTITY_ASSIGNED),
+    /**
+     * Entity unassigned from a customer. Pushes {@link TbMsgType#ENTITY_UNASSIGNED} to rule engine.
+     * Rule engine msg metadata includes {@code unassignedCustomerId} and {@code unassignedCustomerName}.
+     * Audit log payload: customer name.
+     */
+    UNASSIGNED_FROM_CUSTOMER(TbMsgType.ENTITY_UNASSIGNED),
+    /**
+     * User account or integration activated. Does not push to rule engine.
+     * Audit log payload: entity string id.
+     */
+    ACTIVATED,
+    /**
+     * User account or integration suspended. Does not push to rule engine.
+     * Audit log payload: entity string id.
+     */
+    SUSPENDED,
+    /**
+     * Device credentials read. Read-only action. Does not push to rule engine.
+     * Audit log payload: device id.
+     */
+    CREDENTIALS_READ(true),
+    /**
+     * Attributes read. Read-only action. Does not push to rule engine.
+     * Audit log payload: attribute keys read.
+     */
+    ATTRIBUTES_READ(true),
+    /**
+     * Relation created or updated. Pushes {@link TbMsgType#RELATION_ADD_OR_UPDATE} to rule engine.
+     * Rule engine msg data: relation JSON ({@code from}, {@code to}, {@code type}, {@code typeGroup}).
+     */
     RELATION_ADD_OR_UPDATE(TbMsgType.RELATION_ADD_OR_UPDATE),
+    /**
+     * Relation deleted. Pushes {@link TbMsgType#RELATION_DELETED} to rule engine.
+     * Rule engine msg data: relation JSON ({@code from}, {@code to}, {@code type}, {@code typeGroup}).
+     */
     RELATION_DELETED(TbMsgType.RELATION_DELETED),
+    /**
+     * All relations for an entity deleted. Pushes {@link TbMsgType#RELATIONS_DELETED} to rule engine.
+     * Rule engine msg data: empty JSON object.
+     */
     RELATIONS_DELETED(TbMsgType.RELATIONS_DELETED),
-    REST_API_RULE_ENGINE_CALL, // log call to rule engine from REST API
+    /**
+     * REST API call to rule engine. Does not push to rule engine directly
+     * (the REST controller creates a {@link TbMsgType#REST_API_REQUEST} message itself).
+     * Audit log payload: call details.
+     */
+    REST_API_RULE_ENGINE_CALL,
+    /**
+     * Alarm acknowledged by a user. Pushes {@link TbMsgType#ALARM_ACK} to rule engine.
+     * Rule engine msg data: full alarm JSON. Originator: alarm id.
+     */
     ALARM_ACK(TbMsgType.ALARM_ACK, true),
+    /**
+     * Alarm cleared by a user. Pushes {@link TbMsgType#ALARM_CLEAR} to rule engine.
+     * Rule engine msg data: full alarm JSON. Originator: alarm id.
+     */
     ALARM_CLEAR(TbMsgType.ALARM_CLEAR, true),
+    /**
+     * Alarm deleted by a user. Pushes {@link TbMsgType#ALARM_DELETE} to rule engine.
+     * Rule engine msg data: full alarm JSON. Originator: alarm id.
+     */
     ALARM_DELETE(TbMsgType.ALARM_DELETE, true),
+    /**
+     * Alarm assigned to a user. Pushes {@link TbMsgType#ALARM_ASSIGNED} to rule engine.
+     * Rule engine msg data: full alarm JSON. Originator: alarm id.
+     */
     ALARM_ASSIGNED(TbMsgType.ALARM_ASSIGNED, true),
+    /**
+     * Alarm unassigned from a user. Pushes {@link TbMsgType#ALARM_UNASSIGNED} to rule engine.
+     * Rule engine msg data: full alarm JSON. Originator: alarm id.
+     */
     ALARM_UNASSIGNED(TbMsgType.ALARM_UNASSIGNED, true),
+    /**
+     * User logged in. Does not push to rule engine.
+     */
     LOGIN,
+    /**
+     * User logged out. Does not push to rule engine.
+     */
     LOGOUT,
+    /**
+     * User account locked out due to too many failed login attempts. Does not push to rule engine.
+     */
     LOCKOUT,
+    /**
+     * Entity assigned from another tenant (incoming side of cross-tenant transfer).
+     * Pushes {@link TbMsgType#ENTITY_ASSIGNED_FROM_TENANT} to rule engine.
+     * Rule engine msg metadata includes {@code assignedFromTenantId} and {@code assignedFromTenantName}.
+     */
     ASSIGNED_FROM_TENANT(TbMsgType.ENTITY_ASSIGNED_FROM_TENANT),
+    /**
+     * Entity assigned to another tenant (outgoing side of cross-tenant transfer).
+     * Pushes {@link TbMsgType#ENTITY_ASSIGNED_TO_TENANT} to rule engine.
+     * Rule engine msg metadata includes {@code assignedToTenantId} and {@code assignedToTenantName}.
+     */
     ASSIGNED_TO_TENANT(TbMsgType.ENTITY_ASSIGNED_TO_TENANT),
+    /**
+     * Device provisioned successfully. Pushes {@link TbMsgType#PROVISION_SUCCESS} to rule engine.
+     * Rule engine msg data: full device JSON.
+     */
     PROVISION_SUCCESS(TbMsgType.PROVISION_SUCCESS),
+    /**
+     * Device provisioning failed. Pushes {@link TbMsgType#PROVISION_FAILURE} to rule engine.
+     * Rule engine msg data: full device JSON.
+     */
     PROVISION_FAILURE(TbMsgType.PROVISION_FAILURE),
-    ASSIGNED_TO_EDGE(TbMsgType.ENTITY_ASSIGNED_TO_EDGE), // log edge name
+    /**
+     * Entity assigned to an Edge instance. Pushes {@link TbMsgType#ENTITY_ASSIGNED_TO_EDGE} to rule engine.
+     * Rule engine msg metadata includes {@code assignedEdgeId} and {@code assignedEdgeName}.
+     * Audit log payload: edge name.
+     */
+    ASSIGNED_TO_EDGE(TbMsgType.ENTITY_ASSIGNED_TO_EDGE),
+    /**
+     * Entity unassigned from an Edge instance. Pushes {@link TbMsgType#ENTITY_UNASSIGNED_FROM_EDGE} to rule engine.
+     * Rule engine msg metadata includes {@code unassignedEdgeId} and {@code unassignedEdgeName}.
+     */
     UNASSIGNED_FROM_EDGE(TbMsgType.ENTITY_UNASSIGNED_FROM_EDGE),
+    /**
+     * Comment added to an alarm. Pushes {@link TbMsgType#COMMENT_CREATED} to rule engine.
+     * Rule engine msg metadata includes {@code comment} (JSON string of the AlarmComment object).
+     * Rule engine msg data: full alarm JSON. Originator: alarm id.
+     */
     ADDED_COMMENT(TbMsgType.COMMENT_CREATED),
+    /**
+     * Alarm comment updated. Pushes {@link TbMsgType#COMMENT_UPDATED} to rule engine.
+     * Rule engine msg metadata includes {@code comment} (JSON string of the AlarmComment object).
+     * Rule engine msg data: full alarm JSON. Originator: alarm id.
+     */
     UPDATED_COMMENT(TbMsgType.COMMENT_UPDATED),
+    /**
+     * Alarm comment deleted. Does not push to rule engine.
+     */
     DELETED_COMMENT,
+    /**
+     * SMS sent. Does not push to rule engine.
+     */
     SMS_SENT;
 
     @Getter

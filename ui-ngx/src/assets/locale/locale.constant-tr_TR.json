@@ -1095,6 +1095,7 @@
     "expression": "İfade",
     "no-found": "Hesaplanmış alan bulunamadı",
     "list": "{ count, plural, =1 {Bir hesaplanmış alan} other {# hesaplanmış alan listesi} }",
+    "add": "Hesaplanmış alan ekle",
     "selected-fields": "{ count, plural, =1 {1 hesaplanmış alan} other {# hesaplanmış alan} } seçildi",
     "type": {
       "simple": "Basit",
@@ -7465,7 +7466,7 @@
       "handle-empty-result-function": "Boş sonuç fonksiyonunu işle",
       "handle-error-function": "Hata fonksiyonunu işle",
       "handle-non-mobile-fallback-function": "Mobil olmayan geri dönüş fonksiyonunu işle",
-      "save-to-gallery": "Galeriye kaydet",
+      "save-to-gallery": "'Resim Galerisi'ne kaydet",
       "provision-type": "Sağlama türü",
       "auto": "Otomatik",
       "wi-fi": "Wi-Fi",

@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.service;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
@@ -59,10 +60,13 @@ import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.exception.DataValidationException;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @DaoSqlTest
 public class AlarmServiceTest extends AbstractServiceTest {
@@ -988,6 +992,27 @@ public class AlarmServiceTest extends AbstractServiceTest {
         countQuery.setStatusList(List.of(AlarmSearchStatus.CLEARED));
         alarmsCount = alarmService.countAlarmsByQuery(tenantId, null, countQuery, List.of(childId));
         Assert.assertEquals(1, alarmsCount);
+    }
+
+    @Test
+    public void testShouldFailToCreateAlarmWithBadType() {
+        AssetId originatorId = new AssetId(Uuids.timeBased());
+
+        long ts = System.currentTimeMillis();
+        AlarmCreateOrUpdateActiveRequest request = AlarmCreateOrUpdateActiveRequest.builder()
+                .tenantId(tenantId)
+                .originator(originatorId)
+                .type("<img src=1 onerror=alert()>")
+                .severity(AlarmSeverity.CRITICAL)
+                .startTs(ts).build();
+
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            alarmService.createAlarm(request);
+        });
+
+        request.setType(TEST_ALARM);
+        AlarmApiCallResult result = alarmService.createAlarm(request);
+        assertThat(result.getAlarm().getId()).isNotNull();
     }
 
 }

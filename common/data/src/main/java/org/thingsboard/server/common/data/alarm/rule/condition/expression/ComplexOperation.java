@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.common.data.alarm.rule.condition.expression;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(name = "AlarmRuleComplexOperation")
 public enum ComplexOperation {
     AND,
     OR

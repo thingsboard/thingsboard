@@ -45,7 +45,7 @@ public class AlarmComment extends BaseData<AlarmCommentId> implements HasName {
     private AlarmId alarmId;
     @Schema(description = "JSON object with User id.", accessMode = Schema.AccessMode.READ_ONLY)
     private UserId userId;
-    @Schema(description = "Defines origination of comment. System type means comment was created by TB. OTHER type means comment was created by user.", example = "SYSTEM/OTHER", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(description = "Defines origination of comment. System type means comment was created by TB. OTHER type means comment was created by user.", example = "SYSTEM/OTHER")
     private AlarmCommentType type;
     @Schema(description = "JSON object with text of comment.")
     @NoXss
@@ -56,7 +56,7 @@ public class AlarmComment extends BaseData<AlarmCommentId> implements HasName {
     @Schema(description = "JSON object with the alarm comment Id. " +
             "Specify this field to update the alarm comment. " +
             "Referencing non-existing alarm Id will cause error. " +
-            "Omit this field to create new alarm.", accessMode = Schema.AccessMode.READ_ONLY)
+            "Omit this field to create new alarm.")
     @Override
     public AlarmCommentId getId() {
         return super.getId();

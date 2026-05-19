@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.common.data.notification.rule.trigger.config;
 
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -28,11 +30,15 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@Schema
 public class DeviceActivityNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
 
+    @ArraySchema(schema = @Schema(implementation = UUID.class))
     private Set<UUID> devices;
+    @ArraySchema(schema = @Schema(implementation = UUID.class))
     private Set<UUID> deviceProfiles; // set either devices or profiles
     @NotEmpty
+    @ArraySchema(schema = @Schema(implementation = DeviceEvent.class))
     private Set<DeviceEvent> notifyOn;
 
     @Override
@@ -40,6 +46,7 @@ public class DeviceActivityNotificationRuleTriggerConfig implements Notification
         return NotificationRuleTriggerType.DEVICE_ACTIVITY;
     }
 
+    @Schema
     public enum DeviceEvent {
         ACTIVE, INACTIVE
     }

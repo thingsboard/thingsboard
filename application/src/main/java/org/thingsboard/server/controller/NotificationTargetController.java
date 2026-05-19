@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -153,17 +154,26 @@ public class NotificationTargetController extends BaseController {
         return notificationTargetService.findRecipientsForNotificationTargetConfig(user.getTenantId(), (PlatformUsersNotificationTargetConfig) notificationTarget.getConfiguration(), pageLink);
     }
 
-    @ApiOperation(value = "Get notification targets by ids (getNotificationTargetsByIds)",
-            notes = "Returns the list of notification targets found by provided ids." +
-                    SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @Hidden
     @GetMapping(value = "/targets", params = {"ids"})
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    public List<NotificationTarget> getNotificationTargetsByIds(@Parameter(description = "Comma-separated list of uuids representing targets ids", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+    public List<NotificationTarget> getNotificationTargetsByIdsV1(@Parameter(description = "Comma-separated list of uuids representing targets ids", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
                                                                 @RequestParam("ids") UUID[] ids,
                                                                 @AuthenticationPrincipal SecurityUser user) {
         // PE: generic permission
         List<NotificationTargetId> targetsIds = Arrays.stream(ids).map(NotificationTargetId::new).collect(Collectors.toList());
         return notificationTargetService.findNotificationTargetsByTenantIdAndIds(user.getTenantId(), targetsIds);
+    }
+
+    @ApiOperation(value = "Get notification targets by ids (getNotificationTargetsByIds)",
+            notes = "Returns the list of notification targets found by provided ids." +
+                    SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @GetMapping(value = "/targets/list")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    public List<NotificationTarget> getNotificationTargetsByIds(@Parameter(description = "Comma-separated list of uuids representing targets ids", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+                                                                  @RequestParam("ids") UUID[] ids,
+                                                                  @AuthenticationPrincipal SecurityUser user) {
+        return getNotificationTargetsByIdsV1(ids, user);
     }
 
     @ApiOperation(value = "Get notification targets (getNotificationTargets)",
@@ -188,13 +198,10 @@ public class NotificationTargetController extends BaseController {
         return notificationTargetService.findNotificationTargetsByTenantId(user.getTenantId(), pageLink);
     }
 
-    @ApiOperation(value = "Get notification targets by supported notification type (getNotificationTargetsBySupportedNotificationType)",
-            notes = "Returns the page of notification targets filtered by notification type that they can be used for." + NEW_LINE +
-                    PAGE_DATA_PARAMETERS +
-                    SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @Hidden
     @GetMapping(value = "/targets", params = "notificationType")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    public PageData<NotificationTarget> getNotificationTargetsBySupportedNotificationType(@RequestParam int pageSize,
+    public PageData<NotificationTarget> getNotificationTargetsBySupportedNotificationTypeV1(@RequestParam int pageSize,
                                                                                           @RequestParam int page,
                                                                                           @RequestParam(required = false) String textSearch,
                                                                                           @RequestParam(required = false) String sortProperty,
@@ -204,6 +211,22 @@ public class NotificationTargetController extends BaseController {
         // PE: generic permission
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return notificationTargetService.findNotificationTargetsByTenantIdAndSupportedNotificationType(user.getTenantId(), notificationType, pageLink);
+    }
+
+    @ApiOperation(value = "Get notification targets by supported notification type (getNotificationTargetsBySupportedNotificationType)",
+            notes = "Returns the page of notification targets filtered by notification type that they can be used for." + NEW_LINE +
+                    PAGE_DATA_PARAMETERS +
+                    SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @GetMapping(value = "/targets/notificationType/{notificationType}")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    public PageData<NotificationTarget> getNotificationTargetsBySupportedNotificationType(@PathVariable NotificationType notificationType,
+                                                                                            @RequestParam int pageSize,
+                                                                                            @RequestParam int page,
+                                                                                            @RequestParam(required = false) String textSearch,
+                                                                                            @RequestParam(required = false) String sortProperty,
+                                                                                            @RequestParam(required = false) String sortOrder,
+                                                                                            @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
+        return getNotificationTargetsBySupportedNotificationTypeV1(pageSize, page, textSearch, sortProperty, sortOrder, notificationType, user);
     }
 
     @ApiOperation(value = "Delete notification target by id (deleteNotificationTargetById)",

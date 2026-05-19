@@ -15,11 +15,16 @@
  */
 package org.thingsboard.server.config;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.v3.core.converter.AnnotatedType;
 import io.swagger.v3.core.converter.ModelConverter;
 import io.swagger.v3.core.converter.ModelConverters;
+import io.swagger.v3.core.converter.ResolvedSchema;
+import io.swagger.v3.core.jackson.ModelResolver;
 import io.swagger.v3.core.util.Json;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
@@ -31,6 +36,7 @@ import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.media.Content;
+import io.swagger.v3.oas.models.media.IntegerSchema;
 import io.swagger.v3.oas.models.media.MediaType;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.parameters.RequestBody;
@@ -39,11 +45,12 @@ import io.swagger.v3.oas.models.responses.ApiResponses;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.tags.Tag;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springdoc.core.customizers.OperationCustomizer;
-import org.springdoc.core.customizers.RouterOperationCustomizer;
 import org.springdoc.core.discoverer.SpringDocParameterNameDiscoverer;
+import org.springdoc.core.utils.SpringDocUtils;
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springdoc.core.properties.SpringDocConfigProperties;
 import org.springdoc.core.properties.SwaggerUiConfigProperties;
@@ -54,26 +61,35 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.ai.model.chat.AiChatModelConfig;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
-import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.exception.ThingsboardCredentialsExpiredResponse;
 import org.thingsboard.server.exception.ThingsboardErrorResponse;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
 import org.thingsboard.server.service.security.auth.rest.LoginResponse;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.nio.ByteBuffer;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Deque;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -83,15 +99,29 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @Profile("!test")
 public class SwaggerConfiguration {
 
+    @PostConstruct
+    public void configureModelResolver() {
+        ModelResolver.enumsAsRef = true;
+        SpringDocUtils.getConfig().replaceWithSchema(ByteBuffer.class,
+                new Schema<String>().type("string").format("byte"));
+    }
+
     public static final String LOGIN_ENDPOINT = "/api/auth/login";
     public static final String REFRESH_TOKEN_ENDPOINT = "/api/auth/token";
 
-    private static final String LOGIN_PASSWORD_SCHEME = "HTTP login form";
-    private static final String API_KEY_SCHEME = "API key form";
+    private static final String LOGIN_PASSWORD_SCHEME = "HttpLoginForm";
+    private static final String API_KEY_SCHEME = "ApiKeyForm";
 
     private static final ApiResponses loginResponses = loginResponses();
     private static final ApiResponses defaultErrorResponses = defaultErrorResponses(false);
     private static final ApiResponses defaultPostErrorResponses = defaultErrorResponses(true);
+
+    // Populated by mapAwareConverter, consumed by customOpenApiCustomizer.
+    // Keyed by the schema name that swagger-core generates (see resolveSchemaName).
+    private final Map<String, List<String>> schemaPropertyOrders = new ConcurrentHashMap<>();
+    private final Map<String, Set<String>> schemaOwnProps = new ConcurrentHashMap<>();
+    // Tracks schema name → fully-qualified class names to detect collisions.
+    private final Map<String, Set<String>> schemaNameToClasses = new ConcurrentHashMap<>();
 
     @Value("${swagger.api_path:/api/**}")
     private String apiPath;
@@ -137,6 +167,9 @@ public class SwaggerConfiguration {
         if (StringUtils.isEmpty(apiVersion)) {
             apiVersion = appVersion;
         }
+        if (apiVersion != null && apiVersion.endsWith("-SNAPSHOT")) {
+            apiVersion = apiVersion.substring(0, apiVersion.length() - "-SNAPSHOT".length());
+        }
 
         Info info = new Info()
                 .title(title)
@@ -157,9 +190,9 @@ public class SwaggerConfiguration {
                 .in(SecurityScheme.In.HEADER)
                 .description("""
                         Enter the API key value with 'ApiKey' prefix in format: **ApiKey <your_api_key_value>**
-                        
+                                                
                         Example: **ApiKey tb_5te51SkLRYpjGrujUGwqkjFvooWBlQpVe2An2Dr3w13wjfxDW**
-                        
+                                                
                         <br>**NOTE**: Use only ONE authentication method at a time. If both are authorized, JWT auth takes the priority.<br>
                         """);
 
@@ -213,11 +246,12 @@ public class SwaggerConfiguration {
     private void addLoginOperation(OpenAPI openAPI) {
         var operation = new Operation();
         operation.summary("Login method to get user JWT token data");
+        operation.operationId("login");
         operation.description("""
                 Login method used to authenticate user and get JWT token data.
-                
+                                
                 Value of the response **token** field can be used as **X-Authorization** header value:
-                
+                                
                 `X-Authorization: Bearer $JWT_TOKEN_VALUE`.""");
 
         var requestBody = new RequestBody().description("Login request")
@@ -235,11 +269,12 @@ public class SwaggerConfiguration {
     private void addRefreshTokenOperation(OpenAPI openAPI) {
         var operation = new Operation();
         operation.summary("Refresh user JWT token data");
+        operation.operationId("refreshToken");
         operation.description("""
                 Method to refresh JWT token. Provide a valid refresh token to get a new JWT token.
-                
+                                
                 The response contains a new token that can be used for authorization.
-                
+                                
                 `X-Authorization: Bearer $JWT_TOKEN_VALUE`""");
 
         var requestBody = new RequestBody().description("Refresh token request")
@@ -260,7 +295,6 @@ public class SwaggerConfiguration {
         return GroupedOpenApi.builder()
                 .group(groupName)
                 .pathsToMatch(apiPath)
-                .addRouterOperationCustomizer(routerOperationCustomizer(localSpringDocParameterNameDiscoverer))
                 .addOperationCustomizer(operationCustomizer())
                 .addOpenApiCustomizer(customOpenApiCustomizer())
                 .build();
@@ -270,9 +304,34 @@ public class SwaggerConfiguration {
     @Lazy(false)
     ModelConverter mapAwareConverter() {
         return (type, context, chain) -> {
+            // Strip field-level @JsonIgnoreProperties from context annotations so it
+            // doesn't pollute the global schema. The OpenAPI schema should show all
+            // properties; field-level ignore is a serialization concern only.
+            Annotation[] ctxAnnotations = type.getCtxAnnotations();
+            if (ctxAnnotations != null) {
+                Annotation[] filtered = Arrays.stream(ctxAnnotations)
+                        .filter(a -> !(a instanceof JsonIgnoreProperties))
+                        .toArray(Annotation[]::new);
+                if (filtered.length != ctxAnnotations.length) {
+                    type.ctxAnnotations(filtered);
+                }
+            }
+
+            JavaType javaType = Json.mapper().constructType(type.getType());
+            if (javaType != null) {
+                Class<?> cls = javaType.getRawClass();
+                Schema<?> atomicSchema = switch (cls.getName()) {
+                    case "java.util.concurrent.atomic.AtomicInteger" -> new IntegerSchema().format("int32");
+                    case "java.util.concurrent.atomic.AtomicLong" -> new IntegerSchema().format("int64");
+                    case "com.google.common.util.concurrent.AtomicDouble" -> new IntegerSchema().format("double");
+                    default -> null;
+                };
+                if (atomicSchema != null) {
+                    return atomicSchema;
+                }
+            }
             if (chain.hasNext()) {
                 Schema schema = chain.next().resolve(type, context, chain);
-                JavaType javaType = Json.mapper().constructType(type.getType());
                 if (javaType != null) {
                     Class<?> cls = javaType.getRawClass();
                     if (Map.class.isAssignableFrom(cls)) {
@@ -281,6 +340,26 @@ public class SwaggerConfiguration {
                             if (schema.getProperties().isEmpty()) {
                                 schema.setProperties(null);
                             }
+                        }
+                    } else {
+                        // Precompute property order and own-prop names for this class.
+                        // The actual reordering happens later in the OpenApiCustomizer,
+                        // which has access to the final state of all component schemas
+                        // (including ones where the ModelConverter only sees a $ref).
+                        try {
+                            var beanDesc = Json.mapper().getSerializationConfig().introspect(javaType);
+                            String schemaName = resolveSchemaName(javaType);
+                            Set<String> classes = schemaNameToClasses.computeIfAbsent(schemaName, k -> ConcurrentHashMap.newKeySet());
+                            if (classes.add(cls.getName()) && classes.size() > 1) {
+                                log.error("Duplicate OpenAPI schema name '{}' mapped by: {}. Use @Schema(name = ...) to disambiguate.", schemaName, classes);
+                            }
+                            schemaPropertyOrders.put(schemaName, resolvePropertyOrder(cls, beanDesc));
+                            Set<String> ownProps = computeOwnPropNames(cls, beanDesc);
+                            if (!ownProps.isEmpty()) {
+                                schemaOwnProps.put(schemaName, ownProps);
+                            }
+                        } catch (Exception e) {
+                            log.debug("Failed to resolve property order for {}: {}", cls.getName(), e.getMessage());
                         }
                     }
                 }
@@ -292,45 +371,32 @@ public class SwaggerConfiguration {
     }
 
     private void addDefaultSchemas(OpenAPI openAPI) {
-        var jsonNodeSchema = ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(JsonNode.class)).schema;
-        jsonNodeSchema.setType("any");
-        //noinspection unchecked
-        jsonNodeSchema.setExamples(List.of(JacksonUtil.newObjectNode()));
-        jsonNodeSchema.setDescription("A value representing the any type (object or primitive)");
-        openAPI.getComponents()
-                .addSchemas("JsonNode", jsonNodeSchema)
-                .addSchemas("LoginRequest", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(LoginRequest.class)).schema)
-                .addSchemas("LoginResponse", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(LoginResponse.class)).schema)
-                .addSchemas("ThingsboardErrorResponse", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(ThingsboardErrorResponse.class)).schema)
-                .addSchemas("ThingsboardCredentialsExpiredResponse", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(ThingsboardCredentialsExpiredResponse.class)).schema);
+        Schema<?> errorCodeSchema = new Schema<>()
+                .type("integer")
+                .description("Platform error code")
+                ._enum(Arrays.stream(ThingsboardErrorCode.values())
+                        .map(ThingsboardErrorCode::getErrorCode)
+                        .collect(Collectors.toList()));
+        Components components = openAPI.getComponents();
+        registerSchema(components, "LoginRequest", LoginRequest.class);
+        registerSchema(components, "LoginResponse", LoginResponse.class);
+        registerSchema(components, "ThingsboardErrorResponse", ThingsboardErrorResponse.class);
+        registerSchema(components, "ThingsboardCredentialsExpiredResponse", ThingsboardCredentialsExpiredResponse.class);
+        components.addSchemas("ThingsboardErrorCode", errorCodeSchema);
+        registerSchema(components, "AiChatModelConfig", AiChatModelConfig.class);
     }
 
-    private RouterOperationCustomizer routerOperationCustomizer(SpringDocParameterNameDiscoverer localSpringDocParameterNameDiscoverer) {
-        return (routerOperation, handlerMethod) -> {
-            String[] pNames = localSpringDocParameterNameDiscoverer.getParameterNames(handlerMethod.getMethod());
-            String[] reflectionParametersNames = Arrays.stream(handlerMethod.getMethod().getParameters()).map(java.lang.reflect.Parameter::getName).toArray(String[]::new);
-            if (pNames == null || Arrays.stream(pNames).anyMatch(Objects::isNull)) {
-                pNames = reflectionParametersNames;
-            }
-            MethodParameter[] parameters = handlerMethod.getMethodParameters();
-            List<String> requestParams = new ArrayList<>();
-            for (var i = 0; i < parameters.length; i++) {
-                var methodParameter = parameters[i];
-                RequestParam requestParam = methodParameter.getParameterAnnotation(RequestParam.class);
-                if (requestParam != null) {
-                    String pName = StringUtils.isNotBlank(requestParam.value()) ? requestParam.value() :
-                            pNames[i];
-                    if (StringUtils.isNotBlank(pName)) {
-                        requestParams.add(pName);
-                    }
+    private static void registerSchema(Components components, String name, Class<?> cls) {
+        ResolvedSchema resolved = ModelConverters.getInstance()
+                .readAllAsResolvedSchema(new AnnotatedType().type(cls));
+        components.addSchemas(name, resolved.schema);
+        if (resolved.referencedSchemas != null) {
+            resolved.referencedSchemas.forEach((refName, refSchema) -> {
+                if (components.getSchemas() == null || !components.getSchemas().containsKey(refName)) {
+                    components.addSchemas(refName, refSchema);
                 }
-            }
-            if (!requestParams.isEmpty()) {
-                var path = routerOperation.getPath() + "{?" + String.join(",", requestParams) + "}";
-                routerOperation.setPath(path);
-            }
-            return routerOperation;
-        };
+            });
+        }
     }
 
     private OperationCustomizer operationCustomizer() {
@@ -347,6 +413,19 @@ public class SwaggerConfiguration {
         var apiKeyRequirement = createSecurityRequirement(API_KEY_SCHEME);
 
         return openAPI -> {
+            // Fail fast on duplicate schema names — two different classes resolving to the same
+            // OpenAPI schema name causes one to silently overwrite the other.
+            List<String> duplicates = schemaNameToClasses.entrySet().stream()
+                    .filter(e -> e.getValue().size() > 1)
+                    .map(e -> "'" + e.getKey() + "' mapped by: " + e.getValue())
+                    .sorted()
+                    .toList();
+            if (!duplicates.isEmpty()) {
+                throw new IllegalStateException(
+                        "Duplicate OpenAPI schema names detected. Use @Schema(name = ...) to disambiguate:\n  "
+                                + String.join("\n  ", duplicates));
+            }
+
             var paths = openAPI.getPaths();
             paths.entrySet().stream()
                     .peek(entry -> {
@@ -370,17 +449,137 @@ public class SwaggerConfiguration {
             });
             sortedPaths.setExtensions(paths.getExtensions());
             openAPI.setPaths(sortedPaths);
+
+            if (openAPI.getComponents() != null && openAPI.getComponents().getSchemas() != null) {
+                Map<String, Schema> schemas = openAPI.getComponents().getSchemas();
+
+                // Fix all schemas: if they have additionalProperties but no type, set type to object
+                schemas.forEach((schemaName, schema) -> {
+                    if (schema.getAdditionalProperties() != null && schema.getType() == null) {
+                        schema.setType("object");
+                        log.debug("Added type 'object' to schema: {}", schemaName);
+                    }
+                });
+
+                // Springdoc creates duplicate schemas with an "Object" suffix when a type is
+                // resolved through multiple inheritance paths or via generic type resolution.
+                // Remove the "*Object" duplicate when the base schema exists (either
+                // pre-registered in addDefaultSchemas or generated by springdoc).
+                for (String name : new ArrayList<>(schemas.keySet())) {
+                    if (!name.endsWith("Object")) continue;
+                    String baseName = name.substring(0, name.length() - "Object".length());
+                    if (!schemas.containsKey(baseName)) continue;
+
+                    schemas.remove(name);
+                    String refToRemove = "#/components/schemas/" + name;
+                    schemas.values().forEach(s -> {
+                        if (s.getAllOf() != null) {
+                            s.getAllOf().removeIf(allOfEntry -> refToRemove.equals(((Schema<?>) allOfEntry).get$ref()));
+                        }
+                    });
+                    log.debug("Removed duplicate schema '{}' (base '{}' exists)", name, baseName);
+                }
+
+                // Remove duplicate or redundant inline entries in allOf. Springdoc can
+                // generate multiple inline property blocks when resolving a type through
+                // multiple parent paths (e.g. record + sealed interface). One block may be
+                // a strict subset of another (same properties, but the superset has extras
+                // like "modelType"). Keep only the superset in that case.
+                schemas.values().forEach(schema -> {
+                    if (schema.getAllOf() != null && schema.getAllOf().size() > 1) {
+                        List<Schema> allOf = schema.getAllOf();
+                        Set<Integer> redundant = new HashSet<>();
+                        for (int i = 0; i < allOf.size(); i++) {
+                            if (redundant.contains(i)) continue;
+                            Schema a = allOf.get(i);
+                            if (a.get$ref() != null || a.getProperties() == null) continue;
+                            for (int j = i + 1; j < allOf.size(); j++) {
+                                if (redundant.contains(j)) continue;
+                                Schema b = allOf.get(j);
+                                if (b.get$ref() != null || b.getProperties() == null) continue;
+                                if (a.getProperties().entrySet().containsAll(b.getProperties().entrySet())) {
+                                    redundant.add(j); // b is a subset of a
+                                } else if (b.getProperties().entrySet().containsAll(a.getProperties().entrySet())) {
+                                    redundant.add(i); // a is a subset of b
+                                    break;
+                                }
+                            }
+                        }
+                        if (!redundant.isEmpty()) {
+                            List<Schema> filtered = new ArrayList<>();
+                            for (int i = 0; i < allOf.size(); i++) {
+                                if (!redundant.contains(i)) {
+                                    filtered.add(allOf.get(i));
+                                }
+                            }
+                            allOf.clear();
+                            allOf.addAll(filtered);
+                        }
+                    }
+                });
+
+
+                // Fix polymorphic properties: replace inline oneOf with base type $ref
+                schemas.values().forEach(schema -> {
+                    replaceInlineOneOfProperties(schema, schemas);
+                    if (schema.getAllOf() != null) {
+                        List<Schema> allOf = schema.getAllOf();
+                        for (Schema allOfElement : allOf) {
+                            replaceInlineOneOfProperties(allOfElement, schemas);
+                        }
+                    }
+                });
+
+                // Deduplicate allOf child schemas: remove properties that are already defined
+                // in the referenced parent schema to avoid duplication (e.g. EntityId children).
+                schemas.forEach((schemaName, schema) -> {
+                    Set<String> ownProps = schemaOwnProps.getOrDefault(schemaName, Set.of());
+                    deduplicateAllOfProperties(schema, schemas, ownProps);
+                });
+
+                // Reorder properties for all component schemas. This runs after all
+                // schemas are finalized so it covers schemas the ModelConverter only
+                // saw as a $ref (e.g. interface-based discriminator types like EntityId).
+                schemas.forEach((schemaName, schema) -> {
+                    List<String> propOrder = schemaPropertyOrders.getOrDefault(schemaName, List.of());
+                    reorderSchemaProperties(schema, propOrder);
+                });
+
+                // Synthesize a request-body example for every schema that uses a discriminator.
+                // Without this, Swagger UI shows only the discriminator-property field for
+                // polymorphic types (the parent schema doesn't know which oneOf branch to pick).
+                // We resolve the first declared subtype and inline its full property tree.
+                schemas.forEach((schemaName, schema) -> fillDiscriminatorExample(schema, schemas));
+
+                // Fix polymorphic request/response bodies: replace inline oneOf with base type $ref
+                paths.values().stream()
+                        .flatMap(pathItem -> pathItem.readOperationsMap().values().stream())
+                        .forEach(operation -> {
+                            // Request bodies
+                            if (operation.getRequestBody() != null && operation.getRequestBody().getContent() != null) {
+                                replaceInlineOneOfInContent(operation.getRequestBody().getContent(), schemas);
+                            }
+                            // Response bodies
+                            if (operation.getResponses() != null) {
+                                operation.getResponses().values().stream()
+                                        .filter(response -> response.getContent() != null)
+                                        .forEach(response -> replaceInlineOneOfInContent(response.getContent(), schemas));
+                            }
+                        });
+            }
+
+            // Set JsonNode schema last so model scanning cannot overwrite it
+            openAPI.getComponents().addSchemas("JsonNode", new Schema<>()
+                    .description("A value representing the any type (object or primitive)")
+                    .example(JacksonUtil.newObjectNode()));
+
             var sortedSchemas = new TreeMap<>(openAPI.getComponents().getSchemas());
             openAPI.getComponents().setSchemas(new LinkedHashMap<>(sortedSchemas));
         };
     }
 
     private SecurityRequirement createSecurityRequirement(String schemeName) {
-        return new SecurityRequirement().addList(schemeName, Arrays.asList(
-                Authority.SYS_ADMIN.name(),
-                Authority.TENANT_ADMIN.name(),
-                Authority.CUSTOMER_USER.name()
-        ));
+        return new SecurityRequirement().addList(schemeName, List.of());
     }
 
     private Tag extractTagFromPath(Map.Entry<String, PathItem> entry) {
@@ -388,9 +587,134 @@ public class SwaggerConfiguration {
         return tagName != null ? tagFromTagItem(tagName) : null;
     }
 
+    private String findBaseTypeForOneOf(Map<String, Schema> schemas, List<Schema> oneOfSchemas) {
+        if (oneOfSchemas.isEmpty()) {
+            return null;
+        }
+
+        for (Schema oneOfSchema : oneOfSchemas) {
+            String ref = oneOfSchema.get$ref();
+            if (ref == null) {
+                continue;
+            }
+            String refName = ref.substring(ref.lastIndexOf('/') + 1);
+
+            // Check if this entry is itself a base type with discriminator
+            Schema<?> candidate = schemas.get(refName);
+            if (candidate != null && candidate.getDiscriminator() != null
+                    && candidate.getDiscriminator().getMapping() != null) {
+                return refName;
+            }
+
+            // Check if this subtype is in another schema's discriminator mapping
+            String baseType = schemas.entrySet().stream()
+                    .filter(entry -> {
+                        Schema<?> schema = entry.getValue();
+                        if (schema.getDiscriminator() != null && schema.getDiscriminator().getMapping() != null) {
+                            return schema.getDiscriminator().getMapping().values().stream()
+                                    .anyMatch(r -> r.endsWith("/" + refName));
+                        }
+                        return false;
+                    })
+                    .map(Map.Entry::getKey)
+                    .findFirst()
+                    .orElse(null);
+
+            if (baseType != null) {
+                return baseType;
+            }
+
+            // Check if other oneOf items extend this candidate via allOf (parent-child without discriminator)
+            if (candidate != null) {
+                boolean isParent = oneOfSchemas.stream()
+                        .filter(s -> s.get$ref() != null && !s.get$ref().equals(ref))
+                        .anyMatch(s -> {
+                            String otherName = s.get$ref().substring(s.get$ref().lastIndexOf('/') + 1);
+                            Schema<?> otherSchema = schemas.get(otherName);
+                            return otherSchema != null && otherSchema.getAllOf() != null &&
+                                    otherSchema.getAllOf().stream().anyMatch(
+                                            a -> a.get$ref() != null && a.get$ref().endsWith("/" + refName));
+                        });
+                if (isParent) {
+                    return refName;
+                }
+            }
+        }
+        return null;
+    }
+
+
+    private void replaceInlineOneOfInContent(Content content, Map<String, Schema> schemas) {
+        content.values().forEach(mediaType -> {
+            Schema<?> schema = mediaType.getSchema();
+            if (schema != null && schema.getOneOf() != null && !schema.getOneOf().isEmpty()) {
+                String baseType = findBaseTypeForOneOf(schemas, schema.getOneOf());
+                if (baseType != null) {
+                    Schema<?> refSchema = new Schema<>();
+                    refSchema.set$ref("#/components/schemas/" + baseType);
+                    mediaType.setSchema(refSchema);
+                    log.debug("Replaced oneOf in content with $ref to {}", baseType);
+                }
+            }
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    private void replaceInlineOneOfProperties(Schema<?> schema, Map<String, Schema> allSchemas) {
+        if (schema == null || schema.getProperties() == null) {
+            return;
+        }
+        schema.getProperties().forEach((propName, propSchema) -> {
+            if (propSchema instanceof Schema) {
+                Schema<?> prop = (Schema<?>) propSchema;
+
+                // Check if additionalProperties has oneOf (polymorphic map values)
+                if (prop.getAdditionalProperties() instanceof Schema) {
+                    Schema<?> additionalProps = (Schema<?>) prop.getAdditionalProperties();
+                    if (additionalProps.getOneOf() != null && !additionalProps.getOneOf().isEmpty()) {
+                        String baseType = findBaseTypeForOneOf(allSchemas, additionalProps.getOneOf());
+                        if (baseType != null) {
+                            Schema<?> refSchema = new Schema<>();
+                            refSchema.set$ref("#/components/schemas/" + baseType);
+                            prop.setAdditionalProperties(refSchema);
+                            log.debug("Replaced oneOf in additionalProperties with $ref to {} in property {}", baseType, propName);
+                        }
+                    }
+                    // Check if additionalProperties is an array whose items has oneOf (e.g. Map<K, List<PolymorphicType>>)
+                    if (additionalProps.getItems() != null && additionalProps.getItems().getOneOf() != null && !additionalProps.getItems().getOneOf().isEmpty()) {
+                        String baseType = findBaseTypeForOneOf(allSchemas, additionalProps.getItems().getOneOf());
+                        if (baseType != null) {
+                            Schema<?> refSchema = new Schema<>();
+                            refSchema.set$ref("#/components/schemas/" + baseType);
+                            additionalProps.setItems(refSchema);
+                            log.debug("Replaced oneOf in additionalProperties.items with $ref to {} in property {}", baseType, propName);
+                        }
+                    }
+                }
+
+                // If property has oneOf, try to find the base discriminated type
+                if (prop.getOneOf() != null && !prop.getOneOf().isEmpty()) {
+                    String baseType = findBaseTypeForOneOf(allSchemas, prop.getOneOf());
+                    if (baseType != null) {
+                        Schema<?> refSchema = new Schema<>();
+                        refSchema.set$ref("#/components/schemas/" + baseType);
+                        if (prop.getDescription() != null) {
+                            refSchema.setDescription(prop.getDescription());
+                        }
+                        if (prop.getReadOnly() != null) {
+                            refSchema.setReadOnly(prop.getReadOnly());
+                        }
+                        schema.getProperties().put(propName, refSchema);
+                        log.debug("Replaced oneOf with $ref to {} in property {}", baseType, propName);
+                    }
+                }
+            }
+        });
+    }
+
     private String tagItemFromPathItem(PathItem item) {
         var operations = item.readOperationsMap().values();
-        var operation = operations.stream().findAny();
+        var operation = operations.stream().findFirst();
         if (operation.isPresent()) {
             var tags = operation.get().getTags();
             if (tags != null && !tags.isEmpty()) {
@@ -480,28 +804,34 @@ public class SwaggerConfiguration {
     private static ApiResponses loginErrorResponses() {
         ApiResponses apiResponses = new ApiResponses();
 
-        apiResponses.addApiResponse("401", errorResponse("Unauthorized",
-                Map.of(
-                        "bad-credentials", errorExample("Bad credentials",
-                                ThingsboardErrorResponse.of("Invalid username or password", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED)),
-                        "token-expired", errorExample("JWT token expired",
-                                ThingsboardErrorResponse.of("Token has expired", ThingsboardErrorCode.JWT_TOKEN_EXPIRED, HttpStatus.UNAUTHORIZED)),
-                        "account-disabled", errorExample("Disabled account",
-                                ThingsboardErrorResponse.of("User account is not active", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED)),
-                        "account-locked", errorExample("Locked account",
-                                ThingsboardErrorResponse.of("User account is locked due to security policy", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED)),
-                        "authentication-failed", errorExample("General authentication error",
-                                ThingsboardErrorResponse.of("Authentication failed", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED))
-                )
+        Map<String, Example> unauthorizedExamples = new LinkedHashMap<>();
+
+        unauthorizedExamples.put("bad-credentials", errorExample("Bad credentials",
+                ThingsboardErrorResponse.of("Invalid username or password", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED)));
+
+        unauthorizedExamples.put("token-expired", errorExample("JWT token expired",
+                ThingsboardErrorResponse.of("Token has expired", ThingsboardErrorCode.JWT_TOKEN_EXPIRED, HttpStatus.UNAUTHORIZED)));
+
+        unauthorizedExamples.put("account-disabled", errorExample("Disabled account",
+                ThingsboardErrorResponse.of("User account is not active", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED)));
+
+        unauthorizedExamples.put("account-locked", errorExample("Locked account",
+                ThingsboardErrorResponse.of("User account is locked due to security policy", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED)));
+
+        unauthorizedExamples.put("authentication-failed", errorExample("General authentication error",
+                ThingsboardErrorResponse.of("Authentication failed", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED)));
+
+        unauthorizedExamples.put("credentials-expired", errorExample("Expired credentials",
+                ThingsboardCredentialsExpiredResponse.of("User password expired!", "udgDQOpS1Q4ZFEL8qHF9s8cSKQ7d1h")));
+
+        Schema<? extends ThingsboardErrorResponse> unauthorizedSchema = new Schema<>();
+        unauthorizedSchema.oneOf(List.of(
+                new Schema<ThingsboardErrorResponse>().$ref("#/components/schemas/ThingsboardErrorResponse"),
+                new Schema<ThingsboardCredentialsExpiredResponse>().$ref("#/components/schemas/ThingsboardCredentialsExpiredResponse")
         ));
-        var credentialsExpiredSchema = new Schema<ThingsboardCredentialsExpiredResponse>().$ref("#/components/schemas/ThingsboardCredentialsExpiredResponse");
-        apiResponses.addApiResponse("401 ", errorResponse("Unauthorized (**Expired credentials**)",
-                Map.of(
-                        "credentials-expired", errorExample("Expired credentials",
-                                ThingsboardCredentialsExpiredResponse.of("User password expired!", StringUtils.randomAlphanumeric(30)))
-                ),
-                credentialsExpiredSchema
-        ));
+
+        apiResponses.addApiResponse("401", errorResponse("Unauthorized", unauthorizedExamples, unauthorizedSchema));
+
         return apiResponses;
     }
 
@@ -520,10 +850,389 @@ public class SwaggerConfiguration {
         return new ApiResponse().description(description).content(content);
     }
 
+    /**
+     * Recursively collects all property names reachable from {@code schemaName}, walking the
+     * ancestor chain through allOf $ref entries (to handle multi-level inheritance).
+     * {@code visited} prevents infinite loops in case of circular references.
+     */
+    @SuppressWarnings("unchecked")
+    private void collectAllProperties(String schemaName, Map<String, Schema> allSchemas,
+                                      Set<String> result, Set<String> visited) {
+        if (!visited.add(schemaName)) {
+            return;
+        }
+        Schema<?> schema = allSchemas.get(schemaName);
+        if (schema == null) {
+            return;
+        }
+        if (schema.getProperties() != null) {
+            result.addAll(schema.getProperties().keySet());
+        }
+        if (schema.getAllOf() != null) {
+            for (Schema<?> allOfElement : schema.getAllOf()) {
+                String ref = allOfElement.get$ref();
+                if (ref != null) {
+                    String refName = ref.substring(ref.lastIndexOf('/') + 1);
+                    collectAllProperties(refName, allSchemas, result, visited);
+                } else if (allOfElement.getProperties() != null) {
+                    result.addAll(allOfElement.getProperties().keySet());
+                }
+            }
+        }
+    }
+
+    private static final int MAX_EXAMPLE_DEPTH = 4;
+
+    /**
+     * If {@code schema} has a discriminator, populate examples for the parent and every
+     * concrete subtype it maps to. Each subtype gets its own example with the discriminator
+     * field set to the mapping value that points at it, so fields typed as a specific
+     * subtype (e.g. {@code EntityView.id} → {@code EntityViewId}) resolve to a correct
+     * example without falling back to the parent's.
+     */
+    @SuppressWarnings("unchecked")
+    private void fillDiscriminatorExample(Schema<?> schema, Map<String, Schema> allSchemas) {
+        var discriminator = schema.getDiscriminator();
+        if (discriminator == null || discriminator.getMapping() == null || discriminator.getMapping().isEmpty()) {
+            return;
+        }
+        // 1. Populate an example on each mapped subtype.
+        for (var entry : discriminator.getMapping().entrySet()) {
+            String discriminatorValue = entry.getKey();
+            String subtypeRef = entry.getValue();
+            String subtypeName = subtypeRef.substring(subtypeRef.lastIndexOf('/') + 1);
+            Schema<?> subtype = allSchemas.get(subtypeName);
+            if (subtype == null || subtype.getExample() != null) {
+                continue;
+            }
+            Map<String, Object> example = new LinkedHashMap<>();
+            buildSchemaExample(subtypeName, allSchemas, example, new HashSet<>(), 0);
+            if (example.isEmpty()) {
+                continue;
+            }
+            example.put(discriminator.getPropertyName(), discriminatorValue);
+            subtype.setExample(example);
+        }
+        // 2. Mirror a subtype's example onto the parent so a field typed as the parent
+        //    interface still gets a complete example. Prefer the subtype whose mapping key
+        //    matches the example declared on the discriminator property itself
+        //    (e.g. EntityId.getEntityType() has example = "DEVICE" → mirror DeviceId, not
+        //    the alphabetically first AdminSettingsId). Fall back to the first mapping entry.
+        if (schema.getExample() == null) {
+            String preferredValue = null;
+            if (schema.getProperties() != null) {
+                Schema<?> discProp = (Schema<?>) schema.getProperties().get(discriminator.getPropertyName());
+                if (discProp != null && discProp.getExample() != null) {
+                    preferredValue = discProp.getExample().toString();
+                }
+            }
+            String chosenRef = preferredValue != null ? discriminator.getMapping().get(preferredValue) : null;
+            if (chosenRef == null) {
+                chosenRef = discriminator.getMapping().values().iterator().next();
+            }
+            String chosenSubtypeName = chosenRef.substring(chosenRef.lastIndexOf('/') + 1);
+            Schema<?> chosenSubtype = allSchemas.get(chosenSubtypeName);
+            if (chosenSubtype != null && chosenSubtype.getExample() != null) {
+                schema.setExample(chosenSubtype.getExample());
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void buildSchemaExample(String schemaName, Map<String, Schema> allSchemas,
+                                    Map<String, Object> result, Set<String> visited, int depth) {
+        if (depth > MAX_EXAMPLE_DEPTH || !visited.add(schemaName)) {
+            return;
+        }
+        Schema<?> schema = allSchemas.get(schemaName);
+        if (schema == null) {
+            return;
+        }
+        // Walk parents first so own properties (added later) override inherited entries.
+        if (schema.getAllOf() != null) {
+            String selfRef = "#/components/schemas/" + schemaName;
+            for (Schema<?> allOfElement : schema.getAllOf()) {
+                String ref = allOfElement.get$ref();
+                if (ref != null) {
+                    String refName = ref.substring(ref.lastIndexOf('/') + 1);
+                    buildSchemaExample(refName, allSchemas, result, visited, depth);
+                    // If the parent uses a discriminator, this schema is one of its mapping
+                    // targets — override the discriminator field with the value that points
+                    // back at us (e.g. EntityViewId → entityType: "ENTITY_VIEW", not "ADMIN_SETTINGS").
+                    Schema<?> parentSchema = allSchemas.get(refName);
+                    if (parentSchema != null && parentSchema.getDiscriminator() != null
+                            && parentSchema.getDiscriminator().getMapping() != null) {
+                        parentSchema.getDiscriminator().getMapping().entrySet().stream()
+                                .filter(e -> selfRef.equals(e.getValue()))
+                                .map(Map.Entry::getKey)
+                                .findFirst()
+                                .ifPresent(value -> result.put(parentSchema.getDiscriminator().getPropertyName(), value));
+                    }
+                } else if (allOfElement.getProperties() != null) {
+                    allOfElement.getProperties().forEach((k, v) ->
+                            result.put(k, sampleValue((Schema<?>) v, allSchemas, visited, depth + 1)));
+                }
+            }
+        }
+        if (schema.getProperties() != null) {
+            schema.getProperties().forEach((k, v) ->
+                    result.put(k, sampleValue((Schema<?>) v, allSchemas, visited, depth + 1)));
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Object sampleValue(Schema<?> propSchema, Map<String, Schema> allSchemas,
+                               Set<String> visited, int depth) {
+        if (propSchema == null) {
+            return null;
+        }
+        if (propSchema.getExample() != null) {
+            return propSchema.getExample();
+        }
+        String ref = propSchema.get$ref();
+        if (ref != null) {
+            String refName = ref.substring(ref.lastIndexOf('/') + 1);
+            Schema<?> refSchema = allSchemas.get(refName);
+            if (refSchema != null && refSchema.getExample() != null) {
+                return refSchema.getExample();
+            }
+            if (depth >= MAX_EXAMPLE_DEPTH) {
+                return Map.of();
+            }
+            Map<String, Object> nested = new LinkedHashMap<>();
+            buildSchemaExample(refName, allSchemas, nested, new HashSet<>(visited), depth + 1);
+            return nested;
+        }
+        if (propSchema.getEnum() != null && !propSchema.getEnum().isEmpty()) {
+            return propSchema.getEnum().get(0);
+        }
+        String type = propSchema.getType();
+        if (type == null) {
+            return null;
+        }
+        return switch (type) {
+            case "string" -> "string";
+            case "integer", "number" -> 0;
+            case "boolean" -> false;
+            case "array" -> List.of();
+            case "object" -> Map.of();
+            default -> null;
+        };
+    }
+
+    @SuppressWarnings("unchecked")
+    private void deduplicateAllOfProperties(Schema<?> schema, Map<String, Schema> allSchemas, Set<String> ownProps) {
+        if (schema.getAllOf() == null) {
+            return;
+        }
+
+        // Collect properties defined in any $ref'd parent within the allOf, recursively
+        // walking the ancestor chain (each parent may itself use allOf to extend a grandparent).
+        Set<String> parentProperties = new LinkedHashSet<>();
+        for (Schema<?> allOfElement : schema.getAllOf()) {
+            String ref = allOfElement.get$ref();
+            if (ref != null) {
+                String refName = ref.substring(ref.lastIndexOf('/') + 1);
+                collectAllProperties(refName, allSchemas, parentProperties, new LinkedHashSet<>());
+            }
+        }
+
+        if (parentProperties.isEmpty()) {
+            return;
+        }
+
+        // Properties to strip: in parent schema AND not declared as own-class fields.
+        // This removes inherited properties (from superclasses or pure interface getters)
+        // while keeping properties the class declares as its own fields.
+        Set<String> toStrip = new LinkedHashSet<>(parentProperties);
+        toStrip.removeAll(ownProps);
+
+        if (toStrip.isEmpty()) {
+            return;
+        }
+
+        // Strip from inline (non-$ref) allOf elements
+        schema.getAllOf().removeIf(allOfElement -> {
+            if (allOfElement.get$ref() != null) {
+                return false;
+            }
+            if (allOfElement.getProperties() != null) {
+                Map<String, Schema> filtered = new LinkedHashMap<>(allOfElement.getProperties());
+                filtered.keySet().removeAll(toStrip);
+                allOfElement.setProperties(filtered.isEmpty() ? null : filtered);
+            }
+            return allOfElement.getProperties() == null
+                    && allOfElement.getRequired() == null
+                    && allOfElement.getType() == null;
+        });
+
+        // Remove stripped properties from the schema's required list
+        if (schema.getRequired() != null) {
+            List<String> required = new ArrayList<>(schema.getRequired());
+            required.removeAll(toStrip);
+            schema.setRequired(required.isEmpty() ? null : required);
+        }
+    }
+
+    /**
+     * Computes the schema name that swagger-core will use for the given JavaType.
+     * For simple types, this is just the class simple name (e.g. {@code Device}).
+     * For parameterized types, type parameter names are appended
+     * (e.g. {@code PageData<Device>} becomes {@code PageDataDevice}).
+     * This matches the naming convention used by swagger-core's {@code TypeNameResolver}.
+     */
+    private static String resolveSchemaName(JavaType javaType) {
+        Class<?> cls = javaType.getRawClass();
+        io.swagger.v3.oas.annotations.media.Schema schemaAnnotation =
+                cls.getAnnotation(io.swagger.v3.oas.annotations.media.Schema.class);
+        if (schemaAnnotation != null && !schemaAnnotation.name().isEmpty()) {
+            return schemaAnnotation.name();
+        }
+        StringBuilder sb = new StringBuilder(cls.getSimpleName());
+        if (javaType.hasGenericTypes()) {
+            for (int i = 0; i < javaType.containedTypeCount(); i++) {
+                JavaType param = javaType.containedType(i);
+                if (param != null) {
+                    sb.append(param.getRawClass().getSimpleName());
+                }
+            }
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Returns the JSON property names that are backed by fields declared directly in {@code cls}
+     * (not inherited from a superclass). Used to distinguish "own" from "inherited" properties
+     * when deduplicating allOf inline elements.
+     */
+    private static Set<String> computeOwnPropNames(Class<?> cls, com.fasterxml.jackson.databind.BeanDescription beanDesc) {
+        Map<String, String> allFieldToJson = new LinkedHashMap<>();
+        for (var prop : beanDesc.findProperties()) {
+            if (prop.getField() != null && prop.couldSerialize()) {
+                allFieldToJson.put(prop.getField().getName(), prop.getName());
+            }
+        }
+        Set<String> own = new LinkedHashSet<>();
+        for (Field f : cls.getDeclaredFields()) {
+            if (Modifier.isStatic(f.getModifiers())) continue;
+            String jsonName = allFieldToJson.get(f.getName());
+            if (jsonName != null) own.add(jsonName);
+        }
+        return own;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void reorderSchemaProperties(Schema<?> schema, List<String> propOrder) {
+        if (schema.getProperties() != null && schema.getProperties().size() > 1) {
+            schema.setProperties(reorderProperties(schema.getProperties(), propOrder));
+        }
+        if (schema.getAllOf() != null) {
+            for (Schema<?> allOfElement : schema.getAllOf()) {
+                if (allOfElement.get$ref() != null) continue;
+                if (allOfElement.getProperties() != null && allOfElement.getProperties().size() > 1) {
+                    allOfElement.setProperties(reorderProperties(allOfElement.getProperties(), propOrder));
+                }
+            }
+        }
+    }
+
+    private static LinkedHashMap<String, Schema> reorderProperties(Map<String, Schema> current, List<String> propOrder) {
+        var reordered = new LinkedHashMap<String, Schema>();
+        for (String name : propOrder) {
+            Schema prop = current.get(name);
+            if (prop != null) reordered.put(name, prop);
+        }
+        // Any properties not covered by propOrder are appended
+        // alphabetically to guarantee a deterministic stable order.
+        new TreeMap<>(current).forEach((k, v) -> reordered.putIfAbsent(k, v));
+        return reordered;
+    }
+
+    /**
+     * Resolves the property ordering for a schema class.
+     *
+     * <p>Returns a list of JSON property names in the order they should appear in the
+     * OpenAPI schema. The caller uses this list to reorder the schema's property map;
+     * any properties <b>not</b> present in the returned list are appended alphabetically
+     * by the caller's {@code TreeMap} fallback, guaranteeing a stable, deterministic order.
+     *
+     * <p><b>Resolution strategy (first match wins):</b>
+     * <ol>
+     *   <li>If {@code @JsonPropertyOrder} with an explicit {@code value()} is found on the
+     *       class or any interface in its ancestry, that list is returned as-is. Note: if the
+     *       annotation lists only a subset of fields, those fields are ordered first and the
+     *       remaining properties fall through to the caller's alphabetical fallback — consistent
+     *       with Jackson's own behaviour for partial {@code @JsonPropertyOrder}.</li>
+     *   <li>Otherwise, field-backed properties are returned in declaration order (superclass
+     *       fields first). Getter-only properties are intentionally excluded to avoid
+     *       non-deterministic ordering across restarts.</li>
+     * </ol>
+     */
+    private static List<String> resolvePropertyOrder(Class<?> cls, com.fasterxml.jackson.databind.BeanDescription beanDesc) {
+        // If an explicit @JsonPropertyOrder is present on the class or any interface in its
+        // ancestry, honour it directly. Walk up the class hierarchy; for each class also walk
+        // the full interface hierarchy (including super-interfaces) via BFS.
+        for (Class<?> c = cls; c != null && c != Object.class; c = c.getSuperclass()) {
+            JsonPropertyOrder propOrder = c.getAnnotation(JsonPropertyOrder.class);
+            if (propOrder != null && !propOrder.alphabetic() && propOrder.value().length > 0) {
+                return Arrays.asList(propOrder.value());
+            }
+            Deque<Class<?>> ifaceQueue = new ArrayDeque<>(Arrays.asList(c.getInterfaces()));
+            Set<Class<?>> visitedIfaces = new LinkedHashSet<>();
+            while (!ifaceQueue.isEmpty()) {
+                Class<?> iface = ifaceQueue.poll();
+                if (!visitedIfaces.add(iface)) continue;
+                propOrder = iface.getAnnotation(JsonPropertyOrder.class);
+                if (propOrder != null && !propOrder.alphabetic() && propOrder.value().length > 0) {
+                    return Arrays.asList(propOrder.value());
+                }
+                ifaceQueue.addAll(Arrays.asList(iface.getInterfaces()));
+            }
+        }
+
+        // Map backing field names to their JSON property names (respects @JsonProperty)
+        Map<String, String> fieldToJsonName = new LinkedHashMap<>();
+        for (var prop : beanDesc.findProperties()) {
+            if (prop.couldSerialize()) {
+                if (prop.getField() != null) {
+                    fieldToJsonName.put(prop.getField().getName(), prop.getName());
+                } else {
+                    // For transient fields, Jackson may not associate the field with the property.
+                    // Fall back to using the property name as the field name key.
+                    fieldToJsonName.putIfAbsent(prop.getName(), prop.getName());
+                }
+            }
+        }
+
+        // Walk class hierarchy (superclass first) to get field declaration order
+        List<Class<?>> hierarchy = new ArrayList<>();
+        for (Class<?> c = cls; c != null && c != Object.class; c = c.getSuperclass()) {
+            hierarchy.add(0, c);
+        }
+        List<String> ordered = new ArrayList<>();
+        for (Class<?> c : hierarchy) {
+            for (Field f : c.getDeclaredFields()) {
+                if (Modifier.isStatic(f.getModifiers())) continue;
+                String jsonName = fieldToJsonName.get(f.getName());
+                if (jsonName != null) ordered.add(jsonName);
+            }
+        }
+
+        // Return only field-backed properties in declaration order.
+        // Getter-only properties (no backing field) are intentionally excluded: their set can vary
+        // between restarts (e.g. Optional-typed getters depend on Jackson module registration order),
+        // so including them here would make their position non-deterministic when some are in orderedNames
+        // and others are only in the schema map. The converter's TreeMap fallback handles ALL
+        // non-field-backed properties together in one alphabetical pass, guaranteeing stable order.
+        return ordered;
+    }
+
     private static Example errorExample(String summary, ThingsboardErrorResponse example) {
+        var node = (ObjectNode) JacksonUtil.valueToTree(example);
+        node.put("timestamp", 1609459200000L);
         return new Example()
                 .summary(summary)
-                .value(example);
+                .value(node);
     }
 
 }

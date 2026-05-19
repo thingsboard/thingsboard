@@ -490,6 +490,7 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
         type: 'entity.type-calculated-field',
         typePlural: 'entity.type-calculated-fields',
         list: 'calculated-fields.list',
+        add: 'calculated-fields.add',
         details: 'calculated-fields.calculated-field-details',
         noEntities: 'calculated-fields.no-found',
         search: 'action.search',

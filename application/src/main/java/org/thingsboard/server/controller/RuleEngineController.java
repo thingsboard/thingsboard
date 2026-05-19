@@ -17,6 +17,8 @@ package org.thingsboard.server.controller;
 
 import com.google.common.util.concurrent.FutureCallback;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -77,7 +79,7 @@ public class RuleEngineController extends BaseController {
     @Autowired
     private AccessValidator accessValidator;
 
-    @ApiOperation(value = "Push user message to the rule engine (handleRuleEngineRequest)",
+    @ApiOperation(value = "Push user message to the rule engine (handleRuleEngineRequestForUser)",
             notes = MSG_DESCRIPTION_PREFIX +
                     "Uses current User Id ( the one which credentials is used to perform the request) as the Rule Engine message originator. " +
                     MSG_DESCRIPTION +
@@ -86,13 +88,14 @@ public class RuleEngineController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/", method = RequestMethod.POST)
     @ResponseBody
-    public DeferredResult<ResponseEntity> handleRuleEngineRequest(
-            @Parameter(description = "A JSON value representing the message.", required = true)
+    public DeferredResult<ResponseEntity> handleRuleEngineRequestForUser(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON object representing the message.", required = true,
+                    content = @Content(mediaType = "text/plain", schema = @Schema(type = "string")))
             @RequestBody String requestBody) throws ThingsboardException {
-        return handleRuleEngineRequest(null, null, null, defaultResponseTimeout, requestBody);
+        return handleRuleEngineRequestForEntityWithQueueAndTimeout(null, null, null, defaultResponseTimeout, requestBody);
     }
 
-    @ApiOperation(value = "Push entity message to the rule engine (handleRuleEngineRequest)",
+    @ApiOperation(value = "Push entity message to the rule engine (handleRuleEngineRequestForEntity)",
             notes = MSG_DESCRIPTION_PREFIX +
                     "Uses specified Entity Id as the Rule Engine message originator. " +
                     MSG_DESCRIPTION +
@@ -101,17 +104,18 @@ public class RuleEngineController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{entityType}/{entityId}", method = RequestMethod.POST)
     @ResponseBody
-    public DeferredResult<ResponseEntity> handleRuleEngineRequest(
+    public DeferredResult<ResponseEntity> handleRuleEngineRequestForEntity(
             @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
             @PathVariable("entityType") String entityType,
             @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable("entityId") String entityIdStr,
-            @Parameter(description = "A JSON value representing the message.", required = true)
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON object representing the message.", required = true,
+                    content = @Content(mediaType = "text/plain", schema = @Schema(type = "string")))
             @RequestBody String requestBody) throws ThingsboardException {
-        return handleRuleEngineRequest(entityType, entityIdStr, null, defaultResponseTimeout, requestBody);
+        return handleRuleEngineRequestForEntityWithQueueAndTimeout(entityType, entityIdStr, null, defaultResponseTimeout, requestBody);
     }
 
-    @ApiOperation(value = "Push entity message with timeout to the rule engine (handleRuleEngineRequest)",
+    @ApiOperation(value = "Push entity message with timeout to the rule engine (handleRuleEngineRequestForEntityWithTimeout)",
             notes = MSG_DESCRIPTION_PREFIX +
                     "Uses specified Entity Id as the Rule Engine message originator. " +
                     MSG_DESCRIPTION +
@@ -120,19 +124,20 @@ public class RuleEngineController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{entityType}/{entityId}/{timeout}", method = RequestMethod.POST)
     @ResponseBody
-    public DeferredResult<ResponseEntity> handleRuleEngineRequest(
+    public DeferredResult<ResponseEntity> handleRuleEngineRequestForEntityWithTimeout(
             @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
             @PathVariable("entityType") String entityType,
             @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable("entityId") String entityIdStr,
             @Parameter(description = "Timeout to process the request in milliseconds", required = true)
             @PathVariable("timeout") int timeout,
-            @Parameter(description = "A JSON value representing the message.", required = true)
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON object representing the message.", required = true,
+                    content = @Content(mediaType = "text/plain", schema = @Schema(type = "string")))
             @RequestBody String requestBody) throws ThingsboardException {
-        return handleRuleEngineRequest(entityType, entityIdStr, null, timeout, requestBody);
+        return handleRuleEngineRequestForEntityWithQueueAndTimeout(entityType, entityIdStr, null, timeout, requestBody);
     }
 
-    @ApiOperation(value = "Push entity message with timeout and specified queue to the rule engine (handleRuleEngineRequest)",
+    @ApiOperation(value = "Push entity message with timeout and specified queue to the rule engine (handleRuleEngineRequestForEntityWithQueueAndTimeout)",
             notes = MSG_DESCRIPTION_PREFIX +
                     "Uses specified Entity Id as the Rule Engine message originator. " +
                     MSG_DESCRIPTION +
@@ -142,7 +147,7 @@ public class RuleEngineController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{entityType}/{entityId}/{queueName}/{timeout}", method = RequestMethod.POST)
     @ResponseBody
-    public DeferredResult<ResponseEntity> handleRuleEngineRequest(
+    public DeferredResult<ResponseEntity> handleRuleEngineRequestForEntityWithQueueAndTimeout(
             @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
             @PathVariable("entityType") String entityType,
             @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true)
@@ -151,7 +156,8 @@ public class RuleEngineController extends BaseController {
             @PathVariable("queueName") String queueName,
             @Parameter(description = "Timeout to process the request in milliseconds", required = true)
             @PathVariable("timeout") int timeout,
-            @Parameter(description = "A JSON value representing the message.", required = true)
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON object representing the message.", required = true,
+                    content = @Content(mediaType = "text/plain", schema = @Schema(type = "string")))
             @RequestBody String requestBody) throws ThingsboardException {
         try {
             SecurityUser currentUser = getCurrentUser();
@@ -244,5 +250,7 @@ public class RuleEngineController extends BaseController {
                 response != null ? response.getData() : "");
     }
 
-    private record LocalRequestMetaData(TbMsg request, SecurityUser user, DeferredResult<ResponseEntity> responseWriter) {}
+    private record LocalRequestMetaData(TbMsg request, SecurityUser user,
+                                        DeferredResult<ResponseEntity> responseWriter) {
+    }
 }

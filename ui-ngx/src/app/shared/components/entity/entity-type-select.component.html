@@ -24,6 +24,9 @@
       {{ displayEntityTypeFn(type) }}
     </mat-option>
   </mat-select>
+  @if (!inlineField && subscriptSizing === 'dynamic') {
+    <mat-hint></mat-hint>
+  }
   <mat-error *ngIf="!inlineField && entityTypeFormGroup.get('entityType').hasError('required')">
     {{ 'entity.type-required' | translate }}
   </mat-error>

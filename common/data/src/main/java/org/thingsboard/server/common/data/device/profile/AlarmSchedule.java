@@ -18,10 +18,14 @@ package org.thingsboard.server.common.data.device.profile;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.thingsboard.server.common.data.query.DynamicValue;
 
 import java.io.Serializable;
 
+@Schema(
+        hidden = true
+)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,

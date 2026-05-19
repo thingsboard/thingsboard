@@ -1095,6 +1095,7 @@
     "expression": "表达式",
     "no-found": "未找到计算字段",
     "list": "{ count, plural, =1 {一个计算字段} other {# 个计算字段列表} }",
+    "add": "添加计算字段",
     "selected-fields": "{ count, plural, =1 {1 个计算字段} other {# 个计算字段} }已选择",
     "type": {
       "simple": "简单",
@@ -7465,7 +7466,7 @@
       "handle-empty-result-function": "处理空结果函数",
       "handle-error-function": "处理错误函数",
       "handle-non-mobile-fallback-function": "处理非移动端回退函数",
-      "save-to-gallery": "保存到相册",
+      "save-to-gallery": "保存到'图片库'",
       "provision-type": "配网类型",
       "auto": "自动",
       "wi-fi": "Wi-Fi",

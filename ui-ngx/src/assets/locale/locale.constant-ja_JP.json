@@ -1095,6 +1095,7 @@
     "expression": "式",
     "no-found": "計算フィールドが見つかりません",
     "list": "{ count, plural, =1 {計算フィールド} other {計算フィールド一覧（# 件）} }",
+    "add": "計算フィールドを追加",
     "selected-fields": "{ count, plural, =1 {1 件の計算フィールド} other {# 件の計算フィールド} } を選択",
     "type": {
       "simple": "シンプル",
@@ -7465,7 +7466,7 @@
       "handle-empty-result-function": "空結果処理関数",
       "handle-error-function": "エラー処理関数",
       "handle-non-mobile-fallback-function": "非モバイルフォールバック処理関数",
-      "save-to-gallery": "ギャラリーに保存",
+      "save-to-gallery": "'画像ギャラリー'に保存",
       "provision-type": "プロビジョニングタイプ",
       "auto": "自動",
       "wi-fi": "Wi-Fi",

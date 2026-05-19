@@ -81,12 +81,12 @@ public class MobileAppBundleController extends BaseController {
         return tbMobileAppBundleService.save(mobileAppBundle, getOAuth2ClientIds(ids), getCurrentUser());
     }
 
-    @ApiOperation(value = "Update oauth2 clients (updateOauth2Clients)",
+    @ApiOperation(value = "Update oauth2 clients (updateMobileAppBundleOauth2Clients)",
             notes = "Update oauth2 clients of the specified mobile app bundle." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @PutMapping(value = "/mobile/bundle/{id}/oauth2Clients")
-    public void updateOauth2Clients(@PathVariable UUID id,
-                                    @RequestBody UUID[] clientIds) throws ThingsboardException {
+    public void updateMobileAppBundleOauth2Clients(@PathVariable UUID id,
+                                                   @RequestBody UUID[] clientIds) throws ThingsboardException {
         MobileAppBundleId mobileAppBundleId = new MobileAppBundleId(id);
         MobileAppBundle mobileAppBundle = checkMobileAppBundleId(mobileAppBundleId, Operation.WRITE);
         List<OAuth2ClientId> oAuth2ClientIds = getOAuth2ClientIds(clientIds);

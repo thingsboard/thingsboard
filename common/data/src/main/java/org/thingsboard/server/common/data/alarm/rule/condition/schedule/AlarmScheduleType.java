@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.common.data.alarm.rule.condition.schedule;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema
 public enum AlarmScheduleType {
     ANY_TIME,
     SPECIFIC_TIME,

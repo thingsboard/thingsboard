@@ -48,13 +48,13 @@ public class BaseAlarmCommentService extends AbstractEntityService implements Al
 
     @Override
     public AlarmComment createOrUpdateAlarmComment(TenantId tenantId, AlarmComment alarmComment) {
-        alarmCommentDataValidator.validate(alarmComment, c -> tenantId);
+        AlarmComment oldAlarmComment = alarmCommentDataValidator.validate(alarmComment, c -> tenantId);
         boolean isCreated = alarmComment.getId() == null;
         AlarmComment result;
         if (isCreated) {
             result = createAlarmComment(tenantId, alarmComment);
         } else {
-            result = updateAlarmComment(tenantId, alarmComment);
+            result = updateAlarmComment(tenantId, alarmComment, oldAlarmComment);
         }
         if (result != null) {
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entity(result)
@@ -101,18 +101,17 @@ public class BaseAlarmCommentService extends AbstractEntityService implements Al
         return alarmCommentDao.save(tenantId, alarmComment);
     }
 
-    private AlarmComment updateAlarmComment(TenantId tenantId, AlarmComment newAlarmComment) {
+    private AlarmComment updateAlarmComment(TenantId tenantId, AlarmComment newAlarmComment, AlarmComment oldAlarmComment) {
         log.debug("Update Alarm comment : {}", newAlarmComment);
 
-        AlarmComment existing = alarmCommentDao.findAlarmCommentById(tenantId, newAlarmComment.getId().getId());
-        if (existing != null) {
+        if (oldAlarmComment != null) {
             if (newAlarmComment.getComment() != null) {
                 JsonNode comment = newAlarmComment.getComment();
                 ((ObjectNode) comment).put("edited", "true");
                 ((ObjectNode) comment).put("editedOn", System.currentTimeMillis());
-                existing.setComment(comment);
+                oldAlarmComment.setComment(comment);
             }
-            return alarmCommentDao.save(tenantId, existing);
+            return alarmCommentDao.save(tenantId, oldAlarmComment);
         }
         return null;
     }

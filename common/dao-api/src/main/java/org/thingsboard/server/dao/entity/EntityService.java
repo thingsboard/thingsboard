@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.entity;
 
 import com.google.common.util.concurrent.FluentFuture;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -50,5 +51,7 @@ public interface EntityService {
     long countEntitiesByQuery(TenantId tenantId, CustomerId customerId, EntityCountQuery query);
 
     PageData<EntityData> findEntityDataByQuery(TenantId tenantId, CustomerId customerId, EntityDataQuery query);
+
+    ListenableFuture<PageData<EntityData>> findEntityDataByQueryAsync(TenantId tenantId, CustomerId customerId, EntityDataQuery query);
 
 }

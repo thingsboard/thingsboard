@@ -1102,6 +1102,7 @@
         "expression": "Expression",
         "no-found": "No calculated fields found",
         "list": "{ count, plural, =1 {One calculated field} other {List of # calculated fields} }",
+        "add": "Add calculated field",
         "selected-fields": "{ count, plural, =1 {1 calculated field} other {# calculated fields} } selected",
         "type": {
             "simple": "Simple",
@@ -2401,7 +2402,7 @@
         "search": "Search asset profiles",
         "selected-asset-profiles": "{ count, plural, =1 {1 asset profile} other {# asset profiles} } selected",
         "no-asset-profiles-matching": "No asset profile matching '{{entity}}' were found.",
-        "asset-profile-required": "Asset profile is required",
+        "asset-profile-required": "Asset profile is required.",
         "idCopiedMessage": "Asset profile Id has been copied to clipboard",
         "set-default": "Make asset profile default",
         "delete": "Delete asset profile",
@@ -2446,7 +2447,7 @@
         "search": "Search device profiles",
         "selected-device-profiles": "{ count, plural, =1 {1 device profile} other {# device profiles} } selected",
         "no-device-profiles-matching": "No device profile matching '{{entity}}' were found.",
-        "device-profile-required": "Device profile is required",
+        "device-profile-required": "Device profile is required.",
         "idCopiedMessage": "Device profile Id has been copied to clipboard",
         "set-default": "Make device profile default",
         "delete": "Delete device profile",
@@ -7481,7 +7482,7 @@
           "handle-empty-result-function": "Handle empty result function",
           "handle-error-function": "Handle error function",
           "handle-non-mobile-fallback-function": "Handle Non-Mobile fallback function",
-          "save-to-gallery": "Save to gallery",
+          "save-to-gallery": "Save to 'Image gallery'",
           "provision-type": "Provision type",
           "auto": "Auto",
           "wi-fi": "Wi-Fi",
@@ -10138,6 +10139,18 @@
                     "how-to-create-customer-and-assign-dashboard": "How to create Customer and assign Dashboard"
                 }
             }
+        },
+        "html-container": {
+            "java-script": "JavaScript",
+            "js-function": "JavaScript function",
+            "html": "HTML",
+            "angular-html-template": "Angular HTML template",
+            "css": "CSS",
+            "container-type": "Container type",
+            "type-plain": "Plain HTML",
+            "type-angular": "Angular",
+            "resources": "Resources",
+            "no-resources": "No resources configured"
         },
         "api-usage": {
             "api-usage": "API usage",

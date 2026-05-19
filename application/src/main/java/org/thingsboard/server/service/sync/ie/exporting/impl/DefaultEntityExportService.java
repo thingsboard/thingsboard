@@ -70,7 +70,8 @@ public class DefaultEntityExportService<I extends EntityId, E extends Exportable
 
     @Override
     public final D getExportData(EntitiesExportCtx<?> ctx, I entityId) throws ThingsboardException {
-        D exportData = newExportData();
+        @SuppressWarnings("unchecked")
+        D exportData = (D) EntityExportData.newInstance(entityId.getEntityType());
 
         E entity = exportableEntitiesService.findEntityByTenantIdAndId(ctx.getTenantId(), entityId);
         if (entity == null) {
@@ -78,7 +79,6 @@ public class DefaultEntityExportService<I extends EntityId, E extends Exportable
         }
 
         exportData.setEntity(entity);
-        exportData.setEntityType(entityId.getEntityType());
         setAdditionalExportData(ctx, entity, exportData);
         if (entity instanceof HasVersion hasVersion) {
             hasVersion.setVersion(null);
@@ -221,10 +221,6 @@ public class DefaultEntityExportService<I extends EntityId, E extends Exportable
             }
         }
         return internalUuid;
-    }
-
-    protected D newExportData() {
-        return (D) new EntityExportData<E>();
     }
 
 }

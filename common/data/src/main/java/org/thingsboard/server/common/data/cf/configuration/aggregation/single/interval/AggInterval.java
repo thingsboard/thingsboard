@@ -19,10 +19,25 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
+@Schema(
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "HOUR", schema = HourInterval.class),
+                @DiscriminatorMapping(value = "DAY", schema = DayInterval.class),
+                @DiscriminatorMapping(value = "WEEK", schema = WeekInterval.class),
+                @DiscriminatorMapping(value = "WEEK_SUN_SAT", schema = WeekSunSatInterval.class),
+                @DiscriminatorMapping(value = "MONTH", schema = MonthInterval.class),
+                @DiscriminatorMapping(value = "QUARTER", schema = QuarterInterval.class),
+                @DiscriminatorMapping(value = "YEAR", schema = YearInterval.class),
+                @DiscriminatorMapping(value = "CUSTOM", schema = CustomInterval.class)
+        }
+)
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         include = JsonTypeInfo.As.PROPERTY,

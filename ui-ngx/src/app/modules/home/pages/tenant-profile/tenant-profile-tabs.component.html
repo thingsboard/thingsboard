@@ -31,4 +31,8 @@
                         [entityName]="entity.name">
     </tb-attribute-table>
   </mat-tab>
+  <mat-tab *ngIf="!isEdit" #auditLogsTab="matTab"
+           label="{{ 'audit-log.audit-logs' | translate }}">
+    <tb-audit-log-table detailsMode="true" [active]="auditLogsTab.isActive" [auditLogMode]="auditLogModes.ENTITY" [entityId]="entity.id"></tb-audit-log-table>
+  </mat-tab>
 }

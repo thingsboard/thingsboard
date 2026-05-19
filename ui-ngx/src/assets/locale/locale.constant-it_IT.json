@@ -1095,6 +1095,7 @@
     "expression": "Espressione",
     "no-found": "Nessun campo calcolato trovato",
     "list": "{ count, plural, =1 {Un campo calcolato} other {Elenco di # campi calcolati} }",
+    "add": "Aggiungi campo calcolato",
     "selected-fields": "{ count, plural, =1 {1 campo calcolato} other {# campi calcolati} } selezionato/i",
     "type": {
       "simple": "Semplice",
@@ -7465,7 +7466,7 @@
       "handle-empty-result-function": "Funzione per gestire il risultato vuoto",
       "handle-error-function": "Funzione per gestire l'errore",
       "handle-non-mobile-fallback-function": "Funzione per gestire il fallback Non-Mobile",
-      "save-to-gallery": "Salva nella galleria",
+      "save-to-gallery": "Salva nella 'Galleria Immagini'",
       "provision-type": "Tipo di provision",
       "auto": "Auto",
       "wi-fi": "Wi-Fi",

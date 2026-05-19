@@ -37,6 +37,7 @@ import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.vertexai.gemini.VertexAiGeminiChatModel;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.SsrfProtectionValidator;
 import org.thingsboard.server.common.data.ai.model.chat.AmazonBedrockChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.chat.AnthropicChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.chat.AzureOpenAiChatModelConfig;
@@ -58,6 +59,7 @@ import software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeClient;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Base64;
@@ -69,6 +71,7 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
 
     @Override
     public ChatModel configureChatModel(OpenAiChatModelConfig chatModelConfig) {
+        validateBaseUrl(chatModelConfig.providerConfig().baseUrl());
         return OpenAiChatModel.builder()
                 .baseUrl(chatModelConfig.providerConfig().baseUrl())
                 .apiKey(chatModelConfig.providerConfig().apiKey())
@@ -86,6 +89,7 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
     @Override
     public ChatModel configureChatModel(AzureOpenAiChatModelConfig chatModelConfig) {
         AzureOpenAiProviderConfig providerConfig = chatModelConfig.providerConfig();
+        validateBaseUrl(providerConfig.endpoint());
         return AzureOpenAiChatModel.builder()
                 .endpoint(providerConfig.endpoint())
                 .serviceVersion(providerConfig.serviceVersion())
@@ -177,8 +181,8 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
         if (chatModelConfig.frequencyPenalty() != null) {
             generationConfigBuilder.setFrequencyPenalty(chatModelConfig.frequencyPenalty().floatValue());
         }
-        if (chatModelConfig.frequencyPenalty() != null) {
-            generationConfigBuilder.setPresencePenalty(chatModelConfig.frequencyPenalty().floatValue());
+        if (chatModelConfig.presencePenalty() != null) {
+            generationConfigBuilder.setPresencePenalty(chatModelConfig.presencePenalty().floatValue());
         }
         if (chatModelConfig.maxOutputTokens() != null) {
             generationConfigBuilder.setMaxOutputTokens(chatModelConfig.maxOutputTokens());
@@ -273,6 +277,7 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
 
     @Override
     public ChatModel configureChatModel(OllamaChatModelConfig chatModelConfig) {
+        validateBaseUrl(chatModelConfig.providerConfig().baseUrl());
         var builder = OllamaChatModel.builder()
                 .baseUrl(chatModelConfig.providerConfig().baseUrl())
                 .modelName(chatModelConfig.modelId())
@@ -298,6 +303,10 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
         }
 
         return builder.build();
+    }
+
+    private static void validateBaseUrl(String url) {
+        SsrfProtectionValidator.validateUri(URI.create(url));
     }
 
     private static Duration toDuration(Integer timeoutSeconds) {

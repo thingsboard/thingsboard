@@ -93,11 +93,13 @@ public abstract class AbstractServiceTest {
     @Autowired
     protected EntityServiceRegistry entityServiceRegistry;
 
+    protected Tenant tenant;
     protected TenantId tenantId;
 
     @Before
     public void beforeAbstractService() {
-        tenantId = createTenant().getId();
+        tenant = createTenant();
+        tenantId = tenant.getId();
     }
 
     @After

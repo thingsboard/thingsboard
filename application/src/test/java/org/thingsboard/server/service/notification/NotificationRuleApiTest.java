@@ -211,7 +211,6 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         notificationRule.setTriggerConfig(triggerConfig);
 
         EscalatedNotificationRuleRecipientsConfig recipientsConfig = new EscalatedNotificationRuleRecipientsConfig();
-        recipientsConfig.setTriggerType(NotificationRuleTriggerType.ALARM);
         Map<Integer, List<UUID>> escalationTable = new HashMap<>();
         recipientsConfig.setEscalationTable(escalationTable);
         Map<Integer, NotificationApiWsClient> clients = new HashMap<>();
@@ -329,7 +328,6 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         notificationRule.setTriggerConfig(triggerConfig);
 
         EscalatedNotificationRuleRecipientsConfig recipientsConfig = new EscalatedNotificationRuleRecipientsConfig();
-        recipientsConfig.setTriggerType(NotificationRuleTriggerType.ALARM);
         Map<Integer, List<UUID>> escalationTable = new HashMap<>();
         recipientsConfig.setEscalationTable(escalationTable);
 
@@ -640,8 +638,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         EntityActionNotificationRuleTriggerConfig triggerConfig = new EntityActionNotificationRuleTriggerConfig();
         rule.setTriggerConfig(triggerConfig);
 
-        DefaultNotificationRuleRecipientsConfig recipientsConfig = new DefaultNotificationRuleRecipientsConfig();
-        recipientsConfig.setTriggerType(NotificationRuleTriggerType.ENTITY_ACTION);
+        DefaultNotificationRuleRecipientsConfig recipientsConfig = DefaultNotificationRuleRecipientsConfig.forTriggerType(NotificationRuleTriggerType.ENTITY_ACTION);
         recipientsConfig.setTargets(List.of(createNotificationTarget(tenantAdminUserId).getUuidId()));
         rule.setRecipientsConfig(recipientsConfig);
         rule = saveNotificationRule(rule);
@@ -671,8 +668,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         triggerConfig.setCreated(true);
         rule.setTriggerConfig(triggerConfig);
         NotificationTarget target = createNotificationTarget(tenantAdminUserId);
-        DefaultNotificationRuleRecipientsConfig recipientsConfig = new DefaultNotificationRuleRecipientsConfig();
-        recipientsConfig.setTriggerType(NotificationRuleTriggerType.ENTITY_ACTION);
+        DefaultNotificationRuleRecipientsConfig recipientsConfig = DefaultNotificationRuleRecipientsConfig.forTriggerType(NotificationRuleTriggerType.ENTITY_ACTION);
         recipientsConfig.setTargets(List.of(target.getUuidId()));
         rule.setRecipientsConfig(recipientsConfig);
         rule = saveNotificationRule(rule);

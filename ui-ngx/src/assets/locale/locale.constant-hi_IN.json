@@ -1095,6 +1095,7 @@
     "expression": "व्यंजक",
     "no-found": "कोई कैलक्युलेटेड फ़ील्ड नहीं मिला",
     "list": "{ count, plural, =1 {एक कैलक्युलेटेड फ़ील्ड} other {# कैलक्युलेटेड फ़ील्ड्स की सूची} }",
+    "add": "कैलक्युलेटेड फ़ील्ड जोड़ें",
     "selected-fields": "{ count, plural, =1 {1 कैलक्युलेटेड फ़ील्ड} other {# कैलक्युलेटेड फ़ील्ड्स} } चुना गया",
     "type": {
       "simple": "साधारण",
@@ -7465,7 +7466,7 @@
       "handle-empty-result-function": "खाली परिणाम फ़ंक्शन को हैंडल करें",
       "handle-error-function": "त्रुटि फ़ंक्शन को हैंडल करें",
       "handle-non-mobile-fallback-function": "नॉन-मोबाइल फ़ॉलबैक फ़ंक्शन को हैंडल करें",
-      "save-to-gallery": "गैलरी में सहेजें",
+      "save-to-gallery": "'इमेज गैलरी' में सहेजें",
       "provision-type": "प्रोविजन प्रकार",
       "auto": "स्वचालित",
       "wi-fi": "Wi-Fi",

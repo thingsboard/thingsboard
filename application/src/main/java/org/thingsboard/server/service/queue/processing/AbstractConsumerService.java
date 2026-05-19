@@ -26,7 +26,6 @@ import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
-import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -47,7 +46,6 @@ import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
-import org.thingsboard.server.service.cf.CalculatedFieldCache;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.queue.TbPackCallback;
@@ -75,7 +73,6 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
     protected final TbDeviceProfileCache deviceProfileCache;
     protected final TbAssetProfileCache assetProfileCache;
     protected final TbResourceDataCache tbResourceDataCache;
-    protected final CalculatedFieldCache calculatedFieldCache;
     protected final TbApiUsageStateService apiUsageStateService;
     protected final PartitionService partitionService;
     protected final ApplicationEventPublisher eventPublisher;
@@ -166,7 +163,6 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
             tenantProfileCache.evict(tenantProfileId);
             if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.UPDATED)) {
                 apiUsageStateService.onTenantProfileUpdate(tenantProfileId);
-                calculatedFieldCache.handleTenantProfileUpdate(tenantProfileId);
             }
         } else if (EntityType.TENANT.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
             if (TenantId.SYS_TENANT_ID.equals(tenantId)) {
@@ -179,7 +175,6 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
                     apiUsageStateService.onTenantUpdate(tenantId);
                 } else if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.DELETED)) {
                     apiUsageStateService.onTenantDelete(tenantId);
-                    calculatedFieldCache.evictOwner(tenantId);
                     partitionService.removeTenant(tenantId);
                 }
             }
@@ -187,45 +182,17 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
             deviceProfileCache.evict(tenantId, new DeviceProfileId(componentLifecycleMsg.getEntityId().getId()));
         } else if (EntityType.DEVICE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
             deviceProfileCache.evict(tenantId, new DeviceId(componentLifecycleMsg.getEntityId().getId()));
-            if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.CREATED)) {
-                calculatedFieldCache.addOwnerEntity(tenantId, componentLifecycleMsg.getEntityId());
-            } else if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.UPDATED) && componentLifecycleMsg.isOwnerChanged()) {
-                calculatedFieldCache.updateOwnerEntity(tenantId, componentLifecycleMsg.getEntityId());
-            } else if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.DELETED)) {
-                calculatedFieldCache.evictEntity(componentLifecycleMsg.getEntityId());
-            }
         } else if (EntityType.ASSET_PROFILE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
             assetProfileCache.evict(tenantId, new AssetProfileId(componentLifecycleMsg.getEntityId().getId()));
         } else if (EntityType.ASSET.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
             assetProfileCache.evict(tenantId, new AssetId(componentLifecycleMsg.getEntityId().getId()));
-            if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.CREATED)) {
-                calculatedFieldCache.addOwnerEntity(tenantId, componentLifecycleMsg.getEntityId());
-            } else if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.UPDATED) && componentLifecycleMsg.isOwnerChanged()) {
-                calculatedFieldCache.updateOwnerEntity(tenantId, componentLifecycleMsg.getEntityId());
-            } else if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.DELETED)) {
-                calculatedFieldCache.evictEntity(componentLifecycleMsg.getEntityId());
-            }
         } else if (EntityType.ENTITY_VIEW.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
             actorContext.getTbEntityViewService().onComponentLifecycleMsg(componentLifecycleMsg);
         } else if (EntityType.API_USAGE_STATE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
             apiUsageStateService.onApiUsageStateUpdate(tenantId);
         } else if (EntityType.CUSTOMER.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
-            if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.CREATED)) {
-                calculatedFieldCache.addOwnerEntity(tenantId, componentLifecycleMsg.getEntityId());
-            } else if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.UPDATED) && componentLifecycleMsg.isOwnerChanged()) {
-                calculatedFieldCache.updateOwnerEntity(tenantId, componentLifecycleMsg.getEntityId());
-            } else if (componentLifecycleMsg.getEvent() == ComponentLifecycleEvent.DELETED) {
+            if (componentLifecycleMsg.getEvent() == ComponentLifecycleEvent.DELETED) {
                 apiUsageStateService.onCustomerDelete((CustomerId) componentLifecycleMsg.getEntityId());
-                calculatedFieldCache.evictOwner(componentLifecycleMsg.getEntityId());
-                calculatedFieldCache.evictEntity(componentLifecycleMsg.getEntityId());
-            }
-        } else if (EntityType.CALCULATED_FIELD.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
-            if (componentLifecycleMsg.getEvent() == ComponentLifecycleEvent.CREATED) {
-                calculatedFieldCache.addCalculatedField(tenantId, (CalculatedFieldId) componentLifecycleMsg.getEntityId());
-            } else if (componentLifecycleMsg.getEvent() == ComponentLifecycleEvent.UPDATED) {
-                calculatedFieldCache.updateCalculatedField(tenantId, (CalculatedFieldId) componentLifecycleMsg.getEntityId());
-            } else {
-                calculatedFieldCache.evict((CalculatedFieldId) componentLifecycleMsg.getEntityId());
             }
         } else if (EntityType.TB_RESOURCE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
             tbResourceDataCache.evictResourceData(tenantId, new TbResourceId(componentLifecycleMsg.getEntityId().getId()));

@@ -633,13 +633,6 @@ public class EntityRelationControllerTest extends AbstractControllerTest {
         deleteDifferentTenant();
     }
 
-    private Device createDevice(String name) {
-        var device = new Device();
-        device.setName(name);
-        device.setType("default");
-        return doPost("/api/device", device, Device.class);
-    }
-
     private ResultActions getRelation(EntityRelation relation) throws Exception {
         return doGet("/api/relation?" +
                 "fromId=" + relation.getFrom().getId() +

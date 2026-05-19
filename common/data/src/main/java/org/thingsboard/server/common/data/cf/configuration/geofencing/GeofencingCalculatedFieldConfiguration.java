@@ -16,12 +16,14 @@
 package org.thingsboard.server.common.data.cf.configuration.geofencing;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.HasUseLatestTsConfig;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
@@ -36,6 +38,7 @@ import java.util.Set;
 
 import static java.util.stream.Collectors.toSet;
 
+@Schema
 @Data
 public class GeofencingCalculatedFieldConfiguration implements ArgumentsBasedCalculatedFieldConfiguration, ScheduledUpdateSupportedCalculatedFieldConfiguration, HasUseLatestTsConfig {
 
@@ -48,7 +51,7 @@ public class GeofencingCalculatedFieldConfiguration implements ArgumentsBasedCal
     private Map<String, ZoneGroupConfiguration> zoneGroups;
 
     private boolean scheduledUpdateEnabled;
-    private int scheduledUpdateInterval;
+    private Integer scheduledUpdateInterval;
 
     @NotNull
     private Output output;
@@ -88,6 +91,9 @@ public class GeofencingCalculatedFieldConfiguration implements ArgumentsBasedCal
 
     @Override
     public void validate() {
+        if (scheduledUpdateEnabled && scheduledUpdateInterval == null) {
+            throw new IllegalArgumentException("Refresh interval is required when periodic zone group refresh is enabled.");
+        }
         zoneGroups.forEach((key, value) -> value.validate(key));
     }
 

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -115,32 +116,40 @@ public class OAuth2Controller extends BaseController {
         return tbOauth2ClientService.save(oAuth2Client, getCurrentUser());
     }
 
-    @ApiOperation(value = "Get OAuth2 Client infos (findTenantOAuth2ClientInfos)", notes = SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @ApiOperation(value = "Get OAuth2 Client infos (findOAuth2ClientInfos)", notes = SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @GetMapping(value = "/oauth2/client/infos")
-    public PageData<OAuth2ClientInfo> findTenantOAuth2ClientInfos(@Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
-                                                                  @RequestParam int pageSize,
-                                                                  @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
-                                                                  @RequestParam int page,
-                                                                  @Parameter(description = "Case-insensitive 'substring' filter based on client's title")
-                                                                  @RequestParam(required = false) String textSearch,
-                                                                  @Parameter(description = SORT_PROPERTY_DESCRIPTION)
-                                                                  @RequestParam(required = false) String sortProperty,
-                                                                  @Parameter(description = SORT_ORDER_DESCRIPTION)
-                                                                  @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+    public PageData<OAuth2ClientInfo> findOAuth2ClientInfos(@Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
+                                                            @RequestParam int pageSize,
+                                                            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
+                                                            @RequestParam int page,
+                                                            @Parameter(description = "Case-insensitive 'substring' filter based on client's title")
+                                                            @RequestParam(required = false) String textSearch,
+                                                            @Parameter(description = SORT_PROPERTY_DESCRIPTION)
+                                                            @RequestParam(required = false) String sortProperty,
+                                                            @Parameter(description = SORT_ORDER_DESCRIPTION)
+                                                            @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return oAuth2ClientService.findOAuth2ClientInfosByTenantId(getTenantId(), pageLink);
+    }
+
+    @Hidden
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @GetMapping(value = "/oauth2/client/infos", params = {"clientIds"})
+    public List<OAuth2ClientInfo> findTenantOAuth2ClientInfosByIdsV1(
+            @RequestParam("clientIds") UUID[] clientIds) throws ThingsboardException {
+        List<OAuth2ClientId> oAuth2ClientIds = getOAuth2ClientIds(clientIds);
+        return oAuth2ClientService.findOAuth2ClientInfosByIds(getTenantId(), oAuth2ClientIds);
     }
 
     @ApiOperation(value = "Get OAuth2 Client infos By Ids (findTenantOAuth2ClientInfosByIds)",
             notes = "Fetch OAuth2 Client info objects based on the provided ids. " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @GetMapping(value = "/oauth2/client/infos", params = {"clientIds"})
+    @GetMapping(value = "/oauth2/client/list")
     public List<OAuth2ClientInfo> findTenantOAuth2ClientInfosByIds(
             @Parameter(description = "A list of oauth2 ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
             @RequestParam("clientIds") UUID[] clientIds) throws ThingsboardException {
-        List<OAuth2ClientId> oAuth2ClientIds = getOAuth2ClientIds(clientIds);
-        return oAuth2ClientService.findOAuth2ClientInfosByIds(getTenantId(), oAuth2ClientIds);
+        return findTenantOAuth2ClientInfosByIdsV1(clientIds);
     }
 
     @ApiOperation(value = "Get OAuth2 Client by id (getOAuth2ClientById)", notes = SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)

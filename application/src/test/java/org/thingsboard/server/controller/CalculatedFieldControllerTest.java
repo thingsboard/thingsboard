@@ -18,6 +18,7 @@ package org.thingsboard.server.controller;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
@@ -108,6 +109,7 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
         assertThat(savedCalculatedField.getType()).isEqualTo(calculatedField.getType());
         assertThat(savedCalculatedField.getName()).isEqualTo(calculatedField.getName());
         assertThat(savedCalculatedField.getConfiguration()).isEqualTo(getSimpleCalculatedFieldConfig());
+        assertThat(savedCalculatedField.getAdditionalInfo()).isEqualTo(calculatedField.getAdditionalInfo());
         assertThat(savedCalculatedField.getVersion()).isEqualTo(1L);
 
         savedCalculatedField.setName("Test CF");
@@ -115,6 +117,7 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
         CalculatedField updatedCalculatedField = doPost("/api/calculatedField", savedCalculatedField, CalculatedField.class);
 
         assertThat(updatedCalculatedField.getName()).isEqualTo(savedCalculatedField.getName());
+        assertThat(updatedCalculatedField.getAdditionalInfo()).isEqualTo(savedCalculatedField.getAdditionalInfo());
         assertThat(updatedCalculatedField.getVersion()).isEqualTo(savedCalculatedField.getVersion() + 1);
 
         doDelete("/api/calculatedField/" + savedCalculatedField.getId().getId().toString())
@@ -322,6 +325,7 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
         calculatedField.setType(cfType);
         calculatedField.setName("Test Calculated Field for " + entityId);
         calculatedField.setConfigurationVersion(1);
+        calculatedField.setAdditionalInfo(JacksonUtil.newObjectNode());
         if (customConfiguration != null) {
             calculatedField.setConfiguration(customConfiguration);
         } else switch (cfType) {

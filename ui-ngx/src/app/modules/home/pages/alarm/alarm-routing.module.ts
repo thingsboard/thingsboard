@@ -26,7 +26,7 @@ import { EntityDetailsPageComponent } from '@home/components/entity/entity-detai
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 import { entityDetailsPageBreadcrumbLabelFunction } from '@home/pages/home-pages.models';
 import { BreadCrumbConfig } from '@shared/components/breadcrumb';
-import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
+import { AlarmRulesService } from '@core/http/alarm-rules.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
@@ -40,7 +40,7 @@ import { AlarmRulesTableConfig } from '@home/components/alarm-rules/alarm-rules-
 export const AlarmRulesTableConfigResolver: ResolveFn<AlarmRulesTableConfig> =
   (_route: ActivatedRouteSnapshot,
    _state: RouterStateSnapshot,
-   calculatedFieldsService = inject(CalculatedFieldsService),
+   alarmRulesService = inject(AlarmRulesService),
    translate = inject(TranslateService),
    dialog = inject(MatDialog),
    store = inject(Store<AppState>),
@@ -52,7 +52,7 @@ export const AlarmRulesTableConfigResolver: ResolveFn<AlarmRulesTableConfig> =
    router = inject(Router),
   ) => {
     return new AlarmRulesTableConfig(
-      calculatedFieldsService,
+      alarmRulesService,
       translate,
       dialog,
       datePipe,

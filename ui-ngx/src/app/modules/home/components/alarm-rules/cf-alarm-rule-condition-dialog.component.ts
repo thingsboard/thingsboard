@@ -332,7 +332,10 @@ export class CfAlarmRuleConditionDialogComponent extends DialogComponent<CfAlarm
   }
 
   save(): void {
-    this.dialogRef.close(this.conditionFormGroup.value as AlarmRuleCondition);
+    this.dialogRef.close({
+      ...this.conditionFormGroup.value,
+      type: this.conditionFormGroup.get('type').value,
+    } as AlarmRuleCondition);
   }
 
   onTestScript($event: Event) {

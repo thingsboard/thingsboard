@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(name = "AlarmRuleFilterPredicateType")
 public enum FilterPredicateType {
     STRING,
     NUMERIC,

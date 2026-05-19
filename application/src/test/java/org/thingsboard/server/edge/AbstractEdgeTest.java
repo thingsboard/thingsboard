@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.HasVersion;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.SaveOtaPackageInfoRequest;
 import org.thingsboard.server.common.data.StringUtils;
@@ -605,7 +606,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         DeviceCredentials deviceCredentialsMsg = JacksonUtil.fromString(deviceCredentialsUpdateMsg.getEntity(), DeviceCredentials.class, true);
         Assert.assertNotNull(deviceCredentialsMsg);
         Assert.assertEquals(savedDevice.getId(), deviceCredentialsMsg.getDeviceId());
-        Assert.assertEquals(deviceCredentials, deviceCredentialsMsg);
+        compareHasVersionEntities(deviceCredentials, deviceCredentialsMsg);
 
         return savedDevice;
     }
@@ -773,6 +774,12 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
                     Map<String, Object> activeAttr = activeAttrOpt.get();
                     return Boolean.toString(value).equals(activeAttr.get("value").toString());
                 });
+    }
+
+    protected void compareHasVersionEntities(HasVersion entity1, HasVersion entity2) {
+        entity1.setVersion(null);
+        entity2.setVersion(null);
+        Assert.assertEquals(entity1, entity2);
     }
 
 }

@@ -16,10 +16,12 @@
 package org.thingsboard.server.common.data.cf.configuration;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.springframework.lang.Nullable;
 import org.thingsboard.server.common.data.id.EntityId;
 
+@Schema
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Argument {

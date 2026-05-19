@@ -94,6 +94,7 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.cf.AlarmRuleDefinition;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldInfo;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
@@ -123,6 +124,8 @@ import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.job.Job;
 import org.thingsboard.server.common.data.job.JobType;
+import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationType;
@@ -177,6 +180,7 @@ import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -434,6 +438,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         tenantProfileService.deleteTenantProfiles(TenantId.SYS_TENANT_ID);
 
         jdbcTemplate.execute("TRUNCATE TABLE notification");
+        jdbcTemplate.execute("TRUNCATE TABLE audit_log");
 
         log.debug("Executed web test teardown");
     }
@@ -726,6 +731,10 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return assetProfile;
     }
 
+    protected Device createDevice(String name) throws Exception {
+        return createDevice(name, "default", null, null);
+    }
+
     protected Device createDevice(String name, String accessToken) throws Exception {
         return createDevice(name, "default", null, accessToken);
     }
@@ -739,7 +748,11 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         deviceData.setTransportConfiguration(new DefaultDeviceTransportConfiguration());
         deviceData.setConfiguration(new DefaultDeviceConfiguration());
         device.setDeviceData(deviceData);
-        return doPost("/api/device?accessToken=" + accessToken, device, Device.class);
+        if (accessToken != null) {
+            return doPost("/api/device?accessToken=" + accessToken, device, Device.class);
+        } else {
+            return doPost("/api/device", device, Device.class);
+        }
     }
 
     protected Device assignDeviceToCustomer(DeviceId deviceId, CustomerId customerId) {
@@ -1227,7 +1240,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         Awaitility.await("CF state for entity actor ready to refresh dynamic arguments").atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> {
             CalculatedFieldState calculatedFieldState = statesMap.get(cfId);
             boolean isReady = calculatedFieldState != null && ((GeofencingCalculatedFieldState) calculatedFieldState).getLastScheduledRefreshTs() <
-                                                              System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(scheduledUpdateInterval);
+                    System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(scheduledUpdateInterval);
             log.warn("entityId {}, cfId {}, state ready to refresh == {}", entityId, cfId, isReady);
             return isReady;
         });
@@ -1277,7 +1290,8 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         TenantProfile oldTenantProfile = tenantProfileService.findDefaultTenantProfile(TenantId.SYS_TENANT_ID);
         TenantProfile tenantProfile = JacksonUtil.clone(oldTenantProfile);
         updater.accept(tenantProfile);
-        tbTenantProfileService.save(TenantId.SYS_TENANT_ID, tenantProfile, oldTenantProfile);
+        // user should be sysadmin as this operation allowed only for sysadmins. But for the simplification of the test - already existed variable provided. This affects only an audit log content
+        tbTenantProfileService.save(TenantId.SYS_TENANT_ID, tenantProfile, oldTenantProfile, tenantAdminUser);
     }
 
     protected OAuth2Client createOauth2Client(TenantId tenantId, String title) {
@@ -1418,7 +1432,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected List<Job> findJobs(List<JobType> types, List<UUID> entities) throws Exception {
         return doGetTypedWithPageLink("/api/jobs?types=" + types.stream().map(Enum::name).collect(Collectors.joining(",")) +
-                                      "&entities=" + entities.stream().map(UUID::toString).collect(Collectors.joining(",")) + "&",
+                        "&entities=" + entities.stream().map(UUID::toString).collect(Collectors.joining(",")) + "&",
                 new TypeReference<PageData<Job>>() {}, new PageLink(100, 0, null, new SortOrder("createdTime", SortOrder.Direction.DESC))).getData();
     }
 
@@ -1432,21 +1446,50 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected void postTelemetry(EntityId entityId, String payload) throws Exception {
         doPostAsync("/api/plugins/telemetry/" + entityId.getEntityType() + "/" + entityId.getId() +
-                    "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode(payload), 30_000L).andExpect(status().isOk());
+                "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode(payload), 30_000L).andExpect(status().isOk());
+    }
+
+    protected void postTelemetry(EntityId entityId, TsKvEntry entry) throws Exception {
+        var values = JacksonUtil.newObjectNode();
+        JacksonUtil.addKvEntry(values, entry);
+
+        var payload = JacksonUtil.newObjectNode()
+                .put("ts", entry.getTs())
+                .set("values", values);
+
+        var url = "/api/plugins/telemetry/" + entityId.getEntityType() + "/" + entityId.getId() + "/timeseries/any";
+        doPostAsync(url, payload, 30_000L).andExpect(status().isOk());
     }
 
     protected void postAttributes(EntityId entityId, AttributeScope scope, String payload) throws Exception {
         doPostAsync("/api/plugins/telemetry/" + entityId.getEntityType() + "/" + entityId.getId() +
-                    "/attributes/" + scope, JacksonUtil.toJsonNode(payload), 30_000L).andExpect(status().isOk());
+                "/attributes/" + scope, JacksonUtil.toJsonNode(payload), 30_000L).andExpect(status().isOk());
+    }
+
+    protected void postAttributes(EntityId entityId, AttributeScope scope, KvEntry... attributes) throws Exception {
+        postAttributes(entityId, scope, Arrays.asList(attributes));
+    }
+
+    protected void postAttributes(EntityId entityId, AttributeScope scope, Collection<? extends KvEntry> attributes) throws Exception {
+        var url = "/api/plugins/telemetry/" + entityId.getEntityType() + "/" + entityId.getId() + "/attributes/" + scope;
+        var payload = JacksonUtil.newObjectNode();
+        for (KvEntry entry : attributes) {
+            JacksonUtil.addKvEntry(payload, entry);
+        }
+        doPostAsync(url, payload, 30_000L).andExpect(status().isOk());
     }
 
     protected CalculatedField saveCalculatedField(CalculatedField calculatedField) {
         return doPost("/api/calculatedField", calculatedField, CalculatedField.class);
     }
 
+    protected AlarmRuleDefinition saveAlarmRule(AlarmRuleDefinition alarmRule) {
+        return doPost("/api/alarm/rule", alarmRule, AlarmRuleDefinition.class);
+    }
+
     protected PageData<CalculatedField> getEntityCalculatedFields(EntityId entityId, CalculatedFieldType type, PageLink pageLink) throws Exception {
         return doGetTypedWithPageLink("/api/" + entityId.getEntityType() + "/" + entityId.getId() + "/calculatedFields" +
-                                      (type != null ? "?type=" + type.name() + "&" : "?"), new TypeReference<>() {}, pageLink);
+                (type != null ? "?type=" + type.name() + "&" : "?"), new TypeReference<>() {}, pageLink);
     }
 
     protected PageData<String> getCalculatedFieldNames(CalculatedFieldType type, PageLink pageLink) throws Exception {
@@ -1459,11 +1502,11 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
                                                             List<UUID> entities,
                                                             List<String> names) throws Exception {
         return doGetTypedWithPageLink("/api/calculatedFields?" +
-                                      (type != null ? "types=" + type + "&" : "") +
-                                      (entityType != null ? "entityType=" + entityType + "&" : "") +
-                                      (entities != null ? "entities=" + String.join(",",
-                                              entities.stream().map(UUID::toString).toList()) + "&" : "") +
-                                      (names != null ? names.stream().map(name -> "name=" + name + "&").collect(Collectors.joining("")) : ""),
+                        (type != null ? "types=" + type + "&" : "") +
+                        (entityType != null ? "entityType=" + entityType + "&" : "") +
+                        (entities != null ? "entities=" + String.join(",",
+                                entities.stream().map(UUID::toString).toList()) + "&" : "") +
+                        (names != null ? names.stream().map(name -> "name=" + name + "&").collect(Collectors.joining("")) : ""),
                 new TypeReference<PageData<CalculatedFieldInfo>>() {}, new PageLink(10)).getData();
     }
 

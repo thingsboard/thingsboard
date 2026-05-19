@@ -25,6 +25,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.data.util.Pair;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EdgeUtils;
@@ -37,6 +38,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.AttributesSaveResult;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.limit.LimitedApi;
@@ -47,6 +49,7 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.msg.edge.EdgeEventUpdateMsg;
 import org.thingsboard.server.dao.edge.stats.EdgeStatsKey;
 import org.thingsboard.server.gen.edge.v1.AiModelUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.ApiKeyUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AlarmCommentUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AlarmUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
@@ -195,7 +198,7 @@ public abstract class EdgeGrpcSession implements Closeable {
                             }
                             startSyncProcess(fullSync);
                         } else {
-                            syncInProgress = false;
+                            updateSyncInProgress(false);
                         }
                     }
                     if (requestMsg.getMsgType().equals(RequestMsgType.UPLINK_RPC_MESSAGE)) {
@@ -241,6 +244,11 @@ public abstract class EdgeGrpcSession implements Closeable {
         log.debug("[{}] onConfigurationUpdate [{}]", sessionId, edge);
         this.tenantId = edge.getTenantId();
         this.edge = edge;
+        if (!this.edge.getCustomerId().equals(edge.getCustomerId())) {
+            // do not send edge configuration message on customer update
+            // message send by separate flow from assign_to or unassing_from customer
+            return;
+        }
         EdgeUpdateMsg edgeConfig = EdgeUpdateMsg.newBuilder()
                 .setConfiguration(EdgeMsgConstructorUtils.constructEdgeConfiguration(edge)).build();
         ResponseMsg edgeConfigMsg = ResponseMsg.newBuilder()
@@ -252,7 +260,7 @@ public abstract class EdgeGrpcSession implements Closeable {
     public void startSyncProcess(boolean fullSync) {
         if (!syncInProgress) {
             log.info("[{}][{}][{}] Staring edge sync process", tenantId, edge.getId(), sessionId);
-            syncInProgress = true;
+            updateSyncInProgress(true);
             interruptGeneralProcessingOnSync();
             doSync(new EdgeSyncCursor(ctx, edge, fullSync));
         } else {
@@ -396,6 +404,18 @@ public abstract class EdgeGrpcSession implements Closeable {
     private void processSaveEdgeVersionAsAttribute(String edgeVersion) {
         AttributeKvEntry attributeKvEntry = new BaseAttributeKvEntry(new StringDataEntry(DataConstants.EDGE_VERSION_ATTR_KEY, edgeVersion), System.currentTimeMillis());
         ctx.getAttributesService().save(tenantId, edge.getId(), AttributeScope.SERVER_SCOPE, attributeKvEntry);
+    }
+
+    private void updateSyncInProgress(Boolean value) {
+        this.syncInProgress = value;
+
+        ctx.getTsSubService().saveAttributes(AttributesSaveRequest.builder()
+                .tenantId(tenantId)
+                .entityId(edge.getId())
+                .scope(AttributeScope.SERVER_SCOPE)
+                .entry(new BooleanDataEntry(DataConstants.EDGE_SYNC_IN_PROGRESS_ATTR_KEY, value))
+                .callback(new AttributeSaveCallback(tenantId, edge.getId(), DataConstants.EDGE_SYNC_IN_PROGRESS_ATTR_KEY, value))
+                .build());
     }
 
     private void interruptGeneralProcessingOnSync() {
@@ -766,7 +786,7 @@ public abstract class EdgeGrpcSession implements Closeable {
     }
 
     private void markSyncCompletedSendEdgeEventUpdate() {
-        syncInProgress = false;
+        updateSyncInProgress(false);
         ctx.getClusterService().onEdgeEventUpdate(new EdgeEventUpdateMsg(edge.getTenantId(), edge.getId()));
     }
 
@@ -964,6 +984,16 @@ public abstract class EdgeGrpcSession implements Closeable {
                     sequenceDependencyLock.lock();
                     try {
                         result.add(ctx.getUserProcessor().processUserCredentialsMsgFromEdge(edge.getTenantId(), edge, userCredentialsUpdateMsg));
+                    } finally {
+                        sequenceDependencyLock.unlock();
+                    }
+                }
+            }
+            if (uplinkMsg.getApiKeyUpdateMsgCount() > 0) {
+                for (ApiKeyUpdateMsg apiKeyUpdateMsg : uplinkMsg.getApiKeyUpdateMsgList()) {
+                    sequenceDependencyLock.lock();
+                    try {
+                        result.add(ctx.getApiKeyProcessor().processApiKeyMsgFromEdge(edge.getTenantId(), edge, apiKeyUpdateMsg));
                     } finally {
                         sequenceDependencyLock.unlock();
                     }

@@ -16,12 +16,14 @@
 package org.thingsboard.server.common.data.ai.provider;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.AssertTrue;
 import lombok.Builder;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Objects;
 
+@Schema
 @Builder
 public record OpenAiProviderConfig(
         String baseUrl,
