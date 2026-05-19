@@ -164,7 +164,7 @@ public class SnmpTransportService implements TbTransportService, CommandResponde
                     ScheduledTask scheduledTask = new ScheduledTask();
                     scheduledTask.init(() -> {
                         try {
-                            if (sessionContext.isActive()) {
+                            if (sessionContext.isActive() && sessionContext.isConnected()) {
                                 return sendRequest(sessionContext, repeatingCommunicationConfig);
                             }
                         } catch (Exception e) {
@@ -390,7 +390,11 @@ public class SnmpTransportService implements TbTransportService, CommandResponde
 
         JsonObject responseData = responseDataMappers.get(requestContext.getCommunicationSpec()).map(response, requestContext);
         if (responseData.size() == 0) {
-            log.warn("[{}] No values in the response", sessionContext.getDeviceId());
+            log.warn("[{}] No values in the response for spec {}. Response PDUs count: {}, Mappings count: {}",
+                    sessionContext.getDeviceId(), requestContext.getCommunicationSpec(),
+                    response.size(), requestContext.getResponseMappings().size());
+            log.debug("[{}] No values in the response for spec {}. Response PDUs: {}",
+                    sessionContext.getDeviceId(), requestContext.getCommunicationSpec(), response);
             throw new IllegalArgumentException("No values in the response");
         }
 

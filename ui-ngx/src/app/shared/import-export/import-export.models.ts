@@ -210,7 +210,7 @@ function splitCSV(str: string, sep: string): string[] {
         foo = foo.shift().split(sep).concat(foo);
       }
     } else {
-      foo[x].replace(/""/g, '"');
+      foo[x] = foo[x].replace(/""/g, '"');
     }
   }
   return foo;
