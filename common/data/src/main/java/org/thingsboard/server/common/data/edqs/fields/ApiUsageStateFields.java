@@ -40,11 +40,12 @@ public class ApiUsageStateFields extends AbstractEntityFields {
     private ApiUsageStateValue emailExecState;
     private ApiUsageStateValue smsExecState;
     private ApiUsageStateValue alarmExecState;
+    private ApiUsageStateValue edgeState;
 
     public ApiUsageStateFields(UUID id, long createdTime, UUID tenantId, UUID entityId, String entityType, ApiUsageStateValue transportState, ApiUsageStateValue dbStorageState,
                                ApiUsageStateValue reExecState, ApiUsageStateValue jsExecState, ApiUsageStateValue tbelExecState,
                                ApiUsageStateValue emailExecState, ApiUsageStateValue smsExecState, ApiUsageStateValue alarmExecState,
-                               Long version) {
+                               ApiUsageStateValue edgeState, Long version) {
         super(id, createdTime, tenantId, null, null, version);
         this.entityId = (entityType != null && entityId != null) ? EntityIdFactory.getByTypeAndUuid(entityType, entityId) : null;
         this.transportState = transportState;
@@ -55,5 +56,7 @@ public class ApiUsageStateFields extends AbstractEntityFields {
         this.emailExecState = emailExecState;
         this.smsExecState = smsExecState;
         this.alarmExecState = alarmExecState;
+        this.edgeState = edgeState;
     }
+
 }

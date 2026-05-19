@@ -81,6 +81,7 @@ enum ApiUsageRecordKeyProto {
   CREATED_ALARMS_COUNT = 8;
   ACTIVE_DEVICES       = 9;
   INACTIVE_DEVICES     = 10;
+  EDGE_EVENT_COUNT     = 11;
 }
 
 message EntityIdProto {
@@ -387,6 +388,7 @@ message ApiUsageStateProto {
   string smsExecState = 15;
   string alarmExecState = 16;
   int64 version = 17;
+  string edgeState = 18;
 }
 
 message RepositorySettingsProto {
@@ -1783,19 +1785,15 @@ message ToTransportMsg {
 }
 
 message UsageStatsKVProto {
-  string key = 1 [deprecated=true];
+  reserved 1;
+  reserved "key";
   int64 value = 2;
   ApiUsageRecordKeyProto recordKey = 3;
 }
 
 message ToUsageStatsServiceMsg {
-  int64 tenantIdMSB = 1 [deprecated=true];
-  int64 tenantIdLSB = 2 [deprecated=true];
-  int64 entityIdMSB = 3 [deprecated=true];
-  int64 entityIdLSB = 4 [deprecated=true];
-  repeated UsageStatsKVProto values = 5 [deprecated=true];
-  int64 customerIdMSB = 6 [deprecated=true];
-  int64 customerIdLSB = 7 [deprecated=true];
+  reserved 1 to 7;
+  reserved "tenantIdMSB", "tenantIdLSB", "entityIdMSB", "entityIdLSB", "values", "customerIdMSB", "customerIdLSB";
   string serviceId = 8;
   repeated UsageStatsServiceMsg msgs = 9;
 }

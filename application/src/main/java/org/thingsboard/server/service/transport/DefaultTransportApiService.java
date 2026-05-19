@@ -115,9 +115,6 @@ import java.util.stream.Collectors;
 import static org.thingsboard.server.service.transport.BasicCredentialsValidationResult.PASSWORD_MISMATCH;
 import static org.thingsboard.server.service.transport.BasicCredentialsValidationResult.VALID;
 
-/**
- * Created by ashvayka on 05.10.18.
- */
 @Slf4j
 @Service
 @TbCoreComponent

@@ -459,6 +459,7 @@ public class ProtoUtils {
             case CREATED_ALARMS_COUNT -> ApiUsageRecordKeyProto.CREATED_ALARMS_COUNT;
             case ACTIVE_DEVICES -> ApiUsageRecordKeyProto.ACTIVE_DEVICES;
             case INACTIVE_DEVICES -> ApiUsageRecordKeyProto.INACTIVE_DEVICES;
+            case EDGE_EVENT_COUNT -> ApiUsageRecordKeyProto.EDGE_EVENT_COUNT;
         };
     }
 
@@ -476,6 +477,7 @@ public class ProtoUtils {
             case CREATED_ALARMS_COUNT -> ApiUsageRecordKey.CREATED_ALARMS_COUNT;
             case ACTIVE_DEVICES -> ApiUsageRecordKey.ACTIVE_DEVICES;
             case INACTIVE_DEVICES -> ApiUsageRecordKey.INACTIVE_DEVICES;
+            case EDGE_EVENT_COUNT -> ApiUsageRecordKey.EDGE_EVENT_COUNT;
         };
     }
 
@@ -1198,6 +1200,7 @@ public class ProtoUtils {
                 .setEmailExecState(apiUsageState.getEmailExecState().name())
                 .setSmsExecState(apiUsageState.getSmsExecState().name())
                 .setAlarmExecState(apiUsageState.getAlarmExecState().name())
+                .setEdgeState(apiUsageState.getEdgeState().name())
                 .setVersion(apiUsageState.getVersion())
                 .build();
     }
@@ -1215,6 +1218,12 @@ public class ProtoUtils {
         apiUsageState.setEmailExecState(ApiUsageStateValue.valueOf(proto.getEmailExecState()));
         apiUsageState.setSmsExecState(ApiUsageStateValue.valueOf(proto.getSmsExecState()));
         apiUsageState.setAlarmExecState(ApiUsageStateValue.valueOf(proto.getAlarmExecState()));
+        // for backward compatibility, if any message is already in kafka, can simplify after the next release;
+        if (!proto.getEdgeState().isEmpty()) {
+            apiUsageState.setEdgeState(ApiUsageStateValue.valueOf(proto.getEdgeState()));
+        } else {
+            apiUsageState.setEdgeState(ApiUsageStateValue.ENABLED);
+        }
         apiUsageState.setVersion(proto.getVersion());
         return apiUsageState;
     }
@@ -1309,18 +1318,13 @@ public class ProtoUtils {
 
     public static <T> TransportProtos.EntityUpdateMsg toEntityUpdateProto(T entity) {
         var builder = TransportProtos.EntityUpdateMsg.newBuilder();
-        if (entity instanceof Device) {
-            builder.setDevice(toProto((Device) entity));
-        } else if (entity instanceof DeviceProfile) {
-            builder.setDeviceProfile(toProto((DeviceProfile) entity));
-        } else if (entity instanceof Tenant) {
-            builder.setTenant(toProto((Tenant) entity));
-        } else if (entity instanceof TenantProfile) {
-            builder.setTenantProfile(toProto((TenantProfile) entity));
-        } else if (entity instanceof ApiUsageState) {
-            builder.setApiUsageState(toProto((ApiUsageState) entity));
-        } else {
-            log.warn("[{}] entity does not support toProto serialization .", entity.getClass().getSimpleName());
+        switch (entity) {
+            case Device device -> builder.setDevice(toProto(device));
+            case DeviceProfile deviceProfile -> builder.setDeviceProfile(toProto(deviceProfile));
+            case Tenant tenant -> builder.setTenant(toProto(tenant));
+            case TenantProfile tenantProfile -> builder.setTenantProfile(toProto(tenantProfile));
+            case ApiUsageState apiUsageState -> builder.setApiUsageState(toProto(apiUsageState));
+            default -> log.warn("[{}] entity does not support toProto serialization .", entity.getClass().getSimpleName());
         }
         return builder.build();
     }

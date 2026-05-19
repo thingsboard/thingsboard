@@ -39,4 +39,5 @@ public interface TbApiUsageStateService extends TbApiUsageStateClient, RuleEngin
     void onCustomerDelete(CustomerId customerId);
 
     void onApiUsageStateUpdate(TenantId tenantId);
+
 }

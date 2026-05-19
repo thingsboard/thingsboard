@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.edge.exception.EdgeConnectionException;
+import org.thingsboard.edge.exception.EdgeFeatureDisabledException;
 import org.thingsboard.server.common.data.ResourceUtils;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.gen.edge.v1.ConnectRequestMsg;
@@ -170,7 +171,11 @@ public class EdgeGrpcClient implements EdgeRpcClient {
                         } catch (InterruptedException e) {
                             log.error("[{}] Got interruption during disconnect!", edgeKey, e);
                         }
-                        onError.accept(new EdgeConnectionException("Failed to establish the connection! Response code: " + connectResponseMsg.getResponseCode().name()));
+                        if (ConnectResponseCode.FEATURE_DISABLED.equals(connectResponseMsg.getResponseCode())) {
+                            onError.accept(new EdgeFeatureDisabledException(connectResponseMsg.getErrorMsg()));
+                        } else {
+                            onError.accept(new EdgeConnectionException("Failed to establish the connection! Response code: " + connectResponseMsg.getResponseCode().name()));
+                        }
                     }
                 } else if (responseMsg.hasEdgeUpdateMsg()) {
                     log.debug("[{}] Edge update message received {}", edgeKey, responseMsg.getEdgeUpdateMsg());

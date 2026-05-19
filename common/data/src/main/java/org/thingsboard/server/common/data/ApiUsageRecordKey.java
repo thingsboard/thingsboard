@@ -28,6 +28,7 @@ public enum ApiUsageRecordKey {
     EMAIL_EXEC_COUNT(ApiFeature.EMAIL, "emailCount", "emailLimit", "email message", true, true),
     SMS_EXEC_COUNT(ApiFeature.SMS, "smsCount", "smsLimit", "SMS message", true, true),
     CREATED_ALARMS_COUNT(ApiFeature.ALARM, "createdAlarmsCount", "createdAlarmsLimit", "alarm"),
+    EDGE_EVENT_COUNT(ApiFeature.EDGE, "edgeEventCount", "edgeEventLimit", "edge event"),
     ACTIVE_DEVICES("activeDevicesCount"),
     INACTIVE_DEVICES("inactiveDevicesCount");
 
@@ -39,6 +40,7 @@ public enum ApiUsageRecordKey {
     private static final ApiUsageRecordKey[] EMAIL_RECORD_KEYS = {EMAIL_EXEC_COUNT};
     private static final ApiUsageRecordKey[] SMS_RECORD_KEYS = {SMS_EXEC_COUNT};
     private static final ApiUsageRecordKey[] ALARM_RECORD_KEYS = {CREATED_ALARMS_COUNT};
+    private static final ApiUsageRecordKey[] EDGE_RECORD_KEYS = {EDGE_EVENT_COUNT};
 
     @Getter
     private final ApiFeature apiFeature;
@@ -71,26 +73,17 @@ public enum ApiUsageRecordKey {
     }
 
     public static ApiUsageRecordKey[] getKeys(ApiFeature feature) {
-        switch (feature) {
-            case TRANSPORT:
-                return TRANSPORT_RECORD_KEYS;
-            case DB:
-                return DB_RECORD_KEYS;
-            case RE:
-                return RE_RECORD_KEYS;
-            case JS:
-                return JS_RECORD_KEYS;
-            case TBEL:
-                return TBEL_RECORD_KEYS;
-            case EMAIL:
-                return EMAIL_RECORD_KEYS;
-            case SMS:
-                return SMS_RECORD_KEYS;
-            case ALARM:
-                return ALARM_RECORD_KEYS;
-            default:
-                return new ApiUsageRecordKey[]{};
-        }
+        return switch (feature) {
+            case TRANSPORT -> TRANSPORT_RECORD_KEYS;
+            case DB -> DB_RECORD_KEYS;
+            case RE -> RE_RECORD_KEYS;
+            case JS -> JS_RECORD_KEYS;
+            case TBEL -> TBEL_RECORD_KEYS;
+            case EMAIL -> EMAIL_RECORD_KEYS;
+            case SMS -> SMS_RECORD_KEYS;
+            case ALARM -> ALARM_RECORD_KEYS;
+            case EDGE -> EDGE_RECORD_KEYS;
+        };
     }
 
 }

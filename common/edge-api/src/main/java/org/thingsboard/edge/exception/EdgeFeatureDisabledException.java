@@ -13,14 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.edge.exception;
 
-public enum ApiUsageStateValue {
+import java.io.Serial;
 
-    ENABLED, WARNING, DISABLED;
+public class EdgeFeatureDisabledException extends RuntimeException {
 
-    public static ApiUsageStateValue toMoreRestricted(ApiUsageStateValue a, ApiUsageStateValue b) {
-        return a.ordinal() > b.ordinal() ? a : b;
+    @Serial
+    private static final long serialVersionUID = -4719918663724404639L;
+
+    public EdgeFeatureDisabledException(String message) {
+        super(message);
     }
 
 }

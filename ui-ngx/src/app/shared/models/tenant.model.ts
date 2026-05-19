@@ -71,6 +71,7 @@ export interface DefaultTenantProfileConfiguration {
   maxSms: number;
   smsEnabled: boolean;
   maxCreatedAlarms: number;
+  maxEdgeEvents: number;
 
   maxDebugModeDurationMinutes: number;
 
@@ -154,6 +155,7 @@ export function createTenantProfileConfiguration(type: TenantProfileType): Tenan
           maxSms: 0,
           smsEnabled: true,
           maxCreatedAlarms: 0,
+          maxEdgeEvents: 0,
           maxDebugModeDurationMinutes: 15,
           tenantServerRestLimitsConfiguration: '',
           customerServerRestLimitsConfiguration: '',

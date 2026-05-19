@@ -15,8 +15,8 @@
  */
 package org.thingsboard.server.service.edge.rpc;
 
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -28,6 +28,8 @@ import org.thingsboard.server.dao.edge.BaseEdgeEventService;
 import org.thingsboard.server.dao.edge.stats.EdgeStatsCounterService;
 import org.thingsboard.server.dao.edge.stats.EdgeStatsKey;
 import org.thingsboard.server.gen.transport.TransportProtos.ToEdgeEventNotificationMsg;
+import org.thingsboard.server.queue.TbQueueCallback;
+import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
@@ -51,10 +53,23 @@ public class KafkaEdgeEventService extends BaseEdgeEventService {
 
         TopicPartitionInfo tpi = topicService.getEdgeEventNotificationsTopic(edgeEvent.getTenantId(), edgeEvent.getEdgeId());
         ToEdgeEventNotificationMsg msg = ToEdgeEventNotificationMsg.newBuilder().setEdgeEventMsg(ProtoUtils.toProto(edgeEvent)).build();
-        producerProvider.getTbEdgeEventsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), msg), null);
+        SettableFuture<Void> result = SettableFuture.create();
+        producerProvider.getTbEdgeEventsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), msg), new TbQueueCallback() {
+            @Override
+            public void onSuccess(TbQueueMsgMetadata metadata) {
+                reportEdgeEventUsage(edgeEvent);
+                result.set(null);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                log.warn("[{}][{}] Failed to send edge event to queue", edgeEvent.getTenantId(), edgeEvent.getEdgeId(), t);
+                result.setException(t);
+            }
+        });
         statsCounterService.ifPresent(statsCounterService ->
                 statsCounterService.recordEvent(EdgeStatsKey.DOWNLINK_MSGS_ADDED, edgeEvent.getTenantId(), edgeEvent.getEdgeId(), 1));
-        return Futures.immediateFuture(null);
+        return result;
     }
 
 }

@@ -97,6 +97,7 @@ enum ConnectResponseCode {
   ACCEPTED = 0;
   BAD_CREDENTIALS = 1;
   SERVER_UNAVAILABLE = 2;
+  FEATURE_DISABLED = 3;
 }
 
 message ConnectResponseMsg {
