@@ -132,7 +132,6 @@ message SessionInfoProto {
 message RestApiCallResponseMsgProto {
   int64 requestIdMSB = 1;
   int64 requestIdLSB = 2;
-  bytes response = 5 [deprecated = true];
   msgqueue.TbMsgProto responseProto = 6;
 }
 

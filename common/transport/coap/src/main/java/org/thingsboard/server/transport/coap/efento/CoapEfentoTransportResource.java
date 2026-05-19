@@ -245,7 +245,7 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
     }
 
     List<EfentoTelemetry> getEfentoMeasurements(MeasurementsProtos.ProtoMeasurements protoMeasurements, UUID sessionId) {
-        String serialNumber = CoapEfentoUtils.convertByteArrayToString(protoMeasurements.getSerialNum().toByteArray());
+        String serialNumber = CoapEfentoUtils.convertByteArrayToString(protoMeasurements.getSerialNumber().toByteArray());
         boolean batteryStatus = protoMeasurements.getBatteryStatus();
         int measurementPeriodBase = protoMeasurements.getMeasurementPeriodBase();
         int measurementPeriodFactor = protoMeasurements.getMeasurementPeriodFactor();
@@ -258,6 +258,9 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
         }
 
         Map<Long, JsonObject> valuesMap = new TreeMap<>();
+        // general measurements per message
+        valuesMap.put(TimeUnit.SECONDS.toMillis(channelsList.get(0).getTimestamp()), CoapEfentoUtils.setDefaultMeasurements(serialNumber, batteryStatus, nextTransmissionAtMillis, signal));
+
         for (int channel = 0; channel < channelsList.size(); channel++) {
             ProtoChannel protoChannel = channelsList.get(channel);
             List<Integer> sampleOffsetsList = protoChannel.getSampleOffsetsList();
@@ -270,6 +273,10 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
             int measurementPeriod = measurementPeriodBase * channelPeriodFactor;
             long measurementPeriodMillis = TimeUnit.SECONDS.toMillis(measurementPeriod);
             long startTimestampMillis = TimeUnit.SECONDS.toMillis(protoChannel.getTimestamp());
+
+            // measurements per channel
+            JsonObject tsValues = valuesMap.computeIfAbsent(startTimestampMillis, k -> new JsonObject());
+            tsValues.addProperty("measurement_interval_" + (channel + 1), measurementPeriod);
 
             for (int i = 0; i < sampleOffsetsList.size(); i++) {
                 int sampleOffset = sampleOffsetsList.get(i);
@@ -290,20 +297,14 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
                     }
                     long sampleOffsetMillis = TimeUnit.SECONDS.toMillis(sampleOffset);
                     long measurementTimestamp = startTimestampMillis + Math.abs(sampleOffsetMillis);
-                    values = valuesMap.computeIfAbsent(measurementTimestamp - 1000, k ->
-                            CoapEfentoUtils.setDefaultMeasurements(serialNumber, batteryStatus, measurementPeriod, nextTransmissionAtMillis, signal, k));
+                    values = valuesMap.computeIfAbsent(measurementTimestamp - 1000, k -> new JsonObject());
                     addBinarySample(protoChannel, currentIsOk, values, channel + 1, sessionId);
                 } else {
                     long timestampMillis = startTimestampMillis + i * measurementPeriodMillis;
-                    values = valuesMap.computeIfAbsent(timestampMillis, k -> CoapEfentoUtils.setDefaultMeasurements(
-                            serialNumber, batteryStatus, measurementPeriod, nextTransmissionAtMillis, signal, k));
+                    values = valuesMap.computeIfAbsent(timestampMillis, k -> new JsonObject());
                     addContinuesSample(protoChannel, sampleOffset, values, channel + 1, sessionId);
                 }
             }
-        }
-
-        if (CollectionUtils.isEmpty(valuesMap)) {
-            throw new IllegalStateException("[" + sessionId + "]: Failed to collect Efento measurements, reason, values map is empty!");
         }
 
         return valuesMap.entrySet().stream()
@@ -446,7 +447,7 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
         }
     }
 
-    private EfentoTelemetry getEfentoDeviceInfo(DeviceInfoProtos.ProtoDeviceInfo protoDeviceInfo) {
+    EfentoTelemetry getEfentoDeviceInfo(DeviceInfoProtos.ProtoDeviceInfo protoDeviceInfo) {
         JsonObject values = new JsonObject();
         values.addProperty("sw_version", protoDeviceInfo.getSwVersion());
 
@@ -476,41 +477,86 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
 
         //modem info
         DeviceInfoProtos.ProtoModem modem = protoDeviceInfo.getModem();
-        values.addProperty("modem_types", modem.getType().toString());
-        values.addProperty("sc_EARNFCN_offset", modem.getParameters(0));
-        values.addProperty("sc_EARFCN", modem.getParameters(1));
-        values.addProperty("sc_PCI", modem.getParameters(2));
-        values.addProperty("sc_Cell_id", modem.getParameters(3));
-        values.addProperty("sc_RSRP", modem.getParameters(4));
-        values.addProperty("sc_RSRQ", modem.getParameters(5));
-        values.addProperty("sc_RSSI", modem.getParameters(6));
-        values.addProperty("sc_SINR", modem.getParameters(7));
-        values.addProperty("sc_Band", modem.getParameters(8));
-        values.addProperty("sc_TAC", modem.getParameters(9));
-        values.addProperty("sc_ECL", modem.getParameters(10));
-        values.addProperty("sc_TX_PWR", modem.getParameters(11));
-        values.addProperty("op_mode", modem.getParameters(12));
-        values.addProperty("nc_EARFCN", modem.getParameters(13));
-        values.addProperty("nc_EARNFCN_offset", modem.getParameters(14));
-        values.addProperty("nc_PCI", modem.getParameters(15));
-        values.addProperty("nc_RSRP", modem.getParameters(16));
-        values.addProperty("RLC_UL_BLER", modem.getParameters(17));
-        values.addProperty("RLC_DL_BLER", modem.getParameters(18));
-        values.addProperty("MAC_UL_BLER", modem.getParameters(19));
-        values.addProperty("MAC_DL_BLER", modem.getParameters(20));
-        values.addProperty("MAC_UL_TOTAL_BYTES", modem.getParameters(21));
-        values.addProperty("MAC_DL_TOTAL_BYTES", modem.getParameters(22));
-        values.addProperty("MAC_UL_total_HARQ_Tx", modem.getParameters(23));
-        values.addProperty("MAC_DL_total_HARQ_Tx", modem.getParameters(24));
-        values.addProperty("MAC_UL_HARQ_re_Tx", modem.getParameters(25));
-        values.addProperty("MAC_DL_HARQ_re_Tx", modem.getParameters(26));
-        values.addProperty("RLC_UL_tput", modem.getParameters(27));
-        values.addProperty("RLC_DL_tput", modem.getParameters(28));
-        values.addProperty("MAC_UL_tput", modem.getParameters(29));
-        values.addProperty("MAC_DL_tput", modem.getParameters(30));
-        values.addProperty("sleep_duration", modem.getParameters(31));
-        values.addProperty("rx_time", modem.getParameters(32));
-        values.addProperty("tx_time", modem.getParameters(33));
+        DeviceInfoProtos.ModemType modemType = modem.getType();
+        values.addProperty("modem_types", modemType.toString());
+        values.addProperty("sim_card_identification", modem.getSimCardIdentification());
+        values.addProperty("firmware_version", modem.getFirmwareVersion().toString());
+        values.addProperty("modem_identification", modem.getModemIdentification());
+        if (modem.getModemStatisticsCount() >= 4) {
+            values.addProperty("modem_transmissions_count", modem.getModemStatistics(0));
+            values.addProperty("modem_time_since_last_devinfo", modem.getModemStatistics(1));
+            values.addProperty("modem_total_psm_time", modem.getModemStatistics(2));
+            values.addProperty("modem_total_active_time", modem.getModemStatistics(3));
+        }
+        switch (modemType) {
+            case MODEM_TYPE_BC660:
+                values.addProperty("sc_EARFCN", modem.getParameters(0));
+                values.addProperty("sc_EARNFCN_offset", modem.getParameters(1));
+                values.addProperty("sc_PCI", modem.getParameters(2));
+                values.addProperty("sc_Cell_id", modem.getParameters(3));
+                values.addProperty("sc_RSRP", modem.getParameters(4));
+                values.addProperty("sc_RSRQ", modem.getParameters(5));
+                values.addProperty("sc_RSSI", modem.getParameters(6));
+                values.addProperty("sc_SINR", modem.getParameters(7));
+                values.addProperty("sc_Band", modem.getParameters(8));
+                values.addProperty("sc_TAC", modem.getParameters(9));
+                values.addProperty("sc_ECL", modem.getParameters(10));
+                values.addProperty("sc_TX_PWR", modem.getParameters(11));
+                values.addProperty("op_mode", modem.getParameters(12));
+                values.addProperty("nc_EARFCN", modem.getParameters(13));
+                values.addProperty("nc_PCI", modem.getParameters(14));
+                values.addProperty("nc_RSRP", modem.getParameters(15));
+                values.addProperty("nc_RSRQ", modem.getParameters(16));
+                values.addProperty("sleep_duration", modem.getParameters(17));
+                values.addProperty("rx_time", modem.getParameters(18));
+                values.addProperty("tx_time", modem.getParameters(19));
+                values.addProperty("PLMN_state", modem.getParameters(20));
+                values.addProperty("select_PLMN", modem.getParameters(21));
+                break;
+            case MODEM_TYPE_SHARED_MODEM:
+                values.addProperty("RSRP", modem.getParameters(0));
+                values.addProperty("RSRQ", modem.getParameters(1));
+                values.addProperty("RSSI", modem.getParameters(2));
+                values.addProperty("SINR", modem.getParameters(3));
+                break;
+            default:
+                // MODEM_TYPE_UNSPECIFIED, MODEM_TYPE_BC66, MODEM_TYPE_BC66NA
+                values.addProperty("sc_EARNFCN_offset", modem.getParameters(0));
+                values.addProperty("sc_EARFCN", modem.getParameters(1));
+                values.addProperty("sc_PCI", modem.getParameters(2));
+                values.addProperty("sc_Cell_id", modem.getParameters(3));
+                values.addProperty("sc_RSRP", modem.getParameters(4));
+                values.addProperty("sc_RSRQ", modem.getParameters(5));
+                values.addProperty("sc_RSSI", modem.getParameters(6));
+                values.addProperty("sc_SINR", modem.getParameters(7));
+                values.addProperty("sc_Band", modem.getParameters(8));
+                values.addProperty("sc_TAC", modem.getParameters(9));
+                values.addProperty("sc_ECL", modem.getParameters(10));
+                values.addProperty("sc_TX_PWR", modem.getParameters(11));
+                values.addProperty("op_mode", modem.getParameters(12));
+                values.addProperty("nc_EARFCN", modem.getParameters(13));
+                values.addProperty("nc_EARNFCN_offset", modem.getParameters(14));
+                values.addProperty("nc_PCI", modem.getParameters(15));
+                values.addProperty("nc_RSRP", modem.getParameters(16));
+                values.addProperty("RLC_UL_BLER", modem.getParameters(17));
+                values.addProperty("RLC_DL_BLER", modem.getParameters(18));
+                values.addProperty("MAC_UL_BLER", modem.getParameters(19));
+                values.addProperty("MAC_DL_BLER", modem.getParameters(20));
+                values.addProperty("MAC_UL_TOTAL_BYTES", modem.getParameters(21));
+                values.addProperty("MAC_DL_TOTAL_BYTES", modem.getParameters(22));
+                values.addProperty("MAC_UL_total_HARQ_Tx", modem.getParameters(23));
+                values.addProperty("MAC_DL_total_HARQ_Tx", modem.getParameters(24));
+                values.addProperty("MAC_UL_HARQ_re_Tx", modem.getParameters(25));
+                values.addProperty("MAC_DL_HARQ_re_Tx", modem.getParameters(26));
+                values.addProperty("RLC_UL_tput", modem.getParameters(27));
+                values.addProperty("RLC_DL_tput", modem.getParameters(28));
+                values.addProperty("MAC_UL_tput", modem.getParameters(29));
+                values.addProperty("MAC_DL_tput", modem.getParameters(30));
+                values.addProperty("sleep_duration", modem.getParameters(31));
+                values.addProperty("rx_time", modem.getParameters(32));
+                values.addProperty("tx_time", modem.getParameters(33));
+                break;
+        }
 
         //Runtime info
         DeviceInfoProtos.ProtoRuntime runtimeInfo = protoDeviceInfo.getRuntimeInfo();
@@ -521,7 +567,7 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
         values.addProperty("counter_of_non_confirmable_messages_attempts", runtimeInfo.getMessageCounters(1));
         values.addProperty("counter_of_succeeded_messages", runtimeInfo.getMessageCounters(2));
         values.addProperty("min_battery_mcu_temp", runtimeInfo.getMinBatteryMcuTemperature());
-        values.addProperty("min_battery_voltage", runtimeInfo.getMinBatteryVoltage());
+        values.addProperty("min_battery_voltage", runtimeInfo.getBatteryVoltage());
         values.addProperty("min_mcu_temp", runtimeInfo.getMinMcuTemperature());
         values.addProperty("runtime_errors", runtimeInfo.getRuntimeErrorsCount());
         values.addProperty("up_time", runtimeInfo.getUpTime());
@@ -529,8 +575,8 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
         return new EfentoTelemetry(System.currentTimeMillis(), values);
     }
 
-    private JsonElement getEfentoConfiguration(byte[] bytes) throws InvalidProtocolBufferException {
-        return parseString(ProtoConverter.dynamicMsgToJson(bytes, ConfigProtos.getDescriptor().getMessageTypes().get(2)));
+    JsonElement getEfentoConfiguration(byte[] bytes) throws InvalidProtocolBufferException {
+        return parseString(ProtoConverter.dynamicMsgToJson(bytes, ConfigProtos.getDescriptor().getMessageTypes().get(0)));
     }
 
     private static String getDate(long seconds) {

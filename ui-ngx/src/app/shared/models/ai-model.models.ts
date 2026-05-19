@@ -110,6 +110,10 @@ export const AiModelMap = new Map<AiProvider, { modelList: string[], providerFie
         'o3',
         'o3-mini',
         'o1',
+        'gpt-5.4',
+        'gpt-5.4-mini',
+        'gpt-5.4-nano',
+        'gpt-5.2',
         'gpt-5.1',
         'gpt-5',
         'gpt-5-mini',
@@ -136,12 +140,12 @@ export const AiModelMap = new Map<AiProvider, { modelList: string[], providerFie
     AiProvider.GOOGLE_AI_GEMINI,
     {
       modelList: [
-        'gemini-3-pro-preview',
+        'gemini-3.1-pro-preview',
+        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite-preview',
         'gemini-2.5-pro',
         'gemini-2.5-flash',
-        'gemini-2.5-flash-lite',
-        'gemini-2.0-flash',
-        'gemini-2.0-flash-lite',
+        'gemini-2.5-flash-lite'
       ],
       providerFieldsList: ['apiKey'],
       modelFieldsList: ['temperature', 'topP', 'topK', 'frequencyPenalty', 'presencePenalty', 'maxOutputTokens'],
@@ -151,12 +155,12 @@ export const AiModelMap = new Map<AiProvider, { modelList: string[], providerFie
     AiProvider.GOOGLE_VERTEX_AI_GEMINI,
     {
       modelList: [
-        'gemini-3-pro-preview',
+        'gemini-3.1-pro-preview',
+        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite-preview',
         'gemini-2.5-pro',
         'gemini-2.5-flash',
-        'gemini-2.5-flash-lite',
-        'gemini-2.0-flash',
-        'gemini-2.0-flash-lite',
+        'gemini-2.5-flash-lite'
       ],
       providerFieldsList: ['projectId', 'location', 'serviceAccountKey', 'fileName'],
       modelFieldsList: ['temperature', 'topP', 'topK', 'frequencyPenalty', 'presencePenalty', 'maxOutputTokens'],
@@ -171,7 +175,7 @@ export const AiModelMap = new Map<AiProvider, { modelList: string[], providerFie
         'mistral-large-latest',
         'mistral-medium-latest',
         'mistral-small-latest',
-        'pixtral-large-latest',
+        'ministral-14b-latest',
         'ministral-8b-latest',
         'ministral-3b-latest',
         'open-mistral-nemo',
@@ -184,8 +188,10 @@ export const AiModelMap = new Map<AiProvider, { modelList: string[], providerFie
     AiProvider.ANTHROPIC,
     {
       modelList: [
+        'claude-opus-4-6',
         'claude-opus-4-5',
         'claude-opus-4-1',
+        'claude-sonnet-4-6',
         'claude-sonnet-4-5',
         'claude-haiku-4-5'
       ],

@@ -58,6 +58,19 @@ public class TbelCfTsRollingArgTest {
     }
 
     @Test
+    void testMaxOverAllNegativeValues() {
+        TbelCfTsRollingArg negativeArg = new TbelCfTsRollingArg(
+                new TbTimeWindow(ts - 30000, ts - 10),
+                List.of(
+                        new TbelCfTsDoubleVal(ts - 10, -50.0),
+                        new TbelCfTsDoubleVal(ts - 20, -100.0),
+                        new TbelCfTsDoubleVal(ts - 30, -75.0)
+                )
+        );
+        assertThat(negativeArg.max()).isEqualTo(-50.0);
+    }
+
+    @Test
     void testMin() {
         assertThat(rollingArg.min()).isEqualTo(2.0);
         assertThat(rollingArg.min(false)).isNaN();

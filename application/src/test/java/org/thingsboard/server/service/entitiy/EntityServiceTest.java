@@ -26,6 +26,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Customer;
@@ -47,6 +48,7 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.AttributesSaveResult;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
+import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
@@ -79,7 +81,6 @@ import org.thingsboard.server.common.data.query.RelationsQueryFilter;
 import org.thingsboard.server.common.data.query.SingleEntityFilter;
 import org.thingsboard.server.common.data.query.StringFilterPredicate;
 import org.thingsboard.server.common.data.query.StringFilterPredicate.StringOperation;
-import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
@@ -100,6 +101,7 @@ import org.thingsboard.server.dao.entityview.EntityViewDao;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.dao.sql.query.DefaultEntityQueryRepository;
 import org.thingsboard.server.dao.sql.relation.RelationRepository;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
@@ -124,7 +126,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.thingsboard.server.common.data.AttributeScope.SERVER_SCOPE;
 import static org.thingsboard.server.common.data.query.EntityKeyType.ATTRIBUTE;
 import static org.thingsboard.server.common.data.query.EntityKeyType.ENTITY_FIELD;
-import static org.thingsboard.server.common.data.query.EntityKeyType.SERVER_ATTRIBUTE;
 
 @Slf4j
 @DaoSqlTest
@@ -153,6 +154,8 @@ public class EntityServiceTest extends AbstractControllerTest {
     EntityService entityService;
     @Autowired
     RelationRepository relationRepository;
+    @Autowired
+    DefaultEntityQueryRepository entityQueryRepository;
     @Autowired
     RelationService relationService;
     @Autowired
@@ -1751,6 +1754,117 @@ public class EntityServiceTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testSortByNumericTelemetryKeyWithDifferentNullsOrderStrategy() throws ExecutionException, InterruptedException {
+        try {
+            List<Device> devices = new ArrayList<>();
+            for (int i = 0; i < 5; i++) {
+                Device device = new Device();
+                device.setTenantId(tenantId);
+                device.setName("Device" + i);
+                device.setType("default");
+                devices.add(deviceService.saveDevice(device));
+                Thread.sleep(1);
+            }
+
+            List<Long> values = List.of(1L, 0L, 0L);
+            List<ListenableFuture<TimeseriesSaveResult>> timeseriesFutures = new ArrayList<>();
+            for (int i = 0; i < values.size(); i++) {
+                timeseriesFutures.add(saveTimeseries(devices.get(i).getId(), "test", values.get(i)));
+            }
+            Futures.allAsList(timeseriesFutures).get();
+
+            assertNullsOrdering("default",
+                    List.of("0", "0", "1", "", ""),
+                    List.of("", "", "1", "0", "0"),
+                    devices.size());
+
+            assertNullsOrdering("nulls_first",
+                    List.of("", "", "0", "0", "1"),
+                    List.of("", "", "1", "0", "0"),
+                    devices.size());
+
+            assertNullsOrdering("nulls_last",
+                    List.of("0", "0", "1", "", ""),
+                    List.of("1", "0", "0", "", ""),
+                    devices.size());
+        } finally {
+            deviceService.deleteDevicesByTenantId(tenantId);
+        }
+    }
+
+    @Test
+    public void testSortByBooleanKeyWithDifferentNullsOrderStrategy() throws ExecutionException, InterruptedException {
+        try {
+            List<Device> devices = new ArrayList<>();
+            for (int i = 0; i < 5; i++) {
+                Device device = new Device();
+                device.setTenantId(tenantId);
+                device.setName("Device" + i);
+                device.setType("default");
+                devices.add(deviceService.saveDevice(device));
+                Thread.sleep(1);
+            }
+
+            List<Boolean> values = List.of(true, false, false);
+            List<ListenableFuture<TimeseriesSaveResult>> timeseriesFutures = new ArrayList<>();
+            for (int i = 0; i < values.size(); i++) {
+                timeseriesFutures.add(saveTimeseries(devices.get(i).getId(), "test", values.get(i)));
+            }
+            Futures.allAsList(timeseriesFutures).get();
+
+            assertNullsOrdering("default",
+                    List.of("false", "false", "true", "", ""),
+                    List.of("", "", "true", "false", "false"),
+                    devices.size());
+
+            assertNullsOrdering("nulls_first",
+                    List.of("", "", "false", "false", "true"),
+                    List.of("", "", "true", "false", "false"),
+                    devices.size());
+
+            assertNullsOrdering("nulls_last",
+                    List.of("false", "false", "true", "", ""),
+                    List.of("true", "false", "false", "", ""),
+                    devices.size());
+        } finally {
+            deviceService.deleteDevicesByTenantId(tenantId);
+        }
+    }
+
+    private void assertNullsOrdering(String strategy, List<String> expectedAsc, List<String> expectedDesc, int deviceSize) {
+        String originalStrategy = entityQueryRepository.getNullsOrderStrategy();
+        ReflectionTestUtils.setField(entityQueryRepository, "nullsOrderStrategy", strategy);
+        try {
+            DeviceTypeFilter filter = new DeviceTypeFilter();
+            filter.setDeviceTypes(List.of("default"));
+            filter.setDeviceNameFilter("");
+
+            List<EntityKey> entityFields = Collections.singletonList(new EntityKey(ENTITY_FIELD, "name"));
+            List<EntityKey> latestValues = Collections.singletonList(new EntityKey(EntityKeyType.TIME_SERIES, "test"));
+
+            EntityDataSortOrder ascSortOrder = new EntityDataSortOrder(
+                    new EntityKey(EntityKeyType.TIME_SERIES, "test"), EntityDataSortOrder.Direction.ASC);
+            EntityDataQuery ascQuery = new EntityDataQuery(filter,
+                    new EntityDataPageLink(10, 0, null, ascSortOrder), entityFields, latestValues, null);
+            List<String> ascTelemetry = loadAllData(ascQuery, deviceSize).stream()
+                    .map(ed -> ed.getLatest().get(EntityKeyType.TIME_SERIES).get("test").getValue())
+                    .toList();
+            assertThat(ascTelemetry).as("ASC with strategy '%s'", strategy).containsExactlyElementsOf(expectedAsc);
+
+            EntityDataSortOrder descSortOrder = new EntityDataSortOrder(
+                    new EntityKey(EntityKeyType.TIME_SERIES, "test"), EntityDataSortOrder.Direction.DESC);
+            EntityDataQuery descQuery = new EntityDataQuery(filter,
+                    new EntityDataPageLink(10, 0, null, descSortOrder), entityFields, latestValues, null);
+            List<String> descTelemetry = loadAllData(descQuery, deviceSize).stream()
+                    .map(ed -> ed.getLatest().get(EntityKeyType.TIME_SERIES).get("test").getValue())
+                    .toList();
+            assertThat(descTelemetry).as("DESC with strategy '%s'", strategy).containsExactlyElementsOf(expectedDesc);
+        } finally {
+            ReflectionTestUtils.setField(entityQueryRepository, "nullsOrderStrategy", originalStrategy);
+        }
+    }
+
+    @Test
     public void testFindTenantTelemetry() throws ExecutionException, InterruptedException, TimeoutException {
         // save timeseries by sys admin
         BasicTsKvEntry timeseries = new BasicTsKvEntry(42L, new DoubleDataEntry("temperature", 45.5));
@@ -2321,8 +2435,14 @@ public class EntityServiceTest extends AbstractControllerTest {
         return timeseriesService.save(tenantId, entityId, timeseries);
     }
 
-    private ListenableFuture<TimeseriesSaveResult> saveTimeseries(EntityId entityId, String key, Long value) {
+    protected ListenableFuture<TimeseriesSaveResult> saveTimeseries(EntityId entityId, String key, Long value) {
         KvEntry telemetryValue = new LongDataEntry(key, value);
+        BasicTsKvEntry timeseries = new BasicTsKvEntry(42L, telemetryValue);
+        return timeseriesService.save(tenantId, entityId, timeseries);
+    }
+
+    protected ListenableFuture<TimeseriesSaveResult> saveTimeseries(EntityId entityId, String key, Boolean value) {
+        KvEntry telemetryValue = new BooleanDataEntry(key, value);
         BasicTsKvEntry timeseries = new BasicTsKvEntry(42L, telemetryValue);
         return timeseriesService.save(tenantId, entityId, timeseries);
     }

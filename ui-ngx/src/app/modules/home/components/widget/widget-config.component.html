@@ -308,7 +308,7 @@
         </mat-form-field>
       </div>
     </div>
-    <div *ngIf="displayAdvancedAppearance" style="height: 100%;" [formGroup]="advancedSettings">
+    <div *ngIf="displayAdvancedAppearance" class="flex-1" [formGroup]="advancedSettings">
       <tb-widget-settings
         [aliasController]="aliasController"
         [callbacks]="widgetConfigCallbacks"

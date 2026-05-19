@@ -375,6 +375,9 @@ import {
   ValueStepperWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/control/value-stepper-widget-settings.component';
 import { MapWidgetSettingsComponent } from '@home/components/widget/lib/settings/map/map-widget-settings.component';
+import {
+  HtmlContainerWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/html/html-container-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -508,7 +511,8 @@ import { MapWidgetSettingsComponent } from '@home/components/widget/lib/settings
     LabelValueCardWidgetSettingsComponent,
     UnreadNotificationWidgetSettingsComponent,
     ScadaSymbolWidgetSettingsComponent,
-    MapWidgetSettingsComponent
+    MapWidgetSettingsComponent,
+    HtmlContainerWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -647,7 +651,8 @@ import { MapWidgetSettingsComponent } from '@home/components/widget/lib/settings
     LabelValueCardWidgetSettingsComponent,
     UnreadNotificationWidgetSettingsComponent,
     ScadaSymbolWidgetSettingsComponent,
-    MapWidgetSettingsComponent
+    MapWidgetSettingsComponent,
+    HtmlContainerWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {

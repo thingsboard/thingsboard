@@ -9511,6 +9511,18 @@
                     "how-to-create-customer-and-assign-dashboard": "How to create Customer and assign Dashboard"
                 }
             }
+        },
+        "html-container": {
+            "java-script": "JavaScript",
+            "js-function": "JavaScript function",
+            "html": "HTML",
+            "angular-html-template": "Angular HTML template",
+            "css": "CSS",
+            "container-type": "Container type",
+            "type-plain": "Plain HTML",
+            "type-angular": "Angular",
+            "resources": "Resources",
+            "no-resources": "No resources configured"
         }
     },
     "color": {

@@ -19,160 +19,201 @@ option java_package = "org.thingsboard.server.gen.transport.coap";
 option java_outer_classname = "MeasurementTypeProtos";
 
 enum MeasurementType {
-    /* [] - No sensor on the channel                                                                                              */
+
+    /* [] - No sensor on the channel.                                                                                             */
     MEASUREMENT_TYPE_NO_SENSOR = 0;
 
-    /* [°C] - Celsius degree. Resolution 0.1°C. Range [-273.2:4000.0]. Type: Continuous                                           */
+    /* [°C] - Celsius degree. Temperature. Resolution: 0.1°C. Range: [-273.2:4000.0]. Type: Continuous.                           */
     MEASUREMENT_TYPE_TEMPERATURE = 1;
 
-    /* [% RH] - Relative humidity. Resolution 1%. Range [0:100]. Type: Continuous                                                 */
+    /* [% RH] - Percentage. Relative humidity. Resolution: 1%. Range: [0:100]. Type: Continuous.                                  */
     MEASUREMENT_TYPE_HUMIDITY = 2;
 
-    /* [hPa] - Hectopascal (1hPa = 100Pa). Resolution 0.1hPa. Range: [1.0:2000.0]. Atmospheric pressure. Type: Continuous         */
+    /* [hPa] - Hectopascal. Atmospheric pressure. Resolution: 0.1hPa. Range: [1.0:2000.0]. Type: Continuous.                      */
     MEASUREMENT_TYPE_ATMOSPHERIC_PRESSURE = 3;
 
-    /* [Pa] - Pascal. Resolution 1Pa. Range [-10000:10000]. Differential pressure. Type: Continuous                               */
+    /* [Pa] - Pascal. Differential pressure. Resolution: 1Pa. Range: [-10000:10000]. Type: Continuous.                            */
     MEASUREMENT_TYPE_DIFFERENTIAL_PRESSURE = 4;
 
-    /* Sign indicates state: (+) ALARM, (-) OK. Type: Binary                                                                      */
+    /* Sign indicates state: (+) Alarm, (-) OK. Type: Binary.                                                                     */
     MEASUREMENT_TYPE_OK_ALARM = 5;
 
-    /* [IAQ] - IAQ index. Resolution 1IAQ. Range [0:500]. To get IAQ index the value should be divided by 3.                      */
-    /* Sensor return also calibration status as metadata (is the remainder when the absolute value is divided by 3):              */
-    /*   - 0: Calibration required (sensor returns not accurate values)                                                           */
-    /*   - 1: Calibration on-going (sensor returns not accurate values)                                                           */
-    /*   - 2: Calibration done (best accuracy of IAQ sensor)                                                                      */
-    /* Type: Continuous                                                                                                           */
+    /* [IAQ] - IAQ index. Air quality. Resolution: 1IAQ. Range: [0:500]. Type: Continuous.                                        *
+     * To obtain the IAQ index, the measurement value should be divided by 3.                                                     *
+     * Measurement also includes calibration status as metadata (is the remainder of the absolute value divided by 3):            *
+     *   - 0 - Calibration required (sensor returns not accurate values)                                                          *
+     *   - 1 - Calibration on-going (sensor returns not accurate values)                                                          *
+     *   - 2 - Calibration done (best accuracy of IAQ sensor)                                                                     */
     MEASUREMENT_TYPE_IAQ = 6;
 
-    /* Sign indicates water presence: (+) water not detected, (-) water detected. Type: Binary                                    */
+    /* Sign indicates state: (+) Water detected, (-) Water not detected. Type: Binary.                                            */
     MEASUREMENT_TYPE_FLOODING = 7;
 
-    /* [NB] Number of pulses. Resolution 1 pulse. Range [0:8000000]. Type: Continuous                                             */
+    /* [NB] - Number of pulses. Number of pulses in a single period. Resolution: 1 pulse. Range: [0:8000000]. Type: Continuous.   */
     MEASUREMENT_TYPE_PULSE_CNT = 8;
 
-    /* [Wh] - Watthour; Resolution 1Wh. Range [0:8000000]. Number of Watthours in a single period. Type: Continuous               */
+    /* [Wh] - Watt-hour. Number of watt-hours in a single period. Resolution: 1Wh. Range: [0:8000000]. Type: Continuous.          */
     MEASUREMENT_TYPE_ELECTRICITY_METER = 9;
 
-    /* [l] - Liter. Resolution 1l. Range [0:8000000]. Number of litres in a single period. Type: Continuous                       */
+    /* [l] - Liter. Number of litres in a single period. Resolution: 1l. Range: [0:8000000]. Type: Continuous.                    */
     MEASUREMENT_TYPE_WATER_METER = 10;
 
-    /* [kPa] - Kilopascal (1kPa = 1000Pa); Resolution 1kPa. Range [-1000:0]. Soil moisture (tension). Type: Continuous            */
+    /* [kPa] - Kilopascal. Soil moisture (tension). Resolution: 1kPa. Range: [-1000:0]. Type: Continuous.                         */
     MEASUREMENT_TYPE_SOIL_MOISTURE = 11;
 
-    /* [ppm] - Parts per million. Resolution 1ppm. Range [0:1000000]. Carbon monoxide concentration. Type: Continuous             */
+    /* [ppm] - Parts per million. Carbon monoxide concentration. Resolution: 1ppm. Range: [0:1000000]. Type: Continuous.          */
     MEASUREMENT_TYPE_CO_GAS = 12;
 
-    /* [ppm] - Parts per million. Resolution 1.0ppm. Range [0:1000000]. Nitrogen dioxide concentration. Type: Continuous          */
+    /* [ppm] - Parts per million. Nitrogen dioxide concentration. Resolution: 1ppm. Range: [0:1000000]. Type: Continuous.         */
     MEASUREMENT_TYPE_NO2_GAS = 13;
 
-    /* [ppm] - Parts per million. Resolution 0.01ppm. Range [0.00:80000.00]. Hydrogen sulfide concentration. Type: Continuous     */
+    /* [ppm] - Parts per million. Hydrogen sulfide concentration. Resolution: 0.01ppm. Range: [0.00:80000.00]. Type: Continuous.  */
     MEASUREMENT_TYPE_H2S_GAS = 14;
 
-    /* [lx] - Lux. Resolution 0.1lx. Range [0.0:100000.0]. Illuminance. Type: Continuous                                          */
+    /* [lx] - Lux. Illuminance. Resolution: 0.1lx. Range: [0.0:100000.0]. Type: Continuous.                                       */
     MEASUREMENT_TYPE_AMBIENT_LIGHT = 15;
 
-    /* [µg/m^3] - Micro gram per cubic meter. Resolution 1µg/m^3. Range [0:1000].                                                 */
-    /* Particles with an aerodynamic diameter less than 1 micrometer. Type: Continuous                                            */
+    /* [µg/m^3] - Microgram per cubic meter. Particles with an aerodynamic diameter of less than 1 micrometers.                   *
+     * Resolution: 1µg/m^3. Range: [0:1000]. Type: Continuous.                                                                    */
     MEASUREMENT_TYPE_PM_1_0 = 16;
 
-    /* [µg/m^3] - Micro gram per cubic meter. Resolution 1µg/m^3. Range [0:1000].                                                 */
-    /* Particles with an aerodynamic diameter less than 2.5 micrometers. Type: Continuous                                         */
+    /* [µg/m^3] - Microgram per cubic meter. Particles with an aerodynamic diameter of less than 2.5 micrometers.                 *
+     * Resolution: 1µg/m^3. Range: [0:1000]. Type: Continuous.                                                                    */
     MEASUREMENT_TYPE_PM_2_5 = 17;
 
-    /* [µg/m^3] - Micro gram per cubic meter. Resolution 1µg/m^3. Range [0:1000].                                                 */
-    /* Particles with an aerodynamic diameter less than 10 micrometers. Type: Continuous                                          */
+    /* [µg/m^3] - Microgram per cubic meter. Particles with an aerodynamic diameter of less than 10 micrometers.                  *
+     * Resolution: 1µg/m^3. Range: [0:1000]. Type: Continuous.                                                                    */
     MEASUREMENT_TYPE_PM_10_0 = 18;
 
-    /* [dB] - Decibels. Resolution 0.1 dB. Range: [0.0:200.0]. Noise level. Type: Continuous                                      */
+    /* [dB] - Decibel. Noise level. Resolution: 0.1 dB. Range: [0.0:200.0]. Type: Continuous.                                     */
     MEASUREMENT_TYPE_NOISE_LEVEL = 19;
 
-    /* [ppm] - Parts per million. Resolution 1ppm. Range [0:1000000]. Ammonia concentration. Type: Continuous                     */
+    /* [ppm] - Parts per million. Ammonia concentration. Resolution: 1ppm. Range: [0:1000000]. Type: Continuous.                  */
     MEASUREMENT_TYPE_NH3_GAS = 20;
 
-    /* [ppm] - Parts per million. Resolution 1ppm. Range [0:1000000]. Methane concentration. Type: Continuous                     */
+    /* [ppm] - Parts per million. Methane concentration. Resolution: 1ppm. Range: [0:1000000]. Type: Continuous.                  */
     MEASUREMENT_TYPE_CH4_GAS = 21;
 
-    /* [kPa] - Kilopascal (1kPa = 1000Pa, 100kPa = 1bar). Resolution 1kPa. Range [0:200000]. Pressure. Type: Continuous           */
+    /* [kPa] - Kilopascal (100kPa = 1bar). Pressure. Resolution: 1kPa. Range: [0:200000]. Type: Continuous.                       */
     MEASUREMENT_TYPE_HIGH_PRESSURE = 22;
 
-    /* [mm] - Millimeter. Resolution 1mm. Range [0:100000]. Distance. Type: Continuous                                            */
+    /* [mm] - Millimeter. Distance. Resolution: 1mm. Range: [0:100000]. Type: Continuous.                                         */
     MEASUREMENT_TYPE_DISTANCE_MM = 23;
 
-    /* [l] - Liter. Resolution 1l. Range [0:1000000]. Accumulative water meter (minor). Type: Continuous                          */
+    /* [l] - Liter. Water meter (minor). Resolution: 1l. Range: [0:99]. Type: Continuous.                                         *
+     * To obtain the liters, the measurement value should be divided by 6.                                                        *
+     * Measurement also includes a major channel index related with the minor channel as metadata                                 *
+     * (is the remainder of the absolute value divided by 6).                                                                     */
     MEASUREMENT_TYPE_WATER_METER_ACC_MINOR = 24;
 
-    /* [hl] - Hectoliter. Resolution 1hl. Range [0:1000000]. Accumulative water meter (major). Type: Continuous                   */
+    /* [hl] - Hectoliter. Water meter (major). Resolution: 1hl. Range: [0:999999]. Type: Continuous.                              *
+     * To obtain the hectoliters, the measurement value should be divided by 4.                                                   *
+     * Measurement also includes a measurement status as metadata (is the remainder of the absolute value divided by 4):          *
+     *   - 0 - Counter works properly                                                                                             *
+     *   - 1 - Error occurred (the counted value may be underestimated)                                                           *
+     *   - 2 - Sensor reset occurred (the counted value may be underestimated)                                                    *
+     *   - 3 - Sensor reset and error occurred (the counted value may be underestimated)                                          */
     MEASUREMENT_TYPE_WATER_METER_ACC_MAJOR = 25;
 
-    /* [ppm] - Parts per million. Resolution 1ppm. Range [0:1000000]. Carbon dioxide concentration. Type: Continuous              */
+    /* [ppm] - Parts per million. Carbon dioxide concentration. Resolution: 1ppm. Range: [0:1000000]. Type: Continuous.           *
+     * To obtain the carbon dioxide concentration, the measurement value should be divided by 3.                                  *
+     * Measurement also includes calibration status as metadata (is the remainder of the absolute value divided by 3):            *
+     *   - 0 - Auto calibration has not yet been performed                                                                        *
+     *   - 1 - The last auto calibration was successful                                                                           *
+     *   - 2 - Last auto calibration failed                                                                                       */
     MEASUREMENT_TYPE_CO2_GAS = 26;
 
-    /* [% RH] - Relative humidity. Resolution 0.1%. Range [0.0:100.0]. Type: Continuous                                           */
+    /* [% RH] - Percentage. Relative humidity (accurate). Resolution: 0.1%. Range: [0.0:100.0]. Type: Continuous.                 */
     MEASUREMENT_TYPE_HUMIDITY_ACCURATE = 27;
 
-    /* [sIAQ] - Static IAQ index. Resolution 1IAQ. Range [0:10000]. To get static IAQ index the value should be divided by 3.     */
-    /* Sensor return also calibration status as metadata (is the remainder when the absolute value is divided by 3):              */
-    /*   - 0: Calibration required (sensor returns not accurate values)                                                           */
-    /*   - 1: Calibration on-going (sensor returns not accurate values)                                                           */
-    /*   - 2: Calibration done (best accuracy of IAQ sensor)                                                                      */
-    /* Type: Continuous                                                                                                           */
+    /* [sIAQ] - Static IAQ index. Air quality. Resolution: 1sIAQ. Range: [0:10000]. Type: Continuous.                             *
+     * To obtain the static IAQ index, the measurement value should be divided by 3.                                              *
+     * Measurement also includes calibration status as metadata (is the remainder of the absolute value divided by 3):            *
+     *   - 0 - Calibration required (sensor returns not accurate values)                                                          *
+     *   - 1 - Calibration on-going (sensor returns not accurate values)                                                          *
+     *   - 2 - Calibration done (best accuracy of IAQ sensor)                                                                     */
     MEASUREMENT_TYPE_STATIC_IAQ = 28;
 
-    /* [ppm] - Parts per million. Resolution 1ppm. Range [0:1000000]. CO2 equivalent.                                             */
-    /* To get CO2 equivalent the value should be divided by 3.                                                                    */
-    /* Sensor return also calibration status as metadata (is the remainder when the absolute value is divided by 3):              */
-    /*   - 0: Calibration required (sensor returns not accurate values)                                                           */
-    /*   - 1: Calibration on-going (sensor returns not accurate values)                                                           */
-    /*   - 2: Calibration done (best accuracy of IAQ sensor)                                                                      */
-    /* Type: Continuous                                                                                                           */
+    /* [ppm] - Parts per million. CO2 equivalent. Resolution: 1ppm. Range: [0:1000000]. Type: Continuous.                         *
+     * To obtain the CO2 equivalent, the measurement value should be divided by 3.                                                *
+     * Measurement also includes calibration status as metadata (is the remainder of the absolute value divided by 3):            *
+     *   - 0 - Calibration required (sensor returns not accurate values)                                                          *
+     *   - 1 - Calibration on-going (sensor returns not accurate values)                                                          *
+     *   - 2 - Calibration done (best accuracy of IAQ sensor)                                                                     */
     MEASUREMENT_TYPE_CO2_EQUIVALENT = 29;
 
-    /* [ppm] - Parts per million. Resolution 1ppm. Range [0:100000]. Breath VOC estimate.                                         */
-    /* To get breath VOC estimate the value should be divided by 3.                                                               */
-    /* Sensor return also calibration status as metadata (is the remainder when the absolute value is divided by 3):              */
-    /*   - 0: Calibration required (sensor returns not accurate values)                                                           */
-    /*   - 1: Calibration on-going (sensor returns not accurate values)                                                           */
-    /*   - 2: Calibration done (best accuracy of IAQ sensor)                                                                      */
-    /* Type: Continuous                                                                                                           */
+    /* [ppm] - Parts per million. Breath VOC estimate. Resolution: 1ppm. Range: [0:100000]. Type: Continuous.                     *
+     * To obtain the breath VOC estimate, the measurement value should be divided by 3.                                           *
+     * Measurement also includes calibration status as metadata (is the remainder of the absolute value divided by 3):            *
+     *   - 0 - Calibration required (sensor returns not accurate values)                                                          *
+     *   - 1 - Calibration on-going (sensor returns not accurate values)                                                          *
+     *   - 2 - Calibration done (best accuracy of IAQ sensor)                                                                     */
     MEASUREMENT_TYPE_BREATH_VOC = 30;
 
-    /* Special measurement type reserved for cellular gateway.                                                                    */
-    /* Type: Continuous                                                                                                           */
-    MEASUREMENT_TYPE_CELLULAR_GATEWAY = 31;
+    /* Reserved for the Shared Modem functionality. Type: Continuous.                                                             */
+    MEASUREMENT_TYPE_SHARED_MODEM = 31;
 
-    /* [%] - Percentage. Resolution 0.01%. Range [0.00:100.00]. Type: Continuous                                                  */
+    /* [%] - Percentage. Generic type. Resolution: 0.01%. Range: [0.00:100.00]. Type: Continuous.                                 */
     MEASUREMENT_TYPE_PERCENTAGE = 32;
 
-    /* [mV] - Milivolt. Resolution 0.1mV. Range [0.0:100000.0]. Type: Continuous                                                  */
+    /* [mV] - Millivolt. Voltage. Resolution: 0.1mV. Range: [0.0:100000.0]. Type: Continuous.                                     */
     MEASUREMENT_TYPE_VOLTAGE = 33;
 
-    /* [mA] - Milliampere. Resolution 0.01mA. Range [0.0:10000.00]. Type: Continuous                                              */
+    /* [mA] - Milliampere. Current. Resolution: 0.01mA. Range: [0.00:10000.00]. Type: Continuous.                                 */
     MEASUREMENT_TYPE_CURRENT = 34;
 
-    /* [NB] Number of pulses. Resolution 1 pulse. Range [0:1000000]. Type: Continuous                                             */
+    /* [NB] - Number of pulses. Pulse counter (minor). Resolution: 1 pulse. Range: [0:999]. Type: Continuous.                     *
+     * To obtain the number of pulses, the measurement value should be divided by 6.                                              *
+     * Measurement also includes a major channel index related with the minor channel as metadata                                 *
+     * (is the remainder of the absolute value divided by 6).                                                                     */
     MEASUREMENT_TYPE_PULSE_CNT_ACC_MINOR = 35;
 
-    /* [kNB] Number of kilopulses. Resolution 1 kilopulse. Range [0:1000000]. Type: Continuous                                    */
+    /* [kNB] - Number of kilopulses. Pulse counter (major). Resolution: 1 kilopulse. Range: [0:999999]. Type: Continuous.         *
+     * To obtain the number of kilopulses, the measurement value should be divided by 4.                                          *
+     * Measurement also includes a measurement status as metadata (is the remainder of the absolute value divided by 4):          *
+     *   - 0 - Counter works properly                                                                                             *
+     *   - 1 - Error occurred (the counted value may be underestimated)                                                           *
+     *   - 2 - Sensor reset occurred (the counted value may be underestimated)                                                    *
+     *   - 3 - Sensor reset and error occurred (the counted value may be underestimated)                                          */
     MEASUREMENT_TYPE_PULSE_CNT_ACC_MAJOR = 36;
 
-    /* [Wh] - Watt-hour; Resolution 1Wh. Range [0:1000000]. Number of watt-hours in a single period. Type: Continuous             */
+    /* [Wh] - Watt-hour. Electricity meter (minor). Resolution: 1Wh. Range: [0:999]. Type: Continuous.                            *
+     * To obtain the watt-hours, the measurement value should be divided by 6.                                                    *
+     * Measurement also includes a major channel index related with the minor channel as metadata                                 *
+     * (is the remainder of the absolute value divided by 6).                                                                     */
     MEASUREMENT_TYPE_ELEC_METER_ACC_MINOR = 37;
 
-    /* [kWh] - Kilowatt-hour; Resolution 1kWh. Range [0:1000000]. Number of kilowatt-hours in a single period. Type: Continuous   */
+    /* [kWh] - Kilowatt-hour. Electricity meter (major). Resolution: 1kWh. Range: [0:999999]. Type: Continuous.                   *
+     * To obtain the kilowatt-hours, the measurement value should be divided by 4.                                                *
+     * Measurement also includes a measurement status as metadata (is the remainder of the absolute value divided by 4):          *
+     *   - 0 - Counter works properly                                                                                             *
+     *   - 1 - Error occurred (the counted value may be underestimated)                                                           *
+     *   - 2 - Sensor reset occurred (the counted value may be underestimated)                                                    *
+     *   - 3 - Sensor reset and error occurred (the counted value may be underestimated)                                          */
     MEASUREMENT_TYPE_ELEC_METER_ACC_MAJOR = 38;
 
-    /* [NB] Number of pulses (wide range). Resolution 1 pulse. Range [0:999999]. Type: Continuous                                 */
+    /* [NB] - Number of pulses. Wide-range pulse counter (minor). Resolution: 1 pulse. Range: [0:999999]. Type: Continuous.       *
+     * To obtain the number of pulses, the measurement value should be divided by 6.                                              *
+     * Measurement also includes a major channel index related with the minor channel as metadata                                 *
+     * (is the remainder of the absolute value divided by 6).                                                                     */
     MEASUREMENT_TYPE_PULSE_CNT_ACC_WIDE_MINOR = 39;
 
-    /* [MNB] Number of megapulses (wide range). Resolution 1 megapulse. Range [0:999999]. Type: Continuous                        */
+    /* [MNB] - Number of megapulses. Wide-range pulse counter (major). Resolution: 1 megapulse. Range: [0:999999].                *
+     * Type: Continuous.                                                                                                          *
+     * To obtain the number of megapulses, the measurement value should be divided by 4.                                          *
+     * Measurement also includes a measurement status as metadata (is the remainder of the absolute value divided by 4):          *
+     *   - 0 - Counter works properly                                                                                             *
+     *   - 1 - Error occurred (the counted value may be underestimated)                                                           *
+     *   - 2 - Sensor reset occurred (the counted value may be underestimated)                                                    *
+     *   - 3 - Sensor reset and error occurred (the counted value may be underestimated)                                          */
     MEASUREMENT_TYPE_PULSE_CNT_ACC_WIDE_MAJOR = 40;
 
-    /* [mA] - Milliampere. Resolution 0.001mA. Range [-4 000.000:4 000.000]. Type: Continuous                                     */
+    /* [mA] - Milliampere. Current (precise). Resolution: 0.001mA. Range: [-4000.000:4000.000]. Type: Continuous.                 */
     MEASUREMENT_TYPE_CURRENT_PRECISE = 41;
 
-    /* Sign indicates state: (+) ON, (-) OFF. Type: Binary                                                                        */
+    /* Sign indicates state: (+) ON, (-) OFF. Type: Binary.                                                                       */
     MEASUREMENT_TYPE_OUTPUT_CONTROL = 42;
+
+    /* [Ω] - Ohm. Resolution: 1Ω. Range: [0:1000000]. Type: Continuous.                                                           */
+    MEASUREMENT_TYPE_RESISTANCE = 43;
 }
-
-

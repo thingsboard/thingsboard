@@ -32,6 +32,7 @@ import org.thingsboard.server.queue.util.PropertyUtils;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 
 import static org.springframework.util.ConcurrentReferenceHashMap.ReferenceType.SOFT;
 
@@ -59,41 +60,48 @@ public class DefaultNotificationDeduplicationService implements NotificationDedu
     }
 
     private boolean alreadyProcessed(NotificationRuleTrigger trigger, String deduplicationKey, boolean onlyLocalCache) {
-        Long lastProcessedTs = localCache.get(deduplicationKey);
-        if (lastProcessedTs == null && !onlyLocalCache) {
-            Cache externalCache = getExternalCache();
-            if (externalCache != null) {
-                lastProcessedTs = externalCache.get(deduplicationKey, Long.class);
-            } else {
-                log.warn("Sent notifications cache is not set up");
-            }
-        }
-
-        boolean alreadyProcessed = false;
         long deduplicationDuration = getDeduplicationDuration(trigger);
-        if (lastProcessedTs != null) {
-            long passed = System.currentTimeMillis() - lastProcessedTs;
-            log.trace("Deduplicating trigger {} by key '{}'. Deduplication duration: {} ms, passed: {} ms",
-                    trigger.getType(), deduplicationKey, deduplicationDuration, passed);
-            if (deduplicationDuration == 0 || passed <= deduplicationDuration) {
-                alreadyProcessed = true;
-            }
-        }
+        final long now = System.currentTimeMillis();
+        boolean[] result = {false};
 
-        if (!alreadyProcessed) {
-            lastProcessedTs = System.currentTimeMillis();
-        }
-        localCache.put(deduplicationKey, lastProcessedTs);
+        localCache.compute(deduplicationKey, (key, lastProcessedTs) -> {
+            if (lastProcessedTs == null && !onlyLocalCache) {
+                Cache externalCache = getExternalCache();
+                if (externalCache != null) {
+                    lastProcessedTs = externalCache.get(key, Long.class);
+                    if (lastProcessedTs != null && lastProcessedTs > now + TimeUnit.HOURS.toMillis(1)) {
+                        log.warn("Discarding dedup entry from external cache for key '{}': timestamp is {} ms in the future",
+                                key, lastProcessedTs - now);
+                        lastProcessedTs = null;
+                    }
+                } else {
+                    log.warn("Sent notifications cache is not set up");
+                }
+            }
+
+            if (lastProcessedTs != null) {
+                long passed = now - lastProcessedTs;
+                log.trace("Deduplicating trigger {} by key '{}'. Deduplication duration: {} ms, passed: {} ms",
+                        trigger.getType(), key, deduplicationDuration, passed);
+                if (deduplicationDuration == 0 || passed <= deduplicationDuration) {
+                    result[0] = true;
+                    return lastProcessedTs;
+                }
+            }
+
+            return now;
+        });
+
         if (!onlyLocalCache) {
-            if (!alreadyProcessed || deduplicationDuration == 0) {
+            if (!result[0] || deduplicationDuration == 0) {
                 // if lastProcessedTs is changed or if deduplicating infinitely (so that cache value not removed by ttl)
                 Cache externalCache = getExternalCache();
                 if (externalCache != null) {
-                    externalCache.put(deduplicationKey, lastProcessedTs);
+                    externalCache.put(deduplicationKey, now);
                 }
             }
         }
-        return alreadyProcessed;
+        return result[0];
     }
 
     public static String getDeduplicationKey(NotificationRuleTrigger trigger, NotificationRule rule) {

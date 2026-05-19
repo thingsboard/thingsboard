@@ -57,7 +57,12 @@ public class UserEdgeTest extends AbstractEdgeTest {
         User savedTenantAdmin = createUser(newTenantAdmin, "tenant");
         Assert.assertTrue(edgeImitator.waitForMessages()); // wait 3 messages - x1 user update msg and x2 user credentials update msgs (create + authenticate user)
         Assert.assertEquals(1, edgeImitator.findAllMessagesByType(UserUpdateMsg.class).size());
-        Assert.assertEquals(2, edgeImitator.findAllMessagesByType(UserCredentialsUpdateMsg.class).size());
+        // The initial USER ADDED edge event may bundle a UserCredentialsUpdateMsg when
+        // user activation completes before the event is processed, in addition to the 2
+        // messages from the CREDENTIALS_UPDATED events fired during activation. Accept 2 or 3.
+        int credMsgCount = edgeImitator.findAllMessagesByType(UserCredentialsUpdateMsg.class).size();
+        Assert.assertTrue("Expected 2 or 3 UserCredentialsUpdateMsg (ADDED/activation race), got " + credMsgCount,
+                credMsgCount == 2 || credMsgCount == 3);
         Optional<UserUpdateMsg> userUpdateMsgOpt = edgeImitator.findMessageByType(UserUpdateMsg.class);
         Assert.assertTrue(userUpdateMsgOpt.isPresent());
         UserUpdateMsg userUpdateMsg = userUpdateMsgOpt.get();
