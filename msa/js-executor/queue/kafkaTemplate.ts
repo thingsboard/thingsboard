@@ -98,7 +98,7 @@ export class KafkaTemplate implements IQueue {
                     clientId: config.get('kafka.confluent.oauth.client_id'),
                     clientSecret: config.get('kafka.confluent.oauth.client_secret'),
                     host:  config.get('kafka.confluent.oauth.endpoint_url'),
-                    refreshThresholdMs: config.get('kafka.confluent.oauth.refresh_threshold'),
+                    refreshThresholdMs: config.has('kafka.confluent.oauth.refresh_threshold')?config.get('kafka.confluent.oauth.refresh_threshold'):60000,
                 })
                 };
             }

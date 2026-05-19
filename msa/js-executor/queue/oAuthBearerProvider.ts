@@ -15,7 +15,8 @@
 ///
 
 import { AccessToken, ClientCredentials } from 'simple-oauth2'
-import { _logger, KafkaJsWinstonLogCreator } from '../config/logger';
+import { _logger } from '../config/logger';
+import { error } from 'winston';
 
 interface OauthBearerProviderOptions {
   clientId: string;
