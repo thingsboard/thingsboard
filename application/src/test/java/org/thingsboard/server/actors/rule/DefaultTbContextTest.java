@@ -139,7 +139,10 @@ class DefaultTbContextTest {
     public void givenMsgWithCurrentNodeAlreadyInStack_whenInput_thenTellFailureToPreventLoop() {
         // GIVEN - simulate the second iteration: current node is already in the return stack,
         // which happens when forwardMsgToDefaultRuleChain=true and the device's default rule chain
-        // is the same as the rule chain containing this node
+        // is the same as the rule chain containing this node. Explicit stub of 0 fixes the
+        // "0 = strict" contract independent of Mockito's default for primitive int.
+        given(mainCtxMock.getRuleChainInputLoopMaxIterations()).willReturn(0);
+
         var callbackMock = mock(TbMsgCallback.class);
         given(callbackMock.isMsgValid()).willReturn(true);
 
@@ -173,8 +176,174 @@ class DefaultTbContextTest {
         RuleNodeToRuleChainTellNextMsg failureMsg = (RuleNodeToRuleChainTellNextMsg) capturedTellMsg;
         assertThat(failureMsg.getRelationTypes()).containsOnly(TbNodeConnectionType.FAILURE);
         assertThat(failureMsg.getFailureMessage()).containsIgnoringCase("loop");
+        // discoverability: strict-mode message must point admin to the new flag
+        assertThat(failureMsg.getFailureMessage()).contains("TB_RULE_CHAIN_INPUT_LOOP_MAX_ITERATIONS");
+        assertThat(failureMsg.getFailureMessage()).contains("actors.rule.chain.input_loop_max_iterations");
 
-        then(mainCtxMock).shouldHaveNoInteractions(); // no message was enqueued
+        // only the loop-detection config was read; no enqueue path was taken
+        then(mainCtxMock).should().getRuleChainInputLoopMaxIterations();
+        then(mainCtxMock).shouldHaveNoMoreInteractions();
+    }
+
+    @Test
+    public void givenPermissiveModeAndIterationsBelowCap_whenInput_thenEnqueue() {
+        // GIVEN - admin opted into permissive mode by setting TB_RULE_CHAIN_INPUT_LOOP_MAX_ITERATIONS,
+        // fresh message, this input node has fired 0 times so far
+        given(mainCtxMock.getRuleChainInputLoopMaxIterations()).willReturn(5);
+        var tpi = resolve(null);
+        given(mainCtxMock.resolve(eq(ServiceType.TB_RULE_ENGINE), nullable(String.class), eq(TENANT_ID), eq(TENANT_ID))).willReturn(tpi);
+        var clusterService = mock(TbClusterService.class);
+        given(mainCtxMock.getClusterService()).willReturn(clusterService);
+
+        var callbackMock = mock(TbMsgCallback.class);
+        given(callbackMock.isMsgValid()).willReturn(true);
+
+        var ruleNode = new RuleNode(RULE_NODE_ID);
+        ruleNode.setRuleChainId(RULE_CHAIN_ID);
+        ruleNode.setDebugSettings(DebugSettings.off());
+        given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
+        given(nodeCtxMock.getSelf()).willReturn(ruleNode);
+
+        var msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(TENANT_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_STRING)
+                .callback(callbackMock)
+                .build();
+        var targetRuleChainId = new RuleChainId(UUID.randomUUID());
+
+        // WHEN
+        defaultTbContext.input(msg, targetRuleChainId);
+
+        // THEN
+        then(clusterService).should().pushMsgToRuleEngine(eq(tpi), eq(msg.getId()), any(), any());
+        then(chainActorMock).shouldHaveNoInteractions();
+    }
+
+    @Test
+    public void givenPermissiveModeAndIterationsAtCap_whenInput_thenTellFailureWithIterationsMessage() {
+        // GIVEN - permissive mode with cap=2, this input node has already fired twice for this message
+        given(mainCtxMock.getRuleChainInputLoopMaxIterations()).willReturn(2);
+
+        var callbackMock = mock(TbMsgCallback.class);
+        given(callbackMock.isMsgValid()).willReturn(true);
+
+        var ruleNode = new RuleNode(RULE_NODE_ID);
+        ruleNode.setRuleChainId(RULE_CHAIN_ID);
+        ruleNode.setDebugSettings(DebugSettings.off());
+        given(nodeCtxMock.getSelf()).willReturn(ruleNode);
+        given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
+        given(nodeCtxMock.getChainActor()).willReturn(chainActorMock);
+
+        var msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(TENANT_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_STRING)
+                .callback(callbackMock)
+                .build();
+        // two prior visits of THIS node + an unrelated entry that must NOT contribute to the count
+        msg.pushToStack(RULE_CHAIN_ID, RULE_NODE_ID);
+        msg.pushToStack(new RuleChainId(UUID.randomUUID()), new RuleNodeId(UUID.randomUUID()));
+        msg.pushToStack(RULE_CHAIN_ID, RULE_NODE_ID);
+
+        var targetRuleChainId = new RuleChainId(UUID.randomUUID());
+
+        // WHEN
+        defaultTbContext.input(msg, targetRuleChainId);
+
+        // THEN - iteration-cap failure: tellFailure with message naming the limit, ENV name and yaml key
+        ArgumentCaptor<TbActorMsg> tellCaptor = ArgumentCaptor.forClass(TbActorMsg.class);
+        then(chainActorMock).should().tell(tellCaptor.capture());
+        TbActorMsg capturedTellMsg = tellCaptor.getValue();
+        assertThat(capturedTellMsg).isInstanceOf(RuleNodeToRuleChainTellNextMsg.class);
+        RuleNodeToRuleChainTellNextMsg failureMsg = (RuleNodeToRuleChainTellNextMsg) capturedTellMsg;
+        assertThat(failureMsg.getRelationTypes()).containsOnly(TbNodeConnectionType.FAILURE);
+        assertThat(failureMsg.getFailureMessage()).contains("iteration limit 2 reached");
+        assertThat(failureMsg.getFailureMessage()).contains("TB_RULE_CHAIN_INPUT_LOOP_MAX_ITERATIONS");
+        assertThat(failureMsg.getFailureMessage()).contains("actors.rule.chain.input_loop_max_iterations");
+
+        then(mainCtxMock).should().getRuleChainInputLoopMaxIterations();
+        then(mainCtxMock).shouldHaveNoMoreInteractions();
+    }
+
+    @Test
+    public void givenPermissiveModeAndCurrentNodeRepeatedBelowCap_whenInput_thenEnqueue() {
+        // GIVEN - customer's pagination case: same RuleChainInputNode visited three times already.
+        // In strict mode this would fail (the existing test above);
+        // in permissive mode with cap > occurrences it must proceed.
+        given(mainCtxMock.getRuleChainInputLoopMaxIterations()).willReturn(10);
+        var tpi = resolve(null);
+        given(mainCtxMock.resolve(eq(ServiceType.TB_RULE_ENGINE), nullable(String.class), eq(TENANT_ID), eq(TENANT_ID))).willReturn(tpi);
+        var clusterService = mock(TbClusterService.class);
+        given(mainCtxMock.getClusterService()).willReturn(clusterService);
+
+        var callbackMock = mock(TbMsgCallback.class);
+        given(callbackMock.isMsgValid()).willReturn(true);
+
+        var ruleNode = new RuleNode(RULE_NODE_ID);
+        ruleNode.setRuleChainId(RULE_CHAIN_ID);
+        ruleNode.setDebugSettings(DebugSettings.off());
+        given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
+        given(nodeCtxMock.getSelf()).willReturn(ruleNode);
+
+        var msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(TENANT_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_STRING)
+                .callback(callbackMock)
+                .build();
+        // three prior iterations through the same input node — count 3 < cap 10
+        msg.pushToStack(RULE_CHAIN_ID, RULE_NODE_ID);
+        msg.pushToStack(RULE_CHAIN_ID, RULE_NODE_ID);
+        msg.pushToStack(RULE_CHAIN_ID, RULE_NODE_ID);
+
+        var targetRuleChainId = new RuleChainId(UUID.randomUUID());
+
+        // WHEN
+        defaultTbContext.input(msg, targetRuleChainId);
+
+        // THEN
+        then(clusterService).should().pushMsgToRuleEngine(eq(tpi), eq(msg.getId()), any(), any());
+        then(chainActorMock).shouldHaveNoInteractions();
+    }
+
+    @Test
+    public void givenPermissiveModeWithCapOneAndFreshMessage_whenInput_thenEnqueue() {
+        // GIVEN - smallest non-strict cap; this is the boundary where strict and permissive diverge.
+        // First fire of the input node must pass (count=0, 0 >= 1 is false).
+        given(mainCtxMock.getRuleChainInputLoopMaxIterations()).willReturn(1);
+        var tpi = resolve(null);
+        given(mainCtxMock.resolve(eq(ServiceType.TB_RULE_ENGINE), nullable(String.class), eq(TENANT_ID), eq(TENANT_ID))).willReturn(tpi);
+        var clusterService = mock(TbClusterService.class);
+        given(mainCtxMock.getClusterService()).willReturn(clusterService);
+
+        var callbackMock = mock(TbMsgCallback.class);
+        given(callbackMock.isMsgValid()).willReturn(true);
+
+        var ruleNode = new RuleNode(RULE_NODE_ID);
+        ruleNode.setRuleChainId(RULE_CHAIN_ID);
+        ruleNode.setDebugSettings(DebugSettings.off());
+        given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
+        given(nodeCtxMock.getSelf()).willReturn(ruleNode);
+
+        var msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(TENANT_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_STRING)
+                .callback(callbackMock)
+                .build();
+        var targetRuleChainId = new RuleChainId(UUID.randomUUID());
+
+        // WHEN
+        defaultTbContext.input(msg, targetRuleChainId);
+
+        // THEN
+        then(clusterService).should().pushMsgToRuleEngine(eq(tpi), eq(msg.getId()), any(), any());
+        then(chainActorMock).shouldHaveNoInteractions();
     }
 
     @MethodSource

@@ -186,15 +186,33 @@ public class DefaultTbContext implements TbContext {
         }
         RuleChainId selfRuleChainId = nodeCtx.getSelf().getRuleChainId();
         RuleNodeId selfId = nodeCtx.getSelf().getId();
-        if (msg.isAlreadyInStack(selfRuleChainId, selfId)) {
-            log.warn("[{}] Detected rule chain processing loop for rule node [{}] in rule chain [{}]. " +
-                    "The message will be failed to prevent infinite loop. " +
-                    "Please check the rule chain configuration for circular references.",
-                    nodeCtx.getTenantId(), selfId, selfRuleChainId);
-            tellFailure(msg, new RuntimeException(
-                    "Detected rule chain processing loop for rule node [" + selfId + "] " +
-                    "in rule chain [" + selfRuleChainId + "]. " +
-                    "Please check the rule chain configuration for circular references."));
+        // Stack-based revisit check (Layer 2). Layer 1 — direct A->A where the input node's
+        // configured target chain equals its own chain — is enforced unconditionally in
+        // TbRuleChainInputNode.onMsg() and is not affected by this setting.
+        int maxIterations = mainCtx.getRuleChainInputLoopMaxIterations();
+        if (maxIterations <= 0) {
+            if (msg.isAlreadyInStack(selfRuleChainId, selfId)) {
+                log.warn("[{}] Detected rule chain processing loop for rule node [{}] in rule chain [{}]. " +
+                        "The message will be failed to prevent infinite loop. " +
+                        "Please check the rule chain configuration for circular references. " +
+                        "If the loop is intentional, configure actors.rule.chain.input_loop_max_iterations " +
+                        "(env TB_RULE_CHAIN_INPUT_LOOP_MAX_ITERATIONS) to a positive value.",
+                        nodeCtx.getTenantId(), selfId, selfRuleChainId);
+                tellFailure(msg, new RuntimeException(
+                        "Detected rule chain processing loop for rule node [" + selfId + "] " +
+                        "in rule chain [" + selfRuleChainId + "]. " +
+                        "Please check the rule chain configuration for circular references. " +
+                        "If the loop is intentional, configure actors.rule.chain.input_loop_max_iterations " +
+                        "(env TB_RULE_CHAIN_INPUT_LOOP_MAX_ITERATIONS) to a positive value."));
+                return;
+            }
+        } else if (msg.countOccurrences(selfRuleChainId, selfId) >= maxIterations) {
+            String reason = "Rule chain input loop iteration limit " + maxIterations + " reached for rule node ["
+                    + selfId + "] in rule chain [" + selfRuleChainId + "]. "
+                    + "Check the rule chain configuration or raise TB_RULE_CHAIN_INPUT_LOOP_MAX_ITERATIONS "
+                    + "(yaml: actors.rule.chain.input_loop_max_iterations) if the loop is intentional.";
+            log.warn("[{}] {}", nodeCtx.getTenantId(), reason);
+            tellFailure(msg, new RuntimeException(reason));
             return;
         }
         TbMsg tbMsg = msg.copy()

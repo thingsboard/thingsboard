@@ -86,4 +86,50 @@ class TbMsgProcessingCtxTest {
         assertThat(ctx.isAlreadyInStack(RULE_CHAIN_ID, RULE_NODE_ID)).isFalse();
     }
 
+    @Test
+    void givenEmptyStack_whenCountOccurrences_thenReturnZero() {
+        TbMsgProcessingCtx ctx = new TbMsgProcessingCtx();
+
+        assertThat(ctx.countOccurrences(RULE_CHAIN_ID, RULE_NODE_ID)).isZero();
+    }
+
+    @Test
+    void givenStackWithoutMatch_whenCountOccurrences_thenReturnZero() {
+        TbMsgProcessingCtx ctx = new TbMsgProcessingCtx();
+        ctx.push(new RuleChainId(UUID.randomUUID()), new RuleNodeId(UUID.randomUUID()));
+        ctx.push(new RuleChainId(UUID.randomUUID()), new RuleNodeId(UUID.randomUUID()));
+
+        assertThat(ctx.countOccurrences(RULE_CHAIN_ID, RULE_NODE_ID)).isZero();
+    }
+
+    @Test
+    void givenStackWithSingleMatch_whenCountOccurrences_thenReturnOne() {
+        TbMsgProcessingCtx ctx = new TbMsgProcessingCtx();
+        ctx.push(new RuleChainId(UUID.randomUUID()), new RuleNodeId(UUID.randomUUID()));
+        ctx.push(RULE_CHAIN_ID, RULE_NODE_ID);
+        ctx.push(new RuleChainId(UUID.randomUUID()), new RuleNodeId(UUID.randomUUID()));
+
+        assertThat(ctx.countOccurrences(RULE_CHAIN_ID, RULE_NODE_ID)).isEqualTo(1);
+    }
+
+    @Test
+    void givenStackWithThreeMatches_whenCountOccurrences_thenReturnThree() {
+        TbMsgProcessingCtx ctx = new TbMsgProcessingCtx();
+        ctx.push(RULE_CHAIN_ID, RULE_NODE_ID);
+        ctx.push(new RuleChainId(UUID.randomUUID()), new RuleNodeId(UUID.randomUUID()));
+        ctx.push(RULE_CHAIN_ID, RULE_NODE_ID);
+        ctx.push(RULE_CHAIN_ID, RULE_NODE_ID);
+
+        assertThat(ctx.countOccurrences(RULE_CHAIN_ID, RULE_NODE_ID)).isEqualTo(3);
+    }
+
+    @Test
+    void givenStackWithMatchThenPopped_whenCountOccurrences_thenReturnZero() {
+        TbMsgProcessingCtx ctx = new TbMsgProcessingCtx();
+        ctx.push(RULE_CHAIN_ID, RULE_NODE_ID);
+        ctx.pop();
+
+        assertThat(ctx.countOccurrences(RULE_CHAIN_ID, RULE_NODE_ID)).isZero();
+    }
+
 }

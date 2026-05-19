@@ -257,6 +257,10 @@ public final class TbMsg implements Serializable {
         return ctx.isAlreadyInStack(ruleChainId, ruleNodeId);
     }
 
+    public int countOccurrences(RuleChainId ruleChainId, RuleNodeId ruleNodeId) {
+        return ctx.countOccurrences(ruleChainId, ruleNodeId);
+    }
+
     public TbMsgProcessingStackItem popFormStack() {
         return ctx.pop();
     }

@@ -587,6 +587,10 @@ public class ActorSystemContext {
     @Getter
     private long ruleChainErrorPersistFrequency;
 
+    @Value("${actors.rule.chain.input_loop_max_iterations:0}")
+    @Getter
+    private int ruleChainInputLoopMaxIterations;
+
     @Value("${actors.rule.node.error_persist_frequency:3000}")
     @Getter
     private long ruleNodeErrorPersistFrequency;
