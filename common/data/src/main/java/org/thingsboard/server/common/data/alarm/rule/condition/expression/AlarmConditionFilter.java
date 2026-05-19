@@ -32,7 +32,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.io.Serializable;
 import java.util.List;
 
-@Schema(name = "AlarmRuleConditionFilter")
+@Schema
 @Data
 public class AlarmConditionFilter implements Serializable {
 

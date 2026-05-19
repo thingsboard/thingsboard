@@ -19,7 +19,7 @@
   <div class="tb-form-panel stroked no-padding-bottom">
     <div class="tb-form-panel-title" translate>rule-node-config.relation-parameters</div>
     <div class="flex flex-col">
-      <mat-form-field class="mat-block" hideRequiredMarker>
+      <mat-form-field class="mat-block" hideRequiredMarker appearance="outline">
         <mat-label translate>relation.direction</mat-label>
         <mat-select required matInput formControlName="direction">
           @for (type of directionTypes; track type) {
@@ -30,6 +30,7 @@
         </mat-select>
       </mat-form-field>
       <tb-relation-type-autocomplete
+        appearance="outline"
         required
         formControlName="relationType">
       </tb-relation-type-autocomplete>
@@ -49,11 +50,13 @@
             class="flex-1"
             showLabel
             required
+            appearance="outline"
             [allowedEntityTypes]="allowedEntityTypes"
             formControlName="entityType">
           </tb-entity-type-select>
           @if (deleteRelationConfigForm.get('entityType').value && deleteRelationConfigForm.get('entityType').value !== entityType.TENANT) {
             <mat-form-field
+              appearance="outline"
               class="mat-block flex-1">
               <mat-label>{{ entityTypeNamePatternTranslation.get(deleteRelationConfigForm.get('entityType').value) | translate }}</mat-label>
               <input required matInput formControlName="entityNamePattern">

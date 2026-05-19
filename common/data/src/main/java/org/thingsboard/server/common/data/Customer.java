@@ -134,7 +134,7 @@ public class Customer extends ContactBased<CustomerId> implements HasTenantId, E
         return super.getPhone();
     }
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Email", example = "example@company.com")
+    @Schema(description = "Email", example = "example@company.com")
     @Override
     public String getEmail() {
         return super.getEmail();

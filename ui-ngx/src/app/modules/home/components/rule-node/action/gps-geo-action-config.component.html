@@ -20,7 +20,7 @@
     <div class="tb-form-panel-title" translate>rule-node-config.coordinate-field-names</div>
     <section>
       <div class="flex flex-row gap-4">
-        <mat-form-field class="mat-block max-w-50% flex-full">
+        <mat-form-field class="mat-block max-w-50% flex-full" appearance="outline">
           <mat-label>{{ 'rule-node-config.latitude-field-name' | translate }}</mat-label>
           <input matInput formControlName="latitudeKeyName" required>
           @if (geoActionConfigForm.get('latitudeKeyName').hasError('required')) {
@@ -29,7 +29,7 @@
             </mat-error>
           }
         </mat-form-field>
-        <mat-form-field class="mat-block max-w-50% flex-full">
+        <mat-form-field class="mat-block max-w-50% flex-full" appearance="outline">
           <mat-label>{{ 'rule-node-config.longitude-field-name' | translate }}</mat-label>
           <input matInput formControlName="longitudeKeyName" required>
           @if (geoActionConfigForm.get('longitudeKeyName').hasError('required')) {
@@ -45,7 +45,7 @@
   <section class="tb-form-panel stroked" [class.no-padding-bottom]="!defaultPaddingEnable">
     <div class="tb-form-panel-title" translate>rule-node-config.geofence-configuration</div>
     <section class="flex flex-col">
-      <mat-form-field class="mat-block flex-1" hideRequiredMarker>
+      <mat-form-field class="mat-block flex-1" hideRequiredMarker appearance="outline">
         <mat-label>{{ 'rule-node-config.perimeter-type' | translate }}</mat-label>
         <mat-select formControlName="perimeterType">
           @for (type of perimeterTypes; track type) {
@@ -70,7 +70,7 @@
         </mat-slide-toggle>
       </div>
       @if (geoActionConfigForm.get('fetchPerimeterInfoFromMessageMetadata').value) {
-        <mat-form-field class="mat-block">
+        <mat-form-field class="mat-block" appearance="outline">
           <mat-label>{{ 'rule-node-config.perimeter-key-name' | translate }}</mat-label>
           <input matInput formControlName="perimeterKeyName" required>
           @if (geoActionConfigForm.get('perimeterKeyName').hasError('required')) {
@@ -83,8 +83,7 @@
       }
       @if (geoActionConfigForm.get('perimeterType').value === perimeterType.CIRCLE &&
         !geoActionConfigForm.get('fetchPerimeterInfoFromMessageMetadata').value) {
-        <div class="flex flex-col"
-             >
+        <div class="flex flex-col">
           <div class="flex flex-row gap-4">
             <mat-form-field class="flex-1">
               <mat-label>{{ 'rule-node-config.circle-center-latitude' | translate }}</mat-label>
@@ -95,7 +94,7 @@
                 </mat-error>
               }
             </mat-form-field>
-            <mat-form-field class="flex-1">
+            <mat-form-field class="flex-1" appearance="outline">
               <mat-label>{{ 'rule-node-config.circle-center-longitude' | translate }}</mat-label>
               <input type="number" min="-180" max="180" step="0.1" matInput formControlName="centerLongitude" required>
               @if (geoActionConfigForm.get('centerLongitude').hasError('required')) {
@@ -106,7 +105,7 @@
             </mat-form-field>
           </div>
           <div class="flex flex-row gap-4">
-            <mat-form-field class="flex-1">
+            <mat-form-field class="flex-1" appearance="outline">
               <mat-label>{{ 'rule-node-config.range' | translate }}</mat-label>
               <input type="number" min="0" step="0.1" matInput formControlName="range" required>
               @if (geoActionConfigForm.get('range').hasError('required')) {
@@ -115,7 +114,7 @@
                 </mat-error>
               }
             </mat-form-field>
-            <mat-form-field class="flex-1">
+            <mat-form-field class="flex-1" appearance="outline">
               <mat-label>{{ 'rule-node-config.range-units' | translate }}</mat-label>
               <mat-select formControlName="rangeUnit" required>
                 @for (type of rangeUnits; track type) {
@@ -136,7 +135,7 @@
       @if (geoActionConfigForm.get('perimeterType').value === perimeterType.POLYGON &&
         !geoActionConfigForm.get('fetchPerimeterInfoFromMessageMetadata').value) {
         <div class="flex flex-col">
-          <mat-form-field class="mat-block" subscriptSizing="dynamic">
+          <mat-form-field class="mat-block" subscriptSizing="dynamic" appearance="outline">
             <mat-label translate>rule-node-config.polygon-definition</mat-label>
             <input matInput formControlName="polygonsDefinition" required>
             <mat-icon matSuffix class="help-icon m-2 cursor-pointer" aria-hidden="false" aria-label="help-icon"
@@ -174,7 +173,7 @@
       @if (geoActionConfigForm.get('reportPresenceStatusOnEachMessage').value === false) {
         <div>
           <div class="flex flex-col gt-sm:flex-row gt-sm:gap-2">
-            <mat-form-field class="mat-block flex-1">
+            <mat-form-field class="mat-block flex-1" appearance="outline">
               <mat-label translate>rule-node-config.min-inside-duration</mat-label>
               <input type="number" step="1" min="1" max="2147483647" matInput formControlName="minInsideDuration" required>
               @if (geoActionConfigForm.get('minInsideDuration').hasError('required')) {
@@ -193,7 +192,7 @@
                 </mat-error>
               }
             </mat-form-field>
-            <mat-form-field class="mat-block flex-1">
+            <mat-form-field class="mat-block flex-1" appearance="outline">
               <mat-label translate>rule-node-config.min-inside-duration-time-unit</mat-label>
               <mat-select formControlName="minInsideDurationTimeUnit" required>
                 @for (timeUnit of timeUnits; track timeUnit) {
@@ -205,7 +204,7 @@
             </mat-form-field>
           </div>
           <div class="flex flex-col gt-sm:flex-row gt-sm:gap-2">
-            <mat-form-field class="mat-block flex-1">
+            <mat-form-field class="mat-block flex-1" appearance="outline">
               <mat-label translate>rule-node-config.min-outside-duration</mat-label>
               <input type="number" step="1" min="1" max="2147483647" matInput formControlName="minOutsideDuration" required>
               @if (geoActionConfigForm.get('minOutsideDuration').hasError('required')) {
@@ -224,7 +223,7 @@
                 </mat-error>
               }
             </mat-form-field>
-            <mat-form-field class="mat-block flex-1">
+            <mat-form-field class="mat-block flex-1" appearance="outline">
               <mat-label translate>rule-node-config.min-outside-duration-time-unit</mat-label>
               <mat-select formControlName="minOutsideDurationTimeUnit" required>
                 @for (timeUnit of timeUnits; track timeUnit) {

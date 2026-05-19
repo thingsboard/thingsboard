@@ -27,7 +27,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.io.Serializable;
 
 @Schema(
-        name = "AlarmRuleSchedule",
         discriminatorProperty = "type",
         discriminatorMapping = {
                 @DiscriminatorMapping(value = "ANY_TIME", schema = AnyTimeSchedule.class),

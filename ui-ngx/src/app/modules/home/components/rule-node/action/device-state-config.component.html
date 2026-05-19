@@ -16,7 +16,7 @@
 
 -->
 <section [formGroup]="deviceState">
-  <mat-form-field class="mat-block" subscriptSizing="dynamic">
+  <mat-form-field class="mat-block" subscriptSizing="dynamic" appearance="outline">
     <mat-label>{{ 'rule-node-config.select-device-connectivity-event' | translate }}</mat-label>
     <mat-select formControlName="event">
       @for (eventOption of eventOptions; track eventOption) {

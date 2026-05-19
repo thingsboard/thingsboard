@@ -17,7 +17,7 @@
 -->
 <section [formGroup]="assignCustomerConfigForm" class="flex flex-col">
   <div class="tb-form-panel no-padding no-border">
-    <mat-form-field class="mat-block" subscriptSizing="dynamic">
+    <mat-form-field class="mat-block" subscriptSizing="dynamic" appearance="outline">
       <mat-label translate>rule-node-config.customer-name-pattern</mat-label>
       <input required matInput formControlName="customerNamePattern">
       @if (assignCustomerConfigForm.get('customerNamePattern').hasError('required') ||

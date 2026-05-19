@@ -18,31 +18,32 @@
 <section class="tb-widget-settings flex flex-col" [formGroup]="gatewayConfigWidgetSettingsForm">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.gateway.general-settings</legend>
-    <tb-string-pattern-autocomplete class="mat-block flex-1" 
-                                    brackets="curly" 
+    <tb-string-pattern-autocomplete class="mat-block flex-1"
+                                    brackets="curly"
                                     subscriptSizing="fixed"
+                                    appearance="outline"
                                     predefinedValuesButton="true"
                                     label="{{ 'widgets.gateway.widget-title' | translate }}"
                                     [predefinedValues]="predefinedValues"
                                     placeholderText="{{ 'widget-config.set' | translate }}"
                                     formControlName="widgetTitle"
     ></tb-string-pattern-autocomplete>
-    <mat-form-field class="mat-block flex-1">
+    <mat-form-field class="mat-block flex-1" appearance="outline">
       <mat-label translate>widgets.gateway.default-archive-file-name</mat-label>
       <input matInput formControlName="archiveFileName">
     </mat-form-field>
-    <mat-form-field class="mat-block flex-1">
+    <mat-form-field class="mat-block flex-1" appearance="outline">
       <mat-label translate>widgets.gateway.device-type-for-new-gateway</mat-label>
       <input matInput formControlName="gatewayType">
     </mat-form-field>
   </fieldset>
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.gateway.messages-settings</legend>
-    <mat-form-field class="mat-block flex-1">
+    <mat-form-field class="mat-block flex-1" appearance="outline">
       <mat-label translate>widgets.gateway.save-config-success-message</mat-label>
       <input matInput formControlName="successfulSave">
     </mat-form-field>
-    <mat-form-field class="mat-block flex-1">
+    <mat-form-field class="mat-block flex-1" appearance="outline">
       <mat-label translate>widgets.gateway.device-name-exists-message</mat-label>
       <input matInput formControlName="gatewayNameExists">
     </mat-form-field>

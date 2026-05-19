@@ -26,7 +26,7 @@
         </mat-slide-toggle>
       </div>
       @if (unassignCustomerConfigForm.get('unassignFromCustomer').value) {
-        <mat-form-field class="mat-block" subscriptSizing="dynamic">
+        <mat-form-field class="mat-block" subscriptSizing="dynamic" appearance="outline">
           <mat-label translate>rule-node-config.customer-name-pattern</mat-label>
           <input required matInput formControlName="customerNamePattern">
           @if (unassignCustomerConfigForm.get('customerNamePattern').hasError('required') ||

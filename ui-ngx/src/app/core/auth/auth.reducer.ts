@@ -43,7 +43,7 @@ const emptyUserAuthState: AuthPayload = {
   intermediateAggregationIntervalInSecForCF: 0,
   userSettings: initialUserSettings,
   trendzSettings: initialTrendzSettings,
-  allowKeyFiltersOrConditions: false
+  allowKeyFiltersOrConditions: true
 };
 
 export const initialState: AuthState = {

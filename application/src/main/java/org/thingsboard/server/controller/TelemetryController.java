@@ -386,7 +386,8 @@ public class TelemetryController extends BaseController {
                                                                @PathVariable("deviceId") String deviceIdStr,
                                                                @Parameter(description = ATTRIBUTES_SCOPE_DESCRIPTION, schema = @Schema(allowableValues = {"SERVER_SCOPE", "SHARED_SCOPE"}, requiredMode = Schema.RequiredMode.REQUIRED))
                                                                @PathVariable("scope") AttributeScope scope,
-                                                               @io.swagger.v3.oas.annotations.parameters.RequestBody(description = ATTRIBUTES_JSON_REQUEST_DESCRIPTION, required = true)
+                                                               @io.swagger.v3.oas.annotations.parameters.RequestBody(description = ATTRIBUTES_JSON_REQUEST_DESCRIPTION, required = true,
+                                                                       content = @Content(mediaType = "text/plain", schema = @Schema(type = "string")))
                                                                @RequestBody String request) throws ThingsboardException {
         EntityId entityId = EntityIdFactory.getByTypeAndUuid(EntityType.DEVICE, deviceIdStr);
         return saveAttributes(getTenantId(), entityId, scope, request);
@@ -411,7 +412,8 @@ public class TelemetryController extends BaseController {
                                                                  @PathVariable("entityId") String entityIdStr,
                                                                  @Parameter(description = ATTRIBUTES_SCOPE_DESCRIPTION, schema = @Schema(allowableValues = {"SERVER_SCOPE", "SHARED_SCOPE"}))
                                                                  @PathVariable("scope") AttributeScope scope,
-                                                                 @io.swagger.v3.oas.annotations.parameters.RequestBody(description = ATTRIBUTES_JSON_REQUEST_DESCRIPTION, required = true)
+                                                                 @io.swagger.v3.oas.annotations.parameters.RequestBody(description = ATTRIBUTES_JSON_REQUEST_DESCRIPTION, required = true,
+                                                                         content = @Content(mediaType = "text/plain", schema = @Schema(type = "string")))
                                                                  @RequestBody String request) throws ThingsboardException {
         EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
         return saveAttributes(getTenantId(), entityId, scope, request);
@@ -436,7 +438,8 @@ public class TelemetryController extends BaseController {
                                                                  @PathVariable("entityId") String entityIdStr,
                                                                  @Parameter(description = ATTRIBUTES_SCOPE_DESCRIPTION, schema = @Schema(allowableValues = {"SERVER_SCOPE", "SHARED_SCOPE"}, requiredMode = Schema.RequiredMode.REQUIRED))
                                                                  @PathVariable("scope") AttributeScope scope,
-                                                                 @io.swagger.v3.oas.annotations.parameters.RequestBody(description = ATTRIBUTES_JSON_REQUEST_DESCRIPTION, required = true)
+                                                                 @io.swagger.v3.oas.annotations.parameters.RequestBody(description = ATTRIBUTES_JSON_REQUEST_DESCRIPTION, required = true,
+                                                                         content = @Content(mediaType = "text/plain", schema = @Schema(type = "string")))
                                                                  @RequestBody String request) throws ThingsboardException {
         EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
         return saveAttributes(getTenantId(), entityId, scope, request);
@@ -460,7 +463,8 @@ public class TelemetryController extends BaseController {
             @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "DEVICE")) @PathVariable("entityType") String entityType,
             @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true) @PathVariable("entityId") String entityIdStr,
             @Parameter(description = TELEMETRY_SCOPE_DESCRIPTION, required = true, schema = @Schema(allowableValues = "ANY")) @PathVariable("scope") String scope,
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = TELEMETRY_JSON_REQUEST_DESCRIPTION, required = true) @RequestBody String requestBody) throws ThingsboardException {
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = TELEMETRY_JSON_REQUEST_DESCRIPTION, required = true,
+                    content = @Content(mediaType = "text/plain", schema = @Schema(type = "string"))) @RequestBody String requestBody) throws ThingsboardException {
         EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
         return saveTelemetry(getTenantId(), entityId, requestBody, 0L);
     }
@@ -484,7 +488,8 @@ public class TelemetryController extends BaseController {
             @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true) @PathVariable("entityId") String entityIdStr,
             @Parameter(description = TELEMETRY_SCOPE_DESCRIPTION, required = true, schema = @Schema(allowableValues = "ANY")) @PathVariable("scope") String scope,
             @Parameter(description = "A long value representing TTL (Time to Live) parameter.", required = true) @PathVariable("ttl") Long ttl,
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = TELEMETRY_JSON_REQUEST_DESCRIPTION, required = true) @RequestBody String requestBody) throws ThingsboardException {
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = TELEMETRY_JSON_REQUEST_DESCRIPTION, required = true,
+                    content = @Content(mediaType = "text/plain", schema = @Schema(type = "string"))) @RequestBody String requestBody) throws ThingsboardException {
         EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
         return saveTelemetry(getTenantId(), entityId, requestBody, ttl);
     }

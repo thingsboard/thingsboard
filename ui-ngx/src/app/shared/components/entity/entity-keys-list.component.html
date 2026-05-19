@@ -16,7 +16,10 @@
 
 -->
 <mat-form-field [formGroup]="keysListFormGroup" class="mat-block tb-chip-list" [appearance]="appearance">
-  <mat-chip-grid #chipList>
+  @if (label) {
+  <mat-label>{{ label | translate }}</mat-label>
+}
+  <mat-chip-grid #chipList [disabled]="disabled">
     @for (key of modelValue; track key) {
       <mat-chip-row
         [removable]="!disabled"
@@ -39,6 +42,7 @@
            [matChipInputFor]="chipList"
            [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
            matChipInputAddOnBlur
+           [disabled]="disabled"
            (matChipInputTokenEnd)="add($event)">
   </mat-chip-grid>
   <mat-autocomplete #keyAutocomplete="matAutocomplete"

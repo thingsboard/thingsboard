@@ -16,7 +16,7 @@
 
 -->
 <section [formGroup]="mqttConfigForm" class="flex flex-col">
-  <mat-form-field class="mat-block" subscriptSizing="dynamic">
+  <mat-form-field class="mat-block" subscriptSizing="dynamic" appearance="outline">
     <mat-label translate>rule-node-config.topic-pattern</mat-label>
     <input required matInput formControlName="topicPattern">
     @if (mqttConfigForm.get('topicPattern').hasError('required')) {
@@ -27,7 +27,7 @@
     <mat-hint translate>rule-node-config.general-pattern-hint</mat-hint>
   </mat-form-field>
   <div class="flex flex-1 flex-col gt-sm:flex-row gt-sm:gap-2">
-    <mat-form-field class="mat-block gt-sm:max-w-60% gt-sm:flex-full">
+    <mat-form-field class="mat-block gt-sm:max-w-60% gt-sm:flex-full" appearance="outline">
       <mat-label translate>rule-node-config.host</mat-label>
       <input required matInput formControlName="host">
       @if (mqttConfigForm.get('host').hasError('required')) {
@@ -36,7 +36,7 @@
         </mat-error>
       }
     </mat-form-field>
-    <mat-form-field class="mat-block gt-sm:max-w-40% gt-sm:flex-full">
+    <mat-form-field class="mat-block gt-sm:max-w-40% gt-sm:flex-full" appearance="outline">
       <mat-label translate>rule-node-config.port</mat-label>
       <input required type="number" step="1" min="1" max="65535" matInput formControlName="port">
       @if (mqttConfigForm.get('port').hasError('required')) {
@@ -55,7 +55,7 @@
         </mat-error>
       }
     </mat-form-field>
-    <mat-form-field class="mat-block gt-sm:max-w-40% gt-sm:flex-full">
+    <mat-form-field class="mat-block gt-sm:max-w-40% gt-sm:flex-full" appearance="outline">
       <mat-label translate>rule-node-config.connect-timeout</mat-label>
       <input required type="number" step="1" min="1" max="200" matInput formControlName="connectTimeoutSec">
       @if (mqttConfigForm.get('connectTimeoutSec').hasError('required')) {
@@ -75,7 +75,7 @@
       }
     </mat-form-field>
   </div>
-  <mat-form-field class="mat-block" subscriptSizing="dynamic">
+  <mat-form-field class="mat-block" subscriptSizing="dynamic" appearance="outline">
     <mat-label translate>rule-node-config.client-id</mat-label>
     <input matInput formControlName="clientId">
     <mat-hint>{{'rule-node-config.client-id-hint' | translate}}</mat-hint>

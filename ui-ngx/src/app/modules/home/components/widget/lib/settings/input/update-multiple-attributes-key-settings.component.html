@@ -23,7 +23,7 @@
     <legend class="group-title" translate>widgets.input-widgets.general-settings</legend>
     <div class="flex flex-col">
       <section class="flex flex-col gt-xs:flex-row gt-xs:items-center gt-xs:justify-start gt-xs:gap-2">
-        <mat-form-field class="mat-block flex-full xs:max-h-50% gt-xs:max-w-50%">
+        <mat-form-field class="mat-block flex-full xs:max-h-50% gt-xs:max-w-50%" appearance="outline">
           <mat-label translate>widgets.input-widgets.datakey-type</mat-label>
           <mat-select formControlName="dataKeyType">
             <mat-option [value]="'server'">
@@ -37,7 +37,7 @@
             </mat-option>
           </mat-select>
         </mat-form-field>
-        <mat-form-field class="mat-block flex-full xs:max-h-50% gt-xs:max-w-50%">
+        <mat-form-field class="mat-block flex-full xs:max-h-50% gt-xs:max-w-50%" appearance="outline">
           <mat-label translate>widgets.input-widgets.datakey-value-type</mat-label>
           <mat-select formControlName="dataKeyValueType">
             <mat-option [value]="'string'">
@@ -83,7 +83,7 @@
         {{ 'widgets.input-widgets.value-is-required' | translate }}
       </mat-checkbox>
       <section class="flex flex-col gt-xs:flex-row gt-xs:items-center gt-xs:justify-start gt-xs:gap-2">
-        <mat-form-field class="mat-block flex-full xs:max-h-50% gt-xs:max-w-50%">
+        <mat-form-field class="mat-block flex-full xs:max-h-50% gt-xs:max-w-50%" appearance="outline">
           <mat-label translate>widgets.input-widgets.ability-to-edit-attribute</mat-label>
           <mat-select formControlName="isEditable">
             <mat-option [value]="'editable'">
@@ -97,7 +97,7 @@
             </mat-option>
           </mat-select>
         </mat-form-field>
-        <mat-form-field [class.!hidden]="updateMultipleAttributesKeySettingsForm.get('isEditable').value !== 'editable'" class="mat-block flex-full xs:max-h-50% gt-xs:max-w-50%">
+        <mat-form-field [class.!hidden]="updateMultipleAttributesKeySettingsForm.get('isEditable').value !== 'editable'" class="mat-block flex-full xs:max-h-50% gt-xs:max-w-50%" appearance="outline">
           <mat-label translate>widgets.input-widgets.disable-on-datakey-name</mat-label>
           <input matInput formControlName="disabledOnDataKey">
         </mat-form-field>
@@ -105,7 +105,7 @@
       @if (!['booleanSwitch', 'booleanCheckbox', 'radio'].includes(updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value)) {
         <section
           class="flex flex-col gt-xs:flex-row gt-xs:items-center gt-xs:justify-start gt-xs:gap-2">
-          <mat-form-field class="mat-block flex-full xs:max-h-50% gt-xs:max-w-50%">
+          <mat-form-field class="mat-block flex-full xs:max-h-50% gt-xs:max-w-50%" appearance="outline">
             <mat-label translate>widgets.input-widgets.field-appearance</mat-label>
             <mat-select formControlName="appearance">
               <mat-option [value]="'fill'">
@@ -116,7 +116,7 @@
               </mat-option>
             </mat-select>
           </mat-form-field>
-          <mat-form-field class="mat-block flex-full xs:max-h-50% gt-xs:max-w-50%">
+          <mat-form-field class="mat-block flex-full xs:max-h-50% gt-xs:max-w-50%" appearance="outline">
             <mat-label translate>widgets.input-widgets.subscript-sizing</mat-label>
             <mat-select formControlName="subscriptSizing">
               <mat-option [value]="'fixed'">
@@ -134,7 +134,7 @@
   <fieldset [class.!hidden]="updateMultipleAttributesKeySettingsForm.get('dataKeyHidden').value ||
                              updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value !== 'booleanSwitch'" class="fields-group">
     <legend class="group-title" translate>widgets.input-widgets.slide-toggle-settings</legend>
-    <mat-form-field class="mat-block flex-1">
+    <mat-form-field class="mat-block flex-1" appearance="outline">
       <mat-label translate>widgets.input-widgets.slide-toggle-label-position</mat-label>
       <mat-select formControlName="slideToggleLabelPosition">
         <mat-option [value]="'after'">
@@ -188,6 +188,7 @@
     <div class="tb-form-row space-between">
       <div>{{ 'widgets.input-widgets.color' | translate }}</div>
       <tb-color-input asBoxInput
+                      appearance="outline"
                       formControlName="radioColor">
       </tb-color-input>
     </div>
@@ -216,15 +217,15 @@
                              updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value !== 'double')" class="fields-group">
     <legend class="group-title" translate>widgets.input-widgets.numeric-field-settings</legend>
     <section class="flex flex-col gt-xs:flex-row gt-xs:gap-2">
-      <mat-form-field class="mat-block flex-1">
+      <mat-form-field class="mat-block flex-1" appearance="outline">
         <mat-label translate>widgets.input-widgets.step-interval</mat-label>
         <input matInput type="number" min="0" formControlName="step">
       </mat-form-field>
-      <mat-form-field class="mat-block flex-1">
+      <mat-form-field class="mat-block flex-1" appearance="outline">
         <mat-label translate>widgets.input-widgets.min-value</mat-label>
         <input matInput type="number" formControlName="minValue">
       </mat-form-field>
-      <mat-form-field class="mat-block flex-1">
+      <mat-form-field class="mat-block flex-1" appearance="outline">
         <mat-label translate>widgets.input-widgets.max-value</mat-label>
         <input matInput type="number" formControlName="maxValue">
       </mat-form-field>
@@ -232,29 +233,30 @@
   </fieldset>
   <fieldset [class.!hidden]="!displayErrorMessagesSection()" class="fields-group">
     <legend class="group-title" translate>widgets.input-widgets.error-messages</legend>
-    <mat-form-field [class.!hidden]="!updateMultipleAttributesKeySettingsForm.get('required').value" class="mat-block flex-1">
+    <mat-form-field [class.!hidden]="!updateMultipleAttributesKeySettingsForm.get('required').value" class="mat-block flex-1" appearance="outline">
       <mat-label translate>widgets.input-widgets.required-error-message</mat-label>
       <input matInput formControlName="requiredErrorMessage">
     </mat-form-field>
     <section [class.!hidden]="updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value !== 'integer' &&
                               updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value !== 'double'"
       class="flex flex-row gap-2">
-      <mat-form-field class="mat-block flex-1">
+      <mat-form-field class="mat-block flex-1" appearance="outline">
         <mat-label translate>widgets.input-widgets.min-value-error-message</mat-label>
         <input matInput formControlName="minValueErrorMessage">
       </mat-form-field>
-      <mat-form-field class="mat-block flex-1">
+      <mat-form-field class="mat-block flex-1" appearance="outline">
         <mat-label translate>widgets.input-widgets.max-value-error-message</mat-label>
         <input matInput formControlName="maxValueErrorMessage">
       </mat-form-field>
     </section>
     <mat-form-field [class.!hidden]="updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value !== 'dateTime' &&
                                      updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value !== 'date' &&
-                                     updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value !== 'time'" class="mat-block flex-1">
+                                     updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value !== 'time'" class="mat-block flex-1"
+                    appearance="outline">
       <mat-label translate>widgets.input-widgets.invalid-date-error-message</mat-label>
       <input matInput formControlName="invalidDateErrorMessage">
     </mat-form-field>
-    <mat-form-field [class.!hidden]="updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value !== 'JSON'" class="mat-block flex-1">
+    <mat-form-field [class.!hidden]="updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value !== 'JSON'" class="mat-block flex-1" appearance="outline">
       <mat-label translate>widgets.input-widgets.invalid-JSON-error-message</mat-label>
       <input matInput formControlName="invalidJsonErrorMessage">
     </mat-form-field>
@@ -262,16 +264,16 @@
   <fieldset [class.!hidden]="updateMultipleAttributesKeySettingsForm.get('dataKeyHidden').value ||
                              updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value !== 'JSON'"class="fields-group">
     <legend class="group-title" translate>widgets.input-widgets.dialog-editor-settings</legend>
-    <mat-form-field class="mat-block flex-1">
+    <mat-form-field class="mat-block flex-1" appearance="outline">
       <mat-label translate>widgets.input-widgets.title</mat-label>
       <input matInput formControlName="dialogTitle">
     </mat-form-field>
     <section class="flex flex-row xs:flex-col gt-xs:items-center gt-xs:justify-start gt-xs:gap-2">
-      <mat-form-field class="mat-block flex-1">
+      <mat-form-field class="mat-block flex-1" appearance="outline">
         <mat-label translate>widgets.input-widgets.save-button-label</mat-label>
         <input matInput formControlName="saveButtonLabel">
       </mat-form-field>
-      <mat-form-field class="mat-block flex-1">
+      <mat-form-field class="mat-block flex-1" appearance="outline">
         <mat-label translate>widgets.input-widgets.cancel-button-label</mat-label>
         <input matInput formControlName="cancelButtonLabel">
       </mat-form-field>
@@ -287,7 +289,8 @@
     <tb-material-icon-select [class.!hidden]="updateMultipleAttributesKeySettingsForm.get('useCustomIcon').value"
                              label="{{ 'widgets.input-widgets.input-cell-icon' | translate }}"
                              iconClearButton
-                             formControlName="icon">
+                             formControlName="icon"
+                             appearance="outline">
     </tb-material-icon-select>
     <tb-gallery-image-input [class.!hidden]="!updateMultipleAttributesKeySettingsForm.get('useCustomIcon').value"
                             label="{{ 'widgets.input-widgets.input-cell-icon' | translate }}"

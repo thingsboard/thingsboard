@@ -16,7 +16,7 @@
 
 -->
 <section [formGroup]="saveToCustomTableConfigForm" class="tb-form-panel no-border no-padding">
-  <mat-form-field class="mat-block" subscriptSizing="dynamic">
+  <mat-form-field class="mat-block" subscriptSizing="dynamic" appearance="outline">
     <mat-label translate>rule-node-config.custom-table-name</mat-label>
     <input required matInput formControlName="tableName">
     <mat-icon class="help-icon m-2 cursor-pointer"
@@ -45,7 +45,7 @@
     [valRequiredText]="'rule-node-config.table-col-required' | translate"
     [hintText]="'rule-node-config.fields-mapping-hint'">
   </tb-kv-map-config>
-  <mat-form-field class="mat-block flex-1">
+  <mat-form-field class="mat-block flex-1" appearance="outline">
     <mat-label translate>rule-node-config.default-ttl</mat-label>
     <input type="number" min="0" step="1" matInput formControlName="defaultTtl" required>
     <mat-hint translate>rule-node-config.default-ttl-zero-hint</mat-hint>

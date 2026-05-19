@@ -217,8 +217,6 @@ export class AddDeviceProfileDialogComponent extends
       case 1:
         return 'device-profile.transport-configuration';
       case 2:
-        return 'device-profile.alarm-rules';
-      case 3:
         return 'device-profile.device-provisioning';
     }
   }

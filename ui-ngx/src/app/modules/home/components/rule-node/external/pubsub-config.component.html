@@ -16,7 +16,7 @@
 
 -->
 <section [formGroup]="pubSubConfigForm" class="flex flex-col">
-  <mat-form-field class="mat-block">
+  <mat-form-field class="mat-block" appearance="outline">
     <mat-label translate>rule-node-config.gcp-project-id</mat-label>
     <input required matInput formControlName="projectId">
     @if (pubSubConfigForm.get('projectId').hasError('required')) {
@@ -25,7 +25,7 @@
       </mat-error>
     }
   </mat-form-field>
-  <mat-form-field class="mat-block">
+  <mat-form-field class="mat-block" appearance="outline">
     <mat-label translate>rule-node-config.pubsub-topic-name</mat-label>
     <input required matInput formControlName="topicName">
     @if (pubSubConfigForm.get('topicName').hasError('required')) {
@@ -46,12 +46,13 @@
   </tb-file-input>
   <label translate class="tb-title">rule-node-config.message-attributes</label>
   <div class="tb-hint" [innerHTML]="'rule-node-config.message-attributes-hint' | translate | safe: 'html'"></div>
-  <tb-kv-map-config-old
+  <tb-kv-map-config
     required="false"
     formControlName="messageAttributes"
-    keyText="rule-node-config.name"
-    keyRequiredText="rule-node-config.name-required"
-    valText="rule-node-config.value"
-    valRequiredText="rule-node-config.value-required">
-  </tb-kv-map-config-old>
+    [keyText]="'rule-node-config.name' | translate"
+    [keyRequiredText]="'rule-node-config.name-required' | translate"
+    [valText]="'rule-node-config.value' | translate"
+    [valRequiredText]="'rule-node-config.value-required' | translate"
+    [emptyText]="'rule-node-config.message-attributes-empty' | translate">
+  </tb-kv-map-config>
 </section>

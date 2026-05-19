@@ -13,5 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
+package org.thingsboard.monitoring.notification.incident;
+
+public interface IncidentTransport {
+
+    String postIncident(String text);
+
+    void postThreadReply(String threadId, String text);
+
+    void updateIncident(String threadId, String text);
+
 }

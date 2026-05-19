@@ -38,8 +38,8 @@
           {{ rpcMessageTypeText }}
         </mat-slide-toggle>
       </div>
-      <div class="flex flex-row flex-wrap gap-1.5 xs:flex-col">
-        <mat-form-field class="mat-block flex-1">
+      <div class="flex flex-row flex-wrap gap-1.5 xs:flex-col mt-1">
+        <mat-form-field class="mat-block flex-1" appearance="outline">
           <mat-label translate>widgets.persistent-table.method</mat-label>
           <input matInput formControlName="method" required>
           @if (persistentFormGroup.get('method').hasError('required')) {
@@ -53,7 +53,7 @@
             </mat-error>
           }
         </mat-form-field>
-        <mat-form-field class="mat-block flex-1">
+        <mat-form-field class="mat-block flex-1" appearance="outline">
           <mat-label translate>widgets.persistent-table.retries</mat-label>
           <input matInput type="number" formControlName="retries">
         </mat-form-field>

@@ -16,7 +16,7 @@
 
 -->
 <section [formGroup]="sqsConfigForm" class="flex flex-col">
-  <mat-form-field class="mat-block">
+  <mat-form-field class="mat-block" appearance="outline">
     <mat-label translate>rule-node-config.queue-type</mat-label>
     <mat-select formControlName="queueType" required>
       @for (type of sqsQueueTypes; track type) {
@@ -26,7 +26,7 @@
       }
     </mat-select>
   </mat-form-field>
-  <mat-form-field class="mat-block" subscriptSizing="dynamic">
+  <mat-form-field class="mat-block" subscriptSizing="dynamic" appearance="outline">
     <mat-label translate>rule-node-config.queue-url-pattern</mat-label>
     <input required matInput formControlName="queueUrlPattern">
     @if (sqsConfigForm.get('queueUrlPattern').hasError('required')) {
@@ -37,7 +37,7 @@
     <mat-hint translate>rule-node-config.general-pattern-hint</mat-hint>
   </mat-form-field>
   @if (sqsConfigForm.get('queueType').value === sqsQueueType.STANDARD) {
-    <mat-form-field class="mat-block">
+    <mat-form-field class="mat-block" appearance="outline">
       <mat-label translate>rule-node-config.delay-seconds</mat-label>
       <input required type="number" min="0" max="900" step="1" matInput formControlName="delaySeconds">
       @if (sqsConfigForm.get('delaySeconds').hasError('min')) {
@@ -54,15 +54,16 @@
   }
   <label translate class="tb-title">rule-node-config.message-attributes</label>
   <div class="tb-hint" [innerHTML]="'rule-node-config.message-attributes-hint' | translate | safe: 'html'"></div>
-  <tb-kv-map-config-old
+  <tb-kv-map-config
     required="false"
     formControlName="messageAttributes"
-    keyText="rule-node-config.name"
-    keyRequiredText="rule-node-config.name-required"
-    valText="rule-node-config.value"
-    valRequiredText="rule-node-config.value-required">
-  </tb-kv-map-config-old>
-  <mat-form-field class="mat-block">
+    [keyText]="'rule-node-config.name' | translate"
+    [keyRequiredText]="'rule-node-config.name-required' | translate"
+    [valText]="'rule-node-config.value' | translate"
+    [valRequiredText]="'rule-node-config.value-required' | translate"
+    [emptyText]="'rule-node-config.message-attributes-empty' | translate">
+  </tb-kv-map-config>
+  <mat-form-field class="mat-block mt-2" appearance="outline">
     <mat-label translate>rule-node-config.aws-access-key-id</mat-label>
     <input required matInput formControlName="accessKeyId">
     @if (sqsConfigForm.get('accessKeyId').hasError('required')) {
@@ -71,7 +72,7 @@
       </mat-error>
     }
   </mat-form-field>
-  <mat-form-field class="mat-block">
+  <mat-form-field class="mat-block mt-2" appearance="outline">
     <mat-label translate>rule-node-config.aws-secret-access-key</mat-label>
     <input required matInput formControlName="secretAccessKey">
     @if (sqsConfigForm.get('secretAccessKey').hasError('required')) {
@@ -80,7 +81,7 @@
       </mat-error>
     }
   </mat-form-field>
-  <mat-form-field class="mat-block">
+  <mat-form-field class="mat-block mt-2" appearance="outline">
     <mat-label translate>rule-node-config.aws-region</mat-label>
     <input required matInput formControlName="region">
     @if (sqsConfigForm.get('region').hasError('required')) {

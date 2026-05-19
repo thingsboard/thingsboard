@@ -16,7 +16,7 @@
 
 -->
 <section [formGroup]="deduplicationConfigForm">
-  <mat-form-field class="mat-block">
+  <mat-form-field class="mat-block" appearance="outline">
     <mat-label>{{'rule-node-config.interval' | translate}}</mat-label>
     <input type='number' required matInput formControlName="interval">
     @if (deduplicationConfigForm.get('interval').hasError('required')) {
@@ -44,26 +44,24 @@
         }
       </tb-toggle-select>
       @if (deduplicationConfigForm.get('strategy').value === 'ALL') {
-        <tb-example-hint [hintText]="'rule-node-config.strategy-all-hint'"
-                         >
+        <tb-example-hint [hintText]="'rule-node-config.strategy-all-hint'">
         </tb-example-hint>
       }
       @if (deduplicationConfigForm.get('strategy').value === 'FIRST') {
         <tb-example-hint [hintText]="'rule-node-config.strategy-first-hint'"
-                         textAlign="'center'"
-                         >
+                         textAlign="'center'">
         </tb-example-hint>
       }
       @if (deduplicationConfigForm.get('strategy').value === 'LAST') {
         <tb-example-hint [hintText]="'rule-node-config.strategy-last-hint'"
-                         textAlign="'center'"
-                         >
+                         textAlign="'center'">
         </tb-example-hint>
       }
       @if (deduplicationConfigForm.get('strategy').value === deduplicationStrategie.ALL) {
         <div>
           <tb-output-message-type-autocomplete
             required
+            appearance="outline"
             formControlName="outMsgType">
           </tb-output-message-type-autocomplete>
         </div>
@@ -75,7 +73,7 @@
           <mat-panel-title translate>rule-node-config.advanced-settings</mat-panel-title>
         </mat-expansion-panel-header>
         <div class="tb-form-row no-border no-padding tb-standard-fields">
-          <mat-form-field class="flex">
+          <mat-form-field class="flex" appearance="outline">
             <mat-label>{{'rule-node-config.max-pending-msgs' | translate}}</mat-label>
             <input type = 'number' required matInput formControlName="maxPendingMsgs">
             @if (deduplicationConfigForm.get('maxPendingMsgs').hasError('required')) {
@@ -97,7 +95,7 @@
                       color="primary"
             matTooltip="{{ 'rule-node-config.max-pending-msgs-hint' | translate }}">help</mat-icon>
           </mat-form-field>
-          <mat-form-field class="flex">
+          <mat-form-field class="flex" appearance="outline">
             <mat-label>{{'rule-node-config.max-retries' | translate}}</mat-label>
             <input type = 'number' required matInput formControlName="maxRetries">
             @if (deduplicationConfigForm.get('maxRetries').hasError('required')) {

@@ -347,8 +347,10 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
         } else if (query.getEntityFilter().getType().equals(ENTITY_NAME)) {
             validateEntityNameQuery((EntityNameFilter) query.getEntityFilter());
         }
+        // Intentionally using the nullable getKeyFiltersOperation() (not getKeyFiltersOperationOrDefault()):
+        // a null value encodes "classic AND" and must pass this guard even when the OR feature flag is off.
         if (!keyFiltersOrConditionsEnabled && query.getKeyFiltersOperation() == ComplexOperation.OR) {
-            throw new IncorrectParameterException("OR conditions between key filters are disabled");
+            throw new IncorrectParameterException("OR conditions between key filters are disabled by the system administrator.");
         }
     }
 

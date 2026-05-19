@@ -77,7 +77,7 @@
   }
   @if (createAlarmConfigForm.get('useMessageAlarmData').value === false) {
     <section class="flex flex-col">
-      <mat-form-field class="flex-1" subscriptSizing="dynamic">
+      <mat-form-field class="flex-1" subscriptSizing="dynamic" appearance="outline">
         <mat-label translate>rule-node-config.alarm-type</mat-label>
         <input required matInput formControlName="alarmType">
         @if (createAlarmConfigForm.get('alarmType').hasError('required')) {
@@ -91,7 +91,7 @@
         {{ 'rule-node-config.use-alarm-severity-pattern' | translate }}
       </mat-checkbox>
       @if (!createAlarmConfigForm.get('dynamicSeverity').value) {
-        <mat-form-field class="flex-1">
+        <mat-form-field class="flex-1" appearance="outline">
           <mat-label translate>rule-node-config.alarm-severity</mat-label>
           <mat-select formControlName="severity" required>
             @for (severity of alarmSeverities; track severity) {
@@ -108,7 +108,7 @@
         </mat-form-field>
       }
       @if (createAlarmConfigForm.get('dynamicSeverity').value) {
-        <mat-form-field class="flex-1" subscriptSizing="dynamic">
+        <mat-form-field class="flex-1" subscriptSizing="dynamic" appearance="outline">
           <mat-label translate>rule-node-config.alarm-severity-pattern</mat-label>
           <input matInput formControlName="severity" required>
           @if (createAlarmConfigForm.get('severity').hasError('required')) {
@@ -124,7 +124,7 @@
       </mat-checkbox>
       @if (createAlarmConfigForm.get('propagate').value === true) {
         <section>
-          <mat-form-field floatLabel="always" class="mat-block" subscriptSizing="dynamic">
+          <mat-form-field floatLabel="always" class="mat-block" subscriptSizing="dynamic" appearance="outline">
             <mat-label translate>rule-node-config.relation-types-list</mat-label>
             <mat-chip-grid #relationTypesChipList>
               @for (key of createAlarmConfigForm.get('relationTypes').value; track key) {

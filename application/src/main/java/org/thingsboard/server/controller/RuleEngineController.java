@@ -17,6 +17,8 @@ package org.thingsboard.server.controller;
 
 import com.google.common.util.concurrent.FutureCallback;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -87,7 +89,8 @@ public class RuleEngineController extends BaseController {
     @RequestMapping(value = "/", method = RequestMethod.POST)
     @ResponseBody
     public DeferredResult<ResponseEntity> handleRuleEngineRequestForUser(
-            @Parameter(description = "A JSON value representing the message.", required = true)
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON object representing the message.", required = true,
+                    content = @Content(mediaType = "text/plain", schema = @Schema(type = "string")))
             @RequestBody String requestBody) throws ThingsboardException {
         return handleRuleEngineRequestForEntityWithQueueAndTimeout(null, null, null, defaultResponseTimeout, requestBody);
     }
@@ -106,7 +109,8 @@ public class RuleEngineController extends BaseController {
             @PathVariable("entityType") String entityType,
             @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable("entityId") String entityIdStr,
-            @Parameter(description = "A JSON value representing the message.", required = true)
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON object representing the message.", required = true,
+                    content = @Content(mediaType = "text/plain", schema = @Schema(type = "string")))
             @RequestBody String requestBody) throws ThingsboardException {
         return handleRuleEngineRequestForEntityWithQueueAndTimeout(entityType, entityIdStr, null, defaultResponseTimeout, requestBody);
     }
@@ -127,7 +131,8 @@ public class RuleEngineController extends BaseController {
             @PathVariable("entityId") String entityIdStr,
             @Parameter(description = "Timeout to process the request in milliseconds", required = true)
             @PathVariable("timeout") int timeout,
-            @Parameter(description = "A JSON value representing the message.", required = true)
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON object representing the message.", required = true,
+                    content = @Content(mediaType = "text/plain", schema = @Schema(type = "string")))
             @RequestBody String requestBody) throws ThingsboardException {
         return handleRuleEngineRequestForEntityWithQueueAndTimeout(entityType, entityIdStr, null, timeout, requestBody);
     }
@@ -151,7 +156,8 @@ public class RuleEngineController extends BaseController {
             @PathVariable("queueName") String queueName,
             @Parameter(description = "Timeout to process the request in milliseconds", required = true)
             @PathVariable("timeout") int timeout,
-            @Parameter(description = "A JSON value representing the message.", required = true)
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON object representing the message.", required = true,
+                    content = @Content(mediaType = "text/plain", schema = @Schema(type = "string")))
             @RequestBody String requestBody) throws ThingsboardException {
         try {
             SecurityUser currentUser = getCurrentUser();

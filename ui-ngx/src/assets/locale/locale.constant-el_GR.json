@@ -7466,7 +7466,7 @@
       "handle-empty-result-function": "Συνάρτηση χειρισμού κενού αποτελέσματος",
       "handle-error-function": "Συνάρτηση χειρισμού σφάλματος",
       "handle-non-mobile-fallback-function": "Συνάρτηση εναλλακτικής διαχείρισης για μη κινητά",
-      "save-to-gallery": "Αποθήκευση στη συλλογή",
+      "save-to-gallery": "Αποθήκευση στη 'Συλλογή εικόνων'",
       "provision-type": "Τύπος παροχής",
       "auto": "Αυτόματο",
       "wi-fi": "Wi-Fi",

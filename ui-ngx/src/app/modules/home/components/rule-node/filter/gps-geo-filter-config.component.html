@@ -20,7 +20,7 @@
     <div class="tb-form-panel-title" translate>rule-node-config.coordinate-field-names</div>
     <section>
       <div class="flex flex-row gap-4">
-        <mat-form-field class="mat-block max-w-50% flex-full">
+        <mat-form-field class="mat-block max-w-50% flex-full" appearance="outline">
           <mat-label>{{ 'rule-node-config.latitude-field-name' | translate }}</mat-label>
           <input matInput formControlName="latitudeKeyName" required>
           @if (geoFilterConfigForm.get('latitudeKeyName').hasError('required')) {
@@ -29,7 +29,7 @@
             </mat-error>
           }
         </mat-form-field>
-        <mat-form-field class="mat-block max-w-50% flex-full">
+        <mat-form-field class="mat-block max-w-50% flex-full" appearance="outline">
           <mat-label>{{ 'rule-node-config.longitude-field-name' | translate }}</mat-label>
           <input matInput formControlName="longitudeKeyName" required>
           @if (geoFilterConfigForm.get('longitudeKeyName').hasError('required')) {
@@ -45,7 +45,7 @@
   <section class="tb-form-panel stroked" [class.no-padding-bottom]="!defaultPaddingEnable">
     <div class="tb-form-panel-title" translate>rule-node-config.geofence-configuration</div>
     <section class="flex flex-col">
-      <mat-form-field class="mat-block flex-1" hideRequiredMarker>
+      <mat-form-field class="mat-block flex-1" hideRequiredMarker appearance="outline">
         <mat-label>{{ 'rule-node-config.perimeter-type' | translate }}</mat-label>
         <mat-select formControlName="perimeterType">
           @for (type of perimeterTypes; track type) {
@@ -70,7 +70,7 @@
         </mat-slide-toggle>
       </div>
       @if (geoFilterConfigForm.get('fetchPerimeterInfoFromMessageMetadata').value) {
-        <mat-form-field class="mat-block">
+        <mat-form-field class="mat-block" appearance="outline">
           <mat-label>{{ 'rule-node-config.perimeter-key-name' | translate }}</mat-label>
           <input matInput formControlName="perimeterKeyName" required>
           @if (geoFilterConfigForm.get('perimeterKeyName').hasError('required')) {
@@ -83,10 +83,9 @@
       }
       @if (geoFilterConfigForm.get('perimeterType').value === perimeterType.CIRCLE &&
         !geoFilterConfigForm.get('fetchPerimeterInfoFromMessageMetadata').value) {
-        <div class="flex flex-col"
-             >
+        <div class="flex flex-col">
           <div class="flex flex-row gap-4">
-            <mat-form-field class="flex-1">
+            <mat-form-field class="flex-1" appearance="outline">
               <mat-label>{{ 'rule-node-config.circle-center-latitude' | translate }}</mat-label>
               <input type="number" min="-90" max="90" step="0.1" matInput formControlName="centerLatitude" required>
               @if (geoFilterConfigForm.get('centerLatitude').hasError('required')) {
@@ -95,7 +94,7 @@
                 </mat-error>
               }
             </mat-form-field>
-            <mat-form-field class="flex-1">
+            <mat-form-field class="flex-1" appearance="outline">
               <mat-label>{{ 'rule-node-config.circle-center-longitude' | translate }}</mat-label>
               <input type="number" min="-180" max="180" step="0.1" matInput formControlName="centerLongitude" required>
               @if (geoFilterConfigForm.get('centerLongitude').hasError('required')) {
@@ -106,7 +105,7 @@
             </mat-form-field>
           </div>
           <div class="flex flex-row gap-4">
-            <mat-form-field class="flex-1">
+            <mat-form-field class="flex-1" appearance="outline">
               <mat-label>{{ 'rule-node-config.range' | translate }}</mat-label>
               <input type="number" min="0" step="0.1" matInput formControlName="range" required>
               @if (geoFilterConfigForm.get('range').hasError('required')) {
@@ -115,7 +114,7 @@
                 </mat-error>
               }
             </mat-form-field>
-            <mat-form-field class="flex-1">
+            <mat-form-field class="flex-1" appearance="outline">
               <mat-label>{{ 'rule-node-config.range-units' | translate }}</mat-label>
               <mat-select formControlName="rangeUnit" required>
                 @for (type of rangeUnits; track type) {
@@ -135,8 +134,7 @@
       }
       @if (geoFilterConfigForm.get('perimeterType').value === perimeterType.POLYGON &&
         !geoFilterConfigForm.get('fetchPerimeterInfoFromMessageMetadata').value) {
-        <mat-form-field class="mat-block" subscriptSizing="dynamic"
-                        >
+        <mat-form-field class="mat-block" subscriptSizing="dynamic" appearance="outline">
           <mat-label>{{ 'rule-node-config.polygon-definition' | translate }}</mat-label>
           <input matInput formControlName="polygonsDefinition" required>
           <mat-hint>{{ 'rule-node-config.polygon-definition-hint' | translate }}</mat-hint>

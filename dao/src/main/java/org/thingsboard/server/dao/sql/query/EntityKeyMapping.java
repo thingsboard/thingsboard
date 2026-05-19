@@ -288,35 +288,28 @@ public class EntityKeyMapping {
     }
 
     public Stream<String> toQueries(SqlQueryContext ctx, EntityFilterType filterType, boolean outerContext) {
-        if (hasFilter()) {
-            String keyAlias;
-            if (entityKey.getType().equals(EntityKeyType.ENTITY_FIELD) && getEntityKeyColumn() != null) {
-                if (outerContext) {
-                    // In the middle layer (OR relocation), entity field columns are available
-                    // by their alias name from the inner subquery SELECT (e.g., "alias2" from
-                    // "cast(e.name as varchar) as alias2"). Temporarily null out entityKeyColumn
-                    // so buildSimplePredicateQuery uses the alias directly as the field.
-                    String savedColumn = this.entityKeyColumn;
-                    try {
-                        this.entityKeyColumn = null;
-                        List<String> predicates = keyFilters.stream()
-                                .map(keyFilter -> this.buildKeyQuery(ctx, alias, keyFilter, filterType))
-                                .collect(Collectors.toList());
-                        return predicates.stream();
-                    } finally {
-                        this.entityKeyColumn = savedColumn;
-                    }
-                } else {
-                    keyAlias = "e";
-                }
-            } else {
-                keyAlias = alias;
-            }
-            return keyFilters.stream().map(keyFilter ->
-                    this.buildKeyQuery(ctx, keyAlias, keyFilter, filterType));
-        } else {
+        if (!hasFilter()) {
             return Stream.empty();
         }
+        String keyAlias;
+        boolean useAliasDirectly = false;
+        if (entityKey.getType().equals(EntityKeyType.ENTITY_FIELD) && getEntityKeyColumn() != null) {
+            if (outerContext) {
+                // In the middle layer (OR relocation), entity field columns are exposed
+                // by their alias name from the inner subquery SELECT (e.g., "alias2" from
+                // "cast(e.name as varchar) as alias2"), so buildSimplePredicateQuery must
+                // use the alias directly as the field instead of appending entityKeyColumn.
+                keyAlias = alias;
+                useAliasDirectly = true;
+            } else {
+                keyAlias = "e";
+            }
+        } else {
+            keyAlias = alias;
+        }
+        final boolean aliasAsField = useAliasDirectly;
+        return keyFilters.stream().map(keyFilter ->
+                this.buildKeyQuery(ctx, keyAlias, keyFilter, filterType, aliasAsField));
     }
 
     public String toLatestJoin(SqlQueryContext ctx, EntityFilter entityFilter, EntityType entityType) {
@@ -331,7 +324,10 @@ public class EntityKeyMapping {
             entityTypeStr = "'" + entityType.name() + "'";
         }
         ctx.addStringParameter(getKeyId(), entityKey.getKey());
-        String filterQuery = toQueries(ctx, entityFilter.getType())
+        // Under OR (forceLeftJoin=true) the filter predicate is re-emitted by buildQuery at the middle
+        // layer with disjunction semantics. Inlining it in the ON clause here would duplicate the
+        // predicate with a different bound parameter name and double-filter the LEFT JOIN.
+        String filterQuery = forceLeftJoin ? "" : toQueries(ctx, entityFilter.getType())
                 .filter(StringUtils::isNotEmpty)
                 .collect(Collectors.joining(" and "));
         if (StringUtils.isNotEmpty(filterQuery)) {
@@ -400,6 +396,9 @@ public class EntityKeyMapping {
     public static String buildQuery(SqlQueryContext ctx, List<EntityKeyMapping> mappings,
                                      EntityFilterType filterType, ComplexOperation operation) {
         String joiner = (operation == ComplexOperation.OR) ? " OR " : " AND ";
+        // Vacuously-true predicates (e.g. a ComplexFilterPredicate with zero nested predicates producing
+        // an empty string) are dropped here. Under AND this is safe — TRUE is the identity for AND — but
+        // under OR it silently narrows the disjunction. Callers must not emit meaningful empty predicates.
         return mappings.stream()
                 .flatMap(mapping -> mapping.toQueries(ctx, filterType, operation == ComplexOperation.OR))
                 .filter(StringUtils::isNotEmpty)
@@ -602,8 +601,8 @@ public class EntityKeyMapping {
             String attrNumAlias = getSortOrderNumAlias();
             String attrVarcharAlias = getSortOrderStrAlias();
             String attrSortOrderSelection =
-                    String.format("coalesce(%s.dbl_v, cast(%s.long_v as double precision), (case when %s.bool_v then 1 else 0 end)) %s," +
-                            "coalesce(%s.str_v, cast(%s.json_v as varchar), '') %s", alias, alias, alias, attrNumAlias, alias, alias, attrVarcharAlias);
+                    String.format("coalesce(%s.dbl_v, cast(%s.long_v as double precision), (case when %s.bool_v is null then null when %s.bool_v then 1 else 0 end)) %s," +
+                            "coalesce(%s.str_v, cast(%s.json_v as varchar), '') %s", alias, alias, alias, alias, attrNumAlias, alias, alias, attrVarcharAlias);
             return String.join(", ", attrValSelection, attrTsSelection, attrSortOrderSelection);
         } else {
             return String.join(", ", attrValSelection, attrTsSelection);
@@ -620,22 +619,27 @@ public class EntityKeyMapping {
 
     private String buildKeyQuery(SqlQueryContext ctx, String alias, KeyFilter keyFilter,
                                  EntityFilterType filterType) {
-        return this.buildPredicateQuery(ctx, alias, keyFilter.getKey(), keyFilter.getPredicate(), filterType);
+        return this.buildKeyQuery(ctx, alias, keyFilter, filterType, false);
+    }
+
+    private String buildKeyQuery(SqlQueryContext ctx, String alias, KeyFilter keyFilter,
+                                 EntityFilterType filterType, boolean useAliasAsField) {
+        return this.buildPredicateQuery(ctx, alias, keyFilter.getKey(), keyFilter.getPredicate(), filterType, useAliasAsField);
     }
 
     private String buildPredicateQuery(SqlQueryContext ctx, String alias, EntityKey key,
-                                       KeyFilterPredicate predicate, EntityFilterType filterType) {
+                                       KeyFilterPredicate predicate, EntityFilterType filterType, boolean useAliasAsField) {
         if (predicate.getType().equals(FilterPredicateType.COMPLEX)) {
-            return this.buildComplexPredicateQuery(ctx, alias, key, (ComplexFilterPredicate) predicate, filterType);
+            return this.buildComplexPredicateQuery(ctx, alias, key, (ComplexFilterPredicate) predicate, filterType, useAliasAsField);
         } else {
-            return this.buildSimplePredicateQuery(ctx, alias, key, predicate, filterType);
+            return this.buildSimplePredicateQuery(ctx, alias, key, predicate, filterType, useAliasAsField);
         }
     }
 
     private String buildComplexPredicateQuery(SqlQueryContext ctx, String alias, EntityKey key,
-                                              ComplexFilterPredicate predicate, EntityFilterType filterType) {
+                                              ComplexFilterPredicate predicate, EntityFilterType filterType, boolean useAliasAsField) {
         String result = predicate.getPredicates().stream()
-                .map(keyFilterPredicate -> this.buildPredicateQuery(ctx, alias, key, keyFilterPredicate, filterType))
+                .map(keyFilterPredicate -> this.buildPredicateQuery(ctx, alias, key, keyFilterPredicate, filterType, useAliasAsField))
                 .filter(StringUtils::isNotEmpty)
                 .collect(Collectors.joining(" " + predicate.getOperation().name() + " "));
         if (!result.trim().isEmpty()) {
@@ -645,9 +649,9 @@ public class EntityKeyMapping {
     }
 
     private String buildSimplePredicateQuery(SqlQueryContext ctx, String alias, EntityKey key,
-                                             KeyFilterPredicate predicate, EntityFilterType filterType) {
+                                             KeyFilterPredicate predicate, EntityFilterType filterType, boolean useAliasAsField) {
         if (key.getType().equals(EntityKeyType.ENTITY_FIELD)) {
-            String field = (getEntityKeyColumn() != null) ? alias + "." + getEntityKeyColumn() : alias;
+            String field = useAliasAsField || getEntityKeyColumn() == null ? alias : alias + "." + getEntityKeyColumn();
             if (predicate.getType().equals(FilterPredicateType.NUMERIC)) {
                 return this.buildNumericPredicateQuery(ctx, field, (NumericFilterPredicate) predicate);
             } else if (predicate.getType().equals(FilterPredicateType.STRING)) {

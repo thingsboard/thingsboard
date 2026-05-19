@@ -26,10 +26,9 @@
   </div>
   <mat-divider></mat-divider>
   @for (mappingConfig of mappingsConfigFormArray.controls; track mappingConfig; let isLast = $last) {
-    <div
-      [formGroup]="mappingConfig" class="mapping-list flex flex-row items-center justify-start gap-2">
+    <div [formGroup]="mappingConfig" class="mapping-list flex flex-row items-center justify-start gap-2">
       <div class="tb-layout-fill flex flex-1 flex-row items-stretch justify-start gap-2">
-        <mat-form-field class="max-w-26% flex-full">
+        <mat-form-field class="max-w-26% flex-full" appearance="outline">
           <mat-select formControlName="dataType" required>
             @for (dataType of dataTypes; track dataType) {
               <mat-option [value]="dataType">
@@ -43,7 +42,7 @@
             </mat-error>
           }
         </mat-form-field>
-        <mat-form-field class="max-w-37% flex-full">
+        <mat-form-field class="max-w-37% flex-full" appearance="outline">
           <input matInput formControlName="key" required/>
           @if (mappingConfig.get('key').hasError('required')) {
             <mat-error>
@@ -51,7 +50,7 @@
             </mat-error>
           }
         </mat-form-field>
-        <mat-form-field class="max-w-37% flex-full">
+        <mat-form-field class="max-w-37% flex-full" appearance="outline">
           <input matInput formControlName="oid" required/>
           @if (mappingConfig.get('oid').hasError('required')) {
             <mat-error>

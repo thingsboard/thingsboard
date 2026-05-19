@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.common.data.device.profile;
 
-import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import lombok.Data;
@@ -37,7 +36,7 @@ public class DeviceProfileData implements Serializable {
     @Schema(description = "JSON object of provisioning strategy type per device profile")
     private DeviceProfileProvisionConfiguration provisionConfiguration;
     @Valid
-    @ArraySchema(schema = @Schema(implementation = DeviceProfileAlarm.class))
+    @Schema(hidden = true)
     private List<DeviceProfileAlarm> alarms;
 
 }

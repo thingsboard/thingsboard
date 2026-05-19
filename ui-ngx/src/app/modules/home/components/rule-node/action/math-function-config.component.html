@@ -19,6 +19,7 @@
   <tb-math-function-autocomplete
     class="flex-full max-h-30% xs:max-h-full md:max-h-full"
     required
+    appearance="outline"
     formControlName="operation">
   </tb-math-function-autocomplete>
   <fieldset class="fields-group flex flex-col gap-2">
@@ -31,7 +32,7 @@
     <fieldset
       class="fields-group flex flex-col gap-2">
       <legend class="group-title">{{'rule-node-config.custom-expression-field-input' | translate }} *</legend>
-      <mat-form-field class="mat-block no-margin-top flex-1" subscriptSizing="dynamic">
+      <mat-form-field class="mat-block no-margin-top flex-1" subscriptSizing="dynamic" appearance="outline">
         <input matInput formControlName="customFunction" required/>
         <div  matSuffix
               class="pr-2"
@@ -51,7 +52,7 @@
   <fieldset class="fields-group flex flex-col gap-2">
     <legend class="group-title" translate>rule-node-config.result-title</legend>
     <div formGroupName="result">
-      <mat-form-field class="mat-block flex-1">
+      <mat-form-field class="mat-block flex-1" appearance="outline">
         <mat-label translate>rule-node-config.type-field-input</mat-label>
         <mat-select formControlName="type" required>
           <mat-select-trigger>
@@ -75,7 +76,7 @@
       </mat-form-field>
       <div class="xs:flex-col gt-xs:gap-4 flex flex-1 flex-row">
         @if (mathFunctionConfigForm.get('result').get('type').value === ArgumentTypeResult.ATTRIBUTE) {
-          <mat-form-field class="mat-block flex-1">
+          <mat-form-field class="mat-block flex-1" appearance="outline">
             <mat-label translate>rule-node-config.attribute-scope-field-input</mat-label>
             <mat-select required formControlName="attributeScope">
               @for (scope of attributeScopeResult; track scope) {
@@ -86,7 +87,7 @@
             </mat-select>
           </mat-form-field>
         }
-        <mat-form-field floatLabel="always" class="mat-block flex-1">
+        <mat-form-field floatLabel="always" class="mat-block flex-1" appearance="outline">
           <mat-label translate>rule-node-config.key-field-input</mat-label>
           <input matInput formControlName="key" required/>
           <mat-icon class="help-icon m-2 cursor-pointer" aria-hidden="false" aria-label="help-icon" matSuffix
@@ -100,7 +101,7 @@
         </mat-form-field>
       </div>
       <div class="xs:flex-col gt-xs:gap-4 flex flex-1 flex-row">
-        <mat-form-field floatLabel="always" class="mat-block flex-1" subscriptSizing="dynamic">
+        <mat-form-field floatLabel="always" class="mat-block flex-1" subscriptSizing="dynamic" appearance="outline">
           <mat-label translate>rule-node-config.number-floating-point-field-input</mat-label>
           <input formControlName="resultValuePrecision"
                  matInput
@@ -110,8 +111,7 @@
         </mat-form-field>
       </div>
       @if ([ArgumentTypeResult.ATTRIBUTE, ArgumentTypeResult.TIME_SERIES].includes(mathFunctionConfigForm.get('result').get('type').value)) {
-        <div
-          class="xs:flex-col gt-xs:gap-4 flex flex-1 flex-row items-stretch justify-start" style="padding-top: 16px;">
+        <div class="xs:flex-col gt-xs:gap-4 flex flex-1 flex-row items-stretch justify-start" style="padding-top: 16px;">
           <mat-checkbox formControlName="addToBody">
             {{'rule-node-config.add-to-message-field-input' | translate }}
           </mat-checkbox>

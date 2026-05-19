@@ -116,19 +116,19 @@ public class OAuth2Controller extends BaseController {
         return tbOauth2ClientService.save(oAuth2Client, getCurrentUser());
     }
 
-    @ApiOperation(value = "Get OAuth2 Client infos (findTenantOAuth2ClientInfos)", notes = SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @ApiOperation(value = "Get OAuth2 Client infos (findOAuth2ClientInfos)", notes = SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @GetMapping(value = "/oauth2/client/infos")
-    public PageData<OAuth2ClientInfo> findTenantOAuth2ClientInfos(@Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
-                                                                  @RequestParam int pageSize,
-                                                                  @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
-                                                                  @RequestParam int page,
-                                                                  @Parameter(description = "Case-insensitive 'substring' filter based on client's title")
-                                                                  @RequestParam(required = false) String textSearch,
-                                                                  @Parameter(description = SORT_PROPERTY_DESCRIPTION)
-                                                                  @RequestParam(required = false) String sortProperty,
-                                                                  @Parameter(description = SORT_ORDER_DESCRIPTION)
-                                                                  @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+    public PageData<OAuth2ClientInfo> findOAuth2ClientInfos(@Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
+                                                            @RequestParam int pageSize,
+                                                            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
+                                                            @RequestParam int page,
+                                                            @Parameter(description = "Case-insensitive 'substring' filter based on client's title")
+                                                            @RequestParam(required = false) String textSearch,
+                                                            @Parameter(description = SORT_PROPERTY_DESCRIPTION)
+                                                            @RequestParam(required = false) String sortProperty,
+                                                            @Parameter(description = SORT_ORDER_DESCRIPTION)
+                                                            @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return oAuth2ClientService.findOAuth2ClientInfosByTenantId(getTenantId(), pageLink);
     }

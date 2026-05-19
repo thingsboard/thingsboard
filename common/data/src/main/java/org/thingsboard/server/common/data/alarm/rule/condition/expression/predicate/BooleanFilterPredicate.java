@@ -37,6 +37,7 @@ public class BooleanFilterPredicate implements SimpleKeyFilterPredicate<Boolean>
         return FilterPredicateType.BOOLEAN;
     }
 
+    @Schema(name = "AlarmRuleBooleanOperation")
     public enum BooleanOperation {
         EQUAL,
         NOT_EQUAL

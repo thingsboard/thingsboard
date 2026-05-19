@@ -25,7 +25,6 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.monitoring.client.TbClient;
 import org.thingsboard.monitoring.data.Latency;
-import org.thingsboard.monitoring.data.MonitoredServiceKey;
 import org.thingsboard.monitoring.data.notification.HighLatencyNotification;
 import org.thingsboard.monitoring.data.notification.ServiceFailureNotification;
 import org.thingsboard.monitoring.data.notification.ServiceRecoveryNotification;
@@ -119,9 +118,7 @@ public class MonitoringReporter {
 
     public void serviceIsOk(Object serviceKey) {
         ServiceRecoveryNotification notification = new ServiceRecoveryNotification(serviceKey);
-        if (!serviceKey.equals(MonitoredServiceKey.GENERAL)) {
-            log.info(notification.getText());
-        }
+        log.info(notification.getText());
         AtomicInteger failuresCounter = failuresCounters.get(serviceKey);
         if (failuresCounter != null) {
             if (failuresCounter.get() >= failuresThreshold) {

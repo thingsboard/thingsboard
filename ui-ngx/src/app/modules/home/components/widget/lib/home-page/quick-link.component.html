@@ -18,7 +18,7 @@
 @if (addMode || editMode) {
   <div class="flex flex-row">
     <div class="tb-edit-link flex flex-1 flex-col" [class.edit-mode]="editMode" [formGroup]="editQuickLinkFormGroup">
-      <mat-form-field class="mat-block flex-1">
+      <mat-form-field class="mat-block flex-1" appearance="outline">
         <mat-label translate>widgets.quick-links.quick-link</mat-label>
         <input matInput type="text"
                #linkInput

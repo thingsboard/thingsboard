@@ -27,12 +27,19 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.socket.CloseStatus;
+import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.adapter.NativeWebSocketSession;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.service.security.auth.jwt.JwtAuthenticationProvider;
 import org.thingsboard.server.service.security.auth.pat.ApiKeyAuthenticationProvider;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.ws.WebSocketService;
 import org.thingsboard.server.service.ws.WebSocketSessionRef;
 import org.thingsboard.server.service.ws.WebSocketSessionType;
@@ -191,6 +198,72 @@ class TbWebSocketHandlerTest {
         executor.awaitTermination(5, TimeUnit.SECONDS);
 
         assertThat(msgs).map(Integer::parseInt).doesNotHaveDuplicates().hasSize(100);
+    }
+
+    // Regression test for the bug where publicUserSessionsMap was keyed by UserId(NULL_UUID),
+    // making maxWsSessionsPerPublicUser a global limit shared across all tenants.
+    // The limit is now scoped per-tenant.
+    @Test
+    void checkLimits_publicUserSessions_limitIsPerTenantNotGlobal() throws Exception {
+        TbTenantProfileCache tenantProfileCache = mock(TbTenantProfileCache.class);
+        ReflectionTestUtils.setField(wsHandler, "tenantProfileCache", tenantProfileCache);
+
+        int maxPublicSessions = 2;
+
+        TenantId tenant1 = TenantId.fromUUID(UUID.randomUUID());
+        TenantProfile profile1 = new TenantProfile();
+        profile1.createDefaultTenantProfileData();
+        profile1.getDefaultProfileConfiguration().setMaxWsSessionsPerPublicUser(maxPublicSessions);
+        willReturn(profile1).given(tenantProfileCache).get(tenant1);
+
+        TenantId tenant2 = TenantId.fromUUID(UUID.randomUUID());
+        TenantProfile profile2 = new TenantProfile();
+        profile2.createDefaultTenantProfileData();
+        profile2.getDefaultProfileConfiguration().setMaxWsSessionsPerPublicUser(maxPublicSessions);
+        willReturn(profile2).given(tenantProfileCache).get(tenant2);
+
+        Method checkLimits = TbWebSocketHandler.class.getDeclaredMethod(
+                "checkLimits", WebSocketSession.class, WebSocketSessionRef.class);
+        checkLimits.setAccessible(true);
+
+        // tenant1 fills up its limit
+        for (int i = 0; i < maxPublicSessions; i++) {
+            assertThat((boolean) checkLimits.invoke(wsHandler, mockWsSession("t1-" + i), mockPublicSessionRef(tenant1))).isTrue();
+        }
+
+        // tenant2 must get its own independent quota — this was the bug: with NULL_UUID as key
+        // all tenants shared one global counter, so tenant2 would be blocked here
+        for (int i = 0; i < maxPublicSessions; i++) {
+            assertThat((boolean) checkLimits.invoke(wsHandler, mockWsSession("t2-" + i), mockPublicSessionRef(tenant2)))
+                    .as("tenant2 session %d should not be affected by tenant1's sessions", i + 1)
+                    .isTrue();
+        }
+
+        // tenant1's (maxPublicSessions + 1)-th session must be rejected
+        NativeWebSocketSession overLimit = mockWsSession("t1-over");
+        assertThat((boolean) checkLimits.invoke(wsHandler, overLimit, mockPublicSessionRef(tenant1))).isFalse();
+        verify(overLimit).close(CloseStatus.POLICY_VIOLATION.withReason("Max public user sessions limit reached"));
+    }
+
+    private NativeWebSocketSession mockWsSession(String id) {
+        NativeWebSocketSession s = mock(NativeWebSocketSession.class);
+        willReturn(id).given(s).getId();
+        return s;
+    }
+
+    private WebSocketSessionRef mockPublicSessionRef(TenantId tenantId) {
+        CustomerId customerId = new CustomerId(UUID.randomUUID());
+        SecurityUser securityUser = mock(SecurityUser.class);
+        willReturn(tenantId).given(securityUser).getTenantId();
+        willReturn(customerId).given(securityUser).getCustomerId();
+        willReturn(new UserId(EntityId.NULL_UUID)).given(securityUser).getId();
+        willReturn(true).given(securityUser).isCustomerUser();
+        willReturn(new UserPrincipal(UserPrincipal.Type.PUBLIC_ID, customerId.toString())).given(securityUser).getUserPrincipal();
+
+        WebSocketSessionRef ref = mock(WebSocketSessionRef.class);
+        willReturn(securityUser).given(ref).getSecurityCtx();
+        willReturn(UUID.randomUUID().toString()).given(ref).getSessionId();
+        return ref;
     }
 
     private AuthTestFixture createAuthTestFixture() throws IOException {

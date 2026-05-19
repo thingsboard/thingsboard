@@ -20,7 +20,7 @@ import lombok.Data;
 
 import java.util.List;
 
-@Schema(name = "AlarmRuleCustomTimeSchedule")
+@Schema
 @Data
 public class CustomTimeSchedule implements AlarmSchedule {
 

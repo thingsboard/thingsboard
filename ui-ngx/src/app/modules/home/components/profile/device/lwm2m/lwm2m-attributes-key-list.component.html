@@ -25,7 +25,7 @@
     <div class="map-list flex flex-col"
          [formGroup]="nameValueControl">
       <div class="flex flex-row items-center justify-start gap-2">
-        <mat-form-field class="max-w-40% flex-full">
+        <mat-form-field class="max-w-40% flex-full" appearance="outline">
           <mat-select formControlName="name" required>
             @for (attributeName of attributeNames; track attributeName) {
               <mat-option [value]="attributeName"
@@ -40,7 +40,7 @@
             </mat-error>
           }
         </mat-form-field>
-        <mat-form-field class="max-w-60% flex-full">
+        <mat-form-field class="max-w-60% flex-full" appearance="outline">
           <input formControlName="value" matInput required type="number"
                  placeholder="{{ 'key-val.value' | translate }}">
           @if (nameValueControl.get('value').hasError('required')) {
@@ -68,8 +68,7 @@
       </div>
     </div>
   }
-  <div [class.!hidden]="attributesValueFormArray().length"
-  class="map-list flex items-center justify-center" translate>device-profile.lwm2m.no-attributes-set</div>
+  <div [class.!hidden]="attributesValueFormArray().length" class="map-list flex items-center justify-center" translate>device-profile.lwm2m.no-attributes-set</div>
   @if (!disabled && isAddEnabled) {
     <div style="margin-top: 9px;">
       <button mat-stroked-button color="primary"

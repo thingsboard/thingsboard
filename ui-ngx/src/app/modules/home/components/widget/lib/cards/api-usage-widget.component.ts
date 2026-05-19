@@ -104,12 +104,16 @@ export class ApiUsageWidgetComponent implements OnInit, OnDestroy {
     };
     this.ctx.subscriptionApi.createSubscription(apiUsageSubscriptionOptions, true).subscribe();
 
-    this.currentState = this.ctx.stateController.getStateId();
-    this.ctx.stateController.stateId().subscribe((state) => {
-      this.ctx.updateParamsFromData(true);
-      this.currentState = state;
-      this.cd.markForCheck();
-    });
+    const simulated = this.ctx.utilsService.widgetEditMode || this.ctx.isPreview;
+
+    if (!simulated) {
+      this.currentState = this.ctx.stateController.getStateId();
+      this.ctx.stateController.stateId().subscribe((state) => {
+         this.ctx.updateParamsFromData(true);
+         this.currentState = state;
+         this.cd.markForCheck();
+      });
+    }
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
     this.padding = this.settings.background.overlay.enabled ? undefined : this.settings.padding;
@@ -121,7 +125,7 @@ export class ApiUsageWidgetComponent implements OnInit, OnDestroy {
 
   updateState($event: MouseEvent, stateName: string) {
     $event?.preventDefault();
-    if (stateName?.length) {
+    if (stateName?.length && this.ctx.stateController) {
       this.ctx.stateController.updateState(stateName, this.ctx.stateController.getStateParams(), this.ctx.isMobile);
     }
   }

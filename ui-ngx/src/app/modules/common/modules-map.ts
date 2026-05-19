@@ -16,6 +16,7 @@
 
 import * as AngularAnimations from '@angular/animations';
 import * as AngularCore from '@angular/core';
+import * as AngularCoreRxjsInterop from '@angular/core/rxjs-interop';
 import * as AngularCommon from '@angular/common';
 import * as AngularForms from '@angular/forms';
 import * as AngularPlatformBrowser from '@angular/platform-browser';
@@ -355,6 +356,7 @@ class ModulesMap implements IModulesMap {
   private modulesMap: {[key: string]: any} = {
     '@angular/animations': AngularAnimations,
     '@angular/core': this.angularCoreModule20to18Patch(AngularCore),
+    '@angular/core/rxjs-interop': AngularCoreRxjsInterop,
     '@angular/common': AngularCommon,
     '@angular/common/http': HttpClientModule,
     '@angular/forms': AngularForms,

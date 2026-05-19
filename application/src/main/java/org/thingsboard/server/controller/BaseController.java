@@ -71,6 +71,7 @@ import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.domain.Domain;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeInfo;
@@ -679,6 +680,17 @@ public abstract class BaseController {
         checkNotNull(entity, "Entity not found");
         accessControlService.checkPermission(user, Resource.of(entity.getId().getEntityType()), operation, entity.getId(), entity);
         return entity;
+    }
+
+    protected void checkReferencedEntities(CalculatedFieldConfiguration calculatedFieldConfig) throws ThingsboardException {
+        for (EntityId referencedEntityId : calculatedFieldConfig.getReferencedEntities()) {
+            EntityType refEntityType = referencedEntityId.getEntityType();
+            switch (refEntityType) {
+                case TENANT -> {}
+                case CUSTOMER, ASSET, DEVICE -> checkEntityId(referencedEntityId, Operation.READ);
+                default -> throw new IllegalArgumentException("Unsupported referenced entity type: '" + refEntityType + "'.");
+            }
+        }
     }
 
     Device checkDeviceId(DeviceId deviceId, Operation operation) throws ThingsboardException {

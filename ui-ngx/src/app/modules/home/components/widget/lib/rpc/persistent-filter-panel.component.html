@@ -16,7 +16,7 @@
 
 -->
 <form class="mat-content mat-padding flex flex-col" [formGroup]="persistentFilterFormGroup" (ngSubmit)="update()">
-  <mat-form-field class="mat-block flex-1" floatLabel="always">
+  <mat-form-field class="mat-block flex-1" floatLabel="always" appearance="outline">
     <mat-label translate>widgets.persistent-table.rpc-status-list</mat-label>
     <mat-select formControlName="rpcStatus"
                 placeholder="{{ rpcSearchPlaceholder }}">

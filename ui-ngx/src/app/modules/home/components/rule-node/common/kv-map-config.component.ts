@@ -80,6 +80,8 @@ export class KvMapConfigComponent implements ControlValueAccessor, OnInit, Valid
 
   @Input() hintText: string;
 
+  @Input() emptyText: string;
+
   @Input() popupHelpLink: string;
 
   @Input()
@@ -171,7 +173,7 @@ export class KvMapConfigComponent implements ControlValueAccessor, OnInit, Valid
   };
 
   writeValue(keyValMap: { [key: string]: string }): void {
-    const keyValuesData = Object.keys(keyValMap).map(key => ({key, value: keyValMap[key]}));
+    const keyValuesData = Object.keys(keyValMap ?? {}).map(key => ({key, value: keyValMap[key]}));
     if (this.keyValsFormArray().length === keyValuesData.length) {
       this.keyValsFormArray().patchValue(keyValuesData, {emitEvent: false});
     } else {

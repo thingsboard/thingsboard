@@ -18,8 +18,8 @@
 @if (addMode || editMode) {
   <div class="flex flex-row">
     <div class="tb-edit-link flex flex-1 flex-col" [class.edit-mode]="editMode" [formGroup]="editDocLinkFormGroup">
-      <tb-material-icon-select required formControlName="icon"></tb-material-icon-select>
-      <mat-form-field class="mat-block flex-1">
+      <tb-material-icon-select required formControlName="icon" appearance="outline"></tb-material-icon-select>
+      <mat-form-field class="mat-block flex-1" appearance="outline">
         <mat-label translate>widgets.documentation.name</mat-label>
         <input required matInput formControlName="name">
         @if (editDocLinkFormGroup.get('name').hasError('required')) {
@@ -28,7 +28,7 @@
           </mat-error>
         }
       </mat-form-field>
-      <mat-form-field class="mat-block flex-1">
+      <mat-form-field class="mat-block flex-1" appearance="outline">
         <mat-label translate>widgets.documentation.link</mat-label>
         <input required matInput formControlName="link">
         @if (editDocLinkFormGroup.get('link').hasError('required')) {

@@ -18,7 +18,7 @@
 <section [formGroup]="checkRelationConfigForm" class="tb-form-panel stroked no-padding-bottom">
   <div class="tb-form-panel-title" translate>rule-node-config.relation-search-parameters</div>
   <div class="flex flex-col">
-    <mat-form-field class="mat-block" hideRequiredMarker>
+    <mat-form-field class="mat-block" hideRequiredMarker appearance="outline">
       <mat-label>{{ 'relation.direction' | translate }}</mat-label>
       <mat-select formControlName="direction" required>
         @for (direction of entitySearchDirection; track direction) {
@@ -29,6 +29,7 @@
       </mat-select>
     </mat-form-field>
     <tb-relation-type-autocomplete
+      appearance="outline"
       required
       formControlName="relationType">
     </tb-relation-type-autocomplete>
@@ -41,6 +42,7 @@
     @if (checkRelationConfigForm.get('checkForSingleEntity').value) {
       <div class="same-width-component-row">
         <tb-entity-type-select
+          appearance="outline"
           style="min-width: 100px; flex: 1;"
           showLabel
           required
@@ -48,6 +50,7 @@
         </tb-entity-type-select>
         @if (checkRelationConfigForm.get('entityType').value) {
           <tb-entity-autocomplete
+            appearance="outline"
             class="flex-1"
             required
             [entityType]="checkRelationConfigForm.get('entityType').value"

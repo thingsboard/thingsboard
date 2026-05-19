@@ -62,7 +62,7 @@
       {{ testScriptLabel | translate }}
     </button>
   </div>
-  <mat-form-field class="mat-block" subscriptSizing="dynamic">
+  <mat-form-field class="mat-block" subscriptSizing="dynamic" appearance="outline">
     <mat-label translate>rule-node-config.alarm-type</mat-label>
     <input required matInput formControlName="alarmType">
     @if (clearAlarmConfigForm.get('alarmType').hasError('required')) {

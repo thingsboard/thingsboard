@@ -17,7 +17,7 @@
 -->
 <section class="tb-form-panel no-gap no-border" [class.no-padding]="isAdd" [formGroup]="entityForm">
   <div class="tb-form-row tb-standard-fields no-border no-padding">
-    <mat-form-field class="flex">
+    <mat-form-field class="flex" appearance="outline">
       <mat-label translate>admin.oauth2.title</mat-label>
       <input matInput formControlName="title">
       @if (entityForm.get('title').hasError('required')) {
@@ -34,7 +34,7 @@
   </div>
   <div class="tb-form-row tb-standard-fields no-border no-padding column-xs">
     <div class="tb-flex" formGroupName="additionalInfo">
-      <mat-form-field class="flex">
+      <mat-form-field class="flex" appearance="outline">
         <mat-label translate>admin.oauth2.provider</mat-label>
         <mat-select formControlName="providerName">
           @for (provider of templateProvider; track provider) {
@@ -45,7 +45,7 @@
         </mat-select>
       </mat-form-field>
     </div>
-    <mat-form-field class="flex" floatLabel="always">
+    <mat-form-field class="flex" floatLabel="always" appearance="outline">
       <mat-label translate>admin.oauth2.allowed-platforms</mat-label>
       <mat-select formControlName="platforms" multiple placeholder="{{ 'admin.oauth2.all-platforms' | translate }}">
         @for (platform of platformTypes; track platform) {
@@ -57,7 +57,7 @@
     </mat-form-field>
   </div>
   <div class="tb-form-row tb-standard-fields no-border no-padding column-xs">
-    <mat-form-field class="flex">
+    <mat-form-field class="flex" appearance="outline">
       <mat-label translate>admin.oauth2.client-id</mat-label>
       <input matInput formControlName="clientId">
       @if (entityForm.get('clientId').hasError('required')) {
@@ -71,7 +71,7 @@
         </mat-error>
       }
     </mat-form-field>
-    <mat-form-field class="flex">
+    <mat-form-field class="flex" appearance="outline">
       <mat-label translate>admin.oauth2.client-secret</mat-label>
       <input matInput formControlName="clientSecret">
       @if (entityForm.get('clientSecret').hasError('required')) {
@@ -102,10 +102,9 @@
           </tb-toggle-select>
         </div>
         @if (generalSettingsMode) {
-          <section class="tb-form-panel no-gap no-border no-padding" style="padding-bottom: 16px"
-                   >
+          <section class="tb-form-panel no-gap no-border no-padding" style="padding-bottom: 16px">
             <div class="tb-form-row tb-standard-fields no-border no-padding column-xs">
-              <mat-form-field class="flex">
+              <mat-form-field class="flex" appearance="outline">
                 <mat-label translate>admin.oauth2.access-token-uri</mat-label>
                 <input matInput formControlName="accessTokenUri">
                 @if (entityForm.get('accessTokenUri').hasError('required')) {
@@ -119,7 +118,7 @@
                   </mat-error>
                 }
               </mat-form-field>
-              <mat-form-field class="flex">
+              <mat-form-field class="flex" appearance="outline">
                 <mat-label translate>admin.oauth2.authorization-uri</mat-label>
                 <input matInput formControlName="authorizationUri" required>
                 @if (entityForm.get('authorizationUri').hasError('required')) {
@@ -135,7 +134,7 @@
               </mat-form-field>
             </div>
             <div class="tb-form-row tb-standard-fields no-border no-padding column-xs">
-              <mat-form-field class="flex">
+              <mat-form-field class="flex" appearance="outline">
                 <mat-label translate>admin.oauth2.jwk-set-uri</mat-label>
                 <input matInput formControlName="jwkSetUri">
                 @if (entityForm.get('jwkSetUri').hasError('pattern')) {
@@ -144,7 +143,7 @@
                   </mat-error>
                 }
               </mat-form-field>
-              <mat-form-field class="flex">
+              <mat-form-field class="flex" appearance="outline">
                 <mat-label translate>admin.oauth2.user-info-uri</mat-label>
                 <input matInput formControlName="userInfoUri">
                 @if (entityForm.get('userInfoUri').hasError('pattern')) {
@@ -155,7 +154,7 @@
               </mat-form-field>
             </div>
             <div class="tb-form-row tb-standard-fields no-border no-padding">
-              <mat-form-field class="flex">
+              <mat-form-field class="flex" appearance="outline">
                 <mat-label translate>admin.oauth2.client-authentication-method</mat-label>
                 <mat-select formControlName="clientAuthenticationMethod">
                   @for (clientAuthenticationMethod of clientAuthenticationMethods; track clientAuthenticationMethod) {
@@ -169,7 +168,7 @@
             </div>
             @if (isCustomProvider()) {
               <div class="grid gt-xs:grid-cols-2 gt-xs:gap-4">
-                <mat-form-field class="flex" floatLabel="always">
+                <mat-form-field class="flex" floatLabel="always" appearance="outline">
                   <mat-label translate>admin.oauth2.login-button-label</mat-label>
                   <input matInput formControlName="loginButtonLabel"
                          placeholder="{{ 'admin.oauth2.login-button-label-placeholder' | translate }}">
@@ -203,6 +202,7 @@
             </section>
             <tb-string-items-list
               formControlName="scope"
+              appearance="outline"
               label="{{ 'admin.oauth2.scope' | translate }}"
               requiredText="{{ 'admin.oauth2.scope-required' | translate }}"
               required>
@@ -212,7 +212,7 @@
         @if (!generalSettingsMode) {
           <section class="tb-form-panel no-border no-padding no-gap">
             <div class="tb-form-row tb-standard-fields no-border no-padding">
-              <mat-form-field class="flex">
+              <mat-form-field class="flex" appearance="outline">
                 <mat-label translate>admin.oauth2.user-name-attribute-name</mat-label>
                 <input matInput formControlName="userNameAttributeName">
                 @if (entityForm.get('userNameAttributeName').hasError('required')) {
@@ -224,7 +224,7 @@
             </div>
             <section class="tb-form-panel no-border no-padding no-gap" formGroupName="mapperConfig">
               <div class="tb-form-row tb-standard-fields no-border no-padding">
-                <mat-form-field class="flex">
+                <mat-form-field class="flex" appearance="outline">
                   <mat-label translate>admin.oauth2.type</mat-label>
                   <mat-select formControlName="type">
                     @for (mapperType of mapperTypes; track mapperType) {
@@ -237,23 +237,19 @@
                 </mat-form-field>
               </div>
               @if (entityForm.get('mapperConfig.type').value !== mapperType.CUSTOM && entityForm.get('mapperConfig.basic')) {
-                <section class="tb-form-panel no-border no-padding no-gap" formGroupName="basic"
-                         >
+                <section class="tb-form-panel no-border no-padding no-gap" formGroupName="basic">
                   @if (entityForm.get('mapperConfig.type').value !== mapperType.GITHUB) {
-                    <div class="tb-form-row tb-standard-fields no-border no-padding"
-                         >
-                      <mat-form-field class="flex">
+                    <div class="tb-form-row tb-standard-fields no-border no-padding">
+                      <mat-form-field class="flex" appearance="outline">
                         <mat-label translate>admin.oauth2.email-attribute-key</mat-label>
                         <input matInput formControlName="emailAttributeKey">
                         @if (entityForm.get('mapperConfig.basic.emailAttributeKey').hasError('required')) {
-                          <mat-error
-                            >
+                          <mat-error>
                             {{ 'admin.oauth2.email-attribute-key-required' | translate }}
                           </mat-error>
                         }
                         @if (entityForm.get('mapperConfig.basic.emailAttributeKey').hasError('maxlength')) {
-                          <mat-error
-                            >
+                          <mat-error>
                             {{ 'admin.oauth2.email-attribute-key-max-length' | translate }}
                           </mat-error>
                         }
@@ -261,7 +257,7 @@
                     </div>
                   }
                   <div class="tb-form-row tb-standard-fields no-border no-padding column-xs">
-                    <mat-form-field class="flex">
+                    <mat-form-field class="flex" appearance="outline">
                       <mat-label translate>admin.oauth2.first-name-attribute-key</mat-label>
                       <input matInput formControlName="firstNameAttributeKey">
                       @if (entityForm.get('mapperConfig.basic.firstNameAttributeKey').hasError('maxlength')) {
@@ -270,7 +266,7 @@
                         </mat-error>
                       }
                     </mat-form-field>
-                    <mat-form-field class="flex">
+                    <mat-form-field class="flex" appearance="outline">
                       <mat-label translate>admin.oauth2.last-name-attribute-key</mat-label>
                       <input matInput formControlName="lastNameAttributeKey">
                       @if (entityForm.get('mapperConfig.basic.lastNameAttributeKey').hasError('maxlength')) {
@@ -281,7 +277,7 @@
                     </mat-form-field>
                   </div>
                   <div class="tb-form-row tb-standard-fields no-border no-padding column-xs">
-                    <mat-form-field class="flex">
+                    <mat-form-field class="flex" appearance="outline">
                       <mat-label translate>admin.oauth2.tenant-name-strategy</mat-label>
                       <mat-select formControlName="tenantNameStrategy">
                         @for (tenantNameStrategy of tenantNameStrategies; track tenantNameStrategy) {
@@ -293,26 +289,25 @@
                       </mat-select>
                     </mat-form-field>
                     <mat-form-field class="flex"
+                                    appearance="outline"
                                     [class.!hidden]="entityForm.get('mapperConfig.basic.tenantNameStrategy').value !== 'CUSTOM'">
                       <mat-label translate>admin.oauth2.tenant-name-pattern</mat-label>
                       <input matInput formControlName="tenantNamePattern"
                              [required]="entityForm.get('mapperConfig.basic.tenantNameStrategy').value === 'CUSTOM'">
                       @if (entityForm.get('mapperConfig.basic.tenantNamePattern').hasError('required')) {
-                        <mat-error
-                          >
+                        <mat-error>
                           {{ 'admin.oauth2.tenant-name-pattern-required' | translate }}
                         </mat-error>
                       }
                       @if (entityForm.get('mapperConfig.basic.tenantNamePattern').hasError('maxlength')) {
-                        <mat-error
-                          >
+                        <mat-error>
                           {{ 'admin.oauth2.tenant-name-pattern-max-length' | translate }}
                         </mat-error>
                       }
                     </mat-form-field>
                   </div>
                   <div class="tb-form-row tb-standard-fields no-border no-padding">
-                    <mat-form-field class="flex">
+                    <mat-form-field class="flex" appearance="outline">
                       <mat-label translate>admin.oauth2.customer-name-pattern</mat-label>
                       <input matInput formControlName="customerNamePattern">
                       @if (entityForm.get('mapperConfig.basic.customerNamePattern').hasError('maxlength')) {
@@ -323,7 +318,7 @@
                     </mat-form-field>
                   </div>
                   <div class="tb-form-row tb-standard-fields no-border no-padding column-xs">
-                    <mat-form-field class="flex">
+                    <mat-form-field class="flex" appearance="outline">
                       <mat-label translate>admin.oauth2.default-dashboard-name</mat-label>
                       <input matInput formControlName="defaultDashboardName">
                       @if (entityForm.get('mapperConfig.basic.defaultDashboardName').hasError('maxlength')) {
@@ -340,10 +335,9 @@
                 </section>
               }
               @if (entityForm.get('mapperConfig.type').value === mapperType.CUSTOM && entityForm.get('mapperConfig.custom')) {
-                <section class="tb-form-panel no-border no-padding no-gap" formGroupName="custom"
-                         >
+                <section class="tb-form-panel no-border no-padding no-gap" formGroupName="custom">
                   <div class="tb-form-row tb-standard-fields no-border no-padding">
-                    <mat-form-field class="flex">
+                    <mat-form-field class="flex" appearance="outline">
                       <mat-label translate>admin.oauth2.url</mat-label>
                       <input matInput formControlName="url">
                       @if (entityForm.get('mapperConfig.custom.url').hasError('required')) {
@@ -364,7 +358,7 @@
                     </mat-form-field>
                   </div>
                   <div class="tb-form-row tb-standard-fields no-border no-padding column-xs">
-                    <mat-form-field class="flex">
+                    <mat-form-field class="flex" appearance="outline">
                       <mat-label translate>common.username</mat-label>
                       <input matInput formControlName="username" autocomplete="new-username">
                       @if (entityForm.get('mapperConfig.custom.username').hasError('maxlength')) {
@@ -373,7 +367,7 @@
                         </mat-error>
                       }
                     </mat-form-field>
-                    <mat-form-field class="flex">
+                    <mat-form-field class="flex" appearance="outline">
                       <mat-label translate>common.password</mat-label>
                       <input matInput formControlName="password" autocomplete="new-password">
                       @if (entityForm.get('mapperConfig.custom.password').hasError('maxlength')) {

@@ -18,6 +18,7 @@
 <section [formGroup]="getTelemetryFromDatabaseConfigForm" class="tb-form-panel no-padding no-border">
   <tb-string-items-list class="mat-block" editable [placeholder]="'rule-node-config.add-timeseries-key' | translate"
                         subscriptSizing="dynamic" required
+                        appearance="outline"
                         [requiredText]="'rule-node-config.timeseries-keys-required' | translate"
                         [label]="'rule-node-config.timeseries-keys' | translate" formControlName="latestTsKeyNames"
                         [hint]="'rule-node-config.general-pattern-hint' | translate">
@@ -40,10 +41,9 @@
       </mat-slide-toggle>
     </div>
     @if (getTelemetryFromDatabaseConfigForm.get('useMetadataIntervalPatterns').value === false) {
-      <div formGroupName="interval" class="flex flex-col"
-           >
+      <div formGroupName="interval" class="flex flex-col">
         <div class="flex flex-col gap-0 gt-sm:flex-row gt-sm:gap-4">
-          <mat-form-field class="mat-block gt-sm:max-w-50% gt-sm:flex-full">
+          <mat-form-field class="mat-block gt-sm:max-w-50% gt-sm:flex-full" appearance="outline">
             <mat-label>{{ 'rule-node-config.interval-start' | translate }}</mat-label>
             <input type="number" step="1" min="1" max="2147483647" matInput formControlName="startInterval" required>
             @if (getTelemetryFromDatabaseConfigForm.get('interval.startInterval').hasError('required')) {
@@ -62,7 +62,7 @@
               </mat-error>
             }
           </mat-form-field>
-          <mat-form-field class="mat-block gt-sm:max-w-50% gt-sm:flex-full" hideRequiredMarker>
+          <mat-form-field class="mat-block gt-sm:max-w-50% gt-sm:flex-full" hideRequiredMarker appearance="outline">
             <mat-label>{{ 'rule-node-config.time-unit' | translate }}</mat-label>
             <mat-select formControlName="startIntervalTimeUnit" required>
               @for (timeUnit of timeUnits; track timeUnit) {
@@ -74,7 +74,7 @@
           </mat-form-field>
         </div>
         <div class="flex flex-col gap-0 gt-sm:flex-row gt-sm:gap-4">
-          <mat-form-field class="mat-block gt-sm:max-w-50% gt-sm:flex-full">
+          <mat-form-field class="mat-block gt-sm:max-w-50% gt-sm:flex-full" appearance="outline">
             <mat-label>{{ 'rule-node-config.interval-end' | translate }}</mat-label>
             <input type="number" step="1" min="1" max="2147483647" matInput formControlName="endInterval" required>
             @if (getTelemetryFromDatabaseConfigForm.get('interval.endInterval').hasError('required')) {
@@ -93,7 +93,7 @@
               </mat-error>
             }
           </mat-form-field>
-          <mat-form-field class="mat-block gt-sm:max-w-50% gt-sm:flex-full" hideRequiredMarker>
+          <mat-form-field class="mat-block gt-sm:max-w-50% gt-sm:flex-full" hideRequiredMarker appearance="outline">
             <mat-label>{{ 'rule-node-config.time-unit' | translate }}</mat-label>
             <mat-select formControlName="endIntervalTimeUnit" required>
               @for (timeUnit of timeUnits; track timeUnit) {
@@ -123,7 +123,7 @@
       </div>
     } @else {
       <div class="input-block flex flex-col">
-        <mat-form-field class="mat-block flex-1">
+        <mat-form-field class="mat-block flex-1" appearance="outline">
           <mat-label>{{ 'rule-node-config.start-interval' | translate }}</mat-label>
           <input matInput formControlName="startIntervalPattern" required>
           @if (getTelemetryFromDatabaseConfigForm.get('startIntervalPattern').hasError('required') ||
@@ -133,7 +133,7 @@
             </mat-error>
           }
         </mat-form-field>
-        <mat-form-field class="mat-block flex-1">
+        <mat-form-field class="mat-block flex-1" appearance="outline">
           <mat-label>{{ 'rule-node-config.end-interval' | translate }}</mat-label>
           <input matInput formControlName="endIntervalPattern" required>
           @if (getTelemetryFromDatabaseConfigForm.get('endIntervalPattern').hasError('required') ||
@@ -167,7 +167,7 @@
     </div>
     @if (getTelemetryFromDatabaseConfigForm.get('fetchMode').value === fetchMode.ALL) {
       <div>
-        <mat-form-field class="mat-block" hideRequiredMarker
+        <mat-form-field class="mat-block" hideRequiredMarker appearance="outline"
                         [subscriptSizing]="defaultPaddingEnable() ? 'fixed' : 'dynamic'">
           <mat-label>{{ 'aggregation.function' | translate }}</mat-label>
           <mat-select formControlName="aggregation" required>
@@ -180,7 +180,7 @@
         </mat-form-field>
         @if (getTelemetryFromDatabaseConfigForm.get('aggregation').value === aggregationTypes.NONE) {
           <div>
-            <mat-form-field class="mat-block" hideRequiredMarker>
+            <mat-form-field class="mat-block" hideRequiredMarker appearance="outline">
               <mat-label> {{ "rule-node-config.order-by-timestamp" | translate }} </mat-label>
               <mat-select formControlName="orderBy" required>
                 @for (order of samplingOrders; track order) {
@@ -190,7 +190,7 @@
                 }
               </mat-select>
             </mat-form-field>
-            <mat-form-field class="mat-block">
+            <mat-form-field class="mat-block" appearance="outline">
               <mat-label>{{ "rule-node-config.limit" | translate }}</mat-label>
               <input type="number" min="2" max="1000" step="1" matInput formControlName="limit" required>
               <mat-hint>{{ "rule-node-config.limit-hint" | translate }}</mat-hint>

@@ -20,12 +20,13 @@
                                   brackets="curly"
                                   subscriptSizing="fixed"
                                   predefinedValuesButton="true"
+                                  appearance="outline"
                                   label="{{ 'widgets.gateway.events-title' | translate }}"
                                   [predefinedValues]="predefinedValues"
                                   placeholderText="{{ 'widget-config.set' | translate }}"
                                   formControlName="eventsTitle"
   ></tb-string-pattern-autocomplete>
-  <mat-form-field class="mat-block flex-1" floatLabel="always">
+  <mat-form-field class="mat-block flex-1" floatLabel="always" appearance="outline">
     <mat-label translate>widgets.gateway.events-filter</mat-label>
     <mat-chip-grid #chipList formControlName="eventsReg">
       @for (eventFilter of gatewayEventsWidgetSettingsForm.get('eventsReg').value; track eventFilter) {

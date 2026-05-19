@@ -21,6 +21,7 @@
     <tb-color-input
       required
       formControlName="switchPanelBackgroundColor"
+      appearance="outline"
       icon="format_color_fill"
       label="{{ 'widgets.gpio.background-color' | translate }}" openOnInput colorClearButton>
     </tb-color-input>
@@ -56,13 +57,13 @@
   </fieldset>
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.rpc.rpc-settings</legend>
-    <mat-form-field class="mat-block flex-1">
+    <mat-form-field class="mat-block flex-1" appearance="outline">
       <mat-label translate>widgets.rpc.request-timeout</mat-label>
       <input required matInput type="number" min="0" formControlName="requestTimeout">
     </mat-form-field>
     <fieldset class="fields-group" formGroupName="gpioStatusRequest">
       <legend class="group-title" translate>widgets.gpio.gpio-status-request</legend>
-      <mat-form-field class="mat-block flex-1">
+      <mat-form-field class="mat-block flex-1" appearance="outline">
         <mat-label translate>widgets.gpio.method-name</mat-label>
         <input required matInput formControlName="method">
       </mat-form-field>
@@ -76,7 +77,7 @@
     </fieldset>
     <fieldset class="fields-group" formGroupName="gpioStatusChangeRequest">
       <legend class="group-title" translate>widgets.gpio.gpio-status-change-request</legend>
-      <mat-form-field class="mat-block flex-1">
+      <mat-form-field class="mat-block flex-1" appearance="outline">
         <mat-label translate>widgets.gpio.method-name</mat-label>
         <input required matInput formControlName="method">
       </mat-form-field>

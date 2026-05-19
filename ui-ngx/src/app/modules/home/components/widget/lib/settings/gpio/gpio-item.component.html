@@ -50,21 +50,21 @@
       <mat-divider></mat-divider>
       <section class="tb-widget-settings flex flex-col">
         <section class="flex flex-row xs:flex-col gt-xs:gap-2 gt-xs:items-center gt-xs:justify-start">
-          <mat-form-field class="mat-block flex=1">
+          <mat-form-field class="mat-block flex=1" appearance="outline">
             <mat-label translate>widgets.gpio.pin</mat-label>
             <input required matInput type="number" min="1" step="1" formControlName="pin">
           </mat-form-field>
-          <mat-form-field class="mat-block flex-1">
+          <mat-form-field class="mat-block flex-1" appearance="outline">
             <mat-label translate>widgets.gpio.label</mat-label>
             <input required matInput formControlName="label">
           </mat-form-field>
         </section>
         <section class="flex flex-row xs:flex-col gt-xs:gap-2 gt-xs:items-center gt-xs:justify-start">
-          <mat-form-field class="mat-block flex-1">
+          <mat-form-field class="mat-block flex-1" appearance="outline">
             <mat-label translate>widgets.gpio.row</mat-label>
             <input required matInput type="number" min="0" step="1" formControlName="row">
           </mat-form-field>
-          <mat-form-field class="mat-block flex-1">
+          <mat-form-field class="mat-block flex-1" appearance="outline">
             <mat-label translate>widgets.gpio.column</mat-label>
             <input required matInput type="number" min="0" max="1" step="1" formControlName="col">
           </mat-form-field>
@@ -72,6 +72,7 @@
         @if (hasColor) {
           <tb-color-input
             required
+            appearance="outline"
             formControlName="color"
             icon="format_color_fill"
             label="{{ 'widgets.gpio.color' | translate }}" openOnInput colorClearButton>

@@ -21,7 +21,7 @@
   </mat-checkbox>
   @if (sendEmailConfigForm.get('useSystemSmtpSettings').value === false) {
     <section class="flex flex-col">
-      <mat-form-field class="mat-block">
+      <mat-form-field class="mat-block" appearance="outline">
         <mat-label translate>rule-node-config.smtp-protocol</mat-label>
         <mat-select formControlName="smtpProtocol">
           @for (smtpProtocol of smtpProtocols; track smtpProtocol) {
@@ -32,7 +32,7 @@
         </mat-select>
       </mat-form-field>
       <div class="gt-sm:flex gt-sm:flex-row gt-sm:gap-2">
-        <mat-form-field class="mat-block gt-sm:max-w-60% gt-sm:flex-full">
+        <mat-form-field class="mat-block gt-sm:max-w-60% gt-sm:flex-full" appearance="outline">
           <mat-label translate>rule-node-config.smtp-host</mat-label>
           <input required matInput formControlName="smtpHost">
           @if (sendEmailConfigForm.get('smtpHost').hasError('required')) {
@@ -41,7 +41,7 @@
             </mat-error>
           }
         </mat-form-field>
-        <mat-form-field class="mat-block gt-sm:max-w-40% gt-sm:flex-full">
+        <mat-form-field class="mat-block gt-sm:max-w-40% gt-sm:flex-full" appearance="outline">
           <mat-label translate>rule-node-config.smtp-port</mat-label>
           <input required type="number" step="1" min="1" max="65535" matInput formControlName="smtpPort">
           @if (sendEmailConfigForm.get('smtpPort').hasError('required')) {
@@ -61,7 +61,7 @@
           }
         </mat-form-field>
       </div>
-      <mat-form-field class="mat-block">
+      <mat-form-field class="mat-block" appearance="outline">
         <mat-label translate>rule-node-config.timeout-msec</mat-label>
         <input required type="number" step="1" min="0" matInput formControlName="timeout">
         @if (sendEmailConfigForm.get('timeout').hasError('required')) {
@@ -79,7 +79,7 @@
         {{ 'rule-node-config.enable-tls' | translate }}
       </mat-checkbox>
       @if (sendEmailConfigForm.get('enableTls').value === true) {
-        <mat-form-field class="mat-block">
+        <mat-form-field class="mat-block" appearance="outline">
           <mat-label translate>rule-node-config.tls-version</mat-label>
           <mat-select formControlName="tlsVersion">
             @for (tlsVersion of tlsVersions; track tlsVersion) {
@@ -96,7 +96,7 @@
       @if (sendEmailConfigForm.get('enableProxy').value) {
         <div>
           <div class="gt-sm:flex gt-sm:flex-row gt-sm:gap-2">
-            <mat-form-field class="mat-block gt-sm:max-w-60% gt-sm:flex-full">
+            <mat-form-field class="mat-block gt-sm:max-w-60% gt-sm:flex-full" appearance="outline">
               <mat-label translate>rule-node-config.proxy-host</mat-label>
               <input matInput required formControlName="proxyHost">
               @if (sendEmailConfigForm.get('proxyHost').hasError('required')) {
@@ -105,7 +105,7 @@
                 </mat-error>
               }
             </mat-form-field>
-            <mat-form-field class="mat-block gt-sm:max-w-40% gt-sm:flex-full">
+            <mat-form-field class="mat-block gt-sm:max-w-40% gt-sm:flex-full" appearance="outline">
               <mat-label translate>rule-node-config.proxy-port</mat-label>
               <input matInput required formControlName="proxyPort" type="number" step="1" min="1" max="65535">
               @if (sendEmailConfigForm.get('proxyPort').hasError('required')) {
@@ -120,21 +120,21 @@
               }
             </mat-form-field>
           </div>
-          <mat-form-field class="mat-block">
+          <mat-form-field class="mat-block" appearance="outline">
             <mat-label translate>rule-node-config.proxy-user</mat-label>
             <input matInput formControlName="proxyUser">
           </mat-form-field>
-          <mat-form-field class="mat-block">
+          <mat-form-field class="mat-block" appearance="outline">
             <mat-label translate>rule-node-config.proxy-password</mat-label>
             <input matInput formControlName="proxyPassword">
           </mat-form-field>
         </div>
       }
-      <mat-form-field class="mat-block" floatLabel="always">
+      <mat-form-field class="mat-block" floatLabel="always" appearance="outline">
         <mat-label translate>rule-node-config.username</mat-label>
         <input matInput placeholder="{{ 'rule-node-config.enter-username' | translate }}" formControlName="username">
       </mat-form-field>
-      <mat-form-field class="mat-block" floatLabel="always">
+      <mat-form-field class="mat-block" floatLabel="always" appearance="outline">
         <mat-label translate>rule-node-config.password</mat-label>
         <input matInput type="password" placeholder="{{ 'rule-node-config.enter-password' | translate }}" formControlName="password" autocomplete="new-password">
         <tb-toggle-password matSuffix></tb-toggle-password>

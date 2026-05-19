@@ -33,7 +33,7 @@
   }
   <div mat-dialog-content>
     <span translate>{{ dialogTitle }}</span>
-    <mat-form-field class="mat-block">
+    <mat-form-field class="mat-block mt-2" appearance="outline">
       <mat-label translate>widget.title</mat-label>
       <input matInput formControlName="title" required>
       @if (saveWidgetTypeAsFormGroup.get('title').hasError('required')) {
@@ -44,6 +44,7 @@
     </mat-form-field>
     <tb-widgets-bundle-select
       formControlName="widgetsBundle"
+      appearance="outline"
       createNew
       bundlesScope="{{bundlesScope}}">
     </tb-widgets-bundle-select>

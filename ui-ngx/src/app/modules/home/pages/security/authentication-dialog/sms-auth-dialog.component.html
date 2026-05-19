@@ -42,6 +42,7 @@
         <div class="flex flex-row items-center justify-between gap-3.75">
           <tb-phone-input class="flex-1"
                           formControlName="phone"
+                          appearance="outline"
                           [floatLabel]="'never'"
                           placeholder="{{ 'security.2fa.dialog.sms-step-label' | translate }}">
           </tb-phone-input>
@@ -61,7 +62,7 @@
           {{ 'security.2fa.dialog.verification-step-description' | translate : {address: smsConfigForm.get('phone').value} }}
         </p>
         <div class="flex flex-row items-center justify-between xs:flex-col xs:items-end xs:justify-start">
-          <mat-form-field class="mat-block code-container full-width-xs flex-1">
+          <mat-form-field class="mat-block code-container full-width-xs flex-1" appearance="outline">
             <input matInput formControlName="verificationCode"
                    maxlength="6" type="text" required
                    inputmode="numeric" pattern="[0-9]*"

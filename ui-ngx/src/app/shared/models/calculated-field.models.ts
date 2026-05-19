@@ -80,7 +80,9 @@ export type CalculatedField =
   | CalculatedFieldRelatedEntityAggregation
   | CalculatedFieldAlarmRule;
 
-export type CalculatedFieldInfo = CalculatedField & {entityName: string};
+export type WithCalculatedFieldInfo<T> = T & {entityName: string};
+export type CalculatedFieldInfo = WithCalculatedFieldInfo<CalculatedField>;
+export type CalculatedFieldAlarmRuleInfo = WithCalculatedFieldInfo<CalculatedFieldAlarmRule>;
 
 export enum CalculatedFieldType {
   SIMPLE = 'SIMPLE',
@@ -192,7 +194,7 @@ interface BasePropagationConfiguration {
   output: CalculatedFieldOutput;
 }
 
-interface CalculatedFieldAlarmRuleConfiguration {
+export interface CalculatedFieldAlarmRuleConfiguration {
   type: CalculatedFieldType.ALARM;
   arguments: Record<string, CalculatedFieldArgument>;
   createRules: Record<AlarmSeverity, AlarmRule>;

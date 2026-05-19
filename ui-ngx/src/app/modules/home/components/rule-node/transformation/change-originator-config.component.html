@@ -16,7 +16,7 @@
 
 -->
 <section [formGroup]="changeOriginatorConfigForm" class="tb-form-panel no-border no-padding">
-  <mat-form-field class="mat-block" subscriptSizing="dynamic" hideRequiredMarker>
+  <mat-form-field class="mat-block" subscriptSizing="dynamic" hideRequiredMarker appearance="outline">
     <mat-label translate>rule-node-config.new-originator</mat-label>
     <mat-select formControlName="originatorSource" required>
       <mat-select-trigger>
@@ -40,8 +40,7 @@
       </mat-select>
     </mat-form-field>
     @if (changeOriginatorConfigForm.get('originatorSource').value === originatorSource.ENTITY) {
-      <div class="tb-form-panel stroked no-padding-bottom"
-           >
+      <div class="tb-form-panel stroked no-padding-bottom">
         <tb-example-hint [hintText]="'rule-node-config.entity-name-pattern-hint'"
                          popupHelpLink="rulenode/change_originator_node_fields_templatization">
         </tb-example-hint>
@@ -49,11 +48,12 @@
           <tb-entity-type-select
             showLabel
             required
+            appearance="outline"
             [allowedEntityTypes] = "allowedEntityTypes"
             formControlName="entityType"
             class="mat-mdc-form-field flex">
           </tb-entity-type-select>
-          <mat-form-field class="flex">
+          <mat-form-field class="flex" appearance="outline">
             <mat-label translate>rule-node-config.entity-name-pattern</mat-label>
             <input required matInput formControlName="entityNamePattern">
             @if (changeOriginatorConfigForm.get('entityNamePattern').hasError('required') ||

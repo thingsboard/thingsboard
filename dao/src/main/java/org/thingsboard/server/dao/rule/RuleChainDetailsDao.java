@@ -15,15 +15,9 @@
  */
 package org.thingsboard.server.dao.rule;
 
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleChainDetails;
+import org.thingsboard.server.dao.Dao;
 
-import java.util.UUID;
-
-public interface RuleChainDetailsDao {
-
-    RuleChainDetails findById(TenantId tenantId, UUID id);
-
-    RuleChainDetails save(TenantId tenantId, RuleChainDetails ruleChainDetails);
+public interface RuleChainDetailsDao extends Dao<RuleChainDetails> {
 
 }

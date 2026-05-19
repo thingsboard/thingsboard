@@ -21,11 +21,15 @@ import { AppState } from '@core/core.state';
 import { FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@shared/components/dialog.component';
-import { CalculatedField, CalculatedFieldArgument, CalculatedFieldType } from '@shared/models/calculated-field.models';
+import {
+  CalculatedFieldAlarmRule,
+  CalculatedFieldArgument,
+  CalculatedFieldType
+} from '@shared/models/calculated-field.models';
 import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ScriptLanguage } from '@shared/models/rule-node.models';
-import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
+import { AlarmRulesService } from '@core/http/alarm-rules.service';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AdditionalDebugActionConfig } from '@home/components/entity/debug/entity-debug-settings.model';
 import { COMMA, ENTER, SEMICOLON } from "@angular/cdk/keycodes";
@@ -49,13 +53,13 @@ import { AssetInfo } from '@shared/models/asset.models';
 import { DeviceInfo } from '@shared/models/device.models';
 
 export interface AlarmRuleDialogData {
-  value?: CalculatedField;
+  value?: CalculatedFieldAlarmRule;
   buttonTitle: string;
   entityId: EntityId;
   tenantId: string;
   entityName?: string;
   ownerId: EntityId;
-  additionalDebugActionConfig: AdditionalDebugActionConfig<(calculatedField: CalculatedField) => void>;
+  additionalDebugActionConfig: AdditionalDebugActionConfig<(calculatedField: CalculatedFieldAlarmRule) => void>;
   isDirty?: boolean;
   getTestScriptDialogFn: AlarmRuleTestScriptFn,
 }
@@ -67,7 +71,7 @@ export interface AlarmRuleDialogData {
     encapsulation: ViewEncapsulation.None,
     standalone: false
 })
-export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogComponent, CalculatedField> {
+export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogComponent, CalculatedFieldAlarmRule> {
 
   @ViewChild('entitySelect') entitySelect!: EntitySelectComponent;
 
@@ -96,8 +100,8 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: AlarmRuleDialogData,
-              protected dialogRef: MatDialogRef<AlarmRuleDialogComponent, CalculatedField>,
-              private calculatedFieldsService: CalculatedFieldsService,
+              protected dialogRef: MatDialogRef<AlarmRuleDialogComponent, CalculatedFieldAlarmRule>,
+              private alarmRulesService: AlarmRulesService,
               private destroyRef: DestroyRef,
               private cfFormService: CalculatedFieldFormService) {
     super(store, router, dialogRef);
@@ -159,8 +163,8 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
     this.configFormGroup.patchValue({clearRule: clearAlarmRule});
   }
 
-  get fromGroupValue(): CalculatedField {
-    return deepTrim(this.fieldFormGroup.value as CalculatedField);
+  get fromGroupValue(): CalculatedFieldAlarmRule {
+    return deepTrim(this.fieldFormGroup.value as CalculatedFieldAlarmRule);
   }
 
   cancel(): void {
@@ -173,7 +177,7 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
       const alarmRule = { entityId: this.data.entityId, ...(this.data.value ?? {}),  ...this.fromGroupValue};
       alarmRule.configuration.type = CalculatedFieldType.ALARM;
 
-      this.calculatedFieldsService.saveCalculatedField(alarmRule)
+      this.alarmRulesService.saveAlarmRule(alarmRule)
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: calculatedField => this.dialogRef.close(calculatedField),

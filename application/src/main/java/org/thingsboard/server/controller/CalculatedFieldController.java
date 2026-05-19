@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.controller;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -24,10 +23,7 @@ import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.ObjectUtils;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.MultiValueMap;
@@ -40,13 +36,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.script.api.tbel.TbelCfArg;
-import org.thingsboard.script.api.tbel.TbelCfCtx;
-import org.thingsboard.script.api.tbel.TbelCfSingleValueArg;
-import org.thingsboard.script.api.tbel.TbelCfTsDoubleVal;
-import org.thingsboard.script.api.tbel.TbelCfTsRollingArg;
-import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.cf.CalculatedField;
@@ -65,21 +54,15 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldTbelScriptEngine;
 import org.thingsboard.server.service.entitiy.cf.TbCalculatedFieldService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import static org.thingsboard.server.controller.ControllerConstants.CF_TEXT_SEARCH_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_ID_PARAM_DESCRIPTION;
@@ -98,16 +81,12 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 @TbCoreComponent
 @RequestMapping("/api")
 @RequiredArgsConstructor
-@Slf4j
 public class CalculatedFieldController extends BaseController {
 
     private final TbCalculatedFieldService tbCalculatedFieldService;
     private final EventService eventService;
-    private final TbelInvokeService tbelInvokeService;
 
     public static final String CALCULATED_FIELD_ID = "calculatedFieldId";
-
-    public static final int TIMEOUT = 20;
 
     private static final String TEST_SCRIPT_EXPRESSION =
             "Execute the Script expression and return the result. The format of request: \n\n"
@@ -171,13 +150,13 @@ public class CalculatedFieldController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @GetMapping(value = "/{entityType}/{entityId}/calculatedFields", params = {"pageSize", "page"})
     public PageData<CalculatedField> getCalculatedFieldsByEntityIdV1(@PathVariable("entityType") String entityType,
-                                                                   @PathVariable("entityId") String entityIdStr,
-                                                                   @RequestParam int pageSize,
-                                                                   @RequestParam int page,
-                                                                   @RequestParam(required = false) CalculatedFieldType type,
-                                                                   @RequestParam(required = false) String textSearch,
-                                                                   @RequestParam(required = false) String sortProperty,
-                                                                   @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+                                                                     @PathVariable("entityId") String entityIdStr,
+                                                                     @RequestParam int pageSize,
+                                                                     @RequestParam int page,
+                                                                     @RequestParam(required = false) CalculatedFieldType type,
+                                                                     @RequestParam(required = false) String textSearch,
+                                                                     @RequestParam(required = false) String sortProperty,
+                                                                     @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         checkParameter("entityId", entityIdStr);
         EntityId entityId = EntityIdFactory.getByTypeAndUuid(entityType, entityIdStr);
@@ -305,86 +284,9 @@ public class CalculatedFieldController extends BaseController {
     @PostMapping("/calculatedField/testScript")
     public JsonNode testCalculatedFieldScript(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Test calculated field TBEL expression.")
-            @RequestBody JsonNode inputParams) {
-        String expression = inputParams.get("expression").asText();
-        Map<String, TbelCfArg> arguments = Objects.requireNonNullElse(
-                JacksonUtil.convertValue(inputParams.get("arguments"), new TypeReference<>() {}),
-                Collections.emptyMap()
-        );
-
-        ArrayList<String> ctxAndArgNames = new ArrayList<>(arguments.size() + 1);
-        ctxAndArgNames.add("ctx");
-        ctxAndArgNames.addAll(arguments.keySet());
-
-        String output = "";
-        String errorText = "";
-
-        CalculatedFieldTbelScriptEngine engine = null;
-        try {
-            if (tbelInvokeService == null) {
-                throw new IllegalArgumentException("TBEL script engine is disabled!");
-            }
-
-            engine = new CalculatedFieldTbelScriptEngine(
-                    getTenantId(),
-                    tbelInvokeService,
-                    expression,
-                    ctxAndArgNames.toArray(String[]::new)
-            );
-
-            Object[] args = new Object[ctxAndArgNames.size()];
-            args[0] = new TbelCfCtx(arguments, getLatestTimestamp(arguments));
-            for (int i = 1; i < ctxAndArgNames.size(); i++) {
-                var arg = arguments.get(ctxAndArgNames.get(i));
-                if (arg instanceof TbelCfSingleValueArg svArg) {
-                    args[i] = svArg.getValue();
-                } else {
-                    args[i] = arg;
-                }
-            }
-
-            JsonNode json = engine.executeJsonAsync(args).get(TIMEOUT, TimeUnit.SECONDS);
-            output = JacksonUtil.toString(json);
-        } catch (Exception e) {
-            log.error("Error evaluating expression", e);
-            Throwable rootCause = ExceptionUtils.getRootCause(e);
-            errorText = ObjectUtils.firstNonNull(rootCause.getMessage(), e.getMessage(), e.getClass().getSimpleName());
-        } finally {
-            if (engine != null) {
-                engine.destroy();
-            }
-        }
-        return JacksonUtil.newObjectNode()
-                .put("output", output)
-                .put("error", errorText);
-    }
-
-    private long getLatestTimestamp(Map<String, TbelCfArg> arguments) {
-        long lastUpdateTimestamp = -1;
-        for (TbelCfArg entry : arguments.values()) {
-            if (entry instanceof TbelCfSingleValueArg singleValueArg) {
-                long ts = singleValueArg.getTs();
-                lastUpdateTimestamp = Math.max(lastUpdateTimestamp, ts);
-            } else if (entry instanceof TbelCfTsRollingArg tsRollingArg) {
-                long maxTs = tsRollingArg.getValues().stream().mapToLong(TbelCfTsDoubleVal::getTs).max().orElse(-1);
-                lastUpdateTimestamp = Math.max(lastUpdateTimestamp, maxTs);
-            }
-        }
-        return lastUpdateTimestamp == -1 ? System.currentTimeMillis() : lastUpdateTimestamp;
-    }
-
-    private void checkReferencedEntities(CalculatedFieldConfiguration calculatedFieldConfig) throws ThingsboardException {
-        Set<EntityId> referencedEntityIds = calculatedFieldConfig.getReferencedEntities();
-        for (EntityId referencedEntityId : referencedEntityIds) {
-            EntityType entityType = referencedEntityId.getEntityType();
-            switch (entityType) {
-                case TENANT -> {
-                    return;
-                }
-                case CUSTOMER, ASSET, DEVICE -> checkEntityId(referencedEntityId, Operation.READ);
-                default -> throw new IllegalArgumentException("Calculated fields do not support '" + entityType + "' for referenced entities.");
-            }
-        }
+            @RequestBody JsonNode inputParams) throws ThingsboardException {
+        checkParameter("expression", inputParams.has("expression") ? inputParams.get("expression").asText() : null);
+        return tbCalculatedFieldService.executeTestScript(getTenantId(), inputParams);
     }
 
 }

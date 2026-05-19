@@ -37,7 +37,7 @@
           }
         </div>
         <span class="flex-1"></span>
-        @if (attributeScope !== attributeScopeTypes.CLIENT_SCOPE) {
+        @if (attributeScope !== attributeScopeTypes.CLIENT_SCOPE && !disableAddTelemetry) {
           <button mat-icon-button
                   [disabled]="isLoading$ | async"
                   (click)="addAttribute($event)"
@@ -254,6 +254,7 @@
                             [widgets]="widgets"
                             [columns]="20"
                             [isEdit]="false"
+                            [isPreview]="true"
                             [isMobileDisabled]="true"
                             [isEditActionEnabled]="false"
                             [isRemoveActionEnabled]="false">

@@ -20,24 +20,28 @@
   [popupHelpLink]="popupHelpLink"></tb-example-hint>
   <tb-string-items-list subscriptSizing="dynamic" class="mat-block" editable
                         (focusout)="onTouched()"
+                        appearance="outline"
                         [placeholder]="'rule-node-config.add-attribute-key' | translate"
                         [label]="'rule-node-config.client-attributes' | translate" formControlName="clientAttributeNames">
     <ng-container matSuffix *ngTemplateOutlet="helpIcon"></ng-container>
   </tb-string-items-list>
   <tb-string-items-list subscriptSizing="dynamic" class="mat-block" editable
                         (focusout)="onTouched()"
+                        appearance="outline"
                         [placeholder]="'rule-node-config.add-attribute-key' | translate"
                         [label]="'rule-node-config.shared-attributes' | translate" formControlName="sharedAttributeNames">
     <ng-container matSuffix *ngTemplateOutlet="helpIcon"></ng-container>
   </tb-string-items-list>
   <tb-string-items-list subscriptSizing="dynamic" class="mat-block" editable
                         (focusout)="onTouched()"
+                        appearance="outline"
                         [placeholder]="'rule-node-config.add-attribute-key' | translate"
                         [label]="'rule-node-config.server-attributes' | translate" formControlName="serverAttributeNames">
     <ng-container matSuffix *ngTemplateOutlet="helpIcon"></ng-container>
   </tb-string-items-list>
   <tb-string-items-list subscriptSizing="dynamic" editable class="mat-block"
                         (focusout)="onTouched()"
+                        appearance="outline"
                         [placeholder]="'rule-node-config.add-telemetry-key' | translate"
                         [label]="'rule-node-config.latest-telemetry' | translate" formControlName="latestTsKeyNames">
     <ng-container matSuffix *ngTemplateOutlet="helpIcon"></ng-container>

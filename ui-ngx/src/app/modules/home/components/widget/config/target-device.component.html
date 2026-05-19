@@ -25,6 +25,7 @@
   </div>
   @if (targetDeviceFormGroup.get('type').value === targetDeviceType.device) {
     <tb-entity-autocomplete
+      [appearance]="appearance"
       [required]="(!widgetEditMode && !targetDeviceOptional)"
       [entityType]="entityType.DEVICE"
       formControlName="deviceId">
@@ -32,6 +33,7 @@
   }
   @if (targetDeviceFormGroup.get('type').value === targetDeviceType.entity) {
     <tb-entity-alias-select
+      [appearance]="appearance"
       [tbRequired]="(!widgetEditMode && !targetDeviceOptional)"
       [aliasController]="aliasController"
       [callbacks]="entityAliasSelectCallbacks"

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.query;
 
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -62,6 +63,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -320,9 +322,18 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             .replace("$in", "from").replace("$out", "to")
             .replace("$rootIdCondition", "in (:relation_root_ids)");
 
+    private static final String NULLS_ORDER_DEFAULT = "default";
+    private static final String NULLS_ORDER_FIRST = "nulls_first";
+    private static final String NULLS_ORDER_LAST = "nulls_last";
+    private static final Set<String> ACCEPTED_NULLS_ORDER_STRATEGIES = Set.of(NULLS_ORDER_DEFAULT, NULLS_ORDER_FIRST, NULLS_ORDER_LAST);
+
     @Getter
     @Value("${sql.relations.max_level:50}")
     int maxLevelAllowed; //This value has to be reasonable small to prevent infinite recursion as early as possible
+
+    @Getter
+    @Value("${sql.entity_data_query_nulls_order_strategy:default}")
+    String nullsOrderStrategy;
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
     private final TransactionTemplate transactionTemplate;
@@ -332,6 +343,15 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         this.jdbcTemplate = jdbcTemplate;
         this.transactionTemplate = transactionTemplate;
         this.queryLog = queryLog;
+    }
+
+    @PostConstruct
+    void validateNullsOrderStrategy() {
+        if (!ACCEPTED_NULLS_ORDER_STRATEGIES.contains(nullsOrderStrategy)) {
+            log.error("Invalid value '{}' for sql.entity_data_query_nulls_order_strategy. Accepted values are: {}. Falling back to '{}'.",
+                    nullsOrderStrategy, ACCEPTED_NULLS_ORDER_STRATEGIES, NULLS_ORDER_DEFAULT);
+            nullsOrderStrategy = NULLS_ORDER_DEFAULT;
+        }
     }
 
     @Override
@@ -365,10 +385,13 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             List<EntityKeyMapping> entityFieldsFiltersMapping = filterMapping.stream().filter(mapping -> !mapping.isLatest() && mapping.getEntityKeyColumn() != null)
                     .collect(Collectors.toList());
 
-            // Under OR: entity field filter columns must be in inner SELECT for outer WHERE reference
+            // Under OR: entity field filter columns must be in inner SELECT for outer WHERE reference.
+            // Mirror the ignore=true fix from findEntityDataByQuery so the inner subquery still emits the
+            // extra column but downstream response shape (benign for count) stays symmetric with the data path.
             if (isOr) {
                 for (EntityKeyMapping m : entityFieldsFiltersMapping) {
                     if (!selectionMapping.contains(m)) {
+                        m.setIgnore(true);
                         selectionMapping.add(m);
                     }
                 }
@@ -464,10 +487,13 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             List<EntityKeyMapping> entityFieldsFiltersMapping = filterMapping.stream().filter(mapping -> !mapping.isLatest() && mapping.getEntityKeyColumn() != null)
                     .collect(Collectors.toList());
 
-            // Under OR: entity field filter columns must be in inner SELECT for outer WHERE reference
+            // Under OR: entity field filter columns must be in inner SELECT for outer WHERE reference.
+            // Mark force-added filter-only mappings as ignored so EntityDataAdapter does not expose
+            // them in EntityData.latest — keeps the response shape identical to AND.
             if (isOr) {
                 for (EntityKeyMapping m : entityFieldsFiltersMapping) {
                     if (!selectionMapping.contains(m)) {
+                        m.setIgnore(true);
                         selectionMapping.add(m);
                     }
                 }
@@ -567,11 +593,12 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                 if (sortOrderMappingOpt.isPresent()) {
                     EntityKeyMapping sortOrderMapping = sortOrderMappingOpt.get();
                     String direction = sortOrder.getDirection() == EntityDataSortOrder.Direction.ASC ? "asc" : "desc";
+                    String nullsOrder = resolveNullsOrder();
                     if (sortOrderMapping.getEntityKey().getType() == EntityKeyType.ENTITY_FIELD) {
-                        dataQuery = String.format("%s order by %s %s, result.id %s", dataQuery, sortOrderMapping.getValueAlias(), direction, direction);
+                        dataQuery = String.format("%s order by %s %s%s, result.id %s", dataQuery, sortOrderMapping.getValueAlias(), direction, nullsOrder, direction);
                     } else {
-                        dataQuery = String.format("%s order by %s %s, %s %s, result.id %s", dataQuery,
-                                sortOrderMapping.getSortOrderNumAlias(), direction, sortOrderMapping.getSortOrderStrAlias(), direction, direction);
+                        dataQuery = String.format("%s order by %s %s%s, %s %s, result.id %s", dataQuery,
+                                sortOrderMapping.getSortOrderNumAlias(), direction, nullsOrder, sortOrderMapping.getSortOrderStrAlias(), direction, direction);
                     }
                 }
             }
@@ -588,6 +615,14 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             }
             return EntityDataAdapter.createEntityData(pageLink, selectionMapping, rows, totalElements);
         });
+    }
+
+    private String resolveNullsOrder() {
+        return switch (nullsOrderStrategy) {
+            case NULLS_ORDER_FIRST -> " NULLS FIRST";
+            case NULLS_ORDER_LAST -> " NULLS LAST";
+            default -> "";
+        };
     }
 
     private String buildEntityWhere(SqlQueryContext ctx, EntityFilter entityFilter, List<EntityKeyMapping> entityFieldsFilters) {

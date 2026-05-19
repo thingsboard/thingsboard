@@ -7466,7 +7466,7 @@
       "handle-empty-result-function": "Funktion zum Verarbeiten eines leeren Ergebnisses",
       "handle-error-function": "Funktion zum Verarbeiten eines Fehlers",
       "handle-non-mobile-fallback-function": "Fallback-Funktion für Nicht-Mobile",
-      "save-to-gallery": "In Galerie speichern",
+      "save-to-gallery": "In 'Bildergalerie' speichern",
       "provision-type": "Provisioning-Typ",
       "auto": "Auto",
       "wi-fi": "WLAN",

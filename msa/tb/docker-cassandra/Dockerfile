@@ -57,6 +57,10 @@ RUN echo "Previously installed font libraries:" \
 
 COPY logback.xml ${pkg.name}.conf start-db.sh stop-db.sh start-tb.sh upgrade-tb.sh install-tb.sh ${pkg.name}.deb /tmp/
 
+# Keep base image's customized conffiles (e.g. /etc/java-17-openjdk/security/java.security)
+# when apt upgrades openjdk-17-jre-headless transitively as cassandra's java11-runtime provider;
+# without this dpkg blocks on a non-interactive conffile prompt and the build fails.
+ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update \
     && apt-get install -y --no-install-recommends wget nmap procps gnupg2 \
     && mkdir -p /etc/apt/keyrings \
@@ -65,7 +69,9 @@ RUN apt-get update \
     && wget -q https://downloads.apache.org/cassandra/KEYS -O- | gpg --dearmor -o /etc/apt/keyrings/cassandra.gpg \
     && echo "deb [signed-by=/etc/apt/keyrings/cassandra.gpg] https://debian.cassandra.apache.org 40x main" | tee /etc/apt/sources.list.d/cassandra.sources.list > /dev/null \
     && apt-get update \
-    && apt-get install -y --no-install-recommends cassandra cassandra-tools postgresql-${PG_MAJOR} \
+    && apt-get install -y --no-install-recommends \
+         -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" \
+         cassandra cassandra-tools postgresql-${PG_MAJOR} \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get purge -y --auto-remove \
     && sed -i.old '/ulimit/d' /etc/init.d/cassandra \

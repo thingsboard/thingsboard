@@ -34,7 +34,7 @@
     <mat-card-content style="padding-top: 16px;">
       <form [formGroup]="mailSettings" (ngSubmit)="save()">
         <fieldset [disabled]="isLoading$ | async">
-          <mat-form-field class="mat-block">
+          <mat-form-field class="mat-block" appearance="outline">
             <mat-label translate>admin.mail-from</mat-label>
             <input matInput formControlName="mailFrom" required/>
             @if (mailSettings.get('mailFrom').hasError('required')) {
@@ -44,7 +44,7 @@
             }
           </mat-form-field>
 
-          <mat-form-field class="mat-block">
+          <mat-form-field class="mat-block" appearance="outline">
             <mat-label translate>admin.oauth2.smtp-provider</mat-label>
             <mat-select formControlName="providerId">
               @for (provider of templateProvider; track provider) {
@@ -62,7 +62,7 @@
               </mat-panel-title>
             </mat-expansion-panel-header>
             <ng-template matExpansionPanelContent>
-              <mat-form-field class="mat-block">
+              <mat-form-field class="mat-block" appearance="outline">
                 <mat-label translate>admin.smtp-protocol</mat-label>
                 <mat-select formControlName="smtpProtocol">
                   @for (protocol of smtpProtocols; track protocol) {
@@ -73,7 +73,7 @@
                 </mat-select>
               </mat-form-field>
               <div class="gt-sm:flex gt-sm:flex-row gt-sm:gap-2.5">
-                <mat-form-field class="mat-block flex-full gt-sm:max-w-60%">
+                <mat-form-field class="mat-block flex-full gt-sm:max-w-60%" appearance="outline">
                   <mat-label translate>admin.smtp-host</mat-label>
                   <input matInput formControlName="smtpHost" placeholder="localhost" required/>
                   @if (mailSettings.get('smtpHost').hasError('required')) {
@@ -82,7 +82,7 @@
                     </mat-error>
                   }
                 </mat-form-field>
-                <mat-form-field class="mat-block flex-full gt-sm:max-w-40%">
+                <mat-form-field class="mat-block flex-full gt-sm:max-w-40%" appearance="outline">
                   <mat-label translate>admin.smtp-port</mat-label>
                   <input matInput #smtpPortInput formControlName="smtpPort" placeholder="25" maxlength="5" required/>
                   <mat-hint align="end">{{smtpPortInput.value?.length || 0}}/5</mat-hint>
@@ -98,7 +98,7 @@
                   }
                 </mat-form-field>
               </div>
-              <mat-form-field class="mat-block">
+              <mat-form-field class="mat-block" appearance="outline">
                 <mat-label translate>admin.timeout-msec</mat-label>
                 <input matInput #timeoutInput formControlName="timeout" placeholder="10000" maxlength="6" required/>
                 <mat-hint align="end">{{timeoutInput.value?.length || 0}}/6</mat-hint>
@@ -117,7 +117,7 @@
                 {{ 'admin.enable-tls' | translate }}
               </mat-slide-toggle>
               @if (mailSettings.get('enableTls').value) {
-                <mat-form-field class="mat-block flex-1">
+                <mat-form-field class="mat-block flex-1" appearance="outline">
                   <mat-label translate>admin.tls-version</mat-label>
                   <mat-select formControlName="tlsVersion">
                     @for (tlsVersion of tlsVersions; track tlsVersion) {
@@ -134,7 +134,7 @@
               @if (mailSettings.get('enableProxy').value) {
                 <div>
                   <div class="gt-sm:flex gt-sm:flex-row gt-sm:gap-2">
-                    <mat-form-field class="mat-block flex-full gt-sm:max-w-60%">
+                    <mat-form-field class="mat-block flex-full gt-sm:max-w-60%" appearance="outline">
                       <mat-label translate>admin.proxy-host</mat-label>
                       <input matInput required formControlName="proxyHost">
                       @if (mailSettings.get('proxyHost').hasError('required')) {
@@ -143,7 +143,7 @@
                         </mat-error>
                       }
                     </mat-form-field>
-                    <mat-form-field class="mat-block flex-full gt-sm:max-w-40%">
+                    <mat-form-field class="mat-block flex-full gt-sm:max-w-40%" appearance="outline">
                       <mat-label translate>admin.proxy-port</mat-label>
                       <input matInput required formControlName="proxyPort" type="number" step="1" min="1" max="65535">
                       @if (mailSettings.get('proxyPort').hasError('required')) {
@@ -161,11 +161,11 @@
                     </mat-form-field>
                   </div>
                   <div class="flex flex-row xs:flex-col gt-xs:gap-2">
-                    <mat-form-field class="mat-block flex-1">
+                    <mat-form-field class="mat-block flex-1" appearance="outline">
                       <mat-label translate>admin.proxy-user</mat-label>
                       <input matInput formControlName="proxyUser">
                     </mat-form-field>
-                    <mat-form-field class="mat-block flex-1">
+                    <mat-form-field class="mat-block flex-1" appearance="outline">
                       <mat-label translate>admin.proxy-password</mat-label>
                       <input matInput type="password" formControlName="proxyPassword" autocomplete="new-password">
                       <tb-toggle-password matSuffix></tb-toggle-password>
@@ -178,7 +178,7 @@
 
           <fieldset class="fields-group flex flex-col">
             <legend class="group-title" translate>admin.oauth2.authentication</legend>
-            <mat-form-field class="mat-block">
+            <mat-form-field class="mat-block" appearance="outline">
               <mat-label translate>common.username</mat-label>
               <input matInput formControlName="username" placeholder="{{ 'common.enter-username' | translate }}"
                      autocomplete="new-username"/>
@@ -202,7 +202,7 @@
                   </mat-checkbox>
                 }
                 @if (mailSettings.get('changePassword').value || !showChangePassword) {
-                  <mat-form-field class="mat-block">
+                  <mat-form-field class="mat-block" appearance="outline">
                     <mat-label translate>common.password</mat-label>
                     <input matInput formControlName="password" type="password"
                            placeholder="{{ 'common.enter-password' | translate }}" autocomplete="new-password"/>
@@ -214,7 +214,7 @@
             @if (mailSettings.get('enableOauth2').value) {
               <section>
                 <div class="flex flex-row xs:flex-col gt-xs:gap-2">
-                  <mat-form-field class="mat-block flex-1">
+                  <mat-form-field class="mat-block flex-1" appearance="outline">
                     <mat-label translate>admin.oauth2.client-id</mat-label>
                     <input matInput formControlName="clientId" required>
                     @if (mailSettings.get('clientId').hasError('required')) {
@@ -228,7 +228,7 @@
                       </mat-error>
                     }
                   </mat-form-field>
-                  <mat-form-field class="mat-block flex-1">
+                  <mat-form-field class="mat-block flex-1" appearance="outline">
                     <mat-label translate>admin.oauth2.client-secret</mat-label>
                     <input matInput formControlName="clientSecret" required>
                     @if (mailSettings.get('clientSecret').hasError('required')) {
@@ -244,7 +244,7 @@
                   </mat-form-field>
                 </div>
                 @if (mailSettings.get('providerId').value === mailServerOauth2Provider.OFFICE_365) {
-                  <mat-form-field class="mat-block flex-1">
+                  <mat-form-field class="mat-block flex-1" appearance="outline">
                     <mat-label translate>admin.oauth2.microsoft-tenant-id</mat-label>
                     <input matInput formControlName="providerTenantId" required>
                     @if (mailSettings.get('providerTenantId').hasError('required')) {
@@ -262,7 +262,7 @@
                   </mat-expansion-panel-header>
                   <ng-template matExpansionPanelContent>
                     <div class="flex flex-row xs:flex-col gt-xs:gap-2">
-                      <mat-form-field class="mat-block flex-1">
+                      <mat-form-field class="mat-block flex-1" appearance="outline">
                         <mat-label translate>admin.oauth2.authorization-uri</mat-label>
                         <input matInput formControlName="authUri" required>
                         <button mat-icon-button matSuffix
@@ -281,7 +281,7 @@
                           </mat-error>
                         }
                       </mat-form-field>
-                      <mat-form-field class="mat-block flex-1">
+                      <mat-form-field class="mat-block flex-1" appearance="outline">
                         <mat-label translate>admin.oauth2.token-uri</mat-label>
                         <input matInput formControlName="tokenUri" required>
                         <button mat-icon-button matSuffix
@@ -302,6 +302,7 @@
                       </mat-form-field>
                     </div>
                     <tb-string-items-list
+                      appearance="outline"
                       formControlName="scope" required
                       label="{{ 'admin.oauth2.scope' | translate }}"
                       requiredText="{{ 'admin.oauth2.scope-required' | translate }}">
@@ -313,7 +314,7 @@
                   <div class="flex flex-1 flex-row gap-2 xs:flex-col">
                     <div class="flex flex-col sm:max-w-60% sm:flex-full gt-sm:max-w-50% gt-sm:flex-full" [formGroup]="domainForm">
                       <div class="flex flex-row gap-2 xs:flex-col md:flex-col md:gap-0">
-                        <mat-form-field class="mat-block max-w-30% flex-full xs:max-w-full xs:flex-1 md:max-w-full md:flex-1">
+                        <mat-form-field class="mat-block max-w-30% flex-full xs:max-w-full xs:flex-1 md:max-w-full md:flex-1" appearance="outline">
                           <mat-label translate>admin.oauth2.protocol</mat-label>
                           <mat-select formControlName="scheme">
                             @for (protocol of protocols; track protocol) {
@@ -323,7 +324,7 @@
                             }
                           </mat-select>
                         </mat-form-field>
-                        <mat-form-field class="mat-block flex-1">
+                        <mat-form-field class="mat-block flex-1" appearance="outline">
                           <mat-label translate>admin.domain-name</mat-label>
                           <input matInput formControlName="name" required>
                           @if (domainForm.get('name').hasError('pattern')) {
@@ -345,7 +346,7 @@
                       }
                     </div>
                     <div class="flex flex-1 flex-col gt-xs:w-0">
-                      <mat-form-field class="mat-block flex-1">
+                      <mat-form-field class="mat-block flex-1" appearance="outline">
                         <mat-label translate>admin.oauth2.redirect-uri-template</mat-label>
                         <input matInput formControlName="redirectUri" readonly>
                         <tb-copy-button

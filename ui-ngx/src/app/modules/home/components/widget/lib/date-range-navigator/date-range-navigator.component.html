@@ -19,7 +19,7 @@
      [class.short-mode]="ctx.width < 400"
      [class.labels-hidden]="settings.hideLabels"
      [class.long-mode]="ctx.width >= 400">
-  <mat-form-field class="mat-block" [class.!hidden]="settings.hidePicker" (click)="openNavigatorPanel($event)">
+  <mat-form-field class="mat-block" [class.!hidden]="settings.hidePicker" (click)="openNavigatorPanel($event)" appearance="outline">
     @if (!settings.hideLabels) {
       <mat-label translate>widgets.date-range-navigator.localizationMap.Date picker</mat-label>
     }
@@ -29,7 +29,7 @@
       </mat-option>
     </mat-select>
   </mat-form-field>
-  <mat-form-field class="mat-block" [class.!hidden]="settings.hideInterval">
+  <mat-form-field class="mat-block" [class.!hidden]="settings.hideInterval" appearance="outline">
     @if (!settings.hideLabels) {
       <mat-label translate>widgets.date-range-navigator.localizationMap.Interval</mat-label>
     }
@@ -51,7 +51,7 @@
     <button mat-icon-button (click)="goBack()">
       <mat-icon>keyboard_arrow_left</mat-icon>
     </button>
-    <mat-form-field class="mat-block gt-sm:flex-1">
+    <mat-form-field class="mat-block gt-sm:flex-1" appearance="outline">
       @if (!settings.hideLabels) {
         <mat-label translate>widgets.date-range-navigator.localizationMap.Step size</mat-label>
       }

@@ -41,7 +41,6 @@ export interface FilterDialogData {
 @Component({
   selector: 'tb-filter-dialog',
   templateUrl: './filter-dialog.component.html',
-  styleUrls: ['./filter-dialog.component.scss'],
   standalone: false
 })
 export class FilterDialogComponent extends DialogComponent<FilterDialogComponent, Filter> {

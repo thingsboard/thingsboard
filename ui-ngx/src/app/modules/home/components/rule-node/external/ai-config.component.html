@@ -82,6 +82,7 @@
         </mat-form-field>
         <tb-entity-list
           class="flex-1"
+          appearance="outline"
           syncIdsWithDB
           allowCreateNew
           placeholderText="{{ 'rule-node-config.ai.ai-resources' | translate }}"
@@ -133,6 +134,7 @@
               <tb-time-unit-input
                 required
                 inlineField
+                appearance="outline"
                 requiredText="{{ 'rule-node-config.ai.timeout-required' | translate }}"
                 minErrorText="{{ 'rule-node-config.ai.timeout-validation' | translate }}"
                 maxErrorText="{{ 'rule-node-config.ai.timeout-validation' | translate }}"

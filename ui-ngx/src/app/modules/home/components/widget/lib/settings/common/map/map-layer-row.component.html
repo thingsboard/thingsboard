@@ -28,6 +28,18 @@
       }
     </mat-select>
   </mat-form-field>
+  @if (MapProvider.openfreemap === layerFormGroup.get('provider').value) {
+    <mat-form-field
+      class="tb-inline-field tb-layer-field" appearance="outline" subscriptSizing="dynamic">
+      <mat-select formControlName="layerType" required>
+        @for (styleType of openFreeMapStyleTypes; track styleType) {
+          <mat-option [value]="styleType">
+            {{ openFreeMapStyleTranslationMap.get(styleType) | translate }}
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  }
   @if (MapProvider.openstreet === layerFormGroup.get('provider').value) {
     <mat-form-field
       class="tb-inline-field tb-layer-field" appearance="outline" subscriptSizing="dynamic">

@@ -19,11 +19,11 @@
   <div class="tb-entity-table-content tb-outlined-border flex flex-1 flex-col">
     <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="textSearchMode || !dataSource.selection.isEmpty()">
       <div class="mat-toolbar-tools">
-        <div class="title-container flex flex-row items-center justify-start xs:flex-col xs:items-start xs:justify-center">
+        <div class="title-container flex flex-row items-center justify-start xs:flex-col xs:items-start xs:justify-center pt-1">
           <span class="tb-entity-table-title">
             {{(direction == directions.FROM ? 'relation.from-relations' : 'relation.to-relations') | translate}}
           </span>
-          <mat-form-field class="mat-block tb-relation-direction">
+          <mat-form-field class="mat-block tb-relation-direction" appearance="outline" subscriptSizing="dynamic">
             <mat-label translate>relation.direction</mat-label>
             <mat-select [ngModel]="direction"
                         (ngModelChange)="directionChanged($event)">

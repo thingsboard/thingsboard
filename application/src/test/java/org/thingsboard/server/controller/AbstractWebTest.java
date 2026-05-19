@@ -94,6 +94,7 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.cf.AlarmRuleDefinition;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldInfo;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
@@ -1480,6 +1481,10 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected CalculatedField saveCalculatedField(CalculatedField calculatedField) {
         return doPost("/api/calculatedField", calculatedField, CalculatedField.class);
+    }
+
+    protected AlarmRuleDefinition saveAlarmRule(AlarmRuleDefinition alarmRule) {
+        return doPost("/api/alarm/rule", alarmRule, AlarmRuleDefinition.class);
     }
 
     protected PageData<CalculatedField> getEntityCalculatedFields(EntityId entityId, CalculatedFieldType type, PageLink pageLink) throws Exception {

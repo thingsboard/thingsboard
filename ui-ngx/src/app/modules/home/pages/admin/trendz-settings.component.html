@@ -38,7 +38,7 @@
             <mat-checkbox class="flex flex-1" formControlName="isTrendzEnabled">
               {{ 'admin.trendz-enable' | translate }}
             </mat-checkbox>
-            <mat-form-field class="tb-trendz-url mat-block flex-1" subscriptSizing="dynamic">
+            <mat-form-field class="tb-trendz-url mat-block flex-1" subscriptSizing="dynamic" appearance="outline">
               <mat-label translate>admin.trendz-url</mat-label>
               <input matInput formControlName="trendzUrl">
               @if (trendzSettingsForm.get('trendzUrl').hasError('required')) {
@@ -52,7 +52,7 @@
                 </mat-error>
               }
             </mat-form-field>
-            <mat-form-field class="tb-trendz-api-key mat-block flex-1" subscriptSizing="dynamic">
+            <mat-form-field class="tb-trendz-api-key mat-block flex-1" subscriptSizing="dynamic" appearance="outline">
               <mat-label translate>admin.trendz-api-key</mat-label>
               <input matInput formControlName="apiKey">
               @if (trendzSettingsForm.get('apiKey').hasError('pattern')) {

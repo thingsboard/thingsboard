@@ -1,0 +1,125 @@
+/**
+ * Copyright © 2016-2026 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+syntax = "proto3";
+
+option java_package = "org.thingsboard.server.gen.transport.coap";
+option java_outer_classname = "ConfigTypesProtos";
+
+message ProtoCalibrationParametersRequest {
+
+  /* Request details.                                                                                                           *
+   * Bitmask:                                                                                                                   *
+   *   - Bit 0:2 - Requested channel number, range: [1:6]                                                                       *
+   * Status: Deprecated [06.10.00 - 06.xx.xx]                                                                                   */
+  uint32 calibration_request = 1;
+
+  /* Channel assignment - the sensor code.                                                                                      *
+   * Status: Deprecated [06.10.00 - 06.xx.xx]                                                                                   */
+  uint32 channel_assignment = 2;
+
+  /* Channel calibration parameters.                                                                                            *
+   * Up to 8 parameters supported.                                                                                              *
+   * If this field is empty, the sensor will send the current set of parameters.                                                *
+   * Status: Deprecated [06.10.00 - 06.xx.xx]                                                                                   */
+  repeated int32 parameters = 3;
+}
+
+message ProtoOutputControlState {
+
+  /* Channel index.                                                                                                             *
+   * Range: [0:5]                                                                                                               *
+   * Status: In use [06.13.00/06.21.00 - LATEST]                                                                                */
+  uint32 channel_index = 1;
+
+  /* Channel output state:                                                                                                      *
+   *   - 1 - OFF                                                                                                                *
+   *   - 2 - ON                                                                                                                 *
+   * Status: In use [06.13.00/06.21.00 - LATEST]                                                                                */
+  uint32 channel_state = 2;
+}
+
+enum BleAdvertisingPeriodMode {
+
+  /* Invalid value.                                                                                                             */
+  BLE_ADVERTISING_PERIOD_MODE_UNSPECIFIED = 0;
+
+  /* Default mode.                                                                                                              *
+   * Bluetooth advertising interval is set to 1022.5ms or a lower value, based on the continuous measurement period.            */
+  BLE_ADVERTISING_PERIOD_MODE_DEFAULT = 1;
+
+  /* Normal mode.                                                                                                               *
+   * Uses the value configured by the user from the 'normal' field.                                                             */
+  BLE_ADVERTISING_PERIOD_MODE_NORMAL = 2;
+
+  /* Fast mode.                                                                                                                 *
+   * Uses the value configured by the user from the 'fast' field.                                                               */
+  BLE_ADVERTISING_PERIOD_MODE_FAST = 3;
+}
+
+message ProtoBleAdvertisingPeriod {
+
+  /* Bluetooth advertising mode.                                                                                                *
+   * Status: In use [06.13.00/06.21.00 - LATEST]                                                                                */
+  BleAdvertisingPeriodMode mode = 1;
+
+  /* Bluetooth advertising interval in normal mode, configured in steps of 0.625 ms.                                            *
+   * Range: [32:16384]                                                                                                          *
+   * Status: In use [06.13.00/06.21.00 - LATEST]                                                                                */
+  uint32 normal = 2;
+
+  /* Bluetooth advertising interval in fast mode, configured in steps of 0.625 ms.                                              *
+   * Range: [32:16384]                                                                                                          *
+   * Status: In use [06.13.00/06.21.00 - LATEST]                                                                                */
+  uint32 fast = 3;
+}
+
+enum AdvertisementManufacturerDataFormat {
+
+  /* Invalid value.                                                                                                             */
+  ADVERTISEMENT_MANUFACTURER_DATA_FORMAT_UNSPECIFIED = 0;
+
+  /* Advertisement manufacturer specific data format 3.                                                                         */
+  ADVERTISEMENT_MANUFACTURER_DATA_FORMAT_V3 = 1;
+
+  /* Advertisement manufacturer specific data format 5.                                                                         */
+  ADVERTISEMENT_MANUFACTURER_DATA_FORMAT_V5 = 2;
+}
+
+message ProtoNetworkSearch {
+
+  /* Timing schema, if successful registration since the last reset.                                                            *
+   * Length: 6 items.                                                                                                           *
+   * 1st - 6th item - Time in minutes. Range: [1:255].                                                                          *
+   * Status: In use [06.20.00 - LATEST]                                                                                         */
+  repeated uint32 time_schema_last_registration_ok = 1;
+
+  /* Timing schema, if no successful registration since the last reset.                                                         *
+   * Length: 6 items.                                                                                                           *
+   * 1st - 6th item - Time in minutes. Range: [1:255].                                                                          *
+   * Status: In use [06.20.00 - LATEST]                                                                                         */
+  repeated uint32 time_schema_last_registration_not_ok = 2;
+
+  /* Disable base period in minutes.                                                                                            *
+   * Disable time = 'disable_period_base' * counter (from 1 to 'counter_max').                                                  *
+   * Range: [1:255]                                                                                                             *
+   * Status: In use [06.20.00 - LATEST]                                                                                         */
+  uint32 disable_period_base = 3;
+
+  /* Disable counter maximum.                                                                                                   *
+   * Range: [1:255]                                                                                                             *
+   * Status: In use [06.20.00 - LATEST]                                                                                         */
+  uint32 counter_max = 4;
+}

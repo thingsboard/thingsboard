@@ -30,7 +30,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
+import { AlarmRulesService } from '@core/http/alarm-rules.service';
 import { ImportExportService } from '@shared/import-export/import-export.service';
 import { EntityDebugSettingsService } from '@home/components/entity/debug/entity-debug-settings.service';
 import { DatePipe } from '@angular/common';
@@ -59,7 +59,7 @@ export class AlarmRulesTableComponent {
 
   pageMode: boolean = false;
 
-  constructor(private calculatedFieldsService: CalculatedFieldsService,
+  constructor(private alarmRulesService: AlarmRulesService,
               private translate: TranslateService,
               private dialog: MatDialog,
               private store: Store<AppState>,
@@ -77,7 +77,7 @@ export class AlarmRulesTableComponent {
     effect(() => {
       if (this.active() || this.pageMode) {
         this.alarmRulesTableConfig = new AlarmRulesTableConfig(
-          this.calculatedFieldsService,
+          this.alarmRulesService,
           this.translate,
           this.dialog,
           this.datePipe,

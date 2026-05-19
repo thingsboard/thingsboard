@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 syntax = "proto3";
+
 import "efento/proto_measurement_types.proto";
 
 option java_package = "org.thingsboard.server.gen.transport.coap";
@@ -21,106 +22,166 @@ option java_outer_classname = "MeasurementsProtos";
 
 message ProtoChannel {
 
-    /* Type of channel                                                                                                            */
+    /* Reserved fields.                                                                                                           */
+    reserved 6,7,8;
+
+    /* Type of measurement.                                                                                                       *
+     * Status: In use [06.00 - LATEST]                                                                                            */
     MeasurementType type = 1;
 
-    /* Timestamp of the first sample (the oldest one) in seconds since UNIX EPOCH 01-01-1970                                      */
+    /* Timestamp of the first (oldest) sample in seconds since 1st of January 1970 (epoch time).                                  *
+     * Status: In use [06.00 - LATEST]                                                                                            */
     int32 timestamp = 2;
 
-    /* Only used for 'Continuous' sensor types. Value used as the starting point for calculating the values of all                */
-    /* measurements in the package.                                                                                               */
-    /* Format defined by 'MeasurementType' field                                                                                  */
+    /* Start point of measurement values.                                                                                         *
+     * This is used as the base value for calculating the values of all channel measurements in the message.                      *
+     * Used for 'Continuous' sensor types only.                                                                                   *
+     * Format is defined by 'MeasurementType' field.                                                                              *
+     * Status: In use [06.00 - LATEST]                                                                                            */
     sint32 start_point = 4;
 
-    /* 'Continuous' sensor types                                                                                                  */
-    /* Value of the offset from the 'start_point' for each measurement in the package. The oldest sample first ([0]).             */
-    /* 'sample_offsets' format defined by 'MeasurementType' field.                                                                */
-    /* If the 'sample_offset' has a value from the range [8355840: 8388607], it should be interpreted as a sensor error code.     */
-    /* In that case value of the 'start_point' field should not be added to this 'sample_offset'. See ES6-264 for error codes.    */
-    /* Example: MeasurementType = 1 (temperature), start_point = 100, sample_offsets[0] = 15, sample_offsets[1] = 20,             */
-    /* sample_offset[2] = 8388605                                                                                                 */
-    /* 1st sample in the package temperature value = 11.5 °C, 2nd sample in the package temperature value = 12 °C                 */
-    /* 3rd sample in the package has no temperature value. It has information about failure of MCP9808 (temperature) sensor.      */
-    /* Calculating timestamps of the measurements: timestamp = 1606391700, measurement_period_base = 60,                          */
-    /* measurement_period_factor = 1. Timestamp of the 1st sample = 1606391700, timestamp of the 2nd sample = 1606391760,         */
-    /* timestamp of the 3rd sample 1606391820                                                                                     */
-
-    /* 'Binary' sensor types:                                                                                                     */
-    /* Absolute value of the 'sample_offsets' field indicates the offset in seconds from 'timestamp' field.                       */
-    /* Sign (- or +) indicates the state of measurements depending on the sensor type.                                            */
-    /* Value of this field equals to '1' or '-1' indicates the state at the 'timestamp'. Other values                             */
-    /* indicate the state of the relay at the time (in seconds) equal to 'timestamp' + absolute value -1.                         */
-    /* Values of this field are incremented starting from 1 (1->0: state at the time                                              */
-    /* of 'timestamp', 2->1: state at the time equal to 'timestamp' + 1 s, 3->2 :                                                 */
-    /* state at the time equal to 'timestamp' + 2 s, etc.). The first and the last sample define the time range of the            */
-    /* measurements. Only state changes in the time range are included in the 'sample_offsets' field                              */
-    /* Examples: if 'timestamp' value is 1553518060 and 'sample_offsets' equals '1', it means that at 1553518060 the state        */
-    /* was high, if 'timestamp' value is 1553518060 and 'sample_offsets' equals '-9', it means at 1553518068 the state was low    */
+    /* Measurement value offsets.                                                                                                 *
+     * For 'Continuous' sensor types:                                                                                             *
+     *   These are the values of the offsets from the 'start_point' for each channel measurement in the message.                  *
+     *   Format is defined by 'MeasurementType' field. The first sample is the oldest.                                            *
+     *   If the sample offset has a value in the range [8355840:8388607], it should be interpreted as a sensor error code.        *
+     *   In this case, the value of the 'start_point' field should not be added to this sample offset.                            *
+     *   Example: type = 1 (temperature)                                                                                          *
+     *            start_point = 100                                                                                               *
+     *            sample_offsets[0] = 15, sample_offsets[1] = 20, sample_offsets[2] = 8388557                                     *
+     *            timestamp = 1606391700                                                                                          *
+     *            measurement_period_base = 60                                                                                    *
+     *            measurement_period_factor = 1                                                                                   *
+     *            1st measurement is the temperature value = 11.5°C, measured at 1606391700                                       *
+     *            2nd measurement is the temperature value = 12°C, measured at 1606391760                                         *
+     *            3rd measurement is the error code (failure of the SHT4x temperature sensor), measured at 1606391820             *
+     * For 'Binary' sensor types:                                                                                                 *
+     *   The absolute value of the sample offset minus 1 is the offset in seconds from the 'timestamp' field.                     *
+     *   Sign (- or +) indicates the state of the measurement depending on the sensor type.                                       *
+     *   The first and the last samples define the time range of the measurements.                                                *
+     *   Only state changes within the time range are included in the 'sample_offsets' field.                                     *
+     *   Example: type = 5 (OK/Alarm)                                                                                             *
+     *            sample_offsets[0] = 1, sample_offsets[1] = -9, sample_offsets[2] = 13                                           *
+     *            timestamp = 1606391700                                                                                          *
+     *            1st measurement is the state at 1606391700, which is Alarm (+)                                                  *
+     *            2nd measurement is the state at 1606391708, which is OK (-)                                                     *
+     *            3rd measurement is the state at 1606391712, which is Alarm (+)                                                  *
+     * Status: In use [06.00 - LATEST]                                                                                            */
     repeated sint32 sample_offsets = 5 [packed=true];
-
-    /* Deprecated - configuration is sent to endpoint 'c'                                                                         */
-    /* int32 lo_threshold = 6;                                                                                                    */
-    reserved 6;
-
-    /* Deprecated - configuration is sent to endpoint 'c'                                                                         */
-    /* int32 hi_threshold = 7;                                                                                                    */
-    reserved 7;
-
-    /* Deprecated - configurations sent to endpoint 'c'                                                                          */
-    /* int32 diff_threshold = 8;                                                                                                  */
-    reserved 8;
 }
 
 message ProtoMeasurements {
 
-    /* Serial number of the device                                                                                                */
-    bytes serial_num = 1;
+    /* RESERVED FIELDS ---------------------------------------------------------------------------------------------------------- */
 
-    /* Battery status: true - battery ok, false - battery low                                                                     */
-    bool battery_status = 2;
+    reserved 10,11,12,13,14,15;
 
-    /* 'Measurement_period_base' and 'measurement_period_factor' define how often the measurements are taken.                     */
-    /* Sensors of 'Continuous' type take measurement each Measurement_period_base * measurement_period_factor.                    */
-    /* Sensors of 'Binary' type take measurement each Measurement_period_base.                                                    */
-    /* For backward compatibility with versions 5.x in case of binary/mixed sensors, if the 'measurement_period_factor' is        */
-    /* not sent (equal to 0), then the default value '14' shall be used for period calculation.                                   */
-    /* For backward compatibility with versions 5.x in case of continues sensors, if the measurement_period_factor is             */
-    /* not sent (equal to 0), then the default value '1' shall be used for period calculation.                                    */
-    /* measurement period base in seconds                                                                                         */
+    /* DEVICE STATUS FIELDS ----------------------------------------------------------------------------------------------------- */
+
+    /* Serial number of the device.                                                                                               *
+     * Length: 6 bytes.                                                                                                           *
+     * Status: In use [07.00.00 - LATEST] / Previously as serial_num [06.00 - 06.xx.xx]                                           */
+    bytes serial_number = 1;
+
+    /* Identifier of the current configuration.                                                                                   *
+     * The value of this field changes with every configuration change.                                                           *
+     * Status: In use [07.00.00 - LATEST] / Previously as hash [06.00 - 06.xx.xx]                                                 */
+    uint32 configuration_hash = 9;
+
+    /* Identifier of the current extended configuration.                                                                          *
+     * The value of this field changes with every extended configuration change.                                                  *
+     * Status: In use [07.00.00 - LATEST]                                                                                         */
+    uint32 extended_configuration_hash = 17;
+
+    /* Battery level and status:                                                                                                  *
+     *   - [1:65525] - Battery voltage measurement and a battery status                                                           *
+     *   - [65526:65531] - No battery voltage measurement and a battery status                                                    *
+     * To obtain the battery voltage, the battery_level value should be divided by 6 and the remainder of the division discarded. *
+     * The result is in hundredths of a volt or 10921 (no battery voltage measurement).                                           *
+     * Battery level also includes a battery status as metadata (the remainder of the value divided by 6):                        *
+     *   - 0 - Device is powered by a battery                                                                                     *
+     *   - 1 - Device is powered by a rechargeable battery                                                                        *
+     *   - 2 - Device is powered by an external source and a battery is charging                                                  *
+     *   - 3 - Reserved for the future use                                                                                        *
+     *   - 4 - Reserved for the future use                                                                                        *
+     *   - 5 - Reserved for the future use                                                                                        *
+     * Example: battery_level = 2474                                                                                              *
+     *          Battery voltage = 2474/6 = 412 = 4.12[V]                                                                          *
+     *          Battery status = 2474 % 6 = 2                                                                                     *
+     * Status: In use [07.00.00 - LATEST]                                                                                         */
+    uint32 battery_level = 18;
+
+    /* MEASUREMENT FIELDS ------------------------------------------------------------------------------------------------------- */
+
+    /* Measurement period defines how often the measurements are to be taken.                                                     *
+     * Sensors of 'Continuous' type take measurement each 'measurement_period_base' * 'measurement_period_factor'.                *
+     * Sensors of 'Binary' type take measurement each 'measurement_period_base'.                                                  *
+     * For backward compatibility with versions 5.xx in case of 'Binary/Mixed' sensors, if the 'measurement_period_factor' is     *
+     * not sent (equal to 0), then the default value '14' shall be used for the period calculation.                               *
+     * For backward compatibility with versions 5.xx in case of 'Continuous' sensors, if the 'measurement_period_factor' is       *
+     * not sent (equal to 0), then the default value '1' shall be used for the period calculation.                                */
+
+    /* Measurement period base in seconds.                                                                                        *
+     * Status: In use [06.00 - LATEST]                                                                                            */
     uint32 measurement_period_base = 3;
 
-    /* Measurement period factor                                                                                                  */
+    /* Measurement period factor.                                                                                                 *
+     * Status: In use [06.00 - LATEST]                                                                                            */
     uint32 measurement_period_factor = 8;
 
+    /* Measurements grouped by channel.                                                                                           *
+     * Status: In use [06.00 - LATEST]                                                                                            */
     repeated ProtoChannel channels = 4;
 
-    /* Timestamp of the next scheduled transmission. If the device will not send data until this time,                            */
-    /* it should be considered as 'lost'                                                                                          */
+    /* SERVER COMMUNICATION FIELDS ---------------------------------------------------------------------------------------------- */
+
+    /* Battery status:                                                                                                            *
+     *   - True - Battery OK                                                                                                      *
+     *   - False - Battery discharged                                                                                             *
+     * Status: In use [06.00 - LATEST]                                                                                        */
+    bool battery_status = 2;
+
+    /* Timestamp of the next scheduled transmission.                                                                              *
+     * If the device has not sent any data by this time, it should be considered 'lost'.                                          *
+     * This field is only sent during server communication.                                                                       *
+     * Status: In use [06.00 - LATEST]                                                                                            */
     uint32 next_transmission_at = 5;
 
-    /* Reason of transmission - unsigned integer where each bit indicates different possible communication reason.                */
-    /* Can be more than one:                                                                                                      */
-    /*  - bit 0: first message after sensor reset                                                                                 */
-    /*  - bit 1: user button triggered                                                                                            */
-    /*  - bit 2: user BLE triggered                                                                                               */
-    /*  - bit 3-7: number of retries -> incremented after each unsuccessful transmission. Max value 31.                            */
-    /*                                  Set to 0 after a successful transmission.                                                 */
-    /*  - bit 8...19: rule 1...12 was met                                                                                         */
-    /*  - bit 20: triggered after the end of the limit                                                                            */
+    /* Reason for transmission.                                                                                                   *
+     * Bitmask, where each bit represents a specific reason for initiating communication (multiple reasons can be active          *
+     * simultaneously):                                                                                                           *
+     *   - Bit 0 - First message after sensor reset                                                                               *
+     *   - Bit 1 - User-triggered (button press)                                                                                  *
+     *   - Bit 2 - User-triggered (Bluetooth)                                                                                     *
+     *   - Bit 3:7 - Number of retries - incremented after each failed transmission and reset upon success. Range: [0:31]         *
+     *   - Bit 8:19 - Rule-based triggers (12 bits):                                                                              *
+     *      - [06.00 - 07.01.xx]: Bitmask indicating which of the rules 1-12 were met                                             *
+     *      - [07.02.00 - LATEST]: The transfer bit 'i' (where i = 0 to 11) is set if either rule 'i' (0-11) is set               *
+     *        or if rule 'i + 12' (12-15) is set. This aggregation applies only to bits 0-3 (rules 0-3 and 12-15).                *
+     *        The mask aggregates 16 rules (0-15) onto 12 bits.                                                                   *
+     *   - Bit 20 - Triggered at the end of the defined limit                                                                     *
+     *   - Bit 21 - Triggered after a PIN tamper alert                                                                            *
+     *   - Bit 22 - Triggered after an enclosure tamper alert                                                                     *
+     *   - Bit 23 - Triggered before shutdown                                                                                     *
+     * This field is only sent during server communication.                                                                       *
+     * Status: In use [06.00 - LATEST]                                                                                            */
     uint32 transfer_reason = 6;
 
-    /* Signal strength level mapped from RSSI:                                                                                    */
-    /*  - 0: RSSI < -110 dBm                                                                                                      */
-    /*  - 1: -110 dBm <= RSSI < -109 dBm                                                                                          */
-    /*  - 2...61: -109 <= RSSI < -108 dBm ... -50 dBm <= RSSI < -49 dBm                                                           */
-    /*  - 62: -49 dBm <= RSSI < -48 dBm                                                                                           */
-    /*  - 63: RSSI >= -48 dBm                                                                                                     */
-    /*  - 99: Not known or not detectable                                                                                         */
+    /* Signal strength (RSSI - Received Signal Strength Level):                                                                   *
+     *   - 0 - RSSI < -110dBm                                                                                                     *
+     *   - 1 - -110dBm <= RSSI < -109dBm                                                                                          *
+     *   - 2:61 - -109dBm <= RSSI < -108dBm ... -50dBm <= RSSI < -49dBm                                                           *
+     *   - 62 - -49dBm <= RSSI < -48dBm                                                                                           *
+     *   - 63 -  RSSI >= -48dBm                                                                                                   *
+     *   - 99 - Unknown or undetectable                                                                                           *
+     * This field is only sent during server communication.                                                                       *
+     * Status: Deprecated [06.00 - 06.xx.xx]                                                                                      */
     uint32 signal = 7;
 
-    /* Hash of the current configuration. Hash value changes each time a device receives a new configuration                      */
-    uint32 hash = 9;
-
-    /* Optional string up to 36 bytes long. Can be set to any user define value or hold device's IMEI                             */
+    /* Cloud token.                                                                                                               *
+     * Can be empty, set to any user-defined value, or hold device IMEI.                                                          *
+     * String up to 36 characters.                                                                                                *
+     * This field is only sent during server communication.                                                                       *
+     * Status: In use [06.00 - LATEST]                                                                                            */
     string cloud_token = 16;
 }

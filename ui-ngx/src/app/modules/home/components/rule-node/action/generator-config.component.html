@@ -19,7 +19,7 @@
   <div class="tb-form-panel no-padding-bottom stroked">
     <div class="tb-form-panel-title" translate>rule-node-config.generation-parameters</div>
     <div class="tb-form-row no-border no-padding tb-standard-fields column-xs">
-      <mat-form-field class="flex">
+      <mat-form-field class="flex" appearance="outline">
         <mat-label translate>rule-node-config.message-count</mat-label>
         <input required type="number" min="0" step="1" matInput formControlName="msgCount">
         @if (generatorConfigForm.get('msgCount').hasError('required')) {
@@ -33,7 +33,7 @@
           </mat-error>
         }
       </mat-form-field>
-      <mat-form-field class="flex">
+      <mat-form-field class="flex" appearance="outline">
         <mat-label translate>rule-node-config.generation-frequency-seconds</mat-label>
         <input required type="number" min="1" step="1" matInput formControlName="periodInSeconds">
         @if (generatorConfigForm.get('periodInSeconds').hasError('required')) {
@@ -53,6 +53,7 @@
   <div class="tb-form-panel no-padding-bottom stroked">
     <div class="tb-form-panel-title" translate>rule-node-config.originator</div>
     <tb-entity-select class="flex-1"
+                      appearance="outline"
                       required="true"
                       useAliasEntityTypes="true"
                       [allowedEntityTypes]="allowedEntityTypes"

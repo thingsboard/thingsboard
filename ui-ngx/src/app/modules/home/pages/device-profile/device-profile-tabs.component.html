@@ -19,7 +19,7 @@
   <mat-tab #transportType="matTab" label="{{ 'device-profile.transport-configuration' | translate }}">
     @if (transportType.isActive) {
       <div class="mat-padding" [formGroup]="detailsForm">
-        <mat-form-field class="mat-block">
+        <mat-form-field class="mat-block" appearance="outline">
           <mat-label translate>device-profile.transport-type</mat-label>
           <mat-select formControlName="transportType" required>
             @for (type of deviceTransportTypes; track type) {

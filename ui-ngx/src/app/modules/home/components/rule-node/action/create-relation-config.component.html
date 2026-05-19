@@ -19,7 +19,7 @@
   <div class="tb-form-panel stroked no-padding-bottom">
     <div class="tb-form-panel-title" translate>rule-node-config.relation-parameters</div>
     <div class="flex flex-col">
-      <mat-form-field class="mat-block" hideRequiredMarker>
+      <mat-form-field class="mat-block" hideRequiredMarker appearance="outline">
         <mat-label translate>relation.direction</mat-label>
         <mat-select required matInput formControlName="direction">
           @for (type of directionTypes; track type) {
@@ -30,6 +30,7 @@
         </mat-select>
       </mat-form-field>
       <tb-relation-type-autocomplete
+        appearance="outline"
         required
         formControlName="relationType">
       </tb-relation-type-autocomplete>
@@ -40,6 +41,7 @@
     <div class="tb-form-panel-title" translate>rule-node-config.target-entity</div>
     <div class="flex flex-row gap-4">
       <tb-entity-type-select
+        appearance="outline"
         class="flex-1"
         showLabel
         required
@@ -50,6 +52,7 @@
       @if (createRelationConfigForm.get('entityType').value &&
         createRelationConfigForm.get('entityType').value !== entityType.TENANT) {
         <mat-form-field
+          appearance="outline"
           class="mat-block flex-1">
           <mat-label>{{ entityTypeNamePatternTranslation.get(createRelationConfigForm.get('entityType').value) | translate }}</mat-label>
           <input required matInput formControlName="entityNamePattern">
@@ -59,6 +62,7 @@
       @if (createRelationConfigForm.get('entityType').value === entityType.DEVICE ||
         createRelationConfigForm.get('entityType').value === entityType.ASSET) {
         <mat-form-field
+          appearance="outline"
           class="mat-block flex-1">
           <mat-label translate>rule-node-config.profile-name</mat-label>
           <input matInput formControlName="entityTypePattern">

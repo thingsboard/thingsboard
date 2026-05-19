@@ -36,6 +36,7 @@
     <fieldset [disabled]="isLoading$ | async">
       <span>{{ labelText | translate }}</span>
       <tb-entity-list
+        appearance="outline"
         formControlName="assignedCustomerIds"
         [required]="data.actionType !== 'manage'"
         [entityType]="entityType.CUSTOMER">

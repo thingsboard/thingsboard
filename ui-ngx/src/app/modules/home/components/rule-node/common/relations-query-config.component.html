@@ -19,7 +19,7 @@
   <div class="tb-form-panel-title tb-required" translate>rule-node-config.relations-query</div>
   <section>
     <div class="flex flex-row gap-4">
-      <mat-form-field class="mat-block max-w-50% flex-full" style="min-width: 100px;" hideRequiredMarker>
+      <mat-form-field class="mat-block max-w-50% flex-full" style="min-width: 100px;" hideRequiredMarker appearance="outline">
         <mat-label translate>relation.direction</mat-label>
         <mat-select required formControlName="direction">
           @for (type of directionTypes; track type) {
@@ -29,7 +29,7 @@
           }
         </mat-select>
       </mat-form-field>
-      <mat-form-field floatLabel="always" class="mat-block max-w-50% flex-full">
+      <mat-form-field floatLabel="always" class="mat-block max-w-50% flex-full" appearance="outline">
         <mat-label translate>rule-node-config.max-relation-level</mat-label>
         <input matInput
                type="text"

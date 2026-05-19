@@ -17,7 +17,7 @@
 -->
 <section [formGroup]="calculateDeltaConfigForm">
   <div class="gt-sm:flex gt-sm:flex-row gt-sm:gap-5.5">
-    <mat-form-field class="mat-block flex-1">
+    <mat-form-field class="mat-block flex-1" appearance="outline">
       <mat-label>{{ 'rule-node-config.input-value-key' | translate }}</mat-label>
       <input matInput formControlName="inputValueKey">
       @if (calculateDeltaConfigForm.get('inputValueKey').hasError('required') ||
@@ -27,7 +27,7 @@
         </mat-error>
       }
     </mat-form-field>
-    <mat-form-field class="mat-block flex-1">
+    <mat-form-field class="mat-block flex-1" appearance="outline">
       <mat-label>{{ 'rule-node-config.output-value-key' | translate }}</mat-label>
       <input matInput formControlName="outputValueKey">
       @if (calculateDeltaConfigForm.get('outputValueKey').hasError('required') ||
@@ -38,7 +38,7 @@
       }
     </mat-form-field>
   </div>
-  <mat-form-field class="mat-block flex-1">
+  <mat-form-field class="mat-block flex-1" appearance="outline">
     <mat-label>{{ 'rule-node-config.number-of-digits-after-floating-point' | translate }}</mat-label>
     <input type="number" min="0" max="15" step="1" matInput formControlName="round">
     @if (calculateDeltaConfigForm.get('round').hasError('min')) {
@@ -80,7 +80,7 @@
         </mat-slide-toggle>
       </div>
       @if (calculateDeltaConfigForm.get('addPeriodBetweenMsgs').value) {
-        <mat-form-field class="mat-block">
+        <mat-form-field class="mat-block" appearance="outline">
           <mat-label>{{ 'rule-node-config.period-value-key' | translate }}</mat-label>
           <input required matInput formControlName="periodValueKey">
           @if (calculateDeltaConfigForm.get('periodValueKey').hasError('required')) {

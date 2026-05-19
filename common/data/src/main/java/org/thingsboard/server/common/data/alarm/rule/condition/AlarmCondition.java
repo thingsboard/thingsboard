@@ -32,7 +32,6 @@ import org.thingsboard.server.common.data.alarm.rule.condition.schedule.AlarmSch
 import org.thingsboard.server.common.data.alarm.rule.condition.schedule.AnyTimeSchedule;
 
 @Schema(
-        name = "AlarmRuleCondition",
         discriminatorProperty = "type",
         discriminatorMapping = {
                 @DiscriminatorMapping(value = "SIMPLE", schema = SimpleAlarmCondition.class),

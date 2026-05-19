@@ -25,7 +25,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.concurrent.TimeUnit;
 
-@Schema(name = "AlarmRuleDurationCondition")
+@Schema
 @Data
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)

@@ -18,11 +18,11 @@
 <section class="tb-widget-settings flex flex-col" [formGroup]="sendRpcWidgetSettingsForm">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.rpc.common-settings</legend>
-    <mat-form-field class="mat-block flex-1">
+    <mat-form-field class="mat-block flex-1" appearance="outline">
       <mat-label translate>widgets.rpc.widget-title</mat-label>
       <input matInput formControlName="title">
     </mat-form-field>
-    <mat-form-field class="mat-block flex-1">
+    <mat-form-field class="mat-block flex-1" appearance="outline">
       <mat-label translate>widgets.rpc.button-label</mat-label>
       <input matInput formControlName="buttonText">
     </mat-form-field>
@@ -32,7 +32,7 @@
     <mat-checkbox formControlName="oneWayElseTwoWay">
       {{ 'widgets.rpc.is-one-way-command' | translate }}
     </mat-checkbox>
-    <mat-form-field class="mat-block flex-1">
+    <mat-form-field class="mat-block flex-1" appearance="outline">
       <mat-label translate>widgets.rpc.rpc-method</mat-label>
       <input matInput formControlName="methodName">
     </mat-form-field>
@@ -42,7 +42,7 @@
       validateOnChange
       formControlName="methodParams">
     </tb-json-content>
-    <mat-form-field class="mat-block flex-1">
+    <mat-form-field class="mat-block flex-1" appearance="outline">
       <mat-label translate>widgets.rpc.request-timeout</mat-label>
       <input matInput type="number" min="0" formControlName="requestTimeout">
     </mat-form-field>
@@ -64,7 +64,7 @@
           </mat-panel-description>
         </mat-expansion-panel-header>
         <ng-template matExpansionPanelContent>
-          <mat-form-field class="mat-block flex-1">
+          <mat-form-field class="mat-block flex-1" appearance="outline">
             <mat-label translate>widgets.rpc.persistent-polling-interval</mat-label>
             <input matInput type="number" min="1000" formControlName="persistentPollingInterval">
           </mat-form-field>

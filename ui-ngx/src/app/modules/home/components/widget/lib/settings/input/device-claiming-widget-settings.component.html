@@ -18,11 +18,11 @@
 <section class="tb-widget-settings flex flex-col" [formGroup]="deviceClaimingWidgetSettingsForm">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.input-widgets.general-settings</legend>
-    <mat-form-field class="mat-block flex-1">
+    <mat-form-field class="mat-block flex-1" appearance="outline">
       <mat-label translate>widgets.input-widgets.widget-title</mat-label>
       <input matInput formControlName="widgetTitle">
     </mat-form-field>
-    <mat-form-field class="mat-block flex-1">
+    <mat-form-field class="mat-block flex-1" appearance="outline">
       <mat-label translate>widgets.input-widgets.claim-button-label</mat-label>
       <input matInput formControlName="labelClaimButon">
     </mat-form-field>
@@ -46,11 +46,11 @@
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
         <section class="flex flex-col">
-          <mat-form-field class="mat-block flex-1">
+          <mat-form-field class="mat-block flex-1" appearance="outline">
             <mat-label translate>widgets.input-widgets.device-name-label</mat-label>
             <input matInput formControlName="deviceLabel">
           </mat-form-field>
-          <mat-form-field [class.!hidden]="!deviceClaimingWidgetSettingsForm.get('deviceSecret').value" class="mat-block flex-1">
+          <mat-form-field [class.!hidden]="!deviceClaimingWidgetSettingsForm.get('deviceSecret').value" class="mat-block flex-1" appearance="outline">
             <mat-label translate>widgets.input-widgets.secret-key-label</mat-label>
             <input matInput formControlName="secretKeyLabel">
           </mat-form-field>
@@ -60,23 +60,23 @@
   </fieldset>
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.input-widgets.messages-settings</legend>
-    <mat-form-field class="mat-block flex-1">
+    <mat-form-field class="mat-block flex-1" appearance="outline">
       <mat-label translate>widgets.input-widgets.claim-device-success-message</mat-label>
       <input matInput formControlName="successfulClaimDevice">
     </mat-form-field>
-    <mat-form-field class="mat-block flex-1">
+    <mat-form-field class="mat-block flex-1" appearance="outline">
       <mat-label translate>widgets.input-widgets.claim-device-not-found-message</mat-label>
       <input matInput formControlName="deviceNotFound">
     </mat-form-field>
-    <mat-form-field class="mat-block flex-1">
+    <mat-form-field class="mat-block flex-1" appearance="outline">
       <mat-label translate>widgets.input-widgets.claim-device-failed-message</mat-label>
       <input matInput formControlName="failedClaimDevice">
     </mat-form-field>
-    <mat-form-field class="mat-block flex-1">
+    <mat-form-field class="mat-block flex-1" appearance="outline">
       <mat-label translate>widgets.input-widgets.claim-device-name-required-message</mat-label>
       <input matInput formControlName="requiredErrorDevice">
     </mat-form-field>
-    <mat-form-field [class.!hidden]="!deviceClaimingWidgetSettingsForm.get('deviceSecret').value" class="mat-block flex-1">
+    <mat-form-field [class.!hidden]="!deviceClaimingWidgetSettingsForm.get('deviceSecret').value" class="mat-block flex-1" appearance="outline">
       <mat-label translate>widgets.input-widgets.claim-device-secret-key-required-message</mat-label>
       <input matInput formControlName="requiredErrorSecretKey">
     </mat-form-field>

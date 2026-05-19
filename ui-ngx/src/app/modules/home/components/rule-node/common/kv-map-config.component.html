@@ -47,8 +47,7 @@
       </div>
       <div class="tb-form-table-body">
         @for (keyValControl of keyValsFormArray().controls; track keyValControl) {
-          <div class="tb-form-table-row"
-               >
+          <div class="tb-form-table-row">
             <mat-form-field class="tb-inline-field field-space" appearance="outline" subscriptSizing="dynamic">
               <input [placeholder]="keyText+'*'" [formControl]="keyValControl.get('key')" matInput/>
             </mat-form-field>
@@ -56,7 +55,7 @@
               <input [placeholder]="valText+'*'" [formControl]="keyValControl.get('value')" matInput/>
             </mat-form-field>
             <div class="tb-form-table-row-cell-buttons">
-              <button [class.tb-hidden]="keyValsFormArray().controls.length === 1"
+              <button [class.tb-hidden]="required && keyValsFormArray().controls.length === 1"
                       type="button"
                       mat-icon-button
                       (click)="removeKeyVal($index)"
@@ -67,6 +66,10 @@
               </button>
             </div>
           </div>
+        } @empty {
+          @if (emptyText) {
+            <div class="tb-prompt flex items-center justify-center">{{ emptyText }}</div>
+          }
         }
       </div>
     </div>

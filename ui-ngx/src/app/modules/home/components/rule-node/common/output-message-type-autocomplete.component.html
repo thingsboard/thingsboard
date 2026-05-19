@@ -16,7 +16,7 @@
 
 -->
 <section class="tb-form-row no-border no-padding tb-standard-fields column-xs" [formGroup]="messageTypeFormGroup">
-  <mat-form-field class="flex" subscriptSizing="{{ subscriptSizing }}" hideRequiredMarker>
+  <mat-form-field class="flex" subscriptSizing="{{ subscriptSizing }}" hideRequiredMarker [appearance]="appearance">
     <mat-label>{{'rule-node-config.output-message-type' | translate}}</mat-label>
     <mat-select formControlName="messageTypeAlias">
       @for (msgType of messageTypes; track msgType) {
@@ -26,7 +26,7 @@
       }
     </mat-select>
   </mat-form-field>
-  <mat-form-field class="flex" subscriptSizing="{{ subscriptSizing }}" [hideRequiredMarker]="messageTypeFormGroup.get('messageType').disabled">
+  <mat-form-field class="flex" subscriptSizing="{{ subscriptSizing }}" [hideRequiredMarker]="messageTypeFormGroup.get('messageType').disabled" [appearance]="appearance">
     <mat-label>{{'rule-node-config.message-type-value' | translate}}</mat-label>
     <input matInput type="text" formControlName="messageType">
     @if (messageTypeFormGroup.get('messageType').value) {

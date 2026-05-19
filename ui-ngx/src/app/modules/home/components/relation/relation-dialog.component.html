@@ -34,14 +34,16 @@
   <div mat-dialog-content>
     <fieldset [disabled]="isLoading$ | async">
       <tb-relation-type-autocomplete
+        appearance="outline"
         formControlName="type"
-        required="true">
+        [required]="true">
       </tb-relation-type-autocomplete>
       <small>{{(direction === entitySearchDirection.FROM ?
       'relation.to-entity' : 'relation.from-entity') | translate}}</small>
       <tb-entity-list-select
         formControlName="targetEntityIds"
         [additionEntityTypes]="additionEntityTypes"
+        appearance="outline"
         required="true">
       </tb-entity-list-select>
       <tb-json-object-edit

@@ -17,7 +17,7 @@
 -->
 <form [formGroup]="smppSmsProviderConfigurationFormGroup" style="padding-bottom: 16px;">
   <div class="flex flex-row flex-wrap gap-1.5">
-    <mat-form-field class="mat-block lt-sm:flex-full gt-xs:max-w-25% gt-xs:flex-full">
+    <mat-form-field class="mat-block lt-sm:flex-full gt-xs:max-w-25% gt-xs:flex-full" appearance="outline">
       <mat-label translate>admin.smpp-provider.smpp-version</mat-label>
       <mat-select formControlName="protocolVersion">
         @for (smppVersion of smppVersions; track smppVersion) {
@@ -27,7 +27,7 @@
         }
       </mat-select>
     </mat-form-field>
-    <mat-form-field class="mat-block flex-1">
+    <mat-form-field class="mat-block flex-1" appearance="outline">
       <mat-label translate>admin.smpp-provider.smpp-host</mat-label>
       <input required matInput formControlName="host">
       @if (smppSmsProviderConfigurationFormGroup.get('host').hasError('required')) {
@@ -36,7 +36,7 @@
         </mat-error>
       }
     </mat-form-field>
-    <mat-form-field class="mat-block lt-sm:flex-full gt-xs:max-w-25% gt-xs:flex-full">
+    <mat-form-field class="mat-block lt-sm:flex-full gt-xs:max-w-25% gt-xs:flex-full" appearance="outline">
       <mat-label translate>admin.smpp-provider.smpp-port</mat-label>
       <input required matInput type="number" formControlName="port">
       @if (smppSmsProviderConfigurationFormGroup.get('port').hasError('required')) {
@@ -47,7 +47,7 @@
     </mat-form-field>
   </div>
   <div class="flex flex-row flex-wrap gap-1.5">
-    <mat-form-field class="mat-block flex-1">
+    <mat-form-field class="mat-block flex-1" appearance="outline">
       <mat-label translate>admin.smpp-provider.system-id</mat-label>
       <input required matInput formControlName="systemId">
       @if (smppSmsProviderConfigurationFormGroup.get('systemId').hasError('required')) {
@@ -56,7 +56,7 @@
         </mat-error>
       }
     </mat-form-field>
-    <mat-form-field class="mat-block flex-1">
+    <mat-form-field class="mat-block flex-1" appearance="outline">
       <mat-label translate>admin.smpp-provider.password</mat-label>
       <input required matInput type="password" autocomplete="new-password" formControlName="password">
       <tb-toggle-password matSuffix></tb-toggle-password>
@@ -75,11 +75,11 @@
         </mat-panel-title>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
-        <mat-form-field class="mat-block">
+        <mat-form-field class="mat-block" appearance="outline">
           <mat-label translate>admin.smpp-provider.system-type</mat-label>
           <input matInput formControlName="systemType">
         </mat-form-field>
-        <mat-form-field class="mat-block">
+        <mat-form-field class="mat-block" appearance="outline">
           <mat-label translate>admin.smpp-provider.bind-type</mat-label>
           <mat-select formControlName="bindType">
             @for (bindType of bindTypes; track bindType) {
@@ -89,7 +89,7 @@
             }
           </mat-select>
         </mat-form-field>
-        <mat-form-field class="mat-block">
+        <mat-form-field class="mat-block" appearance="outline">
           <mat-label translate>admin.smpp-provider.service-type</mat-label>
           <input matInput formControlName="serviceType">
         </mat-form-field>
@@ -102,11 +102,11 @@
         </mat-panel-title>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
-        <mat-form-field class="mat-block">
+        <mat-form-field class="mat-block" appearance="outline">
           <mat-label translate>admin.smpp-provider.source-address</mat-label>
           <input matInput formControlName="sourceAddress">
         </mat-form-field>
-        <mat-form-field class="mat-block">
+        <mat-form-field class="mat-block" appearance="outline">
           <mat-label translate>admin.smpp-provider.source-ton</mat-label>
           <mat-select formControlName="sourceTon">
             @for (sourceTon of typeOfNumber; track sourceTon) {
@@ -116,7 +116,7 @@
             }
           </mat-select>
         </mat-form-field>
-        <mat-form-field class="mat-block">
+        <mat-form-field class="mat-block" appearance="outline">
           <mat-label translate>admin.smpp-provider.source-npi</mat-label>
           <mat-select formControlName="sourceNpi">
             @for (sourceNpi of numberingPlanIdentification; track sourceNpi) {
@@ -135,7 +135,7 @@
         </mat-panel-title>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
-        <mat-form-field class="mat-block">
+        <mat-form-field class="mat-block" appearance="outline">
           <mat-label translate>admin.smpp-provider.destination-ton</mat-label>
           <mat-select formControlName="destinationTon">
             @for (destinationTon of typeOfNumber; track destinationTon) {
@@ -145,7 +145,7 @@
             }
           </mat-select>
         </mat-form-field>
-        <mat-form-field class="mat-block">
+        <mat-form-field class="mat-block" appearance="outline">
           <mat-label translate>admin.smpp-provider.destination-npi</mat-label>
           <mat-select formControlName="destinationNpi">
             @for (destinationNpi of numberingPlanIdentification; track destinationNpi) {
@@ -164,11 +164,11 @@
         </mat-panel-title>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
-        <mat-form-field class="mat-block">
+        <mat-form-field class="mat-block" appearance="outline">
           <mat-label translate>admin.smpp-provider.address-range</mat-label>
           <input matInput formControlName="addressRange">
         </mat-form-field>
-        <mat-form-field class="mat-block">
+        <mat-form-field class="mat-block" appearance="outline">
           <mat-label translate>admin.smpp-provider.coding-scheme</mat-label>
           <mat-select formControlName="codingScheme">
             @for (codingScheme of codingSchemes; track codingScheme) {

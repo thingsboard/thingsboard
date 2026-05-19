@@ -16,7 +16,7 @@
 
 -->
 <section [formGroup]="rpcRequestConfigForm" class="flex flex-col">
-  <mat-form-field class="mat-block flex-1">
+  <mat-form-field class="mat-block flex-1" appearance="outline">
     <mat-label translate>rule-node-config.timeout-sec</mat-label>
     <input type="number" min="0" step="1" matInput formControlName="timeoutInSeconds" required>
     @if (rpcRequestConfigForm.get('timeoutInSeconds').hasError('required')) {

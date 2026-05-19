@@ -16,15 +16,15 @@
 
 -->
 <section [formGroup]="rabbitMqConfigForm" class="flex flex-col">
-  <mat-form-field class="mat-block">
+  <mat-form-field class="mat-block" appearance="outline">
     <mat-label translate>rule-node-config.exchange-name-pattern</mat-label>
     <input matInput formControlName="exchangeNamePattern">
   </mat-form-field>
-  <mat-form-field class="mat-block">
+  <mat-form-field class="mat-block" appearance="outline">
     <mat-label translate>rule-node-config.routing-key-pattern</mat-label>
     <input matInput formControlName="routingKeyPattern">
   </mat-form-field>
-  <mat-form-field class="mat-block">
+  <mat-form-field class="mat-block" appearance="outline">
     <mat-label translate>rule-node-config.message-properties</mat-label>
     <mat-select formControlName="messageProperties">
       @for (property of messageProperties; track property) {
@@ -35,7 +35,7 @@
     </mat-select>
   </mat-form-field>
   <div class="gt-sm:flex gt-sm:flex-row gt-sm:gap-2">
-    <mat-form-field class="mat-block gt-sm:max-w-60% gt-sm:flex-full">
+    <mat-form-field class="mat-block gt-sm:max-w-60% gt-sm:flex-full" appearance="outline">
       <mat-label translate>rule-node-config.host</mat-label>
       <input required matInput formControlName="host">
       @if (rabbitMqConfigForm.get('host').hasError('required')) {
@@ -44,7 +44,7 @@
         </mat-error>
       }
     </mat-form-field>
-    <mat-form-field class="mat-block gt-sm:max-w-40% gt-sm:flex-full">
+    <mat-form-field class="mat-block gt-sm:max-w-40% gt-sm:flex-full" appearance="outline">
       <mat-label translate>rule-node-config.port</mat-label>
       <input required type="number" step="1" min="1" max="65535" matInput formControlName="port">
       @if (rabbitMqConfigForm.get('port').hasError('required')) {
@@ -64,15 +64,15 @@
       }
     </mat-form-field>
   </div>
-  <mat-form-field class="mat-block">
+  <mat-form-field class="mat-block" appearance="outline">
     <mat-label translate>rule-node-config.virtual-host</mat-label>
     <input matInput formControlName="virtualHost">
   </mat-form-field>
-  <mat-form-field class="mat-block">
+  <mat-form-field class="mat-block" appearance="outline">
     <mat-label translate>rule-node-config.username</mat-label>
     <input matInput formControlName="username">
   </mat-form-field>
-  <mat-form-field class="mat-block">
+  <mat-form-field class="mat-block" appearance="outline">
     <mat-label translate>rule-node-config.password</mat-label>
     <input type="password" matInput formControlName="password" autocomplete="new-password">
     <tb-toggle-password matSuffix></tb-toggle-password>
@@ -80,7 +80,7 @@
   <mat-checkbox formControlName="automaticRecoveryEnabled">
     {{ 'rule-node-config.automatic-recovery' | translate }}
   </mat-checkbox>
-  <mat-form-field class="mat-block">
+  <mat-form-field class="mat-block" appearance="outline">
     <mat-label translate>rule-node-config.connection-timeout-ms</mat-label>
     <input type="number" step="1" min="0" matInput formControlName="connectionTimeout">
     @if (rabbitMqConfigForm.get('connectionTimeout').hasError('min')) {
@@ -89,7 +89,7 @@
       </mat-error>
     }
   </mat-form-field>
-  <mat-form-field class="mat-block">
+  <mat-form-field class="mat-block" appearance="outline">
     <mat-label translate>rule-node-config.handshake-timeout-ms</mat-label>
     <input type="number" step="1" min="0" matInput formControlName="handshakeTimeout">
     @if (rabbitMqConfigForm.get('handshakeTimeout').hasError('min')) {
@@ -99,12 +99,13 @@
     }
   </mat-form-field>
   <label translate class="tb-title">rule-node-config.client-properties</label>
-  <tb-kv-map-config-old
+  <tb-kv-map-config
     required="false"
     formControlName="clientProperties"
-    keyText="rule-node-config.key"
-    keyRequiredText="rule-node-config.key-required"
-    valText="rule-node-config.value"
-    valRequiredText="rule-node-config.value-required">
-  </tb-kv-map-config-old>
+    [keyText]="'rule-node-config.key' | translate"
+    [keyRequiredText]="'rule-node-config.key-required' | translate"
+    [valText]="'rule-node-config.value' | translate"
+    [valRequiredText]="'rule-node-config.value-required' | translate"
+    [emptyText]="'rule-node-config.client-properties-empty' | translate">
+  </tb-kv-map-config>
 </section>

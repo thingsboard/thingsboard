@@ -31,7 +31,7 @@
       <div class="row flex flex-row items-center justify-start gap-2"
            formArrayName="keyVals"
            >
-        <mat-form-field class="cell mat-block flex-1">
+        <mat-form-field class="cell mat-block flex-1" appearance="outline">
           <input [formControl]="keyValControl.get('key')" matInput required
                  placeholder="{{ keyText | translate }}"/>
           @if (keyValControl.get('key').hasError('required')) {
@@ -40,7 +40,7 @@
             </mat-error>
           }
         </mat-form-field>
-        <mat-form-field class="cell mat-block flex-1">
+        <mat-form-field class="cell mat-block flex-1" appearance="outline">
           <input [formControl]="keyValControl.get('value')" matInput required
                  placeholder="{{ valText | translate }}"/>
           @if (keyValControl.get('value').hasError('required')) {

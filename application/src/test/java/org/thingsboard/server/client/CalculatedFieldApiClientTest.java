@@ -17,10 +17,8 @@ package org.thingsboard.server.client;
 
 import org.junit.Test;
 import org.thingsboard.client.model.AlarmCalculatedFieldConfiguration;
-import org.thingsboard.client.model.AlarmConditionValueAlarmRuleSchedule;
-import org.thingsboard.client.model.AlarmRuleDefinition;
-import org.thingsboard.client.model.AlarmRuleSimpleCondition;
-import org.thingsboard.client.model.AlarmRuleSpecificTimeSchedule;
+import org.thingsboard.client.model.AlarmConditionValueAlarmSchedule;
+import org.thingsboard.client.model.AlarmRule;
 import org.thingsboard.client.model.AlarmSeverity;
 import org.thingsboard.client.model.Argument;
 import org.thingsboard.client.model.ArgumentType;
@@ -30,7 +28,9 @@ import org.thingsboard.client.model.Device;
 import org.thingsboard.client.model.EntityType;
 import org.thingsboard.client.model.PageDataCalculatedField;
 import org.thingsboard.client.model.ReferencedEntityKey;
+import org.thingsboard.client.model.SimpleAlarmCondition;
 import org.thingsboard.client.model.SimpleCalculatedFieldConfiguration;
+import org.thingsboard.client.model.SpecificTimeSchedule;
 import org.thingsboard.client.model.TbelAlarmConditionExpression;
 import org.thingsboard.client.model.TimeSeriesOutput;
 import org.thingsboard.server.dao.service.DaoSqlTest;
@@ -198,12 +198,12 @@ public class CalculatedFieldApiClientTest extends AbstractApiClientTest {
         // create rule: HIGH_TEMPERATURE when temp > 50 (TBEL expression)
         TbelAlarmConditionExpression createExpression = new TbelAlarmConditionExpression();
         createExpression.setExpression("return temp > 50;");
-        AlarmRuleSimpleCondition createCondition = new AlarmRuleSimpleCondition();
+        SimpleAlarmCondition createCondition = new SimpleAlarmCondition();
         createCondition.setExpression(createExpression);
-        AlarmRuleSpecificTimeSchedule specificTimeSchedule = new AlarmRuleSpecificTimeSchedule().addDaysOfWeekItem(3);
-        AlarmConditionValueAlarmRuleSchedule schedule = new AlarmConditionValueAlarmRuleSchedule().staticValue(specificTimeSchedule);
+        SpecificTimeSchedule specificTimeSchedule = new SpecificTimeSchedule().addDaysOfWeekItem(3);
+        AlarmConditionValueAlarmSchedule schedule = new AlarmConditionValueAlarmSchedule().staticValue(specificTimeSchedule);
         createCondition.setSchedule(schedule);
-        AlarmRuleDefinition createRule = new AlarmRuleDefinition();
+        AlarmRule createRule = new AlarmRule();
         createRule.setCondition(createCondition);
         createRule.setAlarmDetails("Temperature is too high: ${temp}");
         config.setCreateRules(Map.of(
@@ -213,9 +213,9 @@ public class CalculatedFieldApiClientTest extends AbstractApiClientTest {
         // clear rule: when temp drops below 30
         TbelAlarmConditionExpression clearExpression = new TbelAlarmConditionExpression();
         clearExpression.setExpression("return temp < 30;");
-        AlarmRuleSimpleCondition clearCondition = new AlarmRuleSimpleCondition();
+        SimpleAlarmCondition clearCondition = new SimpleAlarmCondition();
         clearCondition.setExpression(clearExpression);
-        AlarmRuleDefinition clearRule = new AlarmRuleDefinition();
+        AlarmRule clearRule = new AlarmRule();
         clearRule.setCondition(clearCondition);
         config.setClearRule(clearRule);
 
@@ -236,8 +236,8 @@ public class CalculatedFieldApiClientTest extends AbstractApiClientTest {
         assertEquals(cf.getName(), created.getName());
         assertEquals(CalculatedFieldType.ALARM, created.getType());
         AlarmCalculatedFieldConfiguration configuration = (AlarmCalculatedFieldConfiguration) created.getConfiguration();
-        AlarmConditionValueAlarmRuleSchedule createdSchedule = configuration.getCreateRules().get(AlarmSeverity.CRITICAL.name()).getCondition().getSchedule();
-        AlarmRuleSpecificTimeSchedule staticSchedule = (AlarmRuleSpecificTimeSchedule) createdSchedule.getStaticValue();
+        AlarmConditionValueAlarmSchedule createdSchedule = configuration.getCreateRules().get(AlarmSeverity.CRITICAL.name()).getCondition().getSchedule();
+        SpecificTimeSchedule staticSchedule = (SpecificTimeSchedule) createdSchedule.getStaticValue();
         assertEquals(Set.of(3), staticSchedule.getDaysOfWeek());
 
         // get by id and verify configuration
@@ -257,9 +257,9 @@ public class CalculatedFieldApiClientTest extends AbstractApiClientTest {
         // update: add a second create rule for CRITICAL_TEMPERATURE
         TbelAlarmConditionExpression criticalExpression = new TbelAlarmConditionExpression();
         criticalExpression.setExpression("return temp > 80;");
-        AlarmRuleSimpleCondition criticalCondition = new AlarmRuleSimpleCondition();
+        SimpleAlarmCondition criticalCondition = new SimpleAlarmCondition();
         criticalCondition.setExpression(criticalExpression);
-        AlarmRuleDefinition criticalRule = new AlarmRuleDefinition();
+        AlarmRule criticalRule = new AlarmRule();
         criticalRule.setCondition(criticalCondition);
         fetchedConfig.putCreateRulesItem(AlarmSeverity.INDETERMINATE.name(), criticalRule);
         fetched.setConfiguration(fetchedConfig);

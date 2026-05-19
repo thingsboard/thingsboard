@@ -210,6 +210,8 @@ public class RepositoryUtils {
                     return true;
                 }
             }
+            // Vacuously true when OR is called with an empty filter list. Unreachable via checkFilters
+            // (which guards on isHasKeyFilters()), but kept defensive for any future direct caller.
             return keyFilters.isEmpty();
         } else {
             for (EdqsFilter keyFilter : keyFilters) {

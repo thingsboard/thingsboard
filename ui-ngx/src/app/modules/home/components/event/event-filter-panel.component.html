@@ -20,7 +20,7 @@
     @for (column of showColumns; track column) {
       @switch (column.key) {
         @case (isSelector(column.key)) {
-          <mat-form-field>
+          <mat-form-field appearance="outline">
             <mat-label>{{ column.title | translate}}</mat-label>
             <mat-select [formControlName]="column.key">
               <mat-option [value]="">{{ 'event.all-events' | translate}}</mat-option>
@@ -33,7 +33,7 @@
           </mat-form-field>
         }
         @case (isNumberFields(column.key)) {
-          <mat-form-field>
+          <mat-form-field appearance="outline">
             <mat-label>{{ column.title | translate}}</mat-label>
             <input matInput type="number" min="0" [name]="column.key" [formControlName]="column.key">
             @if (eventFilterFormGroup.get(column.key).hasError('min')) {
@@ -50,13 +50,13 @@
           </tb-checkbox>
         }
         @case ('errorStr') {
-          <mat-form-field [class.!hidden]="!showErrorMsgFields()">
+          <mat-form-field [class.!hidden]="!showErrorMsgFields()" appearance="outline">
             <mat-label>{{ column.title | translate}}</mat-label>
             <input matInput type="text" name="errorSearchText" formControlName="errorStr">
           </mat-form-field>
         }
         @default {
-          <mat-form-field>
+          <mat-form-field appearance="outline">
             <mat-label>{{ column.title | translate}}</mat-label>
             <input matInput type="text" [name]="column.key" [formControlName]="column.key">
           </mat-form-field>

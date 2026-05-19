@@ -16,7 +16,7 @@
 
 -->
 <section [formGroup]="jsonPathConfigForm">
-  <mat-form-field subscriptSizing="dynamic" class="mat-block">
+  <mat-form-field subscriptSizing="dynamic" class="mat-block" appearance="outline">
     <mat-label>{{ 'rule-node-config.json-path-expression' | translate }}</mat-label>
     <input matInput formControlName="jsonPath" required/>
     <mat-hint>{{ 'rule-node-config.json-path-expression-hint' | translate }}</mat-hint>

@@ -18,7 +18,7 @@
 @if (!asBoxInput) {
   <div  class="flex flex-row" [formGroup]="materialIconFormGroup">
     <tb-icon class="icon-value" [style]="color ? { color: color } : {}" (click)="openIconDialog()">{{materialIconFormGroup.get('icon').value}}</tb-icon>
-    <mat-form-field class="flex-1">
+    <mat-form-field class="flex-1" [appearance]="appearance">
       <mat-label>{{ label }}</mat-label>
       <input [required]="required" matInput formControlName="icon" (mousedown)="openIconDialog()">
       @if (iconClearButton) {

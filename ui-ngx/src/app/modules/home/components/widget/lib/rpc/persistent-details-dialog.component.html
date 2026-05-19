@@ -34,33 +34,32 @@
   <div mat-dialog-content>
     <fieldset [disabled]="isLoading$ | async">
       <div class="flex flex-row gap-1.5 xs:flex-col">
-        <mat-form-field class="mat-block flex-1">
+        <mat-form-field class="mat-block flex-1" appearance="outline">
           <mat-label translate>widgets.persistent-table.created-time</mat-label>
           <input matInput formControlName="createdTime" readonly>
         </mat-form-field>
-        <mat-form-field class="mat-block flex-1">
+        <mat-form-field class="mat-block flex-1" appearance="outline">
           <mat-label translate>widgets.persistent-table.expiration-time</mat-label>
           <input matInput formControlName="expirationTime" readonly>
         </mat-form-field>
       </div>
       <div class="flex flex-row flex-wrap gap-1.5 xs:flex-col">
-        <mat-form-field class="mat-block flex-1">
+        <mat-form-field class="mat-block flex-1" appearance="outline">
           <mat-label translate>widgets.persistent-table.message-type</mat-label>
           <input matInput formControlName="messageType" readonly>
         </mat-form-field>
-        <mat-form-field class="mat-block flex-1">
+        <mat-form-field class="mat-block flex-1" appearance="outline">
           <mat-label translate>widgets.persistent-table.status</mat-label>
           <input matInput formControlName="status" readonly
                  style="font-weight: bold;"
                  [style.color]="rpcStatusColorsMap.get(data.persistentRequest.status)">
         </mat-form-field>
-        <mat-form-field class="mat-block flex-1">
+        <mat-form-field class="mat-block flex-1" appearance="outline">
           <mat-label translate>widgets.persistent-table.method</mat-label>
           <input matInput formControlName="method" readonly>
         </mat-form-field>
         @if (persistentFormGroup.get('retries').value) {
-          <mat-form-field class="mat-block flex-1"
-                          >
+          <mat-form-field class="mat-block flex-1" appearance="outline">
             <mat-label translate>widgets.persistent-table.retries</mat-label>
             <input matInput formControlName="retries" readonly>
           </mat-form-field>

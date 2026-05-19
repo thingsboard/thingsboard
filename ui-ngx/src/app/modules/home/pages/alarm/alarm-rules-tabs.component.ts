@@ -18,9 +18,9 @@ import { Component } from '@angular/core';
 import { EntityTabsComponent } from '../../components/entity/entity-tabs.component';
 import { CalculatedFieldEventBody, DebugEventType, EventType } from '@shared/models/event.models';
 import type {
-  CalculatedFieldsTableConfig,
-  CalculatedFieldsTableEntity
-} from '@home/components/calculated-fields/calculated-fields-table-config';
+  AlarmRulesTableConfig,
+  AlarmRuleTableEntity
+} from '@home/components/alarm-rules/alarm-rules-table-config';
 import { debugCfActionEnabled } from '@shared/models/calculated-field.models';
 
 @Component({
@@ -29,7 +29,7 @@ import { debugCfActionEnabled } from '@shared/models/calculated-field.models';
     styleUrls: [],
     standalone: false
 })
-export class AlarmRulesTabsComponent extends EntityTabsComponent<CalculatedFieldsTableEntity> {
+export class AlarmRulesTabsComponent extends EntityTabsComponent<AlarmRuleTableEntity> {
 
   readonly DebugEventType = DebugEventType;
   readonly EventType = EventType;
@@ -43,8 +43,7 @@ export class AlarmRulesTabsComponent extends EntityTabsComponent<CalculatedField
   };
 
   onDebugEventSelected(event: CalculatedFieldEventBody) {
-    (this.entitiesTableConfig as CalculatedFieldsTableConfig).getTestScriptDialog(this.entity, JSON.parse(event.arguments))
-      .subscribe((expression) => {
-      });
+    (this.entitiesTableConfig as AlarmRulesTableConfig).getTestScriptDialog(this.entity, JSON.parse(event.arguments))
+      .subscribe((_expression) => { });
   };
 }

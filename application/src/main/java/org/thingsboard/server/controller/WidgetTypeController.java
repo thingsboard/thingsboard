@@ -242,7 +242,7 @@ public class WidgetTypeController extends AutoCommitController {
     @ApiOperation(value = "Get all Widget types for specified Bundle (getBundleWidgetTypes)",
             notes = "Returns an array of Widget Type objects that belong to specified Widget Bundle." + WIDGET_TYPE_DESCRIPTION + " " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @GetMapping(value = "/widgetsBundles/{widgetsBundleId}/widgetTypes")
+    @GetMapping(value = "/widgetsBundle/{widgetsBundleId}/widgetTypes")
     public List<WidgetType> getBundleWidgetTypes(
             @Parameter(description = "Widget Bundle Id", required = true)
             @PathVariable("widgetsBundleId") String strWidgetsBundleId) throws ThingsboardException {

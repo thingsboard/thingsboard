@@ -16,7 +16,7 @@
 
 -->
 <form [formGroup]="awsSnsProviderConfigurationFormGroup" style="padding-bottom: 16px;">
-  <mat-form-field class="mat-block">
+  <mat-form-field class="mat-block" appearance="outline">
     <mat-label translate>admin.aws-access-key-id</mat-label>
     <input required matInput formControlName="accessKeyId">
     @if (awsSnsProviderConfigurationFormGroup.get('accessKeyId').hasError('required')) {
@@ -25,7 +25,7 @@
       </mat-error>
     }
   </mat-form-field>
-  <mat-form-field class="mat-block">
+  <mat-form-field class="mat-block" appearance="outline">
     <mat-label translate>admin.aws-secret-access-key</mat-label>
     <input required type="password" matInput formControlName="secretAccessKey" autocomplete="new-password">
     <tb-toggle-password matSuffix></tb-toggle-password>
@@ -35,7 +35,7 @@
       </mat-error>
     }
   </mat-form-field>
-  <mat-form-field class="mat-block">
+  <mat-form-field class="mat-block" appearance="outline">
     <mat-label translate>admin.aws-region</mat-label>
     <input required matInput formControlName="region">
     @if (awsSnsProviderConfigurationFormGroup.get('region').hasError('required')) {

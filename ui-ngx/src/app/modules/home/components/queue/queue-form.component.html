@@ -16,7 +16,7 @@
 
 -->
 <form [formGroup]="queueFormGroup" class="flex flex-col">
-  <mat-form-field class="mat-block" appearance="fill">
+  <mat-form-field class="mat-block" appearance="outline">
     <mat-label translate>admin.queue-name</mat-label>
     <input matInput formControlName="name" required>
     @if (queueFormGroup.get('name').hasError('required')) {
@@ -62,7 +62,7 @@
           @if (hideBatchSize) {
             <div class="flex-1">
               <label class="group-label" translate>queue.grouping-parameter</label>
-              <mat-form-field class="mat-block">
+              <mat-form-field class="mat-block" appearance="outline">
                 <mat-label translate>queue.batch-size</mat-label>
                 <input type="number" matInput formControlName="batchSize" required>
                 @if (queueFormGroup.get('submitStrategy.batchSize').hasError('required')) {
@@ -107,7 +107,7 @@
           </div>
           <div class="flex-1">
             <label class="group-label" translate>queue.retries-settings</label>
-            <mat-form-field class="mat-block" subscriptSizing="dynamic">
+            <mat-form-field class="mat-block" subscriptSizing="dynamic" appearance="outline">
               <mat-label translate>queue.retries</mat-label>
               <input type="number" matInput formControlName="retries" required>
               <mat-hint></mat-hint>
@@ -123,7 +123,7 @@
                 </mat-error>
               }
             </mat-form-field>
-            <mat-form-field class="mat-block" subscriptSizing="dynamic">
+            <mat-form-field class="mat-block" subscriptSizing="dynamic" appearance="outline">
               <mat-label translate>queue.failure-percentage</mat-label>
               <input type="number" matInput formControlName="failurePercentage" required>
               <mat-hint></mat-hint>
@@ -147,7 +147,7 @@
                 </mat-error>
               }
             </mat-form-field>
-            <mat-form-field class="mat-block" subscriptSizing="dynamic">
+            <mat-form-field class="mat-block" subscriptSizing="dynamic" appearance="outline">
               <mat-label translate>queue.pause-between-retries</mat-label>
               <input type="number" matInput formControlName="pauseBetweenRetries" required>
               <mat-hint></mat-hint>
@@ -163,7 +163,7 @@
                 </mat-error>
               }
             </mat-form-field>
-            <mat-form-field class="mat-block" subscriptSizing="dynamic">
+            <mat-form-field class="mat-block" subscriptSizing="dynamic" appearance="outline">
               <mat-label translate>queue.max-pause-between-retries</mat-label>
               <input type="number" matInput formControlName="maxPauseBetweenRetries" required>
               <mat-hint></mat-hint>
@@ -194,7 +194,7 @@
           <div class="flex-1">
             <label class="group-label" translate>queue.batch-processing</label>
             <div class="flex flex-1 flex-row gap-2.5 xs:flex-col">
-              <mat-form-field class="mat-block flex-1">
+              <mat-form-field class="mat-block flex-1" appearance="outline">
                 <mat-label translate>queue.poll-interval</mat-label>
                 <input type="number" matInput formControlName="pollInterval" required>
                 @if (queueFormGroup.get('pollInterval').hasError('required')) {
@@ -209,7 +209,7 @@
                   </mat-error>
                 }
               </mat-form-field>
-              <mat-form-field class="mat-block flex-1">
+              <mat-form-field class="mat-block flex-1" appearance="outline">
                 <mat-label translate>queue.partitions</mat-label>
                 <input type="number" matInput formControlName="partitions" required>
                 @if (queueFormGroup.get('partitions').hasError('required')) {
@@ -232,7 +232,7 @@
               <mat-checkbox class="flex-1 gt-xs:flex gt-xs:items-stretch gt-xs:justify-center" formControlName="consumerPerPartition">
                 {{ 'queue.consumer-per-partition' | translate }}
               </mat-checkbox>
-              <mat-form-field class="mat-block flex-1">
+              <mat-form-field class="mat-block flex-1" appearance="outline">
                 <mat-label translate>queue.processing-timeout</mat-label>
                 <input type="number" matInput formControlName="packProcessingTimeout" required>
                 @if (queueFormGroup.get('packProcessingTimeout').hasError('required')) {
@@ -257,14 +257,14 @@
     <mat-checkbox class="flex-1" formControlName="duplicateMsgToAllPartitions" style="padding-bottom: 16px;">
       {{ 'queue.duplicate-msg-to-all-partitions' | translate }}
     </mat-checkbox>
-    <mat-form-field class="mat-block" subscriptSizing="dynamic">
+    <mat-form-field class="mat-block" subscriptSizing="dynamic" appearance="outline">
       <mat-label translate>queue.custom-properties</mat-label>
-      <textarea matInput formControlName="customProperties" cdkTextareaAutosize cdkAutosizeMinRows="1"></textarea>
+      <textarea matInput formControlName="customProperties" cdkTextareaAutosize cdkAutosizeMinRows="1" rows="1"></textarea>
       <mat-hint translate>queue.custom-properties-hint</mat-hint>
     </mat-form-field>
-    <mat-form-field class="mat-block" appearance="fill">
+    <mat-form-field class="mat-block" appearance="outline">
       <mat-label translate>queue.description</mat-label>
-      <textarea matInput formControlName="description" rows="2"></textarea>
+      <textarea matInput formControlName="description" cdkTextareaAutosize cdkAutosizeMinRows="1" rows="1"></textarea>
       <mat-hint translate>queue.description-hint</mat-hint>
     </mat-form-field>
   </div>

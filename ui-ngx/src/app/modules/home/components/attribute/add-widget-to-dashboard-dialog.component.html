@@ -33,18 +33,19 @@
     <fieldset [disabled]="isLoading$ | async">
       <mat-radio-group formControlName="addToDashboardType">
         <mat-radio-button [value]="0" color="primary">
-          <section class="flex flex-col" style="width: 300px;">
+          <section class="flex flex-col gap-1" style="width: 300px;">
             <span translate>dashboard.select-existing</span>
             <tb-dashboard-autocomplete formControlName="dashboardId"
+                                       appearance="outline"
                                        [required]="addWidgetFormGroup.get('addToDashboardType').value === 0"
                                        [selectFirstDashboard]="false">
             </tb-dashboard-autocomplete>
           </section>
         </mat-radio-button>
         <mat-radio-button [value]="1" color="primary">
-          <section class="flex flex-col" style="width: 300px;">
+          <section class="flex flex-col gap-1" style="width: 300px;">
             <span translate>dashboard.create-new</span>
-            <mat-form-field class="mat-block">
+            <mat-form-field class="mat-block" appearance="outline">
               <mat-label translate>dashboard.new-dashboard-title</mat-label>
               <input matInput formControlName="newDashboardTitle"
                      [required]="addWidgetFormGroup.get('addToDashboardType').value === 1">

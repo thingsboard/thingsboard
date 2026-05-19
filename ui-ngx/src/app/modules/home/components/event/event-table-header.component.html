@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<mat-form-field class="mat-block">
+<mat-form-field class="mat-block" appearance="outline" subscriptSizing="dynamic">
   <mat-label translate>event.event-type</mat-label>
   <mat-select [ngModel]="eventTableConfig.eventType"
               (ngModelChange)="eventTypeChanged($event)">

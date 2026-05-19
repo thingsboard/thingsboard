@@ -24,7 +24,7 @@ import lombok.Data;
 import java.io.Serializable;
 import java.util.List;
 
-@Schema
+@Schema(hidden = true)
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Deprecated

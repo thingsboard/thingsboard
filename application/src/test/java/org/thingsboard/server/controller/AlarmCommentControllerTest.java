@@ -44,7 +44,9 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -226,6 +228,18 @@ public class AlarmCommentControllerTest extends AbstractControllerTest {
         doDelete("/api/alarm/" + alarm.getId() + "/comment/" + alarmComment.getId())
                 .andExpect(status().isOk());
 
+        Optional<AlarmCommentInfo> systemCommentOpt = doGetTyped(
+                "/api/alarm/" + alarm.getId() + "/comment" + "?page=0&pageSize=10", new TypeReference<PageData<AlarmCommentInfo>>() {
+                }
+        ).getData().stream().filter(alarmCommentInfo -> alarmCommentInfo.getType().equals(AlarmCommentType.SYSTEM)).findFirst();
+        assertThat(systemCommentOpt).isPresent();
+        AlarmCommentInfo systemComment = systemCommentOpt.get();
+
+        assertThat(systemComment.getId()).isEqualTo(alarmComment.getId());
+        assertThat(systemComment.getType()).isEqualTo(AlarmCommentType.SYSTEM);
+        assertThat(systemComment.getComment().get("text").asText()).isEqualTo(String.format("User %s deleted his comment",
+                TENANT_ADMIN_EMAIL));
+
         AlarmComment expectedAlarmComment = AlarmComment.builder()
                 .alarmId(alarm.getId())
                 .type(AlarmCommentType.SYSTEM)
@@ -359,6 +373,39 @@ public class AlarmCommentControllerTest extends AbstractControllerTest {
         AlarmCommentInfo alarmCommentInfo = pageData.getData().get(0);
         boolean equals = alarmComment.getId().equals(alarmCommentInfo.getId()) && alarmComment.getComment().equals(alarmCommentInfo.getComment());
         Assert.assertTrue("Created alarm doesn't match the found one!", equals);
+    }
+
+    @Test
+    public void testShouldNotCreateOrUpdateSystemAlarmComment() throws Exception {
+        loginTenantAdmin();
+
+        AlarmComment alarmComment = AlarmComment.builder()
+                .type(AlarmCommentType.SYSTEM)
+                .comment(JacksonUtil.newObjectNode().set("text", new TextNode("Acknowledged by tenant admin")))
+                .build();
+        AlarmComment created = doPost("/api/alarm/" + alarm.getId() + "/comment", alarmComment, AlarmComment.class);
+        assertThat(created.getType()).isEqualTo(AlarmCommentType.OTHER);
+
+        // acknowledge alarm to create system comment
+        doPost("/api/alarm/" + alarm.getId() + "/ack").andExpect(status().isOk());
+
+        Optional<AlarmCommentInfo> systemCommentOpt = doGetTyped(
+                "/api/alarm/" + alarm.getId() + "/comment" + "?page=0&pageSize=10", new TypeReference<PageData<AlarmCommentInfo>>() {
+                }
+        ).getData().stream().filter(alarmCommentInfo -> alarmCommentInfo.getType().equals(AlarmCommentType.SYSTEM)).findFirst();
+        assertThat(systemCommentOpt).isPresent();
+        AlarmCommentInfo systemComment = systemCommentOpt.get();
+
+        // system comment can't be updated with other type
+        systemComment.setType(AlarmCommentType.OTHER);
+        doPost("/api/alarm/" + alarm.getId() + "/comment", systemComment).andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("System alarm comment can't be updated!")));
+
+        // system comment can't be updated with other text
+        systemComment.setType(AlarmCommentType.SYSTEM);
+        systemComment.setComment(JacksonUtil.newObjectNode().set("text", new TextNode("New system comment")));
+        doPost("/api/alarm/" + alarm.getId() + "/comment", systemComment).andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("System alarm comment can't be updated!")));
     }
 
     private AlarmComment createAlarmComment(AlarmId alarmId, String text) {

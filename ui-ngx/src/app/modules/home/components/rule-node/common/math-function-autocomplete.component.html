@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="mathFunctionForm" class="mat-block">
+<mat-form-field [formGroup]="mathFunctionForm" class="mat-block" [appearance]="appearance">
   <mat-label translate>rule-node-config.functions-field-input</mat-label>
   <input [required]="required"
          (focusin)="onFocus()"

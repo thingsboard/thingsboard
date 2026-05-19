@@ -24,7 +24,7 @@
       <mat-radio-button [value]="'exclude'">{{ 'widgets.navigation.filter-type-exclude' | translate }}</mat-radio-button>
     </mat-radio-group>
   </section>
-  <mat-form-field [class.!hidden]="navigationCardsWidgetSettingsForm.get('filterType').value === 'all'" class="mat-block flex-1" floatLabel="always">
+  <mat-form-field [class.!hidden]="navigationCardsWidgetSettingsForm.get('filterType').value === 'all'" class="mat-block flex-1" floatLabel="always" appearance="outline">
     <mat-label translate>widgets.navigation.items</mat-label>
     <mat-chip-grid #filterItemsChipList>
       @for (filterItem of navigationCardsWidgetSettingsForm.get('filter').value; track filterItem) {

@@ -38,6 +38,7 @@ import { SHARED_MODULE_TOKEN } from '@shared/components/tokens';
 import { guid, isDefinedAndNotNull } from '@core/utils';
 import { Observable, of, ReplaySubject } from 'rxjs';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { sanitizeTemplate } from './markdown-sanitize.helper';
 
 let defaultMarkdownStyle: string;
 
@@ -133,7 +134,7 @@ export class TbMarkdownComponent implements OnChanges {
       const preHtml = preElements.item(i).outerHTML.replace('ngnonbindable=""', 'ngNonBindable');
       template = template.replace(matches[i][0], preHtml);
     }
-    template = this.sanitize(template);
+    template = sanitizeTemplate(template);
     this.markdownContainer.clear();
     let styles: string[] = [];
     let readyObservable: Observable<void>;
@@ -265,10 +266,6 @@ export class TbMarkdownComponent implements OnChanges {
     } else {
       return of(null);
     }
-  }
-
-  private sanitize(template: string): string {
-    return template.replace(/{/g, '&#123;').replace(/}/g, '&#125;').replace(/@/g, '&#64;');
   }
 
   private destroyMarkdownInstanceResources() {

@@ -7466,7 +7466,7 @@
       "handle-empty-result-function": "空結果処理関数",
       "handle-error-function": "エラー処理関数",
       "handle-non-mobile-fallback-function": "非モバイルフォールバック処理関数",
-      "save-to-gallery": "ギャラリーに保存",
+      "save-to-gallery": "'画像ギャラリー'に保存",
       "provision-type": "プロビジョニングタイプ",
       "auto": "自動",
       "wi-fi": "Wi-Fi",

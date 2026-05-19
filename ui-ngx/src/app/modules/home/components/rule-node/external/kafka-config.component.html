@@ -16,7 +16,7 @@
 
 -->
 <section [formGroup]="kafkaConfigForm" class="flex flex-col">
-  <mat-form-field class="mat-block" subscriptSizing="dynamic">
+  <mat-form-field class="mat-block" subscriptSizing="dynamic" appearance="outline">
     <mat-label translate>rule-node-config.topic-pattern</mat-label>
     <input required matInput formControlName="topicPattern">
     @if (kafkaConfigForm.get('topicPattern').hasError('required')) {
@@ -26,13 +26,13 @@
     }
     <mat-hint translate>rule-node-config.general-pattern-hint</mat-hint>
   </mat-form-field>
-  <mat-form-field class="mat-block" subscriptSizing="dynamic">
+  <mat-form-field class="mat-block" subscriptSizing="dynamic" appearance="outline">
     <mat-label translate>rule-node-config.key-pattern</mat-label>
     <input matInput formControlName="keyPattern">
     <mat-hint translate>rule-node-config.general-pattern-hint</mat-hint>
   </mat-form-field>
   <div class="tb-hint" translate>rule-node-config.key-pattern-hint</div>
-  <mat-form-field class="mat-block">
+  <mat-form-field class="mat-block" appearance="outline">
     <mat-label translate>rule-node-config.bootstrap-servers</mat-label>
     <input required matInput formControlName="bootstrapServers">
     @if (kafkaConfigForm.get('bootstrapServers').hasError('required')) {
@@ -41,7 +41,7 @@
       </mat-error>
     }
   </mat-form-field>
-  <mat-form-field class="mat-block">
+  <mat-form-field class="mat-block" appearance="outline">
     <mat-label translate>rule-node-config.retries</mat-label>
     <input type="number" step="1" min="0" matInput formControlName="retries">
     @if (kafkaConfigForm.get('retries').hasError('min')) {
@@ -50,7 +50,7 @@
       </mat-error>
     }
   </mat-form-field>
-  <mat-form-field class="mat-block">
+  <mat-form-field class="mat-block" appearance="outline">
     <mat-label translate>rule-node-config.batch-size-bytes</mat-label>
     <input type="number" step="1" min="0" matInput formControlName="batchSize">
     @if (kafkaConfigForm.get('batchSize').hasError('min')) {
@@ -59,7 +59,7 @@
       </mat-error>
     }
   </mat-form-field>
-  <mat-form-field class="mat-block">
+  <mat-form-field class="mat-block" appearance="outline">
     <mat-label translate>rule-node-config.linger-ms</mat-label>
     <input type="number" step="1" min="0" matInput formControlName="linger">
     @if (kafkaConfigForm.get('linger').hasError('min')) {
@@ -68,7 +68,7 @@
       </mat-error>
     }
   </mat-form-field>
-  <mat-form-field class="mat-block">
+  <mat-form-field class="mat-block" appearance="outline">
     <mat-label translate>rule-node-config.buffer-memory-bytes</mat-label>
     <input type="number" step="1" min="0" matInput formControlName="bufferMemory">
     @if (kafkaConfigForm.get('bufferMemory').hasError('min')) {
@@ -77,7 +77,7 @@
       </mat-error>
     }
   </mat-form-field>
-  <mat-form-field class="mat-block">
+  <mat-form-field class="mat-block" appearance="outline">
     <mat-label translate>rule-node-config.acks</mat-label>
     <mat-select formControlName="acks" required>
       @for (ackValue of ackValues; track ackValue) {
@@ -88,20 +88,21 @@
     </mat-select>
   </mat-form-field>
   <label translate class="tb-title">rule-node-config.other-properties</label>
-  <tb-kv-map-config-old
+  <tb-kv-map-config
     required="false"
     formControlName="otherProperties"
-    keyText="rule-node-config.key"
-    keyRequiredText="rule-node-config.key-required"
-    valText="rule-node-config.value"
-    valRequiredText="rule-node-config.value-required">
-  </tb-kv-map-config-old>
+    [keyText]="'rule-node-config.key' | translate"
+    [keyRequiredText]="'rule-node-config.key-required' | translate"
+    [valText]="'rule-node-config.value' | translate"
+    [valRequiredText]="'rule-node-config.value-required' | translate"
+    [emptyText]="'rule-node-config.other-properties-empty' | translate">
+  </tb-kv-map-config>
   <mat-checkbox class="flex-1" formControlName="addMetadataKeyValuesAsKafkaHeaders">
     {{ 'rule-node-config.add-metadata-key-values-as-kafka-headers' | translate }}
   </mat-checkbox>
   <div class="tb-hint" translate>rule-node-config.add-metadata-key-values-as-kafka-headers-hint</div>
   @if (kafkaConfigForm.get('addMetadataKeyValuesAsKafkaHeaders').value) {
-    <mat-form-field class="mat-block flex-1">
+    <mat-form-field class="mat-block flex-1" appearance="outline">
       <mat-label translate>rule-node-config.charset-encoding</mat-label>
       <mat-select formControlName="kafkaHeadersCharset" required>
         @for (charset of ToByteStandartCharsetTypesValues; track charset) {

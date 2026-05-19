@@ -17,7 +17,7 @@
 -->
 <form [formGroup]="snmpDeviceTransportConfigurationFormGroup" class="flex flex-col gap-2 pb-4">
   <div class="flex flex-row gap-2 xs:flex-col">
-    <mat-form-field class="flex-1">
+    <mat-form-field class="flex-1" appearance="outline">
       <mat-label translate>device-profile.snmp.host</mat-label>
       <input matInput formControlName="host" required>
       @if (snmpDeviceTransportConfigurationFormGroup.get('host').hasError('required') ||
@@ -27,7 +27,7 @@
         </mat-error>
       }
     </mat-form-field>
-    <mat-form-field class="flex-1">
+    <mat-form-field class="flex-1" appearance="outline">
       <mat-label translate>device-profile.snmp.port</mat-label>
       <input matInput formControlName="port" type="number" min="0" required>
       @if (snmpDeviceTransportConfigurationFormGroup.get('port').hasError('required')) {
@@ -43,7 +43,7 @@
       }
     </mat-form-field>
   </div>
-  <mat-form-field class="mat-block" floatLabel="always" hideRequiredMarker>
+  <mat-form-field class="mat-block" floatLabel="always" hideRequiredMarker appearance="outline">
     <mat-label translate>device-profile.snmp.protocol-version</mat-label>
     <mat-select formControlName="protocolVersion" required>
       @for (snmpDeviceProtocolVersion of snmpDeviceProtocolVersions; track snmpDeviceProtocolVersion) {
@@ -60,7 +60,7 @@
   </mat-form-field>
   @if (!isV3protocolVersion()) {
     <section>
-      <mat-form-field class="mat-block">
+      <mat-form-field class="mat-block" appearance="outline">
         <mat-label translate>device-profile.snmp.community</mat-label>
         <input matInput formControlName="community" required>
         @if (snmpDeviceTransportConfigurationFormGroup.get('community').hasError('required') ||
@@ -75,7 +75,7 @@
   @if (isV3protocolVersion()) {
     <section>
       <div class="flex flex-row gap-2 xs:flex-col">
-        <mat-form-field class="flex-1">
+        <mat-form-field class="flex-1" appearance="outline">
           <mat-label translate>device-profile.snmp.user-name</mat-label>
           <input matInput formControlName="username" required>
           @if (snmpDeviceTransportConfigurationFormGroup.get('username').hasError('required') ||
@@ -85,7 +85,7 @@
             </mat-error>
           }
         </mat-form-field>
-        <mat-form-field class="flex-1">
+        <mat-form-field class="flex-1" appearance="outline">
           <mat-label translate>device-profile.snmp.security-name</mat-label>
           <input matInput formControlName="securityName" required>
           @if (snmpDeviceTransportConfigurationFormGroup.get('securityName').hasError('required') ||
@@ -97,7 +97,7 @@
         </mat-form-field>
       </div>
       <div class="flex flex-row gap-2 xs:flex-col">
-        <mat-form-field class="flex-1" floatLabel="always" hideRequiredMarker>
+        <mat-form-field class="flex-1" floatLabel="always" hideRequiredMarker appearance="outline">
           <mat-label translate>device-profile.snmp.authentication-protocol</mat-label>
           <mat-select formControlName="authenticationProtocol" required>
             @for (snmpAuthenticationProtocol of snmpAuthenticationProtocols; track snmpAuthenticationProtocol) {
@@ -112,7 +112,7 @@
             </mat-error>
           }
         </mat-form-field>
-        <mat-form-field class="flex-1">
+        <mat-form-field class="flex-1" appearance="outline">
           <mat-label translate>device-profile.snmp.authentication-passphrase</mat-label>
           <input matInput formControlName="authenticationPassphrase" required>
           @if (snmpDeviceTransportConfigurationFormGroup.get('authenticationPassphrase').hasError('required') ||
@@ -124,7 +124,7 @@
         </mat-form-field>
       </div>
       <div class="flex flex-row gap-2 xs:flex-col">
-        <mat-form-field class="flex-1" floatLabel="always" hideRequiredMarker>
+        <mat-form-field class="flex-1" floatLabel="always" hideRequiredMarker appearance="outline">
           <mat-label translate>device-profile.snmp.privacy-protocol</mat-label>
           <mat-select formControlName="privacyProtocol" required>
             @for (snmpPrivacyProtocol of snmpPrivacyProtocols; track snmpPrivacyProtocol) {
@@ -139,7 +139,7 @@
             </mat-error>
           }
         </mat-form-field>
-        <mat-form-field class="flex-1">
+        <mat-form-field class="flex-1" appearance="outline">
           <mat-label translate>device-profile.snmp.privacy-passphrase</mat-label>
           <input matInput formControlName="privacyPassphrase" required>
           @if (snmpDeviceTransportConfigurationFormGroup.get('privacyPassphrase').hasError('required') ||
@@ -151,11 +151,11 @@
         </mat-form-field>
       </div>
       <div class="flex flex-row gap-2 xs:flex-col">
-        <mat-form-field class="flex-1">
+        <mat-form-field class="flex-1" appearance="outline">
           <mat-label translate>device-profile.snmp.context-name</mat-label>
           <input matInput formControlName="contextName">
         </mat-form-field>
-        <mat-form-field class="flex-1">
+        <mat-form-field class="flex-1" appearance="outline">
           <mat-label translate>device-profile.snmp.engine-id</mat-label>
           <input matInput formControlName="engineId">
         </mat-form-field>

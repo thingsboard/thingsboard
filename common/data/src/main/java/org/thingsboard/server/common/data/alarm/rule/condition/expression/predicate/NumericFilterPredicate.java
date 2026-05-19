@@ -41,6 +41,7 @@ public class NumericFilterPredicate implements SimpleKeyFilterPredicate<Double> 
         return FilterPredicateType.NUMERIC;
     }
 
+    @Schema(name = "AlarmRuleNumericOperation")
     public enum NumericOperation {
         EQUAL,
         NOT_EQUAL,

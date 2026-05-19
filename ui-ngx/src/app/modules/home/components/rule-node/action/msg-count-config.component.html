@@ -16,7 +16,7 @@
 
 -->
 <section [formGroup]="msgCountConfigForm" class="flex flex-col">
-  <mat-form-field class="mat-block">
+  <mat-form-field class="mat-block" appearance="outline">
     <mat-label translate>rule-node-config.interval-seconds</mat-label>
     <input required type="number" min="1" step="1" matInput formControlName="interval">
     @if (msgCountConfigForm.get('interval').hasError('required')) {
@@ -30,7 +30,7 @@
       </mat-error>
     }
   </mat-form-field>
-  <mat-form-field class="mat-block">
+  <mat-form-field class="mat-block" appearance="outline">
     <mat-label translate>rule-node-config.output-timeseries-key-prefix</mat-label>
     <input required matInput formControlName="telemetryPrefix">
     @if (msgCountConfigForm.get('telemetryPrefix').hasError('required')) {

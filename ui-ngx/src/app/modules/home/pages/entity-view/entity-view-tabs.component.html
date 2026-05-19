@@ -30,6 +30,7 @@
     label="{{ 'attribute.latest-telemetry' | translate }}" #telemetryTab="matTab">
     <tb-attribute-table [defaultAttributeScope]="latestTelemetryTypes.LATEST_TELEMETRY"
                         disableAttributeScopeSelection
+                        disableAddTelemetry
                         [active]="telemetryTab.isActive"
                         [entityId]="entity.id"
                         [entityName]="entity.name">

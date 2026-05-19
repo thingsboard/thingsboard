@@ -45,7 +45,7 @@
                       (fileNameChanged)="imageFileNameChanged($event)">
       </tb-image-input>
       @if (uploadImage && uploadImageFormGroup.get('file').value) {
-        <mat-form-field class="mat-block">
+        <mat-form-field class="mat-block" appearance="outline">
           <mat-label translate>image.name</mat-label>
           <input matInput formControlName="title" required>
           @if (uploadImageFormGroup.get('title').hasError('required')) {

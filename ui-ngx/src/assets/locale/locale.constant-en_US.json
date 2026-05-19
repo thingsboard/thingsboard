@@ -2402,7 +2402,7 @@
         "search": "Search asset profiles",
         "selected-asset-profiles": "{ count, plural, =1 {1 asset profile} other {# asset profiles} } selected",
         "no-asset-profiles-matching": "No asset profile matching '{{entity}}' were found.",
-        "asset-profile-required": "Asset profile is required",
+        "asset-profile-required": "Asset profile is required.",
         "idCopiedMessage": "Asset profile Id has been copied to clipboard",
         "set-default": "Make asset profile default",
         "delete": "Delete asset profile",
@@ -2447,7 +2447,7 @@
         "search": "Search device profiles",
         "selected-device-profiles": "{ count, plural, =1 {1 device profile} other {# device profiles} } selected",
         "no-device-profiles-matching": "No device profile matching '{{entity}}' were found.",
-        "device-profile-required": "Device profile is required",
+        "device-profile-required": "Device profile is required.",
         "idCopiedMessage": "Device profile Id has been copied to clipboard",
         "set-default": "Make device profile default",
         "delete": "Delete device profile",
@@ -5522,8 +5522,10 @@
         "endpoint-url-pattern-required": "Endpoint URL pattern is required",
         "request-method": "Request method",
         "ignore-request-body": "Without request body",
+        "request-body-template": "Request body template",
+        "request-body-template-hint": "Use <code><span style=\"color: #000;\">$&#123;</span>metadataKey<span style=\"color: #000;\">&#125;</span></code> for metadata, <code><span style=\"color: #000;\">$[</span>messageKey<span style=\"color: #000;\">]</span></code> for message values. If empty, the message payload is used as the request body. For non-JSON payloads, enable 'Parse to plain text'.",
         "parse-to-plain-text": "Parse to plain text",
-        "parse-to-plain-text-hint": "If selected, request body message payload will be transformed from JSON string to plain text, e.g. msg = \"Hello,\\t\"world\"\" will be parsed to Hello, \"world\"",
+        "parse-to-plain-text-hint": "If selected, the request body (message payload or body template result) will be sent as a plain text string instead of being parsed as JSON, e.g. msg = \"Hello,\\t\"world\"\" will be parsed to Hello, \"world\"",
         "read-timeout": "Read timeout in millis",
         "read-timeout-hint": "The value of 0 means an infinite timeout",
         "max-parallel-requests-count": "Max number of parallel requests",
@@ -5545,6 +5547,7 @@
         "bootstrap-servers": "Bootstrap servers",
         "bootstrap-servers-required": "Bootstrap servers value is required",
         "other-properties": "Other properties",
+        "other-properties-empty": "No other properties configured",
         "key": "Key",
         "key-required": "Key is required",
         "retries": "Automatically retry times if fails",
@@ -5582,6 +5585,7 @@
         "handshake-timeout-ms": "Handshake timeout (ms)",
         "min-handshake-timeout-ms-message": "Only 0 ms minimum value is allowed.",
         "client-properties": "Client properties",
+        "client-properties-empty": "No client properties configured",
         "queue-url-pattern": "Queue URL pattern",
         "queue-url-pattern-required": "Queue URL pattern is required",
         "delay-seconds": "Delay (seconds)",
@@ -5599,6 +5603,7 @@
         "pubsub-topic-name": "Topic name",
         "pubsub-topic-name-required": "Topic name is required",
         "message-attributes": "Message attributes",
+        "message-attributes-empty": "No message attributes configured",
         "message-attributes-hint": "Use <code><span style=\"color: #000;\">$&#123;</span>metadataKey<span style=\"color: #000000;\">&#125;</span></code> for value from metadata, <code><span style=\"color: #000;\">$[</span>messageKey<span style=\"color: #000;\">]</span></code> for value from message body in name/value fields",
         "connect-timeout": "Connection timeout (sec)",
         "connect-timeout-required": "Connection timeout is required.",
@@ -7502,7 +7507,7 @@
           "handle-empty-result-function": "Handle empty result function",
           "handle-error-function": "Handle error function",
           "handle-non-mobile-fallback-function": "Handle Non-Mobile fallback function",
-          "save-to-gallery": "Save to gallery",
+          "save-to-gallery": "Save to 'Image gallery'",
           "provision-type": "Provision type",
           "auto": "Auto",
           "wi-fi": "Wi-Fi",
@@ -8927,7 +8932,18 @@
                     },
                     "custom": {
                         "title": "Custom",
-                        "tile-url": "Tile URL"
+                        "tile-url": "Tile URL",
+                        "style-url": "Style URL",
+                        "vector-tiles": "Vector tiles",
+                        "vector-tiles-hint": "Enable when using a style URL from providers like OpenFreeMap or MapTiler.",
+                        "attribution": "Copyright text",
+                        "attribution-hint": "Displayed at the bottom of the map. Required by most tile providers."
+                    },
+                    "openfreemap": {
+                        "title": "OpenFreeMap",
+                        "liberty": "Liberty",
+                        "bright": "Bright",
+                        "positron": "Positron"
                     }
                 },
                 "credentials": {
@@ -10159,6 +10175,18 @@
                     "how-to-create-customer-and-assign-dashboard": "How to create Customer and assign Dashboard"
                 }
             }
+        },
+        "html-container": {
+            "java-script": "JavaScript",
+            "js-function": "JavaScript function",
+            "html": "HTML",
+            "angular-html-template": "Angular HTML template",
+            "css": "CSS",
+            "container-type": "Container type",
+            "type-plain": "Plain HTML",
+            "type-angular": "Angular",
+            "resources": "Resources",
+            "no-resources": "No resources configured"
         },
         "api-usage": {
             "api-usage": "API usage",

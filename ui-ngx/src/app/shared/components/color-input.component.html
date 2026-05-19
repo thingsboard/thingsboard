@@ -16,7 +16,7 @@
 
 -->
 @if (!asBoxInput) {
-  <mat-form-field [formGroup]="colorFormGroup">
+  <mat-form-field [formGroup]="colorFormGroup" [appearance]="appearance">
     @if (icon || label) {
       <mat-label>
         @if (icon) {

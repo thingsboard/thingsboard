@@ -17,6 +17,7 @@ package org.thingsboard.server.controller;
 
 import com.google.common.util.concurrent.FutureCallback;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -127,7 +128,8 @@ public class RpcV2Controller extends AbstractRpcController {
     public DeferredResult<ResponseEntity> handleOneWayDeviceRPCRequestV2(
             @Parameter(description = DEVICE_ID_PARAM_DESCRIPTION)
             @PathVariable("deviceId") String deviceIdStr,
-            @Parameter(description = "A JSON value representing the RPC request.")
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON object representing the RPC request.",
+                    content = @Content(mediaType = "text/plain", schema = @Schema(type = "string")))
             @RequestBody String requestBody) throws ThingsboardException {
         return handleDeviceRPCRequest(true, new DeviceId(UUID.fromString(deviceIdStr)), requestBody, HttpStatus.GATEWAY_TIMEOUT, HttpStatus.GATEWAY_TIMEOUT);
     }
@@ -146,7 +148,8 @@ public class RpcV2Controller extends AbstractRpcController {
     public DeferredResult<ResponseEntity> handleTwoWayDeviceRPCRequestV2(
             @Parameter(description = DEVICE_ID_PARAM_DESCRIPTION)
             @PathVariable(DEVICE_ID) String deviceIdStr,
-            @Parameter(description = "A JSON value representing the RPC request.")
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON object representing the RPC request.",
+                    content = @Content(mediaType = "text/plain", schema = @Schema(type = "string")))
             @RequestBody String requestBody) throws ThingsboardException {
         return handleDeviceRPCRequest(false, new DeviceId(UUID.fromString(deviceIdStr)), requestBody, HttpStatus.GATEWAY_TIMEOUT, HttpStatus.GATEWAY_TIMEOUT);
     }

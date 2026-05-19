@@ -24,7 +24,7 @@
                      popupHelpLink="rulenode/node-templatization-doc">
     </tb-example-hint>
     <div class="tb-standard-fields">
-      <mat-form-field class="mat-block">
+      <mat-form-field class="mat-block" appearance="outline">
         <mat-label>{{'rule-node-config.function-name' | translate}}</mat-label>
         <input required matInput formControlName="functionName">
         @if (lambdaConfigForm.get('functionName').hasError('required')) {
@@ -33,7 +33,7 @@
           </mat-error>
         }
       </mat-form-field>
-      <mat-form-field class="mat-block">
+      <mat-form-field class="mat-block" appearance="outline">
         <mat-label>{{'rule-node-config.qualifier' | translate}}</mat-label>
         <input matInput formControlName="qualifier">
         <mat-hint translate>rule-node-config.qualifier-hint</mat-hint>
@@ -47,7 +47,7 @@
         <mat-panel-title class="tb-form-panel-title tb-required" translate>rule-node-config.aws-credentials</mat-panel-title>
       </mat-expansion-panel-header>
       <div class="tb-standard-fields">
-        <mat-form-field class="mat-block">
+        <mat-form-field class="mat-block" appearance="outline">
           <mat-label translate>rule-node-config.aws-access-key-id</mat-label>
           <input required matInput formControlName="accessKey">
           @if (lambdaConfigForm.get('accessKey').hasError('required')) {
@@ -56,7 +56,7 @@
             </mat-error>
           }
         </mat-form-field>
-        <mat-form-field class="mat-block">
+        <mat-form-field class="mat-block" appearance="outline">
           <mat-label translate>rule-node-config.aws-secret-access-key</mat-label>
           <input required matInput formControlName="secretKey">
           @if (lambdaConfigForm.get('secretKey').hasError('required')) {
@@ -65,7 +65,7 @@
             </mat-error>
           }
         </mat-form-field>
-        <mat-form-field class="mat-block">
+        <mat-form-field class="mat-block" appearance="outline">
           <mat-label translate>rule-node-config.aws-region</mat-label>
           <input required matInput formControlName="region">
           @if (lambdaConfigForm.get('region').hasError('required')) {
@@ -84,7 +84,7 @@
       </mat-expansion-panel-header>
       <div class="tb-form-panel no-border no-padding no-gap" style="margin-top: 0">
         <div class="tb-form-row no-border same-padding tb-standard-fields">
-          <mat-form-field class="flex">
+          <mat-form-field class="flex" appearance="outline">
             <mat-label translate>rule-node-config.connection-timeout</mat-label>
             <input type="number" required min="0" matInput formControlName="connectionTimeout">
             @if (lambdaConfigForm.get('connectionTimeout').hasError('required')) {
@@ -101,7 +101,7 @@
                       color="primary"
             matTooltip="{{ 'rule-node-config.connection-timeout-hint' | translate }}">help</mat-icon>
           </mat-form-field>
-          <mat-form-field class="flex">
+          <mat-form-field class="flex" appearance="outline">
             <mat-label translate>rule-node-config.request-timeout</mat-label>
             <input type="number" required min="0" matInput formControlName="requestTimeout">
             @if (lambdaConfigForm.get('requestTimeout').hasError('required')) {

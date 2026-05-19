@@ -179,6 +179,7 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
             ruleState.setActive(null);
             AlarmCondition condition = rule.getCondition();
             if (condition.hasSchedule() || (condition.getType() == AlarmConditionType.DURATION && !ruleState.isEmpty())) {
+                ruleState.cancelDurationCheckFuture();
                 reevalNeeded.set(true);
             }
         }

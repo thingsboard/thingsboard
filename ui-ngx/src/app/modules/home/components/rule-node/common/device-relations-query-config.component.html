@@ -17,7 +17,7 @@
 -->
 <section class="flex flex-col" [formGroup]="deviceRelationsQueryFormGroup">
   <div class="flex flex-row gap-5">
-    <mat-form-field class="mat-block max-w-50% flex-full" subscriptSizing="dynamic" style="min-width: 100px;" hideRequiredMarker>
+    <mat-form-field class="mat-block max-w-50% flex-full" subscriptSizing="dynamic" style="min-width: 100px;" hideRequiredMarker appearance="outline">
       <mat-label translate>relation.direction</mat-label>
       <mat-select required formControlName="direction">
         @for (type of directionTypes; track type) {
@@ -27,7 +27,7 @@
         }
       </mat-select>
     </mat-form-field>
-    <mat-form-field floatLabel="always" class="mat-block max-w-50% flex-full">
+    <mat-form-field floatLabel="always" class="mat-block max-w-50% flex-full" appearance="outline">
       <mat-label translate>rule-node-config.max-relation-level</mat-label>
       <input matInput
              type="text"
@@ -57,10 +57,12 @@
     </div>
   }
   <tb-relation-type-autocomplete
+    appearance="outline"
     class="flex-1"
     formControlName="relationType">
   </tb-relation-type-autocomplete>
   <tb-entity-subtype-list
+    appearance="outline"
     required
     [label]="'rule-node-config.device-profiles' | translate"
     [entityType]="entityType.DEVICE"

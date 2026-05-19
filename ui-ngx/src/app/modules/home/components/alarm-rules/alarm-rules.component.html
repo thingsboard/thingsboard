@@ -142,6 +142,7 @@
                                       placeholder="{{ 'alarm-rule.alarm-rule-relation-types-list' | translate }}"
                                       hint="{{ 'alarm-rule.alarm-rule-relation-types-list-hint' | translate }}"
                                       [predefinedValues]="predefinedTypeValues"
+                                      subscriptSizing="dynamic"
                                       allowUserValue
                                       formControlName="propagateRelationTypes">
                 </tb-string-items-list>

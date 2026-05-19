@@ -36,8 +36,29 @@
         </mat-select>
       </mat-form-field>
     </div>
+    @if (MapProvider.custom === layerFormGroup.get('provider').value) {
+      <div class="tb-form-row space-between column-xs">
+        <mat-slide-toggle class="mat-slide" formControlName="vectorTiles">
+          <div tb-hint-tooltip-icon="{{ 'widgets.maps.layer.provider.custom.vector-tiles-hint' | translate }}">
+            {{ 'widgets.maps.layer.provider.custom.vector-tiles' | translate }}
+          </div>
+        </mat-slide-toggle>
+      </div>
+    }
     <div class="tb-form-row space-between column-xs">
-      <div class="fixed-title-width"> {{ (MapProvider.custom === layerFormGroup.get('provider').value ? 'widgets.maps.layer.provider.custom.tile-url' : 'widgets.maps.layer.layer') | translate }}</div>
+      <div class="fixed-title-width"> {{ (MapProvider.custom === layerFormGroup.get('provider').value ? (layerFormGroup.get('vectorTiles').value ? 'widgets.maps.layer.provider.custom.style-url' : 'widgets.maps.layer.provider.custom.tile-url') : 'widgets.maps.layer.layer') | translate }}</div>
+      @if (MapProvider.openfreemap === layerFormGroup.get('provider').value) {
+        <mat-form-field
+          class="flex" appearance="outline" subscriptSizing="dynamic">
+          <mat-select formControlName="layerType" required>
+            @for (styleType of openFreeMapStyleTypes; track styleType) {
+              <mat-option [value]="styleType">
+                {{ openFreeMapStyleTranslationMap.get(styleType) | translate }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
       @if (MapProvider.openstreet === layerFormGroup.get('provider').value) {
         <mat-form-field
           class="flex"  appearance="outline" subscriptSizing="dynamic">
@@ -117,6 +138,14 @@
         </mat-select>
       </mat-form-field>
     </div>
+    @if (MapProvider.custom === layerFormGroup.get('provider').value) {
+      <div class="tb-form-row space-between column-xs">
+        <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'widgets.maps.layer.provider.custom.attribution-hint' | translate }}" translate>widgets.maps.layer.provider.custom.attribution</div>
+        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+          <input matInput formControlName="customAttribution" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+      </div>
+    }
   </div>
   <div class="tb-map-layer-settings-panel-buttons">
     <button mat-button

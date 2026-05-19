@@ -38,6 +38,7 @@ public class StringFilterPredicate implements SimpleKeyFilterPredicate<String> {
         return FilterPredicateType.STRING;
     }
 
+    @Schema(name= "AlarmRuleStringOperation")
     public enum StringOperation {
         EQUAL,
         NOT_EQUAL,

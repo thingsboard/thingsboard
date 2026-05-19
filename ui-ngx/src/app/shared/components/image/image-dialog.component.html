@@ -33,7 +33,7 @@
   }
   <div mat-dialog-content>
     <fieldset [disabled]="isLoading$ | async">
-      <mat-form-field>
+      <mat-form-field appearance="outline">
         <mat-label translate>image.name</mat-label>
         <input matInput formControlName="title" required>
         @if (imageFormGroup.get('title').hasError('required')) {

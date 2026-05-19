@@ -21,11 +21,11 @@
     <div class="flex flex-row items-center justify-start gap-2"
          formArrayName="keyVals"
          >
-      <mat-form-field class="mat-block flex-1" subscriptSizing="{{ subscriptSizing }}">
+      <mat-form-field class="mat-block flex-1" subscriptSizing="{{ subscriptSizing }}" [appearance]="appearance">
         <input [formControl]="keyValControl.get('key')" matInput required
                placeholder="{{ (keyPlaceholderText ? keyPlaceholderText : 'key-val.key') | translate }}"/>
       </mat-form-field>
-      <mat-form-field class="mat-block flex-1" subscriptSizing="{{ subscriptSizing }}">
+      <mat-form-field class="mat-block flex-1" subscriptSizing="{{ subscriptSizing }}" [appearance]="appearance">
         <input [formControl]="keyValControl.get('value')" matInput [required]="isValueRequired"
                placeholder="{{ (valuePlaceholderText ? valuePlaceholderText : 'key-val.value') | translate }}"/>
       </mat-form-field>
