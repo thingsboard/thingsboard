@@ -20,7 +20,7 @@ import org.assertj.core.data.Offset;
 import org.junit.After;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.http.HttpHeaders;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
@@ -50,7 +50,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DaoSqlTest
 public class AuthControllerTest extends AbstractControllerTest {
 
-    @SpyBean
+    @MockitoSpyBean
     private UserCredentialsDao userCredentialsDao;
 
     @After
