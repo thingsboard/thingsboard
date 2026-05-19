@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, SkipSelf } from '@angular/core';
+import { Component, Inject, SkipSelf, ViewChild } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
@@ -40,6 +40,7 @@ import { deepClone, isUndefined } from '@core/utils';
 import { ComplexOperation, Filter, Filters, KeyFilterInfo } from '@shared/models/query/query.models';
 import { FilterDialogComponent, FilterDialogData } from '@home/components/filter/filter-dialog.component';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
+import { MatTable } from '@angular/material/table';
 
 export interface FiltersDialogData {
   filters: Filters;
@@ -60,6 +61,8 @@ export interface FiltersDialogData {
 })
 export class FiltersDialogComponent extends DialogComponent<FiltersDialogComponent, Filters>
   implements ErrorStateMatcher {
+
+  @ViewChild(MatTable) table: MatTable<Filter>;
 
   title: string;
   disableAdd: boolean;
@@ -168,6 +171,7 @@ export class FiltersDialogComponent extends DialogComponent<FiltersDialogCompone
       this.filterNames.delete(filter.filter);
       this.filtersFormGroup.markAsDirty();
     }
+    this.table.renderRows();
   }
 
   private getNextDuplicatedName(filterName: string): string {
@@ -194,6 +198,7 @@ export class FiltersDialogComponent extends DialogComponent<FiltersDialogCompone
         insert(index + 1, this.createFilterFormControl(duplicatedFilter.id, duplicatedFilter));
       this.filterNames.add(duplicatedFilter.filter);
     }
+    this.table.renderRows();
   }
 
   public addFilter() {
@@ -226,6 +231,7 @@ export class FiltersDialogComponent extends DialogComponent<FiltersDialogCompone
         if (isAdd) {
           (this.filtersFormGroup.get('filters') as UntypedFormArray)
             .push(this.createFilterFormControl(result.id, result));
+          this.table.renderRows();
         } else {
           const filterFormControl = (this.filtersFormGroup.get('filters') as UntypedFormArray).at(index);
           filterFormControl.get('filter').patchValue(result.filter);
