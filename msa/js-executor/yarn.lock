@@ -2,6 +2,78 @@
 # yarn lockfile v1
 
 
+"@2l/kafkajs-lz4@^1.3.2":
+  version "1.3.2"
+  resolved "https://registry.yarnpkg.com/@2l/kafkajs-lz4/-/kafkajs-lz4-1.3.2.tgz#25259f693a709816ef4eb62514c1ce1bab80502f"
+  integrity sha512-yq5dx4CbL2sofWXKuadyty3ZKRcZyqe5iiuuOWjZgtIed9MBZ2Wqe5hQN18+a5XVfR4SFQGVISb/a0oTjdPjwQ==
+  dependencies:
+    lz4-napi "^2.8.0"
+
+"@antoniomuso/lz4-napi-android-arm-eabi@2.9.0":
+  version "2.9.0"
+  resolved "https://registry.yarnpkg.com/@antoniomuso/lz4-napi-android-arm-eabi/-/lz4-napi-android-arm-eabi-2.9.0.tgz#5ea67847f0a761c9aec22a31212d0e429ca01fb2"
+  integrity sha512-aeT/9SoWq7rnmzssWuCKUPaxVt3fzE9q+xq/ZHbnUSmrm8/EhLOACMvQeCOnL0IZsmPh8EpuwIE1TZyM9iQPRA==
+
+"@antoniomuso/lz4-napi-android-arm64@2.9.0":
+  version "2.9.0"
+  resolved "https://registry.yarnpkg.com/@antoniomuso/lz4-napi-android-arm64/-/lz4-napi-android-arm64-2.9.0.tgz#64cb0aac70267bb071bba2d8e382301e058811ca"
+  integrity sha512-ibQ0qiEvmljXAM97IgOZfh+PeiSQ0Rqf2HErJlZPVm2v4GVJoB67v21v1TUydqNNV5L8bwufVoZ90nheL8X9ZA==
+
+"@antoniomuso/lz4-napi-darwin-arm64@2.9.0":
+  version "2.9.0"
+  resolved "https://registry.yarnpkg.com/@antoniomuso/lz4-napi-darwin-arm64/-/lz4-napi-darwin-arm64-2.9.0.tgz#669e48b165af11cec20581acc2caa0d1c0f84472"
+  integrity sha512-1su4K1MWa4bcWoZlHajv+luGmFDV1JwIsvjtDF+0HhUveSDPP+8A4Z34zOZidURIr08Sl7M7ViPth6ZQ9SqnAA==
+
+"@antoniomuso/lz4-napi-darwin-x64@2.9.0":
+  version "2.9.0"
+  resolved "https://registry.yarnpkg.com/@antoniomuso/lz4-napi-darwin-x64/-/lz4-napi-darwin-x64-2.9.0.tgz#a00ddf021772e26bd01b3ca5e3025f11d1667edf"
+  integrity sha512-8Lnbm2MkdJtiJ/nbcRS9zRyGp3G0sG6D+Y/x1vTP8nZs3/f8tBwYNsjxCQyyXNNyHcYWwVGbk68onP/pyDljOA==
+
+"@antoniomuso/lz4-napi-freebsd-x64@2.9.0":
+  version "2.9.0"
+  resolved "https://registry.yarnpkg.com/@antoniomuso/lz4-napi-freebsd-x64/-/lz4-napi-freebsd-x64-2.9.0.tgz#fdc2b292489bd6d4e44eb7bb059fb9bd4b860f14"
+  integrity sha512-k04EMVOjntKDPrdR4Tf8WyNseuk9PTtSGw8WHyp4CTjoR1s+YJxtp9SMnThe5o2q0TATwk8WGYb/Howrp5OMxw==
+
+"@antoniomuso/lz4-napi-linux-arm-gnueabihf@2.9.0":
+  version "2.9.0"
+  resolved "https://registry.yarnpkg.com/@antoniomuso/lz4-napi-linux-arm-gnueabihf/-/lz4-napi-linux-arm-gnueabihf-2.9.0.tgz#9fcdf93b3ca5aa24469e4bf11dd7100df8c71975"
+  integrity sha512-H92F8zPZmgy2r8IhCWh3qIBfLp2BQ5cp18RoDXhtGFWwkh+5gVWrZp11IVznrsdgB0QeW0VR7dAMMHg3WLOPfA==
+
+"@antoniomuso/lz4-napi-linux-arm64-gnu@2.9.0":
+  version "2.9.0"
+  resolved "https://registry.yarnpkg.com/@antoniomuso/lz4-napi-linux-arm64-gnu/-/lz4-napi-linux-arm64-gnu-2.9.0.tgz#9d22e075a9cb60c3cb415428138618ae4a79f3c5"
+  integrity sha512-25crh0qs/3Rj3fMI8ulYD0DoaKsidUhMBki2aeO69ZK+F8bmQ/e2++FlgJ6f3EgMP5CNxJtnZXKhPOraQWjwAw==
+
+"@antoniomuso/lz4-napi-linux-arm64-musl@2.9.0":
+  version "2.9.0"
+  resolved "https://registry.yarnpkg.com/@antoniomuso/lz4-napi-linux-arm64-musl/-/lz4-napi-linux-arm64-musl-2.9.0.tgz#d957bce3accd49199bb6de522f5163efa2068fe4"
+  integrity sha512-eJtHp38zuLaYI0/cOV/BKcNQiXUBo4GPx53FTf0Y307yUjLsn48LNeN0vD28Ct9YrbUae3bQvMD5AD86She0ww==
+
+"@antoniomuso/lz4-napi-linux-x64-gnu@2.9.0":
+  version "2.9.0"
+  resolved "https://registry.yarnpkg.com/@antoniomuso/lz4-napi-linux-x64-gnu/-/lz4-napi-linux-x64-gnu-2.9.0.tgz#c86567d5aa23863059afbee829fb9f45895d3869"
+  integrity sha512-mDjS4dyjRKaZQcAP71SphkYH5r3kufB30ih/VETVu/br2toCfBk6Zr1xhL1r+L7FaVAFzF62B7h30CiqrN0Awg==
+
+"@antoniomuso/lz4-napi-linux-x64-musl@2.9.0":
+  version "2.9.0"
+  resolved "https://registry.yarnpkg.com/@antoniomuso/lz4-napi-linux-x64-musl/-/lz4-napi-linux-x64-musl-2.9.0.tgz#7d02612dec7d6247645aa321871b15247da0ce7d"
+  integrity sha512-pvU7Z7qjkjn17NkddBtBQ7C2iRqjtZ7WJ3Jqrjtj4XxolY3Q0HaYMvWjkWhzb9AKGZbj5y+EHYtbVoZJ2TSQhQ==
+
+"@antoniomuso/lz4-napi-win32-arm64-msvc@2.9.0":
+  version "2.9.0"
+  resolved "https://registry.yarnpkg.com/@antoniomuso/lz4-napi-win32-arm64-msvc/-/lz4-napi-win32-arm64-msvc-2.9.0.tgz#c901bfec718303ed86867129ecc0371eaa883517"
+  integrity sha512-aioLlbpJl0QPEXLXhh2bzyitc3T7Jot3f1ap6WdKiRa+CIjMHXw1nxJXy07MLXif10r+qVZr86ic8dvwErgqEQ==
+
+"@antoniomuso/lz4-napi-win32-ia32-msvc@2.9.0":
+  version "2.9.0"
+  resolved "https://registry.yarnpkg.com/@antoniomuso/lz4-napi-win32-ia32-msvc/-/lz4-napi-win32-ia32-msvc-2.9.0.tgz#11e48b18b7923c250735e0130998e5968ae91130"
+  integrity sha512-VaF4XMTdYb59TsPsiqnWwsNaWKHhgxF33z5p4zg4n0tp20eWozl76hn8B+aXthSs40W0W1N97QhxxV4oXGd8cg==
+
+"@antoniomuso/lz4-napi-win32-x64-msvc@2.9.0":
+  version "2.9.0"
+  resolved "https://registry.yarnpkg.com/@antoniomuso/lz4-napi-win32-x64-msvc/-/lz4-napi-win32-x64-msvc-2.9.0.tgz#20d9f71a638f3277cd0b7662e966f90e53d98af8"
+  integrity sha512-wfA8ShO3eGLxJ1LDwXJo87XL2D4NkMJV1pfHPvLZpD0MWb9u8VfgS+gKK5YhT7XKjzVdeIna9jgFdn2HBnZBxA==
+
 "@babel/generator@^7.23.0":
   version "7.28.3"
   resolved "https://registry.yarnpkg.com/@babel/generator/-/generator-7.28.3.tgz#9626c1741c650cbac39121694a0f2d7451b8ef3e"
@@ -99,6 +171,18 @@
   dependencies:
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
+
+"@napi-rs/triples@^1.2.0":
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/@napi-rs/triples/-/triples-1.2.0.tgz#bcd9c936acb93890e7015818e0181f3db421aafa"
+  integrity sha512-HAPjR3bnCsdXBsATpDIP5WCrw0JcACwhhrwIAQhiR46n+jm+a2F8kBsfseAuWtSyQ+H3Yebt2k43B5dy+04yMA==
+
+"@node-rs/helper@^1.3.3":
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/@node-rs/helper/-/helper-1.6.0.tgz#83e5381de6e898d0b8c92178bb8d897d619e3a3a"
+  integrity sha512-2OTh/tokcLA1qom1zuCJm2gQzaZljCCbtX1YCrwRVd/toz7KxaDRFeLTAPwhs8m9hWgzrBn5rShRm6IaZofCPw==
+  dependencies:
+    "@napi-rs/triples" "^1.2.0"
 
 "@tsconfig/node10@^1.0.7":
   version "1.0.11"
@@ -997,6 +1081,27 @@ long@^5.3.2:
   version "5.3.2"
   resolved "https://registry.yarnpkg.com/long/-/long-5.3.2.tgz#1d84463095999262d7d7b7f8bfd4a8cc55167f83"
   integrity sha512-mNAgZ1GmyNhD7AuqnTG3/VQ26o760+ZYBPKjPvugO8+nLbYfX6TVpJPseBvopbdY+qpZ/lKUnmEc1LeZYS3QAA==
+
+lz4-napi@^2.8.0:
+  version "2.9.0"
+  resolved "https://registry.yarnpkg.com/lz4-napi/-/lz4-napi-2.9.0.tgz#4a700974a1154f82b3c0e1b7030fe63140051e7d"
+  integrity sha512-ZOWqxBMIK5768aD20tYn5B6Pp9WPM9UG/LHk8neG9p0gC1DtjdzhTtlkxhAjvTRpmJvMtnnqLKlT+COlqAt9cQ==
+  dependencies:
+    "@node-rs/helper" "^1.3.3"
+  optionalDependencies:
+    "@antoniomuso/lz4-napi-android-arm-eabi" "2.9.0"
+    "@antoniomuso/lz4-napi-android-arm64" "2.9.0"
+    "@antoniomuso/lz4-napi-darwin-arm64" "2.9.0"
+    "@antoniomuso/lz4-napi-darwin-x64" "2.9.0"
+    "@antoniomuso/lz4-napi-freebsd-x64" "2.9.0"
+    "@antoniomuso/lz4-napi-linux-arm-gnueabihf" "2.9.0"
+    "@antoniomuso/lz4-napi-linux-arm64-gnu" "2.9.0"
+    "@antoniomuso/lz4-napi-linux-arm64-musl" "2.9.0"
+    "@antoniomuso/lz4-napi-linux-x64-gnu" "2.9.0"
+    "@antoniomuso/lz4-napi-linux-x64-musl" "2.9.0"
+    "@antoniomuso/lz4-napi-win32-arm64-msvc" "2.9.0"
+    "@antoniomuso/lz4-napi-win32-ia32-msvc" "2.9.0"
+    "@antoniomuso/lz4-napi-win32-x64-msvc" "2.9.0"
 
 make-error@^1.1.1:
   version "1.3.6"

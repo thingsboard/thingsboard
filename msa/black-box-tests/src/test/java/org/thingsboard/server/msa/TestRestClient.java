@@ -328,6 +328,16 @@ public class TestRestClient {
                 .statusCode(HTTP_OK);
     }
 
+    public JsonNode testRuleChainScript(Object body) {
+        return given().spec(requestSpec)
+                .body(body)
+                .post("/api/ruleChain/testScript")
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(JsonNode.class);
+    }
+
     private String getUrlParams(PageLink pageLink) {
         String urlParams = "pageSize={pageSize}&page={page}";
         if (!isEmpty(pageLink.getTextSearch())) {
