@@ -40,17 +40,17 @@ public class AbstractRedisClusterContainer {
     ); 
 
     @ClassRule(order = 1)
-    public static GenericContainer redis1 = new GenericContainer(IMAGE).withEnv(ENVS).withEnv("VALKEY_PORT_NUMBER", "6371").withNetworkMode("host").withLogConsumer(AbstractRedisClusterContainer::consumeLog);
+    public static GenericContainer<?> redis1 = new GenericContainer<>(IMAGE).withEnv(ENVS).withEnv("VALKEY_PORT_NUMBER", "6371").withNetworkMode("host").withLogConsumer(AbstractRedisClusterContainer::consumeLog);
     @ClassRule(order = 2)
-    public static GenericContainer redis2 = new GenericContainer(IMAGE).withEnv(ENVS).withEnv("VALKEY_PORT_NUMBER", "6372").withNetworkMode("host").withLogConsumer(AbstractRedisClusterContainer::consumeLog);
+    public static GenericContainer<?> redis2 = new GenericContainer<>(IMAGE).withEnv(ENVS).withEnv("VALKEY_PORT_NUMBER", "6372").withNetworkMode("host").withLogConsumer(AbstractRedisClusterContainer::consumeLog);
     @ClassRule(order = 3)
-    public static GenericContainer redis3 = new GenericContainer(IMAGE).withEnv(ENVS).withEnv("VALKEY_PORT_NUMBER", "6373").withNetworkMode("host").withLogConsumer(AbstractRedisClusterContainer::consumeLog);
+    public static GenericContainer<?> redis3 = new GenericContainer<>(IMAGE).withEnv(ENVS).withEnv("VALKEY_PORT_NUMBER", "6373").withNetworkMode("host").withLogConsumer(AbstractRedisClusterContainer::consumeLog);
     @ClassRule(order = 4)
-    public static GenericContainer redis4 = new GenericContainer(IMAGE).withEnv(ENVS).withEnv("VALKEY_PORT_NUMBER", "6374").withNetworkMode("host").withLogConsumer(AbstractRedisClusterContainer::consumeLog);
+    public static GenericContainer<?> redis4 = new GenericContainer<>(IMAGE).withEnv(ENVS).withEnv("VALKEY_PORT_NUMBER", "6374").withNetworkMode("host").withLogConsumer(AbstractRedisClusterContainer::consumeLog);
     @ClassRule(order = 5)
-    public static GenericContainer redis5 = new GenericContainer(IMAGE).withEnv(ENVS).withEnv("VALKEY_PORT_NUMBER", "6375").withNetworkMode("host").withLogConsumer(AbstractRedisClusterContainer::consumeLog);
+    public static GenericContainer<?> redis5 = new GenericContainer<>(IMAGE).withEnv(ENVS).withEnv("VALKEY_PORT_NUMBER", "6375").withNetworkMode("host").withLogConsumer(AbstractRedisClusterContainer::consumeLog);
     @ClassRule(order = 6)
-    public static GenericContainer redis6 = new GenericContainer(IMAGE).withEnv(ENVS).withEnv("VALKEY_PORT_NUMBER", "6376").withNetworkMode("host").withLogConsumer(AbstractRedisClusterContainer::consumeLog);
+    public static GenericContainer<?> redis6 = new GenericContainer<>(IMAGE).withEnv(ENVS).withEnv("VALKEY_PORT_NUMBER", "6376").withNetworkMode("host").withLogConsumer(AbstractRedisClusterContainer::consumeLog);
 
 
     @ClassRule(order = 100)

@@ -37,6 +37,7 @@ public class ExceptionUtil {
         }
     }
 
+    @SafeVarargs
     public static Exception lookupExceptionInCause(Throwable source, Class<? extends Exception>... clazzes) {
         while (source != null) {
             for (Class<? extends Exception> clazz : clazzes) {
