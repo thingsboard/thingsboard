@@ -41,15 +41,13 @@ public record AvailableEntityKeysV2(
         )
         Set<EntityType> entityTypes,
 
-        @ArraySchema(
-                arraySchema = @Schema(
-                        description = """
-                                List of unique time series keys available on the matched entities, sorted alphabetically.
-                                Omitted when timeseries keys were not requested.""",
-                        nullable = true
-                ),
-                schema = @Schema(implementation = KeyInfo.class)
+        @Schema(
+                description = """
+                        List of unique time series keys available on the matched entities, sorted alphabetically.
+                        Omitted when timeseries keys were not requested.""",
+                nullable = true
         )
+        @ArraySchema(schema = @Schema(implementation = KeyInfo.class))
         @Nullable List<KeyInfo> timeseries,
 
         @Schema(
