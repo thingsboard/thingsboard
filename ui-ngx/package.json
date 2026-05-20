@@ -142,6 +142,7 @@
     "esbuild": "0.28.0",
     "rollup": "4.59.0",
     "jquery.terminal/**/form-data": ">=4.0.4",
-    "js-beautify/**/minimatch": "^9.0.7"
+    "js-beautify/**/minimatch": "^9.0.7",
+    "brace-expansion": "5.0.6"
   }
 }
