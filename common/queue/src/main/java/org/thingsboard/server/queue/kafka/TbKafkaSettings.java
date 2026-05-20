@@ -23,6 +23,7 @@ import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.config.SaslConfigs;
 import org.apache.kafka.common.config.SslConfigs;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
@@ -137,6 +138,15 @@ public class TbKafkaSettings {
     @Value("${queue.kafka.confluent.security.protocol:}")
     private String securityProtocol;
 
+    @Value("${queue.kafka.confluent.oauth.client-id:}")
+    private String oauthClientId;
+
+    @Value("${queue.kafka.confluent.oauth.client-secret:}")
+    private String oauthClientSecret;
+
+    @Value("${queue.kafka.confluent.oauth.endpoint-url:}")
+    private String oauthEndpointUrl;
+
     @Value("${queue.kafka.other-inline:}")
     private String otherInline;
 
@@ -213,9 +223,19 @@ public class TbKafkaSettings {
 
         if (useConfluent) {
             props.put("ssl.endpoint.identification.algorithm", sslAlgorithm);
-            props.put("sasl.mechanism", saslMechanism);
-            props.put("sasl.jaas.config", saslConfig);
+            props.put(SaslConfigs.SASL_MECHANISM, saslMechanism);
             props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, securityProtocol);
+            if ("OAUTHBEARER".equalsIgnoreCase(saslMechanism)) {
+                props.put(SaslConfigs.SASL_JAAS_CONFIG,
+                        "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required"
+                                + " clientId=\"" + oauthClientId + "\""
+                                + " clientSecret=\"" + oauthClientSecret + "\";");
+                props.put(SaslConfigs.SASL_LOGIN_CALLBACK_HANDLER_CLASS,
+                        "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginCallbackHandler");
+                props.put(SaslConfigs.SASL_OAUTHBEARER_TOKEN_ENDPOINT_URL, oauthEndpointUrl);
+            } else {
+                props.put(SaslConfigs.SASL_JAAS_CONFIG, saslConfig);
+            }
         }
 
         props.put(CommonClientConfigs.REQUEST_TIMEOUT_MS_CONFIG, requestTimeoutMs);

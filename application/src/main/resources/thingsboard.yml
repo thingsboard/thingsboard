@@ -1782,11 +1782,21 @@ queue:
       # The endpoint identification algorithm used by clients to validate server hostname. The default value is https
       ssl.algorithm: "${TB_QUEUE_KAFKA_CONFLUENT_SSL_ALGORITHM:https}"
       # The mechanism used to authenticate Schema Registry requests. SASL/PLAIN should only be used with TLS/SSL as a transport layer to ensure that clear passwords are not transmitted on the wire without encryption
+      # Set to OAUTHBEARER to authenticate via OAuth2/OIDC client-credentials (configure the oauth.* settings below)
       sasl.mechanism: "${TB_QUEUE_KAFKA_CONFLUENT_SASL_MECHANISM:PLAIN}"
       # Using JAAS Configuration for specifying multiple SASL mechanisms on a broker
       sasl.config: "${TB_QUEUE_KAFKA_CONFLUENT_SASL_JAAS_CONFIG:org.apache.kafka.common.security.plain.PlainLoginModule required username=\"CLUSTER_API_KEY\" password=\"CLUSTER_API_SECRET\";}"
       # Protocol used to communicate with brokers. Valid values are: PLAINTEXT, SSL, SASL_PLAINTEXT, SASL_SSL
       security.protocol: "${TB_QUEUE_KAFKA_CONFLUENT_SECURITY_PROTOCOL:SASL_SSL}"
+      # Optional: OAuth2 (OIDC) client-credentials settings. Applied only when sasl.mechanism is OAUTHBEARER.
+      # ThingsBoard wires Kafka's built-in OAuthBearerLoginCallbackHandler; the token is fetched and refreshed automatically.
+      oauth:
+        # Optional: OAuth2 client id
+        client-id: "${TB_QUEUE_KAFKA_CONFLUENT_OAUTH_CLIENT_ID:}"
+        # Optional: OAuth2 client secret
+        client-secret: "${TB_QUEUE_KAFKA_CONFLUENT_OAUTH_CLIENT_SECRET:}"
+        # Optional: OAuth2/OIDC token endpoint URL to request the bearer token from
+        endpoint-url: "${TB_QUEUE_KAFKA_CONFLUENT_OAUTH_ENDPOINT_URL:}"
     # Key-value properties for Kafka consumer per specific topic, e.g. tb_ota_package is a topic name for ota, tb_rule_engine.sq is a topic name for default SequentialByOriginator queue.
     # Check TB_QUEUE_CORE_OTA_TOPIC and TB_QUEUE_RE_SQ_TOPIC params
     consumer-properties-per-topic:

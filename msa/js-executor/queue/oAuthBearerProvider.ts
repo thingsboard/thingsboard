@@ -14,9 +14,8 @@
 /// limitations under the License.
 ///
 
-import { AccessToken, ClientCredentials } from 'simple-oauth2'
+import { AccessToken, ClientCredentials } from 'simple-oauth2';
 import { _logger } from '../config/logger';
-import { error } from 'winston';
 
 interface OauthBearerProviderOptions {
   clientId: string;
@@ -25,8 +24,11 @@ interface OauthBearerProviderOptions {
   refreshThresholdMs: number;
 }
 
+const RETRY_DELAY_MS = 5000;
+const MIN_REFRESH_DELAY_MS = 1000;
+
 export const oauthBearerProvider = (options: OauthBearerProviderOptions) => {
-  const logger = _logger('oauthBearerProvider')
+  const logger = _logger('oauthBearerProvider');
   const client = new ClientCredentials({
     client: {
       id: options.clientId,
@@ -38,38 +40,56 @@ export const oauthBearerProvider = (options: OauthBearerProviderOptions) => {
   });
 
   let tokenPromise: Promise<string>;
-  let accessToken: AccessToken;
+  let refreshTimer: NodeJS.Timeout | undefined;
 
-  async function refreshToken():Promise<string>{
-    logger.info('Start token refreshing/validation');
+  function scheduleRefresh(delayMs: number): void {
+    if (refreshTimer) {
+      clearTimeout(refreshTimer);
+    }
+    const delay = Math.max(delayMs, MIN_REFRESH_DELAY_MS);
+    logger.info('Next Kafka OAuth token refresh in %dms', delay);
+    refreshTimer = setTimeout(() => {
+      tokenPromise = refreshToken();
+      // refreshToken() reschedules its own retry on failure; swallow here to avoid an unhandled rejection.
+      tokenPromise.catch((err) => {
+        logger.error('Scheduled Kafka OAuth token refresh failed: %s', err?.message ?? err);
+      });
+    }, delay);
+    refreshTimer.unref();
+  }
+
+  async function refreshToken(): Promise<string> {
+    logger.info('Requesting Kafka OAuth bearer token');
     try {
-      if (accessToken == null) {
-        accessToken = await client.getToken({})
-        logger.info('Got new token');
+      // Client-credentials grant issues no refresh_token, so always request a fresh token.
+      const accessToken: AccessToken = await client.getToken({});
+
+      const expiresIn = accessToken.token.expires_in;
+      if (typeof expiresIn !== 'number' || expiresIn <= 0) {
+        throw new Error(`OAuth token response has invalid "expires_in": ${expiresIn}`);
+      }
+      const accessTokenValue = accessToken.token.access_token;
+      if (typeof accessTokenValue !== 'string' || accessTokenValue.length === 0) {
+        throw new Error('OAuth token response has no "access_token"');
       }
 
-      if (accessToken.expired(options.refreshThresholdMs / 1000)) {
-        logger.info(`Token will expire during next ${options.refreshThresholdMs}ms. Refresh token`);
-        accessToken = await accessToken.refresh()
-      }
-      let expires_in = typeof accessToken.token.expires_in === "number" ? accessToken.token.expires_in : 0; //throw exception
-      const nextRefresh = expires_in * 1000 - options.refreshThresholdMs;
-      logger.info(`Next token validation in ${nextRefresh}ms.`);
-      setTimeout(() => {
-        tokenPromise = refreshToken()
-      }, nextRefresh);
-      let access_token = typeof accessToken.token.access_token === "string" ? accessToken.token.access_token : ""; //throw exception
-      return access_token;
-    } catch (error) {
-      throw error;
+      const nextRefresh = expiresIn * 1000 - options.refreshThresholdMs;
+      scheduleRefresh(nextRefresh);
+      return accessTokenValue;
+    } catch (err) {
+      logger.error('Failed to obtain Kafka OAuth bearer token, retrying in %dms', RETRY_DELAY_MS);
+      scheduleRefresh(RETRY_DELAY_MS);
+      throw err;
     }
   }
 
   tokenPromise = refreshToken();
+  // The first fetch is retried internally; swallow here, so a startup failure is not an unhandled rejection.
+  tokenPromise.catch(() => { /* retry already scheduled in refreshToken() */ });
 
   return async function () {
     return {
       value: await tokenPromise
-    }
-  }
+    };
+  };
 };
