@@ -987,14 +987,14 @@
     "@babel/helper-plugin-utils" "^7.28.6"
 
 "@babel/plugin-transform-modules-systemjs@^7.27.1":
-  version "7.28.5"
-  resolved "https://registry.yarnpkg.com/@babel/plugin-transform-modules-systemjs/-/plugin-transform-modules-systemjs-7.28.5.tgz#7439e592a92d7670dfcb95d0cbc04bd3e64801d2"
-  integrity sha512-vn5Jma98LCOeBy/KpeQhXcV2WZgaRUtjwQmjoBuLNlOmkg0fB5pdvYVeWRYI69wWKwK2cD1QbMiUQnoujWvrew==
+  version "7.29.4"
+  resolved "https://registry.yarnpkg.com/@babel/plugin-transform-modules-systemjs/-/plugin-transform-modules-systemjs-7.29.4.tgz#f621105da99919c15cf4bde6fcc7346ef95e7b20"
+  integrity sha512-N7QmZ0xRZfjHOfZeQLJjwgX2zS9pdGHSVl/cjSGlo4dXMqvurfxXDMKY4RqEKzPozV78VMcd0lxyG13mlbKc4w==
   dependencies:
-    "@babel/helper-module-transforms" "^7.28.3"
-    "@babel/helper-plugin-utils" "^7.27.1"
+    "@babel/helper-module-transforms" "^7.28.6"
+    "@babel/helper-plugin-utils" "^7.28.6"
     "@babel/helper-validator-identifier" "^7.28.5"
-    "@babel/traverse" "^7.28.5"
+    "@babel/traverse" "^7.29.0"
 
 "@babel/plugin-transform-modules-umd@^7.27.1":
   version "7.27.1"
@@ -1298,7 +1298,7 @@
     "@babel/parser" "^7.28.6"
     "@babel/types" "^7.28.6"
 
-"@babel/traverse@^7.27.1", "@babel/traverse@^7.28.0", "@babel/traverse@^7.28.3", "@babel/traverse@^7.28.5", "@babel/traverse@^7.28.6":
+"@babel/traverse@^7.27.1", "@babel/traverse@^7.28.0", "@babel/traverse@^7.28.3", "@babel/traverse@^7.28.5", "@babel/traverse@^7.28.6", "@babel/traverse@^7.29.0":
   version "7.29.0"
   resolved "https://registry.yarnpkg.com/@babel/traverse/-/traverse-7.29.0.tgz#f323d05001440253eead3c9c858adbe00b90310a"
   integrity sha512-4HPiQr0X7+waHfyXPZpWPfWL/J7dcN1mx9gL6WdQVMbPnF3+ZhSMs8tCxN7oHddJE9fhNE7+lxdnlyemKfJRuA==
