@@ -33,6 +33,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbProperty;
 import org.thingsboard.server.queue.util.PropertyUtils;
 import org.thingsboard.server.queue.util.TbKafkaComponent;
@@ -226,13 +227,7 @@ public class TbKafkaSettings {
             props.put(SaslConfigs.SASL_MECHANISM, saslMechanism);
             props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, securityProtocol);
             if ("OAUTHBEARER".equalsIgnoreCase(saslMechanism)) {
-                props.put(SaslConfigs.SASL_JAAS_CONFIG,
-                        "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required"
-                                + " clientId=\"" + oauthClientId + "\""
-                                + " clientSecret=\"" + oauthClientSecret + "\";");
-                props.put(SaslConfigs.SASL_LOGIN_CALLBACK_HANDLER_CLASS,
-                        "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginCallbackHandler");
-                props.put(SaslConfigs.SASL_OAUTHBEARER_TOKEN_ENDPOINT_URL, oauthEndpointUrl);
+                applyOauthBearerProps(props);
             } else {
                 props.put(SaslConfigs.SASL_JAAS_CONFIG, saslConfig);
             }
@@ -248,6 +243,28 @@ public class TbKafkaSettings {
         configureSSL(props);
 
         return props;
+    }
+
+    private void applyOauthBearerProps(Properties props) {
+        if (StringUtils.isBlank(oauthClientId) || StringUtils.isBlank(oauthClientSecret) || StringUtils.isBlank(oauthEndpointUrl)) {
+            throw new IllegalStateException("Kafka SASL mechanism is OAUTHBEARER but "
+                    + "queue.kafka.confluent.oauth.client-id / client-secret / endpoint-url are not all set");
+        }
+        if (!oauthEndpointUrl.toLowerCase().startsWith("https://")) {
+            log.warn("Kafka OAuth token endpoint URL is not HTTPS ({}); client credentials will be sent unencrypted",
+                    oauthEndpointUrl);
+        }
+        props.put(SaslConfigs.SASL_JAAS_CONFIG,
+                "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required"
+                        + " clientId=\"" + escapeJaasValue(oauthClientId) + "\""
+                        + " clientSecret=\"" + escapeJaasValue(oauthClientSecret) + "\";");
+        props.put(SaslConfigs.SASL_LOGIN_CALLBACK_HANDLER_CLASS,
+                "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginCallbackHandler");
+        props.put(SaslConfigs.SASL_OAUTHBEARER_TOKEN_ENDPOINT_URL, oauthEndpointUrl);
+    }
+
+    private static String escapeJaasValue(String value) {
+        return value.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 
     void configureSSL(Properties props) {

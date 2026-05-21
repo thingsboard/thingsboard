@@ -35,7 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         "queue.kafka.confluent.oauth.client-secret=my-secret",
         "queue.kafka.confluent.oauth.endpoint-url=https://idp.example.com/oauth/token"
 })
-class TbKafkaSettingsOAuthTest {
+class TbKafkaSettingsConfluentOAuthTest {
 
     @Autowired
     TbKafkaSettings settings;

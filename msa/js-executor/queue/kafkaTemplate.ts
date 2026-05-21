@@ -19,7 +19,7 @@ import fs from 'node:fs';
 import { _logger, KafkaJsWinstonLogCreator } from '../config/logger';
 import { JsInvokeMessageProcessor } from '../api/jsInvokeMessageProcessor'
 import { IQueue } from './queue.models';
-import {oauthBearerProvider} from './oAuthBearerProvider';
+import { oauthBearerProvider } from './oAuthBearerProvider';
 import {
     Admin,
     CompressionCodecs,
@@ -36,6 +36,8 @@ import { isNotEmptyStr } from '../api/utils';
 import { KeyObject } from 'tls';
 
 import process, { exit, kill } from 'process';
+
+const DEFAULT_OAUTH_REFRESH_THRESHOLD_MS = 60000;
 
 export class KafkaTemplate implements IQueue {
 
@@ -115,21 +117,23 @@ export class KafkaTemplate implements IQueue {
         kafkaConfig['connectionTimeout'] = this.connectionTimeout;
 
         if (useConfluent) {
-            let saslMechanism = config.get('kafka.confluent.sasl.mechanism') as String
-            if(saslMechanism.toLowerCase() == "oauthbearer"){
+            const saslMechanism = config.get('kafka.confluent.sasl.mechanism') as string;
+            if (saslMechanism.toLowerCase() === 'oauthbearer') {
+                const refreshThresholdMs = config.has('kafka.confluent.oauth.refresh_threshold')
+                    ? Number(config.get('kafka.confluent.oauth.refresh_threshold'))
+                    : DEFAULT_OAUTH_REFRESH_THRESHOLD_MS;
                 kafkaConfig['sasl'] = {
-                mechanism: "oauthbearer",
-                oauthBearerProvider: oauthBearerProvider({
-                    clientId: config.get('kafka.confluent.oauth.client_id'),
-                    clientSecret: config.get('kafka.confluent.oauth.client_secret'),
-                    host:  config.get('kafka.confluent.oauth.endpoint_url'),
-                    refreshThresholdMs: config.has('kafka.confluent.oauth.refresh_threshold')?config.get('kafka.confluent.oauth.refresh_threshold'):60000,
-                })
+                    mechanism: 'oauthbearer',
+                    oauthBearerProvider: oauthBearerProvider({
+                        clientId: config.get('kafka.confluent.oauth.client_id'),
+                        clientSecret: config.get('kafka.confluent.oauth.client_secret'),
+                        host: config.get('kafka.confluent.oauth.endpoint_url'),
+                        refreshThresholdMs,
+                    })
                 };
-            }
-            else{
+            } else {
                 kafkaConfig['sasl'] = {
-                    mechanism: config.get('kafka.confluent.sasl.mechanism') as any,
+                    mechanism: saslMechanism as any,
                     username: config.get('kafka.confluent.username'),
                     password: config.get('kafka.confluent.password')
                 };

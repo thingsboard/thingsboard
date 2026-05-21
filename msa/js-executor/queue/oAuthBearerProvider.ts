@@ -29,6 +29,16 @@ const MIN_REFRESH_DELAY_MS = 1000;
 
 export const oauthBearerProvider = (options: OauthBearerProviderOptions) => {
   const logger = _logger('oauthBearerProvider');
+  if (!options.clientId || !options.clientSecret || !options.host) {
+    throw new Error('Kafka OAUTHBEARER requires kafka.confluent.oauth.client_id, client_secret and endpoint_url to be set');
+  }
+  if (!/^https:\/\//i.test(options.host)) {
+    logger.warn('Kafka OAuth token endpoint URL is not HTTPS (%s); client credentials will be sent unencrypted', options.host);
+  }
+  const refreshThresholdMs = Number(options.refreshThresholdMs);
+  if (!Number.isFinite(refreshThresholdMs) || refreshThresholdMs < 0) {
+    throw new Error(`Kafka OAuth refresh_threshold must be a non-negative number, got: ${options.refreshThresholdMs}`);
+  }
   const client = new ClientCredentials({
     client: {
       id: options.clientId,
@@ -73,7 +83,7 @@ export const oauthBearerProvider = (options: OauthBearerProviderOptions) => {
         throw new Error('OAuth token response has no "access_token"');
       }
 
-      const nextRefresh = expiresIn * 1000 - options.refreshThresholdMs;
+      const nextRefresh = expiresIn * 1000 - refreshThresholdMs;
       scheduleRefresh(nextRefresh);
       return accessTokenValue;
     } catch (err) {
