@@ -250,7 +250,7 @@ public class TbKafkaSettings {
             throw new IllegalStateException("Kafka SASL mechanism is OAUTHBEARER but "
                     + "queue.kafka.confluent.oauth.client-id / client-secret / endpoint-url are not all set");
         }
-        if (!oauthEndpointUrl.toLowerCase().startsWith("https://")) {
+        if (!oauthEndpointUrl.regionMatches(true, 0, "https://", 0, "https://".length())) {
             log.warn("Kafka OAuth token endpoint URL is not HTTPS ({}); client credentials will be sent unencrypted",
                     oauthEndpointUrl);
         }

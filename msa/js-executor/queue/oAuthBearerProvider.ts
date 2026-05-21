@@ -39,13 +39,23 @@ export const oauthBearerProvider = (options: OauthBearerProviderOptions) => {
   if (!Number.isFinite(refreshThresholdMs) || refreshThresholdMs < 0) {
     throw new Error(`Kafka OAuth refresh_threshold must be a non-negative number, got: ${options.refreshThresholdMs}`);
   }
+  let tokenUrl: URL;
+  try {
+    tokenUrl = new URL(options.host);
+  } catch {
+    throw new Error(`Kafka OAuth endpoint_url is not a valid URL: ${options.host}`);
+  }
   const client = new ClientCredentials({
     client: {
       id: options.clientId,
       secret: options.clientSecret
     },
     auth: {
-      tokenHost: options.host
+      // endpoint_url is the full token endpoint URL. Split it into host + path so
+      // simple-oauth2 does not append its default tokenPath (/oauth/token) and
+      // discard the real path (breaks Keycloak, Azure AD, Okta, etc.).
+      tokenHost: tokenUrl.origin,
+      tokenPath: tokenUrl.pathname + tokenUrl.search
     }
   });
 
