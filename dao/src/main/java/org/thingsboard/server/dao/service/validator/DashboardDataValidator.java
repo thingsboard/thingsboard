@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ElementKind;
 import jakarta.validation.Path;
+import jakarta.validation.constraints.AssertTrue;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
@@ -105,11 +106,18 @@ public class DashboardDataValidator extends DataValidator<Dashboard> {
             }
         }
         String elementInfo = elementIndex != null ? " element at index " + elementIndex : "";
+        boolean isLogicConstraint = v.getConstraintDescriptor().getAnnotation().annotationType().equals(AssertTrue.class);
         if (aliasKey != null) {
             EntityAlias alias = cfg.getEntityAliases().get(aliasKey);
             String aliasName = alias != null && alias.getAlias() != null && !alias.getAlias().isBlank()
                     ? alias.getAlias() : aliasKey.toString();
+            if (isLogicConstraint) {
+                return "alias '" + aliasName + "' " + v.getMessage();
+            }
             return "alias '" + aliasName + "' field '" + fieldName + "'" + elementInfo + " " + v.getMessage();
+        }
+        if (isLogicConstraint) {
+            return v.getMessage();
         }
         return "field '" + fieldName + "'" + elementInfo + " " + v.getMessage();
     }

@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.common.data.dashboard.filter;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.validation.constraints.AssertTrue;
 import org.thingsboard.server.common.data.query.AliasEntityId;
 
 public interface DashboardStatefulRootFilter extends DashboardAliasFilter {
@@ -22,5 +24,11 @@ public interface DashboardStatefulRootFilter extends DashboardAliasFilter {
     AliasEntityId getRootEntity();
 
     boolean isRootStateEntity();
+
+    @AssertTrue(message = "must include 'rootEntity' when 'rootStateEntity' is false")
+    @JsonIgnore
+    default boolean isValidRootEntity() {
+        return isRootStateEntity() || getRootEntity() != null;
+    }
 
 }

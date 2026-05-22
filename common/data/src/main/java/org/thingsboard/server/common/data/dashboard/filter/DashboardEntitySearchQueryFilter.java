@@ -21,7 +21,6 @@ import lombok.Data;
 import org.thingsboard.server.common.data.query.AliasEntityId;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 
-@DashboardStatefulRoot
 @Data
 public abstract class DashboardEntitySearchQueryFilter implements DashboardStatefulRootFilter {
 

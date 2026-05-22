@@ -92,7 +92,7 @@ class DashboardRelationsQueryFilterValidationTest extends AbstractDashboardDataV
 
         assertThatThrownBy(() -> validate(dashboard))
                 .isInstanceOf(DataValidationException.class)
-                .hasMessage("Dashboard validation error: alias 'Related' field 'rootEntity' must not be null when 'rootStateEntity' is false");
+                .hasMessage("Dashboard validation error: alias 'Related' must include 'rootEntity' when 'rootStateEntity' is false");
     }
 
 }

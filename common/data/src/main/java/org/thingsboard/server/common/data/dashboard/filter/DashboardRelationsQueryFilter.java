@@ -25,7 +25,6 @@ import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
 
 import java.util.List;
 
-@DashboardStatefulRoot
 @Data
 public class DashboardRelationsQueryFilter implements DashboardStatefulRootFilter {
 
