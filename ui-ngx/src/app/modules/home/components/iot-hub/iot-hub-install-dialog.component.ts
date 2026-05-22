@@ -22,7 +22,14 @@ import { AppState } from '@core/core.state';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
 import { ItemType, itemTypeTranslations } from '@shared/models/iot-hub/iot-hub-item.models';
-import { SolutionTemplateInstalledItemDescriptor } from '@shared/models/iot-hub/iot-hub-installed-item.models';
+import {
+  InstallPlan,
+  InstallPlanEntry,
+  InstallPlanEntryStatus,
+  InstallPlanResult,
+  IotHubInstalledItemDescriptor,
+  SolutionTemplateInstalledItemDescriptor
+} from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityType } from '@shared/models/entity-type.models';
@@ -57,8 +64,10 @@ export type InstallState =
   | 'select-entity'
   | 'confirm-overwrite'
   | 'confirm'
+  | 'plan'
   | 'installing'
   | 'success'
+  | 'partial'
   | 'error';
 
 @Component({
@@ -70,6 +79,7 @@ export type InstallState =
 export class TbIotHubInstallDialogComponent extends DialogComponent<TbIotHubInstallDialogComponent> {
 
   ItemType = ItemType;
+  PlanStatus = InstallPlanEntryStatus;
 
   item: MpItemVersionView;
   typeTranslations = itemTypeTranslations;
@@ -79,6 +89,15 @@ export class TbIotHubInstallDialogComponent extends DialogComponent<TbIotHubInst
 
   selectedEntityId: EntityId | null = null;
   pendingOverwrite: PendingOverwrite | null = null;
+
+  installPlan: InstallPlan | null = null;
+  planSummary: { willInstall: number; alreadyInstalled: number; missing: number } = {
+    willInstall: 0,
+    alreadyInstalled: 0,
+    missing: 0
+  };
+  missingEntries: InstallPlanEntry[] = [];
+  resolvingPlan = false;
 
   private readonly selectEntityConfig: Partial<Record<ItemType, SelectEntityConfig>> = {
     [ItemType.CALCULATED_FIELD]: {
@@ -155,11 +174,7 @@ export class TbIotHubInstallDialogComponent extends DialogComponent<TbIotHubInst
           this.doInstall();
         }
       },
-      error: (err) => {
-        this.state = 'error';
-        this.errorMessage = err?.error?.message || err?.message ||
-          this.translate.instant('iot-hub.install-error', { name: this.item.name });
-      }
+      error: (err) => this.handleApiError(err)
     });
   }
 
@@ -199,42 +214,128 @@ export class TbIotHubInstallDialogComponent extends DialogComponent<TbIotHubInst
   }
 
   doInstall(): void {
-    this.state = 'installing';
+    // Keep the current state visible (confirm / select-entity / confirm-overwrite) while resolving —
+    // a transient 'resolving-plan' state caused a visible "blink" for items without dependencies.
+    this.resolvingPlan = true;
     const versionId = this.item.id as string;
-    const data = this.selectedEntityId ? { entityId: this.selectedEntityId } : undefined;
-    this.iotHubApiService.installItemVersion(versionId, { ignoreLoading: true }, data).subscribe({
-      next: (result) => {
-        if (result.success) {
-          if (result.descriptor?.type === 'SOLUTION_TEMPLATE') {
-            const timeout = this.item.dataDescriptor?.installTimeoutMs;
-            const openSolutionDialog = () => {
-              this.dialogRef.close('installed');
-              this.dialog.open(SolutionInstallDialogComponent, {
-                disableClose: true,
-                autoFocus: false,
-                panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-                data: { descriptor: result.descriptor as SolutionTemplateInstalledItemDescriptor }
-              });
-            };
-            if (timeout > 0) {
-              setTimeout(openSolutionDialog, timeout);
-            } else {
-              openSolutionDialog();
-            }
-          } else {
-            this.state = 'success';
-            this.entityDetailsUrl = resolveEntityDetailsUrl(result.descriptor, this.item.type);
-          }
-        } else {
-          this.state = 'error';
-          this.errorMessage = result.errorMessage || this.translate.instant('iot-hub.install-error', { name: this.item.name });
+    this.iotHubApiService.resolveInstallPlan(versionId, { ignoreLoading: true }).subscribe({
+      next: (plan) => {
+        this.resolvingPlan = false;
+        const summary = this.summarizePlan(plan);
+        const hasDependencies = plan.entries.length > 1
+          || summary.alreadyInstalled > 0
+          || summary.missing > 0;
+
+        if (!hasDependencies && summary.willInstall === 1) {
+          // Single root version, no deps, nothing to skip — install directly without showing the plan.
+          this.legacyInstall();
+          return;
         }
+
+        this.installPlan = plan;
+        this.planSummary = summary;
+        this.missingEntries = plan.entries.filter(e => e.status === InstallPlanEntryStatus.MISSING);
+        this.state = 'plan';
       },
       error: (err) => {
-        this.state = 'error';
-        this.errorMessage = err?.error?.message || err?.message || this.translate.instant('iot-hub.install-error', { name: this.item.name });
+        this.resolvingPlan = false;
+        this.handleApiError(err);
       }
     });
+  }
+
+  confirmPlan(): void {
+    if (!this.installPlan) {
+      return;
+    }
+    this.state = 'installing';
+    this.iotHubApiService.installPlan(this.installPlan, this.installData(), { ignoreLoading: true }).subscribe({
+      next: (result) => this.handlePlanResult(result),
+      error: (err) => this.handleApiError(err)
+    });
+  }
+
+  private legacyInstall(): void {
+    this.state = 'installing';
+    const versionId = this.item.id as string;
+    this.iotHubApiService.installItemVersion(versionId, { ignoreLoading: true }, this.installData()).subscribe({
+      next: (result) => {
+        if (!result.success) {
+          this.state = 'error';
+          this.errorMessage = result.errorMessage || this.translate.instant('iot-hub.install-error', { name: this.item.name });
+          return;
+        }
+        this.handleInstalledDescriptor(result.descriptor);
+      },
+      error: (err) => this.handleApiError(err)
+    });
+  }
+
+  private summarizePlan(plan: InstallPlan): { willInstall: number; alreadyInstalled: number; missing: number } {
+    const summary = { willInstall: 0, alreadyInstalled: 0, missing: 0 };
+    for (const entry of plan.entries) {
+      switch (entry.status) {
+        case InstallPlanEntryStatus.WILL_INSTALL: summary.willInstall++; break;
+        case InstallPlanEntryStatus.ALREADY_INSTALLED: summary.alreadyInstalled++; break;
+        case InstallPlanEntryStatus.MISSING: summary.missing++; break;
+      }
+    }
+    return summary;
+  }
+
+  private handleApiError(err: any): void {
+    this.state = 'error';
+    this.errorMessage = err?.error?.message || err?.message ||
+      this.translate.instant('iot-hub.install-error', { name: this.item.name });
+  }
+
+  private handlePlanResult(result: InstallPlanResult): void {
+    if (!result.success) {
+      this.state = 'error';
+      this.errorMessage = result.errorMessage || this.translate.instant('iot-hub.install-error', { name: this.item.name });
+      return;
+    }
+    if (this.installPlan) {
+      this.installPlan = { ...this.installPlan, entries: result.entries ?? this.installPlan.entries };
+      this.missingEntries = (result.entries ?? []).filter(e => e.status === InstallPlanEntryStatus.MISSING);
+    }
+    if (result.rootDescriptor) {
+      this.handleInstalledDescriptor(result.rootDescriptor, result.missingItemIds?.length > 0);
+    } else {
+      this.state = (result.missingItemIds?.length ?? 0) > 0 ? 'partial' : 'success';
+    }
+  }
+
+  private handleInstalledDescriptor(descriptor: IotHubInstalledItemDescriptor, partial = false): void {
+    if (descriptor?.type === 'SOLUTION_TEMPLATE') {
+      const timeout = this.item.dataDescriptor?.installTimeoutMs;
+      const openSolutionDialog = () => {
+        this.dialogRef.close('installed');
+        this.dialog.open(SolutionInstallDialogComponent, {
+          disableClose: true,
+          autoFocus: false,
+          panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+          data: { descriptor: descriptor as SolutionTemplateInstalledItemDescriptor }
+        });
+      };
+      if (timeout > 0) {
+        setTimeout(openSolutionDialog, timeout);
+      } else {
+        openSolutionDialog();
+      }
+      return;
+    }
+    this.entityDetailsUrl = resolveEntityDetailsUrl(descriptor, this.item.type);
+    this.state = partial ? 'partial' : 'success';
+  }
+
+  private installData(): any | undefined {
+    return this.selectedEntityId ? { entityId: this.selectedEntityId } : undefined;
+  }
+
+  cancelPlan(): void {
+    this.installPlan = null;
+    this.state = 'confirm';
   }
 
   openEntityDetails(): void {
@@ -245,7 +346,8 @@ export class TbIotHubInstallDialogComponent extends DialogComponent<TbIotHubInst
   }
 
   close(): void {
-    this.dialogRef.close(this.state === 'success' ? 'installed' : false);
+    const installedStates: InstallState[] = ['success', 'partial'];
+    this.dialogRef.close(installedStates.includes(this.state) ? 'installed' : false);
   }
 
   cancel(): void {

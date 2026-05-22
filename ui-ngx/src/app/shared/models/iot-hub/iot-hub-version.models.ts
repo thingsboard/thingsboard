@@ -110,6 +110,8 @@ export interface MpItemVersionView {
   installCount: number;
   totalInstallCount: number;
   resources: MpItemVersionResource[];
+  relatedItems?: string[];
+  checksum?: string;
 }
 
 export interface MpItemVersionQueryOptions {

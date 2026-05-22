@@ -71,8 +71,11 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.HexFormat;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -103,48 +106,61 @@ public class DefaultIotHubService implements IotHubService {
     public InstallItemVersionResult installItemVersion(SecurityUser user, String versionId, JsonNode data, HttpServletRequest request) {
         TenantId tenantId = user.getTenantId();
         log.info("[{}] Installing IoT Hub item version: {}", tenantId, versionId);
-
         try {
-            JsonNode versionInfo = iotHubRestClient.getVersionInfo(versionId);
-            String itemType = versionInfo.get("type").asText();
-            String itemName = versionInfo.get("name").asText();
-            UUID itemId = UUID.fromString(versionInfo.get("itemId").asText());
-            String version = versionInfo.get("version").asText();
-            log.debug("[{}] Fetched version info: {} (type: {})", tenantId, itemName, itemType);
-
-            byte[] fileData = iotHubRestClient.getVersionFileData(versionId);
-            log.debug("[{}] Fetched file data, size: {} bytes", tenantId, fileData != null ? fileData.length : 0);
-
-            IotHubInstalledItemDescriptor descriptor = switch (itemType) {
-                case "WIDGET" -> installWidget(user, tenantId, fileData);
-                case "DASHBOARD" -> installDashboard(user, tenantId, fileData);
-                case "CALCULATED_FIELD" -> installCalculatedField(user, tenantId, fileData, data);
-                case "ALARM_RULE" -> throw new IllegalArgumentException(
-                        "Alarm Rules require ThingsBoard 4.3 or later. Please update your platform instance to install Alarm Rule packages.");
-                case "RULE_CHAIN" -> installRuleChain(user, tenantId, fileData, data);
-                case "DEVICE" -> installDeviceProfile(user, tenantId, fileData);
-                case "SOLUTION_TEMPLATE" -> installSolution(user, tenantId, fileData, request);
-                default -> throw new IllegalArgumentException("Unsupported IoT Hub item type: " + itemType);
-            };
-
-            IotHubInstalledItem installedItem = new IotHubInstalledItem();
-            installedItem.setTenantId(tenantId);
-            installedItem.setItemId(itemId);
-            installedItem.setItemVersionId(UUID.fromString(versionId));
-            installedItem.setItemName(itemName);
-            installedItem.setItemType(itemType);
-            installedItem.setVersion(version);
-            installedItem.setDescriptor(descriptor);
-            iotHubInstalledItemService.save(tenantId, installedItem);
-
-            iotHubRestClient.reportVersionInstalled(versionId);
-            log.info("[{}] Successfully installed IoT Hub item version: {} (type: {})", tenantId, itemName, itemType);
-
-            return InstallItemVersionResult.success(descriptor);
+            IotHubInstalledItem installedItem = doInstallVersion(user, versionId, data, request);
+            return InstallItemVersionResult.success(installedItem.getDescriptor());
         } catch (Exception e) {
             log.error("[{}] Failed to install IoT Hub item version: {}", tenantId, versionId, e);
             return InstallItemVersionResult.error(e.getMessage());
         }
+    }
+
+    /**
+     * Fetch + apply a single marketplace version, persist the installed-item record, and ping
+     * the marketplace install counter. Throws on failure so callers (cascade install) can roll back.
+     */
+    private IotHubInstalledItem doInstallVersion(SecurityUser user, String versionId, JsonNode data, HttpServletRequest request) throws Exception {
+        TenantId tenantId = user.getTenantId();
+        JsonNode versionInfo = iotHubRestClient.getVersionInfo(versionId);
+        String itemType = versionInfo.get("type").asText();
+        String itemName = versionInfo.get("name").asText();
+        UUID itemId = UUID.fromString(versionInfo.get("itemId").asText());
+        String version = versionInfo.get("version").asText();
+        log.debug("[{}] Fetched version info: {} (type: {})", tenantId, itemName, itemType);
+
+        byte[] fileData = iotHubRestClient.getVersionFileData(versionId);
+        log.debug("[{}] Fetched file data, size: {} bytes", tenantId, fileData != null ? fileData.length : 0);
+
+        IotHubInstalledItemDescriptor descriptor = switch (itemType) {
+            case "WIDGET" -> installWidget(user, tenantId, fileData);
+            case "DASHBOARD" -> installDashboard(user, tenantId, fileData);
+            case "CALCULATED_FIELD" -> installCalculatedField(user, tenantId, fileData, data);
+            case "ALARM_RULE" -> throw new IllegalArgumentException(
+                    "Alarm Rules require ThingsBoard 4.3 or later. Please update your platform instance to install Alarm Rule packages.");
+            case "RULE_CHAIN" -> installRuleChain(user, tenantId, fileData, data);
+            case "DEVICE" -> installDeviceProfile(user, tenantId, fileData);
+            case "SOLUTION_TEMPLATE" -> installSolution(user, tenantId, fileData, request);
+            default -> throw new IllegalArgumentException("Unsupported IoT Hub item type: " + itemType);
+        };
+
+        IotHubInstalledItem installedItem = new IotHubInstalledItem();
+        installedItem.setTenantId(tenantId);
+        installedItem.setItemId(itemId);
+        installedItem.setItemVersionId(UUID.fromString(versionId));
+        installedItem.setItemName(itemName);
+        installedItem.setItemType(itemType);
+        installedItem.setVersion(version);
+        installedItem.setDescriptor(descriptor);
+        installedItem = iotHubInstalledItemService.save(tenantId, installedItem);
+
+        try {
+            iotHubRestClient.reportVersionInstalled(versionId);
+        } catch (Exception e) {
+            // Counter ping is best-effort — do not fail the install if it errors.
+            log.warn("[{}] Failed to report install counter for version {}: {}", tenantId, versionId, e.getMessage());
+        }
+        log.info("[{}] Successfully installed IoT Hub item version: {} (type: {})", tenantId, itemName, itemType);
+        return installedItem;
     }
 
     private WidgetInstalledItemDescriptor installWidget(SecurityUser user, TenantId tenantId, byte[] fileData) throws Exception {
@@ -653,5 +669,171 @@ public class DefaultIotHubService implements IotHubService {
 
         iotHubInstalledItemService.deleteById(tenantId, installedItemId);
         log.info("[{}] Deleted installed IoT Hub item: {}", tenantId, installedItem.getItemName());
+    }
+
+    @Override
+    public InstallPlan resolveInstallPlan(SecurityUser user, String versionId) {
+        TenantId tenantId = user.getTenantId();
+        log.debug("[{}] Resolving install plan for version: {}", tenantId, versionId);
+
+        JsonNode rootVersion = iotHubRestClient.getVersionInfo(versionId);
+        if (rootVersion == null) {
+            throw new IllegalArgumentException("Marketplace version not found: " + versionId);
+        }
+
+        Set<UUID> alreadyInstalledItemIds = new HashSet<>(iotHubInstalledItemService.findInstalledItemIdsByTenantId(tenantId));
+
+        // LinkedHashMap preserves insertion order; we add deps before the root so a single
+        // forward iteration yields the correct topological install sequence.
+        LinkedHashMap<String, InstallPlanEntry> entries = new LinkedHashMap<>();
+        Set<String> visiting = new HashSet<>();
+
+        collectDependencies(rootVersion, alreadyInstalledItemIds, entries, visiting, true);
+
+        return new InstallPlan(versionId, new ArrayList<>(entries.values()));
+    }
+
+    /**
+     * Depth-first walk over {@code relatedItems}. Children are added BEFORE the current
+     * version so the resulting LinkedHashMap iterates deps-first, root-last.
+     */
+    private void collectDependencies(JsonNode versionInfo,
+                                     Set<UUID> alreadyInstalledItemIds,
+                                     LinkedHashMap<String, InstallPlanEntry> entries,
+                                     Set<String> visiting,
+                                     boolean root) {
+        String itemId = versionInfo.get("itemId").asText();
+        if (entries.containsKey(itemId)) {
+            return;
+        }
+        if (!visiting.add(itemId)) {
+            log.warn("Dependency cycle detected involving IoT Hub item {} — breaking", itemId);
+            return;
+        }
+
+        JsonNode related = versionInfo.get("relatedItems");
+        if (related != null && related.isArray()) {
+            for (JsonNode relatedNode : related) {
+                String relatedItemId = relatedNode.asText();
+                if (relatedItemId == null || relatedItemId.isEmpty() || entries.containsKey(relatedItemId)) {
+                    continue;
+                }
+                JsonNode relatedVersion;
+                try {
+                    relatedVersion = iotHubRestClient.getPublishedVersionByItemId(relatedItemId);
+                } catch (Exception e) {
+                    log.warn("Failed to fetch related item {}: {}", relatedItemId, e.getMessage());
+                    entries.put(relatedItemId, missingEntry(relatedItemId, e.getMessage()));
+                    continue;
+                }
+                if (relatedVersion == null) {
+                    log.warn("Related IoT Hub item {} is missing or unpublished — recording in plan", relatedItemId);
+                    entries.put(relatedItemId, missingEntry(relatedItemId, "Item not found or not published"));
+                    continue;
+                }
+                collectDependencies(relatedVersion, alreadyInstalledItemIds, entries, visiting, false);
+            }
+        }
+
+        visiting.remove(itemId);
+
+        InstallPlanEntry entry = new InstallPlanEntry();
+        entry.setItemId(itemId);
+        entry.setVersionId(versionInfo.get("id").asText());
+        entry.setName(versionInfo.hasNonNull("name") ? versionInfo.get("name").asText() : null);
+        entry.setType(versionInfo.hasNonNull("type") ? versionInfo.get("type").asText() : null);
+        entry.setVersion(versionInfo.hasNonNull("version") ? versionInfo.get("version").asText() : null);
+        entry.setRoot(root);
+        boolean alreadyInstalled;
+        try {
+            alreadyInstalled = alreadyInstalledItemIds.contains(UUID.fromString(itemId));
+        } catch (IllegalArgumentException ex) {
+            alreadyInstalled = false;
+        }
+        entry.setStatus(alreadyInstalled
+                ? InstallPlanEntry.Status.ALREADY_INSTALLED
+                : InstallPlanEntry.Status.WILL_INSTALL);
+        entries.put(itemId, entry);
+    }
+
+    private static InstallPlanEntry missingEntry(String itemId, String errorMessage) {
+        InstallPlanEntry entry = new InstallPlanEntry();
+        entry.setItemId(itemId);
+        entry.setStatus(InstallPlanEntry.Status.MISSING);
+        entry.setErrorMessage(errorMessage);
+        return entry;
+    }
+
+    @Override
+    public InstallPlanResult installPlan(SecurityUser user, InstallPlan plan, JsonNode data, HttpServletRequest request) {
+        TenantId tenantId = user.getTenantId();
+        if (plan == null || plan.getEntries() == null || plan.getEntries().isEmpty()) {
+            return new InstallPlanResult(false, false, "Install plan is empty", null, new ArrayList<>(), new ArrayList<>());
+        }
+
+        InstallPlanResult result = new InstallPlanResult();
+        List<InstallPlanEntry> resultEntries = new ArrayList<>();
+        List<String> missingItemIds = new ArrayList<>();
+        List<IotHubInstalledItemId> rollbackIds = new ArrayList<>();
+        IotHubInstalledItemDescriptor rootDescriptor = null;
+
+        for (InstallPlanEntry entry : plan.getEntries()) {
+            InstallPlanEntry resultEntry = cloneEntry(entry);
+            switch (entry.getStatus()) {
+                case MISSING -> {
+                    missingItemIds.add(entry.getItemId());
+                    resultEntries.add(resultEntry);
+                }
+                case ALREADY_INSTALLED -> resultEntries.add(resultEntry);
+                case WILL_INSTALL -> {
+                    try {
+                        // Only the root entry receives the user's install data (target profile entityId);
+                        // transitive deps install with defaults.
+                        JsonNode entryData = entry.isRoot() ? data : null;
+                        IotHubInstalledItem installed = doInstallVersion(user, entry.getVersionId(), entryData, request);
+                        rollbackIds.add(installed.getId());
+                        if (entry.isRoot()) {
+                            rootDescriptor = installed.getDescriptor();
+                        }
+                        resultEntries.add(resultEntry);
+                    } catch (Exception e) {
+                        log.error("[{}] Cascade install failed at entry {} ({}): {}", tenantId,
+                                entry.getName(), entry.getVersionId(), e.getMessage(), e);
+                        resultEntry.setErrorMessage(e.getMessage());
+                        resultEntries.add(resultEntry);
+                        rollbackInstalledItems(user, rollbackIds);
+                        result.setSuccess(false);
+                        result.setRolledBack(true);
+                        result.setErrorMessage("Failed to install '" + entry.getName() + "': " + e.getMessage());
+                        result.setEntries(resultEntries);
+                        result.setMissingItemIds(missingItemIds);
+                        return result;
+                    }
+                }
+            }
+        }
+
+        result.setSuccess(true);
+        result.setRolledBack(false);
+        result.setRootDescriptor(rootDescriptor);
+        result.setEntries(resultEntries);
+        result.setMissingItemIds(missingItemIds);
+        return result;
+    }
+
+    private void rollbackInstalledItems(SecurityUser user, List<IotHubInstalledItemId> installedIds) {
+        for (int i = installedIds.size() - 1; i >= 0; i--) {
+            IotHubInstalledItemId id = installedIds.get(i);
+            try {
+                deleteInstalledItem(user, id);
+            } catch (Exception e) {
+                log.error("[{}] Failed to roll back installed item {}: {}", user.getTenantId(), id, e.getMessage(), e);
+            }
+        }
+    }
+
+    private static InstallPlanEntry cloneEntry(InstallPlanEntry src) {
+        return new InstallPlanEntry(src.getItemId(), src.getVersionId(), src.getName(), src.getType(),
+                src.getVersion(), src.getStatus(), src.isRoot(), src.getErrorMessage());
     }
 }

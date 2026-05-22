@@ -30,4 +30,8 @@ public interface IotHubService {
     InstallItemVersionResult registerDeviceInstall(SecurityUser user, String versionId, DeviceInstalledItemDescriptor descriptor);
 
     void deleteInstalledItem(SecurityUser user, IotHubInstalledItemId installedItemId);
+
+    InstallPlan resolveInstallPlan(SecurityUser user, String versionId);
+
+    InstallPlanResult installPlan(SecurityUser user, InstallPlan plan, JsonNode data, HttpServletRequest request);
 }
