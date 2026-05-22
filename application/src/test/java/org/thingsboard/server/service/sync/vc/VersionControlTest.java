@@ -372,6 +372,8 @@ public class VersionControlTest extends AbstractControllerTest {
                 "\"" + aliasId + "\": {\n" +
                 "\"alias\": \"assets\",\n" +
                 "\"filter\": {\n" +
+                "   \"type\": \"entityList\",\n" +
+                "   \"entityType\": \"ASSET\",\n" +
                 "   \"entityList\": [\n" +
                 "   \"" + asset1.getId() + "\",\n" +
                 "   \"" + asset2.getId() + "\",\n" +
