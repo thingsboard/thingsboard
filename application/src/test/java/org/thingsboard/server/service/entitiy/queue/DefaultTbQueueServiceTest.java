@@ -31,9 +31,12 @@ import org.thingsboard.server.queue.discovery.TopicService;
 import java.util.List;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -63,9 +66,9 @@ class DefaultTbQueueServiceTest {
 
         service.saveQueue(queue);
 
-        verify(tbQueueAdmin).createTopicIfNotExists(eq("thingsboard.tb_rule_engine.testQueue.0"), eq(null), eq(true));
-        verify(tbQueueAdmin).createTopicIfNotExists(eq("thingsboard.tb_rule_engine.testQueue.1"), eq(null), eq(true));
-        verify(tbQueueAdmin, never()).createTopicIfNotExists(eq("tb_rule_engine.testQueue.0"), eq(null), eq(true));
+        verify(tbQueueAdmin).createTopicIfNotExists(eq("thingsboard.tb_rule_engine.testQueue.0"), isNull(), eq(true));
+        verify(tbQueueAdmin).createTopicIfNotExists(eq("thingsboard.tb_rule_engine.testQueue.1"), isNull(), eq(true));
+        verify(tbQueueAdmin, never()).createTopicIfNotExists(eq("tb_rule_engine.testQueue.0"), isNull(), eq(true));
         verify(tbClusterService).onQueuesUpdate(List.of(queue));
     }
 
@@ -83,9 +86,40 @@ class DefaultTbQueueServiceTest {
 
         service.saveQueue(queue);
 
-        verify(tbQueueAdmin, never()).createTopicIfNotExists(eq("thingsboard.tb_rule_engine.testQueue.0"), eq(null), eq(true));
-        verify(tbQueueAdmin).createTopicIfNotExists(eq("thingsboard.tb_rule_engine.testQueue.1"), eq(null), eq(true));
-        verify(tbQueueAdmin).createTopicIfNotExists(eq("thingsboard.tb_rule_engine.testQueue.2"), eq(null), eq(true));
+        verify(tbQueueAdmin, never()).createTopicIfNotExists(eq("thingsboard.tb_rule_engine.testQueue.0"), isNull(), eq(true));
+        verify(tbQueueAdmin).createTopicIfNotExists(eq("thingsboard.tb_rule_engine.testQueue.1"), isNull(), eq(true));
+        verify(tbQueueAdmin).createTopicIfNotExists(eq("thingsboard.tb_rule_engine.testQueue.2"), isNull(), eq(true));
+        verify(tbClusterService).onQueuesUpdate(List.of(queue));
+    }
+
+    @Test
+    void saveQueueDoesNotCreateKafkaTopicsWhenPartitionCountIsUnchanged() {
+        QueueId queueId = new QueueId(UUID.randomUUID());
+        Queue oldQueue = queue("tb_rule_engine.testQueue", 2);
+        oldQueue.setId(queueId);
+        Queue queue = queue("tb_rule_engine.testQueue", 2);
+        queue.setId(queueId);
+
+        when(queueService.findQueueById(queue.getTenantId(), queueId)).thenReturn(oldQueue);
+        when(queueService.saveQueue(queue)).thenReturn(queue);
+        when(topicService.buildTopicName("tb_rule_engine.testQueue")).thenReturn("thingsboard.tb_rule_engine.testQueue");
+
+        service.saveQueue(queue);
+
+        verifyNoInteractions(tbQueueAdmin);
+        verify(tbClusterService).onQueuesUpdate(List.of(queue));
+    }
+
+    @Test
+    void saveQueueDoesNotPersistQueuePrefixIntoQueueTopic() {
+        Queue queue = queue("tb_rule_engine.testQueue", 1);
+        when(queueService.saveQueue(queue)).thenReturn(queue);
+        when(topicService.buildTopicName("tb_rule_engine.testQueue")).thenReturn("thingsboard.tb_rule_engine.testQueue");
+
+        service.saveQueue(queue);
+
+        assertEquals("tb_rule_engine.testQueue", queue.getTopic());
+        verify(tbQueueAdmin).createTopicIfNotExists(eq("thingsboard.tb_rule_engine.testQueue.0"), isNull(), eq(true));
         verify(tbClusterService).onQueuesUpdate(List.of(queue));
     }
 
