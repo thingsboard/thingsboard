@@ -35,7 +35,7 @@ import { DeepPartial } from '@shared/models/common';
 import { mergeDeep } from '@core/utils';
 import { Observable, of, shareReplay, switchMap } from 'rxjs';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
-import L from 'leaflet';
+import L, { LeafletEvent } from 'leaflet';
 import { catchError, map } from 'rxjs/operators';
 import { ResourcesService } from '@core/services/resources.service';
 import { StyleSpecification } from '@maplibre/maplibre-gl-style-spec';
@@ -120,7 +120,7 @@ export abstract class TbMapLayer<S extends MapLayerSettings> {
                     let referenceLayerLoaded = false;
                     baseLayer.addTo(layer);
                     referenceLayer.addTo(layer);
-                    baseLayer.once('gl-error', (e: any) => {
+                    baseLayer.once('gl-error', (e: LeafletEvent) => {
                       layer.fire('gl-error', e);
                     });
                     baseLayer.once('load', () => {

@@ -1207,6 +1207,7 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
       zoom: this._map.getZoom() - 1,
       attributionControl: false
     });
+    this._glError = false;
     try {
       this._glMap = new MapLibreGLMap(options);
     } catch (e) {
@@ -1214,9 +1215,9 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
       this.fire('gl-error', { error: e });
       return;
     }
-    this._glMap.once('webglcontextlost', () => {
+    this._glMap.once('webglcontextlost', (e) => {
       this._glError = true;
-      this.fire('gl-error', {});
+      this.fire('gl-error', {error: e});
     });
     this._glMap.once('load', () => {
       this.fire('load');
