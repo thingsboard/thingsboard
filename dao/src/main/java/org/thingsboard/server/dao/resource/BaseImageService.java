@@ -138,7 +138,8 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         resourceValidator.validate(image, TbResourceInfo::getTenantId);
 
         ImageDescriptor descriptor = image.getDescriptor(ImageDescriptor.class);
-        Pair<ImageDescriptor, byte[]> result = processImage(image.getData(), descriptor);
+        long maxResourceSize = resourceValidator.getMaxResourceSize(image.getTenantId());
+        Pair<ImageDescriptor, byte[]> result = processImage(image.getData(), descriptor, maxResourceSize);
         descriptor = result.getLeft();
         image.setEtag(descriptor.getEtag());
         image.setDescriptorValue(descriptor);
@@ -152,7 +153,32 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         return new TbResourceInfo(doSaveResource(image));
     }
 
-    private Pair<ImageDescriptor, byte[]> processImage(byte[] data, ImageDescriptor descriptor) throws Exception {
+    private Pair<ImageDescriptor, byte[]> processImage(byte[] data, ImageDescriptor descriptor, long maxResourceSize) throws Exception {
+        if (maxResourceSize > 0) {
+            int[] dimensions = ImageUtils.getImageDimensions(data, descriptor.getMediaType());
+            if (dimensions != null) {
+                long decodedSize = (long) dimensions[0] * dimensions[1] * 4;
+                if (decodedSize > maxResourceSize) {
+                    log.info("Image decoded size ({} bytes) exceeds maxResourceSize ({} bytes), skipping preview generation",
+                            decodedSize, maxResourceSize);
+                    descriptor.setWidth(dimensions[0]);
+                    descriptor.setHeight(dimensions[1]);
+                    descriptor.setSize(data.length);
+                    descriptor.setEtag(calculateEtag(data));
+
+                    ImageDescriptor previewDescriptor = new ImageDescriptor();
+                    previewDescriptor.setWidth(1);
+                    previewDescriptor.setHeight(1);
+                    previewDescriptor.setMediaType("image/gif");
+                    previewDescriptor.setSize(ImageUtils.PLACEHOLDER_PREVIEW.length);
+                    previewDescriptor.setEtag(calculateEtag(ImageUtils.PLACEHOLDER_PREVIEW));
+                    descriptor.setPreviewDescriptor(previewDescriptor);
+
+                    return Pair.of(descriptor, ImageUtils.PLACEHOLDER_PREVIEW);
+                }
+            }
+        }
+
         ProcessedImage image = ImageUtils.processImage(data, descriptor.getMediaType(), 250);
         ProcessedImage preview = image.getPreview();
 

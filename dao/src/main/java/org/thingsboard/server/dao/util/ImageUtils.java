@@ -41,13 +41,16 @@ import org.thingsboard.common.util.JacksonUtil;
 
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
 import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
+import javax.imageio.stream.ImageInputStream;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
@@ -56,6 +59,9 @@ import java.util.regex.Pattern;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @Slf4j
 public class ImageUtils {
+
+    public static final byte[] PLACEHOLDER_PREVIEW = Base64.getDecoder().decode(
+            "R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==");
 
     private static final Map<String, String> mediaTypeMappings = Map.of(
             "jpeg", "jpg",
@@ -73,6 +79,30 @@ public class ImageUtils {
                 .filter(mapping -> mapping.getValue().equals(extension))
                 .map(Map.Entry::getKey).findFirst().orElse(extension);
         return new MimeType("image", subtype).toString();
+    }
+
+    public static int[] getImageDimensions(byte[] data, String mediaType) {
+        if (mediaTypeToFileExtension(mediaType).equals("svg")) {
+            return null;
+        }
+        try (ImageInputStream iis = ImageIO.createImageInputStream(new ByteArrayInputStream(data))) {
+            if (iis == null) {
+                return null;
+            }
+            var readers = ImageIO.getImageReaders(iis);
+            if (readers.hasNext()) {
+                ImageReader reader = readers.next();
+                try {
+                    reader.setInput(iis);
+                    return new int[]{reader.getWidth(0), reader.getHeight(0)};
+                } finally {
+                    reader.dispose();
+                }
+            }
+        } catch (IOException e) {
+            log.warn("Couldn't read image dimensions from metadata: {}", ExceptionUtils.getMessage(e));
+        }
+        return null;
     }
 
     public static ProcessedImage processImage(byte[] data, String mediaType, int thumbnailMaxDimension) throws Exception {
