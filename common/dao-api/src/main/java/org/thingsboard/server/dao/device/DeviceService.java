@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.controller.plugin.DevicePingResponse;
 import org.thingsboard.server.dao.device.provision.ProvisionRequest;
 import org.thingsboard.server.dao.entity.EntityDaoService;
 
@@ -123,5 +124,7 @@ public interface DeviceService extends EntityDaoService {
     PageData<Device> findDevicesByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, PageLink pageLink);
 
     PageData<Device> findDevicesByTenantIdAndEdgeIdAndType(TenantId tenantId, EdgeId edgeId, String type, PageLink pageLink);
+
+    DevicePingResponse pingDevice(DeviceId testDeviceId);
 
 }
