@@ -253,10 +253,6 @@ public final class TbMsg implements Serializable {
         ctx.push(ruleChainId, ruleNodeId);
     }
 
-    public boolean isAlreadyInStack(RuleChainId ruleChainId, RuleNodeId ruleNodeId) {
-        return ctx.isAlreadyInStack(ruleChainId, ruleNodeId);
-    }
-
     public int countOccurrences(RuleChainId ruleChainId, RuleNodeId ruleNodeId) {
         return ctx.countOccurrences(ruleChainId, ruleNodeId);
     }
