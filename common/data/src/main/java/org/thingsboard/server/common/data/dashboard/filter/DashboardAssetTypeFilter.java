@@ -18,11 +18,15 @@ package org.thingsboard.server.common.data.dashboard.filter;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import java.util.List;
 
 @Data
-public class DashboardAssetTypeFilter implements DashboardAliasFilter {
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
+public class DashboardAssetTypeFilter extends DashboardAliasFilter {
 
     @NotEmpty
     private List<@NotBlank String> assetTypes;

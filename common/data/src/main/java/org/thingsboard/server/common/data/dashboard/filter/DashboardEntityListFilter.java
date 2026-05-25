@@ -18,13 +18,17 @@ package org.thingsboard.server.common.data.dashboard.filter;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.thingsboard.server.common.data.EntityType;
 
 import java.util.List;
 import java.util.UUID;
 
 @Data
-public class DashboardEntityListFilter implements DashboardAliasFilter {
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
+public class DashboardEntityListFilter extends DashboardAliasFilter {
 
     @NotNull
     private EntityType entityType;

@@ -19,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.AssertTrue;
 import org.thingsboard.server.common.data.query.AliasEntityId;
 
-public interface DashboardStatefulRootFilter extends DashboardAliasFilter {
+public interface DashboardStatefulRootFilter {
 
     AliasEntityId getRootEntity();
 

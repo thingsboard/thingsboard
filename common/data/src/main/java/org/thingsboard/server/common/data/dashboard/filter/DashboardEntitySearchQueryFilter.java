@@ -18,11 +18,15 @@ package org.thingsboard.server.common.data.dashboard.filter;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.thingsboard.server.common.data.query.AliasEntityId;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 
 @Data
-public abstract class DashboardEntitySearchQueryFilter implements DashboardStatefulRootFilter {
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
+public abstract class DashboardEntitySearchQueryFilter extends DashboardAliasFilter implements DashboardStatefulRootFilter {
 
     private AliasEntityId rootEntity;
 

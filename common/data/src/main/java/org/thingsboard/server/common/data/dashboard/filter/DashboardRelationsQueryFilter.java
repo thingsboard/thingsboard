@@ -19,6 +19,8 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.thingsboard.server.common.data.query.AliasEntityId;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
@@ -26,7 +28,9 @@ import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
 import java.util.List;
 
 @Data
-public class DashboardRelationsQueryFilter implements DashboardStatefulRootFilter {
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
+public class DashboardRelationsQueryFilter extends DashboardAliasFilter implements DashboardStatefulRootFilter {
 
     private AliasEntityId rootEntity;
 
