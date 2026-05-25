@@ -3802,7 +3802,7 @@
         "changelog": "Changelog",
         "created-by": "Created by {{name}}",
         "install-confirm": "Install {{name}} v{{version}}?",
-        "install-confirm-title": "Install '{{name}}'",
+        "install-confirm-title": "Install '{{name}}'?",
         "install-desc": "Installing this will automatically create and configure the necessary resources within your tenant",
         "install-success-desc": "'{{name}}' has been installed successfully",
         "remove": "Remove",

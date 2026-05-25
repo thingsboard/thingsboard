@@ -25,34 +25,34 @@
       <h2 class="tb-iot-hub-install-title">{{ 'iot-hub.install-confirm-title' | translate:{ name: item.name } }}</h2>
       @if (item.type === ItemType.RULE_CHAIN) {
         <p class="tb-iot-hub-install-desc">{{ 'iot-hub.rule-chain-install-subtitle' | translate }}</p>
-        <form [formGroup]="ruleChainInstallForm" class="flex flex-col gap-3">
-          <div class="tb-form-row">
-            <mat-slide-toggle class="mat-slide" formControlName="setAsDefault">
-              <div tb-hint-tooltip-icon="{{ 'iot-hub.rule-chain-set-as-profile-default-tooltip' | translate }}" translate>
-                iot-hub.rule-chain-set-as-profile-default-toggle
+        <form [formGroup]="ruleChainInstallForm">
+          <div class="tb-form-panel stroked">
+            <mat-slide-toggle class="mat-slide flex" formControlName="setAsDefault">
+              <div tb-hint-tooltip-icon="{{ 'iot-hub.rule-chain-set-as-profile-default-tooltip' | translate }}">
+                {{ 'iot-hub.rule-chain-set-as-profile-default-toggle' | translate }}
               </div>
             </mat-slide-toggle>
+            @if (ruleChainInstallForm.controls.setAsDefault.value) {
+              <div class="flex flex-row gap-4 xs:flex-col xs:gap-0">
+                <tb-entity-type-select
+                  class="flex-1"
+                  appearance="outline"
+                  [showLabel]="true"
+                  [required]="true"
+                  [allowedEntityTypes]="[EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE]"
+                  [filterAllowedEntityTypes]="false"
+                  formControlName="entityType">
+                </tb-entity-type-select>
+                <tb-entity-autocomplete
+                  class="flex-1"
+                  appearance="outline"
+                  [required]="true"
+                  [entityType]="ruleChainInstallForm.controls.entityType.value"
+                  formControlName="entityId">
+                </tb-entity-autocomplete>
+              </div>
+            }
           </div>
-          @if (ruleChainInstallForm.controls.setAsDefault.value) {
-            <div class="flex flex-row gap-4 xs:flex-col xs:gap-0">
-              <tb-entity-type-select
-                class="flex-1"
-                appearance="outline"
-                [showLabel]="true"
-                [required]="true"
-                [allowedEntityTypes]="[EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE]"
-                [filterAllowedEntityTypes]="false"
-                formControlName="entityType">
-              </tb-entity-type-select>
-              <tb-entity-autocomplete
-                class="flex-1"
-                appearance="outline"
-                [required]="true"
-                [entityType]="ruleChainInstallForm.controls.entityType.value"
-                formControlName="entityId">
-              </tb-entity-autocomplete>
-            </div>
-          }
         </form>
       } @else {
         @if (activeSelectEntityConfig?.promptKey) {
