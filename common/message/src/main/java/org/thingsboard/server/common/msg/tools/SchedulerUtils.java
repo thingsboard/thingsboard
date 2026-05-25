@@ -36,6 +36,14 @@ public class SchedulerUtils {
         return tzMap.computeIfAbsent(tz == null || tz.isEmpty() ? "UTC" : tz, ZoneId::of);
     }
 
+    public static long getStartOfCurrentDay() {
+        return getStartOfCurrentDay(UTC);
+    }
+
+    public static long getStartOfCurrentDay(ZoneId zoneId) {
+        return LocalDate.now(UTC).atStartOfDay(zoneId).toInstant().toEpochMilli();
+    }
+
     public static long getStartOfCurrentHour() {
         return getStartOfCurrentHour(UTC);
     }
