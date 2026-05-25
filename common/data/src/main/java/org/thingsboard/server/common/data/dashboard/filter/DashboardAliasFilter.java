@@ -18,7 +18,9 @@ package org.thingsboard.server.common.data.dashboard.filter;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import lombok.Data;
 
+@Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -41,4 +43,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = DashboardEntityViewSearchQueryFilter.class, name = "entityViewSearchQuery"),
         @JsonSubTypes.Type(value = DashboardEdgeSearchQueryFilter.class, name = "edgeSearchQuery")
 })
-public interface DashboardAliasFilter {}
+public abstract class DashboardAliasFilter {
+
+    private boolean resolveMultiple;
+
+}

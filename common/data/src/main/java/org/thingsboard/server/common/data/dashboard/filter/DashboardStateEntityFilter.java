@@ -16,10 +16,14 @@
 package org.thingsboard.server.common.data.dashboard.filter;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.thingsboard.server.common.data.query.AliasEntityId;
 
 @Data
-public class DashboardStateEntityFilter implements DashboardAliasFilter {
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
+public class DashboardStateEntityFilter extends DashboardAliasFilter {
 
     private String stateEntityParamName;
 

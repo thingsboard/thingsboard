@@ -17,10 +17,14 @@ package org.thingsboard.server.common.data.dashboard.filter;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.thingsboard.server.common.data.query.AliasEntityId;
 
 @Data
-public class DashboardSingleEntityFilter implements DashboardAliasFilter {
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
+public class DashboardSingleEntityFilter extends DashboardAliasFilter {
 
     @NotNull
     private AliasEntityId singleEntity;
