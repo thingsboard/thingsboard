@@ -9719,6 +9719,7 @@
             "chart-style": "Chart style",
             "data-zoom": "Data zoom",
             "data-zoom-update-timewindow": "Update time window on zoom",
+            "reset-timewindow": "Reset time window",
             "stack-mode": "Stack mode",
             "stack-mode-hint": "Stacks series on the chart. The series with the same unit would be put on top of each other.",
             "axes": "Axes",

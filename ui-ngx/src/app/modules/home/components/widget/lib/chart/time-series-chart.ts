@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { WidgetContext } from '@home/models/widget-component.models';
+import { WidgetAction, WidgetContext } from '@home/models/widget-component.models';
 import {
   adjustTimeAxisExtentToData,
   calculateThresholdsOffset,
@@ -433,6 +433,18 @@ export class TbTimeSeriesChart {
     return this.darkMode;
   }
 
+  public getWidgetActions(): WidgetAction[]{
+    if (this.settings.dataZoom && this.settings.dataZoomUpdateTimewindow) {
+      return [{
+        name: 'widgets.time-series-chart.reset-timewindow',
+        icon: 'restore',
+        onAction: () => this.ctx.defaultSubscription.onResetTimewindow(),
+        show: true
+      }];
+    }
+    return [];
+  }
+
   private setupData(): void {
     const noAggregationBarWidthSettings = this.settings.noAggregationBarWidthSettings;
     const targetBarWidth = noAggregationBarWidthSettings.strategy === TimeSeriesChartNoAggregationBarWidthStrategy.group ?
@@ -833,7 +845,8 @@ export class TbTimeSeriesChart {
           type: 'inside',
           disabled: !this.settings.dataZoom,
           realtime: true,
-          filterMode: this.stateData ? 'none' : 'weakFilter'
+          filterMode: this.stateData ? 'none' : 'weakFilter',
+          ...(this.comparisonEnabled ? { xAxisIndex: [0] } : {})
         },
         {
           type: 'slider',
@@ -841,7 +854,8 @@ export class TbTimeSeriesChart {
           showDetail: false,
           realtime: true,
           filterMode: this.stateData ? 'none' : 'weakFilter',
-          bottom: 10
+          bottom: 10,
+          ...(this.comparisonEnabled ? { xAxisIndex: [0] } : {})
         }
       ],
       ...toAnimationOption(this.ctx, this.settings.animation)
@@ -891,7 +905,7 @@ export class TbTimeSeriesChart {
                 }
               }
             }
-          }, 300);
+          }, 500);
         }
       });
     }
