@@ -47,7 +47,7 @@ import {
   isUndefined
 } from '@core/utils';
 import cssjs from '@core/css/css';
-import { sortItems } from '@shared/models/page/page-link';
+import { SortColumnType, sortItems } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
 import { CollectionViewer, DataSource, SelectionModel } from '@angular/cdk/collections';
 import { BehaviorSubject, forkJoin, fromEvent, merge, Observable, of, Subject, Subscription } from 'rxjs';
@@ -118,6 +118,7 @@ import {
   dataKeyToEntityKey,
   dataKeyTypeToEntityKeyType,
   entityDataPageLinkSortDirection,
+  EntityKeyType,
   KeyFilter
 } from '@app/shared/models/query/query.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
@@ -730,8 +731,12 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       this.pageLink.sortOrder = null;
     }
     const sortOrderLabel = fromEntityColumnDef(this.sort.active, this.columns);
+    const sortColumnType: SortColumnType = key
+      ? (key.type === EntityKeyType.ENTITY_FIELD || key.type === EntityKeyType.ALARM_FIELD ? 'entityField'
+         : key.type === EntityKeyType.TIME_SERIES ? 'timeseries' : 'attribute')
+      : 'entityField';
     const keyFilters: KeyFilter[] = null; // TODO:
-    this.alarmsDatasource.loadAlarms(this.pageLink, sortOrderLabel, keyFilters);
+    this.alarmsDatasource.loadAlarms(this.pageLink, sortOrderLabel, sortColumnType, keyFilters);
     this.ctx.detectChanges();
   }
 
@@ -1256,6 +1261,7 @@ class AlarmsDatasource implements DataSource<AlarmDataInfo> {
 
   private appliedPageLink: AlarmDataPageLink;
   private appliedSortOrderLabel: string;
+  private appliedSortColumnType: SortColumnType = 'entityField';
 
   private reserveSpaceForHiddenAction = true;
   private cellButtonActions: TableCellButtonActionDescriptor[];
@@ -1294,11 +1300,13 @@ class AlarmsDatasource implements DataSource<AlarmDataInfo> {
     this.pageDataSubject.complete();
   }
 
-  loadAlarms(pageLink: AlarmDataPageLink, sortOrderLabel: string, keyFilters: KeyFilter[]) {
+  loadAlarms(pageLink: AlarmDataPageLink, sortOrderLabel: string,
+             sortColumnType: SortColumnType, keyFilters: KeyFilter[]) {
     this.dataLoading = true;
     // this.clear();
     this.appliedPageLink = pageLink;
     this.appliedSortOrderLabel = sortOrderLabel;
+    this.appliedSortColumnType = sortColumnType;
     this.subscription.subscribeForAlarms(pageLink, keyFilters);
   }
 
@@ -1330,7 +1338,7 @@ class AlarmsDatasource implements DataSource<AlarmDataInfo> {
       }
       if (this.appliedSortOrderLabel && this.appliedSortOrderLabel.length) {
         const asc = this.appliedPageLink.sortOrder.direction === Direction.ASC;
-        alarms = alarms.sort((a, b) => sortItems(a, b, this.appliedSortOrderLabel, asc));
+        alarms = alarms.sort((a, b) => sortItems(a, b, this.appliedSortOrderLabel, asc, this.appliedSortColumnType));
       }
       if (this.selection.hasValue()) {
         const alarmIds = alarms.map((alarm) => alarm.id.id);

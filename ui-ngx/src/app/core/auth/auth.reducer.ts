@@ -36,7 +36,9 @@ const emptyUserAuthState: AuthPayload = {
   maxDataPointsPerRollingArg: 0,
   maxDebugModeDurationMinutes: 0,
   userSettings: initialUserSettings,
-  trendzSettings: initialTrendzSettings
+  trendzSettings: initialTrendzSettings,
+  nullsOrderStrategy: 'default',
+  edqsEnabled: false
 };
 
 export const initialState: AuthState = {
