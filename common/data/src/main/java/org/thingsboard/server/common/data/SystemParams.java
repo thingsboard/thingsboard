@@ -45,4 +45,6 @@ public class SystemParams {
     long minAllowedAggregationIntervalInSecForCF;
     long intermediateAggregationIntervalInSecForCF;
     TrendzSettings trendzSettings;
+    String nullsOrderStrategy;
+    boolean edqsEnabled;
 }
