@@ -20,6 +20,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { Authority } from '@shared/models/authority.enum';
 import { TbIotHubHomeComponent } from './iot-hub-home.component';
 import { TbIotHubItemsPageComponent } from './iot-hub-items-page.component';
+import { TbIotHubAlarmRulesUnavailablePageComponent } from './iot-hub-alarm-rules-unavailable-page.component';
 import { TbIotHubCreatorProfileComponent } from './iot-hub-creator-profile.component';
 import { TbIotHubInstalledItemsComponent } from './iot-hub-installed-items.component';
 import { TbIotHubSearchPageComponent } from './iot-hub-search-page.component';
@@ -86,11 +87,10 @@ const routes: Routes = [
       },
       {
         path: 'alarm-rules',
-        component: TbIotHubItemsPageComponent,
+        component: TbIotHubAlarmRulesUnavailablePageComponent,
         data: {
           auth: [Authority.TENANT_ADMIN],
           title: 'item.type-alarm-rule-plural',
-          itemType: 'ALARM_RULE',
           breadcrumb: { label: 'item.type-alarm-rule-plural', icon: 'notification_important' }
         }
       },
@@ -148,6 +148,14 @@ const routes: Routes = [
             label: 'iot-hub.creator-profile',
             icon: 'person'
           }
+        }
+      },
+      {
+        path: 'listing/:slug',
+        component: TbIotHubItemResolverComponent,
+        data: {
+          auth: [Authority.TENANT_ADMIN],
+          title: 'iot-hub.item-detail'
         }
       },
       {
