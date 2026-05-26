@@ -86,24 +86,29 @@ const defaultPageLinkSearch: PageLinkSearchFunction<any> =
     return false;
   };
 
-export function sortItems(item1: any, item2: any, property: string, asc: boolean): number {
+export type SortColumnType = 'entityField' | 'attribute' | 'timeseries';
+
+export function sortItems(item1: any, item2: any, property: string, asc: boolean,
+                          columnType: SortColumnType = 'entityField'): number {
   const item1Value = getDescendantProp(item1, property);
   const item2Value = getDescendantProp(item2, property);
   const item1Empty = item1Value === null || item1Value === undefined || item1Value === '';
   const item2Empty = item2Value === null || item2Value === undefined || item2Value === '';
-  // Mirror backend's nulls ordering only for column types where the SQL ORDER BY sees real NULLs
-  // (boolean/numeric attribute values and entity-field columns). String attribute/telemetry
-  // values are coalesced to '' in SQL, so the backend ignores the strategy there and naive
-  // compare below already matches its order. EDQS has its own fixed null handling (ASC=NULLS
-  // FIRST, DESC=NULLS LAST) that doesn't honor the strategy at all, so skip this branch then
-  // — naive compare already matches EDQS's behavior for the values we care about.
+  // Mirror backend's nulls ordering. EDQS uses fixed NULLS FIRST regardless of strategy and
+  // naive compare below already matches it, so skip this branch when EDQS is on.
+  // For entityField columns the ORDER BY hits a real nullable DB column → strategy always applies.
+  // For attribute/timeseries the strategy only applies to numeric/boolean values; string/json
+  // are coalesced to '' on the backend, so naive compare below already matches its order.
   if (!edqsEnabled && (item1Empty || item2Empty) && !(item1Empty && item2Empty)) {
-    const other = item1Empty ? item2Value : item1Value;
-    const otherIsBoolOrNum =
-      typeof other === 'boolean' || other === 'true' || other === 'false' ||
-      (typeof other === 'number' && isFinite(other)) ||
-      (typeof other === 'string' && other.trim() !== '' && !isNaN(Number(other)));
-    if (otherIsBoolOrNum) {
+    let applyStrategy = columnType === 'entityField';
+    if (!applyStrategy) {
+      const other = item1Empty ? item2Value : item1Value;
+      applyStrategy =
+        typeof other === 'boolean' || other === 'true' || other === 'false' ||
+        (typeof other === 'number' && isFinite(other)) ||
+        (typeof other === 'string' && other.trim() !== '' && !isNaN(Number(other)));
+    }
+    if (applyStrategy) {
       const nullsFirst = nullsOrderStrategy === 'nulls_first'
         || (nullsOrderStrategy === 'default' && !asc);
       if (item1Empty) {
