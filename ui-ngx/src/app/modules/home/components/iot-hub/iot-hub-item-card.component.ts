@@ -61,8 +61,9 @@ export class TbIotHubItemCardComponent {
     if (!this.item.image) {
       return null;
     }
-    const url = this.item.image.split('?')[0];
-    const resolved = url.endsWith('/preview') ? this.item.image : `${url}/preview`;
+    const [path, query] = this.item.image.split('?');
+    const original = path.endsWith('/preview') ? path.slice(0, -'/preview'.length) : path;
+    const resolved = query ? `${original}?${query}` : original;
     return this.iotHubApiService.resolveResourceUrl(resolved);
   }
 

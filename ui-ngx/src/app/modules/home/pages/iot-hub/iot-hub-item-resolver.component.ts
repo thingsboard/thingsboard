@@ -20,9 +20,10 @@ import { MatDialog } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { TranslateService } from '@ngx-translate/core';
 import { AppState } from '@core/core.state';
+import { Observable } from 'rxjs';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
-import { MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
+import { ListingItemVersionNotFound, MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
 import {
   DeepLinkOpenItem,
   isPublished,
@@ -33,6 +34,13 @@ import {
   IotHubUnpublishedWarningDialogData,
   TbIotHubUnpublishedWarningDialogComponent
 } from '@home/components/iot-hub/iot-hub-unpublished-warning-dialog.component';
+import {
+  TbIotHubPeRequiredDialogComponent
+} from '@home/components/iot-hub/iot-hub-pe-required-dialog.component';
+import {
+  IotHubUpgradeRequiredDialogData,
+  TbIotHubUpgradeRequiredDialogComponent
+} from '@home/components/iot-hub/iot-hub-upgrade-required-dialog.component';
 
 @Component({
   selector: 'tb-iot-hub-item-resolver',
@@ -52,28 +60,73 @@ export class TbIotHubItemResolverComponent implements OnInit {
 
   ngOnInit(): void {
     const params = this.route.snapshot.paramMap;
+    const slug = params.get('slug');
     const itemVersionId = params.get('itemVersionId');
     const itemId = params.get('itemId');
-    const byVersion = itemVersionId != null;
-    const id = byVersion ? itemVersionId : itemId;
+    const bySlug = slug != null;
+    const byVersion = !bySlug && itemVersionId != null;
 
-    if (!isUUID(id)) {
-      this.failTo('iot-hub.deep-link-invalid-id');
-      return;
+    let fetch$: Observable<MpItemVersionView>;
+    if (bySlug) {
+      fetch$ = this.iotHubApi.getListingItemVersion(slug, { ignoreErrors: true });
+    } else {
+      const id = byVersion ? itemVersionId : itemId;
+      if (!isUUID(id)) {
+        this.failTo('iot-hub.deep-link-invalid-id');
+        return;
+      }
+      fetch$ = byVersion
+        ? this.iotHubApi.getVersionInfo(id, { ignoreErrors: true })
+        : this.iotHubApi.getPublishedVersion(id, { ignoreErrors: true });
     }
-
-    const fetch$ = byVersion
-      ? this.iotHubApi.getVersionInfo(id, { ignoreErrors: true })
-      : this.iotHubApi.getPublishedVersion(id, { ignoreErrors: true });
 
     fetch$.subscribe({
       next: v => this.handleResolved(v, byVersion),
       error: err => {
+        if (bySlug && err?.status === 404) {
+          const body = (err?.error ?? {}) as ListingItemVersionNotFound;
+          if (body.peRequired) {
+            this.showPeRequired();
+            return;
+          }
+          if (typeof body.minTbVersionRequired === 'number') {
+            this.showMinTbVersionRequired(body.minTbVersionRequired);
+            return;
+          }
+          if (body.noMatchingVersions) {
+            this.failTo('iot-hub.deep-link-not-found');
+            return;
+          }
+        }
         const key = err?.status === 404
           ? 'iot-hub.deep-link-not-found'
           : 'iot-hub.deep-link-fetch-failed';
         this.failTo(key);
       }
+    });
+  }
+
+  private showPeRequired(): void {
+    this.router.navigate(['/iot-hub'], { replaceUrl: true }).then(() => {
+      this.dialog.open(TbIotHubPeRequiredDialogComponent, {
+        panelClass: ['tb-dialog'],
+        disableClose: true,
+        autoFocus: false
+      });
+    });
+  }
+
+  private showMinTbVersionRequired(minTbVersion: number): void {
+    this.router.navigate(['/iot-hub'], { replaceUrl: true }).then(() => {
+      this.dialog.open<TbIotHubUpgradeRequiredDialogComponent, IotHubUpgradeRequiredDialogData>(
+        TbIotHubUpgradeRequiredDialogComponent,
+        {
+          panelClass: ['tb-dialog'],
+          disableClose: true,
+          autoFocus: false,
+          data: { minTbVersion }
+        }
+      );
     });
   }
 
