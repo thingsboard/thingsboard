@@ -84,7 +84,7 @@ import { BaseData } from '@shared/models/base-data';
 })
 export class CalculatedFieldArgumentsTableComponent implements ControlValueAccessor, Validator, OnChanges, AfterViewInit {
 
-  @Input() entityId: EntityId;
+  @Input() entityId: EntityId | EntityId[];
   @Input() tenantId: string;
   @Input() entityName: string;
   @Input() ownerId: EntityId;

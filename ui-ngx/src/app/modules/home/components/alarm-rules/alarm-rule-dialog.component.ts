@@ -41,7 +41,7 @@ import {
   AlarmRuleTestScriptFn
 } from "@shared/models/alarm-rule.models";
 import { deepTrim } from "@core/utils";
-import { combineLatest, Observable } from "rxjs";
+import { combineLatest, forkJoin, Observable } from "rxjs";
 import { debounceTime, startWith } from "rxjs/operators";
 import { RelationTypes } from "@shared/models/relation.models";
 import { StringItemsOption } from "@shared/components/string-items-list.component";
@@ -51,6 +51,7 @@ import { EntitySelectComponent } from '@shared/components/entity/entity-select.c
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { AssetInfo } from '@shared/models/asset.models';
 import { DeviceInfo } from '@shared/models/device.models';
+import { EntityTypeListComponent } from '@shared/components/entity/entity-type-list.component';
 
 export interface AlarmRuleDialogData {
   value?: CalculatedFieldAlarmRule;
@@ -73,7 +74,7 @@ export interface AlarmRuleDialogData {
 })
 export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogComponent, CalculatedFieldAlarmRule> {
 
-  @ViewChild('entitySelect') entitySelect!: EntitySelectComponent;
+  @ViewChild('entitySelect') entitySelect!: EntitySelectComponent | EntityTypeListComponent;
 
   fieldFormGroup: FormGroup ;
 
@@ -96,6 +97,7 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
   disabledClearRuleButton = false;
   disabledArguments = false;
   isLoading = false;
+  createNew = false;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -120,6 +122,7 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
     });
 
     if (!this.data.entityId) {
+      this.createNew = true;
       combineLatest([
         this.fieldFormGroup.get('entityId')!.valueChanges.pipe(startWith(this.fieldFormGroup.get('entityId')!.value)),
         this.fieldFormGroup.get('name')!.valueChanges.pipe(startWith(this.fieldFormGroup.get('name')!.value))
@@ -127,7 +130,7 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
         debounceTime(50),
         takeUntilDestroyed()
       ).subscribe(([entityId, name]) => {
-        this.disabledArguments = !entityId || !name?.length;
+        this.disabledArguments = Array.isArray(entityId) ? !entityId.length : !entityId || !name?.length;
         const argsControl = this.fieldFormGroup.get('configuration.arguments')!;
         if (this.disabledArguments) {
           argsControl.disable({ emitEvent: false });
@@ -174,19 +177,32 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
   add(): void {
     if (this.fieldFormGroup.valid && Object.keys(this.arguments ?? {}).length > 0) {
       this.isLoading = true;
-      const alarmRule = { entityId: this.data.entityId, ...(this.data.value ?? {}),  ...this.fromGroupValue};
-      alarmRule.configuration.type = CalculatedFieldType.ALARM;
+      const entityIds = Array.isArray(this.fieldFormGroup.value.entityId)
+        ? this.fieldFormGroup.value.entityId
+        : [this.fieldFormGroup.value.entityId ?? this.data.entityId];
 
-      this.alarmRulesService.saveAlarmRule(alarmRule)
+      const requests$ = entityIds.map((entityId: EntityId) => {
+        const alarmRule = { ...(this.data.value ?? {}), ...this.fromGroupValue, entityId };
+        alarmRule.configuration.type = CalculatedFieldType.ALARM;
+        return this.alarmRulesService.saveAlarmRule(alarmRule);
+      });
+
+      forkJoin(requests$)
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
-          next: calculatedField => this.dialogRef.close(calculatedField),
+          next: (calculatedFields: CalculatedFieldAlarmRule) => this.dialogRef.close(calculatedFields),
           error: () => this.isLoading = false
         });
     } else {
       this.fieldFormGroup.get('name').markAsTouched();
-      this.entitySelect?.entityAutocompleteMarkAsTouched();
+      if (this.entitySelect instanceof EntitySelectComponent) {
+        this.entitySelect?.entityAutocompleteMarkAsTouched();
+      }
     }
+  }
+
+  get selectedEntityId(): EntityId {
+    return Array.isArray(this.fieldFormGroup.get('entityId').value) ? this.fieldFormGroup.get('entityId').value : this.fieldFormGroup.get('entityId').value;
   }
 
   private applyDialogData(): void {

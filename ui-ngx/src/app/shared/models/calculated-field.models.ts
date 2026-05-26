@@ -33,6 +33,7 @@ import { EntitySearchDirection } from '@shared/models/relation.models';
 import { AbstractControl, FormControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { AlarmRule } from "@shared/models/alarm-rule.models";
 import { AlarmSeverity } from "@shared/models/alarm.models";
+import { EntityFilter } from '@shared/models/query/query.models';
 
 export const FORBIDDEN_NAMES = ['ctx', 'e', 'pi'];
 
@@ -527,7 +528,14 @@ export const ArgumentEntityTypeParamsMap =new Map<ArgumentEntityType, ArgumentEn
   [ArgumentEntityType.Customer, { title: 'calculated-fields.customer-name', entityType: EntityType.CUSTOMER }],
 ])
 
-export const getCalculatedFieldCurrentEntityFilter = (entityName: string, entityId: EntityId) => {
+export const getCalculatedFieldCurrentEntityFilter = (entityName: string, entityId: EntityId | EntityId[]): EntityFilter => {
+  if (Array.isArray(entityId)) {
+    return {
+      type: AliasFilterType.entityList,
+      entityType: entityId[0].entityType as EntityType,
+      entityList: entityId.map(value => value.id)
+    }
+  }
   switch (entityId?.entityType) {
     case EntityType.ASSET_PROFILE:
       return {

@@ -56,23 +56,36 @@
           />
         </div>
         @if (!data.entityId) {
-          <tb-entity-select formControlName="entityId"
-                            #entitySelect
-                            appearance="outline"
-                            required
-                            entityTypeLabel="{{ 'entity.entity-type' | translate }}"
-                            [filterAllowedEntityTypes]="false"
-                            [allowedEntityTypes]="alarmRuleEntityTypeList"
-                            [defaultEntityType]="EntityType.DEVICE_PROFILE"
-                            (entityChanged)="changeEntity($event)">
-          </tb-entity-select>
+          @if (createNew) {
+            <tb-entity-list-select formControlName="entityId"
+                                   #entitySelect
+                                   appearance="outline"
+                                   required
+                                   [filterAllowedEntityTypes]="false"
+                                   [allowedEntityTypes]="alarmRuleEntityTypeList"
+                                   [predefinedEntityType]="EntityType.DEVICE_PROFILE"
+                                   entityTypeLabel="{{ 'entity.entity-type' | translate }}"
+                                   displayEntityLabel>
+            </tb-entity-list-select>
+          } @else {
+            <tb-entity-select formControlName="entityId"
+                              #entitySelect
+                              appearance="outline"
+                              required
+                              entityTypeLabel="{{ 'entity.entity-type' | translate }}"
+                              [filterAllowedEntityTypes]="false"
+                              [allowedEntityTypes]="alarmRuleEntityTypeList"
+                              [defaultEntityType]="EntityType.DEVICE_PROFILE"
+                              (entityChanged)="changeEntity($event)">
+            </tb-entity-select>
+          }
         }
       </div>
       <ng-container formGroupName="configuration">
         <div class="tb-form-panel" [class.disabled]="disabledArguments">
           <div class="tb-form-panel-title tb-required">{{ 'calculated-fields.arguments' | translate }}</div>
           <tb-calculated-field-arguments-table formControlName="arguments"
-                                               [entityId]="data.entityId || fieldFormGroup.get('entityId').value"
+                                               [entityId]="data.entityId || selectedEntityId"
                                                [tenantId]="data.tenantId"
                                                [ownerId]="ownerId"
                                                [watchKeyChange]="true"
