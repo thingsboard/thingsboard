@@ -19,26 +19,55 @@
   @switch (state) {
     @case ('confirm') {
       <h2 class="tb-iot-hub-install-title">{{ 'iot-hub.install-confirm-title' | translate:{ name: item.name } }}</h2>
-      @if (item.type === ItemType.RULE_CHAIN) {
-        <p class="tb-iot-hub-install-desc">{{ 'iot-hub.rule-chain-install-desc' | translate }}</p>
-      } @else {
-        <p class="tb-iot-hub-install-desc">{{ 'iot-hub.install-desc' | translate }}</p>
-      }
+      <p class="tb-iot-hub-install-desc">{{ 'iot-hub.install-desc' | translate }}</p>
     }
     @case ('select-entity') {
       <h2 class="tb-iot-hub-install-title">{{ 'iot-hub.install-confirm-title' | translate:{ name: item.name } }}</h2>
-      @if (activeSelectEntityConfig?.promptKey) {
-        <p class="tb-iot-hub-install-desc"
-           [innerHTML]="activeSelectEntityConfig.promptKey | translate:{ name: item.name }"></p>
+      @if (item.type === ItemType.RULE_CHAIN) {
+        <p class="tb-iot-hub-install-desc">{{ 'iot-hub.rule-chain-install-subtitle' | translate }}</p>
+        <form [formGroup]="ruleChainInstallForm">
+          <div class="tb-form-panel stroked">
+            <mat-slide-toggle class="mat-slide flex" formControlName="setAsDefault">
+              <div tb-hint-tooltip-icon="{{ 'iot-hub.rule-chain-set-as-profile-default-tooltip' | translate }}">
+                {{ 'iot-hub.rule-chain-set-as-profile-default-toggle' | translate }}
+              </div>
+            </mat-slide-toggle>
+            @if (ruleChainInstallForm.controls.setAsDefault.value) {
+              <div class="flex flex-row gap-4 xs:flex-col xs:gap-0">
+                <tb-entity-type-select
+                  class="flex-1"
+                  appearance="outline"
+                  [showLabel]="true"
+                  [required]="true"
+                  [allowedEntityTypes]="[EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE]"
+                  [filterAllowedEntityTypes]="false"
+                  formControlName="entityType">
+                </tb-entity-type-select>
+                <tb-entity-autocomplete
+                  class="flex-1"
+                  appearance="outline"
+                  [required]="true"
+                  [entityType]="ruleChainInstallForm.controls.entityType.value"
+                  formControlName="entityId">
+                </tb-entity-autocomplete>
+              </div>
+            }
+          </div>
+        </form>
+      } @else {
+        @if (activeSelectEntityConfig?.promptKey) {
+          <p class="tb-iot-hub-install-desc"
+             [innerHTML]="activeSelectEntityConfig.promptKey | translate:{ name: item.name }"></p>
+        }
+        <tb-entity-select
+          [(ngModel)]="selectedEntityId"
+          [allowedEntityTypes]="activeSelectEntityConfig.allowed"
+          [defaultEntityType]="activeSelectEntityConfig.defaultType"
+          [filterAllowedEntityTypes]="false"
+          appearance="outline"
+          [required]="activeSelectEntityConfig.required">
+        </tb-entity-select>
       }
-      <tb-entity-select
-        [(ngModel)]="selectedEntityId"
-        [allowedEntityTypes]="activeSelectEntityConfig.allowed"
-        [defaultEntityType]="activeSelectEntityConfig.defaultType"
-        [filterAllowedEntityTypes]="false"
-        appearance="outline"
-        [required]="activeSelectEntityConfig.required">
-      </tb-entity-select>
     }
     @case ('confirm-overwrite') {
       <h2 class="tb-iot-hub-install-title">{{ 'iot-hub.rule-chain-overwrite-title' | translate }}</h2>
@@ -59,7 +88,7 @@
     @case ('error') {
       <h2 class="tb-iot-hub-install-title">{{ 'iot-hub.install-error-title' | translate }}</h2>
       <p class="tb-iot-hub-install-desc">{{ 'iot-hub.install-error-message' | translate:{ name: item.name } }}</p>
-      @if (item?.type === ItemType.SOLUTION_TEMPLATE) {
+      @if (item.type === ItemType.SOLUTION_TEMPLATE) {
         <tb-iot-hub-markdown class="tb-iot-hub-error-details-markdown" [data]="errorMessage"></tb-iot-hub-markdown>
       } @else {
         <div class="tb-iot-hub-error-details">
@@ -73,28 +102,20 @@
   @switch (state) {
     @case ('confirm') {
       <button mat-button (click)="cancel()">{{ 'action.cancel' | translate }}</button>
-      @if (item.type === ItemType.RULE_CHAIN) {
-        <button mat-stroked-button (click)="install()">{{ 'iot-hub.install' | translate }}</button>
-        <button mat-flat-button color="primary" (click)="installAsEntityProfileDefault()">
-          {{ 'iot-hub.rule-chain-install-as-default' | translate }}
-        </button>
-      } @else {
-        <button mat-flat-button color="primary" (click)="install()">{{ 'iot-hub.install' | translate }}</button>
-      }
+      <button mat-flat-button color="primary" (click)="install()">{{ 'iot-hub.install' | translate }}</button>
     }
     @case ('select-entity') {
       <button mat-button (click)="cancel()">{{ 'action.cancel' | translate }}</button>
       @if (item.type === ItemType.RULE_CHAIN) {
-        <button mat-button (click)="selectEntityBack()">{{ 'action.back' | translate }}</button>
         <button mat-flat-button color="primary"
-                [disabled]="!selectedEntityId"
-                (click)="onSelectEntityInstall()">
+                [disabled]="ruleChainInstallForm.invalid"
+                (click)="onRuleChainInstall()">
           {{ 'iot-hub.install' | translate }}
         </button>
       } @else {
         <button mat-flat-button color="primary"
-                [disabled]="activeSelectEntityConfig?.required && !selectedEntityId"
-                (click)="onSelectEntityInstall()">
+                [disabled]="activeSelectEntityConfig.required && !selectedEntityId"
+                (click)="onEntitySelectInstall()">
           {{ 'iot-hub.install' | translate }}
         </button>
       }
