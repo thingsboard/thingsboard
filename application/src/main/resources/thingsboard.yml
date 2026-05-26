@@ -1013,12 +1013,14 @@ audit-log:
 
 # Device state parameters
 state:
-  # Device inactivity timeout is a global configuration parameter that defines when the device will be marked as "inactive" by the server.
-  # The parameter value is in seconds. A user can overwrite this parameter for an individual device by setting the “inactivityTimeout” server-side attribute (NOTE: expects value in milliseconds).
-  # We recommend this parameter to be in sync with session inactivity timeout ("transport.sessions.inactivity_timeout" or TB_TRANSPORT_SESSIONS_INACTIVITY_TIMEOUT) parameter
-  # which is responsible for detection of the stale device connection sessions.
-  # The value of the session inactivity timeout parameter should be greater or equal to the device inactivity timeout.
-  # Note that the session inactivity timeout is set in milliseconds while device inactivity timeout is in seconds.
+  # Global fallback for device inactivity detection, in seconds.
+  # Resolution order (highest priority first):
+  #   1) per-device "inactivityTimeout" server-side attribute (milliseconds)
+  #   2) device profile "inactivityTimeoutMs" field (milliseconds)
+  #   3) this parameter (seconds, fallback)
+  # Keep this parameter in sync with the session inactivity timeout ("transport.sessions.inactivity_timeout" or TB_TRANSPORT_SESSIONS_INACTIVITY_TIMEOUT),
+  # which detects stale device transport sessions. The session inactivity timeout should be greater than or equal to the device inactivity timeout.
+  # The session inactivity timeout is in milliseconds; this device inactivity timeout is in seconds.
   defaultInactivityTimeoutInSec: "${DEFAULT_INACTIVITY_TIMEOUT:600}"
   defaultStateCheckIntervalInSec: "${DEFAULT_STATE_CHECK_INTERVAL:60}" # Interval for checking the device state after a specified period. Time in seconds
   # Controls whether we store the device 'active' flag in attributes (default) or telemetry.
