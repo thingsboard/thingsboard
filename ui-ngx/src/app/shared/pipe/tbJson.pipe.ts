@@ -22,12 +22,18 @@ import { isNumber, isObject } from '@core/utils';
     standalone: false
 })
 export class TbJsonPipe implements PipeTransform {
-  transform(value: any): string {
+  transform(value: any, maxLength?: number): string {
+    let result: string;
     if (isObject(value)) {
-      return JSON.stringify(value);
+      result = JSON.stringify(value);
     } else if (isNumber(value)) {
-      return value.toString();
+      result = value.toString();
+    } else {
+      result = value;
     }
-    return value;
+    if (maxLength != null && maxLength > 0 && result && result.length > maxLength) {
+      return result.slice(0, maxLength) + '\u2026';
+    }
+    return result;
   }
 }
