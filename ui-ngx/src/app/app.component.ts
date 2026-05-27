@@ -92,6 +92,14 @@ export class AppComponent {
   }
 
   setupAuth() {
+    // URL-token login (OAuth2 redirect to root) emits selectUserReady once;
+    // skip(1) would swallow it and gotoDefaultPlace would never fire.
+    const params = new URLSearchParams(window.location.search);
+    const hasRootUrlAuth = window.location.pathname === '/' && (
+      !!params.get('accessToken') ||
+      (!!params.get('username') && !!params.get('password'))
+    );
+
     this.store.select(selectUserReady).pipe(
       filter((data) => data.isUserLoaded),
       tap((data) => {
@@ -102,7 +110,7 @@ export class AppComponent {
         }
         this.notifyUserLang(userLang);
       }),
-      skip(1),
+      skip(hasRootUrlAuth ? 0 : 1),
     ).subscribe((data) => {
       this.authService.gotoDefaultPlace(data.isAuthenticated);
     });
