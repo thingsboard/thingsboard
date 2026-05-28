@@ -346,7 +346,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   }
 
   get mobileDisplayRightLayoutFirst(): boolean {
-    return this.isMobile && this.layouts.right.layoutCtx.gridSettings?.mobileDisplayLayoutFirst;
+    return this.isMobile && this.layouts.right.show && this.layouts.right.layoutCtx.gridSettings?.mobileDisplayLayoutFirst;
   }
 
   set mobileDisplayRightLayoutFirst(mobileDisplayRightLayoutFirst: boolean) {
