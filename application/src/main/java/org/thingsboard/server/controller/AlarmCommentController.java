@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.AlarmCommentInfo;
 import org.thingsboard.server.common.data.alarm.AlarmCommentType;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AlarmCommentId;
 import org.thingsboard.server.common.data.id.AlarmId;
@@ -77,6 +78,7 @@ public class AlarmCommentController extends BaseController {
         checkParameter(ALARM_ID, strAlarmId);
         AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
         Alarm alarm = checkAlarmInfoId(alarmId, Operation.WRITE);
+        checkUserCommentOwnership(alarmComment, Operation.WRITE);
         alarmComment.setAlarmId(alarmId);
         alarmComment.setType(AlarmCommentType.OTHER);
         return tbAlarmCommentService.saveAlarmComment(alarm, alarmComment, getCurrentUser());
@@ -93,6 +95,7 @@ public class AlarmCommentController extends BaseController {
 
         AlarmCommentId alarmCommentId = new AlarmCommentId(toUUID(strCommentId));
         AlarmComment alarmComment = checkAlarmCommentId(alarmCommentId, alarmId);
+        checkUserCommentOwnership(alarmComment, Operation.DELETE);
         tbAlarmCommentService.deleteAlarmComment(alarm, alarmComment, getCurrentUser());
     }
 
@@ -118,6 +121,13 @@ public class AlarmCommentController extends BaseController {
         Alarm alarm = checkAlarmId(alarmId, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, null, sortProperty, sortOrder);
         return checkNotNull(alarmCommentService.findAlarmComments(alarm.getTenantId(), alarmId, pageLink));
+    }
+
+    private void checkUserCommentOwnership(AlarmComment alarmComment, Operation operation) throws ThingsboardException {
+        if (alarmComment.getUserId() != null && !alarmComment.getUserId().equals(getCurrentUser().getId())) {
+            throw new ThingsboardException("User is not allowed to " + operation.name().toLowerCase() + " other user's comment",
+                    ThingsboardErrorCode.PERMISSION_DENIED);
+        }
     }
 
 }

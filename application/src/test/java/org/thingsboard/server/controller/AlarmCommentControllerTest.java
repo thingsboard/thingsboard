@@ -161,6 +161,26 @@ public class AlarmCommentControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testUpdateOthersAlarmCommentByTenantAdmin() throws Exception {
+        // Tenant admins are NOT exempt from the ownership rule — even with full tenant-level
+        // privileges they cannot rewrite a comment authored by a different user.
+        loginCustomerUser();
+        AlarmComment alarmComment = createAlarmComment(alarm.getId());
+
+        loginTenantAdmin();
+        Mockito.reset(tbClusterService, auditLogService);
+
+        JsonNode newComment = JacksonUtil.newObjectNode().set("text", new TextNode("Tenant rewrite attempt"));
+        alarmComment.setComment(newComment);
+
+        doPost("/api/alarm/" + alarm.getId() + "/comment", alarmComment)
+                .andExpect(status().isForbidden())
+                .andExpect(statusReason(containsString("User is not allowed to write other user's comment")));
+
+        testNotifyEntityNever(alarm.getId(), alarmComment);
+    }
+
+    @Test
     public void testUpdateAlarmViaDifferentTenant() throws Exception {
         loginTenantAdmin();
         AlarmComment savedComment = createAlarmComment(alarm.getId());
@@ -213,6 +233,23 @@ public class AlarmCommentControllerTest extends AbstractControllerTest {
                         CUSTOMER_USER_EMAIL)))
                 .build();
         testLogEntityActionEntityEqClass(alarm, alarm.getId(), tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.DELETED_COMMENT, 1, expectedAlarmComment);
+    }
+
+    @Test
+    public void testDeleteOthersAlarmCommentByTenantAdmin() throws Exception {
+        // Tenant admins are NOT exempt from the ownership rule on delete either — even with full
+        // tenant-level privileges they cannot delete a comment authored by a different user.
+        loginCustomerUser();
+        AlarmComment alarmComment = createAlarmComment(alarm.getId());
+
+        loginTenantAdmin();
+        Mockito.reset(tbClusterService, auditLogService);
+
+        doDelete("/api/alarm/" + alarm.getId() + "/comment/" + alarmComment.getId())
+                .andExpect(status().isForbidden())
+                .andExpect(statusReason(containsString("User is not allowed to delete other user's comment")));
+
+        testNotifyEntityNever(alarm.getId(), alarmComment);
     }
 
     @Test
