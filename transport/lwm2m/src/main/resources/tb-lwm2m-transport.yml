@@ -28,19 +28,20 @@ server:
   # Server bind port (has no effect if web-environment is disabled).
   port: "${HTTP_BIND_PORT:8083}"
 
-# Zookeeper connection parameters. Used for service discovery.
+# ZooKeeper connection parameters
+# Controls ZooKeeper-based service discovery and cluster coordination for microservice deployments.
 zk:
-  # Enable/disable zookeeper discovery service.
+  # Enable/disable ZooKeeper discovery service.
   enabled: "${ZOOKEEPER_ENABLED:false}"
-  # Zookeeper connect string
+  # ZooKeeper connect string
   url: "${ZOOKEEPER_URL:localhost:2181}"
-  # Zookeeper retry interval in milliseconds
+  # ZooKeeper retry interval in milliseconds
   retry_interval_ms: "${ZOOKEEPER_RETRY_INTERVAL_MS:3000}"
-  # Zookeeper connection timeout in milliseconds
+  # ZooKeeper connection timeout in milliseconds
   connection_timeout_ms: "${ZOOKEEPER_CONNECTION_TIMEOUT_MS:3000}"
-  # Zookeeper session timeout in milliseconds
+  # ZooKeeper session timeout in milliseconds
   session_timeout_ms: "${ZOOKEEPER_SESSION_TIMEOUT_MS:3000}"
-  # Name of the directory in zookeeper 'filesystem'
+  # Name of the directory in ZooKeeper 'filesystem'
   zk_dir: "${ZOOKEEPER_NODES_DIR:/thingsboard}"
   # The recalculate_delay property is recommended in a microservices architecture setup for rule-engine services.
   # This property provides a pause to ensure that when a rule-engine service is restarted, other nodes don't immediately attempt to recalculate their partitions.
@@ -94,9 +95,9 @@ redis:
     password: "${REDIS_SENTINEL_PASSWORD:}"
     # if set false will be used pool config build from values of the pool config section
     useDefaultPoolConfig: "${REDIS_USE_DEFAULT_POOL_CONFIG:true}"
-  # db index
+  # Redis logical database index to select after connecting.
   db: "${REDIS_DB:0}"
-  # db password
+  # Password for Redis authentication (leave empty if not required).
   password: "${REDIS_PASSWORD:}"
   # Redis username for ACL authentication (Redis 6.0+). Leave empty for legacy password-only auth
   username: "${REDIS_USERNAME:}"
@@ -171,16 +172,16 @@ transport:
     dtls:
       # RFC7925_RETRANSMISSION_TIMEOUT_IN_MILLISECONDS = 9000
       retransmission_timeout: "${LWM2M_DTLS_RETRANSMISSION_TIMEOUT_MS:9000}"
-      # CoAP DTLS connection ID length for LWM2M. RFC 9146, Connection Identifier for DTLS 1.2
-      # Default: off
+      # LWM2M DTLS connection ID length for LWM2M. RFC 9146, Connection Identifier for DTLS 1.2
+      # Default: off. <br>
       # Control usage of DTLS connection ID length (CID).
-      # - 'off' to deactivate it.
-      # - 'on' to activate Connection ID support (same as CID 0 or more 0).
-      # - A positive value defines generated CID size in bytes.
-      # - A value of 0 means we accept using CID but will not generate one for foreign peer (enables support but not for incoming traffic).
-      # - A value between 0 and <= 4: SingleNodeConnectionIdGenerator is used
-      # - A value that are > 4: MultiNodeConnectionIdGenerator is used
-      connection_id_length: "${LWM2M_DTLS_CONNECTION_ID_LENGTH:}"
+      # <ul> <li> 'off' to deactivate it. </li>
+      # <li> 'on' to activate Connection ID support (same as CID 0 or more 0). </li>
+      # <li> A positive value defines generated CID size in bytes.</li>
+      # <li> A value of 0 means we accept using CID but will not generate one for foreign peer (enables support but not for incoming traffic). </li>
+      # <li> A value between 0 and <= 4: SingleNodeConnectionIdGenerator is used </li>
+      # <li> A value that are > 4: MultiNodeConnectionIdGenerator is used </li> </ul>
+      connection_id_length: "${LWM2M_DTLS_CONNECTION_ID_LENGTH:8}"
     server:
       # LwM2M Server ID
       id: "${LWM2M_SERVER_ID:123}"

@@ -120,20 +120,20 @@ app:
   # Application version
   version: "@project.version@"
 
-# Zookeeper connection parameters
+# ZooKeeper connection parameters
 # Controls ZooKeeper-based service discovery and cluster coordination for microservice deployments.
 zk:
-  # Enable/disable zookeeper discovery service.
+  # Enable/disable ZooKeeper discovery service.
   enabled: "${ZOOKEEPER_ENABLED:false}"
-  # Zookeeper connect string
+  # ZooKeeper connect string
   url: "${ZOOKEEPER_URL:localhost:2181}"
-  # Zookeeper retry interval in milliseconds
+  # ZooKeeper retry interval in milliseconds
   retry_interval_ms: "${ZOOKEEPER_RETRY_INTERVAL_MS:3000}"
-  # Zookeeper connection timeout in milliseconds
+  # ZooKeeper connection timeout in milliseconds
   connection_timeout_ms: "${ZOOKEEPER_CONNECTION_TIMEOUT_MS:3000}"
-  # Zookeeper session timeout in milliseconds
+  # ZooKeeper session timeout in milliseconds
   session_timeout_ms: "${ZOOKEEPER_SESSION_TIMEOUT_MS:3000}"
-  # Name of the directory in zookeeper 'filesystem'
+  # Name of the directory in ZooKeeper 'filesystem'
   zk_dir: "${ZOOKEEPER_NODES_DIR:/thingsboard}"
   # The recalculate_delay property is recommended in a microservices architecture setup for rule-engine services.
   # This property provides a pause to ensure that when a rule-engine service is restarted, other nodes don't immediately attempt to recalculate their partitions.
@@ -141,7 +141,7 @@ zk:
   recalculate_delay: "${ZOOKEEPER_RECALCULATE_DELAY_MS:0}"
 
 # Cluster parameters
-# Controls inter-node communication statistics within a ThingsBoard cluster.
+# Controls cluster statistics — tracks the number of messages exchanged between cluster nodes.
 cluster:
   stats:
     # Enable/Disable the cluster statistics. Calculates the number of messages sent between cluster nodes based on each type
@@ -610,14 +610,14 @@ actors:
     response_timeout_ms: "${ACTORS_RPC_RESPONSE_TIMEOUT_MS:30000}"
     # Close transport session if RPC delivery timed out. If enabled, RPC will be reverted to the queued state.
     # Note:
-    # - For MQTT transport:
-    #   - QoS level 0: This feature does not apply, as no acknowledgment is expected, and therefore no timeout is triggered.
-    #   - QoS level 1: This feature applies, as an acknowledgment is expected.
-    #   - QoS level 2: Unsupported.
-    # - For CoAP transport:
-    #   - Confirmable requests: This feature applies, as delivery confirmation is expected.
-    #   - Non-confirmable requests: This feature does not apply, as no delivery acknowledgment is expected.
-    # - For HTTP and SNPM transports: RPC is considered delivered immediately, and there is no logic to await acknowledgment.
+    # <ul><li> For MQTT transport:
+    #   <ul><li> QoS level 0: This feature does not apply, as no acknowledgment is expected, and therefore no timeout is triggered.</li>
+    #   <li> QoS level 1: This feature applies, as an acknowledgment is expected.</li>
+    #   <li> QoS level 2: Unsupported.</li></ul></li>
+    # <li> For CoAP transport:
+    #   <ul><li> Confirmable requests: This feature applies, as delivery confirmation is expected.</li>
+    #   <li> Non-confirmable requests: This feature does not apply, as no delivery acknowledgment is expected.</li></ul></li>
+    # <li> For HTTP and SNPM transports: RPC is considered delivered immediately, and there is no logic to await acknowledgment.</li></ul>
     close_session_on_rpc_delivery_timeout: "${ACTORS_RPC_CLOSE_SESSION_ON_RPC_DELIVERY_TIMEOUT:false}"
   statistics:
     # Enable/disable actor statistics
@@ -825,17 +825,17 @@ redis:
     # if set false will be used pool config build from values of the pool config section
     useDefaultPoolConfig: "${REDIS_USE_DEFAULT_POOL_CONFIG:true}"
   sentinel:
-    # name of the master node
+    # Name of the master node
     master: "${REDIS_MASTER:}"
-    # comma-separated list of "host:port" pairs of sentinels
+    # Comma-separated list of "host:port" pairs of sentinels
     sentinels: "${REDIS_SENTINELS:}"
-    # password to authenticate with sentinel
+    # Password to authenticate with sentinel
     password: "${REDIS_SENTINEL_PASSWORD:}"
-    # if set false will be used pool config build from values of the pool config section
+    # If set false will be used pool config build from values of the pool config section
     useDefaultPoolConfig: "${REDIS_USE_DEFAULT_POOL_CONFIG:true}"
-  # db index
+  # Redis logical database index to select after connecting.
   db: "${REDIS_DB:0}"
-  # db password
+  # Password for Redis authentication (leave empty if not required).
   password: "${REDIS_PASSWORD:}"
   # Redis username for ACL authentication (Redis 6.0+). Leave empty for legacy password-only auth
   username: "${REDIS_USERNAME:}"
@@ -1148,10 +1148,10 @@ transport:
   activity:
     # This property specifies the strategy for reporting activity events within each reporting period.
     # The accepted values are 'FIRST', 'LAST', 'FIRST_AND_LAST' and 'ALL'.
-    # - 'FIRST': Only the first activity event in each reporting period is reported.
-    # - 'LAST': Only the last activity event in the reporting period is reported.
-    # - 'FIRST_AND_LAST': Both the first and last activity events in the reporting period are reported.
-    # - 'ALL': All activity events in the reporting period are reported.
+    # <ul><li> 'FIRST': Only the first activity event in each reporting period is reported.</li>
+    # <li> 'LAST': Only the last activity event in the reporting period is reported.</li>
+    # <li> 'FIRST_AND_LAST': Both the first and last activity events in the reporting period are reported.</li>
+    # <li> 'ALL': All activity events in the reporting period are reported.</li></ul>
     reporting_strategy: "${TB_TRANSPORT_ACTIVITY_REPORTING_STRATEGY:LAST}"
   json:
     # Cast String data types to Numeric if possible when processing Telemetry/Attributes JSON
@@ -1269,16 +1269,16 @@ transport:
     dtls:
       # RFC7925_RETRANSMISSION_TIMEOUT_IN_MILLISECONDS = 9000
       retransmission_timeout: "${LWM2M_DTLS_RETRANSMISSION_TIMEOUT_MS:9000}"
-      # CoAP DTLS connection ID length for LWM2M. RFC 9146, Connection Identifier for DTLS 1.2
-      # Default: off
+      # LWM2M DTLS connection ID length for LWM2M. RFC 9146, Connection Identifier for DTLS 1.2
+      # Default: off. <br>
       # Control usage of DTLS connection ID length (CID).
-      # - 'off' to deactivate it.
-      # - 'on' to activate Connection ID support (same as CID 0 or more 0).
-      # - A positive value defines generated CID size in bytes.
-      # - A value of 0 means we accept using CID but will not generate one for foreign peer (enables support but not for incoming traffic).
-      # - A value between 0 and <= 4: SingleNodeConnectionIdGenerator is used
-      # - A value that are > 4: MultiNodeConnectionIdGenerator is used
-      connection_id_length: "${LWM2M_DTLS_CONNECTION_ID_LENGTH:}"
+      # <ul> <li> 'off' to deactivate it. </li>
+      # <li> 'on' to activate Connection ID support (same as CID 0 or more 0). </li>
+      # <li> A positive value defines generated CID size in bytes.</li>
+      # <li> A value of 0 means we accept using CID but will not generate one for foreign peer (enables support but not for incoming traffic). </li>
+      # <li> A value between 0 and <= 4: SingleNodeConnectionIdGenerator is used </li>
+      # <li> A value that are > 4: MultiNodeConnectionIdGenerator is used </li> </ul>
+      connection_id_length: "${LWM2M_DTLS_CONNECTION_ID_LENGTH:8}"
     server:
       # LwM2M Server ID
       id: "${LWM2M_SERVER_ID:123}"
@@ -1470,15 +1470,15 @@ coap:
     # CoAP DTLS bind port
     bind_port: "${COAP_DTLS_BIND_PORT:5684}"
     # CoAP DTLS connection ID length. RFC 9146, Connection Identifier for DTLS 1.2
-    # Default: off
+    # Default: off. <br>
     # Control usage of DTLS connection ID length (CID).
-    # - 'off' to deactivate it.
-    # - 'on' to activate Connection ID support (same as CID 0 or more 0).
-    # - A positive value defines generated CID size in bytes.
-    # - A value of 0 means we accept using CID but will not generate one for foreign peer (enables support but not for incoming traffic).
-    # - A value between 0 and <= 4: SingleNodeConnectionIdGenerator is used
-    # - A value that are > 4: MultiNodeConnectionIdGenerator is used
-    connection_id_length: "${COAP_DTLS_CONNECTION_ID_LENGTH:}"
+    # <ul> <li> 'off' to deactivate it. </li>
+    # <li> 'on' to activate Connection ID support (same as CID 0 or more 0). </li>
+    # <li> A positive value defines generated CID size in bytes.</li>
+    # <li> A value of 0 means we accept using CID but will not generate one for foreign peer (enables support but not for incoming traffic).</li>
+    # <li> A value between 0 and <= 4: SingleNodeConnectionIdGenerator is used</li>
+    # <li> A value that are > 4: MultiNodeConnectionIdGenerator is used</li> </ul>
+    connection_id_length: "${COAP_DTLS_CONNECTION_ID_LENGTH:8}"
     # Specify the MTU (Maximum Transmission Unit).
     # Should be used if LAN MTU is not used, e.g. if IP tunnels are used or if the client uses a smaller value than the LAN MTU.
     # Default = 1024
@@ -1494,13 +1494,13 @@ coap:
     # In order to negotiate smaller maximum fragment lengths,
     # clients MAY include an extension of type "max_fragment_length" in the (extended) client hello.
     # The "extension_data" field of this extension SHALL contain:
-    # enum {
+    # <pre> enum {
     #   2^9(1) == 512,
     #   2^10(2) == 1024,
     #   2^11(3) == 2048,
     #   2^12(4) == 4096,
     #   (255)
-    # } MaxFragmentLength;
+    # } MaxFragmentLength; </pre>
     # TLS already requires clients and servers to support fragmentation of handshake messages.
     max_fragment_length: "${COAP_DTLS_MAX_FRAGMENT_LENGTH:1024}"
     # Server DTLS credentials
@@ -2180,7 +2180,7 @@ mobileApp:
   # Link to App Store for Thingsboard Live mobile application
   appStoreLink: "${TB_MOBILE_APP_APP_STORE_LINK:https://apps.apple.com/us/app/thingsboard-live/id1594355695}"
 
-# MQTT client settings
+# MQTT client parameters
 # Configures MQTT client retransmission behavior including max attempts, initial delay, and jitter factor.
 mqtt:
   # MQTT client configuration parameters
