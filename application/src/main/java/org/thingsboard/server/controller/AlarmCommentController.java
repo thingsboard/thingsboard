@@ -78,7 +78,10 @@ public class AlarmCommentController extends BaseController {
         checkParameter(ALARM_ID, strAlarmId);
         AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
         Alarm alarm = checkAlarmInfoId(alarmId, Operation.WRITE);
-        checkUserCommentOwnership(alarmComment, Operation.WRITE);
+        if (alarmComment.getId() != null) {
+            AlarmComment existingAlarmComment = checkAlarmCommentId(alarmComment.getId(), alarmId);
+            checkUserCommentOwnership(existingAlarmComment, Operation.WRITE);
+        }
         alarmComment.setAlarmId(alarmId);
         alarmComment.setType(AlarmCommentType.OTHER);
         return tbAlarmCommentService.saveAlarmComment(alarm, alarmComment, getCurrentUser());
@@ -125,7 +128,12 @@ public class AlarmCommentController extends BaseController {
 
     private void checkUserCommentOwnership(AlarmComment alarmComment, Operation operation) throws ThingsboardException {
         if (alarmComment.getUserId() != null && !alarmComment.getUserId().equals(getCurrentUser().getId())) {
-            throw new ThingsboardException("User is not allowed to " + operation.name().toLowerCase() + " other user's comment",
+            String action = switch (operation) {
+                case WRITE -> "edit";
+                case DELETE -> "delete";
+                default -> "perform this operation with";
+            };
+            throw new ThingsboardException("User is not allowed to " + action + " other user's comment",
                     ThingsboardErrorCode.PERMISSION_DENIED);
         }
     }

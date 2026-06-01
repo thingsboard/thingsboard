@@ -172,10 +172,13 @@ public class AlarmCommentControllerTest extends AbstractControllerTest {
 
         JsonNode newComment = JacksonUtil.newObjectNode().set("text", new TextNode("Tenant rewrite attempt"));
         alarmComment.setComment(newComment);
+        // Simulate the real attack: the attacker controls the request body and would omit (or spoof)
+        // the userId. Ownership must be enforced against the persisted comment, not the body.
+        alarmComment.setUserId(null);
 
         doPost("/api/alarm/" + alarm.getId() + "/comment", alarmComment)
                 .andExpect(status().isForbidden())
-                .andExpect(statusReason(containsString("User is not allowed to write other user's comment")));
+                .andExpect(statusReason(containsString("User is not allowed to edit other user's comment")));
 
         testNotifyEntityNever(alarm.getId(), alarmComment);
     }
