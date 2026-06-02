@@ -89,6 +89,7 @@ import {
 import { FormProperty, propertyValid } from '@shared/models/dynamic-form.models';
 import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { CalculatedField } from '@shared/models/calculated-field.models';
+import { RuleChainId } from '@shared/models/id/rule-chain-id';
 
 export type editMissingAliasesFunction = (widgets: Array<Widget>, isSingleWidget: boolean,
                                           customTitle: string, missingEntityAliases: EntityAliases) => Observable<EntityAliases>;
@@ -749,7 +750,9 @@ export class ImportExportService {
               type: 'error'}));
           throw new Error('Invalid device profile file');
         } else {
-            return this.deviceProfileService.saveDeviceProfile(this.prepareImport(deviceProfile));
+          return this.checkIfRuleChainExist(deviceProfile).pipe(
+            mergeMap(profile => this.deviceProfileService.saveDeviceProfile(this.prepareImport(profile)))
+          );
         }
       }),
       catchError(() => of(null))
@@ -776,10 +779,30 @@ export class ImportExportService {
               type: 'error'}));
           throw new Error('Invalid asset profile file');
         } else {
-          return this.assetProfileService.saveAssetProfile(this.prepareImport(assetProfile));
+          return this.checkIfRuleChainExist(assetProfile).pipe(
+            mergeMap(profile => this.assetProfileService.saveAssetProfile(this.prepareImport(profile)))
+          )
         }
       }),
       catchError(() => of(null))
+    );
+  }
+
+  private checkIfRuleChainExist<T extends {defaultRuleChainId?: RuleChainId}>(profile: T) {
+    if (!profile.defaultRuleChainId?.id) {
+      return of(profile);
+    }
+    return this.ruleChainService.getRuleChain(profile.defaultRuleChainId.id,
+      {ignoreErrors: true, ignoreLoading: true}).pipe(
+      map(() => profile),
+      catchError(() => {
+        this.store.dispatch(new ActionNotificationShow(
+          {message: this.translate.instant('rulechain.rulechain-not-found-error'),
+            type: 'warn'}));
+        const cleanedProfile = deepClone(profile);
+        cleanedProfile.defaultRuleChainId = null;
+        return of(cleanedProfile);
+      })
     );
   }
 
