@@ -27,7 +27,6 @@ import org.thingsboard.server.common.transport.config.ssl.SslCredentials;
 import org.thingsboard.server.common.transport.config.ssl.SslCredentialsConfig;
 import org.thingsboard.server.queue.util.TbTransportComponent;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -165,7 +164,6 @@ public class CertificateReloadManager implements SmartInitializingSingleton, Dis
     static class CertificateWatcher {
         private final List<Path> paths;
         private final Runnable reloadCallback;
-        private final Map<Path, Long> lastModifiedMap;
         private final Map<Path, String> lastChecksumMap;
         private int consecutiveFailures;
         private String failedCombinedChecksum;
@@ -173,60 +171,23 @@ public class CertificateReloadManager implements SmartInitializingSingleton, Dis
         CertificateWatcher(List<Path> paths, Runnable reloadCallback) {
             this.paths = paths;
             this.reloadCallback = reloadCallback;
-            this.lastModifiedMap = new HashMap<>();
             this.lastChecksumMap = new HashMap<>();
             for (Path path : paths) {
-                lastModifiedMap.put(path, getLastModifiedTime(path));
                 lastChecksumMap.put(path, calculateChecksum(path));
             }
             this.consecutiveFailures = 0;
         }
 
         synchronized void checkAndReload(String name) {
-            boolean anyModifiedChanged = false;
-            for (Path path : paths) {
-                long currentModified = getLastModifiedTime(path);
-                Long lastModified = lastModifiedMap.getOrDefault(path, 0L);
-                if (currentModified != lastModified) {
-                    anyModifiedChanged = true;
-                    break;
-                }
-            }
-            if (!anyModifiedChanged) {
-                return;
-            }
-
-            // Capture mtimes and checksums together before the callback runs.
-            // Pairing a post-callback mtime with a pre-callback checksum would let a write-during-reload be missed on the next poll.
-            Map<Path, Long> currentModifiedTimes = new HashMap<>();
             Map<Path, String> currentChecksums = new HashMap<>();
-            StringBuilder combined = new StringBuilder();
             for (Path path : paths) {
-                currentModifiedTimes.put(path, getLastModifiedTime(path));
-                String checksum = calculateChecksum(path);
-                currentChecksums.put(path, checksum);
-                if (!combined.isEmpty()) {
-                    combined.append("|");
-                }
-                combined.append(path).append("=").append(checksum);
+                currentChecksums.put(path, calculateChecksum(path));
             }
-            String combinedChecksum = combined.toString();
-
-            // Build old combined checksum for comparison
-            StringBuilder oldCombined = new StringBuilder();
-            for (Path path : paths) {
-                if (!oldCombined.isEmpty()) {
-                    oldCombined.append("|");
-                }
-                oldCombined.append(path).append("=").append(lastChecksumMap.getOrDefault(path, ""));
-            }
-            String oldCombinedChecksum = oldCombined.toString();
+            String combinedChecksum = combinedChecksum(currentChecksums);
+            String oldCombinedChecksum = combinedChecksum(lastChecksumMap);
 
             if (combinedChecksum.equals(oldCombinedChecksum)) {
-                // Content unchanged, just update modification times
-                for (Path path : paths) {
-                    lastModifiedMap.put(path, currentModifiedTimes.get(path));
-                }
+                // Content unchanged
                 return;
             }
 
@@ -237,41 +198,34 @@ public class CertificateReloadManager implements SmartInitializingSingleton, Dis
             }
 
             if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
-                // Update modification times to avoid re-checking mtime and re-computing checksums every poll cycle
-                for (Path path : paths) {
-                    lastModifiedMap.put(path, currentModifiedTimes.get(path));
-                }
                 return;
             }
 
             try {
                 log.info("Certificate change detected for: {}. Triggering reload...", name);
                 reloadCallback.run();
-                for (Path path : paths) {
-                    lastModifiedMap.put(path, currentModifiedTimes.get(path));
-                    lastChecksumMap.put(path, currentChecksums.get(path));
-                }
+                lastChecksumMap.putAll(currentChecksums);
                 consecutiveFailures = 0;
                 failedCombinedChecksum = null;
             } catch (Exception e) {
                 consecutiveFailures++;
                 failedCombinedChecksum = combinedChecksum;
-                // Deliberately NOT updating the lastModifiedMap here, so the next poll cycle retries
-                // (mtime mismatch passes the early gate, checksum matches failedCombinedChecksum).
+                // Deliberately NOT updating lastChecksumMap here, so the next poll cycle still sees a differing
+                // checksum, re-enters this method, and retries the same content.
                 log.error("Failed to reload certificate for {} (attempt {}/{}): {}",
                         name, consecutiveFailures, MAX_CONSECUTIVE_FAILURES, e.getMessage(), e);
             }
         }
 
-        private long getLastModifiedTime(Path path) {
-            try {
-                if (!Files.exists(path)) {
-                    return 0;
+        private String combinedChecksum(Map<Path, String> checksums) {
+            StringBuilder combined = new StringBuilder();
+            for (Path path : paths) {
+                if (!combined.isEmpty()) {
+                    combined.append("|");
                 }
-                return Files.getLastModifiedTime(path).toMillis();
-            } catch (IOException e) {
-                return 0;
+                combined.append(path).append("=").append(checksums.getOrDefault(path, ""));
             }
+            return combined.toString();
         }
 
         private String calculateChecksum(Path path) {

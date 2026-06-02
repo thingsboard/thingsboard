@@ -44,6 +44,8 @@ const emptyUserAuthState: AuthPayload = {
   userSettings: initialUserSettings,
   trendzSettings: initialTrendzSettings,
   allowKeyFiltersOrConditions: true
+  nullsOrderStrategy: 'default',
+  edqsEnabled: false
 };
 
 export const initialState: AuthState = {
