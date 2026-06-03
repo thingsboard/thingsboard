@@ -1107,8 +1107,8 @@
         "ai-providers": {
             "openai": "OpenAI",
             "azure-openai": "Azure OpenAI",
-            "google-ai-gemini": "Google AI Gemini",
-            "google-vertex-ai-gemini": "Google Vertex AI Gemini",
+            "google-ai-gemini": "Google Gemini (Gemini API)",
+            "google-vertex-ai-gemini": "Google Gemini (Agent Platform - Vertex AI)",
             "mistral-ai": "Mistral AI",
             "anthropic": "Anthropic",
             "amazon-bedrock": "Amazon Bedrock",

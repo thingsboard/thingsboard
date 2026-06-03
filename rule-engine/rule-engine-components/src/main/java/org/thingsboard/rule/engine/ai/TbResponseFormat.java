@@ -20,7 +20,9 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.langchain4j.model.chat.request.ResponseFormat;
 import dev.langchain4j.model.chat.request.ResponseFormatType;
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
+import org.thingsboard.server.common.data.ai.model.chat.AiChatModelConfig;
 import org.thingsboard.server.common.data.validation.ValidJsonSchema;
 
 import static org.thingsboard.rule.engine.ai.TbResponseFormat.TbJsonResponseFormat;
@@ -41,6 +43,9 @@ public sealed interface TbResponseFormat permits TbTextResponseFormat, TbJsonRes
 
     TbResponseFormatType type();
 
+    boolean isSupportedBy(AiChatModelConfig<?> modelConfig);
+
+    @Nullable
     ResponseFormat toLangChainResponseFormat();
 
     enum TbResponseFormatType {
@@ -59,6 +64,11 @@ public sealed interface TbResponseFormat permits TbTextResponseFormat, TbJsonRes
         }
 
         @Override
+        public boolean isSupportedBy(AiChatModelConfig<?> modelConfig) {
+            return true;
+        }
+
+        @Override
         public ResponseFormat toLangChainResponseFormat() {
             return ResponseFormat.TEXT;
         }
@@ -73,6 +83,11 @@ public sealed interface TbResponseFormat permits TbTextResponseFormat, TbJsonRes
         }
 
         @Override
+        public boolean isSupportedBy(AiChatModelConfig<?> modelConfig) {
+            return modelConfig.supportsSchemalessJsonOutput();
+        }
+
+        @Override
         public ResponseFormat toLangChainResponseFormat() {
             return ResponseFormat.JSON;
         }
@@ -84,6 +99,11 @@ public sealed interface TbResponseFormat permits TbTextResponseFormat, TbJsonRes
         @Override
         public TbResponseFormatType type() {
             return TbResponseFormatType.JSON_SCHEMA;
+        }
+
+        @Override
+        public boolean isSupportedBy(AiChatModelConfig<?> modelConfig) {
+            return modelConfig.supportsJsonSchemaOutput();
         }
 
         @Override

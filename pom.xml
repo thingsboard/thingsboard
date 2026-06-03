@@ -142,8 +142,7 @@
         <jakarta.el.version>4.0.2</jakarta.el.version>
         <antisamy.version>1.7.5</antisamy.version>
         <snmp4j.version>3.8.0</snmp4j.version>
-        <langchain4j.version>1.8.0-TB</langchain4j.version>
-        <opennlp-tools.version>2.5.9</opennlp-tools.version> <!-- to fix CVE-2026-40682, CVE-2026-42027 in transitive dep via langchain4j-bom (which still pins 2.5.4). TODO: remove when langchain4j fork ships opennlp-tools >= 2.5.9 -->
+        <langchain4j.version>1.15.1-TB1</langchain4j.version>
         <error_prone_annotations.version>2.38.0</error_prone_annotations.version>
         <animal-sniffer-annotations.version>1.24</animal-sniffer-annotations.version>
         <auto-value-annotations.version>1.11.0</auto-value-annotations.version>
@@ -1375,11 +1374,6 @@
                 <groupId>org.postgresql</groupId>
                 <artifactId>postgresql</artifactId>
                 <version>${postgresql.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.opennlp</groupId>
-                <artifactId>opennlp-tools</artifactId>
-                <version>${opennlp-tools.version}</version>
             </dependency>
             <dependency>
                 <groupId>commons-io</groupId>
