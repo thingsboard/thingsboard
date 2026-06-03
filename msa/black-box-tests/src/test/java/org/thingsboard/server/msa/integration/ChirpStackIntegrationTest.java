@@ -25,6 +25,7 @@ import org.thingsboard.server.msa.integration.chirpstack.LoRaWanUplinkFrameBuild
 import org.thingsboard.server.msa.mapper.WsTelemetryResponse;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
@@ -106,29 +107,22 @@ public class ChirpStackIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    public void checkAttributesUploadedWithLocalIntegration() {
+    public void checkAttributesUploadedWithLocalIntegration() throws Exception {
         provisionedDevice = chirpStackClient.provision(ROUTING_KEY);
         createTbChirpStackIntegration();
 
+        wsClient = subscribeToWebSocket(device.getId(), "CLIENT_SCOPE", CmdsType.ATTR_SUB_CMDS);
+
         sendUplink();
 
-        String expectedEui = HexFormat.of().formatHex(provisionedDevice.getDevEui());
+        WsTelemetryResponse actualLatestAttr = wsClient.getLastMessage();
+        assertThat(actualLatestAttr.getData()).hasSize(3);
+        assertThat(actualLatestAttr.getLatestValues().keySet()).containsOnlyOnceElementsOf(Arrays.asList("rssi", "eui", "fPort"));
+        wsClient.closeBlocking();
 
-        await()
-                .pollInterval(1, TimeUnit.SECONDS)
-                .atMost(TIMEOUT, TimeUnit.SECONDS)
-                .untilAsserted(() -> {
-                    List<JsonNode> attributes = testRestClient.getEntityAttributeByScopeAndKey(device.getId(), CLIENT_SCOPE, "rssi,eui,fPort");
-                    Map<String, JsonNode> attributeMap = attributes.stream()
-                            .collect(Collectors.toMap(
-                                    node -> node.get("key").asText(),
-                                    node -> node
-                            ));
-
-                    assertThat(attributeMap.get("rssi").get("value").asInt()).isEqualTo(LoRaWanUplinkFrameBuilder.RSSI);
-                    assertThat(attributeMap.get("eui").get("value").asText()).isEqualTo(expectedEui);
-                    assertThat(attributeMap.get("fPort").get("value").asInt()).isEqualTo(F_PORT);
-                });
+        assertThat(actualLatestAttr.getDataValuesByKey("rssi").get(1)).isEqualTo(String.valueOf(LoRaWanUplinkFrameBuilder.RSSI));
+        assertThat(actualLatestAttr.getDataValuesByKey("eui").get(1)).isEqualTo(HexFormat.of().formatHex(provisionedDevice.getDevEui()));
+        assertThat(actualLatestAttr.getDataValuesByKey("fPort").get(1)).isEqualTo(String.valueOf(F_PORT));
     }
 
     @Test
