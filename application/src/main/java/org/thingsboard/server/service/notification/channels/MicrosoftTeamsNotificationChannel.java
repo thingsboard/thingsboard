@@ -18,15 +18,23 @@ package org.thingsboard.server.service.notification.channels;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Strings;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.SsrfProtectionValidator;
@@ -39,24 +47,50 @@ import org.thingsboard.server.common.data.notification.template.MicrosoftTeamsDe
 import org.thingsboard.server.service.notification.NotificationProcessingContext;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class MicrosoftTeamsNotificationChannel implements NotificationChannel<MicrosoftTeamsNotificationTargetConfig, MicrosoftTeamsDeliveryMethodNotificationTemplate> {
 
+    private static final Duration TIMEOUT = Duration.ofSeconds(15);
+    private static final String GENERIC_FAILURE_MESSAGE = "Failed to send message to Microsoft Teams";
+
     private final SystemSecurityService systemSecurityService;
 
+    private final CloseableHttpClient httpClient = buildHttpClient();
+
     @Setter
-    private RestTemplate restTemplate = new RestTemplateBuilder()
-            .setConnectTimeout(Duration.of(15, ChronoUnit.SECONDS))
-            .setReadTimeout(Duration.of(15, ChronoUnit.SECONDS))
-            .build();
+    private RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory(httpClient));
+
+    private static CloseableHttpClient buildHttpClient() {
+        // Teams webhook endpoints (*.webhook.office.com, *.logic.azure.com) respond directly without 3xx redirects.
+        // Disabling redirect handling prevents SSRF bypass via attacker-controlled 3xx -> internal host.
+        RequestConfig requestConfig = RequestConfig.custom()
+                .setConnectTimeout(TIMEOUT.toMillis(), TimeUnit.MILLISECONDS)
+                .setResponseTimeout(TIMEOUT.toMillis(), TimeUnit.MILLISECONDS)
+                .build();
+        return HttpClientBuilder.create()
+                .disableRedirectHandling()
+                .setDefaultRequestConfig(requestConfig)
+                .build();
+    }
+
+    @PreDestroy
+    public void shutdown() {
+        try {
+            httpClient.close();
+        } catch (IOException e) {
+            log.warn("Failed to close Microsoft Teams HTTP client", e);
+        }
+    }
 
     @Override
     public void sendNotification(MicrosoftTeamsNotificationTargetConfig targetConfig, MicrosoftTeamsDeliveryMethodNotificationTemplate processedTemplate, NotificationProcessingContext ctx) throws Exception {
@@ -110,13 +144,7 @@ public class MicrosoftTeamsNotificationChannel implements NotificationChannel<Mi
             adaptiveCard.getActions().add(actionOpenUrl);
         }
 
-        URI webhookUri = new URI(targetConfig.getWebhookUrl());
-        SsrfProtectionValidator.validateUri(webhookUri);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<String> request = new HttpEntity<>(JacksonUtil.toString(teamsAdaptiveCard), headers);
-        restTemplate.postForEntity(webhookUri, request, String.class);
+        post(targetConfig.getWebhookUrl(), teamsAdaptiveCard);
     }
 
     private void sendTeamsMessageCard(MicrosoftTeamsNotificationTargetConfig targetConfig, MicrosoftTeamsDeliveryMethodNotificationTemplate processedTemplate, NotificationProcessingContext ctx) throws JsonProcessingException, URISyntaxException {
@@ -143,13 +171,37 @@ public class MicrosoftTeamsNotificationChannel implements NotificationChannel<Mi
             teamsMessageCard.setPotentialAction(List.of(actionCard));
         }
 
-        URI webhookUri = new URI(targetConfig.getWebhookUrl());
+        post(targetConfig.getWebhookUrl(), teamsMessageCard);
+    }
+
+    private void post(String webhookUrl, Object body) throws URISyntaxException {
+        URI webhookUri = new URI(webhookUrl);
         SsrfProtectionValidator.validateUri(webhookUri);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<String> request = new HttpEntity<>(JacksonUtil.toString(teamsMessageCard), headers);
-        restTemplate.postForEntity(webhookUri, request, String.class);
+        HttpEntity<String> request = new HttpEntity<>(JacksonUtil.toString(body), headers);
+
+        // Webhook URL contains a secret token in its path — log host only to keep credentials out of log aggregators.
+        String webhookHost = webhookUri.getHost();
+        ResponseEntity<String> response;
+        try {
+            response = restTemplate.postForEntity(webhookUri, request, String.class);
+        } catch (RestClientResponseException e) {
+            log.warn("Microsoft Teams webhook returned non-success status {}", e.getStatusCode());
+            log.debug("Microsoft Teams webhook error response from host [{}]", webhookHost, e);
+            throw new RuntimeException(GENERIC_FAILURE_MESSAGE);
+        } catch (RestClientException e) {
+            log.warn("Microsoft Teams webhook is unreachable");
+            log.debug("Failed to send message to Microsoft Teams webhook host [{}]", webhookHost, e);
+            throw new RuntimeException(GENERIC_FAILURE_MESSAGE);
+        }
+        if (!response.getStatusCode().is2xxSuccessful()) {
+            log.warn("Microsoft Teams webhook returned unexpected status {}", response.getStatusCode());
+            log.debug("Microsoft Teams webhook returned status {} from host [{}]",
+                    response.getStatusCode(), webhookHost);
+            throw new RuntimeException(GENERIC_FAILURE_MESSAGE);
+        }
     }
 
     private String getButtonUri(MicrosoftTeamsDeliveryMethodNotificationTemplate processedTemplate, NotificationProcessingContext ctx) throws JsonProcessingException {
