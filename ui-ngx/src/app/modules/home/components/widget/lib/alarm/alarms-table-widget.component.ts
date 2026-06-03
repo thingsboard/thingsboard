@@ -37,7 +37,16 @@ import { DataKey, WidgetActionDescriptor, WidgetConfig } from '@shared/models/wi
 import { IWidgetSubscription } from '@core/api/widget-api.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import { deepClone, hashCode, isDefined, isDefinedAndNotNull, isNotEmptyStr, isObject, isUndefined } from '@core/utils';
+import {
+  deepClone,
+  hashCode,
+  isDefined,
+  isDefinedAndNotNull,
+  isEqual,
+  isNotEmptyStr,
+  isObject,
+  isUndefined
+} from '@core/utils';
 import cssjs from '@core/css/css';
 import { sortItems } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
@@ -323,6 +332,17 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
 
     if (this.displayPagination) {
       this.sort.sortChange.pipe(takeUntil(this.destroy$)).subscribe(() => this.paginator.pageIndex = 0);
+
+      let currentStateParams = deepClone(this.ctx.stateController?.getStateParams());
+      this.ctx.stateController?.stateChanged().pipe(
+        takeUntil(this.destroy$)
+      ).subscribe(() => {
+        const newStateParams = this.ctx.stateController.getStateParams();
+        if (!isEqual(currentStateParams, newStateParams)) {
+          currentStateParams = deepClone(newStateParams);
+          this.paginator.firstPage();
+        }
+      });
 
       this.ctx.aliasController?.filtersChanged.pipe(
         takeUntil(this.destroy$)
