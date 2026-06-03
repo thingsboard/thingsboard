@@ -276,6 +276,7 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
       elementClick: this.elementClick.bind(this),
       cardClick: this.cardClick.bind(this),
       click: this.click.bind(this),
+      invokeAction: this.invokeAction.bind(this),
       getActiveEntityInfo: this.getActiveEntityInfo.bind(this),
       openDashboardStateInSeparateDialog: this.openDashboardStateInSeparateDialog.bind(this),
       openDashboardStateInPopover: this.openDashboardStateInPopover.bind(this),
@@ -1587,6 +1588,16 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
     const descriptors = this.getActionDescriptors(sourceId);
     if (descriptors.length) {
       this.onWidgetAction($event, descriptors[0]);
+    }
+  }
+
+  private invokeAction($event: Event, actionName: string, additionalParams?: any) {
+    const descriptors = this.getActionDescriptors('javaScript');
+    if (descriptors?.length) {
+      const found = descriptors.find(d => d.name === actionName);
+      if (found) {
+        this.handleWidgetAction($event, found, null, null, additionalParams);
+      }
     }
   }
 

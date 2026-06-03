@@ -15,8 +15,10 @@
 ///
 
 import {
-  Component,
+  ChangeDetectorRef,
+  Component, ComponentRef,
   ElementRef,
+  inject,
   Inject,
   Injector,
   Input,
@@ -96,6 +98,7 @@ export class HtmlContainerWidgetComponent implements OnInit {
               @Inject(HOME_COMPONENTS_MODULE_TOKEN) private homeComponentsModule: Type<any>,
               private dynamicComponentFactoryService: DynamicComponentFactoryService,
               private utils: UtilsService,
+              private cdr: ChangeDetectorRef,
               private resources: ResourcesService) {}
 
   ngOnInit(): void {
@@ -160,11 +163,13 @@ export class HtmlContainerWidgetComponent implements OnInit {
           this.compileAngularFunction().subscribe(
             {
               next: (containerFunction) => {
-                try {
-                  this.initAngularComponent(imports, containerFunction);
-                } catch (e) {
-                  this.handleWidgetException(e);
-                }
+                setTimeout(() => {
+                  try {
+                    this.initAngularComponent(imports, containerFunction);
+                  } catch (e) {
+                    this.handleWidgetException(e);
+                  }
+                });
               },
               error: (e) => {
                 this.handleWidgetException(e);
@@ -200,9 +205,16 @@ export class HtmlContainerWidgetComponent implements OnInit {
       compileModules = compileModules.concat(imports);
     }
     const self = () => this;
+
+    let containerRef: ComponentRef<any>;
+
     this.dynamicComponentFactoryService.createDynamicComponent(
       class TbContainerInstance {
+
+        private cdr = inject(ChangeDetectorRef);
+
         ngOnInit(): void {
+          this.cdr.detach();
           if (containerFunction) {
             const instance = self();
             try {
@@ -210,6 +222,15 @@ export class HtmlContainerWidgetComponent implements OnInit {
             } catch (e) {
               instance.handleWidgetException(e);
             }
+          }
+        }
+        ngDoCheck(): void {
+          const instance = self();
+          try {
+            this.cdr.detectChanges()
+          } catch (error) {
+            containerRef.destroy();
+            instance.handleWidgetException(error)
           }
         }
         ngOnDestroy(): void {
@@ -224,7 +245,7 @@ export class HtmlContainerWidgetComponent implements OnInit {
         this.containerInstanceComponentType = componentType;
         const injector: Injector = Injector.create({providers: [], parent: this.angularContainer.viewContainerRef.injector});
         try {
-          this.angularContainer.viewContainerRef.createComponent(this.containerInstanceComponentType,
+          containerRef = this.angularContainer.viewContainerRef.createComponent(this.containerInstanceComponentType,
               {index: 0, injector});
 
         } catch (error) {
