@@ -681,6 +681,7 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
   }
 
   private reInitImpl() {
+    this.displayNoData = false;
     this.onDestroy();
     if (!this.typeParameters.useCustomDatasources) {
       this.createDefaultSubscription().subscribe({
@@ -724,7 +725,6 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
           subscriptionChanged = subscriptionChanged || subscription.onAliasesChanged(aliasIds);
         }
         if (subscriptionChanged && !this.typeParameters.useCustomDatasources) {
-          this.displayNoData = false;
           this.reInit();
         }
       }
@@ -738,7 +738,6 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
           subscriptionChanged = subscriptionChanged || subscription.onFiltersChanged(filterIds);
         }
         if (subscriptionChanged && !this.typeParameters.useCustomDatasources) {
-          this.displayNoData = false;
           this.reInit();
         }
       }
