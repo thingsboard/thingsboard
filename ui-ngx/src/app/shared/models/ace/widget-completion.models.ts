@@ -632,6 +632,28 @@ export const widgetContextCompletionsWithSettings = (settingsCompletions?: TbEdi
                     optional: true
                   }
                 ]
+              },
+              invokeAction: {
+                description: 'Invoke action with JavaScript action source.',
+                meta: 'function',
+                args: [
+                  {
+                    name: '$event',
+                    description: 'DOM event object associated with action.',
+                    type: 'Event'
+                  },
+                  {
+                    name: 'actionName',
+                    description: 'Name of the configured action with JavaScript action source.',
+                    type: 'string'
+                  },
+                  {
+                    name: 'additionalParams',
+                    description: 'Optional payload merged into the action context and forwarded to the configured JavaScript action function as its <code>additionalParams</code> argument. Use it to pass row data, button state, or any extra values the action handler should react to.',
+                    type: 'object',
+                    optional: true
+                  }
+                ]
               }
             }
           },
@@ -736,6 +758,17 @@ export const widgetContextCompletionsWithSettings = (settingsCompletions?: TbEdi
                 }
               }
             }
+          },
+          registerDestroyCallback: {
+            description: 'Registers a teardown callback that will be invoked exactly once when the widget is about to be destroyed (dashboard navigation, edit/view switch, layout change, etc.). Use it to release resources acquired during widget setup so they don\'t leak across widget reloads — e.g. unsubscribe RxJS subscriptions, detach DOM/window event listeners, clear <code>setInterval</code> / <code>setTimeout</code> timers, abort outstanding HTTP requests, destroy third-party plugin instances. Multiple callbacks may be registered; they are executed in registration order.',
+            meta: 'function',
+            args: [
+              {
+                description: 'Zero-argument function executed when the widget is destroyed. Should be idempotent — synchronously dispose of one specific resource (e.g. one subscription or one listener) and avoid throwing; throwing here may prevent later cleanup callbacks from running.',
+                name: 'destroyCallback',
+                type: '() => void',
+              }
+            ]
           }
         },
         ...serviceCompletions
