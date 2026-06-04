@@ -20,7 +20,6 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.langchain4j.model.chat.request.ResponseFormat;
 import dev.langchain4j.model.chat.request.ResponseFormatType;
-import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import org.thingsboard.server.common.data.ai.model.chat.AiChatModelConfig;
 import org.thingsboard.server.common.data.validation.ValidJsonSchema;
@@ -45,7 +44,6 @@ public sealed interface TbResponseFormat permits TbTextResponseFormat, TbJsonRes
 
     boolean isSupportedBy(AiChatModelConfig<?> modelConfig);
 
-    @Nullable
     ResponseFormat toLangChainResponseFormat();
 
     enum TbResponseFormatType {
