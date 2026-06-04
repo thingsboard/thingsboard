@@ -122,6 +122,9 @@ export class KafkaTemplate implements IQueue {
                 const refreshThresholdMs = config.has('kafka.confluent.oauth.refresh_threshold')
                     ? Number(config.get('kafka.confluent.oauth.refresh_threshold'))
                     : DEFAULT_OAUTH_REFRESH_THRESHOLD_MS;
+                const scope = config.has('kafka.confluent.oauth.scope')
+                    ? config.get('kafka.confluent.oauth.scope') as string
+                    : undefined;
                 kafkaConfig['sasl'] = {
                     mechanism: 'oauthbearer',
                     oauthBearerProvider: oauthBearerProvider({
@@ -129,6 +132,7 @@ export class KafkaTemplate implements IQueue {
                         clientSecret: config.get('kafka.confluent.oauth.client_secret'),
                         host: config.get('kafka.confluent.oauth.endpoint_url'),
                         refreshThresholdMs,
+                        scope,
                     })
                 };
             } else {

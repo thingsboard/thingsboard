@@ -22,6 +22,8 @@ interface OauthBearerProviderOptions {
   clientSecret: string;
   host: string;
   refreshThresholdMs: number;
+  // Optional OAuth2 scope. Required by some IdPs for client-credentials (e.g. Azure AD's "api://<id>/.default").
+  scope?: string;
 }
 
 const RETRY_DELAY_MS = 5000;
@@ -39,6 +41,7 @@ export const oauthBearerProvider = (options: OauthBearerProviderOptions) => {
   if (!Number.isFinite(refreshThresholdMs) || refreshThresholdMs < 0) {
     throw new Error(`Kafka OAuth refresh_threshold must be a non-negative number, got: ${options.refreshThresholdMs}`);
   }
+  const scope = options.scope && options.scope.trim().length > 0 ? options.scope.trim() : undefined;
   let tokenUrl: URL;
   try {
     tokenUrl = new URL(options.host);
@@ -59,8 +62,14 @@ export const oauthBearerProvider = (options: OauthBearerProviderOptions) => {
     }
   });
 
-  let tokenPromise: Promise<string>;
+  // Last successfully fetched token. Kept across refreshes so a failed background refresh
+  // does not drop a still-valid token out from under KafkaJS (which calls this provider on
+  // each reauthentication). It is only swapped in after a successful refresh.
+  let cachedToken: string | undefined;
+  // Resolves once the very first token has been obtained (used only until cachedToken is set).
+  let initialToken: Promise<string>;
   let refreshTimer: NodeJS.Timeout | undefined;
+  let warnedShortLivedToken = false;
 
   function scheduleRefresh(delayMs: number): void {
     if (refreshTimer) {
@@ -69,9 +78,9 @@ export const oauthBearerProvider = (options: OauthBearerProviderOptions) => {
     const delay = Math.max(delayMs, MIN_REFRESH_DELAY_MS);
     logger.info('Next Kafka OAuth token refresh in %dms', delay);
     refreshTimer = setTimeout(() => {
-      tokenPromise = refreshToken();
-      // refreshToken() reschedules its own retry on failure; swallow here to avoid an unhandled rejection.
-      tokenPromise.catch((err) => {
+      // refreshToken() updates cachedToken on success and reschedules its own retry on failure;
+      // swallow here so a failed background refresh is not an unhandled rejection.
+      refreshToken().catch((err) => {
         logger.error('Scheduled Kafka OAuth token refresh failed: %s', err?.message ?? err);
       });
     }, delay);
@@ -82,18 +91,36 @@ export const oauthBearerProvider = (options: OauthBearerProviderOptions) => {
     logger.info('Requesting Kafka OAuth bearer token');
     try {
       // Client-credentials grant issues no refresh_token, so always request a fresh token.
-      const accessToken: AccessToken = await client.getToken({});
+      const accessToken: AccessToken = await client.getToken(scope ? { scope } : {});
 
-      const expiresIn = accessToken.token.expires_in;
-      if (typeof expiresIn !== 'number' || expiresIn <= 0) {
-        throw new Error(`OAuth token response has invalid "expires_in": ${expiresIn}`);
+      // Some IdPs return expires_in as a numeric string ("3600"); coerce before validating.
+      const rawExpiresIn = accessToken.token.expires_in;
+      const expiresIn = Number(rawExpiresIn);
+      if (!Number.isFinite(expiresIn) || expiresIn <= 0) {
+        throw new Error(`OAuth token response has invalid "expires_in": ${rawExpiresIn}`);
       }
       const accessTokenValue = accessToken.token.access_token;
       if (typeof accessTokenValue !== 'string' || accessTokenValue.length === 0) {
         throw new Error('OAuth token response has no "access_token"');
       }
 
-      const nextRefresh = expiresIn * 1000 - refreshThresholdMs;
+      cachedToken = accessTokenValue;
+
+      const lifetimeMs = expiresIn * 1000;
+      // If the token lifetime is shorter than the refresh threshold, refreshing "threshold
+      // before expiry" would fire immediately and clamp to MIN_REFRESH_DELAY_MS, hammering the
+      // token endpoint every second. Cap the effective threshold to half the lifetime instead.
+      let effectiveThresholdMs = refreshThresholdMs;
+      if (refreshThresholdMs >= lifetimeMs) {
+        effectiveThresholdMs = lifetimeMs / 2;
+        if (!warnedShortLivedToken) {
+          logger.warn('Kafka OAuth token lifetime (%dms) is <= refresh threshold (%dms); capping threshold to %dms to avoid hammering the token endpoint',
+            lifetimeMs, refreshThresholdMs, effectiveThresholdMs);
+          warnedShortLivedToken = true;
+        }
+      }
+
+      const nextRefresh = lifetimeMs - effectiveThresholdMs;
       scheduleRefresh(nextRefresh);
       return accessTokenValue;
     } catch (err) {
@@ -103,13 +130,14 @@ export const oauthBearerProvider = (options: OauthBearerProviderOptions) => {
     }
   }
 
-  tokenPromise = refreshToken();
+  initialToken = refreshToken();
   // The first fetch is retried internally; swallow here, so a startup failure is not an unhandled rejection.
-  tokenPromise.catch(() => { /* retry already scheduled in refreshToken() */ });
+  initialToken.catch(() => { /* retry already scheduled in refreshToken() */ });
 
   return async function () {
+    // Prefer the last good token; only fall back to awaiting the initial fetch before one exists.
     return {
-      value: await tokenPromise
+      value: cachedToken ?? await initialToken
     };
   };
 };

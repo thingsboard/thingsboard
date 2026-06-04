@@ -148,6 +148,9 @@ public class TbKafkaSettings {
     @Value("${queue.kafka.confluent.oauth.endpoint-url:}")
     private String oauthEndpointUrl;
 
+    @Value("${queue.kafka.confluent.oauth.scope:}")
+    private String oauthScope;
+
     @Value("${queue.kafka.other-inline:}")
     private String otherInline;
 
@@ -254,10 +257,16 @@ public class TbKafkaSettings {
             log.warn("Kafka OAuth token endpoint URL is not HTTPS ({}); client credentials will be sent unencrypted",
                     oauthEndpointUrl);
         }
-        props.put(SaslConfigs.SASL_JAAS_CONFIG,
+        StringBuilder jaasConfig = new StringBuilder(
                 "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required"
                         + " clientId=\"" + escapeJaasValue(oauthClientId) + "\""
-                        + " clientSecret=\"" + escapeJaasValue(oauthClientSecret) + "\";");
+                        + " clientSecret=\"" + escapeJaasValue(oauthClientSecret) + "\"");
+        if (StringUtils.isNotBlank(oauthScope)) {
+            // Some IdPs (e.g. Azure AD's ".default") require a scope for the client-credentials grant.
+            jaasConfig.append(" scope=\"").append(escapeJaasValue(oauthScope)).append("\"");
+        }
+        jaasConfig.append(";");
+        props.put(SaslConfigs.SASL_JAAS_CONFIG, jaasConfig.toString());
         props.put(SaslConfigs.SASL_LOGIN_CALLBACK_HANDLER_CLASS,
                 "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginCallbackHandler");
         props.put(SaslConfigs.SASL_OAUTHBEARER_TOKEN_ENDPOINT_URL, oauthEndpointUrl);
