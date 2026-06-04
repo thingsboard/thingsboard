@@ -143,12 +143,11 @@
         <antisamy.version>1.7.5</antisamy.version>
         <snmp4j.version>3.8.0</snmp4j.version>
         <langchain4j.version>1.15.1-TB1</langchain4j.version>
-        <error_prone_annotations.version>2.38.0</error_prone_annotations.version>
+        <error_prone_annotations.version>2.43.0</error_prone_annotations.version>
         <animal-sniffer-annotations.version>1.24</animal-sniffer-annotations.version>
         <auto-value-annotations.version>1.11.0</auto-value-annotations.version>
-        <checker-qual.version>3.49.3</checker-qual.version>
+        <checker-qual.version>3.42.0</checker-qual.version>
         <perfmark-api.version>0.27.0</perfmark-api.version>
-        <threetenbp.version>1.7.0</threetenbp.version>
         <!--         TEST SCOPE         -->
         <dbunit.version>2.7.3</dbunit.version>
         <java-websocket.version>1.5.6</java-websocket.version>
@@ -2018,11 +2017,6 @@
                 <groupId>io.perfmark</groupId>
                 <artifactId>perfmark-api</artifactId>
                 <version>${perfmark-api.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.threeten</groupId>
-                <artifactId>threetenbp</artifactId>
-                <version>${threetenbp.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
