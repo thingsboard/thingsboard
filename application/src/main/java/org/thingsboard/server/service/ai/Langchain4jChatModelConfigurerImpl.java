@@ -15,26 +15,18 @@
  */
 package org.thingsboard.server.service.ai;
 
-import com.google.api.gax.core.FixedCredentialsProvider;
-import com.google.api.gax.retrying.RetrySettings;
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
-import com.google.cloud.vertexai.Transport;
-import com.google.cloud.vertexai.VertexAI;
-import com.google.cloud.vertexai.api.GenerationConfig;
-import com.google.cloud.vertexai.api.PredictionServiceClient;
-import com.google.cloud.vertexai.api.PredictionServiceSettings;
-import com.google.cloud.vertexai.generativeai.GenerativeModel;
 import dev.langchain4j.model.anthropic.AnthropicChatModel;
 import dev.langchain4j.model.azure.AzureOpenAiChatModel;
 import dev.langchain4j.model.bedrock.BedrockChatModel;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.request.ChatRequestParameters;
-import dev.langchain4j.model.github.GitHubModelsChatModel;
-import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
+import dev.langchain4j.model.google.genai.GoogleGenAiChatModel;
 import dev.langchain4j.model.mistralai.MistralAiChatModel;
 import dev.langchain4j.model.ollama.OllamaChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
-import dev.langchain4j.model.vertexai.gemini.VertexAiGeminiChatModel;
+import dev.langchain4j.model.openaiofficial.OpenAiOfficialChatModel;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.SsrfProtectionValidator;
@@ -50,7 +42,6 @@ import org.thingsboard.server.common.data.ai.model.chat.OllamaChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.chat.OpenAiChatModelConfig;
 import org.thingsboard.server.common.data.ai.provider.AmazonBedrockProviderConfig;
 import org.thingsboard.server.common.data.ai.provider.AzureOpenAiProviderConfig;
-import org.thingsboard.server.common.data.ai.provider.GoogleVertexAiGeminiProviderConfig;
 import org.thingsboard.server.common.data.ai.provider.OllamaProviderConfig;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -107,14 +98,12 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
 
     @Override
     public ChatModel configureChatModel(GoogleAiGeminiChatModelConfig chatModelConfig) {
-        return GoogleAiGeminiChatModel.builder()
+        return GoogleGenAiChatModel.builder()
                 .apiKey(chatModelConfig.providerConfig().apiKey())
                 .modelName(chatModelConfig.modelId())
                 .temperature(chatModelConfig.temperature())
                 .topP(chatModelConfig.topP())
                 .topK(chatModelConfig.topK())
-                .frequencyPenalty(chatModelConfig.frequencyPenalty())
-                .presencePenalty(chatModelConfig.presencePenalty())
                 .maxOutputTokens(chatModelConfig.maxOutputTokens())
                 .timeout(toDuration(chatModelConfig.timeoutSeconds()))
                 .maxRetries(chatModelConfig.maxRetries())
@@ -123,84 +112,26 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
 
     @Override
     public ChatModel configureChatModel(GoogleVertexAiGeminiChatModelConfig chatModelConfig) {
-        GoogleVertexAiGeminiProviderConfig providerConfig = chatModelConfig.providerConfig();
-
-        // construct service account credentials using service account key JSON
-        ServiceAccountCredentials serviceAccountCredentials;
+        GoogleCredentials credentials;
         try {
-            serviceAccountCredentials = ServiceAccountCredentials.fromStream(new ByteArrayInputStream(providerConfig.serviceAccountKey().getBytes()));
+            credentials = ServiceAccountCredentials
+                    .fromStream(new ByteArrayInputStream(chatModelConfig.providerConfig().serviceAccountKey().getBytes(StandardCharsets.UTF_8)))
+                    .createScoped("https://www.googleapis.com/auth/cloud-platform");
         } catch (IOException e) {
             throw new RuntimeException("Failed to parse service account key JSON", e);
         }
-
-        PredictionServiceSettings predictionServiceClientSettings;
-        try {
-            // create prediction service settings for REST transport with service account key credentials
-            PredictionServiceSettings.Builder settingsBuilder = PredictionServiceSettings.newHttpJsonBuilder()
-                    .setCredentialsProvider(FixedCredentialsProvider.create(serviceAccountCredentials));
-
-            // get the retry settings that control request timeout for generateContent RPC
-            RetrySettings.Builder retrySettings = settingsBuilder
-                    .generateContentSettings()
-                    .getRetrySettings()
-                    .toBuilder();
-
-            // set request timeout from model config
-            if (chatModelConfig.timeoutSeconds() != null) {
-                retrySettings.setTotalTimeoutDuration(Duration.ofSeconds(chatModelConfig.timeoutSeconds()));
-            }
-
-            // set updated retry settings
-            settingsBuilder.generateContentSettings().setRetrySettings(retrySettings.build());
-
-            // build the client settings
-            predictionServiceClientSettings = settingsBuilder.build();
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to create prediction service client settings", e);
-        }
-
-        // construct Vertex AI instance
-        var vertexAI = new VertexAI.Builder()
-                .setProjectId(providerConfig.projectId())
-                .setLocation(providerConfig.location())
-                .setPredictionClientSupplier(() -> createPredictionServiceClient(predictionServiceClientSettings))
-                .setTransport(Transport.REST) // GRPC also possible, but likely does not work with service account keys
+        return GoogleGenAiChatModel.builder()
+                .projectId(chatModelConfig.providerConfig().projectId())
+                .location(chatModelConfig.providerConfig().location())
+                .googleCredentials(credentials)
+                .modelName(chatModelConfig.modelId())
+                .temperature(chatModelConfig.temperature())
+                .topP(chatModelConfig.topP())
+                .topK(chatModelConfig.topK())
+                .maxOutputTokens(chatModelConfig.maxOutputTokens())
+                .timeout(toDuration(chatModelConfig.timeoutSeconds()))
+                .maxRetries(chatModelConfig.maxRetries())
                 .build();
-
-        // map model config to generation config
-        var generationConfigBuilder = GenerationConfig.newBuilder();
-        if (chatModelConfig.temperature() != null) {
-            generationConfigBuilder.setTemperature(chatModelConfig.temperature().floatValue());
-        }
-        if (chatModelConfig.topP() != null) {
-            generationConfigBuilder.setTopP(chatModelConfig.topP().floatValue());
-        }
-        if (chatModelConfig.topK() != null) {
-            generationConfigBuilder.setTopK(chatModelConfig.topK());
-        }
-        if (chatModelConfig.frequencyPenalty() != null) {
-            generationConfigBuilder.setFrequencyPenalty(chatModelConfig.frequencyPenalty().floatValue());
-        }
-        if (chatModelConfig.presencePenalty() != null) {
-            generationConfigBuilder.setPresencePenalty(chatModelConfig.presencePenalty().floatValue());
-        }
-        if (chatModelConfig.maxOutputTokens() != null) {
-            generationConfigBuilder.setMaxOutputTokens(chatModelConfig.maxOutputTokens());
-        }
-        var generationConfig = generationConfigBuilder.build();
-
-        // construct generative model instance
-        var generativeModel = new GenerativeModel(chatModelConfig.modelId(), vertexAI).withGenerationConfig(generationConfig);
-
-        return new VertexAiGeminiChatModel(generativeModel, generationConfig, chatModelConfig.maxRetries());
-    }
-
-    private static PredictionServiceClient createPredictionServiceClient(PredictionServiceSettings settings) {
-        try {
-            return PredictionServiceClient.create(settings);
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to create prediction service client", e);
-        }
     }
 
     @Override
@@ -262,14 +193,16 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
 
     @Override
     public ChatModel configureChatModel(GitHubModelsChatModelConfig chatModelConfig) {
-        return GitHubModelsChatModel.builder()
-                .gitHubToken(chatModelConfig.providerConfig().personalAccessToken())
+        return OpenAiOfficialChatModel.builder()
+                .isGitHubModels(true)
+                .strictJsonSchema(true)
+                .apiKey(chatModelConfig.providerConfig().personalAccessToken())
                 .modelName(chatModelConfig.modelId())
                 .temperature(chatModelConfig.temperature())
                 .topP(chatModelConfig.topP())
                 .frequencyPenalty(chatModelConfig.frequencyPenalty())
                 .presencePenalty(chatModelConfig.presencePenalty())
-                .maxTokens(chatModelConfig.maxOutputTokens())
+                .maxCompletionTokens(chatModelConfig.maxOutputTokens())
                 .timeout(toDuration(chatModelConfig.timeoutSeconds()))
                 .maxRetries(chatModelConfig.maxRetries())
                 .build();
