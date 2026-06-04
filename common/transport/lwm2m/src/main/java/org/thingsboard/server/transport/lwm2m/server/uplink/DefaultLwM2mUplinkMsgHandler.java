@@ -290,7 +290,9 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
 
     private void doUnReg(Registration registration, LwM2mClient client) {
         try {
-            logService.log(client, LOG_LWM2M_INFO + ": Client unRegistration");
+            if (client.shouldNotifyCore()) {
+                logService.log(client, LOG_LWM2M_INFO + ": Client unRegistration");
+            }
             clientContext.unregister(client, registration);
             SessionInfoProto sessionInfo = client.getSession();
             if (sessionInfo != null) {
@@ -451,8 +453,10 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
     @Override
     public void onTenantDelete(DeviceId deviceId) {
         LwM2mClient client = clientContext.getClientByDeviceId(deviceId.getId());
-        client.setSessionCloseReason(SessionCloseReason.TENANT_DELETED);
-        clearAndUnregister(client);
+        if (client != null) {
+            client.setSessionCloseReason(SessionCloseReason.TENANT_DELETED);
+            clearAndUnregister(client);
+        }
     }
 
     @Override

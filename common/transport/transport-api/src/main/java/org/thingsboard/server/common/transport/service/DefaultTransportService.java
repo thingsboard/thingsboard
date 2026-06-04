@@ -72,6 +72,7 @@ import org.thingsboard.server.common.transport.DeviceDeletedEvent;
 import org.thingsboard.server.common.transport.DeviceProfileUpdatedEvent;
 import org.thingsboard.server.common.transport.DeviceUpdatedEvent;
 import org.thingsboard.server.common.transport.SessionMsgListener;
+import org.thingsboard.server.common.transport.TenantDeletedEvent;
 import org.thingsboard.server.common.transport.TransportDeviceProfileCache;
 import org.thingsboard.server.common.transport.TransportResourceCache;
 import org.thingsboard.server.common.transport.TransportService;
@@ -968,7 +969,7 @@ public class DefaultTransportService extends TransportActivityManager implements
         }
     }
 
-    public void onTenantDeleted(TenantId tenantId) {
+    private void onTenantDeleted(TenantId tenantId) {
         sessions.forEach((id, md) -> {
             TenantId sessionTenantId = getTenantId(md.getSessionInfo());
             if (sessionTenantId.equals(tenantId)) {
@@ -976,9 +977,11 @@ public class DefaultTransportService extends TransportActivityManager implements
                 transportCallbackExecutor.submit(() -> {
                     md.getListener().onTenantDeleted(sessionDeviceId);
                 });
-                eventPublisher.publishEvent(new DeviceDeletedEvent(sessionDeviceId));
             }
         });
+        // notify transports holding per-device state (e.g. CoAP's client states) to clean it up in one shot,
+        // since no per-device delete messages are sent during tenant deletion
+        eventPublisher.publishEvent(new TenantDeletedEvent(tenantId));
     }
 
     public void onProfileUpdate(DeviceProfile deviceProfile) {

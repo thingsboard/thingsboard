@@ -263,7 +263,18 @@ public class MqttTransportHandlerTest {
     public void givenOnTenantDeleted_thenNoMessagesToCore() {
         handler.deviceSessionCtx.setChannel(ctx);
         handler.onTenantDeleted(new DeviceId(UUID.randomUUID()));
+        // onAuthFailure is the path that reaches transportRateLimitService (via the real MqttTransportContext),
+        // so on tenant deletion it must not be invoked at all.
+        verify(context, never()).onAuthFailure(any());
         verifyNoInteractions(transportService, transportRateLimitService);
+    }
+
+    @Test
+    public void givenOnDeviceDeleted_thenOnAuthFailureReported() {
+        handler.deviceSessionCtx.setChannel(ctx);
+        handler.onDeviceDeleted(new DeviceId(UUID.randomUUID()));
+        // a regular device deletion is still treated as an auth failure for the connection
+        verify(context).onAuthFailure(any());
     }
 
 }

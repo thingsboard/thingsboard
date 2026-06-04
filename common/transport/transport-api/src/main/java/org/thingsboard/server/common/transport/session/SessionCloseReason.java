@@ -17,6 +17,10 @@ package org.thingsboard.server.common.transport.session;
 
 public enum SessionCloseReason {
 
-    DEFAULT, TENANT_DELETED
+    TENANT_DELETED;
+
+    public static boolean shouldNotifyCore(SessionCloseReason reason) {
+        return reason != TENANT_DELETED;
+    }
 
 }

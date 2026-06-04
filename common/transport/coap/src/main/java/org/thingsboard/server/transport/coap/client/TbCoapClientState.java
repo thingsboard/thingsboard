@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.device.data.CoapDeviceTransportConfigu
 import org.thingsboard.server.common.data.device.data.PowerMode;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.common.transport.session.SessionCloseReason;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -34,6 +35,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -155,6 +157,16 @@ public class TbCoapClientState {
     }
 
     public boolean shouldNotifyCore() {
-        return sessionCloseReason == null || sessionCloseReason != SessionCloseReason.TENANT_DELETED;
+        return SessionCloseReason.shouldNotifyCore(sessionCloseReason);
+    }
+
+    public TenantId getTenantId() {
+        if (credentials != null && credentials.getDeviceInfo() != null) {
+            return credentials.getDeviceInfo().getTenantId();
+        }
+        if (session != null) {
+            return TenantId.fromUUID(new UUID(session.getTenantIdMSB(), session.getTenantIdLSB()));
+        }
+        return null;
     }
 }

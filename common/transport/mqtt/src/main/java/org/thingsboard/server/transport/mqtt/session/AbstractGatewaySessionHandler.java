@@ -227,7 +227,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
         deregisterSession(deviceName);
     }
 
-   public String getNodeId() {
+    public String getNodeId() {
         return context.getNodeId();
     }
 

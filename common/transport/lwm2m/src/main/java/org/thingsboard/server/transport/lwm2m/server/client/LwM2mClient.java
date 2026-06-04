@@ -452,7 +452,7 @@ public class LwM2mClient {
     }
 
     public boolean shouldNotifyCore() {
-        return sessionCloseReason == null || sessionCloseReason != SessionCloseReason.TENANT_DELETED;
+        return SessionCloseReason.shouldNotifyCore(sessionCloseReason);
     }
 
     private void setSupportedClientObjects(){

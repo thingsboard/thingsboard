@@ -50,6 +50,7 @@ import org.thingsboard.server.common.transport.DeviceDeletedEvent;
 import org.thingsboard.server.common.transport.DeviceProfileUpdatedEvent;
 import org.thingsboard.server.common.transport.DeviceUpdatedEvent;
 import org.thingsboard.server.common.transport.SessionMsgListener;
+import org.thingsboard.server.common.transport.TenantDeletedEvent;
 import org.thingsboard.server.common.transport.TransportDeviceProfileCache;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
@@ -140,6 +141,11 @@ public class DefaultCoapClientContext implements CoapClientContext {
     @EventListener(DeviceDeletedEvent.class)
     public void onApplicationEvent(DeviceDeletedEvent event) {
         clients.remove(event.getDeviceId());
+    }
+
+    @EventListener(TenantDeletedEvent.class)
+    public void onApplicationEvent(TenantDeletedEvent event) {
+        clients.values().removeIf(state -> event.getTenantId().equals(state.getTenantId()));
     }
 
     @Override
