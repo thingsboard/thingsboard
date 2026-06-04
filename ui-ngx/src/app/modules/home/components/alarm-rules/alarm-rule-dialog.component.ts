@@ -18,7 +18,7 @@ import { Component, DestroyRef, Inject, ViewChild, ViewEncapsulation } from '@an
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormGroup } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@shared/components/dialog.component';
 import {
@@ -41,8 +41,8 @@ import {
   AlarmRuleTestScriptFn
 } from "@shared/models/alarm-rule.models";
 import { deepTrim } from "@core/utils";
-import { combineLatest, forkJoin, Observable } from "rxjs";
-import { debounceTime, startWith } from "rxjs/operators";
+import { combineLatest, forkJoin, Observable, of } from "rxjs";
+import { debounceTime, map, startWith, switchMap } from "rxjs/operators";
 import { RelationTypes } from "@shared/models/relation.models";
 import { StringItemsOption } from "@shared/components/string-items-list.component";
 import { BaseData } from "@shared/models/base-data";
@@ -51,7 +51,9 @@ import { EntitySelectComponent } from '@shared/components/entity/entity-select.c
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { AssetInfo } from '@shared/models/asset.models';
 import { DeviceInfo } from '@shared/models/device.models';
-import { EntityTypeListComponent } from '@shared/components/entity/entity-type-list.component';
+import { DeviceProfileService } from '@core/http/device-profile.service';
+import { AssetProfileService } from '@core/http/asset-profile.service';
+import { EntityInfoData } from '@shared/models/entity.models';
 
 export interface AlarmRuleDialogData {
   value?: CalculatedFieldAlarmRule;
@@ -74,7 +76,7 @@ export interface AlarmRuleDialogData {
 })
 export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogComponent, CalculatedFieldAlarmRule> {
 
-  @ViewChild('entitySelect') entitySelect!: EntitySelectComponent | EntityTypeListComponent;
+  @ViewChild('entitySelect') entitySelect!: EntitySelectComponent;
 
   fieldFormGroup: FormGroup ;
 
@@ -99,11 +101,17 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
   isLoading = false;
   createNew = false;
 
+  entityTypeControl = new FormControl<EntityType>(EntityType.DEVICE_PROFILE, { nonNullable: true, validators: Validators.required });
+
+  argsEntityId: EntityId | EntityId[];
+
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: AlarmRuleDialogData,
               protected dialogRef: MatDialogRef<AlarmRuleDialogComponent, CalculatedFieldAlarmRule>,
               private alarmRulesService: AlarmRulesService,
+              private deviceProfileService: DeviceProfileService,
+              private assetProfileService: AssetProfileService,
               private destroyRef: DestroyRef,
               private cfFormService: CalculatedFieldFormService) {
     super(store, router, dialogRef);
@@ -123,6 +131,10 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
 
     if (!this.data.entityId) {
       this.createNew = true;
+      this.entityTypeControl.valueChanges.pipe(
+        takeUntilDestroyed()
+      ).subscribe(() => this.fieldFormGroup.get('entityId')!.reset(null));
+
       combineLatest([
         this.fieldFormGroup.get('entityId')!.valueChanges.pipe(startWith(this.fieldFormGroup.get('entityId')!.value)),
         this.fieldFormGroup.get('name')!.valueChanges.pipe(startWith(this.fieldFormGroup.get('name')!.value))
@@ -131,6 +143,7 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
         takeUntilDestroyed()
       ).subscribe(([entityId, name]) => {
         this.disabledArguments = Array.isArray(entityId) ? !entityId.length : !entityId || !name?.length;
+        this.argsEntityId = Array.isArray(entityId) ? entityId.map(id => ({ entityType: this.entityTypeControl.value, id })) : entityId;
         const argsControl = this.fieldFormGroup.get('configuration.arguments')!;
         if (this.disabledArguments) {
           argsControl.disable({ emitEvent: false });
@@ -139,6 +152,15 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
         }
       });
     }
+  }
+
+  get isProfileType(): boolean {
+    return this.entityTypeControl.value === EntityType.DEVICE_PROFILE
+      || this.entityTypeControl.value === EntityType.ASSET_PROFILE;
+  }
+
+  get profileSubtypeEntityType(): EntityType {
+    return this.entityTypeControl.value === EntityType.ASSET_PROFILE ? EntityType.ASSET : EntityType.DEVICE;
   }
 
   get configFormGroup(): FormGroup {
@@ -177,32 +199,46 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
   add(): void {
     if (this.fieldFormGroup.valid && Object.keys(this.arguments ?? {}).length > 0) {
       this.isLoading = true;
-      const entityIds = Array.isArray(this.fieldFormGroup.value.entityId)
-        ? this.fieldFormGroup.value.entityId
-        : [this.fieldFormGroup.value.entityId ?? this.data.entityId];
-
-      const requests$ = entityIds.map((entityId: EntityId) => {
-        const alarmRule = { ...(this.data.value ?? {}), ...this.fromGroupValue, entityId };
-        alarmRule.configuration.type = CalculatedFieldType.ALARM;
-        return this.alarmRulesService.saveAlarmRule(alarmRule);
+      this.resolveEntityIds().pipe(
+        switchMap(entityIds =>
+          forkJoin(entityIds.map((entityId: EntityId) => {
+            const alarmRule = { ...(this.data.value ?? {}), ...this.fromGroupValue, entityId };
+            alarmRule.configuration.type = CalculatedFieldType.ALARM;
+            return this.alarmRulesService.saveAlarmRule(alarmRule);
+          }))),
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe({
+        next: (calculatedFields: CalculatedFieldAlarmRule[]) => this.dialogRef.close(calculatedFields[0]),
+        error: () => this.isLoading = false
       });
-
-      forkJoin(requests$)
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({
-          next: (calculatedFields: CalculatedFieldAlarmRule) => this.dialogRef.close(calculatedFields),
-          error: () => this.isLoading = false
-        });
     } else {
       this.fieldFormGroup.get('name').markAsTouched();
-      if (this.entitySelect instanceof EntitySelectComponent) {
-        this.entitySelect?.entityAutocompleteMarkAsTouched();
-      }
+      this.entitySelect?.entityAutocompleteMarkAsTouched();
     }
   }
 
-  get selectedEntityId(): EntityId {
-    return Array.isArray(this.fieldFormGroup.get('entityId').value) ? this.fieldFormGroup.get('entityId').value : this.fieldFormGroup.get('entityId').value;
+  private resolveEntityIds(): Observable<EntityId[]> {
+    const value = this.fieldFormGroup.get('entityId').value;
+    if (!Array.isArray(value)) {
+      return of([value ?? this.data.entityId]);
+    }
+    switch (this.entityTypeControl.value) {
+      case EntityType.DEVICE_PROFILE:
+        return this.deviceProfileService.getDeviceProfileNames(false).pipe(
+          map(profiles => this.toProfileEntityIds(profiles, value))
+        );
+      case EntityType.ASSET_PROFILE:
+        return this.assetProfileService.getAssetProfileNames(false).pipe(
+          map(profiles => this.toProfileEntityIds(profiles, value))
+        );
+      default:
+        return of(value.map(id => ({ entityType: this.entityTypeControl.value, id })));
+    }
+  }
+
+  private toProfileEntityIds(profiles: EntityInfoData[], names: string[]): EntityId[] {
+    const idByName = new Map(profiles.map(profile => [profile.name, profile.id]));
+    return names.map(name => idByName.get(name)).filter((id): id is EntityId => !!id);
   }
 
   private applyDialogData(): void {

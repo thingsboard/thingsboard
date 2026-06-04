@@ -530,10 +530,25 @@ export const ArgumentEntityTypeParamsMap =new Map<ArgumentEntityType, ArgumentEn
 
 export const getCalculatedFieldCurrentEntityFilter = (entityName: string, entityId: EntityId | EntityId[]): EntityFilter => {
   if (Array.isArray(entityId)) {
-    return {
-      type: AliasFilterType.entityList,
-      entityType: entityId[0].entityType as EntityType,
-      entityList: entityId.map(value => value.id)
+    const entityType = entityId[0]?.entityType as EntityType;
+    const ids = entityId.map(value => value.id);
+    switch (entityType) {
+      case EntityType.ASSET_PROFILE:
+        return {
+          type: AliasFilterType.assetType,
+          assetTypes: ids
+        };
+      case EntityType.DEVICE_PROFILE:
+        return {
+          type: AliasFilterType.deviceType,
+          deviceTypes: ids
+        };
+      default:
+        return {
+          type: AliasFilterType.entityList,
+          entityType,
+          entityList: ids
+        };
     }
   }
   switch (entityId?.entityType) {
