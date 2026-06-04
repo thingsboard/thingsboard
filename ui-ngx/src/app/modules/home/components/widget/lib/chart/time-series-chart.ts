@@ -23,7 +23,8 @@ import {
   createTimeSeriesYAxis,
   defaultTimeSeriesChartYAxisSettings,
   generateChartData,
-  LineSeriesStepType, normalizeAxisLimit,
+  LineSeriesStepType,
+  normalizeAxisLimit,
   parseThresholdData,
   TimeSeriesChartAxis,
   TimeSeriesChartDataItem,
@@ -46,10 +47,12 @@ import {
   updateXAxisTimeWindow
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import {
-  calculateAxisSize, DataZoom,
+  calculateAxisSize,
+  DataZoom,
   ECharts,
   echartsModule,
-  EChartsOption, getAxis,
+  EChartsOption,
+  getAxis,
   getAxisExtent,
   getFocusedSeriesIndex,
   measureAxisNameSize
@@ -146,6 +149,7 @@ export class TbTimeSeriesChart {
   private dataZoomDebounce: ReturnType<typeof setTimeout> | null = null;
   private lastDataZoomStart = 0;
   private lastDataZoomEnd = 100;
+  private timewindowChanged = false;
 
   private timeSeriesChart: ECharts;
   private timeSeriesChartOptions: EChartsOption;
@@ -438,8 +442,11 @@ export class TbTimeSeriesChart {
       return [{
         name: 'widgets.time-series-chart.reset-timewindow',
         icon: 'restore',
-        onAction: () => this.ctx.defaultSubscription.onResetTimewindow(),
-        show: true
+        onAction: () => {
+          this.timewindowChanged = false;
+          this.ctx.defaultSubscription.onResetTimewindow();
+        },
+        show: ()=> this.timewindowChanged
       }];
     }
     return [];
@@ -845,8 +852,7 @@ export class TbTimeSeriesChart {
           type: 'inside',
           disabled: !this.settings.dataZoom,
           realtime: true,
-          filterMode: this.stateData ? 'none' : 'weakFilter',
-          ...(this.comparisonEnabled ? { xAxisIndex: [0] } : {})
+          filterMode: this.stateData ? 'none' : 'weakFilter'
         },
         {
           type: 'slider',
@@ -854,8 +860,7 @@ export class TbTimeSeriesChart {
           showDetail: false,
           realtime: true,
           filterMode: this.stateData ? 'none' : 'weakFilter',
-          bottom: 10,
-          ...(this.comparisonEnabled ? { xAxisIndex: [0] } : {})
+          bottom: 10
         }
       ],
       ...toAnimationOption(this.ctx, this.settings.animation)
@@ -893,6 +898,7 @@ export class TbTimeSeriesChart {
             }
             if (Math.round(this.lastDataZoomStart) === 0 && Math.round(this.lastDataZoomEnd) === 100) {
               this.ctx.defaultSubscription.onResetTimewindow();
+              this.timewindowChanged = false;
             } else {
               const axis = getAxis(this.timeSeriesChart, 'xAxis', 'main');
               if (axis) {
@@ -901,6 +907,7 @@ export class TbTimeSeriesChart {
                 const endMs = Math.round(extent[1]);
                 if (startMs < endMs) {
                   this.dataZoomUpdatePending = true;
+                  this.timewindowChanged = true;
                   this.ctx.defaultSubscription.onUpdateTimewindow(startMs, endMs);
                 }
               }
