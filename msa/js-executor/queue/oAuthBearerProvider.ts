@@ -20,7 +20,7 @@ import { _logger } from '../config/logger';
 interface OauthBearerProviderOptions {
   clientId: string;
   clientSecret: string;
-  host: string;
+  endpointUrl: string;
   refreshThresholdMs: number;
   // Optional OAuth2 scope. Required by some IdPs for client-credentials (e.g. Azure AD's "api://<id>/.default").
   scope?: string;
@@ -35,11 +35,11 @@ const EXPIRY_SAFETY_MS = 5000;
 
 export const oauthBearerProvider = (options: OauthBearerProviderOptions) => {
   const logger = _logger('oauthBearerProvider');
-  if (!options.clientId || !options.clientSecret || !options.host) {
+  if (!options.clientId || !options.clientSecret || !options.endpointUrl) {
     throw new Error('Kafka OAUTHBEARER requires kafka.confluent.oauth.client_id, client_secret and endpoint_url to be set');
   }
-  if (!/^https:\/\//i.test(options.host)) {
-    logger.warn('Kafka OAuth token endpoint URL is not HTTPS (%s); client credentials will be sent unencrypted', options.host);
+  if (!/^https:\/\//i.test(options.endpointUrl)) {
+    logger.warn('Kafka OAuth token endpoint URL is not HTTPS (%s); client credentials will be sent unencrypted', options.endpointUrl);
   }
   const refreshThresholdMs = Number(options.refreshThresholdMs);
   if (!Number.isFinite(refreshThresholdMs) || refreshThresholdMs < 0) {
@@ -48,9 +48,9 @@ export const oauthBearerProvider = (options: OauthBearerProviderOptions) => {
   const scope = options.scope && options.scope.trim().length > 0 ? options.scope.trim() : undefined;
   let tokenUrl: URL;
   try {
-    tokenUrl = new URL(options.host);
+    tokenUrl = new URL(options.endpointUrl);
   } catch {
-    throw new Error(`Kafka OAuth endpoint_url is not a valid URL: ${options.host}`);
+    throw new Error(`Kafka OAuth endpoint_url is not a valid URL: ${options.endpointUrl}`);
   }
   const client = new ClientCredentials({
     client: {

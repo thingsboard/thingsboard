@@ -134,7 +134,7 @@ export class KafkaTemplate implements IQueue {
                     oauthBearerProvider: oauthBearerProvider({
                         clientId: optionalOauthStr('kafka.confluent.oauth.client_id'),
                         clientSecret: optionalOauthStr('kafka.confluent.oauth.client_secret'),
-                        host: optionalOauthStr('kafka.confluent.oauth.endpoint_url'),
+                        endpointUrl: optionalOauthStr('kafka.confluent.oauth.endpoint_url'),
                         refreshThresholdMs,
                         scope,
                     })
