@@ -44,6 +44,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -272,6 +273,7 @@ public class DefaultTbClusterServiceTest {
         TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCoreNotificationMsg>> tbCoreQueueProducer = mock(TbQueueProducer.class);
 
         doReturn(tpi).when(topicService).getNotificationsTopic(any(ServiceType.class), any(String.class));
+        when(partitionService.getAllServiceIds(ServiceType.TB_CORE)).thenReturn(Sets.newHashSet(CORE));
         when(producerProvider.getTbCoreNotificationsMsgProducer()).thenReturn(tbCoreQueueProducer);
         TransportProtos.RestApiCallResponseMsgProto responseMsgProto = TransportProtos.RestApiCallResponseMsgProto.getDefaultInstance();
         TransportProtos.ToCoreNotificationMsg toCoreNotificationMsg = TransportProtos.ToCoreNotificationMsg.newBuilder().setRestApiCallResponseMsg(responseMsgProto).build();
@@ -286,6 +288,62 @@ public class DefaultTbClusterServiceTest {
         assertThat(protoQueueMsgArgumentCaptorValue.getKey()).isNotNull();
         assertThat(protoQueueMsgArgumentCaptorValue.getValue()).isEqualTo(toCoreNotificationMsg);
         assertThat(protoQueueMsgArgumentCaptorValue.getHeaders().getData()).isEqualTo(new DefaultTbQueueMsgHeaders().getData());
+    }
+
+    @Test
+    public void testPushNotificationToCoreToUnknownServiceIdIsSkipped() {
+        when(partitionService.getAllServiceIds(ServiceType.TB_CORE)).thenReturn(Sets.newHashSet(CORE));
+        TbQueueCallback callback = mock(TbQueueCallback.class);
+
+        clusterService.pushNotificationToCore("rpc-1778979165457-749", new FromDeviceRpcResponse(UUID.randomUUID(), null, null), callback);
+
+        verify(topicService, never()).getNotificationsTopic(eq(ServiceType.TB_CORE), eq("rpc-1778979165457-749"));
+        verify(producerProvider, never()).getTbCoreNotificationsMsgProducer();
+        verify(callback, never()).onSuccess(any());
+        verify(callback, times(1)).onFailure(any(Throwable.class));
+    }
+
+    @Test
+    public void testPushNotificationToCoreToKnownServiceIdIsSent() {
+        TopicPartitionInfo tpi = mock(TopicPartitionInfo.class);
+        TbQueueCallback callback = mock(TbQueueCallback.class);
+        TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCoreNotificationMsg>> tbCoreQueueProducer = mock(TbQueueProducer.class);
+
+        when(partitionService.getAllServiceIds(ServiceType.TB_CORE)).thenReturn(Sets.newHashSet(CORE));
+        doReturn(tpi).when(topicService).getNotificationsTopic(ServiceType.TB_CORE, CORE);
+        when(producerProvider.getTbCoreNotificationsMsgProducer()).thenReturn(tbCoreQueueProducer);
+
+        clusterService.pushNotificationToCore(CORE, new FromDeviceRpcResponse(UUID.randomUUID(), null, null), callback);
+
+        verify(tbCoreQueueProducer, times(1)).send(eq(tpi), any(TbProtoQueueMsg.class), eq(callback));
+    }
+
+    @Test
+    public void testPushNotificationToCoreFailsOpenWhenClusterTopologyIsUnknown() {
+        TopicPartitionInfo tpi = mock(TopicPartitionInfo.class);
+        TbQueueCallback callback = mock(TbQueueCallback.class);
+        TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCoreNotificationMsg>> tbCoreQueueProducer = mock(TbQueueProducer.class);
+
+        when(partitionService.getAllServiceIds(ServiceType.TB_CORE)).thenReturn(Sets.newHashSet());
+        doReturn(tpi).when(topicService).getNotificationsTopic(any(ServiceType.class), any(String.class));
+        when(producerProvider.getTbCoreNotificationsMsgProducer()).thenReturn(tbCoreQueueProducer);
+
+        clusterService.pushNotificationToCore("rpc-1778979165457-749", new FromDeviceRpcResponse(UUID.randomUUID(), null, null), callback);
+
+        verify(tbCoreQueueProducer, times(1)).send(eq(tpi), any(TbProtoQueueMsg.class), eq(callback));
+    }
+
+    @Test
+    public void testPushNotificationToRuleEngineToUnknownServiceIdIsSkipped() {
+        when(partitionService.getAllServiceIds(ServiceType.TB_RULE_ENGINE)).thenReturn(Sets.newHashSet(RULE_ENGINE));
+        TbQueueCallback callback = mock(TbQueueCallback.class);
+
+        clusterService.pushNotificationToRuleEngine("rpc-1778979165457-749", new FromDeviceRpcResponse(UUID.randomUUID(), null, null), callback);
+
+        verify(topicService, never()).getNotificationsTopic(eq(ServiceType.TB_RULE_ENGINE), eq("rpc-1778979165457-749"));
+        verify(producerProvider, never()).getRuleEngineNotificationsMsgProducer();
+        verify(callback, never()).onSuccess(any());
+        verify(callback, times(1)).onFailure(any(Throwable.class));
     }
 
     @Test

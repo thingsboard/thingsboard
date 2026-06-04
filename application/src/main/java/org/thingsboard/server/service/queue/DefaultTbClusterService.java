@@ -208,6 +208,10 @@ public class DefaultTbClusterService implements TbClusterService {
 
     @Override
     public void pushNotificationToCore(String serviceId, FromDeviceRpcResponse response, TbQueueCallback callback) {
+        if (isUnknownService(ServiceType.TB_CORE, serviceId)) {
+            skipNotificationToUnknownService(ServiceType.TB_CORE, serviceId, callback);
+            return;
+        }
         TopicPartitionInfo tpi = topicService.getNotificationsTopic(ServiceType.TB_CORE, serviceId);
         log.trace("PUSHING msg: {} to:{}", response, tpi);
         FromDeviceRPCResponseProto.Builder builder = FromDeviceRPCResponseProto.newBuilder()
@@ -222,10 +226,38 @@ public class DefaultTbClusterService implements TbClusterService {
 
     @Override
     public void pushNotificationToCore(String targetServiceId, TransportProtos.RestApiCallResponseMsgProto responseMsgProto, TbQueueCallback callback) {
+        if (isUnknownService(ServiceType.TB_CORE, targetServiceId)) {
+            skipNotificationToUnknownService(ServiceType.TB_CORE, targetServiceId, callback);
+            return;
+        }
         TopicPartitionInfo tpi = topicService.getNotificationsTopic(ServiceType.TB_CORE, targetServiceId);
         ToCoreNotificationMsg msg = ToCoreNotificationMsg.newBuilder().setRestApiCallResponseMsg(responseMsgProto).build();
         producerProvider.getTbCoreNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), msg), callback);
         toCoreNfs.incrementAndGet();
+    }
+
+    /**
+     * Per-service notification topics ({@code <notifications-topic>.<serviceId>}) are auto-created by the producer on
+     * first send. A {@code serviceId} that is not a member of the cluster - e.g. a stale node id or a value injected
+     * via message metadata - would therefore create an orphan topic that nobody ever consumes and that is never
+     * cleaned up. To prevent that, notifications whose target service id is not a current member of the cluster are
+     * skipped. The check fails open while the cluster topology is not yet known (empty/absent membership, e.g. right
+     * after startup) so legitimate notifications are never dropped.
+     */
+    private boolean isUnknownService(ServiceType serviceType, String serviceId) {
+        if (serviceId == null || serviceId.isEmpty()) {
+            return true;
+        }
+        Set<String> serviceIds = partitionService.getAllServiceIds(serviceType);
+        return serviceIds != null && !serviceIds.isEmpty() && !serviceIds.contains(serviceId);
+    }
+
+    private void skipNotificationToUnknownService(ServiceType serviceType, String serviceId, TbQueueCallback callback) {
+        log.warn("Skipping notification push to unknown {} service id [{}]", serviceType, serviceId);
+        if (callback != null) {
+            // The message was not delivered to any node, so signal failure (not success) to the caller.
+            callback.onFailure(new RuntimeException("Target " + serviceType + " service id [" + serviceId + "] is not a member of the cluster"));
+        }
     }
 
     @Override
@@ -322,6 +354,10 @@ public class DefaultTbClusterService implements TbClusterService {
 
     @Override
     public void pushNotificationToRuleEngine(String serviceId, FromDeviceRpcResponse response, TbQueueCallback callback) {
+        if (isUnknownService(ServiceType.TB_RULE_ENGINE, serviceId)) {
+            skipNotificationToUnknownService(ServiceType.TB_RULE_ENGINE, serviceId, callback);
+            return;
+        }
         TopicPartitionInfo tpi = topicService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, serviceId);
         log.trace("PUSHING msg: {} to:{}", response, tpi);
         FromDeviceRPCResponseProto.Builder builder = FromDeviceRPCResponseProto.newBuilder()
