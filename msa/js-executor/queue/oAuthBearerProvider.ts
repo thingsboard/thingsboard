@@ -28,6 +28,10 @@ interface OauthBearerProviderOptions {
 
 const RETRY_DELAY_MS = 5000;
 const MIN_REFRESH_DELAY_MS = 1000;
+// Safety margin applied at serve time: if the cached token is within this window of (or past) its
+// hard expiry, fetch synchronously instead of serving it. Covers a scheduled refresh that slipped
+// because the unref()'d timer was starved or the process was suspended. Also absorbs minor clock skew.
+const EXPIRY_SAFETY_MS = 5000;
 
 export const oauthBearerProvider = (options: OauthBearerProviderOptions) => {
   const logger = _logger('oauthBearerProvider');
@@ -66,8 +70,12 @@ export const oauthBearerProvider = (options: OauthBearerProviderOptions) => {
   // does not drop a still-valid token out from under KafkaJS (which calls this provider on
   // each reauthentication). It is only swapped in after a successful refresh.
   let cachedToken: string | undefined;
-  // Resolves once the very first token has been obtained (used only until cachedToken is set).
-  let initialToken: Promise<string>;
+  // Epoch ms at which cachedToken hard-expires (access_token lifetime from the IdP). 0 until the
+  // first successful fetch. Used to decide at serve time whether the cached token is still safe.
+  let cachedTokenExpiresAt = 0;
+  // In-flight token fetch, shared so a serve-triggered refresh and the scheduled timer (and
+  // concurrent KafkaJS callbacks) coalesce onto one request instead of stampeding the IdP.
+  let refreshInFlight: Promise<string> | undefined;
   let refreshTimer: NodeJS.Timeout | undefined;
   let warnedShortLivedToken = false;
 
@@ -78,13 +86,24 @@ export const oauthBearerProvider = (options: OauthBearerProviderOptions) => {
     const delay = Math.max(delayMs, MIN_REFRESH_DELAY_MS);
     logger.info('Next Kafka OAuth token refresh in %dms', delay);
     refreshTimer = setTimeout(() => {
-      // refreshToken() updates cachedToken on success and reschedules its own retry on failure;
+      // refreshTokenOnce() updates cachedToken on success and reschedules its own retry on failure;
       // swallow here so a failed background refresh is not an unhandled rejection.
-      refreshToken().catch((err) => {
+      refreshTokenOnce().catch((err) => {
         logger.error('Scheduled Kafka OAuth token refresh failed: %s', err?.message ?? err);
       });
     }, delay);
     refreshTimer.unref();
+  }
+
+  // Coalesce concurrent refreshes (scheduled timer, serve-time fallback, parallel KafkaJS callbacks)
+  // onto a single in-flight request so a near-expiry burst cannot stampede the token endpoint.
+  function refreshTokenOnce(): Promise<string> {
+    if (!refreshInFlight) {
+      refreshInFlight = refreshToken().finally(() => {
+        refreshInFlight = undefined;
+      });
+    }
+    return refreshInFlight;
   }
 
   async function refreshToken(): Promise<string> {
@@ -104,9 +123,10 @@ export const oauthBearerProvider = (options: OauthBearerProviderOptions) => {
         throw new Error('OAuth token response has no "access_token"');
       }
 
-      cachedToken = accessTokenValue;
-
       const lifetimeMs = expiresIn * 1000;
+      cachedToken = accessTokenValue;
+      cachedTokenExpiresAt = Date.now() + lifetimeMs;
+
       // If the token lifetime is shorter than the refresh threshold, refreshing "threshold
       // before expiry" would fire immediately and clamp to MIN_REFRESH_DELAY_MS, hammering the
       // token endpoint every second. Cap the effective threshold to half the lifetime instead.
@@ -130,14 +150,22 @@ export const oauthBearerProvider = (options: OauthBearerProviderOptions) => {
     }
   }
 
-  initialToken = refreshToken();
+  // Kick off the initial fetch eagerly so the first authentication is fast.
   // The first fetch is retried internally; swallow here, so a startup failure is not an unhandled rejection.
-  initialToken.catch(() => { /* retry already scheduled in refreshToken() */ });
+  refreshTokenOnce().catch(() => { /* retry already scheduled in refreshToken() */ });
 
   return async function () {
-    // Prefer the last good token; only fall back to awaiting the initial fetch before one exists.
+    // Serve the cached token while it is comfortably valid; the background timer rotates it
+    // proactively. If there is no token yet, or the cached one is within EXPIRY_SAFETY_MS of its
+    // hard expiry (a scheduled refresh slipped), fetch synchronously so KafkaJS never reauthenticates
+    // with an expired token. Concurrent callers coalesce onto the same request via refreshTokenOnce().
+    if (!cachedToken || Date.now() >= cachedTokenExpiresAt - EXPIRY_SAFETY_MS) {
+      return {
+        value: await refreshTokenOnce()
+      };
+    }
     return {
-      value: cachedToken ?? await initialToken
+      value: cachedToken
     };
   };
 };

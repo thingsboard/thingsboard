@@ -125,12 +125,16 @@ export class KafkaTemplate implements IQueue {
                 const scope = config.has('kafka.confluent.oauth.scope')
                     ? config.get('kafka.confluent.oauth.scope') as string
                     : undefined;
+                // Read as optional so a missing key yields '' (and the provider raises its clear
+                // "requires client_id, client_secret and endpoint_url" error) rather than node-config
+                // throwing a generic "Configuration property ... is not defined".
+                const optionalOauthStr = (key: string): string => config.has(key) ? config.get(key) as string : '';
                 kafkaConfig['sasl'] = {
                     mechanism: 'oauthbearer',
                     oauthBearerProvider: oauthBearerProvider({
-                        clientId: config.get('kafka.confluent.oauth.client_id'),
-                        clientSecret: config.get('kafka.confluent.oauth.client_secret'),
-                        host: config.get('kafka.confluent.oauth.endpoint_url'),
+                        clientId: optionalOauthStr('kafka.confluent.oauth.client_id'),
+                        clientSecret: optionalOauthStr('kafka.confluent.oauth.client_secret'),
+                        host: optionalOauthStr('kafka.confluent.oauth.endpoint_url'),
                         refreshThresholdMs,
                         scope,
                     })
