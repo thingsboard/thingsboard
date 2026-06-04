@@ -175,10 +175,10 @@ public class DefaultTbQueueService extends AbstractTbEntityService implements Tb
     private void createTopicsIfNeeded(Queue queue, Queue oldQueue) {
         int newPartitions = queue.getPartitions();
         int oldPartitions = oldQueue != null ? oldQueue.getPartitions() : 0;
-        String prefixedTopic = topicService.buildTopicName(queue.getTopic());
+        String topic = topicService.buildTopicName(queue.getTopic());
         for (int i = oldPartitions; i < newPartitions; i++) {
             tbQueueAdmin.createTopicIfNotExists(
-                    new TopicPartitionInfo(prefixedTopic, queue.getTenantId(), i, false).getFullTopicName(),
+                    new TopicPartitionInfo(topic, queue.getTenantId(), i, false).getFullTopicName(),
                     queue.getCustomProperties(),
                     true); // forcing topic creation because the topic may still be cached on some nodes
         }
