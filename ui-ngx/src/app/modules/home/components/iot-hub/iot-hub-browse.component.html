@@ -405,87 +405,92 @@
         </button>
       </div>
 
-      <!-- Loading -->
-      @if (isLoading) {
-        <div class="flex justify-center py-20">
-          <mat-spinner diameter="40"></mat-spinner>
-        </div>
-      }
+        <div class="relative">
 
-      <!-- Error -->
-      @if (hasError && !isLoading) {
-        <div class="tb-iot-hub-empty-state flex flex-col items-center py-20 text-center">
-          <div class="tb-no-data-bg"></div>
-          <h3>{{ 'iot-hub.unable-to-load' | translate }}</h3>
-          <p>{{ 'iot-hub.unable-to-load-text' | translate }}</p>
-          <button mat-flat-button color="primary" (click)="loadItems()">
-            {{ 'iot-hub.retry' | translate }}
-          </button>
-        </div>
-      }
-
-      <!-- Empty state -->
-      @if (!isLoading && !hasError && items.length === 0) {
-        <div class="tb-iot-hub-empty-state flex flex-col items-center py-20 text-center">
-          <div class="tb-no-data-bg"></div>
-          <h3>{{ 'iot-hub.no-items-found' | translate }}</h3>
-          <p>{{ 'iot-hub.no-items-found-text' | translate }}</p>
-          @if (hasActiveFilters()) {
-            <button mat-flat-button color="primary" (click)="clearAllFilters()">
-              {{ 'iot-hub.clear-all-filters' | translate }}
-            </button>
-          }
-        </div>
-      }
-
-      <!-- Card grid -->
-      @if (!isLoading && !hasError && items.length > 0) {
-        <div class="tb-iot-hub-card-grid" [class.tb-iot-hub-card-grid-compact]="isCompactType">
-          @for (item of items; track item.id) {
-            <tb-iot-hub-item-card
-              [item]="item"
-              [installedItem]="getInstalledItem(item)"
-              [installedItemsCount]="getInstalledItemsCount(item)"
-              [showTypeChip]="false"
-              [showSubtype]="!fixedSubType"
-              [showCreator]="!creatorId"
-              [mode]="mode"
-              (cardClick)="openItemDetail($event)"
-              (creatorClick)="navigateToCreator($event)"
-              (installClick)="installItem($event)"
-              (updateClick)="updateItem($event)"
-              (deleteClick)="deleteInstalledItem($event)"
-              (addClick)="onItemAdd($event)"
-              (guideClick)="openInstallGuide($event)">
-            </tb-iot-hub-item-card>
-          }
-        </div>
-
-        <!-- Pagination -->
-        <div class="tb-iot-hub-pagination flex shrink-0 items-center pt-6">
-          <div class="tb-iot-hub-pagination-pages flex items-center gap-px">
-            <button mat-icon-button [disabled]="pageIndex === 0" (click)="goToPage(pageIndex - 1)">
-              <mat-icon>chevron_left</mat-icon>
-            </button>
-            @for (p of getPageNumbers(); track p) {
-              <button class="tb-iot-hub-page-btn" [class.active]="p === pageIndex" (click)="goToPage(p)">
-                {{ p + 1 }}
+          <!-- Error -->
+          @if (hasError) {
+            <div class="tb-iot-hub-empty-state flex flex-col items-center py-20 text-center">
+              <div class="tb-no-data-bg"></div>
+              <h3>{{ 'iot-hub.unable-to-load' | translate }}</h3>
+              <p>{{ 'iot-hub.unable-to-load-text' | translate }}</p>
+              <button mat-flat-button color="primary" (click)="loadItems()">
+                {{ 'iot-hub.retry' | translate }}
               </button>
-            }
-            <button mat-icon-button [disabled]="pageIndex >= getTotalPages() - 1" (click)="goToPage(pageIndex + 1)">
-              <mat-icon>chevron_right</mat-icon>
-            </button>
-          </div>
-          <div class="tb-iot-hub-pagination-size">
-            <span>{{ 'iot-hub.items-per-page' | translate }}:</span>
-            <mat-select [value]="pageSize" (selectionChange)="onPageSizeChange($event.value)" class="tb-iot-hub-page-size-select">
-              @for (size of pageSizeOptions; track size) {
-                <mat-option [value]="size">{{ size }}</mat-option>
+            </div>
+          }
+
+          <!-- Empty state -->
+          @if (!hasError && items.length === 0) {
+            <div class="tb-iot-hub-empty-state flex flex-col items-center py-20 text-center">
+              <div class="tb-no-data-bg"></div>
+              <h3>{{ 'iot-hub.no-items-found' | translate }}</h3>
+              <p>{{ 'iot-hub.no-items-found-text' | translate }}</p>
+              @if (hasActiveFilters()) {
+                <button mat-flat-button color="primary" (click)="clearAllFilters()">
+                  {{ 'iot-hub.clear-all-filters' | translate }}
+                </button>
               }
-            </mat-select>
-          </div>
+            </div>
+          }
+
+          <!-- Card grid -->
+          @if (!hasError && items.length > 0) {
+            <div class="tb-iot-hub-card-grid" [class.tb-iot-hub-card-grid-compact]="isCompactType">
+              @for (item of items; track item.id) {
+                <tb-iot-hub-item-card
+                  [item]="item"
+                  [installedItem]="getInstalledItem(item)"
+                  [installedItemsCount]="getInstalledItemsCount(item)"
+                  [showTypeChip]="false"
+                  [showSubtype]="!fixedSubType"
+                  [showCreator]="!creatorId"
+                  [mode]="mode"
+                  (cardClick)="openItemDetail($event)"
+                  (creatorClick)="navigateToCreator($event)"
+                  (installClick)="installItem($event)"
+                  (updateClick)="updateItem($event)"
+                  (deleteClick)="deleteInstalledItem($event)"
+                  (addClick)="onItemAdd($event)"
+                  (guideClick)="openInstallGuide($event)">
+                </tb-iot-hub-item-card>
+              }
+            </div>
+
+            <!-- Pagination -->
+            <div class="tb-iot-hub-pagination flex shrink-0 items-center pt-6">
+              <div class="tb-iot-hub-pagination-pages flex items-center gap-px">
+                <button mat-icon-button [disabled]="pageIndex === 0" (click)="goToPage(pageIndex - 1)">
+                  <mat-icon>chevron_left</mat-icon>
+                </button>
+                @for (p of getPageNumbers(); track p) {
+                  <button class="tb-iot-hub-page-btn" [class.active]="p === pageIndex" (click)="goToPage(p)">
+                    {{ p + 1 }}
+                  </button>
+                }
+                <button mat-icon-button [disabled]="pageIndex >= getTotalPages() - 1" (click)="goToPage(pageIndex + 1)">
+                  <mat-icon>chevron_right</mat-icon>
+                </button>
+              </div>
+              <div class="tb-iot-hub-pagination-size">
+                <span>{{ 'iot-hub.items-per-page' | translate }}:</span>
+                <mat-select [value]="pageSize" (selectionChange)="onPageSizeChange($event.value)" class="tb-iot-hub-page-size-select">
+                  @for (size of pageSizeOptions; track size) {
+                    <mat-option [value]="size">{{ size }}</mat-option>
+                  }
+                </mat-select>
+              </div>
+            </div>
+          }
+
+          <!-- Loading -->
+          @if (isLoading) {
+            <div class="absolute inset-0 backdrop-grayscale" style="background: rgba(255, 255, 255, 0.72)">
+              <div class="flex justify-center py-20">
+                <mat-spinner diameter="64"></mat-spinner>
+              </div>
+            </div>
+          }
         </div>
-      }
       </div>
     </mat-drawer-content>
   </mat-drawer-container>

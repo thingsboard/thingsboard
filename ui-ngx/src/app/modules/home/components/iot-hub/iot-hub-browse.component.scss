@@ -112,7 +112,8 @@
 }
 
 .tb-iot-hub-filters-wrapper {
-  position: absolute;
+  position: sticky;
+  max-height: calc(100vh - var(--mat-toolbar-standard-height, 64px));
   inset: 0;
   overflow-y: auto;
 }
@@ -146,10 +147,12 @@
   width: 60%;
   max-width: 550px;
   min-width: 300px;
-  margin-bottom: -48px;
-
-  .embedded & {
-    margin-bottom: 0;
+  &:not(.embedded &) {
+    position: fixed;
+    top: var(--mat-toolbar-standard-height, 64px);
+    @media #{$mat-xs} {
+      top: var(--mat-toolbar-mobile-height, 56px);
+    }
   }
 }
 

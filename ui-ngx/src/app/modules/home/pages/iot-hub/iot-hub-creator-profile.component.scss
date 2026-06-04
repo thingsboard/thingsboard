@@ -163,7 +163,7 @@ a.tb-creator-link:hover span {
       margin-right: -123px;
     }
 
-    .tb-search-categories {
+    .tb-results-container {
       padding-right: 123px;
       padding-bottom: 40px;
       margin-right: -123px;
@@ -203,7 +203,7 @@ a.tb-creator-link:hover span {
         margin-right: -40px;
       }
 
-      .tb-search-categories {
+      .tb-results-container {
         padding-right: 40px;
         margin-right: -40px;
       }
@@ -251,6 +251,7 @@ a.tb-creator-link:hover span {
 @media #{$mat-lt-lg} {
   :host {
     height: auto;
+    flex: 1;
   }
 
   .tb-creator-page {
@@ -273,7 +274,7 @@ a.tb-creator-link:hover span {
         margin-right: -24px;
       }
 
-      .tb-search-categories {
+      .tb-results-container {
         padding-right: 24px;
         margin-right: -24px;
       }
@@ -311,7 +312,7 @@ a.tb-creator-link:hover span {
         margin-right: -16px;
       }
 
-      .tb-search-categories {
+      .tb-results-container {
         padding-right: 16px;
         margin-right: -16px;
       }

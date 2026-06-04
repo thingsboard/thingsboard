@@ -20,7 +20,6 @@
 :host {
   display: flex;
   flex-direction: column;
-  gap: 40px;
 }
 
 .tb-search-results-count-mobile {
@@ -54,10 +53,11 @@
 
 // Results count + Pagination row
 .tb-search-pagination-row {
+  flex: 0 0 48px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: -28px;
+  margin-top: 12px;
 }
 
 .tb-search-results-count {
@@ -121,12 +121,6 @@
   }
 }
 
-// Loading / Empty negative margin
-.tb-search-loading,
-.tb-search-empty {
-  margin-top: -20px;
-}
-
 // Empty state no-data-bg + text
 .tb-search-empty {
   .tb-no-data-bg {
@@ -157,8 +151,15 @@
 .tb-search-divider {
   background: rgba(0, 0, 0, 0.12);
   height: 1px;
-  margin-bottom: -20px;
-  margin-top: -20px;
+  min-height: 1px;
+  margin-top: 20px;
+}
+
+.tb-results-container {
+  position: relative;
+  height: 100%;
+  padding-top: 20px;
+  overflow: auto;
 }
 
 // Categories / sections
@@ -166,9 +167,6 @@
   display: flex;
   flex-direction: column;
   gap: 48px;
-  margin-top: -20px;
-  overflow: auto;
-  padding-top: 20px;
 }
 
 // Section header
@@ -234,6 +232,7 @@
   .tb-search-pagination-row {
     flex-direction: column;
     align-items: flex-start;
+    justify-content: center;
     gap: 12px;
   }
 
