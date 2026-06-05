@@ -153,7 +153,25 @@
       }
     </div>
 
-    @if (!isLoading) {
+    @if (hasError) {
+      <div class="tb-iot-hub-empty-state flex flex-col items-center py-20 text-center">
+        <div class="tb-no-service-bg"></div>
+        <h3>{{ 'iot-hub.network-server-unavailable' | translate }}</h3>
+        <p>{{ 'iot-hub.network-server-unavailable-text' | translate }}</p>
+        <button mat-flat-button color="primary" (click)="retryLoadPopularItems()">
+          {{ 'iot-hub.try-again' | translate }}
+        </button>
+        @if (isLoading) {
+          <div class="absolute inset-0 backdrop-grayscale" style="background: rgba(255, 255, 255, 0.72)">
+            <div class="flex justify-center py-20">
+              <mat-spinner diameter="64"></mat-spinner>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    @if (!isLoading && !hasError) {
       @if (hasAnyPopularItems()) {
         <div class="tb-iot-hub-divider tb-iot-hub-divider-bleed"></div>
         <h2 class="tb-iot-hub-most-popular-title">{{ 'iot-hub.most-popular-in-iot-hub' | translate }}</h2>
@@ -299,7 +317,7 @@
       }
     }
 
-    @if (isLoading) {
+    @if (isLoading && !hasError) {
       <div class="flex justify-center py-20">
         <mat-spinner diameter="40"></mat-spinner>
       </div>
@@ -307,7 +325,7 @@
   </div>
 
   <!-- Become a Creator -->
-  @if (!isLoading) {
+  @if (!isLoading && !hasError) {
     <div class="tb-iot-hub-divider"></div>
     <div class="tb-iot-hub-become-creator">
       <h2>{{ 'iot-hub.become-a-creator' | translate }}</h2>

@@ -90,8 +90,20 @@
 <div class="relative min-h-0">
 
   <div class="tb-results-container">
+    <!-- Error -->
+    @if (hasError) {
+      <div class="tb-search-empty flex flex-col items-center py-10">
+        <div class="tb-no-service-bg"></div>
+        <h3>{{ 'iot-hub.network-server-unavailable' | translate }}</h3>
+        <p>{{ 'iot-hub.network-server-unavailable-text' | translate }}</p>
+        <button mat-flat-button color="primary" (click)="retryLoadResults()">
+          {{ 'iot-hub.try-again' | translate }}
+        </button>
+      </div>
+    }
+
     <!-- No results -->
-    @if (totalElements === 0 && searchText?.trim()) {
+    @if (!hasError && totalElements === 0 && searchText?.trim()) {
       <div class="tb-search-empty flex flex-col items-center py-10">
         <div class="tb-no-data-bg"></div>
         <h3>{{ 'iot-hub.no-items-found' | translate }}</h3>

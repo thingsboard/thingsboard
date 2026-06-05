@@ -424,7 +424,7 @@
 
 // Empty state text + no-data image
 .tb-iot-hub-empty-state {
-  .tb-no-data-bg {
+  .tb-no-data-bg, .tb-no-service-bg {
     flex: auto;
     height: 100px;
   }

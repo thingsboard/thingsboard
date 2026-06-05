@@ -410,11 +410,11 @@
           <!-- Error -->
           @if (hasError) {
             <div class="tb-iot-hub-empty-state flex flex-col items-center py-20 text-center">
-              <div class="tb-no-data-bg"></div>
-              <h3>{{ 'iot-hub.unable-to-load' | translate }}</h3>
-              <p>{{ 'iot-hub.unable-to-load-text' | translate }}</p>
-              <button mat-flat-button color="primary" (click)="loadItems()">
-                {{ 'iot-hub.retry' | translate }}
+              <div class="tb-no-service-bg"></div>
+              <h3>{{ 'iot-hub.network-server-unavailable' | translate }}</h3>
+              <p>{{ 'iot-hub.network-server-unavailable-text' | translate }}</p>
+              <button mat-flat-button color="primary" (click)="retryLoadItems()">
+                {{ 'iot-hub.try-again' | translate }}
               </button>
             </div>
           }

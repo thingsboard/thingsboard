@@ -134,6 +134,8 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
   installedItemsCount = 0;
 
   isLoading = true;
+  hasError = false;
+  private retryTimer: any = null;
 
   bigCardCount = 5;
   compactCardCount = 6;
@@ -444,7 +446,7 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
   }
 
   openSignup(): void {
-    window.open('https://iothub.thingsboard.io/signup', '_blank');
+    window.open(this.iotHubApiService.baseUrl + '/signup', '_blank');
   }
 
   private updateCardCounts(): void {
@@ -479,9 +481,32 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
     }
   }
 
+  retryLoadPopularItems(): void {
+    // Debounce frequent retry clicks: show the loading spinner
+    // immediately and defer the actual loadPopularItems() call by
+    // 350ms so rapid-fire clicks coalesce into a single request set.
+    // hasError stays as-is until the next request actually succeeds.
+    if (this.retryTimer != null) {
+      clearTimeout(this.retryTimer);
+    }
+    this.isLoading = true;
+    this.retryTimer = setTimeout(() => {
+      this.retryTimer = null;
+      this.loadPopularItems();
+    }, 350);
+  }
+
   private loadPopularItems(): void {
+    if (this.retryTimer != null) {
+      clearTimeout(this.retryTimer);
+      this.retryTimer = null;
+    }
+    this.isLoading = true;
+    // hasError is intentionally NOT reset here — the error UI stays
+    // visible until the next forkJoin actually succeeds (cleared in
+    // the `next` callback below).
     const sortOrder: SortOrder = { property: 'totalInstallCount', direction: Direction.DESC };
-    const config = { ignoreLoading: true };
+    const config = { ignoreLoading: true, ignoreErrors: true };
     const installedPageLink = new PageLink(10000, 0);
 
     const buildQuery = (type: ItemType, size: number): MpItemVersionQuery => {
@@ -519,9 +544,17 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
         this.installedRuleChainCounts = results.installedRuleChainCounts;
         this.installedItemsCount = results.installedCount;
         this.isLoading = false;
+        this.hasError = false;
       },
       error: () => {
         this.isLoading = false;
+        this.hasError = true;
+        this.popularWidgets = [];
+        this.popularSolutionTemplates = [];
+        this.popularCalcFields = [];
+        this.popularAlarmRules = [];
+        this.popularRuleChains = [];
+        this.popularDevices = [];
       }
     });
   }

@@ -113,6 +113,7 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
   isLoading = false;
   hasError = false;
   filterDrawerOpened = false;
+  private retryTimer: any = null;
 
   textSearch = '';
   _activeType: ItemType = ItemType.WIDGET;
@@ -676,9 +677,23 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
     });
   }
 
-  loadItems(): void {
+  retryLoadItems(): void {
+    if (this.retryTimer != null) {
+      clearTimeout(this.retryTimer);
+    }
     this.isLoading = true;
-    this.hasError = false;
+    this.retryTimer = setTimeout(() => {
+      this.retryTimer = null;
+      this.loadItems();
+    }, 350);
+  }
+
+  loadItems(): void {
+    if (this.retryTimer != null) {
+      clearTimeout(this.retryTimer);
+      this.retryTimer = null;
+    }
+    this.isLoading = true;
     const sort = this.sortOptions[this.selectedSortIndex];
     const sortOrder: SortOrder = { property: sort.value, direction: sort.direction };
     const pageLink = new PageLink(this.pageSize, this.pageIndex, this.textSearch || null, sortOrder);
@@ -702,6 +717,7 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
         this.items = data.data;
         this.totalElements = data.totalElements;
         this.isLoading = false;
+        this.hasError = false;
       },
       error: () => {
         this.isLoading = false;
