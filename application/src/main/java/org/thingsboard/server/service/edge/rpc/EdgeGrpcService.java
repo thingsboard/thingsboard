@@ -41,7 +41,6 @@ import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.transport.config.ssl.PemSslCredentials;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -58,6 +57,7 @@ import org.thingsboard.server.common.msg.edge.EdgeHighPriorityMsg;
 import org.thingsboard.server.common.msg.edge.EdgeSessionMsg;
 import org.thingsboard.server.common.msg.edge.FromEdgeSyncResponse;
 import org.thingsboard.server.common.msg.edge.ToEdgeSyncRequest;
+import org.thingsboard.server.common.transport.config.ssl.PemSslCredentials;
 import org.thingsboard.server.gen.edge.v1.EdgeRpcServiceGrpc;
 import org.thingsboard.server.gen.edge.v1.RequestMsg;
 import org.thingsboard.server.gen.edge.v1.ResponseMsg;
@@ -68,7 +68,6 @@ import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
-import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -103,6 +102,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private final ConcurrentMap<EdgeId, Lock> sessionNewEventsLocks = new ConcurrentHashMap<>();
     private final Map<EdgeId, Boolean> sessionNewEvents = new HashMap<>();
     private final ConcurrentMap<EdgeId, ScheduledFuture<?>> sessionEdgeEventChecks = new ConcurrentHashMap<>();
+    private final ConcurrentMap<EdgeId, ScheduledFuture<?>> pendingDisconnectNotifications = new ConcurrentHashMap<>();
     private final ConcurrentMap<UUID, Consumer<FromEdgeSyncResponse>> localSyncEdgeRequests = new ConcurrentHashMap<>();
     private final ConcurrentMap<EdgeId, Boolean> edgeEventsMigrationProcessed = new ConcurrentHashMap<>();
     private final List<EdgeGrpcSession> zombieSessions = new ArrayList<>();
@@ -135,6 +135,9 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
 
     @Value("${edges.max_high_priority_queue_size_per_session:10000}")
     private int maxHighPriorityQueueSizePerSession;
+
+    @Value("${edges.connectivity.disconnect_notification_delay_ms:60000}")
+    private long disconnectNotificationDelayMs;
 
     @Autowired
     @Lazy
@@ -239,6 +242,12 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                 sessionEdgeEventChecks.remove(edgeId);
             }
         }
+        pendingDisconnectNotifications.values().forEach(task -> {
+            if (task != null && !task.isDone()) {
+                task.cancel(false);
+            }
+        });
+        pendingDisconnectNotifications.clear();
         if (edgeEventProcessingExecutorService != null) {
             edgeEventProcessingExecutorService.shutdownNow();
         }
@@ -321,6 +330,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             } finally {
                 newEventLock.unlock();
             }
+            cancelPendingDisconnectNotification(edgeId);
             cancelScheduleEdgeEventsCheck(edgeId);
         }
     }
@@ -383,7 +393,11 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         long lastConnectTs = System.currentTimeMillis();
         save(tenantId, edgeId, LAST_CONNECT_TIME, lastConnectTs);
         edgeIdServiceIdCache.put(edgeId, serviceInfoProvider.getServiceId());
-        pushRuleEngineMessage(tenantId, edge, lastConnectTs, TbMsgType.CONNECT_EVENT);
+        // If the edge reconnected within the disconnect-notification delay window, suppress the pending
+        // "disconnected" notification - the drop was transient (debounce for flapping edges).
+        cancelPendingDisconnectNotification(edgeId);
+        pushStateEventToRuleEngine(tenantId, edge, lastConnectTs, TbMsgType.CONNECT_EVENT);
+        notifyEdgeConnectivity(tenantId, edge, true);
         cancelScheduleEdgeEventsCheck(edgeId);
         edgeEventsMigrationProcessed.putIfAbsent(edgeId, Boolean.FALSE);
         scheduleEdgeEventsCheck(edgeGrpcSession);
@@ -545,7 +559,8 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             save(tenantId, edgeId, ACTIVITY_STATE, false);
             long lastDisconnectTs = System.currentTimeMillis();
             save(tenantId, edgeId, LAST_DISCONNECT_TIME, lastDisconnectTs);
-            pushRuleEngineMessage(toRemove.getEdge().getTenantId(), edge, lastDisconnectTs, TbMsgType.DISCONNECT_EVENT);
+            pushStateEventToRuleEngine(toRemove.getEdge().getTenantId(), edge, lastDisconnectTs, TbMsgType.DISCONNECT_EVENT);
+            scheduleDisconnectNotification(tenantId, edge);
             cancelScheduleEdgeEventsCheck(edgeId);
         } else {
             log.info("[{}] edge session [{}] is not current anymore. Attempting to destroy it by sessionId.", edgeId, sessionId);
@@ -617,7 +632,33 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         }
     }
 
-    private void pushRuleEngineMessage(TenantId tenantId, Edge edge, long ts, TbMsgType msgType) {
+    private static class AttributeSaveCallback implements FutureCallback<Void> {
+
+        private final TenantId tenantId;
+        private final EdgeId edgeId;
+        private final String key;
+        private final Object value;
+
+        AttributeSaveCallback(TenantId tenantId, EdgeId edgeId, String key, Object value) {
+            this.tenantId = tenantId;
+            this.edgeId = edgeId;
+            this.key = key;
+            this.value = value;
+        }
+
+        @Override
+        public void onSuccess(@Nullable Void result) {
+            log.trace("[{}][{}] Successfully updated attribute [{}] with value [{}]", tenantId, edgeId, key, value);
+        }
+
+        @Override
+        public void onFailure(Throwable t) {
+            log.warn("[{}][{}] Failed to update attribute [{}] with value [{}]", tenantId, edgeId, key, value, t);
+        }
+
+    }
+
+    private void pushStateEventToRuleEngine(TenantId tenantId, Edge edge, long ts, TbMsgType msgType) {
         try {
             EdgeId edgeId = edge.getId();
             ObjectNode edgeState = JacksonUtil.newObjectNode();
@@ -629,12 +670,6 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                 edgeState.put(ACTIVITY_STATE, false);
                 edgeState.put(LAST_DISCONNECT_TIME, ts);
             }
-            ctx.getRuleProcessor().process(EdgeConnectionTrigger.builder()
-                    .tenantId(tenantId)
-                    .customerId(edge.getCustomerId())
-                    .edgeId(edgeId)
-                    .edgeName(edge.getName())
-                    .connected(isConnected).build());
             String data = JacksonUtil.toString(edgeState);
             TbMsgMetaData md = new TbMsgMetaData();
             if (!persistToTelemetry) {
@@ -652,6 +687,53 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             clusterService.pushMsgToRuleEngine(tenantId, edgeId, tbMsg, null);
         } catch (Exception e) {
             log.warn("[{}][{}] Failed to push {}", tenantId, edge.getId(), msgType, e);
+        }
+    }
+
+    private void notifyEdgeConnectivity(TenantId tenantId, Edge edge, boolean connected) {
+        try {
+            ctx.getRuleProcessor().process(EdgeConnectionTrigger.builder()
+                    .tenantId(tenantId)
+                    .customerId(edge.getCustomerId())
+                    .edgeId(edge.getId())
+                    .edgeName(edge.getName())
+                    .connected(connected).build());
+        } catch (Exception e) {
+            log.warn("[{}][{}] Failed to process edge connectivity notification (connected={})", tenantId, edge.getId(), connected, e);
+        }
+    }
+
+    private void scheduleDisconnectNotification(TenantId tenantId, Edge edge) {
+        if (disconnectNotificationDelayMs <= 0) {
+            notifyEdgeConnectivity(tenantId, edge, false);
+            return;
+        }
+        EdgeId edgeId = edge.getId();
+        pendingDisconnectNotifications.compute(edgeId, (id, existing) -> {
+            if (existing != null && !existing.isDone()) {
+                existing.cancel(false);
+            }
+            return executorService.schedule(() -> fireDelayedDisconnectNotification(tenantId, edge),
+                    disconnectNotificationDelayMs, TimeUnit.MILLISECONDS);
+        });
+    }
+
+    private void fireDelayedDisconnectNotification(TenantId tenantId, Edge edge) {
+        EdgeId edgeId = edge.getId();
+        pendingDisconnectNotifications.remove(edgeId);
+        // Re-verify the edge is still disconnected. The cache is cluster-wide, so this also covers the case
+        // where the edge dropped on this node and reconnected to a different TB-Core node within the window.
+        if (sessions.containsKey(edgeId) || edgeIdServiceIdCache.get(edgeId) != null) {
+            log.debug("[{}][{}] Edge reconnected within the disconnect notification delay - skipping disconnect notification", tenantId, edgeId);
+            return;
+        }
+        notifyEdgeConnectivity(tenantId, edge, false);
+    }
+
+    private void cancelPendingDisconnectNotification(EdgeId edgeId) {
+        ScheduledFuture<?> pending = pendingDisconnectNotifications.remove(edgeId);
+        if (pending != null && !pending.isDone()) {
+            pending.cancel(false);
         }
     }
 
