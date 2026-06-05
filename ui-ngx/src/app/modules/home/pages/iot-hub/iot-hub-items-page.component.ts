@@ -135,11 +135,20 @@ export class TbIotHubItemsPageComponent implements OnInit {
       return;
     }
     history.replaceState({ ...history.state, openItem: undefined }, '');
-    this.resolveInstalledItem(openItem.version).subscribe(installed => {
+
+    const isDevice = this.config.type === ItemType.DEVICE;
+    const resolution$: Observable<{ installed?: IotHubInstalledItem; count?: number }> = isDevice
+      ? this.iotHubApiService
+          .getInstalledItemCounts(ItemType.DEVICE, { ignoreLoading: true })
+          .pipe(map(counts => ({ count: counts[openItem.version.itemId] || 0 })))
+      : this.resolveInstalledItem(openItem.version)
+          .pipe(map(installed => ({ installed: installed ?? undefined })));
+
+    resolution$.subscribe(({ installed, count }) => {
       this.iotHubActions.openItemDetail(
         openItem.version,
-        installed ?? undefined,
-        installed ? 1 : 0,
+        installed,
+        count,
         'default',
         true,
         openItem.preview
