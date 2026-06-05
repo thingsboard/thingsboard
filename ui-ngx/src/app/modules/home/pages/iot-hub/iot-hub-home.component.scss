@@ -542,6 +542,28 @@
   margin: 0;
 }
 
+.tb-iot-hub-empty-state {
+  position: relative;
+  .tb-no-data-bg,
+  .tb-no-service-bg {
+    flex: auto;
+    height: 100px;
+  }
+
+  h3 {
+    font-size: 18px;
+    font-weight: 500;
+    color: rgba(0, 0, 0, 0.87);
+    margin: 16px 0 8px;
+  }
+
+  p {
+    font-size: 14px;
+    color: rgba(0, 0, 0, 0.54);
+    margin: 0 0 24px;
+  }
+}
+
 // Sections — inside main-content, no individual padding needed
 .tb-iot-hub-section {
 }

@@ -26,7 +26,7 @@ import {
   widgetType,
   WidgetTypeInfo
 } from '@shared/models/widget.models';
-import { debounceTime, distinctUntilChanged, map, skip, switchMap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, map, skip } from 'rxjs/operators';
 import { BehaviorSubject, combineLatest, forkJoin, of } from 'rxjs';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
@@ -780,21 +780,17 @@ export class DashboardWidgetSelectComponent {
   }
 
   private fetchInstalledWidgetVersions() {
-    const itemIds = (this.installedWidgets || []).map(i => i.itemId);
-    if (itemIds.length === 0) {
+    const versionIds = (this.installedWidgets || [])
+      .map(i => i.itemVersionId)
+      .filter(id => !!id);
+    if (versionIds.length === 0) {
       this.installedWidgetVersions = [];
       return of([]);
     }
-    return this.iotHubApiService.getItemsPublishedVersions(itemIds, { ignoreLoading: true }).pipe(
-      switchMap(infos => {
-        if (infos.length === 0) {
-          return of([]);
-        }
-        const versionRequests = infos.map(info =>
-          this.iotHubApiService.getVersionInfo(info.publishedVersionId, { ignoreLoading: true })
-        );
-        return forkJoin(versionRequests);
-      }),
+    const versionRequests = versionIds.map(id =>
+      this.iotHubApiService.getVersionInfo(id, { ignoreLoading: true })
+    );
+    return forkJoin(versionRequests).pipe(
       map(versions => {
         this.installedWidgetVersions = versions.sort((a, b) => b.totalInstallCount - a.totalInstallCount);
         return this.installedWidgetVersions;

@@ -16,7 +16,24 @@
 
 -->
 <div class="tb-creator-page">
-  @if (creator) {
+  @if (hasError) {
+    <div class="tb-iot-hub-empty-state flex flex-1 flex-col items-center justify-center py-20 text-center">
+      <div class="tb-no-service-bg"></div>
+      <h3>{{ 'iot-hub.network-server-unavailable' | translate }}</h3>
+      <p>{{ 'iot-hub.network-server-unavailable-text' | translate }}</p>
+      <button mat-flat-button color="primary" (click)="retryLoadCreator()">
+        {{ 'iot-hub.try-again' | translate }}
+      </button>
+      @if (isLoading) {
+        <div class="absolute inset-0 flex items-center justify-center backdrop-grayscale" style="background: rgba(255, 255, 255, 0.72)">
+          <div class="flex justify-center py-20">
+            <mat-spinner diameter="64"></mat-spinner>
+          </div>
+        </div>
+      }
+    </div>
+  }
+  @if (creator && !hasError) {
     <!-- Left: creator info -->
     <div class="tb-creator-info">
         <!-- Back link -->

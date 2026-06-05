@@ -131,7 +131,7 @@
     padding: 8px;
     border: 1px solid rgba(0, 0, 0, 0.05);
     border-radius: 10px;
-    background: white;
+    background: radial-gradient(circle, rgba(0, 0, 0, 0.06) 1px, transparent 1px) 0 0 / 16px 16px rgba(0, 0, 0, 0.04);
     overflow: hidden;
     transition: border-color 0.15s, box-shadow 0.15s;
     @media #{$mat-md-lg} {
@@ -142,13 +142,6 @@
       max-height: 100%;
       object-fit: contain;
     }
-  }
-
-  // Dot pattern used for solution template preview cards
-  .tb-iot-hub-widget-card-image-pattern {
-    background:
-      radial-gradient(circle, rgba(0, 0, 0, 0.06) 1px, transparent 1px) 0 0 / 15px 15px,
-      rgba(0, 0, 0, 0.04);
   }
 
   // Installed badge — green circle + check icon, top-right corner
