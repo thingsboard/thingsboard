@@ -162,25 +162,24 @@ public class AlarmCommentControllerTest extends AbstractControllerTest {
 
     @Test
     public void testUpdateOthersAlarmCommentByTenantAdmin() throws Exception {
-        // Tenant admins are NOT exempt from the ownership rule — even with full tenant-level
-        // privileges they cannot rewrite a comment authored by a different user.
+        // Tenant admins may moderate comments authored by other users — the ownership rule
+        // applies only to non-admin users, so a tenant admin can edit someone else's comment.
         loginCustomerUser();
         AlarmComment alarmComment = createAlarmComment(alarm.getId());
 
         loginTenantAdmin();
         Mockito.reset(tbClusterService, auditLogService);
 
-        JsonNode newComment = JacksonUtil.newObjectNode().set("text", new TextNode("Tenant rewrite attempt"));
+        JsonNode newComment = JacksonUtil.newObjectNode().set("text", new TextNode("Tenant rewrite"));
         alarmComment.setComment(newComment);
-        // Simulate the real attack: the attacker controls the request body and would omit (or spoof)
-        // the userId. Ownership must be enforced against the persisted comment, not the body.
-        alarmComment.setUserId(null);
+        AlarmComment updatedAlarmComment = saveAlarmComment(alarm.getId(), alarmComment);
 
-        doPost("/api/alarm/" + alarm.getId() + "/comment", alarmComment)
-                .andExpect(status().isForbidden())
-                .andExpect(statusReason(containsString("User is not allowed to edit other user's comment")));
+        Assert.assertNotNull(updatedAlarmComment);
+        Assert.assertEquals(newComment.get("text"), updatedAlarmComment.getComment().get("text"));
+        Assert.assertEquals("true", updatedAlarmComment.getComment().get("edited").asText());
+        Assert.assertNotNull(updatedAlarmComment.getComment().get("editedOn"));
 
-        testNotifyEntityNever(alarm.getId(), alarmComment);
+        testLogEntityActionEntityEqClass(alarm, alarm.getId(), tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.UPDATED_COMMENT, 1, updatedAlarmComment);
     }
 
     @Test
@@ -240,8 +239,8 @@ public class AlarmCommentControllerTest extends AbstractControllerTest {
 
     @Test
     public void testDeleteOthersAlarmCommentByTenantAdmin() throws Exception {
-        // Tenant admins are NOT exempt from the ownership rule on delete either — even with full
-        // tenant-level privileges they cannot delete a comment authored by a different user.
+        // Tenant admins may moderate comments authored by other users — the ownership rule
+        // applies only to non-admin users, so a tenant admin can delete someone else's comment.
         loginCustomerUser();
         AlarmComment alarmComment = createAlarmComment(alarm.getId());
 
@@ -249,10 +248,15 @@ public class AlarmCommentControllerTest extends AbstractControllerTest {
         Mockito.reset(tbClusterService, auditLogService);
 
         doDelete("/api/alarm/" + alarm.getId() + "/comment/" + alarmComment.getId())
-                .andExpect(status().isForbidden())
-                .andExpect(statusReason(containsString("User is not allowed to delete other user's comment")));
+                .andExpect(status().isOk());
 
-        testNotifyEntityNever(alarm.getId(), alarmComment);
+        AlarmComment expectedAlarmComment = AlarmComment.builder()
+                .alarmId(alarm.getId())
+                .type(AlarmCommentType.SYSTEM)
+                .comment(JacksonUtil.newObjectNode().put("text", String.format("User %s deleted his comment",
+                        TENANT_ADMIN_EMAIL)))
+                .build();
+        testLogEntityActionEntityEqClass(alarm, alarm.getId(), tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.DELETED_COMMENT, 1, expectedAlarmComment);
     }
 
     @Test

@@ -130,6 +130,9 @@ public class AlarmCommentController extends BaseController {
     }
 
     private void checkUserCommentOwnership(AlarmComment alarmComment, Operation operation, SecurityUser securityUser) throws ThingsboardException {
+        if (securityUser.isTenantAdmin()) {
+            return;
+        }
         if (alarmComment.getUserId() != null && !alarmComment.getUserId().equals(securityUser.getId())) {
             throw new ThingsboardException("User is not allowed to " + (operation == Operation.DELETE ? "delete" : "edit") + " other user's comment",
                     ThingsboardErrorCode.PERMISSION_DENIED);
