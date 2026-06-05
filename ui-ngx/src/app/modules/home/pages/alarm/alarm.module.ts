@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -20,9 +20,12 @@ import { SharedModule } from '@shared/shared.module';
 import { HomeDialogsModule } from '../../dialogs/home-dialogs.module';
 import { HomeComponentsModule } from '@modules/home/components/home-components.module';
 import { AlarmRoutingModule } from '@home/pages/alarm/alarm-routing.module';
+import { AlarmRulesTabsComponent } from '@home/pages/alarm/alarm-rules-tabs.component';
 
 @NgModule({
-  declarations: [],
+  declarations: [
+    AlarmRulesTabsComponent
+  ],
   imports: [
     CommonModule,
     SharedModule,

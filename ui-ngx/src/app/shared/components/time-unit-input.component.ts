@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -39,17 +39,18 @@ interface TimeUnitInputModel {
 }
 
 @Component({
-  selector: 'tb-time-unit-input',
-  templateUrl: './time-unit-input.component.html',
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => TimeUnitInputComponent),
-    multi: true
-  },{
-    provide: NG_VALIDATORS,
-    useExisting: forwardRef(() => TimeUnitInputComponent),
-    multi: true
-  }]
+    selector: 'tb-time-unit-input',
+    templateUrl: './time-unit-input.component.html',
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TimeUnitInputComponent),
+            multi: true
+        }, {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => TimeUnitInputComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class TimeUnitInputComponent implements ControlValueAccessor, Validator, OnInit, OnChanges {
 
@@ -120,6 +121,8 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
     [TimeUnit.SECONDS, SECOND/SECOND],
   ]);
 
+  minValueValidator = 0;
+
   private modelValue: number;
 
   private propagateChange: (value: any) => void = () => {};
@@ -132,35 +135,13 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
     if (isDefinedAndNotNull(this.maxTime)) {
       this.updatedAllowTimeUnitInterval(this.maxTime);
     }
-    if (this.required || this.maxTime || isDefinedAndNotNull(this.minTime) || this.stepMultipleOf) {
-      const timeControl = this.timeInputForm.get('time');
-      const validators = [Validators.pattern(/^\d*$/)];
-      if (this.required) {
-        validators.push(Validators.required);
-      }
-      if (this.maxTime) {
-        validators.push((control: AbstractControl) =>
-          Validators.max(Math.floor(this.maxTime / this.timeIntervalsInSec.get(this.timeInputForm.get('timeUnit').value)))(control)
-        );
-      }
-      if (isDefinedAndNotNull(this.minTime)) {
-        validators.push((control: AbstractControl) =>
-          Validators.min(Math.ceil(this.minTime / this.timeIntervalsInSec.get(this.timeInputForm.get('timeUnit').value)))(control)
-        );
-      }
 
-      if (isDefinedAndNotNull(this.stepMultipleOf) && this.stepMultipleOf > 0) {
-        validators.push(this.createStepMultipleOfValidator());
-      }
-
-      timeControl.setValidators(validators);
-      timeControl.updateValueAndValidity({ emitEvent: false });
-    }
+    this.refreshTimeValidators();
 
     this.timeInputForm.get('timeUnit').valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => {
-      this.timeInputForm.get('time').updateValueAndValidity({onlySelf: true});
+      this.refreshTimeValidators();
       this.timeInputForm.get('time').markAsTouched({onlySelf: true});
     });
 
@@ -169,6 +150,10 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
     ).subscribe(value => {
       this.updatedModel(value);
     });
+  }
+
+  get minValue(): number {
+    return Math.ceil(this.minTime / this.timeIntervalsInSec.get(this.timeInputForm.get('timeUnit').value));
   }
 
   get hasError(): string {
@@ -191,8 +176,10 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
           if (isDefinedAndNotNull(this.maxTime)) {
             this.timeUnits = Object.values(TimeUnit).filter(item => item !== TimeUnit.MILLISECONDS) as TimeUnit[];
             this.updatedAllowTimeUnitInterval(this.maxTime);
-            this.timeInputForm.get('time').updateValueAndValidity({emitEvent: false});
           }
+        }
+        if (['minTime', 'maxTime', 'required', 'stepMultipleOf'].includes(propName)) {
+          this.refreshTimeValidators();
         }
       }
     }
@@ -219,7 +206,7 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
   writeValue(sec: number) {
     if (sec !== this.modelValue) {
       if (isDefinedAndNotNull(sec) && isNumeric(sec) && Number(sec) !== 0) {
-        this.timeInputForm.patchValue(this.parseTime(sec), {emitEvent: false});
+        this.timeInputForm.patchValue(this.parseTime(sec), {emitEvent: true});
         this.modelValue = sec;
       } else {
         this.timeInputForm.patchValue({
@@ -299,4 +286,38 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
     }
   }
 
+  private refreshTimeValidators() {
+    const timeControl = this.timeInputForm.get('time');
+    if (!timeControl) return;
+
+    const currentUnit = this.timeInputForm.get('timeUnit')?.value as TimeUnit;
+    if (!currentUnit) return;
+
+    const secondsInUnit = this.timeIntervalsInSec.get(currentUnit) ?? 1;
+    const validators: ValidatorFn[] = [Validators.pattern(/^\d*$/)];
+
+    if (this.required) {
+      validators.push(Validators.required);
+    }
+
+    if (isDefinedAndNotNull(this.minTime)) {
+      this.minValueValidator = Math.ceil(this.minTime / secondsInUnit);
+      validators.push(Validators.min(this.minValueValidator));
+    } else {
+      this.minValueValidator = 0;
+      validators.push(Validators.min(this.minValueValidator));
+    }
+
+    if (isDefinedAndNotNull(this.maxTime)) {
+      const maxInCurrentUnit = Math.floor(this.maxTime / secondsInUnit);
+      validators.push(Validators.max(maxInCurrentUnit));
+    }
+
+    if (isDefinedAndNotNull(this.stepMultipleOf) && this.stepMultipleOf > 0) {
+      validators.push(this.createStepMultipleOfValidator());
+    }
+
+    timeControl.setValidators(validators);
+    timeControl.updateValueAndValidity({ onlySelf: true, emitEvent: false });
+  }
 }

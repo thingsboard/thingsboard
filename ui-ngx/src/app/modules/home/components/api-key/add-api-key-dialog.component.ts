@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -29,9 +29,10 @@ import { ApiKeysTableDialogData } from '@home/components/api-key/api-keys-table-
 import { DAY } from '@shared/models/time/time.models';
 
 @Component({
-  selector: 'tb-add-api-key-dialog',
-  templateUrl: './add-api-key-dialog.component.html',
-  styleUrls: ['./add-api-key-dialog.component.scss']
+    selector: 'tb-add-api-key-dialog',
+    templateUrl: './add-api-key-dialog.component.html',
+    styleUrls: ['./add-api-key-dialog.component.scss'],
+    standalone: false
 })
 export class AddApiKeyDialogComponent extends DialogComponent<AddApiKeyDialogComponent, ApiKeyInfo | string> {
 

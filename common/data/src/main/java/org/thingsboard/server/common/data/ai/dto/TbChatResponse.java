@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,17 @@ package org.thingsboard.server.common.data.ai.dto;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+@Schema(
+        description = "Response from chat API",
+        discriminatorProperty = "status",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "SUCCESS", schema = TbChatResponse.Success.class),
+                @DiscriminatorMapping(value = "FAILURE", schema = TbChatResponse.Failure.class)
+        }
+)
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         property = "status",
@@ -33,7 +42,8 @@ public sealed interface TbChatResponse permits TbChatResponse.Success, TbChatRes
 
     @Schema(
             description = "Indicates whether the request was successful or not",
-            example = "SUCCESS"
+            example = "SUCCESS",
+            requiredMode = Schema.RequiredMode.REQUIRED
     )
     String getStatus();
 

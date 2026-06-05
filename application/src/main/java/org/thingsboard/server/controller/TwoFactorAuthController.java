@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -99,7 +100,7 @@ public class TwoFactorAuthController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Get available 2FA providers (getAvailableTwoFaProviders)", notes =
+    @ApiOperation(value = "Get available 2FA providers (getAvailableTwoFaProviderInfos)", notes =
             "Get the list of 2FA provider infos available for user to use. Example:\n" +
             "```\n[\n" +
             "  {\n    \"type\": \"EMAIL\",\n    \"default\": true,\n    \"contact\": \"ab*****ko@gmail.com\"\n  },\n" +
@@ -108,7 +109,7 @@ public class TwoFactorAuthController extends BaseController {
             "]\n```")
     @GetMapping("/providers")
     @PreAuthorize("hasAuthority('PRE_VERIFICATION_TOKEN')")
-    public List<TwoFaProviderInfo> getAvailableTwoFaProviders() throws ThingsboardException {
+    public List<TwoFaProviderInfo> getAvailableTwoFaProviderInfos() throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         Optional<PlatformTwoFaSettings> platformTwoFaSettings = twoFaConfigManager.getPlatformTwoFaSettings(user.getTenantId(), true);
         return twoFaConfigManager.getAccountTwoFaSettings(user.getTenantId(), user)
@@ -166,6 +167,7 @@ public class TwoFactorAuthController extends BaseController {
     @Builder
     public static class TwoFaProviderInfo {
         private TwoFaProviderType type;
+        @JsonProperty("default")
         private boolean isDefault;
         private String contact;
         private Integer minVerificationCodeSendPeriod;

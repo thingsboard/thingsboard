@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,7 +16,8 @@
 
 -->
 <ng-content class="tb-hint-tooltip-content"></ng-content>
-<tb-icon class="tb-hint-tooltip-icon tb-mat-18"
-         *ngIf="tooltipText"
-         matTooltip="{{ tooltipText }}"
-         [matTooltipPosition]="tooltipPosition">{{ hintIcon }}</tb-icon>
+@if (tooltipText) {
+  <tb-icon class="tb-hint-tooltip-icon tb-mat-18"
+           matTooltip="{{ tooltipText }}"
+  [matTooltipPosition]="tooltipPosition">{{ hintIcon }}</tb-icon>
+}

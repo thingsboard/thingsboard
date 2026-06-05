@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -62,19 +62,23 @@ import {
 export interface TimewindowConfigDialogData {
   quickIntervalOnly: boolean;
   aggregation: boolean;
+  showSaveAsDefault: boolean;
   timewindow: Timewindow;
 }
 
 @Component({
-  selector: 'tb-timewindow-config-dialog',
-  templateUrl: './timewindow-config-dialog.component.html',
-  styleUrls: ['./timewindow-config-dialog.component.scss', './timewindow-form.scss']
+    selector: 'tb-timewindow-config-dialog',
+    templateUrl: './timewindow-config-dialog.component.html',
+    styleUrls: ['./timewindow-config-dialog.component.scss', './timewindow-form.scss'],
+    standalone: false
 })
 export class TimewindowConfigDialogComponent extends PageComponent implements OnInit, OnDestroy {
 
   quickIntervalOnly = false;
 
   aggregation = false;
+
+  showSaveAsDefault = false;
 
   timewindowForm: FormGroup;
 
@@ -140,6 +144,7 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
     super(store);
     this.quickIntervalOnly = data.quickIntervalOnly;
     this.aggregation = data.aggregation;
+    this.showSaveAsDefault = data.showSaveAsDefault;
     this.timewindow = data.timewindow;
 
     if (!this.quickIntervalOnly) {
@@ -160,7 +165,9 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
     this.timewindowForm = this.fb.group({
       selectedTab: [isDefined(this.timewindow.selectedTab) ? this.timewindow.selectedTab : TimewindowType.REALTIME],
       realtime: this.fb.group({
-        realtimeType: [ isDefined(realtime?.realtimeType) ? realtime.realtimeType : RealtimeWindowType.LAST_INTERVAL ],
+        realtimeType: [ this.quickIntervalOnly
+          ? RealtimeWindowType.INTERVAL
+          : (isDefined(realtime?.realtimeType) ? realtime.realtimeType : RealtimeWindowType.LAST_INTERVAL) ],
         timewindowMs: [ isDefined(realtime?.timewindowMs) ? realtime.timewindowMs : null ],
         interval: [ isDefined(realtime?.interval) ? realtime.interval : null ],
         quickInterval: [ isDefined(realtime?.quickInterval) ? realtime.quickInterval : null ],
@@ -241,7 +248,9 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
       hideAggInterval: [ isDefinedAndNotNull(this.timewindow.hideAggInterval)
                       ? this.timewindow.hideAggInterval : false ],
       hideTimezone: [ isDefinedAndNotNull(this.timewindow.hideTimezone)
-                      ? this.timewindow.hideTimezone : false ]
+                      ? this.timewindow.hideTimezone : false ],
+      hideSaveAsDefault: [ isDefinedAndNotNull(this.timewindow.hideSaveAsDefault)
+        ? this.timewindow.hideSaveAsDefault : false ],
     });
     this.updateValidators(this.timewindowForm.get('aggregation.type').value);
 
@@ -423,11 +432,6 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
       realtimeDisableCustomInterval, historyDisableCustomInterval,
       timewindowFormValue.realtime.advancedParams, timewindowFormValue.history.advancedParams,
       this.realtimeTimewindowOptions, this.historyTimewindowOptions);
-    this.timewindowForm.patchValue({
-      hideAggregation: timewindowFormValue.hideAggregation,
-      hideAggInterval: timewindowFormValue.hideAggInterval,
-      hideTimezone: timewindowFormValue.hideTimezone
-    });
   }
 
   update() {

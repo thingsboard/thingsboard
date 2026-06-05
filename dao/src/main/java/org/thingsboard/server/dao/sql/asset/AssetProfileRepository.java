@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,5 +86,11 @@ public interface AssetProfileRepository extends JpaRepository<AssetProfileEntity
     @Query("SELECT new org.thingsboard.server.common.data.edqs.fields.AssetProfileFields(a.id, a.createdTime, a.tenantId," +
             "a.name, a.version, a.isDefault) FROM AssetProfileEntity a WHERE a.id > :id ORDER BY a.id")
     List<AssetProfileFields> findNextBatch(@Param("id") UUID id, Limit limit);
+
+    @Query("SELECT new org.thingsboard.server.common.data.asset.AssetProfileInfo(a.id, a.tenantId, a.name, a.image, a.defaultDashboardId) " +
+            "FROM AssetProfileEntity a WHERE " +
+            "a.tenantId = :tenantId AND a.id IN :assetProfileIds")
+    List<AssetProfileInfo> findAssetProfileInfosByTenantIdAndIdIn(@Param("tenantId") UUID tenantId,
+                                                                  @Param("assetProfileIds") List<UUID> assetProfileIds);
 
 }

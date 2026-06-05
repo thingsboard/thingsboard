@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package org.thingsboard.server.cache;
 import org.springframework.data.redis.serializer.SerializationException;
 import org.thingsboard.common.util.JacksonUtil;
 
+import java.io.IOException;
+
 public class TbJsonRedisSerializer<K, V> implements TbRedisSerializer<K, V> {
 
     private final Class<V> clazz;
@@ -33,6 +35,13 @@ public class TbJsonRedisSerializer<K, V> implements TbRedisSerializer<K, V> {
 
     @Override
     public V deserialize(K key, byte[] bytes) throws SerializationException {
-        return JacksonUtil.fromBytes(bytes, clazz);
+        if (bytes == null) {
+            return null;
+        }
+        try {
+            return JacksonUtil.IGNORE_UNKNOWN_PROPERTIES_JSON_MAPPER.readValue(bytes, clazz);
+        } catch (IOException e) {
+            throw new SerializationException("Failed to deserialize cached value", e);
+        }
     }
 }

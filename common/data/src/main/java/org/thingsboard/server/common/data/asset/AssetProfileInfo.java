@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import lombok.ToString;
 import lombok.Value;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -64,6 +65,12 @@ public class AssetProfileInfo extends EntityInfo {
 
     public AssetProfileInfo(AssetProfile profile) {
         this(profile.getId(), profile.getTenantId(), profile.getName(), profile.getImage(), profile.getDefaultDashboardId());
+    }
+
+    @Override
+    @Schema(implementation = AssetProfileId.class, description = "JSON object with the Asset Profile Id.")
+    public EntityId getId() {
+        return super.getId();
     }
 
 }

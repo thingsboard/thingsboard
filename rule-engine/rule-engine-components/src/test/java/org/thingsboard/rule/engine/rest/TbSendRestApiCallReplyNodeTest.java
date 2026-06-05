@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ public class TbSendRestApiCallReplyNodeTest {
 
     private TbSendRestApiCallReplyNode node;
     private TbSendRestApiCallReplyNodeConfiguration config;
-    
+
     @Mock
     private TbContext ctxMock;
     @Mock
@@ -140,4 +140,5 @@ public class TbSendRestApiCallReplyNodeTest {
                         TbMsg.EMPTY_STRING, "Request body is empty!")
         );
     }
+
 }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,38 +14,37 @@
 /// limitations under the License.
 ///
 
-import {
-  Component,
-  Input,
-  forwardRef,
-  OnInit,
-  ViewChild,
-  ElementRef
-} from '@angular/core';
+import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
 import {
   ControlValueAccessor,
-  NG_VALUE_ACCESSOR,
+  FormBuilder,
   FormControl,
-  Validators,
-  FormBuilder
+  NG_VALUE_ACCESSOR,
+  ValidatorFn,
+  Validators
 } from '@angular/forms';
 import { Observable, of } from 'rxjs';
-import { tap, map, switchMap, take } from 'rxjs/operators';
+import { map, switchMap, take, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 
+export interface ErrorMessageConfig {
+  [errorKey: string]: string;
+}
+
 @Component({
-  selector: 'tb-string-autocomplete',
-  templateUrl: './string-autocomplete.component.html',
-  styleUrls: ['./string-autocomplete.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => StringAutocompleteComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-string-autocomplete',
+    templateUrl: './string-autocomplete.component.html',
+    styleUrls: ['./string-autocomplete.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => StringAutocompleteComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class StringAutocompleteComponent implements ControlValueAccessor, OnInit {
 
@@ -86,6 +85,12 @@ export class StringAutocompleteComponent implements ControlValueAccessor, OnInit
   errorText: string;
 
   @Input()
+  controlValidators: ValidatorFn[] = [];
+
+  @Input()
+  errorMessages: ErrorMessageConfig;
+
+  @Input()
   @coerceBoolean()
   showInlineError = false;
 
@@ -107,7 +112,13 @@ export class StringAutocompleteComponent implements ControlValueAccessor, OnInit
 
   ngOnInit() {
     const validators = [Validators.pattern(/.*\S.*/)];
-    if (this.required) {
+    if (this.controlValidators?.length) {
+     validators.push(...this.controlValidators);
+      const parentHasRequired = this.controlValidators.some(v => v === Validators.required);
+      if (this.required && !parentHasRequired) {
+        validators.push(Validators.required);
+      }
+    } else if (this.required) {
       validators.push(Validators.required);
     }
     this.selectionFormControl = this.fb.control('', validators);
@@ -183,5 +194,19 @@ export class StringAutocompleteComponent implements ControlValueAccessor, OnInit
       this.nameInput.nativeElement.blur();
       this.nameInput.nativeElement.focus();
     }, 0);
+  }
+
+  get getErrorMessage(): string {
+    if (!this.selectionFormControl.errors) {
+      return '';
+    }
+    if (this.errorMessages) {
+      for (const errorKey in this.selectionFormControl.errors) {
+        if (this.errorMessages[errorKey]) {
+          return this.errorMessages[errorKey];
+        }
+      }
+    }
+    return this.errorText;
   }
 }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -37,17 +37,9 @@ import { DataKey, WidgetActionDescriptor, WidgetConfig } from '@shared/models/wi
 import { IWidgetSubscription } from '@core/api/widget-api.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import {
-  deepClone,
-  hashCode,
-  isDefined,
-  isDefinedAndNotNull,
-  isNotEmptyStr,
-  isObject,
-  isUndefined
-} from '@core/utils';
+import { deepClone, hashCode, isDefined, isDefinedAndNotNull, isNotEmptyStr, isObject, isUndefined } from '@core/utils';
 import cssjs from '@core/css/css';
-import { sortItems } from '@shared/models/page/page-link';
+import { SortColumnType, sortItems } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
 import { CollectionViewer, DataSource, SelectionModel } from '@angular/cdk/collections';
 import { BehaviorSubject, forkJoin, fromEvent, merge, Observable, of, Subject, Subscription } from 'rxjs';
@@ -118,6 +110,7 @@ import {
   dataKeyToEntityKey,
   dataKeyTypeToEntityKeyType,
   entityDataPageLinkSortDirection,
+  EntityKeyType,
   KeyFilter
 } from '@app/shared/models/query/query.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
@@ -166,9 +159,10 @@ interface AlarmWidgetActionDescriptor extends TableCellButtonActionDescriptor {
 }
 
 @Component({
-  selector: 'tb-alarms-table-widget',
-  templateUrl: './alarms-table-widget.component.html',
-  styleUrls: ['./alarms-table-widget.component.scss', './../table-widget.scss']
+    selector: 'tb-alarms-table-widget',
+    templateUrl: './alarms-table-widget.component.html',
+    styleUrls: ['./alarms-table-widget.component.scss', './../table-widget.scss'],
+    standalone: false
 })
 export class AlarmsTableWidgetComponent extends PageComponent implements OnInit, OnDestroy, AfterViewInit {
 
@@ -450,7 +444,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     if (this.subscription.alarmSource) {
       this.subscription.alarmSource.dataKeys.forEach((alarmDataKey) => {
         const dataKey: EntityColumn = deepClone(alarmDataKey) as EntityColumn;
-        const keySettings: TableWidgetDataKeySettings = dataKey.settings;
+        const keySettings: TableWidgetDataKeySettings = dataKey.settings ?? {};
         dataKey.entityKey = dataKeyToEntityKey(alarmDataKey);
         dataKey.label = this.utils.customTranslation(dataKey.label, dataKey.label);
         dataKey.title = getHeaderTitle(dataKey, keySettings, this.utils);
@@ -729,8 +723,12 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       this.pageLink.sortOrder = null;
     }
     const sortOrderLabel = fromEntityColumnDef(this.sort.active, this.columns);
+    const sortColumnType: SortColumnType = key
+      ? (key.type === EntityKeyType.ENTITY_FIELD || key.type === EntityKeyType.ALARM_FIELD ? 'entityField'
+         : key.type === EntityKeyType.TIME_SERIES ? 'timeseries' : 'attribute')
+      : 'entityField';
     const keyFilters: KeyFilter[] = null; // TODO:
-    this.alarmsDatasource.loadAlarms(this.pageLink, sortOrderLabel, keyFilters);
+    this.alarmsDatasource.loadAlarms(this.pageLink, sortOrderLabel, sortColumnType, keyFilters);
     this.ctx.detectChanges();
   }
 
@@ -976,7 +974,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       (AlarmDetailsDialogComponent,
         {
           disableClose: true,
-          panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+          panelClass: ['tb-dialog', 'tb-fullscreen-dialog', this.ctx.stateController.dashboardCtrl.dashboardCtx.dashboardCssClass, this.ctx.widgetCssClass],
           data: {
             alarmId: alarm.id.id,
             allowAcknowledgment: this.allowAcknowledgment,
@@ -1258,6 +1256,7 @@ class AlarmsDatasource implements DataSource<AlarmDataInfo> {
 
   private appliedPageLink: AlarmDataPageLink;
   private appliedSortOrderLabel: string;
+  private appliedSortColumnType: SortColumnType = 'entityField';
 
   private reserveSpaceForHiddenAction = true;
   private cellButtonActions: TableCellButtonActionDescriptor[];
@@ -1296,11 +1295,13 @@ class AlarmsDatasource implements DataSource<AlarmDataInfo> {
     this.pageDataSubject.complete();
   }
 
-  loadAlarms(pageLink: AlarmDataPageLink, sortOrderLabel: string, keyFilters: KeyFilter[]) {
+  loadAlarms(pageLink: AlarmDataPageLink, sortOrderLabel: string,
+             sortColumnType: SortColumnType, keyFilters: KeyFilter[]) {
     this.dataLoading = true;
     // this.clear();
     this.appliedPageLink = pageLink;
     this.appliedSortOrderLabel = sortOrderLabel;
+    this.appliedSortColumnType = sortColumnType;
     this.subscription.subscribeForAlarms(pageLink, keyFilters);
   }
 
@@ -1332,7 +1333,7 @@ class AlarmsDatasource implements DataSource<AlarmDataInfo> {
       }
       if (this.appliedSortOrderLabel && this.appliedSortOrderLabel.length) {
         const asc = this.appliedPageLink.sortOrder.direction === Direction.ASC;
-        alarms = alarms.sort((a, b) => sortItems(a, b, this.appliedSortOrderLabel, asc));
+        alarms = alarms.sort((a, b) => sortItems(a, b, this.appliedSortOrderLabel, asc, this.appliedSortColumnType));
       }
       if (this.selection.hasValue()) {
         const alarmIds = alarms.map((alarm) => alarm.id.id);

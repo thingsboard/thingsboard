@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -110,7 +110,7 @@
                       matTooltip="{{ 'calculated-fields.test-script-function' | translate }}"
                       matTooltipPosition="above"
                       class="tb-mat-32"
-                      [disabled]="!arguments.length"
+                      [disabled]="!arguments.length || readonly"
                       (click)="onTestScript('filter')">
                 <mat-icon class="material-icons" color="primary">bug_report</mat-icon>
               </button>
@@ -119,7 +119,7 @@
               <button mat-button mat-raised-button color="primary"
                       type="button"
                       (click)="onTestScript('filter')"
-                      [disabled]="!arguments.length">
+                      [disabled]="!arguments.length || readonly">
                 {{ 'calculated-fields.test-script-function' | translate }}
               </button>
             </div>
@@ -130,7 +130,10 @@
     <ng-container formGroupName="input">
       @if (!simpleMode) {
         <div class="tb-form-row">
-          <div class="fixed-title-width">{{ 'calculated-fields.metrics.value-source' | translate }}</div>
+          <div class="fixed-title-width"
+               tb-hint-tooltip-icon="{{ 'calculated-fields.metrics.value-source-hint' | translate }}">
+            {{ 'calculated-fields.metrics.value-source' | translate }}
+          </div>
           <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="type">
               @for (inputType of AggInputTypes; track inputType) {
@@ -140,7 +143,7 @@
           </mat-form-field>
         </div>
       }
-      @if (this.metricForm.get('input.type').value === AggInputType.key) {
+      @if (metricForm.get('input.type').value === AggInputType.key) {
         <div class="tb-form-row">
           <div class="fixed-title-width tb-required">{{ 'calculated-fields.argument-name' | translate }}</div>
           <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
@@ -170,7 +173,7 @@
                     [highlightRules]="highlightRules"
                     [editorCompleter]="editorCompleter"
                     [helpPopupStyle]="{ width: '1200px' }"
-                    helpId="calculated-field/expression_fn">
+                    helpId="calculated-field/map_expression_fn">
           <div toolbarPrefixButton
                class="tb-primary-background tbel-script-lang-chip">{{ 'api-usage.tbel' | translate }}
           </div>
@@ -179,7 +182,7 @@
                   matTooltip="{{ 'calculated-fields.test-script-function' | translate }}"
                   matTooltipPosition="above"
                   class="tb-mat-32"
-                  [disabled]="!arguments.length"
+                  [disabled]="!arguments.length || readonly"
                   (click)="onTestScript('input.function')">
             <mat-icon class="material-icons" color="primary">bug_report</mat-icon>
           </button>
@@ -188,7 +191,7 @@
           <button mat-button mat-raised-button color="primary"
                   type="button"
                   (click)="onTestScript('input.function')"
-                  [disabled]="!arguments.length">
+                  [disabled]="!arguments.length || readonly">
             {{ 'calculated-fields.test-script-function' | translate }}
           </button>
         </div>
@@ -210,12 +213,14 @@
             (click)="cancel()">
       {{ 'action.cancel' | translate }}
     </button>
-    <button mat-raised-button
-            color="primary"
-            type="button"
-            (click)="saveMetric()"
-            [disabled]="metricForm.invalid || !metricForm.dirty">
-      {{ buttonTitle | translate }}
-    </button>
+    @if (!readonly) {
+      <button mat-raised-button
+              color="primary"
+              type="button"
+              (click)="saveMetric()"
+              [disabled]="metricForm.invalid || !metricForm.dirty">
+        {{ buttonTitle | translate }}
+      </button>
+    }
   </div>
 </div>

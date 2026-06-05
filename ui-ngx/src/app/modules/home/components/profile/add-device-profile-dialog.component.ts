@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -54,10 +54,11 @@ export interface AddDeviceProfileDialogData {
 }
 
 @Component({
-  selector: 'tb-add-device-profile-dialog',
-  templateUrl: './add-device-profile-dialog.component.html',
-  providers: [],
-  styleUrls: ['./add-device-profile-dialog.component.scss']
+    selector: 'tb-add-device-profile-dialog',
+    templateUrl: './add-device-profile-dialog.component.html',
+    providers: [],
+    styleUrls: ['./add-device-profile-dialog.component.scss'],
+    standalone: false
 })
 export class AddDeviceProfileDialogComponent extends
   DialogComponent<AddDeviceProfileDialogComponent, DeviceProfile> {
@@ -216,8 +217,6 @@ export class AddDeviceProfileDialogComponent extends
       case 1:
         return 'device-profile.transport-configuration';
       case 2:
-        return 'device-profile.alarm-rules';
-      case 3:
         return 'device-profile.device-provisioning';
     }
   }

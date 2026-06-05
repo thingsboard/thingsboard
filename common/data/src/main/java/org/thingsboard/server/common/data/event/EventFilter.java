@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,21 @@ package org.thingsboard.server.common.data.event;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-@Schema
+@Schema(
+        description = "Filter for various event types",
+        discriminatorProperty = "eventType",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "DEBUG_RULE_NODE", schema = RuleNodeDebugEventFilter.class),
+                @DiscriminatorMapping(value = "DEBUG_RULE_CHAIN", schema = RuleChainDebugEventFilter.class),
+                @DiscriminatorMapping(value = "ERROR", schema = ErrorEventFilter.class),
+                @DiscriminatorMapping(value = "LC_EVENT", schema = LifeCycleEventFilter.class),
+                @DiscriminatorMapping(value = "STATS", schema = StatisticsEventFilter.class),
+                @DiscriminatorMapping(value = "DEBUG_CALCULATED_FIELD", schema = CalculatedFieldDebugEventFilter.class)
+        }
+)
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         include = JsonTypeInfo.As.PROPERTY,

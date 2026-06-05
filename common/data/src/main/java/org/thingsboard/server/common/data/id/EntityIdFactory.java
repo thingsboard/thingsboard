@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,6 +114,8 @@ public class EntityIdFactory {
             case DOMAIN -> new DomainId(uuid);
             case CALCULATED_FIELD -> new CalculatedFieldId(uuid);
             case AI_MODEL -> new AiModelId(uuid);
+            case API_KEY -> new ApiKeyId(uuid);
+            case ADMIN_SETTINGS -> new AdminSettingsId(uuid);
             default -> throw new IllegalArgumentException("EdgeEventType " + edgeEventType + " is not supported!");
         };
     }

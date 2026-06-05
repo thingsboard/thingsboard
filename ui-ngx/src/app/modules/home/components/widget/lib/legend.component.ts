@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,9 +18,10 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { LegendConfig, LegendData, LegendDirection, LegendKey, LegendPosition } from '@shared/models/widget.models';
 
 @Component({
-  selector: 'tb-legend',
-  templateUrl: './legend.component.html',
-  styleUrls: ['./legend.component.scss']
+    selector: 'tb-legend',
+    templateUrl: './legend.component.html',
+    styleUrls: ['./legend.component.scss'],
+    standalone: false
 })
 export class LegendComponent implements OnInit {
 

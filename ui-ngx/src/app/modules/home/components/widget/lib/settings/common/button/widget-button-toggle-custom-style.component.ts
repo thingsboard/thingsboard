@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -40,17 +40,18 @@ import {
 } from '@home/components/widget/lib/settings/common/button/widget-button-toggle-custom-style-panel.component';
 
 @Component({
-  selector: 'tb-widget-button-toggle-custom-style',
-  templateUrl: './widget-button-toggle-custom-style.component.html',
-  styleUrls: ['./widget-button-toggle-custom-style.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => WidgetButtonToggleCustomStyleComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-widget-button-toggle-custom-style',
+    templateUrl: './widget-button-toggle-custom-style.component.html',
+    styleUrls: ['./widget-button-toggle-custom-style.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => WidgetButtonToggleCustomStyleComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class WidgetButtonToggleCustomStyleComponent implements OnInit, OnChanges, ControlValueAccessor {
 

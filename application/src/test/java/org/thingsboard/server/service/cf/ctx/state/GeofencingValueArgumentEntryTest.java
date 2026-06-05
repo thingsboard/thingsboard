@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,9 @@ package org.thingsboard.server.service.cf.ctx.state;
 import io.hypersistence.utils.hibernate.type.json.internal.JacksonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.geo.PerimeterDefinition;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -33,6 +36,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@ExtendWith(MockitoExtension.class)
 public class GeofencingValueArgumentEntryTest {
 
     private final AssetId ZONE_1_ID = new AssetId(UUID.fromString("c0e3031c-7df1-45e4-9590-cfd621a4d714"));
@@ -46,6 +50,9 @@ public class GeofencingValueArgumentEntryTest {
 
     private GeofencingArgumentEntry entry;
 
+    @Mock
+    private CalculatedFieldCtx ctx;
+
     @BeforeEach
     void setUp() {
         entry = new GeofencingArgumentEntry(Map.of(ZONE_1_ID, allowedZoneAttributeKvEntry, ZONE_2_ID, restrictedZoneAttributeKvEntry));
@@ -58,14 +65,14 @@ public class GeofencingValueArgumentEntryTest {
 
     @Test
     void testUpdateEntryWhenSingleEntryPassed() {
-        assertThatThrownBy(() -> entry.updateEntry(new SingleValueArgumentEntry()))
+        assertThatThrownBy(() -> entry.updateEntry(new SingleValueArgumentEntry(), ctx))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Unsupported argument entry type for geofencing argument entry: SINGLE_VALUE");
     }
 
     @Test
     void testUpdateEntryWhenRollingEntryPassed() {
-        assertThatThrownBy(() -> entry.updateEntry(new TsRollingArgumentEntry(5, 30000L)))
+        assertThatThrownBy(() -> entry.updateEntry(new TsRollingArgumentEntry(5, 30000L), ctx))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Unsupported argument entry type for geofencing argument entry: TS_ROLLING");
     }
@@ -74,7 +81,7 @@ public class GeofencingValueArgumentEntryTest {
     void testUpdateEntryWithTheSameTs() {
         BaseAttributeKvEntry differentValueSameTs = new BaseAttributeKvEntry(new JsonDataEntry("zone", "[[50.472001, 30.504001], [50.472001, 30.506001], [50.474001, 30.506001], [50.474001, 30.504001]]"), 363L, 156L);
         var updated = new GeofencingArgumentEntry(Map.of(ZONE_1_ID, differentValueSameTs, ZONE_2_ID, restrictedZoneAttributeKvEntry));
-        assertThat(entry.updateEntry(updated)).isFalse();
+        assertThat(entry.updateEntry(updated, ctx)).isFalse();
     }
 
     @Test
@@ -83,7 +90,7 @@ public class GeofencingValueArgumentEntryTest {
         BaseAttributeKvEntry differentValueNewVersionIsNull = new BaseAttributeKvEntry(new JsonDataEntry("zone", "[[50.472001, 30.504001], [50.472001, 30.506001], [50.474001, 30.506001], [50.474001, 30.504001]]"), 364L, null);
         var updated = new GeofencingArgumentEntry(Map.of(ZONE_1_ID, differentValueNewVersionIsNull, ZONE_2_ID, restrictedZoneAttributeKvEntry));
 
-        assertThat(entry.updateEntry(updated)).isTrue();
+        assertThat(entry.updateEntry(updated, ctx)).isTrue();
         assertThat(entry.getValue()).isInstanceOf(Map.class);
 
         Map<EntityId, GeofencingZoneState> value = (Map<EntityId, GeofencingZoneState>) entry.getValue();
@@ -105,7 +112,7 @@ public class GeofencingValueArgumentEntryTest {
         BaseAttributeKvEntry differentValueNewVersionIsSet = new BaseAttributeKvEntry(new JsonDataEntry("zone", "[[50.472001, 30.504001], [50.472001, 30.506001], [50.474001, 30.506001], [50.474001, 30.504001]]"), 364L, 156L);
         var updated = new GeofencingArgumentEntry(Map.of(ZONE_1_ID, differentValueNewVersionIsSet, ZONE_2_ID, restrictedZoneAttributeKvEntry));
 
-        assertThat(entry.updateEntry(updated)).isTrue();
+        assertThat(entry.updateEntry(updated, ctx)).isTrue();
         assertThat(entry.getValue()).isInstanceOf(Map.class);
 
         Map<EntityId, GeofencingZoneState> value = (Map<EntityId, GeofencingZoneState>) entry.getValue();
@@ -126,7 +133,7 @@ public class GeofencingValueArgumentEntryTest {
         BaseAttributeKvEntry differentValueNewVersionIsSet = new BaseAttributeKvEntry(new JsonDataEntry("zone", "[[50.472001, 30.504001], [50.472001, 30.506001], [50.474001, 30.506001], [50.474001, 30.504001]]"), 364L, 154L);
         var updated = new GeofencingArgumentEntry(Map.of(ZONE_1_ID, differentValueNewVersionIsSet, ZONE_2_ID, restrictedZoneAttributeKvEntry));
 
-        assertThat(entry.updateEntry(updated)).isFalse();
+        assertThat(entry.updateEntry(updated, ctx)).isFalse();
     }
 
     @Test
@@ -134,7 +141,7 @@ public class GeofencingValueArgumentEntryTest {
         BaseAttributeKvEntry newTsAndTheSameValue = new BaseAttributeKvEntry(allowedZoneDataEntry, 364L, 156L);
         var updated = new GeofencingArgumentEntry(Map.of(ZONE_1_ID, newTsAndTheSameValue, ZONE_2_ID, restrictedZoneAttributeKvEntry));
 
-        assertThat(entry.updateEntry(updated)).isTrue();
+        assertThat(entry.updateEntry(updated, ctx)).isTrue();
     }
 
     @Test
@@ -142,7 +149,7 @@ public class GeofencingValueArgumentEntryTest {
         BaseAttributeKvEntry oldTsAndTheSameValue = new BaseAttributeKvEntry(allowedZoneDataEntry, 362L, 156L);
         var updated = new GeofencingArgumentEntry(Map.of(ZONE_1_ID, oldTsAndTheSameValue, ZONE_2_ID, restrictedZoneAttributeKvEntry));
 
-        assertThat(entry.updateEntry(updated)).isFalse();
+        assertThat(entry.updateEntry(updated, ctx)).isFalse();
     }
 
     @Test
@@ -150,7 +157,7 @@ public class GeofencingValueArgumentEntryTest {
         final AssetId NEW_ZONE_ID = new AssetId(UUID.fromString("a3eacf1a-6af3-4e9f-87c4-502bb25c7dc3"));
         BaseAttributeKvEntry newZone = new BaseAttributeKvEntry(new JsonDataEntry("zone", "[[50.472001, 30.504001], [50.472001, 30.506001], [50.474001, 30.506001], [50.474001, 30.504001]]"), 364L, 156L);
         var updated = new GeofencingArgumentEntry(Map.of(ZONE_1_ID, allowedZoneAttributeKvEntry, ZONE_2_ID, restrictedZoneAttributeKvEntry, NEW_ZONE_ID, newZone));
-        assertThat(entry.updateEntry(updated)).isTrue();
+        assertThat(entry.updateEntry(updated, ctx)).isTrue();
     }
 
     @Test
@@ -170,7 +177,7 @@ public class GeofencingValueArgumentEntryTest {
         BaseAttributeKvEntry invalidZoneEntry = new BaseAttributeKvEntry(new StringDataEntry("zone", "someString"), 363L, 155L);
         assertThatThrownBy(() -> new GeofencingArgumentEntry(Map.of(ZONE_1_ID, invalidZoneEntry)))
                 .isExactlyInstanceOf(IllegalArgumentException.class)
-                .hasMessage("The given string value cannot be transformed to Json object: someString");
+                .hasMessage("Invalid perimeter definition format for Zone with id: " + ZONE_1_ID + ". Failed to parse attribute 'zone'");
     }
 
     @Test
@@ -178,7 +185,7 @@ public class GeofencingValueArgumentEntryTest {
         BaseAttributeKvEntry invalidZoneEntry = new BaseAttributeKvEntry(new JsonDataEntry("zone", "\"{}\""), 363L, 155L);
         assertThatThrownBy(() -> new GeofencingArgumentEntry(Map.of(ZONE_1_ID, invalidZoneEntry)))
                 .isExactlyInstanceOf(IllegalArgumentException.class)
-                .hasMessage("The given string value cannot be transformed to Json object: \"{}\"");
+                .hasMessage("Invalid perimeter definition format for Zone with id: " + ZONE_1_ID + ". Failed to parse attribute 'zone'");
     }
 
 }

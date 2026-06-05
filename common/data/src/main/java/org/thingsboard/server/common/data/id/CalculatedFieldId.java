@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import org.thingsboard.server.common.data.EntityType;
 import java.io.Serial;
 import java.util.UUID;
 
-@Schema
+@Schema(allOf = EntityId.class)
 public class CalculatedFieldId extends UUIDBased implements EntityId {
 
     @Serial
@@ -38,7 +38,7 @@ public class CalculatedFieldId extends UUIDBased implements EntityId {
         return new CalculatedFieldId(UUID.fromString(calculatedFieldId));
     }
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "string", example = "CALCULATED_FIELD", allowableValues = "CALCULATED_FIELD")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, accessMode = Schema.AccessMode.READ_ONLY, description = "string", example = "CALCULATED_FIELD", allowableValues = "CALCULATED_FIELD")
     @Override
     public EntityType getEntityType() {
         return EntityType.CALCULATED_FIELD;

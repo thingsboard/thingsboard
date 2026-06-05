@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,20 +17,21 @@
 import { Component, forwardRef, Input } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { DefaultTenantProfileConfiguration, FormControlsFrom } from '@shared/models/tenant.model';
-import { isDefinedAndNotNull } from '@core/utils';
+import { isDefinedAndNotNull, isUndefinedOrNull} from '@core/utils';
 import { RateLimitsType } from './rate-limits/rate-limits.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
-  selector: 'tb-default-tenant-profile-configuration',
-  templateUrl: './default-tenant-profile-configuration.component.html',
-  styleUrls: ['./default-tenant-profile-configuration.component.scss'],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => DefaultTenantProfileConfigurationComponent),
-    multi: true
-  }]
+    selector: 'tb-default-tenant-profile-configuration',
+    templateUrl: './default-tenant-profile-configuration.component.html',
+    styleUrls: ['./default-tenant-profile-configuration.component.scss'],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DefaultTenantProfileConfigurationComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class DefaultTenantProfileConfigurationComponent implements ControlValueAccessor {
 
@@ -120,6 +121,9 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
       minAllowedAggregationIntervalInSecForCF: [0, [Validators.required, Validators.min(0)]],
       maxRelatedEntitiesToReturnPerCfArgument: [1, [Validators.required, Validators.min(1)]],
       minAllowedScheduledUpdateIntervalInSecForCF: [0, [Validators.required, Validators.min(0)]],
+      intermediateAggregationIntervalInSecForCF: [0, [Validators.required, Validators.min(1)]],
+      cfReevaluationCheckInterval: [0, [Validators.required, Validators.min(1)]],
+      alarmsReevaluationInterval: [0, [Validators.required, Validators.min(1)]],
       maxDataPointsPerRollingArg: [0, [Validators.required, Validators.min(0)]],
       maxStateSizeInKBytes: [0, [Validators.required, Validators.min(0)]],
       calculatedFieldDebugEventsRateLimit: [''],
@@ -167,6 +171,9 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
 
   writeValue(value: DefaultTenantProfileConfiguration | null): void {
     if (isDefinedAndNotNull(value)) {
+      if (isUndefinedOrNull(value.smsEnabled)) {
+        value.smsEnabled = true;
+      }
       this.maxSmsValidation(value.smsEnabled);
       this.tenantProfileConfigurationForm.patchValue(value, {emitEvent: false});
     }

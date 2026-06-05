@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,10 @@ import org.thingsboard.server.common.msg.session.FeatureType;
 
 import java.io.IOException;
 
+import static org.thingsboard.server.transport.coap.AbstractCoapIntegrationTest.COAP_BASE_URL;
+
 public class CoapTestClient {
 
-    private static final String COAP_BASE_URL = "coap://localhost:5683/api/v1/";
     private static final long CLIENT_REQUEST_TIMEOUT = 60000L;
 
     private final CoapClient client;

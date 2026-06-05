@@ -1,5 +1,5 @@
- ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+///
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -27,25 +27,27 @@
  import {
    AlarmRuleFilter,
    AlarmRuleFilterPredicate,
-   filterOperationTranslationMap
+   filterOperationTranslationMap,
+   isPredicateArgumentsValid
  } from "@shared/models/alarm-rule.models";
  import { CalculatedFieldArgument } from "@shared/models/calculated-field.models";
  import { FormControlsFrom } from "@shared/models/tenant.model";
  import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
- import { isDefinedAndNotNull } from "@core/utils";
 
  export interface AlarmRuleFilterDialogData {
   filter: AlarmRuleFilter;
   isAdd: boolean;
   arguments: Record<string, CalculatedFieldArgument>;
   usedArguments: Array<string>;
+  readonly: boolean;
 }
 
 @Component({
-  selector: 'tb-alarm-rule-filter-dialog',
-  templateUrl: './alarm-rule-filter-dialog.component.html',
-  providers: [],
-  styleUrls: ['./alarm-rule-filter-dialog.component.scss']
+    selector: 'tb-alarm-rule-filter-dialog',
+    templateUrl: './alarm-rule-filter-dialog.component.html',
+    providers: [],
+    styleUrls: ['./alarm-rule-filter-dialog.component.scss'],
+    standalone: false
 })
 export class AlarmRuleFilterDialogComponent extends DialogComponent<AlarmRuleFilterDialogComponent, AlarmRuleFilter> {
 
@@ -65,6 +67,8 @@ export class AlarmRuleFilterDialogComponent extends DialogComponent<AlarmRuleFil
 
   arguments = this.data.arguments;
   argumentsList: Array<string>;
+
+  readonly = this.data.readonly;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -87,11 +91,11 @@ export class AlarmRuleFilterDialogComponent extends DialogComponent<AlarmRuleFil
       }
     );
 
-    this.predicatesValid = this.isPredicateArgumentsValid(this.data.filter.predicates);
+    this.predicatesValid = isPredicateArgumentsValid(this.data.filter.predicates, this.arguments);
     this.filterFormGroup.get('predicates').valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(predicates => {
-      this.predicatesValid = this.isPredicateArgumentsValid(predicates);
+      this.predicatesValid = isPredicateArgumentsValid(predicates, this.arguments);
     });
 
     this.filterFormGroup.get('valueType').valueChanges.pipe(
@@ -114,31 +118,10 @@ export class AlarmRuleFilterDialogComponent extends DialogComponent<AlarmRuleFil
         }
       }
     });
-  }
 
-  private isPredicateArgumentsValid(predicates: any): boolean {
-    const validSet = new Set(Object.keys(this.data.arguments));
-    function checkPredicates(predicates: any[]): boolean {
-      for (const p of predicates) {
-        if (isDefinedAndNotNull(p.value?.dynamicValueArgument)) {
-          if (!validSet.has(p.value.dynamicValueArgument)) {
-            return false;
-          }
-        }
-        if (p.type === 'COMPLEX' && Array.isArray(p.predicates)) {
-          if (!checkPredicates(p.predicates)) {
-            return false;
-          }
-        }
-      }
-      return true;
+    if (this.readonly) {
+      this.filterFormGroup.disable({emitEvent: false});
     }
-    if (Array.isArray(predicates)) {
-      if (!checkPredicates(predicates)) {
-        return false;
-      }
-    }
-    return true;
   }
 
   argumentInUse(argument: string): boolean {

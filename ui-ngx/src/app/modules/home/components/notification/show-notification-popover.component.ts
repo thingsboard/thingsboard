@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -28,9 +28,10 @@ import { NotificationSubscriber } from '@shared/models/telemetry/telemetry.model
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-show-notification-popover',
-  templateUrl: './show-notification-popover.component.html',
-  styleUrls: ['show-notification-popover.component.scss']
+    selector: 'tb-show-notification-popover',
+    templateUrl: './show-notification-popover.component.html',
+    styleUrls: ['show-notification-popover.component.scss'],
+    standalone: false
 })
 export class ShowNotificationPopoverComponent extends PageComponent implements OnDestroy {
 
@@ -45,8 +46,8 @@ export class ShowNotificationPopoverComponent extends PageComponent implements O
 
   private notificationSubscriber = NotificationSubscriber.createNotificationsSubscription(this.notificationWsService, this.zone, 6);
 
-  notifications$: Observable<Notification[]> = this.notificationSubscriber.notifications$.pipe(
-    filter(value => Array.isArray(value)),
+  notifications$: Observable<Notification[]> = (this.notificationSubscriber.notifications$ as Observable<Notification[] | null>).pipe(
+    filter((value): value is Notification[] => Array.isArray(value)),
     shareReplay(1),
     tap(() => setTimeout(() => this.cd.markForCheck()))
   );
@@ -89,9 +90,5 @@ export class ShowNotificationPopoverComponent extends PageComponent implements O
     }
     this.onClose();
     this.router.navigateByUrl(this.router.parseUrl('/notification/inbox')).then(() => {});
-  }
-
-  trackById(index: number, item: NotificationRequest): string {
-    return item.id.id;
   }
 }

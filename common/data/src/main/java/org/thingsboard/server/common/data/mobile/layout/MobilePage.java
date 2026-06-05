@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,22 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonView;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.thingsboard.server.common.data.Views;
 
 import java.io.Serializable;
 
+@Schema(
+        description = "Configuration for a mobile page",
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "DEFAULT", schema = DefaultMobilePage.class),
+                @DiscriminatorMapping(value = "DASHBOARD", schema = DashboardPage.class),
+                @DiscriminatorMapping(value = "WEB_VIEW", schema = WebViewPage.class),
+                @DiscriminatorMapping(value = "CUSTOM", schema = CustomMobilePage.class)
+        }
+)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -36,6 +48,7 @@ import java.io.Serializable;
 })
 public interface MobilePage extends Serializable {
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @JsonView(Views.Private.class)
     MobilePageType getType();
 

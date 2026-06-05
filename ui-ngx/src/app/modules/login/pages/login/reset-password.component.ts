@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,20 +16,22 @@
 
 import { Component } from '@angular/core';
 import { AuthService } from '@core/auth/auth.service';
-import { PageComponent } from '@shared/components/page.component';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UserPasswordPolicy } from '@shared/models/settings.models';
 import { passwordsMatchValidator, passwordStrengthValidator } from '@shared/models/password.models';
+import { finalize } from 'rxjs/operators';
 
 @Component({
-  selector: 'tb-reset-password',
-  templateUrl: './reset-password.component.html',
-  styleUrls: ['./reset-password.component.scss']
+    selector: 'tb-reset-password',
+    templateUrl: './reset-password.component.html',
+    styleUrls: ['./password.component.scss'],
+    standalone: false
 })
-export class ResetPasswordComponent extends PageComponent {
+export class ResetPasswordComponent {
 
   isExpiredPassword: boolean;
+  isLoading = false;
 
   resetPassword: FormGroup;
   passwordPolicy: UserPasswordPolicy;
@@ -40,7 +42,6 @@ export class ResetPasswordComponent extends PageComponent {
               private router: Router,
               private authService: AuthService,
               private fb: FormBuilder) {
-    super();
 
     this.resetToken = this.route.snapshot.queryParams['resetToken'] || '';
     this.passwordPolicy = this.route.snapshot.data['passwordPolicy'];
@@ -62,13 +63,12 @@ export class ResetPasswordComponent extends PageComponent {
 
   onResetPassword() {
     if (this.resetPassword.invalid) {
-     this.resetPassword.markAllAsTouched();
+      this.resetPassword.markAllAsTouched();
     } else {
-      this.authService.resetPassword(
-        this.resetToken,
-        this.resetPassword.get('newPassword').value).subscribe(
-        () => this.router.navigateByUrl('login')
-      );
+      this.isLoading = true;
+      this.authService.resetPassword(this.resetToken, this.resetPassword.get('newPassword').value).pipe(
+        finalize(() => {this.isLoading = false})
+      ).subscribe(() => this.router.navigateByUrl('login'));
     }
   }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -160,7 +160,6 @@ public class SnmpTransportContext extends TransportContext {
             return;
         }
         sessions.put(device.getId(), sessionContext);
-        snmpTransportService.createQueryingTasks(sessionContext);
         log.info("Established SNMP device session for device {}", device.getId());
     }
 
@@ -226,6 +225,8 @@ public class SnmpTransportContext extends TransportContext {
                                 registerTransportSession(sessionContext, msg);
                             });
                             transportService.lifecycleEvent(sessionContext.getTenantId(), sessionContext.getDeviceId(), ComponentLifecycleEvent.STARTED, true, null);
+                            snmpTransportService.createQueryingTasks(sessionContext);
+                            log.info("[{}] Session registered and querying tasks created", sessionContext.getDeviceId());
                         } else {
                             log.warn("[{}] Failed to process device auth", sessionContext.getDeviceId());
                         }

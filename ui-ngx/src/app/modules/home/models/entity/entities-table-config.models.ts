@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -50,6 +50,9 @@ export type CellTooltipFunction<T extends BaseData<HasId>> = (entity: T, key: st
 export type HeaderCellStyleFunction<T extends BaseData<HasId>> = (key: string) => object;
 export type CellStyleFunction<T extends BaseData<HasId>> = (entity: T, key: string) => object;
 export type CopyCellContent<T extends BaseData<HasId>> = (entity: T, key: string, length: number) => object;
+
+export type EntityColumnsType = Array<Partial<EntityTableColumn<BaseData<HasId>> & EntityLinkTableColumn<BaseData<HasId>> & EntityChipsEntityTableColumn<BaseData<HasId>>>>;
+export type EntityColumnType = Partial<EntityTableColumn<BaseData<HasId>> & EntityLinkTableColumn<BaseData<HasId>> & EntityChipsEntityTableColumn<BaseData<HasId>>>;
 
 export enum CellActionDescriptorType { 'DEFAULT', 'COPY_BUTTON'}
 
@@ -175,7 +178,7 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
   selectionEnabled = true;
   searchEnabled = true;
   addEnabled = true;
-  addAsTextButton = false;
+  addAsTextButton = true;
   entitiesDeleteEnabled = true;
   detailsPanelEnabled = true;
   hideDetailsTabsOnEdit = true;
@@ -236,9 +239,9 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
     this.table = null;
   }
 
-  updateData(closeDetails = false) {
+  updateData(closeDetails = false, reloadEntity = true) {
     if (this.table) {
-      this.table.updateData(closeDetails);
+      this.table.updateData(closeDetails, reloadEntity);
     } else if (this.entityDetailsPage) {
       this.entityDetailsPage.reload();
     }

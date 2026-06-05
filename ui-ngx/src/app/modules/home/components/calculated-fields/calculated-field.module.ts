@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -44,12 +44,22 @@ import {
 import {
   EntityAggregationComponentModule
 } from '@home/components/calculated-fields/components/entity-aggregation-configuration/entity-aggregation-component.module';
+import {
+  CalculatedFieldsHeaderComponent
+} from '@home/components/calculated-fields/table-header/calculated-fields-header.component';
+import {
+  CalculatedFieldsFilterConfigComponent
+} from '@home/components/calculated-fields/table-header/calculated-fields-filter-config.component';
+import { CalculatedFieldComponent } from '@home/components/calculated-fields/calculated-field.component';
 
 @NgModule({
   declarations: [
     CalculatedFieldDialogComponent,
     CalculatedFieldScriptTestDialogComponent,
     CalculatedFieldTestArgumentsComponent,
+    CalculatedFieldsHeaderComponent,
+    CalculatedFieldsFilterConfigComponent,
+    CalculatedFieldComponent,
   ],
   imports: [
     CommonModule,
@@ -64,6 +74,7 @@ import {
   exports: [
     CalculatedFieldDialogComponent,
     CalculatedFieldScriptTestDialogComponent,
+    CalculatedFieldComponent,
   ]
 })
 export class CalculatedFieldsModule {}

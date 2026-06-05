@@ -25,8 +25,7 @@
                                         "useCellStyleFunction": false,
                                         "useCellContentFunction": true,
                                         "cellContentFunction": "return JSON.parse(value).ruleChainName;"
-                                    },
-                                    "_hash": 0.9954481282345906
+                                    }
                                 },
                                 {
                                     "name": "ruleEngineException",
@@ -37,8 +36,7 @@
                                         "useCellStyleFunction": false,
                                         "useCellContentFunction": true,
                                         "cellContentFunction": "return JSON.parse(value).ruleNodeName;"
-                                    },
-                                    "_hash": 0.18580357036589978
+                                    }
                                 },
                                 {
                                     "name": "ruleEngineException",
@@ -49,8 +47,7 @@
                                         "useCellStyleFunction": false,
                                         "useCellContentFunction": true,
                                         "cellContentFunction": "return JSON.parse(value).message;"
-                                    },
-                                    "_hash": 0.7255162989552142
+                                    }
                                 }
                             ],
                             "alarmFilterConfig": {
@@ -64,16 +61,14 @@
                                     "type": "entityField",
                                     "label": "Queue name",
                                     "color": "#ffc107",
-                                    "settings": {},
-                                    "_hash": 0.6889245277142959
+                                    "settings": {}
                                 },
                                 {
                                     "name": "serviceId",
                                     "type": "entityField",
                                     "label": "Service Id",
                                     "color": "#607d8b",
-                                    "settings": {},
-                                    "_hash": 0.7972226575450785
+                                    "settings": {}
                                 }
                             ]
                         }
@@ -126,7 +121,31 @@
                     "noDataDisplayMessage": "",
                     "configMode": "basic",
                     "borderRadius": "12px",
-                    "titleColor": "rgba(0, 0, 0, 0.54)"
+                    "titleColor": "rgba(0, 0, 0, 0.54)",
+                    "timewindowStyle": {
+                        "showIcon": false,
+                        "iconSize": "24px",
+                        "icon": "query_builder",
+                        "iconPosition": "left",
+                        "font": {
+                            "size": 12,
+                            "sizeUnit": "px",
+                            "family": "Roboto",
+                            "weight": "400",
+                            "style": "normal",
+                            "lineHeight": "16px"
+                        },
+                        "color": "rgba(0, 0, 0, 0.38)",
+                        "displayTypePrefix": true
+                    },
+                    "titleFont": {
+                        "size": 14,
+                        "sizeUnit": "px",
+                        "family": "Roboto",
+                        "weight": "500",
+                        "style": "normal",
+                        "lineHeight": "20px"
+                    }
                 },
                 "id": "a669cf86-e715-efa4-dd9a-b839abf499e9",
                 "typeFullFqn": "system.cards.timeseries_table"
@@ -207,7 +226,6 @@
                                             }
                                         }
                                     },
-                                    "_hash": 0.15490750967648736,
                                     "aggregationType": null,
                                     "units": null,
                                     "decimals": null,
@@ -280,7 +298,6 @@
                                             }
                                         }
                                     },
-                                    "_hash": 0.4186621166514697,
                                     "aggregationType": null,
                                     "units": null,
                                     "decimals": null,
@@ -353,7 +370,6 @@
                                             }
                                         }
                                     },
-                                    "_hash": 0.49891007198715376,
                                     "aggregationType": null,
                                     "units": null,
                                     "decimals": null,
@@ -373,16 +389,14 @@
                                     "type": "entityField",
                                     "label": "Queue name",
                                     "color": "#ffc107",
-                                    "settings": {},
-                                    "_hash": 0.7021721434431745
+                                    "settings": {}
                                 },
                                 {
                                     "name": "serviceId",
                                     "type": "entityField",
                                     "label": "Service Id",
                                     "color": "#607d8b",
-                                    "settings": {},
-                                    "_hash": 0.5924381120750077
+                                    "settings": {}
                                 }
                             ]
                         }
@@ -759,7 +773,6 @@
                                             }
                                         }
                                     },
-                                    "_hash": 0.565222981550328,
                                     "aggregationType": null,
                                     "units": null,
                                     "decimals": null,
@@ -832,7 +845,6 @@
                                             }
                                         }
                                     },
-                                    "_hash": 0.2679547062508352,
                                     "aggregationType": null,
                                     "units": null,
                                     "decimals": null,
@@ -852,16 +864,14 @@
                                     "type": "entityField",
                                     "label": "Queue name",
                                     "color": "#f44336",
-                                    "settings": {},
-                                    "_hash": 0.7066844328378095
+                                    "settings": {}
                                 },
                                 {
                                     "name": "serviceId",
                                     "type": "entityField",
                                     "label": "Service Id",
                                     "color": "#ffc107",
-                                    "settings": {},
-                                    "_hash": 0.1371570237026627
+                                    "settings": {}
                                 }
                             ]
                         }
@@ -1204,7 +1214,6 @@
                                         },
                                         "type": "bar"
                                     },
-                                    "_hash": 0.0661644137210089,
                                     "units": null,
                                     "decimals": null,
                                     "funcBody": null,
@@ -1560,7 +1569,6 @@
                                         },
                                         "type": "bar"
                                     },
-                                    "_hash": 0.46849996721308895,
                                     "units": null,
                                     "decimals": null,
                                     "funcBody": null,
@@ -1949,7 +1957,6 @@
                                             }
                                         }
                                     },
-                                    "_hash": 0.0661644137210089,
                                     "units": null,
                                     "decimals": null,
                                     "funcBody": null,
@@ -2355,7 +2362,6 @@
                                             }
                                         }
                                     },
-                                    "_hash": 0.0661644137210089,
                                     "units": null,
                                     "decimals": null,
                                     "funcBody": null,
@@ -2710,7 +2716,6 @@
                                         },
                                         "type": "bar"
                                     },
-                                    "_hash": 0.0661644137210089,
                                     "units": null,
                                     "decimals": null,
                                     "funcBody": null,
@@ -3071,7 +3076,6 @@
                                         },
                                         "type": "bar"
                                     },
-                                    "_hash": 0.0661644137210089,
                                     "units": null,
                                     "decimals": null,
                                     "funcBody": null,
@@ -3438,7 +3442,6 @@
                                         "type": "bar",
                                         "yAxisId": "default"
                                     },
-                                    "_hash": 0.0661644137210089,
                                     "units": null,
                                     "decimals": null,
                                     "funcBody": null,
@@ -3845,7 +3848,6 @@
                                             "color": ""
                                         }
                                     },
-                                    "_hash": 0.12814821361119078,
                                     "aggregationType": null,
                                     "units": null,
                                     "decimals": null,
@@ -4262,7 +4264,6 @@
                                             "color": ""
                                         }
                                     },
-                                    "_hash": 0.01948850513940492,
                                     "aggregationType": null,
                                     "units": null,
                                     "decimals": null,
@@ -4542,7 +4543,7 @@
                                 "name": "{i18n:api-usage.view-statistics}",
                                 "buttonType": "icon",
                                 "icon": "show_chart",
-                                "buttonColor": "rgba(0, 0, 0, 0.87)",
+                                "buttonColor": "rgba(0, 0, 0, 0.54)",
                                 "customButtonStyle": {},
                                 "useShowWidgetActionFunction": null,
                                 "showWidgetActionFunction": "return true;",
@@ -4689,7 +4690,6 @@
                                             "color": ""
                                         }
                                     },
-                                    "_hash": 0.5125470598651091,
                                     "aggregationType": null,
                                     "units": null,
                                     "decimals": null,
@@ -4979,7 +4979,7 @@
                                 "name": "{i18n:api-usage.view-statistics}",
                                 "buttonType": "icon",
                                 "icon": "show_chart",
-                                "buttonColor": "rgba(0, 0, 0, 0.87)",
+                                "buttonColor": "rgba(0, 0, 0, 0.54)",
                                 "customButtonStyle": {},
                                 "useShowWidgetActionFunction": null,
                                 "showWidgetActionFunction": "return true;",
@@ -5082,7 +5082,6 @@
                                         "type": "bar",
                                         "yAxisId": "default"
                                     },
-                                    "_hash": 0.0661644137210089,
                                     "units": null,
                                     "decimals": null,
                                     "funcBody": null,
@@ -5436,7 +5435,6 @@
                                         "type": "bar",
                                         "yAxisId": "default"
                                     },
-                                    "_hash": 0.0661644137210089,
                                     "units": null,
                                     "decimals": null,
                                     "funcBody": null,
@@ -5799,7 +5797,6 @@
                                         "type": "bar",
                                         "yAxisId": "default"
                                     },
-                                    "_hash": 0.0661644137210089,
                                     "units": null,
                                     "decimals": null,
                                     "funcBody": null,
@@ -6167,7 +6164,6 @@
                                         "type": "bar",
                                         "yAxisId": "default"
                                     },
-                                    "_hash": 0.0661644137210089,
                                     "units": null,
                                     "decimals": null,
                                     "funcBody": null,
@@ -6521,7 +6517,6 @@
                                         "type": "bar",
                                         "yAxisId": "default"
                                     },
-                                    "_hash": 0.0661644137210089,
                                     "units": null,
                                     "decimals": null,
                                     "funcBody": null,
@@ -6884,7 +6879,6 @@
                                         "type": "bar",
                                         "yAxisId": "default"
                                     },
-                                    "_hash": 0.0661644137210089,
                                     "units": null,
                                     "decimals": null,
                                     "funcBody": null,
@@ -7252,7 +7246,6 @@
                                         "type": "bar",
                                         "yAxisId": "default"
                                     },
-                                    "_hash": 0.0661644137210089,
                                     "units": null,
                                     "decimals": null,
                                     "funcBody": null,
@@ -7615,7 +7608,6 @@
                                         "type": "bar",
                                         "yAxisId": "default"
                                     },
-                                    "_hash": 0.0661644137210089,
                                     "units": null,
                                     "decimals": null,
                                     "funcBody": null,
@@ -7988,7 +7980,6 @@
                                         "type": "bar",
                                         "yAxisId": "default"
                                     },
-                                    "_hash": 0.0661644137210089,
                                     "units": null,
                                     "decimals": null,
                                     "funcBody": null,
@@ -8342,7 +8333,6 @@
                                         "type": "bar",
                                         "yAxisId": "default"
                                     },
-                                    "_hash": 0.0661644137210089,
                                     "units": null,
                                     "decimals": null,
                                     "funcBody": null,
@@ -8705,7 +8695,6 @@
                                         "type": "bar",
                                         "yAxisId": "default"
                                     },
-                                    "_hash": 0.0661644137210089,
                                     "units": null,
                                     "decimals": null,
                                     "funcBody": null,
@@ -9078,7 +9067,6 @@
                                         "type": "bar",
                                         "yAxisId": "default"
                                     },
-                                    "_hash": 0.0661644137210089,
                                     "units": null,
                                     "decimals": null,
                                     "funcBody": null,
@@ -9432,7 +9420,6 @@
                                         "type": "bar",
                                         "yAxisId": "default"
                                     },
-                                    "_hash": 0.0661644137210089,
                                     "units": null,
                                     "decimals": null,
                                     "funcBody": null,
@@ -9795,7 +9782,6 @@
                                         "type": "bar",
                                         "yAxisId": "default"
                                     },
-                                    "_hash": 0.0661644137210089,
                                     "units": null,
                                     "decimals": null,
                                     "funcBody": null,
@@ -10163,7 +10149,6 @@
                                         "type": "bar",
                                         "yAxisId": "default"
                                     },
-                                    "_hash": 0.0661644137210089,
                                     "units": null,
                                     "decimals": null,
                                     "funcBody": null,
@@ -10517,7 +10502,6 @@
                                         "type": "bar",
                                         "yAxisId": "default"
                                     },
-                                    "_hash": 0.0661644137210089,
                                     "units": null,
                                     "decimals": null,
                                     "funcBody": null,
@@ -10880,7 +10864,6 @@
                                         "type": "bar",
                                         "yAxisId": "default"
                                     },
-                                    "_hash": 0.0661644137210089,
                                     "units": null,
                                     "decimals": null,
                                     "funcBody": null,
@@ -11429,8 +11412,8 @@
                                 "label": "{i18n:api-usage.sms}",
                                 "state": "sms",
                                 "status": {
-                                    "name": "notificationApiState",
-                                    "label": "notificationApiState",
+                                    "name": "smsApiState",
+                                    "label": "smsApiState",
                                     "type": "timeseries",
                                     "settings": {},
                                     "color": "#2196f3"

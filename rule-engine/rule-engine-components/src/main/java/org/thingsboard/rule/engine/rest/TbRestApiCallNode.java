@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.thingsboard.rule.engine.rest;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.thingsboard.rule.engine.api.TbHttpClientSettings;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -26,17 +27,24 @@ import org.thingsboard.rule.engine.external.TbAbstractExternalNode;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.exception.DataValidationException;
 
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
+
+import static org.thingsboard.server.dao.service.ConstraintValidator.validateFields;
 
 @RuleNode(
         type = ComponentType.EXTERNAL,
         name = "rest api call",
         configClazz = TbRestApiCallNodeConfiguration.class,
-        version = 3,
+        version = 4,
         nodeDescription = "Invoke REST API calls to external REST server",
         nodeDetails = "Will invoke REST API call <code>GET | POST | PUT | DELETE</code> to external REST server. " +
-                "Message payload added into Request body. Configured attributes can be added into Headers from Message Metadata." +
+                "Message payload is used as the request body by default. " +
+                "Optionally, a request body template can be configured with <code>${metadataKey}</code> and <code>$[messageKey]</code> placeholders. " +
+                "Configured attributes can be added into Headers from Message Metadata." +
                 " Outbound message will contain response fields " +
                 "(<code>status</code>, <code>statusCode</code>, <code>statusReason</code> and response <code>headers</code>) in the Message Metadata." +
                 " Response body saved in outbound Message payload. " +
@@ -51,14 +59,28 @@ public class TbRestApiCallNode extends TbAbstractExternalNode {
 
     static final String PARSE_TO_PLAIN_TEXT = "parseToPlainText";
     static final String MAX_IN_MEMORY_BUFFER_SIZE_IN_KB = "maxInMemoryBufferSizeInKb";
+    static final String REQUEST_BODY_TEMPLATE = "requestBodyTemplate";
     static final String TRIM_DOUBLE_QUOTES = "trimDoubleQuotes";
     protected TbHttpClient httpClient;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         super.init(ctx);
+
         TbRestApiCallNodeConfiguration config = TbNodeUtils.convert(configuration, TbRestApiCallNodeConfiguration.class);
-        httpClient = new TbHttpClient(config, ctx.getSharedEventLoop());
+
+        String errorPrefix = "'" + ctx.getSelf().getName() + "' node configuration is invalid: ";
+        try {
+            validateFields(config, errorPrefix);
+        } catch (DataValidationException e) {
+            throw new TbNodeException(e, true);
+        }
+
+        TbHttpClientSettings httpClientSettings = ctx.getTbHttpClientSettings();
+        httpClient = new TbHttpClient(config, ctx.getSharedEventLoop(),
+                ctx.getTenantId() != null ? ctx.getTenantId().getId().toString() : "n/a",
+                ctx.getSelfId() != null ? ctx.getSelfId().getId().toString() : "n/a",
+                httpClientSettings != null ? httpClientSettings : TbHttpClientSettings.DEFAULT);
     }
 
     @Override
@@ -95,6 +117,25 @@ public class TbRestApiCallNode extends TbAbstractExternalNode {
                 if (!oldConfiguration.has(MAX_IN_MEMORY_BUFFER_SIZE_IN_KB)) {
                     hasChanges = true;
                     ((ObjectNode) oldConfiguration).put(MAX_IN_MEMORY_BUFFER_SIZE_IN_KB, 256);
+                }
+            case 3:
+                if (!oldConfiguration.has(REQUEST_BODY_TEMPLATE)) {
+                    hasChanges = true;
+                    ((ObjectNode) oldConfiguration).putNull(REQUEST_BODY_TEMPLATE);
+                }
+                Set<String> knownProperties = Set.of(
+                        "restEndpointUrlPattern", "requestMethod", "headers",
+                        "readTimeoutMs", "maxParallelRequestsCount", "parseToPlainText",
+                        "enableProxy", "useSystemProxyProperties", "proxyHost", "proxyPort",
+                        "proxyUser", "proxyPassword", "credentials", "ignoreRequestBody",
+                        "requestBodyTemplate", "maxInMemoryBufferSizeInKb"
+                );
+                Iterator<String> fieldNames = oldConfiguration.fieldNames();
+                while (fieldNames.hasNext()) {
+                    if (!knownProperties.contains(fieldNames.next())) {
+                        hasChanges = true;
+                        fieldNames.remove();
+                    }
                 }
                 break;
             default:

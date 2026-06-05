@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -416,7 +416,7 @@ div.tb-widget .tb-widget-content.tb-no-interaction {
             min-height: 20px;
             margin: 4px;
             cursor: pointer;
-            accent-color: var(--mdc-checkbox-selected-icon-color, var(--mat-app-primary));
+            accent-color: var(--mat-checkbox-selected-icon-color, var(--mat-app-primary));
           }
           .tb-group-label {
             padding-left: 12px;

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,10 @@
   &:has(section) {
     height: 100%;
   }
-  --mat-outlined-button-horizontal-padding: 8px;
-  --mdc-outlined-button-container-height: 30px;
-  --mdc-outlined-button-label-text-size: 12px;
-  --mat-outlined-button-hover-state-layer-opacity: 0;
+  --mat-button-outlined-horizontal-padding: 8px;
+  --mat-button-outlined-container-height: 30px;
+  --mat-button-outlined-label-text-size: 12px;
+  --mat-button-outlined-hover-state-layer-opacity: 0;
   --mat-icon-button-hover-state-layer-opacity: 0;
 
   .group {
@@ -45,6 +45,6 @@
 
   .button-label {
     height: 28px;
-    --mat-divider-color: var(--mdc-outlined-button-label-text-color);
+    --mat-divider-color: var(--mat-button-outlined-label-text-color);
   }
 }

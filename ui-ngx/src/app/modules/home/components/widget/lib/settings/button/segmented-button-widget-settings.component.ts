@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -38,11 +38,13 @@ import {
   WidgetButtonToggleState,
   widgetButtonToggleStatesTranslations
 } from '@home/components/widget/lib/button/segmented-button-widget.models';
+import { ValueCardLayout } from '@home/components/widget/lib/cards/value-card-widget.models';
 
 @Component({
-  selector: 'tb-segmented-button-widget-settings',
-  templateUrl: './segmented-button-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-segmented-button-widget-settings',
+    templateUrl: './segmented-button-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class SegmentedButtonWidgetSettingsComponent extends WidgetSettingsComponent {
 
@@ -138,5 +140,53 @@ export class SegmentedButtonWidgetSettingsComponent extends WidgetSettingsCompon
         }),
       })
     });
+  }
+
+  protected validatorTriggers(): string[] {
+    return ['appearance.leftAppearance.showLabel', 'appearance.leftAppearance.showIcon', 'appearance.rightAppearance.showLabel', 'appearance.rightAppearance.showIcon',];
+  }
+
+  protected updateValidators(emitEvent: boolean) {
+    const showLeftLabel: boolean = this.segmentedButtonWidgetSettingsForm.get('appearance.leftAppearance.showLabel').value;
+    const showRightLabel: boolean = this.segmentedButtonWidgetSettingsForm.get('appearance.rightAppearance.showLabel').value;
+
+    const showLeftIcon: boolean = this.segmentedButtonWidgetSettingsForm.get('appearance.leftAppearance.showIcon').value;
+    const showRightIcon: boolean = this.segmentedButtonWidgetSettingsForm.get('appearance.rightAppearance.showIcon').value;
+
+    if (showLeftLabel) {
+      this.segmentedButtonWidgetSettingsForm.get('appearance.leftAppearance.label').enable({emitEvent});
+      this.segmentedButtonWidgetSettingsForm.get('appearance.leftAppearance.labelFont').enable({emitEvent});
+    } else {
+      this.segmentedButtonWidgetSettingsForm.get('appearance.leftAppearance.label').disable({emitEvent});
+      this.segmentedButtonWidgetSettingsForm.get('appearance.leftAppearance.labelFont').disable({emitEvent});
+    }
+
+    if (showRightLabel) {
+      this.segmentedButtonWidgetSettingsForm.get('appearance.rightAppearance.label').enable({emitEvent});
+      this.segmentedButtonWidgetSettingsForm.get('appearance.rightAppearance.labelFont').enable({emitEvent});
+    } else {
+      this.segmentedButtonWidgetSettingsForm.get('appearance.rightAppearance.label').disable({emitEvent});
+      this.segmentedButtonWidgetSettingsForm.get('appearance.rightAppearance.labelFont').disable({emitEvent});
+    }
+
+    if (showLeftIcon) {
+      this.segmentedButtonWidgetSettingsForm.get('appearance.leftAppearance.icon').enable({emitEvent});
+      this.segmentedButtonWidgetSettingsForm.get('appearance.leftAppearance.iconSize').enable({emitEvent});
+      this.segmentedButtonWidgetSettingsForm.get('appearance.leftAppearance.iconSizeUnit').enable({emitEvent});
+    } else {
+      this.segmentedButtonWidgetSettingsForm.get('appearance.leftAppearance.icon').disable({emitEvent});
+      this.segmentedButtonWidgetSettingsForm.get('appearance.leftAppearance.iconSize').disable({emitEvent});
+      this.segmentedButtonWidgetSettingsForm.get('appearance.leftAppearance.iconSizeUnit').disable({emitEvent});
+    }
+
+    if (showRightIcon) {
+      this.segmentedButtonWidgetSettingsForm.get('appearance.rightAppearance.icon').enable({emitEvent});
+      this.segmentedButtonWidgetSettingsForm.get('appearance.rightAppearance.iconSize').enable({emitEvent});
+      this.segmentedButtonWidgetSettingsForm.get('appearance.rightAppearance.iconSizeUnit').enable({emitEvent});
+    } else {
+      this.segmentedButtonWidgetSettingsForm.get('appearance.rightAppearance.icon').disable({emitEvent});
+      this.segmentedButtonWidgetSettingsForm.get('appearance.rightAppearance.iconSize').disable({emitEvent});
+      this.segmentedButtonWidgetSettingsForm.get('appearance.rightAppearance.iconSizeUnit').disable({emitEvent});
+    }
   }
 }

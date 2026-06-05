@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -48,16 +48,17 @@ import { MatDialog } from '@angular/material/dialog';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 
 @Component({
-  selector: 'tb-api-usage-widget-settings',
-  templateUrl: './api-usage-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss', 'api-usage-widget-settings.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ApiUsageWidgetSettingsComponent),
-      multi: true
-    }
-  ],
+    selector: 'tb-api-usage-widget-settings',
+    templateUrl: './api-usage-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss', 'api-usage-widget-settings.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ApiUsageWidgetSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ApiUsageWidgetSettingsComponent extends WidgetSettingsComponent {
 

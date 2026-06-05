@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@
 
 -->
 <div class="tb-form-panel" [formGroup]="outputForm">
-  <div class="tb-form-panel-title">{{ 'calculated-fields.output' | translate }}</div>
+  <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ 'calculated-fields.output-hint' | translate }}">
+    {{ 'calculated-fields.output' | translate }}
+  </div>
   <div [class]=containerInputClass>
     <div class="flex gap-3 xs:flex-col">
       <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
@@ -28,7 +30,7 @@
         </mat-select>
       </mat-form-field>
       @if (outputForm.get('type').value === OutputType.Attribute
-      && (entityId.entityType === EntityType.DEVICE || entityId.entityType === EntityType.DEVICE_PROFILE)) {
+      && (entityId?.entityType === EntityType.DEVICE || entityId?.entityType === EntityType.DEVICE_PROFILE)) {
         <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
           <mat-label>{{ 'calculated-fields.attribute-scope' | translate }}</mat-label>
           <mat-select formControlName="scope" class="w-full">
@@ -51,14 +53,9 @@
       } @else {
         <div class="flex items-start gap-3 xs:flex-col xs:items-stretch">
           <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
-            <mat-label>
-              {{
-                (outputForm.get('type').value === OutputType.Timeseries
-                  ? 'calculated-fields.timeseries-key'
-                  : 'calculated-fields.attribute-key')
-                  | translate
-              }}
-            </mat-label>
+            <mat-label>{{ (outputForm.get('type').value === OutputType.Timeseries
+              ? 'calculated-fields.timeseries-key'
+              : 'calculated-fields.attribute-key') | translate }}</mat-label>
             <input matInput formControlName="name" required>
             @if (outputForm.get('name').errors && outputForm.get('name').touched) {
               <mat-error>
@@ -83,7 +80,7 @@
       <mat-expansion-panel-header class="flex flex-row flex-wrap">
         <mat-panel-title>
           <div class="flex flex-1 flex-row items-center justify-between xs:flex-col xs:items-start xs:gap-3">
-            <div class="tb-form-panel-title" style="color: var(--mat-expansion-header-text-color)" tb-hint-tooltip-icon="{{ 'calculated-fields.output-strategy.hint.strategy' | translate }}">
+            <div class="tb-form-panel-title" [style.color]="disabled ? 'var(--mat-form-field-outlined-disabled-input-text-color)' : 'var(--mat-expansion-header-text-color)'" tb-hint-tooltip-icon="{{ 'calculated-fields.output-strategy.hint.strategy' | translate }}">
               {{ 'calculated-fields.output-strategy.strategy' | translate }}
             </div>
             <tb-toggle-select formControlName="type" selectMediaBreakpoint="xs" disablePagination appearance="fill" (click)="$event.stopPropagation()">

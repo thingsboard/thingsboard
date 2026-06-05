@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -34,10 +34,11 @@ export interface ResourcesDialogData {
 }
 
 @Component({
-  selector: 'tb-resources-dialog',
-  templateUrl: './resources-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: ResourcesDialogComponent}],
-  styleUrls: ['./resources-dialog.component.scss']
+    selector: 'tb-resources-dialog',
+    templateUrl: './resources-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: ResourcesDialogComponent }],
+    styleUrls: ['./resources-dialog.component.scss'],
+    standalone: false
 })
 export class ResourcesDialogComponent extends DialogComponent<ResourcesDialogComponent, Resource> implements ErrorStateMatcher, AfterViewInit {
 

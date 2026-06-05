@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package org.thingsboard.server.common.msg;
 
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.crypto.digests.SHA3Digest;
-import org.bouncycastle.pqc.legacy.math.linearalgebra.ByteUtils;
+import org.bouncycastle.util.encoders.Hex;
 
 /**
  * @author Valerii Sosliuk
@@ -66,7 +66,7 @@ public class EncryptionUtil {
         md.update(dataBytes, 0, dataBytes.length);
         byte[] hashedBytes = new byte[256 / 8];
         md.doFinal(hashedBytes, 0);
-        String sha3Hash = ByteUtils.toHexString(hashedBytes);
+        String sha3Hash = Hex.toHexString(hashedBytes);
         return sha3Hash;
     }
 

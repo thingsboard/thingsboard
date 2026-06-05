@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,5 +20,5 @@
   max-height: 100vh;
   display: grid;
   grid-template-rows: min-content 4px minmax(auto, 1fr) min-content;
-  --mdc-outlined-text-field-outline-color: rgba(0,0,0,0.12);
+  --mat-form-field-outlined-outline-color: rgba(0,0,0,0.12);
 }

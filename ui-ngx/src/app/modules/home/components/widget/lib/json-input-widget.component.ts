@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -49,9 +49,10 @@ interface JsonInputWidgetSettings {
 }
 
 @Component({
-  selector: 'tb-json-input-widget ',
-  templateUrl: './json-input-widget.component.html',
-  styleUrls: ['./json-input-widget.component.scss']
+    selector: 'tb-json-input-widget ',
+    templateUrl: './json-input-widget.component.html',
+    styleUrls: ['./json-input-widget.component.scss'],
+    standalone: false
 })
 export class JsonInputWidgetComponent extends PageComponent implements OnInit {
 

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.ImageContainerDao;
 import org.thingsboard.server.dao.ResourceContainerDao;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -80,5 +81,7 @@ public interface DashboardInfoDao extends Dao<DashboardInfo>, ImageContainerDao<
     DashboardInfo findFirstByTenantIdAndName(UUID tenantId, String name);
 
     String findTitleById(UUID tenantId, UUID dashboardId);
+
+    List<DashboardInfo> findDashboardsByIds(UUID tenantId, List<UUID> dashboardIds);
 
 }

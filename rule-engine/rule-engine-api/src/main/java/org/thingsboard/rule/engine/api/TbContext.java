@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -440,5 +440,11 @@ public interface TbContext {
     // Configuration parameters for the MQTT client that is used in the MQTT node and Azure IoT hub node
 
     MqttClientSettings getMqttClientSettings();
+
+    // Server-level safety caps for the HTTP client used by the REST API Call rule node (read from thingsboard.yml)
+
+    default TbHttpClientSettings getTbHttpClientSettings() {
+        return TbHttpClientSettings.DEFAULT;
+    }
 
 }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 import { AuthUser, User } from '@shared/models/user.model';
 import { UserSettings } from '@shared/models/user-settings.models';
 import { TrendzSettings } from '@shared/models/trendz-settings.models';
+import { NullsOrderStrategy } from '@shared/models/page/page-link';
 
 export interface SysParamsState {
   userTokenAccessEnabled: boolean;
@@ -35,9 +36,14 @@ export interface SysParamsState {
   minAllowedAggregationIntervalInSecForCF: number;
   minAllowedScheduledUpdateIntervalInSecForCF: number;
   maxRelationLevelPerCfArgument: number;
+  maxRelatedEntitiesToReturnPerCfArgument: number;
   ruleChainDebugPerTenantLimitsConfiguration?: string;
   calculatedFieldDebugPerTenantLimitsConfiguration?: string;
+  intermediateAggregationIntervalInSecForCF: number;
   trendzSettings: TrendzSettings;
+  allowKeyFiltersOrConditions: boolean;
+  nullsOrderStrategy: NullsOrderStrategy;
+  edqsEnabled: boolean;
 }
 
 export interface SysParams extends SysParamsState {

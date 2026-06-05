@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -100,7 +100,7 @@ import {
   EntityKeyType,
   KeyFilter
 } from '@shared/models/query/query.models';
-import { sortItems } from '@shared/models/page/page-link';
+import { SortColumnType, sortItems } from '@shared/models/page/page-link';
 import { entityFields } from '@shared/models/entity.models';
 import { DatePipe } from '@angular/common';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
@@ -123,9 +123,10 @@ interface EntitiesTableWidgetSettings extends TableWidgetSettings {
 }
 
 @Component({
-  selector: 'tb-entities-table-widget',
-  templateUrl: './entities-table-widget.component.html',
-  styleUrls: ['./entities-table-widget.component.scss', './../table-widget.scss']
+    selector: 'tb-entities-table-widget',
+    templateUrl: './entities-table-widget.component.html',
+    styleUrls: ['./entities-table-widget.component.scss', './../table-widget.scss'],
+    standalone: false
 })
 export class EntitiesTableWidgetComponent extends PageComponent implements OnInit, AfterViewInit, OnDestroy {
 
@@ -471,7 +472,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
         }
         dataKeys.push(dataKey);
 
-        const keySettings: TableWidgetDataKeySettings = dataKey.settings;
+        const keySettings: TableWidgetDataKeySettings = dataKey.settings ?? {};
         dataKey.label = this.utils.customTranslation(dataKey.label, dataKey.label);
         dataKey.title = getHeaderTitle(dataKey, keySettings, this.utils);
         dataKey.def = 'def' + this.columns.length;
@@ -616,8 +617,12 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
       this.pageLink.sortOrder = null;
     }
     const sortOrderLabel = fromEntityColumnDef(this.sort.active, this.columns);
+    const sortColumnType: SortColumnType = key
+      ? (key.type === EntityKeyType.ENTITY_FIELD ? 'entityField'
+         : key.type === EntityKeyType.TIME_SERIES ? 'timeseries' : 'attribute')
+      : 'entityField';
     const keyFilters: KeyFilter[] = null; // TODO:
-    this.entityDatasource.loadEntities(this.pageLink, sortOrderLabel, keyFilters);
+    this.entityDatasource.loadEntities(this.pageLink, sortOrderLabel, sortColumnType, keyFilters);
     this.ctx.detectChanges();
   }
 
@@ -864,6 +869,7 @@ class EntityDatasource implements DataSource<EntityData> {
 
   private appliedPageLink: EntityDataPageLink;
   private appliedSortOrderLabel: string;
+  private appliedSortColumnType: SortColumnType = 'entityField';
 
   private reserveSpaceForHiddenAction = true;
   private cellButtonActions: TableCellButtonActionDescriptor[];
@@ -904,11 +910,13 @@ class EntityDatasource implements DataSource<EntityData> {
     this.pageDataSubject.complete();
   }
 
-  loadEntities(pageLink: EntityDataPageLink, sortOrderLabel: string, keyFilters: KeyFilter[]) {
+  loadEntities(pageLink: EntityDataPageLink, sortOrderLabel: string,
+               sortColumnType: SortColumnType, keyFilters: KeyFilter[]) {
     this.dataLoading = true;
     // this.clear();
     this.appliedPageLink = pageLink;
     this.appliedSortOrderLabel = sortOrderLabel;
+    this.appliedSortColumnType = sortColumnType;
     this.subscription.subscribeForPaginatedData(0, pageLink, keyFilters);
   }
 
@@ -933,7 +941,7 @@ class EntityDatasource implements DataSource<EntityData> {
       });
       if (this.appliedSortOrderLabel && this.appliedSortOrderLabel.length) {
         const asc = this.appliedPageLink.sortOrder.direction === Direction.ASC;
-        entities = entities.sort((a, b) => sortItems(a, b, this.appliedSortOrderLabel, asc));
+        entities = entities.sort((a, b) => sortItems(a, b, this.appliedSortOrderLabel, asc, this.appliedSortColumnType));
       }
       if (!dynamicWidthCellButtonActions && this.cellButtonActions.length && entities.length) {
         maxCellButtonAction = entities[0].actionCellButtons.length;

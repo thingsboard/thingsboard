@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import { AppState } from '@core/core.state';
 import { ControlValueAccessor, FormArray, NG_VALUE_ACCESSOR, } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { DropDirective, FlowDirective } from '@flowjs/ngx-flow';
+import { FlowConfig, FlowDrop } from '@flowjs/ngx-flow';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { UtilsService } from '@core/services/utils.service';
 import { DialogService } from '@core/services/dialog.service';
@@ -32,16 +32,17 @@ import { DndDropEvent } from 'ngx-drag-drop';
 import { isUndefined } from '@core/utils';
 
 @Component({
-  selector: 'tb-multiple-image-input',
-  templateUrl: './multiple-image-input.component.html',
-  styleUrls: ['./multiple-image-input.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => MultipleImageInputComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-multiple-image-input',
+    templateUrl: './multiple-image-input.component.html',
+    styleUrls: ['./multiple-image-input.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => MultipleImageInputComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class MultipleImageInputComponent extends PageComponent implements AfterViewInit, OnDestroy, ControlValueAccessor {
 
@@ -77,10 +78,10 @@ export class MultipleImageInputComponent extends PageComponent implements AfterV
   dragIndex: number;
 
   @ViewChild('flow', {static: true})
-  flow: FlowDirective;
+  flow: FlowConfig;
 
   @ViewChild('flowDrop', {static: true})
-  flowDrop: DropDirective;
+  flowDrop: FlowDrop;
 
   autoUploadSubscription: Subscription;
 

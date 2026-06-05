@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,23 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.BooleanNode;
+import com.fasterxml.jackson.databind.node.DoubleNode;
+import com.fasterxml.jackson.databind.node.IntNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.awaitility.core.ThrowingRunnable;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.ResultActions;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DataConstants;
@@ -34,18 +41,30 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
+import org.thingsboard.server.common.data.kv.BooleanDataEntry;
+import org.thingsboard.server.common.data.kv.DoubleDataEntry;
+import org.thingsboard.server.common.data.kv.JsonDataEntry;
+import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataPageLink;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.common.data.query.AliasEntityId;
+import org.thingsboard.server.common.data.query.AvailableEntityKeysV2;
+import org.thingsboard.server.common.data.query.AvailableEntityKeysV2.KeyInfo;
+import org.thingsboard.server.common.data.query.ComplexFilterPredicate;
+import org.thingsboard.server.common.data.query.ComplexOperation;
 import org.thingsboard.server.common.data.query.DeviceTypeFilter;
 import org.thingsboard.server.common.data.query.DynamicValue;
 import org.thingsboard.server.common.data.query.DynamicValueSourceType;
@@ -63,6 +82,7 @@ import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.NumericFilterPredicate;
 import org.thingsboard.server.common.data.query.RelationsQueryFilter;
+import org.thingsboard.server.common.data.query.SingleEntityFilter;
 import org.thingsboard.server.common.data.query.StringFilterPredicate;
 import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.common.data.queue.QueueStats;
@@ -70,6 +90,9 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
+import org.thingsboard.server.dao.entity.BaseEntityService;
 import org.thingsboard.server.dao.queue.QueueStatsService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.edqs.util.EdqsRocksDb;
@@ -78,6 +101,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
@@ -103,6 +127,8 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
     @Autowired
     private QueueStatsService queueStatsService;
+    @Autowired
+    private BaseEntityService baseEntityService;
 
     @MockitoBean
     private EdqsRocksDb edqsRocksDb;
@@ -214,6 +240,64 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         countByQueryAndCheck(countQuery, 97);
 
         countByQueryAndCheck(countQuery, 97);
+    }
+
+    @Test
+    public void testEDQForSysAdmin() throws Exception {
+        loginSysAdmin();
+
+        ObjectNode tenantAttr = JacksonUtil.newObjectNode();
+        tenantAttr.put("attr", "tenantAttrValue");
+        doPost("/api/plugins/telemetry/TENANT/" + tenantId + "/attributes/" + AttributeScope.SERVER_SCOPE, tenantAttr);
+
+        loginTenantAdmin();
+        Device tenantDevice = new Device();
+        tenantDevice.setName("device " + StringUtils.randomAlphanumeric(10));
+        tenantDevice.setType("default");
+        tenantDevice = doPost("/api/device", tenantDevice, Device.class);
+
+        loginSysAdmin();
+        TenantProfile tenantProfile = doPost("/api/tenantProfile", createTenantProfile("Test tenant profile"), TenantProfile.class);
+
+        ObjectNode tenantProfileAttr = JacksonUtil.newObjectNode();
+        tenantProfileAttr.put("attr", "tenantProfileAttrValue");
+        doPost("/api/plugins/telemetry/TENANT_PROFILE/" + tenantProfile.getId() + "/attributes/" + AttributeScope.SERVER_SCOPE, tenantProfileAttr);
+
+        // check tenant telemetry is accessible for sysadmin
+        SingleEntityFilter filter = new SingleEntityFilter();
+        filter.setSingleEntity(AliasEntityId.fromEntityId(tenantId));
+        EntityDataSortOrder sortOrder = new EntityDataSortOrder(new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime"), EntityDataSortOrder.Direction.ASC);
+        EntityDataPageLink pageLink = new EntityDataPageLink(10, 0, null, sortOrder);
+        List<EntityKey> entityFields = List.of(new EntityKey(EntityKeyType.ENTITY_FIELD, "name"));
+        List<EntityKey> latestValues = List.of(new EntityKey(EntityKeyType.ATTRIBUTE, "attr"));
+        EntityDataQuery dataQuery = new EntityDataQuery(filter, pageLink, entityFields, latestValues, null);
+
+        PageData<EntityData> loadedTenants = findByQueryAndCheck(dataQuery, 1);
+        String retrievedTenantAttr = loadedTenants.getData().get(0).getLatest().get(EntityKeyType.ATTRIBUTE).get("attr").getValue();
+        assertThat(retrievedTenantAttr).isEqualTo("tenantAttrValue");
+
+        // check tenant profile telemetry is accessible for sysadmin
+        filter.setSingleEntity(AliasEntityId.fromEntityId(tenantProfile.getId()));
+
+        PageData<EntityData> loadedTenantProfiles = findByQueryAndCheck(dataQuery, 1);
+        String retrievedProfileAttr = loadedTenantProfiles.getData().get(0).getLatest().get(EntityKeyType.ATTRIBUTE).get("attr").getValue();
+        assertThat(retrievedProfileAttr).isEqualTo("tenantProfileAttrValue");
+
+        // check other tenant entities are prohibited
+        filter.setSingleEntity(AliasEntityId.fromEntityId(tenantDevice.getId()));
+        findByQueryAndCheck(dataQuery, 0);
+    }
+
+    private TenantProfile createTenantProfile(String name) {
+        TenantProfile tenantProfile = new TenantProfile();
+        tenantProfile.setName(name);
+        tenantProfile.setDescription(name + " Test");
+        TenantProfileData tenantProfileData = new TenantProfileData();
+        tenantProfileData.setConfiguration(new DefaultTenantProfileConfiguration());
+        tenantProfile.setProfileData(tenantProfileData);
+        tenantProfile.setDefault(false);
+        tenantProfile.setIsolatedTbRuleEngine(false);
+        return tenantProfile;
     }
 
     @Test
@@ -1390,6 +1474,10 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         return result;
     }
 
+    protected void verifyAvailableKeysByQueryV2(ThrowingRunnable assertion) throws Throwable {
+        assertion.run();
+    }
+
     private KeyFilter getEntityFieldEqualFilter(String keyName, String value) {
         return getEntityFieldKeyFilter(keyName, value, StringFilterPredicate.StringOperation.EQUAL);
     }
@@ -1428,6 +1516,742 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         predicate.setValue(FilterPredicateValue.fromString(value));
         nameFilter.setPredicate(predicate);
         return nameFilter;
+    }
+
+    // --- findAvailableEntityKeysV2 tests ---
+
+    @Test
+    public void testFindAvailableKeysByQueryV2() throws Throwable {
+        // GIVEN — two devices matched by query; a third device should not be matched
+        var device1 = createDevice("Test device 1");
+        var device2 = createDevice("Test device 2");
+        var unmatchedDevice = createDevice("Unmatched device");
+
+        // unmatched device has unique keys that must NOT appear in the result
+        postTelemetry(unmatchedDevice.getId(), new BasicTsKvEntry(9000, new DoubleDataEntry("unmatchedTs", 999.0)));
+        postAttributes(unmatchedDevice.getId(), AttributeScope.SHARED_SCOPE, new StringDataEntry("unmatchedAttr", "nope"));
+
+        // device1: timeseries1 (Double) with two data points, and timeseries2 older data point
+        postTelemetry(device1.getId(), new BasicTsKvEntry(1000, new DoubleDataEntry("timeseries1", 10.0)));
+        postTelemetry(device1.getId(), new BasicTsKvEntry(2000, new DoubleDataEntry("timeseries1", 20.5)));
+        postTelemetry(device1.getId(), new BasicTsKvEntry(1000, new LongDataEntry("timeseries2", 100L)));
+
+        // device2: timeseries2 (Long) with a newer data point, and timeseries3 only on this device
+        postTelemetry(device2.getId(), new BasicTsKvEntry(3000, new LongDataEntry("timeseries2", 300L)));
+        postTelemetry(device2.getId(), new BasicTsKvEntry(5000, new DoubleDataEntry("timeseries3", 99.9)));
+
+        // device1: SHARED_SCOPE attributes
+        postAttributes(device1.getId(), AttributeScope.SHARED_SCOPE,
+                new BooleanDataEntry("sharedAttribute1", true), new DoubleDataEntry("sharedAttribute2", 3.14));
+
+        // device2: CLIENT_SCOPE attributes (saved via service to bypass API restriction)
+        attributesService.save(tenantId, device2.getId(), AttributeScope.CLIENT_SCOPE, List.of(
+                new BaseAttributeKvEntry(new JsonDataEntry("clientAttribute1", "{\"key\":\"val\"}"), System.currentTimeMillis()),
+                new BaseAttributeKvEntry(new BooleanDataEntry("clientAttribute2", false), System.currentTimeMillis())
+        )).get();
+
+        // device1 also has SERVER_SCOPE attributes (should be omitted by scope filter)
+        postAttributes(device1.getId(), AttributeScope.SERVER_SCOPE,
+                new StringDataEntry("serverAttribute1", "sv1"), new LongDataEntry("serverAttribute2", 42L));
+
+        // WHEN — query matches both devices; request timeseries + only SHARED and CLIENT attribute scopes
+        DeviceTypeFilter filter = new DeviceTypeFilter();
+        filter.setDeviceTypes(List.of("default"));
+        filter.setDeviceNameFilter("Test device");
+        EntityDataPageLink pageLink = new EntityDataPageLink(100, 0, null, null);
+        EntityDataQuery query = new EntityDataQuery(filter, pageLink, List.of(), null, null);
+
+        // THEN
+        verifyAvailableKeysByQueryV2(() -> {
+            AvailableEntityKeysV2 result = findAvailableEntityKeysByQueryV2(query,
+                    true, true, List.of(AttributeScope.SHARED_SCOPE, AttributeScope.CLIENT_SCOPE), true);
+
+            assertThat(result.entityTypes()).containsExactly(EntityType.DEVICE);
+
+            // timeseries: keys collected from both devices, samples contain the freshest data points
+            assertThat(result.timeseries()).extracting(KeyInfo::key)
+                    .containsExactly("timeseries1", "timeseries2", "timeseries3");
+            assertThat(result.timeseries()).allSatisfy(ki -> assertThat(ki.sample()).isNotNull());
+            assertKeySample(result.timeseries(), "timeseries1", new DoubleNode(20.5), 2000);   // from device1
+            assertKeySample(result.timeseries(), "timeseries2", new IntNode(300), 3000);        // from device2 (newer)
+            assertKeySample(result.timeseries(), "timeseries3", new DoubleNode(99.9), 5000);    // only on device2
+
+            // SERVER_SCOPE must be fully omitted from the response
+            assertThat(result.attributes()).containsOnlyKeys(AttributeScope.SHARED_SCOPE, AttributeScope.CLIENT_SCOPE);
+
+            // SHARED_SCOPE: from device1 (alphabetical order)
+            assertThat(result.attributes().get(AttributeScope.SHARED_SCOPE))
+                    .extracting(KeyInfo::key).containsExactly("sharedAttribute1", "sharedAttribute2");
+            assertKeySample(result.attributes().get(AttributeScope.SHARED_SCOPE), "sharedAttribute1", BooleanNode.TRUE);
+            assertKeySample(result.attributes().get(AttributeScope.SHARED_SCOPE), "sharedAttribute2", new DoubleNode(3.14));
+
+            // CLIENT_SCOPE: from device2 (alphabetical order)
+            assertThat(result.attributes().get(AttributeScope.CLIENT_SCOPE))
+                    .extracting(KeyInfo::key).containsExactly("clientAttribute1", "clientAttribute2");
+            assertKeySample(result.attributes().get(AttributeScope.CLIENT_SCOPE), "clientAttribute1", JacksonUtil.toJsonNode("{\"key\":\"val\"}"));
+            assertKeySample(result.attributes().get(AttributeScope.CLIENT_SCOPE), "clientAttribute2", BooleanNode.FALSE);
+        });
+    }
+
+    @Test
+    public void testFindAvailableKeysByQueryV2_withoutSamples() throws Throwable {
+        // GIVEN
+        var device = createDevice("Test device");
+        postTelemetry(device.getId(), new BasicTsKvEntry(System.currentTimeMillis(), new DoubleDataEntry("temperature", 10.0)));
+        postAttributes(device.getId(), AttributeScope.SERVER_SCOPE, new StringDataEntry("firmware", "v1.0"));
+
+        // THEN
+        verifyAvailableKeysByQueryV2(() -> {
+            AvailableEntityKeysV2 result = findAvailableEntityKeysByQueryV2(
+                    buildDeviceQuery("Test device"), true, true, null, false);
+
+            assertThat(result.timeseries()).allSatisfy(ki -> assertThat(ki.sample()).isNull());
+            assertThat(result.attributes().get(AttributeScope.SERVER_SCOPE))
+                    .allSatisfy(ki -> assertThat(ki.sample()).isNull());
+        });
+    }
+
+    @Test
+    public void testFindAvailableKeysByQueryV2_timeseriesOnly() throws Throwable {
+        // GIVEN
+        var device = createDevice("Test device");
+        postTelemetry(device.getId(), new BasicTsKvEntry(System.currentTimeMillis(), new DoubleDataEntry("temperature", 10.0)));
+        postAttributes(device.getId(), AttributeScope.SERVER_SCOPE, new StringDataEntry("firmware", "v1.0"));
+
+        // THEN
+        verifyAvailableKeysByQueryV2(() -> {
+            AvailableEntityKeysV2 result = findAvailableEntityKeysByQueryV2(
+                    buildDeviceQuery("Test device"), true, false, null, false);
+
+            assertThat(result.timeseries()).extracting(KeyInfo::key).contains("temperature");
+            assertThat(result.attributes()).isNull();
+        });
+    }
+
+    @Test
+    public void testFindAvailableKeysByQueryV2_attributesOnly() throws Throwable {
+        // GIVEN
+        var device = createDevice("Test device");
+        postTelemetry(device.getId(), new BasicTsKvEntry(System.currentTimeMillis(), new DoubleDataEntry("temperature", 10.0)));
+        postAttributes(device.getId(), AttributeScope.SERVER_SCOPE, new StringDataEntry("firmware", "v1.0"));
+
+        // THEN
+        verifyAvailableKeysByQueryV2(() -> {
+            AvailableEntityKeysV2 result = findAvailableEntityKeysByQueryV2(
+                    buildDeviceQuery("Test device"), false, true, null, false);
+
+            assertThat(result.timeseries()).isNull();
+            assertThat(result.attributes().get(AttributeScope.SERVER_SCOPE))
+                    .extracting(KeyInfo::key).contains("firmware");
+        });
+    }
+
+    @Test
+    public void testFindAvailableKeysByQueryV2_noMatchingEntities() throws Throwable {
+        // THEN
+        verifyAvailableKeysByQueryV2(() -> {
+            AvailableEntityKeysV2 result = findAvailableEntityKeysByQueryV2(
+                    buildDeviceQuery("NonExistentDevice_" + UUID.randomUUID()), true, true, null, true);
+
+            assertThat(result.entityTypes()).isEmpty();
+            assertThat(result.timeseries()).isEmpty();
+            assertThat(result.attributes()).isEmpty();
+        });
+    }
+
+    @Test
+    public void testFindAvailableKeysByQueryV2_assetUsesServerScopeOnly() throws Throwable {
+        // GIVEN
+        var asset = new Asset();
+        asset.setName("Test asset");
+        asset.setType("default");
+        asset = doPost("/api/asset", asset, Asset.class);
+        postAttributes(asset.getId(), AttributeScope.SERVER_SCOPE, new StringDataEntry("location", "warehouse"));
+
+        // WHEN
+        var filter = new SingleEntityFilter();
+        filter.setSingleEntity(AliasEntityId.fromEntityId(asset.getId()));
+        var query = new EntityDataQuery(filter, new EntityDataPageLink(1, 0, null, null), Collections.emptyList(), null, null);
+
+        // THEN
+        verifyAvailableKeysByQueryV2(() -> {
+            AvailableEntityKeysV2 result = findAvailableEntityKeysByQueryV2(query, false, true, null, false);
+
+            assertThat(result.entityTypes()).containsExactly(EntityType.ASSET);
+            assertThat(result.attributes()).containsOnlyKeys(AttributeScope.SERVER_SCOPE);
+            assertThat(result.attributes().get(AttributeScope.SERVER_SCOPE))
+                    .extracting(KeyInfo::key).containsExactly("location");
+        });
+    }
+
+    @Test
+    public void testFindAvailableKeysByQueryV2_rejectsWhenNoKeyTypeRequested() throws Exception {
+        // WHEN / THEN
+        EntityDataQuery query = buildDeviceQuery("NonExistent");
+
+        doPostAsync("/api/v2/entitiesQuery/find/keys?includeTimeseries=false&includeAttributes=false",
+                query, 30_000L).andExpect(status().isBadRequest());
+    }
+
+    protected AvailableEntityKeysV2 findAvailableEntityKeysByQueryV2(EntityDataQuery query,
+                                                                     boolean includeTimeseries, boolean includeAttributes,
+                                                                     List<AttributeScope> scopes, boolean includeSamples) throws Exception {
+        StringBuilder url = new StringBuilder("/api/v2/entitiesQuery/find/keys?")
+                .append("includeTimeseries=").append(includeTimeseries)
+                .append("&includeAttributes=").append(includeAttributes)
+                .append("&includeSamples=").append(includeSamples);
+        if (scopes != null) {
+            for (AttributeScope scope : scopes) {
+                url.append("&scopes=").append(scope);
+            }
+        }
+        return doPostAsyncWithTypedResponse(url.toString(), query,
+                new TypeReference<>() {}, status().isOk());
+    }
+
+    private static void assertKeySample(List<KeyInfo> keys, String expectedKey, JsonNode expectedValue, long expectedTs) {
+        KeyInfo keyInfo = findKeyInfo(keys, expectedKey);
+        assertThat(keyInfo.sample()).isNotNull();
+        assertThat(keyInfo.sample().value()).isEqualTo(expectedValue);
+        assertThat(keyInfo.sample().ts()).isEqualTo(expectedTs);
+    }
+
+    private static void assertKeySample(List<KeyInfo> keys, String expectedKey, JsonNode expectedValue) {
+        KeyInfo keyInfo = findKeyInfo(keys, expectedKey);
+        assertThat(keyInfo.sample()).isNotNull();
+        assertThat(keyInfo.sample().value()).isEqualTo(expectedValue);
+        assertThat(keyInfo.sample().ts()).isGreaterThan(0);
+    }
+
+    private static KeyInfo findKeyInfo(List<KeyInfo> keys, String key) {
+        return keys.stream()
+                .filter(ki -> ki.key().equals(key)).findFirst().orElseThrow();
+    }
+
+    private static EntityDataQuery buildDeviceQuery(String deviceName) {
+        var filter = new DeviceTypeFilter();
+        filter.setDeviceTypes(Collections.singletonList("default"));
+        filter.setDeviceNameFilter(deviceName);
+        return new EntityDataQuery(filter, new EntityDataPageLink(1, 0, null, null), Collections.emptyList(), null, null);
+    }
+
+    // --- OR conditions tests ---
+
+    private Device createDeviceWithSharedAttributes(String name, String type, String sharedAttributesPayload) throws Exception {
+        Device device = new Device();
+        device.setName(name);
+        device.setType(type);
+        device = doPost("/api/device", device, Device.class);
+        if (sharedAttributesPayload != null) {
+            doPost("/api/plugins/telemetry/" + device.getId() + "/" + DataConstants.SHARED_SCOPE,
+                    sharedAttributesPayload, String.class, status().isOk());
+        }
+        return device;
+    }
+
+    private Device createDeviceWithTimeseries(String name, String type, String timeseriesPayload) throws Exception {
+        Device device = new Device();
+        device.setName(name);
+        device.setType(type);
+        device = doPost("/api/device", device, Device.class);
+        JsonNode payload = JacksonUtil.toJsonNode(timeseriesPayload);
+        doPost("/api/plugins/telemetry/" + EntityType.DEVICE.name() + "/" + device.getUuidId() + "/timeseries/SERVER_SCOPE", payload)
+                .andExpect(status().isOk());
+        return device;
+    }
+
+    private Alarm createAlarm(DeviceId originator, String type, AlarmSeverity severity) throws Exception {
+        Alarm alarm = new Alarm();
+        alarm.setOriginator(originator);
+        alarm.setType(type);
+        alarm.setSeverity(severity);
+        return doPost("/api/alarm", alarm, Alarm.class);
+    }
+
+    private static DeviceTypeFilter deviceTypeFilter(String type) {
+        DeviceTypeFilter filter = new DeviceTypeFilter();
+        filter.setDeviceTypes(List.of(type));
+        filter.setDeviceNameFilter("");
+        return filter;
+    }
+
+    private static KeyFilter numericKeyFilter(EntityKeyType keyType, String key,
+                                              NumericFilterPredicate.NumericOperation operation, double value) {
+        KeyFilter keyFilter = new KeyFilter();
+        keyFilter.setKey(new EntityKey(keyType, key));
+        keyFilter.setValueType(EntityKeyValueType.NUMERIC);
+        NumericFilterPredicate predicate = new NumericFilterPredicate();
+        predicate.setValue(FilterPredicateValue.fromDouble(value));
+        predicate.setOperation(operation);
+        keyFilter.setPredicate(predicate);
+        return keyFilter;
+    }
+
+    private static KeyFilter numericAttributeKeyFilter(String key,
+                                                      NumericFilterPredicate.NumericOperation operation, double value) {
+        return numericKeyFilter(EntityKeyType.ATTRIBUTE, key, operation, value);
+    }
+
+    private static KeyFilter stringKeyFilter(EntityKeyType keyType, String key,
+                                             StringFilterPredicate.StringOperation operation, String value) {
+        KeyFilter keyFilter = new KeyFilter();
+        keyFilter.setKey(new EntityKey(keyType, key));
+        keyFilter.setValueType(EntityKeyValueType.STRING);
+        StringFilterPredicate predicate = new StringFilterPredicate();
+        predicate.setValue(FilterPredicateValue.fromString(value));
+        predicate.setOperation(operation);
+        keyFilter.setPredicate(predicate);
+        return keyFilter;
+    }
+
+    private static KeyFilter stringAttributeKeyFilter(String key,
+                                                     StringFilterPredicate.StringOperation operation, String value) {
+        return stringKeyFilter(EntityKeyType.ATTRIBUTE, key, operation, value);
+    }
+
+    private static EntityDataPageLink pageLinkSortedByName(int pageSize, int page, String textSearch) {
+        EntityDataSortOrder sortOrder = new EntityDataSortOrder(
+                new EntityKey(EntityKeyType.ENTITY_FIELD, "name"), EntityDataSortOrder.Direction.ASC);
+        return new EntityDataPageLink(pageSize, page, textSearch, sortOrder);
+    }
+
+    private static List<EntityKey> nameEntityField() {
+        return Collections.singletonList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name"));
+    }
+
+    private static List<String> extractNames(PageData<EntityData> result) {
+        return result.getData().stream()
+                .map(e -> e.getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue())
+                .collect(Collectors.toList());
+    }
+
+    @Test
+    public void testCountEntitiesWithOrKeyFiltersOperation() throws Exception {
+        String type = "orTestType";
+        createDeviceWithSharedAttributes("OrTestDeviceA", type, "{\"temperature\":60}");
+        createDeviceWithSharedAttributes("OrTestDeviceB", type, "{\"temperature\":5}");
+        createDeviceWithSharedAttributes("OrTestDeviceC", type, "{\"temperature\":30}");
+
+        List<KeyFilter> keyFilters = List.of(
+                numericAttributeKeyFilter("temperature", NumericFilterPredicate.NumericOperation.GREATER, 50),
+                numericAttributeKeyFilter("temperature", NumericFilterPredicate.NumericOperation.LESS, 10));
+
+        // OR: deviceA (60>50) and deviceB (5<10) match => count=2
+        EntityCountQuery orQuery = new EntityCountQuery(deviceTypeFilter(type), keyFilters, ComplexOperation.OR);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> countByQueryAndCheck(orQuery, 2));
+
+        // AND: no device has temperature both >50 AND <10 => count=0
+        EntityCountQuery andQuery = new EntityCountQuery(deviceTypeFilter(type), keyFilters, ComplexOperation.AND);
+        countByQueryAndCheck(andQuery, 0);
+    }
+
+    @Test
+    public void testFindEntityDataWithOrKeyFiltersOperation() throws Exception {
+        String type = "orDataType";
+        createDeviceWithSharedAttributes("OrDataDeviceX", type, "{\"status\":\"active\"}");
+        createDeviceWithSharedAttributes("OrDataDeviceY", type, "{\"humidity\":80}");
+        createDeviceWithSharedAttributes("OrDataDeviceZ", type, null); // no matching attribute
+
+        List<KeyFilter> keyFilters = List.of(
+                stringAttributeKeyFilter("status", StringFilterPredicate.StringOperation.EQUAL, "active"),
+                numericAttributeKeyFilter("humidity", NumericFilterPredicate.NumericOperation.GREATER, 70));
+
+        // OR: deviceX matches status=active, deviceY matches humidity>70
+        EntityDataQuery orQuery = new EntityDataQuery(deviceTypeFilter(type), pageLinkSortedByName(10, 0, null),
+                nameEntityField(), null, keyFilters, ComplexOperation.OR);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> findByQueryAndCheck(orQuery, 2));
+        PageData<EntityData> result = findByQueryAndCheck(orQuery, 2);
+        assertThat(extractNames(result)).containsExactlyInAnyOrder("OrDataDeviceX", "OrDataDeviceY");
+    }
+
+    @Test
+    public void testFindEntityDataWithOrDoesNotLeakFilterOnlyEntityFields() throws Exception {
+        // Regression test: under OR, an entity-field filter (e.g. label) that isn't declared in
+        // entityFields must not leak its value into EntityData.latest[ENTITY_FIELD].
+        String type = "orLeakGuardType";
+        Device d1 = createDeviceWithSharedAttributes("OrLeakDeviceA", type, "{\"status\":\"active\"}");
+        d1.setLabel("leak-label-A");
+        doPost("/api/device", d1, Device.class);
+
+        Device d2 = createDeviceWithSharedAttributes("OrLeakDeviceB", type, null);
+        d2.setLabel("leak-label-B");
+        doPost("/api/device", d2, Device.class);
+
+        List<KeyFilter> keyFilters = List.of(
+                stringAttributeKeyFilter("status", StringFilterPredicate.StringOperation.EQUAL, "active"),
+                buildStringKeyFilter(EntityKeyType.ENTITY_FIELD, "label", StringFilterPredicate.StringOperation.EQUAL, "leak-label-B"));
+
+        EntityDataQuery orQuery = new EntityDataQuery(deviceTypeFilter(type), pageLinkSortedByName(10, 0, null),
+                nameEntityField(), null, keyFilters, ComplexOperation.OR);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> findByQueryAndCheck(orQuery, 2));
+        PageData<EntityData> result = findByQueryAndCheck(orQuery, 2);
+        assertThat(extractNames(result)).containsExactlyInAnyOrder("OrLeakDeviceA", "OrLeakDeviceB");
+        for (EntityData entity : result.getData()) {
+            assertThat(entity.getLatest().get(EntityKeyType.ENTITY_FIELD)).containsOnlyKeys("name");
+        }
+    }
+
+    @Test
+    public void testFindEntityDataWithOrSameKeyFilters() throws Exception {
+        String type = "orSameKeyType";
+        createDeviceWithSharedAttributes("OrSameKeyDeviceA", type, "{\"temperature\":60}");
+        createDeviceWithSharedAttributes("OrSameKeyDeviceB", type, "{\"temperature\":5}");
+
+        // Same key "temperature" with two different predicates exercises the OR-ungrouping path
+        List<KeyFilter> keyFilters = List.of(
+                numericAttributeKeyFilter("temperature", NumericFilterPredicate.NumericOperation.GREATER, 50),
+                numericAttributeKeyFilter("temperature", NumericFilterPredicate.NumericOperation.LESS, 10));
+
+        EntityDataQuery orQuery = new EntityDataQuery(deviceTypeFilter(type), pageLinkSortedByName(10, 0, null),
+                nameEntityField(), null, keyFilters, ComplexOperation.OR);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> findByQueryAndCheck(orQuery, 2));
+        PageData<EntityData> result = findByQueryAndCheck(orQuery, 2);
+        assertThat(extractNames(result)).containsExactlyInAnyOrder("OrSameKeyDeviceA", "OrSameKeyDeviceB");
+    }
+
+    @Test
+    public void testCountEntitiesWithoutKeyFiltersOperation() throws Exception {
+        String type = "backCompatType";
+        createDeviceWithSharedAttributes("BackCompatDeviceA", type, "{\"temperature\":60}");
+        createDeviceWithSharedAttributes("BackCompatDeviceB", type, "{\"temperature\":5}");
+
+        List<KeyFilter> keyFilters = List.of(
+                numericAttributeKeyFilter("temperature", NumericFilterPredicate.NumericOperation.GREATER, 50),
+                numericAttributeKeyFilter("temperature", NumericFilterPredicate.NumericOperation.LESS, 10));
+
+        // Await attribute propagation via an OR query that should find 2 when propagated
+        EntityCountQuery orCheckQuery = new EntityCountQuery(deviceTypeFilter(type), keyFilters, ComplexOperation.OR);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> countByQueryAndCheck(orCheckQuery, 2));
+
+        // Query without keyFiltersOperation (null) -- should behave as AND
+        EntityCountQuery nullOpQuery = new EntityCountQuery(deviceTypeFilter(type), keyFilters);
+        Long nullResult = countByQueryAndCheck(nullOpQuery, 0);
+
+        // Query with explicit AND -- should produce the same result
+        EntityCountQuery andOpQuery = new EntityCountQuery(deviceTypeFilter(type), keyFilters, ComplexOperation.AND);
+        Long andResult = countByQueryAndCheck(andOpQuery, 0);
+
+        Assert.assertEquals(nullResult, andResult);
+    }
+
+    @Test
+    public void testAlarmDataQueryWithOrKeyFiltersOperation() throws Exception {
+        loginTenantAdmin();
+
+        String type = "orAlarmType";
+        Device deviceHot = createDeviceWithSharedAttributes("OrAlarmDeviceHot", type, "{\"temperature\":60}");
+        Device deviceCold = createDeviceWithSharedAttributes("OrAlarmDeviceCold", type, "{\"temperature\":5}");
+        Device deviceMid = createDeviceWithSharedAttributes("OrAlarmDeviceMid", type, "{\"temperature\":30}");
+
+        createAlarm(deviceHot.getId(), "highTemp", AlarmSeverity.CRITICAL);
+        createAlarm(deviceCold.getId(), "lowTemp", AlarmSeverity.WARNING);
+        createAlarm(deviceMid.getId(), "normalTemp", AlarmSeverity.WARNING);
+
+        List<KeyFilter> keyFilters = List.of(
+                numericAttributeKeyFilter("temperature", NumericFilterPredicate.NumericOperation.GREATER, 50),
+                numericAttributeKeyFilter("temperature", NumericFilterPredicate.NumericOperation.LESS, 10));
+
+        AlarmDataPageLink pageLink = new AlarmDataPageLink();
+        pageLink.setPage(0);
+        pageLink.setPageSize(100);
+        pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey(EntityKeyType.ALARM_FIELD, "createdTime")));
+        List<EntityKey> alarmFields = List.of(new EntityKey(EntityKeyType.ALARM_FIELD, "type"));
+
+        // OR query: should return alarms for deviceHot (60>50) and deviceCold (5<10) = 2 alarms
+        AlarmDataQuery orAlarmQuery = new AlarmDataQuery(deviceTypeFilter(type), pageLink, null, null, keyFilters, alarmFields, ComplexOperation.OR);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> findAlarmsByQueryAndCheck(orAlarmQuery, 2));
+        PageData<AlarmData> alarmResult = findAlarmsByQueryAndCheck(orAlarmQuery, 2);
+        List<String> alarmTypes = alarmResult.getData().stream().map(AlarmData::getType).collect(Collectors.toList());
+        assertThat(alarmTypes).containsExactlyInAnyOrder("highTemp", "lowTemp");
+
+        // AND query: no device has temp both >50 AND <10 => 0 alarms
+        AlarmDataQuery andAlarmQuery = new AlarmDataQuery(deviceTypeFilter(type), pageLink, null, null, keyFilters, alarmFields, ComplexOperation.AND);
+        findAlarmsByQueryAndCheck(andAlarmQuery, 0);
+    }
+
+    @Test
+    public void testCountAlarmsByQueryWithOrKeyFiltersOperation() throws Exception {
+        loginTenantAdmin();
+
+        String type = "orAlarmCntType";
+        Device deviceHot = createDeviceWithSharedAttributes("OrAlarmCntDeviceHot", type, "{\"temperature\":60}");
+        Device deviceCold = createDeviceWithSharedAttributes("OrAlarmCntDeviceCold", type, "{\"temperature\":5}");
+        Device deviceMid = createDeviceWithSharedAttributes("OrAlarmCntDeviceMid", type, "{\"temperature\":30}");
+
+        // 2 alarms for deviceHot, 1 for deviceCold, 1 for deviceMid
+        createAlarm(deviceHot.getId(), "highTemp1", AlarmSeverity.CRITICAL);
+        createAlarm(deviceHot.getId(), "highTemp2", AlarmSeverity.CRITICAL);
+        createAlarm(deviceCold.getId(), "lowTemp", AlarmSeverity.WARNING);
+        createAlarm(deviceMid.getId(), "normalTemp", AlarmSeverity.WARNING);
+
+        List<KeyFilter> keyFilters = List.of(
+                numericAttributeKeyFilter("temperature", NumericFilterPredicate.NumericOperation.GREATER, 50),
+                numericAttributeKeyFilter("temperature", NumericFilterPredicate.NumericOperation.LESS, 10));
+
+        // OR: deviceHot (2 alarms) + deviceCold (1 alarm) match => 3 alarms total
+        AlarmCountQuery orQuery = new AlarmCountQuery(deviceTypeFilter(type), keyFilters, ComplexOperation.OR);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> countAlarmsByQueryAndCheck(orQuery, 3));
+
+        // AND: no device matches both filters => 0
+        AlarmCountQuery andQuery = new AlarmCountQuery(deviceTypeFilter(type), keyFilters, ComplexOperation.AND);
+        countAlarmsByQueryAndCheck(andQuery, 0);
+    }
+
+    @Test
+    public void testCountEntitiesWithOrMixedEntityFieldAndAttribute() throws Exception {
+        // Exercises the entity field predicate relocation to middle-layer WHERE under OR
+        String type = "orMixedType";
+        createDeviceWithSharedAttributes("OrMixedAlpha", type, "{\"temperature\":10}");
+        createDeviceWithSharedAttributes("OrMixedBeta", type, "{\"temperature\":60}");
+        createDeviceWithSharedAttributes("OrMixedGamma", type, "{\"temperature\":10}");
+
+        List<KeyFilter> keyFilters = List.of(
+                stringKeyFilter(EntityKeyType.ENTITY_FIELD, "name", StringFilterPredicate.StringOperation.CONTAINS, "Alpha"),
+                numericAttributeKeyFilter("temperature", NumericFilterPredicate.NumericOperation.GREATER, 50));
+
+        // OR: Alpha matches name contains "Alpha", Beta matches temp>50 => count=2
+        EntityCountQuery orQuery = new EntityCountQuery(deviceTypeFilter(type), keyFilters, ComplexOperation.OR);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> countByQueryAndCheck(orQuery, 2));
+
+        // AND: only Alpha has name "Alpha" AND temp is 10 (not >50) => count=0
+        EntityCountQuery andQuery = new EntityCountQuery(deviceTypeFilter(type), keyFilters, ComplexOperation.AND);
+        countByQueryAndCheck(andQuery, 0);
+    }
+
+    @Test
+    public void testCountEntitiesWithOrStringAttributes() throws Exception {
+        String type = "orStrType";
+        createDeviceWithSharedAttributes("OrStrDeviceA", type, "{\"color\":\"red\"}");
+        createDeviceWithSharedAttributes("OrStrDeviceB", type, "{\"color\":\"blue\"}");
+        createDeviceWithSharedAttributes("OrStrDeviceC", type, "{\"color\":\"green\"}");
+
+        List<KeyFilter> keyFilters = List.of(
+                stringAttributeKeyFilter("color", StringFilterPredicate.StringOperation.EQUAL, "red"),
+                stringAttributeKeyFilter("color", StringFilterPredicate.StringOperation.EQUAL, "blue"));
+
+        // OR: red and blue match => count=2
+        EntityCountQuery orQuery = new EntityCountQuery(deviceTypeFilter(type), keyFilters, ComplexOperation.OR);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> countByQueryAndCheck(orQuery, 2));
+
+        // AND: no device is both red AND blue => count=0
+        EntityCountQuery andQuery = new EntityCountQuery(deviceTypeFilter(type), keyFilters, ComplexOperation.AND);
+        countByQueryAndCheck(andQuery, 0);
+    }
+
+    @Test
+    public void testCountEntitiesWithOrSingleFilter() throws Exception {
+        String type = "orSingleType";
+        createDeviceWithSharedAttributes("OrSingleDeviceA", type, "{\"temperature\":60}");
+        createDeviceWithSharedAttributes("OrSingleDeviceB", type, "{\"temperature\":30}");
+
+        List<KeyFilter> keyFilters = List.of(
+                numericAttributeKeyFilter("temperature", NumericFilterPredicate.NumericOperation.GREATER, 50));
+
+        // Single filter with OR should behave identically to AND
+        EntityCountQuery orQuery = new EntityCountQuery(deviceTypeFilter(type), keyFilters, ComplexOperation.OR);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> countByQueryAndCheck(orQuery, 1));
+        Long orResult = countByQueryAndCheck(orQuery, 1);
+
+        EntityCountQuery andQuery = new EntityCountQuery(deviceTypeFilter(type), keyFilters, ComplexOperation.AND);
+        Long andResult = countByQueryAndCheck(andQuery, 1);
+
+        Assert.assertEquals(orResult, andResult);
+    }
+
+    @Test
+    public void testCountEntitiesWithOrThreeFilters() throws Exception {
+        String type = "or3fType";
+        createDeviceWithSharedAttributes("Or3fDeviceA", type, "{\"temperature\":60,\"humidity\":50,\"pressure\":1000}");
+        createDeviceWithSharedAttributes("Or3fDeviceB", type, "{\"temperature\":20,\"humidity\":90,\"pressure\":1000}");
+        createDeviceWithSharedAttributes("Or3fDeviceC", type, "{\"temperature\":20,\"humidity\":50,\"pressure\":1050}");
+        createDeviceWithSharedAttributes("Or3fDeviceD", type, "{\"temperature\":20,\"humidity\":50,\"pressure\":1000}");
+
+        List<KeyFilter> keyFilters = List.of(
+                numericAttributeKeyFilter("temperature", NumericFilterPredicate.NumericOperation.GREATER, 50),
+                numericAttributeKeyFilter("humidity", NumericFilterPredicate.NumericOperation.GREATER, 80),
+                numericAttributeKeyFilter("pressure", NumericFilterPredicate.NumericOperation.GREATER, 1040));
+
+        // OR: A matches temp>50, B matches hum>80, C matches press>1040, D matches none => 3
+        EntityCountQuery orQuery = new EntityCountQuery(deviceTypeFilter(type), keyFilters, ComplexOperation.OR);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> countByQueryAndCheck(orQuery, 3));
+
+        // AND: no device matches all three => 0
+        EntityCountQuery andQuery = new EntityCountQuery(deviceTypeFilter(type), keyFilters, ComplexOperation.AND);
+        countByQueryAndCheck(andQuery, 0);
+    }
+
+    @Test
+    public void testFindEntityDataWithOrPagination() throws Exception {
+        // 5 devices, 4 match OR filters; explicit temperatures keep the setup easy to read.
+        String type = "orPageType";
+        int[] temperatures = {61, 62, 2, 1, 25}; // devices 1,2: temp>50; 3,4: temp<10; 5: no match
+        for (int i = 0; i < temperatures.length; i++) {
+            createDeviceWithSharedAttributes(
+                    String.format("OrPageDevice%02d", i + 1), type,
+                    "{\"temperature\":" + temperatures[i] + "}");
+        }
+
+        List<KeyFilter> keyFilters = List.of(
+                numericAttributeKeyFilter("temperature", NumericFilterPredicate.NumericOperation.GREATER, 50),
+                numericAttributeKeyFilter("temperature", NumericFilterPredicate.NumericOperation.LESS, 10));
+
+        // Page 1: pageSize=2, totalElements=4, data.size()=2
+        EntityDataQuery orQuery1 = new EntityDataQuery(deviceTypeFilter(type), pageLinkSortedByName(2, 0, null),
+                nameEntityField(), null, keyFilters, ComplexOperation.OR);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> findByQueryAndCheck(orQuery1, 4));
+        PageData<EntityData> page1 = findByQueryAndCheck(orQuery1, 4);
+        Assert.assertEquals(2, page1.getData().size());
+        Assert.assertTrue(page1.hasNext());
+
+        // Page 2: remaining 2 of 4
+        EntityDataQuery orQuery2 = new EntityDataQuery(deviceTypeFilter(type), pageLinkSortedByName(2, 1, null),
+                nameEntityField(), null, keyFilters, ComplexOperation.OR);
+        PageData<EntityData> page2 = findByQueryAndCheck(orQuery2, 4);
+        Assert.assertEquals(2, page2.getData().size());
+        Assert.assertFalse(page2.hasNext());
+
+        // All names across both pages should be from the 4 matching devices (01..04)
+        List<String> allNames = new ArrayList<>(extractNames(page1));
+        allNames.addAll(extractNames(page2));
+        assertThat(allNames).hasSize(4).doesNotContain("OrPageDevice05");
+    }
+
+    @Test
+    public void testCountEntitiesWithOrZeroMatches() throws Exception {
+        String type = "orZeroType";
+        createDeviceWithSharedAttributes("OrZeroDeviceA", type, "{\"temperature\":30}");
+        createDeviceWithSharedAttributes("OrZeroDeviceB", type, "{\"temperature\":40}");
+
+        // Await attribute propagation via a filter that actually matches both devices
+        EntityCountQuery propagationCheck = new EntityCountQuery(deviceTypeFilter(type), List.of(
+                numericAttributeKeyFilter("temperature", NumericFilterPredicate.NumericOperation.GREATER, 20)),
+                ComplexOperation.OR);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> countByQueryAndCheck(propagationCheck, 2));
+
+        List<KeyFilter> keyFilters = List.of(
+                numericAttributeKeyFilter("temperature", NumericFilterPredicate.NumericOperation.GREATER, 50),
+                numericAttributeKeyFilter("temperature", NumericFilterPredicate.NumericOperation.LESS, 10));
+
+        // OR with no matches: neither filter matches any device => count=0
+        EntityCountQuery orQuery = new EntityCountQuery(deviceTypeFilter(type), keyFilters, ComplexOperation.OR);
+        countByQueryAndCheck(orQuery, 0);
+    }
+
+    @Test
+    public void testOrKeyFiltersOperationRejectedWhenDisabled() throws Exception {
+        loginTenantAdmin();
+
+        ReflectionTestUtils.setField(baseEntityService, "keyFiltersOrConditionsEnabled", false);
+        try {
+            DeviceTypeFilter filter = deviceTypeFilter("default");
+
+            // POST a query with OR operation -- should be rejected with 400
+            EntityCountQuery orQuery = new EntityCountQuery(filter, Collections.emptyList(), ComplexOperation.OR);
+            String errorMessage = getErrorMessage(
+                    doPost("/api/entitiesQuery/count", orQuery).andExpect(status().isBadRequest())
+            );
+            assertThat(errorMessage).contains("OR conditions between key filters are disabled");
+
+            // POST a query without keyFiltersOperation (null/AND) -- should still succeed
+            EntityCountQuery andQuery = new EntityCountQuery(filter, Collections.emptyList());
+            doPost("/api/entitiesQuery/count", andQuery).andExpect(status().isOk());
+
+            // POST a query with explicit AND -- should also succeed
+            EntityCountQuery explicitAndQuery = new EntityCountQuery(filter, Collections.emptyList(), ComplexOperation.AND);
+            doPost("/api/entitiesQuery/count", explicitAndQuery).andExpect(status().isOk());
+        } finally {
+            ReflectionTestUtils.setField(baseEntityService, "keyFiltersOrConditionsEnabled", true);
+        }
+    }
+
+    @Test
+    public void testFindEntityDataWithOrAndTextSearch() throws Exception {
+        // 3 devices: 2 match OR filters, but only 1 also matches textSearch at a time
+        String type = "orTextType";
+        createDeviceWithSharedAttributes("OrTextAlpha", type, "{\"temperature\":60}");
+        createDeviceWithSharedAttributes("OrTextBeta", type, "{\"temperature\":5}");
+        createDeviceWithSharedAttributes("OrTextGamma", type, "{\"temperature\":30}");
+
+        List<KeyFilter> keyFilters = List.of(
+                numericAttributeKeyFilter("temperature", NumericFilterPredicate.NumericOperation.GREATER, 50),
+                numericAttributeKeyFilter("temperature", NumericFilterPredicate.NumericOperation.LESS, 10));
+
+        // OR without textSearch: Alpha and Beta match => 2
+        EntityDataQuery orQueryNoText = new EntityDataQuery(deviceTypeFilter(type), pageLinkSortedByName(10, 0, null),
+                nameEntityField(), null, keyFilters, ComplexOperation.OR);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> findByQueryAndCheck(orQueryNoText, 2));
+
+        // OR with textSearch="Alpha": only Alpha matches both OR filter AND text search
+        EntityDataQuery orQueryWithText = new EntityDataQuery(deviceTypeFilter(type), pageLinkSortedByName(10, 0, "Alpha"),
+                nameEntityField(), null, keyFilters, ComplexOperation.OR);
+        assertThat(extractNames(findByQueryAndCheck(orQueryWithText, 1))).containsExactly("OrTextAlpha");
+
+        // OR with textSearch="Beta": only Beta matches both OR filter AND text search
+        EntityDataQuery orQueryBeta = new EntityDataQuery(deviceTypeFilter(type), pageLinkSortedByName(10, 0, "Beta"),
+                nameEntityField(), null, keyFilters, ComplexOperation.OR);
+        assertThat(extractNames(findByQueryAndCheck(orQueryBeta, 1))).containsExactly("OrTextBeta");
+
+        // OR with textSearch="Gamma": Gamma doesn't match any OR filter => 0
+        EntityDataQuery orQueryGamma = new EntityDataQuery(deviceTypeFilter(type), pageLinkSortedByName(10, 0, "Gamma"),
+                nameEntityField(), null, keyFilters, ComplexOperation.OR);
+        findByQueryAndCheck(orQueryGamma, 0);
+    }
+
+    @Test
+    public void testCountEntitiesWithOrTimeSeriesKeyFilters() throws Exception {
+        String type = "orTsType";
+        createDeviceWithTimeseries("OrTsDeviceA", type, "{\"temperature\":60}");
+        createDeviceWithTimeseries("OrTsDeviceB", type, "{\"temperature\":5}");
+        createDeviceWithTimeseries("OrTsDeviceC", type, "{\"temperature\":30}");
+
+        List<KeyFilter> keyFilters = List.of(
+                numericKeyFilter(EntityKeyType.TIME_SERIES, "temperature", NumericFilterPredicate.NumericOperation.GREATER, 50),
+                numericKeyFilter(EntityKeyType.TIME_SERIES, "temperature", NumericFilterPredicate.NumericOperation.LESS, 10));
+
+        // OR: deviceA (60>50) and deviceB (5<10) match => count=2
+        EntityCountQuery orQuery = new EntityCountQuery(deviceTypeFilter(type), keyFilters, ComplexOperation.OR);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> countByQueryAndCheck(orQuery, 2));
+
+        // AND: no device has ts temperature both >50 AND <10 => count=0
+        EntityCountQuery andQuery = new EntityCountQuery(deviceTypeFilter(type), keyFilters, ComplexOperation.AND);
+        countByQueryAndCheck(andQuery, 0);
+    }
+
+    @Test
+    public void testCountEntitiesWithOrComplexFilterPredicate() throws Exception {
+        // Key-level ComplexFilterPredicate combined with query-level OR
+        String type = "orCplxType";
+        createDeviceWithSharedAttributes("OrCplxDeviceA", type, "{\"temperature\":65,\"humidity\":50}");
+        createDeviceWithSharedAttributes("OrCplxDeviceB", type, "{\"temperature\":25,\"humidity\":90}");
+        createDeviceWithSharedAttributes("OrCplxDeviceC", type, "{\"temperature\":25,\"humidity\":50}");
+
+        // Key filter 1: temperature > 50 AND temperature < 70 (complex predicate within key filter) — matches A only
+        NumericFilterPredicate gt50 = new NumericFilterPredicate();
+        gt50.setValue(FilterPredicateValue.fromDouble(50));
+        gt50.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
+        NumericFilterPredicate lt70 = new NumericFilterPredicate();
+        lt70.setValue(FilterPredicateValue.fromDouble(70));
+        lt70.setOperation(NumericFilterPredicate.NumericOperation.LESS);
+        ComplexFilterPredicate complexTempPred = new ComplexFilterPredicate();
+        complexTempPred.setOperation(ComplexOperation.AND);
+        complexTempPred.setPredicates(List.of(gt50, lt70));
+        KeyFilter tempComplexFilter = new KeyFilter();
+        tempComplexFilter.setKey(new EntityKey(EntityKeyType.ATTRIBUTE, "temperature"));
+        tempComplexFilter.setValueType(EntityKeyValueType.NUMERIC);
+        tempComplexFilter.setPredicate(complexTempPred);
+
+        // Key filter 2: humidity > 80 (simple predicate) — matches B only
+        List<KeyFilter> keyFilters = List.of(
+                tempComplexFilter,
+                numericAttributeKeyFilter("humidity", NumericFilterPredicate.NumericOperation.GREATER, 80));
+
+        // Query-level OR: A matches key filter 1, B matches key filter 2 => 2
+        EntityCountQuery orQuery = new EntityCountQuery(deviceTypeFilter(type), keyFilters, ComplexOperation.OR);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> countByQueryAndCheck(orQuery, 2));
+
+        // Query-level AND: no device matches both key filters => 0
+        EntityCountQuery andQuery = new EntityCountQuery(deviceTypeFilter(type), keyFilters, ComplexOperation.AND);
+        countByQueryAndCheck(andQuery, 0);
     }
 
 }

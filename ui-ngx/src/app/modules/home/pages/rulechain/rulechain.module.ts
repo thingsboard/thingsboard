@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -22,19 +22,27 @@ import { RuleChainRoutingModule } from '@modules/home/pages/rulechain/rulechain-
 import { HomeComponentsModule } from '@modules/home/components/home-components.module';
 import { RuleChainTabsComponent } from '@home/pages/rulechain/rulechain-tabs.component';
 import { RuleNodeComponent } from '@home/pages/rulechain/rulenode.component';
-import { FC_NODE_COMPONENT_CONFIG } from 'ngx-flowchart';
+import { RuleNoteComponent } from '@home/pages/rulechain/rulenote.component';
+import { FC_NODE_COMPONENT_CONFIG, FC_NOTE_COMPONENT_CONFIG } from 'ngx-flowchart';
 
 @NgModule({
   declarations: [
     RuleChainComponent,
     RuleChainTabsComponent,
     RuleNodeComponent,
+    RuleNoteComponent,
   ],
   providers: [
     {
       provide: FC_NODE_COMPONENT_CONFIG,
       useValue: {
         nodeComponentType: RuleNodeComponent
+      }
+    },
+    {
+      provide: FC_NOTE_COMPONENT_CONFIG,
+      useValue: {
+        noteComponentType: RuleNoteComponent
       }
     },
   ],

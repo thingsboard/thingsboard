@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -348,7 +348,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
                         if (sub.isLatestValues()) {
                             for (TsKvEntry kv : data) {
                                 Long stateTs = keyStates.get(kv.getKey());
-                                if (stateTs == null || kv.getTs() >= stateTs) {
+                                if (stateTs == null || kv.getTs() >= stateTs || kv.isDeletedEntry()) {
                                     if (updateData == null) {
                                         updateData = new ArrayList<>();
                                     }
@@ -362,7 +362,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
                         for (TsKvEntry kv : data) {
                             Long stateTs = keyStates.get(kv.getKey());
                             if (stateTs != null) {
-                                if (!sub.isLatestValues() || kv.getTs() >= stateTs) {
+                                if (!sub.isLatestValues() || kv.getTs() >= stateTs || kv.isDeletedEntry()) {
                                     if (updateData == null) {
                                         updateData = new ArrayList<>();
                                     }

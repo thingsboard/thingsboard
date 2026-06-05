@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.Value;
 import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -73,6 +74,12 @@ public class DeviceProfileInfo extends EntityInfo {
     public DeviceProfileInfo(DeviceProfile profile) {
         this(profile.getId(), profile.getTenantId(), profile.getName(), profile.getImage(), profile.getDefaultDashboardId(),
                 profile.getType(), profile.getTransportType());
+    }
+
+    @Override
+    @Schema(implementation = DeviceProfileId.class, description = "JSON object with the Device Profile Id.")
+    public EntityId getId() {
+        return super.getId();
     }
 
 }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -36,9 +36,10 @@ export interface SaveWidgetTypeAsDialogData {
 }
 
 @Component({
-  selector: 'tb-save-widget-type-as-dialog',
-  templateUrl: './save-widget-type-as-dialog.component.html',
-  styleUrls: []
+    selector: 'tb-save-widget-type-as-dialog',
+    templateUrl: './save-widget-type-as-dialog.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class SaveWidgetTypeAsDialogComponent extends
   DialogComponent<SaveWidgetTypeAsDialogComponent, SaveWidgetTypeAsDialogResult> implements OnInit {

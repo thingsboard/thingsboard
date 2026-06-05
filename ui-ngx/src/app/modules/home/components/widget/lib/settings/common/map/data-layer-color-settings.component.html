@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -21,10 +21,11 @@
         [disabled]="disabled"
         #matButton
         (click)="openColorSettingsPopup($event, matButton)">
-  <tb-icon matButtonIcon *ngIf="modelValue?.type === DataLayerColorType.function; else colorPreview">mdi:function-variant</tb-icon>
+  @if (modelValue?.type === DataLayerColorType.function) {
+    <tb-icon matButtonIcon>mdi:function-variant</tb-icon>
+  } @else {
+    <div class="tb-color-preview box" [class.disabled]="disabled">
+      <div class="tb-color-result" [style]="colorStyle"></div>
+    </div>
+  }
 </button>
-<ng-template #colorPreview>
-  <div class="tb-color-preview box" [class.disabled]="disabled">
-    <div class="tb-color-result" [style]="colorStyle"></div>
-  </div>
-</ng-template>

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -37,15 +37,17 @@
     [widget]="widget"
     formControlName="circleSettings">
   </tb-circle-settings>
-  <tb-marker-clustering-settings
-    *ngIf="!routeMap"
-    [class.!hidden]="mapSettingsFormGroup.get('mapProviderSettings').value.provider === mapProvider.image"
-    formControlName="markerClusteringSettings">
-  </tb-marker-clustering-settings>
-  <tb-route-map-settings
-    *ngIf="routeMap"
-    formControlName="routeMapSettings">
-  </tb-route-map-settings>
+  @if (!routeMap) {
+    <tb-marker-clustering-settings
+      [class.!hidden]="mapSettingsFormGroup.get('mapProviderSettings').value.provider === mapProvider.image"
+      formControlName="markerClusteringSettings">
+    </tb-marker-clustering-settings>
+  }
+  @if (routeMap) {
+    <tb-route-map-settings
+      formControlName="routeMapSettings">
+    </tb-route-map-settings>
+  }
   <tb-map-editor-settings
     [class.!hidden]="!displayEditorSettings()"
     formControlName="mapEditorSettings">

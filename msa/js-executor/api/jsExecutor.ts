@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,14 +15,22 @@
 ///
 
 import vm, { Script } from 'vm';
+import { _logger } from '../config/logger';
 
 export type TbScript = Script | Function;
 
 export class JsExecutor {
     useSandbox: boolean;
+    private logger = _logger('JsExecutor');
 
     constructor(useSandbox: boolean) {
         this.useSandbox = useSandbox;
+        if (!useSandbox) {
+            this.logger.warn(
+                'script.use_sandbox=false: dangerous by design — user-supplied scripts run in the host realm with no isolation. ' +
+                'Use only as a performance trade-off in trusted, non-public clusters.'
+            );
+        }
     }
 
     compileScript(code: string): Promise<TbScript> {
@@ -56,9 +64,15 @@ export class JsExecutor {
     private invokeScript(script: Script, args: string[], timeout: number | undefined): Promise<any> {
         return new Promise((resolve, reject) => {
             try {
-                const sandbox = Object.create(null);
-                sandbox.args = args;
-                const result = script.runInNewContext(sandbox, {timeout: timeout});
+                const sandbox = vm.createContext(Object.create(null));
+                // Construct args inside the sandbox context so it inherits sandbox-realm
+                // prototypes; prevents prototype-based escapes from the host realm.
+                const ctxArgs = vm.runInContext('[]', sandbox) as string[];
+                for (let i = 0; i < args.length; i++) {
+                    ctxArgs[i] = String(args[i]);
+                }
+                sandbox.args = ctxArgs;
+                const result = script.runInContext(sandbox, {timeout: timeout});
                 resolve(result);
             } catch (err) {
                 reject(err);
@@ -67,6 +81,11 @@ export class JsExecutor {
     }
 
 
+    // DANGEROUS BY DESIGN: the non-sandbox path. vm.compileFunction's
+    // parsingContext only isolates *parsing*, not *execution* — the resulting
+    // function runs in the host realm with full access to host globals
+    // (process, require, etc.). Enabled only via script.use_sandbox=false as
+    // a performance trade-off in trusted clusters.
     private createFunction(code: string): Promise<Function> {
         return new Promise((resolve, reject) => {
             try {

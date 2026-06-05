@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ export const FORBIDDEN_NAMES = ['ctx', 'e', 'pi'];
 
 interface BaseCalculatedField extends Omit<BaseData<CalculatedFieldId>, 'label'>, HasVersion, HasEntityDebugSettings, HasTenantId, ExportableEntity<CalculatedFieldId> {
   entityId: EntityId;
+  additionalInfo?: any;
 }
 
 export interface CalculatedFieldSimple extends BaseCalculatedField {
@@ -79,6 +80,10 @@ export type CalculatedField =
   | CalculatedFieldRelatedEntityAggregation
   | CalculatedFieldAlarmRule;
 
+export type WithCalculatedFieldInfo<T> = T & {entityName: string};
+export type CalculatedFieldInfo = WithCalculatedFieldInfo<CalculatedField>;
+export type CalculatedFieldAlarmRuleInfo = WithCalculatedFieldInfo<CalculatedFieldAlarmRule>;
+
 export enum CalculatedFieldType {
   SIMPLE = 'SIMPLE',
   SCRIPT = 'SCRIPT',
@@ -89,7 +94,7 @@ export enum CalculatedFieldType {
   ALARM = 'ALARM',
 }
 
-interface CalculatedFieldTypeTranslate {
+export interface CalculatedFieldTypeTranslate {
   name: string;
   hint?: string;
 }
@@ -97,16 +102,20 @@ interface CalculatedFieldTypeTranslate {
 export const CalculatedFieldTypeTranslations = new Map<CalculatedFieldType, CalculatedFieldTypeTranslate>(
   [
     [CalculatedFieldType.SIMPLE, {
-      name: 'calculated-fields.type.simple'
+      name: 'calculated-fields.type.simple',
+      hint: 'calculated-fields.type.simple-hint',
     }],
     [CalculatedFieldType.SCRIPT, {
-      name: 'calculated-fields.type.script'
+      name: 'calculated-fields.type.script',
+      hint: 'calculated-fields.type.script-hint',
     }],
     [CalculatedFieldType.GEOFENCING, {
-      name: 'calculated-fields.type.geofencing'
+      name: 'calculated-fields.type.geofencing',
+      hint: 'calculated-fields.type.geofencing-hint',
     }],
     [CalculatedFieldType.PROPAGATION, {
-      name: 'calculated-fields.type.propagation'
+      name: 'calculated-fields.type.propagation',
+      hint: 'calculated-fields.type.propagation-hint',
     }],
     [CalculatedFieldType.RELATED_ENTITIES_AGGREGATION, {
       name: 'calculated-fields.type.related-entities-aggregation',
@@ -118,6 +127,8 @@ export const CalculatedFieldTypeTranslations = new Map<CalculatedFieldType, Calc
     }],
   ]
 )
+
+export const calculatedFieldTypes = Object.values(CalculatedFieldType).filter(type => type !== CalculatedFieldType.ALARM)
 
 export type CalculatedFieldConfiguration =
   | CalculatedFieldSimpleConfiguration
@@ -168,6 +179,7 @@ export interface CalculatedFieldEntityAggregationConfiguration {
   metrics: Record<string, CalculatedFieldAggMetric>;
   interval: AggInterval;
   watermark?: WatermarkConfig;
+  produceIntermediateResult?: boolean;
   output: CalculatedFieldOutput & { decimalsByDefault?: number; };
 }
 
@@ -182,7 +194,7 @@ interface BasePropagationConfiguration {
   output: CalculatedFieldOutput;
 }
 
-interface CalculatedFieldAlarmRuleConfiguration {
+export interface CalculatedFieldAlarmRuleConfiguration {
   type: CalculatedFieldType.ALARM;
   arguments: Record<string, CalculatedFieldArgument>;
   createRules: Record<AlarmSeverity, AlarmRule>;
@@ -516,7 +528,7 @@ export const ArgumentEntityTypeParamsMap =new Map<ArgumentEntityType, ArgumentEn
 ])
 
 export const getCalculatedFieldCurrentEntityFilter = (entityName: string, entityId: EntityId) => {
-  switch (entityId.entityType) {
+  switch (entityId?.entityType) {
     case EntityType.ASSET_PROFILE:
       return {
         assetTypes: [entityName],
@@ -533,6 +545,12 @@ export const getCalculatedFieldCurrentEntityFilter = (entityName: string, entity
         singleEntity: entityId,
       };
   }
+}
+
+export const debugCfActionEnabled = (cf: CalculatedField) => {
+  return (cf.type === CalculatedFieldType.SCRIPT ||
+    (cf.type === CalculatedFieldType.PROPAGATION && cf.configuration.applyExpressionToResolvedArguments)
+  );
 }
 
 export interface CalculatedFieldArgumentValueBase {
@@ -565,6 +583,8 @@ export type CalculatedFieldSingleArgumentValue<ValueType = unknown> = Calculated
 export type CalculatedFieldArgumentEventValue<ValueType = unknown> = CalculatedFieldAttributeArgumentValue<ValueType> | CalculatedFieldLatestTelemetryArgumentValue<ValueType> | CalculatedFieldRollingTelemetryArgumentValue<ValueType>;
 
 export type CalculatedFieldEventArguments<ValueType = unknown> = Record<string, CalculatedFieldArgumentEventValue<ValueType>>;
+
+export const calculatedFieldsEntityTypeList = [EntityType.DEVICE, EntityType.ASSET, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE];
 
 export const defaultCalculatedFieldOutput: CalculatedFieldOutputTimeSeries = {
   type: OutputType.Timeseries,
@@ -1061,8 +1081,19 @@ export function uniqueNameValidator(existingNames: string[]): ValidatorFn {
 }
 
 export interface CalculatedFieldsQuery {
-  type: CalculatedFieldType;
+  types: Array<CalculatedFieldType>;
   entityType?: EntityType;
   entities?: Array<string>;
-  name?: string;
+  name?: Array<string>;
 }
+
+export const calculatedFieldMetricFilterDefaultScript =
+  '// Sample filter script to include only active and unoccupied parking spaces\n' +
+  '// Goal: Count only parking spaces that are active and currently free\n\n' +
+  'return active == true && occupied == false;';
+
+export const calculatedFieldMetricMapDefaultScript =
+  '// Sample map script to convert temperature from Fahrenheit to Celsius\n' +
+  '// Goal: Apply conversion per entity before aggregation (e.g., for average temperature)\n\n' +
+  'var temperatureC = (temperature - 32) / 1.8;\n' +
+  'return toFixed(temperatureC, 2);';

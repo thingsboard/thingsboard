@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -60,6 +60,36 @@ let connections: Socket[] = [];
         const app = express();
         server = http.createServer(app);
 
+        // Build security headers map once at startup.
+        // node-config passes env var overrides as strings, so enabled can be boolean or string.
+        const isEnabled = (val: any) => val === true || val === 'true';
+        const securityHeaders: Record<string, string> = {};
+        const hc: any = config.get('security.headers');
+        if (isEnabled(hc['x-content-type-options']?.enabled)) {
+            securityHeaders['X-Content-Type-Options'] = 'nosniff';
+        }
+        if (isEnabled(hc['referrer-policy']?.enabled)) {
+            securityHeaders['Referrer-Policy'] = hc['referrer-policy']?.value || 'strict-origin-when-cross-origin';
+        }
+        if (isEnabled(hc['x-frame-options']?.enabled)) {
+            securityHeaders['X-Frame-Options'] = hc['x-frame-options']?.value || 'SAMEORIGIN';
+        }
+        if (isEnabled(hc['content-security-policy']?.enabled) && hc['content-security-policy']?.value) {
+            const csp = hc['content-security-policy'];
+            const name = isEnabled(csp['report-only'])
+                ? 'Content-Security-Policy-Report-Only' : 'Content-Security-Policy';
+            securityHeaders[name] = csp.value;
+        }
+        logger.info('Security headers: %s', JSON.stringify(securityHeaders));
+
+        // Apply security headers to all responses
+        app.use((_req, res, next) => {
+            for (const [name, value] of Object.entries(securityHeaders)) {
+                res.setHeader(name, value);
+            }
+            next();
+        });
+
         let apiProxy: httpProxy;
         if (useApiProxy) {
             apiProxy = httpProxy.createProxyServer({
@@ -81,12 +111,12 @@ let connections: Socket[] = [];
                     }
                 }
             });
-            app.all('/api/*', (req, res) => {
+            app.all('/api/*splat', (req, res) => {
               logger.debug(req.method + ' ' + req.originalUrl);
               apiProxy.web(req, res);
             });
 
-            app.all('/static/rulenode/*', (req, res) => {
+            app.all('/static/rulenode/*splat', (req, res) => {
               apiProxy.web(req, res);
             });
 

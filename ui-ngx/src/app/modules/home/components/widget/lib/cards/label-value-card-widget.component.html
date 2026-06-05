@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -23,11 +23,17 @@
   </div>
   <div #labelCardContent class="tb-label-value-card-content">
     <div #labelCardRow class="tb-label-value-card-row">
-      <div *ngIf="showIcon || showLabel" class="tb-label-value-card-icon-label">
-        <tb-icon *ngIf="showIcon" [style]="iconStyle" [style.color]="iconColor.color">{{ icon }}</tb-icon>
-        <div *ngIf="showLabel" [class.tb-label-value-card-label]="!settings.autoScale" [style]="labelStyle" [style.color]="labelColor.color"
-             [innerHTML]="label$ | async | safe:'html'"></div>
-      </div>
+      @if (showIcon || showLabel) {
+        <div class="tb-label-value-card-icon-label">
+          @if (showIcon) {
+            <tb-icon [style]="iconStyle" [style.color]="iconColor.color">{{ icon }}</tb-icon>
+          }
+          @if (showLabel) {
+            <div [class.tb-label-value-card-label]="!settings.autoScale" [style]="labelStyle" [style.color]="labelColor.color"
+            [innerHTML]="label$ | async | safe:'html'"></div>
+          }
+        </div>
+      }
       <div class="tb-label-value-card-value" [style]="valueStyle" [style.color]="valueColor.color">{{ valueText }}</div>
     </div>
   </div>

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,17 @@ package org.thingsboard.server.dao.service.validator;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
+import org.thingsboard.server.common.data.alarm.AlarmCommentType;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.alarm.AlarmCommentDao;
 import org.thingsboard.server.dao.service.DataValidator;
+import org.thingsboard.server.exception.DataValidationException;
 
 @Component
 @AllArgsConstructor
 public class AlarmCommentDataValidator extends DataValidator<AlarmComment> {
+
+    private final AlarmCommentDao alarmCommentDao;
 
     @Override
     protected void validateDataImpl(TenantId tenantId, AlarmComment alarmComment) {
@@ -35,4 +39,20 @@ public class AlarmCommentDataValidator extends DataValidator<AlarmComment> {
             throw new DataValidationException("Alarm id should be specified!");
         }
     }
+
+    @Override
+    protected AlarmComment validateUpdate(TenantId tenantId, AlarmComment alarmComment) {
+        AlarmComment oldAlarmComment = null;
+        if (alarmComment.getId() != null) {
+            oldAlarmComment = alarmCommentDao.findAlarmCommentById(tenantId, alarmComment.getId().getId());
+            if (oldAlarmComment == null) {
+                throw new DataValidationException("Can't update non existing alarm comment!");
+            }
+            if (oldAlarmComment.getType() == AlarmCommentType.SYSTEM) {
+                throw new DataValidationException("System alarm comment can't be updated!");
+            }
+        }
+        return oldAlarmComment;
+    }
+
 }

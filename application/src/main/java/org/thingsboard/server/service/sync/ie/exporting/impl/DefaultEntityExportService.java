@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,8 @@ public class DefaultEntityExportService<I extends EntityId, E extends Exportable
 
     @Override
     public final D getExportData(EntitiesExportCtx<?> ctx, I entityId) throws ThingsboardException {
-        D exportData = newExportData();
+        @SuppressWarnings("unchecked")
+        D exportData = (D) EntityExportData.newInstance(entityId.getEntityType());
 
         E entity = exportableEntitiesService.findEntityByTenantIdAndId(ctx.getTenantId(), entityId);
         if (entity == null) {
@@ -78,7 +79,6 @@ public class DefaultEntityExportService<I extends EntityId, E extends Exportable
         }
 
         exportData.setEntity(entity);
-        exportData.setEntityType(entityId.getEntityType());
         setAdditionalExportData(ctx, entity, exportData);
         if (entity instanceof HasVersion hasVersion) {
             hasVersion.setVersion(null);
@@ -221,10 +221,6 @@ public class DefaultEntityExportService<I extends EntityId, E extends Exportable
             }
         }
         return internalUuid;
-    }
-
-    protected D newExportData() {
-        return (D) new EntityExportData<E>();
     }
 
 }

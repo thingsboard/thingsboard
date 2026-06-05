@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -33,21 +33,22 @@ import {
 } from '@shared/models/widget/maps/map.models';
 
 @Component({
-  selector: 'tb-trip-timeline-settings',
-  templateUrl: './trip-timeline-settings.component.html',
-  styleUrls: ['./../../widget-settings.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => TripTimelineSettingsComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => TripTimelineSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-trip-timeline-settings',
+    templateUrl: './trip-timeline-settings.component.html',
+    styleUrls: ['./../../widget-settings.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TripTimelineSettingsComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => TripTimelineSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class TripTimelineSettingsComponent implements OnInit, ControlValueAccessor, Validator {
 

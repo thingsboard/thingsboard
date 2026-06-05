@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,15 +58,14 @@ public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
             dashboard.setAssignedCustomers(dashboardById.getAssignedCustomers());
         }
 
-        dashboardValidator.validate(dashboard, Dashboard::getTenantId);
-        if (created) {
-            dashboard.setId(dashboardId);
+        if (isSaveRequired(dashboardById, dashboard)) {
+            dashboardValidator.validate(dashboard, Dashboard::getTenantId);
+            if (created) {
+                dashboard.setId(dashboardId);
+            }
+            dashboard = edgeCtx.getDashboardService().saveDashboard(dashboard, false);
         }
-
-        Dashboard savedDashboard = edgeCtx.getDashboardService().saveDashboard(dashboard, false);
-
-        updateDashboardAssignments(tenantId, customerId, dashboardById, savedDashboard, newAssignedCustomers);
-
+        updateDashboardAssignments(tenantId, customerId, dashboardById, dashboard, newAssignedCustomers);
         return created;
     }
 

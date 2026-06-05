@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -34,21 +34,22 @@ import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 
 @Component({
-  selector: 'tb-profile-lwm2m-observe-attr-telemetry-instances',
-  templateUrl: './lwm2m-observe-attr-telemetry-instances.component.html',
-  styleUrls: [ './lwm2m-observe-attr-telemetry-instances.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => Lwm2mObserveAttrTelemetryInstancesComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => Lwm2mObserveAttrTelemetryInstancesComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-profile-lwm2m-observe-attr-telemetry-instances',
+    templateUrl: './lwm2m-observe-attr-telemetry-instances.component.html',
+    styleUrls: ['./lwm2m-observe-attr-telemetry-instances.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => Lwm2mObserveAttrTelemetryInstancesComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => Lwm2mObserveAttrTelemetryInstancesComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 
 export class Lwm2mObserveAttrTelemetryInstancesComponent implements ControlValueAccessor, Validator, OnDestroy {

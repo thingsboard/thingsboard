@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ import {
   CalculatedFieldAggMetric,
   CalculatedFieldAggMetricValue,
 } from '@shared/models/calculated-field.models';
-import { MatButton } from '@angular/material/button';
+import { MatIconButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { isDefinedAndNotNull, isEqual } from '@core/utils';
@@ -59,21 +59,22 @@ import { AceHighlightRules } from '@shared/models/ace/ace.models';
 import { Observable } from "rxjs";
 
 @Component({
-  selector: 'tb-calculated-field-metrics-table',
-  templateUrl: './calculated-field-metrics-table.component.html',
-  styleUrls: [`../calculated-field-arguments/calculated-field-arguments-table.component.scss`],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => CalculatedFieldMetricsTableComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => CalculatedFieldMetricsTableComponent),
-      multi: true
-    }
-  ],
+    selector: 'tb-calculated-field-metrics-table',
+    templateUrl: './calculated-field-metrics-table.component.html',
+    styleUrls: [`../calculated-field-arguments/calculated-field-arguments-table.component.scss`],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => CalculatedFieldMetricsTableComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => CalculatedFieldMetricsTableComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class CalculatedFieldMetricsTableComponent implements OnInit, ControlValueAccessor, Validator, AfterViewInit {
 
@@ -89,6 +90,7 @@ export class CalculatedFieldMetricsTableComponent implements OnInit, ControlValu
   metricsFormArray = this.fb.array<CalculatedFieldAggMetricValue>([]);
   sortOrder = { direction: 'asc' as SortDirection, property: '' };
   dataSource = new CalculatedFieldMetricsDatasource();
+  disable = false;
 
   displayColumns = ['name', 'function', 'filter', 'valueSource', 'actions'];
 
@@ -116,7 +118,7 @@ export class CalculatedFieldMetricsTableComponent implements OnInit, ControlValu
 
   ngOnInit() {
     if (this.simpleMode) {
-      this.displayColumns = ['name', 'function', 'actions'];
+      this.displayColumns = ['name', 'function', 'argumentName', 'actions'];
     }
   }
 
@@ -141,6 +143,10 @@ export class CalculatedFieldMetricsTableComponent implements OnInit, ControlValu
     return this.errorText ? { metricsFormArray: false } : null;
   }
 
+  setDisabledState(isDisabled: boolean): void {
+    this.disable = isDisabled;
+  }
+
   onDelete($event: Event, metric: CalculatedFieldAggMetricValue): void {
     $event.stopPropagation();
     const index = this.metricsFormArray.controls.findIndex(control => isEqual(control.value, metric));
@@ -148,7 +154,7 @@ export class CalculatedFieldMetricsTableComponent implements OnInit, ControlValu
     this.metricsFormArray.markAsDirty();
   }
 
-  manageMetrics($event: Event, matButton: MatButton, metric = {} as CalculatedFieldAggMetricValue): void {
+  manageMetrics($event: Event, matButton: MatIconButton, metric = {} as CalculatedFieldAggMetricValue, readonly: boolean = false): void {
     $event?.stopPropagation();
     if (this.popoverComponent && !this.popoverComponent.tbHidden) {
       this.popoverComponent.hide();
@@ -168,7 +174,8 @@ export class CalculatedFieldMetricsTableComponent implements OnInit, ControlValu
         editorCompleter: this.editorCompleter,
         highlightRules: this.highlightRules,
         simpleMode: this.simpleMode,
-        testScript: this.testScript
+        testScript: this.testScript,
+        readonly
       };
       this.popoverComponent = this.popoverService.displayPopover({
         trigger,
@@ -213,7 +220,7 @@ export class CalculatedFieldMetricsTableComponent implements OnInit, ControlValu
   }
 
   writeValue(metrics: Record<string, CalculatedFieldAggMetric>): void {
-    this.metricsFormArray.clear();
+    this.metricsFormArray.clear({emitEvent: false});
     this.populateZonesFormArray(metrics);
   }
 
@@ -225,7 +232,7 @@ export class CalculatedFieldMetricsTableComponent implements OnInit, ControlValu
       };
       this.metricsFormArray.push(this.fb.control(value), { emitEvent: false });
     });
-    this.metricsFormArray.updateValueAndValidity();
+    this.updateDataSource(this.metricsFormArray.value);
   }
 
   private getSortValue(metric: CalculatedFieldAggMetricValue, column: string): string {

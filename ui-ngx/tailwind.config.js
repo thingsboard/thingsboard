@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,7 +84,8 @@ module.exports = {
         '25': '6.25rem',
         '37.5': '9.375rem',
         '62.5': '15.625rem',
-        '72.5': '18.125rem'
+        '72.5': '18.125rem',
+        '40%': '40%'
       },
       flex: {
         full: '1 1 100%'

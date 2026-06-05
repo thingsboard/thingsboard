@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -31,21 +31,22 @@ import { AlarmRuleFilterPredicateType, NoDataAlarmRuleFilterPredicate } from "@s
 import { isDefinedAndNotNull } from "@core/utils";
 
 @Component({
-  selector: 'tb-alarm-rule-filter-predicate-no-data-value',
-  templateUrl: './alarm-rule-filter-predicate-no-data-value.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => AlarmRuleFilterPredicateNoDataValueComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => AlarmRuleFilterPredicateNoDataValueComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-alarm-rule-filter-predicate-no-data-value',
+    templateUrl: './alarm-rule-filter-predicate-no-data-value.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => AlarmRuleFilterPredicateNoDataValueComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => AlarmRuleFilterPredicateNoDataValueComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class AlarmRuleFilterPredicateNoDataValueComponent implements ControlValueAccessor, Validator, OnInit, OnChanges {
 
@@ -150,7 +151,7 @@ export class AlarmRuleFilterPredicateNoDataValueComponent implements ControlValu
   }
 
   writeValue(predicateValue: NoDataAlarmRuleFilterPredicate): void {
-    if (isDefinedAndNotNull(predicateValue.duration.dynamicValueArgument)) {
+    if (isDefinedAndNotNull(predicateValue?.duration?.dynamicValueArgument)) {
       const availableArgument = this.argumentsList.filter(arg => arg !== this.argumentInUse);
       if (!availableArgument.includes(predicateValue.duration.dynamicValueArgument)) {
         predicateValue.duration.dynamicValueArgument = '';

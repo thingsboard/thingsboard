@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,18 +15,19 @@
     limitations under the License.
 
 -->
-<button *ngIf="boxButton; else iconButton"
-        type="button"
-        mat-stroked-button
-        class="tb-box-button"
-        [disabled]="disabled"
-        #matButton
-        (click)="openThresholdSettingsPopup($event, matButton)"
-        matTooltip="{{ title | translate }}"
-        matTooltipPosition="above">
-  <tb-icon matButtonIcon>{{icon}}</tb-icon>
-</button>
-<ng-template #iconButton>
+@if (boxButton) {
+  <button
+    type="button"
+    mat-stroked-button
+    class="tb-box-button"
+    [disabled]="disabled"
+    #matButton
+    (click)="openThresholdSettingsPopup($event, matButton)"
+    matTooltip="{{ title | translate }}"
+    matTooltipPosition="above">
+    <tb-icon matButtonIcon>{{icon}}</tb-icon>
+  </button>
+} @else {
   <button type="button"
           mat-icon-button
           [disabled]="disabled"
@@ -36,4 +37,4 @@
           matTooltipPosition="above">
     <tb-icon>{{icon}}</tb-icon>
   </button>
-</ng-template>
+}

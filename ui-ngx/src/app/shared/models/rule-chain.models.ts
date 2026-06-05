@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ import { BaseData, ExportableEntity } from '@shared/models/base-data';
 import { TenantId } from '@shared/models/id/tenant-id';
 import { RuleChainId } from '@shared/models/id/rule-chain-id';
 import { RuleNodeId } from '@shared/models/id/rule-node-id';
-import { RuleNode, RuleNodeComponentDescriptor, RuleNodeType } from '@shared/models/rule-node.models';
+import { FcRuleNote, RuleNode, RuleNodeComponentDescriptor, RuleNodeType } from '@shared/models/rule-node.models';
 import { ComponentClusteringMode, ComponentType } from '@shared/models/component-descriptor.models';
 import { HasTenantId, HasVersion } from '@shared/models/entity.models';
 
@@ -39,6 +39,7 @@ export interface RuleChainMetaData extends HasVersion {
   firstNodeIndex?: number;
   nodes: Array<RuleNode>;
   connections: Array<NodeConnectionInfo>;
+  notes?: Array<FcRuleNote>;
 }
 
 export interface RuleChainImport {

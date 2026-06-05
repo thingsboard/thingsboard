@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -73,9 +73,11 @@
             <mat-form-field class="flex-1">
               <mat-label translate>widgets.maps.decorator-symbol</mat-label>
               <mat-select required formControlName="decoratorSymbol">
-                <mat-option *ngFor="let symbol of polylineDecoratorSymbols" [value]="symbol">
-                  {{polylineDecoratorSymbolTranslations.get(symbol) | translate}}
-                </mat-option>
+                @for (symbol of polylineDecoratorSymbols; track symbol) {
+                  <mat-option [value]="symbol">
+                    {{polylineDecoratorSymbolTranslations.get(symbol) | translate}}
+                  </mat-option>
+                }
               </mat-select>
             </mat-form-field>
             <mat-form-field class="flex-1">

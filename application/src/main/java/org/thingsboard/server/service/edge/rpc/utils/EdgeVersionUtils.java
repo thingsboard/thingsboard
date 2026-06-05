@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,14 @@
 package org.thingsboard.server.service.edge.rpc.utils;
 
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.edge.rpc.EdgeVersionComparator;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 
 @Slf4j
 public final class EdgeVersionUtils {
 
     public static boolean isEdgeVersionOlderThan(EdgeVersion currentVersion, EdgeVersion requiredVersion) {
-        return currentVersion.ordinal() < requiredVersion.ordinal();
+        return EdgeVersionComparator.INSTANCE.compare(currentVersion, requiredVersion) < 0;
     }
 
 }

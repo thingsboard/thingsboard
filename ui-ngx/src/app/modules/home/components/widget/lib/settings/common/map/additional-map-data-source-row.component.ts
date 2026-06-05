@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -41,17 +41,18 @@ import { genNextLabelForDataKeys } from '@core/utils';
 import { MapSettingsContext } from '@home/components/widget/lib/settings/common/map/map-settings.component.models';
 
 @Component({
-  selector: 'tb-additional-map-data-source-row',
-  templateUrl: './additional-map-data-source-row.component.html',
-  styleUrls: ['./additional-map-data-source-row.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => AdditionalMapDataSourceRowComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-additional-map-data-source-row',
+    templateUrl: './additional-map-data-source-row.component.html',
+    styleUrls: ['./additional-map-data-source-row.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => AdditionalMapDataSourceRowComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class AdditionalMapDataSourceRowComponent implements ControlValueAccessor, OnInit {
 

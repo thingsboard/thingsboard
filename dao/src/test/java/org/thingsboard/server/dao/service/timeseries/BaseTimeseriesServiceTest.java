@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -708,6 +708,31 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
 
         assertEquals(50000, list.get(2).getTs());
         assertEquals(java.util.Optional.of(2L), list.get(2).getLongValue());
+    }
+
+    @Test
+    public void testFindDeviceMaxAggregationOverNegativeMixedLongAndDoubleTsData() throws Exception {
+        save(deviceId, 5000, -100L);
+        save(deviceId, 15000, -50.0);
+
+        List<TsKvEntry> list = tsService.findAll(tenantId, deviceId, Collections.singletonList(new BaseReadTsKvQuery(LONG_KEY, 0,
+                60000, 60000, 1, Aggregation.MAX))).get(MAX_TIMEOUT, TimeUnit.SECONDS);
+
+        assertEquals(1, list.size());
+        assertEquals(java.util.Optional.of(-50.0), list.get(0).getDoubleValue());
+    }
+
+    @Test
+    public void testFindDeviceMaxAggregationOverAllNegativeDoubleTsData() throws Exception {
+        save(deviceId, 5000, -50.0);
+        save(deviceId, 15000, -100.0);
+        save(deviceId, 25000, -75.0);
+
+        List<TsKvEntry> list = tsService.findAll(tenantId, deviceId, Collections.singletonList(new BaseReadTsKvQuery(LONG_KEY, 0,
+                60000, 60000, 1, Aggregation.MAX))).get(MAX_TIMEOUT, TimeUnit.SECONDS);
+
+        assertEquals(1, list.size());
+        assertEquals(java.util.Optional.of(-50.0), list.get(0).getDoubleValue());
     }
 
     @Test

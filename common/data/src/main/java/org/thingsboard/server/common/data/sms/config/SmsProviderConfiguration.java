@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(
@@ -30,6 +32,15 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = TwilioSmsProviderConfiguration.class, name = "TWILIO"),
         @JsonSubTypes.Type(value = SmppSmsProviderConfiguration.class, name = "SMPP")
 })
+@Schema(
+        description = "Base configuration for SMS providers",
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "AWS_SNS", schema = AwsSnsSmsProviderConfiguration.class),
+                @DiscriminatorMapping(value = "TWILIO", schema = TwilioSmsProviderConfiguration.class),
+                @DiscriminatorMapping(value = "SMPP", schema = SmppSmsProviderConfiguration.class)
+        }
+)
 public interface SmsProviderConfiguration {
 
     @JsonIgnore

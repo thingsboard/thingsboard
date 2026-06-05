@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,6 @@ public final class AiModel extends BaseData<AiModelId> implements HasTenantId, H
     private static final long serialVersionUID = 9017108678716011604L;
 
     @Schema(
-            requiredMode = Schema.RequiredMode.REQUIRED,
             accessMode = Schema.AccessMode.READ_ONLY,
             description = "JSON object representing the ID of the tenant associated with this AI model",
             example = "e3c4b7d2-5678-4a9b-0c1d-2e3f4a5b6c7d"
@@ -54,7 +53,6 @@ public final class AiModel extends BaseData<AiModelId> implements HasTenantId, H
     private TenantId tenantId;
 
     @Schema(
-            requiredMode = Schema.RequiredMode.REQUIRED,
             accessMode = Schema.AccessMode.READ_ONLY,
             description = "Version of the AI model record; increments automatically whenever the record is changed",
             example = "7",

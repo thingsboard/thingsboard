@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -45,27 +45,27 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-dynamic-form-select-items',
-  templateUrl: './dynamic-form-select-items.component.html',
-  styleUrls: ['./dynamic-form-select-items.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DynamicFormSelectItemsComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => DynamicFormSelectItemsComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-dynamic-form-select-items',
+    templateUrl: './dynamic-form-select-items.component.html',
+    styleUrls: ['./dynamic-form-select-items.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DynamicFormSelectItemsComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => DynamicFormSelectItemsComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class DynamicFormSelectItemsComponent implements ControlValueAccessor, OnInit, Validator {
 
   @HostBinding('style.display') styleDisplay = 'flex';
-  @HostBinding('style.overflow') styleOverflow = 'hidden';
 
   @ViewChildren(DynamicFormSelectItemRowComponent)
   selectItemRows: QueryList<DynamicFormSelectItemRowComponent>;

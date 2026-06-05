@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -59,6 +59,10 @@ export class UserService {
 
   public getUser(userId: string, config?: RequestConfig): Observable<User> {
     return this.http.get<User>(`/api/user/${userId}`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getUsersByIds(userIds: Array<string>, config?: RequestConfig): Observable<Array<User>> {
+    return this.http.get<Array<User>>(`/api/users?userIds=${userIds.join(',')}`, defaultHttpOptionsFromConfig(config));
   }
 
   public saveUser(user: User, sendActivationMail: boolean = false,

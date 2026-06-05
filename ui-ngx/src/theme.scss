@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,13 @@
  */
 @use '@angular/material' as mat;
 @use 'theme-overwrites' as overwrites;
+@use '@angular/material/core/tokens/m2-utils';
 @import '../theme/datepicker-theme';
 @import './scss/constants';
 
 @include mat.all-component-typographies();
-@include mat.core();
+@include mat.elevation-classes();
+@include mat.app-background();
 
 $tb-mat-indigo: (
   50: #e8eaf6,
@@ -57,10 +59,6 @@ $tb-mat-indigo: (
 $tb-primary: mat.m2-define-palette($tb-mat-indigo);
 $tb-accent: mat.m2-define-palette(mat.$m2-deep-orange-palette);
 
-$background: (background: map_get(mat.$m2-grey-palette, 200));
-
-$tb-theme-background: map_merge(mat.$m2-light-theme-background-palette, $background);
-
 $tb-mat-theme: mat.m2-define-light-theme((
   color: (
     primary: $tb-primary,
@@ -72,10 +70,9 @@ $tb-mat-theme: mat.m2-define-light-theme((
   density: 0
 ));
 
-$color: map_get($tb-mat-theme, color);
-$color: map_merge($color, (background: $tb-theme-background));
-$tb-mat-theme: map_merge($tb-mat-theme, (color: $color));
-$tb-theme: map_merge($tb-mat-theme, $color);
+$tb-theme-system: m2-utils.get-system($tb-mat-theme);
+$tb-theme-system: map_merge($tb-theme-system, ( background: map_get(mat.$m2-grey-palette, 200) ));
+$tb-theme: map_merge($tb-mat-theme, (_mat-system: $tb-theme-system));
 
 $primary: mat.m2-get-color-from-palette($tb-primary);
 $accent: mat.m2-get-color-from-palette($tb-accent);
@@ -115,24 +112,6 @@ $tb-dark-mat-indigo: (
 
 $tb-dark-primary: mat.m2-define-palette($tb-dark-mat-indigo);
 
-$tb-dark-theme-background: (
-  status-bar: black,
-  app-bar:    map_get($tb-dark-mat-indigo, 900),
-  background: map_get($tb-dark-mat-indigo, 800),
-  hover:      rgba(white, 0.04),
-  card:       map_get($tb-dark-mat-indigo, 800),
-  dialog:     map_get($tb-dark-mat-indigo, 800),
-  disabled-button: rgba(white, 0.12),
-  raised-button: map-get($tb-dark-mat-indigo, 50),
-  focused-button: rgba(white, 0.12),
-  selected-button: map_get($tb-dark-mat-indigo, 900),
-  selected-disabled-button: map_get($tb-dark-mat-indigo, 800),
-  disabled-button-toggle: black,
-  unselected-chip: map_get($tb-dark-mat-indigo, 700),
-  disabled-list-option: black,
-  tooltip: map_get(mat.$m2-grey-palette, 700),
-);
-
 $tb-dark-theme: mat.m2-define-dark-theme((
   color: (
     primary: $tb-dark-primary,
@@ -142,10 +121,9 @@ $tb-dark-theme: mat.m2-define-dark-theme((
   density: 0
 ));
 
-$color: map_get($tb-dark-theme, color);
-$color: map_merge($color, (background: $tb-dark-theme-background));
-$tb-dark-theme: map_merge($tb-dark-theme, (color: $color));
-$tb-dark-theme: map_merge($tb-dark-theme, $color);
+$tb-dark-theme-system: m2-utils.get-system($tb-dark-theme);
+$tb-dark-theme-system: map_merge($tb-dark-theme-system, ( surface: map_get($tb-dark-mat-indigo, 800) ));
+$tb-dark-theme: map_merge($tb-dark-theme, (_mat-system: $tb-dark-theme-system));
 
 @mixin mat-fab-toolbar-theme($theme) {
   $primary: map-get($theme, primary);

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { booleanAttribute, Component, forwardRef, Input, OnChanges, SimpleChanges } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -43,22 +43,23 @@ import { EntityFilter } from '@shared/models/query/query.models';
 import { EntityId } from '@shared/models/id/entity-id';
 
 @Component({
-  selector: 'tb-geofencing-configuration',
-  templateUrl: './geofencing-configuration.component.html',
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => GeofencingConfigurationComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => GeofencingConfigurationComponent),
-      multi: true
-    }
-  ],
+    selector: 'tb-geofencing-configuration',
+    templateUrl: './geofencing-configuration.component.html',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => GeofencingConfigurationComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => GeofencingConfigurationComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
-export class GeofencingConfigurationComponent implements ControlValueAccessor, Validator, OnInit {
+export class GeofencingConfigurationComponent implements ControlValueAccessor, Validator, OnChanges {
 
   @Input({required: true})
   entityId: EntityId;
@@ -71,6 +72,8 @@ export class GeofencingConfigurationComponent implements ControlValueAccessor, V
 
   @Input({required: true})
   ownerId: EntityId;
+
+  @Input({transform: booleanAttribute}) isEditValue = true;
 
   readonly minAllowedScheduledUpdateIntervalInSecForCF = getCurrentAuthState(this.store).minAllowedScheduledUpdateIntervalInSecForCF;
   readonly DataKeyType = DataKeyType;
@@ -113,8 +116,14 @@ export class GeofencingConfigurationComponent implements ControlValueAccessor, V
     })
   }
 
-  ngOnInit() {
-    this.currentEntityFilter = getCalculatedFieldCurrentEntityFilter(this.entityName, this.entityId);
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes.entityName || changes.entityId) {
+      const entityNameChanges = changes.entityName;
+      const entityIdChanges = changes.entityId;
+      if ((entityNameChanges?.currentValue !== entityNameChanges?.previousValue) || (entityIdChanges?.currentValue !== entityIdChanges?.previousValue)) {
+        this.currentEntityFilter = getCalculatedFieldCurrentEntityFilter(this.entityName, this.entityId);
+      }
+    }
   }
 
   validate(): ValidationErrors | null {
@@ -124,7 +133,9 @@ export class GeofencingConfigurationComponent implements ControlValueAccessor, V
   writeValue(config: CalculatedFieldGeofencingConfiguration): void {
     this.geofencingConfiguration.patchValue(config, {emitEvent: false});
     this.checkRelatedEntity(this.geofencingConfiguration.get('zoneGroups').value);
-    this.checkScheduledUpdateEnabled(this.geofencingConfiguration.get('scheduledUpdateEnabled').value);
+    if (this.geofencingConfiguration.enabled) {
+      this.checkScheduledUpdateEnabled(this.geofencingConfiguration.get('scheduledUpdateEnabled').value);
+    }
   }
 
   registerOnChange(fn: (config: CalculatedFieldGeofencingConfiguration) => void): void {

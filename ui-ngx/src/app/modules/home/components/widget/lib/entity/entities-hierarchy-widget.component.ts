@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -72,9 +72,10 @@ import { FormBuilder } from '@angular/forms';
 import { Subject } from 'rxjs';
 
 @Component({
-  selector: 'tb-entities-hierarchy-widget',
-  templateUrl: './entities-hierarchy-widget.component.html',
-  styleUrls: ['./entities-hierarchy-widget.component.scss']
+    selector: 'tb-entities-hierarchy-widget',
+    templateUrl: './entities-hierarchy-widget.component.html',
+    styleUrls: ['./entities-hierarchy-widget.component.scss'],
+    standalone: false
 })
 export class EntitiesHierarchyWidgetComponent extends PageComponent implements OnInit, AfterViewInit, OnDestroy {
 
@@ -447,6 +448,10 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
     const subscriptionOptions: WidgetSubscriptionOptions = {
       type: widgetType.latest,
       datasources: [childrenDatasource],
+      pageSize: this.ctx.widgetConfig.pageSize,
+      useDashboardTimewindow: this.ctx.widgetConfig.useDashboardTimewindow,
+      dashboardTimewindow: this.ctx.dashboardTimewindow,
+      timeWindowConfig: this.ctx.widgetConfig.useDashboardTimewindow ? this.ctx.dashboardTimewindow : this.ctx.widgetConfig.timewindow,
       callbacks: {
         onSubscriptionMessage: (subscription, message) => {
           this.ctx.showToast(message.severity, message.message, undefined,

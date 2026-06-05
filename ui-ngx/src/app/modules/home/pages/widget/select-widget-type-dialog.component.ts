@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -23,9 +23,10 @@ import { Router } from '@angular/router';
 import { widgetType, widgetTypesData } from '@shared/models/widget.models';
 
 @Component({
-  selector: 'tb-select-widget-type-dialog',
-  templateUrl: './select-widget-type-dialog.component.html',
-  styleUrls: ['./select-widget-type-dialog.component.scss']
+    selector: 'tb-select-widget-type-dialog',
+    templateUrl: './select-widget-type-dialog.component.html',
+    styleUrls: ['./select-widget-type-dialog.component.scss'],
+    standalone: false
 })
 export class SelectWidgetTypeDialogComponent extends
   DialogComponent<SelectWidgetTypeDialogComponent, widgetType> {

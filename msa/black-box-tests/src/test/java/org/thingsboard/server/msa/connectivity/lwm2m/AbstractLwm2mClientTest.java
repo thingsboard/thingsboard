@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,12 +57,12 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.msa.AbstractContainerTest;
+import org.thingsboard.server.msa.PortFinder;
 import org.thingsboard.server.msa.WsClient;
 import org.thingsboard.server.msa.connectivity.lwm2m.client.LwM2MTestClient;
 import org.thingsboard.server.msa.connectivity.lwm2m.client.Lwm2mTestHelper.LwM2MClientState;
 import org.thingsboard.server.msa.mapper.WsTelemetryResponse;
 
-import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -229,10 +229,8 @@ public class AbstractLwm2mClientTest extends AbstractContainerTest {
                                            String endpoint, ScheduledExecutorService executor) throws Exception {
         this.executor = executor;
         LwM2MTestClient lwM2MTestClient = new LwM2MTestClient(executor, endpoint);
-        try (ServerSocket socket = new ServerSocket(0)) {
-            int clientPort = socket.getLocalPort();
-            lwM2MTestClient.init(security, clientPort);
-        }
+        int clientPort = PortFinder.findAvailableUdpPort();
+        lwM2MTestClient.init(security, clientPort);
         return lwM2MTestClient;
     }
 

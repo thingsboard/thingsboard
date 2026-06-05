@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,8 @@ public enum ApiUsageRecordKey {
     RE_EXEC_COUNT(ApiFeature.RE, "ruleEngineExecutionCount", "ruleEngineExecutionLimit", "Rule Engine execution"),
     JS_EXEC_COUNT(ApiFeature.JS, "jsExecutionCount", "jsExecutionLimit", "JavaScript execution"),
     TBEL_EXEC_COUNT(ApiFeature.TBEL, "tbelExecutionCount", "tbelExecutionLimit", "Tbel execution"),
-    EMAIL_EXEC_COUNT(ApiFeature.EMAIL, "emailCount", "emailLimit", "email message"),
-    SMS_EXEC_COUNT(ApiFeature.SMS, "smsCount", "smsLimit", "SMS message"),
+    EMAIL_EXEC_COUNT(ApiFeature.EMAIL, "emailCount", "emailLimit", "email message", true, true),
+    SMS_EXEC_COUNT(ApiFeature.SMS, "smsCount", "smsLimit", "SMS message", true, true),
     CREATED_ALARMS_COUNT(ApiFeature.ALARM, "createdAlarmsCount", "createdAlarmsLimit", "alarm"),
     ACTIVE_DEVICES("activeDevicesCount"),
     INACTIVE_DEVICES("inactiveDevicesCount");
@@ -50,21 +50,24 @@ public enum ApiUsageRecordKey {
     private final String unitLabel;
     @Getter
     private final boolean counter;
+    @Getter
+    private final boolean urgent; // urgent keys are reported at a shorter interval for quicker usage state updates
 
     ApiUsageRecordKey(ApiFeature apiFeature, String apiCountKey, String apiLimitKey, String unitLabel) {
-        this(apiFeature, apiCountKey, apiLimitKey, unitLabel, true);
+        this(apiFeature, apiCountKey, apiLimitKey, unitLabel, true, false);
     }
 
     ApiUsageRecordKey(String apiCountKey) {
-        this(null, apiCountKey, null, null, false);
+        this(null, apiCountKey, null, null, false, false);
     }
 
-    ApiUsageRecordKey(ApiFeature apiFeature, String apiCountKey, String apiLimitKey, String unitLabel, boolean counter) {
+    ApiUsageRecordKey(ApiFeature apiFeature, String apiCountKey, String apiLimitKey, String unitLabel, boolean counter, boolean urgent) {
         this.apiFeature = apiFeature;
         this.apiCountKey = apiCountKey;
         this.apiLimitKey = apiLimitKey;
         this.unitLabel = unitLabel;
         this.counter = counter;
+        this.urgent = urgent;
     }
 
     public static ApiUsageRecordKey[] getKeys(ApiFeature feature) {

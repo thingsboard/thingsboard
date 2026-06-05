@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.thingsboard.server.controller;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
@@ -108,6 +109,7 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
         assertThat(savedCalculatedField.getType()).isEqualTo(calculatedField.getType());
         assertThat(savedCalculatedField.getName()).isEqualTo(calculatedField.getName());
         assertThat(savedCalculatedField.getConfiguration()).isEqualTo(getSimpleCalculatedFieldConfig());
+        assertThat(savedCalculatedField.getAdditionalInfo()).isEqualTo(calculatedField.getAdditionalInfo());
         assertThat(savedCalculatedField.getVersion()).isEqualTo(1L);
 
         savedCalculatedField.setName("Test CF");
@@ -115,6 +117,7 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
         CalculatedField updatedCalculatedField = doPost("/api/calculatedField", savedCalculatedField, CalculatedField.class);
 
         assertThat(updatedCalculatedField.getName()).isEqualTo(savedCalculatedField.getName());
+        assertThat(updatedCalculatedField.getAdditionalInfo()).isEqualTo(savedCalculatedField.getAdditionalInfo());
         assertThat(updatedCalculatedField.getVersion()).isEqualTo(savedCalculatedField.getVersion() + 1);
 
         doDelete("/api/calculatedField/" + savedCalculatedField.getId().getId().toString())
@@ -259,6 +262,8 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
         List<CalculatedFieldInfo> allCalculatedFields = getCalculatedFields(CalculatedFieldType.SIMPLE,
                 null, null, null);
         assertThat(allCalculatedFields).contains(deviceCalculatedField, profileCalculatedField);
+        allCalculatedFields = getCalculatedFields(null, null, null, null);
+        assertThat(allCalculatedFields).contains(deviceCalculatedField, profileCalculatedField);
 
         List<CalculatedFieldInfo> profileLevelCalculatedFields = getCalculatedFields(CalculatedFieldType.SIMPLE,
                 EntityType.DEVICE_PROFILE, null, null);
@@ -320,6 +325,7 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
         calculatedField.setType(cfType);
         calculatedField.setName("Test Calculated Field for " + entityId);
         calculatedField.setConfigurationVersion(1);
+        calculatedField.setAdditionalInfo(JacksonUtil.newObjectNode());
         if (customConfiguration != null) {
             calculatedField.setConfiguration(customConfiguration);
         } else switch (cfType) {
@@ -380,7 +386,7 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
 
         AggMetric metric = new AggMetric();
         metric.setInput(new AggKeyInput("en"));
-        metric.setDefaultValue(9999L);
+        metric.setDefaultValue(9999.0);
         config.setMetrics(Map.of("consumption", metric));
 
         config.setWatermark(new Watermark(TimeUnit.DAYS.toSeconds(1)));

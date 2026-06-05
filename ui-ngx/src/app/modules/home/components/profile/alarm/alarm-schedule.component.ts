@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -43,18 +43,19 @@ import { getDefaultTimezone } from '@shared/models/time/time.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-alarm-schedule',
-  templateUrl: './alarm-schedule.component.html',
-  styleUrls: ['./alarm-schedule.component.scss'],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => AlarmScheduleComponent),
-    multi: true
-  }, {
-    provide: NG_VALIDATORS,
-    useExisting: forwardRef(() => AlarmScheduleComponent),
-    multi: true
-  }]
+    selector: 'tb-alarm-schedule',
+    templateUrl: './alarm-schedule.component.html',
+    styleUrls: ['./alarm-schedule.component.scss'],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => AlarmScheduleComponent),
+            multi: true
+        }, {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => AlarmScheduleComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class AlarmScheduleComponent implements ControlValueAccessor, Validator, OnInit {
   @Input()
@@ -62,7 +63,7 @@ export class AlarmScheduleComponent implements ControlValueAccessor, Validator, 
 
   alarmScheduleForm: UntypedFormGroup;
 
-  alarmScheduleTypes = Object.keys(AlarmScheduleType);
+  alarmScheduleTypes = Object.values(AlarmScheduleType);
   alarmScheduleType = AlarmScheduleType;
   alarmScheduleTypeTranslate = AlarmScheduleTypeTranslationMap;
   dayOfWeekTranslationsArray = dayOfWeekTranslations;

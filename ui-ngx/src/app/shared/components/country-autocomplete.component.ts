@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,18 @@
 /// limitations under the License.
 ///
 
-import { Component, ElementRef, EventEmitter, forwardRef, Input, OnInit, Output, ViewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  EventEmitter,
+  forwardRef,
+  Input,
+  OnChanges,
+  OnInit,
+  Output,
+  SimpleChanges,
+  ViewChild
+} from '@angular/core';
 import { Country, CountryData } from '@shared/models/country.models';
 import {
   ControlValueAccessor,
@@ -23,43 +34,50 @@ import {
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   ValidationErrors,
-  Validator
+  Validator,
+  Validators
 } from '@angular/forms';
-import { isNotEmptyStr } from '@core/utils';
+import { isNotEmptyStr, objectRequired } from '@core/utils';
 import { Observable, of } from 'rxjs';
 import { debounceTime, distinctUntilChanged, map, share, switchMap, tap } from 'rxjs/operators';
-import { SubscriptSizing, MatFormFieldAppearance } from '@angular/material/form-field';
+import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { TranslateService } from '@ngx-translate/core';
+import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 
 interface CountrySearchData extends Country {
   searchText?: string;
 }
 
 @Component({
-  selector: 'tb-country-autocomplete',
-  templateUrl: 'country-autocomplete.component.html',
-  providers: [
-    CountryData,
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => CountryAutocompleteComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => CountryAutocompleteComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-country-autocomplete',
+    templateUrl: 'country-autocomplete.component.html',
+    styleUrls: ['./country-autocomplete.component.scss'],
+    providers: [
+        CountryData,
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => CountryAutocompleteComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => CountryAutocompleteComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
-export class CountryAutocompleteComponent implements OnInit, ControlValueAccessor, Validator {
+export class CountryAutocompleteComponent implements OnInit, OnChanges, ControlValueAccessor, Validator {
 
   @Input()
   labelText = this.translate.instant('contact.country');
 
   @Input()
   requiredText = this.translate.instant('contact.country-required');
+
+  @Input()
+  objectRequiredText = this.translate.instant('contact.country-object-required');
 
   @Input()
   autocompleteHint: string;
@@ -78,6 +96,8 @@ export class CountryAutocompleteComponent implements OnInit, ControlValueAccesso
   subscriptSizing: SubscriptSizing = 'fixed';
 
   @ViewChild('countryInput', {static: true}) countryInput: ElementRef;
+
+  @ViewChild('autocompleteTrigger') autocompleteTrigger: MatAutocompleteTrigger;
 
   @Output()
   selectCountryCode = new EventEmitter<string>();
@@ -103,8 +123,22 @@ export class CountryAutocompleteComponent implements OnInit, ControlValueAccesso
               private countryData: CountryData,
               private translate: TranslateService) {
     this.countryFormGroup = this.fb.group({
-      country: ['']
+      country: ['', objectRequired()]
     });
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes.required) {
+      const requiredChanges = changes.required;
+      if (requiredChanges.currentValue !== requiredChanges.previousValue) {
+        if (this.required) {
+          this.countryFormGroup.get('country').addValidators(Validators.required);
+        } else {
+          this.countryFormGroup.get('country').removeValidators(Validators.required);
+        }
+        this.countryFormGroup.get('country').updateValueAndValidity();
+      }
+    }
   }
 
   ngOnInit(): void {
@@ -163,7 +197,7 @@ export class CountryAutocompleteComponent implements OnInit, ControlValueAccesso
   }
 
   displayCountryFn(country?: Country): string | undefined {
-    return country ? `${country.flag} ${country.name}` : undefined;
+    return country ? country.name : undefined;
   }
 
   onFocus() {
@@ -171,6 +205,21 @@ export class CountryAutocompleteComponent implements OnInit, ControlValueAccesso
       this.countryFormGroup.get('country').updateValueAndValidity({onlySelf: true});
       this.dirty = false;
     }
+  }
+
+  checkInputAndAutoSelect() {
+    const control = this.countryFormGroup.get('country');
+    const value = control.value;
+
+    if (value && typeof value === 'string') {
+      const foundCountry = this.fetchCountries(value);
+      if (foundCountry.length === 1) {
+        control.setValue(foundCountry[0]);
+        this.autocompleteTrigger?.closePanel();
+      }
+    }
+
+    this.onTouched();
   }
 
   textIsNotEmpty(text: string): boolean {

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -19,9 +19,11 @@
   <mat-form-field class="mat-block" appearance="outline" hideRequiredMarker>
     <mat-label>{{ (selectEntityFormGroup.get('entity').value ? 'entity.entity' : 'widgets.maps.data-layer.select-entity') | translate }}</mat-label>
     <mat-select formControlName="entity">
-      <mat-option *ngFor="let entity of entities" [value]="entity">
-        {{ entity.entity.entityDisplayName }}
-      </mat-option>
+      @for (entity of entities; track entity) {
+        <mat-option [value]="entity">
+          {{ entity.entity.entityDisplayName }}
+        </mat-option>
+      }
     </mat-select>
     <mat-hint translate>widgets.maps.data-layer.select-entity-hint</mat-hint>
   </mat-form-field>

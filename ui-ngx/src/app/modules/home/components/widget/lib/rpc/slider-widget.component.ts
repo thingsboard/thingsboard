@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -50,10 +50,11 @@ import tinycolor from 'tinycolor2';
 import { UnitService } from '@core/services/unit.service';
 
 @Component({
-  selector: 'tb-slider-widget',
-  templateUrl: './slider-widget.component.html',
-  styleUrls: ['../action/action-widget.scss', './slider-widget.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-slider-widget',
+    templateUrl: './slider-widget.component.html',
+    styleUrls: ['../action/action-widget.scss', './slider-widget.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class SliderWidgetComponent extends
   BasicActionWidgetComponent implements OnInit, AfterViewInit, OnDestroy {

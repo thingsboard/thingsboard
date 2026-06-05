@@ -1,5 +1,5 @@
 --
--- Copyright © 2016-2025 The Thingsboard Authors
+-- Copyright © 2016-2026 The Thingsboard Authors
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ BEGIN
                 IF partition_type = 'YEARS' THEN
                     FOR partition IN SELECT tablename
                                      FROM pg_tables
-                                     WHERE schemaname = 'public'
+                                     WHERE schemaname = current_schema()
                                        AND tablename like 'ts_kv_' || '%'
                                        AND tablename != 'ts_kv_latest'
                                        AND tablename != 'key_dictionary'
@@ -93,7 +93,7 @@ BEGIN
                         ELSE
                             FOR partition IN SELECT tablename
                                              FROM pg_tables
-                                             WHERE schemaname = 'public'
+                                             WHERE schemaname = current_schema()
                                                AND tablename like 'ts_kv_' || '%'
                                                AND tablename != 'ts_kv_latest'
                                                AND tablename != 'key_dictionary'
@@ -135,7 +135,7 @@ BEGIN
                                 ELSE
                                     FOR partition IN SELECT tablename
                                                      FROM pg_tables
-                                                     WHERE schemaname = 'public'
+                                                     WHERE schemaname = current_schema()
                                                        AND tablename like 'ts_kv_' || '%'
                                                        AND tablename != 'ts_kv_latest'
                                                        AND tablename != 'key_dictionary'
@@ -205,7 +205,7 @@ BEGIN
     IF partition IS NOT NULL THEN
         IF NOT EXISTS(SELECT
                       FROM pg_tables
-                      WHERE schemaname = 'public'
+                      WHERE schemaname = current_schema()
                         AND tablename = partition) THEN
             partition := NULL;
             RAISE NOTICE 'Failed to found partition by ttl';

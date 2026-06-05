@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -46,6 +46,11 @@ export class EntityViewService {
 
   public getEntityView(entityViewId: string, config?: RequestConfig): Observable<EntityView> {
     return this.http.get<EntityView>(`/api/entityView/${entityViewId}`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getEntityViews(entityViewIds: Array<string>, config?: RequestConfig): Observable<Array<EntityView>> {
+    return this.http.get<Array<EntityView>>(`/api/entityViews?entityViewIds=${entityViewIds.join(',')}`,
+      defaultHttpOptionsFromConfig(config));
   }
 
   public getEntityViewInfo(entityViewId: string, config?: RequestConfig): Observable<EntityViewInfo> {

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import printTemplate from '@home/pages/security/authentication-dialog/backup-code-print-template.raw';
 import { ImportExportService } from '@shared/import-export/import-export.service';
 import { mergeMap, tap } from 'rxjs/operators';
+import { ActionNotificationShow } from "@core/notification/notification.actions";
 
 enum ForceTwoFAState {
   SETUP = 'setup',
@@ -60,9 +61,10 @@ enum BackupCodeState {
 }
 
 @Component({
-  selector: 'tb-force-two-factor-auth-login',
-  templateUrl: './force-two-factor-auth-login.component.html',
-  styleUrls: ['./force-two-factor-auth-login.component.scss']
+    selector: 'tb-force-two-factor-auth-login',
+    templateUrl: './force-two-factor-auth-login.component.html',
+    styleUrls: ['./force-two-factor-auth-login.component.scss'],
+    standalone: false
 })
 export class ForceTwoFactorAuthLoginComponent extends PageComponent implements OnInit, OnDestroy {
 
@@ -261,6 +263,13 @@ export class ForceTwoFactorAuthLoginComponent extends PageComponent implements O
             this.configForm.get('verificationCode').setErrors({incorrectCode: true});
           } else if (error.status === 429) {
             this.configForm.get('verificationCode').setErrors({tooManyRequest: true});
+          } else {
+            this.store.dispatch(new ActionNotificationShow({
+              message: error.error.message,
+              type: 'error',
+              verticalPosition: 'top',
+              horizontalPosition: 'left'
+            }));
           }
         }
       })

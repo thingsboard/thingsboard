@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -30,9 +30,10 @@ import { EntityId } from '@app/shared/models/id/entity-id';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 
 @Component({
-  selector: 'tb-entity-view',
-  templateUrl: './entity-view.component.html',
-  styleUrls: ['./entity-view.component.scss']
+    selector: 'tb-entity-view',
+    templateUrl: './entity-view.component.html',
+    styleUrls: ['./entity-view.component.scss'],
+    standalone: false
 })
 export class EntityViewComponent extends EntityComponent<EntityViewInfo> {
 

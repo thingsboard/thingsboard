@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.SsrfProtectionValidator;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.info.NotificationInfo;
@@ -109,10 +110,13 @@ public class MicrosoftTeamsNotificationChannel implements NotificationChannel<Mi
             adaptiveCard.getActions().add(actionOpenUrl);
         }
 
+        URI webhookUri = new URI(targetConfig.getWebhookUrl());
+        SsrfProtectionValidator.validateUri(webhookUri);
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> request = new HttpEntity<>(JacksonUtil.toString(teamsAdaptiveCard), headers);
-        restTemplate.postForEntity(new URI(targetConfig.getWebhookUrl()), request, String.class);
+        restTemplate.postForEntity(webhookUri, request, String.class);
     }
 
     private void sendTeamsMessageCard(MicrosoftTeamsNotificationTargetConfig targetConfig, MicrosoftTeamsDeliveryMethodNotificationTemplate processedTemplate, NotificationProcessingContext ctx) throws JsonProcessingException, URISyntaxException {
@@ -139,10 +143,13 @@ public class MicrosoftTeamsNotificationChannel implements NotificationChannel<Mi
             teamsMessageCard.setPotentialAction(List.of(actionCard));
         }
 
+        URI webhookUri = new URI(targetConfig.getWebhookUrl());
+        SsrfProtectionValidator.validateUri(webhookUri);
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> request = new HttpEntity<>(JacksonUtil.toString(teamsMessageCard), headers);
-        restTemplate.postForEntity(new URI(targetConfig.getWebhookUrl()), request, String.class);
+        restTemplate.postForEntity(webhookUri, request, String.class);
     }
 
     private String getButtonUri(MicrosoftTeamsDeliveryMethodNotificationTemplate processedTemplate, NotificationProcessingContext ctx) throws JsonProcessingException {

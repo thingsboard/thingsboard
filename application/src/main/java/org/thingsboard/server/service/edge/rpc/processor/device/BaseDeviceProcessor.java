@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -54,23 +53,17 @@ public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
             } else {
                 device.setId(deviceId);
             }
-            String deviceName = device.getName();
-            Device deviceByName = edgeCtx.getDeviceService().findDeviceByTenantIdAndName(tenantId, deviceName);
-            if (deviceByName != null && !deviceByName.getId().equals(deviceId)) {
-                deviceName = deviceName + "_" + StringUtils.randomAlphabetic(15);
-                log.warn("[{}] Device with name {} already exists. Renaming device name to {}",
-                        tenantId, device.getName(), deviceName);
-                deviceNameUpdated = true;
-            }
-            device.setName(deviceName);
-            setCustomerId(tenantId, created ? null : deviceById.getCustomerId(), device, deviceUpdateMsg);
+            if (isSaveRequired(deviceById, device)) {
+                deviceNameUpdated = updateDeviceNameIfDuplicateExists(tenantId, deviceId, device);
+                setCustomerId(tenantId, created ? null : deviceById.getCustomerId(), device, deviceUpdateMsg);
 
-            deviceValidator.validate(device, Device::getTenantId);
-            if (created) {
-                device.setId(deviceId);
+                deviceValidator.validate(device, Device::getTenantId);
+                if (created) {
+                    device.setId(deviceId);
+                }
+                Device savedDevice = edgeCtx.getDeviceService().saveDevice(device, false);
+                edgeCtx.getClusterService().onDeviceUpdated(savedDevice, created ? null : device);
             }
-            Device savedDevice = edgeCtx.getDeviceService().saveDevice(device, false);
-            edgeCtx.getClusterService().onDeviceUpdated(savedDevice, created ? null : device);
         } catch (Exception e) {
             log.error("[{}] Failed to process device update msg [{}]", tenantId, deviceUpdateMsg, e);
             throw e;
@@ -78,6 +71,15 @@ public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
             deviceCreationLock.unlock();
         }
         return Pair.of(created, deviceNameUpdated);
+    }
+
+    private boolean updateDeviceNameIfDuplicateExists(TenantId tenantId, DeviceId deviceId, Device device) {
+        Device deviceByName = edgeCtx.getDeviceService().findDeviceByTenantIdAndName(tenantId, device.getName());
+
+        return generateUniqueNameIfDuplicateExists(tenantId, deviceId, device, deviceByName).map(uniqueName -> {
+            device.setName(uniqueName);
+            return true;
+        }).orElse(false);
     }
 
     protected void updateDeviceCredentials(TenantId tenantId, DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg) {

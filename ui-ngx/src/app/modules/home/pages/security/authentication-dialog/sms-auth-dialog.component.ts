@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -31,9 +31,10 @@ import { phoneNumberPattern } from '@shared/models/settings.models';
 import { MatStepper } from '@angular/material/stepper';
 
 @Component({
-  selector: 'tb-sms-auth-dialog',
-  templateUrl: './sms-auth-dialog.component.html',
-  styleUrls: ['./authentication-dialog.component.scss']
+    selector: 'tb-sms-auth-dialog',
+    templateUrl: './sms-auth-dialog.component.html',
+    styleUrls: ['./authentication-dialog.component.scss'],
+    standalone: false
 })
 export class SMSAuthDialogComponent extends DialogComponent<SMSAuthDialogComponent> {
 

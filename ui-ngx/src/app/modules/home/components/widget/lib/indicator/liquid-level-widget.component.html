@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -20,11 +20,15 @@
   <div class="tb-liquid-level-overlay" [style]="overlayStyle"></div>
   <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
   <div #liquidLevelContent class="tb-liquid-level-content"></div>
-  <div *ngIf="errorsMsg.length" class="tb-liquid-level-error">
-    <div class="tb-liquid-level-error-container">
-      <div *ngFor="let error of errorsMsg">
-        {{ error }}
+  @if (errorsMsg.length) {
+    <div class="tb-liquid-level-error">
+      <div class="tb-liquid-level-error-container">
+        @for (error of errorsMsg; track error) {
+          <div>
+            {{ error }}
+          </div>
+        }
       </div>
     </div>
-  </div>
+  }
 </div>

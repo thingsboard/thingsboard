@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainType;
-import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.TbActorStopReason;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -139,13 +138,22 @@ public class TenantActor extends RuleChainManagerActor {
     @Override
     protected boolean doProcess(TbActorMsg msg) {
         if (cantFindTenant) {
-            log.info("[{}] Processing missing Tenant msg: {}", tenantId, msg);
-            if (msg.getMsgType().equals(MsgType.QUEUE_TO_RULE_ENGINE_MSG)) {
-                QueueToRuleEngineMsg queueMsg = (QueueToRuleEngineMsg) msg;
-                queueMsg.getMsg().getCallback().onSuccess();
-            } else if (msg.getMsgType().equals(MsgType.TRANSPORT_TO_DEVICE_ACTOR_MSG)) {
-                TransportToDeviceActorMsgWrapper transportMsg = (TransportToDeviceActorMsgWrapper) msg;
-                transportMsg.getCallback().onSuccess();
+            log.debug("[{}] Processing message for non-existing tenant: {}", tenantId, msg);
+            switch (msg.getMsgType()) {
+                case QUEUE_TO_RULE_ENGINE_MSG -> {
+                    ((QueueToRuleEngineMsg) msg).getMsg().getCallback().onSuccess();
+                }
+                case TRANSPORT_TO_DEVICE_ACTOR_MSG -> {
+                    ((TransportToDeviceActorMsgWrapper) msg).getCallback().onSuccess();
+                }
+                case CF_STATE_RESTORE_MSG -> {
+                    ((CalculatedFieldStateRestoreMsg) msg).getCallback().onSuccess();
+                }
+                default -> {
+                    if (!log.isDebugEnabled()) {
+                        log.info("[{}] Processing message for non-existing tenant: {}", tenantId, msg);
+                    }
+                }
             }
             return true;
         }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -141,12 +141,17 @@ public class JpaUserDao extends JpaAbstractDao<UserEntity, User> implements User
     @Override
     public UserAuthDetails findUserAuthDetailsByUserId(UUID tenantId, UUID userId) {
         TbPair<UserEntity, Boolean> result = userRepository.findUserAuthDetailsByUserId(userId);
-        return new UserAuthDetails(result.getFirst().toData(), result.getSecond());
+        return result != null ? new UserAuthDetails(result.getFirst().toData(), result.getSecond()) : null;
     }
 
     @Override
     public int countTenantAdmins(UUID tenantId) {
         return userRepository.countByTenantIdAndAuthority(tenantId, Authority.TENANT_ADMIN);
+    }
+
+    @Override
+    public List<User> findUsersByTenantIdAndIds(UUID tenantId, List<UUID> userIds) {
+        return DaoUtil.convertDataList(userRepository.findUsersByTenantIdAndIdIn(tenantId, userIds));
     }
 
     @Override

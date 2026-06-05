@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +58,11 @@ public interface DeviceProfileRepository extends JpaRepository<DeviceProfileEnti
                                                    @Param("textSearch") String textSearch,
                                                    @Param("transportType") DeviceTransportType transportType,
                                                    Pageable pageable);
+
+    @Query("SELECT new org.thingsboard.server.common.data.DeviceProfileInfo(d.id, d.tenantId, d.name, d.image, d.defaultDashboardId, d.type, d.transportType) " +
+            "FROM DeviceProfileEntity d WHERE " +
+            "d.tenantId = :tenantId AND d.id IN :deviceProfileIds")
+    List<DeviceProfileInfo> findDeviceProfileInfosByTenantIdAndIdIn(@Param("tenantId") UUID tenantId, @Param("deviceProfileIds") List<UUID> deviceProfileIds);
 
     @Query("SELECT d FROM DeviceProfileEntity d " +
             "WHERE d.tenantId = :tenantId AND d.isDefault = true")

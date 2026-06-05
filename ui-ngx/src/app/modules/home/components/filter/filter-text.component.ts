@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,13 +14,12 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
-import { ControlValueAccessor, UntypedFormBuilder, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { MatDialog } from '@angular/material/dialog';
-import { KeyFilter, keyFiltersToText } from '@shared/models/query/query.models';
+import { Component, forwardRef, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ComplexOperation, KeyFilter, keyFiltersToText } from '@shared/models/query/query.models';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-filter-text',
@@ -32,18 +31,14 @@ import { coerceBooleanProperty } from '@angular/cdk/coercion';
       useExisting: forwardRef(() => FilterTextComponent),
       multi: true
     }
-  ]
+  ],
+  standalone: false
 })
-export class FilterTextComponent implements ControlValueAccessor, OnInit {
+export class FilterTextComponent implements ControlValueAccessor, OnChanges {
 
-  private requiredValue: boolean;
-  get required(): boolean {
-    return this.requiredValue;
-  }
   @Input()
-  set required(value: boolean) {
-    this.requiredValue = coerceBooleanProperty(value);
-  }
+  @coerceBoolean()
+  required = false;
 
   @Input()
   disabled: boolean;
@@ -57,26 +52,30 @@ export class FilterTextComponent implements ControlValueAccessor, OnInit {
   @Input()
   nowrap = false;
 
+  @Input()
+  operation: ComplexOperation = ComplexOperation.AND;
+
   requiredClass = false;
 
   public filterText: string;
 
-  private propagateChange = (v: any) => { };
+  private currentValue: Array<KeyFilter>;
 
-  constructor(private dialog: MatDialog,
-              private fb: UntypedFormBuilder,
-              private translate: TranslateService,
+  constructor(private translate: TranslateService,
               private datePipe: DatePipe) {
   }
 
-  registerOnChange(fn: any): void {
-    this.propagateChange = fn;
+  registerOnChange(_fn: any): void {
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(_fn: any): void {
   }
 
-  ngOnInit() {
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes.operation && !changes.operation.firstChange
+      && changes.operation.currentValue !== changes.operation.previousValue) {
+      this.updateFilterText(this.currentValue);
+    }
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -84,13 +83,14 @@ export class FilterTextComponent implements ControlValueAccessor, OnInit {
   }
 
   writeValue(value: Array<KeyFilter>): void {
+    this.currentValue = value;
     this.updateFilterText(value);
   }
 
   private updateFilterText(value: Array<KeyFilter>) {
     this.requiredClass = false;
     if (value && value.length) {
-      this.filterText = keyFiltersToText(this.translate, this.datePipe, value);
+      this.filterText = keyFiltersToText(this.translate, this.datePipe, value, this.operation);
     } else {
       if (this.required && !this.disabled) {
         this.filterText = this.addFilterPrompt;

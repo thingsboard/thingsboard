@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -20,9 +20,11 @@
   <div class="fx-centered">
     <div class="fetch-to-data-toggle">
       <tb-toggle-select class="fetch-to-data-toggle" formControlName="renameIn" appearance="fill">
-        <tb-toggle-option *ngFor="let data of renameIn" [value]="data.value">
-          {{ data.name }}
-        </tb-toggle-option>
+        @for (data of renameIn; track data) {
+          <tb-toggle-option [value]="data.value">
+            {{ data.name }}
+          </tb-toggle-option>
+        }
       </tb-toggle-select>
     </div>
   </div>

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.thingsboard.server.edqs.query;
 
 import lombok.Builder;
+import org.thingsboard.server.common.data.query.ComplexOperation;
 import org.thingsboard.server.common.data.query.EntityFilter;
 
 import java.util.List;
@@ -23,8 +24,8 @@ import java.util.List;
 public class EdqsCountQuery extends EdqsQuery {
 
     @Builder
-    EdqsCountQuery(EntityFilter entityFilter, boolean hasKeyFilters, List<EdqsFilter> keyFilters) {
-        super(entityFilter, hasKeyFilters, keyFilters);
+    EdqsCountQuery(EntityFilter entityFilter, boolean hasKeyFilters, List<EdqsFilter> keyFilters, ComplexOperation keyFiltersOperation) {
+        super(entityFilter, hasKeyFilters, keyFilters, keyFiltersOperation);
     }
 
 }

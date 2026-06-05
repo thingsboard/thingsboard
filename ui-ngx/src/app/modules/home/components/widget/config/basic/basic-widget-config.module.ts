@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -150,6 +150,9 @@ import {
   ValueStepperBasicConfigComponent
 } from '@home/components/widget/config/basic/rpc/value-stepper-basic-config.component';
 import { MapBasicConfigComponent } from '@home/components/widget/config/basic/map/map-basic-config.component';
+import {
+  HtmlContainerBasicConfigComponent
+} from '@home/components/widget/config/basic/html/html-container-basic-config.component';
 
 @NgModule({
   declarations: [
@@ -201,7 +204,8 @@ import { MapBasicConfigComponent } from '@home/components/widget/config/basic/ma
     LabelValueCardBasicConfigComponent,
     UnreadNotificationBasicConfigComponent,
     ScadaSymbolBasicConfigComponent,
-    MapBasicConfigComponent
+    MapBasicConfigComponent,
+    HtmlContainerBasicConfigComponent
   ],
   imports: [
     CommonModule,
@@ -255,7 +259,8 @@ import { MapBasicConfigComponent } from '@home/components/widget/config/basic/ma
     LabelCardBasicConfigComponent,
     LabelValueCardBasicConfigComponent,
     UnreadNotificationBasicConfigComponent,
-    MapBasicConfigComponent
+    MapBasicConfigComponent,
+    HtmlContainerBasicConfigComponent
   ]
 })
 export class BasicWidgetConfigModule {

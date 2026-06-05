@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -44,21 +44,22 @@ import { MatDialog } from '@angular/material/dialog';
 import { AddMobilePageDialogComponent } from '@home/pages/mobile/bundes/layout/add-mobile-page-dialog.component';
 
 @Component({
-  selector: 'tb-mobile-layout',
-  templateUrl: './mobile-layout.component.html',
-  styleUrls: ['./mobile-layout.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => MobileLayoutComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => MobileLayoutComponent),
-      multi: true
-    }
-  ],
+    selector: 'tb-mobile-layout',
+    templateUrl: './mobile-layout.component.html',
+    styleUrls: ['./mobile-layout.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => MobileLayoutComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => MobileLayoutComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class MobileLayoutComponent implements ControlValueAccessor, Validator {
 

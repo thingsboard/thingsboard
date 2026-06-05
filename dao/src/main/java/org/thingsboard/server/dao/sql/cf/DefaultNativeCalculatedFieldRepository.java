@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,6 +74,7 @@ public class DefaultNativeCalculatedFieldRepository implements NativeCalculatedF
                 JsonNode configuration = JacksonUtil.toJsonNode((String) row.get("configuration"));
                 long version = row.get("version") != null ? (long) row.get("version") : 0;
                 String debugSettings = (String) row.get("debug_settings");
+                JsonNode additionalInfo = JacksonUtil.toJsonNode((String) row.get("additional_info"));
 
                 CalculatedField calculatedField = new CalculatedField();
                 calculatedField.setId(new CalculatedFieldId(id));
@@ -91,6 +92,7 @@ public class DefaultNativeCalculatedFieldRepository implements NativeCalculatedF
                 }
                 calculatedField.setVersion(version);
                 calculatedField.setDebugSettings(JacksonUtil.fromString(debugSettings, DebugSettings.class));
+                calculatedField.setAdditionalInfo(additionalInfo);
 
                 return calculatedField;
             }).collect(Collectors.toList());

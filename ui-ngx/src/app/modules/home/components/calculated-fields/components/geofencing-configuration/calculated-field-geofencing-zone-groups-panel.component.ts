@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -58,9 +58,10 @@ import { EntitySearchDirection } from '@shared/models/relation.models';
 import { CdkDragDrop } from "@angular/cdk/drag-drop";
 
 @Component({
-  selector: 'tb-calculated-field-geofencing-zone-groups-panel',
-  templateUrl: './calculated-field-geofencing-zone-groups-panel.component.html',
-  styleUrls: ['../common/calculated-field-panel.scss', './calculated-field-geofencing-zone-groups-panel.component.scss']
+    selector: 'tb-calculated-field-geofencing-zone-groups-panel',
+    templateUrl: './calculated-field-geofencing-zone-groups-panel.component.html',
+    styleUrls: ['../common/calculated-field-panel.scss', './calculated-field-geofencing-zone-groups-panel.component.scss'],
+    standalone: false
 })
 export class CalculatedFieldGeofencingZoneGroupsPanelComponent implements OnInit, AfterViewInit {
 
@@ -71,6 +72,7 @@ export class CalculatedFieldGeofencingZoneGroupsPanelComponent implements OnInit
   @Input() entityName: string;
   @Input() ownerId: EntityId;
   @Input() usedNames: string[];
+  @Input() readonly = false;
 
   @ViewChild('entityAutocomplete') entityAutocomplete: EntityAutocompleteComponent;
 
@@ -160,6 +162,10 @@ export class CalculatedFieldGeofencingZoneGroupsPanelComponent implements OnInit
 
     this.currentEntityFilter = getCalculatedFieldCurrentEntityFilter(this.entityName, this.entityId);
     this.updateEntityFilter(this.zone.refEntityId?.entityType);
+
+    if (this.readonly) {
+      this.geofencingFormGroup.disable({emitEvent: false});
+    }
   }
 
   fetchOptions(searchText: string): Observable<Array<string>> {
@@ -278,7 +284,7 @@ export class CalculatedFieldGeofencingZoneGroupsPanelComponent implements OnInit
         this.enableAutocomplete = (this.entityId.entityType === EntityType.DEVICE_PROFILE || this.entityId.entityType === EntityType.ASSET_PROFILE) && type === ArgumentEntityType.Owner;
         this.geofencingFormGroup.get('refEntityId').get('id').setValue(null);
         this.geofencingFormGroup.get('perimeterKeyName').reset('');
-        const isEntityWithId = !!type && ![ArgumentEntityType.Tenant, ArgumentEntityType.Current, ArgumentEntityType.Owner].includes(type);
+        const isEntityWithId = !!type && ![ArgumentEntityType.Tenant, ArgumentEntityType.Current, ArgumentEntityType.Owner, ArgumentEntityType.RelationQuery].includes(type);
         this.geofencingFormGroup.get('refEntityId').get('id')[isEntityWithId ? 'enable' : 'disable']();
         if (!isEntityWithId) {
           this.entityNameSubject.next(null);
@@ -303,6 +309,7 @@ export class CalculatedFieldGeofencingZoneGroupsPanelComponent implements OnInit
 
   removeKey(index: number) {
     this.levelsFormArray().removeAt(index);
+    this.levelsFormArray().markAsDirty();
   }
 
   addKey() {
@@ -320,6 +327,6 @@ export class CalculatedFieldGeofencingZoneGroupsPanelComponent implements OnInit
   }
 
   get dragEnabled(): boolean {
-    return this.levelsFormArray().controls.length > 1;
+    return this.levelsFormArray().controls.length > 1 && !this.readonly;
   }
 }

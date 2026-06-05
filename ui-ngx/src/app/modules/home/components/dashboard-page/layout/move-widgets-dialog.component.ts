@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -28,10 +28,11 @@ export interface MoveWidgetsDialogResult {
 }
 
 @Component({
-  selector: 'tb-move-widgets-dialog',
-  templateUrl: './move-widgets-dialog.component.html',
-  providers: [],
-  styleUrls: []
+    selector: 'tb-move-widgets-dialog',
+    templateUrl: './move-widgets-dialog.component.html',
+    providers: [],
+    styleUrls: [],
+    standalone: false
 })
 export class MoveWidgetsDialogComponent extends DialogComponent<MoveWidgetsDialogComponent, MoveWidgetsDialogResult> {
 

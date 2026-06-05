@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -157,7 +157,7 @@ public class AlarmRuleState {
     private AlarmEvalResult evalDuration(CalculatedFieldCtx ctx) {
         if (eval(condition.getExpression(), ctx)) {
             long ts = System.currentTimeMillis();
-            if (firstEventTs == 0) {
+            if (firstEventTs <= 0) {
                 firstEventTs = state.getLatestTimestamp();
             }
             lastCheckTs = ts;
@@ -256,6 +256,18 @@ public class AlarmRuleState {
         firstEventTs = 0L;
         lastCheckTs = 0L;
         duration = 0L;
+        cancelDurationCheckFuture();
+    }
+
+    public void setDurationCheckFuture(ScheduledFuture<?> durationCheckFuture) {
+        if (this.durationCheckFuture != null) {
+            log.warn("Setting new duration check future while previous is not null for state {}", this, new RuntimeException("stacktrace"));
+            this.durationCheckFuture.cancel(true);
+        }
+        this.durationCheckFuture = durationCheckFuture;
+    }
+
+    public void cancelDurationCheckFuture() {
         if (durationCheckFuture != null) {
             durationCheckFuture.cancel(true);
             durationCheckFuture = null;

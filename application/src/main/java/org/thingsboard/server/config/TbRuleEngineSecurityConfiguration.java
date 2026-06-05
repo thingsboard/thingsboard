@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.context.annotation.Bean;
@@ -33,11 +34,16 @@ import org.springframework.security.web.SecurityFilterChain;
 @ConditionalOnExpression("'${service.type:null}'=='tb-rule-engine'")
 public class TbRuleEngineSecurityConfiguration {
 
+    @Autowired
+    private HttpSecurityHeadersCustomizer httpSecurityHeadersCustomizer;
+
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.headers(headers -> headers
-                        .cacheControl(config -> {})
-                        .frameOptions(config -> {}).disable())
+        http.headers(headers -> {
+                    headers.defaultsDisabled();
+                    headers.cacheControl(config -> {});
+                    httpSecurityHeadersCustomizer.customize(headers);
+                })
                 .cors(cors -> {})
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(config -> config

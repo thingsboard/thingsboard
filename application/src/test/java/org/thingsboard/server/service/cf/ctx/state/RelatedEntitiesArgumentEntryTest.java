@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,9 @@ package org.thingsboard.server.service.cf.ctx.state;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
@@ -29,10 +32,15 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.lenient;
 
+@ExtendWith(MockitoExtension.class)
 public class RelatedEntitiesArgumentEntryTest {
 
     private RelatedEntitiesArgumentEntry entry;
+
+    @Mock
+    private CalculatedFieldCtx ctx;
 
     private final DeviceId device1 = new DeviceId(UUID.fromString("1984e5f4-9ff0-4187-84ae-e4438bba4c8a"));
     private final DeviceId device2 = new DeviceId(UUID.fromString("937fc062-1a9d-438f-aa22-55a93fc908b7"));
@@ -41,6 +49,8 @@ public class RelatedEntitiesArgumentEntryTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(ctx.getMaxRelatedEntitiesPerCfArgument()).thenReturn(1000L);
+
         Map<EntityId, ArgumentEntry> aggInputs = new HashMap<>();
         aggInputs.put(device1, new SingleValueArgumentEntry(device1, new BasicTsKvEntry(ts - 100, new LongDataEntry("key", 12L), 1L)));
         aggInputs.put(device2, new SingleValueArgumentEntry(device2, new BasicTsKvEntry(ts - 150, new LongDataEntry("key", 16L), 6L)));
@@ -50,7 +60,7 @@ public class RelatedEntitiesArgumentEntryTest {
 
     @Test
     void testUpdateEntryWhenNotAggEntryPassed() {
-        assertThatThrownBy(() -> entry.updateEntry(new TsRollingArgumentEntry(5, 30000L)))
+        assertThatThrownBy(() -> entry.updateEntry(new TsRollingArgumentEntry(5, 30000L), ctx))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Unsupported argument entry type for aggregation argument entry: " + ArgumentEntryType.TS_ROLLING);
     }
@@ -65,7 +75,7 @@ public class RelatedEntitiesArgumentEntryTest {
                 device4, new SingleValueArgumentEntry(device4, new BasicTsKvEntry(ts - 60, new LongDataEntry("key", 23L), 7L))
         ), false);
 
-        assertThat(entry.updateEntry(relatedEntitiesArgumentEntry)).isTrue();
+        assertThat(entry.updateEntry(relatedEntitiesArgumentEntry, ctx)).isTrue();
 
         Map<EntityId, ArgumentEntry> aggInputs = entry.getEntityInputs();
         assertThat(aggInputs.size()).isEqualTo(4);
@@ -79,7 +89,7 @@ public class RelatedEntitiesArgumentEntryTest {
 
         SingleValueArgumentEntry singleEntityArgumentEntry = new SingleValueArgumentEntry(device3, new BasicTsKvEntry(ts - 50, new LongDataEntry("key", 18L), 10L));
 
-        assertThat(entry.updateEntry(singleEntityArgumentEntry)).isTrue();
+        assertThat(entry.updateEntry(singleEntityArgumentEntry, ctx)).isTrue();
 
         Map<EntityId, ArgumentEntry> aggInputs = entry.getEntityInputs();
         assertThat(aggInputs.size()).isEqualTo(3);
@@ -90,7 +100,7 @@ public class RelatedEntitiesArgumentEntryTest {
     void testUpdateEntryWhenSingleValueArgumentEntryPassedAndEntryByIdExist() {
         SingleValueArgumentEntry singleEntityArgumentEntry = new SingleValueArgumentEntry(device2, new BasicTsKvEntry(ts - 50, new LongDataEntry("key", 18L), 10L));
 
-        assertThat(entry.updateEntry(singleEntityArgumentEntry)).isTrue();
+        assertThat(entry.updateEntry(singleEntityArgumentEntry, ctx)).isTrue();
 
         Map<EntityId, ArgumentEntry> aggInputs = entry.getEntityInputs();
         assertThat(aggInputs.size()).isEqualTo(2);

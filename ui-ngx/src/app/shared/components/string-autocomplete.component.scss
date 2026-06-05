@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,26 +23,6 @@
     &.tb-inline-field {
       .mdc-icon-button {
         margin-right: 8px;
-      }
-    }
-
-    .tb-autocomplete.tb-option-input-autocomplete {
-      .mat-mdc-option {
-        border-bottom: none;
-
-        .mdc-list-item__primary-text {
-          flex: 1;
-          display: flex;
-          flex-direction: row;
-          gap: 8px;
-
-          .tb-option {
-            font-size: 14px;
-            font-weight: 400;
-            line-height: 20px;
-            letter-spacing: 0.2px;
-          }
-        }
       }
     }
   }

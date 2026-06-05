@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,19 @@ public class TbelCfTsRollingArgTest {
     void testMax() {
         assertThat(rollingArg.max()).isEqualTo(9.0);
         assertThat(rollingArg.max(false)).isNaN();
+    }
+
+    @Test
+    void testMaxOverAllNegativeValues() {
+        TbelCfTsRollingArg negativeArg = new TbelCfTsRollingArg(
+                new TbTimeWindow(ts - 30000, ts - 10),
+                List.of(
+                        new TbelCfTsDoubleVal(ts - 10, -50.0),
+                        new TbelCfTsDoubleVal(ts - 20, -100.0),
+                        new TbelCfTsDoubleVal(ts - 30, -75.0)
+                )
+        );
+        assertThat(negativeArg.max()).isEqualTo(-50.0);
     }
 
     @Test

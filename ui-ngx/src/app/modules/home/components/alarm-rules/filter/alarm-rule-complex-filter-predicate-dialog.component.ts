@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -36,13 +36,15 @@ export interface AlarmRuleComplexFilterPredicateDialogData {
   valueType: EntityKeyValueType;
   arguments: Record<string, CalculatedFieldArgument>;
   argumentInUse: string;
+  readonly: boolean;
 }
 
 @Component({
-  selector: 'tb-alarm-rule-complex-filter-predicate-dialog',
-  templateUrl: './alarm-rule-complex-filter-predicate-dialog.component.html',
-  providers: [],
-  styleUrls: []
+    selector: 'tb-alarm-rule-complex-filter-predicate-dialog',
+    templateUrl: './alarm-rule-complex-filter-predicate-dialog.component.html',
+    providers: [],
+    styleUrls: [],
+    standalone: false
 })
 
 export class AlarmRuleComplexFilterPredicateDialogComponent extends
@@ -63,6 +65,8 @@ export class AlarmRuleComplexFilterPredicateDialogComponent extends
 
   arguments = this.data.arguments;
 
+  readonly = this.data.readonly;
+
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: AlarmRuleComplexFilterPredicateDialogData,
@@ -73,6 +77,10 @@ export class AlarmRuleComplexFilterPredicateDialogComponent extends
     this.isAdd = this.data.isAdd;
 
     this.complexFilterFormGroup.patchValue(this.data.complexPredicate, {emitEvent: false});
+
+    if (this.readonly) {
+      this.complexFilterFormGroup.disable({emitEvent: false});
+    }
   }
 
   cancel(): void {

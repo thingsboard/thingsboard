@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -26,14 +26,16 @@
       [hovered]="state === widgetButtonToggleState.hovered"
       [disabled]="state === widgetButtonToggleState.disabled">
     </tb-widget-button-toggle>
-    <button *ngIf="modelValue"
-            mat-icon-button
-            [matTooltip]="'widgets.button.clear-style' | translate"
-            matTooltipPosition="above"
-            class="tb-mat-32"
-            (click)="clearStyle()">
-      <tb-icon>mdi:broom</tb-icon>
-    </button>
+    @if (modelValue) {
+      <button
+        mat-icon-button
+        [matTooltip]="'widgets.button.clear-style' | translate"
+        matTooltipPosition="above"
+        class="tb-mat-32"
+        (click)="clearStyle()">
+        <tb-icon>mdi:broom</tb-icon>
+      </button>
+    }
   </div>
   <button mat-icon-button
           class="tb-mat-32"

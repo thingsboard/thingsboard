@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
 ///
 
 import { IStateController, StateObject } from '@core/api/widget-api.models';
-import { IDashboardController } from '@home/components/dashboard-page/dashboard-page.models';
 import { DashboardState } from '@shared/models/dashboard.models';
 
 export declare type StateControllerState = StateObject[];
@@ -29,6 +28,5 @@ export interface IStateControllerComponent extends IStateController {
   states: {[id: string]: DashboardState };
   dashboardId: string;
   preservedState: any;
-  reInit(): void;
   init(): void;
 }

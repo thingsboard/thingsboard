@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,26 +16,32 @@
 
 -->
 <ng-container [formGroup]="legendConfigForm">
-  <div *ngIf="!hideDirection" class="tb-form-row space-between">
-    <div>{{ 'legend.direction' | translate }}</div>
-    <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
-      <mat-select formControlName="direction">
-        <mat-option *ngFor="let direction of legendDirections" [value]="direction">
-          {{ legendDirectionTranslations.get(legendDirection[direction]) | translate }}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
-  </div>
+  @if (!hideDirection) {
+    <div class="tb-form-row space-between">
+      <div>{{ 'legend.direction' | translate }}</div>
+      <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="direction">
+          @for (direction of legendDirections; track direction) {
+            <mat-option [value]="direction">
+              {{ legendDirectionTranslations.get(legendDirection[direction]) | translate }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+  }
   <div class="tb-form-row space-between">
     <div>{{ 'legend.position' | translate }}</div>
     <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
       <mat-select formControlName="position">
-        <mat-option *ngFor="let pos of legendPositions" [value]="pos"
+        @for (pos of legendPositions; track pos) {
+          <mat-option [value]="pos"
                     [disabled]="!hideDirection &&
                                  legendConfigForm.get('direction').value === legendDirection.row &&
                                  (pos === legendPosition.left || pos === legendPosition.right)">
-          {{ legendPositionTranslations.get(legendPosition[pos]) | translate }}
-        </mat-option>
+            {{ legendPositionTranslations.get(legendPosition[pos]) | translate }}
+          </mat-option>
+        }
       </mat-select>
     </mat-form-field>
   </div>

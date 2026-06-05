@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -31,9 +31,10 @@ export interface MakeDashboardPublicDialogData {
 }
 
 @Component({
-  selector: 'tb-make-dashboard-public-dialog',
-  templateUrl: './make-dashboard-public-dialog.component.html',
-  styleUrls: []
+    selector: 'tb-make-dashboard-public-dialog',
+    templateUrl: './make-dashboard-public-dialog.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class MakeDashboardPublicDialogComponent extends DialogComponent<MakeDashboardPublicDialogComponent> implements OnInit {
 

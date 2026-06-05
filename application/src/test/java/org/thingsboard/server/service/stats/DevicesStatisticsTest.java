@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import static org.awaitility.Awaitility.await;
 @TestPropertySource(properties = {
         "usage.stats.report.enabled=true",
         "usage.stats.report.interval=2",
+        "usage.stats.report.urgent_interval=1",
         "usage.stats.gauge_report_interval=1",
         "usage.stats.devices.report_interval=3",
         "state.defaultStateCheckIntervalInSec=3",

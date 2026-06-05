@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.exception;
 
+import jakarta.persistence.PersistenceException;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -47,10 +48,12 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import org.springframework.web.util.WebUtils;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.msg.tools.MaxPayloadSizeExceededException;
 import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
+import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.service.security.exception.AuthMethodNotSupportedException;
 import org.thingsboard.server.service.security.exception.JwtExpiredTokenException;
 import org.thingsboard.server.service.security.exception.UserPasswordExpiredException;
@@ -95,6 +98,7 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
         errorCodeToStatusMap.put(ThingsboardErrorCode.TOO_MANY_REQUESTS, HttpStatus.TOO_MANY_REQUESTS);
         errorCodeToStatusMap.put(ThingsboardErrorCode.TOO_MANY_UPDATES, HttpStatus.TOO_MANY_REQUESTS);
         errorCodeToStatusMap.put(ThingsboardErrorCode.SUBSCRIPTION_VIOLATION, HttpStatus.FORBIDDEN);
+        errorCodeToStatusMap.put(ThingsboardErrorCode.ENTITIES_LIMIT_EXCEEDED, HttpStatus.FORBIDDEN);
         errorCodeToStatusMap.put(ThingsboardErrorCode.VERSION_CONFLICT, HttpStatus.CONFLICT);
     }
 
@@ -143,6 +147,12 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
                         handleSubscriptionException(thingsboardException, response);
                     } else if (thingsboardException.getErrorCode() == ThingsboardErrorCode.DATABASE) {
                         handleDatabaseException(thingsboardException.getCause(), response);
+                    } else if (thingsboardException.getErrorCode() == ThingsboardErrorCode.ENTITIES_LIMIT_EXCEEDED) {
+                        if (thingsboardException.getCause() instanceof EntitiesLimitExceededException entitiesLimitExceededException) {
+                            handleEntitiesLimitExceededException(entitiesLimitExceededException, response);
+                        } else {
+                            handleEntitiesLimitExceededException(thingsboardException, response);
+                        }
                     } else {
                         handleThingsboardException(thingsboardException, response);
                     }
@@ -154,8 +164,8 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
                     handleAuthenticationException(authenticationException, response);
                 } else if (exception instanceof MaxPayloadSizeExceededException maxPayloadSizeExceededException) {
                     handleMaxPayloadSizeExceededException(response, maxPayloadSizeExceededException);
-                } else if (exception instanceof DataAccessException e) {
-                    handleDatabaseException(e, response);
+                } else if (exception instanceof DataAccessException || exception instanceof PersistenceException) {
+                    handleDatabaseException(exception, response);
                 } else {
                     response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
                     JacksonUtil.writeValue(response.getWriter(), ThingsboardErrorResponse.of(exception.getMessage(),
@@ -209,13 +219,36 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
 
     private void handleDatabaseException(Throwable databaseException, HttpServletResponse response) throws IOException {
         ThingsboardErrorResponse errorResponse;
-        if (databaseException instanceof ConstraintViolationException) {
-            errorResponse = ThingsboardErrorResponse.of(ExceptionUtils.getRootCause(databaseException).getMessage(), ThingsboardErrorCode.BAD_REQUEST_PARAMS, HttpStatus.BAD_REQUEST);
+        ConstraintViolationException constraintViolationException = DaoUtil.extractConstraintViolation(databaseException);
+        if (constraintViolationException != null) {
+            log.debug("Constraint violation: {}", ExceptionUtils.getRootCauseMessage(databaseException));
+            String constraintName = constraintViolationException.getConstraintName();
+            String userMessage;
+            if (constraintName != null && !constraintName.isEmpty()) {
+                userMessage = "Constraint violation: " + constraintName;
+            } else {
+                userMessage = "Constraint violation";
+            }
+            errorResponse = ThingsboardErrorResponse.of(userMessage, ThingsboardErrorCode.BAD_REQUEST_PARAMS, HttpStatus.BAD_REQUEST);
         } else {
             log.warn("Database error: {} - {}", databaseException.getClass().getSimpleName(), ExceptionUtils.getRootCauseMessage(databaseException));
             errorResponse = ThingsboardErrorResponse.of("Database error", ThingsboardErrorCode.DATABASE, HttpStatus.INTERNAL_SERVER_ERROR);
         }
         writeResponse(errorResponse, response);
+    }
+
+    private void handleEntitiesLimitExceededException(ThingsboardException entitiesLimitExceededException, HttpServletResponse response) throws IOException {
+        response.setStatus(HttpStatus.FORBIDDEN.value());
+        JacksonUtil.writeValue(response.getWriter(),
+                JacksonUtil.fromBytes(((HttpClientErrorException) entitiesLimitExceededException.getCause()).getResponseBodyAsByteArray(), Object.class));
+    }
+
+    private void handleEntitiesLimitExceededException(EntitiesLimitExceededException entitiesLimitExceededException, HttpServletResponse response) throws IOException {
+        EntityType entityType = entitiesLimitExceededException.getEntityType();
+        Long limit = entitiesLimitExceededException.getLimit();
+        response.setStatus(HttpStatus.FORBIDDEN.value());
+        JacksonUtil.writeValue(response.getWriter(),
+                ThingsboardEntitiesLimitExceededResponse.of(entitiesLimitExceededException.getMessage(), entityType, limit));
     }
 
     private void handleAccessDeniedException(HttpServletResponse response) throws IOException {

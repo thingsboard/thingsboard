@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -26,23 +26,27 @@
     </mat-chip-set>
   </div>
   <div class="tb-state-render-function-field">
-    <button *ngIf="!disabled || tagFormGroup.get('stateRenderFunction').value"
-            #editStateRenderFunctionButton
-            mat-button
-            color="primary"
-            (click)="editTagStateRenderFunction()">
-      <mat-icon>{{ disabled ? 'visibility' :  (tagFormGroup.get('stateRenderFunction').value ? 'edit' : 'add') }}</mat-icon>
-      <span>{{ ( disabled ? 'action.view' : (tagFormGroup.get('stateRenderFunction').value ? 'action.edit' : 'action.add') ) | translate }}</span>
-    </button>
+    @if (!disabled || tagFormGroup.get('stateRenderFunction').value) {
+      <button
+        #editStateRenderFunctionButton
+        mat-button
+        color="primary"
+        (click)="editTagStateRenderFunction()">
+        <mat-icon>{{ disabled ? 'visibility' :  (tagFormGroup.get('stateRenderFunction').value ? 'edit' : 'add') }}</mat-icon>
+        <span>{{ ( disabled ? 'action.view' : (tagFormGroup.get('stateRenderFunction').value ? 'action.edit' : 'action.add') ) | translate }}</span>
+      </button>
+    }
   </div>
   <div class="tb-on-click-action-field">
-    <button *ngIf="!disabled || tagFormGroup.get('clickAction').value"
-            #editClickActionButton
-            mat-button
-            color="primary"
-            (click)="editClickAction()">
-      <mat-icon>{{ disabled ? 'visibility' : (tagFormGroup.get('clickAction').value ? 'edit' : 'add') }}</mat-icon>
-      <span>{{ ( disabled ? 'action.view' : (tagFormGroup.get('clickAction').value ? 'action.edit' : 'action.add') ) | translate }}</span>
-    </button>
+    @if (!disabled || tagFormGroup.get('clickAction').value) {
+      <button
+        #editClickActionButton
+        mat-button
+        color="primary"
+        (click)="editClickAction()">
+        <mat-icon>{{ disabled ? 'visibility' : (tagFormGroup.get('clickAction').value ? 'edit' : 'add') }}</mat-icon>
+        <span>{{ ( disabled ? 'action.view' : (tagFormGroup.get('clickAction').value ? 'action.edit' : 'action.add') ) | translate }}</span>
+      </button>
+    }
   </div>
 </div>

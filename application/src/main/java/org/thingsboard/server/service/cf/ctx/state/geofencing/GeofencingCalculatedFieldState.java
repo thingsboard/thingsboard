@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,11 @@
  */
 package org.thingsboard.server.service.cf.ctx.state.geofencing;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.geo.Coordinates;
@@ -52,13 +49,11 @@ import static org.thingsboard.server.common.data.cf.configuration.geofencing.Ent
 import static org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingPresenceStatus.INSIDE;
 import static org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingPresenceStatus.OUTSIDE;
 
-@Getter
-@Setter
 @Slf4j
 @EqualsAndHashCode(callSuper = true)
-public class GeofencingCalculatedFieldState extends BaseCalculatedFieldState {
+public class GeofencingCalculatedFieldState extends BaseCalculatedFieldState implements ScheduledRefreshSupported {
 
-    private long lastDynamicArgumentsRefreshTs = -1;
+    private long lastDynamicArgumentsRefreshTs = DEFAULT_LAST_UPDATE_TS;
 
     public GeofencingCalculatedFieldState(EntityId entityId) {
         super(entityId);
@@ -114,10 +109,14 @@ public class GeofencingCalculatedFieldState extends BaseCalculatedFieldState {
                     return;
                 }
                 GeofencingTransitionEvent transitionEvent = eval.transition();
-                if (transitionEvent == null && !firstEval) {
-                    return;
+                if (transitionEvent == null) {
+                    if (!firstEval) {
+                        return;
+                    }
+                    transitionEvent = eval.status() == INSIDE ?
+                            GeofencingTransitionEvent.ENTERED :
+                            GeofencingTransitionEvent.LEFT;
                 }
-                transitionEvent = transitionEvent == null ? GeofencingTransitionEvent.LEFT : transitionEvent;
                 EntityRelation relation = switch (zoneGroupCfg.getDirection()) {
                     case TO -> new EntityRelation(zoneId, entityId, zoneGroupCfg.getRelationType());
                     case FROM -> new EntityRelation(entityId, zoneId, zoneGroupCfg.getRelationType());
@@ -136,7 +135,7 @@ public class GeofencingCalculatedFieldState extends BaseCalculatedFieldState {
                 .outputStrategy(ctx.getOutput().getStrategy())
                 .type(outputType)
                 .scope(ctx.getOutput().getScope())
-                .result(toResultNode(outputType, valuesNode))
+                .result(toResultNode(valuesNode))
                 .build();
         if (relationFutures.isEmpty()) {
             return Futures.immediateFuture(result);
@@ -147,10 +146,21 @@ public class GeofencingCalculatedFieldState extends BaseCalculatedFieldState {
     @Override
     public void reset() {
         super.reset();
-        lastDynamicArgumentsRefreshTs = -1;
+        resetScheduledRefreshTs();
     }
 
-    public void updateLastDynamicArgumentsRefreshTs() {
+    @Override
+    public void resetScheduledRefreshTs() {
+        lastDynamicArgumentsRefreshTs = DEFAULT_LAST_UPDATE_TS;
+    }
+
+    @Override
+    public long getLastScheduledRefreshTs() {
+        return lastDynamicArgumentsRefreshTs;
+    }
+
+    @Override
+    public void updateScheduledRefreshTs() {
         lastDynamicArgumentsRefreshTs = System.currentTimeMillis();
     }
 
@@ -173,10 +183,6 @@ public class GeofencingCalculatedFieldState extends BaseCalculatedFieldState {
                 resultNode.put(statusKey, aggregationResult.status().name());
             }
         }
-    }
-
-    private JsonNode toResultNode(OutputType outputType, ObjectNode valuesNode) {
-        return toSimpleResult(outputType == OutputType.TIME_SERIES, valuesNode);
     }
 
     private GeofencingEvalResult aggregateZoneGroup(List<GeofencingEvalResult> zoneResults) {

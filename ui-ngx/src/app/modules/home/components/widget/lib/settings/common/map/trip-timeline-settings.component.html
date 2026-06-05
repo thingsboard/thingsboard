@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
     limitations under the License.
 
 -->
-
 <ng-container [formGroup]="tripTimelineSettingsFormGroup">
   <div class="tb-form-panel stroked tb-slide-toggle">
     <mat-expansion-panel class="tb-settings" [expanded]="settingsExpanded"
@@ -39,9 +38,11 @@
           <div class="fixed-title-width" translate>widgets.maps.timeline.speed-options</div>
           <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="speedOptions" multiple>
-              <mat-option *ngFor="let speed of [1,5,10,15,25]" [value]="speed">
-                {{ speed }}
-              </mat-option>
+              @for (speed of [1,5,10,15,25]; track speed) {
+                <mat-option [value]="speed">
+                  {{ speed }}
+                </mat-option>
+              }
             </mat-select>
           </mat-form-field>
         </div>
@@ -51,7 +52,7 @@
           </mat-slide-toggle>
           <tb-date-format-select class="flex-1"
                                  excludeLastUpdateAgo
-                                 formControlName="timestampFormat"></tb-date-format-select>
+          formControlName="timestampFormat"></tb-date-format-select>
         </div>
         <div class="tb-form-panel tb-slide-toggle stroked">
           <mat-expansion-panel class="tb-settings" [expanded]="tripTimelineSettingsFormGroup.get('snapToRealLocation').value"

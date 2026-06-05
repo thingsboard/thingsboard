@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,8 +15,10 @@
     limitations under the License.
 
 -->
-<div class="flex flex-col gap-3">
-  <div class="tb-form-panel stroked no-padding no-gap arguments-table flex flex-col" [class.arguments-table-with-error]="errorText">
+<div class="flex flex-col gap-4">
+  <div class="tb-form-panel stroked no-padding no-gap arguments-table flex flex-col"
+       [class.arguments-table-with-error]="errorText"
+       [class.!hidden]="!(dataSource.isEmpty() | async) === false">
     <table mat-table [dataSource]="dataSource" class="overflow-hidden bg-transparent" matSort
            [matSortActive]="sortOrder.property" [matSortDirection]="sortOrder.direction" matSortDisableClear>
       <ng-container [matColumnDef]="'name'">
@@ -91,23 +93,36 @@
         <mat-header-cell *matHeaderCellDef class="w-20 min-w-20"/>
         <mat-cell *matCellDef="let argument;">
           <div class="tb-form-table-row-cell-buttons min-w-20">
+            @if (!isEditValue) {
+              <button type="button"
+                      mat-icon-button
+                      #previewButton
+                      (click)="manageArgument($event, previewButton, argument, true)"
+                      [matTooltip]="'calculated-fields.preview' | translate"
+                      matTooltipPosition="above">
+                <mat-icon>visibility</mat-icon>
+              </button>
+            } @else {
+              <button type="button"
+                      mat-icon-button
+                      #button
+                      [disabled]="disable"
+                      (click)="manageArgument($event, button, argument)"
+                      [matTooltip]="'action.edit' | translate"
+                      matTooltipPosition="above">
+                <mat-icon
+                  [matBadgeHidden]="isEditButtonShowBadge(argument)"
+                  matBadgeColor="warn"
+                  matBadgeSize="small"
+                  matBadge="*"
+                >
+                  edit
+                </mat-icon>
+              </button>
+            }
             <button type="button"
                     mat-icon-button
-                    #button
-                    (click)="manageArgument($event, button, argument)"
-                    [matTooltip]="'action.edit' | translate"
-                    matTooltipPosition="above">
-              <mat-icon
-                [matBadgeHidden]="isEditButtonShowBadge(argument)"
-                matBadgeColor="warn"
-                matBadgeSize="small"
-                matBadge="*"
-              >
-                edit
-              </mat-icon>
-            </button>
-            <button type="button"
-                    mat-icon-button
+                    [disabled]="disable"
                     (click)="onDelete($event, argument)"
                     [matTooltip]="'action.delete' | translate"
                     matTooltipPosition="above">
@@ -119,13 +134,14 @@
       <mat-header-row class="mat-row-select" *matHeaderRowDef="displayColumns"></mat-header-row>
       <mat-row *matRowDef="let argument; columns: displayColumns"></mat-row>
     </table>
-    <div [class.!hidden]="(dataSource.isEmpty() | async) === false"
-         class="tb-prompt flex flex-1 items-end justify-center min-h-14">
-      {{ 'calculated-fields.no-arguments' | translate }}
-    </div>
     @if (errorText || (dataSource.isEmpty() | async)) {
       <tb-error noMargin [error]="errorText | translate" class="flex h-9 items-center pl-3"/>
     }
+  </div>
+  <div [class.!hidden]="(dataSource.isEmpty() | async) === false"
+       [class.required]="!disable"
+       class="tb-prompt flex flex-1 items-end justify-center text-base">
+    {{ 'calculated-fields.no-arguments' | translate }}
   </div>
   <div class="flex h-9 justify-between">
     <button
@@ -134,7 +150,7 @@
       color="primary"
       #button
       (click)="manageArgument($event, button)"
-      [disabled]="maxArgumentsPerCF > 0 && argumentsFormArray.length >= maxArgumentsPerCF || disabledAddButton"
+      [disabled]="maxArgumentsPerCF > 0 && argumentsFormArray.length >= maxArgumentsPerCF || disable"
     >
       {{ 'calculated-fields.add-argument' | translate }}
     </button>

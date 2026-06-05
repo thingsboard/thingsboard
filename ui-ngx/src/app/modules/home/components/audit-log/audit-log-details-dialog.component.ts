@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -22,16 +22,21 @@ import { ActionStatus, AuditLog } from '@shared/models/audit-log.models';
 import { Ace } from 'ace-builds';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
-import { getAce } from '@shared/models/ace/ace.models';
+import { getAce, updateEditorSize } from '@shared/models/ace/ace.models';
+import { Observable, of } from 'rxjs';
+import { isObject } from '@core/utils';
+import { ContentType, contentTypesMap } from '@shared/models/constants';
+import { beautifyJs } from '@shared/models/beautify.models';
 
 export interface AuditLogDetailsDialogData {
   auditLog: AuditLog;
 }
 
 @Component({
-  selector: 'tb-audit-log-details-dialog',
-  templateUrl: './audit-log-details-dialog.component.html',
-  styleUrls: ['./audit-log-details-dialog.component.scss']
+    selector: 'tb-audit-log-details-dialog',
+    templateUrl: './audit-log-details-dialog.component.html',
+    styleUrls: ['./audit-log-details-dialog.component.scss'],
+    standalone: false
 })
 export class AuditLogDetailsDialogComponent extends DialogComponent<AuditLogDetailsDialogComponent> implements OnInit, OnDestroy {
 
@@ -41,11 +46,10 @@ export class AuditLogDetailsDialogComponent extends DialogComponent<AuditLogDeta
   @ViewChild('failureDetailsEditor', {static: true})
   failureDetailsEditorElmRef: ElementRef;
 
-  auditLog: AuditLog;
   displayFailureDetails: boolean;
-  actionData: string;
-  actionFailureDetails: string;
-  aceEditors: Ace.Editor[] = [];
+
+  private auditLog: AuditLog;
+  private aceEditors: Ace.Editor[] = [];
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -58,12 +62,10 @@ export class AuditLogDetailsDialogComponent extends DialogComponent<AuditLogDeta
   ngOnInit(): void {
     this.auditLog = this.data.auditLog;
     this.displayFailureDetails = this.auditLog.actionStatus === ActionStatus.FAILURE;
-    this.actionData = this.auditLog.actionData ? JSON.stringify(this.auditLog.actionData, null, 2) : '';
-    this.actionFailureDetails = this.auditLog.actionFailureDetails;
 
-    this.createEditor(this.actionDataEditorElmRef, this.actionData);
+    this.createEditor(this.actionDataEditorElmRef, this.auditLog.actionData);
     if (this.displayFailureDetails) {
-      this.createEditor(this.failureDetailsEditorElmRef, this.actionFailureDetails);
+      this.createEditor(this.failureDetailsEditorElmRef, this.auditLog.actionFailureDetails);
     }
   }
 
@@ -72,53 +74,43 @@ export class AuditLogDetailsDialogComponent extends DialogComponent<AuditLogDeta
     super.ngOnDestroy();
   }
 
-  createEditor(editorElementRef: ElementRef, content: string): void {
+  createEditor(editorElementRef: ElementRef, content: string | object): void {
     const editorElement = editorElementRef.nativeElement;
-    let editorOptions: Partial<Ace.EditorOptions> = {
-      mode: 'ace/mode/java',
-      theme: 'ace/theme/github',
-      showGutter: false,
-      showPrintMargin: false,
-      readOnly: true
-    };
-
-    const advancedOptions = {
-      enableSnippets: false,
-      enableBasicAutocompletion: false,
-      enableLiveAutocompletion: false
-    };
-
-    editorOptions = {...editorOptions, ...advancedOptions};
-    getAce().subscribe(
-      (ace) => {
-        const editor = ace.edit(editorElement, editorOptions);
-        this.aceEditors.push(editor);
-        editor.session.setUseWrapMode(false);
-        editor.setValue(content, -1);
-        this.updateEditorSize(editorElement, content, editor);
-      }
-    );
-  }
-
-  updateEditorSize(editorElement: any, content: string, editor: Ace.Editor) {
-    let newHeight = 200;
-    let newWidth = 600;
-    if (content && content.length > 0) {
-      const lines = content.split('\n');
-      newHeight = 18 * lines.length + 16;
-      let maxLineLength = 0;
-      lines.forEach((row) => {
-        const line = row.replace(/\t/g, '    ').replace(/\n/g, '');
-        const lineLength = line.length;
-        maxLineLength = Math.max(maxLineLength, lineLength);
-      });
-      newWidth = 9 * maxLineLength + 16;
+    let mode = 'java';
+    let content$: Observable<string> = null;
+    let contentType = ContentType.TEXT;
+    if (content && isObject(content)) {
+      contentType = ContentType.JSON;
+      mode = contentTypesMap.get(contentType).code;
+      content$ = beautifyJs(JSON.stringify(content), {indent_size: 2});
     }
-    // newHeight = Math.min(400, newHeight);
-    this.renderer.setStyle(editorElement, 'minHeight', newHeight.toString() + 'px');
-    this.renderer.setStyle(editorElement, 'height', newHeight.toString() + 'px');
-    this.renderer.setStyle(editorElement, 'width', newWidth.toString() + 'px');
-    editor.resize();
+    if (!content$) {
+      content$ = of(content as string);
+    }
+    content$.subscribe((processedContent) => {
+      const isJSON = contentType === ContentType.JSON
+      const editorOptions: Partial<Ace.EditorOptions> = {
+        mode: `ace/mode/${mode}`,
+        theme: 'ace/theme/github',
+        showGutter: isJSON,
+        showFoldWidgets: true,
+        foldStyle: 'markbeginend',
+        showPrintMargin: false,
+        readOnly: true,
+        enableSnippets: false,
+        enableBasicAutocompletion: false,
+        enableLiveAutocompletion: false,
+      };
+      getAce().subscribe(
+        (ace) => {
+          const editor = ace.edit(editorElement, editorOptions);
+          this.aceEditors.push(editor);
+          editor.session.setUseWrapMode(false);
+          editor.setValue(processedContent, -1);
+          updateEditorSize(editorElement, processedContent, editor, this.renderer, {showGutter: isJSON});
+        }
+      )
+    });
   }
 
 }

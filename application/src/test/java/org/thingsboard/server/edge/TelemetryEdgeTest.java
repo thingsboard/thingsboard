@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -223,8 +223,10 @@ public class TelemetryEdgeTest extends AbstractEdgeTest {
                     device.getId().getId(), EdgeEventType.DEVICE, timeseriesEntityData);
             edgeEventService.saveAsync(failedEdgeEvent).get();
 
+            // add unique body to avoid merge and filter by device id in edge service (mergeAndFilterDownlinkDuplicates)
+            JsonNode uniqueBody = JacksonUtil.toJsonNode("{\"idx\":" + idx + "}");
             EdgeEvent successEdgeEvent = constructEdgeEvent(tenantId, edge.getId(), EdgeEventActionType.UPDATED,
-                    device.getId().getId(), EdgeEventType.DEVICE, null);
+                    device.getId().getId(), EdgeEventType.DEVICE, uniqueBody);
             edgeEventService.saveAsync(successEdgeEvent).get();
         }
 

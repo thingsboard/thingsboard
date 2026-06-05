@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.thingsboard.server.common.data.EntityType;
 
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -30,12 +29,12 @@ import java.util.UUID;
 public class CalculatedFieldFilter {
 
     @NonNull
-    private final CalculatedFieldType type;
+    private final Set<CalculatedFieldType> types;
     @NonNull
     private final Set<EntityType> entityTypes;
     @Nullable
-    private final List<UUID> entityIds;
+    private final Set<UUID> entityIds;
     @Nullable
-    private final List<String> names;
+    private final Set<String> names;
 
 }

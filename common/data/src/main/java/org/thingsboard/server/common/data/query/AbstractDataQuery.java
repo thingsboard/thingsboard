@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,18 @@ public abstract class AbstractDataQuery<T extends EntityDataPageLink> extends En
                              List<EntityKey> latestValues,
                              List<KeyFilter> keyFilters) {
         super(entityFilter, keyFilters);
+        this.pageLink = pageLink;
+        this.entityFields = entityFields;
+        this.latestValues = latestValues;
+    }
+
+    public AbstractDataQuery(EntityFilter entityFilter,
+                             T pageLink,
+                             List<EntityKey> entityFields,
+                             List<EntityKey> latestValues,
+                             List<KeyFilter> keyFilters,
+                             ComplexOperation keyFiltersOperation) {
+        super(entityFilter, keyFilters, keyFiltersOperation);
         this.pageLink = pageLink;
         this.entityFields = entityFields;
         this.latestValues = latestValues;

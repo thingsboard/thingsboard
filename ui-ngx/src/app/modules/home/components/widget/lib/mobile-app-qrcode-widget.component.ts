@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -30,9 +30,10 @@ import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
 
 @Component({
-  selector: 'tb-mobile-app-qrcode-widget',
-  templateUrl: './mobile-app-qrcode-widget.component.html',
-  styleUrls: ['./mobile-app-qrcode-widget.component.scss']
+    selector: 'tb-mobile-app-qrcode-widget',
+    templateUrl: './mobile-app-qrcode-widget.component.html',
+    styleUrls: ['./mobile-app-qrcode-widget.component.scss'],
+    standalone: false
 })
 export class MobileAppQrcodeWidgetComponent extends PageComponent implements OnInit, OnDestroy {
 

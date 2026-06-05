@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2025 The Thingsboard Authors
+# Copyright © 2016-2026 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,6 +25,20 @@ thingsboard:
   host: "localhost"
   # ThingsBoard node port
   port: "8080"
+security:
+  headers:
+    x-content-type-options:
+      enabled: true
+    referrer-policy:
+      enabled: true
+      value: "strict-origin-when-cross-origin"
+    x-frame-options:
+      enabled: false
+      value: "SAMEORIGIN"
+    content-security-policy:
+      enabled: false
+      value: ""
+      report-only: false
 logger:
   level: "info"
   path: "logs"

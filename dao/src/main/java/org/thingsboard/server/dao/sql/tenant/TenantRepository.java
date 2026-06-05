@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,6 @@ import org.thingsboard.server.dao.model.sql.TenantInfoEntity;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Created by Valerii Sosliuk on 4/30/2017.
- */
 public interface TenantRepository extends JpaRepository<TenantEntity, UUID> {
 
     @Query("SELECT new org.thingsboard.server.dao.model.sql.TenantInfoEntity(t, p.name) " +
@@ -61,5 +58,7 @@ public interface TenantRepository extends JpaRepository<TenantEntity, UUID> {
     List<TenantFields> findNextBatch(@Param("id") UUID id, Limit limit);
 
     TenantEntity findFirstByTitle(String name);
+
+    List<TenantEntity> findTenantsByIdIn(List<UUID> tenantIds);
 
 }

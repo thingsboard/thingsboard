@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -47,10 +47,11 @@ import { catchError } from 'rxjs/operators';
 import { HttpStatusCode } from '@angular/common/http';
 
 @Component({
-  selector: 'tb-entity-details-panel',
-  templateUrl: './entity-details-panel.component.html',
-  styleUrls: ['./entity-details-panel.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'tb-entity-details-panel',
+    templateUrl: './entity-details-panel.component.html',
+    styleUrls: ['./entity-details-panel.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class EntityDetailsPanelComponent extends PageComponent implements AfterViewInit, OnDestroy {
 

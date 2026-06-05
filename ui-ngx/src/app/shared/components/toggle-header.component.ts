@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -61,7 +61,8 @@ export type ScrollDirection = 'after' | 'before';
   {
     // eslint-disable-next-line @angular-eslint/directive-selector
     selector: 'tb-toggle-option',
-  }
+    standalone: false
+}
 )
 // eslint-disable-next-line @angular-eslint/directive-class-suffix
 export class ToggleOption implements OnChanges, OnDestroy {
@@ -136,9 +137,10 @@ export abstract class _ToggleBase extends PageComponent implements AfterContentI
 }
 
 @Component({
-  selector: 'tb-toggle-header',
-  templateUrl: './toggle-header.component.html',
-  styleUrls: ['./toggle-header.component.scss']
+    selector: 'tb-toggle-header',
+    templateUrl: './toggle-header.component.html',
+    styleUrls: ['./toggle-header.component.scss'],
+    standalone: false
 })
 export class ToggleHeaderComponent extends _ToggleBase implements OnInit, AfterViewInit, AfterContentInit,
   AfterContentChecked, AfterViewChecked, OnDestroy {

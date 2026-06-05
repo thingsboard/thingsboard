@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,10 +35,10 @@ import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
-import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
+import org.thingsboard.server.exception.DataValidationException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -190,7 +190,7 @@ public class TenantProfileServiceImpl extends AbstractCachedEntityService<Tenant
     }
 
     @Override
-    public boolean setDefaultTenantProfile(TenantId tenantId, TenantProfileId tenantProfileId) {
+    public TenantProfile setDefaultTenantProfile(TenantId tenantId, TenantProfileId tenantProfileId) {
         log.trace("Executing setDefaultTenantProfile [{}]", tenantProfileId);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         validateId(tenantProfileId, id -> INCORRECT_TENANT_PROFILE_ID + id);
@@ -198,22 +198,18 @@ public class TenantProfileServiceImpl extends AbstractCachedEntityService<Tenant
         if (!tenantProfile.isDefault()) {
             tenantProfile.setDefault(true);
             TenantProfile previousDefaultTenantProfile = findDefaultTenantProfile(tenantId);
-            boolean changed = false;
             if (previousDefaultTenantProfile == null) {
-                tenantProfileDao.save(tenantId, tenantProfile);
+                tenantProfile = tenantProfileDao.save(tenantId, tenantProfile);
                 publishEvictEvent(new TenantProfileEvictEvent(tenantProfileId, true));
-                changed = true;
             } else if (!previousDefaultTenantProfile.getId().equals(tenantProfile.getId())) {
                 previousDefaultTenantProfile.setDefault(false);
                 tenantProfileDao.save(tenantId, previousDefaultTenantProfile);
-                tenantProfileDao.save(tenantId, tenantProfile);
+                tenantProfile = tenantProfileDao.save(tenantId, tenantProfile);
                 publishEvictEvent(new TenantProfileEvictEvent(previousDefaultTenantProfile.getId(), false));
                 publishEvictEvent(new TenantProfileEvictEvent(tenantProfileId, true));
-                changed = true;
             }
-            return changed;
         }
-        return false;
+        return tenantProfile;
     }
 
     @Override

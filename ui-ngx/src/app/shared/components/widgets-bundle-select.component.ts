@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -40,17 +40,19 @@ import {
   WidgetsBundleDialogComponent,
   WidgetsBundleDialogData
 } from '@home/pages/widget/widgets-bundle-dialog.component';
+import { MatFormFieldAppearance } from '@angular/material/form-field';
 
 @Component({
-  selector: 'tb-widgets-bundle-select',
-  templateUrl: './widgets-bundle-select.component.html',
-  styleUrls: ['./widgets-bundle-select.component.scss'],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => WidgetsBundleSelectComponent),
-    multi: true
-  }],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-widgets-bundle-select',
+    templateUrl: './widgets-bundle-select.component.html',
+    styleUrls: ['./widgets-bundle-select.component.scss'],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => WidgetsBundleSelectComponent),
+            multi: true
+        }],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class WidgetsBundleSelectComponent implements ControlValueAccessor, OnInit, OnChanges {
 
@@ -77,6 +79,9 @@ export class WidgetsBundleSelectComponent implements ControlValueAccessor, OnIni
   @Input()
   @coerceBoolean()
   createNew: boolean;
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   widgetsBundles$: Observable<Array<WidgetsBundle>>;
 

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.rule.engine.TestDbCallbackExecutor;
+import org.thingsboard.common.util.DirectListeningExecutor;
 import org.thingsboard.rule.engine.ai.TbResponseFormat.TbJsonResponseFormat;
 import org.thingsboard.rule.engine.ai.TbResponseFormat.TbJsonSchemaResponseFormat;
 import org.thingsboard.rule.engine.ai.TbResponseFormat.TbTextResponseFormat;
@@ -67,7 +67,7 @@ import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.ai.AiModelService;
-import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.resource.TbResourceDataCache;
 
@@ -164,7 +164,7 @@ class TbAiNodeTest {
         lenient().when(ctxMock.getTenantId()).thenReturn(tenantId);
         lenient().when(ctxMock.getAiModelService()).thenReturn(aiModelServiceMock);
         lenient().when(ctxMock.getAiChatModelService()).thenReturn(aiChatModelServiceMock);
-        lenient().when(ctxMock.getDbCallbackExecutor()).thenReturn(new TestDbCallbackExecutor());
+        lenient().when(ctxMock.getDbCallbackExecutor()).thenReturn(DirectListeningExecutor.INSTANCE);
         lenient().when(ctxMock.getTbResourceDataCache()).thenReturn(tbResourceDataCacheMock);
         lenient().when(ctxMock.getResourceService()).thenReturn(resourceServiceMock);
     }

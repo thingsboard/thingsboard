@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,10 @@ package org.thingsboard.server.dao.sql;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.thingsboard.common.util.ListeningExecutor;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
@@ -29,7 +31,8 @@ import java.sql.Statement;
 public abstract class JpaAbstractDaoListeningExecutorService {
 
     @Autowired
-    protected JpaExecutorService service;
+    @Qualifier("jpaExecutorService")
+    protected ListeningExecutor service;
 
     @Autowired
     protected DataSource dataSource;

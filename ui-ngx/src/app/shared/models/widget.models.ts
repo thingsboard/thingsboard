@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import { EntityId } from '@shared/models/id/entity-id';
 import {
   AlarmFilter,
   AlarmFilterConfig,
+  ComplexOperation,
   EntityDataPageLink,
   EntityFilter,
   KeyFilter
@@ -401,7 +402,6 @@ export interface DataKey extends KeyInfo {
   inLegend?: boolean;
   isAdditional?: boolean;
   origDataKeyIndex?: number;
-  _hash?: number;
 }
 
 export type CellClickColumnInfo = Pick<DataKey, 'name' | 'label'>;
@@ -451,6 +451,7 @@ export interface Datasource {
   origDatasourceIndex?: number;
   pageLink?: EntityDataPageLink;
   keyFilters?: Array<KeyFilter>;
+  keyFiltersOperation?: ComplexOperation;
   entityFilter?: EntityFilter;
   alarmFilterConfig?: AlarmFilterConfig;
   alarmFilter?: AlarmFilter;

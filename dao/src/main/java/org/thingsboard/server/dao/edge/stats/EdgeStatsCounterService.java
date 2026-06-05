@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,13 @@ import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.concurrent.ConcurrentHashMap;
 
-@ConditionalOnProperty(prefix = "edges.stats", name = "enabled", havingValue = "true", matchIfMissing = false)
+@ConditionalOnProperty(prefix = "edges.stats", name = "enabled", havingValue = "true")
 @Service
 @Slf4j
 @Getter
 public class EdgeStatsCounterService {
 
-    private final ConcurrentHashMap<EdgeId, MsgCounters> counterByEdge = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<EdgeId, MsgCounters> msgCountersByEdge = new ConcurrentHashMap<>();
 
     public void recordEvent(EdgeStatsKey type, TenantId tenantId, EdgeId edgeId, long value) {
         MsgCounters counters = getOrCreateCounters(tenantId, edgeId);
@@ -39,19 +39,16 @@ public class EdgeStatsCounterService {
             case DOWNLINK_MSGS_PUSHED -> counters.getMsgsPushed().addAndGet(value);
             case DOWNLINK_MSGS_PERMANENTLY_FAILED -> counters.getMsgsPermanentlyFailed().addAndGet(value);
             case DOWNLINK_MSGS_TMP_FAILED -> counters.getMsgsTmpFailed().addAndGet(value);
+            case DOWNLINK_MSGS_LAG -> counters.getMsgsLag().set(value);
         }
     }
 
-    public void setDownlinkMsgsLag(TenantId tenantId, EdgeId edgeId, long value) {
-        getOrCreateCounters(tenantId, edgeId).getMsgsLag().set(value);
+    public MsgCounters getOrCreateCounters(TenantId tenantId, EdgeId edgeId) {
+        return msgCountersByEdge.computeIfAbsent(edgeId, id -> new MsgCounters(tenantId));
     }
 
     public void clear(EdgeId edgeId) {
-        counterByEdge.remove(edgeId);
-    }
-
-    public MsgCounters getOrCreateCounters(TenantId tenantId, EdgeId edgeId) {
-        return counterByEdge.computeIfAbsent(edgeId, id -> new MsgCounters(tenantId));
+        msgCountersByEdge.remove(edgeId);
     }
 
 }

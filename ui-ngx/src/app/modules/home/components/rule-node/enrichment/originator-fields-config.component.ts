@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -22,8 +22,9 @@ import { allowedOriginatorFields, FetchTo, SvMapOption } from '@home/components/
 import { RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@app/shared/models/rule-node.models';
 
 @Component({
-  selector: 'tb-enrichment-node-originator-fields-config',
-  templateUrl: './originator-fields-config.component.html'
+    selector: 'tb-enrichment-node-originator-fields-config',
+    templateUrl: './originator-fields-config.component.html',
+    standalone: false
 })
 export class OriginatorFieldsConfigComponent extends RuleNodeConfigurationComponent {
 

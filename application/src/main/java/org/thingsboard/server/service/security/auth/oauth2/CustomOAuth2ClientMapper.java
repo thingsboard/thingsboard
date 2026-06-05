@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,15 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.SsrfProtectionValidator;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.oauth2.OAuth2CustomMapperConfig;
 import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
 import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.dao.oauth2.OAuth2User;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+
+import java.net.URI;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 @Service(value = "customOAuth2ClientMapper")
@@ -64,6 +67,7 @@ public class CustomOAuth2ClientMapper extends AbstractOAuth2ClientMapper impleme
             throw new RuntimeException("Can't convert principal to JSON string", e);
         }
         try {
+            SsrfProtectionValidator.validateUri(new URI(custom.getUrl()));
             return restTemplate.postForEntity(custom.getUrl(), request, OAuth2User.class).getBody();
         } catch (Exception e) {
             log.error("There was an error during connection to custom mapper endpoint", e);

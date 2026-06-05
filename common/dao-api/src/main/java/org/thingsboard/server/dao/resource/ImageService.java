@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 
 import java.util.Collection;
+import java.util.Set;
 
 public interface ImageService {
 
@@ -37,6 +38,8 @@ public interface ImageService {
     TbResourceInfo saveImageInfo(TbResourceInfo imageInfo);
 
     TbResourceInfo getImageInfoByTenantIdAndKey(TenantId tenantId, String key);
+
+    Set<String> getAllImageKeysByTenantId(TenantId tenantId);
 
     TbResourceInfo getPublicImageInfoByKey(String publicResourceKey);
 

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -34,9 +34,10 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { PageLink } from "@shared/models/page/page-link";
 
 @Component({
-  selector: 'tb-dashboard-form',
-  templateUrl: './dashboard-form.component.html',
-  styleUrls: ['./dashboard-form.component.scss']
+    selector: 'tb-dashboard-form',
+    templateUrl: './dashboard-form.component.html',
+    styleUrls: ['./dashboard-form.component.scss'],
+    standalone: false
 })
 export class DashboardFormComponent extends EntityComponent<Dashboard, PageLink, DashboardInfo> {
 

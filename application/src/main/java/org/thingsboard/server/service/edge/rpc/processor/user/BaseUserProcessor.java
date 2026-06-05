@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
@@ -57,33 +56,38 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
             } else {
                 user.setId(userId);
             }
+            if (isSaveRequired(userById, user)) {
+                userEmailUpdated = updateUserEmailIfDuplicateExists(tenantId, userId, user);
+                setCustomerId(tenantId, isCreated ? null : userById.getCustomerId(), user, userUpdateMsg);
 
-            String userEmail = user.getEmail();
-            User existing = edgeCtx.getUserService().findUserByTenantIdAndEmail(tenantId, user.getEmail());
+                userValidator.validate(user, User::getTenantId);
 
-            if (existing != null && !existing.getId().equals(user.getId())) {
-                String[] splitEmail = userEmail.split("@");
-                userEmail = splitEmail[0] + "_" + StringUtils.randomAlphanumeric(15) + "@" + splitEmail[1];
-                log.warn("[{}] User with email {} already exists. Renaming User email to {}",
-                        tenantId, user.getEmail(), userEmail);
-                userEmailUpdated = true;
+                if (isCreated) {
+                    user.setId(userId);
+                }
+
+                edgeCtx.getUserService().saveUser(tenantId, user, false);
             }
-            user.setEmail(userEmail);
-            setCustomerId(tenantId, isCreated ? null : userById.getCustomerId(), user, userUpdateMsg);
-
-            userValidator.validate(user, User::getTenantId);
-
-            if (isCreated) {
-                user.setId(userId);
-            }
-
-            edgeCtx.getUserService().saveUser(tenantId, user, false);
         } catch (Exception e) {
             log.error("[{}] Failed to process user update msg [{}]", tenantId, userUpdateMsg, e);
             throw e;
         }
 
         return Pair.of(isCreated, userEmailUpdated);
+    }
+
+    private boolean updateUserEmailIfDuplicateExists(TenantId tenantId, UserId userId, User user) {
+        String email = user.getEmail();
+        User userByEmail = edgeCtx.getUserService().findUserByTenantIdAndEmail(tenantId, email);
+
+        if (userByEmail != null && !userByEmail.getId().equals(user.getId())) {
+            String[] splitEmail = email.split("@");
+            String newEmail = splitEmail[0] + "_" + StringUtils.randomAlphanumeric(15) + "@" + splitEmail[1];
+            log.warn("[{}] User with email {} already exists. Renaming User email to {}", tenantId, user.getEmail(), newEmail);
+            user.setEmail(newEmail);
+            return true;
+        }
+        return false;
     }
 
     protected void deleteUserAndPushEntityDeletedEventToRuleEngine(TenantId tenantId, UserId userId) {

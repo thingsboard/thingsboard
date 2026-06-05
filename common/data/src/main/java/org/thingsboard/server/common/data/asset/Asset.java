@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -169,7 +169,10 @@ public class Asset extends BaseDataWithAdditionalInfo<AssetId> implements HasLab
         this.assetProfileId = assetProfileId;
     }
 
-    @Schema(description = "Additional parameters of the asset",implementation = com.fasterxml.jackson.databind.JsonNode.class)
+    @Schema(description = "Additional parameters of the asset. " +
+            "May include: 'description' (string).",
+            implementation = com.fasterxml.jackson.databind.JsonNode.class,
+            example = "{\"description\":\"Building A asset\"}")
     @Override
     public JsonNode getAdditionalInfo() {
         return super.getAdditionalInfo();

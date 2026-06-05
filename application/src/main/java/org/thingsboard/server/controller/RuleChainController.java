@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
@@ -79,6 +81,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
@@ -90,6 +93,7 @@ import static org.thingsboard.server.controller.ControllerConstants.EDGE_UNASSIG
 import static org.thingsboard.server.controller.ControllerConstants.EDGE_UNASSIGN_RECEIVE_STEP_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.MARKDOWN_CODE_BLOCK_END;
 import static org.thingsboard.server.controller.ControllerConstants.MARKDOWN_CODE_BLOCK_START;
+import static org.thingsboard.server.controller.ControllerConstants.NEW_LINE;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
@@ -226,12 +230,12 @@ public class RuleChainController extends BaseController {
         return tbRuleChainService.save(ruleChain, getCurrentUser());
     }
 
-    @ApiOperation(value = "Create Default Rule Chain",
+    @ApiOperation(value = "Create Default Rule Chain (setDeviceDefaultRuleChain)",
             notes = "Create rule chain from template, based on the specified name in the request. " +
                     "Creates the rule chain based on the template that is used to create root rule chain. " + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @PostMapping("/ruleChain/device/default")
-    public RuleChain saveRuleChain(
+    public RuleChain setDeviceDefaultRuleChain(
             @Parameter(description = "A JSON value representing the request.")
             @RequestBody DefaultRuleChainCreateRequest request) throws Exception {
         checkNotNull(request);
@@ -278,7 +282,7 @@ public class RuleChainController extends BaseController {
     @ApiOperation(value = "Get Rule Chains (getRuleChains)",
             notes = "Returns a page of Rule Chains owned by tenant. " + RULE_CHAIN_DESCRIPTION + PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @GetMapping(value = "/ruleChains", params = {"pageSize", "page"})
+    @GetMapping(value = "/ruleChains")
     public PageData<RuleChain> getRuleChains(
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
@@ -344,7 +348,7 @@ public class RuleChainController extends BaseController {
             notes = TEST_SCRIPT_FUNCTION + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @PostMapping("/ruleChain/testScript")
-    public JsonNode testScript(
+    public JsonNode testRuleChainScript(
             @Parameter(description = "Script language: JS or TBEL")
             @RequestParam(required = false) ScriptLanguage scriptLang,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Test JS request. See API call description above.")
@@ -406,7 +410,7 @@ public class RuleChainController extends BaseController {
 
     @ApiOperation(value = "Export Rule Chains", notes = "Exports all tenant rule chains as one JSON." + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @GetMapping(value = "/ruleChains/export", params = {"limit"})
+    @GetMapping(value = "/ruleChains/export")
     public RuleChainData exportRuleChains(
             @Parameter(description = "A limit of rule chains to export.", required = true)
             @RequestParam("limit") int limit) throws ThingsboardException {
@@ -502,7 +506,7 @@ public class RuleChainController extends BaseController {
     @ApiOperation(value = "Get Edge Rule Chains (getEdgeRuleChains)",
             notes = "Returns a page of Rule Chains assigned to the specified edge. " + RULE_CHAIN_DESCRIPTION + PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @GetMapping(value = "/edge/{edgeId}/ruleChains", params = {"pageSize", "page"})
+    @GetMapping(value = "/edge/{edgeId}/ruleChains")
     public PageData<RuleChain> getEdgeRuleChains(
             @Parameter(description = EDGE_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(EDGE_ID) String strEdgeId,
@@ -577,6 +581,29 @@ public class RuleChainController extends BaseController {
             result.add(ruleChain);
         }
         return checkNotNull(result);
+    }
+
+    @Hidden
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @GetMapping(value = "/ruleChains", params = {"ruleChainIds"})
+    public List<RuleChain> getRuleChainsByIdsV1(@RequestParam("ruleChainIds") Set<UUID> ruleChainUUIDs) throws Exception {
+        TenantId tenantId = getCurrentUser().getTenantId();
+        List<RuleChainId> ruleChainIds = new ArrayList<>();
+        for (UUID ruleChainUUID : ruleChainUUIDs) {
+            ruleChainIds.add(new RuleChainId(ruleChainUUID));
+        }
+        return ruleChainService.findRuleChainsByIds(tenantId, ruleChainIds);
+    }
+
+    @ApiOperation(value = "Get Rule Chains By Ids (getRuleChainsByIds)",
+            notes = "Requested rule chains must be owned by tenant which is performing the request. " +
+                    NEW_LINE)
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @GetMapping(value = "/ruleChains/list")
+    public List<RuleChain> getRuleChainsByIds(
+            @Parameter(description = "A list of rule chain ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+            @RequestParam("ruleChainIds") Set<UUID> ruleChainUUIDs) throws Exception {
+        return getRuleChainsByIdsV1(ruleChainUUIDs);
     }
 
 }

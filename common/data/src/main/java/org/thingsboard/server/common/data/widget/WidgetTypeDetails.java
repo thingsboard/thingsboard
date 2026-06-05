@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import java.util.List;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@JsonPropertyOrder({"fqn", "name", "deprecated", "image", "description", "descriptor", "externalId", "resources"})
+@JsonPropertyOrder({"id", "createdTime", "tenantId", "fqn", "name", "deprecated", "scada", "version", "descriptor", "image", "description", "tags", "externalId", "resources"})
 public class WidgetTypeDetails extends WidgetType implements HasName, HasTenantId, HasImage, ExportableEntity<WidgetTypeId> {
 
     @Schema(description = "Relative or external image URL. Replaced with image data URL (Base64) in case of relative URL and 'inlineImages' option enabled.")

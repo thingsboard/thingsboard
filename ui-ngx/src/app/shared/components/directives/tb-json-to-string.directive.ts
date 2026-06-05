@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -29,25 +29,26 @@ import { ErrorStateMatcher } from '@angular/material/core';
 import { isObject } from '@core/utils';
 
 @Directive({
-  selector: '[tb-json-to-string]',
-  // eslint-disable-next-line @angular-eslint/no-host-metadata-property
-  host: {
-    '(blur)': 'onTouched()'
-  },
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => TbJsonToStringDirective),
-    multi: true
-  },
-  {
-    provide: NG_VALIDATORS,
-    useExisting: forwardRef(() => TbJsonToStringDirective),
-    multi: true,
-  },
-  {
-    provide: ErrorStateMatcher,
-    useExisting: TbJsonToStringDirective
-  }]
+    selector: '[tb-json-to-string]',
+    // eslint-disable-next-line @angular-eslint/no-host-metadata-property
+    host: {
+        '(blur)': 'onTouched()'
+    },
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TbJsonToStringDirective),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => TbJsonToStringDirective),
+            multi: true,
+        },
+        {
+            provide: ErrorStateMatcher,
+            useExisting: TbJsonToStringDirective
+        }],
+    standalone: false
 })
 
 export class TbJsonToStringDirective implements ControlValueAccessor, Validator, ErrorStateMatcher {

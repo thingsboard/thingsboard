@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -34,21 +34,22 @@ import { FormControlsFrom } from "@shared/models/tenant.model";
 import { isDefinedAndNotNull } from "@core/utils";
 
 @Component({
-  selector: 'tb-alarm-rule-filter-predicate-value',
-  templateUrl: './alarm-rule-filter-predicate-value.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => AlarmRuleFilterPredicateValueComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => AlarmRuleFilterPredicateValueComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-alarm-rule-filter-predicate-value',
+    templateUrl: './alarm-rule-filter-predicate-value.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => AlarmRuleFilterPredicateValueComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => AlarmRuleFilterPredicateValueComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class AlarmRuleFilterPredicateValueComponent implements ControlValueAccessor, Validator, OnInit, OnChanges {
 
@@ -166,7 +167,7 @@ export class AlarmRuleFilterPredicateValueComponent implements ControlValueAcces
   }
 
   writeValue(predicateValue: AlarmRuleValue<string | number | boolean>): void {
-    if (isDefinedAndNotNull(predicateValue.dynamicValueArgument)) {
+    if (isDefinedAndNotNull(predicateValue?.dynamicValueArgument)) {
       const availableArgument = this.argumentsList.filter(arg => arg !== this.argumentInUse);
       if (!availableArgument.includes(predicateValue.dynamicValueArgument)) {
         predicateValue.dynamicValueArgument = '';

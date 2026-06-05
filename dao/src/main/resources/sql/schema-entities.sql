@@ -1,5 +1,5 @@
 --
--- Copyright © 2016-2025 The Thingsboard Authors
+-- Copyright © 2016-2026 The Thingsboard Authors
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -162,6 +162,7 @@ CREATE TABLE IF NOT EXISTS rule_chain (
     created_time bigint NOT NULL,
     additional_info varchar,
     configuration varchar(10000000),
+    notes varchar(1000000),
     name varchar(255),
     type varchar(255),
     first_rule_node_id uuid,
@@ -935,6 +936,7 @@ CREATE TABLE IF NOT EXISTS calculated_field (
     configuration varchar(1000000),
     version BIGINT DEFAULT 1,
     debug_settings varchar(1024),
+    additional_info varchar,
     CONSTRAINT calculated_field_unq_key UNIQUE (entity_id, type, name)
 );
 

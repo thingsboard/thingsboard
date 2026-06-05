@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -38,7 +38,8 @@ import { MatButton } from '@angular/material/button';
 import Timeout = NodeJS.Timeout;
 
 @Directive({
-  selector: '[tb-toast]'
+    selector: '[tb-toast]',
+    standalone: false
 })
 export class ToastDirective implements AfterViewInit, OnDestroy {
 
@@ -134,8 +135,10 @@ export class ToastDirective implements AfterViewInit, OnDestroy {
         notification: notificationMessage,
         panelClass,
         destroyToastComponent: () => {
-          this.viewContainerRef.detach(0);
-          this.toastComponentRef.destroy();
+          if (this.toastComponentRef) {
+            this.viewContainerRef.detach(0);
+            this.toastComponentRef.destroy();
+          }
         }
       };
       const providers: StaticProvider[] = [
@@ -272,10 +275,11 @@ export const toastAnimations: {
 export type ToastAnimationState = 'default' | 'opened' | 'closing';
 
 @Component({
-  selector: 'tb-snack-bar-component',
-  templateUrl: 'snack-bar-component.html',
-  styleUrls: ['snack-bar-component.scss'],
-  animations: [toastAnimations.showHideToast]
+    selector: 'tb-snack-bar-component',
+    templateUrl: 'snack-bar-component.html',
+    styleUrls: ['snack-bar-component.scss'],
+    animations: [toastAnimations.showHideToast],
+    standalone: false
 })
 export class TbSnackBarComponent implements AfterViewInit, OnDestroy {
 

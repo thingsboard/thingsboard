@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -24,9 +24,11 @@
     </div>
     <div class="tb-form-table-body">
       <mat-selection-list formControlName="allowedAggregationTypes">
-        <mat-list-option *ngFor="let type of allAggregationTypes" [value]="type" togglePosition="before" color="primary">
-          {{ aggregationTypesTranslations.get(aggregationTypes[type]) | translate }}
-        </mat-list-option>
+        @for (type of allAggregationTypes; track type) {
+          <mat-list-option [value]="type" togglePosition="before" color="primary">
+            {{ aggregationTypesTranslations.get(aggregationTypes[type]) | translate }}
+          </mat-list-option>
+        }
       </mat-selection-list>
     </div>
   </div>

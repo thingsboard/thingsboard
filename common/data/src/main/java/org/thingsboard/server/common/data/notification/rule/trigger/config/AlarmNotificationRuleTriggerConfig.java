@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.common.data.notification.rule.trigger.config;
 
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -31,16 +33,20 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@Schema
 public class AlarmNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
 
     @Serial
     private static final long serialVersionUID = -7382883720381542344L;
 
+    @ArraySchema(schema = @Schema(implementation = String.class))
     private Set<String> alarmTypes;
+    @ArraySchema(schema = @Schema(implementation = AlarmSeverity.class))
     private Set<AlarmSeverity> alarmSeverities;
     @NotEmpty
+    @ArraySchema(schema = @Schema(implementation = AlarmAction.class))
     private Set<AlarmAction> notifyOn;
-
+    @Schema
     private ClearRule clearRule;
 
     @Override
@@ -55,6 +61,7 @@ public class AlarmNotificationRuleTriggerConfig implements NotificationRuleTrigg
         private Set<AlarmSearchStatus> alarmStatuses;
     }
 
+    @Schema
     public enum AlarmAction {
         CREATED, SEVERITY_CHANGED, ACKNOWLEDGED, CLEARED
     }

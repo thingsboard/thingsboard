@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public enum EdgeEventType {
     TENANT_PROFILE(true, EntityType.TENANT_PROFILE),
     WIDGETS_BUNDLE(true, EntityType.WIDGETS_BUNDLE),
     WIDGET_TYPE(true, EntityType.WIDGET_TYPE),
-    ADMIN_SETTINGS(true, null),
+    ADMIN_SETTINGS(true, EntityType.ADMIN_SETTINGS),
     OTA_PACKAGE(true, EntityType.OTA_PACKAGE),
     QUEUE(true, EntityType.QUEUE),
     NOTIFICATION_RULE(true, EntityType.NOTIFICATION_RULE),
@@ -48,7 +48,8 @@ public enum EdgeEventType {
     OAUTH2_CLIENT(true, EntityType.OAUTH2_CLIENT),
     DOMAIN(true, EntityType.DOMAIN),
     CALCULATED_FIELD(false, EntityType.CALCULATED_FIELD),
-    AI_MODEL(true, EntityType.AI_MODEL);
+    AI_MODEL(true, EntityType.AI_MODEL),
+    API_KEY(true, EntityType.API_KEY);
 
     private final boolean allEdgesRelated;
 

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,17 +18,16 @@
 import { CustomTimeSchedulerItem } from "@shared/models/device.models";
 import { DashboardId } from "@shared/models/id/dashboard-id";
 import { TimeUnit } from "@shared/models/time/time.models";
-import {
-  BooleanOperation,
-  ComplexOperation,
-  EntityKeyValueType,
-  FilterPredicateType,
-  NumericOperation,
-  StringOperation
-} from "@shared/models/query/query.models";
+import { ComplexOperation, EntityKeyValueType, FilterPredicateType } from "@shared/models/query/query.models";
 import { EntityType } from "@shared/models/entity-type.models";
 import { Observable } from "rxjs";
-import { CalculatedField } from "@shared/models/calculated-field.models";
+import {
+  CalculatedField,
+  CalculatedFieldArgument,
+  CalculatedFieldEventArguments
+} from "@shared/models/calculated-field.models";
+
+export const alarmRuleEntityTypeList = [EntityType.DEVICE, EntityType.ASSET, EntityType.CUSTOMER, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE];
 
 export enum AlarmRuleScheduleType {
   ANY_TIME = 'ANY_TIME',
@@ -246,7 +245,66 @@ export const alarmRuleBooleanOperationTranslationMap = new Map<AlarmRuleBooleanO
 );
 
 export const alarmRuleDefaultScript =
-  '// Sample expression for an alarm rule: triggers when temperature is above 20 degree\n' +
+  '// Triggers when temperature is above 20 degrees\n' +
   'return temperature > 20;'
 
-export type AlarmRuleTestScriptFn = (calculatedField: CalculatedField, expression: string, argumentsObj?: Record<string, unknown>, closeAllOnSave?: boolean) => Observable<string>;
+export type AlarmRuleTestScriptFn = (calculatedField: CalculatedField, argumentsObj?: CalculatedFieldEventArguments, openCalculatedFieldEdit?: boolean, expression?: string) => Observable<string>;
+
+export function checkPredicates(predicates: any[], validSet: Set<string>): boolean {
+  for (const predicate of predicates) {
+    if (!predicate) continue;
+    if (predicate?.value?.dynamicValueArgument) {
+      if (!validSet.has(predicate.value.dynamicValueArgument)) {
+        return false;
+      }
+    }
+    if (predicate.type === 'COMPLEX' && Array.isArray(predicate.predicates)) {
+      if (!checkPredicates(predicate.predicates, validSet)) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+export function areFilterAndPredicateArgumentsValid(obj: any, args: Record<string, CalculatedFieldArgument>): boolean {
+  const validSet = new Set(Object.keys(args));
+  const filter = obj || [];
+  if (filter.argument && !validSet.has(filter.argument)) {
+    return false;
+  }
+  if (Array.isArray(filter.predicates)) {
+    if (!checkPredicates(filter.predicates, validSet)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+export function areFiltersAndPredicateArgumentsValid(obj: any, args: Record<string, CalculatedFieldArgument>): boolean {
+  const validSet = new Set(Object.keys(args));
+  const filters = obj || [];
+    for (const filter of filters) {
+      if (filter.argument && !validSet.has(filter.argument)) {
+        return false;
+      }
+    }
+  for (const filter of filters) {
+    if (Array.isArray(filter.predicates)) {
+      if (!checkPredicates(filter.predicates, validSet)) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+export function isPredicateArgumentsValid(predicates: any, args: Record<string, CalculatedFieldArgument>): boolean {
+  const validSet = new Set(Object.keys(args));
+  if (Array.isArray(predicates)) {
+    if (!checkPredicates(predicates, validSet)) {
+      return false;
+    }
+  }
+  return true;
+}

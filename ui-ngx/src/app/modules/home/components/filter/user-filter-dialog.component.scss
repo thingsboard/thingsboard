@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 :host ::ng-deep {
-  .user-filter-dialog {
-    .mat-mdc-form-field.mat-mdc-form-field-has-icon-suffix.mat-form-field-hide-placeholder {
+  .numeric-field {
+    &.mat-mdc-form-field-has-icon-suffix.mat-form-field-hide-placeholder {
       .mat-mdc-form-field-icon-suffix {
         place-self: center;
       }
     }
 
-    .mat-mdc-form-field.mat-mdc-form-field-has-icon-suffix {
+    &.mat-mdc-form-field-has-icon-suffix {
       .mat-mdc-form-field-icon-suffix {
         place-self: baseline;
       }

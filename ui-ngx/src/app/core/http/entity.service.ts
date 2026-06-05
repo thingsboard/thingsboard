@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -245,50 +245,34 @@ export class EntityService {
         observable = this.edgeService.getEdges(entityIds, config);
         break;
       case EntityType.ENTITY_VIEW:
-        observable = this.getEntitiesByIdsObservable(
-          (id) => this.entityViewService.getEntityView(id, config),
-          entityIds);
+        observable = this.entityViewService.getEntityViews(entityIds, config);
         break;
       case EntityType.TENANT:
-        observable = this.getEntitiesByIdsObservable(
-          (id) => this.tenantService.getTenant(id, config),
-          entityIds);
+        observable = this.tenantService.getTenantsByIds(entityIds, config);
         break;
       case EntityType.CUSTOMER:
-        observable = this.getEntitiesByIdsObservable(
-          (id) => this.customerService.getCustomer(id, config),
-          entityIds);
+        observable = this.customerService.getCustomersByIds(entityIds, config);
         break;
       case EntityType.DASHBOARD:
-        observable = this.getEntitiesByIdsObservable(
-          (id) => this.dashboardService.getDashboardInfo(id, config),
-          entityIds);
+        observable = this.dashboardService.getDashboards(entityIds, config);
         break;
       case EntityType.USER:
-        observable = this.getEntitiesByIdsObservable(
-          (id) => this.userService.getUser(id, config),
-          entityIds);
+        observable = this.userService.getUsersByIds(entityIds, config);
         break;
       case EntityType.ALARM:
         console.error('Get Alarm Entity is not implemented!');
         break;
       case EntityType.DEVICE_PROFILE:
-        observable = this.getEntitiesByIdsObservable(
-          (id) => this.deviceProfileService.getDeviceProfileInfo(id, config),
-          entityIds);
+        observable = this.deviceProfileService.getDeviceProfilesByIds(entityIds, config);
         break;
       case EntityType.TENANT_PROFILE:
         observable = this.tenantProfileService.getTenantProfilesByIds(entityIds, config);
         break;
       case EntityType.ASSET_PROFILE:
-        observable = this.getEntitiesByIdsObservable(
-          (id) => this.assetProfileService.getAssetProfileInfo(id, config),
-          entityIds);
+        observable = this.assetProfileService.getAssetProfilesByIds(entityIds, config);
         break;
       case EntityType.WIDGETS_BUNDLE:
-        observable = this.getEntitiesByIdsObservable(
-          (id) => this.widgetService.getWidgetsBundle(id, config),
-          entityIds);
+        observable = this.widgetService.getWidgetsBundlesByIds(entityIds, config);
         break;
       case EntityType.NOTIFICATION_TARGET:
         observable = this.notificationService.getNotificationTargetsByIds(entityIds, config);
@@ -300,9 +284,7 @@ export class EntityService {
         observable = this.oauth2Service.findTenantOAuth2ClientInfosByIds(entityIds, config);
         break;
       case EntityType.RULE_CHAIN:
-        observable = this.getEntitiesByIdsObservable(
-          (id) => this.ruleChainService.getRuleChain(id, config),
-          entityIds);
+        observable = this.ruleChainService.getRuleChainsByIds(entityIds, config);
         break;
       case EntityType.TB_RESOURCE:
         observable = this.resourceService.getResourcesByIds(entityIds, config);

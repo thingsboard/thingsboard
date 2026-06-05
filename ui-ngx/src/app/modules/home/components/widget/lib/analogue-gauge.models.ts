@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import { TbUnit } from '@shared/models/unit.models';
 import { ValueFormatProcessor } from '@shared/models/widget-settings.models';
 import { UnitService } from '@core/services/unit.service';
 import { DataKey } from '@shared/models/widget.models';
+import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 
 export type AnimationRule = 'linear' | 'quad' | 'quint' | 'cycle'
                             | 'bounce' | 'elastic' | 'dequad' | 'dequint'
@@ -201,7 +202,7 @@ export abstract class TbAnalogueGauge<S extends AnalogueGaugeSettings, O extends
       minorTicks: settings.minorTicks || 2,
       units: unitSymbols,
       title: ((settings.showUnitTitle !== false) ?
-        (settings.unitTitle && settings.unitTitle.length > 0 ?
+        this.ctx.$injector.get(CustomTranslatePipe).transform(settings.unitTitle && settings.unitTitle.length > 0 ?
           settings.unitTitle : dataKey.label) : ''),
 
       borders: settings.showBorder !== false,

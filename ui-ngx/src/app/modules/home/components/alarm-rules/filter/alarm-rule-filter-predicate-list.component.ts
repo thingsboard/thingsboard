@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -52,21 +52,22 @@ import { CalculatedFieldArgument } from "@shared/models/calculated-field.models"
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
-  selector: 'tb-alarm-rule-filter-predicate-list',
-  templateUrl: './alarm-rule-filter-predicate-list.component.html',
-  styleUrls: ['./alarm-rule-filter-predicate-list.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => AlarmRuleFilterPredicateListComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => AlarmRuleFilterPredicateListComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-alarm-rule-filter-predicate-list',
+    templateUrl: './alarm-rule-filter-predicate-list.component.html',
+    styleUrls: ['./alarm-rule-filter-predicate-list.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => AlarmRuleFilterPredicateListComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => AlarmRuleFilterPredicateListComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class AlarmRuleFilterPredicateListComponent implements ControlValueAccessor, Validator {
 
@@ -79,6 +80,8 @@ export class AlarmRuleFilterPredicateListComponent implements ControlValueAccess
   @Input() arguments: Record<string, CalculatedFieldArgument>;
 
   @Input() argumentInUse: string;
+
+  @Input() readonly: boolean;
 
   filterListFormGroup = this.fb.group({
     predicates: this.fb.array([])
@@ -197,7 +200,8 @@ export class AlarmRuleFilterPredicateListComponent implements ControlValueAccess
         valueType: this.valueType,
         isAdd: true,
         arguments: this.arguments,
-        argumentInUse: this.argumentInUse
+        argumentInUse: this.argumentInUse,
+        readonly: this.readonly
       }
     }).afterClosed().pipe(
       map(result => result)

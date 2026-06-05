@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ public class TenantEdgeTest extends AbstractEdgeTest {
         TenantProfileUpdateMsg tenantProfileUpdateMsg = tenantProfileUpdateMsgOpt.get();
         Tenant tenantMsg = JacksonUtil.fromString(tenantUpdateMsg.getEntity(), Tenant.class, true);
         Assert.assertNotNull(tenantMsg);
-        Assert.assertEquals(savedTenant, tenantMsg);
+        compareHasVersionEntities(savedTenant, tenantMsg);
         TenantProfile tenantProfileMsg = JacksonUtil.fromString(tenantProfileUpdateMsg.getEntity(), TenantProfile.class, true);
         Assert.assertNotNull(tenantProfileMsg);
         Assert.assertEquals(tenantMsg.getTenantProfileId(), tenantProfileMsg.getId());
@@ -75,7 +75,7 @@ public class TenantEdgeTest extends AbstractEdgeTest {
         Assert.assertNotNull(tenantProfileMsg);
         // tenant update
         Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, tenantUpdateMsg.getMsgType());
-        Assert.assertEquals(savedTenant, tenantMsg);
+        compareHasVersionEntities(savedTenant, tenantMsg);
         Assert.assertEquals(savedTenant.getTenantProfileId(), tenantProfileMsg.getId());
     }
 

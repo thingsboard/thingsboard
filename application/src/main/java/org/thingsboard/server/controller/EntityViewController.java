@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@
 package org.thingsboard.server.controller;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -57,7 +59,10 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -74,7 +79,6 @@ import static org.thingsboard.server.controller.ControllerConstants.ENTITY_VIEW_
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_VIEW_TYPE;
 import static org.thingsboard.server.controller.ControllerConstants.MODEL_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.NAME_CONFLICT_POLICY_DESC;
-import static org.thingsboard.server.controller.ControllerConstants.UNIQUIFY_SEPARATOR_DESC;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
@@ -82,6 +86,7 @@ import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_D
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.UNIQUIFY_SEPARATOR_DESC;
 import static org.thingsboard.server.controller.ControllerConstants.UNIQUIFY_STRATEGY_DESC;
 import static org.thingsboard.server.controller.EdgeController.EDGE_ID;
 
@@ -162,15 +167,23 @@ public class EntityViewController extends BaseController {
         tbEntityViewService.delete(entityView, getCurrentUser());
     }
 
-    @ApiOperation(value = "Get Entity View by name (getTenantEntityView)",
-            notes = "Fetch the Entity View object based on the tenant id and entity view name. " + TENANT_AUTHORITY_PARAGRAPH)
+    @Hidden
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping(value = "/tenant/entityViews", params = {"entityViewName"})
     public EntityView getTenantEntityView(
-            @Parameter(description = "Entity View name")
             @RequestParam String entityViewName) throws ThingsboardException {
         TenantId tenantId = getCurrentUser().getTenantId();
         return checkNotNull(entityViewService.findEntityViewByTenantIdAndName(tenantId, entityViewName));
+    }
+
+    @ApiOperation(value = "Get Entity View by name (getTenantEntityViewByName)",
+            notes = "Fetch the Entity View object based on the tenant id and entity view name. " + TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @GetMapping(value = "/tenant/entityView")
+    public EntityView getTenantEntityViewByName(
+            @Parameter(description = "Entity View name")
+            @RequestParam String entityViewName) throws ThingsboardException {
+        return getTenantEntityView(entityViewName);
     }
 
     @ApiOperation(value = "Assign Entity View to customer (assignEntityViewToCustomer)",
@@ -217,7 +230,7 @@ public class EntityViewController extends BaseController {
             notes = "Returns a page of Entity View objects assigned to customer. " +
                     PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @GetMapping(value = "/customer/{customerId}/entityViews", params = {"pageSize", "page"})
+    @GetMapping(value = "/customer/{customerId}/entityViews")
     public PageData<EntityView> getCustomerEntityViews(
             @Parameter(description = CUSTOMER_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(CUSTOMER_ID) String strCustomerId,
@@ -249,7 +262,7 @@ public class EntityViewController extends BaseController {
             notes = "Returns a page of Entity View info objects assigned to customer. " + ENTITY_VIEW_DESCRIPTION +
                     PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @GetMapping(value = "/customer/{customerId}/entityViewInfos", params = {"pageSize", "page"})
+    @GetMapping(value = "/customer/{customerId}/entityViewInfos")
     public PageData<EntityViewInfo> getCustomerEntityViewInfos(
             @Parameter(description = CUSTOMER_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(CUSTOMER_ID) String strCustomerId,
@@ -281,7 +294,7 @@ public class EntityViewController extends BaseController {
             notes = "Returns a page of entity views owned by tenant. " + ENTITY_VIEW_DESCRIPTION +
                     PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @GetMapping(value = "/tenant/entityViews", params = {"pageSize", "page"})
+    @GetMapping(value = "/tenant/entityViews")
     public PageData<EntityView> getTenantEntityViews(
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
@@ -309,7 +322,7 @@ public class EntityViewController extends BaseController {
             notes = "Returns a page of entity views info owned by tenant. " + ENTITY_VIEW_DESCRIPTION +
                     PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @GetMapping(value = "/tenant/entityViewInfos", params = {"pageSize", "page"})
+    @GetMapping(value = "/tenant/entityViewInfos")
     public PageData<EntityViewInfo> getTenantEntityViewInfos(
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
@@ -332,13 +345,13 @@ public class EntityViewController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Find related entity views (findByQuery)",
+    @ApiOperation(value = "Find related entity views (findEntityViewsByQuery)",
             notes = "Returns all entity views that are related to the specific entity. " +
                     "The entity id, relation type, entity view types, depth of the search, and other query parameters defined using complex 'EntityViewSearchQuery' object. " +
                     "See 'Model' tab of the Parameters for more info." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @PostMapping(value = "/entityViews")
-    public List<EntityView> findByQuery(
+    public List<EntityView> findEntityViewsByQuery(
             @Parameter(description = "The entity view search query JSON")
             @RequestBody EntityViewSearchQuery query) throws ThingsboardException, ExecutionException, InterruptedException {
         checkNotNull(query);
@@ -346,14 +359,7 @@ public class EntityViewController extends BaseController {
         checkNotNull(query.getEntityViewTypes());
         checkEntityId(query.getParameters().getEntityId(), Operation.READ);
         List<EntityView> entityViews = checkNotNull(entityViewService.findEntityViewsByQuery(getTenantId(), query).get());
-        entityViews = entityViews.stream().filter(entityView -> {
-            try {
-                accessControlService.checkPermission(getCurrentUser(), Resource.ENTITY_VIEW, Operation.READ, entityView.getId(), entityView);
-                return true;
-            } catch (ThingsboardException e) {
-                return false;
-            }
-        }).collect(Collectors.toList());
+        entityViews = filterEntityViewsByReadPermission(entityViews);
         return entityViews;
     }
 
@@ -431,7 +437,7 @@ public class EntityViewController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @GetMapping(value = "/edge/{edgeId}/entityViews", params = {"pageSize", "page"})
+    @GetMapping(value = "/edge/{edgeId}/entityViews")
     public PageData<EntityView> getEdgeEntityViews(
             @PathVariable(EDGE_ID) String strEdgeId,
             @RequestParam int pageSize,
@@ -453,19 +459,45 @@ public class EntityViewController extends BaseController {
         } else {
             nonFilteredResult = entityViewService.findEntityViewsByTenantIdAndEdgeId(tenantId, edgeId, pageLink);
         }
-        List<EntityView> filteredEntityViews = nonFilteredResult.getData().stream().filter(entityView -> {
-            try {
-                accessControlService.checkPermission(getCurrentUser(), Resource.ENTITY_VIEW, Operation.READ, entityView.getId(), entityView);
-                return true;
-            } catch (ThingsboardException e) {
-                return false;
-            }
-        }).collect(Collectors.toList());
+        List<EntityView> filteredEntityViews = filterEntityViewsByReadPermission(nonFilteredResult.getData());
         PageData<EntityView> filteredResult = new PageData<>(filteredEntityViews,
                 nonFilteredResult.getTotalPages(),
                 nonFilteredResult.getTotalElements(),
                 nonFilteredResult.hasNext());
         return checkNotNull(filteredResult);
+    }
+
+    @Hidden
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping(value = "/entityViews", params = {"entityViewIds"})
+    public List<EntityView> getEntityViewsByIdsV1(@Parameter(description = "A list of entity view ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+            @RequestParam("entityViewIds") Set<UUID> entityViewUUIDs) throws ThingsboardException {
+        TenantId tenantId = getCurrentUser().getTenantId();
+        List<EntityViewId> entityViewIds = new ArrayList<>();
+        for (UUID entityViewUUID : entityViewUUIDs) {
+            entityViewIds.add(new EntityViewId(entityViewUUID));
+        }
+        List<EntityView> entityViews = entityViewService.findEntityViewsByTenantIdAndIds(tenantId, entityViewIds);
+        return filterEntityViewsByReadPermission(entityViews);
+    }
+
+    @ApiOperation(value = "Get Entity Views By Ids (getEntityViewsByIds)",
+            notes = "Requested entity views must be owned by tenant or assigned to customer which user is performing the request. ")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping(value = "/entityViews/list")
+    public List<EntityView> getEntityViewsByIds(@Parameter(description = "A list of entity view ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+                                                @RequestParam("entityViewIds") Set<UUID> entityViewUUIDs) throws ThingsboardException {
+        return getEntityViewsByIdsV1(entityViewUUIDs);
+    }
+
+    private List<EntityView> filterEntityViewsByReadPermission(List<EntityView> entityViews) {
+        return entityViews.stream().filter(entityView -> {
+            try {
+                return accessControlService.hasPermission(getCurrentUser(), Resource.ENTITY_VIEW, Operation.READ, entityView.getId(), entityView);
+            } catch (ThingsboardException e) {
+                return false;
+            }
+        }).collect(Collectors.toList());
     }
 
 }

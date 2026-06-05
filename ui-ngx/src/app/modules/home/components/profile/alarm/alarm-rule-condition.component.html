@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -23,8 +23,10 @@
                     required
                     addFilterPrompt="{{'device-profile.enter-alarm-rule-condition-prompt' | translate}}">
     </tb-filter-text>
-    <span *ngIf="specText" class="tb-alarm-rule-condition-spec" [class.disabled]="disabled" [innerHTML]="specText">
-    </span>
+    @if (specText) {
+      <span class="tb-alarm-rule-condition-spec" [class.disabled]="disabled" [innerHTML]="specText">
+      </span>
+    }
   </div>
   <button mat-icon-button
           [color]="conditionSet() ? 'primary' : 'warn'"

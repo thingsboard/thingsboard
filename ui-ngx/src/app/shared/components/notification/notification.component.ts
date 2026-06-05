@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,10 +14,9 @@
 /// limitations under the License.
 ///
 
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, SecurityContext } from '@angular/core';
 import {
   ActionButtonLinkType,
-  AlarmSeverityNotificationColors,
   Notification,
   NotificationStatus,
   NotificationType,
@@ -25,16 +24,22 @@ import {
 } from '@shared/models/notification.models';
 import { UtilsService } from '@core/services/utils.service';
 import { Router } from '@angular/router';
-import { alarmSeverityTranslations } from '@shared/models/alarm.models';
+import {
+  alarmSeverityBackgroundColors,
+  alarmSeverityColors,
+  alarmSeverityTranslations
+} from '@shared/models/alarm.models';
 import tinycolor from 'tinycolor2';
 import { StateObject } from '@core/api/widget-api.models';
 import { objToBase64URI } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { DomSanitizer } from '@angular/platform-browser';
 
 @Component({
-  selector: 'tb-notification',
-  templateUrl: './notification.component.html',
-  styleUrls: ['./notification.component.scss']
+    selector: 'tb-notification',
+    templateUrl: './notification.component.html',
+    styleUrls: ['./notification.component.scss'],
+    standalone: false
 })
 export class NotificationComponent implements OnInit {
 
@@ -67,7 +72,8 @@ export class NotificationComponent implements OnInit {
 
   constructor(
     private utils: UtilsService,
-    private router: Router
+    private router: Router,
+    private sanitizer: DomSanitizer
   ) {
   }
 
@@ -75,11 +81,10 @@ export class NotificationComponent implements OnInit {
     this.showIcon = this.notification.additionalConfig?.icon?.enabled;
     this.showButton = this.notification.additionalConfig?.actionButtonConfig?.enabled;
     this.hideMarkAsReadButton = this.notification.status === NotificationStatus.READ;
-    this.title = this.utils.customTranslation(this.notification.subject, this.notification.subject);
-    this.message = this.utils.customTranslation(this.notification.text, this.notification.text);
+    this.title = this.sanitizer.sanitize(SecurityContext.HTML, this.utils.customTranslation(this.notification.subject));
+    this.message = this.sanitizer.sanitize(SecurityContext.HTML, this.utils.customTranslation(this.notification.text));
     if (this.showButton) {
-      this.buttonLabel = this.utils.customTranslation(this.notification.additionalConfig.actionButtonConfig.text,
-                                                      this.notification.additionalConfig.actionButtonConfig.text);
+      this.buttonLabel = this.utils.customTranslation(this.notification.additionalConfig.actionButtonConfig.text);
     }
   }
 
@@ -134,13 +139,13 @@ export class NotificationComponent implements OnInit {
     }
   }
 
-  alarmColorSeverity(alpha: number) {
-    return tinycolor(AlarmSeverityNotificationColors.get(this.notification.info.alarmSeverity)).setAlpha(alpha).toRgbString();
+  alarmColorSeverityBackground() {
+    return alarmSeverityBackgroundColors.get(this.notification.info.alarmSeverity);
   }
 
   notificationColor(): string {
     if (this.notification.type === NotificationType.ALARM && !this.notification.info.cleared) {
-      return AlarmSeverityNotificationColors.get(this.notification.info.alarmSeverity);
+      return alarmSeverityColors.get(this.notification.info.alarmSeverity);
     }
     return 'transparent';
   }
@@ -154,9 +159,11 @@ export class NotificationComponent implements OnInit {
 
   notificationIconColor(): object {
     if (this.notification.type === NotificationType.ALARM) {
-      return {color: AlarmSeverityNotificationColors.get(this.notification.info.alarmSeverity)};
+      return {color: alarmSeverityColors.get(this.notification.info.alarmSeverity)};
     } else if (this.notification.type === NotificationType.RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT) {
       return {color: '#D12730'};
+    } else if (this.notification.type === NotificationType.ENTITIES_LIMIT_INCREASE_REQUEST) {
+      return {color: '#305680'};
     }
     return null;
   }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,14 @@ package org.thingsboard.server.common.data.device.profile;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
 import com.squareup.wire.schema.Location;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.DynamicProtoUtils;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TransportPayloadType;
 
+@Schema
 @Slf4j
 @Data
 public class ProtoTransportPayloadConfiguration implements TransportPayloadTypeConfiguration {
@@ -43,6 +45,9 @@ public class ProtoTransportPayloadConfiguration implements TransportPayloadTypeC
     private boolean enableCompatibilityWithJsonPayloadFormat;
     private boolean useJsonPayloadFormatForDefaultDownlinkTopics;
 
+    @Schema(
+            description = "Transport payload type", requiredMode = Schema.RequiredMode.REQUIRED
+    )
     @Override
     public TransportPayloadType getTransportPayloadType() {
         return TransportPayloadType.PROTOBUF;

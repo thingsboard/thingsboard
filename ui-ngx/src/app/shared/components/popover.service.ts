@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -142,7 +142,7 @@ export class TbPopoverService {
       conf.componentRef.location.nativeElement
     );
     const originElementRef = new ElementRef(conf.trigger);
-    component.setOverlayOrigin(new CdkOverlayOrigin(originElementRef));
+    component.setOriginElement(originElementRef);
     component.tbPlacement = conf.preferredPlacement;
     component.tbComponent = conf.componentType;
     component.tbComponentInjector = conf.injector;
@@ -198,7 +198,7 @@ export class TbPopoverService {
       const originElementRef = new ElementRef(trigger);
       component.tbAnimationState = 'void';
       component.tbOverlayStyle = {...overlayStyle, opacity: '0' };
-      component.setOverlayOrigin(new CdkOverlayOrigin(originElementRef));
+      component.setOriginElement(originElementRef);
       component.tbPlacement = preferredPlacement;
       component.tbComponent = this.helpMarkdownComponent;
       component.tbComponentInjector = injector;

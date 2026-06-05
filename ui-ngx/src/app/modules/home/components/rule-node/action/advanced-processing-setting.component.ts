@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -30,17 +30,18 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 import { AttributeAdvancedProcessingStrategy } from '@home/components/rule-node/action/attributes-config.model';
 
 @Component({
-  selector: 'tb-advanced-processing-settings',
-  templateUrl: './advanced-processing-setting.component.html',
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => AdvancedProcessingSettingComponent),
-    multi: true
-  },{
-    provide: NG_VALIDATORS,
-    useExisting: forwardRef(() => AdvancedProcessingSettingComponent),
-    multi: true
-  }]
+    selector: 'tb-advanced-processing-settings',
+    templateUrl: './advanced-processing-setting.component.html',
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => AdvancedProcessingSettingComponent),
+            multi: true
+        }, {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => AdvancedProcessingSettingComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class AdvancedProcessingSettingComponent implements OnInit, ControlValueAccessor, Validator {
 

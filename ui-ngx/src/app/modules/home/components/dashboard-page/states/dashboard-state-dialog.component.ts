@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -43,10 +43,11 @@ export interface DashboardStateDialogData {
 }
 
 @Component({
-  selector: 'tb-dashboard-state-dialog',
-  templateUrl: './dashboard-state-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: DashboardStateDialogComponent}],
-  styleUrls: []
+    selector: 'tb-dashboard-state-dialog',
+    templateUrl: './dashboard-state-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: DashboardStateDialogComponent }],
+    styleUrls: [],
+    standalone: false
 })
 export class DashboardStateDialogComponent extends
   DialogComponent<DashboardStateDialogComponent, DashboardStateInfo>

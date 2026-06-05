@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,9 +55,6 @@ import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.StringUtils.isBlank;
 
-/**
- * @author Andrew Shvayka
- */
 @Service
 @Slf4j
 public class BaseTimeseriesService implements TimeseriesService {
@@ -159,6 +156,16 @@ public class BaseTimeseriesService implements TimeseriesService {
     @Override
     public ListenableFuture<List<String>> findAllKeysByEntityIdsAsync(TenantId tenantId, List<EntityId> entityIds) {
         return timeseriesLatestDao.findAllKeysByEntityIdsAsync(tenantId, entityIds);
+    }
+
+    @Override
+    public List<TsKvEntry> findLatestByEntityIds(TenantId tenantId, List<EntityId> entityIds) {
+        return timeseriesLatestDao.findLatestByEntityIds(tenantId, entityIds);
+    }
+
+    @Override
+    public ListenableFuture<List<TsKvEntry>> findLatestByEntityIdsAsync(TenantId tenantId, List<EntityId> entityIds) {
+        return timeseriesLatestDao.findLatestByEntityIdsAsync(tenantId, entityIds);
     }
 
     @Override

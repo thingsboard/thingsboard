@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,6 +95,10 @@ public abstract class AbstractTbEntityService {
 
     protected <I extends EntityId> I emptyId(EntityType entityType) {
         return (I) EntityIdFactory.getByTypeAndUuid(entityType, ModelConstants.NULL_UUID);
+    }
+
+    protected <I extends EntityId> I getOrEmptyId(I entityId, EntityType entityType) {
+        return entityId == null ? emptyId(entityType) : entityId;
     }
 
     protected ListenableFuture<UUID> autoCommit(User user, EntityId entityId) {

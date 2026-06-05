@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -29,14 +29,15 @@ import { EntityService } from '@core/http/entity.service';
 import { isDefinedAndNotNull } from '@core/utils';
 
 @Component({
-  selector: 'tb-aliases-entity-autocomplete',
-  templateUrl: './aliases-entity-autocomplete.component.html',
-  styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => AliasesEntityAutocompleteComponent),
-    multi: true
-  }]
+    selector: 'tb-aliases-entity-autocomplete',
+    templateUrl: './aliases-entity-autocomplete.component.html',
+    styleUrls: [],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => AliasesEntityAutocompleteComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class AliasesEntityAutocompleteComponent implements ControlValueAccessor, OnInit, AfterViewInit {
 

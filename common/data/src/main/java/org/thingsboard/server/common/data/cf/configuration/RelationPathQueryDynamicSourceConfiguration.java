@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,8 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -25,11 +26,11 @@ import org.thingsboard.server.common.data.relation.RelationPathLevel;
 import org.thingsboard.server.common.data.util.CollectionsUtil;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 
 @Data
 public class RelationPathQueryDynamicSourceConfiguration implements CfArgumentDynamicSourceConfiguration {
 
+    @ArraySchema(schema = @Schema(implementation = RelationPathLevel.class))
     private List<RelationPathLevel> levels;
 
     @Override

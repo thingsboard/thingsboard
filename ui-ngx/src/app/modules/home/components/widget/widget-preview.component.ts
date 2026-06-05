@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -24,9 +24,10 @@ import { deepClone } from '@core/utils';
 import { Timewindow } from '@shared/models/time/time.models';
 
 @Component({
-  selector: 'tb-widget-preview',
-  templateUrl: './widget-preview.component.html',
-  styleUrls: ['./widget-preview.component.scss']
+    selector: 'tb-widget-preview',
+    templateUrl: './widget-preview.component.html',
+    styleUrls: ['./widget-preview.component.scss'],
+    standalone: false
 })
 export class WidgetPreviewComponent extends PageComponent implements OnInit, OnChanges {
 

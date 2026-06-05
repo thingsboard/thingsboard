@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 import {
   AfterViewInit,
+  booleanAttribute,
   ChangeDetectorRef,
   Component,
   DestroyRef,
@@ -46,7 +47,7 @@ import {
 import {
   CalculatedFieldArgumentPanelComponent
 } from '@home/components/calculated-fields/components/calculated-field-arguments/calculated-field-argument-panel.component';
-import { MatButton } from '@angular/material/button';
+import { MatIconButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EntityId } from '@shared/models/id/entity-id';
@@ -64,21 +65,22 @@ import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { BaseData } from '@shared/models/base-data';
 
 @Component({
-  selector: 'tb-calculated-field-arguments-table',
-  templateUrl: './calculated-field-arguments-table.component.html',
-  styleUrls: [`calculated-field-arguments-table.component.scss`],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => CalculatedFieldArgumentsTableComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => CalculatedFieldArgumentsTableComponent),
-      multi: true
-    }
-  ],
+    selector: 'tb-calculated-field-arguments-table',
+    templateUrl: './calculated-field-arguments-table.component.html',
+    styleUrls: [`calculated-field-arguments-table.component.scss`],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => CalculatedFieldArgumentsTableComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => CalculatedFieldArgumentsTableComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class CalculatedFieldArgumentsTableComponent implements ControlValueAccessor, Validator, OnChanges, AfterViewInit {
 
@@ -87,7 +89,8 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
   @Input() entityName: string;
   @Input() ownerId: EntityId;
   @Input() isScript: boolean;
-  @Input() disabledAddButton = false;
+  @Input({transform: booleanAttribute}) disable = false;
+  @Input({transform: booleanAttribute}) isEditValue = true;
   @Input() watchKeyChange = false;
 
   @ViewChild(MatSort, { static: true }) sort: MatSort;
@@ -153,7 +156,11 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
 
   validate(): ValidationErrors | null {
     this.updateErrorText();
-    return this.errorText ? { argumentsFormArray: false } : null;
+    return this.errorText || !this.argumentsFormArray.controls.length ? { argumentsFormArray: false } : null;
+  }
+
+  setDisabledState(isDisabled: boolean): void {
+    this.disable = isDisabled;
   }
 
   onDelete($event: Event, argument: CalculatedFieldArgumentValue): void {
@@ -163,7 +170,7 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
     this.argumentsFormArray.markAsDirty();
   }
 
-  manageArgument($event: Event, matButton: MatButton, argument = {} as CalculatedFieldArgumentValue): void {
+  manageArgument($event: Event, matButton: MatIconButton, argument = {} as CalculatedFieldArgumentValue, readonly: boolean = false): void {
     $event?.stopPropagation();
     if (this.popoverComponent && !this.popoverComponent.tbHidden) {
       this.popoverComponent.hide();
@@ -185,6 +192,7 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
         ownerId: this.ownerId,
         watchKeyChange: this.watchKeyChange,
         usedArgumentNames: this.argumentsFormArray.value.map(({ argumentName }) => argumentName).filter(name => name !== argument.argumentName),
+        readonly
       };
       this.popoverComponent = this.popoverService.displayPopover({
         trigger,
@@ -220,8 +228,6 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
       this.errorText = 'calculated-fields.hint.arguments-simple-with-rolling';
     } else if (this.argumentsFormArray.controls.some(control => control.value.refEntityId?.id === NULL_UUID)) {
       this.errorText = 'calculated-fields.hint.arguments-entity-not-found';
-    } else if (!this.argumentsFormArray.controls.length) {
-      this.errorText = 'calculated-fields.hint.arguments-empty';
     } else {
       this.errorText = '';
     }
@@ -236,7 +242,7 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
   }
 
   writeValue(argumentsObj: Record<string, CalculatedFieldArgument>): void {
-    this.argumentsFormArray.clear();
+    this.argumentsFormArray.clear({emitEvent: false});
     this.populateArgumentsFormArray(argumentsObj);
     this.updateEntityNameMap(this.argumentsFormArray.value);
   }
@@ -246,7 +252,7 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
   }
 
   protected changeIsScriptMode(): void {
-    this.argumentsFormArray.updateValueAndValidity();
+    this.argumentsFormArray.updateValueAndValidity({emitEvent: !this.disable});
   }
 
   protected isEditButtonShowBadge(argument: CalculatedFieldArgumentValue): boolean {
@@ -261,7 +267,7 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
       };
       this.argumentsFormArray.push(this.fb.control(value), { emitEvent: false });
     });
-    this.argumentsFormArray.updateValueAndValidity();
+    this.updateDataSource(this.argumentsFormArray.value);
   }
 
   private updateEntityNameMap(values: CalculatedFieldArgumentValue[]): void {

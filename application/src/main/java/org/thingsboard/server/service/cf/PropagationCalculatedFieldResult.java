@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import java.util.List;
 @Builder
 public final class PropagationCalculatedFieldResult implements CalculatedFieldResult {
 
-    private final List<EntityId> propagationEntityIds;
+    private final List<EntityId> entityIds;
     private final TelemetryCalculatedFieldResult result;
 
     @Override
@@ -43,7 +43,7 @@ public final class PropagationCalculatedFieldResult implements CalculatedFieldRe
 
     @Override
     public boolean isEmpty() {
-        return CollectionsUtil.isEmpty(propagationEntityIds) || result.isEmpty();
+        return CollectionsUtil.isEmpty(entityIds) || result.isEmpty();
     }
 
 }

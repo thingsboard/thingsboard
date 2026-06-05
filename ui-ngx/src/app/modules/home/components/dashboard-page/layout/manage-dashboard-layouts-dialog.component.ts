@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -75,10 +75,11 @@ export interface DashboardLayoutSettings {
 }
 
 @Component({
-  selector: 'tb-manage-dashboard-layouts-dialog',
-  templateUrl: './manage-dashboard-layouts-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: ManageDashboardLayoutsDialogComponent}],
-  styleUrls: ['./manage-dashboard-layouts-dialog.component.scss', '../../../components/dashboard/layout-button.scss']
+    selector: 'tb-manage-dashboard-layouts-dialog',
+    templateUrl: './manage-dashboard-layouts-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: ManageDashboardLayoutsDialogComponent }],
+    styleUrls: ['./manage-dashboard-layouts-dialog.component.scss', '../../../components/dashboard/layout-button.scss'],
+    standalone: false
 })
 export class ManageDashboardLayoutsDialogComponent extends DialogComponent<ManageDashboardLayoutsDialogComponent, DashboardStateLayouts>
   implements ErrorStateMatcher, OnDestroy {

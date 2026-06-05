@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.audit;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import jakarta.validation.constraints.NotNull;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
@@ -43,7 +44,7 @@ public interface AuditLogService {
             CustomerId customerId,
             UserId userId,
             String userName,
-            I entityId,
+            @NotNull I entityId,
             E entity,
             ActionType actionType,
             Exception e, Object... additionalInfo);

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -32,9 +32,10 @@ import {
 } from '@home/components/widget/config/basic/chart/latest-chart-basic-config.component';
 
 @Component({
-  selector: 'tb-doughnut-basic-config',
-  templateUrl: './latest-chart-basic-config.component.html',
-  styleUrls: ['../basic-config.scss']
+    selector: 'tb-doughnut-basic-config',
+    templateUrl: './latest-chart-basic-config.component.html',
+    styleUrls: ['../basic-config.scss'],
+    standalone: false
 })
 export class DoughnutBasicConfigComponent extends LatestChartBasicConfigComponent<DoughnutWidgetSettings> {
 

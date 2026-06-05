@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -34,8 +34,9 @@ import { filter, startWith, takeUntil } from 'rxjs/operators';
 import { isNotEmptyStr } from '@core/utils';
 
 @Component({
-  selector: 'tb-ota-update',
-  templateUrl: './ota-update.component.html'
+    selector: 'tb-ota-update',
+    templateUrl: './ota-update.component.html',
+    standalone: false
 })
 export class OtaUpdateComponent extends EntityComponent<OtaPackage> implements OnInit, OnDestroy {
 

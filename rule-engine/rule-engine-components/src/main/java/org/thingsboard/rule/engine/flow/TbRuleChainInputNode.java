@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,6 +76,13 @@ public class TbRuleChainInputNode implements TbNode {
     public void onMsg(TbContext ctx, TbMsg msg) throws TbNodeException {
         RuleChainId targetRuleChainId = forwardMsgToDefaultRuleChain ?
                 getOriginatorDefaultRuleChainId(ctx, msg).orElse(ruleChainId) : ruleChainId;
+        if (targetRuleChainId.equals(ctx.getSelf().getRuleChainId())) {
+            ctx.tellFailure(msg, new RuntimeException(
+                    "TbRuleChainInputNode in rule chain [" + targetRuleChainId +
+                    "] is configured to forward messages back to the same rule chain it belongs to. " +
+                    "This would cause an infinite loop. Please check the rule chain configuration."));
+            return;
+        }
         ctx.input(msg, targetRuleChainId);
     }
 

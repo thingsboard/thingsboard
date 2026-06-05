@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,29 @@
  */
 package org.thingsboard.server.common.data;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+@JsonPropertyOrder({
+        "emailEnabled",
+        "smsEnabled",
+        "notificationEnabled",
+        "oauthEnabled",
+        "twoFaEnabled"
+})
+@Schema
 @Data
 public class FeaturesInfo {
+    @JsonProperty("emailEnabled")
     boolean isEmailEnabled;
+    @JsonProperty("smsEnabled")
     boolean isSmsEnabled;
+    @JsonProperty("notificationEnabled")
     boolean isNotificationEnabled;
+    @JsonProperty("oauthEnabled")
     boolean isOauthEnabled;
+    @JsonProperty("twoFaEnabled")
     boolean isTwoFaEnabled;
 }

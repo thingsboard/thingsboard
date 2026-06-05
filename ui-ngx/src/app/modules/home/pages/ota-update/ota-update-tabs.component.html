@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,9 +15,11 @@
     limitations under the License.
 
 -->
-<mat-tab *ngIf="isTenantOtaUpdate() && authUser.authority === authorities.TENANT_ADMIN"
-         label="{{ 'version-control.version-control' | translate }}" #versionControlTab="matTab">
-  <tb-version-control detailsMode="true" singleEntityMode="true"
-                      (versionRestored)="entitiesTableConfig.updateData()"
-                      [active]="versionControlTab.isActive" [entityId]="entity.id" [entityName]="entity.title" [externalEntityId]="entity.externalId || entity.id"></tb-version-control>
-</mat-tab>
+@if (isTenantOtaUpdate() && authUser.authority === authorities.TENANT_ADMIN) {
+  <mat-tab
+    label="{{ 'version-control.version-control' | translate }}" #versionControlTab="matTab">
+    <tb-version-control detailsMode="true" singleEntityMode="true"
+                        (versionRestored)="entitiesTableConfig.updateData()"
+    [active]="versionControlTab.isActive" [entityId]="entity.id" [entityName]="entity.title" [externalEntityId]="entity.externalId || entity.id"></tb-version-control>
+  </mat-tab>
+}

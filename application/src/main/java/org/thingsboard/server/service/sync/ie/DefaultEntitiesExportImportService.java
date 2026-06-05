@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.common.data.sync.ie.EntityImportResult;
 import org.thingsboard.server.common.data.util.ThrowingRunnable;
-import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.TbLogEntityActionService;
@@ -64,7 +64,7 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
     private final RateLimitService rateLimitService;
     private final TbLogEntityActionService logEntityActionService;
 
-    protected static final List<EntityType> SUPPORTED_ENTITY_TYPES = List.of(
+    public static final List<EntityType> SUPPORTED_ENTITY_TYPES = List.of(
             EntityType.CUSTOMER, EntityType.RULE_CHAIN, EntityType.TB_RESOURCE,
             EntityType.DASHBOARD, EntityType.ASSET_PROFILE, EntityType.ASSET,
             EntityType.DEVICE_PROFILE, EntityType.OTA_PACKAGE, EntityType.DEVICE,
@@ -131,7 +131,10 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
 
     @Override
     public Comparator<EntityType> getEntityTypeComparatorForImport() {
-        return Comparator.comparing(SUPPORTED_ENTITY_TYPES::indexOf);
+        return Comparator.comparingInt(type -> {
+            int index = SUPPORTED_ENTITY_TYPES.indexOf(type);
+            return index >= 0 ? index : Integer.MAX_VALUE;
+        });
     }
 
     @SuppressWarnings("unchecked")

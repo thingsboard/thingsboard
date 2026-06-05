@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ import org.thingsboard.server.common.data.rule.NodeConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChainData;
+import org.thingsboard.server.common.data.rule.RuleChainDetails;
 import org.thingsboard.server.common.data.rule.RuleChainImportResult;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
@@ -63,11 +64,11 @@ import org.thingsboard.server.dao.entity.EntityCountService;
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
-import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.service.validator.RuleChainDataValidator;
+import org.thingsboard.server.exception.DataValidationException;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -85,6 +86,7 @@ import java.util.stream.Collectors;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.server.common.data.DataConstants.TENANT;
+import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validateIds;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
@@ -102,6 +104,9 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
 
     @Autowired
     private RuleChainDao ruleChainDao;
+
+    @Autowired
+    private RuleChainDetailsDao ruleChainDetailsDao;
 
     @Autowired
     private RuleNodeDao ruleNodeDao;
@@ -315,9 +320,11 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         if (!relations.isEmpty()) {
             relationService.saveRelations(tenantId, relations);
         }
-        ruleChain = ruleChainDao.save(tenantId, ruleChain);
-        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entity(ruleChain)
-                .entityId(ruleChain.getId()).broadcastEvent(publishSaveEvent).build());
+        RuleChainDetails ruleChainDetails = new RuleChainDetails(ruleChain);
+        ruleChainDetails.setNotes(ruleChainMetaData.getNotes());
+        ruleChainDetails = ruleChainDetailsDao.save(tenantId, ruleChainDetails);
+        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entity(ruleChainDetails)
+                .entityId(ruleChainDetails.getId()).broadcastEvent(publishSaveEvent).build());
         return RuleChainUpdateResult.successful(updatedRuleNodes);
     }
 
@@ -340,13 +347,13 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     @Override
     public RuleChainMetaData loadRuleChainMetaData(TenantId tenantId, RuleChainId ruleChainId) {
         Validator.validateId(ruleChainId, "Incorrect rule chain id.");
-        RuleChain ruleChain = findRuleChainById(tenantId, ruleChainId);
-        if (ruleChain == null) {
+        RuleChainDetails ruleChainDetails = ruleChainDetailsDao.findById(tenantId, ruleChainId.getId());
+        if (ruleChainDetails == null) {
             return null;
         }
         RuleChainMetaData ruleChainMetaData = new RuleChainMetaData();
         ruleChainMetaData.setRuleChainId(ruleChainId);
-        ruleChainMetaData.setVersion(ruleChain.getVersion());
+        ruleChainMetaData.setVersion(ruleChainDetails.getVersion());
         List<RuleNode> ruleNodes = getRuleChainNodes(tenantId, ruleChainId);
         Collections.sort(ruleNodes, Comparator.comparingLong(RuleNode::getCreatedTime).thenComparing(RuleNode::getId, Comparator.comparing(RuleNodeId::getId)));
         Map<RuleNodeId, Integer> ruleNodeIndexMap = new HashMap<>();
@@ -354,8 +361,8 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             ruleNodeIndexMap.put(node.getId(), ruleNodes.indexOf(node));
         }
         ruleChainMetaData.setNodes(ruleNodes);
-        if (ruleChain.getFirstRuleNodeId() != null) {
-            ruleChainMetaData.setFirstNodeIndex(ruleNodeIndexMap.get(ruleChain.getFirstRuleNodeId()));
+        if (ruleChainDetails.getFirstRuleNodeId() != null) {
+            ruleChainMetaData.setFirstNodeIndex(ruleNodeIndexMap.get(ruleChainDetails.getFirstRuleNodeId()));
         }
         for (RuleNode node : ruleNodes) {
             int fromIndex = ruleNodeIndexMap.get(node.getId());
@@ -375,6 +382,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             Collections.sort(ruleChainMetaData.getConnections(), Comparator.comparingInt(NodeConnectionInfo::getFromIndex)
                     .thenComparing(NodeConnectionInfo::getToIndex).thenComparing(NodeConnectionInfo::getType));
         }
+        ruleChainMetaData.setNotes(ruleChainDetails.getNotes());
         return ruleChainMetaData;
     }
 
@@ -871,6 +879,12 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         for (EntityRelation relation : nodeRelations) {
             deleteRuleNode(tenantId, relation.getTo());
         }
+    }
+
+    @Override
+    public List<RuleChain> findRuleChainsByIds(TenantId tenantId, List<RuleChainId> ruleChainIds) {
+        log.trace("Executing findRuleChainsByIds, tenantId [{}], ruleChainIds [{}]", tenantId, ruleChainIds);
+        return ruleChainDao.findRuleChainsByTenantIdAndIds(tenantId.getId(), toUUIDs(ruleChainIds));
     }
 
 

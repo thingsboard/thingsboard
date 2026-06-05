@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -227,12 +227,12 @@ public class AlarmController extends BaseController {
         return tbAlarmService.unassign(alarm, System.currentTimeMillis(), getCurrentUser());
     }
 
-    @ApiOperation(value = "Get Alarms (getAlarms)",
+    @ApiOperation(value = "Get Alarms (getAlarmsByEntity)",
             notes = "Returns a page of alarms for the selected entity. Specifying both parameters 'searchStatus' and 'status' at the same time will cause an error. " +
                     PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/alarm/{entityType}/{entityId}")
-    public PageData<AlarmInfo> getAlarms(
+    public PageData<AlarmInfo> getAlarmsByEntity(
             @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "DEVICE"))
             @PathVariable(ENTITY_TYPE) String strEntityType,
             @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true)

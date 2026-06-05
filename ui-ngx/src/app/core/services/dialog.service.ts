@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -36,6 +36,11 @@ import {
   ErrorAlertDialogData
 } from '@shared/components/dialog/error-alert-dialog.component';
 import { TodoDialogComponent } from '@shared/components/dialog/todo-dialog.component';
+import { EntityType } from '@shared/models/entity-type.models';
+import {
+  EntityLimitExceededDialogComponent,
+  EntityLimitExceededDialogData
+} from '@shared/components/dialog/entity-limit-exceeded-dialog.component';
 
 @Injectable({
   providedIn: 'root'
@@ -121,6 +126,16 @@ export class DialogService {
           icon,
           iconClearButton
         },
+        autoFocus: false
+      }).afterClosed();
+  }
+
+  entitiesLimitExceeded(entityLimitData: {entityType: EntityType, limit: number}): Observable<any> {
+    return this.dialog.open<EntityLimitExceededDialogComponent, EntityLimitExceededDialogData>(EntityLimitExceededDialogComponent,
+      {
+        disableClose: true,
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        data: entityLimitData,
         autoFocus: false
       }).afterClosed();
   }

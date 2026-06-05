@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,12 +17,20 @@
 import { EntityAliases, EntityAliasInfo, getEntityAliasId } from '@shared/models/alias.models';
 import { FilterInfo, Filters, getFilterId } from '@shared/models/query/query.models';
 import { Dashboard } from '@shared/models/dashboard.models';
-import { Datasource, datasourcesHasAggregation, DatasourceType, Widget } from '@shared/models/widget.models';
+import {
+  Datasource,
+  datasourcesHasAggregation,
+  datasourcesHasOnlyComparisonAggregation,
+  DatasourceType,
+  Widget
+} from '@shared/models/widget.models';
 import {
   additionalMapDataSourcesToDatasources,
   BaseMapSettings,
+  latestMapDataLayerTypes,
   MapDataLayerSettings,
   MapDataLayerType,
+  mapDataLayerTypes,
   MapDataSourceSettings,
   mapDataSourceSettingsToDatasource,
   MapType
@@ -40,30 +48,21 @@ interface MapDataLayerDsInfo extends AliasFilterPair {
 
 type ExportDataSourceInfo = {[dataLayerIndex: number]: MapDataLayerDsInfo};
 
-interface MapDatasourcesInfo {
-  trips?: ExportDataSourceInfo;
-  markers?: ExportDataSourceInfo;
-  polygons?: ExportDataSourceInfo;
-  circles?: ExportDataSourceInfo;
+type MapDatasourcesInfo = {
+  [K in MapDataLayerType]?: ExportDataSourceInfo;
+} & {
   additionalDataSources?: ExportDataSourceInfo;
-}
+};
 
 export const MapModelDefinition: WidgetModelDefinition<MapDatasourcesInfo> = {
   testWidget(widget: Widget): boolean {
     if (widget?.config?.settings) {
       const settings = widget.config.settings;
       if (settings.mapType && [MapType.image, MapType.geoMap].includes(settings.mapType)) {
-        if (settings.trips && Array.isArray(settings.trips)) {
-          return true;
-        }
-        if (settings.markers && Array.isArray(settings.markers)) {
-          return true;
-        }
-        if (settings.polygons && Array.isArray(settings.polygons)) {
-          return true;
-        }
-        if (settings.circles && Array.isArray(settings.circles)) {
-          return true;
+        for (const layerType of mapDataLayerTypes) {
+          if (Array.isArray(settings[layerType])) {
+            return true;
+          }
         }
       }
     }
@@ -72,17 +71,11 @@ export const MapModelDefinition: WidgetModelDefinition<MapDatasourcesInfo> = {
   prepareExportInfo(dashboard: Dashboard, widget: Widget): MapDatasourcesInfo {
     const settings: BaseMapSettings = widget.config.settings as BaseMapSettings;
     const info: MapDatasourcesInfo = {};
-    if (settings.trips?.length) {
-      info.trips = prepareExportDataSourcesInfo(dashboard, settings.trips);
-    }
-    if (settings.markers?.length) {
-      info.markers = prepareExportDataSourcesInfo(dashboard, settings.markers);
-    }
-    if (settings.polygons?.length) {
-      info.polygons = prepareExportDataSourcesInfo(dashboard, settings.polygons);
-    }
-    if (settings.circles?.length) {
-      info.circles = prepareExportDataSourcesInfo(dashboard, settings.circles);
+    for (const layerType of mapDataLayerTypes) {
+      const dataLayerSettings = settings[layerType];
+      if (dataLayerSettings?.length) {
+        info[layerType] = prepareExportDataSourcesInfo(dashboard, dataLayerSettings);
+      }
     }
     if (settings.additionalDataSources?.length) {
       info.additionalDataSources = prepareExportDataSourcesInfo(dashboard, settings.additionalDataSources);
@@ -90,63 +83,36 @@ export const MapModelDefinition: WidgetModelDefinition<MapDatasourcesInfo> = {
     return info;
   },
   updateFromExportInfo(widget: Widget, entityAliases: EntityAliases, filters: Filters, info: MapDatasourcesInfo): void {
-    const settings: BaseMapSettings = widget.config.settings as BaseMapSettings;
-    if (info?.trips) {
-      updateMapDatasourceFromExportInfo(entityAliases, filters, settings.trips, info.trips);
-    }
-    if (info?.markers) {
-      updateMapDatasourceFromExportInfo(entityAliases, filters, settings.markers, info.markers);
-    }
-    if (info?.polygons) {
-      updateMapDatasourceFromExportInfo(entityAliases, filters, settings.polygons, info.polygons);
-    }
-    if (info?.circles) {
-      updateMapDatasourceFromExportInfo(entityAliases, filters, settings.circles, info.circles);
-    }
-    if (info?.additionalDataSources) {
-      updateMapDatasourceFromExportInfo(entityAliases, filters, settings.additionalDataSources, info.additionalDataSources);
+    if (info && Object.keys(info).length) {
+      const settings: BaseMapSettings = widget.config.settings as BaseMapSettings;
+      for (const layerType of mapDataLayerTypes) {
+        const layerInfo = info[layerType];
+        const dataLayerSettings = settings[layerType];
+        if (layerInfo && dataLayerSettings) {
+          updateMapDatasourceFromExportInfo(entityAliases, filters, dataLayerSettings, layerInfo);
+        }
+      }
+      if (info.additionalDataSources) {
+        updateMapDatasourceFromExportInfo(entityAliases, filters, settings.additionalDataSources, info.additionalDataSources);
+      }
     }
   },
   datasources(widget: Widget): Datasource[] {
-    const settings: BaseMapSettings = widget.config.settings as BaseMapSettings;
-    const datasources: Datasource[] = [];
-    if (settings.trips?.length) {
-      datasources.push(...getMapDataLayersDatasources(settings.trips));
-    }
-    if (settings.markers?.length) {
-      datasources.push(...getMapDataLayersDatasources(settings.markers));
-    }
-    if (settings.polygons?.length) {
-      datasources.push(...getMapDataLayersDatasources(settings.polygons));
-    }
-    if (settings.circles?.length) {
-      datasources.push(...getMapDataLayersDatasources(settings.circles));
-    }
-    if (settings.additionalDataSources?.length) {
-      datasources.push(...additionalMapDataSourcesToDatasources(settings.additionalDataSources));
-    }
-    return datasources;
+    return getMapDataLayersDatasources(widget.config.settings as BaseMapSettings, mapDataLayerTypes);
   },
   hasTimewindow(widget: Widget): boolean {
     const settings: BaseMapSettings = widget.config.settings as BaseMapSettings;
-    if (settings.trips?.length) {
+    const timeSeriesDataLayerTypes = mapDataLayerTypes.filter(t => !latestMapDataLayerTypes.includes(t));
+    if (timeSeriesDataLayerTypes.some(layerType => settings[layerType]?.length)) {
       return true;
-    } else {
-      const datasources: Datasource[] = [];
-      if (settings.markers?.length) {
-        datasources.push(...getMapDataLayersDatasources(settings.markers, true, 'markers'));
-      }
-      if (settings.polygons?.length) {
-        datasources.push(...getMapDataLayersDatasources(settings.polygons, true, 'polygons'));
-      }
-      if (settings.circles?.length) {
-        datasources.push(...getMapDataLayersDatasources(settings.circles, true, 'circles'));
-      }
-      if (settings.additionalDataSources?.length) {
-        datasources.push(...additionalMapDataSourcesToDatasources(settings.additionalDataSources));
-      }
-      return datasourcesHasAggregation(datasources);
     }
+    return datasourcesHasAggregation(getMapDataLayersDatasources(settings, latestMapDataLayerTypes, true));
+  },
+  datasourcesHasAggregation(widget: Widget): boolean {
+    return datasourcesHasAggregation(getMapDataLayersDatasources(widget.config.settings as BaseMapSettings, latestMapDataLayerTypes, true));
+  },
+  datasourcesHasOnlyComparisonAggregation(widget: Widget): boolean {
+    return datasourcesHasOnlyComparisonAggregation(getMapDataLayersDatasources(widget.config.settings as BaseMapSettings, latestMapDataLayerTypes, true));
   }
 };
 
@@ -234,7 +200,7 @@ const prepareAliasAndFilterPair = (dashboard: Dashboard, settings: MapDataSource
   }
 }
 
-const getMapDataLayersDatasources = (settings: MapDataLayerSettings[],
+const getMapDataLayerDatasources = (settings: MapDataLayerSettings[],
                                      includeDataKeys = false, dataLayerType?: MapDataLayerType): Datasource[] => {
   const datasources: Datasource[] = [];
   settings.forEach((dsSettings) => {
@@ -250,5 +216,20 @@ const getMapDataLayersDatasources = (settings: MapDataLayerSettings[],
       });
     }
   });
+  return datasources;
+};
+
+const getMapDataLayersDatasources = (settings: BaseMapSettings,
+                                     layerTypes: readonly MapDataLayerType[], includeDataKeys = false): Datasource[] => {
+  const datasources: Datasource[] = [];
+  for (const layerType of layerTypes) {
+    const dataLayerSettings = settings[layerType];
+    if (dataLayerSettings?.length) {
+      datasources.push(...getMapDataLayerDatasources(dataLayerSettings, includeDataKeys, layerType));
+    }
+  }
+  if (settings.additionalDataSources?.length) {
+    datasources.push(...additionalMapDataSourcesToDatasources(settings.additionalDataSources));
+  }
   return datasources;
 };
