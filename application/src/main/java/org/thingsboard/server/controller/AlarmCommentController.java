@@ -82,7 +82,7 @@ public class AlarmCommentController extends BaseController {
         SecurityUser currentUser = getCurrentUser();
         if (alarmComment.getId() != null) {
             AlarmComment existingAlarmComment = checkAlarmCommentId(alarmComment.getId(), alarmId);
-            checkUserCommentOwnership(existingAlarmComment, Operation.WRITE, currentUser);
+            checkUserCommentOwnership(existingAlarmComment, "edit", currentUser);
         }
         alarmComment.setAlarmId(alarmId);
         alarmComment.setType(AlarmCommentType.OTHER);
@@ -101,7 +101,7 @@ public class AlarmCommentController extends BaseController {
         AlarmCommentId alarmCommentId = new AlarmCommentId(toUUID(strCommentId));
         AlarmComment alarmComment = checkAlarmCommentId(alarmCommentId, alarmId);
         SecurityUser currentUser = getCurrentUser();
-        checkUserCommentOwnership(alarmComment, Operation.DELETE, currentUser);
+        checkUserCommentOwnership(alarmComment, "delete", currentUser);
         tbAlarmCommentService.deleteAlarmComment(alarm, alarmComment, currentUser);
     }
 
@@ -129,12 +129,12 @@ public class AlarmCommentController extends BaseController {
         return checkNotNull(alarmCommentService.findAlarmComments(alarm.getTenantId(), alarmId, pageLink));
     }
 
-    private void checkUserCommentOwnership(AlarmComment alarmComment, Operation operation, SecurityUser securityUser) throws ThingsboardException {
+    private void checkUserCommentOwnership(AlarmComment alarmComment, String action, SecurityUser securityUser) throws ThingsboardException {
         if (securityUser.isTenantAdmin()) {
             return;
         }
         if (alarmComment.getUserId() != null && !alarmComment.getUserId().equals(securityUser.getId())) {
-            throw new ThingsboardException("User is not allowed to " + (operation == Operation.DELETE ? "delete" : "edit") + " other user's comment",
+            throw new ThingsboardException("User is not allowed to " + action + " other user's comment",
                     ThingsboardErrorCode.PERMISSION_DENIED);
         }
     }
