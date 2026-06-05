@@ -180,7 +180,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractPartitionBasedCo
             callback.onSuccess();
         } else if (nfMsg.hasFromDeviceRpcResponse()) {
             TransportProtos.FromDeviceRPCResponseProto proto = nfMsg.getFromDeviceRpcResponse();
-            RpcError error = proto.getError() >= 0 ? RpcError.values()[proto.getError()] : null;
+            RpcError error = RpcError.fromProtoErrorCode(proto.getError());
             FromDeviceRpcResponse response = new FromDeviceRpcResponse(new UUID(proto.getRequestIdMSB(), proto.getRequestIdLSB())
                     , proto.hasResponse() ? proto.getResponse() : null, error);
             tbDeviceRpcService.processRpcResponseFromDevice(response);

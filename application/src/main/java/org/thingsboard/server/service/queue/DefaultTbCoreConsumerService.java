@@ -465,8 +465,8 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         return firmwareStateService.process(msg.getValue());
     }
 
-    private void forwardToCoreRpcService(FromDeviceRPCResponseProto proto, TbCallback callback) {
-        RpcError error = proto.getError() >= 0 ? RpcError.values()[proto.getError()] : null;
+    void forwardToCoreRpcService(FromDeviceRPCResponseProto proto, TbCallback callback) {
+        RpcError error = RpcError.fromProtoErrorCode(proto.getError());
         FromDeviceRpcResponse response = new FromDeviceRpcResponse(new UUID(proto.getRequestIdMSB(), proto.getRequestIdLSB())
                 , proto.hasResponse() ? proto.getResponse() : null, error);
         tbCoreDeviceRpcService.processRpcResponseFromRuleEngine(response);

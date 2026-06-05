@@ -587,7 +587,7 @@ public class ProtoUtils {
         FromDeviceRpcResponse fromDeviceRpcResponse = new FromDeviceRpcResponse(
                 new UUID(rpcResponse.getRequestIdMSB(), rpcResponse.getRequestIdLSB()),
                 rpcResponse.hasResponse() ? rpcResponse.getResponse() : null,
-                rpcResponse.getError() >= 0 ? RpcError.values()[rpcResponse.getError()] : null);
+                RpcError.fromProtoErrorCode(rpcResponse.getError()));
         return new FromDeviceRpcResponseActorMsg(
                 proto.getRequestId(),
                 TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
