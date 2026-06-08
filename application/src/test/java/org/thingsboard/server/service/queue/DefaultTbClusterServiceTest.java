@@ -55,6 +55,7 @@ import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.common.TbRuleEngineProducerService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TopicService;
+import org.thingsboard.server.queue.discovery.event.ServiceListChangedEvent;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.service.gateway_device.GatewayNotificationsService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
@@ -301,6 +302,27 @@ public class DefaultTbClusterServiceTest {
         verify(producerProvider, never()).getTbCoreNotificationsMsgProducer();
         verify(callback, times(1)).onSuccess(isNull());
         verify(callback, never()).onFailure(any(Throwable.class));
+    }
+
+    @Test
+    public void testPushNotificationToCoreToRecentlySeenButOfflineServiceIdIsSent() {
+        String offlineCore = "core-offline";
+        TopicPartitionInfo tpi = mock(TopicPartitionInfo.class);
+        TbQueueCallback callback = mock(TbQueueCallback.class);
+        TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCoreNotificationMsg>> tbCoreQueueProducer = mock(TbQueueProducer.class);
+
+        // offlineCore was a cluster member moments ago but has dropped out of the current live snapshot
+        clusterService.onServiceListChanged(new ServiceListChangedEvent(
+                List.of(TransportProtos.ServiceInfo.newBuilder().setServiceId(offlineCore).addServiceTypes(ServiceType.TB_CORE.name()).build()),
+                TransportProtos.ServiceInfo.newBuilder().setServiceId(CORE).addServiceTypes(ServiceType.TB_CORE.name()).build()));
+
+        when(partitionService.getAllServiceIds(ServiceType.TB_CORE)).thenReturn(Sets.newHashSet(CORE));
+        doReturn(tpi).when(topicService).getNotificationsTopic(ServiceType.TB_CORE, offlineCore);
+        when(producerProvider.getTbCoreNotificationsMsgProducer()).thenReturn(tbCoreQueueProducer);
+
+        clusterService.pushNotificationToCore(offlineCore, new FromDeviceRpcResponse(UUID.randomUUID(), null, null), callback);
+
+        verify(tbCoreQueueProducer, times(1)).send(eq(tpi), any(TbProtoQueueMsg.class), eq(callback));
     }
 
     @Test
