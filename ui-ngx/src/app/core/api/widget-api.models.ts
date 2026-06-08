@@ -119,6 +119,7 @@ export interface WidgetActionsApi {
   elementClick: ($event: Event) => void;
   cardClick: ($event: Event) => void;
   click: ($event: Event) => void;
+  invokeAction: ($event: Event, actionName: string, additionalParams?: any) => void;
   getActiveEntityInfo: () => SubscriptionEntityInfo;
   openDashboardStateInSeparateDialog: (targetDashboardStateId: string, params?: StateParams, dialogTitle?: string,
                                        hideDashboardToolbar?: boolean, dialogWidth?: number, dialogHeight?: number) => MatDialogRef<any>;
