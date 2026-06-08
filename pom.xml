@@ -143,7 +143,7 @@
         <jakarta.el.version>4.0.2</jakarta.el.version>
         <antisamy.version>1.7.5</antisamy.version>
         <snmp4j.version>3.8.0</snmp4j.version>
-        <langchain4j.version>1.15.1-TB1</langchain4j.version>
+        <langchain4j.version>1.16.1-TB1</langchain4j.version>
         <error_prone_annotations.version>2.43.0</error_prone_annotations.version>
         <animal-sniffer-annotations.version>1.24</animal-sniffer-annotations.version>
         <auto-value-annotations.version>1.11.0</auto-value-annotations.version>
