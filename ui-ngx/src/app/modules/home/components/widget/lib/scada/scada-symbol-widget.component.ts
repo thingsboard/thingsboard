@@ -42,6 +42,7 @@ import { WidgetContext } from '@home/models/widget-component.models';
 import { catchError, share } from 'rxjs/operators';
 import { MatIconRegistry } from '@angular/material/icon';
 import { RafService } from '@core/services/raf.service';
+import { TOAST_PANEL_MIN_HEIGHT, TOAST_PANEL_MIN_WIDTH } from '@shared/components/toast.directive';
 
 @Component({
     selector: 'tb-scada-symbol-widget',
@@ -127,11 +128,19 @@ export class ScadaSymbolWidgetComponent implements OnInit, AfterViewInit, OnDest
   }
 
   onScadaSymbolObjectError(error: string) {
-    this.ctx.showErrorToast(error, 'bottom', 'center', this.ctx.toastTargetId, true);
+    const scadaSymbolNativeElement = this.scadaSymbolShape.nativeElement;
+    const isFit = scadaSymbolNativeElement.offsetHeight >= TOAST_PANEL_MIN_HEIGHT || scadaSymbolNativeElement.offsetWidth >= TOAST_PANEL_MIN_WIDTH;
+    const verticalPosition = isFit ? 'bottom' : 'top';
+    const horizontalPosition = isFit ? 'center' : 'right';
+    this.ctx.showErrorToast(error, verticalPosition, horizontalPosition, this.ctx.toastTargetId, true);
   }
 
   onScadaSymbolObjectMessage(message: string) {
-    this.ctx.showSuccessToast(message, 3000, 'bottom', 'center', this.ctx.toastTargetId, true);
+    const scadaSymbolNativeElement = this.scadaSymbolShape.nativeElement;
+    const isFit = scadaSymbolNativeElement.offsetHeight >= TOAST_PANEL_MIN_HEIGHT || scadaSymbolNativeElement.offsetWidth >= TOAST_PANEL_MIN_WIDTH;
+    const verticalPosition = isFit ? 'bottom' : 'top';
+    const horizontalPosition = isFit ? 'center' : 'right';
+    this.ctx.showSuccessToast(message, 3000, verticalPosition, horizontalPosition, this.ctx.toastTargetId, true);
   }
 
   private initObject(rootElement: HTMLElement,
