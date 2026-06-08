@@ -239,7 +239,18 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
       if (this.readAsBinary) {
         reader.readAsBinaryString(file.file);
       } else {
-        reader.readAsText(file.file);
+        file.file.arrayBuffer().then(buf => {
+          const bytes = new Uint8Array(buf);
+          let text: string;
+          try {
+            text = new TextDecoder('utf-8', {fatal: true}).decode(bytes);
+          } catch {
+            text = new TextDecoder('iso-8859-1').decode(bytes);
+          }
+           Object.defineProperty(reader, 'readyState', {value: FileReader.DONE, configurable: true});
+          Object.defineProperty(reader, 'result',    {value: text,            configurable: true});
+          reader.onload(new ProgressEvent('load') as ProgressEvent<FileReader>);
+        }).catch(() => reader.onerror(new ProgressEvent('error') as ProgressEvent<FileReader>));
       }
     });
   }
