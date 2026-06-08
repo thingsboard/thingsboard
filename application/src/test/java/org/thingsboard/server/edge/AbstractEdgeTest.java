@@ -122,6 +122,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
 
     public static final String EDGE_HOST = "localhost";
     public static final int EDGE_PORT = TestSocketUtils.findAvailableTcpPort();
+
     @DynamicPropertySource
     static void props(DynamicPropertyRegistry registry) {
         log.debug("edges.rpc.port = {}", EDGE_PORT);
@@ -154,14 +155,21 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         //8 installation messages
         installation();
 
-        edgeImitator = new EdgeImitator(EDGE_HOST, EDGE_PORT, edge.getRoutingKey(), edge.getSecret());
+        edgeImitator = createEdgeImitator();
         // 17 connect messages + 8 installation messages
         edgeImitator.expectMessageAmount(SYNC_MESSAGE_COUNT);
-        edgeImitator.ignoreType(OAuth2ClientUpdateMsg.class);
-        edgeImitator.ignoreType(OAuth2DomainUpdateMsg.class);
         edgeImitator.connect();
 
         verifyEdgeConnectionAndInitialData();
+    }
+
+    // Creates an EdgeImitator wired with the standard ignored message types, but not yet connected.
+    // Callers add any expectations (e.g. expectMessageAmount) before invoking connect() themselves.
+    protected EdgeImitator createEdgeImitator() throws Exception {
+        EdgeImitator imitator = new EdgeImitator(EDGE_HOST, EDGE_PORT, edge.getRoutingKey(), edge.getSecret());
+        imitator.ignoreType(OAuth2ClientUpdateMsg.class);
+        imitator.ignoreType(OAuth2DomainUpdateMsg.class);
+        return imitator;
     }
 
     @After

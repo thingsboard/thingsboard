@@ -25,8 +25,6 @@ import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.controller.AbstractWebTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.edge.imitator.EdgeImitator;
-import org.thingsboard.server.gen.edge.v1.OAuth2ClientUpdateMsg;
-import org.thingsboard.server.gen.edge.v1.OAuth2DomainUpdateMsg;
 
 import java.util.concurrent.TimeUnit;
 
@@ -70,9 +68,7 @@ public class EdgeConnectionNotificationTest extends AbstractEdgeTest {
         TimeUnit.SECONDS.sleep(1);
 
         // ...and reconnects within the delay window, which must cancel the pending "disconnected" notification.
-        EdgeImitator reconnected = new EdgeImitator(EDGE_HOST, EDGE_PORT, edge.getRoutingKey(), edge.getSecret());
-        reconnected.ignoreType(OAuth2ClientUpdateMsg.class);
-        reconnected.ignoreType(OAuth2DomainUpdateMsg.class);
+        EdgeImitator reconnected = createEdgeImitator();
         reconnected.connect();
         edgeImitator = reconnected; // let teardown clean up the live session
 

@@ -36,12 +36,12 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
+import org.thingsboard.server.cache.TbCacheValueWrapper;
 import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.transport.config.ssl.PemSslCredentials;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -58,6 +58,7 @@ import org.thingsboard.server.common.msg.edge.EdgeHighPriorityMsg;
 import org.thingsboard.server.common.msg.edge.EdgeSessionMsg;
 import org.thingsboard.server.common.msg.edge.FromEdgeSyncResponse;
 import org.thingsboard.server.common.msg.edge.ToEdgeSyncRequest;
+import org.thingsboard.server.common.transport.config.ssl.PemSslCredentials;
 import org.thingsboard.server.gen.edge.v1.EdgeRpcServiceGrpc;
 import org.thingsboard.server.gen.edge.v1.RequestMsg;
 import org.thingsboard.server.gen.edge.v1.ResponseMsg;
@@ -246,11 +247,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                 sessionEdgeEventChecks.remove(edgeId);
             }
         }
-        pendingDisconnectNotifications.values().forEach(task -> {
-            if (task != null && !task.isDone()) {
-                task.cancel(false);
-            }
-        });
+        pendingDisconnectNotifications.values().forEach(EdgeGrpcService::cancelIfPending);
         pendingDisconnectNotifications.clear();
         if (edgeEventProcessingExecutorService != null) {
             edgeEventProcessingExecutorService.shutdownNow();
@@ -334,9 +331,9 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             } finally {
                 newEventLock.unlock();
             }
-            cancelPendingDisconnectNotification(edgeId);
             cancelScheduleEdgeEventsCheck(edgeId);
         }
+        cancelPendingDisconnectNotification(edgeId);
     }
 
     private void onEdgeEventUpdate(TenantId tenantId, EdgeId edgeId) {
@@ -580,7 +577,17 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                 log.debug("[{}] No session found by sessionId [{}] to destroy", edgeId, sessionId);
             }
         }
-        edgeIdServiceIdCache.evict(edgeId);
+        evictServiceIdCacheIfOwnedByThisNode(edgeId);
+    }
+
+    // Only evict if the cache still points to this node. If the edge already reconnected to a different
+    // TB-Core node within the keep-alive window, that node has overwritten the entry - evicting it here
+    // would wipe the live owner and make fireDelayedDisconnectNotification raise a false 'disconnected'.
+    private void evictServiceIdCacheIfOwnedByThisNode(EdgeId edgeId) {
+        TbCacheValueWrapper<String> wrapper = edgeIdServiceIdCache.get(edgeId);
+        if (wrapper != null && serviceInfoProvider.getServiceId().equals(wrapper.get())) {
+            edgeIdServiceIdCache.evict(edgeId);
+        }
     }
 
     private void destroySession(EdgeGrpcSession session) {
@@ -714,10 +721,8 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         }
         EdgeId edgeId = edge.getId();
         pendingDisconnectNotifications.compute(edgeId, (id, existing) -> {
-            if (existing != null && !existing.isDone()) {
-                existing.cancel(false);
-            }
-            return executorService.schedule(() -> fireDelayedDisconnectNotification(tenantId, edge),
+            cancelIfPending(existing);
+            return edgeEventProcessingExecutorService.schedule(() -> fireDelayedDisconnectNotification(tenantId, edge),
                     disconnectNotificationDelayMs, TimeUnit.MILLISECONDS);
         });
     }
@@ -735,9 +740,12 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     }
 
     private void cancelPendingDisconnectNotification(EdgeId edgeId) {
-        ScheduledFuture<?> pending = pendingDisconnectNotifications.remove(edgeId);
-        if (pending != null && !pending.isDone()) {
-            pending.cancel(false);
+        cancelIfPending(pendingDisconnectNotifications.remove(edgeId));
+    }
+
+    private static void cancelIfPending(ScheduledFuture<?> future) {
+        if (future != null && !future.isDone()) {
+            future.cancel(false);
         }
     }
 
