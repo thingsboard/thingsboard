@@ -150,7 +150,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     protected final MqttTransportContext context;
     private final TransportService transportService;
     private final SchedulerComponent scheduler;
-    private final SslHandler sslHandler;
+    private final boolean ssl;
+    private volatile SslHandler sslHandler;
     private final ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap;
 
     final DeviceSessionCtx deviceSessionCtx;
@@ -172,6 +173,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         this.context = context;
         this.transportService = context.getTransportService();
         this.scheduler = context.getScheduler();
+        this.ssl = sslHandler != null;
         this.sslHandler = sslHandler;
         this.mqttQoSMap = new ConcurrentHashMap<>();
         this.deviceSessionCtx = new DeviceSessionCtx(sessionId, mqttQoSMap, context);
@@ -1373,6 +1375,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 }
             });
         }
+        this.sslHandler = null;
     }
 
     @Override
