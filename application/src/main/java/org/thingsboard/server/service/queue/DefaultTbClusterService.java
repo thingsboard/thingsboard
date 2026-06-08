@@ -253,7 +253,7 @@ public class DefaultTbClusterService implements TbClusterService {
     }
 
     private void skipNotificationToUnknownService(ServiceType serviceType, String serviceId, TbQueueCallback callback) {
-        log.warn("Skipping notification push to unknown {} service id [{}]", serviceType, serviceId);
+        log.debug("Skipping notification push to unknown {} service id [{}]", serviceType, serviceId);
         if (callback != null) {
             // The message was not delivered to any node, so signal failure (not success) to the caller.
             callback.onFailure(new RuntimeException("Target " + serviceType + " service id [" + serviceId + "] is not a member of the cluster"));
@@ -377,6 +377,10 @@ public class DefaultTbClusterService implements TbClusterService {
             if (callback != null) {
                 callback.onSuccess(null); //callback that message already sent, no useful payload expected
             }
+            return;
+        }
+        if (isUnknownService(ServiceType.TB_TRANSPORT, serviceId)) {
+            skipNotificationToUnknownService(ServiceType.TB_TRANSPORT, serviceId, callback);
             return;
         }
         TopicPartitionInfo tpi = topicService.getNotificationsTopic(ServiceType.TB_TRANSPORT, serviceId);

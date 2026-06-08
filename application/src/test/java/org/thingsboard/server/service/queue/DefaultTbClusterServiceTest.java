@@ -347,6 +347,34 @@ public class DefaultTbClusterServiceTest {
     }
 
     @Test
+    public void testPushNotificationToTransportToUnknownServiceIdIsSkipped() {
+        when(partitionService.getAllServiceIds(ServiceType.TB_TRANSPORT)).thenReturn(Sets.newHashSet(TRANSPORT));
+        TbQueueCallback callback = mock(TbQueueCallback.class);
+
+        clusterService.pushNotificationToTransport("unknown-transport", TransportProtos.ToTransportMsg.getDefaultInstance(), callback);
+
+        verify(topicService, never()).getNotificationsTopic(eq(ServiceType.TB_TRANSPORT), eq("unknown-transport"));
+        verify(producerProvider, never()).getTransportNotificationsMsgProducer();
+        verify(callback, never()).onSuccess(any());
+        verify(callback, times(1)).onFailure(any(Throwable.class));
+    }
+
+    @Test
+    public void testPushNotificationToTransportToKnownServiceIdIsSent() {
+        TopicPartitionInfo tpi = mock(TopicPartitionInfo.class);
+        TbQueueCallback callback = mock(TbQueueCallback.class);
+        TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToTransportMsg>> tbTransportQueueProducer = mock(TbQueueProducer.class);
+
+        when(partitionService.getAllServiceIds(ServiceType.TB_TRANSPORT)).thenReturn(Sets.newHashSet(TRANSPORT));
+        doReturn(tpi).when(topicService).getNotificationsTopic(ServiceType.TB_TRANSPORT, TRANSPORT);
+        when(producerProvider.getTransportNotificationsMsgProducer()).thenReturn(tbTransportQueueProducer);
+
+        clusterService.pushNotificationToTransport(TRANSPORT, TransportProtos.ToTransportMsg.getDefaultInstance(), callback);
+
+        verify(tbTransportQueueProducer, times(1)).send(eq(tpi), any(TbProtoQueueMsg.class), eq(callback));
+    }
+
+    @Test
     public void testPushMsgToRuleEngineWithTenantIdIsNullUuidAndEntityIsTenantUseQueueFromMsgIsTrue() {
         TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> tbREQueueProducer = mock(TbQueueProducer.class);
         TbQueueCallback callback = mock(TbQueueCallback.class);
