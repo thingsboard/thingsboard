@@ -52,10 +52,19 @@ public class NumberUtilsTest {
     }
 
     @Test
+    public void toLong() {
+        assertThat(NumberUtils.toLong(doubleVal)).isEqualTo(1729L);
+        assertThat(NumberUtils.toLong(12.8)).isEqualTo(13L);
+        assertThat(NumberUtils.toLong(28.0)).isEqualTo(28L);
+        assertThat(NumberUtils.toLong(3_980_173_734.0)).isEqualTo(3_980_173_734L);
+    }
+
+    @Test
     public void roundResult() {
         assertThat(NumberUtils.roundResult(doubleVal, null)).isEqualTo(1729.1729);
-        assertThat(NumberUtils.roundResult(doubleVal, 0)).isEqualTo(1729);
+        assertThat(NumberUtils.roundResult(doubleVal, 0)).isEqualTo(1729L);
         assertThat(NumberUtils.roundResult(doubleVal, 2)).isEqualTo(1729.17);
+        assertThat(NumberUtils.roundResult(3_980_173_734.0, 0)).isEqualTo(3_980_173_734L);
     }
 
 }
