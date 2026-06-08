@@ -304,8 +304,8 @@ public class DefaultTbClusterServiceTest {
 
         verify(topicService, never()).getNotificationsTopic(eq(ServiceType.TB_CORE), eq("rpc-1778979165457-749"));
         verify(producerProvider, never()).getTbCoreNotificationsMsgProducer();
-        verify(callback, never()).onSuccess(any());
-        verify(callback, times(1)).onFailure(any(Throwable.class));
+        verify(callback, times(1)).onSuccess(isNull());
+        verify(callback, never()).onFailure(any(Throwable.class));
     }
 
     @Test
@@ -347,8 +347,8 @@ public class DefaultTbClusterServiceTest {
 
         verify(topicService, never()).getNotificationsTopic(eq(ServiceType.TB_RULE_ENGINE), eq("rpc-1778979165457-749"));
         verify(producerProvider, never()).getRuleEngineNotificationsMsgProducer();
-        verify(callback, never()).onSuccess(any());
-        verify(callback, times(1)).onFailure(any(Throwable.class));
+        verify(callback, times(1)).onSuccess(isNull());
+        verify(callback, never()).onFailure(any(Throwable.class));
     }
 
     @Test
@@ -360,8 +360,8 @@ public class DefaultTbClusterServiceTest {
 
         verify(topicService, never()).getNotificationsTopic(eq(ServiceType.TB_TRANSPORT), eq("unknown-transport"));
         verify(producerProvider, never()).getTransportNotificationsMsgProducer();
-        verify(callback, never()).onSuccess(any());
-        verify(callback, times(1)).onFailure(any(Throwable.class));
+        verify(callback, times(1)).onSuccess(isNull());
+        verify(callback, never()).onFailure(any(Throwable.class));
     }
 
     @Test
