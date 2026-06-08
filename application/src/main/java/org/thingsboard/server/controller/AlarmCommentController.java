@@ -81,11 +81,7 @@ public class AlarmCommentController extends BaseController {
         Alarm alarm = checkAlarmInfoId(alarmId, Operation.WRITE);
         SecurityUser currentUser = getCurrentUser();
         if (alarmComment.getId() != null) {
-            AlarmComment existingAlarmComment = checkAlarmCommentId(alarmComment.getId(), alarmId);
-            if (existingAlarmComment.getUserId() != null && !existingAlarmComment.getUserId().equals(currentUser.getId())) {
-                throw new ThingsboardException("User is not allowed to edit other user's comment",
-                        ThingsboardErrorCode.PERMISSION_DENIED);
-            }
+            checkUserPermission(alarmComment, alarmId, "edit", currentUser);
         }
         alarmComment.setAlarmId(alarmId);
         alarmComment.setType(AlarmCommentType.OTHER);
@@ -104,6 +100,9 @@ public class AlarmCommentController extends BaseController {
         AlarmCommentId alarmCommentId = new AlarmCommentId(toUUID(strCommentId));
         AlarmComment alarmComment = checkAlarmCommentId(alarmCommentId, alarmId);
         SecurityUser currentUser = getCurrentUser();
+        if (!currentUser.isTenantAdmin()) {
+            checkUserPermission(alarmComment, alarmId, "delete", currentUser);
+        }
         tbAlarmCommentService.deleteAlarmComment(alarm, alarmComment, currentUser);
     }
 
@@ -129,6 +128,14 @@ public class AlarmCommentController extends BaseController {
         Alarm alarm = checkAlarmId(alarmId, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, null, sortProperty, sortOrder);
         return checkNotNull(alarmCommentService.findAlarmComments(alarm.getTenantId(), alarmId, pageLink));
+    }
+
+    private void checkUserPermission(AlarmComment alarmComment, AlarmId alarmId, String operation, SecurityUser currentUser) throws ThingsboardException {
+        AlarmComment existingAlarmComment = checkAlarmCommentId(alarmComment.getId(), alarmId);
+        if (existingAlarmComment.getUserId() != null && !existingAlarmComment.getUserId().equals(currentUser.getId())) {
+            throw new ThingsboardException("User is not allowed to " + operation + " other user's comment",
+                    ThingsboardErrorCode.PERMISSION_DENIED);
+        }
     }
 
 }

@@ -235,7 +235,7 @@ public class AlarmCommentControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testDeleteOthersAlarmCommentIsAllowedForUserWithAlarmWritePermission() throws Exception {
+    public void testDeleteOthersAlarmCommentIsAllowedForAuthorOrTenantAdmin() throws Exception {
         loginCustomerUser();
         AlarmComment alarmComment = createAlarmComment(alarm.getId());
 
@@ -243,15 +243,19 @@ public class AlarmCommentControllerTest extends AbstractControllerTest {
         Mockito.reset(tbClusterService, auditLogService);
 
         doDelete("/api/alarm/" + alarm.getId() + "/comment/" + alarmComment.getId())
-                .andExpect(status().isOk());
+                .andExpect(status().isForbidden())
+                .andExpect(statusReason(containsString("User is not allowed to delete other user's comment")));
 
+        loginTenantAdmin();
+        doDelete("/api/alarm/" + alarm.getId() + "/comment/" + alarmComment.getId())
+                .andExpect(status().isOk());
         AlarmComment expectedAlarmComment = AlarmComment.builder()
                 .alarmId(alarm.getId())
                 .type(AlarmCommentType.SYSTEM)
                 .comment(JacksonUtil.newObjectNode().put("text", String.format("Comment was deleted by user %s",
-                        SECOND_CUSTOMER_USER_EMAIL)))
+                        TENANT_ADMIN_EMAIL)))
                 .build();
-        testLogEntityActionEntityEqClass(alarm, alarm.getId(), tenantId, customerId, secondCustomerUserId, SECOND_CUSTOMER_USER_EMAIL, ActionType.DELETED_COMMENT, 1, expectedAlarmComment);
+        testLogEntityActionEntityEqClass(alarm, alarm.getId(), tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.DELETED_COMMENT, 1, expectedAlarmComment);
     }
 
     @Test
