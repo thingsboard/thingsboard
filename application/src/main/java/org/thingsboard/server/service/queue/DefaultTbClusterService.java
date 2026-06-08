@@ -255,8 +255,9 @@ public class DefaultTbClusterService implements TbClusterService {
     private void skipNotificationToUnknownService(ServiceType serviceType, String serviceId, TbQueueCallback callback) {
         log.debug("Skipping notification push to unknown {} service id [{}]", serviceType, serviceId);
         if (callback != null) {
-            // The message was not delivered to any node, so signal failure (not success) to the caller.
-            callback.onFailure(new RuntimeException("Target " + serviceType + " service id [" + serviceId + "] is not a member of the cluster"));
+            // Deliberate skip - the target is not a cluster member. Complete the callback as a no-op success,
+            // matching pushNotificationToTransport, so callers don't treat an intentional skip as a delivery error.
+            callback.onSuccess(null);
         }
     }
 
