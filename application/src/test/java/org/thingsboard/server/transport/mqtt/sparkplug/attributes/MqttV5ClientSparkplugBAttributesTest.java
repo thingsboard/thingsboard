@@ -29,7 +29,7 @@ public class MqttV5ClientSparkplugBAttributesTest extends AbstractMqttV5ClientSp
 
     @Before
     public void beforeTest() throws Exception {
-        beforeSparkplugTest();
+        beforeSparkplugTest(false);
     }
 
     @After

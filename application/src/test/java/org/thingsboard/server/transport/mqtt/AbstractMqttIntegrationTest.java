@@ -88,7 +88,7 @@ public abstract class AbstractMqttIntegrationTest extends AbstractTransportInteg
             assertNotNull(accessToken);
         }
         if (config.getGatewayName() != null) {
-            savedGateway = createDevice(config.getGatewayName(), deviceProfile.getName(), true);
+            savedGateway = createDevice(config.getGatewayName(), deviceProfile.getName(), !config.isSparkplug);
             DeviceCredentials gatewayCredentials =
                     doGet("/api/device/" + savedGateway.getId().getId().toString() + "/credentials", DeviceCredentials.class);
             assertNotNull(gatewayCredentials);
