@@ -312,7 +312,7 @@ public class DefaultTbClusterServiceTest {
         TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCoreNotificationMsg>> tbCoreQueueProducer = mock(TbQueueProducer.class);
 
         // offlineCore was a cluster member moments ago but has dropped out of the current live snapshot
-        clusterService.onServiceListChanged(new ServiceListChangedEvent(
+        ((DefaultTbClusterService) clusterService).onServiceListChanged(new ServiceListChangedEvent(
                 List.of(TransportProtos.ServiceInfo.newBuilder().setServiceId(offlineCore).addServiceTypes(ServiceType.TB_CORE.name()).build()),
                 TransportProtos.ServiceInfo.newBuilder().setServiceId(CORE).addServiceTypes(ServiceType.TB_CORE.name()).build()));
 
