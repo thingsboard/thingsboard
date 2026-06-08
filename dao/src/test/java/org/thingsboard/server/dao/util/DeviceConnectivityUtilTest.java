@@ -81,6 +81,39 @@ class DeviceConnectivityUtilTest {
         assertNoInjectedSiblingKeys(yaml);
     }
 
+    @Test
+    void mqttBasicQuoteInUserNameIsEscapedInPublishCommand() {
+        String command = DeviceConnectivityUtil.getMqttPublishCommand(
+                "mqtt", "localhost", "1883", "v1/devices/me/telemetry",
+                mqttBasic("cid", "u\";touch pwned;echo \"", "pwd"));
+
+        // the double quote must be backslash-escaped so it cannot terminate the -u "..." argument
+        assertThat(command).contains("-u \"u\\\";touch pwned;echo \\\"\"");
+        assertThat(command).doesNotContain("-u \"u\";");
+    }
+
+    @Test
+    void controlCharsInMqttClientIdAreStrippedInPublishCommand() {
+        String command = DeviceConnectivityUtil.getMqttPublishCommand(
+                "mqtt", "localhost", "1883", "v1/devices/me/telemetry",
+                mqttBasic("c\nid", "user", "pwd"));
+
+        assertThat(command).doesNotContain("\n");
+        assertThat(command).contains("-i \"c_id\"");
+    }
+
+    @Test
+    void controlCharsInAccessTokenAreStrippedInHttpAndCoapCommands() {
+        DeviceCredentials creds = accessToken("tok\nen");
+
+        assertThat(DeviceConnectivityUtil.getHttpPublishCommand("http", "localhost", ":8080", creds))
+                .doesNotContain("\n")
+                .contains("/api/v1/tok_en/telemetry");
+        assertThat(DeviceConnectivityUtil.getCoapPublishCommand("coap", "localhost", ":5683", creds))
+                .doesNotContain("\n")
+                .contains("/api/v1/tok_en/telemetry");
+    }
+
     private static String renderCompose(DeviceCredentials credentials) throws Exception {
         var resource = DeviceConnectivityUtil.getGatewayDockerComposeFile(
                 "host.docker.internal", "3.8-stable", credentials);

@@ -30,12 +30,8 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 
-import java.util.regex.Pattern;
-
 @Component
 public class DeviceCredentialsDataValidator extends DataValidator<DeviceCredentials> {
-
-    private static final Pattern CONTROL_CHARS = Pattern.compile("[\\x00-\\x1F\\x7F]");
 
     @Autowired
     private DeviceCredentialsDao deviceCredentialsDao;
@@ -92,7 +88,7 @@ public class DeviceCredentialsDataValidator extends DataValidator<DeviceCredenti
     }
 
     private static void rejectControlChars(String value, String fieldName) {
-        if (value != null && CONTROL_CHARS.matcher(value).find()) {
+        if (StringUtils.containsControlChars(value)) {
             throw new DeviceCredentialsValidationException(fieldName + " must not contain control characters!");
         }
     }

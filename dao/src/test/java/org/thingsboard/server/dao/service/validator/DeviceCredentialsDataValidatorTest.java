@@ -105,6 +105,15 @@ class DeviceCredentialsDataValidatorTest {
                 .doesNotThrowAnyException();
     }
 
+    @Test
+    void acceptsValidMqttBasicCredentials() {
+        willReturn(new Device()).given(deviceService).findDeviceById(tenantId, deviceId);
+        DeviceCredentials creds = mqttBasic("client-1", "user-1", "pwd-1");
+
+        assertThatCode(() -> validator.validateDataImpl(tenantId, creds))
+                .doesNotThrowAnyException();
+    }
+
     private DeviceCredentials accessToken(String token) {
         DeviceCredentials c = new DeviceCredentials();
         c.setDeviceId(deviceId);
