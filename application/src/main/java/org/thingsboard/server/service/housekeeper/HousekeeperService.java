@@ -53,6 +53,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 @TbCoreComponent
@@ -93,6 +94,8 @@ public class HousekeeperService {
         this.taskProcessors = taskProcessors.stream().collect(Collectors.toMap(HousekeeperTaskProcessor::getTaskType, p -> p));
         if (config.isAsyncProcessingEnabled()) {
             int threads = config.getAsyncProcessingThreads() <= 0 ? Math.max(4, Runtime.getRuntime().availableProcessors()) : config.getAsyncProcessingThreads();
+            // Runs only the synchronous prologue of processTaskAsync (query build + the non-blocking remove call);
+            // the actual deletion runs on the timeseries executors. Bounds concurrent submissions, not deletions.
             this.asyncTaskExecutor = Executors.newFixedThreadPool(threads, ThingsBoardThreadFactory.forName("housekeeper-async-task-processor"));
             this.timeoutScheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("housekeeper-timeout-scheduler"));
             log.trace("Async processing enabled with {} threads and timeout scheduler", threads);
@@ -110,15 +113,13 @@ public class HousekeeperService {
     }
 
     private void processMsgs(List<TbProtoQueueMsg<ToHousekeeperServiceMsg>> msgs, TbQueueConsumer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> consumer) {
-        List<ListenableFuture<Void>> asyncFutures = new ArrayList<>();
+        List<ListenableFuture<Void>> taskFutures = new ArrayList<>();
 
         for (TbProtoQueueMsg<ToHousekeeperServiceMsg> msg : msgs) {
             log.trace("Processing task: {}", msg);
             try {
-                ListenableFuture<Void> asyncFuture = processTask(msg.getValue(), false);
-                if (asyncFuture != null) {
-                    asyncFutures.add(asyncFuture);
-                }
+                // Sync tasks complete inline and return an already-completed future; async tasks return a pending one.
+                taskFutures.add(processTask(msg.getValue(), false));
             } catch (InterruptedException e) {
                 return;
             } catch (Throwable e) {
@@ -127,16 +128,17 @@ public class HousekeeperService {
             }
         }
 
-        if (!asyncFutures.isEmpty()) {
-            ListenableFuture<List<Void>> allFutures = Futures.successfulAsList(asyncFutures);
-            try {
-                allFutures.get();
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                return;
-            } catch (ExecutionException e) {
-                // successfulAsList doesn't throw ExecutionException, but it's a checked exception from Future.get()
-            }
+        // Wait for all tasks before committing the offset. successfulAsList never completes exceptionally - per-task
+        // failures are already handled in handleFailure - so this only blocks until every task settles.
+        ListenableFuture<List<Void>> allFutures = Futures.successfulAsList(taskFutures);
+        try {
+            allFutures.get();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return;
+        } catch (ExecutionException e) {
+            // Not expected: successfulAsList never fails, but get() declares this checked exception. Log just in case.
+            log.error("Unexpected error while waiting for housekeeper tasks to complete", e);
         }
 
         consumer.commit();
@@ -149,7 +151,7 @@ public class HousekeeperService {
 
         if (config.getDisabledTaskTypes().contains(taskType)) {
             log.debug("Task type {} is disabled, ignoring {}", taskType, task);
-            return null;
+            return Futures.immediateFuture(null);
         }
         HousekeeperTaskProcessor<T> taskProcessor = (HousekeeperTaskProcessor<T>) taskProcessors.get(taskType);
         if (taskProcessor == null) {
@@ -162,7 +164,7 @@ public class HousekeeperService {
             return processTaskAsync(msg, task, taskType, taskProcessor);
         } else {
             processTaskSync(msg, task, taskType, taskProcessor);
-            return null;
+            return Futures.immediateFuture(null);
         }
     }
 
@@ -170,46 +172,56 @@ public class HousekeeperService {
     private <T extends HousekeeperTask> ListenableFuture<Void> processTaskAsync(ToHousekeeperServiceMsg msg, HousekeeperTask task, HousekeeperTaskType taskType, HousekeeperTaskProcessor<T> taskProcessor) {
         long startTs = System.currentTimeMillis();
         SettableFuture<Void> completionFuture = SettableFuture.create();
+        // Only one path (completion, timeout or submission failure) settles the task, running its side effects before
+        // completing completionFuture - so the offset commits only after reprocessing, and success/timeout can't both fire.
+        AtomicBoolean settled = new AtomicBoolean(false);
 
         try {
             asyncTaskExecutor.submit(() -> {
                 try {
                     ListenableFuture<Void> processFuture = taskProcessor.processAsync((T) task);
 
+                    // Timeout enforcement mirrors the sync path's future.get(timeout) in processTaskSync, but for a
+                    // ListenableFuture: a scheduled task cancels the deletion and fails it once the timeout elapses.
                     ScheduledFuture<?> timeoutFuture = timeoutScheduler.schedule(() -> {
-                        TimeoutException timeoutException = new TimeoutException("Timeout after " + config.getTaskProcessingTimeout() + " ms");
-                        processFuture.cancel(true);
-                        if (completionFuture.setException(timeoutException)) {
+                        if (settled.compareAndSet(false, true)) {
+                            processFuture.cancel(true);
+                            TimeoutException timeoutException = new TimeoutException();
                             handleFailure(taskType, msg, task, timeoutException);
+                            completionFuture.setException(timeoutException);
                         }
                     }, config.getTaskProcessingTimeout(), TimeUnit.MILLISECONDS);
 
                     processFuture.addListener(() -> {
-                        timeoutFuture.cancel(false);
-                        try {
-                            processFuture.get();
-                            long timing = System.currentTimeMillis() - startTs;
-                            if (log.isDebugEnabled()) {
-                                log.debug("[{}] Processed {} in {} ms (attempt {})", task.getTenantId(), task.getDescription(), timing, msg.getTask().getAttempt());
-                            }
-                            statsService.ifPresent(s -> s.reportProcessed(taskType, msg, timing));
-                            completionFuture.set(null);
-                        } catch (Throwable e) {
-                            if (completionFuture.setException(e)) {
+                        if (settled.compareAndSet(false, true)) {
+                            timeoutFuture.cancel(false);
+                            try {
+                                processFuture.get();
+                                long timing = System.currentTimeMillis() - startTs;
+                                if (log.isDebugEnabled()) {
+                                    log.debug("[{}] Processed {} in {} ms (attempt {})", task.getTenantId(), task.getDescription(), timing, msg.getTask().getAttempt());
+                                }
+                                statsService.ifPresent(s -> s.reportProcessed(taskType, msg, timing));
+                                completionFuture.set(null);
+                            } catch (Throwable e) {
                                 handleFailure(taskType, msg, task, e);
+                                completionFuture.setException(e);
                             }
                         }
                     }, MoreExecutors.directExecutor());
 
                 } catch (Throwable e) {
-                    if (completionFuture.setException(e)) {
+                    if (settled.compareAndSet(false, true)) {
                         handleFailure(taskType, msg, task, e);
+                        completionFuture.setException(e);
                     }
                 }
             });
         } catch (RejectedExecutionException e) {
-            handleFailure(taskType, msg, task, e);
-            completionFuture.setException(e);
+            if (settled.compareAndSet(false, true)) {
+                handleFailure(taskType, msg, task, e);
+                completionFuture.setException(e);
+            }
         }
 
         return completionFuture;
@@ -223,6 +235,8 @@ public class HousekeeperService {
                 taskProcessor.process((T) task);
                 return null;
             });
+            // Timeout enforcement for the blocking path; the async path enforces the same config.getTaskProcessingTimeout()
+            // via a scheduled cancellation in processTaskAsync. Keep the two in sync if the timeout semantics change.
             future.get(config.getTaskProcessingTimeout(), TimeUnit.MILLISECONDS);
 
             long timing = System.currentTimeMillis() - startTs;

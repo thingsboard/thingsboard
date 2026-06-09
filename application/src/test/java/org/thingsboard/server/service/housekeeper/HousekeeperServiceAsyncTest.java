@@ -20,16 +20,21 @@ import com.google.common.util.concurrent.SettableFuture;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTrigger;
+import org.thingsboard.server.common.data.notification.rule.trigger.TaskProcessingFailureTrigger;
+import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
@@ -43,7 +48,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -65,6 +73,8 @@ public class HousekeeperServiceAsyncTest extends AbstractControllerTest {
     private LatestTsDeletionTaskProcessor latestTsDeletionTaskProcessor;
     @MockitoSpyBean
     private HousekeeperReprocessingService housekeeperReprocessingService;
+    @MockitoSpyBean
+    private NotificationRuleProcessor notificationRuleProcessor;
     @Autowired
     private TimeseriesService timeseriesService;
 
@@ -81,7 +91,7 @@ public class HousekeeperServiceAsyncTest extends AbstractControllerTest {
 
     @After
     public void tearDown() {
-        Mockito.reset(tsHistoryDeletionTaskProcessor, latestTsDeletionTaskProcessor, housekeeperReprocessingService);
+        Mockito.reset(tsHistoryDeletionTaskProcessor, latestTsDeletionTaskProcessor, housekeeperReprocessingService, notificationRuleProcessor);
     }
 
     @Test
@@ -177,6 +187,43 @@ public class HousekeeperServiceAsyncTest extends AbstractControllerTest {
         });
 
         verify(housekeeperReprocessingService).submitForReprocessing(any(), any());
+    }
+
+    @Test
+    public void whenAsyncProcessingKeepsFailing_thenAttemptsExhaustedAndNotificationTriggered() throws Exception {
+        RuntimeException error = new RuntimeException("Persistent failure");
+        // The first attempt runs on the async path; reprocessed attempts fall back to the sync path by design.
+        // Fail both so the task is driven past max-reprocessing-attempts and reaches the terminal notification
+        // branch of the shared handleFailure, which is now reachable starting from an async task.
+        doReturn(Futures.immediateFailedFuture(error)).when(tsHistoryDeletionTaskProcessor).processAsync(any());
+        doThrow(error).when(tsHistoryDeletionTaskProcessor).process(any());
+
+        Device device = createDevice("asyncMaxAttemptsTest", "asyncMaxAttemptsTest");
+
+        timeseriesService.save(tenantId, device.getId(),
+                new BasicTsKvEntry(System.currentTimeMillis(), new StringDataEntry(TELEMETRY_KEY, KV_VALUE))).get();
+
+        doDelete("/api/device/" + device.getId()).andExpect(status().isOk());
+
+        // process(...) is shared across all notification triggers, so match the task-processing-failure type only.
+        await().atMost(60, TimeUnit.SECONDS).untilAsserted(() ->
+                verify(notificationRuleProcessor, atLeastOnce()).process(any(TaskProcessingFailureTrigger.class)));
+
+        ArgumentCaptor<NotificationRuleTrigger> triggerCaptor = ArgumentCaptor.forClass(NotificationRuleTrigger.class);
+        verify(notificationRuleProcessor, atLeastOnce()).process(triggerCaptor.capture());
+        TaskProcessingFailureTrigger trigger = triggerCaptor.getAllValues().stream()
+                .filter(t -> t instanceof TaskProcessingFailureTrigger)
+                .map(t -> (TaskProcessingFailureTrigger) t)
+                .filter(t -> t.getTask().getEntityId().equals(device.getId())
+                        && t.getTask().getTaskType() == HousekeeperTaskType.DELETE_TS_HISTORY)
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("No TaskProcessingFailureTrigger captured for the deleted device"));
+        // max-reprocessing-attempts=5: notification fires once the attempt counter reaches the configured maximum.
+        assertThat(trigger.getAttempt()).isEqualTo(5);
+
+        // The async path was exercised first, before reprocessing fell back to the sync path.
+        verify(tsHistoryDeletionTaskProcessor, atLeastOnce()).processAsync(any());
+        verify(tsHistoryDeletionTaskProcessor, atLeastOnce()).process(any());
     }
 
     private TsKvEntry getLatestTelemetry(org.thingsboard.server.common.data.id.EntityId entityId) throws Exception {
