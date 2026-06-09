@@ -300,97 +300,97 @@
             </mat-form-field>
           </section>
         }
-          <mat-drawer-container class="tb-dashboard-layouts flex-1"
+        <mat-drawer-container class="tb-dashboard-layouts flex-1"
                                 [class.tb-shrinked]="isEditingWidget">
-            @if (layouts.right.show) {
-              <mat-drawer
-                id="tb-right-layout"
-                style="border-left: none"
-                [style.min-width]="rightLayoutSize.width"
-                [style.max-width]="rightLayoutSize.width"
-                [style.height]="rightLayoutSize.height"
-                disableClose="true"
-                [@.disabled]="!isMobile"
-                position="end"
-                [mode]="isMobile ? 'over' : 'side'"
-                [(opened)]="rightLayoutOpened">
-                <tb-dashboard-layout style="height: 100%;"
-                                     [dashboardCheatSheet]="cheatSheetComponent"
-                                     [layoutCtx]="mobileDisplayRightLayoutFirst ? layouts.main.layoutCtx : layouts.right.layoutCtx"
-                                     [dashboardCtx]="dashboardCtx"
-                                     [isEdit]="isEdit"
-                                     [isEditingWidget]="isEditingWidget"
-                                     [isMobile]="forceDashboardMobileMode"
-                                     [widgetEditMode]="widgetEditMode"
-                                     [parentDashboard]="parentDashboard"
-                                     [popoverComponent]="popoverComponent">
-                </tb-dashboard-layout>
-              </mat-drawer>
-            }
-            <mat-drawer-content [class.!hidden]="!layouts.main.show"
-                                id="tb-main-layout"
-                                [style.width]="mainLayoutSize.width"
-                                [style.height]="mainLayoutSize.height">
-              <tb-dashboard-layout
-                [style.max-width]="mainLayoutSize.maxWidth"
-                [style.min-width]="mainLayoutSize.minWidth"
-                [dashboardCheatSheet]="cheatSheetComponent"
-                [layoutCtx]="mobileDisplayRightLayoutFirst ? layouts.right.layoutCtx : layouts.main.layoutCtx"
-                [dashboardCtx]="dashboardCtx"
-                [isEdit]="isEdit"
-                [isEditingWidget]="isEditingWidget"
-                [isMobile]="forceDashboardMobileMode"
-                [widgetEditMode]="widgetEditMode"
-                [parentDashboard]="parentDashboard"
-                [popoverComponent]="popoverComponent">
+          @if (layouts.right.show) {
+            <mat-drawer
+              id="tb-right-layout"
+              style="border-left: none"
+              [style.min-width]="rightLayoutSize.width"
+              [style.max-width]="rightLayoutSize.width"
+              [style.height]="rightLayoutSize.height"
+              disableClose="true"
+              [@.disabled]="!isMobile"
+              position="end"
+              [mode]="isMobile ? 'over' : 'side'"
+              [(opened)]="rightLayoutOpened">
+              <tb-dashboard-layout style="height: 100%;"
+                                   [dashboardCheatSheet]="cheatSheetComponent"
+                                   [layoutCtx]="mobileDisplayRightLayoutFirst ? layouts.main.layoutCtx : layouts.right.layoutCtx"
+                                   [dashboardCtx]="dashboardCtx"
+                                   [isEdit]="isEdit"
+                                   [isEditingWidget]="isEditingWidget"
+                                   [isMobile]="forceDashboardMobileMode"
+                                   [widgetEditMode]="widgetEditMode"
+                                   [parentDashboard]="parentDashboard"
+                                   [popoverComponent]="popoverComponent">
               </tb-dashboard-layout>
-              @if (isEdit) {
-                <div class="layout-filler"
-                     [class.!hidden]="!showMainLayoutFiller">
-                  {{ 'dashboard.breakpoint-value' | translate : {value: currentBreakpointValue } }}
-                </div>
-              }
-            </mat-drawer-content>
-          </mat-drawer-container>
-          @if (!readonly && (hideToolbar || widgetEditMode)) {
-            <section data-html2canvas-ignore class="tb-header-buttons tb-enter-edit-mode flex flex-row flex-wrap items-end justify-start">
-              <button [class.!hidden]="isEdit"
-                      color="primary"
-                      mat-mini-fab
-                      class="tb-btn-header tb-btn-edit"
-                      (click)="toggleDashboardEditMode()"
-                      matTooltip="{{ 'action.enter-edit-mode' | translate }}"
-                      matTooltipPosition="above">
-                <mat-icon>edit</mat-icon>
-              </button>
-              <button [class.!hidden]="!isEdit"
-                      color="primary"
-                      mat-mini-fab
-                      class="tb-btn-header tb-btn-edit"
-                      (click)="saveDashboard()"
-                      [disabled]="isLoading$ | async"
-                      matTooltip="{{'action.save' | translate}}"
-                      matTooltipPosition="below">
-                <mat-icon>done</mat-icon>
-              </button>
-              <button [class.!hidden]="!isEdit"
-                      color="primary"
-                      mat-mini-fab
-                      class="tb-btn-header tb-btn-edit"
-                      (click)="toggleDashboardEditMode()"
-                      [disabled]="isLoading$ | async"
-                      matTooltip="{{'action.cancel' | translate}}"
-                      matTooltipPosition="below">
-                <mat-icon>close</mat-icon>
-              </button>
-            </section>
+            </mat-drawer>
           }
-          @if (!embedded) {
-            <section data-html2canvas-ignore class="tb-powered-by-footer" [style.color]="dashboard.configuration.settings.titleColor">
-              <span>Powered by <a href="https://thingsboard.io" target="_blank">ThingsBoard v.{{ thingsboardVersion }}</a></span>
-            </section>
-          }
-        </mat-drawer-content>
+          <mat-drawer-content [class.!hidden]="!layouts.main.show"
+                              id="tb-main-layout"
+                              [style.width]="mainLayoutSize.width"
+                              [style.height]="mainLayoutSize.height">
+            <tb-dashboard-layout
+              [style.max-width]="mainLayoutSize.maxWidth"
+              [style.min-width]="mainLayoutSize.minWidth"
+              [dashboardCheatSheet]="cheatSheetComponent"
+              [layoutCtx]="mobileDisplayRightLayoutFirst ? layouts.right.layoutCtx : layouts.main.layoutCtx"
+              [dashboardCtx]="dashboardCtx"
+              [isEdit]="isEdit"
+              [isEditingWidget]="isEditingWidget"
+              [isMobile]="forceDashboardMobileMode"
+              [widgetEditMode]="widgetEditMode"
+              [parentDashboard]="parentDashboard"
+              [popoverComponent]="popoverComponent">
+            </tb-dashboard-layout>
+            @if (isEdit) {
+              <div class="layout-filler"
+                   [class.!hidden]="!showMainLayoutFiller">
+                {{ 'dashboard.breakpoint-value' | translate : {value: currentBreakpointValue } }}
+              </div>
+            }
+          </mat-drawer-content>
+        </mat-drawer-container>
+        @if (!readonly && (hideToolbar || widgetEditMode)) {
+          <section data-html2canvas-ignore class="tb-header-buttons tb-enter-edit-mode flex flex-row flex-wrap items-end justify-start">
+            <button [class.!hidden]="isEdit"
+                    color="primary"
+                    mat-mini-fab
+                    class="tb-btn-header tb-btn-edit"
+                    (click)="toggleDashboardEditMode()"
+                    matTooltip="{{ 'action.enter-edit-mode' | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button [class.!hidden]="!isEdit"
+                    color="primary"
+                    mat-mini-fab
+                    class="tb-btn-header tb-btn-edit"
+                    (click)="saveDashboard()"
+                    [disabled]="isLoading$ | async"
+                    matTooltip="{{'action.save' | translate}}"
+                    matTooltipPosition="below">
+              <mat-icon>done</mat-icon>
+            </button>
+            <button [class.!hidden]="!isEdit"
+                    color="primary"
+                    mat-mini-fab
+                    class="tb-btn-header tb-btn-edit"
+                    (click)="toggleDashboardEditMode()"
+                    [disabled]="isLoading$ | async"
+                    matTooltip="{{'action.cancel' | translate}}"
+                    matTooltipPosition="below">
+              <mat-icon>close</mat-icon>
+            </button>
+          </section>
+        }
+        @if (!embedded) {
+          <section data-html2canvas-ignore class="tb-powered-by-footer" [style.color]="dashboard.configuration.settings.titleColor">
+            <span>Powered by <a href="https://thingsboard.io" target="_blank">ThingsBoard v.{{ thingsboardVersion }}</a></span>
+          </section>
+        }
+      </mat-drawer-content>
       <mat-drawer class="tb-details-drawer"
                   [opened]="isEditingWidget || isAddingWidget"
                   (openedStart)="detailsDrawerOpenedStart()"
