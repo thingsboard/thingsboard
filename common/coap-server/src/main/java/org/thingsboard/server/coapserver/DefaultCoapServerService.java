@@ -85,7 +85,9 @@ public class DefaultCoapServerService implements CoapServerService, SmartInitial
             dtlsSessionsExecutor.shutdownNow();
         }
         log.info("Stopping CoAP server!");
-        server.destroy();
+        if (server != null) {
+            server.destroy();
+        }
         log.info("CoAP server stopped!");
     }
 
@@ -105,8 +107,8 @@ public class DefaultCoapServerService implements CoapServerService, SmartInitial
 
     private CoapServer createCoapServer() throws UnknownHostException {
         Configuration networkConfig = createNetworkConfiguration();
-        server = new CoapServer(networkConfig);
         try {
+            server = new CoapServer(networkConfig);
             CoapEndpoint.Builder noSecCoapEndpointBuilder = new CoapEndpoint.Builder();
             InetAddress addr = InetAddress.getByName(coapServerContext.getHost());
             InetSocketAddress sockAddr = new InetSocketAddress(addr, coapServerContext.getPort());

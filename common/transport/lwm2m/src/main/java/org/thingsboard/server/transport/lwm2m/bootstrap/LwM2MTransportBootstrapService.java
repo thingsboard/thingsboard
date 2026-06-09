@@ -82,15 +82,18 @@ public class LwM2MTransportBootstrapService implements SmartInitializingSingleto
     @PostConstruct
     public void init() {
         log.info("Starting LwM2M transport bootstrap server...");
-        LeshanBootstrapServer bootstrapServer = getLhBootstrapServer();
+        LeshanBootstrapServer bootstrapServer = null;
         try {
+            bootstrapServer = getLhBootstrapServer();
             this.server = bootstrapServer;
             bootstrapServer.start();
             log.info("Started LwM2M transport bootstrap server.");
         } catch (RuntimeException e) {
             log.error("Failed to start LwM2M transport bootstrap server, releasing resources", e);
             try {
-                bootstrapServer.destroy();
+                if (bootstrapServer != null) {
+                    bootstrapServer.destroy();
+                }
             } catch (Exception suppressed) {
                 e.addSuppressed(suppressed);
             } finally {
