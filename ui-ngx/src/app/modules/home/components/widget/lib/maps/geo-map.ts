@@ -18,7 +18,7 @@ import {
   DEFAULT_ZOOM_LEVEL,
   defaultGeoMapSettings,
   GeoMapSettings,
-  latLngPointToBounds,
+  latLngPointToBounds, MapControlsPosition,
   MapZoomAction,
   TbCircleData,
   TbPolygonCoordinate,
@@ -93,6 +93,15 @@ export class TbGeoMap extends TbMap<GeoMapSettings> {
       tap((layers: L.TB.LayerData[]) => {
         if (layers.length) {
           const layer = layers[0];
+          layers.forEach(layer => {
+            layer.layer.once('gl-error', () => {
+              const toastPosition = this.settings.controlsPosition === MapControlsPosition.bottomleft || this.settings.controlsPosition === MapControlsPosition.bottomright ? 'top' : 'bottom';
+              this.ctx.showErrorToast(
+                this.ctx.translate.instant('widgets.maps.gl.webgl-not-available'),
+                toastPosition, 'left', this.ctx.toastTargetId, true
+              );
+            });
+          })
           layer.layer.addTo(this.map);
           this.map.attributionControl.setPrefix(layer.attributionPrefix);
           if (layers.length > 1) {
