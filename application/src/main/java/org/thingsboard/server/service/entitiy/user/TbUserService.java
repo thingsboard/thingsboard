@@ -30,6 +30,6 @@ public interface TbUserService {
 
     UserActivationLink getActivationLink(TenantId tenantId, CustomerId customerId, Authority authority, UserId userId, HttpServletRequest request) throws ThingsboardException;
 
-    UserPasswordResetLink getPasswordResetLink(TenantId tenantId, CustomerId customerId, UserId userId, HttpServletRequest request) throws ThingsboardException;
+    UserPasswordResetLink getPasswordResetLink(TenantId tenantId, CustomerId customerId, UserId userId, HttpServletRequest request, User responsibleUser) throws ThingsboardException;
 
 }
