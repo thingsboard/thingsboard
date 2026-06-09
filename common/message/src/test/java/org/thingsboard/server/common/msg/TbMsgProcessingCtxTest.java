@@ -29,61 +29,65 @@ class TbMsgProcessingCtxTest {
     private final RuleNodeId RULE_NODE_ID = new RuleNodeId(UUID.fromString("1ca5e2ef-1309-41d9-bafa-709e9df0e2a6"));
 
     @Test
-    void givenEmptyStack_whenIsAlreadyInStack_thenReturnFalse() {
+    void givenEmptyStack_whenCountOccurrences_thenReturnZero() {
         TbMsgProcessingCtx ctx = new TbMsgProcessingCtx();
 
-        assertThat(ctx.isAlreadyInStack(RULE_CHAIN_ID, RULE_NODE_ID)).isFalse();
+        assertThat(ctx.countOccurrences(RULE_CHAIN_ID, RULE_NODE_ID)).isZero();
     }
 
     @Test
-    void givenStackWithDifferentEntry_whenIsAlreadyInStack_thenReturnFalse() {
+    void givenStackWithoutMatch_whenCountOccurrences_thenReturnZero() {
         TbMsgProcessingCtx ctx = new TbMsgProcessingCtx();
         ctx.push(new RuleChainId(UUID.randomUUID()), new RuleNodeId(UUID.randomUUID()));
+        ctx.push(new RuleChainId(UUID.randomUUID()), new RuleNodeId(UUID.randomUUID()));
 
-        assertThat(ctx.isAlreadyInStack(RULE_CHAIN_ID, RULE_NODE_ID)).isFalse();
+        assertThat(ctx.countOccurrences(RULE_CHAIN_ID, RULE_NODE_ID)).isZero();
     }
 
     @Test
-    void givenStackWithMatchingEntry_whenIsAlreadyInStack_thenReturnTrue() {
-        TbMsgProcessingCtx ctx = new TbMsgProcessingCtx();
-        ctx.push(RULE_CHAIN_ID, RULE_NODE_ID);
-
-        assertThat(ctx.isAlreadyInStack(RULE_CHAIN_ID, RULE_NODE_ID)).isTrue();
-    }
-
-    @Test
-    void givenStackWithMatchingEntryAmongOthers_whenIsAlreadyInStack_thenReturnTrue() {
+    void givenStackWithSingleMatch_whenCountOccurrences_thenReturnOne() {
         TbMsgProcessingCtx ctx = new TbMsgProcessingCtx();
         ctx.push(new RuleChainId(UUID.randomUUID()), new RuleNodeId(UUID.randomUUID()));
         ctx.push(RULE_CHAIN_ID, RULE_NODE_ID);
         ctx.push(new RuleChainId(UUID.randomUUID()), new RuleNodeId(UUID.randomUUID()));
 
-        assertThat(ctx.isAlreadyInStack(RULE_CHAIN_ID, RULE_NODE_ID)).isTrue();
+        assertThat(ctx.countOccurrences(RULE_CHAIN_ID, RULE_NODE_ID)).isEqualTo(1);
     }
 
     @Test
-    void givenStackWithSameChainButDifferentNode_whenIsAlreadyInStack_thenReturnFalse() {
+    void givenStackWithThreeMatches_whenCountOccurrences_thenReturnThree() {
         TbMsgProcessingCtx ctx = new TbMsgProcessingCtx();
-        ctx.push(RULE_CHAIN_ID, new RuleNodeId(UUID.randomUUID()));
+        ctx.push(RULE_CHAIN_ID, RULE_NODE_ID);
+        ctx.push(new RuleChainId(UUID.randomUUID()), new RuleNodeId(UUID.randomUUID()));
+        ctx.push(RULE_CHAIN_ID, RULE_NODE_ID);
+        ctx.push(RULE_CHAIN_ID, RULE_NODE_ID);
 
-        assertThat(ctx.isAlreadyInStack(RULE_CHAIN_ID, RULE_NODE_ID)).isFalse();
+        assertThat(ctx.countOccurrences(RULE_CHAIN_ID, RULE_NODE_ID)).isEqualTo(3);
     }
 
     @Test
-    void givenStackWithSameNodeButDifferentChain_whenIsAlreadyInStack_thenReturnFalse() {
-        TbMsgProcessingCtx ctx = new TbMsgProcessingCtx();
-        ctx.push(new RuleChainId(UUID.randomUUID()), RULE_NODE_ID);
-
-        assertThat(ctx.isAlreadyInStack(RULE_CHAIN_ID, RULE_NODE_ID)).isFalse();
-    }
-
-    @Test
-    void givenStackWithEntryThenPopped_whenIsAlreadyInStack_thenReturnFalse() {
+    void givenStackWithMatchThenPopped_whenCountOccurrences_thenReturnZero() {
         TbMsgProcessingCtx ctx = new TbMsgProcessingCtx();
         ctx.push(RULE_CHAIN_ID, RULE_NODE_ID);
         ctx.pop();
 
-        assertThat(ctx.isAlreadyInStack(RULE_CHAIN_ID, RULE_NODE_ID)).isFalse();
+        assertThat(ctx.countOccurrences(RULE_CHAIN_ID, RULE_NODE_ID)).isZero();
+    }
+
+    @Test
+    void givenStackWithSameChainButDifferentNode_whenCountOccurrences_thenReturnZero() {
+        TbMsgProcessingCtx ctx = new TbMsgProcessingCtx();
+        ctx.push(RULE_CHAIN_ID, new RuleNodeId(UUID.randomUUID()));
+
+        assertThat(ctx.countOccurrences(RULE_CHAIN_ID, RULE_NODE_ID)).isZero();
+    }
+
+    @Test
+    void givenStackWithSameNodeButDifferentChain_whenCountOccurrences_thenReturnZero() {
+        TbMsgProcessingCtx ctx = new TbMsgProcessingCtx();
+        ctx.push(new RuleChainId(UUID.randomUUID()), RULE_NODE_ID);
+
+        assertThat(ctx.countOccurrences(RULE_CHAIN_ID, RULE_NODE_ID)).isZero();
     }
 
 }
