@@ -38,6 +38,7 @@ public class MobileLayoutConfig {
     @Schema(description = "List of pages")
     @JsonView(Views.Public.class)
     @Valid
+    @Builder.Default
     private List<MobilePage> pages = new ArrayList<>();
 
 }
