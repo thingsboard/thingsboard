@@ -141,6 +141,8 @@ redis:
 # MQTT server parameters
 # Configures the MQTT transport layer including bind address/port, SSL, Netty tuning, session management, rate limits, and message processing options.
 transport:
+  # Size of the thread pool that executes transport API callbacks (session registration, telemetry/attribute and RPC responses, entity update notifications, and the tenant profile fetch on a cache miss). Bounds how many such callbacks - including those that block on a backend round-trip - can run concurrently.
+  callback_thread_pool_size: "${TB_TRANSPORT_CALLBACK_THREAD_POOL_SIZE:20}"
   mqtt:
     # MQTT bind-address
     bind_address: "${MQTT_BIND_ADDRESS:0.0.0.0}"
