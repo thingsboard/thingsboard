@@ -173,7 +173,7 @@ class DefaultTbContextTest {
         RuleNodeToRuleChainTellNextMsg failureMsg = (RuleNodeToRuleChainTellNextMsg) capturedTellMsg;
         assertThat(failureMsg.getRelationTypes()).containsOnly(TbNodeConnectionType.FAILURE);
         assertThat(failureMsg.getFailureMessage()).contains("visit limit 1 reached");
-        assertThat(failureMsg.getFailureMessage()).contains("TB_RULE_CHAIN_INPUT_LOOP_MAX_VISITS");
+        assertThat(failureMsg.getFailureMessage()).contains("ACTORS_RULE_CHAIN_INPUT_LOOP_MAX_VISITS");
         assertThat(failureMsg.getFailureMessage()).contains("actors.rule.chain.input_loop_max_visits");
 
         then(mainCtxMock).should().getRuleChainInputLoopMaxVisits();
@@ -255,7 +255,7 @@ class DefaultTbContextTest {
         RuleNodeToRuleChainTellNextMsg failureMsg = (RuleNodeToRuleChainTellNextMsg) capturedTellMsg;
         assertThat(failureMsg.getRelationTypes()).containsOnly(TbNodeConnectionType.FAILURE);
         assertThat(failureMsg.getFailureMessage()).contains("visit limit 2 reached");
-        assertThat(failureMsg.getFailureMessage()).contains("TB_RULE_CHAIN_INPUT_LOOP_MAX_VISITS");
+        assertThat(failureMsg.getFailureMessage()).contains("ACTORS_RULE_CHAIN_INPUT_LOOP_MAX_VISITS");
         assertThat(failureMsg.getFailureMessage()).contains("actors.rule.chain.input_loop_max_visits");
 
         then(mainCtxMock).should().getRuleChainInputLoopMaxVisits();

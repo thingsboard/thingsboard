@@ -635,6 +635,12 @@ public class ActorSystemContext {
                     "enable SSRF protection by setting SSRF_PROTECTION_ENABLED=true. If your rule chains need to access " +
                     "devices on local networks, use SSRF_ALLOWED_HOSTS to whitelist specific addresses or ranges.");
         }
+        if (ruleChainInputLoopMaxVisits < 1) {
+            log.warn("actors.rule.chain.input_loop_max_visits is configured to {}, which is below the minimum of 1. " +
+                    "Clamping to 1 (strict cycle detection - each rule chain input node fires at most once per message). " +
+                    "Set ACTORS_RULE_CHAIN_INPUT_LOOP_MAX_VISITS to a value >= 1 to allow intentional loops.",
+                    ruleChainInputLoopMaxVisits);
+        }
     }
 
     @Value("${actors.tenant.create_components_on_init:true}")

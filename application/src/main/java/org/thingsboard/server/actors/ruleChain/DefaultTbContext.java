@@ -190,8 +190,9 @@ public class DefaultTbContext implements TbContext {
         if (msg.countOccurrences(selfRuleChainId, selfId) >= maxVisits) {
             String reason = "Rule chain input node visit limit " + maxVisits + " reached for rule node ["
                     + selfId + "] in rule chain [" + selfRuleChainId + "]. "
+                    + "If this loop is unexpected, check the rule chain configuration for circular references. "
                     + "If the loop is intentional, raise actors.rule.chain.input_loop_max_visits "
-                    + "(env TB_RULE_CHAIN_INPUT_LOOP_MAX_VISITS).";
+                    + "(env ACTORS_RULE_CHAIN_INPUT_LOOP_MAX_VISITS).";
             log.warn("[{}] {}", nodeCtx.getTenantId(), reason);
             tellFailure(msg, new RuntimeException(reason));
             return;
