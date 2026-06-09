@@ -66,7 +66,7 @@ import { forkJoin, mergeMap, of, Subscription, throwError } from 'rxjs';
 import { widgetEditorCompleter } from '@home/pages/widget/widget-editor.models';
 import { Observable } from 'rxjs/internal/Observable';
 import { catchError, map, tap } from 'rxjs/operators';
-import { beautifyCss, beautifyHtml, beautifyJs } from '@shared/models/beautify.models';
+import { beautifyJs } from '@shared/models/beautify.models';
 import { HttpClient, HttpStatusCode } from '@angular/common/http';
 import { loadModulesCompleter } from '@shared/models/js-function.models';
 import { TbPopoverService } from '@shared/components/popover.service';
@@ -74,6 +74,7 @@ import { JsFuncModulesComponent } from '@shared/components/js-func-modules.compo
 import { MatIconButton } from '@angular/material/button';
 import { formPropertyCompletions } from '@shared/models/dynamic-form.models';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
+import { UntypedFormBuilder } from '@angular/forms';
 import Timeout = NodeJS.Timeout;
 
 // @dynamic
@@ -103,12 +104,6 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
 
   @ViewChild('framePanel', {static: true})
   framePanelElmRef: ElementRef;
-
-  @ViewChild('htmlInput', {static: true})
-  htmlInputElmRef: ElementRef;
-
-  @ViewChild('cssInput', {static: true})
-  cssInputElmRef: ElementRef;
 
   @ViewChild('javascriptInput', {static: true})
   javascriptInputElmRef: ElementRef;
@@ -152,8 +147,6 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
 
   aceEditors: Ace.Editor[] = [];
   editorsResizeCafs: {[editorId: string]: CancelAnimationFrame} = {};
-  htmlEditor: Ace.Editor;
-  cssEditor: Ace.Editor;
   jsEditor: Ace.Editor;
   private initialCompleters: Ace.Completer[];
   aceResize$: ResizeObserver;
@@ -174,6 +167,9 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
 
   updateBreadcrumbs = new EventEmitter();
 
+  htmlFormControl = null;
+  cssFormControl = null;
+
   private rxSubscriptions = new Array<Subscription>();
 
   constructor(protected store: Store<AppState>,
@@ -188,7 +184,8 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
               private renderer: Renderer2,
               private viewContainerRef: ViewContainerRef,
               private customTranslate: CustomTranslatePipe,
-              private http: HttpClient) {
+              private http: HttpClient,
+              private fb: UntypedFormBuilder) {
     super(store);
 
     this.authUser = getCurrentAuthUser(store);
@@ -308,6 +305,12 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
   }
 
   private initAceEditors() {
+    this.htmlFormControl = this.fb.control(this.widget.templateHtml ?? null);
+    this.htmlFormControl.valueChanges.subscribe((value: string) => this.widget.templateHtml = value);
+
+    this.cssFormControl = this.fb.control(this.widget.templateCss ?? null);
+    this.cssFormControl.valueChanges.subscribe((value: string) => this.widget.templateCss = value);
+
     this.aceResize$ = new ResizeObserver((entries) => {
       entries.forEach((entry) => {
         const editor = this.aceEditors.find(aceEditor => aceEditor.container === entry.target);
@@ -316,33 +319,6 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
     });
 
     const editorsObservables: Observable<any>[] = [];
-
-
-    editorsObservables.push(this.createAceEditor(this.htmlInputElmRef, 'html').pipe(
-      tap((editor) => {
-        this.htmlEditor = editor;
-        this.htmlEditor.on('input', () => {
-          const editorValue = this.htmlEditor.getValue();
-          if (this.widget.templateHtml !== editorValue) {
-            this.widget.templateHtml = editorValue;
-            this.isDirty = true;
-          }
-        });
-      })
-    ));
-
-    editorsObservables.push(this.createAceEditor(this.cssInputElmRef, 'css').pipe(
-      tap((editor) => {
-        this.cssEditor = editor;
-        this.cssEditor.on('input', () => {
-          const editorValue = this.cssEditor.getValue();
-          if (this.widget.templateCss !== editorValue) {
-            this.widget.templateCss = editorValue;
-            this.isDirty = true;
-          }
-        });
-      })
-    ));
 
     editorsObservables.push(this.createAceEditor(this.javascriptInputElmRef, 'javascript').pipe(
       tap((editor) => {
@@ -376,8 +352,8 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
   }
 
   private setAceEditorValues() {
-    this.htmlEditor.setValue(this.widget.templateHtml ? this.widget.templateHtml : '', -1);
-    this.cssEditor.setValue(this.widget.templateCss ? this.widget.templateCss : '', -1);
+    this.htmlFormControl.setValue(this.widget.templateHtml ?? null, {emitEvent: false});
+    this.cssFormControl.setValue(this.widget.templateCss ?? null, {emitEvent: false});
     this.jsEditor.setValue(this.controllerScriptBody ? this.controllerScriptBody : '', -1);
     this.updateControllerScriptCompleters();
   }
@@ -686,30 +662,6 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
     return !this.iframeWidgetEditModeInited
       || this.saveWidgetPending
       || this.saveWidgetAsPending;
-  }
-
-  beautifyCss(): void {
-    beautifyCss(this.widget.templateCss, {indent_size: 4}).subscribe(
-      (res) => {
-        if (this.widget.templateCss !== res) {
-          this.isDirty = true;
-          this.widget.templateCss = res;
-          this.cssEditor.setValue(this.widget.templateCss ? this.widget.templateCss : '', -1);
-        }
-      }
-    );
-  }
-
-  beautifyHtml(): void {
-    beautifyHtml(this.widget.templateHtml, {indent_size: 4, wrap_line_length: 60}).subscribe(
-      (res) => {
-        if (this.widget.templateHtml !== res) {
-          this.isDirty = true;
-          this.widget.templateHtml = res;
-          this.htmlEditor.setValue(this.widget.templateHtml ? this.widget.templateHtml : '', -1);
-        }
-      }
-    );
   }
 
   beautifyJs(): void {

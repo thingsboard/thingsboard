@@ -67,6 +67,8 @@ export class CssComponent implements OnInit, OnDestroy, ControlValueAccessor, Va
 
   @Input() label: string;
 
+  @Input() showLabel = true;
+
   @Input() disabled: boolean;
 
   @Input() fillHeight: boolean;

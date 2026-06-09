@@ -25,9 +25,13 @@
                      'tb-error': !objectValid}">{{ label }}</label>
     <span class="flex-1"></span>
     @if (!readonly && !disabled) {
-      <button type="button"
-              mat-button class="tidy" (click)="beautifyJSON()">
-        {{'js-func.tidy' | translate }}
+      <button type='button' mat-icon-button
+              class="tb-mat-32 tidy"
+              matTooltip="{{'js-func.tidy' | translate}}"
+              matTooltipPosition="above"
+              style="border-radius: 50%"
+              (click)="beautifyJSON()">
+        <mat-icon class="material-icons">auto_fix_high</mat-icon>
       </button>
     }
     @if (!readonly && !disabled) {

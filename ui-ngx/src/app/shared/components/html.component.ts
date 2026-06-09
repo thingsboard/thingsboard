@@ -71,6 +71,8 @@ export class HtmlComponent implements OnInit, OnDestroy, ControlValueAccessor, V
 
   @Input() fillHeight: boolean;
 
+  @Input() showLabel = true;
+
   @Input() minHeight = '200px';
 
   private requiredValue: boolean;
@@ -196,7 +198,7 @@ export class HtmlComponent implements OnInit, OnDestroy, ControlValueAccessor, V
   }
 
   beautifyHtml() {
-    beautifyHtml(this.modelValue, {indent_size: 4}).subscribe(
+    beautifyHtml(this.modelValue, {indent_size: 4, wrap_line_length: 60}).subscribe(
       (res) => {
         if (this.modelValue !== res) {
           this.htmlEditor.setValue(res ? res : '', -1);

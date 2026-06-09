@@ -1,0 +1,37 @@
+<!--
+
+    Copyright © 2016-2026 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div [class.fill-height]="fillHeight()" class="tb-toolbar flex flex-col items-center gap-1 bg-gray-50 px-1 py-2">
+  @if (!disabled()) {
+    <button type='button' mat-icon-button
+            class="tb-mat-32"
+            matTooltip="{{'js-func.tidy' | translate}}"
+            matTooltipPosition="above"
+            style="border-radius: 50%"
+            (click)="beautifyTriggered.emit()">
+      <mat-icon class="material-icons">auto_fix_high</mat-icon>
+    </button>
+  }
+  <button type='button' mat-icon-button
+          class="tb-mat-32"
+          matTooltip="{{(fullscreen() ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
+          matTooltipPosition="above"
+          style="border-radius: 50%"
+          (click)="setFullscreen.emit(!fullscreen())">
+    <mat-icon class="material-icons">{{ fullscreen() ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+  </button>
+</div>

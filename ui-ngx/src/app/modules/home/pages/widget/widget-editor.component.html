@@ -162,34 +162,22 @@
               </mat-tab>
               <mat-tab label="{{ 'widget.html' | translate }}">
                 <div class="tb-resize-container" tb-fullscreen [fullscreen]="htmlFullscreen">
-                  <div class="tb-editor-area-title-panel">
-                    <button mat-button (click)="beautifyHtml()">
-                      {{ 'widget.tidy' | translate }}
-                    </button>
-                    <button mat-icon-button class="tb-mat-32"
-                            (click)="htmlFullscreen = !htmlFullscreen"
-                            matTooltip="{{(htmlFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
-                            matTooltipPosition="above">
-                      <mat-icon>{{ htmlFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
-                    </button>
-                  </div>
-                  <div #htmlInput></div>
+                  <tb-html class="flex-1"
+                           [fillHeight]="true"
+                           [formControl]="htmlFormControl"
+                           [showLabel]="false"
+                           label="{{ 'widget.html' | translate }}">
+                  </tb-html>
                 </div>
               </mat-tab>
               <mat-tab label="{{ 'widget.css' | translate }}">
                 <div class="tb-resize-container" tb-fullscreen [fullscreen]="cssFullscreen">
-                  <div class="tb-editor-area-title-panel">
-                    <button mat-button (click)="beautifyCss()">
-                      {{ 'widget.tidy' | translate }}
-                    </button>
-                    <button mat-icon-button class="tb-mat-32"
-                            (click)="cssFullscreen = !cssFullscreen"
-                            matTooltip="{{(cssFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
-                            matTooltipPosition="above">
-                      <mat-icon>{{ cssFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
-                    </button>
-                  </div>
-                  <div #cssInput></div>
+                  <tb-css class="flex-1"
+                          [fillHeight]="true"
+                          [formControl]="cssFormControl"
+                          [showLabel]="false"
+                          label="{{ 'widget.css' | translate }}">
+                  </tb-css>
                 </div>
               </mat-tab>
             </mat-tab-group>

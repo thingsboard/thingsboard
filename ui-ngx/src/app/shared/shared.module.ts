@@ -242,6 +242,7 @@ import { MAT_BUTTON_TOGGLE_DEFAULT_OPTIONS } from '@angular/material/button-togg
 import { RgbaInputComponent } from '@shared/components/color-picker/rgba-input.component';
 import { HslaInputComponent } from '@shared/components/color-picker/hsla-input.component';
 import { InputChangeDirective } from '@shared/components/color-picker/input-change.directive';
+import { EditorToolbarComponent } from '@shared/components/editor-toolbar.component';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -472,7 +473,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     StringPatternAutocompleteComponent,
     RgbaInputComponent,
     HslaInputComponent,
-    InputChangeDirective
+    InputChangeDirective,
+    EditorToolbarComponent
   ],
   imports: [
     CommonModule,

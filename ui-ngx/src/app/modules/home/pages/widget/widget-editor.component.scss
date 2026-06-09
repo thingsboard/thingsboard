@@ -160,14 +160,27 @@ div.tb-editor-area-title-panel {
   }
 }
 
-.tb-resize-container {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  overflow-y: auto;
-
-  .ace_editor {
+.tb-editor .tb-split {
+  .tb-resize-container {
+    position: relative;
+    width: 100%;
     height: 100%;
+    overflow-y: auto;
+
+    .tb-html, .tb-css {
+      &:not(.tb-fullscreen) {
+        padding-bottom: 0;
+      }
+    }
+
+    .tb-html-content-panel, .tb-css-content-panel {
+      border: none;
+      height: 100%;
+    }
+
+    .ace_editor {
+      height: 100%;
+    }
   }
 }
 

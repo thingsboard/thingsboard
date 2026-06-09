@@ -50,18 +50,8 @@
     }
   }
   .tb-html {
-    position: relative;
     &:not(.tb-fullscreen) {
       padding-bottom: 0;
-    }
-    .tb-html-toolbar {
-      position: absolute;
-      top: 0;
-      right: 8px;
-      z-index: 8;
-      .tb-title {
-        display: none;
-      }
     }
     .tb-html-content-panel {
       border-top: none;
@@ -69,19 +59,9 @@
     }
   }
   .tb-css {
-    position: relative;
     &:not(.tb-fullscreen) {
       .tb-css-content-panel {
         margin: 0;
-      }
-    }
-    .tb-css-toolbar {
-      position: absolute;
-      top: 0;
-      right: 8px;
-      z-index: 8;
-      .tb-title {
-        display: none;
       }
     }
     .tb-css-content-panel {

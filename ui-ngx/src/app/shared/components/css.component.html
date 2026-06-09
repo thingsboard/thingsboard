@@ -18,26 +18,20 @@
 <div class="tb-css flex flex-col" style="background: #fff;" [class]="{'tb-disabled': disabled, 'fill-height': fillHeight}"
      tb-fullscreen
      [fullscreen]="fullscreen">
-  <div style="height: 40px;" class="tb-css-toolbar flex flex-row items-center justify-start">
-    <label class="tb-title no-padding" [class]="{'tb-error': !disabled && (hasErrors || required && !modelValue), 'tb-required': !disabled && required}">{{ label }}</label>
-    <span class="flex-1"></span>
-    @if (!disabled) {
-      <button type='button' mat-button class="tidy" (click)="beautifyCss()">
-        {{'js-func.tidy' | translate }}
-      </button>
-    }
-    <fieldset style="width: initial">
-      <div matTooltip="{{(fullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
-           matTooltipPosition="above"
-           style="border-radius: 50%"
-           (click)="fullscreen = !fullscreen">
-        <button type='button' mat-icon-button class="tb-mat-32">
-          <mat-icon class="material-icons">{{ fullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
-        </button>
-      </div>
-    </fieldset>
-  </div>
-  <div id="tb-css-panel" class="tb-css-content-panel flex flex-col">
+  @if (showLabel) {
+    <div style="height: 40px;" class="flex flex-row items-center justify-start">
+      <label class="tb-title no-padding" [class]="{'tb-error': !disabled && (hasErrors || required && !modelValue), 'tb-required': !disabled && required}">{{ label }}</label>
+    </div>
+  }
+  <div id="tb-css-panel" class="tb-css-content-panel flex" [class.fill-height]="fillHeight">
     <div #cssEditor id="tb-css-input" [class.fill-height]="fillHeight"></div>
+    <tb-editor-toolbar
+      [class.fill-height]="fillHeight"
+      [fullscreen]="fullscreen"
+      [fillHeight]="fillHeight"
+      [disabled]="disabled"
+      (setFullscreen)="fullscreen = $event"
+      (beautifyTriggered)="beautifyCss()">
+    </tb-editor-toolbar>
   </div>
 </div>
