@@ -22,6 +22,11 @@ import org.eclipse.californium.core.coap.Response;
 import org.eclipse.californium.core.network.Exchange;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.eclipse.californium.core.server.resources.Resource;
+import org.eclipse.californium.elements.EndpointContext;
+import org.eclipse.californium.elements.auth.X509CertPath;
+import org.thingsboard.server.coapserver.CoapServerService;
+import org.thingsboard.server.coapserver.TbCoapDtlsSessionKey;
+import org.thingsboard.server.coapserver.TbCoapDtlsSessionInfo;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -34,19 +39,27 @@ import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsRes
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.coap.callback.CoapDeviceAuthCallback;
 
+import java.net.InetSocketAddress;
+import java.security.cert.X509Certificate;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentMap;
+
+import static org.eclipse.californium.elements.DtlsEndpointContext.KEY_SESSION_ID;
 
 @Slf4j
 public class OtaPackageTransportResource extends AbstractCoapTransportResource {
     private static final int ACCESS_TOKEN_POSITION = 2;
 
     private final OtaPackageType otaPackageType;
+    private final ConcurrentMap<TbCoapDtlsSessionKey, TbCoapDtlsSessionInfo> dtlsSessionsMap;
 
-    public OtaPackageTransportResource(CoapTransportContext ctx, OtaPackageType otaPackageType) {
+    public OtaPackageTransportResource(CoapTransportContext ctx, CoapServerService coapServerService, OtaPackageType otaPackageType) {
         super(ctx, otaPackageType.getKeyPrefix());
         this.otaPackageType = otaPackageType;
+        this.dtlsSessionsMap = coapServerService.getDtlsSessionsMap();
 
         this.setObservable(true);
     }
@@ -57,6 +70,16 @@ public class OtaPackageTransportResource extends AbstractCoapTransportResource {
         exchange.accept();
         Exchange advanced = exchange.advanced();
         Request request = advanced.getRequest();
+
+        var dtlsSessionId = request.getSourceContext().get(KEY_SESSION_ID);
+        if (dtlsSessionsMap != null && dtlsSessionId != null && !dtlsSessionId.isEmpty()) {
+            TbCoapDtlsSessionInfo tbCoapDtlsSessionInfo = this.getCoapDtlsSessionInfo(request.getSourceContext());
+            if (tbCoapDtlsSessionInfo != null) {
+                getOtaPackageCallback(tbCoapDtlsSessionInfo.getMsg(), exchange, otaPackageType);
+                return;
+            }
+        }
+
         processAccessTokenRequest(exchange, request);
     }
 
@@ -151,4 +174,31 @@ public class OtaPackageTransportResource extends AbstractCoapTransportResource {
         }
     }
 
+    private TbCoapDtlsSessionInfo getCoapDtlsSessionInfo(EndpointContext endpointContext) {
+        InetSocketAddress peerAddress = endpointContext.getPeerAddress();
+        String certPemStr = getCertPem(endpointContext);
+        TbCoapDtlsSessionKey tbCoapDtlsSessionKey = StringUtils.isNotBlank(certPemStr) ? new TbCoapDtlsSessionKey(peerAddress, certPemStr) : null;
+        TbCoapDtlsSessionInfo tbCoapDtlsSessionInfo;
+        if (tbCoapDtlsSessionKey != null) {
+            tbCoapDtlsSessionInfo = dtlsSessionsMap
+                    .computeIfPresent(tbCoapDtlsSessionKey, (dtlsSessionIdStr, dtlsSessionInfo) -> {
+                        dtlsSessionInfo.setLastActivityTime(System.currentTimeMillis());
+                        return dtlsSessionInfo;
+                    });
+        } else {
+            tbCoapDtlsSessionInfo = null;
+        }
+        return tbCoapDtlsSessionInfo;
+    }
+
+    private String getCertPem(EndpointContext endpointContext) {
+        try {
+            X509CertPath certPath = (X509CertPath) endpointContext.getPeerIdentity();
+            X509Certificate x509Certificate = (X509Certificate) certPath.getPath().getCertificates().get(0);
+            return Base64.getEncoder().encodeToString(x509Certificate.getEncoded());
+        } catch (Exception e) {
+            log.error("Failed to get cert PEM: [{}]", endpointContext.getPeerAddress(), e);
+            return null;
+        }
+    }
 }
