@@ -167,6 +167,8 @@ redis:
 
 # HTTP server parameters
 transport:
+  # Size of the thread pool that executes transport API callbacks (session registration, telemetry/attribute and RPC responses, entity update notifications, and the tenant profile fetch on a cache miss). Bounds how many such callbacks - including those that block on a backend round-trip - can run concurrently.
+  callback_thread_pool_size: "${TB_TRANSPORT_CALLBACK_THREAD_POOL_SIZE:20}"
   http:
     # HTTP request processing timeout in milliseconds
     request_timeout: "${HTTP_REQUEST_TIMEOUT:60000}"
