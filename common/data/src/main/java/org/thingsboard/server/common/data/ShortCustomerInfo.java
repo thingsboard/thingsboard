@@ -23,10 +23,6 @@ import lombok.Setter;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.validation.NoXss;
 
-/**
- * Created by igor on 2/27/18.
- */
-
 @Schema
 @AllArgsConstructor
 public class ShortCustomerInfo {
