@@ -97,12 +97,16 @@ public class SmppSmsSenderTest {
 
     @Test
     public void testSendSms_dcs8_ucs2() throws Exception {
-        assertEncoded((byte) 8, "Привіт", "UTF-16BE");
+        // "Привіт" as UCS-2 (UTF-16BE) — exact wire bytes, two octets per code point.
+        byte[] expected = {0x04, 0x1F, 0x04, 0x40, 0x04, 0x38, 0x04, 0x32, 0x04, 0x56, 0x04, 0x42};
+        assertEncodedBytes((byte) 8, "Привіт", expected);
     }
 
     @Test
     public void testSendSms_dcs6_cyrillic() throws Exception {
-        assertEncoded((byte) 6, "Привіт", "ISO-8859-5");
+        // "Привіт" as ISO-8859-5 — exact single-byte Cyrillic wire bytes.
+        byte[] expected = {(byte) 0xBF, (byte) 0xE0, (byte) 0xD8, (byte) 0xD2, (byte) 0xF6, (byte) 0xE2};
+        assertEncodedBytes((byte) 6, "Привіт", expected);
     }
 
     @Test
@@ -111,8 +115,11 @@ public class SmppSmsSenderTest {
     }
 
     @Test
-    public void testSendSms_dcs0_ascii() throws Exception {
-        assertEncoded((byte) 0, "Hello", "US-ASCII");
+    public void testSendSms_dcs0_gsm7() throws Exception {
+        // DCS 0 is the SMSC default alphabet (GSM 7-bit). 'é' is in the GSM alphabet (0x05); under a plain US-ASCII
+        // fallback it would be lost to '?' (0x3F), so these bytes guard against that regression.
+        byte[] expected = {0x63, 0x61, 0x66, 0x05}; // café
+        assertEncodedBytes((byte) 0, "café", expected);
     }
 
     @Test
@@ -161,7 +168,22 @@ public class SmppSmsSenderTest {
         assertEncoded((byte) 14, "안녕하세요", "EUC-KR");
     }
 
+    // Verifies the DCS -> charset mapping. The expected side mirrors the production charset, so it locks the mapping
+    // but not the exact wire bytes; use assertEncodedBytes for charsets where a silent substitution could hide a bug.
     private void assertEncoded(byte dataCoding, String message, String expectedCharset) throws Exception {
+        SubmitSM sent = captureSentPdu(dataCoding, message);
+        assertArrayEquals(message.getBytes(expectedCharset), sent.getShortMessageData().getBuffer());
+        assertEquals(dataCoding, sent.getDataCoding());
+    }
+
+    // Locks the exact bytes written into the SubmitSM PDU against a known-good sequence (independent of the production code).
+    private void assertEncodedBytes(byte dataCoding, String message, byte[] expectedBytes) throws Exception {
+        SubmitSM sent = captureSentPdu(dataCoding, message);
+        assertArrayEquals(expectedBytes, sent.getShortMessageData().getBuffer());
+        assertEquals(dataCoding, sent.getDataCoding());
+    }
+
+    private SubmitSM captureSentPdu(byte dataCoding, String message) throws Exception {
         when(smppSession.isOpened()).thenReturn(true);
         when(smppSession.submit(any())).thenReturn(new SubmitSMResp());
         setDefaultSmppConfig();
@@ -171,10 +193,7 @@ public class SmppSmsSenderTest {
 
         ArgumentCaptor<SubmitSM> captor = ArgumentCaptor.forClass(SubmitSM.class);
         verify(smppSession).submit(captor.capture());
-        SubmitSM sent = captor.getValue();
-
-        assertArrayEquals(message.getBytes(expectedCharset), sent.getShortMessageData().getBuffer());
-        assertEquals(dataCoding, sent.getDataCoding());
+        return captor.getValue();
     }
 
     private void setDefaultSmppConfig() {
