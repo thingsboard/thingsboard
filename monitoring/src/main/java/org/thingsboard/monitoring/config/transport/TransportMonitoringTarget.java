@@ -30,6 +30,7 @@ public class TransportMonitoringTarget implements MonitoringTarget {
     private String queue;
     private boolean checkDomainIps;
     private String namePrefix;
+    private RpcCheckConfig rpc;
 
     @Override
     public UUID getDeviceId() {
@@ -42,6 +43,10 @@ public class TransportMonitoringTarget implements MonitoringTarget {
 
     public String getNamePrefix() {
         return Strings.nullToEmpty(namePrefix);
+    }
+
+    public boolean isRpcEnabled() {
+        return rpc != null && rpc.isEnabled();
     }
 
 }

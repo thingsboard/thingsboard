@@ -1,0 +1,316 @@
+/**
+ * Copyright © 2016-2026 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.thingsboard.monitoring.service.transport.impl;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestTemplate;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.monitoring.client.TbClient;
+import org.thingsboard.monitoring.config.transport.DeviceConfig;
+import org.thingsboard.monitoring.config.transport.HttpTransportMonitoringConfig;
+import org.thingsboard.monitoring.config.transport.RpcCheckConfig;
+import org.thingsboard.monitoring.config.transport.RpcInfo;
+import org.thingsboard.monitoring.config.transport.TransportMonitoringTarget;
+import org.thingsboard.monitoring.data.ServiceFailureException;
+import org.thingsboard.monitoring.service.MonitoringReporter;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.security.DeviceCredentials;
+
+import java.net.SocketTimeoutException;
+import java.util.UUID;
+import java.util.concurrent.Future;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.after;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+class HttpTransportHealthCheckerRpcTest {
+
+    private HttpTransportMonitoringConfig config;
+    private TransportMonitoringTarget target;
+    private HttpTransportHealthChecker checker;
+    private TbClient tbClient;
+    private RestTemplate restTemplate;
+
+    @BeforeEach
+    void setUp() {
+        config = new HttpTransportMonitoringConfig();
+        ReflectionTestUtils.invokeSetterMethod(config, "setRequestTimeoutMs", 4000, int.class);
+
+        DeviceConfig device = new DeviceConfig();
+        device.setId(UUID.randomUUID().toString());
+        DeviceCredentials credentials = new DeviceCredentials();
+        credentials.setCredentialsId("token-abc");
+        device.setCredentials(credentials);
+
+        target = new TransportMonitoringTarget();
+        target.setBaseUrl("http://localhost:8080");
+        target.setDevice(device);
+
+        tbClient = mock(TbClient.class);
+        restTemplate = mock(RestTemplate.class);
+
+        checker = new HttpTransportHealthChecker(config, target);
+        ReflectionTestUtils.setField(checker, "restTemplate", restTemplate);
+        ReflectionTestUtils.setField(checker, "tbClient", tbClient);
+        ReflectionTestUtils.setField(checker, "reporter", mock(MonitoringReporter.class));
+    }
+
+    @Test
+    void doRpcCheckHappyPath() throws Exception {
+        enableRpc();
+        ArgumentCaptor<JsonNode> bodyCaptor = ArgumentCaptor.forClass(JsonNode.class);
+        when(tbClient.handleTwoWayDeviceRPCRequest(any(DeviceId.class), bodyCaptor.capture()))
+                .thenAnswer(inv -> bodyCaptor.getValue().get("params"));
+
+        checker.doRpcCheck();
+
+        assertThat(bodyCaptor.getValue().get("method").asText()).isEqualTo("monitoringCheck");
+    }
+
+    @Test
+    void doRpcCheckValueMismatchUsesRpcKey() {
+        enableRpc();
+        when(tbClient.handleTwoWayDeviceRPCRequest(any(DeviceId.class), any(JsonNode.class)))
+                .thenReturn(JacksonUtil.newObjectNode().put("value", "wrong"));
+
+        assertThatThrownBy(() -> checker.doRpcCheck())
+                .isInstanceOf(ServiceFailureException.class)
+                .extracting(t -> ((ServiceFailureException) t).getServiceKey())
+                .satisfies(key -> assertThat(key.toString()).endsWith(RpcInfo.RPC_SUFFIX));
+    }
+
+    @Test
+    void doRpcCheckRestExceptionWraps() {
+        enableRpc();
+        when(tbClient.handleTwoWayDeviceRPCRequest(any(DeviceId.class), any(JsonNode.class)))
+                .thenThrow(new RuntimeException("400 Bad Request"));
+
+        assertThatThrownBy(() -> checker.doRpcCheck())
+                .isInstanceOf(ServiceFailureException.class)
+                .hasCauseInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    void doRpcCheckTimeoutWraps() {
+        enableRpc();
+        when(tbClient.handleTwoWayDeviceRPCRequest(any(DeviceId.class), any(JsonNode.class)))
+                .thenThrow(new ResourceAccessException("read timed out", new SocketTimeoutException()));
+
+        assertThatThrownBy(() -> checker.doRpcCheck())
+                .isInstanceOf(ServiceFailureException.class)
+                .hasMessageContaining("read timed out");
+    }
+
+    @Test
+    void doRpcCheckIsNoOpWhenRpcDisabled() throws Exception {
+        checker.doRpcCheck();
+
+        verify(tbClient, never()).handleTwoWayDeviceRPCRequest(any(), any());
+    }
+
+    @Test
+    void initClientStartsPollingWhenRpcEnabled() throws Exception {
+        enableRpc();
+        when(restTemplate.getForEntity(contains("/rpc?timeout="), eq(JsonNode.class)))
+                .thenReturn(new ResponseEntity<>(null, HttpStatus.OK));
+
+        checker.initClient();
+        try {
+            verify(restTemplate, timeout(2000).atLeastOnce())
+                    .getForEntity(contains("/rpc?timeout="), eq(JsonNode.class));
+        } finally {
+            checker.destroyClient();
+        }
+    }
+
+    @Test
+    void initClientDoesNotStartPollingWhenRpcDisabled() throws Exception {
+        checker.initClient();
+
+        // Mockito#after waits for the window then asserts no invocation occurred —
+        // deterministic on slow CI runners, unlike Thread.sleep + verify(never()).
+        verify(restTemplate, after(200).never()).getForEntity(any(String.class), eq(JsonNode.class));
+        Future<?> future = (Future<?>) ReflectionTestUtils.getField(checker, "rpcPollFuture");
+        assertThat(future).isNull();
+    }
+
+    @Test
+    void initClientIsIdempotent() throws Exception {
+        enableRpc();
+        when(restTemplate.getForEntity(contains("/rpc?timeout="), eq(JsonNode.class)))
+                .thenReturn(new ResponseEntity<>(null, HttpStatus.OK));
+
+        checker.initClient();
+        Future<?> first = (Future<?>) ReflectionTestUtils.getField(checker, "rpcPollFuture");
+        checker.initClient();
+        Future<?> second = (Future<?>) ReflectionTestUtils.getField(checker, "rpcPollFuture");
+
+        assertThat(second).isSameAs(first);
+        checker.destroyClient();
+    }
+
+    @Test
+    void destroyClientStopsPolling() throws Exception {
+        enableRpc();
+        when(restTemplate.getForEntity(contains("/rpc?timeout="), eq(JsonNode.class)))
+                .thenReturn(new ResponseEntity<>(null, HttpStatus.OK));
+
+        checker.initClient();
+        verify(restTemplate, timeout(2000).atLeastOnce())
+                .getForEntity(contains("/rpc?timeout="), eq(JsonNode.class));
+
+        checker.destroyClient();
+        clearInvocations(restTemplate);
+
+        // Wait the window and verify no further polls fire — replaces brittle
+        // Thread.sleep + verifyNoMoreInteractions which races on slow runners.
+        verify(restTemplate, after(200).never())
+                .getForEntity(any(String.class), eq(JsonNode.class));
+        assertThat(ReflectionTestUtils.getField(checker, "rpcPollFuture")).isNull();
+        assertThat(ReflectionTestUtils.getField(checker, "rpcPoller")).isNull();
+    }
+
+    @Test
+    void initClientReschedulesAfterPollFutureDies() throws Exception {
+        enableRpc();
+        when(restTemplate.getForEntity(contains("/rpc?timeout="), eq(JsonNode.class)))
+                .thenReturn(new ResponseEntity<>(null, HttpStatus.OK));
+
+        checker.initClient();
+        try {
+            Future<?> first = (Future<?>) ReflectionTestUtils.getField(checker, "rpcPollFuture");
+            assertThat(first).isNotNull();
+            first.cancel(true);
+            verify(restTemplate, timeout(2000).atLeastOnce())
+                    .getForEntity(contains("/rpc?timeout="), eq(JsonNode.class));
+
+            checker.initClient();
+
+            Future<?> second = (Future<?>) ReflectionTestUtils.getField(checker, "rpcPollFuture");
+            assertThat(second).isNotNull().isNotSameAs(first);
+            assertThat(second.isDone()).isFalse();
+        } finally {
+            checker.destroyClient();
+        }
+    }
+
+    @Test
+    void pollOnceEchoesParamsWhenRpcArrives() throws Exception {
+        ObjectNode rpc = JacksonUtil.newObjectNode();
+        rpc.put("id", 99L);
+        rpc.put("method", "monitoringCheck");
+        rpc.set("params", JacksonUtil.newObjectNode().put("value", "uuid-99"));
+        when(restTemplate.getForEntity(contains("/rpc?timeout="), eq(JsonNode.class)))
+                .thenReturn(ResponseEntity.ok(rpc));
+
+        checker.pollOnce();
+
+        ArgumentCaptor<JsonNode> bodyCaptor = ArgumentCaptor.forClass(JsonNode.class);
+        verify(restTemplate).postForLocation(eq("http://localhost:8080/api/v1/token-abc/rpc/99"), bodyCaptor.capture());
+        assertThat(bodyCaptor.getValue().get("value").asText()).isEqualTo("uuid-99");
+    }
+
+    @Test
+    void pollOncePostsEmptyBodyWhenParamsMissing() throws Exception {
+        ObjectNode rpc = JacksonUtil.newObjectNode();
+        rpc.put("id", 7L);
+        rpc.put("method", "monitoringCheck");
+        when(restTemplate.getForEntity(contains("/rpc?timeout="), eq(JsonNode.class)))
+                .thenReturn(ResponseEntity.ok(rpc));
+
+        checker.pollOnce();
+
+        ArgumentCaptor<JsonNode> bodyCaptor = ArgumentCaptor.forClass(JsonNode.class);
+        verify(restTemplate).postForLocation(eq("http://localhost:8080/api/v1/token-abc/rpc/7"), bodyCaptor.capture());
+        assertThat(bodyCaptor.getValue()).isNotNull();
+        assertThat(bodyCaptor.getValue().isObject()).isTrue();
+    }
+
+    @Test
+    void pollOnceIgnoresNonNumericId() throws Exception {
+        ObjectNode rpc = JacksonUtil.newObjectNode();
+        rpc.put("id", "abc");
+        when(restTemplate.getForEntity(contains("/rpc?timeout="), eq(JsonNode.class)))
+                .thenReturn(ResponseEntity.ok(rpc));
+
+        checker.pollOnce();
+
+        verify(restTemplate, never()).postForLocation(any(String.class), any());
+    }
+
+    @Test
+    void pollOnceIsSilentOn408() throws Exception {
+        when(restTemplate.getForEntity(contains("/rpc?timeout="), eq(JsonNode.class)))
+                .thenThrow(HttpClientErrorException.create(HttpStatus.REQUEST_TIMEOUT, "timeout", null, null, null));
+
+        checker.pollOnce();
+
+        verify(restTemplate, never()).postForLocation(any(String.class), any());
+    }
+
+    @Test
+    void pollOnceSwallowsBodylessOk() throws Exception {
+        when(restTemplate.getForEntity(contains("/rpc?timeout="), eq(JsonNode.class)))
+                .thenReturn(new ResponseEntity<>(null, HttpStatus.OK));
+
+        checker.pollOnce();
+
+        verify(restTemplate, never()).postForLocation(any(String.class), any());
+    }
+
+    @Test
+    void pollTaskBackoffDoesNotKillScheduler() throws Exception {
+        enableRpc();
+        when(restTemplate.getForEntity(contains("/rpc?timeout="), eq(JsonNode.class)))
+                .thenThrow(new RuntimeException("boom"))
+                .thenThrow(new RuntimeException("boom"))
+                .thenReturn(new ResponseEntity<>(null, HttpStatus.OK));
+
+        checker.initClient();
+        try {
+            verify(restTemplate, timeout(5000).atLeast(3))
+                    .getForEntity(contains("/rpc?timeout="), eq(JsonNode.class));
+        } finally {
+            checker.destroyClient();
+        }
+    }
+
+    private void enableRpc() {
+        RpcCheckConfig rpc = new RpcCheckConfig();
+        rpc.setEnabled(true);
+        target.setRpc(rpc);
+    }
+
+}

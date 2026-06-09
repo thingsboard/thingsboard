@@ -54,6 +54,10 @@ public abstract class BaseHealthChecker<C extends MonitoringConfig, T extends Mo
     @Value("${monitoring.check_timeout_ms}")
     private int resultCheckTimeoutMs;
 
+    protected final void reportRpcLatency(long latencyNanos) {
+        reporter.reportLatency(Latencies.rpcRoundTrip(getKey()), latencyNanos);
+    }
+
     @Getter
     private final Map<String, BaseHealthChecker<C, T>> associates = new HashMap<>();
 
@@ -87,6 +91,8 @@ public abstract class BaseHealthChecker<C extends MonitoringConfig, T extends Mo
 
             log.trace("[{}] Waiting for WS update", info);
             checkWsUpdates(wsClient, testValue);
+
+            doRpcCheck();
 
             reporter.serviceIsOk(info);
         } catch (ServiceFailureException e) {
@@ -129,6 +135,10 @@ public abstract class BaseHealthChecker<C extends MonitoringConfig, T extends Mo
     protected abstract String createTestPayload(String testValue);
 
     protected abstract void sendTestPayload(String payload) throws Exception;
+
+    protected void doRpcCheck() throws Exception {
+        // no-op; transports opt in by overriding when target.isRpcEnabled()
+    }
 
     @PreDestroy
     protected abstract void destroyClient() throws Exception;

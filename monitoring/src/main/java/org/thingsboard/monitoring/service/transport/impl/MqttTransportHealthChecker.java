@@ -15,7 +15,10 @@
  */
 package org.thingsboard.monitoring.service.transport.impl;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.annotations.VisibleForTesting;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.paho.client.mqttv3.IMqttToken;
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.MqttClient;
@@ -25,19 +28,26 @@ import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.monitoring.config.transport.MqttTransportMonitoringConfig;
 import org.thingsboard.monitoring.config.transport.TransportMonitoringTarget;
 import org.thingsboard.monitoring.config.transport.TransportType;
 import org.thingsboard.monitoring.service.transport.TransportHealthChecker;
+
+import java.nio.charset.StandardCharsets;
 
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 @Slf4j
 public class MqttTransportHealthChecker extends TransportHealthChecker<MqttTransportMonitoringConfig> {
 
-    private MqttClient mqttClient;
+    @VisibleForTesting
+    MqttClient mqttClient;
+    private boolean rpcSubscribed;
 
     private static final String DEVICE_TELEMETRY_TOPIC = "v1/devices/me/telemetry";
+    private static final String DEVICE_RPC_REQUEST_SUB_TOPIC = "v1/devices/me/rpc/request/+";
+    private static final String DEVICE_RPC_RESPONSE_TOPIC_PREFIX = "v1/devices/me/rpc/response/";
 
     protected MqttTransportHealthChecker(MqttTransportMonitoringConfig config, TransportMonitoringTarget target) {
         super(config, target);
@@ -59,6 +69,33 @@ public class MqttTransportHealthChecker extends TransportHealthChecker<MqttTrans
                 throw result.getException();
             }
             log.debug("Initialized MQTT client for URI {}", mqttClient.getServerURI());
+            rpcSubscribed = false;
+        }
+        if (target.isRpcEnabled() && !rpcSubscribed) {
+            mqttClient.subscribe(DEVICE_RPC_REQUEST_SUB_TOPIC, config.getQos(), this::echoRpcRequest);
+            rpcSubscribed = true;
+            log.debug("Subscribed for RPC requests on {}", DEVICE_RPC_REQUEST_SUB_TOPIC);
+        }
+    }
+
+    // Registered as IMqttMessageListener; must not propagate exceptions to Paho's
+    // callback dispatcher. A leaked exception (malformed payload, broken JSON,
+    // transient publish failure) can disconnect the session or leave the listener
+    // in a bad state, masking the very telemetry uplink the rest of this checker
+    // depends on. Match CoapTransportHealthChecker.handleRpcNotification: log + skip.
+    @VisibleForTesting
+    void echoRpcRequest(String topic, MqttMessage request) {
+        try {
+            String requestId = StringUtils.substringAfterLast(topic, "/");
+            JsonNode body = JacksonUtil.toJsonNode(new String(request.getPayload(), StandardCharsets.UTF_8));
+            JsonNode params = body == null ? null : body.get("params");
+            byte[] responsePayload = (params == null ? "{}" : JacksonUtil.toString(params))
+                    .getBytes(StandardCharsets.UTF_8);
+            MqttMessage response = new MqttMessage(responsePayload);
+            response.setQos(config.getQos());
+            mqttClient.publish(DEVICE_RPC_RESPONSE_TOPIC_PREFIX + requestId, response);
+        } catch (Exception e) {
+            log.warn("MQTT RPC echo failed for {}: {}", topic, e.getMessage());
         }
     }
 
@@ -70,11 +107,18 @@ public class MqttTransportHealthChecker extends TransportHealthChecker<MqttTrans
         mqttClient.publish(DEVICE_TELEMETRY_TOPIC, message);
     }
 
+    @VisibleForTesting
+    @Override
+    protected void doRpcCheck() throws Exception {
+        super.doRpcCheck();
+    }
+
     @Override
     protected void destroyClient() throws Exception {
         if (mqttClient != null) {
             mqttClient.disconnect();
             mqttClient = null;
+            rpcSubscribed = false;
             log.info("Disconnected MQTT client");
         }
     }
