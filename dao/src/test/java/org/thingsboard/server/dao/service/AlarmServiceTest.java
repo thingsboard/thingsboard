@@ -64,6 +64,7 @@ import org.thingsboard.server.dao.user.UserService;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -1025,6 +1026,7 @@ public class AlarmServiceTest extends AbstractServiceTest {
         ExecutorService executor = Executors.newFixedThreadPool(parallelism);
         CountDownLatch start = new CountDownLatch(1);
         CountDownLatch done = new CountDownLatch(parallelism);
+        List<Throwable> failures = new CopyOnWriteArrayList<>();
         try {
             for (int i = 0; i < parallelism; i++) {
                 executor.submit(() -> {
@@ -1036,7 +1038,8 @@ public class AlarmServiceTest extends AbstractServiceTest {
                                 .type(TEST_ALARM)
                                 .severity(AlarmSeverity.CRITICAL)
                                 .startTs(ts).build());
-                    } catch (Throwable ignored) {
+                    } catch (Throwable t) {
+                        failures.add(t);
                     } finally {
                         done.countDown();
                     }
@@ -1047,6 +1050,10 @@ public class AlarmServiceTest extends AbstractServiceTest {
         } finally {
             executor.shutdownNow();
         }
+
+        assertThat(failures)
+                .as("Concurrent createAlarm calls must not throw (e.g. deadlock or SQL error under contention)")
+                .isEmpty();
 
         PageData<AlarmInfo> activeAlarms = alarmService.findAlarms(tenantId, AlarmQuery.builder()
                 .affectedEntityId(originatorId)
