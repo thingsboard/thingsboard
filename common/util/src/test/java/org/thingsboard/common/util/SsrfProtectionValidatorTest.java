@@ -577,4 +577,89 @@ public class SsrfProtectionValidatorTest {
         }
     }
 
+    // --- validateHost(String) direct tests ---
+
+    @ParameterizedTest
+    @ValueSource(strings = {"example.com", "8.8.8.8", "github.com"})
+    void testValidateHostAllowsPublicHosts(String host) {
+        assertThatNoException().isThrownBy(() -> SsrfProtectionValidator.validateHost(host, true));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"127.0.0.1", "10.0.0.1", "192.168.1.1", "172.16.0.1", "169.254.169.254", "0.0.0.0"})
+    void testValidateHostBlocksPrivateIps(String host) {
+        assertThatThrownBy(() -> SsrfProtectionValidator.validateHost(host, true))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("URI is invalid");
+    }
+
+    @Test
+    void testValidateHostBlocksLocalhost() {
+        assertThatThrownBy(() -> SsrfProtectionValidator.validateHost("localhost", true))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("URI is invalid");
+    }
+
+    @Test
+    void testValidateHostBlocksIpv6Loopback() {
+        assertThatThrownBy(() -> SsrfProtectionValidator.validateHost("::1", true))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("URI is invalid");
+        assertThatThrownBy(() -> SsrfProtectionValidator.validateHost("[::1]", true))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("URI is invalid");
+    }
+
+    @Test
+    void testValidateHostBlocksInternalSuffix() {
+        assertThatThrownBy(() -> SsrfProtectionValidator.validateHost("server.internal", true))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("URI is invalid");
+        assertThatThrownBy(() -> SsrfProtectionValidator.validateHost("app.local", true))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("URI is invalid");
+    }
+
+    @Test
+    void testValidateHostRejectsNullOrEmpty() {
+        assertThatThrownBy(() -> SsrfProtectionValidator.validateHost(null, true))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("hostname is missing");
+        assertThatThrownBy(() -> SsrfProtectionValidator.validateHost("", true))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("hostname is missing");
+    }
+
+    @Test
+    void testValidateHostDisabledSkipsAllChecks() {
+        // Even with private IP and null host, validation is a no-op when disabled
+        assertThatNoException().isThrownBy(() -> SsrfProtectionValidator.validateHost("127.0.0.1", false));
+        assertThatNoException().isThrownBy(() -> SsrfProtectionValidator.validateHost(null, false));
+    }
+
+    @Test
+    void testValidateHostHonorsAllowList() {
+        try {
+            SsrfProtectionValidator.setAllowedHosts(List.of("10.0.0.0/8"));
+            assertThatNoException().isThrownBy(() -> SsrfProtectionValidator.validateHost("10.1.2.3", true));
+        } finally {
+            SsrfProtectionValidator.setAllowedHosts(Collections.emptyList());
+        }
+    }
+
+    @Test
+    void testValidateHostUsesStaticEnabledFlag() {
+        boolean original = SsrfProtectionValidator.isEnabled();
+        try {
+            SsrfProtectionValidator.setEnabled(true);
+            assertThatThrownBy(() -> SsrfProtectionValidator.validateHost("127.0.0.1"))
+                    .isInstanceOf(RuntimeException.class)
+                    .hasMessageContaining("URI is invalid");
+            SsrfProtectionValidator.setEnabled(false);
+            assertThatNoException().isThrownBy(() -> SsrfProtectionValidator.validateHost("127.0.0.1"));
+        } finally {
+            SsrfProtectionValidator.setEnabled(original);
+        }
+    }
+
 }
