@@ -116,6 +116,13 @@ server:
       # Default timeout for waiting response of REST API request to Rule Engine in milliseconds
       response_timeout: "${DEFAULT_RULE_ENGINE_RESPONSE_TIMEOUT:10000}"
 
+# Rule Engine REST API v2 settings (see /api/rule-engine/v2)
+rule_engine:
+  acl:
+    # Maximum number of entities accepted in /api/rule-engine/v2 aclEntities. Bounds DB load and permission checks per request.
+    # Set to 0 to disable the bound entirely (no upper limit); any positive value caps the list size.
+    max_entities: "${RULE_ENGINE_ACL_MAX_ENTITIES:20}"
+
 # Application info parameters
 app:
   # Application version

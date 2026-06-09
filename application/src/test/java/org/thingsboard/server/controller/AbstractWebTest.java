@@ -547,7 +547,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected void loginDifferentCustomer() throws Exception {
         if (savedDifferentCustomer != null) {
-            login(savedDifferentCustomer.getEmail(), CUSTOMER_USER_PASSWORD);
+            login(DIFFERENT_CUSTOMER_USER_EMAIL, DIFFERENT_CUSTOMER_USER_PASSWORD);
         } else {
             createDifferentCustomer();
 

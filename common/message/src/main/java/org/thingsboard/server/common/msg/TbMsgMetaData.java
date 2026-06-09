@@ -29,6 +29,21 @@ public final class TbMsgMetaData implements Serializable {
 
     public static final TbMsgMetaData EMPTY = new TbMsgMetaData(0);
 
+    /**
+     * Reserved metadata key. Populated by the platform (e.g. the Rule Engine REST API
+     * v2 enrichment) with a JSON array of {@code EntityAclEntry}. Rule chains MUST
+     * treat this value as authoritative; the platform overwrites any caller-supplied
+     * value of this key before the message is forwarded to the Rule Engine.
+     */
+    public static final String ACL_KEY = "acl";
+
+    /**
+     * Reserved metadata key. Populated by the platform with the UUID (as string) of
+     * the user that initiated the request — intended for audit logging inside rule
+     * chains. The platform overwrites any caller-supplied value of this key.
+     */
+    public static final String USER_ID_KEY = "userId";
+
     private final Map<String, String> data;
 
     public TbMsgMetaData() {
