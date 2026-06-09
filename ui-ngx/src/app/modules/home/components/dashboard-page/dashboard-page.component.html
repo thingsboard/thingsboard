@@ -116,168 +116,164 @@
               <mat-icon>edit</mat-icon></button>
               <button class="lt-lg:!hidden" mat-stroked-button (click)="toggleDashboardEditMode()">
                 <mat-icon>edit</mat-icon>{{'dashboard.edit-mode' | translate}}</button>
-              }
-              @if (isEdit) {
-                <button class="gt-md:!hidden" mat-icon-button (click)="saveDashboard()" [disabled]="isLoading$ | async"
-                        matTooltip="{{'action.save' | translate}}"
-                        matTooltipPosition="below">
-                  <mat-icon>done</mat-icon></button>
-                  <button class="lt-lg:!hidden" mat-stroked-button [disabled]="isLoading$ | async" (click)="saveDashboard()">
-                    <mat-icon>done</mat-icon>{{ 'action.save' | translate }}</button>
-                    <button class="gt-md:!hidden" mat-icon-button (click)="toggleDashboardEditMode()"
-                            matTooltip="{{'action.cancel' | translate}}"
-                            [disabled]="isLoading$ | async"
-                            matTooltipPosition="below">
-                      <mat-icon>close</mat-icon></button>
-                      <button class="lt-lg:!hidden" mat-button (click)="toggleDashboardEditMode()" [disabled]="isLoading$ | async">
-                        <mat-icon>close</mat-icon>{{ 'action.cancel' | translate }}</button>
-                        <mat-divider class="tb-toolbar-divider" vertical></mat-divider>
-                      }
-                      @if (currentDashboardId && isEdit && isTenantAdmin()) {
-                        <button class="lt-lg:!hidden gt-lg:!hidden" mat-icon-button
-                                #versionControlIconButton
-                                matTooltip="{{'version-control.version-control' | translate}}"
-                                matTooltipPosition="below"
-                                (click)="toggleVersionControl($event, versionControlIconButton)">
-                          <mat-icon>history</mat-icon>
-                        </button>
-                        <button class="lt-xl:!hidden" mat-button
-                                #versionControlButton
-                                matTooltip="{{'version-control.version-control' | translate}}"
-                                matTooltipPosition="below"
-                                (click)="toggleVersionControl($event, versionControlButton)">
-                          <mat-icon>history</mat-icon>
-                          {{'version-control.versions' | translate}}
-                        </button>
-                      }
-                      @if (isEdit) {
-                        <button class="gt-lg:!hidden" mat-icon-button
-                                matTooltip="{{ 'filter.filters' | translate }}"
-                                matTooltipPosition="below"
-                                (click)="openFilters($event)">
-                          <mat-icon>filter_list</mat-icon>
-                        </button>
-                        <button class="lt-xl:!hidden" mat-button
-                                matTooltip="{{ 'filter.filters' | translate }}"
-                                matTooltipPosition="below"
-                                (click)="openFilters($event)">
-                          <mat-icon>filter_list</mat-icon>
-                          {{ 'filter.filters' | translate }}
-                        </button>
-                      }
-                      @if (isEdit) {
-                        <button class="gt-lg:!hidden" mat-icon-button
-                                matTooltip="{{ 'entity.aliases' | translate }}"
-                                matTooltipPosition="below"
-                                (click)="openEntityAliases($event)">
-                          <mat-icon>devices_other</mat-icon>
-                        </button>
-                        <button class="lt-xl:!hidden" mat-button
-                                matTooltip="{{ 'entity.aliases' | translate }}"
-                                matTooltipPosition="below"
-                                (click)="openEntityAliases($event)">
-                          <mat-icon>devices_other</mat-icon>
-                          {{ 'entity.aliases-short' | translate }}
-                        </button>
-                      }
-                      @if (isEdit) {
-                        <button class="gt-lg:!hidden" mat-icon-button
-                                matTooltip="{{ 'dashboard.settings' | translate }}"
-                                matTooltipPosition="below"
-                                (click)="openDashboardSettings($event)">
-                          <mat-icon>settings</mat-icon>
-                        </button>
-                        <button class="lt-xl:!hidden" mat-button
-                                matTooltip="{{ 'dashboard.settings' | translate }}"
-                                matTooltipPosition="below"
-                                (click)="openDashboardSettings($event)">
-                          <mat-icon>settings</mat-icon>
-                          {{ 'dashboard.settings' | translate }}
-                        </button>
-                      }
-                      <button [class.!hidden]="!currentDashboardId || isEdit || isMobileApp || !isTenantAdmin() || !displayUpdateDashboardImage()" mat-icon-button
-                              matTooltip="{{'dashboard.update-image' | translate}}"
-                              matTooltipPosition="below"
-                              (click)="updateDashboardImage($event)">
-                        <mat-icon>wallpaper</mat-icon>
-                      </button>
-                      @if (isEdit) {
-                        <tb-timewindow class="lt-xl:!hidden" asButton
-                                       flatButton
-                                       showSaveAsDefault
-                                       [displayTimewindowValue]="false"
-                                       [isEdit]="true"
-                                       tooltipPosition="below"
-                                       aggregation="true"
-                                       timezone="true"
-                                       [(ngModel)]="dashboardCtx.dashboardTimewindow">
-                        </tb-timewindow>
-                        <tb-timewindow class="gt-lg:!hidden"
-                                       hideLabel
-                                       showSaveAsDefault
-                                       [isEdit]="true"
-                                       tooltipPosition="below"
-                                       aggregation="true"
-                                       timezone="true"
-                                       [(ngModel)]="dashboardCtx.dashboardTimewindow">
-                        </tb-timewindow>
-                      } @else {
-                        @if (displayDashboardTimewindow()) {
-                          <tb-timewindow class="gt-md:!hidden"
-                                         [isEdit]="false"
-                                         hideLabel
-                                         tooltipPosition="below"
-                                         aggregation="true"
-                                         timezone="true"
-                                         [showSaveAsDefault]="!readonly"
-                                         [(ngModel)]="dashboardCtx.dashboardTimewindow"
-                                         (saveAsDefault)="saveDashboard()">>
-                          </tb-timewindow>
-                          <tb-timewindow class="lt-lg:!hidden"
-                                         [isEdit]="false"
-                                         tooltipPosition="below"
-                                         aggregation="true"
-                                         timezone="true"
-                                         [showSaveAsDefault]="!readonly"
-                                         [(ngModel)]="dashboardCtx.dashboardTimewindow"
-                                         (saveAsDefault)="saveDashboard()">>
-                          </tb-timewindow>
-                        }
-                      }
-                      @if (isEdit) {
-                        <button class="gt-md:!hidden" mat-icon-button
-                                matTooltip="{{ 'dashboard.add-widget-button-text' | translate }}"
-                                matTooltipPosition="below"
-                                (click)="addWidget($event)">
-                          <mat-icon>add</mat-icon>
-                        </button>
-                        <button class="lt-lg:!hidden" mat-stroked-button
-                                matTooltip="{{ 'dashboard.add-widget-button-text' | translate }}"
-                                matTooltipPosition="below"
-                                (click)="addWidget($event)">
-                          <mat-icon>add</mat-icon>
-                          {{ 'dashboard.add-widget-button-text' | translate }}
-                        </button>
-                      }
-                      <tb-filters-edit [class.!hidden]="isEdit || !displayFilters()"
-                                       tooltipPosition="below"
-                                       [aliasController]="dashboardCtx.aliasController">
-                      </tb-filters-edit>
-                      <tb-aliases-entity-select [class.!hidden]="isEdit || !displayEntitiesSelect()"
-                                                tooltipPosition="below"
-                                                [aliasController]="dashboardCtx.aliasController">
-                      </tb-aliases-entity-select>
-                      @if (!isEdit && !widgetEditMode && !embedded && displayDashboardsSelect()) {
-                        <tb-dashboard-select
-                          [(ngModel)]="currentDashboardId"
-                          (ngModelChange)="currentDashboardIdChanged(currentDashboardId)"
-                          [customerId]="currentCustomerId"
-                          [dashboardsScope]="currentDashboardScope">
-                        </tb-dashboard-select>
-                      }
-                    </div>
-                  </div>
-                </tb-dashboard-toolbar>
+          }
+          @if (isEdit) {
+            <button class="gt-md:!hidden" mat-icon-button (click)="saveDashboard()" [disabled]="isLoading$ | async"
+                    matTooltip="{{'action.save' | translate}}"
+                    matTooltipPosition="below">
+              <mat-icon>done</mat-icon></button>
+            <button class="lt-lg:!hidden" mat-stroked-button [disabled]="isLoading$ | async" (click)="saveDashboard()">
+              <mat-icon>done</mat-icon>{{ 'action.save' | translate }}</button>
+            <button class="gt-md:!hidden" mat-icon-button (click)="toggleDashboardEditMode()"
+                    matTooltip="{{'action.cancel' | translate}}"
+                    [disabled]="isLoading$ | async"
+                    matTooltipPosition="below">
+              <mat-icon>close</mat-icon></button>
+            <button class="lt-lg:!hidden" mat-button (click)="toggleDashboardEditMode()" [disabled]="isLoading$ | async">
+              <mat-icon>close</mat-icon>{{ 'action.cancel' | translate }}</button>
+            <mat-divider class="tb-toolbar-divider" vertical></mat-divider>
+          }
+          @if (currentDashboardId && isEdit && isTenantAdmin()) {
+            <button class="lt-lg:!hidden gt-lg:!hidden" mat-icon-button
+                    #versionControlIconButton
+                    matTooltip="{{'version-control.version-control' | translate}}"
+                    matTooltipPosition="below"
+                    (click)="toggleVersionControl($event, versionControlIconButton)">
+              <mat-icon>history</mat-icon>
+            </button>
+            <button class="lt-xl:!hidden" mat-button
+                    #versionControlButton
+                    matTooltip="{{'version-control.version-control' | translate}}"
+                    matTooltipPosition="below"
+                    (click)="toggleVersionControl($event, versionControlButton)">
+              <mat-icon>history</mat-icon>
+              {{'version-control.versions' | translate}}
+            </button>
+          }
+          @if (isEdit) {
+            <button class="gt-lg:!hidden" mat-icon-button
+                    matTooltip="{{ 'filter.filters' | translate }}"
+                    matTooltipPosition="below"
+                    (click)="openFilters($event)">
+              <mat-icon>filter_list</mat-icon>
+            </button>
+            <button class="lt-xl:!hidden" mat-button
+                    matTooltip="{{ 'filter.filters' | translate }}"
+                    matTooltipPosition="below"
+                    (click)="openFilters($event)">
+              <mat-icon>filter_list</mat-icon>
+              {{ 'filter.filters' | translate }}
+            </button>
+            <button class="gt-lg:!hidden" mat-icon-button
+                    matTooltip="{{ 'entity.aliases' | translate }}"
+                    matTooltipPosition="below"
+                    (click)="openEntityAliases($event)">
+              <mat-icon>devices_other</mat-icon>
+            </button>
+            <button class="lt-xl:!hidden" mat-button
+                    matTooltip="{{ 'entity.aliases' | translate }}"
+                    matTooltipPosition="below"
+                    (click)="openEntityAliases($event)">
+              <mat-icon>devices_other</mat-icon>
+              {{ 'entity.aliases-short' | translate }}
+            </button>
+            <button class="gt-lg:!hidden" mat-icon-button
+                    matTooltip="{{ 'dashboard.settings' | translate }}"
+                    matTooltipPosition="below"
+                    (click)="openDashboardSettings($event)">
+              <mat-icon>settings</mat-icon>
+            </button>
+            <button class="lt-xl:!hidden" mat-button
+                    matTooltip="{{ 'dashboard.settings' | translate }}"
+                    matTooltipPosition="below"
+                    (click)="openDashboardSettings($event)">
+              <mat-icon>settings</mat-icon>
+              {{ 'dashboard.settings' | translate }}
+            </button>
+          }
+          <button [class.!hidden]="!currentDashboardId || isEdit || isMobileApp || !isTenantAdmin() || !displayUpdateDashboardImage()" mat-icon-button
+                  matTooltip="{{'dashboard.update-image' | translate}}"
+                  matTooltipPosition="below"
+                  (click)="updateDashboardImage($event)">
+            <mat-icon>wallpaper</mat-icon>
+          </button>
+          @if (isEdit) {
+            <tb-timewindow class="lt-xl:!hidden" asButton
+                           flatButton
+                           showSaveAsDefault
+                           [displayTimewindowValue]="false"
+                           [isEdit]="true"
+                           tooltipPosition="below"
+                           aggregation="true"
+                           timezone="true"
+                           [(ngModel)]="dashboardCtx.dashboardTimewindow">
+            </tb-timewindow>
+            <tb-timewindow class="gt-lg:!hidden"
+                           hideLabel
+                           showSaveAsDefault
+                           [isEdit]="true"
+                           tooltipPosition="below"
+                           aggregation="true"
+                           timezone="true"
+                           [(ngModel)]="dashboardCtx.dashboardTimewindow">
+            </tb-timewindow>
+          } @else {
+            @if (displayDashboardTimewindow()) {
+              <tb-timewindow class="gt-md:!hidden"
+                             [isEdit]="false"
+                             hideLabel
+                             tooltipPosition="below"
+                             aggregation="true"
+                             timezone="true"
+                             [showSaveAsDefault]="!readonly"
+                             [(ngModel)]="dashboardCtx.dashboardTimewindow"
+                             (saveAsDefault)="saveDashboard()">>
+              </tb-timewindow>
+              <tb-timewindow class="lt-lg:!hidden"
+                             [isEdit]="false"
+                             tooltipPosition="below"
+                             aggregation="true"
+                             timezone="true"
+                             [showSaveAsDefault]="!readonly"
+                             [(ngModel)]="dashboardCtx.dashboardTimewindow"
+                             (saveAsDefault)="saveDashboard()">>
+              </tb-timewindow>
+            }
+          }
+          @if (isEdit) {
+            <button class="gt-md:!hidden" mat-icon-button
+                    matTooltip="{{ 'dashboard.add-widget-button-text' | translate }}"
+                    matTooltipPosition="below"
+                    (click)="addWidget($event)">
+              <mat-icon>add</mat-icon>
+            </button>
+            <button class="lt-lg:!hidden" mat-stroked-button
+                    matTooltip="{{ 'dashboard.add-widget-button-text' | translate }}"
+                    matTooltipPosition="below"
+                    (click)="addWidget($event)">
+              <mat-icon>add</mat-icon>
+              {{ 'dashboard.add-widget-button-text' | translate }}
+            </button>
+          }
+          <tb-filters-edit [class.!hidden]="isEdit || !displayFilters()"
+                           tooltipPosition="below"
+                           [aliasController]="dashboardCtx.aliasController">
+          </tb-filters-edit>
+          <tb-aliases-entity-select [class.!hidden]="isEdit || !displayEntitiesSelect()"
+                                    tooltipPosition="below"
+                                    [aliasController]="dashboardCtx.aliasController">
+          </tb-aliases-entity-select>
+          @if (!isEdit && !widgetEditMode && !embedded && displayDashboardsSelect()) {
+            <tb-dashboard-select
+              [(ngModel)]="currentDashboardId"
+              (ngModelChange)="currentDashboardIdChanged(currentDashboardId)"
+              [customerId]="currentCustomerId"
+              [dashboardsScope]="currentDashboardScope">
+            </tb-dashboard-select>
+          }
+        </div>
+      </div>
+    </tb-dashboard-toolbar>
   </section>
   <section class="tb-dashboard-container tb-absolute-fill"
          tb-toast toastTarget="dashboardRoot"
