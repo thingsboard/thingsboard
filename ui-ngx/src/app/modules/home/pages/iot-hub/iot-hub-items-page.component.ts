@@ -136,13 +136,22 @@ export class TbIotHubItemsPageComponent implements OnInit {
     }
     history.replaceState({ ...history.state, openItem: undefined }, '');
 
-    const isDevice = this.config.type === ItemType.DEVICE;
-    const resolution$: Observable<{ installed?: IotHubInstalledItem; count?: number }> = isDevice
+    // Types where multiple entities can be installed from the same
+    // IoT Hub item — we only care about the count per itemId
+    // (no singular installed entity to surface in the detail dialog).
+    const countBasedTypes: ReadonlySet<ItemType> = new Set([
+      ItemType.DEVICE,
+      ItemType.CALCULATED_FIELD,
+      ItemType.ALARM_RULE,
+      ItemType.RULE_CHAIN
+    ]);
+    const isCountBased = countBasedTypes.has(this.config.type);
+    const resolution$: Observable<{ installed?: IotHubInstalledItem; count?: number }> = isCountBased
       ? this.iotHubApiService
-          .getInstalledItemCounts(ItemType.DEVICE, { ignoreLoading: true })
-          .pipe(map(counts => ({ count: counts[openItem.version.itemId] || 0 })))
+      .getInstalledItemCounts(this.config.type, { ignoreLoading: true })
+      .pipe(map(counts => ({ count: counts[openItem.version.itemId] || 0 })))
       : this.resolveInstalledItem(openItem.version)
-          .pipe(map(installed => ({ installed: installed ?? undefined })));
+      .pipe(map(installed => ({ installed: installed ?? undefined })));
 
     resolution$.subscribe(({ installed, count }) => {
       this.iotHubActions.openItemDetail(
