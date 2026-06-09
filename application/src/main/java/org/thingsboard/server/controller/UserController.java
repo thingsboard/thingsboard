@@ -254,7 +254,7 @@ public class UserController extends BaseController {
 
     @ApiOperation(value = "Get password reset link (getPasswordResetLink)",
             notes = "Generate and return a password reset link for the specified user. " +
-                    "Issues a fresh reset token, invalidating any previously issued reset token for this user. " +
+                    "Reuses the currently valid reset token, regenerating it only when it is about to expire. " +
                     "Available only for users that are already activated and whose account is enabled. " +
                     "The base url for the link is configurable in the general settings of system administrator. " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
@@ -268,7 +268,7 @@ public class UserController extends BaseController {
 
     @ApiOperation(value = "Get password reset link info (getPasswordResetLinkInfo)",
             notes = "Generate and return a password reset link info for the specified user. " +
-                    "Issues a fresh reset token, invalidating any previously issued reset token for this user. " +
+                    "Reuses the currently valid reset token, regenerating it only when it is about to expire. " +
                     "Available only for users that are already activated and whose account is enabled. " +
                     "The base url for the link is configurable in the general settings of system administrator. " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
@@ -280,7 +280,7 @@ public class UserController extends BaseController {
         UserId userId = new UserId(toUUID(strUserId));
         checkUserId(userId, Operation.WRITE_CREDENTIALS);
         SecurityUser securityUser = getCurrentUser();
-        return tbUserService.getPasswordResetLink(securityUser.getTenantId(), securityUser.getCustomerId(), userId, request);
+        return tbUserService.getPasswordResetLink(securityUser.getTenantId(), securityUser.getCustomerId(), userId, request, securityUser);
     }
 
     @ApiOperation(value = "Delete User (deleteUser)",

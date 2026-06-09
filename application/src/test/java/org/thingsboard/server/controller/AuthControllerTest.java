@@ -324,25 +324,26 @@ public class AuthControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testGetPasswordResetLinkRegeneratesToken() throws Exception {
+    public void testGetPasswordResetLinkReusesValidToken() throws Exception {
         loginTenantAdmin();
         User user = new User();
         user.setAuthority(Authority.TENANT_ADMIN);
-        user.setEmail("tenant-admin-reset-regen@thingsboard.org");
+        user.setEmail("tenant-admin-reset-reuse@thingsboard.org");
         User savedUser = createUserAndLogin(user, "initialPassword1");
         loginTenantAdmin();
 
+        // repeated calls are idempotent while the token is still valid — no churn for prefetch/double-click
         UserPasswordResetLink first = getPasswordResetLinkInfo(savedUser);
         UserPasswordResetLink second = getPasswordResetLinkInfo(savedUser);
-        assertThat(second.value()).isNotEqualTo(first.value());
+        assertThat(second.value()).isEqualTo(first.value());
 
-        // first token must now be invalid — second one wins
-        String firstToken = StringUtils.substringAfterLast(first.value(), "resetToken=");
+        // the reused link still works end-to-end
+        String resetToken = StringUtils.substringAfterLast(first.value(), "resetToken=");
+        Mockito.doNothing().when(mailService).sendPasswordWasResetEmail(anyString(), anyString());
         doPost("/api/noauth/resetPassword", JacksonUtil.newObjectNode()
-                .put("resetToken", firstToken)
+                .put("resetToken", resetToken)
                 .put("password", "newPassword1"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message", is("Invalid reset token!")));
+                .andExpect(status().isOk());
     }
 
     @Test

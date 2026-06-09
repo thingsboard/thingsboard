@@ -99,7 +99,7 @@ public class DefaultUserService extends AbstractTbEntityService implements TbUse
     }
 
     @Override
-    public UserPasswordResetLink getPasswordResetLink(TenantId tenantId, CustomerId customerId, UserId userId, HttpServletRequest request) throws ThingsboardException {
+    public UserPasswordResetLink getPasswordResetLink(TenantId tenantId, CustomerId customerId, UserId userId, HttpServletRequest request, User responsibleUser) throws ThingsboardException {
         UserCredentials userCredentials = userService.findUserCredentialsByUserId(tenantId, userId);
         if (!userCredentials.isEnabled()) {
             if (userCredentials.getActivateToken() != null) {
@@ -107,10 +107,12 @@ public class DefaultUserService extends AbstractTbEntityService implements TbUse
             }
             throw new ThingsboardException("User account is disabled!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
-        userCredentials = userService.generatePasswordResetToken(userCredentials);
-        userCredentials = userService.saveUserCredentials(tenantId, userCredentials);
+        userCredentials = userService.checkUserPasswordResetToken(tenantId, userCredentials);
         String baseUrl = systemSecurityService.getBaseUrl(tenantId, customerId, request);
         String link = baseUrl + "/api/noauth/resetPassword?resetToken=" + userCredentials.getResetToken();
+        User user = userService.findUserById(tenantId, userId);
+        logEntityActionService.logEntityAction(tenantId, userId, user, user.getCustomerId(),
+                ActionType.CREDENTIALS_READ, responsibleUser, userId.toString());
         return new UserPasswordResetLink(link, userCredentials.getResetTokenTtl());
     }
 
