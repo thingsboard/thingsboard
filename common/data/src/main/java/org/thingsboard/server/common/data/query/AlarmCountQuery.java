@@ -18,6 +18,7 @@ package org.thingsboard.server.common.data.query;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
@@ -30,6 +31,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
+@EqualsAndHashCode(callSuper = false)
 @ToString
 public class AlarmCountQuery extends EntityCountQuery {
     private long startTs;
