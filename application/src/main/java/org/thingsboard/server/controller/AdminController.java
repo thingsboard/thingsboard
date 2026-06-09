@@ -304,7 +304,7 @@ public class AdminController extends BaseController {
     @PostMapping("/repositorySettings")
     public DeferredResult<RepositorySettings> saveRepositorySettings(@RequestBody RepositorySettings settings) throws ThingsboardException {
         accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.WRITE);
-        settings.setLocalOnly(false); // only to be used in tests
+        settings.setLocalOnly(false); // force off for the tenant API: localOnly bypasses RepositoryUriValidator, so it must never be tenant-controlled (part of the SSRF defense)
         ListenableFuture<RepositorySettings> future = versionControlService.saveVersionControlSettings(getTenantId(), settings);
         return wrapFuture(Futures.transform(future, savedSettings -> {
             savedSettings.setPassword(null);
@@ -333,7 +333,7 @@ public class AdminController extends BaseController {
             @Parameter(description = "A JSON value representing the Repository Settings.")
             @RequestBody RepositorySettings settings) throws Exception {
         accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
-        settings.setLocalOnly(false); // only to be used in tests
+        settings.setLocalOnly(false); // force off for the tenant API: localOnly bypasses RepositoryUriValidator, so it must never be tenant-controlled (part of the SSRF defense)
         return wrapFuture(versionControlService.checkVersionControlAccess(getTenantId(), settings), vcRequestTimeout);
     }
 

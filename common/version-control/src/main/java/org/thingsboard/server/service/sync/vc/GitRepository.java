@@ -569,7 +569,7 @@ public class GitRepository {
 
         private static String extractHost(String repositoryUri) {
             try {
-                return new URIish(repositoryUri).getHost();
+                return new URIish(repositoryUri.trim()).getHost();
             } catch (Exception e) {
                 return null;
             }

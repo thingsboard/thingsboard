@@ -95,6 +95,8 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
         @Override
         public StoredConfig getUserConfig() throws ConfigInvalidException, IOException {
             StoredConfig config = delegate.getUserConfig();
+            // SSRF hardening: keep http.followRedirects off — a followed
+            // redirect on the info/refs GET is itself the probe being closed.
             config.setString("http", null, "followRedirects", "false");
             return config;
         }
