@@ -265,14 +265,18 @@ public class TwoFactorAuthConfigController extends BaseController {
         SecurityUser securityUser = getCurrentUser();
         try {
             PlatformTwoFaSettings savedSettings = twoFaConfigManager.savePlatformTwoFaSettings(getTenantId(), twoFaSettings);
-            auditLogService.logEntityAction(securityUser.getTenantId(), securityUser.getCustomerId(), securityUser.getId(), securityUser.getName(),
-                    securityUser.getId(), securityUser, ActionType.SETTINGS_UPDATED, null, "twoFaSettings");
+            logSettingsAction(securityUser, null);
             return savedSettings;
         } catch (Exception e) {
-            auditLogService.logEntityAction(securityUser.getTenantId(), securityUser.getCustomerId(), securityUser.getId(), securityUser.getName(),
-                    securityUser.getId(), securityUser, ActionType.SETTINGS_UPDATED, e, "twoFaSettings");
+            logSettingsAction(securityUser, e);
             throw e;
         }
+    }
+
+    private void logSettingsAction(SecurityUser securityUser, Exception e) {
+        auditLogService.logEntityAction(securityUser.getTenantId(), securityUser.getCustomerId(),
+                securityUser.getId(), securityUser.getName(),
+                securityUser.getId(), securityUser, ActionType.SETTINGS_UPDATED, e, "twoFaSettings");
     }
 
     @Data

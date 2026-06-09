@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -48,6 +49,7 @@ public class DefaultTbQueueService extends AbstractTbEntityService implements Tb
     private final QueueService queueService;
     private final TbClusterService tbClusterService;
     private final TbQueueAdmin tbQueueAdmin;
+    private final AuditLogService auditLogService;
 
     @Override
     public Queue saveQueue(Queue queue, User user) {
@@ -64,10 +66,12 @@ public class DefaultTbQueueService extends AbstractTbEntityService implements Tb
             Queue savedQueue = queueService.saveQueue(queue);
             createTopicsIfNeeded(savedQueue, oldQueue);
             tbClusterService.onQueuesUpdate(List.of(savedQueue));
-            logEntityActionService.logEntityAction(tenantId, savedQueue.getId(), savedQueue, null, actionType, user);
+            auditLogService.logEntityAction(user.getTenantId(), user.getCustomerId(), user.getId(), user.getName(),
+                    savedQueue.getId(), savedQueue, actionType, null);
             return savedQueue;
         } catch (Exception e) {
-            logEntityActionService.logEntityAction(tenantId, getOrEmptyId(queue.getId(), EntityType.QUEUE), queue, actionType, user, e);
+            auditLogService.logEntityAction(user.getTenantId(), user.getCustomerId(), user.getId(), user.getName(),
+                    getOrEmptyId(queue.getId(), EntityType.QUEUE), queue, actionType, e);
             throw e;
         }
     }
@@ -79,9 +83,11 @@ public class DefaultTbQueueService extends AbstractTbEntityService implements Tb
             queue = queueService.findQueueById(tenantId, queueId);
             queueService.deleteQueue(tenantId, queueId);
             tbClusterService.onQueuesDelete(List.of(queue));
-            logEntityActionService.logEntityAction(tenantId, queueId, queue, null, ActionType.DELETED, user);
+            auditLogService.logEntityAction(user.getTenantId(), user.getCustomerId(), user.getId(), user.getName(),
+                    queueId, queue, ActionType.DELETED, null);
         } catch (Exception e) {
-            logEntityActionService.logEntityAction(tenantId, queueId, queue, null, ActionType.DELETED, user, e);
+            auditLogService.logEntityAction(user.getTenantId(), user.getCustomerId(), user.getId(), user.getName(),
+                    queueId, queue, ActionType.DELETED, e);
             throw e;
         }
     }
