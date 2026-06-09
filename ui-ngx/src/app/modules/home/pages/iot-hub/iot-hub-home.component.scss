@@ -1,0 +1,783 @@
+/**
+ * Copyright © 2016-2026 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+@import "../../../../../scss/constants";
+
+// Outer page — 16px padding around the white container
+:host {
+  display: block;
+  padding: 16px;
+}
+
+// Page container — white card with 8px radius, matches Design "page-container"
+.tb-iot-hub-home {
+  position: relative;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+
+  // Dot grid pattern — covers top 800px, fades out via gradient mask.
+  // Layered ABOVE the colored blobs so the dots overlay the glow.
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 800px;
+    background-image: radial-gradient(circle, rgba(0, 0, 0, 0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+    mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  > *:not(.tb-iot-hub-installed-btn):not(.tb-iot-hub-blob) {
+    position: relative;
+    z-index: 2;
+  }
+}
+
+// Installed Items button — Design: top-right, white bg, primary border, card shadow
+.tb-iot-hub-installed-btn {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  z-index: 3;
+  background: white;
+  box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.08), 0 4px 8px 0 rgba(0, 0, 0, 0.08);
+
+  &.mat-primary {
+    --mat-button-outlined-outline-color: #{$tb-primary-color};
+  }
+}
+
+// Hero section
+.tb-iot-hub-hero {
+  text-align: center;
+  padding: 140px 40px 80px;
+  position: relative;
+  overflow: hidden;
+}
+
+// Soft colored glow blobs — direct CSS port of the design's two
+// 568×568 ellipses (Ellipse 399 right, Ellipse 400 left) with layer
+// opacity 0.16. Children of the page container so the halo spreads
+// across the whole page background, not just the hero. Fill comes
+// from the active hero type via `currentColor` (driven by
+// `[style.color]`).
+//
+// The design's "Layer Blur 240" is a Figma renderer parameter — when
+// translated to CSS `filter: blur(<σ>)` the visual match is around
+// σ=120 (Figma's radius is roughly twice the Gaussian σ used by CSS).
+// At σ=240 the kernel reaches well outside the 568px ellipse and peak
+// intensity collapses to ~58 % before opacity is applied, which
+// produced an almost invisible wash. σ=120 keeps the centre near
+// full strength while still spreading the halo across the page.
+.tb-iot-hub-blob {
+  position: absolute;
+  width: 568px;
+  height: 568px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.16;
+  filter: blur(120px);
+  pointer-events: none;
+  z-index: 0;
+  transition: color 0.6s ease;
+  will-change: filter;
+}
+
+// Ellipse 400 — top-left corner at (-221, 56) inside the page-container.
+.tb-iot-hub-blob-left {
+  top: 56px;
+  left: -221px;
+}
+
+// Ellipse 399 — top-left corner at (1266, 259) inside a 1638-wide
+// page-container. Anchored to the right edge so it stays in place on
+// any viewport width: 1638 - (1266 + 568) = -196.
+.tb-iot-hub-blob-right {
+  top: 259px;
+  right: -196px;
+}
+
+// Floating icons cluster per type — one composite SVG with all icons baked in.
+// Active variant fades in expanding outward from the hero center; inactive
+// variants fade out collapsing back toward the center. This is achieved by
+// uniformly scaling the wrapper around its centre — peripheral icons travel
+// further than central ones, giving the "burst from / collapse to centre"
+// motion shown in the design prototype.
+.tb-iot-hub-hero-icons {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.8);
+  transform-origin: 50% 50%;
+  transition: opacity 0.4s ease-out, transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &.active {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+// Cluster SVG — sits above the title, centered, scales with viewport.
+// Aspect ratio is preserved by the SVG's intrinsic dimensions.
+.tb-iot-hub-hero-cluster {
+  position: absolute;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(890px, calc(100% - 80px));
+  height: auto;
+  display: block;
+  pointer-events: none;
+}
+
+.tb-iot-hub-hero-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+  position: relative;
+  z-index: 1;
+}
+
+.tb-iot-hub-hero-title {
+  font-size: 56px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.14px;
+  color: rgba(0, 0, 0, 0.87);
+  margin: 0;
+}
+
+.tb-iot-hub-hero-subtitle {
+  font-size: 20px;
+  line-height: 24px;
+  letter-spacing: 0.1px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.tb-iot-hub-hero-subtitle-break {
+  flex-basis: 100%;
+  height: 0;
+}
+
+.tb-iot-hub-hero-prefix {
+  font-weight: 400;
+  color: rgba(0, 0, 0, 0.76);
+}
+
+.tb-iot-hub-hero-keyword {
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.54);
+  opacity: 0.48;
+  cursor: pointer;
+  transition: color 0.3s ease, opacity 0.3s ease;
+
+  &.active {
+    color: var(--keyword-color);
+    opacity: 1;
+  }
+
+  &:hover {
+    opacity: 0.8;
+  }
+}
+
+.tb-iot-hub-hero-search {
+  width: 600px;
+  max-width: 100%;
+
+  ::ng-deep .mat-mdc-text-field-wrapper {
+    background: white;
+    border-radius: 8px;
+    box-shadow:
+      0 7px 16px 0 rgba(0, 0, 0, 0.04),
+      0 29px 29px 0 rgba(0, 0, 0, 0.03),
+      0 64px 38px 0 rgba(0, 0, 0, 0.02),
+      0 114px 46px 0 rgba(0, 0, 0, 0.01),
+      0 178px 50px 0 rgba(0, 0, 0, 0);
+  }
+}
+
+// Search popup panel (mat-autocomplete overlay)
+::ng-deep .tb-search-popup-panel.mat-mdc-autocomplete-panel {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+  padding: 16px 0 0;
+  max-height: 424px;
+  box-shadow:
+    0 7px 16px 0 rgba(0, 0, 0, 0.04),
+    0 29px 29px 0 rgba(0, 0, 0, 0.03),
+    0 64px 38px 0 rgba(0, 0, 0, 0.02),
+    0 114px 46px 0 rgba(0, 0, 0, 0.01),
+    0 178px 50px 0 rgba(0, 0, 0, 0);
+
+  // Section group — 12px gap between groups
+  .mat-mdc-optgroup + .mat-mdc-optgroup .mat-mdc-optgroup-label {
+    margin-top: 12px;
+  }
+
+  // Section title — Design: 14px Medium, 0.25 tracking, black-tertiary, 4px V / 16px H
+  .mat-mdc-optgroup .mat-mdc-optgroup-label {
+    padding: 4px 16px;
+    min-height: 28px;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+    letter-spacing: 0.25px;
+    color: rgba(0, 0, 0, 0.54);
+    white-space: nowrap;
+
+    .mdc-list-item__primary-text {
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 20px;
+      letter-spacing: 0.25px;
+      color: rgba(0, 0, 0, 0.54);
+    }
+  }
+
+  // Item row — Design: 8px V / 16px H, 16px gap, centered
+  .mat-mdc-optgroup .mat-mdc-option:not(.mat-mdc-option-multiple) {
+    padding: 8px 16px;
+    min-height: auto;
+    height: auto;
+
+    &:hover:not(.mdc-list-item--disabled),
+    &.mat-mdc-option-active:not(.mdc-list-item--disabled) {
+      background: rgba(0, 0, 0, 0.04);
+    }
+
+    .mat-icon, tb-icon {
+      margin-right: 0;
+    }
+
+    .mdc-list-item__primary-text {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      width: 100%;
+    }
+  }
+
+  // Thumbnail — Design: 99px x 56px, 4px radius, 1px border, 4% bg
+  .tb-search-popup-thumbnail {
+    width: 99px;
+    height: 56px;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    background: rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+  }
+
+  .tb-search-popup-thumb-placeholder {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    color: rgba(0, 0, 0, 0.38);
+  }
+
+  // Icon square — Design: 56x56, 4.667px radius, colored bg
+  .tb-search-popup-icon-square {
+    width: 56px;
+    height: 56px;
+    border-radius: 4.667px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .tb-search-popup-icon-inner {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+    color: white !important;
+    --tb-icon-color: white;
+  }
+
+  // Text block — Design: flex-col, 4px gap, flex 1
+  .tb-search-popup-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  // Name — Design: 14px Medium, 0.25 tracking, black-primary, ellipsis
+  .tb-search-popup-name {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+    letter-spacing: 0.25px;
+    color: rgba(0, 0, 0, 0.87);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  // Author — Design: 12px Regular, 0.25 tracking, black-tertiary, 16px person icon
+  .tb-search-popup-author {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 16px;
+    letter-spacing: 0.25px;
+    color: rgba(0, 0, 0, 0.54);
+    white-space: nowrap;
+
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      margin-right: 0;
+      color: rgba(0, 0, 0, 0.54);
+    }
+  }
+
+  // Loading
+  .tb-search-popup-loading {
+    pointer-events: none;
+    opacity: 1 !important;
+    display: flex;
+    justify-content: center;
+    padding: 24px 16px;
+    min-height: auto;
+  }
+
+  // No results
+  .tb-search-popup-no-results {
+    pointer-events: none;
+    opacity: 1 !important;
+  }
+
+  .tb-search-popup-no-results-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 0;
+    color: rgba(0, 0, 0, 0.87);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+
+    mat-icon {
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+      color: rgba(0, 0, 0, 0.76);
+    }
+  }
+
+  // Footer — Design: 40px h, 8px V / 16px H, 1px top border, tb-primary text
+  .tb-search-popup-footer {
+    position: sticky;
+    bottom: 0;
+    border-top: 1px solid rgba(0, 0, 0, 0.12);
+    height: 40px;
+    min-height: 40px;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+    letter-spacing: 0.25px;
+    color: $tb-primary-color;
+    cursor: pointer;
+    background: white;
+    white-space: nowrap;
+
+    &:hover {
+      background: #f5f5f5;
+    }
+  }
+}
+
+// Main content — wraps categories + item sections
+// Category cards — Design: centered 1200px container, 3-col rows
+.tb-iot-hub-categories {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+// Card — design: flex-col, gap=24, pt=24, rounded-8, h=220, overflow clipped
+// to crop the scaled hover image. The hover state mirrors the design's
+// SMART_ANIMATE on hover (200ms ease-out): the image scales up slightly
+// and the title chevron fades+slides in.
+.tb-iot-hub-category-card {
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding-top: 24px;
+  height: 220px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+
+  &:hover {
+    .tb-iot-hub-category-img img {
+      // 408 / 387 ≈ 1.054 — design grows the img frame from 387×148 → 408×156
+      transform: scale(1.054);
+    }
+    .tb-iot-hub-category-chevron {
+      opacity: 1;
+      width: 24px;
+      margin-left: 4px;
+      transform: translateX(0);
+    }
+  }
+}
+
+// Title — design: 18px Medium, centered horizontally with chevron, 4px gap
+.tb-iot-hub-category-title {
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 24px;
+  letter-spacing: 0.15px;
+  color: rgba(0, 0, 0, 0.87);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tb-iot-hub-category-title-text {
+  white-space: nowrap;
+}
+
+// Chevron — hidden in default state, slides in on card hover (200ms ease-out)
+.tb-iot-hub-category-chevron {
+  width: 0;
+  height: 24px;
+  margin-left: 0;
+  opacity: 0;
+  overflow: hidden;
+  transform: translateX(-4px);
+  font-size: 24px;
+  color: rgba(0, 0, 0, 0.87);
+  transition:
+    opacity 0.2s ease-out,
+    transform 0.2s ease-out,
+    width 0.2s ease-out,
+    margin-left 0.2s ease-out;
+}
+
+// Card image wrapper — fixed 148px tall; overflow visible lets the 5.4%
+// hover scale bleed past the wrapper. The card itself has overflow:
+// hidden, so the bleed is still clipped at the card edges.
+.tb-iot-hub-category-img {
+  width: 100%;
+  height: 148px;
+  flex-shrink: 0;
+  overflow: visible;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+    transition: transform 0.2s ease-out;
+  }
+}
+
+// Per-card flat background colors sampled from the design.
+.category-devices         { background: #ccd5ff; }
+.category-solutions       { background: #b7d8ff; }
+.category-widgets         { background: #a3ffc3; }
+.category-calc-fields     { background: #bcedff; }
+.category-alarm-rules     { background: #ffe6cc; }
+.category-rule-chains     { background: #ebd1ff; }
+
+// "Most popular in IoT Hub" title — design: 28/36 Medium, sits between
+// the post-cards divider and the first popular section.
+.tb-iot-hub-most-popular-title {
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 36px;
+  letter-spacing: 0.15px;
+  color: rgba(0, 0, 0, 0.87);
+  margin: 0;
+}
+
+.tb-iot-hub-empty-state {
+  position: relative;
+  .tb-no-data-bg,
+  .tb-no-service-bg {
+    flex: auto;
+    height: 100px;
+  }
+
+  h3 {
+    font-size: 18px;
+    font-weight: 500;
+    color: rgba(0, 0, 0, 0.87);
+    margin: 16px 0 8px;
+  }
+
+  p {
+    font-size: 14px;
+    color: rgba(0, 0, 0, 0.54);
+    margin: 0 0 24px;
+  }
+}
+
+// Sections — inside main-content, no individual padding needed
+.tb-iot-hub-section {
+}
+
+// Section header — mat-button, Design: height=40, font-size=20, font-weight=500
+.tb-iot-hub-section-header {
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 40px;
+  color: rgba(0, 0, 0, 0.87);
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+}
+
+// Big card row — matches Design "cards-row" (5 cards, gap=20, mt=12 from header)
+.tb-iot-hub-big-cards-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 20px;
+  margin-top: 12px;
+}
+
+// Compact card grid — matches Design "cards" (3 columns, row gap=20, col gap=20)
+.tb-iot-hub-compact-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-top: 12px;
+}
+
+// Divider — matches Design "divider" (1px, rgba(0,0,0,0.12))
+.tb-iot-hub-divider {
+  height: 1px;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+// Bleed variant — used inside main-content (which has 40px horizontal
+// padding) to span the full page-container width like in the design.
+.tb-iot-hub-divider-bleed {
+  margin: 0 -40px;
+}
+
+// Become a Creator — matches Design (pt=64, text centered, button at y=156)
+.tb-iot-hub-become-creator {
+  text-align: center;
+  padding: 64px 40px;
+
+  h2 {
+    font-size: 24px;
+    font-weight: 500;
+    line-height: 32px;
+    color: rgba(0, 0, 0, 0.87);
+    margin: 0 0 8px;
+  }
+
+  p {
+    font-size: 14px;
+    line-height: 20px;
+    color: rgba(0, 0, 0, 0.54);
+    margin: 0 0 32px;
+  }
+}
+
+// Page load animation — Design: Default→appear-first, Smart Animate 1.02s, Gentle easing
+// Hero elements fade in + slide DOWN 20px; categories fade in + slide UP 20px
+@keyframes iot-hub-fade-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes iot-hub-fade-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tb-iot-hub-hero-title,
+.tb-iot-hub-hero-subtitle,
+.tb-iot-hub-hero-search {
+  animation: iot-hub-fade-slide-down 1s cubic-bezier(0.19, 1, 0.22, 1) 0.2s both;
+}
+
+.tb-iot-hub-categories {
+  animation: iot-hub-fade-slide-up 1s cubic-bezier(0.19, 1, 0.22, 1) 0.2s both;
+}
+
+// Responsive — breakpoints from design: XXXL=2448, XXL=1920, XL=1600, LG=1280, MD=960, SM=600, XS=375
+
+// ≥2448px: 6-col big cards, 4-col compact
+@media #{$mat-gt-xxl} {
+  .tb-iot-hub-big-cards-row {
+    grid-template-columns: repeat(6, 1fr);
+  }
+
+  .tb-iot-hub-compact-cards-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+// ≤1919px: 4-col big cards, 3-col compact
+@media #{$mat-lt-xl} {
+  .tb-iot-hub-big-cards-row {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+// ≤1599px: 3-col big cards, 2-col compact
+@media #{$mat-lt-xmd} {
+  .tb-iot-hub-big-cards-row {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .tb-iot-hub-compact-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+// ≤1279px: 2-col big cards, 1-col compact, 2-col categories, smaller icons
+@media #{$mat-lt-lg} {
+  .tb-iot-hub-big-cards-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .tb-iot-hub-compact-cards-grid {
+    grid-template-columns: repeat(1, 1fr);
+  }
+
+  .tb-iot-hub-categories {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .tb-iot-hub-hero {
+    padding: 140px 24px 60px;
+  }
+
+  .tb-iot-hub-hero-title {
+    font-size: 40px;
+  }
+
+  .tb-iot-hub-hero-subtitle {
+    font-size: 18px;
+    line-height: 22px;
+  }
+
+  .tb-iot-hub-main-content {
+    padding: 0 24px 64px;
+  }
+
+  .tb-iot-hub-become-creator {
+    padding: 64px 24px;
+  }
+
+  // Cluster shrinks with viewport — keep some gutter on the sides
+  .tb-iot-hub-hero-cluster {
+    top: 30px;
+    width: min(900px, calc(100% - 48px));
+  }
+}
+
+// ≤959px: cluster sits closer to the title and uses the full content width
+@media #{$mat-lt-md} {
+  .tb-iot-hub-hero-cluster {
+    top: 64px;
+    width: calc(100% - 32px);
+  }
+}
+
+// ≤599px: only top pair visible (51px), bottom pair hidden
+@media #{$mat-lt-sm} {
+  :host {
+    padding: 8px;
+  }
+
+  .tb-iot-hub-hero {
+    padding: 140px 16px 40px;
+  }
+
+  .tb-iot-hub-categories {
+    grid-template-columns: 1fr;
+  }
+
+  .tb-iot-hub-big-cards-row {
+    grid-template-columns: 1fr;
+  }
+
+  .tb-iot-hub-main-content {
+    padding: 0 16px 48px;
+  }
+
+  .tb-iot-hub-become-creator {
+    padding: 48px 16px;
+  }
+
+  .tb-iot-hub-installed-btn {
+    top: 12px;
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+}

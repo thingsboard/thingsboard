@@ -741,6 +741,31 @@
     }
   }
 
+  .tb-no-service-bg {
+    margin: 10px;
+    position: relative;
+    flex: 1;
+    width: 100%;
+    max-height: 100px;
+    &:before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: $tb-primary-color;
+      mask-image: url(/assets/home/no-service.svg);
+      -webkit-mask-image: url(/assets/home/no-service.svg);
+      mask-repeat: no-repeat;
+      -webkit-mask-repeat: no-repeat;
+      mask-size: contain;
+      -webkit-mask-size: contain;
+      mask-position: center;
+      -webkit-mask-position: center;
+    }
+  }
+
   .tb-no-data-text {
     font-weight: 500;
     font-size: 14px;

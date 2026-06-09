@@ -49,6 +49,8 @@ import { isUndefined } from '@core/utils';
 import { PageLink } from '@shared/models/page/page-link';
 import { Edge } from '@shared/models/edge.models';
 import { mergeMap } from 'rxjs/operators';
+import { ItemType } from '@shared/models/iot-hub/iot-hub-item.models';
+import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
 import { PageData } from '@shared/models/page/page-data';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 
@@ -63,6 +65,7 @@ export class RuleChainsTableConfigResolver  {
               private importExport: ImportExportService,
               private itembuffer: ItemBufferService,
               private edgeService: EdgeService,
+              private iotHubActions: IotHubActionsService,
               private translate: TranslateService,
               private datePipe: DatePipe,
               private router: Router,
@@ -168,6 +171,12 @@ export class RuleChainsTableConfigResolver  {
           icon: 'file_upload',
           isEnabled: () => true,
           onAction: ($event) => this.importRuleChain($event)
+        },
+        {
+          name: this.translate.instant('iot-hub.add-from-iot-hub'),
+          icon: 'store',
+          isEnabled: () => true,
+          onAction: (_$event) => this.addRuleChainFromIotHub()
         }
       );
     }
@@ -286,6 +295,21 @@ export class RuleChainsTableConfigResolver  {
       }
     );
     return actions;
+  }
+
+  addRuleChainFromIotHub() {
+    const ruleChainScope = this.config.componentsData.ruleChainScope;
+    const ruleChainType = ruleChainScope === 'edges' ? 'EDGE' : 'CORE';
+    this.iotHubActions.addItem(ItemType.RULE_CHAIN, { itemSubType: ruleChainType }).subscribe(result => {
+      if (result?.descriptor?.type === 'RULE_CHAIN' && result.descriptor.ruleChainId?.id) {
+        const ruleChainId = result.descriptor.ruleChainId.id;
+        if (ruleChainScope === 'edges') {
+          this.router.navigateByUrl(`edgeManagement/ruleChains/${ruleChainId}`);
+        } else {
+          this.router.navigateByUrl(`ruleChains/${ruleChainId}`);
+        }
+      }
+    });
   }
 
   importRuleChain($event: Event) {

@@ -15,7 +15,8 @@
     limitations under the License.
 
 -->
-<a mat-button class="tb-button-toggle" (click)="toggleSection($event)">
+<a mat-button class="tb-button-toggle" (click)="toggleSection($event)"
+   [class.is-new]="section.isNew">
   @if (section.icon !== null) {
     <tb-icon matButtonIcon>{{section.icon}}</tb-icon>
   }
