@@ -210,6 +210,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     private static final String DIFFERENT_TENANT_ADMIN_PASSWORD = "difftenant";
 
     protected static final String CUSTOMER_USER_EMAIL = "testcustomer@thingsboard.org";
+    protected static final String SECOND_CUSTOMER_USER_EMAIL = "testsecondcustomer@thingsboard.org";
     private static final String CUSTOMER_USER_PASSWORD = "customer";
 
     protected static final String DIFFERENT_CUSTOMER_USER_EMAIL = "testdifferentcustomer@thingsboard.org";
@@ -247,6 +248,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected CustomerId differentTenantCustomerId;
     protected UserId customerUserId;
+    protected UserId secondCustomerUserId;
     protected UserId differentCustomerUserId;
 
     protected UserId differentTenantCustomerUserId;
@@ -372,8 +374,16 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         customerUser.setCustomerId(savedCustomer.getId());
         customerUser.setEmail(CUSTOMER_USER_EMAIL);
 
-        customerUser = createUserAndLogin(customerUser, CUSTOMER_USER_PASSWORD);
+        customerUser = createUserAndActivate(customerUser, CUSTOMER_USER_PASSWORD);
         customerUserId = customerUser.getId();
+
+        User secondCustomerUser = new User();
+        secondCustomerUser.setAuthority(Authority.CUSTOMER_USER);
+        secondCustomerUser.setTenantId(tenantId);
+        secondCustomerUser.setCustomerId(customerId);
+        secondCustomerUser.setEmail(SECOND_CUSTOMER_USER_EMAIL);
+        secondCustomerUser = createUserAndActivate(secondCustomerUser, CUSTOMER_USER_PASSWORD);
+        secondCustomerUserId = secondCustomerUser.getId();
 
         resetTokens();
 
@@ -470,6 +480,10 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected void loginCustomerUser() throws Exception {
         login(CUSTOMER_USER_EMAIL, CUSTOMER_USER_PASSWORD);
+    }
+
+    protected void loginSecondCustomerUser() throws Exception {
+        login(SECOND_CUSTOMER_USER_EMAIL, CUSTOMER_USER_PASSWORD);
     }
 
     protected void loginUser(String userName, String password) throws Exception {
@@ -583,6 +597,13 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         JsonNode activateRequest = getActivateRequest(password);
         JsonNode tokenInfo = readResponse(doPost("/api/noauth/activate", activateRequest).andExpect(status().isOk()), JsonNode.class);
         validateAndSetJwtToken(tokenInfo, user.getEmail());
+        return savedUser;
+    }
+
+    protected User createUserAndActivate(User user, String password) throws Exception {
+        User savedUser = doPost("/api/user", user, User.class);
+        JsonNode activateRequest = getActivateRequest(password);
+        doPost("/api/noauth/activate", activateRequest).andExpect(status().isOk());
         return savedUser;
     }
 
