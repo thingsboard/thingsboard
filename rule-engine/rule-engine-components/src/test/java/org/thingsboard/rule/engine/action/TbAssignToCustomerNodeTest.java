@@ -97,7 +97,7 @@ class TbAssignToCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
     private final Edge EDGE = new Edge();
     private final Dashboard DASHBOARD = new Dashboard();
 
-    private final TenantId TENANT_ID = new TenantId(UUID.fromString("c818385f-e661-407f-8c52-daf2dddf406d"));
+    private final TenantId TENANT_ID = TenantId.fromUUID(UUID.fromString("c818385f-e661-407f-8c52-daf2dddf406d"));
     private final RuleNodeId RULE_NODE_ID = new RuleNodeId(UUID.fromString("c3570bd0-c0bc-4609-97a4-6f57d7c8b809"));
 
     private static Stream<Arguments> givenUnsupportedOriginatorType_whenOnMsg_thenVerifyExceptionThrown() {
