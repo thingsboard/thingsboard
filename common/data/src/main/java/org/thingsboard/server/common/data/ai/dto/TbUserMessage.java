@@ -25,12 +25,10 @@ import java.util.List;
 public record TbUserMessage(
         @NotEmpty
         @Valid
-        @ArraySchema(
-                arraySchema = @Schema(
-                        requiredMode = Schema.RequiredMode.REQUIRED,
-                        description = "A list of content parts that make up the complete user prompt"
-                ),
-                schema = @Schema(ref = "#/components/schemas/TbContent")
+        @Schema(
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                description = "A list of content parts that make up the complete user prompt"
         )
+        @ArraySchema(schema = @Schema(ref = "#/components/schemas/TbContent"))
         List<TbContent> contents
 ) {}

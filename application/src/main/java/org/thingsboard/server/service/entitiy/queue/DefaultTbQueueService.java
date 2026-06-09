@@ -31,6 +31,7 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.queue.TbQueueAdmin;
+import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
@@ -50,6 +51,7 @@ public class DefaultTbQueueService extends AbstractTbEntityService implements Tb
     private final TbClusterService tbClusterService;
     private final TbQueueAdmin tbQueueAdmin;
     private final AuditLogService auditLogService;
+    private final TopicService topicService;
 
     @Override
     public Queue saveQueue(Queue queue, User user) {
@@ -196,9 +198,10 @@ public class DefaultTbQueueService extends AbstractTbEntityService implements Tb
     private void createTopicsIfNeeded(Queue queue, Queue oldQueue) {
         int newPartitions = queue.getPartitions();
         int oldPartitions = oldQueue != null ? oldQueue.getPartitions() : 0;
+        String topic = topicService.buildTopicName(queue.getTopic());
         for (int i = oldPartitions; i < newPartitions; i++) {
             tbQueueAdmin.createTopicIfNotExists(
-                    new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName(),
+                    new TopicPartitionInfo(topic, queue.getTenantId(), i, false).getFullTopicName(),
                     queue.getCustomProperties(),
                     true); // forcing topic creation because the topic may still be cached on some nodes
         }

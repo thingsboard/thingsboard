@@ -53,8 +53,13 @@ public record AnthropicChatModelConfig(
     }
 
     @Override
-    public boolean supportsJsonMode() {
+    public boolean supportsSchemalessJsonOutput() {
         return false;
+    }
+
+    @Override
+    public boolean supportsJsonSchemaOutput() {
+        return true;
     }
 
 }

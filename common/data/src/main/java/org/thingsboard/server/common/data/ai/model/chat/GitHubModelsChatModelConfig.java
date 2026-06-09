@@ -54,8 +54,13 @@ public record GitHubModelsChatModelConfig(
     }
 
     @Override
-    public boolean supportsJsonMode() {
-        return false;
+    public boolean supportsSchemalessJsonOutput() {
+        return true;
+    }
+
+    @Override
+    public boolean supportsJsonSchemaOutput() {
+        return true;
     }
 
 }
