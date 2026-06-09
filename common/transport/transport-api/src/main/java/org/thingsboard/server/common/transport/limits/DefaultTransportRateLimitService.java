@@ -107,11 +107,12 @@ public class DefaultTransportRateLimitService implements TransportRateLimitServi
 
     @Override
     public void update(TenantProfileUpdateResult update) {
-        log.info("Received tenant profile update: {}", update.getProfile());
-        EntityTransportRateLimits tenantRateLimitPrototype = createRateLimits(update.getProfile(), TENANT_LIMITS);
-        EntityTransportRateLimits deviceRateLimitPrototype = createRateLimits(update.getProfile(), DEVICE_LIMITS);
-        EntityTransportRateLimits gatewayRateLimitPrototype = createRateLimits(update.getProfile(), GATEWAY_LIMITS);
-        EntityTransportRateLimits gatewayDeviceRateLimitPrototype = createRateLimits(update.getProfile(), GATEWAY_DEVICE_LIMITS);
+        TenantProfile profile = update.getProfile();
+        log.info("Received tenant profile update: {}", profile);
+        EntityTransportRateLimits tenantRateLimitPrototype = createRateLimits(profile, TENANT_LIMITS);
+        EntityTransportRateLimits deviceRateLimitPrototype = createRateLimits(profile, DEVICE_LIMITS);
+        EntityTransportRateLimits gatewayRateLimitPrototype = createRateLimits(profile, GATEWAY_LIMITS);
+        EntityTransportRateLimits gatewayDeviceRateLimitPrototype = createRateLimits(profile, GATEWAY_DEVICE_LIMITS);
         for (TenantId tenantId : update.getAffectedTenants()) {
             update(tenantId, tenantRateLimitPrototype, deviceRateLimitPrototype, gatewayRateLimitPrototype, gatewayDeviceRateLimitPrototype);
         }
@@ -301,15 +302,17 @@ public class DefaultTransportRateLimitService implements TransportRateLimitServi
     }
 
     private <T extends EntityId> EntityTransportRateLimits getRateLimits(ConcurrentMap<T, EntityTransportRateLimits> limitsMap, TenantId tenantId,
-                                                                         T entityId, TransportLimitsType limitsType, Runnable onCreate) {
+                                                                         T entityId, TransportLimitsType limitsType, Runnable onMiss) {
         EntityTransportRateLimits limits = limitsMap.get(entityId);
         if (limits == null) {
             // Resolve the tenant profile WITHOUT holding the ConcurrentHashMap bin lock: the fetch may
             // block on a cross-service round-trip, so it must run before computeIfAbsent's mapping function.
             TenantProfile tenantProfile = tenantProfileCache.get(tenantId);
             limits = limitsMap.computeIfAbsent(entityId, k -> createRateLimits(tenantProfile, limitsType));
-            if (onCreate != null) {
-                onCreate.run();
+            // Runs on every observed miss, including callers that lost the computeIfAbsent race and got an
+            // existing value back - NOT only on actual creation, so the callback must be idempotent.
+            if (onMiss != null) {
+                onMiss.run();
             }
         }
         return limits;

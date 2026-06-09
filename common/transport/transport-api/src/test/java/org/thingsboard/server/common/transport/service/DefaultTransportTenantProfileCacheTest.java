@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.transport.service;
 
+import com.google.common.util.concurrent.Striped;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,6 +32,8 @@ import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.gen.transport.TransportProtos.GetEntityProfileRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetEntityProfileResponseMsg;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -38,12 +41,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class DefaultTransportTenantProfileCacheTest {
@@ -53,8 +59,22 @@ class DefaultTransportTenantProfileCacheTest {
     private TransportRateLimitService rateLimitService;
     private ExecutorService executor;
 
+    // Must match DefaultTransportTenantProfileCache.TENANT_PROFILE_FETCH_LOCK_STRIPES.
+    private static final int STRIPE_COUNT = 1024;
+
     private final TenantId tenantA = TenantId.fromUUID(UUID.randomUUID());
-    private final TenantId tenantB = TenantId.fromUUID(UUID.randomUUID());
+    // Deterministically pick a tenant that maps to a DIFFERENT stripe than tenantA, so the cross-tenant
+    // test below cannot flake on the ~1/1024 chance two random UUIDs hash to the same stripe.
+    private final TenantId tenantB = differentStripeFrom(tenantA);
+
+    private static TenantId differentStripeFrom(TenantId other) {
+        Striped<Lock> probe = Striped.lock(STRIPE_COUNT);
+        TenantId candidate = TenantId.fromUUID(UUID.randomUUID());
+        while (probe.get(candidate) == probe.get(other)) {
+            candidate = TenantId.fromUUID(UUID.randomUUID());
+        }
+        return candidate;
+    }
 
     @BeforeEach
     void setUp() {
@@ -105,6 +125,41 @@ class DefaultTransportTenantProfileCacheTest {
 
         releaseTenantA.countDown();
         assertThat(tenantAResult.get(5, TimeUnit.SECONDS)).isNotNull();
+    }
+
+    @Test
+    void concurrentMissesForSameTenantDedupeToSingleFetch() throws Exception {
+        // The per-tenant lock exists precisely so that concurrent cold misses for the SAME tenant collapse
+        // into a single cross-service fetch (the rest are served from cache). Assert that contract directly.
+        int callers = 8;
+        CountDownLatch fetchStarted = new CountDownLatch(1);
+        CountDownLatch releaseFetch = new CountDownLatch(1);
+
+        when(transportService.getEntityProfile(any())).thenAnswer(invocation -> {
+            fetchStarted.countDown();
+            // Hold the (single) in-flight fetch open while the other callers pile up on the per-tenant lock.
+            releaseFetch.await(5, TimeUnit.SECONDS);
+            return responseFor(tenantA);
+        });
+
+        CountDownLatch allSubmitted = new CountDownLatch(callers);
+        List<Future<TenantProfile>> results = new ArrayList<>();
+        for (int i = 0; i < callers; i++) {
+            results.add(executor.submit(() -> {
+                allSubmitted.countDown();
+                return cache.get(tenantA);
+            }));
+        }
+
+        assertThat(allSubmitted.await(5, TimeUnit.SECONDS)).as("all callers should start").isTrue();
+        assertThat(fetchStarted.await(5, TimeUnit.SECONDS)).as("the first fetch should start").isTrue();
+        releaseFetch.countDown();
+
+        for (Future<TenantProfile> result : results) {
+            assertThat(result.get(5, TimeUnit.SECONDS)).isNotNull();
+        }
+        // All 8 callers resolved the same tenant, but only one of them hit the backend.
+        verify(transportService, times(1)).getEntityProfile(any());
     }
 
     private GetEntityProfileResponseMsg responseFor(TenantId tenantId) {
