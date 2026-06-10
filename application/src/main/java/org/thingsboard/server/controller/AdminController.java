@@ -180,15 +180,6 @@ public class AdminController extends BaseController {
         return securitySettings;
     }
 
-    @ApiOperation(value = "Get maximum allowed TTL for user activation link (getActivationLinkMaxTtl)",
-            notes = "Returns the maximum allowed TTL in hours for user activation link, configured on the server." + SYSTEM_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @GetMapping(value = "/securitySettings/activationLinkMaxTtl")
-    public int getActivationLinkMaxTtl() throws ThingsboardException {
-        accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
-        return securitySettingsService.getMaxActivationLinkTtl();
-    }
-
     @ApiOperation(value = "Get the JWT Settings object (getJwtSettings)",
             notes = "Get the JWT Settings object that contains JWT token policy, etc. " + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")

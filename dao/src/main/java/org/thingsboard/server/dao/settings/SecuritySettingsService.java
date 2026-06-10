@@ -23,6 +23,4 @@ public interface SecuritySettingsService {
 
     SecuritySettings saveSecuritySettings(SecuritySettings securitySettings);
 
-    int getMaxActivationLinkTtl();
-
 }

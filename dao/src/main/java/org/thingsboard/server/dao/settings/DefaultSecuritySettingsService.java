@@ -61,12 +61,8 @@ public class DefaultSecuritySettingsService implements SecuritySettingsService {
             securitySettings.setPasswordResetTokenTtl(24);
             securitySettings.setUserActivationTokenTtl(24);
         }
+        securitySettings.setMaxActivationLinkTtl(maxActivationLinkTtl);
         return securitySettings;
-    }
-
-    @Override
-    public int getMaxActivationLinkTtl() {
-        return maxActivationLinkTtl;
     }
 
     @CacheEvict(cacheNames = SECURITY_SETTINGS_CACHE, key = "'securitySettings'")
@@ -85,7 +81,9 @@ public class DefaultSecuritySettingsService implements SecuritySettingsService {
         adminSettings.setJsonValue(JacksonUtil.valueToTree(securitySettings));
         AdminSettings savedAdminSettings = adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, adminSettings);
         try {
-            return JacksonUtil.convertValue(savedAdminSettings.getJsonValue(), SecuritySettings.class);
+            SecuritySettings savedSecuritySettings = JacksonUtil.convertValue(savedAdminSettings.getJsonValue(), SecuritySettings.class);
+            savedSecuritySettings.setMaxActivationLinkTtl(maxActivationLinkTtl);
+            return savedSecuritySettings;
         } catch (Exception e) {
             throw new RuntimeException("Failed to load security settings!", e);
         }

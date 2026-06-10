@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.security.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -46,6 +47,10 @@ public class SecuritySettings implements Serializable {
     @NotNull @Min(1)
     @Schema(description = "TTL in hours for user activation link", minimum = "1", requiredMode = Schema.RequiredMode.REQUIRED)
     private Integer userActivationTokenTtl;
+
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    @Schema(description = "Maximum allowed TTL in hours for user activation link, configured on the server.", accessMode = Schema.AccessMode.READ_ONLY)
+    private Integer maxActivationLinkTtl;
 
     @NotNull @Min(1) @Max(24)
     @Schema(description = "TTL in hours for password reset link", minimum = "1", maximum = "24", requiredMode = Schema.RequiredMode.REQUIRED)
