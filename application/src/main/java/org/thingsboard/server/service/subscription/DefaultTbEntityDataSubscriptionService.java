@@ -41,7 +41,6 @@ import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
-import org.thingsboard.server.common.data.query.ComparisonTsValue;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityKey;
@@ -296,17 +295,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     }
 
     private ListenableFuture<TbEntityDataSubCtx> handleAggHistoryCmd(TbEntityDataSubCtx ctx, AggHistoryCmd cmd) {
-        ConcurrentMap<Integer, ReadTsKvQueryInfo> queries = new ConcurrentHashMap<>();
-        for (AggKey key : cmd.getKeys()) {
-            if (key.getPreviousValueOnly() == null || !key.getPreviousValueOnly()) {
-                var query = new BaseReadTsKvQuery(key.getKey(), cmd.getStartTs(), cmd.getEndTs(), cmd.getEndTs() - cmd.getStartTs(), 1, key.getAgg());
-                queries.put(query.getId(), new ReadTsKvQueryInfo(key, query, false));
-            }
-            if (key.getPreviousStartTs() != null && key.getPreviousEndTs() != null && key.getPreviousEndTs() >= key.getPreviousStartTs()) {
-                var query = new BaseReadTsKvQuery(key.getKey(), key.getPreviousStartTs(), key.getPreviousEndTs(), key.getPreviousEndTs() - key.getPreviousStartTs(), 1, key.getAgg());
-                queries.put(query.getId(), new ReadTsKvQueryInfo(key, query, true));
-            }
-        }
+        Map<Integer, ReadTsKvQueryInfo> queries = AggregationQueryUtils.buildAggHistoryQueries(cmd.getKeys(), cmd.getStartTs(), cmd.getEndTs());
         return handleAggCmd(ctx, cmd.getKeys(), queries, cmd.getStartTs(), cmd.getEndTs(), false);
     }
 
@@ -319,7 +308,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         return handleAggCmd(ctx, cmd.getKeys(), queries, cmd.getStartTs(), cmd.getStartTs() + cmd.getTimeWindow(), true);
     }
 
-    private ListenableFuture<TbEntityDataSubCtx> handleAggCmd(TbEntityDataSubCtx ctx, List<AggKey> keys, ConcurrentMap<Integer, ReadTsKvQueryInfo> queries,
+    private ListenableFuture<TbEntityDataSubCtx> handleAggCmd(TbEntityDataSubCtx ctx, List<AggKey> keys, Map<Integer, ReadTsKvQueryInfo> queries,
                                                               long startTs, long endTs, boolean subscribe) {
         Map<EntityData, ListenableFuture<List<ReadTsKvQueryResult>>> fetchResultMap = new HashMap<>();
         List<EntityData> entityDataList = ctx.getData().getData();
@@ -335,22 +324,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                     lastTsEntityMap.put(entityData, lastTsMap);
 
                     List<ReadTsKvQueryResult> queryResults = future.get();
-                    if (queryResults != null) {
-                        for (ReadTsKvQueryResult queryResult : queryResults) {
-                            ReadTsKvQueryInfo queryInfo = queries.get(queryResult.getQueryId());
-                            ComparisonTsValue comparisonTsValue = entityData.getAggLatest().computeIfAbsent(queryInfo.getKey().getId(), agg -> new ComparisonTsValue());
-                            if (queryInfo.isPrevious()) {
-                                comparisonTsValue.setPrevious(queryResult.toTsValue(queryInfo.getQuery()));
-                            } else {
-                                comparisonTsValue.setCurrent(queryResult.toTsValue(queryInfo.getQuery()));
-                                lastTsMap.put(queryInfo.getQuery().getKey(), queryResult.getLastEntryTs());
-                            }
-                        }
-                    }
-                    // Populate with empty values if no data found.
-                    keys.forEach(key -> {
-                        entityData.getAggLatest().putIfAbsent(key.getId(), new ComparisonTsValue(TsValue.EMPTY, TsValue.EMPTY));
-                    });
+                    AggregationQueryUtils.populateAggLatest(entityData, queryResults, queries, keys, lastTsMap);
                 } catch (InterruptedException | ExecutionException e) {
                     log.warn("[{}][{}][{}] Failed to fetch historical data", ctx.getSessionId(), ctx.getCmdId(), entityData.getEntityId(), e);
                     ctx.sendWsMsg(new EntityDataUpdate(ctx.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR.getCode(), "Failed to fetch historical data!"));

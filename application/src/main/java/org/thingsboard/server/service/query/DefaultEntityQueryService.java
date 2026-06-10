@@ -36,6 +36,8 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
+import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.AlarmData;
@@ -63,6 +65,9 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.subscription.AggregationQueryUtils;
+import org.thingsboard.server.service.subscription.ReadTsKvQueryInfo;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.AggHistoryCmd;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -337,6 +342,45 @@ public class DefaultEntityQueryService implements EntityQueryService {
                 error.accept(t);
             }
         }, dbCallbackExecutor);
+    }
+
+    @Override
+    public DeferredResult<PageData<EntityData>> findEntityDataAggHistoryByQuery(SecurityUser securityUser, EntityDataQuery query, AggHistoryCmd cmd) {
+        DeferredResult<PageData<EntityData>> response = new DeferredResult<>();
+        PageData<EntityData> pageData = findEntityDataByQuery(securityUser, query);
+        List<EntityData> entityDataList = pageData.getData();
+        if (entityDataList.isEmpty() || cmd.getKeys() == null || cmd.getKeys().isEmpty()) {
+            response.setResult(pageData);
+            return response;
+        }
+        TenantId tenantId = securityUser.getTenantId();
+        Map<Integer, ReadTsKvQueryInfo> queries = AggregationQueryUtils.buildAggHistoryQueries(cmd.getKeys(), cmd.getStartTs(), cmd.getEndTs());
+        List<ReadTsKvQuery> queryList = queries.values().stream().map(ReadTsKvQueryInfo::getQuery).collect(Collectors.toList());
+        Map<EntityData, ListenableFuture<List<ReadTsKvQueryResult>>> fetchResultMap = new LinkedHashMap<>();
+        entityDataList.forEach(entityData -> fetchResultMap.put(entityData,
+                timeseriesService.findAllByQueries(tenantId, entityData.getEntityId(), queryList)));
+        Futures.addCallback(Futures.allAsList(fetchResultMap.values()), new FutureCallback<>() {
+            @Override
+            public void onSuccess(@Nullable List<List<ReadTsKvQueryResult>> ignored) {
+                fetchResultMap.forEach((entityData, future) -> {
+                    try {
+                        List<ReadTsKvQueryResult> queryResults = future.get();
+                        AggregationQueryUtils.populateAggLatest(entityData, queryResults, queries, cmd.getKeys(), null);
+                    } catch (InterruptedException | ExecutionException e) {
+                        log.warn("[{}] Failed to fetch aggregated historical data", entityData.getEntityId(), e);
+                        AggregationQueryUtils.populateAggLatest(entityData, null, queries, cmd.getKeys(), null);
+                    }
+                });
+                response.setResult(pageData);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                log.error("Failed to fetch aggregated historical data", t);
+                response.setErrorResult(t);
+            }
+        }, dbCallbackExecutor);
+        return response;
     }
 
 }
