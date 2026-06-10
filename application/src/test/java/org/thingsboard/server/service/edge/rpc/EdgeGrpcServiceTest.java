@@ -45,12 +45,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/**
- * Unit coverage for the cluster-aware predicates that guard the delayed disconnect notification:
- * {@code evictServiceIdCacheIfOwnedByThisNode} and the re-verify check in
- * {@code fireDelayedDisconnectNotification}. These exercise the cross-node ownership logic that the
- * single-node integration tests ({@code EdgeConnectionNotificationTest}) cannot reach.
- */
 @ExtendWith(MockitoExtension.class)
 public class EdgeGrpcServiceTest {
 
@@ -72,20 +66,16 @@ public class EdgeGrpcServiceTest {
     @InjectMocks
     private EdgeGrpcService edgeGrpcService;
 
-    private TenantId tenantId;
     private EdgeId edgeId;
     private Edge edge;
 
     @BeforeEach
     public void setUp() {
-        tenantId = new TenantId(UUID.randomUUID());
         edgeId = new EdgeId(UUID.randomUUID());
         edge = new Edge(edgeId);
-        edge.setTenantId(tenantId);
+        edge.setTenantId(TenantId.fromUUID(UUID.randomUUID()));
         edge.setName("test-edge");
     }
-
-    // --- evictServiceIdCacheIfOwnedByThisNode ---
 
     @Test
     public void givenCacheOwnedByThisNode_whenEvict_thenEntryIsEvicted() {

@@ -238,18 +238,9 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
 
     @PreDestroy
     public void destroy() {
-        // Flush already-pending disconnect notifications BEFORE shutting the server down. These are edges that
-        // disconnected on their own within the delay window; without this a graceful restart would silently
-        // swallow their "disconnected" alert. Snapshotting first means we only flush those - not edges that this
-        // very shutdown is about to disconnect (they rebalance to another node and shouldn't alert) - and we run
-        // while the scheduler and rule engine are still alive. The guard inside fireDelayedDisconnectNotification
-        // still suppresses any edge that reconnected elsewhere.
         List<PendingDisconnect> pendingToFlush = new ArrayList<>(pendingDisconnectNotifications.values());
         pendingDisconnectNotifications.clear();
-        pendingToFlush.forEach(pending -> {
-            cancelIfPending(pending.future());
-            fireDelayedDisconnectNotification(pending);
-        });
+        pendingToFlush.forEach(this::fireDelayedDisconnectNotification);
         if (server != null) {
             server.shutdownNow();
         }
@@ -590,10 +581,20 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     // TB-Core node within the keep-alive window, that node has overwritten the entry - evicting it here
     // would wipe the live owner and make fireDelayedDisconnectNotification raise a false 'disconnected'.
     private void evictServiceIdCacheIfOwnedByThisNode(EdgeId edgeId) {
-        TbCacheValueWrapper<String> wrapper = edgeIdServiceIdCache.get(edgeId);
-        if (wrapper != null && serviceInfoProvider.getServiceId().equals(wrapper.get())) {
+        if (isOwnedByThisNode(edgeId)) {
             edgeIdServiceIdCache.evict(edgeId);
         }
+    }
+
+    // The edge's service-id cache entry still points at this node, i.e. this node is the recorded owner.
+    private boolean isOwnedByThisNode(EdgeId edgeId) {
+        TbCacheValueWrapper<String> wrapper = edgeIdServiceIdCache.get(edgeId);
+        return wrapper != null && serviceInfoProvider.getServiceId().equals(wrapper.get());
+    }
+
+    // The edge has a live owner somewhere in the cluster (the cache is cluster-wide), regardless of which node.
+    private boolean isConnectedClusterWide(EdgeId edgeId) {
+        return edgeIdServiceIdCache.get(edgeId) != null;
     }
 
     private void destroySession(EdgeGrpcSession session) {
@@ -749,7 +750,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         pendingDisconnectNotifications.remove(edgeId, pending);
         // Re-verify the edge is still disconnected. The cache is cluster-wide, so this also covers the case
         // where the edge dropped on this node and reconnected to a different TB-Core node within the window.
-        if (sessions.containsKey(edgeId) || edgeIdServiceIdCache.get(edgeId) != null) {
+        if (sessions.containsKey(edgeId) || isConnectedClusterWide(edgeId)) {
             log.debug("[{}][{}] Edge reconnected within the disconnect notification delay - skipping disconnect notification", edge.getTenantId(), edgeId);
             return;
         }
@@ -763,9 +764,6 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         }
     }
 
-    // Carries the context the delayed task needs, so a pending notification can still be fired on shutdown
-    // (see destroy()), not just cancelled. The future is back-filled right after scheduling (see
-    // scheduleDisconnectNotification). Package-private for unit testing of fireDelayedDisconnectNotification.
     static final class PendingDisconnect {
         private final Edge edge;
         private ScheduledFuture<?> future;
@@ -785,6 +783,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         void setFuture(ScheduledFuture<?> future) {
             this.future = future;
         }
+
     }
 
     private static void cancelIfPending(ScheduledFuture<?> future) {
