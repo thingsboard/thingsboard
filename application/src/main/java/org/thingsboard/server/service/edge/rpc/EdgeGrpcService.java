@@ -69,6 +69,7 @@ import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
+import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -103,7 +104,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private final ConcurrentMap<EdgeId, Lock> sessionNewEventsLocks = new ConcurrentHashMap<>();
     private final Map<EdgeId, Boolean> sessionNewEvents = new HashMap<>();
     private final ConcurrentMap<EdgeId, ScheduledFuture<?>> sessionEdgeEventChecks = new ConcurrentHashMap<>();
-    private final ConcurrentMap<EdgeId, ScheduledFuture<?>> pendingDisconnectNotifications = new ConcurrentHashMap<>();
+    private final ConcurrentMap<EdgeId, PendingDisconnect> pendingDisconnectNotifications = new ConcurrentHashMap<>();
     private final ConcurrentMap<UUID, Consumer<FromEdgeSyncResponse>> localSyncEdgeRequests = new ConcurrentHashMap<>();
     private final ConcurrentMap<EdgeId, Boolean> edgeEventsMigrationProcessed = new ConcurrentHashMap<>();
     private final List<EdgeGrpcSession> zombieSessions = new ArrayList<>();
@@ -143,6 +144,9 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     @Autowired
     @Lazy
     private EdgeContextComponent ctx;
+
+    @Autowired
+    private TelemetrySubscriptionService tsSubService;
 
     @Autowired
     private TbClusterService clusterService;
@@ -198,7 +202,9 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         }
         this.edgeEventProcessingExecutorService = ThingsBoardExecutors.newScheduledThreadPool(schedulerPoolSize, "edge-event-check-scheduler");
         this.sendDownlinkExecutorService = ThingsBoardExecutors.newScheduledThreadPool(sendSchedulerPoolSize, "edge-send-scheduler");
-        this.executorService = ThingsBoardExecutors.newSingleThreadScheduledExecutor("edge-service");
+        // removeOnCancelPolicy: cancelled delayed disconnect notifications (common with flapping edges) are dropped
+        // from the queue right away on reconnect, instead of piling up until their original fire time.
+        this.executorService = ThingsBoardExecutors.newSingleThreadScheduledExecutor("edge-service", true);
         this.executorService.scheduleAtFixedRate(this::cleanupZombieSessions, 60, 60, TimeUnit.SECONDS);
         log.info("Edge RPC service initialized!");
     }
@@ -232,19 +238,23 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
 
     @PreDestroy
     public void destroy() {
+        // Flush already-pending disconnect notifications BEFORE shutting the server down. These are edges that
+        // disconnected on their own within the delay window; without this a graceful restart would silently
+        // swallow their "disconnected" alert. Snapshotting first means we only flush those - not edges that this
+        // very shutdown is about to disconnect (they rebalance to another node and shouldn't alert) - and we run
+        // while the scheduler and rule engine are still alive. The guard inside fireDelayedDisconnectNotification
+        // still suppresses any edge that reconnected elsewhere.
+        List<PendingDisconnect> pendingToFlush = new ArrayList<>(pendingDisconnectNotifications.values());
+        pendingDisconnectNotifications.clear();
+        pendingToFlush.forEach(pending -> {
+            cancelIfPending(pending.future());
+            fireDelayedDisconnectNotification(pending);
+        });
         if (server != null) {
             server.shutdownNow();
         }
-        for (Map.Entry<EdgeId, ScheduledFuture<?>> entry : sessionEdgeEventChecks.entrySet()) {
-            EdgeId edgeId = entry.getKey();
-            ScheduledFuture<?> sessionEdgeEventCheck = entry.getValue();
-            if (sessionEdgeEventCheck != null && !sessionEdgeEventCheck.isCancelled() && !sessionEdgeEventCheck.isDone()) {
-                sessionEdgeEventCheck.cancel(true);
-                sessionEdgeEventChecks.remove(edgeId);
-            }
-        }
-        pendingDisconnectNotifications.values().forEach(EdgeGrpcService::cancelIfPending);
-        pendingDisconnectNotifications.clear();
+        sessionEdgeEventChecks.values().forEach(task -> cancelIfPending(task, true));
+        sessionEdgeEventChecks.clear();
         if (edgeEventProcessingExecutorService != null) {
             edgeEventProcessingExecutorService.shutdownNow();
         }
@@ -393,6 +403,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         // If the edge reconnected within the disconnect-notification delay window, suppress the pending
         // "disconnected" notification - the drop was transient (debounce for flapping edges).
         cancelPendingDisconnectNotification(edgeId);
+        // Connect notifies immediately; only the disconnect notification is debounced (see scheduleDisconnectNotification).
         pushStateEventToRuleEngine(tenantId, edge, lastConnectTs, TbMsgType.CONNECT_EVENT);
         notifyEdgeConnectivity(tenantId, edge, true);
         cancelScheduleEdgeEventsCheck(edgeId);
@@ -528,13 +539,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
 
     private void cancelScheduleEdgeEventsCheck(EdgeId edgeId) {
         log.trace("[{}] cancelling edge event check for edge", edgeId);
-        if (sessionEdgeEventChecks.containsKey(edgeId)) {
-            ScheduledFuture<?> sessionEdgeEventCheck = sessionEdgeEventChecks.get(edgeId);
-            if (sessionEdgeEventCheck != null && !sessionEdgeEventCheck.isCancelled() && !sessionEdgeEventCheck.isDone()) {
-                sessionEdgeEventCheck.cancel(true);
-                sessionEdgeEventChecks.remove(edgeId);
-            }
-        }
+        cancelIfPending(sessionEdgeEventChecks.remove(edgeId), true);
     }
 
     private void onEdgeDisconnect(Edge edge, UUID sessionId) {
@@ -602,14 +607,14 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private void save(TenantId tenantId, EdgeId edgeId, String key, long value) {
         log.debug("[{}][{}] Updating long edge telemetry [{}] [{}]", tenantId, edgeId, key, value);
         if (persistToTelemetry) {
-            ctx.getTsSubService().saveTimeseries(TimeseriesSaveRequest.builder()
+            tsSubService.saveTimeseries(TimeseriesSaveRequest.builder()
                     .tenantId(tenantId)
                     .entityId(edgeId)
                     .entry(new LongDataEntry(key, value))
                     .callback(new AttributeSaveCallback(tenantId, edgeId, key, value))
                     .build());
         } else {
-            ctx.getTsSubService().saveAttributes(AttributesSaveRequest.builder()
+            tsSubService.saveAttributes(AttributesSaveRequest.builder()
                     .tenantId(tenantId)
                     .entityId(edgeId)
                     .scope(AttributeScope.SERVER_SCOPE)
@@ -622,14 +627,14 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private void save(TenantId tenantId, EdgeId edgeId, String key, boolean value) {
         log.debug("[{}][{}] Updating boolean edge telemetry [{}] [{}]", tenantId, edgeId, key, value);
         if (persistToTelemetry) {
-            ctx.getTsSubService().saveTimeseries(TimeseriesSaveRequest.builder()
+            tsSubService.saveTimeseries(TimeseriesSaveRequest.builder()
                     .tenantId(tenantId)
                     .entityId(edgeId)
                     .entry(new BooleanDataEntry(key, value))
                     .callback(new AttributeSaveCallback(tenantId, edgeId, key, value))
                     .build());
         } else {
-            ctx.getTsSubService().saveAttributes(AttributesSaveRequest.builder()
+            tsSubService.saveAttributes(AttributesSaveRequest.builder()
                     .tenantId(tenantId)
                     .entityId(edgeId)
                     .scope(AttributeScope.SERVER_SCOPE)
@@ -717,31 +722,51 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         }
         EdgeId edgeId = edge.getId();
         pendingDisconnectNotifications.compute(edgeId, (id, existing) -> {
-            cancelIfPending(existing);
-            return edgeEventProcessingExecutorService.schedule(() -> fireDelayedDisconnectNotification(tenantId, edge),
+            if (existing != null) {
+                cancelIfPending(existing.future());
+            }
+            // Single-element holder so the scheduled task can reference its own pending entry, which doesn't exist
+            // until schedule(...) returns. The task needs it for the identity-keyed remove in fireDelayedDisconnectNotification.
+            PendingDisconnect[] holder = {null};
+            ScheduledFuture<?> future = executorService.schedule(
+                    () -> fireDelayedDisconnectNotification(holder[0]),
                     disconnectNotificationDelayMs, TimeUnit.MILLISECONDS);
+            holder[0] = new PendingDisconnect(tenantId, edge, future);
+            return holder[0];
         });
     }
 
-    private void fireDelayedDisconnectNotification(TenantId tenantId, Edge edge) {
-        EdgeId edgeId = edge.getId();
-        pendingDisconnectNotifications.remove(edgeId);
+    private void fireDelayedDisconnectNotification(PendingDisconnect pending) {
+        EdgeId edgeId = pending.edge().getId();
+        // Identity-keyed remove: don't clobber a newer entry if a second disconnect races with this task firing.
+        pendingDisconnectNotifications.remove(edgeId, pending);
         // Re-verify the edge is still disconnected. The cache is cluster-wide, so this also covers the case
         // where the edge dropped on this node and reconnected to a different TB-Core node within the window.
         if (sessions.containsKey(edgeId) || edgeIdServiceIdCache.get(edgeId) != null) {
-            log.debug("[{}][{}] Edge reconnected within the disconnect notification delay - skipping disconnect notification", tenantId, edgeId);
+            log.debug("[{}][{}] Edge reconnected within the disconnect notification delay - skipping disconnect notification", pending.tenantId(), edgeId);
             return;
         }
-        notifyEdgeConnectivity(tenantId, edge, false);
+        notifyEdgeConnectivity(pending.tenantId(), pending.edge(), false);
     }
 
     private void cancelPendingDisconnectNotification(EdgeId edgeId) {
-        cancelIfPending(pendingDisconnectNotifications.remove(edgeId));
+        PendingDisconnect pending = pendingDisconnectNotifications.remove(edgeId);
+        if (pending != null) {
+            cancelIfPending(pending.future());
+        }
     }
 
+    // Carries the context the delayed task needs, so a pending notification can still be fired on shutdown
+    // (see destroy()), not just cancelled. Package-private for unit testing of fireDelayedDisconnectNotification.
+    record PendingDisconnect(TenantId tenantId, Edge edge, ScheduledFuture<?> future) {}
+
     private static void cancelIfPending(ScheduledFuture<?> future) {
+        cancelIfPending(future, false);
+    }
+
+    private static void cancelIfPending(ScheduledFuture<?> future, boolean mayInterruptIfRunning) {
         if (future != null && !future.isDone()) {
-            future.cancel(false);
+            future.cancel(mayInterruptIfRunning);
         }
     }
 
@@ -797,6 +822,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                     !kafkaSession.getConsumer().getConsumer().isStopped();
         }
         return false;
+
     }
 
 }
