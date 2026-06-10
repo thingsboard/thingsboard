@@ -122,7 +122,6 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
 
     public static final String EDGE_HOST = "localhost";
     public static final int EDGE_PORT = TestSocketUtils.findAvailableTcpPort();
-
     @DynamicPropertySource
     static void props(DynamicPropertyRegistry registry) {
         log.debug("edges.rpc.port = {}", EDGE_PORT);
