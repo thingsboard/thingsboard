@@ -28,7 +28,7 @@ public class MqttV5RpcSparkplugTest  extends AbstractMqttV5RpcSparkplugTest {
 
     @Before
     public void beforeTest() throws Exception {
-        beforeSparkplugTest(false);
+        beforeSparkplugTest();
     }
 
     @After

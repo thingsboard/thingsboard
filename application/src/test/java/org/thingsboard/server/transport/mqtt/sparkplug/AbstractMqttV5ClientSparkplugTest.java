@@ -31,7 +31,6 @@ import org.junit.Assert;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TransportPayloadType;
-import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
@@ -58,6 +57,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static java.util.concurrent.Executors.newFixedThreadPool;
 import static org.awaitility.Awaitility.await;
 import static org.eclipse.paho.mqttv5.common.packet.MqttWireMessage.MESSAGE_TYPE_CONNACK;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -108,7 +108,8 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
     protected static final String metricBirthName_Int32 = "Device Metric int32";
     protected Set<String> sparkplugAttributesMetricNames;
 
-    public void beforeSparkplugTest(boolean isCreateDevices) throws Exception {
+    public void beforeSparkplugTest() throws Exception {
+
         MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
                 .gatewayName(edgeNodeDeviceName)
                 .isSparkplug(true)
@@ -116,24 +117,26 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
                 .transportPayloadType(TransportPayloadType.PROTOBUF)
                 .build();
         processBeforeTest(configProperties);
-        if (isCreateDevices) {
-            // 1. Create the first device with a short name (legacy style)
-            String deviceName1 = deviceId + "_1";
-            Device device1 = createDevice(deviceName1, deviceProfile.getName(), false);
+    }
 
-            // 2. Establish 'Created' relation so the transport identifies this gateway as the owner
-            String relationType = "Created";
-            EntityRelation relation1 = createFromRelation(savedGateway, device1, relationType);
-            doPost("/api/relation", relation1).andExpect(status().isOk());
+    public void seedLegacyAndFullPathDevices() throws Exception {
+        // 1. Create the first device with a short name (legacy style)
+        String deviceName1 = deviceId + "_1";
+        Device device1 = createDevice(deviceName1, deviceProfile.getName(), false);
 
-            // 3. Create the second device with a full-path name
-            String deviceName2 = groupId + DEVICE_NAME_SPLIT_SEPARATOR + edgeNode + DEVICE_NAME_SPLIT_SEPARATOR + deviceId + "_2";
-            Device device2 = createDevice(deviceName2, deviceProfile.getName(), false);
+        // 2. Establish 'Created' relation so the transport identifies this gateway as the owner
+        String relationType = "Created";
+        EntityRelation relation1 = createFromRelation(savedGateway, device1, relationType);
+        doPost("/api/relation", relation1).andExpect(status().isOk());
 
-            // 4. Establish 'Created' relation for the second device as well
-            EntityRelation relation2 = createFromRelation(savedGateway, device2, relationType);
-            doPost("/api/relation", relation2).andExpect(status().isOk());
-        }
+        // 3. Create the second device with a full-path name
+        String deviceName2 = groupId + DEVICE_NAME_SPLIT_SEPARATOR + edgeNode + DEVICE_NAME_SPLIT_SEPARATOR + deviceId + "_2";
+        Device device2 = createDevice(deviceName2, deviceProfile.getName(), false);
+
+        // 4. Establish 'Created' relation for the second device as well
+        EntityRelation relation2 = createFromRelation(savedGateway, device2, relationType);
+        doPost("/api/relation", relation2).andExpect(status().isOk());
+
     }
 
     public void clientWithCorrectNodeAccessTokenWithNDEATH() throws Exception {
@@ -208,7 +211,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
                     .setTimestamp(ts)
                     .setSeq(getSeqNum());
             String deviceIdName = deviceId + "_" + i;
-            String deviceName = groupId +  ":" + edgeNode +  ":" + deviceIdName;
+            String deviceName = groupId +  DEVICE_NAME_SPLIT_SEPARATOR + edgeNode +  DEVICE_NAME_SPLIT_SEPARATOR + deviceIdName;
             payloadBirthDevice.addMetrics(metric);
             if (client.isConnected()) {
                 client.publish(TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_SEPARATOR + groupId + TOPIC_SPLIT_SEPARATOR + SparkplugMessageType.DBIRTH.name() + TOPIC_SPLIT_SEPARATOR + edgeNode + TOPIC_SPLIT_SEPARATOR + deviceIdName,
@@ -304,7 +307,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
     protected void renameCollisionWhenTargetNameAlreadyExists_Test() throws Exception {
         long ts = calendar.getTimeInMillis();
         String shortName = deviceId + "_1"; // Created in beforeTest
-        String fullPathName = groupId + ":" + edgeNode + ":" + shortName;
+        String fullPathName = groupId + DEVICE_NAME_SPLIT_SEPARATOR + edgeNode + DEVICE_NAME_SPLIT_SEPARATOR + shortName;
 
         // Manually create a device that already has the "new" full-path name to trigger a collision
         createDevice(fullPathName, deviceProfile.getName(), false);
@@ -318,7 +321,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
 
         // Gateway sends DBIRTH for the short name.
         // Transport will try to rename it but should find a conflict and handle it gracefully.
-        client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/DBIRTH/" + edgeNode + "/" + shortName,
+        client.publish(TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_SEPARATOR + groupId + "/DBIRTH/" + edgeNode + TOPIC_SPLIT_SEPARATOR + shortName,
                 payload.build().toByteArray(), 0, false);
 
         await("Checking stability after collision")
@@ -352,10 +355,10 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
                 .setTimestamp(ts).setSeq(getSeqNum());
 
         // 2. Unauthorized gateway attempts to rename this device via Sparkplug topic path
-        client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/DBIRTH/" + edgeNode + "/" + strangerName,
+        client.publish(TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_SEPARATOR + groupId + "/DBIRTH/" + edgeNode + TOPIC_SPLIT_SEPARATOR + strangerName,
                 payload.build().toByteArray(), 0, false);
 
-        String expectedFullPath = groupId + ":" + edgeNode + ":" + strangerName;
+        String expectedFullPath = groupId + DEVICE_NAME_SPLIT_SEPARATOR + edgeNode + DEVICE_NAME_SPLIT_SEPARATOR + strangerName;
 
         // 3. Verify security: the original device must still be linked to its short name with the same ID
         await("Verify original device was not hijacked")
@@ -394,10 +397,10 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
                 .setTimestamp(ts).setSeq(getSeqNum());
 
         // Unauthorized gateway attempts to rename the device via Sparkplug topic
-        client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/DBIRTH/" + edgeNode + "/" + strangerName,
+        client.publish(TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_SEPARATOR + groupId + "/DBIRTH/" + edgeNode + TOPIC_SPLIT_SEPARATOR + strangerName,
                 payload.build().toByteArray(), 0, false);
 
-        String expectedFullPath = groupId + ":" + edgeNode + ":" + strangerName;
+        String expectedFullPath = groupId + DEVICE_NAME_SPLIT_SEPARATOR + edgeNode + DEVICE_NAME_SPLIT_SEPARATOR + strangerName;
         await().atMost(30, TimeUnit.SECONDS).untilAsserted(() ->
                 doGet("/api/tenant/devices?deviceName=" + expectedFullPath, Device.class, status().isNotFound())
         );
@@ -438,7 +441,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         String concurrentDeviceName = "concurrent_device";
         clientWithCorrectNodeAccessTokenWithNDEATH();
 
-        java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newFixedThreadPool(threadCount);
+        java.util.concurrent.ExecutorService executor = newFixedThreadPool(threadCount);
         long ts = calendar.getTimeInMillis();
 
         for (int i = 0; i < threadCount; i++) {
@@ -446,7 +449,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
                 try {
                     SparkplugBProto.Payload.Builder payload = SparkplugBProto.Payload.newBuilder()
                             .setTimestamp(ts).setSeq(0);
-                    client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/DBIRTH/" + edgeNode + "/" + concurrentDeviceName,
+                    client.publish(TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_SEPARATOR + groupId + "/DBIRTH/" + edgeNode + TOPIC_SPLIT_SEPARATOR + concurrentDeviceName,
                             payload.build().toByteArray(), 0, false);
                 } catch (Exception e) {
                     log.error("Concurrent publish failed", e);
@@ -454,9 +457,9 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
             });
         }
 
-        String expectedName = groupId + ":" + edgeNode + ":" + concurrentDeviceName;
+        String expectedName = groupId + DEVICE_NAME_SPLIT_SEPARATOR + edgeNode + DEVICE_NAME_SPLIT_SEPARATOR + concurrentDeviceName;
         await("Wait for concurrent registration result")
-                .atMost(40, TimeUnit.SECONDS) // Restored to 40s as requested
+                .atMost(40, TimeUnit.SECONDS)
                 .until(() -> doGet("/api/tenant/devices?deviceName=" + expectedName, Device.class) != null);
 
         executor.shutdown();
@@ -506,7 +509,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
                 .setTimestamp(ts)
                 .setSeq(getSeqNum());
         String deviceIdName = deviceId + "_1";
-        String deviceName = groupId +  ":" + edgeNode +  ":" + deviceIdName;
+        String deviceName = groupId +  DEVICE_NAME_SPLIT_SEPARATOR + edgeNode +  DEVICE_NAME_SPLIT_SEPARATOR + deviceIdName;
 
         payloadBirthDevice.addMetrics(metric);
         if (client.isConnected()) {
