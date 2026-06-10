@@ -29,7 +29,7 @@
             <div class="tb-iot-hub-widget-card" role="button" tabindex="0"
                  (click)="openItemDetail(item)"
                  (keyup.enter)="openItemDetail(item)">
-              <div class="tb-iot-hub-widget-card-image tb-iot-hub-widget-card-image-pattern">
+              <div class="tb-iot-hub-widget-card-image">
                 @if (getItemImage(item); as imgUrl) {
                   <img [src]="imgUrl" alt="">
                 }

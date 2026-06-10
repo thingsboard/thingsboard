@@ -18,7 +18,7 @@ import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from '@angu
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { forkJoin, Subject, Subscription } from 'rxjs';
-import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { MpItemVersionQuery, MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
@@ -65,6 +65,8 @@ export class TbIotHubSearchComponent implements OnInit, OnDestroy {
   resultGroups: SearchResultGroup[] = [];
   totalElements = 0;
   isLoading = false;
+  hasError = false;
+  private retryTimer: any = null;
 
   pageSize = 15;
   pageIndex = 0;
@@ -98,14 +100,10 @@ export class TbIotHubSearchComponent implements OnInit, OnDestroy {
     this.loadInstalledItems();
     this.searchSubscription = this.searchSubject.pipe(
       debounceTime(300),
-      distinctUntilChanged(),
-      switchMap(text => {
-        this.isLoading = true;
-        this.pageIndex = 0;
-        return this.fetchResults(text);
-      })
-    ).subscribe(result => {
-      this.applyResults(result.data, result.totalElements);
+      distinctUntilChanged()
+    ).subscribe(() => {
+      this.pageIndex = 0;
+      this.loadResults();
     });
     this.loadResults();
   }
@@ -269,11 +267,37 @@ export class TbIotHubSearchComponent implements OnInit, OnDestroy {
     void this.router.navigate(['/iot-hub/creator', creatorId]);
   }
 
+  retryLoadResults(): void {
+    if (this.retryTimer != null) {
+      clearTimeout(this.retryTimer);
+    }
+    this.isLoading = true;
+    this.retryTimer = setTimeout(() => {
+      this.retryTimer = null;
+      this.loadResults();
+    }, 350);
+  }
+
   // Data loading
   private loadResults(): void {
+    if (this.retryTimer != null) {
+      clearTimeout(this.retryTimer);
+      this.retryTimer = null;
+    }
     this.isLoading = true;
-    this.fetchResults(this.searchText || '').subscribe(result => {
-      this.applyResults(result.data, result.totalElements);
+    // hasError stays as-is until the request actually succeeds
+    // (cleared in the `next` callback below).
+    this.fetchResults(this.searchText || '').subscribe({
+      next: result => {
+        this.applyResults(result.data, result.totalElements);
+        this.hasError = false;
+      },
+      error: () => {
+        this.isLoading = false;
+        this.hasError = true;
+        this.resultGroups = [];
+        this.totalElements = 0;
+      }
     });
   }
 
@@ -282,7 +306,7 @@ export class TbIotHubSearchComponent implements OnInit, OnDestroy {
     const sortOrder: SortOrder = { property: sort.value, direction: sort.direction };
     const pageLink = new PageLink(this.pageSize, this.pageIndex, text.trim() || null, sortOrder);
     const query = new MpItemVersionQuery(pageLink, { creatorId: this.creatorId || undefined });
-    return this.iotHubApiService.getPublishedVersions(query, { ignoreLoading: true });
+    return this.iotHubApiService.getPublishedVersions(query, { ignoreLoading: true, ignoreErrors: true });
   }
 
   private applyResults(data: MpItemVersionView[], totalElements: number): void {

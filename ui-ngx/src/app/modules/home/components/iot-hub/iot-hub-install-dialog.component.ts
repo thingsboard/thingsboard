@@ -14,9 +14,11 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject } from '@angular/core';
+import { Component, DestroyRef, Inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Router } from '@angular/router';
+import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { DialogComponent } from '@shared/components/dialog.component';
@@ -80,15 +82,21 @@ export class TbIotHubInstallDialogComponent extends DialogComponent<TbIotHubInst
 
   ItemType = ItemType;
   PlanStatus = InstallPlanEntryStatus;
+  EntityType = EntityType;
 
   item: MpItemVersionView;
   typeTranslations = itemTypeTranslations;
-  state: InstallState = 'confirm';
+  state!: InstallState;
   errorMessage = '';
   entityDetailsUrl: string | null = null;
 
   selectedEntityId: EntityId | null = null;
   pendingOverwrite: PendingOverwrite | null = null;
+  ruleChainInstallForm!: FormGroup<{
+    setAsDefault: FormControl<boolean>;
+    entityType: FormControl<EntityType>;
+    entityId: FormControl<string | null>;
+  }>;
 
   installPlan: InstallPlan | null = null;
   planSummary: { willInstall: number; alreadyInstalled: number; missing: number } = {
@@ -106,12 +114,6 @@ export class TbIotHubInstallDialogComponent extends DialogComponent<TbIotHubInst
       required: true,
       promptKey: 'iot-hub.select-entity-for-cf',
     },
-    [ItemType.RULE_CHAIN]: {
-      allowed: [EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE],
-      defaultType: EntityType.DEVICE_PROFILE,
-      required: true,
-      promptKey: 'iot-hub.select-profile-for-rule-chain',
-    },
   };
 
   get activeSelectEntityConfig(): SelectEntityConfig | null {
@@ -128,10 +130,47 @@ export class TbIotHubInstallDialogComponent extends DialogComponent<TbIotHubInst
     private iotHubApiService: IotHubApiService,
     private deviceProfileService: DeviceProfileService,
     private assetProfileService: AssetProfileService,
-    private ruleChainService: RuleChainService
+    private ruleChainService: RuleChainService,
+    private fb: FormBuilder,
+    private destroyRef: DestroyRef
   ) {
     super(store, router, dialogRef);
     this.item = data.item;
+    this.state = this.computeInitialState();
+    if (this.item.type === ItemType.RULE_CHAIN) {
+      this.initRuleChainForm();
+    }
+  }
+
+  private computeInitialState(): InstallState {
+    return this.activeSelectEntityConfig || this.item.type === ItemType.RULE_CHAIN
+      ? 'select-entity'
+      : 'confirm';
+  }
+
+  private initRuleChainForm(): void {
+    this.ruleChainInstallForm = this.fb.group({
+      setAsDefault: this.fb.nonNullable.control<boolean>(false),
+      entityType: this.fb.nonNullable.control<EntityType>(EntityType.DEVICE_PROFILE),
+      entityId: this.fb.control<string | null>(null)
+    });
+    this.ruleChainInstallForm.controls.setAsDefault.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(setAsDefault => {
+        const entityIdCtrl = this.ruleChainInstallForm.controls.entityId;
+        if (setAsDefault) {
+          entityIdCtrl.setValidators(Validators.required);
+        } else {
+          entityIdCtrl.clearValidators();
+          entityIdCtrl.setValue(null);
+        }
+        entityIdCtrl.updateValueAndValidity();
+      });
+    this.ruleChainInstallForm.controls.entityType.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.ruleChainInstallForm.controls.entityId.setValue(null);
+      });
   }
 
   getTypeLabel(): string {
@@ -139,39 +178,33 @@ export class TbIotHubInstallDialogComponent extends DialogComponent<TbIotHubInst
     return key ? this.translate.instant(key) : '';
   }
 
-  install(): void {
-    if (this.item.type === ItemType.CALCULATED_FIELD) {
-      this.state = 'select-entity';
-      return;
-    }
-    this.doInstall();
-  }
-
-  installAsEntityProfileDefault(): void {
-    this.state = 'select-entity';
-  }
-
-  selectEntityBack(): void {
-    this.selectedEntityId = null;
-    this.state = 'confirm';
-  }
-
-  onSelectEntityInstall(): void {
+  onEntitySelectInstall(): void {
     if (!this.selectedEntityId) {
       return;
     }
-    if (this.item.type !== ItemType.RULE_CHAIN) {
-      this.doInstall();
+    this.install();
+  }
+
+  onRuleChainInstall(): void {
+    const { setAsDefault, entityType, entityId } = this.ruleChainInstallForm.getRawValue();
+    if (!setAsDefault) {
+      this.selectedEntityId = null;
+      this.install();
       return;
     }
-    this.resolveOverwrite(this.selectedEntityId).subscribe({
+    if (!entityId) {
+      return;
+    }
+    const profileEntityId: EntityId = { entityType, id: entityId };
+    this.selectedEntityId = profileEntityId;
+    this.resolveOverwrite(profileEntityId).subscribe({
       next: (pending) => {
         if (pending) {
           this.pendingOverwrite = pending;
           this.state = 'confirm-overwrite';
         } else {
           this.pendingOverwrite = null;
-          this.doInstall();
+          this.install();
         }
       },
       error: (err) => this.handleApiError(err)
@@ -179,7 +212,7 @@ export class TbIotHubInstallDialogComponent extends DialogComponent<TbIotHubInst
   }
 
   confirmOverwriteReplace(): void {
-    this.doInstall();
+    this.install();
   }
 
   confirmOverwriteCancel(): void {
@@ -213,7 +246,7 @@ export class TbIotHubInstallDialogComponent extends DialogComponent<TbIotHubInst
     );
   }
 
-  doInstall(): void {
+  install(): void {
     // Keep the current state visible (confirm / select-entity / confirm-overwrite) while resolving —
     // a transient 'resolving-plan' state caused a visible "blink" for items without dependencies.
     this.resolvingPlan = true;
@@ -335,7 +368,7 @@ export class TbIotHubInstallDialogComponent extends DialogComponent<TbIotHubInst
 
   cancelPlan(): void {
     this.installPlan = null;
-    this.state = 'confirm';
+    this.state = this.computeInitialState();
   }
 
   openEntityDetails(): void {

@@ -37,6 +37,8 @@ const emptyUserAuthState: AuthPayload = {
   maxDebugModeDurationMinutes: 0,
   userSettings: initialUserSettings,
   trendzSettings: initialTrendzSettings,
+  nullsOrderStrategy: 'default',
+  edqsEnabled: false,
   iotHubBaseUrl: ''
 };
 

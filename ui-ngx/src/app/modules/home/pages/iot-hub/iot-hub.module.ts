@@ -21,6 +21,7 @@ import { IotHubComponentsModule } from '@home/components/iot-hub/iot-hub-compone
 import { IotHubRoutingModule } from './iot-hub-routing.module';
 import { TbIotHubHomeComponent } from './iot-hub-home.component';
 import { TbIotHubItemsPageComponent } from './iot-hub-items-page.component';
+import { TbIotHubAlarmRulesUnavailablePageComponent } from './iot-hub-alarm-rules-unavailable-page.component';
 import { TbIotHubCreatorProfileComponent } from './iot-hub-creator-profile.component';
 import { TbIotHubInstalledItemsComponent } from './iot-hub-installed-items.component';
 import { TbIotHubSearchPageComponent } from './iot-hub-search-page.component';
@@ -33,7 +34,8 @@ import { TbIotHubItemResolverComponent } from './iot-hub-item-resolver.component
     TbIotHubCreatorProfileComponent,
     TbIotHubInstalledItemsComponent,
     TbIotHubSearchPageComponent,
-    TbIotHubItemResolverComponent
+    TbIotHubItemResolverComponent,
+    TbIotHubAlarmRulesUnavailablePageComponent
   ],
   imports: [
     CommonModule,

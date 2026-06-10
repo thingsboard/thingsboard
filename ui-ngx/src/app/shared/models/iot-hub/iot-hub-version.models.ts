@@ -114,6 +114,15 @@ export interface MpItemVersionView {
   checksum?: string;
 }
 
+// 404 body shapes returned by the public listing item-version endpoint
+// (GET /api/listings/public/by-slug/{slug}/item-version) when no
+// version matches the caller's edition / platform combination.
+export interface ListingItemVersionNotFound {
+  noMatchingVersions?: boolean;
+  peRequired?: boolean;
+  minTbVersionRequired?: number;
+}
+
 export interface MpItemVersionQueryOptions {
   type?: string;
   peOnly?: boolean;

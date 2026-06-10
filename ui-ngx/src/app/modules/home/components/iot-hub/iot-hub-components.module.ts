@@ -31,6 +31,8 @@ import { TbIotHubSearchComponent } from './iot-hub-search.component';
 import { TbIotHubInstalledItemsTableComponent } from './iot-hub-installed-items-table.component';
 import { TbIotHubInstalledItemsDialogComponent } from './iot-hub-installed-items-dialog.component';
 import { TbPeConnectivityMethodPromptComponent } from './pe-connectivity-method-prompt.component';
+import { TbIotHubPeRequiredDialogComponent } from './iot-hub-pe-required-dialog.component';
+import { TbIotHubUpgradeRequiredDialogComponent } from './iot-hub-upgrade-required-dialog.component';
 import { TbIotHubMarkdownComponent } from './iot-hub-markdown.component';
 import { SolutionInstallDialogComponent } from './solution-install-dialog.component';
 import { IotHubActionsService } from './iot-hub-actions.service';
@@ -53,7 +55,9 @@ import { IotHubItemLinkModule } from './iot-hub-item-link-card/iot-hub-item-link
     TbPeConnectivityMethodPromptComponent,
     TbIotHubMarkdownComponent,
     SolutionInstallDialogComponent,
-    InstallFormRendererComponent
+    InstallFormRendererComponent,
+    TbIotHubPeRequiredDialogComponent,
+    TbIotHubUpgradeRequiredDialogComponent
   ],
   imports: [
     CommonModule,
@@ -78,7 +82,9 @@ import { IotHubItemLinkModule } from './iot-hub-item-link-card/iot-hub-item-link
     TbIotHubInstalledItemsDialogComponent,
     TbPeConnectivityMethodPromptComponent,
     TbIotHubMarkdownComponent,
-    SolutionInstallDialogComponent
+    SolutionInstallDialogComponent,
+    TbIotHubPeRequiredDialogComponent,
+    TbIotHubUpgradeRequiredDialogComponent
   ]
 })
 export class IotHubComponentsModule { }

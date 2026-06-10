@@ -31,7 +31,10 @@ export class TbIotHubCreatorProfileComponent implements OnInit, OnDestroy {
 
   creator: CreatorView;
   creatorId: string;
+  isLoading = false;
+  hasError = false;
 
+  private retryTimer: any = null;
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -64,10 +67,40 @@ export class TbIotHubCreatorProfileComponent implements OnInit, OnDestroy {
     void this.router.navigate(['/iot-hub']);
   }
 
+  retryLoadCreator(): void {
+    // Debounce frequent retry clicks: show the loading spinner
+    // immediately and defer the actual loadCreator() call by 350ms
+    // so rapid-fire clicks coalesce into a single network round-trip.
+    // hasError is left as-is until the next request actually succeeds.
+    if (this.retryTimer != null) {
+      clearTimeout(this.retryTimer);
+    }
+    this.isLoading = true;
+    this.retryTimer = setTimeout(() => {
+      this.retryTimer = null;
+      this.loadCreator();
+    }, 350);
+  }
+
   private loadCreator(): void {
-    this.iotHubApiService.getCreatorProfile(this.creatorId, { ignoreLoading: true }).subscribe({
-      next: creator => this.creator = creator,
-      error: () => void this.router.navigate(['/iot-hub'])
+    if (this.retryTimer != null) {
+      clearTimeout(this.retryTimer);
+      this.retryTimer = null;
+    }
+    this.isLoading = true;
+    // hasError stays as-is until the request actually succeeds —
+    // cleared in the `next` callback below.
+    this.iotHubApiService.getCreatorProfile(this.creatorId, { ignoreLoading: true, ignoreErrors: true }).subscribe({
+      next: creator => {
+        this.creator = creator;
+        this.isLoading = false;
+        this.hasError = false;
+      },
+      error: () => {
+        this.creator = null;
+        this.isLoading = false;
+        this.hasError = true;
+      }
     });
   }
 

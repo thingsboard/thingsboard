@@ -39,6 +39,16 @@ export function tbVersionToInt(version: string): number {
   return major * 100 + minor * 10 + patch;
 }
 
+// Inverse of tbVersionToInt — produces "{major}.{minor}" by default
+// and appends ".{patch}" when the patch component is non-zero so the
+// rendered version stays compact (e.g. 430 → "4.3", 421 → "4.2.1").
+export function tbVersionIntToString(version: number): string {
+  const major = Math.floor(version / 100);
+  const minor = Math.floor((version % 100) / 10);
+  const patch = version % 10;
+  return patch === 0 ? `${major}.${minor}` : `${major}.${minor}.${patch}`;
+}
+
 export function iotHubResourceUrl(baseUrl: string, path: string): string {
   if (!path) {
     return path;
@@ -117,6 +127,29 @@ export class IotHubApiService {
   public getPublishedVersion(itemId: string, config?: IotHubRequestConfig): Observable<MpItemVersionView> {
     return this.http.get<MpItemVersionView>(
       `${this.baseUrl}/api/items/${itemId}/published`,
+      { params: this.buildParams(config) }
+    );
+  }
+
+  /**
+   * Resolves the listing item-version that matches the caller's edition
+   * and platform version.
+   *
+   * Backend: GET /api/listings/public/by-slug/{slug}/item-version
+   *
+   * On success → 200 with `MpItemVersionView`.
+   * On miss   → 404 with a `ListingItemVersionNotFound` body shape
+   *             (`noMatchingVersions`, `peRequired`, or
+   *             `minTbVersionRequired`). Callers should inspect
+   *             `HttpErrorResponse.error` to differentiate.
+   */
+  public getListingItemVersion(slug: string, config?: IotHubRequestConfig): Observable<MpItemVersionView> {
+    const queryParams = [
+      'ce=true',
+      `tbVersion=${tbVersionToInt(env.tbVersion)}`
+    ];
+    return this.http.get<MpItemVersionView>(
+      `${this.baseUrl}/api/listings/public/by-slug/${encodeURIComponent(slug)}/item-version?${queryParams.join('&')}`,
       { params: this.buildParams(config) }
     );
   }
