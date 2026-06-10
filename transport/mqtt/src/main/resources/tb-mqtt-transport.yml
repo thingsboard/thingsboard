@@ -141,6 +141,8 @@ redis:
 # MQTT server parameters
 # Configures the MQTT transport layer including bind address/port, SSL, Netty tuning, session management, rate limits, and message processing options.
 transport:
+  # Size of the thread pool that executes transport API callbacks (session registration, telemetry/attribute and RPC responses, entity update notifications, and the tenant profile fetch on a cache miss). Bounds how many such callbacks - including those that block on a backend round-trip - can run concurrently.
+  callback_thread_pool_size: "${TB_TRANSPORT_CALLBACK_THREAD_POOL_SIZE:20}"
   mqtt:
     # MQTT bind-address
     bind_address: "${MQTT_BIND_ADDRESS:0.0.0.0}"
@@ -306,11 +308,23 @@ queue:
       # The endpoint identification algorithm used by clients to validate server hostname. The default value is https
       ssl.algorithm: "${TB_QUEUE_KAFKA_CONFLUENT_SSL_ALGORITHM:https}"
       # The mechanism used to authenticate Schema Registry requests. SASL/PLAIN should only be used with TLS/SSL as a transport layer to ensure that clear passwords are not transmitted on the wire without encryption
+      # Set to OAUTHBEARER to authenticate via OAuth2/OIDC client-credentials (configure the oauth.* settings below)
       sasl.mechanism: "${TB_QUEUE_KAFKA_CONFLUENT_SASL_MECHANISM:PLAIN}"
       # Using JAAS Configuration for specifying multiple SASL mechanisms on a broker
       sasl.config: "${TB_QUEUE_KAFKA_CONFLUENT_SASL_JAAS_CONFIG:org.apache.kafka.common.security.plain.PlainLoginModule required username=\"CLUSTER_API_KEY\" password=\"CLUSTER_API_SECRET\";}"
       # Protocol used to communicate with brokers. Valid values are: PLAINTEXT, SSL, SASL_PLAINTEXT, SASL_SSL
       security.protocol: "${TB_QUEUE_KAFKA_CONFLUENT_SECURITY_PROTOCOL:SASL_SSL}"
+      # Optional: OAuth2 (OIDC) client-credentials settings. Applied only when sasl.mechanism is OAUTHBEARER.
+      # ThingsBoard wires Kafka's built-in OAuthBearerLoginCallbackHandler; the token is fetched and refreshed automatically.
+      oauth:
+        # Optional: OAuth2 client id
+        client-id: "${TB_QUEUE_KAFKA_CONFLUENT_OAUTH_CLIENT_ID:}"
+        # Optional: OAuth2 client secret
+        client-secret: "${TB_QUEUE_KAFKA_CONFLUENT_OAUTH_CLIENT_SECRET:}"
+        # Optional: OAuth2/OIDC token endpoint URL to request the bearer token from
+        endpoint-url: "${TB_QUEUE_KAFKA_CONFLUENT_OAUTH_ENDPOINT_URL:}"
+        # Optional: OAuth2 scope/audience requested for the token. Required by some IdPs for client-credentials (e.g. Azure AD's "api://<id>/.default")
+        scope: "${TB_QUEUE_KAFKA_CONFLUENT_OAUTH_SCOPE:}"
     # If you override any default Kafka topic name using environment variables, you must also specify the related consumer properties
     # for the new topic in `consumer-properties-per-topic-inline`. Otherwise, the topic will not inherit its expected configuration (e.g., max.poll.records, timeouts, etc).
     # Format: "topic1:key1=value1,key2=value2;topic2:key=value"

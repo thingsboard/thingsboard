@@ -71,6 +71,7 @@
         <commons-lang3.version>3.18.0</commons-lang3.version> <!-- to fix CVE-2025-48924. TODO: remove when fixed in spring-boot-dependencies -->
         <postgresql.version>42.7.11</postgresql.version> <!-- to fix CVE-2026-42198. TODO: remove when fixed in spring-boot-dependencies -->
         <netty.version>4.1.133.Final</netty.version> <!-- to fix CVE-2026-42579, CVE-2026-42583, CVE-2026-42584, CVE-2026-42587. TODO: remove when fixed in spring-boot-dependencies -->
+        <tomcat.version>10.1.55</tomcat.version> <!-- to fix CVE-2026-41284, CVE-2026-43512. TODO: remove when fixed in spring-boot-dependencies -->
         <javax.xml.bind-api.version>2.4.0-b180830.0359</javax.xml.bind-api.version>
         <jjwt.version>0.12.5</jjwt.version>
         <rat.version>0.10</rat.version> <!-- unused -->
@@ -143,14 +144,12 @@
         <antisamy.version>1.7.5</antisamy.version>
         <snmp4j.version>3.8.0</snmp4j.version>
         <bytebuddy.version>1.18.4</bytebuddy.version>
-        <langchain4j.version>1.8.0-TB</langchain4j.version>
-        <opennlp-tools.version>2.5.9</opennlp-tools.version> <!-- to fix CVE-2026-40682, CVE-2026-42027 in transitive dep via langchain4j-bom (which still pins 2.5.4). TODO: remove when langchain4j fork ships opennlp-tools >= 2.5.9 -->
-        <error_prone_annotations.version>2.38.0</error_prone_annotations.version>
+        <langchain4j.version>1.16.1-TB1</langchain4j.version>
+        <error_prone_annotations.version>2.43.0</error_prone_annotations.version>
         <animal-sniffer-annotations.version>1.24</animal-sniffer-annotations.version>
         <auto-value-annotations.version>1.11.0</auto-value-annotations.version>
-        <checker-qual.version>3.49.3</checker-qual.version>
+        <checker-qual.version>3.42.0</checker-qual.version>
         <perfmark-api.version>0.27.0</perfmark-api.version>
-        <threetenbp.version>1.7.0</threetenbp.version>
         <!--         TEST SCOPE         -->
         <dbunit.version>2.7.3</dbunit.version>
         <java-websocket.version>1.5.6</java-websocket.version>
@@ -1019,6 +1018,23 @@
                 <scope>import</scope>
             </dependency>
             <!-- End of netty-bom version override -->
+            <!-- Temporary tomcat-embed version override -->
+            <dependency>
+                <groupId>org.apache.tomcat.embed</groupId>
+                <artifactId>tomcat-embed-core</artifactId>
+                <version>${tomcat.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.tomcat.embed</groupId>
+                <artifactId>tomcat-embed-el</artifactId>
+                <version>${tomcat.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.tomcat.embed</groupId>
+                <artifactId>tomcat-embed-websocket</artifactId>
+                <version>${tomcat.version}</version>
+            </dependency>
+            <!-- End of tomcat-embed version override -->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
@@ -1376,11 +1392,6 @@
                 <groupId>org.postgresql</groupId>
                 <artifactId>postgresql</artifactId>
                 <version>${postgresql.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.opennlp</groupId>
-                <artifactId>opennlp-tools</artifactId>
-                <version>${opennlp-tools.version}</version>
             </dependency>
             <dependency>
                 <groupId>commons-io</groupId>
@@ -2025,11 +2036,6 @@
                 <groupId>io.perfmark</groupId>
                 <artifactId>perfmark-api</artifactId>
                 <version>${perfmark-api.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.threeten</groupId>
-                <artifactId>threetenbp</artifactId>
-                <version>${threetenbp.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

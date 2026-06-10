@@ -51,9 +51,27 @@ public class DeviceConnectivityUtil {
     public static final String COAP_IMAGE = "thingsboard/coap-clients ";
     private final static Pattern VALID_URL_PATTERN = Pattern.compile("^(https?)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]");
 
+    private static String stripControlChars(String value) {
+        return value == null ? null : StringUtils.CONTROL_CHARS.matcher(value).replaceAll("_");
+    }
+
+    // Escapes a value that is interpolated inside a double-quoted shell argument (e.g. -u "...") in the
+    // publish commands shown to the operator, so it cannot break out of the quotes or trigger command/
+    // variable substitution. Control chars are stripped first to keep the command on a single line.
+    private static String escapeShellArg(String value) {
+        if (value == null) {
+            return null;
+        }
+        return stripControlChars(value)
+                .replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("$", "\\$")
+                .replace("`", "\\`");
+    }
+
     public static String getHttpPublishCommand(String protocol, String host, String port, DeviceCredentials deviceCredentials) {
         return String.format("curl -v -X POST %s://%s%s/api/v1/%s/telemetry --header Content-Type:application/json --data " + JSON_EXAMPLE_PAYLOAD,
-                protocol, host, port, deviceCredentials.getCredentialsId());
+                protocol, host, port, stripControlChars(deviceCredentials.getCredentialsId()));
     }
 
     public static String getMqttPublishCommand(String protocol, String host, String port, String deviceTelemetryTopic, DeviceCredentials deviceCredentials) {
@@ -66,20 +84,20 @@ public class DeviceConnectivityUtil {
 
         switch (deviceCredentials.getCredentialsType()) {
             case ACCESS_TOKEN:
-                command.append(" -u \"").append(deviceCredentials.getCredentialsId()).append("\"");
+                command.append(" -u \"").append(escapeShellArg(deviceCredentials.getCredentialsId())).append("\"");
                 break;
             case MQTT_BASIC:
                 BasicMqttCredentials credentials = JacksonUtil.fromString(deviceCredentials.getCredentialsValue(),
                         BasicMqttCredentials.class);
                 if (credentials != null) {
                     if (StringUtils.isNotEmpty(credentials.getClientId())) {
-                        command.append(" -i \"").append(credentials.getClientId()).append("\"");
+                        command.append(" -i \"").append(escapeShellArg(credentials.getClientId())).append("\"");
                     }
                     if (StringUtils.isNotEmpty(credentials.getUserName())) {
-                        command.append(" -u \"").append(credentials.getUserName()).append("\"");
+                        command.append(" -u \"").append(escapeShellArg(credentials.getUserName())).append("\"");
                     }
                     if (StringUtils.isNotEmpty(credentials.getPassword())) {
-                        command.append(" -P \"").append(credentials.getPassword()).append("\"");
+                        command.append(" -P \"").append(escapeShellArg(credentials.getPassword())).append("\"");
                     }
                 } else {
                     return null;
@@ -117,12 +135,12 @@ public class DeviceConnectivityUtil {
         dockerComposeBuilder.append("\n");
         dockerComposeBuilder.append("    # Environment variables\n");
         dockerComposeBuilder.append("    environment:\n");
-        dockerComposeBuilder.append("      - TB_GW_HOST=").append(isLocalhost(host) ? HOST_DOCKER_INTERNAL : host).append("\n");
+        dockerComposeBuilder.append("      - TB_GW_HOST=").append(stripControlChars(isLocalhost(host) ? HOST_DOCKER_INTERNAL : host)).append("\n");
         dockerComposeBuilder.append("      - TB_GW_PORT=1883\n");
         switch (deviceCredentials.getCredentialsType()) {
             case ACCESS_TOKEN:
                 dockerComposeBuilder.append("      - TB_GW_SECURITY_TYPE=accessToken\n");
-                dockerComposeBuilder.append("      - TB_GW_ACCESS_TOKEN=").append(deviceCredentials.getCredentialsId()).append("\n");
+                dockerComposeBuilder.append("      - TB_GW_ACCESS_TOKEN=").append(stripControlChars(deviceCredentials.getCredentialsId())).append("\n");
                 break;
             case MQTT_BASIC:
                 dockerComposeBuilder.append("      - TB_GW_SECURITY_TYPE=usernamePassword\n");
@@ -130,13 +148,13 @@ public class DeviceConnectivityUtil {
                         BasicMqttCredentials.class);
                 if (credentials != null) {
                     if (StringUtils.isNotEmpty(credentials.getClientId())) {
-                        dockerComposeBuilder.append("      - TB_GW_CLIENT_ID=").append(credentials.getClientId()).append("\n");
+                        dockerComposeBuilder.append("      - TB_GW_CLIENT_ID=").append(stripControlChars(credentials.getClientId())).append("\n");
                     }
                     if (StringUtils.isNotEmpty(credentials.getUserName())) {
-                        dockerComposeBuilder.append("      - TB_GW_USERNAME=").append(credentials.getUserName()).append("\n");
+                        dockerComposeBuilder.append("      - TB_GW_USERNAME=").append(stripControlChars(credentials.getUserName())).append("\n");
                     }
                     if (StringUtils.isNotEmpty(credentials.getPassword())) {
-                        dockerComposeBuilder.append("      - TB_GW_PASSWORD=").append(credentials.getPassword()).append("\n");
+                        dockerComposeBuilder.append("      - TB_GW_PASSWORD=").append(stripControlChars(credentials.getPassword())).append("\n");
                     }
                 }
                 break;
@@ -201,7 +219,7 @@ public class DeviceConnectivityUtil {
                 String client = COAPS.equals(protocol) ? "coap-client-openssl" : "coap-client";
                 String certificate = COAPS.equals(protocol) ? " -R " + CA_ROOT_CERT_PEM : "";
                 return String.format("%s -v 6 -m POST%s -t \"application/json\" -e %s %s://%s%s/api/v1/%s/telemetry",
-                        client, certificate, JSON_EXAMPLE_PAYLOAD, protocol, host, port, deviceCredentials.getCredentialsId());
+                        client, certificate, JSON_EXAMPLE_PAYLOAD, protocol, host, port, stripControlChars(deviceCredentials.getCredentialsId()));
             default:
                 return null;
         }

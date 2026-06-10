@@ -36,12 +36,16 @@ public class NumberUtils {
         return BigDecimal.valueOf(value).setScale(0, RoundingMode.HALF_UP).intValue();
     }
 
+    public static long toLong(double value) {
+        return BigDecimal.valueOf(value).setScale(0, RoundingMode.HALF_UP).longValue();
+    }
+
     public static Object roundResult(double value, Integer precision) {
         if (precision == null) {
             return value;
         }
         if (precision.equals(0)) {
-            return toInt(value);
+            return toLong(value);
         }
         return toFixed(value, precision);
     }

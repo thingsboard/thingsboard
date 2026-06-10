@@ -49,6 +49,8 @@ kafka:
   confluent:
     sasl:
       mechanism: "PLAIN" # SASL mechanism for Confluent Cloud authentication: PLAIN, SCRAM-SHA-256, or SCRAM-SHA-512
+    oauth:
+      refresh_threshold: "60000" # How many ms before token expiry to proactively refresh it (default: 60 s)
 
 # Logging configuration
 # Controls log verbosity, output directory, and log file naming pattern for the JS executor service.
@@ -60,7 +62,13 @@ logger:
 # JavaScript execution and monitoring configuration
 # Sandboxing, script caching, and observability settings for the JS script runtime.
 script:
-  use_sandbox: "true" # Run scripts inside an isolated sandbox to prevent access to Node.js internals
+  # WARNING: setting this to "false" is DANGEROUS BY DESIGN. The non-sandbox
+  # path compiles and runs user-supplied scripts in the host realm via
+  # vm.compileFunction; it provides no isolation and exposes the host process
+  # (file system, environment variables, child_process, etc.) to script
+  # authors. Use "false" only as a performance trade-off in trusted,
+  # non-public clusters where every script author is fully trusted.
+  use_sandbox: "true"
   memory_usage_trace_frequency: "1000" # Log memory usage every N script executions
   script_body_trace_frequency: "10000" # Log the script body every N script executions
   stat_print_frequency: "10000" # Print execution statistics every N script executions
