@@ -128,7 +128,7 @@ $gallery-border-hover-color: #2a7dec;
       max-width: 100%;
     }
 
-    a:not(.mdc-button) {
+    a:not(.mdc-button):not(.tb-iot-hub-item-link-card) {
       font-weight: 500;
       color: $link-color;
       text-decoration: none;
