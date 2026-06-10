@@ -43,7 +43,7 @@ import static org.mockito.Mockito.verify;
 @DaoSqlTest
 public class EdgeConnectionNotificationTest extends AbstractEdgeTest {
 
-    private static final long DELAY_MS = 5000L;
+    private static final long DELAY_MS = 1500L;
 
     @MockitoSpyBean
     private NotificationRuleProcessor notificationRuleProcessor;
@@ -115,8 +115,8 @@ public class EdgeConnectionNotificationTest extends AbstractEdgeTest {
 
         // The "disconnected" notification must never be sent throughout the full delay window.
         await().during(DELAY_MS + 500, TimeUnit.MILLISECONDS)
-               .atMost(DELAY_MS + 2000, TimeUnit.MILLISECONDS)
-               .untilAsserted(() -> verify(notificationRuleProcessor, never()).process(argThat(edgeConnectionTrigger(false))));
+                .atMost(DELAY_MS + 2000, TimeUnit.MILLISECONDS)
+                .untilAsserted(() -> verify(notificationRuleProcessor, never()).process(argThat(edgeConnectionTrigger(false))));
     }
 
     private ArgumentMatcher<NotificationRuleTrigger> edgeConnectionTrigger(boolean connected) {
