@@ -155,7 +155,8 @@ public class EntityQueryController extends BaseController {
     @ApiOperation(value = "Find Aggregated Historical Entity Data by Query",
             notes = "Runs the entity data query and, for each matched entity, fetches a single aggregated value per key over [startTs, endTs] " +
                     "with per-key aggregation function. Optional previousStartTs/previousEndTs per key add a comparison window. " +
-                    "REST equivalent of the WebSocket AggHistoryCmd. The aggregated values are returned in the 'aggLatest' field of each EntityData.")
+                    "REST equivalent of the WebSocket AggHistoryCmd. The aggregated values are returned in the 'aggLatest' field of each EntityData. " +
+                    "Note: a separate timeseries aggregation query is issued per matched entity, so a large pageSize fans out proportionally - callers should page responsibly.")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @PostMapping("/entitiesQuery/find/aggHistory")
     public DeferredResult<PageData<EntityData>> findEntityDataAggHistoryByQuery(

@@ -36,14 +36,12 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
-import org.thingsboard.server.common.data.query.ComparisonTsValue;
 import org.thingsboard.server.common.data.query.ComplexFilterPredicate;
 import org.thingsboard.server.common.data.query.DynamicValue;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
@@ -57,7 +55,6 @@ import org.thingsboard.server.common.data.query.FilterPredicateType;
 import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.KeyFilterPredicate;
 import org.thingsboard.server.common.data.query.SimpleKeyFilterPredicate;
-import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.entity.EntityService;
@@ -68,14 +65,13 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.subscription.AggregationQueryUtils;
 import org.thingsboard.server.service.subscription.ReadTsKvQueryInfo;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AggHistoryCmd;
-import org.thingsboard.server.service.ws.telemetry.cmd.v2.AggKey;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -358,19 +354,7 @@ public class DefaultEntityQueryService implements EntityQueryService {
             return response;
         }
         TenantId tenantId = securityUser.getTenantId();
-        Map<Integer, ReadTsKvQueryInfo> queries = new HashMap<>();
-        for (AggKey key : cmd.getKeys()) {
-            if (key.getPreviousValueOnly() == null || !key.getPreviousValueOnly()) {
-                var q = new BaseReadTsKvQuery(key.getKey(), cmd.getStartTs(), cmd.getEndTs(),
-                        cmd.getEndTs() - cmd.getStartTs(), 1, key.getAgg());
-                queries.put(q.getId(), new ReadTsKvQueryInfo(key, q, false));
-            }
-            if (key.getPreviousStartTs() != null && key.getPreviousEndTs() != null && key.getPreviousEndTs() >= key.getPreviousStartTs()) {
-                var q = new BaseReadTsKvQuery(key.getKey(), key.getPreviousStartTs(), key.getPreviousEndTs(),
-                        key.getPreviousEndTs() - key.getPreviousStartTs(), 1, key.getAgg());
-                queries.put(q.getId(), new ReadTsKvQueryInfo(key, q, true));
-            }
-        }
+        Map<Integer, ReadTsKvQueryInfo> queries = AggregationQueryUtils.buildAggHistoryQueries(cmd.getKeys(), cmd.getStartTs(), cmd.getEndTs());
         List<ReadTsKvQuery> queryList = queries.values().stream().map(ReadTsKvQueryInfo::getQuery).collect(Collectors.toList());
         Map<EntityData, ListenableFuture<List<ReadTsKvQueryResult>>> fetchResultMap = new LinkedHashMap<>();
         entityDataList.forEach(entityData -> fetchResultMap.put(entityData,
@@ -381,24 +365,10 @@ public class DefaultEntityQueryService implements EntityQueryService {
                 fetchResultMap.forEach((entityData, future) -> {
                     try {
                         List<ReadTsKvQueryResult> queryResults = future.get();
-                        if (queryResults != null) {
-                            for (ReadTsKvQueryResult queryResult : queryResults) {
-                                ReadTsKvQueryInfo info = queries.get(queryResult.getQueryId());
-                                ComparisonTsValue comparisonTsValue = entityData.getAggLatest()
-                                        .computeIfAbsent(info.getKey().getId(), k -> new ComparisonTsValue());
-                                if (info.isPrevious()) {
-                                    comparisonTsValue.setPrevious(queryResult.toTsValue(info.getQuery()));
-                                } else {
-                                    comparisonTsValue.setCurrent(queryResult.toTsValue(info.getQuery()));
-                                }
-                            }
-                        }
-                        cmd.getKeys().forEach(key -> entityData.getAggLatest()
-                                .putIfAbsent(key.getId(), new ComparisonTsValue(TsValue.EMPTY, TsValue.EMPTY)));
+                        AggregationQueryUtils.populateAggLatest(entityData, queryResults, queries, cmd.getKeys(), null);
                     } catch (InterruptedException | ExecutionException e) {
                         log.warn("[{}] Failed to fetch aggregated historical data", entityData.getEntityId(), e);
-                        cmd.getKeys().forEach(key -> entityData.getAggLatest()
-                                .putIfAbsent(key.getId(), new ComparisonTsValue(TsValue.EMPTY, TsValue.EMPTY)));
+                        AggregationQueryUtils.populateAggLatest(entityData, null, queries, cmd.getKeys(), null);
                     }
                 });
                 response.setResult(pageData);
