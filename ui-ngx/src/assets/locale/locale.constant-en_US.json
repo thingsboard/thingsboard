@@ -1159,6 +1159,8 @@
         "timeseries": "Time series",
         "output": "Output",
         "output-hint": "Defines how output is processed.",
+        "enable": "Enable",
+        "disable": "Disable",
         "create": "Create new calculated field",
         "file": "Calculated field file",
         "invalid-file-error": "Invalid file format. Please make sure the file is a valid JSON file.",

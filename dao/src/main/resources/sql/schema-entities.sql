@@ -932,6 +932,7 @@ CREATE TABLE IF NOT EXISTS calculated_field (
     entity_id uuid NOT NULL,
     type varchar(32) NOT NULL,
     name varchar(255) NOT NULL,
+    enabled boolean NOT NULL DEFAULT true,
     configuration_version int DEFAULT 0,
     configuration varchar(1000000),
     version BIGINT DEFAULT 1,
