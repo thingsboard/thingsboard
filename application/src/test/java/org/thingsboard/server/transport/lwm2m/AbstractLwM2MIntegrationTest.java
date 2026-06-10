@@ -36,7 +36,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -132,10 +132,10 @@ import static org.thingsboard.server.transport.lwm2m.ota.AbstractOtaLwM2MIntegra
 @DaoSqlTest
 public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportIntegrationTest {
 
-    @SpyBean
+    @MockitoSpyBean
     protected LwM2mUplinkMsgHandler defaultLwM2mUplinkMsgHandlerTest;
 
-    @SpyBean
+    @MockitoSpyBean
     protected DefaultLwM2mUplinkMsgHandler defaultUplinkMsgHandlerTest;
 
     @Autowired

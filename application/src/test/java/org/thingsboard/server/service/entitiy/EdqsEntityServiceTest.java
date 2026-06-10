@@ -21,7 +21,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
@@ -72,7 +72,7 @@ public class EdqsEntityServiceTest extends EntityServiceTest {
     @Autowired
     private EdqsService edqsService;
 
-    @MockBean
+    @MockitoBean
     private EdqsRocksDb edqsRocksDb;
 
     @Before

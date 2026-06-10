@@ -19,7 +19,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
@@ -56,7 +56,7 @@ public class RuleEngineControllerTest extends AbstractControllerTest {
     private final String REQUEST_BODY = "{\"request\":\"download\"}";
     private final String RESPONSE_BODY = "{\"response\":\"downloadOk\"}";
 
-    @SpyBean
+    @MockitoSpyBean
     private RuleEngineCallService ruleEngineCallService;
 
     @Test

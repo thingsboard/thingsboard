@@ -21,8 +21,8 @@ import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.thingsboard.server.cluster.TbClusterService;
@@ -73,28 +73,43 @@ import static org.mockito.Mockito.when;
 
 @Slf4j
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = DeviceProvisionServiceImpl.class)
+@ContextConfiguration(classes = DeviceProvisionServiceTest.ContextConfiguration.class)
 public class DeviceProvisionServiceTest {
 
-    @MockBean
+    @org.springframework.context.annotation.Configuration
+    static class ContextConfiguration {
+        @org.springframework.context.annotation.Bean
+        public DeviceProvisionServiceImpl deviceProvisionService(TbQueueProducerProvider producerProvider,
+                                                                 DeviceProfileService deviceProfileService,
+                                                                 DeviceService deviceService,
+                                                                 DeviceCredentialsService deviceCredentialsService,
+                                                                 AttributesService attributesService,
+                                                                 AuditLogService auditLogService,
+                                                                 PartitionService partitionService) {
+            return new DeviceProvisionServiceImpl(producerProvider, deviceProfileService, deviceService,
+                    deviceCredentialsService, attributesService, auditLogService, partitionService);
+        }
+    }
+
+    @MockitoBean
     protected TbQueueProducerProvider producerProvider;
-    @MockBean
+    @MockitoBean
     protected TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> ruleEngineMsgProducer;
-    @MockBean
+    @MockitoBean
     protected TbClusterService clusterService;
-    @MockBean
+    @MockitoBean
     protected DeviceProfileService deviceProfileService;
-    @MockBean
+    @MockitoBean
     protected DeviceService deviceService;
-    @MockBean
+    @MockitoBean
     protected DeviceCredentialsService deviceCredentialsService;
-    @MockBean
+    @MockitoBean
     protected AttributesService attributesService;
-    @MockBean
+    @MockitoBean
     protected AuditLogService auditLogService;
-    @MockBean
+    @MockitoBean
     protected PartitionService partitionService;
-    @SpyBean
+    @MockitoSpyBean
     DeviceProvisionServiceImpl service;
 
     private String[] chain;

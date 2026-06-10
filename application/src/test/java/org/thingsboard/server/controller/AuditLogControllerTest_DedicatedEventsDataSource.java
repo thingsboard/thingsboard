@@ -16,7 +16,7 @@
 package org.thingsboard.server.controller;
 
 import lombok.Getter;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.sqlts.insert.sql.DedicatedEventsSqlPartitioningRepository;
@@ -30,7 +30,7 @@ import org.thingsboard.server.dao.sqlts.insert.sql.DedicatedEventsSqlPartitionin
 public class AuditLogControllerTest_DedicatedEventsDataSource extends AuditLogControllerTest {
 
     @Getter
-    @SpyBean
+    @MockitoSpyBean
     private DedicatedEventsSqlPartitioningRepository partitioningRepository;
 
 }
