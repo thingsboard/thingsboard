@@ -295,6 +295,42 @@ public class AuthControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testActivationLinkMaxTtlExposedInSecuritySettings() throws Exception {
+        loginSysAdmin();
+        // maxActivationLinkTtl is a read-only field, so read it from the raw response rather than the typed object
+        JsonNode securitySettings = doGet("/api/admin/securitySettings", JsonNode.class);
+        assertThat(securitySettings.get("maxActivationLinkTtl").asInt()).isEqualTo(720);
+    }
+
+    @Test
+    public void testActivationLinkTtlAtMaxIsAllowed() throws Exception {
+        loginSysAdmin();
+        SecuritySettings securitySettings = doGet("/api/admin/securitySettings", SecuritySettings.class);
+        securitySettings.setUserActivationTokenTtl(720);
+        doPost("/api/admin/securitySettings", securitySettings).andExpect(status().isOk());
+    }
+
+    @Test
+    public void testActivationLinkTtlExceedsMax() throws Exception {
+        loginSysAdmin();
+        SecuritySettings securitySettings = doGet("/api/admin/securitySettings", SecuritySettings.class);
+        securitySettings.setUserActivationTokenTtl(721);
+        doPost("/api/admin/securitySettings", securitySettings).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void testActivationLinkMaxTtlIsReadOnlyOnSave() throws Exception {
+        loginSysAdmin();
+        SecuritySettings securitySettings = doGet("/api/admin/securitySettings", SecuritySettings.class);
+        // a client-supplied max is ignored: the server keeps its configured cap, so a TTL within that cap is accepted
+        securitySettings.setMaxActivationLinkTtl(1);
+        securitySettings.setUserActivationTokenTtl(100);
+        doPost("/api/admin/securitySettings", securitySettings).andExpect(status().isOk());
+        JsonNode updated = doGet("/api/admin/securitySettings", JsonNode.class);
+        assertThat(updated.get("maxActivationLinkTtl").asInt()).isEqualTo(720);
+    }
+
+    @Test
     public void testGetPageWithoutRedirect() throws Exception {
         doGet("/login").andExpect(status().isOk());
         doGet("/home").andExpect(status().isOk());

@@ -208,7 +208,7 @@
     "minimum-max-failed-login-attempts-range": "Максимальна кількість невдалих спроб входу не може бути від'ємною",
     "user-lockout-notification-email": "У разі блокування облікового запису користувача надсилати сповіщення на email",
     "user-activation-token-ttl": "TTL посилання активації користувача у годинах",
-    "user-activation-token-ttl-range": "TTL посилання активації користувача має бути в діапазоні від 1 до 24 годин",
+    "user-activation-token-ttl-range": "TTL посилання активації користувача має бути в діапазоні від 1 до {{max}} годин",
     "password-reset-token-ttl": "TTL посилання скидання пароля у годинах",
     "password-reset-token-ttl-range": "TTL посилання скидання пароля має бути в діапазоні від 1 до 24 годин",
     "mobile-secret-key-length": "Довжина мобільного секретного ключа",

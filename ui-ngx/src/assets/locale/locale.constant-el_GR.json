@@ -208,7 +208,7 @@
     "minimum-max-failed-login-attempts-range": "Ο μέγιστος αριθμός αποτυχημένων προσπαθειών δεν μπορεί να είναι αρνητικός",
     "user-lockout-notification-email": "Σε περίπτωση κλειδώματος λογαριασμού χρήστη, αποστολή ειδοποίησης μέσω email",
     "user-activation-token-ttl": "Χρόνος ζωής συνδέσμου ενεργοποίησης λογαριασμού (σε ώρες)",
-    "user-activation-token-ttl-range": "Ο χρόνος ζωής πρέπει να είναι από 1 έως 24 ώρες",
+    "user-activation-token-ttl-range": "Ο χρόνος ζωής πρέπει να είναι από 1 έως {{max}} ώρες",
     "password-reset-token-ttl": "Χρόνος ζωής συνδέσμου επαναφοράς κωδικού (σε ώρες)",
     "password-reset-token-ttl-range": "Ο χρόνος ζωής συνδέσμου πρέπει να είναι από 1 έως 24 ώρες",
     "mobile-secret-key-length": "Μήκος μυστικού κλειδιού κινητού",

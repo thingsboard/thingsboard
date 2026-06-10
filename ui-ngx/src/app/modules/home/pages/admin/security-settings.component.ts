@@ -32,7 +32,7 @@ import { JwtSettings, SecuritySettings } from '@shared/models/settings.models';
 import { AdminService } from '@core/http/admin.service';
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
 import { mergeMap, tap } from 'rxjs/operators';
-import { randomAlphanumeric, validateEmail } from '@core/utils';
+import { isDefinedAndNotNull, randomAlphanumeric, validateEmail } from '@core/utils';
 import { AuthService } from '@core/auth/auth.service';
 import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -51,6 +51,7 @@ export class SecuritySettingsComponent extends PageComponent implements HasConfi
   jwtSecuritySettingsFormGroup: UntypedFormGroup;
 
   showMainLoadingBar = false;
+  maxActivationLinkTtl: number;
 
   private securitySettings: SecuritySettings;
   private jwtSettings: JwtSettings;
@@ -78,7 +79,7 @@ export class SecuritySettingsComponent extends PageComponent implements HasConfi
     this.securitySettingsFormGroup = this.fb.group({
       maxFailedLoginAttempts: [null, [Validators.min(0)]],
       userLockoutNotificationEmail: ['', [validateEmail]],
-      userActivationTokenTtl: [24, [Validators.required, Validators.min(1), Validators.max(24)]],
+      userActivationTokenTtl: [24, [Validators.required, Validators.min(1)]],
       passwordResetTokenTtl: [24, [Validators.required, Validators.min(1), Validators.max(24)]],
       mobileSecretKeyLength: [null, [Validators.min(1)]],
       passwordPolicy: this.fb.group(
@@ -180,6 +181,12 @@ export class SecuritySettingsComponent extends PageComponent implements HasConfi
 
   private processSecuritySettings(securitySettings: SecuritySettings) {
     this.securitySettings = securitySettings;
+    if (isDefinedAndNotNull(securitySettings.maxActivationLinkTtl)) {
+      this.maxActivationLinkTtl = securitySettings.maxActivationLinkTtl;
+      const userActivationTokenTtl = this.securitySettingsFormGroup.get('userActivationTokenTtl');
+      userActivationTokenTtl.setValidators([Validators.required, Validators.min(1), Validators.max(this.maxActivationLinkTtl)]);
+      userActivationTokenTtl.updateValueAndValidity({emitEvent: false});
+    }
     this.securitySettingsFormGroup.reset(this.securitySettings);
   }
 
