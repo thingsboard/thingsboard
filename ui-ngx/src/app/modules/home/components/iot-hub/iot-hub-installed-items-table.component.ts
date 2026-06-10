@@ -44,7 +44,7 @@ import {
   ItemPublishedVersionInfo
 } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
-import { ItemType, itemTypeTranslations } from '@shared/models/iot-hub/iot-hub-item.models';
+import { getItemTypeIcon, ItemType, itemTypeTranslations } from '@shared/models/iot-hub/iot-hub-item.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { getEntityDetailsPageURL } from '@core/utils';
 import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
@@ -153,16 +153,7 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
   }
 
   getItemTypeIcon(itemType: string): string {
-    switch (itemType) {
-      case 'WIDGET': return 'widgets';
-      case 'DASHBOARD': return 'dashboard';
-      case 'SOLUTION_TEMPLATE': return 'integration_instructions';
-      case 'CALCULATED_FIELD': return 'functions';
-      case 'ALARM_RULE': return 'notification_important';
-      case 'RULE_CHAIN': return 'settings_ethernet';
-      case 'DEVICE': return 'memory';
-      default: return 'category';
-    }
+    return getItemTypeIcon(itemType);
   }
 
   deleteItem(item: IotHubInstalledItem): void {

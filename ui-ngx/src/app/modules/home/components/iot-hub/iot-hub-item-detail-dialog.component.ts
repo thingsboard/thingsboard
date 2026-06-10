@@ -21,7 +21,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { MpItemVersionView, cfTypeTranslations, cfTypeIcons, ruleChainTypeTranslations, widgetTypeTranslations, NodeInfo } from '@shared/models/iot-hub/iot-hub-version.models';
-import { ItemType, itemTypeTranslations } from '@shared/models/iot-hub/iot-hub-item.models';
+import { getItemTypeIcon, ItemType, itemTypeTranslations } from '@shared/models/iot-hub/iot-hub-item.models';
 import { IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -103,16 +103,7 @@ export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubI
   }
 
   getTypeIcon(): string {
-    switch (this.item.type) {
-      case ItemType.WIDGET: return 'widgets';
-      case ItemType.DASHBOARD: return 'dashboard';
-      case ItemType.SOLUTION_TEMPLATE: return 'integration_instructions';
-      case ItemType.CALCULATED_FIELD: return 'functions';
-      case ItemType.ALARM_RULE: return 'notification_important';
-      case ItemType.RULE_CHAIN: return 'account_tree';
-      case ItemType.DEVICE: return 'memory';
-      default: return 'category';
-    }
+    return getItemTypeIcon(this.item.type);
   }
 
   getCompactIcon(): string {
@@ -121,15 +112,15 @@ export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubI
     }
     if (this.item.type === ItemType.CALCULATED_FIELD) {
       const cfType = this.item.dataDescriptor?.cfType;
-      return cfTypeIcons.get(cfType) || 'functions';
+      return cfTypeIcons.get(cfType) || getItemTypeIcon(ItemType.CALCULATED_FIELD);
     }
     if (this.item.type === ItemType.ALARM_RULE) {
-      return 'notification_important';
+      return getItemTypeIcon(ItemType.ALARM_RULE);
     }
     switch (this.item.dataDescriptor?.ruleChainType) {
       case 'CORE': return 'device_hub';
       case 'EDGE': return 'router';
-      default: return 'account_tree';
+      default: return getItemTypeIcon(ItemType.RULE_CHAIN);
     }
   }
 

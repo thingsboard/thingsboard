@@ -25,7 +25,7 @@ import { MediaBreakpoints } from '@shared/models/constants';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { MpItemVersionQuery, MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
-import { ItemType, itemTypeTranslations } from '@shared/models/iot-hub/iot-hub-item.models';
+import { getItemTypeIcon, ItemType, itemTypeTranslations } from '@shared/models/iot-hub/iot-hub-item.models';
 import { IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -266,15 +266,7 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
   }
 
   getCompactIcon(item: MpItemVersionView): string {
-    if (item.icon) {
-      return item.icon;
-    }
-    switch (item.type) {
-      case ItemType.CALCULATED_FIELD: return 'functions';
-      case ItemType.ALARM_RULE: return 'notification_important';
-      case ItemType.RULE_CHAIN: return 'settings_ethernet';
-      default: return 'category';
-    }
+    return item.icon || getItemTypeIcon(item.type);
   }
 
   getItemImage(item: MpItemVersionView): string | null {
@@ -282,14 +274,7 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
   }
 
   getItemTypeIcon(type: ItemType): string {
-    switch (type) {
-      case ItemType.WIDGET: return 'widgets';
-      case ItemType.DASHBOARD: return 'dashboard';
-      case ItemType.SOLUTION_TEMPLATE: return 'integration_instructions';
-      case ItemType.ALARM_RULE: return 'notification_important';
-      case ItemType.DEVICE: return 'memory';
-      default: return 'category';
-    }
+    return getItemTypeIcon(type);
   }
 
   getSearchGroupLabel(type: ItemType): string {

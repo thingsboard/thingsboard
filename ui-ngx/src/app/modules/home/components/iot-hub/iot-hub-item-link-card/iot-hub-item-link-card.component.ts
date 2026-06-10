@@ -17,7 +17,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
-import { ItemType } from '@shared/models/iot-hub/iot-hub-item.models';
+import { getItemTypeIcon, ItemType } from '@shared/models/iot-hub/iot-hub-item.models';
 
 type CardState = 'loading' | 'loaded' | 'unavailable';
 
@@ -71,29 +71,11 @@ export class TbIotHubItemLinkCardComponent implements OnInit {
 
   getCompactIcon(): string {
     const item = this.item!;
-    if (item.icon) {
-      return item.icon;
-    }
-    switch (item.type) {
-      case ItemType.CALCULATED_FIELD: return 'functions';
-      case ItemType.ALARM_RULE: return 'notification_important';
-      case ItemType.RULE_CHAIN: return 'account_tree';
-      default: return 'category';
-    }
+    return item.icon || getItemTypeIcon(item.type);
   }
 
   getTypeIcon(): string {
-    const item = this.item!;
-    switch (item.type) {
-      case ItemType.WIDGET: return 'widgets';
-      case ItemType.DASHBOARD: return 'dashboard';
-      case ItemType.SOLUTION_TEMPLATE: return 'integration_instructions';
-      case ItemType.CALCULATED_FIELD: return 'functions';
-      case ItemType.ALARM_RULE: return 'notification_important';
-      case ItemType.RULE_CHAIN: return 'account_tree';
-      case ItemType.DEVICE: return 'memory';
-      default: return 'category';
-    }
+    return getItemTypeIcon(this.item!.type);
   }
 
   getCompactColor(): string {

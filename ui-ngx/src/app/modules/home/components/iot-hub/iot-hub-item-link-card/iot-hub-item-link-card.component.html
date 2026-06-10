@@ -40,7 +40,7 @@
           @if (getImageUrl(); as imgUrl) {
             <img [src]="imgUrl" alt="">
           } @else {
-            <mat-icon class="tb-iot-hub-item-link-thumb-fallback">{{ getTypeIcon() }}</mat-icon>
+            <tb-icon class="tb-iot-hub-item-link-thumb-fallback">{{ getTypeIcon() }}</tb-icon>
           }
         </div>
       }
