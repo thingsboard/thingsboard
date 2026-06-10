@@ -17,13 +17,19 @@ package org.thingsboard.server.dao.service.validator;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.SsrfProtectionValidator;
 import org.thingsboard.server.common.data.ai.AiModel;
+import org.thingsboard.server.common.data.ai.provider.AiProviderConfig;
+import org.thingsboard.server.common.data.ai.provider.AzureOpenAiProviderConfig;
+import org.thingsboard.server.common.data.ai.provider.OllamaProviderConfig;
+import org.thingsboard.server.common.data.ai.provider.OpenAiProviderConfig;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.ai.AiModelDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TenantService;
 
+import java.net.URI;
 import java.util.Optional;
 
 @Component
@@ -63,6 +69,26 @@ class AiModelDataValidator extends DataValidator<AiModel> {
         }
         if (!tenantService.tenantExists(tenantId)) {
             throw new DataValidationException("AI model reference a non-existent tenant!");
+        }
+
+        // provider URL SSRF validation
+        if (model.getConfiguration() != null) {
+            AiProviderConfig providerConfig = model.getConfiguration().providerConfig();
+            String url = null;
+            if (providerConfig instanceof OpenAiProviderConfig c) {
+                url = c.baseUrl();
+            } else if (providerConfig instanceof AzureOpenAiProviderConfig c) {
+                url = c.endpoint();
+            } else if (providerConfig instanceof OllamaProviderConfig c) {
+                url = c.baseUrl();
+            }
+            if (url != null) {
+                try {
+                    SsrfProtectionValidator.validateUri(URI.create(url));
+                } catch (Exception e) {
+                    throw new DataValidationException("AI model provider URL is not allowed: " + e.getMessage());
+                }
+            }
         }
     }
 

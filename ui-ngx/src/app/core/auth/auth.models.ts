@@ -17,6 +17,7 @@
 import { AuthUser, User } from '@shared/models/user.model';
 import { UserSettings } from '@shared/models/user-settings.models';
 import { TrendzSettings } from '@shared/models/trendz-settings.models';
+import { NullsOrderStrategy } from '@shared/models/page/page-link';
 
 export interface SysParamsState {
   userTokenAccessEnabled: boolean;
@@ -34,6 +35,8 @@ export interface SysParamsState {
   ruleChainDebugPerTenantLimitsConfiguration?: string;
   calculatedFieldDebugPerTenantLimitsConfiguration?: string;
   trendzSettings: TrendzSettings;
+  nullsOrderStrategy: NullsOrderStrategy;
+  edqsEnabled: boolean;
 }
 
 export interface SysParams extends SysParamsState {

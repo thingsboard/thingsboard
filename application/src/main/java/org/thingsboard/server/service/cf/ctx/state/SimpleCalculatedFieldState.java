@@ -85,7 +85,7 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
             return expressionResult;
         }
         if (decimals.equals(0)) {
-            return TbUtils.toInt(expressionResult);
+            return TbUtils.toLong(expressionResult);
         }
         return TbUtils.toFixed(expressionResult, decimals);
     }
@@ -96,6 +96,8 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
         ObjectNode valuesNode = JacksonUtil.newObjectNode();
         if (result instanceof Double doubleValue) {
             valuesNode.put(outputName, doubleValue);
+        } else if (result instanceof Long longValue) {
+            valuesNode.put(outputName, longValue);
         } else if (result instanceof Integer integerValue) {
             valuesNode.put(outputName, integerValue);
         } else {

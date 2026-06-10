@@ -98,7 +98,10 @@ public abstract class AbstractTbQueueConsumerTemplate<R, T extends TbQueueMsg> i
                 doSubscribe(partitions);
                 subscribed = true;
             }
-            records = partitions.isEmpty() ? emptyList() : doPoll(durationInMillis);
+            if (partitions.isEmpty()) {
+                return sleepAndReturnEmpty(startNanos, durationInMillis);
+            }
+            records = doPoll(durationInMillis);
         } finally {
             consumerLock.unlock();
         }

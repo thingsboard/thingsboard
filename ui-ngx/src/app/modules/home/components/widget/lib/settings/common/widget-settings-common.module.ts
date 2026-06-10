@@ -267,6 +267,9 @@ import {
 import {
   ShapeFillStripeSettingsPanelComponent
 } from '@home/components/widget/lib/settings/common/map/shape-fill-stripe-settings-panel.component';
+import {
+  HtmlContainerSettingsComponent
+} from '@home/components/widget/lib/settings/common/html/html-container-settings.component';
 
 @NgModule({
   declarations: [
@@ -372,7 +375,8 @@ import {
     DataKeysComponent,
     DataKeyConfigDialogComponent,
     DataKeyConfigComponent,
-    WidgetSettingsComponent
+    WidgetSettingsComponent,
+    HtmlContainerSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -453,7 +457,8 @@ import {
     DataKeysComponent,
     DataKeyConfigDialogComponent,
     DataKeyConfigComponent,
-    WidgetSettingsComponent
+    WidgetSettingsComponent,
+    HtmlContainerSettingsComponent
   ],
   providers: [
     ColorSettingsComponentService,

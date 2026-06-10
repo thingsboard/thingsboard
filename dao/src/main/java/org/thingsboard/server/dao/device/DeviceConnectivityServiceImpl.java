@@ -85,7 +85,7 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
     private String mqttsPemCertFile;
     @Value("${device.connectivity.coaps.pem_cert_file:}")
     private String coapsPemCertFile;
-    @Value("${device.connectivity.gateway.image_version:3.7-stable}")
+    @Value("${device.connectivity.gateway.image_version:3.8-stable}")
     private String gatewayImageVersion;
 
     @Override

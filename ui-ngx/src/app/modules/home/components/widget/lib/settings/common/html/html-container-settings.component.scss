@@ -1,0 +1,128 @@
+/**
+ * Copyright © 2016-2026 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.tb-html-container-settings {
+    height: 100%;
+}
+
+.tb-html-container-settings .tb-html-container-settings-panel, .tb-html-container-settings-panel {
+  position: relative;
+  background: #fff;
+  .mat-mdc-tab-body-wrapper {
+    position: relative;
+    top: 0;
+    flex: 1;
+  }
+  .tb-action-expand-button {
+    position: absolute;
+    top: 4px;
+    right: 0;
+    z-index: 2;
+  }
+  .gutter {
+    display: none;
+    background-color: #eee;
+    background-repeat: no-repeat;
+    background-position: 50%;
+    &.gutter-horizontal {
+      cursor: col-resize;
+      background-image: url("../../../../../../../../../assets/split.js/grips/vertical.png");
+    }
+  }
+  .tb-js-func {
+    &:not(.tb-fullscreen) {
+      &.tb-hide-brackets {
+        padding-bottom: 0;
+      }
+    }
+  }
+  .tb-html {
+    position: relative;
+    &:not(.tb-fullscreen) {
+      padding-bottom: 0;
+    }
+    .tb-html-toolbar {
+      position: absolute;
+      top: 0;
+      right: 8px;
+      z-index: 8;
+      .tb-title {
+        display: none;
+      }
+    }
+    .tb-html-content-panel {
+      border-top: none;
+      height: 100%;
+    }
+  }
+  .tb-css {
+    position: relative;
+    &:not(.tb-fullscreen) {
+      .tb-css-content-panel {
+        margin: 0;
+      }
+    }
+    .tb-css-toolbar {
+      position: absolute;
+      top: 0;
+      right: 8px;
+      z-index: 8;
+      .tb-title {
+        display: none;
+      }
+    }
+    .tb-css-content-panel {
+      border-top: none;
+      height: 100%;
+    }
+  }
+  &.tb-fullscreen {
+    padding: 8px;
+    gap: 8px;
+    .tb-action-expand-button {
+      position: relative;
+      top: 0;
+      right: 0;
+    }
+    .gutter {
+      display: block;
+    }
+    .tb-content {
+      border: 1px solid #c0c0c0;
+      .tb-html {
+        .tb-html-content-panel {
+          border: none;
+        }
+      }
+      .tb-css {
+        .tb-css-content-panel {
+          border: none;
+        }
+      }
+      .tb-js-func {
+        padding-top: 8px;
+        .tb-js-func-toolbar {
+          padding: 0 5px;
+        }
+        .tb-js-func-panel {
+          border-left: none;
+          border-right: none;
+          border-bottom: none;
+        }
+      }
+    }
+  }
+}

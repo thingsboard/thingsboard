@@ -1107,8 +1107,8 @@
         "ai-providers": {
             "openai": "OpenAI",
             "azure-openai": "Azure OpenAI",
-            "google-ai-gemini": "Google AI Gemini",
-            "google-vertex-ai-gemini": "Google Vertex AI Gemini",
+            "google-ai-gemini": "Google Gemini (Gemini API)",
+            "google-vertex-ai-gemini": "Google Gemini (Agent Platform - Vertex AI)",
             "mistral-ai": "Mistral AI",
             "anthropic": "Anthropic",
             "amazon-bedrock": "Amazon Bedrock",
@@ -9511,6 +9511,18 @@
                     "how-to-create-customer-and-assign-dashboard": "How to create Customer and assign Dashboard"
                 }
             }
+        },
+        "html-container": {
+            "java-script": "JavaScript",
+            "js-function": "JavaScript function",
+            "html": "HTML",
+            "angular-html-template": "Angular HTML template",
+            "css": "CSS",
+            "container-type": "Container type",
+            "type-plain": "Plain HTML",
+            "type-angular": "Angular",
+            "resources": "Resources",
+            "no-resources": "No resources configured"
         }
     },
     "color": {

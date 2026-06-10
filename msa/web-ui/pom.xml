@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>4.2.2.2-SNAPSHOT</version>
+        <version>4.2.2.3-SNAPSHOT</version>
         <artifactId>msa</artifactId>
     </parent>
     <groupId>org.thingsboard.msa</groupId>
@@ -99,7 +99,7 @@
                         </goals>
                         <phase>compile</phase>
                         <configuration>
-                            <arguments>run pkg</arguments>
+                            <arguments>--mutex network run pkg</arguments>
                         </configuration>
                     </execution>
                 </executions>
