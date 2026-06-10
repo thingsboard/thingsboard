@@ -123,6 +123,8 @@ export class StringPatternAutocompleteComponent implements ControlValueAccessor,
 
   private predefinedValuesButtonMode = false;
 
+  private scrollSyncRafId: number | null = null;
+
   private propagateChange = (_val: any) => {
   };
 
@@ -150,6 +152,8 @@ export class StringPatternAutocompleteComponent implements ControlValueAccessor,
     fromEvent<KeyboardEvent>(this.inputRef.nativeElement, 'keydown')
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(event => this.handleKeydown(event));
+
+    this.destroyRef.onDestroy(() => this.stopScrollSync());
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -180,6 +184,11 @@ export class StringPatternAutocompleteComponent implements ControlValueAccessor,
 
   onFocus() {
     this.onSelectionChange();
+    this.startScrollSync();
+  }
+
+  onBlur() {
+    this.stopScrollSync();
   }
 
   registerOnChange(fn: any): void {
@@ -199,14 +208,33 @@ export class StringPatternAutocompleteComponent implements ControlValueAccessor,
     }
   }
 
-  onInputScroll(event: Event) {
-    const scrollLeft = (event.target as HTMLInputElement).scrollLeft;
-    const scrollTop = (event.target as HTMLInputElement).scrollTop;
-    if (this.highlightTextRef && this.highlightTextRef.nativeElement) {
-      this.highlightTextRef.nativeElement.scrollLeft = scrollLeft;
-      this.highlightTextRef.nativeElement.scrollTop = scrollTop;
+  private startScrollSync() {
+    if (this.scrollSyncRafId !== null) {
+      return;
+    }
+    const input = this.inputRef.nativeElement as HTMLInputElement;
+    const overlay = this.highlightTextRef?.nativeElement as HTMLElement;
+    let lastLeft = -1;
+    let lastTop = -1;
+    const tick = () => {
+      if (overlay && (input.scrollLeft !== lastLeft || input.scrollTop !== lastTop)) {
+        lastLeft = input.scrollLeft;
+        lastTop = input.scrollTop;
+        overlay.scrollLeft = lastLeft;
+        overlay.scrollTop = lastTop;
+      }
+      this.scrollSyncRafId = requestAnimationFrame(tick);
+    };
+    this.scrollSyncRafId = requestAnimationFrame(tick);
+  }
+
+  private stopScrollSync() {
+    if (this.scrollSyncRafId !== null) {
+      cancelAnimationFrame(this.scrollSyncRafId);
+      this.scrollSyncRafId = null;
     }
   }
+
 
   optionSelected(value: string) {
     const position = this.inputRef.nativeElement.selectionStart;
