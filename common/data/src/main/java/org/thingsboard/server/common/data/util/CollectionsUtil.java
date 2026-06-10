@@ -83,6 +83,7 @@ public class CollectionsUtil {
         return result;
     }
 
+    @SafeVarargs
     public static <V> boolean isOneOf(V value, V... others) {
         if (value == null) {
             return false;
@@ -105,7 +106,7 @@ public class CollectionsUtil {
         Set<T> newSet = new HashSet<>(existing.size() + 1);
         newSet.addAll(existing);
         newSet.add(value);
-        return (Set<T>) Set.of(newSet.toArray());
+        return Set.copyOf(newSet);
     }
 
 }

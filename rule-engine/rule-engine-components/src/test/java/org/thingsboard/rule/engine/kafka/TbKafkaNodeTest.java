@@ -420,7 +420,7 @@ public class TbKafkaNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     private void verifyProducerRecord(String expectedTopic, String expectedKey, String expectedValue, Headers expectedHeaders) {
-        ArgumentCaptor<ProducerRecord<String, String>> actualRecordCaptor = ArgumentCaptor.forClass(ProducerRecord.class);
+        ArgumentCaptor<ProducerRecord<String, String>> actualRecordCaptor = ArgumentCaptor.captor();
         then(producerMock).should().send(actualRecordCaptor.capture(), any());
         ProducerRecord<String, String> actualRecord = actualRecordCaptor.getValue();
         assertThat(actualRecord.topic()).isEqualTo(expectedTopic);
