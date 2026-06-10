@@ -192,6 +192,10 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
             if (calculatedField == null) {
                 return;
             }
+            if (!calculatedField.isEnabled()) {
+                log.debug("[{}] Skipping disabled calculated field, not caching for processing [{}]", tenantId, calculatedFieldId);
+                return;
+            }
             EntityId cfEntityId = calculatedField.getEntityId();
 
             calculatedFields.put(calculatedFieldId, calculatedField);

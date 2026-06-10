@@ -805,13 +805,9 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     }
 
     public void initCalculatedFields() {
-        PageDataIterable<CalculatedField> cfs = new PageDataIterable<>(pageLink -> cfDaoService.findCalculatedFieldsByTenantId(tenantId, pageLink), cfSettings.getInitTenantFetchPackSize());
+        PageDataIterable<CalculatedField> cfs = new PageDataIterable<>(pageLink -> cfDaoService.findCalculatedFieldsByTenantIdAndEnabled(tenantId, true, pageLink), cfSettings.getInitTenantFetchPackSize());
         cfs.forEach(cf -> {
             log.trace("Processing calculated field record: {}", cf);
-            if (!cf.isEnabled()) {
-                log.debug("[{}] Skipping disabled calculated field [{}]", tenantId, cf.getId());
-                return;
-            }
             try {
                 initCalculatedField(cf);
                 initCalculatedFieldLinks(cf);
