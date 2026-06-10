@@ -109,7 +109,34 @@ export class TbIotHubMarkdownComponent implements OnInit, OnChanges {
     parsed = replaceItemLinkPlaceholders(parsed);
     parsed = this.resolveImages(parsed);
     parsed = this.resolveVariables(parsed);
+    parsed = this.forceLinksOpenInNewTab(parsed);
     return parsed;
+  }
+
+  // Ensure every link rendered through tb-markdown opens in a new tab.
+  //  1) For markdown links `[text](url)` — append the
+  //     `{:target="_blank"}` suffix to the link TEXT (not the URL)
+  //     so MarkedOptionsService.renderer.link, which checks
+  //     `token.text.endsWith(targetBlankBlock)`, emits
+  //     `target="_blank"` on the rendered <a>. Skip links whose
+  //     text already ends with the suffix and skip image syntax
+  //     (`![alt](url)`).
+  //  2) For raw <a ...> HTML anchors authored in the markdown — add
+  //     `target="_blank"` when no `target=` attribute is already
+  //     present.
+  private forceLinksOpenInNewTab(content: string): string {
+    const TARGET_BLANK_BLOCK = '{:target="_blank"}';
+    content = content.replace(
+      /(?<!!)\[([^\]]*?)]\(([^)]+)\)/g,
+      (match, text: string, url: string) =>
+        text.endsWith(TARGET_BLANK_BLOCK) ? match : `[${text}${TARGET_BLANK_BLOCK}](${url})`
+    );
+    content = content.replace(
+      /<a\b([^>]*)>/gi,
+      (match, attrs: string) =>
+        /\btarget\s*=/i.test(attrs) ? match : `<a${attrs} target="_blank">`
+    );
+    return content;
   }
 
   private prefixResourceUrls(markdown: string): string {

@@ -16,7 +16,7 @@
 
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { MpItemVersionView, cfTypeTranslations, cfTypeIcons, ruleChainTypeTranslations, widgetTypeTranslations } from '@shared/models/iot-hub/iot-hub-version.models';
-import { ItemType } from '@shared/models/iot-hub/iot-hub-item.models';
+import { getItemTypeIcon, ItemType } from '@shared/models/iot-hub/iot-hub-item.models';
 import { IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { TranslateService } from '@ngx-translate/core';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
@@ -69,17 +69,21 @@ export class TbIotHubItemCardComponent {
 
   getPlaceholderIcon(): string {
     switch (this.item.type) {
-      case ItemType.WIDGET: return 'widgets';
-      case ItemType.DASHBOARD: return 'dashboard';
-      case ItemType.SOLUTION_TEMPLATE: return 'integration_instructions';
       case ItemType.CALCULATED_FIELD:
-        return this.item.icon || cfTypeIcons.get(this.item.dataDescriptor?.cfType) || 'functions';
+        return this.item.icon
+          || cfTypeIcons.get(this.item.dataDescriptor?.cfType)
+          || getItemTypeIcon(ItemType.CALCULATED_FIELD);
       case ItemType.ALARM_RULE:
-        return this.item.icon || 'notification_important';
+        return this.item.icon || getItemTypeIcon(ItemType.ALARM_RULE);
       case ItemType.RULE_CHAIN:
-        return this.item.icon || (this.item.dataDescriptor?.ruleChainType === 'EDGE' ? 'router' : 'device_hub');
-      case ItemType.DEVICE: return 'memory';
-      default: return 'extension';
+        return this.item.icon
+          || (this.item.dataDescriptor?.ruleChainType === 'EDGE'
+                ? 'router'
+                : (this.item.dataDescriptor?.ruleChainType === 'CORE'
+                    ? 'device_hub'
+                    : getItemTypeIcon(ItemType.RULE_CHAIN)));
+      default:
+        return getItemTypeIcon(this.item.type);
     }
   }
 

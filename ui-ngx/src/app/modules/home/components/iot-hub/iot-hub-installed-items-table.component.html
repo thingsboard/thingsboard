@@ -29,7 +29,7 @@
         <th mat-header-cell *matHeaderCellDef>{{ 'iot-hub.item-type' | translate }}</th>
         <td mat-cell *matCellDef="let item">
           <span class="tb-installed-type" [ngClass]="getItemTypeChipClass(item.itemType)">
-            <mat-icon class="tb-installed-type-icon">{{ getItemTypeIcon(item.itemType) }}</mat-icon>
+            <tb-icon class="tb-installed-type-icon">{{ getItemTypeIcon(item.itemType) }}</tb-icon>
             {{ getItemTypeLabel(item.itemType) }}
           </span>
         </td>

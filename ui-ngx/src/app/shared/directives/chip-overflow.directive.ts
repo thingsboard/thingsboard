@@ -15,6 +15,7 @@
 ///
 
 import { AfterViewInit, Directive, ElementRef, Input, NgZone, OnDestroy, Renderer2 } from '@angular/core';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Directive({
   selector: '[tb-chip-overflow]',
@@ -27,6 +28,10 @@ export class ChipOverflowDirective implements AfterViewInit, OnDestroy {
   @Input() overflowTemplate = '+{n}';
   @Input() overflowClass = 'tb-overflow-chip';
   @Input() minChips = 1;
+
+  @Input()
+  @coerceBoolean()
+  showOverflowedTitle = false;
 
   private resizeObserver?: ResizeObserver;
   private mutationObserver?: MutationObserver;
@@ -151,6 +156,7 @@ export class ChipOverflowDirective implements AfterViewInit, OnDestroy {
     // 4. Determine which chips fit
     let usedWidth = 0;
     let hiddenCount = 0;
+    const hiddenChips: HTMLElement[] = [];
     const minChips = Math.max(1, this.minChips);
 
     for (let i = 0; i < chips.length; i++) {
@@ -163,12 +169,29 @@ export class ChipOverflowDirective implements AfterViewInit, OnDestroy {
         usedWidth = nextUsedWidth;
       } else {
         hiddenCount++;
+        hiddenChips.push(chips[i]);
       }
     }
 
     if (hiddenCount > 0) {
       this.renderer.setProperty(this.overflowEl, 'textContent', this.overflowTemplate.replace('{n}', String(hiddenCount)));
       this.renderer.setStyle(this.overflowEl, 'display', 'inline-flex');
+      if (this.showOverflowedTitle) {
+        const title = hiddenChips
+          .map(chip => (chip.textContent || '').trim())
+          .filter(text => !!text)
+          .join(', ');
+        this.renderer.setAttribute(this.overflowEl, 'title', title);
+        // Allow pointer interaction so the browser's native title
+        // tooltip appears on hover.
+        this.renderer.removeStyle(this.overflowEl, 'pointerEvents');
+      } else {
+        this.renderer.removeAttribute(this.overflowEl, 'title');
+        this.renderer.setStyle(this.overflowEl, 'pointerEvents', 'none');
+      }
+    } else {
+      this.renderer.removeAttribute(this.overflowEl, 'title');
+      this.renderer.setStyle(this.overflowEl, 'pointerEvents', 'none');
     }
   }
 }
