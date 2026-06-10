@@ -134,8 +134,16 @@ class DeviceProfileDataValidatorTest {
     @Test
     void testValidate_InactivityTimeoutMs_Positive_Ok() {
         DeviceProfile deviceProfile = baseDefaultProfile();
-        deviceProfile.getProfileData().setInactivityTimeoutMs(1L);
+        deviceProfile.getProfileData().setInactivityTimeoutMs(1000L);
         validator.validateDataImpl(tenantId, deviceProfile);
+    }
+
+    @Test
+    void testValidate_InactivityTimeoutMs_NotMultipleOfSecond_Error() {
+        DeviceProfile deviceProfile = baseDefaultProfile();
+        deviceProfile.getProfileData().setInactivityTimeoutMs(1500L);
+        assertThatThrownBy(() -> validator.validateDataImpl(tenantId, deviceProfile))
+                .hasMessageContaining("Device profile inactivity timeout must be specified in whole seconds");
     }
 
     @Test

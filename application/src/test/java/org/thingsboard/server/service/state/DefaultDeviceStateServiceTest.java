@@ -17,6 +17,7 @@ package org.thingsboard.server.service.state;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -158,6 +159,13 @@ class DefaultDeviceStateServiceTest {
 
         deviceStateCallbackExecutor = MoreExecutors.newDirectExecutorService();
         ReflectionTestUtils.setField(service, "deviceStateCallbackExecutor", deviceStateCallbackExecutor);
+
+        ListeningScheduledExecutorService scheduledExecutor = mock(ListeningScheduledExecutorService.class);
+        lenient().doAnswer(inv -> {
+            ((Runnable) inv.getArgument(0)).run();
+            return Futures.immediateVoidFuture();
+        }).when(scheduledExecutor).submit(any(Runnable.class));
+        ReflectionTestUtils.setField(service, "scheduledExecutor", scheduledExecutor);
 
         lenient().when(partitionService.resolve(ServiceType.TB_CORE, tenantId, deviceId)).thenReturn(tpi);
 

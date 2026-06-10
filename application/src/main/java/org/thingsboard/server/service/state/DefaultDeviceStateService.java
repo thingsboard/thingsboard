@@ -175,7 +175,6 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
     @Lazy
     private TelemetrySubscriptionService tsSubService;
     @Autowired
-    @Lazy
     private TbDeviceProfileCache deviceProfileCache;
 
     @Value("#{${state.defaultInactivityTimeoutInSec} * 1000}")
@@ -376,18 +375,27 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         if (previousResolved != null && previousResolved == resolvedNew) {
             return;
         }
-        deviceStates.forEach((deviceId, stateData) -> {
-            if (!profileId.equals(stateData.getDeviceProfileId())) {
+        // Run the per-device propagation on the single-threaded scheduledExecutor instead of the notifications
+        // consumer thread: it keeps the consumer responsive, serializes with checkStates() so the iteration never
+        // races the periodic checker over the same DeviceState, and preserves event order so devices converge on
+        // the latest resolved timeout. The guard below drops a task whose value was already superseded.
+        scheduledExecutor.submit(() -> {
+            if (!Objects.equals(profileResolvedInactivityTimeoutMs.get(profileId), resolvedNew)) {
                 return;
             }
-            if (stateData.isInactivityTimeoutOverridden()) {
-                return;
-            }
-            if (stateData.getState().getInactivityTimeout() == resolvedNew) {
-                return;
-            }
-            stateData.getState().setInactivityTimeout(resolvedNew);
-            checkAndUpdateState(deviceId, stateData);
+            deviceStates.forEach((deviceId, stateData) -> {
+                if (!profileId.equals(stateData.getDeviceProfileId())) {
+                    return;
+                }
+                if (stateData.isInactivityTimeoutOverridden()) {
+                    return;
+                }
+                if (stateData.getState().getInactivityTimeout() == resolvedNew) {
+                    return;
+                }
+                stateData.getState().setInactivityTimeout(resolvedNew);
+                checkAndUpdateState(deviceId, stateData);
+            });
         });
     }
 

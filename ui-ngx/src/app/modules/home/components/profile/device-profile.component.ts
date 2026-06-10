@@ -232,10 +232,8 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
     if (formValue.defaultEdgeRuleChainId) {
       formValue.defaultEdgeRuleChainId = new RuleChainId(formValue.defaultEdgeRuleChainId);
     }
-    if (formValue.profileData) {
-      const sec = formValue.inactivityTimeoutSec;
-      formValue.profileData.inactivityTimeoutMs = sec && sec > 0 ? sec * SECOND : null;
-    }
+    const sec = formValue.inactivityTimeoutSec;
+    formValue.profileData.inactivityTimeoutMs = sec && sec > 0 ? sec * SECOND : null;
     delete formValue.inactivityTimeoutSec;
     const deviceProvisionConfiguration: DeviceProvisionConfiguration = formValue.profileData.provisionConfiguration;
     formValue.provisionType = deviceProvisionConfiguration.type;
