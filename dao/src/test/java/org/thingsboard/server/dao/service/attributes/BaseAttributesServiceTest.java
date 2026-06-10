@@ -122,7 +122,7 @@ public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
 
     @Test
     public void testDummyRequestWithEmptyResult() throws Exception {
-        var future = attributesService.find(new TenantId(UUID.randomUUID()), new DeviceId(UUID.randomUUID()), AttributeScope.SERVER_SCOPE, "TEST");
+        var future = attributesService.find(TenantId.fromUUID(UUID.randomUUID()), new DeviceId(UUID.randomUUID()), AttributeScope.SERVER_SCOPE, "TEST");
         Assert.assertNotNull(future);
         var result = future.get(10, TimeUnit.SECONDS);
         Assert.assertTrue(result.isEmpty());
@@ -130,7 +130,7 @@ public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
 
     @Test
     public void testConcurrentFetchAndUpdate() throws Exception {
-        var tenantId = new TenantId(UUID.randomUUID());
+        var tenantId = TenantId.fromUUID(UUID.randomUUID());
         ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(2));
         try {
             for (int i = 0; i < 100; i++) {
@@ -144,7 +144,7 @@ public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
 
     @Test
     public void testConcurrentFetchAndUpdateMulti() throws Exception {
-        var tenantId = new TenantId(UUID.randomUUID());
+        var tenantId = TenantId.fromUUID(UUID.randomUUID());
         ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(2));
         try {
             for (int i = 0; i < 100; i++) {
@@ -158,7 +158,7 @@ public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFetchAndUpdateEmpty() throws Exception {
-        var tenantId = new TenantId(UUID.randomUUID());
+        var tenantId = TenantId.fromUUID(UUID.randomUUID());
         var deviceId = new DeviceId(UUID.randomUUID());
         var scope = AttributeScope.SERVER_SCOPE;
         var key = "TEST";
@@ -172,7 +172,7 @@ public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFetchAndUpdateMulti() throws Exception {
-        var tenantId = new TenantId(UUID.randomUUID());
+        var tenantId = TenantId.fromUUID(UUID.randomUUID());
         var deviceId = new DeviceId(UUID.randomUUID());
         var scope = AttributeScope.SERVER_SCOPE;
         var key1 = "TEST1";
@@ -204,7 +204,7 @@ public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindAllKeysByEntityId() {
-        var tenantId = new TenantId(UUID.randomUUID());
+        var tenantId = TenantId.fromUUID(UUID.randomUUID());
         var deviceId = new DeviceId(UUID.randomUUID());
         saveAttribute(tenantId, deviceId, AttributeScope.SERVER_SCOPE, "key1", "123");
         saveAttribute(tenantId, deviceId, AttributeScope.SERVER_SCOPE, "key2", "123");
@@ -217,7 +217,7 @@ public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindAllKeysByEntityIdAndAttributeType() {
-        var tenantId = new TenantId(UUID.randomUUID());
+        var tenantId = TenantId.fromUUID(UUID.randomUUID());
         var deviceId = new DeviceId(UUID.randomUUID());
         saveAttribute(tenantId, deviceId, AttributeScope.SERVER_SCOPE, "key1", "123");
         saveAttribute(tenantId, deviceId, AttributeScope.SERVER_SCOPE, "key2", "123");
@@ -230,7 +230,7 @@ public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindAllByEntityIdAndAttributeType() {
-        var tenantId = new TenantId(UUID.randomUUID());
+        var tenantId = TenantId.fromUUID(UUID.randomUUID());
         var deviceId = new DeviceId(UUID.randomUUID());
         saveAttribute(tenantId, deviceId, AttributeScope.SERVER_SCOPE, "key1", "123");
         saveAttribute(tenantId, deviceId, AttributeScope.SERVER_SCOPE, "key2", "123");

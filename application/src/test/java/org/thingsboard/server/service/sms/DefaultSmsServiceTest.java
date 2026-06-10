@@ -22,9 +22,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.TestPropertySource;
-import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.TenantProfile;
@@ -55,7 +55,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "usage.stats.report.urgent_interval=1"
 })
 public class DefaultSmsServiceTest extends AbstractControllerTest {
-    @SpyBean
+    @MockitoSpyBean
     private DefaultSmsService defaultSmsService;
     @Autowired
     private AdminSettingsService adminSettingsService;
@@ -84,13 +84,13 @@ public class DefaultSmsServiceTest extends AbstractControllerTest {
 
         for (int i = 0; i < 10; i++) {
             doReturn(1).when(defaultSmsService).sendSms(any(), any());
-            defaultSmsService.sendSms(tenantId, null, new String[]{RandomStringUtils.randomNumeric(10)}, "Message");
+            defaultSmsService.sendSms(tenantId, null, new String[]{RandomStringUtils.secure().nextNumeric(10)}, "Message");
         }
 
         //wait 1 sec so that api usage state is updated
         TimeUnit.SECONDS.sleep(1);
         assertThrows(RuntimeException.class, () -> {
-            defaultSmsService.sendSms(tenantId, null, new String[]{RandomStringUtils.randomNumeric(10)}, "Message");
+            defaultSmsService.sendSms(tenantId, null, new String[]{RandomStringUtils.secure().nextNumeric(10)}, "Message");
         }, "SMS sending is disabled due to API limits!");
     }
 
@@ -103,7 +103,7 @@ public class DefaultSmsServiceTest extends AbstractControllerTest {
 
         TimeUnit.SECONDS.sleep(1);
         assertThrows(RuntimeException.class, () -> {
-            defaultSmsService.sendSms(tenantId, null, new String[]{RandomStringUtils.randomNumeric(10)}, "Message");
+            defaultSmsService.sendSms(tenantId, null, new String[]{RandomStringUtils.secure().nextNumeric(10)}, "Message");
         }, "SMS sending is disabled due to API limits!");
 
         //enable sms messaging
@@ -113,7 +113,7 @@ public class DefaultSmsServiceTest extends AbstractControllerTest {
 
         for (int i = 0; i < 10; i++) {
             doReturn(1).when(defaultSmsService).sendSms(any(), any());
-            defaultSmsService.sendSms(tenantId, null, new String[]{RandomStringUtils.randomNumeric(10)}, "Message");
+            defaultSmsService.sendSms(tenantId, null, new String[]{RandomStringUtils.secure().nextNumeric(10)}, "Message");
         }
     }
 

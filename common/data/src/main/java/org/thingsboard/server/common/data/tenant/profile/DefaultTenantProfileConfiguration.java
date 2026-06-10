@@ -169,8 +169,10 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
 
     private double warnThreshold;
 
+    @Builder.Default
     @Schema(example = "5")
     private long maxCalculatedFieldsPerEntity = 5;
+    @Builder.Default
     @Schema(example = "10")
     private long maxArgumentsPerCF = 10;
     @Schema(example = "10")
@@ -188,8 +190,10 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     @Positive
     @Schema(example = "1000")
     private long maxDataPointsPerRollingArg = 1000;
+    @Builder.Default
     @Schema(example = "32")
     private long maxStateSizeInKBytes = 32;
+    @Builder.Default
     @Schema(example = "2")
     private long maxSingleValueArgumentSizeInKBytes = 2;
     @Schema(example = "10")

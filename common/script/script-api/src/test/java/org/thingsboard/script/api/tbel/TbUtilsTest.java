@@ -1281,13 +1281,13 @@ public class TbUtilsTest {
     }
     @Test
     public void setTest() throws ExecutionException, InterruptedException {
-        Set actual = TbUtils.newSet(ctx);
-        Set expected = toSet(new byte[]{(byte) 0xDD, (byte) 0xCC, (byte) 0xCC});
+        Set<Byte> actual = TbUtils.newSet(ctx);
+        Set<Byte> expected = toSet(new byte[]{(byte) 0xDD, (byte) 0xCC, (byte) 0xCC});
         actual.add((byte) 0xDD);
         actual.add((byte) 0xCC);
         actual.add((byte) 0xCC);
         assertTrue(expected.containsAll(actual));
-        List list = toList(new byte[]{(byte) 0xDD, (byte) 0xCC, (byte) 0xBB, (byte) 0xAA});
+        List<Byte> list = toList(new byte[]{(byte) 0xDD, (byte) 0xCC, (byte) 0xBB, (byte) 0xAA});
         actual.addAll(list);
         assertEquals(4, actual.size());
         assertTrue(actual.containsAll(expected));
@@ -1301,9 +1301,9 @@ public class TbUtilsTest {
         actual.clear();
         assertTrue(actual.isEmpty());
         actual = TbUtils.toSet(ctx, list);
-        Set actualClone = TbUtils.toSet(ctx, list);
-        Set actualClone_asc = TbUtils.toSet(ctx, list);
-        Set actualClone_desc = TbUtils.toSet(ctx, list);
+        Set<Byte> actualClone = TbUtils.toSet(ctx, list);
+        Set<Byte> actualClone_asc = TbUtils.toSet(ctx, list);
+        Set<Byte> actualClone_desc = TbUtils.toSet(ctx, list);
         ((ExecutionLinkedHashSet<?>)actualClone).sort();
         ((ExecutionLinkedHashSet<?>)actualClone_asc).sort(true);
         ((ExecutionLinkedHashSet<?>)actualClone_desc).sort(false);

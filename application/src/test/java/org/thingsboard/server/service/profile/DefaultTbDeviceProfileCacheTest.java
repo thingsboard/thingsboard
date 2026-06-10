@@ -57,8 +57,8 @@ public class DefaultTbDeviceProfileCacheTest {
 
     @Test
     public void onComponentLifecycleEvent_tenantDeleted_evictsDeviceProfilesForThatTenant() {
-        TenantId tenant1 = new TenantId(UUID.randomUUID());
-        TenantId tenant2 = new TenantId(UUID.randomUUID());
+        TenantId tenant1 = TenantId.fromUUID(UUID.randomUUID());
+        TenantId tenant2 = TenantId.fromUUID(UUID.randomUUID());
         DeviceProfileId profileId1 = new DeviceProfileId(UUID.randomUUID());
         DeviceProfileId profileId2 = new DeviceProfileId(UUID.randomUUID());
 
@@ -76,7 +76,7 @@ public class DefaultTbDeviceProfileCacheTest {
 
     @Test
     public void onComponentLifecycleEvent_tenantDeleted_evictsDeviceMappingsForThatTenant() {
-        TenantId tenant = new TenantId(UUID.randomUUID());
+        TenantId tenant = TenantId.fromUUID(UUID.randomUUID());
         DeviceProfileId profileId = new DeviceProfileId(UUID.randomUUID());
         DeviceId deviceId = new DeviceId(UUID.randomUUID());
 
@@ -93,7 +93,7 @@ public class DefaultTbDeviceProfileCacheTest {
 
     @Test
     public void onComponentLifecycleEvent_tenantDeleted_removesListenersForThatTenant() {
-        TenantId tenant = new TenantId(UUID.randomUUID());
+        TenantId tenant = TenantId.fromUUID(UUID.randomUUID());
         EntityId listenerId = new DeviceId(UUID.randomUUID());
         AtomicInteger callCount = new AtomicInteger();
 
@@ -111,7 +111,7 @@ public class DefaultTbDeviceProfileCacheTest {
 
     @Test
     public void onComponentLifecycleEvent_tenantUpdated_doesNotEvictProfiles() {
-        TenantId tenant = new TenantId(UUID.randomUUID());
+        TenantId tenant = TenantId.fromUUID(UUID.randomUUID());
         DeviceProfileId profileId = new DeviceProfileId(UUID.randomUUID());
         loadProfileIntoCache(tenant, profileId);
 
@@ -124,8 +124,8 @@ public class DefaultTbDeviceProfileCacheTest {
 
     @Test
     public void onComponentLifecycleEvent_differentTenantDeleted_keepsOtherTenantsProfiles() {
-        TenantId tenant1 = new TenantId(UUID.randomUUID());
-        TenantId tenant2 = new TenantId(UUID.randomUUID());
+        TenantId tenant1 = TenantId.fromUUID(UUID.randomUUID());
+        TenantId tenant2 = TenantId.fromUUID(UUID.randomUUID());
         DeviceProfileId profileId1 = new DeviceProfileId(UUID.randomUUID());
         DeviceProfileId profileId2 = new DeviceProfileId(UUID.randomUUID());
 

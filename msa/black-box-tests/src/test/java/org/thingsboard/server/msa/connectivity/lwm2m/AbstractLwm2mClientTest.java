@@ -25,7 +25,7 @@ import org.apache.commons.io.IOUtils;
 import org.eclipse.leshan.client.object.Security;
 import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.util.Hex;
-import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.testng.Assert;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
@@ -111,7 +111,7 @@ public class AbstractLwm2mClientTest extends AbstractContainerTest {
     public final Set<LwM2MClientState> expectedStatusesRegistrationLwm2mSuccess = new HashSet<>(Arrays.asList(ON_INIT, ON_REGISTRATION_STARTED, ON_REGISTRATION_SUCCESS));
 
     public void createLwm2mDevicesForConnectNoSec(String name, Lwm2mDevicesForTest devicesForTest) throws Exception {
-        String clientEndpoint = name + "-" + RandomStringUtils.randomAlphanumeric(7);
+        String clientEndpoint = name + "-" + RandomStringUtils.secure().nextAlphanumeric(7);
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(clientEndpoint));
         Device lwM2MDeviceTest = createDeviceWithCredentials(deviceCredentials, clientEndpoint, devicesForTest.getLwm2mDeviceProfile().getId());
         LwM2MTestClient lwM2MTestClient = createNewClient(SECURITY_NO_SEC, clientEndpoint, executor);
@@ -120,7 +120,7 @@ public class AbstractLwm2mClientTest extends AbstractContainerTest {
     }
 
     public void createLwm2mDevicesForConnectPsk(Lwm2mDevicesForTest devicesForTest) throws Exception {
-        String clientEndpoint = CLIENT_ENDPOINT_PSK + "-" + RandomStringUtils.randomAlphanumeric(7);
+        String clientEndpoint = CLIENT_ENDPOINT_PSK + "-" + RandomStringUtils.secure().nextAlphanumeric(7);
         String identity = CLIENT_PSK_IDENTITY;
         String keyPsk = CLIENT_PSK_KEY;
         PSKClientCredential clientCredentials = new PSKClientCredential();

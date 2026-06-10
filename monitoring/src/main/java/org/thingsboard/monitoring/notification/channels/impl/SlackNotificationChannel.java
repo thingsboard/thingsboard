@@ -40,8 +40,8 @@ public class SlackNotificationChannel implements NotificationChannel {
     @PostConstruct
     private void init() {
         restTemplate = new RestTemplateBuilder()
-                .setConnectTimeout(Duration.ofSeconds(5))
-                .setReadTimeout(Duration.ofSeconds(2))
+                .connectTimeout(Duration.ofSeconds(5))
+                .readTimeout(Duration.ofSeconds(2))
                 .build();
     }
 

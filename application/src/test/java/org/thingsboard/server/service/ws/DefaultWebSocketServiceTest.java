@@ -113,7 +113,7 @@ class DefaultWebSocketServiceTest {
         assertThat(publicUserSubscriptionsMap).as("map should contain tenant1").containsKey(tenant1);
         assertThat(publicUserSubscriptionsMap).as("map should contain tenant2").containsKey(tenant2);
         assertThat(publicUserSubscriptionsMap).as("map must not have a single NULL_UUID entry for all tenants")
-                .doesNotContainKey(new TenantId(EntityId.NULL_UUID));
+                .doesNotContainKey(TenantId.fromUUID(EntityId.NULL_UUID));
 
         assertThat(publicUserSubscriptionsMap.get(tenant1))
                 .as("tenant1 should have exactly %d subscriptions", maxPublicSubscriptions)

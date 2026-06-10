@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.msa.ui.utils;
 
-import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
@@ -212,14 +212,14 @@ public class EntityPrototypes {
 
     public static Device defaultDevicePrototype(String name) {
         Device device = new Device();
-        device.setName(name + RandomStringUtils.randomAlphanumeric(7));
+        device.setName(name + RandomStringUtils.secure().nextAlphanumeric(7));
         device.setType("DEFAULT");
         return device;
     }
 
     public static Device defaultDevicePrototype(String name, CustomerId id) {
         Device device = new Device();
-        device.setName(name + RandomStringUtils.randomAlphanumeric(7));
+        device.setName(name + RandomStringUtils.secure().nextAlphanumeric(7));
         device.setCustomerId(id);
         device.setType("DEFAULT");
         return device;
@@ -227,7 +227,7 @@ public class EntityPrototypes {
 
     public static Device defaultDevicePrototype(String name, String description) {
         Device device = new Device();
-        device.setName(name + RandomStringUtils.randomAlphanumeric(7));
+        device.setName(name + RandomStringUtils.secure().nextAlphanumeric(7));
         device.setType("DEFAULT");
         device.setAdditionalInfo(JacksonUtil.newObjectNode().put("description", description));
         return device;
@@ -235,7 +235,7 @@ public class EntityPrototypes {
 
     public static Device defaultDevicePrototype(String name, String description, String label) {
         Device device = new Device();
-        device.setName(name + RandomStringUtils.randomAlphanumeric(7));
+        device.setName(name + RandomStringUtils.secure().nextAlphanumeric(7));
         device.setType("DEFAULT");
         device.setAdditionalInfo(JacksonUtil.newObjectNode().put("description", description));
         device.setLabel(label);
@@ -244,7 +244,7 @@ public class EntityPrototypes {
 
     public static Device defaultDevicePrototype(String name, boolean gateway) {
         Device device = new Device();
-        device.setName(name + RandomStringUtils.randomAlphanumeric(7));
+        device.setName(name + RandomStringUtils.secure().nextAlphanumeric(7));
         device.setType("DEFAULT");
         device.setAdditionalInfo(JacksonUtil.newObjectNode().put("gateway", gateway));
         return device;
@@ -252,7 +252,7 @@ public class EntityPrototypes {
 
     public static Device defaultDevicePrototype(String name, boolean gateway, boolean overwriteActivityTime) {
         Device device = new Device();
-        device.setName(name + RandomStringUtils.randomAlphanumeric(7));
+        device.setName(name + RandomStringUtils.secure().nextAlphanumeric(7));
         device.setType("DEFAULT");
         device.setAdditionalInfo(JacksonUtil.newObjectNode()
                 .put("gateway", gateway)
@@ -262,7 +262,7 @@ public class EntityPrototypes {
 
     public static Device defaultDevicePrototype(String name, DeviceProfileId deviceProfileId) {
         Device device = new Device();
-        device.setName(name + RandomStringUtils.randomAlphanumeric(7));
+        device.setName(name + RandomStringUtils.secure().nextAlphanumeric(7));
         device.setType("DEFAULT");
         device.setDeviceProfileId(deviceProfileId);
         return device;
@@ -270,7 +270,7 @@ public class EntityPrototypes {
 
     public static Asset defaultAssetPrototype(String name, CustomerId id) {
         Asset asset = new Asset();
-        asset.setName(name + RandomStringUtils.randomAlphanumeric(7));
+        asset.setName(name + RandomStringUtils.secure().nextAlphanumeric(7));
         asset.setCustomerId(id);
         asset.setType("DEFAULT");
         return asset;
@@ -278,15 +278,15 @@ public class EntityPrototypes {
 
     public static EntityView defaultEntityViewPrototype(String name, String type, String entityType) {
         EntityView entityView = new EntityView();
-        entityView.setName(name + RandomStringUtils.randomAlphanumeric(7));
-        entityView.setType(type + RandomStringUtils.randomAlphanumeric(7));
+        entityView.setName(name + RandomStringUtils.secure().nextAlphanumeric(7));
+        entityView.setType(type + RandomStringUtils.secure().nextAlphanumeric(7));
         entityView.setAdditionalInfo(JacksonUtil.newObjectNode().put("entityType", entityType));
         return entityView;
     }
 
     public static Dashboard defaultDashboardPrototype(String title) {
         Dashboard dashboard = new Dashboard();
-        dashboard.setTitle(title + RandomStringUtils.randomAlphanumeric(7));
+        dashboard.setTitle(title + RandomStringUtils.secure().nextAlphanumeric(7));
         return dashboard;
     }
 }

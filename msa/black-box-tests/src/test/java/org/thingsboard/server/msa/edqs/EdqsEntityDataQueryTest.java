@@ -16,7 +16,7 @@
 package org.thingsboard.server.msa.edqs;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
@@ -68,7 +68,7 @@ public class EdqsEntityDataQueryTest extends AbstractContainerTest {
     private UserId customer2UserId;
     private final List<Device> tenantDevices = new ArrayList<>();
     private final List<Device> tenant2Devices = new ArrayList<>();
-    private final String deviceProfile = "LoRa-" + RandomStringUtils.randomAlphabetic(10);
+    private final String deviceProfile = "LoRa-" + RandomStringUtils.secure().nextAlphabetic(10);
 
     @BeforeClass
     public void beforeClass() throws Exception {
@@ -188,7 +188,7 @@ public class EdqsEntityDataQueryTest extends AbstractContainerTest {
             device.setLabel("testLabel" + (int) (Math.random() * 1000));
             //TO make sure devices have different created time
             Thread.sleep(1);
-            String token = RandomStringUtils.randomAlphabetic(10);
+            String token = RandomStringUtils.secure().nextAlphabetic(10);
             Device saved = testRestClient.postDevice(token, device);
             tenantDevices.add(saved);
 

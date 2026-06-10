@@ -70,7 +70,7 @@ import static org.mockito.Mockito.when;
 public class TbGetTenantAttributeNodeTest {
 
     private static final DeviceId DUMMY_DEVICE_ORIGINATOR = new DeviceId(UUID.randomUUID());
-    private static final TenantId TENANT_ID = new TenantId(UUID.randomUUID());
+    private static final TenantId TENANT_ID = TenantId.fromUUID(UUID.randomUUID());
     private static final DirectListeningExecutor DB_EXECUTOR = DirectListeningExecutor.INSTANCE;
     @Mock
     private TbContext ctxMock;
