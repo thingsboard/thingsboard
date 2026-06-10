@@ -26,6 +26,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 import static org.apache.commons.lang3.StringUtils.repeat;
 
@@ -38,6 +39,12 @@ public class StringUtils {
     public static final String EMPTY = "";
 
     public static final int INDEX_NOT_FOUND = -1;
+
+    public static final Pattern CONTROL_CHARS = Pattern.compile("[\\x00-\\x1F\\x7F]");
+
+    public static boolean containsControlChars(String source) {
+        return source != null && CONTROL_CHARS.matcher(source).find();
+    }
 
     public static boolean isEmpty(String source) {
         return source == null || source.isEmpty();

@@ -26,6 +26,7 @@ import {
 import { deepClone } from '@core/utils';
 import { MatDialog } from '@angular/material/dialog';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
     selector: 'tb-widget-actions-panel',
@@ -44,6 +45,10 @@ export class WidgetActionsPanelComponent implements ControlValueAccessor, OnInit
 
   @Input()
   disabled: boolean;
+
+  @Input()
+  @coerceBoolean()
+  strokedPanel = false;
 
   actionsFormGroup: UntypedFormGroup;
 
