@@ -405,7 +405,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         cancelPendingDisconnectNotification(edgeId);
         // Connect notifies immediately; only the disconnect notification is debounced (see scheduleDisconnectNotification).
         pushStateEventToRuleEngine(tenantId, edge, lastConnectTs, TbMsgType.CONNECT_EVENT);
-        notifyEdgeConnectivity(tenantId, edge, true);
+        notifyEdgeConnectivity(edge, true);
         cancelScheduleEdgeEventsCheck(edgeId);
         edgeEventsMigrationProcessed.putIfAbsent(edgeId, Boolean.FALSE);
         scheduleEdgeEventsCheck(edgeGrpcSession);
@@ -562,7 +562,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             long lastDisconnectTs = System.currentTimeMillis();
             save(tenantId, edgeId, LAST_DISCONNECT_TIME, lastDisconnectTs);
             pushStateEventToRuleEngine(toRemove.getEdge().getTenantId(), edge, lastDisconnectTs, TbMsgType.DISCONNECT_EVENT);
-            scheduleDisconnectNotification(tenantId, edge);
+            scheduleDisconnectNotification(edge);
             cancelScheduleEdgeEventsCheck(edgeId);
         } else {
             log.info("[{}] edge session [{}] is not current anymore. Attempting to destroy it by sessionId.", edgeId, sessionId);
@@ -578,7 +578,12 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                 log.debug("[{}] No session found by sessionId [{}] to destroy", edgeId, sessionId);
             }
         }
-        evictServiceIdCacheIfOwnedByThisNode(edgeId);
+        // Don't evict while a live session for this edge still exists on this node (e.g. a stale session
+        // disconnecting after a newer one already replaced it) - that newer session legitimately owns the
+        // cache entry, and wiping it would let another node's pending task fire a false 'disconnected' notification.
+        if (!sessions.containsKey(edgeId)) {
+            evictServiceIdCacheIfOwnedByThisNode(edgeId);
+        }
     }
 
     // Only evict if the cache still points to this node. If the edge already reconnected to a different
@@ -702,22 +707,22 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         }
     }
 
-    private void notifyEdgeConnectivity(TenantId tenantId, Edge edge, boolean connected) {
+    private void notifyEdgeConnectivity(Edge edge, boolean connected) {
         try {
             ctx.getRuleProcessor().process(EdgeConnectionTrigger.builder()
-                    .tenantId(tenantId)
+                    .tenantId(edge.getTenantId())
                     .customerId(edge.getCustomerId())
                     .edgeId(edge.getId())
                     .edgeName(edge.getName())
                     .connected(connected).build());
         } catch (Exception e) {
-            log.warn("[{}][{}] Failed to process edge connectivity notification (connected={})", tenantId, edge.getId(), connected, e);
+            log.warn("[{}][{}] Failed to process edge connectivity notification (connected={})", edge.getTenantId(), edge.getId(), connected, e);
         }
     }
 
-    private void scheduleDisconnectNotification(TenantId tenantId, Edge edge) {
+    private void scheduleDisconnectNotification(Edge edge) {
         if (disconnectNotificationDelayMs <= 0) {
-            notifyEdgeConnectivity(tenantId, edge, false);
+            notifyEdgeConnectivity(edge, false);
             return;
         }
         EdgeId edgeId = edge.getId();
@@ -725,28 +730,30 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             if (existing != null) {
                 cancelIfPending(existing.future());
             }
-            // Single-element holder so the scheduled task can reference its own pending entry, which doesn't exist
-            // until schedule(...) returns. The task needs it for the identity-keyed remove in fireDelayedDisconnectNotification.
-            PendingDisconnect[] holder = {null};
+            // Create the pending entry first so the scheduled task can reference it (for the identity-keyed
+            // remove in fireDelayedDisconnectNotification), then back-fill its future. Doing this inside compute()
+            // keeps it under the map bin lock, so the future is set before the entry becomes visible to other threads.
+            PendingDisconnect pending = new PendingDisconnect(edge);
             ScheduledFuture<?> future = executorService.schedule(
-                    () -> fireDelayedDisconnectNotification(holder[0]),
+                    () -> fireDelayedDisconnectNotification(pending),
                     disconnectNotificationDelayMs, TimeUnit.MILLISECONDS);
-            holder[0] = new PendingDisconnect(tenantId, edge, future);
-            return holder[0];
+            pending.setFuture(future);
+            return pending;
         });
     }
 
     private void fireDelayedDisconnectNotification(PendingDisconnect pending) {
-        EdgeId edgeId = pending.edge().getId();
+        Edge edge = pending.edge();
+        EdgeId edgeId = edge.getId();
         // Identity-keyed remove: don't clobber a newer entry if a second disconnect races with this task firing.
         pendingDisconnectNotifications.remove(edgeId, pending);
         // Re-verify the edge is still disconnected. The cache is cluster-wide, so this also covers the case
         // where the edge dropped on this node and reconnected to a different TB-Core node within the window.
         if (sessions.containsKey(edgeId) || edgeIdServiceIdCache.get(edgeId) != null) {
-            log.debug("[{}][{}] Edge reconnected within the disconnect notification delay - skipping disconnect notification", pending.tenantId(), edgeId);
+            log.debug("[{}][{}] Edge reconnected within the disconnect notification delay - skipping disconnect notification", edge.getTenantId(), edgeId);
             return;
         }
-        notifyEdgeConnectivity(pending.tenantId(), pending.edge(), false);
+        notifyEdgeConnectivity(edge, false);
     }
 
     private void cancelPendingDisconnectNotification(EdgeId edgeId) {
@@ -757,8 +764,28 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     }
 
     // Carries the context the delayed task needs, so a pending notification can still be fired on shutdown
-    // (see destroy()), not just cancelled. Package-private for unit testing of fireDelayedDisconnectNotification.
-    record PendingDisconnect(TenantId tenantId, Edge edge, ScheduledFuture<?> future) {}
+    // (see destroy()), not just cancelled. The future is back-filled right after scheduling (see
+    // scheduleDisconnectNotification). Package-private for unit testing of fireDelayedDisconnectNotification.
+    static final class PendingDisconnect {
+        private final Edge edge;
+        private ScheduledFuture<?> future;
+
+        PendingDisconnect(Edge edge) {
+            this.edge = edge;
+        }
+
+        Edge edge() {
+            return edge;
+        }
+
+        ScheduledFuture<?> future() {
+            return future;
+        }
+
+        void setFuture(ScheduledFuture<?> future) {
+            this.future = future;
+        }
+    }
 
     private static void cancelIfPending(ScheduledFuture<?> future) {
         cancelIfPending(future, false);

@@ -156,7 +156,7 @@ public class EdgeGrpcServiceTest {
         // notification rather than drop it, otherwise a restart within the delay window swallows the alert.
         when(edgeIdServiceIdCache.get(edgeId)).thenReturn(null);
         when(ctx.getRuleProcessor()).thenReturn(ruleProcessor);
-        pendingDisconnects().put(edgeId, new EdgeGrpcService.PendingDisconnect(tenantId, edge, null));
+        pendingDisconnects().put(edgeId, new EdgeGrpcService.PendingDisconnect(edge));
 
         destroy();
 
@@ -167,7 +167,7 @@ public class EdgeGrpcServiceTest {
     public void givenPendingDisconnectButReconnectedElsewhere_whenDestroy_thenNotificationSuppressed() {
         // The flush still honors the re-verify guard: an edge that reconnected to another node must not alert.
         when(edgeIdServiceIdCache.get(edgeId)).thenReturn(SimpleTbCacheValueWrapper.wrap(OTHER_NODE));
-        pendingDisconnects().put(edgeId, new EdgeGrpcService.PendingDisconnect(tenantId, edge, null));
+        pendingDisconnects().put(edgeId, new EdgeGrpcService.PendingDisconnect(edge));
 
         destroy();
 
@@ -183,7 +183,7 @@ public class EdgeGrpcServiceTest {
     }
 
     private void fireDelayedDisconnectNotification() {
-        EdgeGrpcService.PendingDisconnect pending = new EdgeGrpcService.PendingDisconnect(tenantId, edge, null);
+        EdgeGrpcService.PendingDisconnect pending = new EdgeGrpcService.PendingDisconnect(edge);
         ReflectionTestUtils.invokeMethod(edgeGrpcService, "fireDelayedDisconnectNotification", pending);
     }
 
