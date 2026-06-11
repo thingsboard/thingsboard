@@ -31,7 +31,6 @@ import org.junit.Assert;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TransportPayloadType;
-import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
@@ -54,14 +53,19 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static java.util.concurrent.Executors.newFixedThreadPool;
 import static org.awaitility.Awaitility.await;
 import static org.eclipse.paho.mqttv5.common.packet.MqttWireMessage.MESSAGE_TYPE_CONNACK;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.common.util.JacksonUtil.newArrayNode;
+import static org.thingsboard.server.service.transport.DefaultTransportApiService.GATEWAY_CREATED_RELATION;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.Bytes;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.Int16;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.Int32;
@@ -108,7 +112,8 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
     protected static final String metricBirthName_Int32 = "Device Metric int32";
     protected Set<String> sparkplugAttributesMetricNames;
 
-    public void beforeSparkplugTest(boolean isCreateDevices) throws Exception {
+    public void beforeSparkplugTest() throws Exception {
+
         MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
                 .gatewayName(edgeNodeDeviceName)
                 .isSparkplug(true)
@@ -116,24 +121,25 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
                 .transportPayloadType(TransportPayloadType.PROTOBUF)
                 .build();
         processBeforeTest(configProperties);
-        if (isCreateDevices) {
-            // 1. Create the first device with a short name (legacy style)
-            String deviceName1 = deviceId + "_1";
-            Device device1 = createDevice(deviceName1, deviceProfile.getName(), false);
+    }
 
-            // 2. Establish 'Created' relation so the transport identifies this gateway as the owner
-            String relationType = "Created";
-            EntityRelation relation1 = createFromRelation(savedGateway, device1, relationType);
-            doPost("/api/relation", relation1).andExpect(status().isOk());
+    public void seedLegacyAndFullPathDevices() throws Exception {
+        // 1. Create the first device with a short name (legacy style)
+        String deviceName1 = deviceId + "_1";
+        Device device1 = createDevice(deviceName1, deviceProfile.getName(), false);
 
-            // 3. Create the second device with a full-path name
-            String deviceName2 = groupId + DEVICE_NAME_SPLIT_SEPARATOR + edgeNode + DEVICE_NAME_SPLIT_SEPARATOR + deviceId + "_2";
-            Device device2 = createDevice(deviceName2, deviceProfile.getName(), false);
+        // 2. Establish 'Created' relation so the transport identifies this gateway as the owner
+        EntityRelation relation1 = createFromRelation(savedGateway, device1, GATEWAY_CREATED_RELATION);
+        doPost("/api/relation", relation1).andExpect(status().isOk());
 
-            // 4. Establish 'Created' relation for the second device as well
-            EntityRelation relation2 = createFromRelation(savedGateway, device2, relationType);
-            doPost("/api/relation", relation2).andExpect(status().isOk());
-        }
+        // 3. Create the second device with a full-path name
+        String deviceName2 = groupId + DEVICE_NAME_SPLIT_SEPARATOR + edgeNode + DEVICE_NAME_SPLIT_SEPARATOR + deviceId + "_2";
+        Device device2 = createDevice(deviceName2, deviceProfile.getName(), false);
+
+        // 4. Establish 'Created' relation for the second device as well
+        EntityRelation relation2 = createFromRelation(savedGateway, device2, GATEWAY_CREATED_RELATION);
+        doPost("/api/relation", relation2).andExpect(status().isOk());
+
     }
 
     public void clientWithCorrectNodeAccessTokenWithNDEATH() throws Exception {
@@ -150,9 +156,9 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
     public void clientWithCorrectNodeAccessTokenWithNDEATH(long ts, long value) throws Exception {
         IMqttToken connectionResult = clientMqttV5ConnectWithNDEATH(ts, value, -1L);
         MqttWireMessage response = connectionResult.getResponse();
-        Assert.assertEquals(MESSAGE_TYPE_CONNACK, response.getType());
+        assertEquals(MESSAGE_TYPE_CONNACK, response.getType());
         MqttConnAck connAckMsg = (MqttConnAck) response;
-        Assert.assertEquals(MqttReturnCode.RETURN_CODE_SUCCESS, connAckMsg.getReturnCode());
+        assertEquals(MqttReturnCode.RETURN_CODE_SUCCESS, connAckMsg.getReturnCode());
     }
 
     public IMqttToken clientMqttV5ConnectWithNDEATH(long ts, long value, Long alias, String... nameSpaceBad) throws Exception {
@@ -208,7 +214,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
                     .setTimestamp(ts)
                     .setSeq(getSeqNum());
             String deviceIdName = deviceId + "_" + i;
-            String deviceName = groupId +  ":" + edgeNode +  ":" + deviceIdName;
+            String deviceName = groupId +  DEVICE_NAME_SPLIT_SEPARATOR + edgeNode +  DEVICE_NAME_SPLIT_SEPARATOR + deviceIdName;
             payloadBirthDevice.addMetrics(metric);
             if (client.isConnected()) {
                 client.publish(TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_SEPARATOR + groupId + TOPIC_SPLIT_SEPARATOR + SparkplugMessageType.DBIRTH.name() + TOPIC_SPLIT_SEPARATOR + edgeNode + TOPIC_SPLIT_SEPARATOR + deviceIdName,
@@ -225,7 +231,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
             }
         }
 
-        Assert.assertEquals(cntDevices, devices.size());
+        assertEquals(cntDevices, devices.size());
         return devices;
     }
 
@@ -290,10 +296,10 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
                     return device2.get() != null;
                 });
         devices.add(device2.get());
-        Assert.assertEquals(cntDevices, devices.size());
+        assertEquals(cntDevices, devices.size());
         state_ONLINE_ALL (devices, calendar.getTimeInMillis());
         // Without full topic: as it was in the old version. When deviceId is updated to full theme, Label is also updated to old deviceId
-        Assert.assertEquals(deviceIdNameLabel1, device1.get().getLabel());
+        assertEquals(deviceIdNameLabel1, device1.get().getLabel());
         // // With a full topic: if new. When creating a device by a client to a full topic, if the Label was not filled in - we do not touch it.
         Assert.assertNull(device2.get().getLabel());
     }
@@ -304,7 +310,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
     protected void renameCollisionWhenTargetNameAlreadyExists_Test() throws Exception {
         long ts = calendar.getTimeInMillis();
         String shortName = deviceId + "_1"; // Created in beforeTest
-        String fullPathName = groupId + ":" + edgeNode + ":" + shortName;
+        String fullPathName = groupId + DEVICE_NAME_SPLIT_SEPARATOR + edgeNode + DEVICE_NAME_SPLIT_SEPARATOR + shortName;
 
         // Manually create a device that already has the "new" full-path name to trigger a collision
         createDevice(fullPathName, deviceProfile.getName(), false);
@@ -318,7 +324,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
 
         // Gateway sends DBIRTH for the short name.
         // Transport will try to rename it but should find a conflict and handle it gracefully.
-        client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/DBIRTH/" + edgeNode + "/" + shortName,
+        client.publish(TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_SEPARATOR + groupId + "/DBIRTH/" + edgeNode + TOPIC_SPLIT_SEPARATOR + shortName,
                 payload.build().toByteArray(), 0, false);
 
         await("Checking stability after collision")
@@ -352,10 +358,10 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
                 .setTimestamp(ts).setSeq(getSeqNum());
 
         // 2. Unauthorized gateway attempts to rename this device via Sparkplug topic path
-        client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/DBIRTH/" + edgeNode + "/" + strangerName,
+        client.publish(TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_SEPARATOR + groupId + "/DBIRTH/" + edgeNode + TOPIC_SPLIT_SEPARATOR + strangerName,
                 payload.build().toByteArray(), 0, false);
 
-        String expectedFullPath = groupId + ":" + edgeNode + ":" + strangerName;
+        String expectedFullPath = groupId + DEVICE_NAME_SPLIT_SEPARATOR + edgeNode + DEVICE_NAME_SPLIT_SEPARATOR + strangerName;
 
         // 3. Verify security: the original device must still be linked to its short name with the same ID
         await("Verify original device was not hijacked")
@@ -364,8 +370,8 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
                 .untilAsserted(() -> {
                     // Check if the original device still exists with its original ID
                     Device currentStranger = doGet("/api/tenant/devices?deviceName=" + strangerName, Device.class);
-                    Assert.assertNotNull("Original device disappeared!", currentStranger);
-                    Assert.assertEquals("Security breach: Original device ID changed!", originalStrangerId, currentStranger.getId());
+                    assertNotNull("Original device disappeared!", currentStranger);
+                    assertEquals("Security breach: Original device ID changed!", originalStrangerId, currentStranger.getId());
 
                     // Even if the gateway created a NEW device with a full path, it must have a different ID
                     Device newDevice = doGet("/api/tenant/devices?deviceName=" + expectedFullPath, Device.class);
@@ -387,6 +393,8 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         stranger.setName(strangerName);
         stranger.setType("default");
         doPost("/api/device", stranger);
+        Device originalStrangerDevice =
+                doGet("/api/tenant/devices?deviceName=" + strangerName, Device.class);
 
         clientWithCorrectNodeAccessTokenWithNDEATH();
 
@@ -394,13 +402,18 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
                 .setTimestamp(ts).setSeq(getSeqNum());
 
         // Unauthorized gateway attempts to rename the device via Sparkplug topic
-        client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/DBIRTH/" + edgeNode + "/" + strangerName,
+        client.publish(TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_SEPARATOR + groupId + "/DBIRTH/" + edgeNode + TOPIC_SPLIT_SEPARATOR + strangerName,
                 payload.build().toByteArray(), 0, false);
 
-        String expectedFullPath = groupId + ":" + edgeNode + ":" + strangerName;
+        String expectedFullPath = groupId + DEVICE_NAME_SPLIT_SEPARATOR + edgeNode + DEVICE_NAME_SPLIT_SEPARATOR + strangerName;
         await().atMost(30, TimeUnit.SECONDS).untilAsserted(() ->
-                doGet("/api/tenant/devices?deviceName=" + expectedFullPath, Device.class, status().isNotFound())
+                doGet("/api/tenant/devices?deviceName=" + expectedFullPath, Device.class, status().isOk())
         );
+
+        Device strangerDevice =
+                doGet("/api/tenant/devices?deviceName=" + strangerName, Device.class);
+        assertNotNull(strangerDevice);
+        assertEquals(originalStrangerDevice.getId(), strangerDevice.getId());
     }
 
     protected void state_ONLINE_ALL (List<Device> devices, long ts) {
@@ -438,7 +451,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         String concurrentDeviceName = "concurrent_device";
         clientWithCorrectNodeAccessTokenWithNDEATH();
 
-        java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newFixedThreadPool(threadCount);
+        ExecutorService executor = newFixedThreadPool(threadCount);
         long ts = calendar.getTimeInMillis();
 
         for (int i = 0; i < threadCount; i++) {
@@ -446,7 +459,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
                 try {
                     SparkplugBProto.Payload.Builder payload = SparkplugBProto.Payload.newBuilder()
                             .setTimestamp(ts).setSeq(0);
-                    client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/DBIRTH/" + edgeNode + "/" + concurrentDeviceName,
+                    client.publish(TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_SEPARATOR + groupId + "/DBIRTH/" + edgeNode + TOPIC_SPLIT_SEPARATOR + concurrentDeviceName,
                             payload.build().toByteArray(), 0, false);
                 } catch (Exception e) {
                     log.error("Concurrent publish failed", e);
@@ -454,9 +467,9 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
             });
         }
 
-        String expectedName = groupId + ":" + edgeNode + ":" + concurrentDeviceName;
+        String expectedName = groupId + DEVICE_NAME_SPLIT_SEPARATOR + edgeNode + DEVICE_NAME_SPLIT_SEPARATOR + concurrentDeviceName;
         await("Wait for concurrent registration result")
-                .atMost(40, TimeUnit.SECONDS) // Restored to 40s as requested
+                .atMost(40, TimeUnit.SECONDS)
                 .until(() -> doGet("/api/tenant/devices?deviceName=" + expectedName, Device.class) != null);
 
         executor.shutdown();
@@ -506,7 +519,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
                 .setTimestamp(ts)
                 .setSeq(getSeqNum());
         String deviceIdName = deviceId + "_1";
-        String deviceName = groupId +  ":" + edgeNode +  ":" + deviceIdName;
+        String deviceName = groupId +  DEVICE_NAME_SPLIT_SEPARATOR + edgeNode +  DEVICE_NAME_SPLIT_SEPARATOR + deviceIdName;
 
         payloadBirthDevice.addMetrics(metric);
         if (client.isConnected()) {
@@ -523,7 +536,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
             devices.add(device.get());
         }
 
-        Assert.assertEquals(1, devices.size());
+        assertEquals(1, devices.size());
         return devices;
     }
 

@@ -29,7 +29,7 @@ public class MqttV5ClientSparkplugBTelemetryTest extends AbstractMqttV5ClientSpa
 
     @Before
     public void beforeTest() throws Exception {
-        beforeSparkplugTest(false);
+        beforeSparkplugTest();
     }
 
     @After

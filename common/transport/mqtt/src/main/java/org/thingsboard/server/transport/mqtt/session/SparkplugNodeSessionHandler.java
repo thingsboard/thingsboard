@@ -115,26 +115,23 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
             }
             contextListenableFuture = Futures.immediateFuture(this.deviceSessionCtx);
         } else {
-            try {
-                deviceName = checkDeviceName(topic.getNodeDeviceNameAllPath());
-                ListenableFuture<SparkplugDeviceSessionContext> deviceCtx = this.onDeviceConnectProto(topic);
-                String finalDeviceName = deviceName;
-                contextListenableFuture = Futures.transform(deviceCtx, ctx -> {
-                    if (topic.isType(DBIRTH)) {
-                        sendSparkplugStateOnTelemetry(ctx.getSessionInfo(), finalDeviceName, ONLINE,
-                                sparkplugBProto.getTimestamp());
-                        try {
-                            ctx.setDeviceBirthMetrics(sparkplugBProto.getMetricsList());
-                        } catch (IllegalArgumentException | DuplicateKeyException e) {
-                            log.error("[{}] Failed to set birth metrics", finalDeviceName, e);
-                            throw new RuntimeException(e);
-                        }
+            deviceName = checkDeviceName(topic.getNodeDeviceNameAllPath());
+            ListenableFuture<SparkplugDeviceSessionContext> deviceCtx = this.onDeviceConnectProto(topic);
+            String finalDeviceName = deviceName;
+
+            contextListenableFuture = Futures.transform(deviceCtx, ctx -> {
+                if (topic.isType(DBIRTH)) {
+                    sendSparkplugStateOnTelemetry(ctx.getSessionInfo(), finalDeviceName, ONLINE,
+                            sparkplugBProto.getTimestamp());
+                    try {
+                        ctx.setDeviceBirthMetrics(sparkplugBProto.getMetricsList());
+                    } catch (IllegalArgumentException | DuplicateKeyException e) {
+                        log.error("[{}] Failed to set birth metrics", finalDeviceName, e);
+                        throw new RuntimeException(e);
                     }
-                    return ctx;
-                }, MoreExecutors.directExecutor());
-            }  catch (IllegalArgumentException | DuplicateKeyException e) {
-                throw new RuntimeException(e);
-            }
+                }
+                return ctx;
+            }, MoreExecutors.directExecutor());
         }
         Set<String> attributesMetricNames = ((MqttDeviceProfileTransportConfiguration) deviceSessionCtx
                 .getDeviceProfile().getProfileData().getTransportConfiguration()).getSparkplugAttributesMetricNames();
