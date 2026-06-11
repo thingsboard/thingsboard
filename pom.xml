@@ -136,7 +136,7 @@
         <commons-beanutils.version>1.11.0</commons-beanutils.version>
         <commons-collections.version>4.4</commons-collections.version>
         <protobuf-dynamic.version>1.0.4TB</protobuf-dynamic.version>
-        <wire-schema.version>3.7.1</wire-schema.version>
+        <wire-schema.version>6.3.0</wire-schema.version> <!-- to fix CVE-2026-45799 (transitive wire-runtime). TODO: remove pin when upstream bundles >= 6.3.0 -->
         <twilio.version>10.1.3</twilio.version>
         <hypersistence-utils.version>3.7.4</hypersistence-utils.version> <!-- artifact name should be updated with hibernate-core version -->
         <jakarta.el.version>4.0.2</jakarta.el.version>
