@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.edge.rpc.session;
 
+import io.grpc.Status;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.service.edge.rpc.session.manager.EdgeGrpcSessionManager;
 
@@ -31,4 +32,10 @@ public abstract class EdgeGrpcSessionDelegate implements EdgeGrpcSessionManager 
     public void startSyncProcess(boolean fullSync) {
         getSession().startSyncProcess(fullSync);
     }
+
+    @Override
+    public void closeWithError(Status status, String errorMsg) {
+        getSession().closeWithError(status, errorMsg);
+    }
+
 }

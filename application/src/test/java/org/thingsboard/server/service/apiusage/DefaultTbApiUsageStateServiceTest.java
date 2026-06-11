@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
@@ -64,7 +65,6 @@ public class DefaultTbApiUsageStateServiceTest extends AbstractControllerTest {
     private ApiUsageStateService apiUsageStateService;
 
     private TenantId tenantId;
-    private Tenant savedTenant;
     private TenantProfile savedTenantProfile;
 
     private static final int MAX_ENABLE_VALUE = 5000;
@@ -83,48 +83,20 @@ public class DefaultTbApiUsageStateServiceTest extends AbstractControllerTest {
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant");
         tenant.setTenantProfileId(savedTenantProfile.getId());
-        savedTenant = saveTenant(tenant);
+        Tenant savedTenant = saveTenant(tenant);
         tenantId = savedTenant.getId();
         Assert.assertNotNull(savedTenant);
     }
 
     @Test
     public void testProcess_transitionFromWarningToDisabled() {
-        TransportProtos.ToUsageStatsServiceMsg.Builder warningMsgBuilder = TransportProtos.ToUsageStatsServiceMsg.newBuilder()
-                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
-                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
-                .setCustomerIdMSB(0)
-                .setCustomerIdLSB(0)
-                .setServiceId("testService");
+        sendUsageStats(tenantId, ApiUsageRecordKey.STORAGE_DP_COUNT, VALUE_WARNING);
+        await().atMost(5, TimeUnit.SECONDS).until(() ->
+                apiUsageStateService.findTenantApiUsageState(tenantId).getDbStorageState() == ApiUsageStateValue.WARNING);
 
-        warningMsgBuilder.addValues(TransportProtos.UsageStatsKVProto.newBuilder()
-                .setKey(ApiUsageRecordKey.STORAGE_DP_COUNT.name())
-                .setValue(VALUE_WARNING)
-                .build());
-
-        TransportProtos.ToUsageStatsServiceMsg warningStatsMsg = warningMsgBuilder.build();
-        TbProtoQueueMsg<TransportProtos.ToUsageStatsServiceMsg> warningMsg = new TbProtoQueueMsg<>(UUID.randomUUID(), warningStatsMsg);
-
-        service.process(warningMsg, TbCallback.EMPTY);
-        assertEquals(ApiUsageStateValue.WARNING, apiUsageStateService.findTenantApiUsageState(tenantId).getDbStorageState());
-
-        TransportProtos.ToUsageStatsServiceMsg.Builder disableMsgBuilder = TransportProtos.ToUsageStatsServiceMsg.newBuilder()
-                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
-                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
-                .setCustomerIdMSB(0)
-                .setCustomerIdLSB(0)
-                .setServiceId("testService");
-
-        disableMsgBuilder.addValues(TransportProtos.UsageStatsKVProto.newBuilder()
-                .setKey(ApiUsageRecordKey.STORAGE_DP_COUNT.name())
-                .setValue(VALUE_DISABLE)
-                .build());
-
-        TransportProtos.ToUsageStatsServiceMsg disableStatsMsg = disableMsgBuilder.build();
-        TbProtoQueueMsg<TransportProtos.ToUsageStatsServiceMsg> disableMsg = new TbProtoQueueMsg<>(UUID.randomUUID(), disableStatsMsg);
-
-        service.process(disableMsg, TbCallback.EMPTY);
-        assertEquals(ApiUsageStateValue.DISABLED, apiUsageStateService.findTenantApiUsageState(tenantId).getDbStorageState());
+        sendUsageStats(tenantId, ApiUsageRecordKey.STORAGE_DP_COUNT, VALUE_DISABLE);
+        await().atMost(5, TimeUnit.SECONDS).until(() ->
+                apiUsageStateService.findTenantApiUsageState(tenantId).getDbStorageState() == ApiUsageStateValue.DISABLED);
     }
 
     @Test
@@ -138,6 +110,7 @@ public class DefaultTbApiUsageStateServiceTest extends AbstractControllerTest {
         apiUsageState.setTransportState(ApiUsageStateValue.ENABLED);
         apiUsageState.setEmailExecState(ApiUsageStateValue.ENABLED);
         apiUsageState.setJsExecState(ApiUsageStateValue.ENABLED);
+        apiUsageState.setEdgeState(ApiUsageStateValue.ENABLED);
         apiUsageState.setTenantId(tenantId);
         apiUsageState.setEntityId(tenantId);
 
@@ -194,7 +167,7 @@ public class DefaultTbApiUsageStateServiceTest extends AbstractControllerTest {
 
         await().atMost(5, TimeUnit.SECONDS).until(() -> {
             Optional<TsKvEntry> smsApiState = tsService.findLatest(finalTenantId, finalApiUsageStateId, SMS_EXEC_COUNT.getApiLimitKey()).get();
-            return smsApiState.isPresent() && smsApiState.get().getLongValue().get().equals(0L);
+            return smsApiState.isPresent() && smsApiState.get().getLongValue().isPresent() && smsApiState.get().getLongValue().get().equals(0L);
         });
 
         // enable SMS and check that the ApiUsageState is updated accordingly
@@ -216,10 +189,10 @@ public class DefaultTbApiUsageStateServiceTest extends AbstractControllerTest {
 
         await().atMost(5, TimeUnit.SECONDS).until(() -> {
             Optional<TsKvEntry> smsApiState = tsService.findLatest(finalTenantId, finalApiUsageStateId, SMS_EXEC_COUNT.getApiLimitKey()).get();
-            return smsApiState.isPresent() && smsApiState.get().getLongValue().get().equals(10L);
+            return smsApiState.isPresent() && smsApiState.get().getLongValue().isPresent() && smsApiState.get().getLongValue().get().equals(10L);
         });
 
-        //disable SMS and check that the ApiUsageState is updated accordingly
+        // disable SMS and check that the ApiUsageState is updated accordingly
         config = DefaultTenantProfileConfiguration.builder()
                 .smsEnabled(false)
                 .build();
@@ -237,8 +210,96 @@ public class DefaultTbApiUsageStateServiceTest extends AbstractControllerTest {
 
         await().atMost(5, TimeUnit.SECONDS).until(() -> {
             Optional<TsKvEntry> smsApiState = tsService.findLatest(finalTenantId, finalApiUsageStateId, SMS_EXEC_COUNT.getApiLimitKey()).get();
-            return smsApiState.isPresent() && smsApiState.get().getLongValue().get().equals(0L);
+            return smsApiState.isPresent() && smsApiState.get().getLongValue().isPresent() && smsApiState.get().getLongValue().get().equals(0L);
         });
+    }
+
+    @Test
+    public void testEdgeStateTransitions() throws Exception {
+        TenantProfile edgeProfile = createProfileWithThreshold("Edge Test Profile", DefaultTenantProfileConfiguration.builder()
+                .maxEdgeEvents(100)
+                .warnThreshold(0.8)
+                .build());
+        Tenant edgeTenant = createTenantWithProfile("Edge tenant", edgeProfile);
+        TenantId edgeTenantId = edgeTenant.getId();
+
+        sendUsageStats(edgeTenantId, ApiUsageRecordKey.EDGE_EVENT_COUNT, 85);
+        await().atMost(5, TimeUnit.SECONDS).until(() ->
+                apiUsageStateService.findTenantApiUsageState(edgeTenantId).getEdgeState() == ApiUsageStateValue.WARNING);
+
+        sendUsageStats(edgeTenantId, ApiUsageRecordKey.EDGE_EVENT_COUNT, 20);
+        await().atMost(5, TimeUnit.SECONDS).until(() ->
+                apiUsageStateService.findTenantApiUsageState(edgeTenantId).getEdgeState() == ApiUsageStateValue.DISABLED);
+    }
+
+    @Test
+    public void testEdgeDisableDoesNotAffectOtherFeatures() throws Exception {
+        TenantProfile profile = createProfileWithThreshold("Edge Isolation Profile", DefaultTenantProfileConfiguration.builder()
+                .maxEdgeEvents(50)
+                .maxDPStorageDays(MAX_ENABLE_VALUE)
+                .warnThreshold(0.8)
+                .build());
+        Tenant tenant = createTenantWithProfile("Edge isolation tenant", profile);
+        TenantId tid = tenant.getId();
+
+        sendUsageStats(tid, ApiUsageRecordKey.EDGE_EVENT_COUNT, 100);
+        await().atMost(5, TimeUnit.SECONDS).until(() ->
+                apiUsageStateService.findTenantApiUsageState(tid).getEdgeState() == ApiUsageStateValue.DISABLED);
+
+        ApiUsageState state = apiUsageStateService.findTenantApiUsageState(tid);
+        assertEquals(ApiUsageStateValue.ENABLED, state.getTransportState());
+        assertEquals(ApiUsageStateValue.ENABLED, state.getReExecState());
+        assertEquals(ApiUsageStateValue.ENABLED, state.getDbStorageState());
+    }
+
+    @Test
+    public void testZeroThresholdMeansUnlimited() throws Exception {
+        TenantProfile profile = createProfileWithThreshold("Unlimited Profile", DefaultTenantProfileConfiguration.builder()
+                .maxEdgeEvents(0)
+                .warnThreshold(0.8)
+                .build());
+        Tenant tenant = createTenantWithProfile("Unlimited tenant", profile);
+        TenantId tid = tenant.getId();
+
+        sendUsageStats(tid, ApiUsageRecordKey.EDGE_EVENT_COUNT, 1_000_000);
+        await().atMost(5, TimeUnit.SECONDS).until(() ->
+                apiUsageStateService.findTenantApiUsageState(tid).getEdgeState() == ApiUsageStateValue.ENABLED);
+    }
+
+    private void sendUsageStats(TenantId tenantId, ApiUsageRecordKey recordKey, long value) {
+        TransportProtos.UsageStatsServiceMsg statsMsg = TransportProtos.UsageStatsServiceMsg.newBuilder()
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setCustomerIdMSB(0)
+                .setCustomerIdLSB(0)
+                .addValues(TransportProtos.UsageStatsKVProto.newBuilder()
+                        .setRecordKey(ProtoUtils.toProto(recordKey))
+                        .setValue(value)
+                        .build())
+                .build();
+
+        TransportProtos.ToUsageStatsServiceMsg msg = TransportProtos.ToUsageStatsServiceMsg.newBuilder()
+                .setServiceId("testService")
+                .addMsgs(statsMsg)
+                .build();
+
+        service.process(new TbProtoQueueMsg<>(UUID.randomUUID(), msg), TbCallback.EMPTY);
+    }
+
+    private TenantProfile createProfileWithThreshold(String name, DefaultTenantProfileConfiguration config) {
+        TenantProfile profile = new TenantProfile();
+        profile.setName(name);
+        TenantProfileData profileData = new TenantProfileData();
+        profileData.setConfiguration(config);
+        profile.setProfileData(profileData);
+        return doPost("/api/tenantProfile", profile, TenantProfile.class);
+    }
+
+    private Tenant createTenantWithProfile(String title, TenantProfile profile) throws Exception {
+        Tenant tenant = new Tenant();
+        tenant.setTitle(title);
+        tenant.setTenantProfileId(profile.getId());
+        return saveTenant(tenant);
     }
 
     private TenantProfile createTenantProfile() {

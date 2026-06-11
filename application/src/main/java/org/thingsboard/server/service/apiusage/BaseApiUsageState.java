@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class BaseApiUsageState {
+
     private final Map<ApiUsageRecordKey, Long> currentCycleValues = new ConcurrentHashMap<>();
     private final Map<ApiUsageRecordKey, Long> currentHourValues = new ConcurrentHashMap<>();
 
@@ -137,55 +138,31 @@ public abstract class BaseApiUsageState {
     }
 
     public ApiUsageStateValue getFeatureValue(ApiFeature feature) {
-        switch (feature) {
-            case TRANSPORT:
-                return apiUsageState.getTransportState();
-            case RE:
-                return apiUsageState.getReExecState();
-            case DB:
-                return apiUsageState.getDbStorageState();
-            case JS:
-                return apiUsageState.getJsExecState();
-            case TBEL:
-                return apiUsageState.getTbelExecState();
-            case EMAIL:
-                return apiUsageState.getEmailExecState();
-            case SMS:
-                return apiUsageState.getSmsExecState();
-            case ALARM:
-                return apiUsageState.getAlarmExecState();
-            default:
-                return ApiUsageStateValue.ENABLED;
-        }
+        return switch (feature) {
+            case TRANSPORT -> apiUsageState.getTransportState();
+            case RE -> apiUsageState.getReExecState();
+            case DB -> apiUsageState.getDbStorageState();
+            case JS -> apiUsageState.getJsExecState();
+            case TBEL -> apiUsageState.getTbelExecState();
+            case EMAIL -> apiUsageState.getEmailExecState();
+            case SMS -> apiUsageState.getSmsExecState();
+            case ALARM -> apiUsageState.getAlarmExecState();
+            case EDGE -> apiUsageState.getEdgeState();
+        };
     }
 
     public boolean setFeatureValue(ApiFeature feature, ApiUsageStateValue value) {
         ApiUsageStateValue currentValue = getFeatureValue(feature);
         switch (feature) {
-            case TRANSPORT:
-                apiUsageState.setTransportState(value);
-                break;
-            case RE:
-                apiUsageState.setReExecState(value);
-                break;
-            case DB:
-                apiUsageState.setDbStorageState(value);
-                break;
-            case JS:
-                apiUsageState.setJsExecState(value);
-                break;
-            case TBEL:
-                apiUsageState.setTbelExecState(value);
-                break;
-            case EMAIL:
-                apiUsageState.setEmailExecState(value);
-                break;
-            case SMS:
-                apiUsageState.setSmsExecState(value);
-                break;
-            case ALARM:
-                apiUsageState.setAlarmExecState(value);
-                break;
+            case TRANSPORT -> apiUsageState.setTransportState(value);
+            case RE -> apiUsageState.setReExecState(value);
+            case DB -> apiUsageState.setDbStorageState(value);
+            case JS -> apiUsageState.setJsExecState(value);
+            case TBEL -> apiUsageState.setTbelExecState(value);
+            case EMAIL -> apiUsageState.setEmailExecState(value);
+            case SMS -> apiUsageState.setSmsExecState(value);
+            case ALARM -> apiUsageState.setAlarmExecState(value);
+            case EDGE -> apiUsageState.setEdgeState(value);
         }
         return !currentValue.equals(value);
     }
