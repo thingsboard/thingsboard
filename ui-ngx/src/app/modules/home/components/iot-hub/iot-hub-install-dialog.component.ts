@@ -259,9 +259,9 @@ export class TbIotHubInstallDialogComponent extends DialogComponent<TbIotHubInst
           || summary.alreadyInstalled > 0
           || summary.missing > 0;
 
-        if (!hasDependencies && summary.willInstall === 1) {
+        if (!hasDependencies) {
           // Single root version, no deps, nothing to skip — install directly without showing the plan.
-          this.legacyInstall();
+          this.installItem();
           return;
         }
 
@@ -277,7 +277,7 @@ export class TbIotHubInstallDialogComponent extends DialogComponent<TbIotHubInst
     });
   }
 
-  confirmPlan(): void {
+  installItemWithDependencies(): void {
     if (!this.installPlan) {
       return;
     }
@@ -288,7 +288,7 @@ export class TbIotHubInstallDialogComponent extends DialogComponent<TbIotHubInst
     });
   }
 
-  private legacyInstall(): void {
+  private installItem(): void {
     this.state = 'installing';
     const versionId = this.item.id as string;
     this.iotHubApiService.installItemVersion(versionId, { ignoreLoading: true }, this.installData()).subscribe({

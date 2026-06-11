@@ -683,39 +683,19 @@ public class DefaultIotHubService implements IotHubService {
 
         Set<UUID> alreadyInstalledItemIds = new HashSet<>(iotHubInstalledItemService.findInstalledItemIdsByTenantId(tenantId));
 
-        // LinkedHashMap preserves insertion order; we add deps before the root so a single
-        // forward iteration yields the correct topological install sequence.
+        // LinkedHashMap preserves insertion order; we add the related items (deps) before the
+        // root so a single forward iteration yields the correct install sequence (deps first,
+        // root last). Related items are leaf dependencies — IoT Hub items are only ever one
+        // level deep, so there is no need to walk a related item's own related items.
         LinkedHashMap<String, InstallPlanEntry> entries = new LinkedHashMap<>();
-        Set<String> visiting = new HashSet<>();
 
-        collectDependencies(rootVersion, alreadyInstalledItemIds, entries, visiting, true);
-
-        return new InstallPlan(versionId, new ArrayList<>(entries.values()));
-    }
-
-    /**
-     * Depth-first walk over {@code relatedItems}. Children are added BEFORE the current
-     * version so the resulting LinkedHashMap iterates deps-first, root-last.
-     */
-    private void collectDependencies(JsonNode versionInfo,
-                                     Set<UUID> alreadyInstalledItemIds,
-                                     LinkedHashMap<String, InstallPlanEntry> entries,
-                                     Set<String> visiting,
-                                     boolean root) {
-        String itemId = versionInfo.get("itemId").asText();
-        if (entries.containsKey(itemId)) {
-            return;
-        }
-        if (!visiting.add(itemId)) {
-            log.warn("Dependency cycle detected involving IoT Hub item {} — breaking", itemId);
-            return;
-        }
-
-        JsonNode related = versionInfo.get("relatedItems");
+        String rootItemId = rootVersion.get("itemId").asText();
+        JsonNode related = rootVersion.get("relatedItems");
         if (related != null && related.isArray()) {
             for (JsonNode relatedNode : related) {
                 String relatedItemId = relatedNode.asText();
-                if (relatedItemId == null || relatedItemId.isEmpty() || entries.containsKey(relatedItemId)) {
+                if (relatedItemId == null || relatedItemId.isEmpty()
+                        || relatedItemId.equals(rootItemId) || entries.containsKey(relatedItemId)) {
                     continue;
                 }
                 JsonNode relatedVersion;
@@ -731,11 +711,28 @@ public class DefaultIotHubService implements IotHubService {
                     entries.put(relatedItemId, missingEntry(relatedItemId, "Item not found or not published"));
                     continue;
                 }
-                collectDependencies(relatedVersion, alreadyInstalledItemIds, entries, visiting, false);
+                addPlanEntry(relatedVersion, alreadyInstalledItemIds, entries, false);
             }
         }
 
-        visiting.remove(itemId);
+        addPlanEntry(rootVersion, alreadyInstalledItemIds, entries, true);
+
+        return new InstallPlan(versionId, new ArrayList<>(entries.values()));
+    }
+
+    /**
+     * Build an {@link InstallPlanEntry} for a single marketplace version and append it to the
+     * plan. No traversal of {@code relatedItems} happens here — related items are resolved one
+     * level deep by {@link #resolveInstallPlan}.
+     */
+    private void addPlanEntry(JsonNode versionInfo,
+                              Set<UUID> alreadyInstalledItemIds,
+                              LinkedHashMap<String, InstallPlanEntry> entries,
+                              boolean root) {
+        String itemId = versionInfo.get("itemId").asText();
+        if (entries.containsKey(itemId)) {
+            return;
+        }
 
         InstallPlanEntry entry = new InstallPlanEntry();
         entry.setItemId(itemId);

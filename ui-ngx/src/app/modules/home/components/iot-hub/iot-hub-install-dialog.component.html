@@ -197,7 +197,7 @@
       <button mat-button (click)="cancelPlan()">{{ 'action.cancel' | translate }}</button>
       <button mat-flat-button color="primary"
               [disabled]="planSummary.willInstall === 0"
-              (click)="confirmPlan()">
+              (click)="installItemWithDependencies()">
         {{ 'iot-hub.install-plan-confirm' | translate }}
       </button>
     }
