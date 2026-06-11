@@ -65,6 +65,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.common.util.JacksonUtil.newArrayNode;
+import static org.thingsboard.server.service.transport.DefaultTransportApiService.GATEWAY_CREATED_RELATION;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.Bytes;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.Int16;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.Int32;
@@ -128,8 +129,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         Device device1 = createDevice(deviceName1, deviceProfile.getName(), false);
 
         // 2. Establish 'Created' relation so the transport identifies this gateway as the owner
-        String relationType = "Created";
-        EntityRelation relation1 = createFromRelation(savedGateway, device1, relationType);
+        EntityRelation relation1 = createFromRelation(savedGateway, device1, GATEWAY_CREATED_RELATION);
         doPost("/api/relation", relation1).andExpect(status().isOk());
 
         // 3. Create the second device with a full-path name
@@ -137,7 +137,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         Device device2 = createDevice(deviceName2, deviceProfile.getName(), false);
 
         // 4. Establish 'Created' relation for the second device as well
-        EntityRelation relation2 = createFromRelation(savedGateway, device2, relationType);
+        EntityRelation relation2 = createFromRelation(savedGateway, device2, GATEWAY_CREATED_RELATION);
         doPost("/api/relation", relation2).andExpect(status().isOk());
 
     }

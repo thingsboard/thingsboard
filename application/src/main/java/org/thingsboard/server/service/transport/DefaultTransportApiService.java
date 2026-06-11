@@ -141,6 +141,7 @@ public class DefaultTransportApiService implements TransportApiService {
     private final OtaPackageService otaPackageService;
     private final OtaPackageDataCache otaPackageDataCache;
     private final QueueService queueService;
+    public static final String GATEWAY_CREATED_RELATION = "Created";
 
     private final ConcurrentMap<String, ReentrantLock> deviceCreationLocks = new ConcurrentReferenceHashMap<>(16, ConcurrentReferenceHashMap.ReferenceType.WEAK);
 
@@ -400,7 +401,7 @@ public class DefaultTransportApiService implements TransportApiService {
                     gateway.getTenantId(),
                     gateway.getId(),
                     existingDevice.getId(),
-                    EntityRelation.CONTAINS_TYPE,
+                    GATEWAY_CREATED_RELATION,
                     RelationTypeGroup.COMMON
             );
         } catch (Exception e) {
@@ -462,7 +463,7 @@ public class DefaultTransportApiService implements TransportApiService {
         device = deviceService.saveDevice(device);
         relationService.saveRelation(
                 tenantId,
-                new EntityRelation(gateway.getId(), device.getId(), EntityRelation.CONTAINS_TYPE)
+                new EntityRelation(gateway.getId(), device.getId(), GATEWAY_CREATED_RELATION)
         );
         return device;
     }
