@@ -147,8 +147,11 @@ public class KafkaEdgeGrpcSession extends EdgeGrpcSession {
     @Override
     public void processHighPriorityEvents() {
         isHighPriorityProcessing = true;
-        super.processHighPriorityEvents();
-        isHighPriorityProcessing = false;
+        try {
+            super.processHighPriorityEvents();
+        } finally {
+            isHighPriorityProcessing = false;
+        }
     }
 
     @Override
