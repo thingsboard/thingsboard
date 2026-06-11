@@ -127,8 +127,9 @@ public class DefaultIotHubService implements IotHubService {
     /**
      * Fetch + apply a single marketplace version, persist the installed-item record, and ping
      * the marketplace install counter. Throws on failure so callers (cascade install) can roll back.
+     * Package-private so the cascade-install / rollback orchestration can be unit-tested in isolation.
      */
-    private IotHubInstalledItem doInstallVersion(SecurityUser user, String versionId, JsonNode data, HttpServletRequest request) throws Exception {
+    IotHubInstalledItem doInstallVersion(SecurityUser user, String versionId, JsonNode data, HttpServletRequest request) throws Exception {
         TenantId tenantId = user.getTenantId();
         JsonNode versionInfo = iotHubRestClient.getVersionInfo(versionId);
         String itemType = versionInfo.get(FIELD_TYPE).asText();
@@ -698,7 +699,9 @@ public class DefaultIotHubService implements IotHubService {
         // level deep, so there is no need to walk a related item's own related items.
         LinkedHashMap<String, InstallPlanEntry> entries = new LinkedHashMap<>();
 
-        String rootItemId = rootVersion.get(FIELD_ITEM_ID).asText();
+        // Null-safe: a malformed payload without an itemId must surface the friendly
+        // IllegalArgumentException thrown by addPlanEntry(root) below, not an NPE here.
+        String rootItemId = optText(rootVersion, FIELD_ITEM_ID);
         JsonNode related = rootVersion.get(FIELD_RELATED_ITEMS);
         if (related != null && related.isArray()) {
             for (JsonNode relatedNode : related) {

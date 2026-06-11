@@ -327,7 +327,15 @@ export class TbIotHubInstallDialogComponent extends DialogComponent<TbIotHubInst
   private handlePlanResult(result: InstallPlanResult): void {
     if (!result.success) {
       this.state = 'error';
-      this.errorMessage = result.errorMessage || this.translate.instant('iot-hub.install-error', { name: this.item.name });
+      let message = result.errorMessage || this.translate.instant('iot-hub.install-error', { name: this.item.name });
+      // A failed cascade rolls back the items installed so far. When something was actually being
+      // installed and the rollback came back partial (rolledBack === false), some entities are left
+      // behind — tell the admin so they know manual cleanup may be needed. The willInstall guard
+      // avoids the misleading warning on the "empty plan" failure, where nothing was installed.
+      if (!result.rolledBack && this.planSummary.willInstall > 0) {
+        message += ' ' + this.translate.instant('iot-hub.install-rollback-partial');
+      }
+      this.errorMessage = message;
       return;
     }
     if (this.installPlan) {

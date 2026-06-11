@@ -17,13 +17,19 @@ package org.thingsboard.server.service.iot_hub;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.id.IotHubInstalledItemId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.iot_hub.DashboardInstalledItemDescriptor;
+import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItem;
 import org.thingsboard.server.dao.iot_hub.IotHubInstalledItemService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
@@ -34,6 +40,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -50,11 +62,29 @@ class DefaultIotHubServiceTest {
     @Mock
     private IotHubInstalledItemService iotHubInstalledItemService;
 
+    @Spy
     @InjectMocks
     private DefaultIotHubService service;
 
     private void mockTenant() {
         when(user.getTenantId()).thenReturn(tenantId);
+    }
+
+    private IotHubInstalledItem installedItem(UUID id) {
+        IotHubInstalledItem item = new IotHubInstalledItem();
+        item.setId(new IotHubInstalledItemId(id));
+        item.setTenantId(tenantId);
+        return item;
+    }
+
+    private InstallPlanEntry willInstall(String versionId, boolean root) {
+        InstallPlanEntry entry = new InstallPlanEntry();
+        entry.setItemId(UUID.randomUUID().toString());
+        entry.setVersionId(versionId);
+        entry.setName(root ? "Root" : "Dep");
+        entry.setStatus(InstallPlanEntry.Status.WILL_INSTALL);
+        entry.setRoot(root);
+        return entry;
     }
 
     private ObjectNode version(String id, String itemId, String type, String name, String ver) {
@@ -211,5 +241,92 @@ class DefaultIotHubServiceTest {
         assertThat(result.getEntries().get(0).getStatus()).isEqualTo(InstallPlanEntry.Status.ALREADY_INSTALLED);
         // No marketplace fetch happened — the duplicate install was avoided.
         verify(iotHubRestClient, never()).getVersionInfo(anyString());
+    }
+
+    @Test
+    void installPlan_cascade_installsDependencyBeforeRoot_andRoutesDataToRootOnly() throws Exception {
+        mockTenant();
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        JsonNode data = JacksonUtil.newObjectNode().put("entityId", UUID.randomUUID().toString());
+        String depVersionId = UUID.randomUUID().toString();
+        String rootVersionId = UUID.randomUUID().toString();
+        InstallPlanEntry dep = willInstall(depVersionId, false);
+        InstallPlanEntry root = willInstall(rootVersionId, true);
+
+        when(iotHubInstalledItemService.findInstalledItemIdsByTenantId(tenantId)).thenReturn(List.of());
+        IotHubInstalledItem depItem = installedItem(UUID.randomUUID());
+        IotHubInstalledItem rootItem = installedItem(UUID.randomUUID());
+        DashboardInstalledItemDescriptor rootDescriptor = new DashboardInstalledItemDescriptor();
+        rootItem.setDescriptor(rootDescriptor);
+        doReturn(depItem).when(service).doInstallVersion(eq(user), eq(depVersionId), any(), any());
+        doReturn(rootItem).when(service).doInstallVersion(eq(user), eq(rootVersionId), any(), any());
+
+        InstallPlanResult result = service.installPlan(user, new InstallPlan(rootVersionId, List.of(dep, root)), data, request);
+
+        assertThat(result.isSuccess()).isTrue();
+        assertThat(result.isRolledBack()).isFalse();
+        assertThat(result.getRootDescriptor()).isSameAs(rootDescriptor);
+        assertThat(result.getMissingItemIds()).isEmpty();
+        assertThat(result.getEntries()).hasSize(2);
+
+        // The dependency installs before the root, and only the root receives the user's install data.
+        InOrder inOrder = inOrder(service);
+        inOrder.verify(service).doInstallVersion(eq(user), eq(depVersionId), isNull(), eq(request));
+        inOrder.verify(service).doInstallVersion(eq(user), eq(rootVersionId), eq(data), eq(request));
+        verify(service, never()).deleteInstalledItem(any(), any());
+    }
+
+    @Test
+    void installPlan_dependencyFails_rollsBackInstalledItemsInReverseOrder() throws Exception {
+        mockTenant();
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        String dep1VersionId = UUID.randomUUID().toString();
+        String dep2VersionId = UUID.randomUUID().toString();
+        String rootVersionId = UUID.randomUUID().toString();
+        InstallPlanEntry dep1 = willInstall(dep1VersionId, false);
+        InstallPlanEntry dep2 = willInstall(dep2VersionId, false);
+        InstallPlanEntry root = willInstall(rootVersionId, true);
+
+        when(iotHubInstalledItemService.findInstalledItemIdsByTenantId(tenantId)).thenReturn(List.of());
+        IotHubInstalledItem dep1Item = installedItem(UUID.randomUUID());
+        IotHubInstalledItem dep2Item = installedItem(UUID.randomUUID());
+        doReturn(dep1Item).when(service).doInstallVersion(eq(user), eq(dep1VersionId), any(), any());
+        doReturn(dep2Item).when(service).doInstallVersion(eq(user), eq(dep2VersionId), any(), any());
+        doThrow(new IllegalStateException("install failed")).when(service).doInstallVersion(eq(user), eq(rootVersionId), any(), any());
+        doNothing().when(service).deleteInstalledItem(eq(user), any());
+
+        InstallPlanResult result = service.installPlan(user, new InstallPlan(rootVersionId, List.of(dep1, dep2, root)), null, request);
+
+        assertThat(result.isSuccess()).isFalse();
+        assertThat(result.isRolledBack()).isTrue();
+        assertThat(result.getErrorMessage()).contains("install failed");
+
+        // Successfully installed dependencies are rolled back in reverse install order (dep2 before dep1).
+        InOrder inOrder = inOrder(service);
+        inOrder.verify(service).deleteInstalledItem(user, dep2Item.getId());
+        inOrder.verify(service).deleteInstalledItem(user, dep1Item.getId());
+    }
+
+    @Test
+    void installPlan_rollbackFailure_reportsNotFullyRolledBack() throws Exception {
+        mockTenant();
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        String depVersionId = UUID.randomUUID().toString();
+        String rootVersionId = UUID.randomUUID().toString();
+        InstallPlanEntry dep = willInstall(depVersionId, false);
+        InstallPlanEntry root = willInstall(rootVersionId, true);
+
+        when(iotHubInstalledItemService.findInstalledItemIdsByTenantId(tenantId)).thenReturn(List.of());
+        IotHubInstalledItem depItem = installedItem(UUID.randomUUID());
+        doReturn(depItem).when(service).doInstallVersion(eq(user), eq(depVersionId), any(), any());
+        doThrow(new IllegalStateException("install failed")).when(service).doInstallVersion(eq(user), eq(rootVersionId), any(), any());
+        // Rolling back the one installed dependency itself fails — the result must report a partial rollback.
+        doThrow(new RuntimeException("delete failed")).when(service).deleteInstalledItem(user, depItem.getId());
+
+        InstallPlanResult result = service.installPlan(user, new InstallPlan(rootVersionId, List.of(dep, root)), null, request);
+
+        assertThat(result.isSuccess()).isFalse();
+        assertThat(result.isRolledBack()).isFalse();
+        assertThat(result.getErrorMessage()).contains("install failed");
     }
 }

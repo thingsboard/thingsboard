@@ -3853,6 +3853,7 @@
         "install-plan-confirm": "Install",
         "install-partial-title": "Installed with warnings",
         "install-partial-desc": "'{{name}}' was installed, but some required items were missing.",
+        "install-rollback-partial": "Some of the items installed before the failure could not be removed automatically and may need to be deleted manually.",
         "check-for-updates": "Check for updates",
         "updates": "Updates",
         "up-to-date": "Up to date",
