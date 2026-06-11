@@ -400,7 +400,7 @@ public class DefaultTransportApiService implements TransportApiService {
                     gateway.getTenantId(),
                     gateway.getId(),
                     existingDevice.getId(),
-                    "Created",
+                    EntityRelation.CONTAINS_TYPE,
                     RelationTypeGroup.COMMON
             );
         } catch (Exception e) {
@@ -448,8 +448,8 @@ public class DefaultTransportApiService implements TransportApiService {
         Device device = new Device();
         device.setTenantId(tenantId);
         device.setName(requestMsg.getDeviceName());
-        if (requestMsg.getIsSparkplug()) {
-            if (topicPath.length == 3) device.setLabel(topicPath[2]);
+        if (requestMsg.getIsSparkplug() && topicPath.length == 3) {
+            device.setLabel(topicPath[2]);
         }
         device.setType(requestMsg.getDeviceType());
         device.setCustomerId(gateway.getCustomerId());
@@ -462,7 +462,7 @@ public class DefaultTransportApiService implements TransportApiService {
         device = deviceService.saveDevice(device);
         relationService.saveRelation(
                 tenantId,
-                new EntityRelation(gateway.getId(), device.getId(), "Created")
+                new EntityRelation(gateway.getId(), device.getId(), EntityRelation.CONTAINS_TYPE)
         );
         return device;
     }

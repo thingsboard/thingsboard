@@ -53,6 +53,7 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -60,6 +61,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import static java.util.concurrent.Executors.newFixedThreadPool;
 import static org.awaitility.Awaitility.await;
 import static org.eclipse.paho.mqttv5.common.packet.MqttWireMessage.MESSAGE_TYPE_CONNACK;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.common.util.JacksonUtil.newArrayNode;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.Bytes;
@@ -153,9 +156,9 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
     public void clientWithCorrectNodeAccessTokenWithNDEATH(long ts, long value) throws Exception {
         IMqttToken connectionResult = clientMqttV5ConnectWithNDEATH(ts, value, -1L);
         MqttWireMessage response = connectionResult.getResponse();
-        Assert.assertEquals(MESSAGE_TYPE_CONNACK, response.getType());
+        assertEquals(MESSAGE_TYPE_CONNACK, response.getType());
         MqttConnAck connAckMsg = (MqttConnAck) response;
-        Assert.assertEquals(MqttReturnCode.RETURN_CODE_SUCCESS, connAckMsg.getReturnCode());
+        assertEquals(MqttReturnCode.RETURN_CODE_SUCCESS, connAckMsg.getReturnCode());
     }
 
     public IMqttToken clientMqttV5ConnectWithNDEATH(long ts, long value, Long alias, String... nameSpaceBad) throws Exception {
@@ -228,7 +231,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
             }
         }
 
-        Assert.assertEquals(cntDevices, devices.size());
+        assertEquals(cntDevices, devices.size());
         return devices;
     }
 
@@ -293,10 +296,10 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
                     return device2.get() != null;
                 });
         devices.add(device2.get());
-        Assert.assertEquals(cntDevices, devices.size());
+        assertEquals(cntDevices, devices.size());
         state_ONLINE_ALL (devices, calendar.getTimeInMillis());
         // Without full topic: as it was in the old version. When deviceId is updated to full theme, Label is also updated to old deviceId
-        Assert.assertEquals(deviceIdNameLabel1, device1.get().getLabel());
+        assertEquals(deviceIdNameLabel1, device1.get().getLabel());
         // // With a full topic: if new. When creating a device by a client to a full topic, if the Label was not filled in - we do not touch it.
         Assert.assertNull(device2.get().getLabel());
     }
@@ -367,8 +370,8 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
                 .untilAsserted(() -> {
                     // Check if the original device still exists with its original ID
                     Device currentStranger = doGet("/api/tenant/devices?deviceName=" + strangerName, Device.class);
-                    Assert.assertNotNull("Original device disappeared!", currentStranger);
-                    Assert.assertEquals("Security breach: Original device ID changed!", originalStrangerId, currentStranger.getId());
+                    assertNotNull("Original device disappeared!", currentStranger);
+                    assertEquals("Security breach: Original device ID changed!", originalStrangerId, currentStranger.getId());
 
                     // Even if the gateway created a NEW device with a full path, it must have a different ID
                     Device newDevice = doGet("/api/tenant/devices?deviceName=" + expectedFullPath, Device.class);
@@ -390,6 +393,8 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         stranger.setName(strangerName);
         stranger.setType("default");
         doPost("/api/device", stranger);
+        Device originalStrangerDevice =
+                doGet("/api/tenant/devices?deviceName=" + strangerName, Device.class);
 
         clientWithCorrectNodeAccessTokenWithNDEATH();
 
@@ -404,6 +409,11 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         await().atMost(30, TimeUnit.SECONDS).untilAsserted(() ->
                 doGet("/api/tenant/devices?deviceName=" + expectedFullPath, Device.class, status().isOk())
         );
+
+        Device strangerDevice =
+                doGet("/api/tenant/devices?deviceName=" + strangerName, Device.class);
+        assertNotNull(strangerDevice);
+        assertEquals(originalStrangerDevice.getId(), strangerDevice.getId());
     }
 
     protected void state_ONLINE_ALL (List<Device> devices, long ts) {
@@ -441,7 +451,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         String concurrentDeviceName = "concurrent_device";
         clientWithCorrectNodeAccessTokenWithNDEATH();
 
-        java.util.concurrent.ExecutorService executor = newFixedThreadPool(threadCount);
+        ExecutorService executor = newFixedThreadPool(threadCount);
         long ts = calendar.getTimeInMillis();
 
         for (int i = 0; i < threadCount; i++) {
@@ -526,7 +536,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
             devices.add(device.get());
         }
 
-        Assert.assertEquals(1, devices.size());
+        assertEquals(1, devices.size());
         return devices;
     }
 
