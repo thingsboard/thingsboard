@@ -40,13 +40,12 @@ import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import {
   DeviceInstalledItemDescriptor,
+  getInstalledItemUrl,
   IotHubInstalledItem,
   ItemPublishedVersionInfo
 } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
 import { getItemTypeIcon, ItemType, itemTypeTranslations } from '@shared/models/iot-hub/iot-hub-item.models';
-import { EntityType } from '@shared/models/entity-type.models';
-import { getEntityDetailsPageURL } from '@core/utils';
 import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
 
 @Component({
@@ -209,42 +208,11 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
     });
   }
 
-  getEntityId(item: IotHubInstalledItem): string | null {
-    const descriptor = item.descriptor;
-    switch (descriptor.type) {
-      case 'WIDGET': return descriptor.widgetTypeId?.id;
-      case 'DASHBOARD': return descriptor.dashboardId?.id;
-      case 'CALCULATED_FIELD': return descriptor.entityId?.id;
-      case 'ALARM_RULE': return descriptor.entityId?.id;
-      case 'RULE_CHAIN': return descriptor.ruleChainId?.id;
-      case 'DEVICE': return descriptor.dashboardId?.id ?? null;
-      case 'SOLUTION_TEMPLATE': return descriptor.dashboardId?.id;
-      default: return null;
-    }
-  }
-
-  getEntityType(item: IotHubInstalledItem): EntityType | null {
-    const descriptor = item.descriptor;
-    switch (descriptor.type) {
-      case 'WIDGET': return EntityType.WIDGET_TYPE;
-      case 'DASHBOARD': return EntityType.DASHBOARD;
-      case 'CALCULATED_FIELD': return descriptor.entityId?.entityType as EntityType;
-      case 'ALARM_RULE': return descriptor.entityId?.entityType as EntityType;
-      case 'RULE_CHAIN': return EntityType.RULE_CHAIN;
-      case 'DEVICE': return descriptor.dashboardId ? EntityType.DASHBOARD : null;
-      case 'SOLUTION_TEMPLATE': return EntityType.DASHBOARD;
-      default: return null;
-    }
-  }
-
   openEntity(item: IotHubInstalledItem): void {
-    const entityType = this.getEntityType(item);
-    const entityId = this.getEntityId(item);
-    if (entityType && entityId) {
-      const url = getEntityDetailsPageURL(entityId, entityType);
-      if (url) {
-        window.open(this.router.serializeUrl(this.router.parseUrl(url)), '_blank');
-      }
+    const url = getInstalledItemUrl(item?.descriptor);
+    if (url) {
+      const urlTree = this.router.parseUrl(url);
+      window.open(this.router.serializeUrl(urlTree), '_blank');
     }
   }
 
