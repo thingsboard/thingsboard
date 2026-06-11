@@ -54,13 +54,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-/**
- * Unit tests for the readiness gate that {@link KafkaBasedEdgeGrpcSessionManager} feeds into its edge-event consumer.
- * <p>
- * The generic poll-gate mechanism is covered by {@code QueueConsumerManagerTest}; these tests pin the edge-specific
- * half of the fix: the manager's readiness predicate, and the fact that the consumer is actually wired with it - so
- * dropping the {@code .readinessCheck(...)} builder line would silently reintroduce the event-loss bug.
- */
 class KafkaBasedEdgeGrpcSessionManagerTest {
 
     private static final long POLL_INTERVAL_MS = 20L;

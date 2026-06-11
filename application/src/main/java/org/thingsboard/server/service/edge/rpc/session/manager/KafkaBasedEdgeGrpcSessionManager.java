@@ -251,17 +251,6 @@ public class KafkaBasedEdgeGrpcSessionManager extends AbstractEdgeGrpcSessionMan
         }
     }
 
-    /**
-     * Readiness gate for the edge-event consumer (see {@link QueueConsumerManager}'s {@code readinessCheck}): it polls
-     * only while the session is connected and no sync or high-priority processing is running.
-     * <p>
-     * Pausing polling in those windows is deliberate. A batch that is polled but then skipped advances the Kafka
-     * position without committing, so it is lost until a rebalance; keeping events queued instead matches the no-loss
-     * behaviour the Postgres-based manager gets by re-reading by seqId. This covers the common case - a batch already
-     * in flight when a sync starts is a known residual (closing it would need seek/rewind, which {@code TbQueueConsumer}
-     * lacks). If a sync ever outran {@code max.poll.interval.ms} (default 5 min) the consumer is rebalanced and resumes
-     * from the committed offset: still no loss, just a possible replay. Edge syncs are seconds, so this is acceptable.
-     */
     private boolean isReadyToProcessGeneralEvents() {
         return isSessionReady(getState());
     }
