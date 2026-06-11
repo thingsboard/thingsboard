@@ -59,15 +59,17 @@ export class ConfirmOnExitGuard  {
 
     if (auth && auth.isAuthenticated) {
       let isDirty = false;
+      let isDisabled = false;
       if (component.confirmForm) {
         const confirmForm = component.confirmForm();
         if (confirmForm) {
           isDirty = confirmForm.dirty;
+          isDisabled = confirmForm.disabled;
         }
       } else if (isDefined(component.isDirty)) {
         isDirty = component.isDirty;
       }
-      if (isDirty) {
+      if (isDirty && !isDisabled) {
         const message = this.getMessage(component);
         return this.dialogService.confirm(
           this.translate.instant('confirm-on-exit.title'),
