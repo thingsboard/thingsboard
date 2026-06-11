@@ -25,9 +25,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.model.sql.IotHubInstalledItemEntity;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 interface IotHubInstalledItemRepository extends JpaRepository<IotHubInstalledItemEntity, UUID> {
+
+    Optional<IotHubInstalledItemEntity> findByTenantIdAndId(UUID tenantId, UUID id);
 
     @Query("SELECT DISTINCT item.itemId FROM IotHubInstalledItemEntity item WHERE item.tenantId = :tenantId")
     List<UUID> findInstalledItemIdsByTenantId(@Param("tenantId") UUID tenantId);
@@ -63,5 +67,10 @@ interface IotHubInstalledItemRepository extends JpaRepository<IotHubInstalledIte
     @Modifying
     @Query(value = "DELETE FROM iot_hub_installed_item WHERE tenant_id = :tenantId", nativeQuery = true)
     void deleteByTenantId(@Param("tenantId") UUID tenantId);
+
+    @Transactional
+    @Modifying
+    @Query("DELETE FROM IotHubInstalledItemEntity item WHERE item.tenantId = :tenantId AND item.id IN (:ids)")
+    int deleteByTenantIdAndIdIn(@Param("tenantId") UUID tenantId, @Param("ids") Set<UUID> ids);
 
 }
