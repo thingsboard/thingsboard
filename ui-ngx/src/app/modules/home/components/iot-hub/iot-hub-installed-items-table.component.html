@@ -44,7 +44,7 @@
       <!-- Installed date -->
       <ng-container matColumnDef="createdTime">
         <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'iot-hub.installed-date' | translate }}</th>
-        <td mat-cell *matCellDef="let item">{{ item.createdTime | date:'mediumDate' }}</td>
+        <td mat-cell *matCellDef="let item">{{ item.createdTime | date:'MMM d, y, h:mm a' }}</td>
       </ng-container>
 
       <!-- Updates -->
