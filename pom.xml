@@ -1770,7 +1770,7 @@
             </dependency>
             <dependency>
                 <groupId>com.squareup.wire</groupId>
-                <artifactId>wire-schema</artifactId>
+                <artifactId>wire-schema-jvm</artifactId>
                 <version>${wire-schema.version}</version>
             </dependency>
             <dependency>
