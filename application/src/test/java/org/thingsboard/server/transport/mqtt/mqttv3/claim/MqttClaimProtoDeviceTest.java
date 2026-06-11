@@ -24,6 +24,9 @@ import org.thingsboard.server.gen.transport.TransportApiProtos;
 import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
 import org.thingsboard.server.transport.mqtt.mqttv3.MqttTestClient;
 
+import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_CLAIM_SHORT_PROTO_TOPIC;
+import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_CLAIM_TOPIC;
+
 @Slf4j
 @DaoSqlTest
 public class MqttClaimProtoDeviceTest extends MqttClaimDeviceTest {
@@ -49,6 +52,16 @@ public class MqttClaimProtoDeviceTest extends MqttClaimDeviceTest {
     }
 
     @Test
+    public void testClaimingDeviceOnShortProtoTopic() throws Exception {
+        processTestClaimingDevice(false, DEVICE_CLAIM_SHORT_PROTO_TOPIC);
+    }
+
+    @Test
+    public void testClaimingDeviceOnShortProtoTopicWithoutSecretAndDuration() throws Exception {
+        processTestClaimingDevice(true, DEVICE_CLAIM_SHORT_PROTO_TOPIC);
+    }
+
+    @Test
     public void testGatewayClaimingDevice() throws Exception {
         processTestGatewayClaimingDevice("Test claiming gateway device Proto", false);
     }
@@ -59,6 +72,11 @@ public class MqttClaimProtoDeviceTest extends MqttClaimDeviceTest {
     }
 
     protected void processTestClaimingDevice(boolean emptyPayload) throws Exception {
+        processTestClaimingDevice(emptyPayload, DEVICE_CLAIM_TOPIC);
+    }
+
+    @Override
+    protected void processTestClaimingDevice(boolean emptyPayload, String claimTopic) throws Exception {
         MqttTestClient client = new MqttTestClient();
         client.connectAndWait(accessToken);
         byte[] payloadBytes;
@@ -68,7 +86,7 @@ public class MqttClaimProtoDeviceTest extends MqttClaimDeviceTest {
             payloadBytes = getClaimDevice(60000, emptyPayload).toByteArray();
         }
         byte[] failurePayloadBytes = getClaimDevice(1, emptyPayload).toByteArray();
-        validateClaimResponse(emptyPayload, client, payloadBytes, failurePayloadBytes);
+        validateClaimResponse(emptyPayload, client, payloadBytes, failurePayloadBytes, claimTopic);
     }
 
     protected void processTestGatewayClaimingDevice(String deviceName, boolean emptyPayload) throws Exception {

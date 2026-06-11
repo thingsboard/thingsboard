@@ -26,23 +26,32 @@ import org.thingsboard.server.transport.mqtt.mqttv5.MqttV5TestClient;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_CLAIM_SHORT_TOPIC;
 import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_CLAIM_TOPIC;
 
 @Slf4j
 public abstract class AbstractMqttV5ClaimTest extends AbstractMqttV5Test {
 
     protected void processTestClaimingDevice() throws Exception {
+        processTestClaimingDevice(DEVICE_CLAIM_TOPIC);
+    }
+
+    protected void processTestClaimingDeviceOnShortTopic() throws Exception {
+        processTestClaimingDevice(DEVICE_CLAIM_SHORT_TOPIC);
+    }
+
+    protected void processTestClaimingDevice(String claimTopic) throws Exception {
         MqttV5TestClient client = new MqttV5TestClient();
         client.connectAndWait(accessToken);
         byte[] payloadBytes;
         byte[] failurePayloadBytes;
         payloadBytes = "{\"secretKey\":\"value\", \"durationMs\":60000}".getBytes();
         failurePayloadBytes = "{\"secretKey\":\"value\", \"durationMs\":1}".getBytes();
-        validateClaimResponse(client, payloadBytes, failurePayloadBytes);
+        validateClaimResponse(client, payloadBytes, failurePayloadBytes, claimTopic);
     }
 
-    protected void validateClaimResponse(MqttV5TestClient client, byte[] payloadBytes, byte[] failurePayloadBytes) throws Exception {
-        client.publishAndWait(DEVICE_CLAIM_TOPIC, failurePayloadBytes);
+    protected void validateClaimResponse(MqttV5TestClient client, byte[] payloadBytes, byte[] failurePayloadBytes, String claimTopic) throws Exception {
+        client.publishAndWait(claimTopic, failurePayloadBytes);
         awaitForClaimingInfoToBeRegistered(savedDevice.getId());
 
         loginCustomerUser();
@@ -56,7 +65,7 @@ public abstract class AbstractMqttV5ClaimTest extends AbstractMqttV5Test {
 
         assertEquals(claimResponse, ClaimResponse.FAILURE);
 
-        client.publishAndWait(DEVICE_CLAIM_TOPIC, payloadBytes);
+        client.publishAndWait(claimTopic, payloadBytes);
         client.disconnect();
         awaitForClaimingInfoToBeRegistered(savedDevice.getId());
 

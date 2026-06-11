@@ -612,6 +612,15 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 TransportProtos.PostAttributeMsg postAttributeMsg = context.getProtoMqttAdaptor().convertToPostAttributes(deviceSessionCtx, mqttMsg);
                 transportService.process(deviceSessionCtx.getSessionInfo(), postAttributeMsg, getMetadata(deviceSessionCtx, topicName),
                         getPubAckCallback(ctx, msgId, postAttributeMsg));
+            } else if (topicName.equals(MqttTopics.DEVICE_CLAIM_SHORT_TOPIC)) {
+                TransportProtos.ClaimDeviceMsg claimDeviceMsg = payloadAdaptor.convertToClaimDevice(deviceSessionCtx, mqttMsg);
+                transportService.process(deviceSessionCtx.getSessionInfo(), claimDeviceMsg, getPubAckCallback(ctx, msgId, claimDeviceMsg));
+            } else if (topicName.equals(MqttTopics.DEVICE_CLAIM_SHORT_JSON_TOPIC)) {
+                TransportProtos.ClaimDeviceMsg claimDeviceMsg = context.getJsonMqttAdaptor().convertToClaimDevice(deviceSessionCtx, mqttMsg);
+                transportService.process(deviceSessionCtx.getSessionInfo(), claimDeviceMsg, getPubAckCallback(ctx, msgId, claimDeviceMsg));
+            } else if (topicName.equals(MqttTopics.DEVICE_CLAIM_SHORT_PROTO_TOPIC)) {
+                TransportProtos.ClaimDeviceMsg claimDeviceMsg = context.getProtoMqttAdaptor().convertToClaimDevice(deviceSessionCtx, mqttMsg);
+                transportService.process(deviceSessionCtx.getSessionInfo(), claimDeviceMsg, getPubAckCallback(ctx, msgId, claimDeviceMsg));
             } else if (topicName.startsWith(MqttTopics.DEVICE_RPC_RESPONSE_SHORT_JSON_TOPIC)) {
                 TransportProtos.ToDeviceRpcResponseMsg rpcResponseMsg = context.getJsonMqttAdaptor().convertToDeviceRpcResponse(deviceSessionCtx, mqttMsg, MqttTopics.DEVICE_RPC_RESPONSE_SHORT_JSON_TOPIC);
                 transportService.process(deviceSessionCtx.getSessionInfo(), rpcResponseMsg, getPubAckCallback(ctx, msgId, rpcResponseMsg));

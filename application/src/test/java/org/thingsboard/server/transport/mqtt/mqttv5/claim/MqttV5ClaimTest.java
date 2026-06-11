@@ -35,4 +35,9 @@ public class MqttV5ClaimTest extends AbstractMqttV5ClaimTest {
     public void testClaimingDevice() throws Exception {
         processTestClaimingDevice();
     }
+
+    @Test
+    public void testClaimingDeviceOnShortTopic() throws Exception {
+        processTestClaimingDeviceOnShortTopic();
+    }
 }
