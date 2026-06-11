@@ -35,7 +35,6 @@ import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.kafka.KafkaAdmin;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.util.TbKafkaComponent;
-
 import org.thingsboard.server.service.edge.rpc.EdgeSessionState;
 import org.thingsboard.server.service.edge.rpc.processor.PostgresGeneralEdgeEventsDispatcher;
 import org.thingsboard.server.service.edge.rpc.session.EdgeSessionsHolder;
@@ -143,8 +142,7 @@ public class KafkaBasedEdgeGrpcSessionManager extends AbstractEdgeGrpcSessionMan
                 }
             } catch (Exception e) {
                 log.warn("[{}] Failed to process edge events for edge [{}]!", tenantId, edgeId, e);
-            }
-            finally {
+            } finally {
                 initLock.unlock();
             }
         }, ctx.getEdgeEventStorageSettings().getNoRecordsSleepInterval(), TimeUnit.MILLISECONDS);
@@ -176,7 +174,7 @@ public class KafkaBasedEdgeGrpcSessionManager extends AbstractEdgeGrpcSessionMan
     }
 
     private boolean initAndLaunchConsumer(TenantId tenantId, EdgeId edgeId, EdgeSessionState state) {
-        if (!state.isConnected() || state.isSyncInProgress() || isHighPriorityProcessing) {
+        if (!isSessionReady(state)) {
             log.warn("[{}][{}] Session is not ready (connected={}, syncInProgress={}, highPriority={}), skip starting edge event consumer",
                     tenantId, edgeId, state.isConnected(), state.isSyncInProgress(), isHighPriorityProcessing);
             return false;
@@ -205,6 +203,7 @@ public class KafkaBasedEdgeGrpcSessionManager extends AbstractEdgeGrpcSessionMan
                     .consumerCreator(() -> tbCoreQueueFactory.createEdgeEventMsgConsumer(tenantId, edgeId))
                     .consumerExecutor(consumerExecutor)
                     .threadPrefix("edge-events-" + edgeId)
+                    .readinessCheck(this::isReadyToProcessGeneralEvents)
                     .build();
             consumer.subscribe();
             consumer.launch();
@@ -224,7 +223,9 @@ public class KafkaBasedEdgeGrpcSessionManager extends AbstractEdgeGrpcSessionMan
         EdgeId edgeId = state.getEdgeId();
 
         log.trace("[{}][{}] starting processing edge events", tenantId, edgeId);
-        if (!state.isConnected() || state.isSyncInProgress() || isHighPriorityProcessing) {
+        // Defensive backstop: the loop already gates polling on readiness; this only fires on the narrow race
+        // where readiness flips during poll(), and that already-polled batch is dropped here (can't rewind).
+        if (!isSessionReady(state)) {
             log.debug("[{}][{}] edge not connected, edge sync is not completed or high priority processing in progress, " +
                             "connected = {}, sync in progress = {}, high priority in progress = {}. Skipping iteration",
                     tenantId, edgeId, state.isConnected(), state.isSyncInProgress(), isHighPriorityProcessing);
@@ -248,6 +249,26 @@ public class KafkaBasedEdgeGrpcSessionManager extends AbstractEdgeGrpcSessionMan
         if (!isInterrupted) {
             consumer.commit();
         }
+    }
+
+    /**
+     * Readiness gate for the edge-event consumer (see {@link QueueConsumerManager}'s {@code readinessCheck}): it polls
+     * only while the session is connected and no sync or high-priority processing is running.
+     * <p>
+     * Pausing polling in those windows is deliberate. A batch that is polled but then skipped advances the Kafka
+     * position without committing, so it is lost until a rebalance; keeping events queued instead matches the no-loss
+     * behaviour the Postgres-based manager gets by re-reading by seqId. This covers the common case - a batch already
+     * in flight when a sync starts is a known residual (closing it would need seek/rewind, which {@code TbQueueConsumer}
+     * lacks). If a sync ever outran {@code max.poll.interval.ms} (default 5 min) the consumer is rebalanced and resumes
+     * from the committed offset: still no loss, just a possible replay. Edge syncs are seconds, so this is acceptable.
+     */
+    private boolean isReadyToProcessGeneralEvents() {
+        return isSessionReady(getState());
+    }
+
+    /** Single source of truth for "the session may process general edge events" - see {@link #isReadyToProcessGeneralEvents}. */
+    private boolean isSessionReady(EdgeSessionState state) {
+        return state != null && state.isConnected() && !state.isSyncInProgress() && !isHighPriorityProcessing;
     }
 
     private void cancelMigrationAndProcessingInit() {
@@ -299,4 +320,5 @@ public class KafkaBasedEdgeGrpcSessionManager extends AbstractEdgeGrpcSessionMan
             Thread.currentThread().interrupt();
         }
     }
+
 }
