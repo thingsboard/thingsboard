@@ -22,11 +22,9 @@ import { AppState } from '@core/core.state';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { MpItemVersionView, cfTypeTranslations, cfTypeIcons, ruleChainTypeTranslations, widgetTypeTranslations, NodeInfo } from '@shared/models/iot-hub/iot-hub-version.models';
 import { getItemTypeIcon, ItemType, itemTypeTranslations } from '@shared/models/iot-hub/iot-hub-item.models';
-import { IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
+import { getInstalledItemUrl, IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { TranslateService } from '@ngx-translate/core';
-import { EntityType } from '@shared/models/entity-type.models';
-import { getEntityDetailsPageURL } from '@core/utils';
 import { SolutionInstallDialogComponent } from '@home/components/iot-hub/solution-install-dialog.component';
 import { SolutionTemplateInstalledItemDescriptor } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
@@ -199,29 +197,10 @@ export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubI
   }
 
   openEntityDetails(): void {
-    const descriptor = this.installedItem?.descriptor;
-    if (!descriptor) {
-      return;
-    }
-    let entityId: string | null = null;
-    let entityType: EntityType | null = null;
-    switch (descriptor.type) {
-      case 'WIDGET': entityId = descriptor.widgetTypeId?.id; entityType = EntityType.WIDGET_TYPE; break;
-      case 'DASHBOARD': entityId = descriptor.dashboardId?.id; entityType = EntityType.DASHBOARD; break;
-      case 'CALCULATED_FIELD':
-      case 'ALARM_RULE':
-        entityId = descriptor.calculatedFieldId?.id;
-        entityType = EntityType.CALCULATED_FIELD;
-        break;
-      case 'RULE_CHAIN': entityId = descriptor.ruleChainId?.id; entityType = EntityType.RULE_CHAIN; break;
-      case 'SOLUTION_TEMPLATE': entityId = descriptor.dashboardId?.id; entityType = EntityType.DASHBOARD; break;
-    }
-    if (entityType && entityId) {
-      const url = getEntityDetailsPageURL(entityId, entityType);
-      if (url) {
-        this.dialogRef.close();
-        void this.router.navigateByUrl(url);
-      }
+    const url = getInstalledItemUrl(this.installedItem?.descriptor);
+    if (url) {
+      this.dialogRef.close();
+      void this.router.navigateByUrl(url);
     }
   }
 
