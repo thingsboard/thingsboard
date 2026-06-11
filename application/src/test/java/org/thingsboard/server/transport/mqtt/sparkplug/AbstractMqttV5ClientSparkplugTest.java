@@ -402,7 +402,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
 
         String expectedFullPath = groupId + DEVICE_NAME_SPLIT_SEPARATOR + edgeNode + DEVICE_NAME_SPLIT_SEPARATOR + strangerName;
         await().atMost(30, TimeUnit.SECONDS).untilAsserted(() ->
-                doGet("/api/tenant/devices?deviceName=" + expectedFullPath, Device.class, status().isNotFound())
+                doGet("/api/tenant/devices?deviceName=" + expectedFullPath, Device.class, status().isOk())
         );
     }
 
