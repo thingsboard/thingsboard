@@ -18,6 +18,7 @@ package org.thingsboard.server.transport.http;
 import com.google.gson.JsonParseException;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.http.HttpInputMessage;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.context.request.async.DeferredResult;
@@ -37,7 +38,7 @@ class DeviceApiControllerTest {
         };
         var callback = new DeviceApiController.DeviceAuthCallback(transportContext, responseWriter, onSuccess);
 
-        callback.onError(new HttpMessageNotReadableException("JSON incorrect syntax"));
+        callback.onError(new HttpMessageNotReadableException("JSON incorrect syntax", (HttpInputMessage) null));
 
         callback.onError(new JsonParseException("Json ; expected"));
 
@@ -51,7 +52,7 @@ class DeviceApiControllerTest {
         DeferredResult<ResponseEntity> responseWriter = Mockito.mock(DeferredResult.class);
         var callback = new DeviceApiController.DeviceProvisionCallback(responseWriter);
 
-        callback.onError(new HttpMessageNotReadableException("JSON incorrect syntax"));
+        callback.onError(new HttpMessageNotReadableException("JSON incorrect syntax", (HttpInputMessage) null));
 
         callback.onError(new JsonParseException("Json ; expected"));
 
@@ -71,7 +72,7 @@ class DeviceApiControllerTest {
 
         var callback = new DeviceApiController.GetOtaPackageCallback(transportContext, responseWriter, title, version, chunkSize, chunk);
 
-        callback.onError(new HttpMessageNotReadableException("JSON incorrect syntax"));
+        callback.onError(new HttpMessageNotReadableException("JSON incorrect syntax", (HttpInputMessage) null));
 
         callback.onError(new JsonParseException("Json ; expected"));
 

@@ -57,8 +57,8 @@ public class DefaultTbAssetProfileCacheTest {
 
     @Test
     public void onComponentLifecycleEvent_tenantDeleted_evictsAssetProfilesForThatTenant() {
-        TenantId tenant1 = new TenantId(UUID.randomUUID());
-        TenantId tenant2 = new TenantId(UUID.randomUUID());
+        TenantId tenant1 = TenantId.fromUUID(UUID.randomUUID());
+        TenantId tenant2 = TenantId.fromUUID(UUID.randomUUID());
         AssetProfileId profileId1 = new AssetProfileId(UUID.randomUUID());
         AssetProfileId profileId2 = new AssetProfileId(UUID.randomUUID());
 
@@ -75,7 +75,7 @@ public class DefaultTbAssetProfileCacheTest {
 
     @Test
     public void onComponentLifecycleEvent_tenantDeleted_evictsAssetMappingsForThatTenant() {
-        TenantId tenant = new TenantId(UUID.randomUUID());
+        TenantId tenant = TenantId.fromUUID(UUID.randomUUID());
         AssetProfileId profileId = new AssetProfileId(UUID.randomUUID());
         AssetId assetId = new AssetId(UUID.randomUUID());
 
@@ -92,7 +92,7 @@ public class DefaultTbAssetProfileCacheTest {
 
     @Test
     public void onComponentLifecycleEvent_tenantDeleted_removesListenersForThatTenant() {
-        TenantId tenant = new TenantId(UUID.randomUUID());
+        TenantId tenant = TenantId.fromUUID(UUID.randomUUID());
         EntityId listenerId = new AssetId(UUID.randomUUID());
         AtomicInteger callCount = new AtomicInteger();
 
@@ -110,7 +110,7 @@ public class DefaultTbAssetProfileCacheTest {
 
     @Test
     public void onComponentLifecycleEvent_tenantUpdated_doesNotEvictProfiles() {
-        TenantId tenant = new TenantId(UUID.randomUUID());
+        TenantId tenant = TenantId.fromUUID(UUID.randomUUID());
         AssetProfileId profileId = new AssetProfileId(UUID.randomUUID());
         loadProfileIntoCache(tenant, profileId);
 
@@ -123,8 +123,8 @@ public class DefaultTbAssetProfileCacheTest {
 
     @Test
     public void onComponentLifecycleEvent_differentTenantDeleted_keepsOtherTenantsProfiles() {
-        TenantId tenant1 = new TenantId(UUID.randomUUID());
-        TenantId tenant2 = new TenantId(UUID.randomUUID());
+        TenantId tenant1 = TenantId.fromUUID(UUID.randomUUID());
+        TenantId tenant2 = TenantId.fromUUID(UUID.randomUUID());
         AssetProfileId profileId1 = new AssetProfileId(UUID.randomUUID());
         AssetProfileId profileId2 = new AssetProfileId(UUID.randomUUID());
 

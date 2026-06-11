@@ -31,7 +31,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.ResultActions;
-import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Customer;
@@ -207,7 +207,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         loginTenantAdmin();
 
         List<Device> devices = new ArrayList<>();
-        String devicePrefix = "Device" + RandomStringUtils.randomAlphabetic(5);
+        String devicePrefix = "Device" + RandomStringUtils.secure().nextAlphabetic(5);
         for (int i = 0; i < 97; i++) {
             Device device = new Device();
             device.setName(devicePrefix + i);

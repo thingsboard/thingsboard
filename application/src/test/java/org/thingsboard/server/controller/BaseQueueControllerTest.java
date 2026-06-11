@@ -236,7 +236,7 @@ public class BaseQueueControllerTest extends AbstractControllerTest {
         when(testProcessingResult.getFailedMap()).thenReturn(new ConcurrentHashMap<>());
         when(testProcessingResult.getPendingMap()).thenReturn(new ConcurrentHashMap<>());
 
-        String largeExceptionMessage = RandomStringUtils.randomAlphabetic(150);
+        String largeExceptionMessage = RandomStringUtils.secure().nextAlphabetic(150);
         RuleEngineException ruleEngineException = new RuleEngineException(largeExceptionMessage);
         when(testProcessingResult.getExceptionsMap()).thenReturn(new ConcurrentHashMap<>(Map.of(
                 tenantId, ruleEngineException

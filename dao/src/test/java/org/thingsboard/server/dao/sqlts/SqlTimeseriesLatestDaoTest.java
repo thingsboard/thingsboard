@@ -171,7 +171,7 @@ public class SqlTimeseriesLatestDaoTest extends AbstractServiceTest {
     }
 
     private TsKvEntry createEntry(String key, long ts) {
-        return new BasicTsKvEntry(ts, new StringDataEntry(key, RandomStringUtils.random(10)));
+        return new BasicTsKvEntry(ts, new StringDataEntry(key, RandomStringUtils.secure().next(10)));
     }
 
     private void equalsIgnoreVersion(TsKvEntry expected, TsKvEntry actual) {

@@ -43,8 +43,8 @@ public class HttpTransportHealthChecker extends TransportHealthChecker<HttpTrans
     protected void initClient() throws Exception {
         if (restTemplate == null) {
             restTemplate = new RestTemplateBuilder()
-                    .setConnectTimeout(Duration.ofMillis(config.getRequestTimeoutMs()))
-                    .setReadTimeout(Duration.ofMillis(config.getRequestTimeoutMs()))
+                    .connectTimeout(Duration.ofMillis(config.getRequestTimeoutMs()))
+                    .readTimeout(Duration.ofMillis(config.getRequestTimeoutMs()))
                     .build();
             log.debug("Initialized HTTP client");
         }

@@ -1004,7 +1004,7 @@ public class EntityServiceTest extends AbstractControllerTest {
     public void testFindEntityDataByQuery_filter_entity_name_ends_with() {
         List<Device> devices = new ArrayList<>();
 
-        String suffixes = RandomStringUtils.randomAlphanumeric(5);
+        String suffixes = RandomStringUtils.secure().nextAlphanumeric(5);
         for (int i = 0; i < 10; i++) {
             Device device = new Device();
             device.setTenantId(tenantId);
@@ -1425,7 +1425,7 @@ public class EntityServiceTest extends AbstractControllerTest {
         Device device = new Device();
         device.setTenantId(tenantId);
         device.setCustomerId(customerId);
-        device.setName("Device test " + RandomStringUtils.randomAlphabetic(5));
+        device.setName("Device test " + RandomStringUtils.secure().nextAlphabetic(5));
         device.setType("default");
         return device;
     }
@@ -1485,7 +1485,7 @@ public class EntityServiceTest extends AbstractControllerTest {
                     device.setTenantId(tenantId);
                     device.setName("Device " + i);
                     device.setType("default");
-                    device.setLabel("label-" + RandomUtils.nextInt(100, 10000));
+                    device.setLabel("label-" + RandomUtils.secure().randomInt(100, 10000));
                     return device;
                 })
                 .limit(count)

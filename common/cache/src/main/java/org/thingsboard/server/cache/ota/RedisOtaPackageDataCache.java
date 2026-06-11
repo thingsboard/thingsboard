@@ -39,26 +39,26 @@ public class RedisOtaPackageDataCache implements OtaPackageDataCache {
     public byte[] get(String key, int chunkSize, int chunk) {
         try (RedisConnection connection = redisConnectionFactory.getConnection()) {
             if (chunkSize == 0) {
-                return connection.get(toOtaPackageCacheKey(key));
+                return connection.stringCommands().get(toOtaPackageCacheKey(key));
             }
 
             int startIndex = chunkSize * chunk;
             int endIndex = startIndex + chunkSize - 1;
-            return connection.getRange(toOtaPackageCacheKey(key), startIndex, endIndex);
+            return connection.stringCommands().getRange(toOtaPackageCacheKey(key), startIndex, endIndex);
         }
     }
 
     @Override
     public void put(String key, byte[] value) {
         try (RedisConnection connection = redisConnectionFactory.getConnection()) {
-            connection.set(toOtaPackageCacheKey(key), value);
+            connection.stringCommands().set(toOtaPackageCacheKey(key), value);
         }
     }
 
     @Override
     public void evict(String key) {
         try (RedisConnection connection = redisConnectionFactory.getConnection()) {
-            connection.del(toOtaPackageCacheKey(key));
+            connection.keyCommands().del(toOtaPackageCacheKey(key));
         }
     }
 
