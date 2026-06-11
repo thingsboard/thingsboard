@@ -30,6 +30,7 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.edge.imitator.EdgeImitator;
 import org.thingsboard.server.service.edge.rpc.EdgeGrpcService;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.awaitility.Awaitility.await;
@@ -101,8 +102,12 @@ public class EdgeConnectionNotificationTest extends AbstractEdgeTest {
 
         // Edge drops...
         edgeImitator.disconnect();
-        // Ensure the server processed the disconnect (and scheduled the delayed notification) before reconnecting.
-        TimeUnit.SECONDS.sleep(1);
+        // Wait until the server has processed the disconnect and scheduled the pending notification
+        // (the edge id appears in the pendingDisconnectNotifications map) before reconnecting.
+        await().atMost(AbstractWebTest.TIMEOUT, TimeUnit.SECONDS).until(() -> {
+            Map<?, ?> pending = (Map<?, ?>) ReflectionTestUtils.getField(edgeGrpcService, "pendingDisconnectNotifications");
+            return pending != null && pending.containsKey(edge.getId());
+        });
 
         // ...and reconnects within the delay window, which must cancel the pending "disconnected" notification.
         EdgeImitator reconnected = createEdgeImitator();

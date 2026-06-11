@@ -84,6 +84,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
@@ -722,6 +723,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     }
 
     private void scheduleDisconnectNotification(Edge edge) {
+        // Zero delay means "no debounce": notify immediately and skip the cluster-wide re-verify guard.
         if (disconnectNotificationDelayMs <= 0) {
             notifyEdgeConnectivity(edge, false);
             return;
@@ -729,7 +731,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         EdgeId edgeId = edge.getId();
         pendingDisconnectNotifications.compute(edgeId, (id, existing) -> {
             if (existing != null) {
-                cancelIfPending(existing.future());
+                cancelIfPending(existing.getFuture());
             }
             // Create the pending entry first so the scheduled task can reference it (for the identity-keyed
             // remove in fireDelayedDisconnectNotification), then back-fill its future. Doing this inside compute()
@@ -744,7 +746,13 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     }
 
     private void fireDelayedDisconnectNotification(PendingDisconnect pending) {
-        Edge edge = pending.edge();
+        // Claim-once guard: the @PreDestroy destroy() flush and a concurrently-firing scheduled task can both call
+        // this for the same PendingDisconnect. tryClaim() ensures notifyEdgeConnectivity fires at most once without
+        // relying on downstream notification dedup.
+        if (!pending.tryClaim()) {
+            return;
+        }
+        Edge edge = pending.getEdge();
         EdgeId edgeId = edge.getId();
         // Identity-keyed remove: don't clobber a newer entry if a second disconnect races with this task firing.
         pendingDisconnectNotifications.remove(edgeId, pending);
@@ -760,28 +768,34 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private void cancelPendingDisconnectNotification(EdgeId edgeId) {
         PendingDisconnect pending = pendingDisconnectNotifications.remove(edgeId);
         if (pending != null) {
-            cancelIfPending(pending.future());
+            cancelIfPending(pending.getFuture());
         }
     }
 
     static final class PendingDisconnect {
+
         private final Edge edge;
+        private final AtomicBoolean notified = new AtomicBoolean(false);
         private ScheduledFuture<?> future;
 
         PendingDisconnect(Edge edge) {
             this.edge = edge;
         }
 
-        Edge edge() {
+        Edge getEdge() {
             return edge;
         }
 
-        ScheduledFuture<?> future() {
+        ScheduledFuture<?> getFuture() {
             return future;
         }
 
         void setFuture(ScheduledFuture<?> future) {
             this.future = future;
+        }
+
+        boolean tryClaim() {
+            return notified.compareAndSet(false, true);
         }
 
     }
