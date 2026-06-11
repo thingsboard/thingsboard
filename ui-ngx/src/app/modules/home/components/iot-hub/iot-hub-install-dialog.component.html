@@ -195,11 +195,11 @@
     }
     @case ('plan') {
       <button mat-button (click)="cancelPlan()">{{ 'action.cancel' | translate }}</button>
-      <button mat-flat-button color="primary"
-              [disabled]="planSummary.willInstall === 0"
-              (click)="installItemWithDependencies()">
-        {{ 'iot-hub.install-plan-confirm' | translate }}
-      </button>
+      @if (planSummary.willInstall > 0) {
+        <button mat-flat-button color="primary" (click)="installItemWithDependencies()">
+          {{ 'iot-hub.install-plan-confirm' | translate }}
+        </button>
+      }
     }
     @case ('installing') {
       <button mat-button disabled>{{ 'action.cancel' | translate }}</button>

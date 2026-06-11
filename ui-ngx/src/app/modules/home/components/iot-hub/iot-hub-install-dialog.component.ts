@@ -255,12 +255,14 @@ export class TbIotHubInstallDialogComponent extends DialogComponent<TbIotHubInst
       next: (plan) => {
         this.resolvingPlan = false;
         const summary = this.summarizePlan(plan);
-        const hasDependencies = plan.entries.length > 1
+        // Show the plan only when there's something worth telling the user about: extra items to
+        // install, items already installed, or missing dependencies. A lone root with nothing to
+        // skip installs directly so the dialog doesn't flash a one-line "plan".
+        const shouldShowPlan = plan.entries.length > 1
           || summary.alreadyInstalled > 0
           || summary.missing > 0;
 
-        if (!hasDependencies) {
-          // Single root version, no deps, nothing to skip — install directly without showing the plan.
+        if (!shouldShowPlan) {
           this.installItem();
           return;
         }
@@ -332,10 +334,11 @@ export class TbIotHubInstallDialogComponent extends DialogComponent<TbIotHubInst
       this.installPlan = { ...this.installPlan, entries: result.entries ?? this.installPlan.entries };
       this.missingEntries = (result.entries ?? []).filter(e => e.status === InstallPlanEntryStatus.MISSING);
     }
+    const hasMissing = (result.missingItemIds?.length ?? 0) > 0;
     if (result.rootDescriptor) {
-      this.handleInstalledDescriptor(result.rootDescriptor, result.missingItemIds?.length > 0);
+      this.handleInstalledDescriptor(result.rootDescriptor, hasMissing);
     } else {
-      this.state = (result.missingItemIds?.length ?? 0) > 0 ? 'partial' : 'success';
+      this.state = hasMissing ? 'partial' : 'success';
     }
   }
 
