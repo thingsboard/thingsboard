@@ -39,6 +39,7 @@ import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
+import org.thingsboard.server.dao.iot_hub.IotHubInstalledItemService;
 import org.thingsboard.server.dao.mobile.QrCodeSettingService;
 import org.thingsboard.server.dao.notification.NotificationSettingsService;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -83,7 +84,7 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
     @Autowired
     private TrendzSettingsService trendzSettingsService;
     @Autowired
-    private org.thingsboard.server.dao.iot_hub.IotHubInstalledItemService iotHubInstalledItemService;
+    private IotHubInstalledItemService iotHubInstalledItemService;
     @Autowired
     private TenantDataValidator tenantValidator;
     @Autowired

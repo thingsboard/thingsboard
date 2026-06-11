@@ -269,7 +269,7 @@ public class DefaultSolutionService implements SolutionService {
                 tsService.remove(tenantId, tenantId, queries).get();
             }
             List<String> attrKeys = descriptor.getTenantAttributeKeys();
-            if (tsKeys != null && !tsKeys.isEmpty()) {
+            if (attrKeys != null && !attrKeys.isEmpty()) {
                 attributesService.removeAll(tenantId, tenantId, AttributeScope.SERVER_SCOPE, attrKeys).get();
             }
         } catch (Exception e) {
