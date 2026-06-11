@@ -243,6 +243,9 @@ import { RgbaInputComponent } from '@shared/components/color-picker/rgba-input.c
 import { HslaInputComponent } from '@shared/components/color-picker/hsla-input.component';
 import { InputChangeDirective } from '@shared/components/color-picker/input-change.directive';
 import { PhotoSwipeGalleryDirective } from '@shared/directives/photoswipe-gallery.directive';
+import {
+  AutocompleteAutoScrollRepositionDirective
+} from '@shared/directives/autocomplete-auto-scroll-reposition.directive';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -292,8 +295,6 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     {
       provide: MAT_AUTOCOMPLETE_DEFAULT_OPTIONS,
       useValue: {
-        hasBackdrop: true,
-        backdropClass: 'cdk-overlay-transparent-backdrop',
         hideSingleSelectionIndicator: true
       }
     },
@@ -404,6 +405,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ContextMenuDirective,
     ChipOverflowDirective,
     PhotoSwipeGalleryDirective,
+    AutocompleteAutoScrollRepositionDirective,
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,
@@ -679,6 +681,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ContextMenuDirective,
     ChipOverflowDirective,
     PhotoSwipeGalleryDirective,
+    AutocompleteAutoScrollRepositionDirective,
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,
