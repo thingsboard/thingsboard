@@ -396,24 +396,13 @@ public class DefaultTransportApiService implements TransportApiService {
 
         // Security check: verify that the device was created by this gateway
         boolean isRelated = false;
-        try {
-            isRelated = relationService.checkRelation(
-                    gateway.getTenantId(),
-                    gateway.getId(),
-                    existingDevice.getId(),
-                    GATEWAY_CREATED_RELATION,
-                    RelationTypeGroup.COMMON
-            );
-        } catch (Exception e) {
-            log.error("[{}] Failed checking relation for device {}",
-                    gateway.getId(),
-                    existingDevice.getId(),
-                    e);
-            throw new RuntimeException(
-                    "Failed checking relation for device " + existingDevice.getId(),
-                    e
-            );
-        }
+        isRelated = relationService.checkRelation(
+                gateway.getTenantId(),
+                gateway.getId(),
+                existingDevice.getId(),
+                GATEWAY_CREATED_RELATION,
+                RelationTypeGroup.COMMON
+        );
 
         // If the device is found but not related to this gateway
         if (!isRelated) {
