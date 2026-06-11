@@ -77,6 +77,45 @@
             existing: pendingOverwrite?.existingRuleChainName
          }"></p>
     }
+    @case ('plan') {
+      <h2 class="tb-iot-hub-install-title">{{ 'iot-hub.install-plan-title' | translate:{ name: item.name } }}</h2>
+      <p class="tb-iot-hub-install-desc">
+        @if (planSummary.willInstall > 0) {
+          <span>{{ 'iot-hub.install-plan-will-install' | translate:{ count: planSummary.willInstall } }}</span>
+        }
+        @if (planSummary.alreadyInstalled > 0) {
+          <span>{{ 'iot-hub.install-plan-will-update' | translate:{ count: planSummary.alreadyInstalled } }}</span>
+        }
+      </p>
+      @if (planSummary.missing > 0) {
+        <p class="tb-iot-hub-install-warning">{{ 'iot-hub.install-plan-missing-warning' | translate:{ count: planSummary.missing } }}</p>
+      }
+      <ul class="tb-iot-hub-plan-list">
+        @for (entry of installPlan?.entries; track entry.itemId) {
+          <li class="tb-iot-hub-plan-entry">
+            <div class="tb-iot-hub-plan-entry-main">
+              <span class="tb-iot-hub-plan-entry-name">{{ entry.name || entry.itemId }}</span>
+              @if (entry.type) {
+                <span class="tb-iot-hub-plan-entry-type">{{ (typeTranslations.get(entry.type) || entry.type) | translate }}</span>
+              }
+              @if (entry.version) {
+                <span class="tb-iot-hub-plan-entry-version">v{{ entry.version }}</span>
+              }
+            </div>
+            <span class="tb-iot-hub-plan-entry-status"
+                  [class.tb-status-installed]="entry.status === PlanStatus.ALREADY_INSTALLED"
+                  [class.tb-status-missing]="entry.status === PlanStatus.MISSING"
+                  [class.tb-status-will-install]="entry.status === PlanStatus.WILL_INSTALL">
+              @switch (entry.status) {
+                @case (PlanStatus.WILL_INSTALL) { {{ 'iot-hub.install-plan-status-will' | translate }} }
+                @case (PlanStatus.ALREADY_INSTALLED) { {{ 'iot-hub.install-plan-status-installed' | translate }} }
+                @case (PlanStatus.MISSING) { {{ 'iot-hub.install-plan-status-missing' | translate }} }
+              }
+            </span>
+          </li>
+        }
+      </ul>
+    }
     @case ('installing') {
       <h2 class="tb-iot-hub-install-title">{{ 'iot-hub.install-confirm-title' | translate:{ name: item.name } }}</h2>
       <p class="tb-iot-hub-install-desc">{{ 'iot-hub.install-desc' | translate }}</p>
@@ -84,6 +123,20 @@
     @case ('success') {
       <h2 class="tb-iot-hub-install-title">{{ 'iot-hub.install-success-title' | translate }}</h2>
       <p class="tb-iot-hub-install-desc">{{ 'iot-hub.install-success-desc' | translate:{ name: item.name } }}</p>
+    }
+    @case ('partial') {
+      <h2 class="tb-iot-hub-install-title">{{ 'iot-hub.install-partial-title' | translate }}</h2>
+      <p class="tb-iot-hub-install-desc">{{ 'iot-hub.install-partial-desc' | translate:{ name: item.name } }}</p>
+      <ul class="tb-iot-hub-plan-list">
+        @for (entry of missingEntries; track entry.itemId) {
+          <li class="tb-iot-hub-plan-entry">
+            <span class="tb-iot-hub-plan-entry-name">{{ entry.name || entry.itemId }}</span>
+            @if (entry.errorMessage) {
+              <span class="tb-iot-hub-plan-entry-error">{{ entry.errorMessage }}</span>
+            }
+          </li>
+        }
+      </ul>
     }
     @case ('error') {
       <h2 class="tb-iot-hub-install-title">{{ 'iot-hub.install-error-title' | translate }}</h2>
@@ -101,30 +154,52 @@
 <mat-dialog-actions align="end">
   @switch (state) {
     @case ('confirm') {
-      <button mat-button (click)="cancel()">{{ 'action.cancel' | translate }}</button>
-      <button mat-flat-button color="primary" (click)="install()">{{ 'iot-hub.install' | translate }}</button>
+      <button mat-button [disabled]="resolvingPlan" (click)="cancel()">{{ 'action.cancel' | translate }}</button>
+      <button mat-flat-button color="primary" [disabled]="resolvingPlan" (click)="install()">
+        @if (resolvingPlan) {
+          <mat-spinner diameter="18" class="mr-2 inline-block align-middle"></mat-spinner>
+        }
+        {{ 'iot-hub.install' | translate }}
+      </button>
     }
     @case ('select-entity') {
-      <button mat-button (click)="cancel()">{{ 'action.cancel' | translate }}</button>
+      <button mat-button [disabled]="resolvingPlan" (click)="cancel()">{{ 'action.cancel' | translate }}</button>
       @if (item.type === ItemType.RULE_CHAIN) {
         <button mat-flat-button color="primary"
-                [disabled]="ruleChainInstallForm.invalid"
+                [disabled]="ruleChainInstallForm.invalid || resolvingPlan"
                 (click)="onRuleChainInstall()">
+          @if (resolvingPlan) {
+            <mat-spinner diameter="18" class="mr-2 inline-block align-middle"></mat-spinner>
+          }
           {{ 'iot-hub.install' | translate }}
         </button>
       } @else {
         <button mat-flat-button color="primary"
-                [disabled]="activeSelectEntityConfig.required && !selectedEntityId"
+                [disabled]="(activeSelectEntityConfig.required && !selectedEntityId) || resolvingPlan"
                 (click)="onEntitySelectInstall()">
+          @if (resolvingPlan) {
+            <mat-spinner diameter="18" class="mr-2 inline-block align-middle"></mat-spinner>
+          }
           {{ 'iot-hub.install' | translate }}
         </button>
       }
     }
     @case ('confirm-overwrite') {
-      <button mat-button (click)="confirmOverwriteCancel()">{{ 'action.cancel' | translate }}</button>
-      <button mat-flat-button color="primary" (click)="confirmOverwriteReplace()">
+      <button mat-button [disabled]="resolvingPlan" (click)="confirmOverwriteCancel()">{{ 'action.cancel' | translate }}</button>
+      <button mat-flat-button color="primary" [disabled]="resolvingPlan" (click)="confirmOverwriteReplace()">
+        @if (resolvingPlan) {
+          <mat-spinner diameter="18" class="mr-2 inline-block align-middle"></mat-spinner>
+        }
         {{ 'iot-hub.rule-chain-overwrite-replace' | translate }}
       </button>
+    }
+    @case ('plan') {
+      <button mat-button (click)="cancelPlan()">{{ 'action.cancel' | translate }}</button>
+      @if (planSummary.willInstall > 0) {
+        <button mat-flat-button color="primary" (click)="installItemWithDependencies()">
+          {{ 'iot-hub.install-plan-confirm' | translate }}
+        </button>
+      }
     }
     @case ('installing') {
       <button mat-button disabled>{{ 'action.cancel' | translate }}</button>
@@ -134,6 +209,14 @@
       </button>
     }
     @case ('success') {
+      <button mat-button (click)="close()">{{ (entityDetailsUrl ? 'action.cancel' : 'action.close') | translate }}</button>
+      @if (entityDetailsUrl) {
+        <button mat-flat-button color="primary" (click)="openEntityDetails()">
+          {{ 'iot-hub.open-item-type' | translate:{ type: getTypeLabel() } }}
+        </button>
+      }
+    }
+    @case ('partial') {
       <button mat-button (click)="close()">{{ (entityDetailsUrl ? 'action.cancel' : 'action.close') | translate }}</button>
       @if (entityDetailsUrl) {
         <button mat-flat-button color="primary" (click)="openEntityDetails()">

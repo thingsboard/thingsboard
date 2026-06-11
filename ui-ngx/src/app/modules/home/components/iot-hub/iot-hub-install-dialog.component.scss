@@ -57,3 +57,92 @@ tb-entity-select {
   border-radius: 8px;
   padding-bottom: 24px;
 }
+
+.tb-iot-hub-install-warning {
+  color: #b26a00;
+  background: #fff8e1;
+  border-left: 3px solid #f5b324;
+  padding: 8px 12px;
+  font-size: 13px;
+  line-height: 18px;
+  border-radius: 4px;
+  margin: 0;
+}
+
+.tb-iot-hub-plan-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.tb-iot-hub-plan-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.tb-iot-hub-plan-entry-main {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.tb-iot-hub-plan-entry-name {
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.tb-iot-hub-plan-entry-type {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.05);
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+
+.tb-iot-hub-plan-entry-version {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.54);
+}
+
+.tb-iot-hub-plan-entry-error {
+  font-size: 12px;
+  color: #b26a00;
+  margin-left: 8px;
+}
+
+.tb-iot-hub-plan-entry-status {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+
+  &.tb-status-will-install {
+    color: #1565c0;
+    background: rgba(21, 101, 192, 0.08);
+  }
+
+  &.tb-status-installed {
+    color: #2e7d32;
+    background: rgba(46, 125, 50, 0.08);
+  }
+
+  &.tb-status-missing {
+    color: #b26a00;
+    background: rgba(245, 179, 36, 0.12);
+  }
+}

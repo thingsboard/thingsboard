@@ -18,8 +18,10 @@ package org.thingsboard.server.service.iot_hub;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
@@ -37,6 +39,23 @@ public class IotHubRestClient {
         String url = baseUrl + "/api/versions/" + versionId;
         log.debug("Fetching IoT Hub version info: {}", url);
         return restTemplate.getForObject(url, JsonNode.class);
+    }
+
+    /**
+     * Returns the latest published version of an item, or {@code null} if the marketplace
+     * responds with 404 (item missing or never published). Other 4xx/5xx still propagate.
+     */
+    public JsonNode getPublishedVersionByItemId(String itemId) {
+        String url = baseUrl + "/api/items/" + itemId + "/published";
+        log.debug("Fetching IoT Hub published version for item: {}", url);
+        try {
+            return restTemplate.getForObject(url, JsonNode.class);
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return null;
+            }
+            throw e;
+        }
     }
 
     public byte[] getVersionFileData(String versionId) {

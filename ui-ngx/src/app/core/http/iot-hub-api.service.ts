@@ -22,7 +22,7 @@ import { PageData } from '@shared/models/page/page-data';
 import { PageLink } from '@shared/models/page/page-link';
 import { MpItemVersionQuery, MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
 import { CreatorView } from '@shared/models/iot-hub/iot-hub-creator.models';
-import { IotHubInstalledItem, InstallItemVersionResult, UpdateItemVersionResult, ItemPublishedVersionInfo } from '@shared/models/iot-hub/iot-hub-installed-item.models';
+import { IotHubInstalledItem, InstallItemVersionResult, InstallPlan, InstallPlanResult, UpdateItemVersionResult, ItemPublishedVersionInfo } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { ItemType, ItemTypeFilterInfo, WidgetCategory } from '@shared/models/iot-hub/iot-hub-item.models';
 import { InterceptorHttpParams } from '@core/interceptors/interceptor-http-params';
 import { InterceptorConfig } from '@core/interceptors/interceptor-config';
@@ -191,6 +191,21 @@ export class IotHubApiService {
     return this.http.post<InstallItemVersionResult>(
       `/api/iot-hub/versions/${versionId}/install`,
       data || null,
+      { params: this.buildParams(config) }
+    );
+  }
+
+  public resolveInstallPlan(versionId: string, config?: IotHubRequestConfig): Observable<InstallPlan> {
+    return this.http.get<InstallPlan>(
+      `/api/iot-hub/versions/${versionId}/installPlan`,
+      { params: this.buildParams(config) }
+    );
+  }
+
+  public installPlan(plan: InstallPlan, data?: any, config?: IotHubRequestConfig): Observable<InstallPlanResult> {
+    return this.http.post<InstallPlanResult>(
+      `/api/iot-hub/installPlan`,
+      { plan, data: data ?? null },
       { params: this.buildParams(config) }
     );
   }

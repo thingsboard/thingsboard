@@ -75,6 +75,37 @@ export interface InstallItemVersionResult {
   descriptor: IotHubInstalledItemDescriptor;
 }
 
+export enum InstallPlanEntryStatus {
+  WILL_INSTALL = 'WILL_INSTALL',
+  ALREADY_INSTALLED = 'ALREADY_INSTALLED',
+  MISSING = 'MISSING'
+}
+
+export interface InstallPlanEntry {
+  itemId: string;
+  versionId: string;
+  name: string;
+  type: string;
+  version: string;
+  status: InstallPlanEntryStatus;
+  root: boolean;
+  errorMessage?: string;
+}
+
+export interface InstallPlan {
+  rootVersionId: string;
+  entries: InstallPlanEntry[];
+}
+
+export interface InstallPlanResult {
+  success: boolean;
+  rolledBack: boolean;
+  errorMessage?: string;
+  rootDescriptor?: IotHubInstalledItemDescriptor;
+  entries: InstallPlanEntry[];
+  missingItemIds: string[];
+}
+
 export interface UpdateItemVersionResult {
   success: boolean;
   entityModified: boolean;
