@@ -21,6 +21,7 @@
       [inlineField]="inlineField"
       [class.flex-1]="inlineField && !modelValue.entityType"
       style="min-width: 100px; padding-right: 8px;"
+      [label]="entityTypeLabel ?? null"
       [showLabel]="true"
       [required]="required"
       subscriptSizing="dynamic"
@@ -35,6 +36,7 @@
   @if (modelValue.entityType) {
     <tb-entity-list
       class="flex-1"
+      [labelText]="displayEntityLabel ? (entityTypeTranslations.get(modelValue.entityType).typePlural | translate) : ''"
       [inlineField]="inlineField"
       [class.tb-not-empty]="modelValue.ids?.length > 0"
       [required]="required"

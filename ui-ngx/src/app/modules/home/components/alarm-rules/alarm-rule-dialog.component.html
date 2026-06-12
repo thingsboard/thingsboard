@@ -56,23 +56,57 @@
           />
         </div>
         @if (!data.entityId) {
-          <tb-entity-select formControlName="entityId"
-                            #entitySelect
-                            appearance="outline"
-                            required
-                            entityTypeLabel="{{ 'entity.entity-type' | translate }}"
-                            [filterAllowedEntityTypes]="false"
-                            [allowedEntityTypes]="alarmRuleEntityTypeList"
-                            [defaultEntityType]="EntityType.DEVICE_PROFILE"
-                            (entityChanged)="changeEntity($event)">
-          </tb-entity-select>
+          @if (createNew) {
+            <div class="flex gap-1">
+              <mat-form-field class="w-1/4 h-fit" appearance="outline" subscriptSizing="dynamic">
+                <mat-label>{{ 'entity.entity-type' | translate }}</mat-label>
+                <mat-select [formControl]="entityTypeControl" required>
+                  @for (type of alarmRuleEntityTypeList; track type) {
+                    <mat-option [value]="type">
+                      {{ entityTypeTranslations.get(type)?.type | translate }}
+                    </mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+              @if (isProfileType) {
+                <tb-entity-subtype-list formControlName="entityId"
+                                        class="flex-1"
+                                        appearance="outline"
+                                        required
+                                        subscriptSizing="dynamic"
+                                        [entityType]="profileSubtypeEntityType"
+                                        [label]="entityTypeTranslations.get(entityTypeControl.value)?.typePlural | translate">
+                </tb-entity-subtype-list>
+              } @else {
+                <tb-entity-list formControlName="entityId"
+                                class="flex-1"
+                                appearance="outline"
+                                required
+                                subscriptSizing="dynamic"
+                                [entityType]="entityTypeControl.value"
+                                labelText="{{ entityTypeTranslations.get(entityTypeControl.value)?.typePlural | translate }}">
+                </tb-entity-list>
+              }
+            </div>
+          } @else {
+            <tb-entity-select formControlName="entityId"
+                              #entitySelect
+                              appearance="outline"
+                              required
+                              entityTypeLabel="{{ 'entity.entity-type' | translate }}"
+                              [filterAllowedEntityTypes]="false"
+                              [allowedEntityTypes]="alarmRuleEntityTypeList"
+                              [defaultEntityType]="EntityType.DEVICE_PROFILE"
+                              (entityChanged)="changeEntity($event)">
+            </tb-entity-select>
+          }
         }
       </div>
       <ng-container formGroupName="configuration">
         <div class="tb-form-panel" [class.disabled]="disabledArguments">
           <div class="tb-form-panel-title tb-required">{{ 'calculated-fields.arguments' | translate }}</div>
           <tb-calculated-field-arguments-table formControlName="arguments"
-                                               [entityId]="data.entityId || fieldFormGroup.get('entityId').value"
+                                               [entityId]="data.entityId || argsEntityId"
                                                [tenantId]="data.tenantId"
                                                [ownerId]="ownerId"
                                                [watchKeyChange]="true"
