@@ -78,7 +78,6 @@
       <mat-autocomplete #searchAuto="matAutocomplete"
                          class="tb-search-popup-panel"
                          [displayWith]="searchDisplayFn"
-                         (optionSelected)="onSearchOptionSelected($event)"
                          [hideSingleSelectionIndicator]="true">
         @if (searchLoading) {
           <mat-option [disabled]="true" class="tb-search-popup-loading">
@@ -99,7 +98,7 @@
           @for (group of searchResultGroups; track group.type) {
             <mat-optgroup [label]="getSearchGroupLabel(group.type)">
               @for (item of group.items; track item.id) {
-                <mat-option [value]="item">
+                <mat-option [value]="searchText" (click)="openItemDetail(item)">
                   @if (isCompactType(item.type)) {
                     <div class="tb-search-popup-icon-square" [style.background]="item.color || '#048ad3'">
                       <tb-icon class="tb-search-popup-icon-inner">{{ getCompactIcon(item) }}</tb-icon>
