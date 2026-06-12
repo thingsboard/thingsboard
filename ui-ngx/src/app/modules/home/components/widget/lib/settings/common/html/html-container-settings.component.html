@@ -122,7 +122,8 @@
                 [editorCompleter]="containerFunctionEditorCompleter"
                 [functionArgs]="htmlContainerSettingsForm.get('type').value === HtmlContainerWidgetType.ANGULAR ? ['ctx'] : ['ctx', 'container']"
                 withModules
-                functionTitle="{{ 'widgets.html-container.js-function' | translate }}">
+                functionTitle="{{ 'widgets.html-container.js-function' | translate }}"
+                [helpId]="htmlContainerSettingsForm.get('type').value === HtmlContainerWidgetType.ANGULAR ? 'widget/lib/html_container/container_angular_fn' : 'widget/lib/html_container/container_plain_fn'">
     </tb-js-func>
   </ng-container>
 </ng-template>
