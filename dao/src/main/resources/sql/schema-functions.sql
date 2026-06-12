@@ -32,6 +32,13 @@ DECLARE
     result    alarm_info;
     row_count integer;
 BEGIN
+    -- Serialize concurrent callers for the same (originator, type) so that the SELECT/INSERT
+    -- pair below cannot interleave and produce duplicate active alarms.
+    -- Correctness relies on READ COMMITTED (ThingsBoard's default isolation level): after the
+    -- lock is granted, the SELECT below takes a fresh per-statement snapshot and sees the row a
+    -- prior caller just committed. Under REPEATABLE READ / SERIALIZABLE the transaction's older
+    -- snapshot would miss that row and INSERT a duplicate, so do not call this under those levels.
+    PERFORM pg_advisory_xact_lock(hashtext(a_o_id::text), hashtext(a_type));
     SELECT * INTO existing FROM alarm a WHERE a.originator_id = a_o_id AND a.type = a_type AND a.cleared = false ORDER BY a.start_ts DESC FOR UPDATE;
     IF existing.id IS NULL THEN
         IF a_creation_enabled = FALSE THEN

@@ -64,7 +64,12 @@ import org.thingsboard.server.dao.user.UserService;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -1010,6 +1015,55 @@ public class AlarmServiceTest extends AbstractServiceTest {
         request.setType(TEST_ALARM);
         AlarmApiCallResult result = alarmService.createAlarm(request);
         assertThat(result.getAlarm().getId()).isNotNull();
+    }
+
+    @Test
+    public void testShouldNotCreateDuplicateActiveAlarmsOnConcurrentCreate() throws InterruptedException {
+        AssetId originatorId = new AssetId(Uuids.timeBased());
+        int parallelism = 10;
+        long ts = System.currentTimeMillis();
+
+        ExecutorService executor = Executors.newFixedThreadPool(parallelism);
+        CountDownLatch start = new CountDownLatch(1);
+        CountDownLatch done = new CountDownLatch(parallelism);
+        List<Throwable> failures = new CopyOnWriteArrayList<>();
+        try {
+            for (int i = 0; i < parallelism; i++) {
+                executor.submit(() -> {
+                    try {
+                        start.await();
+                        alarmService.createAlarm(AlarmCreateOrUpdateActiveRequest.builder()
+                                .tenantId(tenantId)
+                                .originator(originatorId)
+                                .type(TEST_ALARM)
+                                .severity(AlarmSeverity.CRITICAL)
+                                .startTs(ts).build());
+                    } catch (Throwable t) {
+                        failures.add(t);
+                    } finally {
+                        done.countDown();
+                    }
+                });
+            }
+            start.countDown();
+            Assert.assertTrue("Concurrent createAlarm did not finish in time", done.await(30, TimeUnit.SECONDS));
+        } finally {
+            executor.shutdownNow();
+        }
+
+        assertThat(failures)
+                .as("Concurrent createAlarm calls must not throw (e.g. deadlock or SQL error under contention)")
+                .isEmpty();
+
+        PageData<AlarmInfo> activeAlarms = alarmService.findAlarms(tenantId, AlarmQuery.builder()
+                .affectedEntityId(originatorId)
+                .status(AlarmStatus.ACTIVE_UNACK).pageLink(
+                        new TimePageLink(parallelism * 2, 0, "",
+                                new SortOrder("createdTime", SortOrder.Direction.DESC), 0L, System.currentTimeMillis())
+                ).build());
+        assertThat(activeAlarms.getData())
+                .as("Concurrent createAlarm calls for the same originator and type must produce exactly one active alarm")
+                .hasSize(1);
     }
 
 }
