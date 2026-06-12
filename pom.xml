@@ -64,9 +64,11 @@
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
         <thingsboard.client.version>4.3.1.2</thingsboard.client.version>
         <spring-boot.version>3.5.15</spring-boot.version>
-        <!-- TODO: remove spring-boot-test.version override and the matching dependencyManagement entries below
-             once Spring Boot 3.5.15+ is released with a fix for the ImportsContextCustomizer regression in 3.5.14
-             that causes "Duplicate spy definition" failures on legacy @SpyBean fields (see PR #15557). -->
+        <!-- Pins spring-boot-test to 3.5.13: the ImportsContextCustomizer change in 3.5.14 causes "Duplicate spy
+             definition" failures on legacy @SpyBean fields (see PR #15557). Spring declined to restore the prior
+             behavior (spring-projects/spring-boot#50230, closed NOT_PLANNED), so no 3.5.x release fixes this — the
+             bump to 3.5.15 in this PR does not. TODO: remove this override and the matching dependencyManagement
+             entries below once TB migrates its tests off the deprecated @SpyBean/@MockBean to @MockitoSpyBean/@MockitoBean. -->
         <spring-boot-test.version>3.5.13</spring-boot-test.version>
         <commons-lang3.version>3.18.0</commons-lang3.version> <!-- to fix CVE-2025-48924. TODO: remove when fixed in spring-boot-dependencies -->
         <netty.version>4.1.134.Final</netty.version> <!-- to fix CVE-2026-42579, CVE-2026-42583, CVE-2026-42584, CVE-2026-42587, and MQTT decoder regression introduced in 4.1.133 by the CVE-2026-44248 fix. TODO: remove when fixed in spring-boot-dependencies -->
@@ -135,7 +137,7 @@
         <commons-beanutils.version>1.11.0</commons-beanutils.version>
         <commons-collections.version>4.4</commons-collections.version>
         <protobuf-dynamic.version>1.0.4TB</protobuf-dynamic.version>
-        <wire-schema.version>6.3.0</wire-schema.version> <!-- to fix CVE-2026-45799 (transitive wire-runtime). TODO: remove pin when upstream bundles >= 6.3.0 -->
+        <wire-schema.version>6.3.0</wire-schema.version> <!-- to fix CVE-2026-45799 (transitive wire-runtime). Not managed by the Spring Boot BOM — this pin is the sole source of the wire version, nothing to defer to. TODO: remove only once a TB dependency pulls wire >= 6.3.0 transitively, making the explicit pin redundant. -->
         <twilio.version>10.1.3</twilio.version>
         <hypersistence-utils.version>3.7.4</hypersistence-utils.version> <!-- artifact name should be updated with hibernate-core version -->
         <jakarta.el.version>4.0.2</jakarta.el.version>
