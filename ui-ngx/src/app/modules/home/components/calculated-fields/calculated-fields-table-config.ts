@@ -110,7 +110,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
       },
       {
         name: this.translate.instant('iot-hub.add-from-iot-hub'),
-        icon: 'store',
+        icon: 'hub',
         isEnabled: () => true,
         onAction: () => this.addCalculatedFieldFromIotHub()
       }
