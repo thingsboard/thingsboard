@@ -116,6 +116,7 @@ export class BarChartWithLabelsBasicConfigComponent extends BasicWidgetConfigCom
       iconColor: [configData.config.iconColor, []],
 
       dataZoom: [settings.dataZoom, []],
+      dataZoomUpdateTimewindow: [settings.dataZoomUpdateTimewindow, []],
 
       showBarLabel: [settings.showBarLabel, []],
       barLabelFont: [settings.barLabelFont, []],
@@ -193,6 +194,7 @@ export class BarChartWithLabelsBasicConfigComponent extends BasicWidgetConfigCom
     this.widgetConfig.config.settings = this.widgetConfig.config.settings || {};
 
     this.widgetConfig.config.settings.dataZoom = config.dataZoom;
+    this.widgetConfig.config.settings.dataZoomUpdateTimewindow = config.dataZoomUpdateTimewindow;
 
     this.widgetConfig.config.settings.showBarLabel = config.showBarLabel;
     this.widgetConfig.config.settings.barLabelFont = config.barLabelFont;
@@ -248,10 +250,11 @@ export class BarChartWithLabelsBasicConfigComponent extends BasicWidgetConfigCom
   }
 
   protected validatorTriggers(): string[] {
-    return ['showTitle', 'showIcon', 'showBarLabel', 'showBarValue', 'showBarBorder', 'showLegend', 'showTooltip', 'tooltipShowDate'];
+    return ['dataZoom', 'showTitle', 'showIcon', 'showBarLabel', 'showBarValue', 'showBarBorder', 'showLegend', 'showTooltip', 'tooltipShowDate'];
   }
 
   protected updateValidators(emitEvent: boolean, trigger?: string) {
+    const dataZoom: boolean = this.barChartWidgetConfigForm.get('dataZoom').value;
     const showTitle: boolean = this.barChartWidgetConfigForm.get('showTitle').value;
     const showIcon: boolean = this.barChartWidgetConfigForm.get('showIcon').value;
     const showBarLabel: boolean = this.barChartWidgetConfigForm.get('showBarLabel').value;
@@ -260,6 +263,12 @@ export class BarChartWithLabelsBasicConfigComponent extends BasicWidgetConfigCom
     const showLegend: boolean = this.barChartWidgetConfigForm.get('showLegend').value;
     const showTooltip: boolean = this.barChartWidgetConfigForm.get('showTooltip').value;
     const tooltipShowDate: boolean = this.barChartWidgetConfigForm.get('tooltipShowDate').value;
+
+    if (dataZoom) {
+      this.barChartWidgetConfigForm.get('dataZoomUpdateTimewindow').enable();
+    } else {
+      this.barChartWidgetConfigForm.get('dataZoomUpdateTimewindow').disable();
+    }
 
     if (showTitle) {
       this.barChartWidgetConfigForm.get('title').enable();

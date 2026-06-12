@@ -103,7 +103,7 @@
       @for (action of widget.widgetActions; track action) {
         <button mat-icon-button
                 type="button"
-                [class.!hidden]="isEdit || !action.show"
+                [class.!hidden]="isEdit || !actionVisible(action)"
                 (click)="action.onAction($event)"
                 matTooltip="{{ action.name | translate }}"
                 matTooltipPosition="above">
