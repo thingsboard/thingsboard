@@ -70,6 +70,8 @@ import { AlarmRulesTabsComponent } from '@home/pages/alarm/alarm-rules-tabs.comp
 import { Router } from '@angular/router';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { AlarmRulesComponent } from '@home/components/alarm-rules/alarm-rules.component';
+import { ItemType } from '@shared/models/iot-hub/iot-hub-item.models';
+import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
 
 export type AlarmRuleTableEntity = CalculatedFieldAlarmRule | CalculatedFieldAlarmRuleInfo;
 
@@ -97,6 +99,7 @@ export class AlarmRulesTableConfig extends EntityTableConfig<AlarmRuleTableEntit
               private entityDebugSettingsService: EntityDebugSettingsService,
               private utilsService: UtilsService,
               private router: Router,
+              private iotHubActions: IotHubActionsService,
               public pageMode: boolean = false,
   ) {
     super();
@@ -150,6 +153,12 @@ export class AlarmRulesTableConfig extends EntityTableConfig<AlarmRuleTableEntit
         icon: 'file_upload',
         isEnabled: () => true,
         onAction: () => this.importCalculatedField()
+      },
+      {
+        name: this.translate.instant('iot-hub.add-from-iot-hub'),
+        icon: 'hub',
+        isEnabled: () => true,
+        onAction: () => this.addAlarmRuleFromIotHub()
       }
     ];
 
@@ -331,6 +340,14 @@ export class AlarmRulesTableConfig extends EntityTableConfig<AlarmRuleTableEntit
   private exportAlarmRule($event: Event, calculatedField: AlarmRuleTableEntity): void {
     $event?.stopPropagation();
     this.importExportService.exportCalculatedField(calculatedField.id.id);
+  }
+
+  private addAlarmRuleFromIotHub(): void {
+    this.iotHubActions.addItem(ItemType.ALARM_RULE, { entityId: this.entityId }).subscribe(result => {
+      if (result?.descriptor) {
+        this.updateData();
+      }
+    });
   }
 
   private importCalculatedField(): void {

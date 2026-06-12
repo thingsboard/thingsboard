@@ -37,6 +37,7 @@ import { DatePipe } from '@angular/common';
 import { AlarmRulesTableConfig } from "@home/components/alarm-rules/alarm-rules-table-config";
 import { UtilsService } from "@core/services/utils.service";
 import { ActivatedRoute, Router } from "@angular/router";
+import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
 
 @Component({
     selector: 'tb-alarm-rules-table',
@@ -71,7 +72,8 @@ export class AlarmRulesTableComponent {
               private utilsService: UtilsService,
               private destroyRef: DestroyRef,
               private route: ActivatedRoute,
-              private router: Router
+              private router: Router,
+              private iotHubActions: IotHubActionsService
   ) {
     this.pageMode = !!this.route.snapshot.data.isPage;
     effect(() => {
@@ -91,6 +93,7 @@ export class AlarmRulesTableComponent {
           this.entityDebugSettingsService,
           this.utilsService,
           this.router,
+          this.iotHubActions,
           this.pageMode,
         );
         this.cd.markForCheck();
