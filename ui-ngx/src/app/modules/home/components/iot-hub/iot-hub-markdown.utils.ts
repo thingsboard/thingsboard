@@ -54,7 +54,7 @@ export function resolveDocLinkPlaceholders(
 function buildDocLinkButton(url: string, text: string, icon: string): string {
   const safeUrl = escapeHtmlAttr(url);
   const safeText = escapeHtml(text);
-  return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="mr-2" mat-stroked-button>` +
+  return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="mr-2 mb-2" mat-stroked-button>` +
     `<tb-icon matButtonIcon>${icon}</tb-icon><span>${safeText}</span></a>`;
 }
 
