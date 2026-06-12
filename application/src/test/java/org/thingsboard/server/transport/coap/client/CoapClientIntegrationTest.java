@@ -19,6 +19,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.awaitility.Awaitility;
 import org.eclipse.californium.core.CoapHandler;
 import org.eclipse.californium.core.CoapObserveRelation;
 import org.eclipse.californium.core.CoapResponse;
@@ -27,13 +28,23 @@ import org.eclipse.californium.core.coap.MediaTypeRegistry;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.query.AliasEntityId;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.SingleEntityFilter;
+import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.msg.session.FeatureType;
+import org.thingsboard.server.common.transport.limits.TransportRateLimitService;
+import org.thingsboard.server.common.transport.service.DefaultTransportService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.transport.coap.AbstractCoapIntegrationTest;
 import org.thingsboard.server.transport.coap.CoapTestCallback;
@@ -56,6 +67,10 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.common.data.query.EntityKeyType.CLIENT_ATTRIBUTE;
 import static org.thingsboard.server.common.data.query.EntityKeyType.SHARED_ATTRIBUTE;
@@ -66,6 +81,11 @@ public class CoapClientIntegrationTest extends AbstractCoapIntegrationTest {
 
     private static final List<String> EXPECTED_KEYS = Arrays.asList("key1", "key2", "key3", "key4", "key5");
     private static final String DEVICE_RESPONSE = "{\"value1\":\"A\",\"value2\":\"B\"}";
+
+    @Autowired
+    DefaultTransportService defaultTransportService;
+    @MockitoSpyBean
+    TransportRateLimitService rateLimitService;
 
     @Before
     public void beforeTest() throws Exception {
@@ -303,5 +323,45 @@ public class CoapClientIntegrationTest extends AbstractCoapIntegrationTest {
 
     private List<EntityKey> getEntityKeys(EntityKeyType scope) {
         return CoapClientIntegrationTest.EXPECTED_KEYS.stream().map(key -> new EntityKey(scope, key)).collect(Collectors.toList());
+    }
+
+    @Test
+    public void testCancelAttributeSubscriptionAfterTenantDeletion() throws Exception {
+        loginSysAdmin();
+        Tenant tenant = new Tenant();
+        tenant.setTitle("Mqtt Client Connection Test Tenant");
+        Tenant savedTenant = saveTenant(tenant);
+
+        User tenantAdmin = new User();
+        tenantAdmin.setAuthority(Authority.TENANT_ADMIN);
+        tenantAdmin.setTenantId(savedTenant.getTenantId());
+        tenantAdmin.setEmail("mqttTestClient@thingsboard.org");
+        createUserAndLogin(tenantAdmin, TENANT_ADMIN_PASSWORD);
+
+        savedDevice = createDevice(RandomStringUtils.randomAlphabetic(10), "default");
+        DeviceCredentials deviceCredentials =
+                doGet("/api/device/" + savedDevice.getId().getId().toString() + "/credentials", DeviceCredentials.class);
+        accessToken = deviceCredentials.getCredentialsId();
+
+        client = new CoapTestClient(accessToken, FeatureType.ATTRIBUTES);
+        CoapTestCallback callbackCoap = new CoapTestCallback();
+
+        client.getObserveRelation(callbackCoap);
+        String awaitAlias = "await subscribe to attributes updates";
+        await(awaitAlias)
+                .atMost(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .until(() -> CoAP.ResponseCode.CONTENT.equals(callbackCoap.getResponseCode()) &&
+                        callbackCoap.getObserve() != null && 0 == callbackCoap.getObserve());
+
+        loginSysAdmin();
+        Mockito.clearInvocations(rateLimitService);
+        deleteTenant(savedTenant.getId());
+
+        Awaitility.await("awaiting defaultTransportService.sessions is empty")
+                .pollInterval(10, TimeUnit.MILLISECONDS)
+                .atMost(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .until(() -> defaultTransportService.sessions.isEmpty());
+
+        verify(rateLimitService, never()).checkLimits(Mockito.any(), Mockito.any(), Mockito.any(), anyInt(), anyBoolean());
     }
 }

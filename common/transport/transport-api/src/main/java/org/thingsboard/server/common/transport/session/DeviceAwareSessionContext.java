@@ -47,6 +47,9 @@ public abstract class DeviceAwareSessionContext implements SessionContext {
     @Getter
     @Setter
     protected volatile TransportProtos.SessionInfoProto sessionInfo;
+    @Getter
+    @Setter
+    protected volatile SessionCloseReason sessionCloseReason;
 
     @Setter
     private volatile boolean connected;
@@ -82,6 +85,10 @@ public abstract class DeviceAwareSessionContext implements SessionContext {
 
     public void setDisconnected() {
         this.connected = false;
+    }
+
+    public boolean shouldNotifyCore() {
+        return SessionCloseReason.shouldNotifyCore(sessionCloseReason);
     }
 
     public boolean isSparkplug() {
