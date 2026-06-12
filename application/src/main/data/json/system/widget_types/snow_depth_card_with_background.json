@@ -1,7 +1,7 @@
 {
   "fqn": "snow_depth_card_with_background",
   "name": "Snow depth card with background",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/snow_depth_card_with_background_system_widget_image.png",
   "description": "Displays the latest snow depth telemetry in a scalable rectangle card with the background image.",
   "descriptor": {

@@ -1,7 +1,7 @@
 {
   "fqn": "individual_allergy_index_card",
   "name": "Individual allergy index (IAI) card",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/IAI-value-card.svg",
   "description": "Indicates the concentration of airborne allergens, including pollen and mold spores, which can trigger allergic reactions in sensitive individuals.",
   "descriptor": {

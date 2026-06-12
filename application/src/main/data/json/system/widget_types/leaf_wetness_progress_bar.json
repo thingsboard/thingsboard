@@ -1,7 +1,7 @@
 {
   "fqn": "leaf_wetness_progress_bar",
   "name": "Leaf wetness progress bar",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/leaf_wetness_progress_bar_system_widget_image.png",
   "description": "Displays leaf wetness reading as a horizontal progress bar. Allows to configure value range, bar colors, and other settings.",
   "descriptor": {

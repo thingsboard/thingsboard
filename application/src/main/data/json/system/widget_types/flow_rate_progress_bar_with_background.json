@@ -1,7 +1,7 @@
 {
   "fqn": "flow_rate_progress_bar_with_background",
   "name": "Flow rate progress bar with background",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/flow_rate_progress_bar_with_background.svg",
   "description": "Displays flow rate reading as a horizontal progress bar with background. Allows to configure value range, bar colors, and other settings.",
   "descriptor": {
