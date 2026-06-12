@@ -47,4 +47,5 @@ public class SystemParams {
     TrendzSettings trendzSettings;
     String nullsOrderStrategy;
     boolean edqsEnabled;
+    String iotHubBaseUrl;
 }

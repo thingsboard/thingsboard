@@ -1,0 +1,337 @@
+<!--
+
+    Copyright © 2016-2026 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-iot-hub-home">
+  <!-- Soft colored glows (left + right) tinted with the active type's color.
+       Sit on the page background, behind the hero/cards content. -->
+  <div class="tb-iot-hub-blob tb-iot-hub-blob-left"
+       [style.color]="activeHeroType.color"></div>
+  <div class="tb-iot-hub-blob tb-iot-hub-blob-right"
+       [style.color]="activeHeroType.color"></div>
+
+  <!-- Installed Items button -->
+  @if (installedItemsCount > 0) {
+    <button mat-stroked-button color="primary" class="tb-iot-hub-installed-btn" (click)="navigateToInstalledItems()">
+      <mat-icon>inventory_2</mat-icon>
+      {{ 'iot-hub.installed-items' | translate }}: {{ installedItemsCount }}
+    </button>
+  }
+
+  <!-- Hero section -->
+  <div class="tb-iot-hub-hero">
+    <!-- Floating icons cluster (one composite SVG per type, fade between types) -->
+    @for (heroType of heroTypes; track heroType.type) {
+      <div class="tb-iot-hub-hero-icons"
+           [class.active]="heroIconsReady && activeHeroType === heroType">
+        <img class="tb-iot-hub-hero-cluster" [src]="heroType.icon" alt="">
+      </div>
+    }
+
+    <div class="tb-iot-hub-hero-content">
+      <h1 class="tb-iot-hub-hero-title">{{ 'iot-hub.home-title' | translate }}</h1>
+      <div class="tb-iot-hub-hero-subtitle">
+        <span class="tb-iot-hub-hero-prefix">{{ 'iot-hub.home-subtitle-prefix' | translate }}</span>
+        @for (ht of heroTypes; track ht.type; let i = $index; let last = $last) {
+          <span class="tb-iot-hub-hero-keyword" role="button" tabindex="0"
+                [class.active]="activeHeroType === ht"
+                [style.--keyword-color]="ht.color"
+                (mouseenter)="onHeroTypeHover(ht)"
+                (mouseleave)="onHeroTypeLeave()"
+                (click)="navigateToBrowse(ht.type)"
+                (keyup.enter)="navigateToBrowse(ht.type)">@if (last) {& }{{ ht.labelKey | translate }}@if (!last) {,}</span>
+          @if (i === 2) {
+            <span class="tb-iot-hub-hero-subtitle-break"></span>
+          }
+        }
+      </div>
+      <mat-form-field appearance="outline" class="tb-iot-hub-hero-search" subscriptSizing="dynamic">
+        <input matInput #searchInput
+               [placeholder]="'iot-hub.search-placeholder' | translate"
+               [(ngModel)]="searchText"
+               [matAutocomplete]="searchAuto"
+               (input)="onSearchInput()"
+               (focus)="onSearchFocus()"
+               (keyup.enter)="onSearch()">
+        @if (searchText) {
+          <button matSuffix mat-icon-button (click)="clearSearch()">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+        <button matSuffix mat-icon-button (click)="$event.stopPropagation(); onSearch()">
+          <mat-icon>search</mat-icon>
+        </button>
+      </mat-form-field>
+      <mat-autocomplete #searchAuto="matAutocomplete"
+                         class="tb-search-popup-panel"
+                         [displayWith]="searchDisplayFn"
+                         [hideSingleSelectionIndicator]="true">
+        @if (searchLoading) {
+          <mat-option [disabled]="true" class="tb-search-popup-loading">
+            <mat-spinner diameter="24"></mat-spinner>
+          </mat-option>
+        } @else if (searchResults.length === 0 && searchLoaded) {
+          <mat-option [disabled]="true" class="tb-search-popup-no-results">
+            <div class="tb-search-popup-no-results-content">
+              <mat-icon>search_off</mat-icon>
+              @if (searchText?.trim()) {
+                <span>{{ 'iot-hub.no-search-results' | translate:{ search: searchText.trim() } }}</span>
+              } @else {
+                <span>{{ 'iot-hub.no-items-available' | translate }}</span>
+              }
+            </div>
+          </mat-option>
+        } @else {
+          @for (group of searchResultGroups; track group.type) {
+            <mat-optgroup [label]="getSearchGroupLabel(group.type)">
+              @for (item of group.items; track item.id) {
+                <mat-option [value]="searchText" (click)="openItemDetail(item)">
+                  @if (isCompactType(item.type)) {
+                    <div class="tb-search-popup-icon-square" [style.background]="item.color || '#048ad3'">
+                      <tb-icon class="tb-search-popup-icon-inner">{{ getCompactIcon(item) }}</tb-icon>
+                    </div>
+                  } @else {
+                    <div class="tb-search-popup-thumbnail">
+                      @if (getItemImage(item); as imgUrl) {
+                        <img [src]="imgUrl" alt="">
+                      } @else {
+                        <tb-icon class="tb-search-popup-thumb-placeholder">{{ getItemTypeIcon(item.type) }}</tb-icon>
+                      }
+                    </div>
+                  }
+                  <div class="tb-search-popup-text">
+                    <span class="tb-search-popup-name">{{ item.name }}</span>
+                    <span class="tb-search-popup-author">
+                      <mat-icon>person</mat-icon>
+                      {{ item.creatorDisplayName }}
+                    </span>
+                  </div>
+                </mat-option>
+              }
+            </mat-optgroup>
+          }
+        }
+        <div class="tb-search-popup-footer" role="button" tabindex="0"
+             (click)="seeAllResults()" (keyup.enter)="seeAllResults()">
+          {{ 'iot-hub.see-all-results' | translate }}
+        </div>
+      </mat-autocomplete>
+    </div>
+  </div>
+
+  <!-- Main content -->
+  <div class="flex flex-col gap-12 px-10 pb-16">
+    <!-- Category cards -->
+    <div class="tb-iot-hub-categories">
+      @for (card of categoryCards; track card.type) {
+        <div class="tb-iot-hub-category-card" role="button" tabindex="0"
+             [ngClass]="card.cssClass"
+             (click)="navigateToBrowse(card.type)"
+             (keyup.enter)="navigateToBrowse(card.type)">
+          <span class="tb-iot-hub-category-title">
+            <span class="tb-iot-hub-category-title-text">{{ card.titleKey | translate }}</span>
+            <mat-icon class="tb-iot-hub-category-chevron">chevron_right</mat-icon>
+          </span>
+          <div class="tb-iot-hub-category-img">
+            <img [src]="card.image" alt="">
+          </div>
+        </div>
+      }
+    </div>
+
+    @if (hasError) {
+      <div class="tb-iot-hub-empty-state flex flex-col items-center py-20 text-center">
+        <div class="tb-no-service-bg"></div>
+        <h3>{{ 'iot-hub.network-server-unavailable' | translate }}</h3>
+        <p>{{ 'iot-hub.network-server-unavailable-text' | translate }}</p>
+        <button mat-flat-button color="primary" (click)="retryLoadPopularItems()">
+          {{ 'iot-hub.try-again' | translate }}
+        </button>
+        @if (isLoading) {
+          <div class="absolute inset-0 backdrop-grayscale" style="background: rgba(255, 255, 255, 0.72)">
+            <div class="flex justify-center py-20">
+              <mat-spinner diameter="64"></mat-spinner>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    @if (!isLoading && !hasError) {
+      @if (hasAnyPopularItems()) {
+        <div class="tb-iot-hub-divider tb-iot-hub-divider-bleed"></div>
+        <h2 class="tb-iot-hub-most-popular-title">{{ 'iot-hub.most-popular-in-iot-hub' | translate }}</h2>
+      }
+
+      <!-- Devices -->
+      @if (popularDevices.length) {
+        <div class="tb-iot-hub-section">
+          <button mat-button class="tb-iot-hub-section-header" (click)="navigateToBrowse(ItemType.DEVICE)">
+            {{ 'item.type-device-plural' | translate }}
+            <mat-icon iconPositionEnd>chevron_right</mat-icon>
+          </button>
+          <div class="tb-iot-hub-big-cards-row">
+            @for (item of popularDevices; track item.id) {
+              <tb-iot-hub-item-card
+                [item]="item"
+                [installedItemsCount]="findInstalledItemsCount(item)"
+                [showTypeChip]="false"
+                [showCreator]="true"
+                (cardClick)="openItemDetail($event)"
+                (creatorClick)="navigateToCreator($event)"
+                (installClick)="installItem($event)">
+              </tb-iot-hub-item-card>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Solution Templates -->
+      @if (popularSolutionTemplates.length) {
+        <div class="tb-iot-hub-section">
+          <button mat-button class="tb-iot-hub-section-header" (click)="navigateToBrowse(ItemType.SOLUTION_TEMPLATE)">
+            {{ 'item.type-solution-template-plural' | translate }}
+            <mat-icon iconPositionEnd>chevron_right</mat-icon>
+          </button>
+          <div class="tb-iot-hub-big-cards-row">
+            @for (item of popularSolutionTemplates; track item.id) {
+              <tb-iot-hub-item-card
+                [item]="item"
+                [installedItem]="getInstalledSolutionTemplate(item)"
+                [showTypeChip]="false"
+                [showCreator]="true"
+                (cardClick)="openItemDetail($event)"
+                (creatorClick)="navigateToCreator($event)"
+                (installClick)="installItem($event)"
+                (updateClick)="updateItem($event)"
+                (deleteClick)="deleteInstalledItem($event)">
+              </tb-iot-hub-item-card>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Widgets -->
+      @if (popularWidgets.length) {
+        <div class="tb-iot-hub-section">
+          <button mat-button class="tb-iot-hub-section-header" (click)="navigateToBrowse(ItemType.WIDGET)">
+            {{ 'item.type-widget-plural' | translate }}
+            <mat-icon iconPositionEnd>chevron_right</mat-icon>
+          </button>
+          <div class="tb-iot-hub-big-cards-row">
+            @for (item of popularWidgets; track item.id) {
+              <tb-iot-hub-item-card
+                [item]="item"
+                [installedItem]="getInstalledWidget(item)"
+                [showTypeChip]="false"
+                [showCreator]="true"
+                (cardClick)="openItemDetail($event)"
+                (creatorClick)="navigateToCreator($event)"
+                (installClick)="installItem($event)"
+                (updateClick)="updateItem($event)"
+                (deleteClick)="deleteInstalledItem($event)">
+              </tb-iot-hub-item-card>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Calculated Fields -->
+      @if (popularCalcFields.length) {
+        <div class="tb-iot-hub-section">
+          <button mat-button class="tb-iot-hub-section-header" (click)="navigateToBrowse(ItemType.CALCULATED_FIELD)">
+            {{ 'item.type-calculated-field-plural' | translate }}
+            <mat-icon iconPositionEnd>chevron_right</mat-icon>
+          </button>
+          <div class="tb-iot-hub-compact-cards-grid">
+            @for (item of popularCalcFields; track item.id) {
+              <tb-iot-hub-item-card
+                [item]="item"
+                [showTypeChip]="false"
+                [showCreator]="true"
+                (cardClick)="openItemDetail($event)"
+                (creatorClick)="navigateToCreator($event)"
+                (installClick)="installItem($event)">
+              </tb-iot-hub-item-card>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Alarm Rules -->
+      @if (popularAlarmRules.length) {
+        <div class="tb-iot-hub-section">
+          <button mat-button class="tb-iot-hub-section-header" (click)="navigateToBrowse(ItemType.ALARM_RULE)">
+            {{ 'item.type-alarm-rule-plural' | translate }}
+            <mat-icon iconPositionEnd>chevron_right</mat-icon>
+          </button>
+          <div class="tb-iot-hub-compact-cards-grid">
+            @for (item of popularAlarmRules; track item.id) {
+              <tb-iot-hub-item-card
+                [item]="item"
+                [showTypeChip]="false"
+                [showCreator]="true"
+                (cardClick)="openItemDetail($event)"
+                (creatorClick)="navigateToCreator($event)"
+                (installClick)="installItem($event)">
+              </tb-iot-hub-item-card>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Rule Chains -->
+      @if (popularRuleChains.length) {
+        <div class="tb-iot-hub-section">
+          <button mat-button class="tb-iot-hub-section-header" (click)="navigateToBrowse(ItemType.RULE_CHAIN)">
+            {{ 'item.type-rule-chain-plural' | translate }}
+            <mat-icon iconPositionEnd>chevron_right</mat-icon>
+          </button>
+          <div class="tb-iot-hub-compact-cards-grid">
+            @for (item of popularRuleChains; track item.id) {
+              <tb-iot-hub-item-card
+                [item]="item"
+                [showTypeChip]="false"
+                [showCreator]="true"
+                (cardClick)="openItemDetail($event)"
+                (creatorClick)="navigateToCreator($event)"
+                (installClick)="installItem($event)">
+              </tb-iot-hub-item-card>
+            }
+          </div>
+        </div>
+      }
+    }
+
+    @if (isLoading && !hasError) {
+      <div class="flex justify-center py-20">
+        <mat-spinner diameter="40"></mat-spinner>
+      </div>
+    }
+  </div>
+
+  <!-- Become a Creator -->
+  @if (!isLoading && !hasError) {
+    <div class="tb-iot-hub-divider"></div>
+    <div class="tb-iot-hub-become-creator">
+      <h2>{{ 'iot-hub.become-a-creator' | translate }}</h2>
+      <p>{{ 'iot-hub.become-creator-text' | translate }}</p>
+      <button mat-stroked-button color="primary" (click)="openSignup()">
+        {{ 'iot-hub.contribute' | translate }}
+      </button>
+    </div>
+  }
+</div>

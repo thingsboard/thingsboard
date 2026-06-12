@@ -1,0 +1,178 @@
+/**
+ * Copyright © 2016-2026 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+@import "../../../../../scss/constants";
+
+:host {
+  display: block;
+  padding: 16px;
+}
+
+.tb-iot-hub-items-page {
+  background: white;
+  border-radius: 8px;
+  padding: 40px 40px 48px;
+}
+
+.tb-iot-hub-back-btn {
+  margin-bottom: 40px;
+}
+
+.tb-iot-hub-items-title {
+  font-size: 36px;
+  font-weight: 500;
+  line-height: 48px;
+  color: rgba(0, 0, 0, 0.87);
+  margin: 0 0 12px;
+}
+
+// Description — Design: 16px Regular, line-height 24, tracking 0.15, rgba(0,0,0,0.76)
+.tb-iot-hub-items-desc {
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  letter-spacing: 0.15px;
+  color: rgba(0, 0, 0, 0.76);
+  margin: 0 0 24px;
+  max-width: 800px;
+}
+
+.tb-iot-hub-items-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.tb-iot-hub-items-installed-btn {
+  &.mat-primary {
+    --mat-button-outlined-outline-color: #{$tb-primary-color};
+  }
+}
+
+.tb-iot-hub-items-hero-image {
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-start;
+
+  img {
+    max-height: 276px;
+    object-fit: contain;
+  }
+}
+
+// Browse component — stretch to fill, ignore parent padding
+tb-iot-hub-browse {
+  margin-left: -40px;
+  margin-right: -40px;
+}
+
+// Footer divider
+.tb-iot-hub-items-divider {
+  height: 1px;
+  background: rgba(0, 0, 0, 0.12);
+  margin-top: 48px;
+  margin-left: -40px;
+  margin-right: -40px;
+}
+
+// Become a Creator footer
+.tb-iot-hub-items-footer {
+  text-align: center;
+  padding: 40px 0 0;
+
+  h2 {
+    font-size: 24px;
+    font-weight: 500;
+    line-height: 32px;
+    color: rgba(0, 0, 0, 0.87);
+    margin: 0 0 8px;
+  }
+
+  p {
+    font-size: 14px;
+    line-height: 20px;
+    color: rgba(0, 0, 0, 0.54);
+    margin: 0 0 32px;
+  }
+}
+
+// Responsive
+@media #{$mat-lt-lg} {
+  .tb-iot-hub-items-page {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  .tb-iot-hub-items-divider {
+    margin-left: -24px;
+    margin-right: -24px;
+  }
+
+  tb-iot-hub-browse {
+    margin-left: -24px;
+    margin-right: -24px;
+  }
+
+  .tb-iot-hub-items-title {
+    font-size: 28px;
+    line-height: 36px;
+  }
+
+  .tb-iot-hub-items-desc {
+    font-size: 14px;
+    line-height: 20px;
+  }
+}
+
+@media #{$mat-lt-xmd} {
+  .tb-iot-hub-items-hero {
+    gap: 24px;
+  }
+
+  .tb-iot-hub-items-hero-image {
+    min-width: 0;
+    flex: 1;
+
+    img {
+      min-width: 0;
+      margin-left: auto;
+      margin-top: auto;
+    }
+  }
+}
+
+@media #{$mat-lt-md} {
+  .tb-iot-hub-items-hero-image {
+    display: none;
+  }
+}
+
+@media #{$mat-xs} {
+  .tb-iot-hub-items-page {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .tb-iot-hub-items-divider {
+    margin-left: -16px;
+    margin-right: -16px;
+  }
+
+  tb-iot-hub-browse {
+    margin-left: -16px;
+    margin-right: -16px;
+  }
+}

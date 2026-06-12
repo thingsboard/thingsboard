@@ -1,0 +1,100 @@
+<!--
+
+    Copyright © 2016-2026 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-installed-items-page flex h-full flex-col">
+  <!-- Back link -->
+  <button mat-button color="primary" class="tb-installed-back-btn self-start" (click)="navigateToMarketplace()">
+    <mat-icon>chevron_left</mat-icon>
+    {{ 'iot-hub.back-to-iot-hub' | translate }}
+  </button>
+
+  <!-- Header -->
+  <div class="tb-installed-header">
+    <h1 class="tb-installed-title">{{ 'iot-hub.installed-items' | translate }}</h1>
+    @if (!updatesChecked) {
+      <button mat-flat-button color="primary" (click)="checkForUpdates()" [disabled]="isCheckingUpdates">
+        @if (isCheckingUpdates) {
+          <mat-spinner diameter="18"></mat-spinner>
+        } @else {
+          <mat-icon>update</mat-icon>
+        }
+        {{ 'iot-hub.check-for-updates' | translate }}
+      </button>
+    }
+  </div>
+
+  <!-- Filter + chips row -->
+  <div class="tb-installed-filter-row">
+    <button mat-stroked-button color="primary" class="tb-installed-filter-btn" [matMenuTriggerFor]="filterMenu">
+      <mat-icon>filter_list</mat-icon>
+      {{ 'iot-hub.filter' | translate }}
+    </button>
+    <mat-menu #filterMenu="matMenu" class="tb-installed-filter-menu" xPosition="after">
+      @for (type of allItemTypes; track type; let last = $last) {
+        <div mat-menu-item class="tb-installed-filter-item" role="menuitemcheckbox" tabindex="0"
+             [attr.aria-checked]="isTypeFilterActive(type)"
+             (click)="$event.stopPropagation(); toggleTypeFilter(type)"
+             (keyup.enter)="toggleTypeFilter(type)">
+          <mat-checkbox [checked]="isTypeFilterActive(type)">
+            {{ getItemTypeLabel(type) }}
+          </mat-checkbox>
+        </div>
+        @if (!last) {
+          <mat-divider></mat-divider>
+        }
+      }
+    </mat-menu>
+    @if (hasActiveFilters()) {
+      <mat-chip-set class="tb-installed-filter-chips">
+        @for (type of activeTypeFilters; track type) {
+          <mat-chip (removed)="removeTypeFilter(type)">
+            {{ getItemTypeLabel(type) }}
+            <mat-icon matChipRemove>close</mat-icon>
+          </mat-chip>
+        }
+      </mat-chip-set>
+      <button class="tb-installed-clear-btn" (click)="clearAllFilters()">
+        {{ 'iot-hub.clear-all' | translate }}
+      </button>
+    }
+  </div>
+
+  <!-- Search row -->
+  <div class="tb-installed-search-row">
+    <div class="tb-installed-search flex flex-1 items-center">
+      <input class="tb-installed-search-input"
+             [placeholder]="'iot-hub.search' | translate"
+             [value]="textSearch"
+             (input)="onSearchChange($any($event.target).value)">
+      @if (textSearch) {
+        <button mat-icon-button class="tb-installed-search-action" (click)="onSearchChange('')">
+          <mat-icon>close</mat-icon>
+        </button>
+      } @else {
+        <span class="tb-installed-search-action tb-installed-search-action-static" aria-hidden="true">
+          <mat-icon>search</mat-icon>
+        </span>
+      }
+    </div>
+  </div>
+
+  <tb-iot-hub-installed-items-table
+      [textSearch]="appliedTextSearch"
+      [typeFilters]="typeFilters"
+      (clearFilters)="clearAllFilters()">
+  </tb-iot-hub-installed-items-table>
+</div>

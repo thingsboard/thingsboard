@@ -72,6 +72,8 @@ import { EntityAction } from '@home/models/entity/entity-component.models';
 import { CalculatedFieldComponent } from '@home/components/calculated-fields/calculated-field.component';
 import { Router } from '@angular/router';
 import { CalculatedFieldsTabsComponent } from '@home/pages/calculated-fields/calculated-fields-tabs.component';
+import { ItemType } from '@shared/models/iot-hub/iot-hub-item.models';
+import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
 
 export type CalculatedFieldsTableEntity = CalculatedField | CalculatedFieldInfo;
 
@@ -101,6 +103,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
               private entityDebugSettingsService: EntityDebugSettingsService,
               private utilsService: UtilsService,
               private router: Router,
+              private iotHubActions: IotHubActionsService,
               public pageMode = false,
   ) {
     super();
@@ -143,6 +146,12 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
         icon: 'file_upload',
         isEnabled: () => true,
         onAction: () => this.importCalculatedField()
+      },
+      {
+        name: this.translate.instant('iot-hub.add-from-iot-hub'),
+        icon: 'hub',
+        isEnabled: () => true,
+        onAction: () => this.addCalculatedFieldFromIotHub()
       }
     ];
 
@@ -328,6 +337,14 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
           this.updateData();
         }
       });
+  }
+
+  private addCalculatedFieldFromIotHub(): void {
+    this.iotHubActions.addItem(ItemType.CALCULATED_FIELD, { entityId: this.entityId }).subscribe(result => {
+      if (result?.descriptor) {
+        this.updateData();
+      }
+    });
   }
 
   private importCalculatedField(): void {
