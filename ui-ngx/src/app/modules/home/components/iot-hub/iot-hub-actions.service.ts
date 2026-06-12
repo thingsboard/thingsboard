@@ -129,34 +129,24 @@ export class IotHubActionsService {
   }
 
   installDevice(item: MpItemVersionView): Observable<string> {
-    return this.fetchZipData(item).pipe(
-      mergeMap((zipData: ArrayBuffer) => this.openDeviceInstallDialog(item, zipData))
-    );
+    return this.openDeviceInstallDialog(item);
   }
 
   reviewDevice(item: MpItemVersionView, deviceDescriptor: DeviceInstalledItemDescriptor): Observable<any> {
-    return this.fetchZipData(item).pipe(
-      mergeMap((zipData: ArrayBuffer) => this.openDeviceInstallDialog(item, zipData, {
+    return this.openDeviceInstallDialog(item, {
         reviewMode: true,
         selectedInstallMethod: deviceDescriptor.selectedInstallMethod,
         installState: deviceDescriptor.installState
-      }))
-    );
+      });
   }
 
-  private fetchZipData(item: MpItemVersionView): Observable<ArrayBuffer> {
-    return this.iotHubApiService.getVersionFileData(item.id as string, { ignoreLoading: true }).pipe(
-      mergeMap((blob: Blob) => blob.arrayBuffer())
-    );
-  }
-
-  private openDeviceInstallDialog(item: MpItemVersionView, zipData: ArrayBuffer,
+  private openDeviceInstallDialog(item: MpItemVersionView,
                                   options?: { reviewMode?: boolean; selectedInstallMethod?: string; installState?: any }): Observable<any> {
-    return this.dialog.open(TbDeviceInstallDialogComponent, {
+    return this.dialog.open<TbDeviceInstallDialogComponent, DeviceInstallDialogData>(TbDeviceInstallDialogComponent, {
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog-lt-md'],
       disableClose: true,
       autoFocus: false,
-      data: { item, zipData, ...options } as DeviceInstallDialogData
+      data: { item, ...options }
     }).afterClosed();
   }
 }

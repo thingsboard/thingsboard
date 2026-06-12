@@ -53,10 +53,10 @@ import {
   InstallStepType,
   stepTypeAliasMap
 } from '@shared/models/iot-hub/device-package.models';
+import { mergeMap } from 'rxjs/operators';
 
 export interface DeviceInstallDialogData {
   item: MpItemVersionView;
-  zipData: ArrayBuffer;
   reviewMode?: boolean;
   selectedInstallMethod?: string;
   installState?: Record<string, any>;
@@ -138,8 +138,11 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
 
   async ngOnInit(): Promise<void> {
     try {
+      const zipData = await firstValueFrom(this.iotHubApiService.getVersionFileData(this.data.item.id, { ignoreLoading: true }).pipe(
+        mergeMap((blob: Blob) => blob.arrayBuffer())
+      ));
       const JSZip = (await import('jszip')).default;
-      const zip = await JSZip.loadAsync(this.data.zipData);
+      const zip = await JSZip.loadAsync(zipData);
       const imageExtensions = new Set(['png', 'jpg', 'jpeg', 'gif', 'svg']);
       for (const [path, entry] of Object.entries(zip.files) as [string, any][]) {
         if (!entry.dir) {
