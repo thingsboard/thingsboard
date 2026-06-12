@@ -33,7 +33,8 @@ import {
 } from '@shared/models/alias.models';
 import { MatDialog } from '@angular/material/dialog';
 import { ImportDialogComponent, ImportDialogData } from '@shared/import-export/import-dialog.component';
-import { forkJoin, Observable, of, Subject } from 'rxjs';
+import { forkJoin, Observable, of, Subject, throwError } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 import { catchError, map, mergeMap, switchMap, take, tap } from 'rxjs/operators';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { EntityService } from '@core/http/entity.service';
@@ -750,7 +751,7 @@ export class ImportExportService {
               type: 'error'}));
           throw new Error('Invalid device profile file');
         } else {
-          return this.checkIfRuleChainExist(deviceProfile).pipe(
+          return this.clearMissingProfileRuleChains(deviceProfile).pipe(
             mergeMap(profile => this.deviceProfileService.saveDeviceProfile(this.prepareImport(profile)))
           );
         }
@@ -779,30 +780,45 @@ export class ImportExportService {
               type: 'error'}));
           throw new Error('Invalid asset profile file');
         } else {
-          return this.checkIfRuleChainExist(assetProfile).pipe(
+          return this.clearMissingProfileRuleChains(assetProfile).pipe(
             mergeMap(profile => this.assetProfileService.saveAssetProfile(this.prepareImport(profile)))
-          )
+          );
         }
       }),
       catchError(() => of(null))
     );
   }
 
-  private checkIfRuleChainExist<T extends {defaultRuleChainId?: RuleChainId}>(profile: T) {
-    if (!profile.defaultRuleChainId?.id) {
+  private clearMissingProfileRuleChains<T extends { defaultRuleChainId?: RuleChainId; defaultEdgeRuleChainId?: RuleChainId }>(profile: T): Observable<T> {
+    const ruleChainFields: Array<'defaultRuleChainId' | 'defaultEdgeRuleChainId'> = ['defaultRuleChainId', 'defaultEdgeRuleChainId'];
+    const checks = ruleChainFields
+      .filter(field => profile[field]?.id)
+      .map(field => this.ruleChainExists(profile[field].id).pipe(
+        map(exists => ({field, exists}))
+      ));
+    if (!checks.length) {
       return of(profile);
     }
-    return this.ruleChainService.getRuleChain(profile.defaultRuleChainId.id,
-      {ignoreErrors: true, ignoreLoading: true}).pipe(
-      map(() => profile),
-      catchError(() => {
+    return forkJoin(checks).pipe(
+      map(results => {
+        const missingFields = results.filter(result => !result.exists).map(result => result.field);
+        if (!missingFields.length) {
+          return profile;
+        }
         this.store.dispatch(new ActionNotificationShow(
-          {message: this.translate.instant('rulechain.rulechain-not-found-error'),
+          {message: this.translate.instant('rulechain.rulechain-not-found-warning'),
             type: 'warn'}));
         const cleanedProfile = deepClone(profile);
-        cleanedProfile.defaultRuleChainId = null;
-        return of(cleanedProfile);
+        missingFields.forEach(field => cleanedProfile[field] = null);
+        return cleanedProfile;
       })
+    );
+  }
+
+  private ruleChainExists(ruleChainId: string): Observable<boolean> {
+    return this.ruleChainService.getRuleChain(ruleChainId, {ignoreErrors: true, ignoreLoading: true}).pipe(
+      map(() => true),
+      catchError((err: HttpErrorResponse) => err?.status === 404 ? of(false) : throwError(() => err))
     );
   }
 
