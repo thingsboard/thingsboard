@@ -1,7 +1,7 @@
 {
   "fqn": "simple_uv_index_chart_card",
   "name": "Simple UV Index chart card",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/simple_uv_index_chart_card_system_widget_image.png",
   "description": "Displays historical UV index values as a simplified chart. Optionally may display the corresponding latest UV index value.",
   "descriptor": {

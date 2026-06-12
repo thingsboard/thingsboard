@@ -1,7 +1,7 @@
 {
   "fqn": "rotational_speed_card_with_background",
   "name": "Rotational speed card with background",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/rotational_speed_card_with_background.svg",
   "description": "Displays the latest rotational speed telemetry in a scalable rectangle card with the background image.",
   "descriptor": {

@@ -1,7 +1,7 @@
 {
   "fqn": "vibration_card_with_background",
   "name": "Vibration card with background",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/vibration_card_with_background_system_widget_image.png",
   "description": "Displays the latest vibration telemetry in a scalable rectangle card with the background image.",
   "descriptor": {

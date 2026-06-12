@@ -1,7 +1,7 @@
 {
   "fqn": "pm10_card",
   "name": "PM10 card",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/pm10_card_system_widget_image.png",
   "description": "Displays the latest fine and coarse particulate matter (PM10) telemetry in a scalable rectangle card.",
   "descriptor": {

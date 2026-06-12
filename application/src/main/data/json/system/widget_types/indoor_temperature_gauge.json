@@ -1,7 +1,7 @@
 {
   "fqn": "indoor_temperature_gauge",
   "name": "Indoor temperature gauge",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/indoor_temperature_gauge.svg",
   "description": "Indoor temperatue gauge.",
   "descriptor": {
