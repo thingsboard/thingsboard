@@ -93,6 +93,7 @@ public class DefaultIotHubService implements IotHubService {
     private static final String ITEM_TYPE_WIDGET = "widget";
     private static final String ITEM_TYPE_DASHBOARD = "dashboard";
     private static final String ITEM_TYPE_CALCULATED_FIELD = "calculated field";
+    private static final String ITEM_TYPE_ALARM_RULE = "alarm rule";
     private static final String ITEM_TYPE_RULE_CHAIN = "rule chain";
     private static final String ITEM_TYPE_DEVICE_PROFILE = "device profile";
 
@@ -225,7 +226,7 @@ public class DefaultIotHubService implements IotHubService {
         try {
             alarmRule = JacksonUtil.fromString(new String(fileData), CalculatedField.class, true);
         } catch (Exception e) {
-            throw new Exception("Failed to parse alarm rule data: " + (e.getCause() != null ? e.getCause().getMessage() : e.getMessage()), e);
+            throw parseFailure(ACTION_INSTALL, ITEM_TYPE_ALARM_RULE, e);
         }
         if (alarmRule.getType() != CalculatedFieldType.ALARM) {
             throw new Exception("Expected ALARM-type calculated field for ALARM_RULE install; got: " + alarmRule.getType());
@@ -496,7 +497,7 @@ public class DefaultIotHubService implements IotHubService {
         try {
             newCf = JacksonUtil.fromString(new String(fileData), CalculatedField.class, true);
         } catch (Exception e) {
-            throw new Exception("Failed to parse alarm rule data: " + (e.getCause() != null ? e.getCause().getMessage() : e.getMessage()), e);
+            throw parseFailure(ACTION_UPDATE, ITEM_TYPE_ALARM_RULE, e);
         }
         if (newCf.getType() != CalculatedFieldType.ALARM) {
             throw new Exception("Expected ALARM-type calculated field for ALARM_RULE update; got: " + newCf.getType());
