@@ -81,6 +81,17 @@ import java.util.UUID;
 @Slf4j
 public class DefaultIotHubService implements IotHubService {
 
+    private static final String ACTION_INSTALL = "install";
+    private static final String ACTION_UPDATE = "update";
+    private static final String SECTION_PACKAGE_DATA = "package data";
+    private static final String SECTION_RULE_CHAIN_METADATA = "rule chain metadata";
+
+    private static final String ITEM_TYPE_WIDGET = "widget";
+    private static final String ITEM_TYPE_DASHBOARD = "dashboard";
+    private static final String ITEM_TYPE_CALCULATED_FIELD = "calculated field";
+    private static final String ITEM_TYPE_RULE_CHAIN = "rule chain";
+    private static final String ITEM_TYPE_DEVICE_PROFILE = "device profile";
+
     private final IotHubRestClient iotHubRestClient;
     private final TbWidgetTypeService tbWidgetTypeService;
     private final TbDashboardService tbDashboardService;
@@ -155,7 +166,7 @@ public class DefaultIotHubService implements IotHubService {
         try {
             widgetTypeDetails = JacksonUtil.fromString(new String(fileData), WidgetTypeDetails.class, true);
         } catch (Exception e) {
-            throw new Exception("Failed to parse widget data: " + (e.getCause() != null ? e.getCause().getMessage() : e.getMessage()), e);
+            throw parseFailure(ACTION_INSTALL, ITEM_TYPE_WIDGET, e);
         }
         widgetTypeDetails.setId(null);
         widgetTypeDetails.setTenantId(tenantId);
@@ -171,7 +182,7 @@ public class DefaultIotHubService implements IotHubService {
         try {
             dashboard = JacksonUtil.fromString(new String(fileData), Dashboard.class, true);
         } catch (Exception e) {
-            throw new Exception("Failed to parse dashboard data: " + (e.getCause() != null ? e.getCause().getMessage() : e.getMessage()), e);
+            throw parseFailure(ACTION_INSTALL, ITEM_TYPE_DASHBOARD, e);
         }
         dashboard.setId(null);
         dashboard.setTenantId(tenantId);
@@ -187,7 +198,7 @@ public class DefaultIotHubService implements IotHubService {
         try {
             calculatedField = JacksonUtil.fromString(new String(fileData), CalculatedField.class, true);
         } catch (Exception e) {
-            throw new Exception("Failed to parse calculated field data: " + (e.getCause() != null ? e.getCause().getMessage() : e.getMessage()), e);
+            throw parseFailure(ACTION_INSTALL, ITEM_TYPE_CALCULATED_FIELD, e);
         }
         calculatedField.setId(null);
         calculatedField.setTenantId(tenantId);
@@ -211,14 +222,14 @@ public class DefaultIotHubService implements IotHubService {
         try {
             ruleChain = JacksonUtil.fromString(json.get("ruleChain").toString(), RuleChain.class, true);
         } catch (Exception e) {
-            throw new Exception("Failed to parse rule chain: " + (e.getCause() != null ? e.getCause().getMessage() : e.getMessage()), e);
+            throw parseFailure(ACTION_INSTALL, ITEM_TYPE_RULE_CHAIN, e);
         }
 
         RuleChainMetaData metadata;
         try {
             metadata = JacksonUtil.fromString(json.get("metadata").toString(), RuleChainMetaData.class, true);
         } catch (Exception e) {
-            throw new Exception("Failed to parse rule chain metadata: " + (e.getCause() != null ? e.getCause().getMessage() : e.getMessage()), e);
+            throw parseFailure(ACTION_INSTALL, ITEM_TYPE_RULE_CHAIN, SECTION_RULE_CHAIN_METADATA, e);
         }
 
         ruleChain.setId(null);
@@ -281,7 +292,7 @@ public class DefaultIotHubService implements IotHubService {
         try {
             deviceProfile = JacksonUtil.fromString(new String(fileData), DeviceProfile.class, true);
         } catch (Exception e) {
-            throw new Exception("Failed to parse device profile data: " + (e.getCause() != null ? e.getCause().getMessage() : e.getMessage()), e);
+            throw parseFailure(ACTION_INSTALL, ITEM_TYPE_DEVICE_PROFILE, e);
         }
         deviceProfile.setId(null);
         deviceProfile.setTenantId(tenantId);
@@ -405,7 +416,7 @@ public class DefaultIotHubService implements IotHubService {
         try {
             newWidgetType = JacksonUtil.fromString(new String(fileData), WidgetTypeDetails.class, true);
         } catch (Exception e) {
-            throw new Exception("Failed to parse widget data: " + (e.getCause() != null ? e.getCause().getMessage() : e.getMessage()), e);
+            throw parseFailure(ACTION_UPDATE, ITEM_TYPE_WIDGET, e);
         }
         WidgetTypeDetails existing = widgetTypeService.findWidgetTypeDetailsById(tenantId, descriptor.getWidgetTypeId());
         if (existing == null) {
@@ -421,7 +432,7 @@ public class DefaultIotHubService implements IotHubService {
         try {
             newDashboard = JacksonUtil.fromString(new String(fileData), Dashboard.class, true);
         } catch (Exception e) {
-            throw new Exception("Failed to parse dashboard data: " + (e.getCause() != null ? e.getCause().getMessage() : e.getMessage()), e);
+            throw parseFailure(ACTION_UPDATE, ITEM_TYPE_DASHBOARD, e);
         }
         Dashboard existing = dashboardService.findDashboardById(tenantId, descriptor.getDashboardId());
         if (existing == null) {
@@ -437,7 +448,7 @@ public class DefaultIotHubService implements IotHubService {
         try {
             newCf = JacksonUtil.fromString(new String(fileData), CalculatedField.class, true);
         } catch (Exception e) {
-            throw new Exception("Failed to parse calculated field data: " + (e.getCause() != null ? e.getCause().getMessage() : e.getMessage()), e);
+            throw parseFailure(ACTION_UPDATE, ITEM_TYPE_CALCULATED_FIELD, e);
         }
         CalculatedField existing = calculatedFieldService.findById(tenantId, descriptor.getCalculatedFieldId());
         if (existing == null) {
@@ -455,7 +466,7 @@ public class DefaultIotHubService implements IotHubService {
         try {
             metadata = JacksonUtil.fromString(json.get("metadata").toString(), RuleChainMetaData.class, true);
         } catch (Exception e) {
-            throw new Exception("Failed to parse rule chain metadata: " + (e.getCause() != null ? e.getCause().getMessage() : e.getMessage()), e);
+            throw parseFailure(ACTION_UPDATE, ITEM_TYPE_RULE_CHAIN, SECTION_RULE_CHAIN_METADATA, e);
         }
         RuleChain existing = ruleChainService.findRuleChainById(tenantId, descriptor.getRuleChainId());
         if (existing == null) {
@@ -465,7 +476,7 @@ public class DefaultIotHubService implements IotHubService {
         try {
             newRuleChain = JacksonUtil.fromString(json.get("ruleChain").toString(), RuleChain.class, true);
         } catch (Exception e) {
-            throw new Exception("Failed to parse rule chain: " + (e.getCause() != null ? e.getCause().getMessage() : e.getMessage()), e);
+            throw parseFailure(ACTION_UPDATE, ITEM_TYPE_RULE_CHAIN, e);
         }
         existing.setName(newRuleChain.getName());
         RuleChain savedRuleChain = ruleChainService.saveRuleChain(existing);
@@ -672,5 +683,14 @@ public class DefaultIotHubService implements IotHubService {
 
         iotHubInstalledItemService.deleteById(tenantId, installedItemId);
         log.info("[{}] Deleted installed IoT Hub item: {}", tenantId, installedItem.getItemName());
+    }
+
+    private static Exception parseFailure(String action, String itemTypeName, Exception cause) {
+        return parseFailure(action, itemTypeName, SECTION_PACKAGE_DATA, cause);
+    }
+
+    private static Exception parseFailure(String action, String itemTypeName, String section, Exception cause) {
+        return new Exception("Unable to " + action + " this " + itemTypeName + " — the " + section + " could not be parsed. " +
+                "The package may be corrupted or in an unexpected format; please contact the creator to have it re-published.", cause);
     }
 }
