@@ -61,6 +61,10 @@ public class ConstraintValidator {
         }
     }
 
+    public static <T> Set<ConstraintViolation<T>> getViolations(T data) {
+        return fieldsValidator.validate(data);
+    }
+
     public static String getErrorMessage(Collection<ConstraintViolation<Object>> constraintsViolations) {
         return constraintsViolations.stream()
                 .map(ConstraintValidator::getErrorMessage)
