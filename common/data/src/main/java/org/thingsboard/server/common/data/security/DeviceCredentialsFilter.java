@@ -16,7 +16,7 @@
 package org.thingsboard.server.common.data.security;
 
 /**
- * TODO: This is a temporary name. DeviceCredentialsId is resereved in dao layer
+ * TODO: This is a temporary name. DeviceCredentialsId is reserved in dao layer
  */
 public interface DeviceCredentialsFilter {
 
