@@ -21,6 +21,7 @@ import {
   ElementRef,
   forwardRef,
   Input,
+  NgZone,
   OnChanges,
   OnInit,
   QueryList,
@@ -133,6 +134,7 @@ export class StringPatternAutocompleteComponent implements ControlValueAccessor,
               private translate: TranslateService,
               private viewContainerRef: ViewContainerRef,
               private destroyRef: DestroyRef,
+              private ngZone: NgZone,
               private cd: ChangeDetectorRef) {
   }
 
@@ -216,16 +218,18 @@ export class StringPatternAutocompleteComponent implements ControlValueAccessor,
     const overlay = this.highlightTextRef?.nativeElement as HTMLElement;
     let lastLeft = -1;
     let lastTop = -1;
-    const tick = () => {
-      if (overlay && (input.scrollLeft !== lastLeft || input.scrollTop !== lastTop)) {
-        lastLeft = input.scrollLeft;
-        lastTop = input.scrollTop;
-        overlay.scrollLeft = lastLeft;
-        overlay.scrollTop = lastTop;
-      }
+    this.ngZone.runOutsideAngular(() => {
+      const tick = () => {
+        if (overlay && (input.scrollLeft !== lastLeft || input.scrollTop !== lastTop)) {
+          lastLeft = input.scrollLeft;
+          lastTop = input.scrollTop;
+          overlay.scrollLeft = lastLeft;
+          overlay.scrollTop = lastTop;
+        }
+        this.scrollSyncRafId = requestAnimationFrame(tick);
+      };
       this.scrollSyncRafId = requestAnimationFrame(tick);
-    };
-    this.scrollSyncRafId = requestAnimationFrame(tick);
+    });
   }
 
   private stopScrollSync() {
@@ -234,7 +238,6 @@ export class StringPatternAutocompleteComponent implements ControlValueAccessor,
       this.scrollSyncRafId = null;
     }
   }
-
 
   optionSelected(value: string) {
     const position = this.inputRef.nativeElement.selectionStart;
