@@ -74,7 +74,7 @@ public class KafkaEdgeGrpcSession extends EdgeGrpcSession {
         // where readiness flips during poll(), and that already-polled batch is dropped here (can't rewind).
         if (!isReadyToProcessGeneralEvents()) {
             log.debug("[{}][{}] edge not connected, edge sync is not completed or high priority processing in progress, " +
-                      "connected = {}, sync in progress = {}, high priority in progress = {}. Skipping iteration",
+                            "connected = {}, sync in progress = {}, high priority in progress = {}. Skipping iteration",
                     tenantId, edge.getId(), isConnected(), isSyncInProgress(), isHighPriorityProcessing);
             return;
         }
