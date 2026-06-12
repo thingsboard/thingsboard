@@ -1078,6 +1078,25 @@ pre.tb-highlight {
     }
   }
 
+  .tb-fullscreen-dialog-lt-md {
+    @media #{$mat-lt-md} {
+      min-height: 100%;
+      min-width: 100%;
+      max-width: none !important;
+      position: absolute !important;
+      inset: 0;
+      .mat-mdc-dialog-container {
+        > *:first-child, form {
+          min-width: 100% !important;
+          height: 100%;
+        }
+        .mat-mdc-dialog-content {
+          max-height: 100%;
+        }
+      }
+    }
+  }
+
   .tb-fullscreen-dialog {
     @media #{$mat-lt-sm} {
       min-height: 100%;

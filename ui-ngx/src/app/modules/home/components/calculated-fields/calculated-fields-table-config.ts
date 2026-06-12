@@ -57,6 +57,8 @@ import { ImportExportService } from '@shared/import-export/import-export.service
 import { isObject } from '@core/utils';
 import { EntityDebugSettingsService } from '@home/components/entity/debug/entity-debug-settings.service';
 import { DatePipe } from '@angular/common';
+import { ItemType } from '@shared/models/iot-hub/iot-hub-item.models';
+import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
 
 export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedField> {
 
@@ -77,6 +79,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
               public entityName: string,
               private importExportService: ImportExportService,
               private entityDebugSettingsService: EntityDebugSettingsService,
+              private iotHubActions: IotHubActionsService,
   ) {
     super();
     this.tableTitle = this.translate.instant('entity.type-calculated-fields');
@@ -104,6 +107,12 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
         icon: 'file_upload',
         isEnabled: () => true,
         onAction: () => this.importCalculatedField()
+      },
+      {
+        name: this.translate.instant('iot-hub.add-from-iot-hub'),
+        icon: 'hub',
+        isEnabled: () => true,
+        onAction: () => this.addCalculatedFieldFromIotHub()
       }
     ];
 
@@ -241,6 +250,14 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
       $event.stopPropagation();
     }
     this.importExportService.exportCalculatedField(calculatedField.id.id);
+  }
+
+  private addCalculatedFieldFromIotHub(): void {
+    this.iotHubActions.addItem(ItemType.CALCULATED_FIELD, { entityId: this.entityId }).subscribe(result => {
+      if (result?.descriptor) {
+        this.updateData();
+      }
+    });
   }
 
   private importCalculatedField(): void {
