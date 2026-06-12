@@ -1,7 +1,7 @@
 {
   "fqn": "rotational_speed_card",
   "name": "Rotational speed card",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/rotational_speed_card.svg",
   "description": "Displays the latest rotational speed telemetry in a scalable rectangle card.",
   "descriptor": {

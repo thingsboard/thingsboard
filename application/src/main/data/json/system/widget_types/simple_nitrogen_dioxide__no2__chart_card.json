@@ -1,7 +1,7 @@
 {
   "fqn": "simple_nitrogen_dioxide_no2_chart_card",
   "name": "Simple nitrogen dioxide (NO2) chart card",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/simple-NO2-value-and-chart-card.svg",
   "description": "A gas produced from vehicle emissions and the burning of fossil fuels. Results displayed by combining the latest and aggregated values and optional simplified chart.",
   "descriptor": {

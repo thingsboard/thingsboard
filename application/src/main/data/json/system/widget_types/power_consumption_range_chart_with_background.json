@@ -1,7 +1,7 @@
 {
   "fqn": "power_consumption_range_chart_with_background",
   "name": "Power consumption range chart with background",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/power_consumption_range_chart_with_background.svg",
   "description": "Displays changes to power consumption data over time visualized with color ranges and background.",
   "descriptor": {

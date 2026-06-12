@@ -1,7 +1,7 @@
 {
   "fqn": "horizontal_flow_rate_card_with_background",
   "name": "Horizontal flow rate card with background",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/horizontal_flow_rate_card_with_background.svg",
   "description": "Displays the latest flow rate telemetry in a scalable horizontal layout with the background image.",
   "descriptor": {
