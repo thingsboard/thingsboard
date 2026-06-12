@@ -582,6 +582,7 @@ export interface DeviceProfileData {
   transportConfiguration: DeviceProfileTransportConfiguration;
   alarms?: Array<DeviceProfileAlarm>;
   provisionConfiguration?: DeviceProvisionConfiguration;
+  inactivityTimeoutMs?: number;
 }
 
 export interface DeviceProfile extends BaseData<DeviceProfileId>, HasTenantId, HasVersion, ExportableEntity<DeviceProfileId> {

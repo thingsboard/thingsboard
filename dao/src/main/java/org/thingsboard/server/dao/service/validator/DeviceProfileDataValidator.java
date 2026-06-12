@@ -206,6 +206,14 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
             }
         }
 
+        Long inactivityTimeoutMs = deviceProfile.getProfileData().getInactivityTimeoutMs();
+        if (inactivityTimeoutMs != null && inactivityTimeoutMs <= 0) {
+            throw new DataValidationException("Device profile inactivity timeout must be greater than 0!");
+        }
+        if (inactivityTimeoutMs != null && inactivityTimeoutMs % 1000 != 0) {
+            throw new DataValidationException("Device profile inactivity timeout must be specified in whole seconds!");
+        }
+
         if (deviceProfile.getDefaultRuleChainId() != null) {
             validateRuleChain(tenantId, deviceProfile.getTenantId(), deviceProfile.getDefaultRuleChainId());
         }
