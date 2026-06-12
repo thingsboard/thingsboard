@@ -33,7 +33,8 @@ import {
 } from '@shared/models/alias.models';
 import { MatDialog } from '@angular/material/dialog';
 import { ImportDialogComponent, ImportDialogData } from '@shared/import-export/import-dialog.component';
-import { forkJoin, Observable, of, Subject } from 'rxjs';
+import { forkJoin, Observable, of, Subject, throwError } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 import { catchError, map, mergeMap, switchMap, take, tap } from 'rxjs/operators';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { EntityService } from '@core/http/entity.service';
@@ -89,6 +90,7 @@ import {
 import { FormProperty, propertyValid } from '@shared/models/dynamic-form.models';
 import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { CalculatedField } from '@shared/models/calculated-field.models';
+import { RuleChainId } from '@shared/models/id/rule-chain-id';
 
 export type editMissingAliasesFunction = (widgets: Array<Widget>, isSingleWidget: boolean,
                                           customTitle: string, missingEntityAliases: EntityAliases) => Observable<EntityAliases>;
@@ -749,7 +751,9 @@ export class ImportExportService {
               type: 'error'}));
           throw new Error('Invalid device profile file');
         } else {
-            return this.deviceProfileService.saveDeviceProfile(this.prepareImport(deviceProfile));
+          return this.clearMissingProfileRuleChains(deviceProfile).pipe(
+            mergeMap(profile => this.deviceProfileService.saveDeviceProfile(this.prepareImport(profile)))
+          );
         }
       }),
       catchError(() => of(null))
@@ -776,10 +780,45 @@ export class ImportExportService {
               type: 'error'}));
           throw new Error('Invalid asset profile file');
         } else {
-          return this.assetProfileService.saveAssetProfile(this.prepareImport(assetProfile));
+          return this.clearMissingProfileRuleChains(assetProfile).pipe(
+            mergeMap(profile => this.assetProfileService.saveAssetProfile(this.prepareImport(profile)))
+          );
         }
       }),
       catchError(() => of(null))
+    );
+  }
+
+  private clearMissingProfileRuleChains<T extends { defaultRuleChainId?: RuleChainId; defaultEdgeRuleChainId?: RuleChainId }>(profile: T): Observable<T> {
+    const ruleChainFields: Array<'defaultRuleChainId' | 'defaultEdgeRuleChainId'> = ['defaultRuleChainId', 'defaultEdgeRuleChainId'];
+    const checks = ruleChainFields
+      .filter(field => profile[field]?.id)
+      .map(field => this.ruleChainExists(profile[field].id).pipe(
+        map(exists => ({field, exists}))
+      ));
+    if (!checks.length) {
+      return of(profile);
+    }
+    return forkJoin(checks).pipe(
+      map(results => {
+        const missingFields = results.filter(result => !result.exists).map(result => result.field);
+        if (!missingFields.length) {
+          return profile;
+        }
+        this.store.dispatch(new ActionNotificationShow(
+          {message: this.translate.instant('rulechain.rulechain-not-found-warning'),
+            type: 'warn'}));
+        const cleanedProfile = deepClone(profile);
+        missingFields.forEach(field => cleanedProfile[field] = null);
+        return cleanedProfile;
+      })
+    );
+  }
+
+  private ruleChainExists(ruleChainId: string): Observable<boolean> {
+    return this.ruleChainService.getRuleChain(ruleChainId, {ignoreErrors: true, ignoreLoading: true}).pipe(
+      map(() => true),
+      catchError((err: HttpErrorResponse) => err?.status === 404 ? of(false) : throwError(() => err))
     );
   }
 
