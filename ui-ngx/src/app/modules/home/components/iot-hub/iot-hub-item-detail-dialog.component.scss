@@ -54,6 +54,21 @@
 
 }
 
+.dlg-close-btn-desktop {
+  @media #{$mat-lt-sm} {
+    display: none;
+  }
+}
+
+.dlg-close-btn-mobile {
+  position: absolute;
+  top: 16px;
+  right: 12px;
+  @media #{$mat-gt-xs} {
+    display: none;
+  }
+}
+
 // Header icon for CF/RC — Design: 64px, rounded-8, colored bg, white icon 36px
 .dlg-header-icon {
   width: 64px;
@@ -250,21 +265,25 @@
   display: grid;
   gap: 24px;
   padding: 16px 24px 12px;
-  grid-template-columns: max-content minmax(0, max-content) minmax(auto, max-content) minmax(auto, 1fr) max-content;
+  grid-template-columns: minmax(0, max-content) minmax(0, max-content) minmax(auto, max-content) minmax(auto, 1fr) max-content;
 
   &.dlg-meta-4-col {
-    grid-template-columns: max-content minmax(auto, max-content) minmax(auto, 1fr) max-content;
+    grid-template-columns: minmax(0, max-content) minmax(auto, max-content) minmax(auto, 1fr) max-content;
   }
 
   .dlg-meta-details {
     display: none;
   }
 
+  .dlg-meta-creator-section {
+    min-width: 0;
+  }
+
   @media #{$mat-lt-md} {
-    grid-template-columns: max-content max-content max-content;
+    grid-template-columns: minmax(0, 1fr) max-content max-content;
 
     &.dlg-meta-4-col {
-      grid-template-columns: max-content max-content max-content;
+      grid-template-columns: minmax(0, 1fr) max-content max-content;
     }
 
     .dlg-meta-details-section {
