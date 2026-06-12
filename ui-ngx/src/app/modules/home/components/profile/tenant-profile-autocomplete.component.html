@@ -21,6 +21,7 @@
          #tenantProfileInput
          formControlName="tenantProfile"
          (focusin)="onFocus()"
+         (blur)="onBlur()"
          [required]="required"
          (keydown)="tenantProfileEnter($event)"
          (keypress)="tenantProfileEnter($event)"
@@ -88,6 +89,11 @@
   @if (selectTenantProfileFormGroup.get('tenantProfile').hasError('required')) {
     <mat-error>
       {{ 'tenant-profile.tenant-profile-required' | translate }}
+    </mat-error>
+  }
+  @if (selectTenantProfileFormGroup.get('tenantProfile').hasError('objectRequired')) {
+    <mat-error>
+      {{ 'entity.entity-not-valid-create-new' | translate: {entity: 'tenant-profile.tenant-profile' | translate | lowercase} }}
     </mat-error>
   }
 </mat-form-field>

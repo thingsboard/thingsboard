@@ -14,42 +14,49 @@
 /// limitations under the License.
 ///
 
-import { Component, DestroyRef, ElementRef, forwardRef, Input, OnInit, SkipSelf, ViewChild } from '@angular/core';
+import { Component, ElementRef, forwardRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import {
+  AbstractControl,
   ControlValueAccessor,
   FormBuilder,
   FormControl,
   FormGroup,
-  FormGroupDirective,
   NG_VALUE_ACCESSOR,
-  NgForm,
+  Validators
 } from '@angular/forms';
-import { Observable, of } from 'rxjs';
-import { map, mergeMap, share, tap } from 'rxjs/operators';
+import { ErrorStateMatcher } from '@angular/material/core';
+import { Observable, of, shareReplay, Subject } from 'rxjs';
+import { debounceTime, map, switchMap, takeUntil, tap } from 'rxjs/operators';
 import { EntityType } from '@shared/models/entity-type.models';
 import { EntityService } from '@core/http/entity.service';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { EntityAlias } from '@shared/models/alias.models';
 import { IAliasController } from '@core/api/widget-api.models';
-import { MatAutocomplete } from '@angular/material/autocomplete';
+import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { EntityAliasSelectCallbacks } from './entity-alias-select.component.models';
 import { ENTER } from '@angular/cdk/keycodes';
-import { ErrorStateMatcher } from '@angular/material/core';
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AutocompleteBaseDirective } from '@shared/components/directives/autocomplete-base.directive';
 
 @Component({
     selector: 'tb-entity-alias-select',
     templateUrl: './entity-alias-select.component.html',
     styleUrls: ['./entity-alias-select.component.scss'],
-    providers: [{
+    providers: [
+        {
             provide: NG_VALUE_ACCESSOR,
             useExisting: forwardRef(() => EntityAliasSelectComponent),
             multi: true
-        }],
+        },
+        {
+            provide: ErrorStateMatcher,
+            useExisting: forwardRef(() => EntityAliasSelectComponent)
+        }
+    ],
     standalone: false
 })
-export class EntityAliasSelectComponent implements ControlValueAccessor, OnInit, ErrorStateMatcher {
+export class EntityAliasSelectComponent extends AutocompleteBaseDirective
+    implements ControlValueAccessor, OnInit, OnDestroy, ErrorStateMatcher {
 
   selectEntityAliasFormGroup: FormGroup;
 
@@ -68,7 +75,9 @@ export class EntityAliasSelectComponent implements ControlValueAccessor, OnInit,
   @coerceBoolean()
   showLabel: boolean;
 
-  @ViewChild('entityAliasAutocomplete') entityAliasAutocomplete: MatAutocomplete;
+  @ViewChild('entityAliasInput', {static: true}) entityAliasInput: ElementRef;
+
+  @ViewChild('entityAliasInput', {read: MatAutocompleteTrigger}) autocompleteTrigger: MatAutocompleteTrigger;
 
   @Input()
   @coerceBoolean()
@@ -87,43 +96,48 @@ export class EntityAliasSelectComponent implements ControlValueAccessor, OnInit,
   @Input()
   subscriptSizing: SubscriptSizing = 'fixed';
 
-  @ViewChild('entityAliasInput', {static: true}) entityAliasInput: ElementRef;
-
   filteredEntityAliases: Observable<Array<EntityAlias>>;
 
-  searchText = '';
-
-  private dirty = false;
   private entityAliasList: Array<EntityAlias> = [];
-  private propagateChange = (_v: any) => { };
+  private destroy$ = new Subject<void>();
 
-  constructor(@SkipSelf() private errorStateMatcher: ErrorStateMatcher,
-              private entityService: EntityService,
-              private fb: FormBuilder,
-              private destroyRef: DestroyRef) {
+  constructor(private entityService: EntityService,
+              private fb: FormBuilder) {
+    super();
     this.selectEntityAliasFormGroup = this.fb.group({
       entityAlias: [null]
     });
   }
 
-  registerOnChange(fn: any): void {
-    this.propagateChange = fn;
+  isErrorState(control: AbstractControl | null, form: any): boolean {
+    const submitted = form?.submitted ?? false;
+    return !!(control?.invalid && (control?.dirty || control?.touched || submitted));
   }
 
-  registerOnTouched(_fn: any): void {
+  protected getControl(): FormControl {
+    return this.selectEntityAliasFormGroup.get('entityAlias') as FormControl;
+  }
+
+  protected getInput(): ElementRef<HTMLInputElement> {
+    return this.entityAliasInput as ElementRef<HTMLInputElement>;
   }
 
   ngOnInit() {
-    this.loadEntityAliases();
+    const aliasControl = this.selectEntityAliasFormGroup.get('entityAlias');
+    if (this.tbRequired) {
+      aliasControl.addValidators(Validators.required);
+      aliasControl.updateValueAndValidity({ emitEvent: false });
+    }
 
-    this.filteredEntityAliases = this.selectEntityAliasFormGroup.get('entityAlias').valueChanges
+    this.filteredEntityAliases = aliasControl.valueChanges
       .pipe(
+        debounceTime(150),
         tap(value => {
-          let modelValue: EntityAlias;
+          let modelValue: string | null;
           if (typeof value === 'string' || !value) {
             modelValue = null;
           } else {
-            modelValue = value;
+            modelValue = value.id;
           }
           this.updateView(modelValue);
           if (value === null) {
@@ -131,21 +145,22 @@ export class EntityAliasSelectComponent implements ControlValueAccessor, OnInit,
           }
         }),
         map(value => value ? (typeof value === 'string' ? value : value.alias) : ''),
-        mergeMap(name => this.fetchEntityAliases(name) ),
-        share()
+        switchMap(name => this.fetchEntityAliases(name)),
+        shareReplay(1)
       );
 
     this.aliasController.entityAliasesChanged.pipe(
-      takeUntilDestroyed(this.destroyRef),
+      takeUntil(this.destroy$)
     ).subscribe(() => {
       this.loadEntityAliases();
     });
+
+    this.loadEntityAliases();
   }
 
-  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
-    const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
-    const customErrorState = this.tbRequired && !this.modelValue;
-    return originalErrorState || customErrorState;
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -176,17 +191,9 @@ export class EntityAliasSelectComponent implements ControlValueAccessor, OnInit,
     this.dirty = true;
   }
 
-  onFocus() {
-    if (this.dirty) {
-      this.selectEntityAliasFormGroup.get('entityAlias').updateValueAndValidity({onlySelf: true, emitEvent: true});
-      this.dirty = false;
-    }
-  }
-
-  updateView(value: EntityAlias | null) {
-    const aliasId = value ? value.id : null;
-    if (this.modelValue !== aliasId) {
-      this.modelValue = aliasId;
+  updateView(value: string | null) {
+    if (this.modelValue !== value) {
+      this.modelValue = value;
       this.propagateChange(this.modelValue);
     }
   }
@@ -196,25 +203,12 @@ export class EntityAliasSelectComponent implements ControlValueAccessor, OnInit,
   }
 
   fetchEntityAliases(searchText?: string): Observable<Array<EntityAlias>> {
-    this.searchText = searchText;
+    this.searchText = searchText ?? '';
     let result = this.entityAliasList;
     if (searchText && searchText.length) {
       result = this.entityAliasList.filter((entityAlias) => entityAlias.alias.toLowerCase().includes(searchText.toLowerCase()));
     }
     return of(result);
-  }
-
-  clear(value: string = '') {
-    this.entityAliasInput.nativeElement.value = value;
-    this.selectEntityAliasFormGroup.get('entityAlias').patchValue(value, {emitEvent: true});
-    setTimeout(() => {
-      this.entityAliasInput.nativeElement.blur();
-      this.entityAliasInput.nativeElement.focus();
-    }, 0);
-  }
-
-  textIsNotEmpty(text: string): boolean {
-    return text?.length > 0;
   }
 
   entityAliasEnter($event: KeyboardEvent) {

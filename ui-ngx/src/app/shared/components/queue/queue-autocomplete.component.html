@@ -22,6 +22,7 @@
          #queueInput
          formControlName="queueName"
          (focusin)="onFocus()"
+         (blur)="onBlur()"
          [required]="required"
          [matAutocomplete]="queueAutocomplete">
   @if (selectQueueFormGroup.get('queueName').value && !disabled) {

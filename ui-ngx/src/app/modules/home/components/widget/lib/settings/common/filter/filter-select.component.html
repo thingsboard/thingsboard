@@ -28,6 +28,7 @@
          #filterInput
          formControlName="filter"
          (focusin)="onFocus()"
+         (blur)="onBlur()"
          [required]="tbRequired"
          (keydown)="filterEnter($event)"
          (keypress)="filterEnter($event)"

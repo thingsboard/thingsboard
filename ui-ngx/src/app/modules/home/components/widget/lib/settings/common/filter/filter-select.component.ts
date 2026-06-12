@@ -14,44 +14,47 @@
 /// limitations under the License.
 ///
 
-import { Component, DestroyRef, ElementRef, forwardRef, Input, OnInit, SkipSelf, ViewChild } from '@angular/core';
+import { Component, ElementRef, forwardRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import {
+  AbstractControl,
   ControlValueAccessor,
-  FormGroupDirective,
+  FormControl,
   NG_VALUE_ACCESSOR,
-  NgForm,
   UntypedFormBuilder,
-  UntypedFormControl,
-  UntypedFormGroup
+  UntypedFormGroup,
+  Validators
 } from '@angular/forms';
-import { Observable, of } from 'rxjs';
-import { map, mergeMap, share, tap } from 'rxjs/operators';
-import { IAliasController } from '@core/api/widget-api.models';
-import { MatAutocomplete } from '@angular/material/autocomplete';
-import { ENTER } from '@angular/cdk/keycodes';
 import { ErrorStateMatcher } from '@angular/material/core';
+import { Observable, of, shareReplay, Subject } from 'rxjs';
+import { debounceTime, map, switchMap, takeUntil, tap } from 'rxjs/operators';
+import { IAliasController } from '@core/api/widget-api.models';
+import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { ENTER } from '@angular/cdk/keycodes';
 import { FilterSelectCallbacks } from './filter-select.component.models';
 import { Filter } from '@shared/models/query/query.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AutocompleteBaseDirective } from '@shared/components/directives/autocomplete-base.directive';
 
 @Component({
     selector: 'tb-filter-select',
     templateUrl: './filter-select.component.html',
     styleUrls: [],
-    providers: [{
+    providers: [
+        {
             provide: NG_VALUE_ACCESSOR,
             useExisting: forwardRef(() => FilterSelectComponent),
             multi: true
         },
         {
             provide: ErrorStateMatcher,
-            useExisting: FilterSelectComponent
-        }],
+            useExisting: forwardRef(() => FilterSelectComponent)
+        }
+    ],
     standalone: false
 })
-export class FilterSelectComponent implements ControlValueAccessor, OnInit, ErrorStateMatcher {
+export class FilterSelectComponent extends AutocompleteBaseDirective
+    implements ControlValueAccessor, OnInit, OnDestroy, ErrorStateMatcher {
 
   selectFilterFormGroup: UntypedFormGroup;
 
@@ -77,8 +80,6 @@ export class FilterSelectComponent implements ControlValueAccessor, OnInit, Erro
   @Input()
   subscriptSizing: SubscriptSizing = 'fixed';
 
-  @ViewChild('filterAutocomplete') filterAutocomplete: MatAutocomplete;
-
   @Input()
   @coerceBoolean()
   tbRequired: boolean;
@@ -88,40 +89,49 @@ export class FilterSelectComponent implements ControlValueAccessor, OnInit, Erro
 
   @ViewChild('filterInput', {static: true}) filterInput: ElementRef;
 
+  @ViewChild('filterInput', {read: MatAutocompleteTrigger}) autocompleteTrigger: MatAutocompleteTrigger;
+
   filteredFilters: Observable<Array<Filter>>;
 
-  searchText = '';
-
-  private dirty = false;
   private filterList: Array<Filter> = [];
-  private propagateChange = (_v: any) => { };
+  private destroy$ = new Subject<void>();
 
-  constructor(@SkipSelf() private errorStateMatcher: ErrorStateMatcher,
-              private fb: UntypedFormBuilder,
-              private destroyRef: DestroyRef) {
+  constructor(private fb: UntypedFormBuilder) {
+    super();
     this.selectFilterFormGroup = this.fb.group({
       filter: [null]
     });
   }
 
-  registerOnChange(fn: any): void {
-    this.propagateChange = fn;
+  isErrorState(control: AbstractControl | null, form: any): boolean {
+    const submitted = form?.submitted ?? false;
+    return !!(control?.invalid && (control?.dirty || control?.touched || submitted));
   }
 
-  registerOnTouched(_fn: any): void {
+  protected getControl(): FormControl {
+    return this.selectFilterFormGroup.get('filter') as FormControl;
+  }
+
+  protected getInput(): ElementRef<HTMLInputElement> {
+    return this.filterInput as ElementRef<HTMLInputElement>;
   }
 
   ngOnInit() {
-    this.loadFilters();
+    const filterControl = this.selectFilterFormGroup.get('filter');
+    if (this.tbRequired) {
+      filterControl.addValidators(Validators.required);
+      filterControl.updateValueAndValidity({ emitEvent: false });
+    }
 
-    this.filteredFilters = this.selectFilterFormGroup.get('filter').valueChanges
+    this.filteredFilters = filterControl.valueChanges
       .pipe(
+        debounceTime(150),
         tap(value => {
-          let modelValue: Filter;
+          let modelValue: string;
           if (typeof value === 'string' || !value) {
             modelValue = null;
           } else {
-            modelValue = value;
+            modelValue = value.id;
           }
           this.updateView(modelValue);
           if (value === null) {
@@ -129,21 +139,20 @@ export class FilterSelectComponent implements ControlValueAccessor, OnInit, Erro
           }
         }),
         map(value => value ? (typeof value === 'string' ? value : value.filter) : ''),
-        mergeMap(name => this.fetchFilters(name) ),
-        share()
+        switchMap(name => this.fetchFilters(name)),
+        shareReplay(1)
       );
 
     this.aliasController.filtersChanged.pipe(
-      takeUntilDestroyed(this.destroyRef),
+      takeUntil(this.destroy$)
     ).subscribe(() => {
       this.loadFilters();
     });
   }
 
-  isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
-    const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
-    const customErrorState = this.tbRequired && !this.modelValue;
-    return originalErrorState || customErrorState;
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -174,17 +183,9 @@ export class FilterSelectComponent implements ControlValueAccessor, OnInit, Erro
     this.dirty = true;
   }
 
-  onFocus() {
-    if (this.dirty) {
-      this.selectFilterFormGroup.get('filter').updateValueAndValidity({onlySelf: true, emitEvent: true});
-      this.dirty = false;
-    }
-  }
-
-  updateView(value: Filter | null) {
-    const filterId = value ? value.id : null;
-    if (this.modelValue !== filterId) {
-      this.modelValue = filterId;
+  updateView(value: string | null) {
+    if (this.modelValue !== value) {
+      this.modelValue = value;
       this.propagateChange(this.modelValue);
     }
   }
@@ -194,25 +195,12 @@ export class FilterSelectComponent implements ControlValueAccessor, OnInit, Erro
   }
 
   fetchFilters(searchText?: string): Observable<Array<Filter>> {
-    this.searchText = searchText;
+    this.searchText = searchText ?? '';
     let result = this.filterList;
     if (searchText && searchText.length) {
       result = this.filterList.filter((filter) => filter.filter.toLowerCase().includes(searchText.toLowerCase()));
     }
     return of(result);
-  }
-
-  clear(value: string = '') {
-    this.filterInput.nativeElement.value = value;
-    this.selectFilterFormGroup.get('filter').patchValue(value, {emitEvent: true});
-    setTimeout(() => {
-      this.filterInput.nativeElement.blur();
-      this.filterInput.nativeElement.focus();
-    }, 0);
-  }
-
-  textIsNotEmpty(text: string): boolean {
-    return text?.length > 0;
   }
 
   filterEnter($event: KeyboardEvent) {

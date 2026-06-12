@@ -25,11 +25,11 @@ import {
   Output,
   ViewChild
 } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
-import { Observable, of } from 'rxjs';
+import { ControlValueAccessor, FormControl, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
+import { Observable, of, shareReplay } from 'rxjs';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
-import { catchError, debounceTime, distinctUntilChanged, map, share, switchMap, tap } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, map, switchMap, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
@@ -37,9 +37,9 @@ import { entityIdEquals } from '@shared/models/id/entity-id';
 import { TruncatePipe } from '@shared//pipe/truncate.pipe';
 import { ENTER } from '@angular/cdk/keycodes';
 import { MatDialog } from '@angular/material/dialog';
-import { MatAutocomplete } from '@angular/material/autocomplete';
+import { MatAutocomplete, MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { emptyPageData } from '@shared/models/page/page-data';
-import { getEntityDetailsPageURL } from '@core/utils';
+import { getEntityDetailsPageURL, objectRequired } from '@core/utils';
 import { AssetProfileId } from '@shared/models/id/asset-profile-id';
 import { AssetProfile, AssetProfileInfo } from '@shared/models/asset.models';
 import { AssetProfileService } from '@core/http/asset-profile.service';
@@ -49,6 +49,7 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 import { AuthUser } from '@shared/models/user.model';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
+import { AutocompleteBaseDirective } from '@shared/components/directives/autocomplete-base.directive';
 
 @Component({
     selector: 'tb-asset-profile-autocomplete',
@@ -61,7 +62,7 @@ import { Authority } from '@shared/models/authority.enum';
         }],
     standalone: false
 })
-export class AssetProfileAutocompleteComponent implements ControlValueAccessor, OnInit {
+export class AssetProfileAutocompleteComponent extends AutocompleteBaseDirective implements ControlValueAccessor, OnInit {
 
   selectAssetProfileFormGroup: UntypedFormGroup;
 
@@ -111,16 +112,15 @@ export class AssetProfileAutocompleteComponent implements ControlValueAccessor, 
 
   @ViewChild('assetProfileAutocomplete', {static: true}) assetProfileAutocomplete: MatAutocomplete;
 
+  @ViewChild('assetProfileInput', {read: MatAutocompleteTrigger}) autocompleteTrigger: MatAutocompleteTrigger;
+
   filteredAssetProfiles: Observable<Array<AssetProfileInfo>>;
 
-  searchText = '';
   assetProfileURL: string;
 
   useAssetProfileLink = true;
 
   private authUser: AuthUser;
-
-  private dirty = false;
 
   private ignoreClosedPanel = false;
 
@@ -129,8 +129,6 @@ export class AssetProfileAutocompleteComponent implements ControlValueAccessor, 
     id: null
   };
 
-  private propagateChange = (v: any) => { };
-
   constructor(private store: Store<AppState>,
               public translate: TranslateService,
               public truncate: TruncatePipe,
@@ -138,20 +136,22 @@ export class AssetProfileAutocompleteComponent implements ControlValueAccessor, 
               private fb: UntypedFormBuilder,
               private zone: NgZone,
               private dialog: MatDialog) {
+    super();
     this.authUser = getCurrentAuthUser(this.store);
     if (this.authUser.authority === Authority.CUSTOMER_USER) {
       this.useAssetProfileLink = false;
     }
     this.selectAssetProfileFormGroup = this.fb.group({
-      assetProfile: [null]
+      assetProfile: [null, objectRequired()]
     });
   }
 
-  registerOnChange(fn: any): void {
-    this.propagateChange = fn;
+  protected getControl(): FormControl {
+    return this.selectAssetProfileFormGroup.get('assetProfile') as FormControl;
   }
 
-  registerOnTouched(fn: any): void {
+  protected getInput(): ElementRef<HTMLInputElement> {
+    return this.assetProfileInput as ElementRef<HTMLInputElement>;
   }
 
   ngOnInit() {
@@ -186,7 +186,7 @@ export class AssetProfileAutocompleteComponent implements ControlValueAccessor, 
         debounceTime(150),
         distinctUntilChanged(),
         switchMap(name => this.fetchAssetProfiles(name)),
-        share()
+        shareReplay(1)
       );
   }
 
@@ -258,13 +258,6 @@ export class AssetProfileAutocompleteComponent implements ControlValueAccessor, 
     this.dirty = true;
   }
 
-  onFocus() {
-    if (this.dirty) {
-      this.selectAssetProfileFormGroup.get('assetProfile').updateValueAndValidity({onlySelf: true, emitEvent: true});
-      this.dirty = false;
-    }
-  }
-
   onPanelClosed() {
     if (this.ignoreClosedPanel) {
       this.ignoreClosedPanel = false;
@@ -291,7 +284,7 @@ export class AssetProfileAutocompleteComponent implements ControlValueAccessor, 
   }
 
   fetchAssetProfiles(searchText?: string): Observable<Array<AssetProfileInfo>> {
-    this.searchText = searchText;
+    this.searchText = searchText ?? '';
     const pageLink = new PageLink(10, 0, searchText, {
       property: 'name',
       direction: Direction.ASC
@@ -308,17 +301,9 @@ export class AssetProfileAutocompleteComponent implements ControlValueAccessor, 
     );
   }
 
-  clear() {
+  override clear() {
     this.ignoreClosedPanel = true;
-    this.selectAssetProfileFormGroup.get('assetProfile').patchValue(null, {emitEvent: true});
-    setTimeout(() => {
-      this.assetProfileInput.nativeElement.blur();
-      this.assetProfileInput.nativeElement.focus();
-    }, 0);
-  }
-
-  textIsNotEmpty(text: string): boolean {
-    return (text && text.length > 0);
+    super.clear();
   }
 
   assetProfileEnter($event: KeyboardEvent) {

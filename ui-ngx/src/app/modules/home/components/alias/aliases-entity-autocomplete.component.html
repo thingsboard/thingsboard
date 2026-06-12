@@ -19,7 +19,10 @@
   <mat-label>{{ alias }}</mat-label>
   <input matInput type="text"
          #entityInfoInput
+         #autocompleteTrigger="matAutocompleteTrigger"
          formControlName="entityInfo"
+         (focusin)="onFocus()"
+         (blur)="onBlur()"
          [required]="required"
          [matAutocomplete]="entityInfoAutocomplete">
   @if (selectEntityInfoFormGroup.get('entityInfo').value && !disabled) {

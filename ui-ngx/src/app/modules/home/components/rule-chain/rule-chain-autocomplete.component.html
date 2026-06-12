@@ -21,6 +21,7 @@
          #ruleChainInput
          formControlName="ruleChainId"
          (focusin)="onFocus()"
+         (blur)="onBlur()"
          [required]="required"
          [matAutocomplete]="ruleChainAutocomplete"
          [class.!hidden]="disabled && selectRuleChainFormGroup.get('ruleChainId').value">
@@ -68,6 +69,11 @@
   @if (selectRuleChainFormGroup.get('ruleChainId').hasError('required')) {
     <mat-error>
       {{ 'rulechain.rulechain-required' | translate }}
+    </mat-error>
+  }
+  @if (selectRuleChainFormGroup.get('ruleChainId').hasError('objectRequired')) {
+    <mat-error>
+      {{ 'entity.entity-not-valid-create-new' | translate: {entity: 'rulechain.rulechain' | translate | lowercase} }}
     </mat-error>
   }
   <mat-hint>

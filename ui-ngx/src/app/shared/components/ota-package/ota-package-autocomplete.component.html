@@ -19,15 +19,16 @@
   <mat-label>{{ placeholderText | translate }}</mat-label>
   <input matInput type="text"
          #packageInput
+         #autocompleteTrigger="matAutocompleteTrigger"
          formControlName="packageId"
+         (blur)="onBlur()"
          (focusin)="onFocus()"
          [required]="required"
          [matAutocomplete]="packageAutocomplete"
          [matAutocompleteDisabled]="disabled"
          [class.!hidden]="showDetailsPageLink && usePackageLink && disabled && otaPackageFormGroup.get('packageId').value">
   @if (showDetailsPageLink && usePackageLink && otaPackageFormGroup.get('packageId').value && disabled) {
-    <a
-      aria-label="Open ota package" [routerLink]=packageURL>
+    <a aria-label="Open ota package" [routerLink]=packageURL>
       {{ displayPackageFn(otaPackageFormGroup.get('packageId').value) }}
     </a>
   }
@@ -56,8 +57,7 @@
             </div>
           } @else {
             <span>
-              {{ translate.get(notMatchingPackage,
-              {entity: truncate.transform(searchText, true, 6, &apos;...&apos;)}) | async }}
+              {{ translate.get(notMatchingPackage, {entity: truncate.transform(searchText, true, 6, &apos;...&apos;)}) | async }}
             </span>
           }
         </div>
@@ -67,6 +67,11 @@
   @if (otaPackageFormGroup.get('packageId').hasError('required')) {
     <mat-error>
       {{ requiredErrorText | translate }}
+    </mat-error>
+  }
+  @if (otaPackageFormGroup.get('packageId').hasError('objectRequired')) {
+    <mat-error>
+      {{ 'entity.entity-not-valid' | translate: {entity: placeholderText | translate | lowercase} }}
     </mat-error>
   }
   @if (!disabled) {
