@@ -60,6 +60,10 @@ export class TimezoneSelectComponent implements ControlValueAccessor, OnInit, Af
   displayLabel = true;
 
   @Input()
+  @coerceBoolean()
+  propagateChangeOnWrite = true;
+
+  @Input()
   subscriptSizing: SubscriptSizing = 'fixed';
 
   @Input()
@@ -166,7 +170,7 @@ export class TimezoneSelectComponent implements ControlValueAccessor, OnInit, Af
     const foundTimezone = getTimezoneInfo(value, this.defaultTimezoneId, this.userTimezoneByDefaultValue);
     if (foundTimezone !== null) {
       this.selectTimezoneFormGroup.get('timezone').patchValue(foundTimezone, {emitEvent: false});
-      if (foundTimezone.id !== value) {
+      if (foundTimezone.id !== value && this.propagateChangeOnWrite) {
         setTimeout(() => {
           this.updateView(foundTimezone.id);
         }, 0);
