@@ -350,6 +350,10 @@ public class AuditLogServiceImpl implements AuditLogService {
                 String number = extractParameter(String.class, 0, additionalInfo);
                 actionData.put("recipientNumber", number);
                 break;
+            case SETTINGS_UPDATED:
+                String settingsKey = extractParameter(String.class, 0, additionalInfo);
+                actionData.put("settingsKey", settingsKey);
+                break;
         }
         return actionData;
     }

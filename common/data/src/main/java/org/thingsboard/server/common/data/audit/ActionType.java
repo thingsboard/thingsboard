@@ -78,6 +78,12 @@ public enum ActionType {
      */
     CREDENTIALS_UPDATED,
     /**
+     * System-level settings updated (sysadmin-managed: general/mail/sms admin settings,
+     * security settings, JWT settings, platform 2FA settings). Does not push to rule engine.
+     * Audit log payload: {@code settingsKey} identifying which settings family was changed.
+     */
+    SETTINGS_UPDATED,
+    /**
      * Entity assigned to a customer. Pushes {@link TbMsgType#ENTITY_ASSIGNED} to rule engine.
      * Rule engine msg metadata includes {@code assignedCustomerId} and {@code assignedCustomerName}.
      * Audit log payload: customer name.
