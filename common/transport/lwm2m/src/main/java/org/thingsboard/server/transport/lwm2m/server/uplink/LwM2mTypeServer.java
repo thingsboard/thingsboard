@@ -33,7 +33,7 @@ public enum LwM2mTypeServer {
                 return sm;
             }
         }
-        throw new IllegalArgumentException(String.format("Unsupported typeServer type : %d", type));
+        throw new IllegalArgumentException(String.format("Unsupported typeServer type : %s", type));
     }
 }
 
