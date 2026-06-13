@@ -18,16 +18,12 @@ package org.thingsboard.server.common.data;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Random;
 import java.util.UUID;
 
 /**
  * Created by ashvayka on 14.07.17.
  */
-@ExtendWith(MockitoExtension .class)
 public class UUIDConverterTest {
 
     @Test
@@ -40,7 +36,11 @@ public class UUIDConverterTest {
 
     @Test
     public void basicUuid() {
-        System.out.println(UUIDConverter.fromString("1e746126eaaefa6a91992ebcb67fe33"));
+        UUID result = UUIDConverter.fromString("1e746126eaaefa6a91992ebcb67fe33");
+        Assertions.assertEquals(
+                UUID.fromString("6eaaefa6-4612-11e7-a919-92ebcb67fe33"),
+                result
+        );
     }
 
     @Test
@@ -63,8 +63,7 @@ public class UUIDConverterTest {
     }
 
     @Test
-    public void basicUuidComperisonTest() {
-        Random r = new Random(System.currentTimeMillis());
+    public void basicUuidComparisonTest() {
         for (int i = 0; i < 100000; i++) {
             long ts = System.currentTimeMillis() + 1000 * 60 * 60 * 24 * 365 * 10;
             long before = (long) (Math.random() * ts);
@@ -78,11 +77,12 @@ public class UUIDConverterTest {
             String beforeStr = UUIDConverter.fromTimeUUID(Uuids.startOf(before));
             String afterStr = UUIDConverter.fromTimeUUID(Uuids.startOf(after));
 
-            if (afterStr.compareTo(beforeStr) < 0) {
-                System.out.println("Before: " + before + " | " + beforeStr);
-                System.out.println("After: " + after + " | " + afterStr);
-            }
-            Assertions.assertTrue(afterStr.compareTo(beforeStr) >= 0);
+            Assertions.assertTrue(
+                    afterStr.compareTo(beforeStr) >= 0,
+                    "Expected chronological UUID string ordering. Before: "
+                            + before + " | " + beforeStr
+                            + ", After: " + after + " | " + afterStr
+            );
         }
     }
 
