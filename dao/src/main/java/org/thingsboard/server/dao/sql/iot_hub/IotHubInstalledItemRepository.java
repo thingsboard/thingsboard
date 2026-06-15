@@ -24,6 +24,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.model.sql.IotHubInstalledItemEntity;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -35,6 +36,11 @@ interface IotHubInstalledItemRepository extends JpaRepository<IotHubInstalledIte
 
     @Query("SELECT DISTINCT item.itemId FROM IotHubInstalledItemEntity item WHERE item.tenantId = :tenantId")
     List<UUID> findInstalledItemIdsByTenantId(@Param("tenantId") UUID tenantId);
+
+    @Query("SELECT DISTINCT item.itemId FROM IotHubInstalledItemEntity item " +
+            "WHERE item.tenantId = :tenantId AND item.itemId IN :itemIds")
+    List<UUID> findInstalledItemIdsByTenantIdAndItemIdIn(@Param("tenantId") UUID tenantId,
+                                                         @Param("itemIds") Collection<UUID> itemIds);
 
     @Query("""
             SELECT item FROM IotHubInstalledItemEntity item
