@@ -25,6 +25,7 @@ export interface CreatorView {
   githubUrl: string;
   linkedinUrl: string;
   twitterUrl: string;
+  youtubeUrl: string;
   publishedCount: number;
   verified: boolean;
 }
