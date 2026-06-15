@@ -814,7 +814,7 @@ public class DefaultIotHubService implements IotHubService {
         entry.setType(optText(versionInfo, FIELD_TYPE));
         entry.setVersion(optText(versionInfo, FIELD_VERSION));
         entry.setRoot(root);
-        entry.setStatus(isAlreadyInstalled(itemId, alreadyInstalledItemIds)
+        entry.setStatus(isAlreadyInstalled(entry, alreadyInstalledItemIds)
                 ? InstallPlanEntry.Status.ALREADY_INSTALLED
                 : InstallPlanEntry.Status.WILL_INSTALL);
         entries.put(itemId, entry);
@@ -872,7 +872,7 @@ public class DefaultIotHubService implements IotHubService {
                 }
                 case ALREADY_INSTALLED -> resultEntries.add(resultEntry);
                 case WILL_INSTALL -> {
-                    if (isAlreadyInstalled(entry.getItemId(), alreadyInstalledItemIds)) {
+                    if (isAlreadyInstalled(entry, alreadyInstalledItemIds)) {
                         // Installed since the plan was resolved — skip rather than create a duplicate.
                         resultEntry.setStatus(InstallPlanEntry.Status.ALREADY_INSTALLED);
                         resultEntries.add(resultEntry);
@@ -946,12 +946,15 @@ public class DefaultIotHubService implements IotHubService {
         }
     }
 
-    private static boolean isAlreadyInstalled(String itemId, Set<UUID> alreadyInstalledItemIds) {
-        if (itemId == null) {
+    private static boolean isAlreadyInstalled(InstallPlanEntry entry, Set<UUID> alreadyInstalledItemIds) {
+        if (entry == null || entry.getItemId() == null) {
+            return false;
+        }
+        if (entry.isRoot() && (!"WIDGET".equals(entry.getType()) && !"SOLUTION_TEMPLATE".equals(entry.getType()))) {
             return false;
         }
         try {
-            return alreadyInstalledItemIds.contains(UUID.fromString(itemId));
+            return alreadyInstalledItemIds.contains(UUID.fromString(entry.getItemId()));
         } catch (IllegalArgumentException ex) {
             return false;
         }
