@@ -229,6 +229,17 @@ class ProtoUtilsTest {
     }
 
     @Test
+    void protoFromDeviceRpcResponseOnewaySerialization() {
+        // Oneway RPC success: response and error are both null. Relies on the proto
+        // 'optional string response' presence bit so the receiver round-trips null
+        // rather than seeing the proto3 default "".
+        FromDeviceRpcResponseActorMsg msg = new FromDeviceRpcResponseActorMsg(23, tenantId, deviceId, new FromDeviceRpcResponse(id, null, null));
+        TransportProtos.ToDeviceActorNotificationMsgProto serializedMsg = ProtoUtils.toProto(msg);
+        Assertions.assertNotNull(serializedMsg);
+        assertThat(ProtoUtils.fromProto(serializedMsg)).as("deserialized").isEqualTo(msg);
+    }
+
+    @Test
     void protoRemoveRpcActorSerialization() {
         RemoveRpcActorMsg msg = new RemoveRpcActorMsg(tenantId, deviceId, id);
         TransportProtos.ToDeviceActorNotificationMsgProto serializedMsg = ProtoUtils.toProto(msg);
