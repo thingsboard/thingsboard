@@ -48,7 +48,7 @@ import {
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import {
   calculateAxisSize,
-  DataZoom,
+  DataZoomEvent,
   ECharts,
   echartsModule,
   EChartsOption,
@@ -437,12 +437,16 @@ export class TbTimeSeriesChart {
     return this.darkMode;
   }
 
-  public getWidgetActions(): WidgetAction[]{
+  public getWidgetActions(): WidgetAction[] {
     if (this.settings.dataZoom && this.settings.dataZoomUpdateTimewindow) {
       return [{
         name: 'widgets.time-series-chart.reset-timewindow',
         icon: 'restore',
         onAction: () => {
+          if (this.dataZoomDebounce !== null) {
+            clearTimeout(this.dataZoomDebounce);
+            this.dataZoomDebounce = null;
+          }
           this.timewindowChanged = false;
           this.ctx.defaultSubscription.onResetTimewindow();
         },
@@ -881,7 +885,7 @@ export class TbTimeSeriesChart {
     this.updateAxes(false);
 
     if (this.settings.dataZoom) {
-      this.timeSeriesChart.on('datazoom', (event: DataZoom) => {
+      this.timeSeriesChart.on('datazoom', (event: DataZoomEvent) => {
         this.updateAxes();
         if (this.settings.dataZoomUpdateTimewindow && !this.dataZoomResetting) {
           const evStart = event.batch?.length ? event.batch[0].start : event.start;

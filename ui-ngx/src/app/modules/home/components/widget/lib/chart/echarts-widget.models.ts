@@ -263,9 +263,8 @@ export const getFocusedSeriesIndex = (chart: ECharts): number => {
   return -1;
 };
 
-
-export interface DataZoom {
-  end: number;
+export interface DataZoomEvent {
   start: number;
+  end: number;
   batch?: Array<{ start: number; end: number }>;
 }
