@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItem;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -54,6 +55,11 @@ class IotHubInstalledItemServiceImpl implements IotHubInstalledItemService {
     @Override
     public List<UUID> findInstalledItemIdsByTenantId(TenantId tenantId) {
         return iotHubInstalledItemDao.findInstalledItemIdsByTenantId(tenantId);
+    }
+
+    @Override
+    public List<UUID> findInstalledItemIdsByTenantIdAndItemIdIn(TenantId tenantId, Collection<UUID> itemIds) {
+        return iotHubInstalledItemDao.findInstalledItemIdsByTenantIdAndItemIdIn(tenantId, itemIds);
     }
 
     @Override

@@ -103,7 +103,7 @@ class DefaultIotHubServiceTest {
         String versionId = UUID.randomUUID().toString();
         String itemId = UUID.randomUUID().toString();
         when(iotHubRestClient.getVersionInfo(versionId)).thenReturn(version(versionId, itemId, "DASHBOARD", "Root", "1.0"));
-        when(iotHubInstalledItemService.findInstalledItemIdsByTenantId(tenantId)).thenReturn(List.of());
+        when(iotHubInstalledItemService.findInstalledItemIdsByTenantIdAndItemIdIn(eq(tenantId), any())).thenReturn(List.of());
 
         InstallPlan plan = service.resolveInstallPlan(user, versionId);
 
@@ -125,7 +125,7 @@ class DefaultIotHubServiceTest {
         when(iotHubRestClient.getVersionInfo(versionId)).thenReturn(root);
         when(iotHubRestClient.getPublishedVersionByItemId(relatedItemId))
                 .thenReturn(version(UUID.randomUUID().toString(), relatedItemId, "WIDGET", "Dep", "2.0"));
-        when(iotHubInstalledItemService.findInstalledItemIdsByTenantId(tenantId)).thenReturn(List.of());
+        when(iotHubInstalledItemService.findInstalledItemIdsByTenantIdAndItemIdIn(eq(tenantId), any())).thenReturn(List.of());
 
         InstallPlan plan = service.resolveInstallPlan(user, versionId);
 
@@ -146,7 +146,7 @@ class DefaultIotHubServiceTest {
         root.putArray("relatedItems").add(relatedItemId);
         when(iotHubRestClient.getVersionInfo(versionId)).thenReturn(root);
         when(iotHubRestClient.getPublishedVersionByItemId(relatedItemId)).thenReturn(null);
-        when(iotHubInstalledItemService.findInstalledItemIdsByTenantId(tenantId)).thenReturn(List.of());
+        when(iotHubInstalledItemService.findInstalledItemIdsByTenantIdAndItemIdIn(eq(tenantId), any())).thenReturn(List.of());
 
         InstallPlan plan = service.resolveInstallPlan(user, versionId);
 
@@ -166,7 +166,7 @@ class DefaultIotHubServiceTest {
         root.putArray("relatedItems").add(relatedItemId);
         when(iotHubRestClient.getVersionInfo(versionId)).thenReturn(root);
         when(iotHubRestClient.getPublishedVersionByItemId(relatedItemId)).thenThrow(new RuntimeException("boom"));
-        when(iotHubInstalledItemService.findInstalledItemIdsByTenantId(tenantId)).thenReturn(List.of());
+        when(iotHubInstalledItemService.findInstalledItemIdsByTenantIdAndItemIdIn(eq(tenantId), any())).thenReturn(List.of());
 
         InstallPlan plan = service.resolveInstallPlan(user, versionId);
 
@@ -181,7 +181,7 @@ class DefaultIotHubServiceTest {
         UUID rootItemId = UUID.randomUUID();
         when(iotHubRestClient.getVersionInfo(versionId))
                 .thenReturn(version(versionId, rootItemId.toString(), "DASHBOARD", "Root", "1.0"));
-        when(iotHubInstalledItemService.findInstalledItemIdsByTenantId(tenantId)).thenReturn(List.of(rootItemId));
+        when(iotHubInstalledItemService.findInstalledItemIdsByTenantIdAndItemIdIn(eq(tenantId), any())).thenReturn(List.of(rootItemId));
 
         InstallPlan plan = service.resolveInstallPlan(user, versionId);
 
@@ -204,7 +204,7 @@ class DefaultIotHubServiceTest {
 
         assertThat(result.isSuccess()).isFalse();
         assertThat(result.getErrorMessage()).contains("empty");
-        verify(iotHubInstalledItemService, never()).findInstalledItemIdsByTenantId(any());
+        verify(iotHubInstalledItemService, never()).findInstalledItemIdsByTenantIdAndItemIdIn(any(), any());
     }
 
     @Test
@@ -213,7 +213,6 @@ class DefaultIotHubServiceTest {
         InstallPlanEntry missing = new InstallPlanEntry();
         missing.setItemId(UUID.randomUUID().toString());
         missing.setStatus(InstallPlanEntry.Status.MISSING);
-        when(iotHubInstalledItemService.findInstalledItemIdsByTenantId(tenantId)).thenReturn(List.of());
 
         InstallPlanResult result = service.installPlan(user, new InstallPlan(null, List.of(missing)), null, null);
 
@@ -221,6 +220,8 @@ class DefaultIotHubServiceTest {
         assertThat(result.getMissingItemIds()).containsExactly(missing.getItemId());
         assertThat(result.getRootDescriptor()).isNull();
         verify(iotHubRestClient, never()).getVersionInfo(anyString());
+        // A plan with nothing to install never hits the DB to check what is already installed.
+        verify(iotHubInstalledItemService, never()).findInstalledItemIdsByTenantIdAndItemIdIn(any(), any());
     }
 
     @Test
@@ -233,7 +234,7 @@ class DefaultIotHubServiceTest {
         entry.setStatus(InstallPlanEntry.Status.WILL_INSTALL);
         entry.setRoot(true);
         // The item is reported as already installed at install time, even though the plan says WILL_INSTALL.
-        when(iotHubInstalledItemService.findInstalledItemIdsByTenantId(tenantId)).thenReturn(List.of(itemId));
+        when(iotHubInstalledItemService.findInstalledItemIdsByTenantIdAndItemIdIn(eq(tenantId), any())).thenReturn(List.of(itemId));
 
         InstallPlanResult result = service.installPlan(user, new InstallPlan(null, List.of(entry)), null, null);
 
@@ -241,6 +242,41 @@ class DefaultIotHubServiceTest {
         assertThat(result.getEntries().get(0).getStatus()).isEqualTo(InstallPlanEntry.Status.ALREADY_INSTALLED);
         // No marketplace fetch happened — the duplicate install was avoided.
         verify(iotHubRestClient, never()).getVersionInfo(anyString());
+    }
+
+    @Test
+    void installPlan_duplicateItemId_installsOnce() throws Exception {
+        mockTenant();
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        UUID itemId = UUID.randomUUID();
+        String firstVersionId = UUID.randomUUID().toString();
+        String secondVersionId = UUID.randomUUID().toString();
+        // Two entries point at the same item — a client-supplied plan is not de-duplicated, so the
+        // cascade itself must not install the same item twice.
+        InstallPlanEntry first = new InstallPlanEntry();
+        first.setItemId(itemId.toString());
+        first.setVersionId(firstVersionId);
+        first.setStatus(InstallPlanEntry.Status.WILL_INSTALL);
+        first.setRoot(true);
+        InstallPlanEntry duplicate = new InstallPlanEntry();
+        duplicate.setItemId(itemId.toString());
+        duplicate.setVersionId(secondVersionId);
+        duplicate.setStatus(InstallPlanEntry.Status.WILL_INSTALL);
+        duplicate.setRoot(false);
+
+        // Nothing is installed yet when the plan is submitted.
+        when(iotHubInstalledItemService.findInstalledItemIdsByTenantIdAndItemIdIn(eq(tenantId), any())).thenReturn(List.of());
+        doReturn(installedItem(UUID.randomUUID())).when(service).doInstallVersion(eq(user), eq(firstVersionId), any(), any());
+
+        InstallPlanResult result = service.installPlan(user, new InstallPlan(firstVersionId, List.of(first, duplicate)), null, request);
+
+        assertThat(result.isSuccess()).isTrue();
+        assertThat(result.getEntries()).hasSize(2);
+        assertThat(result.getEntries().get(0).getStatus()).isEqualTo(InstallPlanEntry.Status.WILL_INSTALL);
+        // The duplicate is recognised as freshly installed and skipped.
+        assertThat(result.getEntries().get(1).getStatus()).isEqualTo(InstallPlanEntry.Status.ALREADY_INSTALLED);
+        verify(service).doInstallVersion(eq(user), eq(firstVersionId), any(), any());
+        verify(service, never()).doInstallVersion(eq(user), eq(secondVersionId), any(), any());
     }
 
     @Test
@@ -253,7 +289,7 @@ class DefaultIotHubServiceTest {
         InstallPlanEntry dep = willInstall(depVersionId, false);
         InstallPlanEntry root = willInstall(rootVersionId, true);
 
-        when(iotHubInstalledItemService.findInstalledItemIdsByTenantId(tenantId)).thenReturn(List.of());
+        when(iotHubInstalledItemService.findInstalledItemIdsByTenantIdAndItemIdIn(eq(tenantId), any())).thenReturn(List.of());
         IotHubInstalledItem depItem = installedItem(UUID.randomUUID());
         IotHubInstalledItem rootItem = installedItem(UUID.randomUUID());
         DashboardInstalledItemDescriptor rootDescriptor = new DashboardInstalledItemDescriptor();
@@ -287,7 +323,7 @@ class DefaultIotHubServiceTest {
         InstallPlanEntry dep2 = willInstall(dep2VersionId, false);
         InstallPlanEntry root = willInstall(rootVersionId, true);
 
-        when(iotHubInstalledItemService.findInstalledItemIdsByTenantId(tenantId)).thenReturn(List.of());
+        when(iotHubInstalledItemService.findInstalledItemIdsByTenantIdAndItemIdIn(eq(tenantId), any())).thenReturn(List.of());
         IotHubInstalledItem dep1Item = installedItem(UUID.randomUUID());
         IotHubInstalledItem dep2Item = installedItem(UUID.randomUUID());
         doReturn(dep1Item).when(service).doInstallVersion(eq(user), eq(dep1VersionId), any(), any());
@@ -316,7 +352,7 @@ class DefaultIotHubServiceTest {
         InstallPlanEntry dep = willInstall(depVersionId, false);
         InstallPlanEntry root = willInstall(rootVersionId, true);
 
-        when(iotHubInstalledItemService.findInstalledItemIdsByTenantId(tenantId)).thenReturn(List.of());
+        when(iotHubInstalledItemService.findInstalledItemIdsByTenantIdAndItemIdIn(eq(tenantId), any())).thenReturn(List.of());
         IotHubInstalledItem depItem = installedItem(UUID.randomUUID());
         doReturn(depItem).when(service).doInstallVersion(eq(user), eq(depVersionId), any(), any());
         doThrow(new IllegalStateException("install failed")).when(service).doInstallVersion(eq(user), eq(rootVersionId), any(), any());

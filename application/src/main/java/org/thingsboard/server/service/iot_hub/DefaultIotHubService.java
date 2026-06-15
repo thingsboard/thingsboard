@@ -713,7 +713,24 @@ public class DefaultIotHubService implements IotHubService {
             throw new IllegalArgumentException("Marketplace version not found: " + versionId);
         }
 
-        Set<UUID> alreadyInstalledItemIds = new HashSet<>(iotHubInstalledItemService.findInstalledItemIdsByTenantId(tenantId));
+        // Null-safe: a malformed payload without an itemId must surface the friendly
+        // IllegalArgumentException thrown by addPlanEntry(root) below, not an NPE here.
+        String rootItemId = optText(rootVersion, FIELD_ITEM_ID);
+        JsonNode related = rootVersion.get(FIELD_RELATED_ITEMS);
+
+        // The plan only ever touches the root and its (one-level-deep) related items, so we ask the
+        // DB whether just those item ids are already installed instead of loading every installed id
+        // for the tenant — a tenant may have thousands installed while a plan checks a handful.
+        Set<UUID> candidateItemIds = new HashSet<>();
+        addCandidateItemId(candidateItemIds, rootItemId);
+        if (related != null && related.isArray()) {
+            for (JsonNode relatedNode : related) {
+                addCandidateItemId(candidateItemIds, relatedNode.asText());
+            }
+        }
+        Set<UUID> alreadyInstalledItemIds = candidateItemIds.isEmpty()
+                ? Set.of()
+                : new HashSet<>(iotHubInstalledItemService.findInstalledItemIdsByTenantIdAndItemIdIn(tenantId, candidateItemIds));
 
         // LinkedHashMap preserves insertion order; we add the related items (deps) before the
         // root so a single forward iteration yields the correct install sequence (deps first,
@@ -721,10 +738,6 @@ public class DefaultIotHubService implements IotHubService {
         // level deep, so there is no need to walk a related item's own related items.
         LinkedHashMap<String, InstallPlanEntry> entries = new LinkedHashMap<>();
 
-        // Null-safe: a malformed payload without an itemId must surface the friendly
-        // IllegalArgumentException thrown by addPlanEntry(root) below, not an NPE here.
-        String rootItemId = optText(rootVersion, FIELD_ITEM_ID);
-        JsonNode related = rootVersion.get(FIELD_RELATED_ITEMS);
         if (related != null && related.isArray()) {
             for (JsonNode relatedNode : related) {
                 String relatedItemId = relatedNode.asText();
@@ -816,9 +829,22 @@ public class DefaultIotHubService implements IotHubService {
         }
 
         // The plan is resolved by a separate request, so by the time it is submitted an item may
-        // already have been installed (stale or replayed plan). Re-check against the current state
-        // so we never install the same item twice.
-        Set<UUID> alreadyInstalledItemIds = new HashSet<>(iotHubInstalledItemService.findInstalledItemIdsByTenantId(tenantId));
+        // already have been installed (stale or replayed plan). Re-check the current state for only
+        // the items this plan would install, so we never install the same item twice.
+        Set<UUID> candidateItemIds = new HashSet<>();
+        for (InstallPlanEntry entry : plan.getEntries()) {
+            if (entry.getStatus() == InstallPlanEntry.Status.WILL_INSTALL) {
+                addCandidateItemId(candidateItemIds, entry.getItemId());
+            }
+        }
+        // Mutable on purpose: as the cascade installs each item we add its id below, so a later
+        // duplicate entry for the same item in this plan is recognised as installed and skipped
+        // instead of installed twice. A client-supplied plan is not de-duplicated the way a freshly
+        // resolved one is, so the loop has to guard against duplicates itself.
+        Set<UUID> alreadyInstalledItemIds = new HashSet<>();
+        if (!candidateItemIds.isEmpty()) {
+            alreadyInstalledItemIds.addAll(iotHubInstalledItemService.findInstalledItemIdsByTenantIdAndItemIdIn(tenantId, candidateItemIds));
+        }
 
         InstallPlanResult result = new InstallPlanResult();
         List<InstallPlanEntry> resultEntries = new ArrayList<>();
@@ -847,6 +873,9 @@ public class DefaultIotHubService implements IotHubService {
                         JsonNode entryData = entry.isRoot() ? data : null;
                         IotHubInstalledItem installed = doInstallVersion(user, entry.getVersionId(), entryData, request);
                         rollbackIds.add(installed.getId());
+                        // Record it as installed so a duplicate entry for the same item later in this
+                        // plan is skipped rather than installed a second time.
+                        addCandidateItemId(alreadyInstalledItemIds, entry.getItemId());
                         if (entry.isRoot()) {
                             rootDescriptor = installed.getDescriptor();
                         }
@@ -893,6 +922,17 @@ public class DefaultIotHubService implements IotHubService {
             }
         }
         return fullyRolledBack;
+    }
+
+    private static void addCandidateItemId(Set<UUID> candidates, String itemId) {
+        if (itemId == null || itemId.isEmpty()) {
+            return;
+        }
+        try {
+            candidates.add(UUID.fromString(itemId));
+        } catch (IllegalArgumentException ignored) {
+            // A non-UUID item id can never match an installed record — leave it out of the lookup.
+        }
     }
 
     private static boolean isAlreadyInstalled(String itemId, Set<UUID> alreadyInstalledItemIds) {

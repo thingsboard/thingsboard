@@ -33,6 +33,7 @@ import org.thingsboard.server.dao.model.sql.IotHubInstalledItemEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,6 +67,11 @@ class JpaIotHubInstalledItemDao extends JpaAbstractDao<IotHubInstalledItemEntity
     @Override
     public List<UUID> findInstalledItemIdsByTenantId(TenantId tenantId) {
         return repository.findInstalledItemIdsByTenantId(tenantId.getId());
+    }
+
+    @Override
+    public List<UUID> findInstalledItemIdsByTenantIdAndItemIdIn(TenantId tenantId, Collection<UUID> itemIds) {
+        return repository.findInstalledItemIdsByTenantIdAndItemIdIn(tenantId.getId(), itemIds);
     }
 
     @Override
