@@ -25,6 +25,7 @@ import { DialogComponent } from '@shared/components/dialog.component';
 import { MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
 import { ItemType, itemTypeTranslations } from '@shared/models/iot-hub/iot-hub-item.models';
 import {
+  getInstalledItemUrl,
   InstallPlan,
   InstallPlanEntry,
   InstallPlanEntryStatus,
@@ -36,7 +37,6 @@ import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityType } from '@shared/models/entity-type.models';
 import { EntityId } from '@shared/models/id/entity-id';
-import { resolveEntityDetailsUrl } from './iot-hub-components.models';
 import { SolutionInstallDialogComponent } from '@home/components/iot-hub/solution-install-dialog.component';
 import { Observable, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
@@ -369,7 +369,7 @@ export class TbIotHubInstallDialogComponent extends DialogComponent<TbIotHubInst
       }
       return;
     }
-    this.entityDetailsUrl = resolveEntityDetailsUrl(descriptor, this.item.type);
+    this.entityDetailsUrl = getInstalledItemUrl(descriptor);
     this.state = partial ? 'partial' : 'success';
   }
 

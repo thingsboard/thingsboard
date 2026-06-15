@@ -115,6 +115,12 @@ public class DefaultIotHubService implements IotHubService {
     public InstallItemVersionResult installItemVersion(SecurityUser user, String versionId, JsonNode data, HttpServletRequest request) {
         TenantId tenantId = user.getTenantId();
         log.info("[{}] Installing IoT Hub item version: {}", tenantId, versionId);
+
+        JsonNode versionInfo = iotHubRestClient.getVersionInfo(versionId);
+        if (versionInfo == null) {
+            throw new IllegalArgumentException("Failed to get version info from IoT Hub");
+        }
+
         try {
             IotHubInstalledItem installedItem = doInstallVersion(user, versionId, data, request);
             return InstallItemVersionResult.success(installedItem.getDescriptor());
@@ -346,6 +352,9 @@ public class DefaultIotHubService implements IotHubService {
             // Skip checksum validation for solution templates
             if (!"SOLUTION_TEMPLATE".equals(itemType)) {
                 JsonNode installedVersionInfo = iotHubRestClient.getVersionInfo(installedItem.getItemVersionId().toString());
+                if (installedVersionInfo == null) {
+                    throw new IllegalArgumentException("Failed to get installed version info from IoT Hub");
+                }
                 String installedChecksum = installedVersionInfo.has("checksum") ? installedVersionInfo.get("checksum").asText() : null;
                 log.info("[{}] Installed version info: name={}, version={}, checksum={}", tenantId, installedItem.getItemName(), installedItem.getVersion(), installedChecksum);
 
@@ -361,6 +370,16 @@ public class DefaultIotHubService implements IotHubService {
             }
 
             JsonNode versionInfo = iotHubRestClient.getVersionInfo(versionId);
+
+            if (versionInfo == null) {
+                throw new IllegalArgumentException("Failed to get version info from IoT Hub");
+            }
+
+            String updateItemType = versionInfo.get("type").asText();
+            if (!itemType.equals(updateItemType)) {
+                throw new IllegalArgumentException("Installed item type does not match the new version's item type.");
+            }
+
             String itemName = versionInfo.get("name").asText();
             String version = versionInfo.get("version").asText();
 
@@ -386,6 +405,8 @@ public class DefaultIotHubService implements IotHubService {
                         throw new RuntimeException(response.getDetails());
                     }
                     stDescriptor.setCreatedEntityIds(response.getCreatedEntityIds());
+                    stDescriptor.setTenantTelemetryKeys(response.getTenantTelemetryKeys());
+                    stDescriptor.setTenantAttributeKeys(response.getTenantAttributeKeys());
                     stDescriptor.setDashboardId(response.getDashboardId());
                     stDescriptor.setPublicId(response.getPublicId());
                     stDescriptor.setMainDashboardPublic(response.isMainDashboardPublic());
@@ -482,10 +503,6 @@ public class DefaultIotHubService implements IotHubService {
         ruleChainService.saveRuleChainMetaData(tenantId, metadata, tbRuleChainService::updateRuleNodeConfiguration);
     }
 
-    private void updateDeviceProfile(SecurityUser user, TenantId tenantId, byte[] fileData) throws Exception {
-        // TODO: implement device profile update
-    }
-
     private String calculateEntityChecksum(TenantId tenantId, IotHubInstalledItem installedItem) {
         IotHubInstalledItemDescriptor descriptor = installedItem.getDescriptor();
         if (descriptor instanceof WidgetInstalledItemDescriptor wd) {
@@ -575,6 +592,11 @@ public class DefaultIotHubService implements IotHubService {
 
         try {
             JsonNode versionInfo = iotHubRestClient.getVersionInfo(versionId);
+
+            if (versionInfo == null) {
+                throw new IllegalArgumentException("Failed to get version info from IoT Hub");
+            }
+
             String itemName = versionInfo.get("name").asText();
             UUID itemId = UUID.fromString(versionInfo.get("itemId").asText());
             String version = versionInfo.get("version").asText();

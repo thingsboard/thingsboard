@@ -15,6 +15,8 @@
 ///
 
 import { BaseData } from '@shared/models/base-data';
+import { EntityType } from '@shared/models/entity-type.models';
+import { getEntityDetailsPageURL } from '@core/utils';
 
 export interface WidgetInstalledItemDescriptor {
   type: 'WIDGET';
@@ -127,4 +129,55 @@ export interface IotHubInstalledItem extends BaseData<{id: string}> {
   itemType: string;
   version: string;
   descriptor: IotHubInstalledItemDescriptor;
+}
+
+export const getInstalledItemUrl = (descriptor?: IotHubInstalledItemDescriptor): string | null => {
+  if (!descriptor) {
+    return null;
+  }
+  let entityId: string | null = null;
+  let entityType: EntityType | null = null;
+  let query: string | null = null;
+  switch (descriptor.type) {
+    case 'DEVICE':
+      entityId = descriptor.dashboardId?.id;
+      entityType = EntityType.DASHBOARD;
+      break;
+    case 'WIDGET':
+      entityId = descriptor.widgetTypeId?.id;
+      entityType = EntityType.WIDGET_TYPE;
+      break;
+    case 'DASHBOARD':
+      entityId = descriptor.dashboardId?.id;
+      entityType = EntityType.DASHBOARD;
+      break;
+    case 'CALCULATED_FIELD':
+    case 'ALARM_RULE':
+      entityId = descriptor.entityId?.id;
+      entityType = descriptor.entityId?.entityType as EntityType;
+      if (descriptor.type === 'CALCULATED_FIELD') {
+        query = 'selectedTab=cf';
+      }
+      break;
+    case 'RULE_CHAIN':
+      entityId = descriptor.ruleChainId?.id;
+      entityType = EntityType.RULE_CHAIN;
+      break;
+    case 'SOLUTION_TEMPLATE':
+      entityId = descriptor.dashboardId?.id;
+      entityType = EntityType.DASHBOARD;
+      break;
+  }
+  if (entityType && entityId) {
+    let url = getEntityDetailsPageURL(entityId, entityType);
+    if (url) {
+      if (query) {
+        url = `${url}?${query}`;
+      }
+      return url;
+    } else {
+      return null;
+    }
+  }
+  return null;
 }

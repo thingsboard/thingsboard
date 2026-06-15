@@ -230,6 +230,9 @@ import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
 import { MqttVersionSelectComponent } from '@shared/components/mqtt-version-select.component';
 import { MAT_BUTTON_TOGGLE_DEFAULT_OPTIONS } from '@angular/material/button-toggle';
 import { PhotoSwipeGalleryDirective } from '@shared/directives/photoswipe-gallery.directive';
+import {
+  AutocompleteAutoScrollRepositionDirective
+} from '@shared/directives/autocomplete-auto-scroll-reposition.directive';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -278,8 +281,6 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     {
       provide: MAT_AUTOCOMPLETE_DEFAULT_OPTIONS,
       useValue: {
-        hasBackdrop: true,
-        backdropClass: 'cdk-overlay-transparent-backdrop',
         hideSingleSelectionIndicator: true
       }
     },
@@ -389,6 +390,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ContextMenuDirective,
     ChipOverflowDirective,
     PhotoSwipeGalleryDirective,
+    AutocompleteAutoScrollRepositionDirective,
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,
@@ -655,6 +657,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ContextMenuDirective,
     ChipOverflowDirective,
     PhotoSwipeGalleryDirective,
+    AutocompleteAutoScrollRepositionDirective,
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,

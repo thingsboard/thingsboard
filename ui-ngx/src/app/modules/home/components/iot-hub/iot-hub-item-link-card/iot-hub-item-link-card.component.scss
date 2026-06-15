@@ -37,6 +37,9 @@
     background: rgba(4, 138, 211, 0.04);
     border-color: rgba(4, 138, 211, 0.32);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    .tb-iot-hub-item-link-name, .tb-iot-hub-item-link-author {
+      text-decoration: underline;
+    }
   }
 
   &--unavailable {
@@ -127,6 +130,11 @@
     font-size: 14px;
     width: 14px;
     height: 14px;
+  }
+
+  // Verified-creator accent — matches the item card chip color.
+  .tb-iot-hub-item-link-verified-icon {
+    color: #00695c;
   }
 }
 

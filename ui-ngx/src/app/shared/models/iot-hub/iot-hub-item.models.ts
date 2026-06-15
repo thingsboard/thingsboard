@@ -36,6 +36,23 @@ export const itemTypeTranslations = new Map<ItemType, string>(
   ]
 );
 
+// Canonical icon lookup per item type. Values are tb-icon
+// identifiers (Material symbol names or `mdi:*` strings) and should
+// be used everywhere an icon is rendered for an item type so the
+// mapping stays consistent across the app.
+export const itemTypeIcons: Record<string, string> = {
+  [ItemType.WIDGET]: 'widgets',
+  [ItemType.DASHBOARD]: 'dashboard',
+  [ItemType.SOLUTION_TEMPLATE]: 'apps',
+  [ItemType.CALCULATED_FIELD]: 'mdi:function-variant',
+  [ItemType.RULE_CHAIN]: 'settings_ethernet',
+  [ItemType.ALARM_RULE]: 'mdi:bell-cog',
+  [ItemType.DEVICE]: 'devices_other'
+};
+
+export const getItemTypeIcon = (type?: string | null): string =>
+  type && itemTypeIcons[type] ? itemTypeIcons[type] : 'category';
+
 /**
  * Item types discoverable to creators in the marketplace UI.
  * DASHBOARD is intentionally absent (IoT Hub no longer accepts Dashboard contributions).

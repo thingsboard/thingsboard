@@ -43,7 +43,7 @@ class IotHubInstalledItemServiceImpl implements IotHubInstalledItemService {
 
     @Override
     public IotHubInstalledItem findById(TenantId tenantId, IotHubInstalledItemId id) {
-        return iotHubInstalledItemDao.findById(tenantId, id.getId());
+        return iotHubInstalledItemDao.findByTenantIdAndId(tenantId, id).orElse(null);
     }
 
     @Override
@@ -68,7 +68,7 @@ class IotHubInstalledItemServiceImpl implements IotHubInstalledItemService {
 
     @Override
     public void deleteById(TenantId tenantId, IotHubInstalledItemId id) {
-        iotHubInstalledItemDao.removeById(tenantId, id.getId());
+        iotHubInstalledItemDao.deleteByTenantIdAndId(tenantId, id);
     }
 
     @Override

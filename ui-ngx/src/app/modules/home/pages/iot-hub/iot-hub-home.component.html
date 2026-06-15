@@ -109,7 +109,7 @@
                       @if (getItemImage(item); as imgUrl) {
                         <img [src]="imgUrl" alt="">
                       } @else {
-                        <mat-icon class="tb-search-popup-thumb-placeholder">{{ getItemTypeIcon(item.type) }}</mat-icon>
+                        <tb-icon class="tb-search-popup-thumb-placeholder">{{ getItemTypeIcon(item.type) }}</tb-icon>
                       }
                     </div>
                   }

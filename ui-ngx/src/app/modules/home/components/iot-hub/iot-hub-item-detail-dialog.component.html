@@ -203,7 +203,7 @@
           @if (item.dataDescriptor?.connectivity?.length) {
             <div class="dlg-meta-group dlg-meta-details-section">
               <span class="dlg-meta-label">{{ 'iot-hub.connectivity' | translate }}</span>
-              <div class="dlg-meta-chips" tb-chip-overflow chipSelector=".dlg-chip" overflowClass="dlg-chip dlg-chip-category" [gap]="4" [minChips]="2">
+              <div class="dlg-meta-chips" tb-chip-overflow chipSelector=".dlg-chip" overflowClass="dlg-chip dlg-chip-category" [gap]="4" [minChips]="2" showOverflowedTitle>
                 @for (conn of item.dataDescriptor.connectivity; track conn) {
                   <span class="dlg-chip dlg-chip-category">{{ conn }}</span>
                 }
@@ -214,7 +214,7 @@
           @if (item.categories?.length) {
             <div class="dlg-meta-group dlg-meta-details-section">
               <span class="dlg-meta-label">{{ 'iot-hub.category' | translate }}</span>
-              <div class="dlg-meta-chips" tb-chip-overflow chipSelector=".dlg-chip" overflowClass="dlg-chip dlg-chip-category" [gap]="4" [minChips]="2">
+              <div class="dlg-meta-chips" tb-chip-overflow chipSelector=".dlg-chip" overflowClass="dlg-chip dlg-chip-category" [gap]="4" [minChips]="2" showOverflowedTitle>
                 @for (cat of item.categories; track cat) {
                   <span class="dlg-chip dlg-chip-category">{{ cat }}</span>
                 }
@@ -225,7 +225,7 @@
         @if (item.useCases?.length) {
           <div class="dlg-meta-group dlg-meta-details-section">
             <span class="dlg-meta-label">{{ 'iot-hub.use-cases' | translate }}</span>
-            <div class="dlg-meta-chips" tb-chip-overflow chipSelector=".dlg-chip" overflowClass="dlg-chip dlg-chip-usecase" [gap]="4">
+            <div class="dlg-meta-chips" tb-chip-overflow chipSelector=".dlg-chip" overflowClass="dlg-chip dlg-chip-usecase" [gap]="4" showOverflowedTitle>
               @for (uc of item.useCases; track uc) {
                 <span class="dlg-chip dlg-chip-usecase">{{ uc }}</span>
               }
