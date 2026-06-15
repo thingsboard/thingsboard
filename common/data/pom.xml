@@ -84,8 +84,11 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <!-- wire-schema-jvm (not wire-schema): from Wire 4.x the plain wire-schema artifact is an empty
+                 Kotlin-Multiplatform pointer whose Maven pom carries no classes, so the -jvm variant must be
+                 referenced explicitly. It transitively pulls wire-runtime-jvm. See CVE-2026-45799 fix. -->
             <groupId>com.squareup.wire</groupId>
-            <artifactId>wire-schema</artifactId>
+            <artifactId>wire-schema-jvm</artifactId>
         </dependency>
         <dependency>
             <groupId>org.thingsboard</groupId>
