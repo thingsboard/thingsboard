@@ -110,6 +110,8 @@ export interface MpItemVersionView {
   installCount: number;
   totalInstallCount: number;
   resources: MpItemVersionResource[];
+  relatedItems?: string[];
+  checksum?: string;
 }
 
 // 404 body shapes returned by the public listing item-version endpoint

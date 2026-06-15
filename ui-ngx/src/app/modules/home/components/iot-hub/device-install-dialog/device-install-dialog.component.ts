@@ -143,7 +143,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       ));
       const JSZip = (await import('jszip')).default;
       const zip = await JSZip.loadAsync(zipData);
-      const imageExtensions = new Set(['png', 'jpg', 'jpeg', 'gif', 'svg']);
+      const imageExtensions = new Set(['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp']);
       for (const [path, entry] of Object.entries(zip.files) as [string, any][]) {
         if (!entry.dir) {
           const ext = path.split('.').pop()?.toLowerCase();
