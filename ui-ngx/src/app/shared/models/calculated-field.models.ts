@@ -529,45 +529,21 @@ export const ArgumentEntityTypeParamsMap =new Map<ArgumentEntityType, ArgumentEn
 ])
 
 export const getCalculatedFieldCurrentEntityFilter = (entityName: string, entityId: EntityId | EntityId[]): EntityFilter => {
+  const entityType = (Array.isArray(entityId) ? entityId[0]?.entityType : entityId?.entityType) as EntityType;
+
+  if (entityType === EntityType.DEVICE_PROFILE || entityType === EntityType.ASSET_PROFILE) {
+    const profileNames = Array.isArray(entityId) ? entityId.map(value => value.id) : [entityName];
+    return entityType === EntityType.ASSET_PROFILE
+      ? { type: AliasFilterType.assetType, assetTypes: profileNames }
+      : { type: AliasFilterType.deviceType, deviceTypes: profileNames };
+  }
+
   if (Array.isArray(entityId)) {
-    const entityType = entityId[0]?.entityType as EntityType;
-    const ids = entityId.map(value => value.id);
-    switch (entityType) {
-      case EntityType.ASSET_PROFILE:
-        return {
-          type: AliasFilterType.assetType,
-          assetTypes: ids
-        };
-      case EntityType.DEVICE_PROFILE:
-        return {
-          type: AliasFilterType.deviceType,
-          deviceTypes: ids
-        };
-      default:
-        return {
-          type: AliasFilterType.entityList,
-          entityType,
-          entityList: ids
-        };
-    }
+    return entityId.length === 1
+      ? { type: AliasFilterType.singleEntity, singleEntity: entityId[0] }
+      : { type: AliasFilterType.entityList, entityType, entityList: entityId.map(value => value.id) };
   }
-  switch (entityId?.entityType) {
-    case EntityType.ASSET_PROFILE:
-      return {
-        assetTypes: [entityName],
-        type: AliasFilterType.assetType
-      };
-    case EntityType.DEVICE_PROFILE:
-      return {
-        deviceTypes: [entityName],
-        type: AliasFilterType.deviceType
-      };
-    default:
-      return {
-        type: AliasFilterType.singleEntity,
-        singleEntity: entityId,
-      };
-  }
+  return { type: AliasFilterType.singleEntity, singleEntity: entityId };
 }
 
 export const debugCfActionEnabled = (cf: CalculatedField) => {

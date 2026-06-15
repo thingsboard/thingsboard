@@ -36,7 +36,7 @@
   @if (modelValue.entityType) {
     <tb-entity-list
       class="flex-1"
-      [labelText]="displayEntityLabel ? (entityTypeTranslations.get(modelValue.entityType).typePlural | translate) : ''"
+      [labelText]="entityListLabel ?? ''"
       [inlineField]="inlineField"
       [class.tb-not-empty]="modelValue.ids?.length > 0"
       [required]="required"

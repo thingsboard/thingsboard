@@ -68,14 +68,23 @@
                   }
                 </mat-select>
               </mat-form-field>
-              @if (isProfileType) {
+              @if (entityTypeControl.value === EntityType.DEVICE_PROFILE) {
                 <tb-entity-subtype-list formControlName="entityId"
                                         class="flex-1"
                                         appearance="outline"
                                         required
                                         subscriptSizing="dynamic"
-                                        [entityType]="profileSubtypeEntityType"
-                                        [label]="entityTypeTranslations.get(entityTypeControl.value)?.typePlural | translate">
+                                        [entityType]="EntityType.DEVICE"
+                                        [label]="entityTypeTranslations.get(EntityType.DEVICE_PROFILE)?.typePlural | translate">
+                </tb-entity-subtype-list>
+              } @else if (entityTypeControl.value === EntityType.ASSET_PROFILE) {
+                <tb-entity-subtype-list formControlName="entityId"
+                                        class="flex-1"
+                                        appearance="outline"
+                                        required
+                                        subscriptSizing="dynamic"
+                                        [entityType]="EntityType.ASSET"
+                                        [label]="entityTypeTranslations.get(EntityType.ASSET_PROFILE)?.typePlural | translate">
                 </tb-entity-subtype-list>
               } @else {
                 <tb-entity-list formControlName="entityId"

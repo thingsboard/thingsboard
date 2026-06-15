@@ -41,8 +41,8 @@ import {
   AlarmRuleTestScriptFn
 } from "@shared/models/alarm-rule.models";
 import { deepTrim } from "@core/utils";
-import { combineLatest, forkJoin, Observable, of } from "rxjs";
-import { debounceTime, map, startWith, switchMap } from "rxjs/operators";
+import { combineLatest, forkJoin, Observable, of } from 'rxjs';
+import { debounceTime, map, startWith, switchMap } from 'rxjs/operators';
 import { RelationTypes } from "@shared/models/relation.models";
 import { StringItemsOption } from "@shared/components/string-items-list.component";
 import { BaseData } from "@shared/models/base-data";
@@ -154,15 +154,6 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
     }
   }
 
-  get isProfileType(): boolean {
-    return this.entityTypeControl.value === EntityType.DEVICE_PROFILE
-      || this.entityTypeControl.value === EntityType.ASSET_PROFILE;
-  }
-
-  get profileSubtypeEntityType(): EntityType {
-    return this.entityTypeControl.value === EntityType.ASSET_PROFILE ? EntityType.ASSET : EntityType.DEVICE;
-  }
-
   get configFormGroup(): FormGroup {
     return this.fieldFormGroup.get('configuration') as FormGroup;
   }
@@ -201,18 +192,22 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
       this.isLoading = true;
       this.resolveEntityIds().pipe(
         switchMap(entityIds =>
-          forkJoin(entityIds.map((entityId: EntityId) => {
-            const alarmRule = { ...(this.data.value ?? {}), ...this.fromGroupValue, entityId };
-            alarmRule.configuration.type = CalculatedFieldType.ALARM;
-            return this.alarmRulesService.saveAlarmRule(alarmRule);
-          }))),
+          entityIds.length
+            ? forkJoin(entityIds.map((entityId: EntityId) => {
+                const alarmRule = { ...(this.data.value ?? {}), ...this.fromGroupValue, entityId };
+                alarmRule.configuration.type = CalculatedFieldType.ALARM;
+                return this.alarmRulesService.saveAlarmRule(alarmRule);
+              }))
+            : of([] as CalculatedFieldAlarmRule[])),
         takeUntilDestroyed(this.destroyRef)
       ).subscribe({
-        next: (calculatedFields: CalculatedFieldAlarmRule[]) => this.dialogRef.close(calculatedFields[0]),
+        next: (calculatedFields: CalculatedFieldAlarmRule[]) =>
+          calculatedFields.length ? this.dialogRef.close(calculatedFields[0]) : this.isLoading = false,
         error: () => this.isLoading = false
       });
     } else {
       this.fieldFormGroup.get('name').markAsTouched();
+      this.fieldFormGroup.get('entityId')?.markAsTouched();
       this.entitySelect?.entityAutocompleteMarkAsTouched();
     }
   }

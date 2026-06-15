@@ -16,7 +16,7 @@
 
 import { booleanAttribute, Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
-import { AliasEntityType, EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
+import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
 import { EntityService } from '@core/http/entity.service';
 import { EntityId } from '@shared/models/id/entity-id';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -79,12 +79,10 @@ export class EntityListSelectComponent implements ControlValueAccessor, OnInit {
   @Input()
   entityTypeLabel: string;
 
-  @Input({transform: booleanAttribute})
-  displayEntityLabel: boolean;
+  @Input()
+  entityListLabel: string;
 
   displayEntityTypeSelect: boolean;
-
-  readonly entityTypeTranslations = entityTypeTranslations;
 
   private defaultEntityType: EntityType | AliasEntityType = null;
 
