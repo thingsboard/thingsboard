@@ -17,7 +17,6 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
-import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { forkJoin, Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
@@ -234,13 +233,6 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
   searchDisplayFn = (value: any): string => {
     return typeof value === 'string' ? value : this.searchText || '';
   };
-
-  onSearchOptionSelected(event: MatAutocompleteSelectedEvent): void {
-    const item = event.option.value as MpItemVersionView;
-    this.searchText = '';
-    this.searchAutoTrigger?.closePanel();
-    this.openItemDetail(item);
-  }
 
   clearSearch(): void {
     this.searchText = '';

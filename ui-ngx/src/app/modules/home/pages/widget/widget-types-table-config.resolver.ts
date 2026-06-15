@@ -157,7 +157,7 @@ export class WidgetTypesTableConfigResolver  {
       this.config.addActionDescriptors.push(
         {
           name: this.translate.instant('iot-hub.add-from-iot-hub'),
-          icon: 'store',
+          icon: 'hub',
           isEnabled: () => true,
           onAction: (_$event) => this.addWidgetFromIotHub()
         }

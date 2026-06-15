@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, Inject, OnInit, Type, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import {
@@ -40,9 +40,6 @@ import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { generateSecret } from '@core/utils';
 import {
-  installMethodIcons as INSTALL_METHOD_ICONS,
-  installMethodLabels as INSTALL_METHOD_LABELS,
-  peOnlyInstallMethods,
   DeviceInstallStep,
   DevicePackageInfo,
   ENTITY_STEP_TYPES,
@@ -50,13 +47,16 @@ import {
   EntityStepProgress,
   FormFieldDefinition,
   FormFieldType,
+  installMethodIcons as INSTALL_METHOD_ICONS,
+  installMethodLabels as INSTALL_METHOD_LABELS,
   InstallStepType,
+  peOnlyInstallMethods,
   stepTypeAliasMap
 } from '@shared/models/iot-hub/device-package.models';
+import { mergeMap } from 'rxjs/operators';
 
 export interface DeviceInstallDialogData {
   item: MpItemVersionView;
-  zipData: ArrayBuffer;
   reviewMode?: boolean;
   selectedInstallMethod?: string;
   installState?: Record<string, any>;
@@ -89,7 +89,7 @@ const DEFAULT_RANDOM_SIZE = 20;
   templateUrl: './device-install-dialog.component.html',
   styleUrls: ['./device-install-dialog.component.scss']
 })
-export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInstallDialogComponent> implements OnInit {
+export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInstallDialogComponent> implements OnInit, OnDestroy {
 
   @ViewChild('installStepper', {static: false}) stepper: MatStepper;
 
@@ -138,16 +138,19 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
 
   async ngOnInit(): Promise<void> {
     try {
+      const zipData = await firstValueFrom(this.iotHubApiService.getVersionFileData(this.data.item.id, { ignoreLoading: true }).pipe(
+        mergeMap((blob: Blob) => blob.arrayBuffer())
+      ));
       const JSZip = (await import('jszip')).default;
-      const zip = await JSZip.loadAsync(this.data.zipData);
-      const imageExtensions = new Set(['png', 'jpg', 'jpeg', 'gif', 'svg']);
+      const zip = await JSZip.loadAsync(zipData);
+      const imageExtensions = new Set(['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp']);
       for (const [path, entry] of Object.entries(zip.files) as [string, any][]) {
         if (!entry.dir) {
           const ext = path.split('.').pop()?.toLowerCase();
           if (imageExtensions.has(ext)) {
-            const base64 = await entry.async('base64');
-            const mimeType = ext === 'jpg' ? 'image/jpeg' : ext === 'svg' ? 'image/svg+xml' : `image/${ext}`;
-            this.zipImages.set(path, `data:${mimeType};base64,${base64}`);
+            const blob = await entry.async('blob');
+            const blobUrl = URL.createObjectURL(blob);
+            this.zipImages.set(path, blobUrl);
           } else {
             const content = await entry.async('string');
             this.zipFiles.set(path, content);
@@ -197,6 +200,13 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     this.cdr.detectChanges();
   }
 
+  ngOnDestroy() {
+    for (const url of this.zipImages.values()) {
+      URL.revokeObjectURL(url);
+    }
+    super.ngOnDestroy();
+  }
+
   // --- Connectivity ---
 
   selectConnectivity(ct: string): void {
@@ -234,8 +244,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     const ws = this.wizardSteps[index];
     if (!ws) return;
     if (ws.type === 'instruction' && !ws.markdown) {
-      const raw = this.zipFiles.get(ws.rawSteps[0].file) || '';
-      ws.markdown = raw;
+      ws.markdown = this.zipFiles.get(ws.rawSteps[0].file) || '';
     } else if (ws.type === 'progress' && !ws.progressDone) {
       this.showCompletedEntitySteps(ws);
     }
@@ -543,8 +552,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       // Pre-activate all steps for tab mode (tabs render lazily on first select)
       for (const ws of this.wizardSteps) {
         if (ws.type === 'instruction') {
-          const raw = this.zipFiles.get(ws.rawSteps[0].file) || '';
-          ws.markdown = raw;
+          ws.markdown = this.zipFiles.get(ws.rawSteps[0].file) || '';
         } else if (ws.type === 'progress') {
           this.showCompletedEntitySteps(ws);
         }
@@ -674,8 +682,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       return;
     }
     if (step.type === 'instruction') {
-      const raw = this.zipFiles.get(step.rawSteps[0].file) || '';
-      step.markdown = raw;
+      step.markdown = this.zipFiles.get(step.rawSteps[0].file) || '';
     } else if (step.type === 'progress' && !step.progressDone) {
       if (this.reviewMode) {
         this.showCompletedEntitySteps(step);
