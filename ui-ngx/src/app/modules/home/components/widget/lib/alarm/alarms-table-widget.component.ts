@@ -42,7 +42,6 @@ import {
   hashCode,
   isDefined,
   isDefinedAndNotNull,
-  isEqual,
   isNotEmptyStr,
   isObject,
   isUndefined
@@ -81,6 +80,7 @@ import {
   isValidPageStepIncrement,
   noDataMessage,
   prepareTableCellButtonActions,
+  resetPaginationOnStateChange,
   RowStyleInfo,
   TableCellButtonActionDescriptor,
   TableWidgetDataKeySettings,
@@ -333,16 +333,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     if (this.displayPagination) {
       this.sort.sortChange.pipe(takeUntil(this.destroy$)).subscribe(() => this.paginator.pageIndex = 0);
 
-      let currentStateParams = deepClone(this.ctx.stateController?.getStateParams());
-      this.ctx.stateController?.stateChanged().pipe(
-        takeUntil(this.destroy$)
-      ).subscribe(() => {
-        const newStateParams = this.ctx.stateController.getStateParams();
-        if (!isEqual(currentStateParams, newStateParams)) {
-          currentStateParams = deepClone(newStateParams);
-          this.paginator.firstPage();
-        }
-      });
+      resetPaginationOnStateChange(this.ctx, this.paginator, this.destroy$);
 
       this.ctx.aliasController?.filtersChanged.pipe(
         takeUntil(this.destroy$)

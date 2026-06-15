@@ -42,7 +42,7 @@ import {
 import { IWidgetSubscription } from '@core/api/widget-api.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import { deepClone, hashCode, isDefined, isDefinedAndNotNull, isEqual, isObject, isUndefined } from '@core/utils';
+import { deepClone, hashCode, isDefined, isDefinedAndNotNull, isObject, isUndefined } from '@core/utils';
 import cssjs from '@core/css/css';
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
@@ -79,6 +79,7 @@ import {
   isValidPageStepIncrement,
   noDataMessage,
   prepareTableCellButtonActions,
+  resetPaginationOnStateChange,
   RowStyleInfo,
   TableCellButtonActionDescriptor,
   TableWidgetDataKeySettings,
@@ -267,16 +268,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     if (this.displayPagination) {
       this.sort.sortChange.pipe(takeUntil(this.destroy$)).subscribe(() => this.paginator.pageIndex = 0);
 
-      let currentStateParams = deepClone(this.ctx.stateController?.getStateParams());
-      this.ctx.stateController?.stateChanged().pipe(
-        takeUntil(this.destroy$)
-      ).subscribe(() => {
-        const newStateParams = this.ctx.stateController.getStateParams();
-        if (!isEqual(currentStateParams, newStateParams)) {
-          currentStateParams = deepClone(newStateParams);
-          this.paginator.firstPage();
-        }
-      });
+      resetPaginationOnStateChange(this.ctx, this.paginator, this.destroy$);
 
       this.ctx.aliasController?.filtersChanged.pipe(
         takeUntil(this.destroy$)

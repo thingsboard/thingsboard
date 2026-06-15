@@ -16,7 +16,7 @@
 
 import { EntityId } from '@shared/models/id/entity-id';
 import { DataKey, FormattedData, WidgetActionDescriptor, WidgetConfig } from '@shared/models/widget.models';
-import { getDescendantProp, isDefined, isNotEmptyStr } from '@core/utils';
+import { deepClone, getDescendantProp, isDefined, isEqual, isNotEmptyStr } from '@core/utils';
 import { AlarmDataInfo, alarmFields } from '@shared/models/alarm.models';
 import tinycolor from 'tinycolor2';
 import { Direction } from '@shared/models/page/sort-order';
@@ -32,8 +32,9 @@ import {
   isNotEmptyTbFunction,
   TbFunction
 } from '@shared/models/js-function.models';
-import { forkJoin, Observable, of, ReplaySubject } from 'rxjs';
-import { catchError, map, share } from 'rxjs/operators';
+import { forkJoin, Observable, of, ReplaySubject, Subject } from 'rxjs';
+import { catchError, distinctUntilChanged, map, share, skip, startWith, takeUntil } from 'rxjs/operators';
+import { MatPaginator } from '@angular/material/paginator';
 import type { ValueFormatProcessor } from '@shared/models/widget-settings.models';
 
 type ColumnVisibilityOptions = 'visible' | 'hidden' | 'hidden-mobile';
@@ -515,4 +516,16 @@ export function isValidPageStepIncrement(value: number): boolean {
 
 export function isValidPageStepCount(value: number): boolean {
   return Number.isInteger(value) && value > 0 && value <= 100;
+}
+
+export function resetPaginationOnStateChange(ctx: WidgetContext,
+                                             paginator: MatPaginator,
+                                             destroy$: Subject<void>): void {
+  ctx.stateController?.stateChanged().pipe(
+    map(() => deepClone(ctx.stateController.getStateParams())),
+    startWith(deepClone(ctx.stateController?.getStateParams())),
+    distinctUntilChanged(isEqual),
+    skip(1),
+    takeUntil(destroy$)
+  ).subscribe(() => paginator.firstPage());
 }
