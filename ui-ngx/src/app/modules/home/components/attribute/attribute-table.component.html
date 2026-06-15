@@ -170,7 +170,7 @@
           <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 40%"> {{ 'attribute.key' | translate }} </mat-header-cell>
           <mat-cell *matCellDef="let attribute" class="attribute">
             <div class="flex flex-row" style="align-items: center">
-              <span class="ellipsis">{{ attribute.key }}</span>
+              <span class="ellipsis">{{ attribute.key | tbJson:300 }}</span>
               <tb-copy-button
                 class="attribute-copy"
                 [disabled]="isLoading$ | async"
@@ -191,7 +191,7 @@
                     (click)="editAttribute($event, attribute)">
             <div class="flex flex-1 flex-row" style="align-items: center">
               <div class="flex flex-1 flex-row" style="overflow: hidden; align-items: center;">
-                <span class="ellipsis">{{attribute.value | tbJson}}</span>
+                <span class="ellipsis">{{attribute.value | tbJson:300}}</span>
                 @if (attribute.value !== '') {
                   <tb-copy-button
                     class="attribute-copy"

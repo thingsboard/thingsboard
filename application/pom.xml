@@ -395,11 +395,7 @@
         </dependency>
         <dependency>
             <groupId>org.thingsboard.langchain4j</groupId>
-            <artifactId>langchain4j-google-ai-gemini</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.thingsboard.langchain4j</groupId>
-            <artifactId>langchain4j-vertex-ai-gemini</artifactId>
+            <artifactId>langchain4j-google-genai</artifactId>
         </dependency>
         <dependency>
             <groupId>org.thingsboard.langchain4j</groupId>
@@ -415,13 +411,7 @@
         </dependency>
         <dependency>
             <groupId>org.thingsboard.langchain4j</groupId>
-            <artifactId>langchain4j-github-models</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.azure</groupId>
-                    <artifactId>azure-core-test</artifactId>
-                </exclusion>
-            </exclusions>
+            <artifactId>langchain4j-open-ai-official</artifactId>
         </dependency>
         <dependency>
             <groupId>org.thingsboard.langchain4j</groupId>

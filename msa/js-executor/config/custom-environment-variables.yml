@@ -54,6 +54,18 @@ kafka:
       mechanism: "TB_QUEUE_KAFKA_CONFLUENT_SASL_MECHANISM"
     username: "TB_QUEUE_KAFKA_CONFLUENT_USERNAME"
     password: "TB_QUEUE_KAFKA_CONFLUENT_PASSWORD"
+    # Optional: OAuth2 Setting
+    oauth:
+      # Optional: OAuth2 Client ID
+      client_id: "TB_QUEUE_KAFKA_CONFLUENT_OAUTH_CLIENT_ID"
+      # Optional: OAuth2 Client Secret
+      client_secret: "TB_QUEUE_KAFKA_CONFLUENT_OAUTH_CLIENT_SECRET"
+      # Optional: OAuth2 Endpoint URL to get the token from
+      endpoint_url: "TB_QUEUE_KAFKA_CONFLUENT_OAUTH_ENDPOINT_URL"
+      # Optional: threshold to renew current token before it expires (ms). Token refresh is managed by this service; no equivalent setting exists on the JVM-based services.
+      refresh_threshold: "TB_QUEUE_KAFKA_CONFLUENT_OAUTH_REFRESH_THRESHOLD"
+      # Optional: OAuth2 scope/audience requested for the token. Required by some IdPs for client-credentials (e.g. Azure AD's "api://<id>/.default")
+      scope: "TB_QUEUE_KAFKA_CONFLUENT_OAUTH_SCOPE"
 
 logger:
   level: "LOGGER_LEVEL"
