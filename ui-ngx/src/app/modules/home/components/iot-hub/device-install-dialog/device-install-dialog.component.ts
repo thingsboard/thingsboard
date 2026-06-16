@@ -565,7 +565,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
 
   private buildWizardSteps(): void {
     this.wizardSteps = [];
-    if (!this.reviewMode && this.availableInstallMethods.length > 1 && !this.selectedInstallMethod) {
+    if (!this.reviewMode && this.availableInstallMethods.length > 0 && !this.selectedInstallMethod) {
       // First step: connection method selector. Remaining steps are
       // appended via appendInstallSteps() once a method is confirmed.
       this.wizardSteps.push({
