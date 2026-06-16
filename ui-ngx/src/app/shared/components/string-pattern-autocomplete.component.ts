@@ -21,7 +21,6 @@ import {
   ElementRef,
   forwardRef,
   Input,
-  NgZone,
   OnChanges,
   OnInit,
   QueryList,
@@ -46,6 +45,7 @@ import {
   PositionStrategy
 } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
+import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 
 @Component({
     selector: 'tb-string-pattern-autocomplete',
@@ -124,7 +124,7 @@ export class StringPatternAutocompleteComponent implements ControlValueAccessor,
 
   private predefinedValuesButtonMode = false;
 
-  private scrollSyncRafId: number | null = null;
+  private scrollSyncCancel: CancelAnimationFrame | null = null;
 
   private propagateChange = (_val: any) => {
   };
@@ -134,8 +134,8 @@ export class StringPatternAutocompleteComponent implements ControlValueAccessor,
               private translate: TranslateService,
               private viewContainerRef: ViewContainerRef,
               private destroyRef: DestroyRef,
-              private ngZone: NgZone,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private raf: RafService) {
   }
 
   ngOnInit() {
@@ -210,32 +210,36 @@ export class StringPatternAutocompleteComponent implements ControlValueAccessor,
     }
   }
 
+  // Continuous per-frame poll instead of a 'scroll' event handler: Safari does not reliably
+  // fire 'scroll' on this input, so the highlight overlay would drift out of sync. The poll
+  // also keeps the overlay synced frame-by-frame during drag-selection / auto-scroll, where an
+  // event-driven sync stutters. The loop runs only while the input is focused (one at a time),
+  // so its cost is bounded - do not revert this to a 'scroll' listener.
   private startScrollSync() {
-    if (this.scrollSyncRafId !== null) {
+    if (this.scrollSyncCancel !== null) {
       return;
     }
-    const input = this.inputRef.nativeElement as HTMLInputElement;
-    const overlay = this.highlightTextRef?.nativeElement as HTMLElement;
+
     let lastLeft = -1;
     let lastTop = -1;
-    this.ngZone.runOutsideAngular(() => {
-      const tick = () => {
-        if (overlay && (input.scrollLeft !== lastLeft || input.scrollTop !== lastTop)) {
-          lastLeft = input.scrollLeft;
-          lastTop = input.scrollTop;
-          overlay.scrollLeft = lastLeft;
-          overlay.scrollTop = lastTop;
-        }
-        this.scrollSyncRafId = requestAnimationFrame(tick);
-      };
-      this.scrollSyncRafId = requestAnimationFrame(tick);
-    });
+    const tick = () => {
+      const input = this.inputRef?.nativeElement as HTMLInputElement;
+      const overlay = this.highlightTextRef?.nativeElement as HTMLElement;
+      if (input && overlay && (input.scrollLeft !== lastLeft || input.scrollTop !== lastTop)) {
+        lastLeft = input.scrollLeft;
+        lastTop = input.scrollTop;
+        overlay.scrollLeft = lastLeft;
+        overlay.scrollTop = lastTop;
+      }
+      this.scrollSyncCancel = this.raf.raf(tick);
+    };
+    this.scrollSyncCancel = this.raf.raf(tick);
   }
 
   private stopScrollSync() {
-    if (this.scrollSyncRafId !== null) {
-      cancelAnimationFrame(this.scrollSyncRafId);
-      this.scrollSyncRafId = null;
+    if (this.scrollSyncCancel !== null) {
+      this.scrollSyncCancel();
+      this.scrollSyncCancel = null;
     }
   }
 
