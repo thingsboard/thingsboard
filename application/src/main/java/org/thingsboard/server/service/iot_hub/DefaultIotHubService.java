@@ -178,7 +178,22 @@ public class DefaultIotHubService implements IotHubService {
         installedItem.setItemType(itemType);
         installedItem.setVersion(version);
         installedItem.setDescriptor(descriptor);
-        installedItem = iotHubInstalledItemService.save(tenantId, installedItem);
+        try {
+            installedItem = iotHubInstalledItemService.save(tenantId, installedItem);
+        } catch (Exception e) {
+            // Tracking save failed after the entity was already created locally — compensate by
+            // deleting the orphaned entity so the user is not left with an installed item that
+            // IoT Hub update/delete flows cannot see.
+            log.error("[{}] Failed to save IoT Hub installed-item tracking row for {} ({}); rolling back created entity",
+                    tenantId, itemName, itemType, e);
+            try {
+                deleteEntityForDescriptor(user, tenantId, descriptor, null);
+            } catch (Exception rb) {
+                log.error("[{}] Compensating delete after failed tracking save threw — entity may remain orphaned",
+                        tenantId, rb);
+            }
+            throw e;
+        }
 
         try {
             iotHubRestClient.reportVersionInstalled(versionId);
@@ -620,9 +635,26 @@ public class DefaultIotHubService implements IotHubService {
             installedItem.setItemType("DEVICE");
             installedItem.setVersion(version);
             installedItem.setDescriptor(descriptor);
-            iotHubInstalledItemService.save(tenantId, installedItem);
+            try {
+                iotHubInstalledItemService.save(tenantId, installedItem);
+            } catch (Exception e) {
+                log.error("[{}] Failed to save IoT Hub installed-item tracking row for device package {} (version {}); rolling back created entities",
+                        tenantId, itemName, version, e);
+                try {
+                    deleteEntityForDescriptor(user, tenantId, descriptor, null);
+                } catch (Exception rb) {
+                    log.error("[{}] Compensating delete after failed tracking save threw — device package entities may remain orphaned",
+                            tenantId, rb);
+                }
+                throw e;
+            }
 
-            iotHubRestClient.reportVersionInstalled(versionId);
+            try {
+                iotHubRestClient.reportVersionInstalled(versionId);
+            } catch (Exception e) {
+                // Counter ping is best-effort — do not fail the install if it errors.
+                log.warn("[{}] Failed to report install counter for version {}: {}", tenantId, versionId, e.getMessage());
+            }
             log.info("[{}] Registered device package install: {} (version {})", tenantId, itemName, version);
 
             return InstallItemVersionResult.success(descriptor);
@@ -677,7 +709,20 @@ public class DefaultIotHubService implements IotHubService {
             throw new IllegalArgumentException("Installed item not found");
         }
 
-        IotHubInstalledItemDescriptor descriptor = installedItem.getDescriptor();
+        deleteEntityForDescriptor(user, tenantId, installedItem.getDescriptor(), installedItemId);
+
+        iotHubInstalledItemService.deleteById(tenantId, installedItemId);
+        log.info("[{}] Deleted installed IoT Hub item: {}", tenantId, installedItem.getItemName());
+    }
+
+    /**
+     * Per-type dispatcher that removes the local entities a marketplace install created. Shared by
+     * {@link #deleteInstalledItem} and by the tracking-row compensation path in
+     * {@link #doInstallVersion} so a failed tracking save does not leave the entity orphaned.
+     */
+    private void deleteEntityForDescriptor(SecurityUser user, TenantId tenantId,
+                                           IotHubInstalledItemDescriptor descriptor,
+                                           IotHubInstalledItemId installedItemId) {
         if (descriptor instanceof WidgetInstalledItemDescriptor wd) {
             WidgetTypeDetails widgetType = widgetTypeService.findWidgetTypeDetailsById(tenantId, wd.getWidgetTypeId());
             if (widgetType != null) {
@@ -709,9 +754,6 @@ public class DefaultIotHubService implements IotHubService {
                 log.error("[{}] Failed to delete solution for installed item {}", tenantId, installedItemId, e);
             }
         }
-
-        iotHubInstalledItemService.deleteById(tenantId, installedItemId);
-        log.info("[{}] Deleted installed IoT Hub item: {}", tenantId, installedItem.getItemName());
     }
 
     @Override
