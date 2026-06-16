@@ -426,8 +426,8 @@ export enum MessageType {
 
 export const messageTypeNames = new Map<MessageType, string>(
   [
-    [MessageType.POST_ATTRIBUTES_REQUEST, 'Post attributes'],
-    [MessageType.POST_TELEMETRY_REQUEST, 'Post telemetry'],
+    [MessageType.POST_ATTRIBUTES_REQUEST, 'Post Attributes'],
+    [MessageType.POST_TELEMETRY_REQUEST, 'Post Telemetry'],
     [MessageType.TO_SERVER_RPC_REQUEST, 'RPC Request from Device'],
     [MessageType.RPC_CALL_FROM_SERVER_TO_DEVICE, 'RPC Request to Device'],
     [MessageType.RPC_QUEUED, 'RPC Queued'],
@@ -455,8 +455,8 @@ export const messageTypeNames = new Map<MessageType, string>(
     [MessageType.ALARM_UNASSIGNED, 'Alarm Unassigned'],
     [MessageType.COMMENT_CREATED, 'Comment Created'],
     [MessageType.COMMENT_UPDATED, 'Comment Updated'],
-    [MessageType.ENTITY_ASSIGNED_FROM_TENANT, 'Entity Assigned From Tenant'],
-    [MessageType.ENTITY_ASSIGNED_TO_TENANT, 'Entity Assigned To Tenant'],
+    [MessageType.ENTITY_ASSIGNED_FROM_TENANT, 'Entity Assigned from Tenant'],
+    [MessageType.ENTITY_ASSIGNED_TO_TENANT, 'Entity Assigned to Tenant'],
     [MessageType.TIMESERIES_UPDATED, 'Timeseries Updated'],
     [MessageType.TIMESERIES_DELETED, 'Timeseries Deleted']
   ]

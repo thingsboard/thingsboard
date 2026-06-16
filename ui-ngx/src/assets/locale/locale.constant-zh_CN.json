@@ -3317,7 +3317,7 @@
     "timeseries-placeholder": "时间序列",
     "target-entity": "目标实体",
     "attributes-propagation": "属性传播",
-    "attributes-propagation-hint": "实体视图将在每次保存或更新此实体视图时自动从目标实体复制指定的属性。出于性能考虑，每次属性更改时不会自动将目标实体属性传播到实体视图。您可以通过在规则链中配置“copy to view”规则节点并将“Post attributes”和“Attributes Updated”消息链接到新规则节点来启用自动传播。",
+    "attributes-propagation-hint": "实体视图将在每次保存或更新此实体视图时自动从目标实体复制指定的属性。出于性能考虑，每次属性更改时不会自动将目标实体属性传播到实体视图。您可以通过在规则链中配置“copy to view”规则节点并将“Post Attributes”和“Attributes Updated”消息链接到新规则节点来启用自动传播。",
     "timeseries-data": "时间序列数据",
     "timeseries-data-hint": "配置实体视图可访问的目标实体时间序列数据键。此时间序列数据为只读。",
     "search": "搜索实体视图",

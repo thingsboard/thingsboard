@@ -1928,7 +1928,7 @@
         "timeseries-placeholder": "時間序列",
         "target-entity": "目標實體",
         "attributes-propagation": "屬性傳播",
-        "attributes-propagation-hint": "每次儲存或更新這個實體視圖時，實體視圖將自動從目標實體複製指定的屬性。由於性能原因，目標實體屬性不會在每次屬性更改時傳播到實體視圖。您可以通過配置\"copy to view\"規則鏈中的規則節點，並將\"Post attributes\"和\"attributes Updated\"消息連結到新規則節點，從而啟用自動傳播。",
+        "attributes-propagation-hint": "每次儲存或更新這個實體視圖時，實體視圖將自動從目標實體複製指定的屬性。由於性能原因，目標實體屬性不會在每次屬性更改時傳播到實體視圖。您可以通過配置\"copy to view\"規則鏈中的規則節點，並將\"Post Attributes\"和\"attributes Updated\"消息連結到新規則節點，從而啟用自動傳播。",
         "timeseries-data": "時間序列資料",
         "timeseries-data-hint": "配置目標實體的時間序列資料鍵,以便實體視圖可以存取這些鍵。這個時間序列資料是只讀的。",
         "search": "搜尋實體視圖",

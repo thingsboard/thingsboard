@@ -3317,7 +3317,7 @@
     "timeseries-placeholder": "Séries temporelles",
     "target-entity": "Entité cible",
     "attributes-propagation": "Propagation des attributs",
-    "attributes-propagation-hint": "La vue d’entité copiera automatiquement les attributs spécifiés de l’entité cible à chaque enregistrement ou mise à jour de cette vue. Pour des raisons de performance, les attributs de l’entité cible ne sont pas propagés à la vue d’entité à chaque modification. Vous pouvez activer la propagation automatique en configurant un nœud de règle \"copy to view\" dans votre chaîne de règles et en liant les messages \"Post attributes\" et \"Attributes Updated\" à ce nouveau nœud.",
+    "attributes-propagation-hint": "La vue d’entité copiera automatiquement les attributs spécifiés de l’entité cible à chaque enregistrement ou mise à jour de cette vue. Pour des raisons de performance, les attributs de l’entité cible ne sont pas propagés à la vue d’entité à chaque modification. Vous pouvez activer la propagation automatique en configurant un nœud de règle \"copy to view\" dans votre chaîne de règles et en liant les messages \"Post Attributes\" et \"Attributes Updated\" à ce nouveau nœud.",
     "timeseries-data": "Données de séries temporelles",
     "timeseries-data-hint": "Configurez les clés de séries temporelles de l’entité cible qui seront accessibles à la vue d’entité. Ces données sont en lecture seule.",
     "search": "Rechercher des vues d’entité",

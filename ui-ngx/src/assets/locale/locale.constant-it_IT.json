@@ -3317,7 +3317,7 @@
     "timeseries-placeholder": "Serie temporali",
     "target-entity": "Entità di destinazione",
     "attributes-propagation": "Propagazione degli attributi",
-    "attributes-propagation-hint": "La Entity View copierà automaticamente gli attributi specificati dall’entità di destinazione ogni volta che salvi o aggiorni questa entity view. Per motivi di prestazioni, gli attributi dell’entità di destinazione non vengono propagati alla entity view a ogni modifica degli attributi. Puoi abilitare la propagazione automatica configurando il rule node \"copy to view\" nella tua rule chain e collegando i messaggi \"Post attributes\" e \"Attributes Updated\" al nuovo rule node.",
+    "attributes-propagation-hint": "La Entity View copierà automaticamente gli attributi specificati dall’entità di destinazione ogni volta che salvi o aggiorni questa entity view. Per motivi di prestazioni, gli attributi dell’entità di destinazione non vengono propagati alla entity view a ogni modifica degli attributi. Puoi abilitare la propagazione automatica configurando il rule node \"copy to view\" nella tua rule chain e collegando i messaggi \"Post Attributes\" e \"Attributes Updated\" al nuovo rule node.",
     "timeseries-data": "Dati delle serie temporali",
     "timeseries-data-hint": "Configura le chiavi delle serie temporali dell’entità di destinazione che saranno accessibili alla entity view. Questi dati delle serie temporali sono di sola lettura.",
     "search": "Cerca viste entità",

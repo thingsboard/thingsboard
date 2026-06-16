@@ -107,17 +107,17 @@ public class RuleChainApiClientTest extends AbstractApiClientTest {
 
         newMetadata.setNodes(List.of(switchNode, logNode, saveNode));
 
-        // connection: switch -> log (on "Post telemetry")
+        // connection: switch -> log (on "Post Telemetry")
         NodeConnectionInfo conn1 = new NodeConnectionInfo();
         conn1.setFromIndex(0);
         conn1.setToIndex(1);
-        conn1.setType("Post telemetry");
+        conn1.setType("Post Telemetry");
 
-        // connection: switch -> save timeseries (on "Post telemetry")
+        // connection: switch -> save timeseries (on "Post Telemetry")
         NodeConnectionInfo conn2 = new NodeConnectionInfo();
         conn2.setFromIndex(0);
         conn2.setToIndex(2);
-        conn2.setType("Post telemetry");
+        conn2.setType("Post Telemetry");
 
         newMetadata.setConnections(List.of(conn1, conn2));
         newMetadata.setRuleChainConnections(List.of());

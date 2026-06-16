@@ -3317,7 +3317,7 @@
     "timeseries-placeholder": "Zeitreihen",
     "target-entity": "Zielentität",
     "attributes-propagation": "Attributweiterleitung",
-    "attributes-propagation-hint": "Die Entitätsansicht kopiert automatisch die angegebenen Attribute von der Zielentität jedes Mal, wenn Sie diese Entitätsansicht speichern oder aktualisieren. Aus Leistungsgründen werden die Attribute der Zielentität nicht bei jeder Attributänderung automatisch in die Entitätsansicht übernommen. Sie können eine automatische Weiterleitung aktivieren, indem Sie den Regelknoten \"In Ansicht kopieren\" in Ihrer Regelkette konfigurieren und die Nachrichten \"Post attributes\" und \"Attributes Updated\" mit diesem neuen Regelknoten verknüpfen.",
+    "attributes-propagation-hint": "Die Entitätsansicht kopiert automatisch die angegebenen Attribute von der Zielentität jedes Mal, wenn Sie diese Entitätsansicht speichern oder aktualisieren. Aus Leistungsgründen werden die Attribute der Zielentität nicht bei jeder Attributänderung automatisch in die Entitätsansicht übernommen. Sie können eine automatische Weiterleitung aktivieren, indem Sie den Regelknoten \"In Ansicht kopieren\" in Ihrer Regelkette konfigurieren und die Nachrichten \"Post Attributes\" und \"Attributes Updated\" mit diesem neuen Regelknoten verknüpfen.",
     "timeseries-data": "Zeitreihendaten",
     "timeseries-data-hint": "Konfigurieren Sie die Zeitreihenschlüssel der Zielentität, die in der Entitätsansicht verfügbar sein sollen. Diese Zeitreihendaten sind schreibgeschützt.",
     "search": "Entitätssichten suchen",

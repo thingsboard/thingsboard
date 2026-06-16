@@ -3317,7 +3317,7 @@
     "timeseries-placeholder": "Séries temporais",
     "target-entity": "Entidade de destino",
     "attributes-propagation": "Propagação de atributos",
-    "attributes-propagation-hint": "A visualização de entidade copiará automaticamente os atributos especificados da entidade de destino cada vez que você salvar ou atualizar esta visualização de entidade. Por razões de desempenho, os atributos da entidade de destino não são propagados para a visualização de entidade a cada alteração de atributo. Você pode habilitar a propagação automática configurando o nó de regra \"copy to view\" na sua cadeia de regras e vinculando as mensagens \"Post attributes\" e \"Attributes Updated\" ao novo nó de regra.",
+    "attributes-propagation-hint": "A visualização de entidade copiará automaticamente os atributos especificados da entidade de destino cada vez que você salvar ou atualizar esta visualização de entidade. Por razões de desempenho, os atributos da entidade de destino não são propagados para a visualização de entidade a cada alteração de atributo. Você pode habilitar a propagação automática configurando o nó de regra \"copy to view\" na sua cadeia de regras e vinculando as mensagens \"Post Attributes\" e \"Attributes Updated\" ao novo nó de regra.",
     "timeseries-data": "Dados de séries temporais",
     "timeseries-data-hint": "Configure as chaves de dados de séries temporais da entidade de destino que estarão acessíveis à visualização de entidade. Esses dados de séries temporais são somente leitura.",
     "search": "Pesquisar visualizações de entidade",
