@@ -66,7 +66,7 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
 
   @Input() buttonTitle: string;
   @Input() argument: CalculatedFieldArgumentValue;
-  @Input() entityId: EntityId;
+  @Input() entityId: EntityId | EntityId[];
   @Input() tenantId: string;
   @Input() entityName: string;
   @Input() ownerId: EntityId;
@@ -154,7 +154,7 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
   get enableAttributeScopeSelection(): boolean {
     return this.entityType === ArgumentEntityType.Device
       || (this.entityType === ArgumentEntityType.Current
-        && (this.entityId.entityType === EntityType.DEVICE || this.entityId.entityType === EntityType.DEVICE_PROFILE))
+        && (this.entityIdType === EntityType.DEVICE || this.entityIdType === EntityType.DEVICE_PROFILE))
   }
 
   ngOnInit(): void {
@@ -221,7 +221,7 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
   private updatedArgumentType(): void {
     let argumentType = ArgumentEntityType.Current;
     if (this.argument.refDynamicSourceConfiguration?.type === ArgumentEntityType.Owner) {
-      this.enableAutocomplete = (this.entityId.entityType === EntityType.DEVICE_PROFILE || this.entityId.entityType === EntityType.ASSET_PROFILE);
+      this.enableAutocomplete = (this.entityIdType === EntityType.DEVICE_PROFILE || this.entityIdType === EntityType.ASSET_PROFILE);
       argumentType = ArgumentEntityType.Owner;
     } else if (this.argument.refEntityId?.entityType) {
       argumentType = this.argument.refEntityId.entityType;
@@ -294,7 +294,7 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
       .pipe(distinctUntilChanged(), takeUntilDestroyed())
       .subscribe(type => {
         this.argumentFormGroup.get('refEntityId').setValue(null);
-        this.enableAutocomplete = (this.entityId.entityType === EntityType.DEVICE_PROFILE || this.entityId.entityType === EntityType.ASSET_PROFILE) && type === ArgumentEntityType.Owner;
+        this.enableAutocomplete = (this.entityIdType === EntityType.DEVICE_PROFILE || this.entityIdType === EntityType.ASSET_PROFILE) && type === ArgumentEntityType.Owner;
         this.updatedRefEntityIdState(type);
         if (!this.enableAttributeScopeSelection) {
           this.refEntityKeyFormGroup.get('scope').setValue(AttributeScope.SERVER_SCOPE);
@@ -340,5 +340,9 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
     if (!isEntityWithId) {
       this.entityNameSubject.next(null);
     }
+  }
+
+  get entityIdType() {
+    return Array.isArray(this.entityId) ? this.entityId[0]?.entityType : this.entityId?.entityType;
   }
 }

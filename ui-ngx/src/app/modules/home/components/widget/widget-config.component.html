@@ -36,7 +36,7 @@
           <ng-container *ngTemplateOutlet="data"></ng-container>
         </div>
       }
-      <div [class.!hidden]="selectedOption !== 'appearance'" class="mat-content">
+      <div [class.!hidden]="selectedOption !== 'appearance'" class="mat-content" style="height: 100%;">
         <ng-container *ngTemplateOutlet="appearance"></ng-container>
       </div>
       <div [class.!hidden]="selectedOption !== 'card'" [formGroup]="widgetSettings" class="mat-content">
