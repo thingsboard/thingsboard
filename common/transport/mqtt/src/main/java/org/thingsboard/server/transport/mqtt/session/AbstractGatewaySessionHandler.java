@@ -261,7 +261,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
         log.trace("[{}][{}][{}] onDeviceConnect: [{}]", gateway.getTenantId(), gateway.getDeviceId(), sessionId, deviceName);
         int msgId = getMsgId(msg);
         AtomicBoolean ackSent = new AtomicBoolean(false);
-        process(onDeviceConnect(deviceName, deviceType, false),
+        process(onDeviceConnect(deviceName, deviceType),
                 result -> {
                     ack(msg, MqttReasonCodes.PubAck.SUCCESS);
                     log.trace("[{}][{}][{}] onDeviceConnectOk: [{}]", gateway.getTenantId(), gateway.getDeviceId(), sessionId, deviceName);
@@ -275,6 +275,10 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
         if (deviceAdditionalInfo.has(DataConstants.GATEWAY_PARAMETER) && deviceAdditionalInfo.has(DataConstants.OVERWRITE_ACTIVITY_TIME_PARAMETER)) {
             overwriteDevicesActivity = deviceAdditionalInfo.get(DataConstants.OVERWRITE_ACTIVITY_TIME_PARAMETER).asBoolean();
         }
+    }
+
+    ListenableFuture<T> onDeviceConnect(String deviceName, String deviceType) {
+        return onDeviceConnect(deviceName, deviceType, false);
     }
 
     ListenableFuture<T> onDeviceConnect(String deviceName, String deviceType, boolean isSparkplug) {
@@ -902,7 +906,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
     }
 
     protected void process(String deviceName, Consumer<T> onSuccess, Consumer<Throwable> onFailure) {
-        ListenableFuture<T> deviceCtxFuture = onDeviceConnect(deviceName, DEFAULT_DEVICE_TYPE, false);
+        ListenableFuture<T> deviceCtxFuture = onDeviceConnect(deviceName, DEFAULT_DEVICE_TYPE);
         process(deviceCtxFuture, onSuccess, onFailure);
     }
 

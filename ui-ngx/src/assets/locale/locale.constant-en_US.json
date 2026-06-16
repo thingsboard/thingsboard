@@ -5392,6 +5392,7 @@
         "create-new-rulechain": "Create new rule chain",
         "rulechain-file": "Rule chain file",
         "invalid-rulechain-file-error": "Unable to import rule chain: Invalid rule chain data structure.",
+        "rulechain-not-found-warning": "Default rule chain not found. The profile was saved without one — you can assign it in the profile settings.",
         "copyId": "Copy rule chain Id",
         "idCopiedMessage": "Rule chain Id has been copied to clipboard",
         "select-rulechain": "Select rule chain",

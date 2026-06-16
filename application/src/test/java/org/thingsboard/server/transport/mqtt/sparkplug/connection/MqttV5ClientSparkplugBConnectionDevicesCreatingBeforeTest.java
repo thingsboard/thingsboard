@@ -34,7 +34,8 @@ public class MqttV5ClientSparkplugBConnectionDevicesCreatingBeforeTest extends A
      */
     @Before
     public void beforeTest() throws Exception {
-        beforeSparkplugTest(true);
+        beforeSparkplugTest();
+        seedLegacyAndFullPathDevices();
     }
 
     @After

@@ -141,6 +141,7 @@ public class DefaultTransportApiService implements TransportApiService {
     private final OtaPackageService otaPackageService;
     private final OtaPackageDataCache otaPackageDataCache;
     private final QueueService queueService;
+    public static final String GATEWAY_CREATED_RELATION = "Created";
 
     private final ConcurrentMap<String, ReentrantLock> deviceCreationLocks = new ConcurrentReferenceHashMap<>(16, ConcurrentReferenceHashMap.ReferenceType.WEAK);
 
@@ -395,47 +396,32 @@ public class DefaultTransportApiService implements TransportApiService {
 
         // Security check: verify that the device was created by this gateway
         boolean isRelated = false;
-        try {
-            // Security check: verify that the device was originally created by this gateway
-            isRelated = relationService.checkRelation(
-                    gateway.getTenantId(),
+        isRelated = relationService.checkRelation(
+                gateway.getTenantId(),
+                gateway.getId(),
+                existingDevice.getId(),
+                GATEWAY_CREATED_RELATION,
+                RelationTypeGroup.COMMON
+        );
+
+        // If the device is found but not related to this gateway
+        if (!isRelated) {
+            log.debug("[{}] Device [{}] exists but is not related to gateway. " +
+                            "Skipping rename and allowing creation of Sparkplug device [{}].",
                     gateway.getId(),
                     existingDevice.getId(),
-                    "Created",
-                    RelationTypeGroup.COMMON
-            );
-        } catch (Exception e) {
-            // Log the error from the relation service but return null to allow potential recovery
-            log.error("[{}] Error checking relation for device {}", gateway.getId(), existingDevice.getId(), e);
-            return null;
-        }
+                    requestMsg.getDeviceName());
 
-        // If the device is found but not related to this gateway, it's a security breach
-        if (!isRelated) {
-            log.error("[{}] Security breach attempt! Gateway tried to rename device [{}] without 'Created' relation.",
-                    gateway.getId(), existingDevice.getId());
-            // Throwing exception to halt the entire connection process
-            throw new RuntimeException("Security breach attempt! Unauthorized device rename.");
+            return null;
         }
 
         // Logic for renaming the device if it's related and no naming conflicts exist
         boolean changed = false;
         String newName = requestMsg.getDeviceName();
-
         if (!newName.equals(existingDevice.getName())) {
-            // Check if the new name is already taken by another device
-            Device conflictDevice = deviceService.findDeviceByTenantIdAndName(gateway.getTenantId(), newName);
-
-            if (conflictDevice != null) {
-                log.warn("[{}] Cannot rename device [{}] to [{}]: name already exists!",
-                        gateway.getId(), existingDevice.getId(), newName);
-                return existingDevice;
-            }
-
             existingDevice.setName(newName);
 
-            // Update label only if it's empty to avoid overwriting user changes
-            if (existingDevice.getLabel() == null || existingDevice.getLabel().isEmpty()) {
+            if (StringUtils.isEmpty(existingDevice.getLabel())) {
                 existingDevice.setLabel(deviceId);
             }
 
@@ -452,8 +438,8 @@ public class DefaultTransportApiService implements TransportApiService {
         Device device = new Device();
         device.setTenantId(tenantId);
         device.setName(requestMsg.getDeviceName());
-        if (requestMsg.getIsSparkplug()) {
-            if (topicPath.length == 3) device.setLabel(topicPath[2]);
+        if (requestMsg.getIsSparkplug() && topicPath.length == 3) {
+            device.setLabel(topicPath[2]);
         }
         device.setType(requestMsg.getDeviceType());
         device.setCustomerId(gateway.getCustomerId());
@@ -466,7 +452,7 @@ public class DefaultTransportApiService implements TransportApiService {
         device = deviceService.saveDevice(device);
         relationService.saveRelation(
                 tenantId,
-                new EntityRelation(gateway.getId(), device.getId(), "Created")
+                new EntityRelation(gateway.getId(), device.getId(), GATEWAY_CREATED_RELATION)
         );
         return device;
     }
