@@ -166,7 +166,7 @@ public class DeviceApiController implements TbTransportService {
         return responseWriter;
     }
 
-    @Operation(summary = "Post attributes (postDeviceAttributes)",
+    @Operation(summary = "Post Attributes (postDeviceAttributes)",
             description = "Post client attribute updates on behalf of device. "
                     + "\n Example of the request: "
                     + MARKDOWN_CODE_BLOCK_START

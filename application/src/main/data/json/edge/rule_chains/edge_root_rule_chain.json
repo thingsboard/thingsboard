@@ -158,12 +158,12 @@
       {
         "fromIndex": 3,
         "toIndex": 1,
-        "type": "Post telemetry"
+        "type": "Post Telemetry"
       },
       {
         "fromIndex": 3,
         "toIndex": 2,
-        "type": "Post attributes"
+        "type": "Post Attributes"
       },
       {
         "fromIndex": 3,

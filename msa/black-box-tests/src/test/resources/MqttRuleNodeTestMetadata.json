@@ -71,7 +71,7 @@
     {
       "fromIndex": 2,
       "toIndex": 0,
-      "type": "Post telemetry"
+      "type": "Post Telemetry"
     }
   ],
   "ruleChainConnections": null

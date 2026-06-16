@@ -24,8 +24,8 @@ import java.util.stream.Collectors;
 
 public enum TbMsgType {
 
-    POST_ATTRIBUTES_REQUEST("Post attributes"),
-    POST_TELEMETRY_REQUEST("Post telemetry"),
+    POST_ATTRIBUTES_REQUEST("Post Attributes"),
+    POST_TELEMETRY_REQUEST("Post Telemetry"),
     TO_SERVER_RPC_REQUEST("RPC Request from Device"),
     ACTIVITY_EVENT("Activity Event"),
     INACTIVITY_EVENT("Inactivity Event"),
@@ -47,8 +47,8 @@ public enum TbMsgType {
     COMMENT_CREATED("Comment Created"),
     COMMENT_UPDATED("Comment Updated"),
     RPC_CALL_FROM_SERVER_TO_DEVICE("RPC Request to Device"),
-    ENTITY_ASSIGNED_FROM_TENANT("Entity Assigned From Tenant"),
-    ENTITY_ASSIGNED_TO_TENANT("Entity Assigned To Tenant"),
+    ENTITY_ASSIGNED_FROM_TENANT("Entity Assigned from Tenant"),
+    ENTITY_ASSIGNED_TO_TENANT("Entity Assigned to Tenant"),
     ENTITY_ASSIGNED_TO_EDGE,
     ENTITY_UNASSIGNED_FROM_EDGE,
     TIMESERIES_UPDATED("Timeseries Updated"),
@@ -67,7 +67,7 @@ public enum TbMsgType {
     PROVISION_SUCCESS,
     PROVISION_FAILURE,
     SEND_EMAIL,
-    REST_API_REQUEST("REST API request"),
+    REST_API_REQUEST("REST API Request"),
 
     // tellSelfOnly types
     GENERATOR_NODE_SELF_MSG(null, true),
