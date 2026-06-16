@@ -1,7 +1,7 @@
 {
   "fqn": "horizontal_snow_depth_card",
   "name": "Horizontal snow depth card",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/horizontal_snow_depth_card_system_widget_image.png",
   "description": "Displays the latest snow depth telemetry in a scalable horizontal layout.",
   "descriptor": {

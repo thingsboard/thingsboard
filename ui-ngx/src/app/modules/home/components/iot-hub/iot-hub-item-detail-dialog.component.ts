@@ -21,12 +21,10 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { MpItemVersionView, cfTypeTranslations, cfTypeIcons, ruleChainTypeTranslations, widgetTypeTranslations, NodeInfo } from '@shared/models/iot-hub/iot-hub-version.models';
-import { ItemType, itemTypeTranslations } from '@shared/models/iot-hub/iot-hub-item.models';
-import { IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
+import { getItemTypeIcon, ItemType, itemTypeTranslations } from '@shared/models/iot-hub/iot-hub-item.models';
+import { getInstalledItemUrl, IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { TranslateService } from '@ngx-translate/core';
-import { EntityType } from '@shared/models/entity-type.models';
-import { getEntityDetailsPageURL } from '@core/utils';
 import { SolutionInstallDialogComponent } from '@home/components/iot-hub/solution-install-dialog.component';
 import { SolutionTemplateInstalledItemDescriptor } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
@@ -103,16 +101,7 @@ export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubI
   }
 
   getTypeIcon(): string {
-    switch (this.item.type) {
-      case ItemType.WIDGET: return 'widgets';
-      case ItemType.DASHBOARD: return 'dashboard';
-      case ItemType.SOLUTION_TEMPLATE: return 'integration_instructions';
-      case ItemType.CALCULATED_FIELD: return 'functions';
-      case ItemType.ALARM_RULE: return 'notification_important';
-      case ItemType.RULE_CHAIN: return 'account_tree';
-      case ItemType.DEVICE: return 'memory';
-      default: return 'category';
-    }
+    return getItemTypeIcon(this.item.type);
   }
 
   getCompactIcon(): string {
@@ -121,15 +110,15 @@ export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubI
     }
     if (this.item.type === ItemType.CALCULATED_FIELD) {
       const cfType = this.item.dataDescriptor?.cfType;
-      return cfTypeIcons.get(cfType) || 'functions';
+      return cfTypeIcons.get(cfType) || getItemTypeIcon(ItemType.CALCULATED_FIELD);
     }
     if (this.item.type === ItemType.ALARM_RULE) {
-      return 'notification_important';
+      return getItemTypeIcon(ItemType.ALARM_RULE);
     }
     switch (this.item.dataDescriptor?.ruleChainType) {
       case 'CORE': return 'device_hub';
       case 'EDGE': return 'router';
-      default: return 'account_tree';
+      default: return getItemTypeIcon(ItemType.RULE_CHAIN);
     }
   }
 
@@ -208,29 +197,10 @@ export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubI
   }
 
   openEntityDetails(): void {
-    const descriptor = this.installedItem?.descriptor;
-    if (!descriptor) {
-      return;
-    }
-    let entityId: string | null = null;
-    let entityType: EntityType | null = null;
-    switch (descriptor.type) {
-      case 'WIDGET': entityId = descriptor.widgetTypeId?.id; entityType = EntityType.WIDGET_TYPE; break;
-      case 'DASHBOARD': entityId = descriptor.dashboardId?.id; entityType = EntityType.DASHBOARD; break;
-      case 'CALCULATED_FIELD':
-      case 'ALARM_RULE':
-        entityId = descriptor.calculatedFieldId?.id;
-        entityType = EntityType.CALCULATED_FIELD;
-        break;
-      case 'RULE_CHAIN': entityId = descriptor.ruleChainId?.id; entityType = EntityType.RULE_CHAIN; break;
-      case 'SOLUTION_TEMPLATE': entityId = descriptor.dashboardId?.id; entityType = EntityType.DASHBOARD; break;
-    }
-    if (entityType && entityId) {
-      const url = getEntityDetailsPageURL(entityId, entityType);
-      if (url) {
-        this.dialogRef.close();
-        void this.router.navigateByUrl(url);
-      }
+    const url = getInstalledItemUrl(this.installedItem?.descriptor);
+    if (url) {
+      this.dialogRef.close();
+      void this.router.navigateByUrl(url);
     }
   }
 

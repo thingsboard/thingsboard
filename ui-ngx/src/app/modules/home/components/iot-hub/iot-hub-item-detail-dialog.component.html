@@ -69,11 +69,15 @@
           </span>
         }
       }
-      <button mat-icon-button class="shrink-0" (click)="close()" type="button">
+      <button mat-icon-button class="dlg-close-btn-desktop" (click)="close()" type="button">
         <tb-icon>close</tb-icon>
       </button>
     </div>
   </div>
+
+  <button mat-icon-button class="dlg-close-btn-mobile" (click)="close()" type="button">
+    <tb-icon>close</tb-icon>
+  </button>
 
   <!-- Scrollable content -->
   <div class="dlg-body">
@@ -163,7 +167,7 @@
       <div class="dlg-divider"></div>
       <div class="dlg-meta" [class.dlg-meta-4-col]="item.type === ItemType.SOLUTION_TEMPLATE || item.type === ItemType.DASHBOARD">
         @if (showCreator) {
-          <div class="dlg-meta-group">
+          <div class="dlg-meta-group dlg-meta-creator-section">
             <span class="dlg-meta-label">{{ 'iot-hub.creator' | translate }}</span>
             <div class="dlg-meta-creator" role="button" tabindex="0"
                  [class.clickable]="mode !== 'add'"
@@ -179,7 +183,7 @@
                   <mat-icon class="dlg-meta-creator-verified">verified</mat-icon>
                 }
               </div>
-              <span class="dlg-meta-creator-name">{{ item.creatorDisplayName }}</span>
+              <span class="dlg-meta-creator-name" tbTruncateWithTooltip>{{ item.creatorDisplayName }}</span>
             </div>
           </div>
         }
@@ -203,7 +207,7 @@
           @if (item.dataDescriptor?.connectivity?.length) {
             <div class="dlg-meta-group dlg-meta-details-section">
               <span class="dlg-meta-label">{{ 'iot-hub.connectivity' | translate }}</span>
-              <div class="dlg-meta-chips" tb-chip-overflow chipSelector=".dlg-chip" overflowClass="dlg-chip dlg-chip-category" [gap]="4" [minChips]="2">
+              <div class="dlg-meta-chips" tb-chip-overflow chipSelector=".dlg-chip" overflowClass="dlg-chip dlg-chip-category" [gap]="4" [minChips]="2" showOverflowedTitle>
                 @for (conn of item.dataDescriptor.connectivity; track conn) {
                   <span class="dlg-chip dlg-chip-category">{{ conn }}</span>
                 }
@@ -214,7 +218,7 @@
           @if (item.categories?.length) {
             <div class="dlg-meta-group dlg-meta-details-section">
               <span class="dlg-meta-label">{{ 'iot-hub.category' | translate }}</span>
-              <div class="dlg-meta-chips" tb-chip-overflow chipSelector=".dlg-chip" overflowClass="dlg-chip dlg-chip-category" [gap]="4" [minChips]="2">
+              <div class="dlg-meta-chips" tb-chip-overflow chipSelector=".dlg-chip" overflowClass="dlg-chip dlg-chip-category" [gap]="4" [minChips]="2" showOverflowedTitle>
                 @for (cat of item.categories; track cat) {
                   <span class="dlg-chip dlg-chip-category">{{ cat }}</span>
                 }
@@ -225,7 +229,7 @@
         @if (item.useCases?.length) {
           <div class="dlg-meta-group dlg-meta-details-section">
             <span class="dlg-meta-label">{{ 'iot-hub.use-cases' | translate }}</span>
-            <div class="dlg-meta-chips" tb-chip-overflow chipSelector=".dlg-chip" overflowClass="dlg-chip dlg-chip-usecase" [gap]="4">
+            <div class="dlg-meta-chips" tb-chip-overflow chipSelector=".dlg-chip" overflowClass="dlg-chip dlg-chip-usecase" [gap]="4" showOverflowedTitle>
               @for (uc of item.useCases; track uc) {
                 <span class="dlg-chip dlg-chip-usecase">{{ uc }}</span>
               }

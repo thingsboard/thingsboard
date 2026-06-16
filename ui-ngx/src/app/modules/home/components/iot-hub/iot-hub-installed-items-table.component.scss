@@ -72,9 +72,9 @@
 }
 
 .mat-column-createdTime {
-  width: 100px;
-  min-width: 100px;
-  max-width: 100px;
+  width: 160px;
+  min-width: 160px;
+  max-width: 160px;
 }
 
 .mat-column-updates {
@@ -122,12 +122,14 @@
   --mat-icon-color: currentColor;
 }
 
-.tb-type-widget { color: rgb(32, 115, 61); background: rgba(46, 166, 88, 0.06); }
-.tb-type-dashboard { color: rgb(61, 76, 166); background: rgba(61, 76, 166, 0.06); }
-.tb-type-solution-template { color: rgb(0, 137, 186); background: rgba(0, 137, 186, 0.06); }
-.tb-type-calc-field { color: rgb(40, 120, 148); background: rgba(40, 120, 148, 0.06); }
-.tb-type-rule-chain { color: rgb(178, 121, 29); background: rgba(179, 121, 29, 0.06); }
-.tb-type-device { color: rgb(24, 146, 110); background: rgba(24, 146, 110, 0.06); }
+// Colors mirror itemTypeChipColors from the iot-hub mp-item.models.
+.tb-type-device { color: #3d4ca6; background: rgba(61, 76, 166, 0.06); }
+.tb-type-solution-template { color: #2c6cb4; background: rgba(44, 108, 180, 0.06); }
+.tb-type-widget { color: #20733d; background: rgba(46, 166, 88, 0.06); }
+.tb-type-calc-field { color: #3db5e0; background: rgba(61, 181, 224, 0.06); }
+.tb-type-alarm-rule { color: #d7702f; background: rgba(215, 112, 47, 0.06); }
+.tb-type-rule-chain { color: #aa5be3; background: rgba(170, 91, 227, 0.06); }
+.tb-type-dashboard { color: #607d8b; background: rgba(96, 125, 139, 0.06); }
 
 // "vX.X.X Available" button — Design: border rgba(0,0,0,0.12), rounded-4, px-12 py-6, gap-8
 .tb-installed-version-btn {

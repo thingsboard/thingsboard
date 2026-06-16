@@ -82,7 +82,7 @@ export class TbIotHubAddItemDialogComponent extends DialogComponent<TbIotHubAddI
       this.installDeviceItem(item);
       return;
     }
-    if (this.itemType === ItemType.CALCULATED_FIELD && !this.data.entityId) {
+    if ((this.itemType === ItemType.CALCULATED_FIELD || this.itemType === ItemType.ALARM_RULE) && !this.data.entityId) {
       this.dialog.open<TbIotHubSelectCfEntityDialogComponent, IotHubSelectCfEntityDialogData, EntityId | null>(
         TbIotHubSelectCfEntityDialogComponent, {
           panelClass: ['tb-dialog'],

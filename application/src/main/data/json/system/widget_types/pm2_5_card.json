@@ -1,7 +1,7 @@
 {
   "fqn": "pm2_5_card",
   "name": "PM2.5 card",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/pm2_5_card_system_widget_image.png",
   "description": "Displays the latest fine particulate matter (PM2.5) telemetry in a scalable rectangle card.",
   "descriptor": {

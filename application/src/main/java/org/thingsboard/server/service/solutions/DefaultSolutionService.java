@@ -144,6 +144,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -180,6 +181,18 @@ public class DefaultSolutionService implements SolutionService {
 
     @Value("${ui.solution_templates.docs_base_url:https://thingsboard.io/docs}")
     private String docsBaseUrl;
+
+    @Value("${iot-hub.max-uncompressed-archive-bytes:209715200}")
+    private long maxUncompressedArchiveBytes;
+
+    @Value("${iot-hub.max-uncompressed-entry-bytes:52428800}")
+    private long maxUncompressedEntryBytes;
+
+    @Value("${iot-hub.max-archive-entry-count:10000}")
+    private int maxArchiveEntryCount;
+
+    @Value("${iot-hub.max-install-timeout-ms:60000}")
+    private long maxInstallTimeoutMs;
 
     private final RuleChainService ruleChainService;
     private final TbRuleChainService tbRuleChainService;
@@ -271,7 +284,7 @@ public class DefaultSolutionService implements SolutionService {
                 tsService.remove(tenantId, tenantId, queries).get();
             }
             List<String> attrKeys = descriptor.getTenantAttributeKeys();
-            if (tsKeys != null && !tsKeys.isEmpty()) {
+            if (attrKeys != null && !attrKeys.isEmpty()) {
                 attributesService.removeAll(tenantId, tenantId, AttributeScope.SERVER_SCOPE, attrKeys).get();
             }
         } catch (Exception e) {
@@ -392,7 +405,7 @@ public class DefaultSolutionService implements SolutionService {
 
             List<ReferenceableEntityDefinition> ruleChainDefs = loadListOfEntitiesIfFileExists(ctx.getTempDir(), "rule_chains.json", new TypeReference<>() {});
             if (ruleChainDefs.stream().anyMatch(r -> StringUtils.isNotEmpty(r.getUpdate()))) {
-                long timeout = loadInstallTimeoutMs(ctx.getTempDir());
+                long timeout = Math.min(loadInstallTimeoutMs(ctx.getTempDir()), maxInstallTimeoutMs);
                 if (timeout > 0) {
                     Thread.sleep(timeout);
                 }
@@ -1555,10 +1568,18 @@ public class DefaultSolutionService implements SolutionService {
         return Collections.emptyList();
     }
 
-    private static void extractZip(byte[] zipData, Path destDir) throws IOException {
+    private static final int EXTRACT_BUFFER_SIZE = 8 * 1024;
+
+    private void extractZip(byte[] zipData, Path destDir) throws IOException {
+        long totalBytes = 0;
+        int entryCount = 0;
+        byte[] buf = new byte[EXTRACT_BUFFER_SIZE];
         try (ZipInputStream zis = new ZipInputStream(new ByteArrayInputStream(zipData))) {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
+                if (++entryCount > maxArchiveEntryCount) {
+                    throw new IOException("Solution template archive exceeds max entry count: " + maxArchiveEntryCount);
+                }
                 Path entryPath = destDir.resolve(entry.getName()).normalize();
                 if (!entryPath.startsWith(destDir)) {
                     throw new IOException("ZIP entry outside of target directory: " + entry.getName());
@@ -1567,7 +1588,21 @@ public class DefaultSolutionService implements SolutionService {
                     Files.createDirectories(entryPath);
                 } else {
                     Files.createDirectories(entryPath.getParent());
-                    Files.write(entryPath, zis.readAllBytes());
+                    try (OutputStream out = Files.newOutputStream(entryPath)) {
+                        long entryBytes = 0;
+                        int n;
+                        while ((n = zis.read(buf)) > 0) {
+                            entryBytes += n;
+                            totalBytes += n;
+                            if (entryBytes > maxUncompressedEntryBytes) {
+                                throw new IOException("Solution template entry exceeds max uncompressed size: " + entry.getName());
+                            }
+                            if (totalBytes > maxUncompressedArchiveBytes) {
+                                throw new IOException("Solution template archive exceeds max uncompressed size: " + maxUncompressedArchiveBytes + " bytes");
+                            }
+                            out.write(buf, 0, n);
+                        }
+                    }
                 }
                 zis.closeEntry();
             }

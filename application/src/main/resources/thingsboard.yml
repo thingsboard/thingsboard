@@ -2255,3 +2255,10 @@ mqtt:
       jitter_factor: "${TB_MQTT_CLIENT_RETRANSMISSION_JITTER_FACTOR:0.15}"
 iot-hub:
   base-url: "${IOT_HUB_BASE_URL:https://iot-hub.thingsboard.io}" # IoT Hub base URL for fetching published items, resources, etc.
+  connect-timeout-sec: "${IOT_HUB_CONNECT_TIMEOUT_SEC:5}" # timeout in seconds to connect to IoT Hub server.
+  read-timeout-sec: "${IOT_HUB_READ_TIMEOUT_SEC:10}" # timeout in seconds to read from IoT Hub server.
+  max-file-data-size-bytes: "${IOT_HUB_MAX_FILE_DATA_SIZE_BYTES:104857600}" # maximum size in bytes of a file-data payload fetched from IoT Hub. Requests advertising a larger Content-Length, or streams that exceed this size, are rejected to avoid out-of-memory issues on the platform side.
+  max-uncompressed-archive-bytes: "${IOT_HUB_MAX_UNCOMPRESSED_ARCHIVE_BYTES:209715200}" # maximum cumulative uncompressed size in bytes for a solution template archive. Extraction aborts past this threshold to mitigate zip-bomb attacks.
+  max-uncompressed-entry-bytes: "${IOT_HUB_MAX_UNCOMPRESSED_ENTRY_BYTES:52428800}" # maximum uncompressed size in bytes for any single entry inside a solution template archive.
+  max-archive-entry-count: "${IOT_HUB_MAX_ARCHIVE_ENTRY_COUNT:10000}" # maximum number of entries allowed inside a solution template archive.
+  max-install-timeout-ms: "${IOT_HUB_MAX_INSTALL_TIMEOUT_MS:60000}" # upper clamp in milliseconds for the post-install wait declared in a solution template's solution.json. Prevents a malicious or misconfigured template from pinning an HTTP worker thread.

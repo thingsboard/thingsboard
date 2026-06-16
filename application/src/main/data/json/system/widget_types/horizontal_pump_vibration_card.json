@@ -1,7 +1,7 @@
 {
   "fqn": "horizontal_pump_vibration_card",
   "name": "Horizontal vibration card",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/horizontal_vibration_card.svg",
   "description": "Displays the latest vibration telemetry in a scalable horizontal layout.",
   "descriptor": {

@@ -40,14 +40,18 @@
           @if (getImageUrl(); as imgUrl) {
             <img [src]="imgUrl" alt="">
           } @else {
-            <mat-icon class="tb-iot-hub-item-link-thumb-fallback">{{ getTypeIcon() }}</mat-icon>
+            <tb-icon class="tb-iot-hub-item-link-thumb-fallback">{{ getTypeIcon() }}</tb-icon>
           }
         </div>
       }
       <div class="tb-iot-hub-item-link-text">
         <span class="tb-iot-hub-item-link-name">{{ item.name }}</span>
         <span class="tb-iot-hub-item-link-author">
-          <mat-icon>person</mat-icon>
+          @if (item.creatorVerified) {
+            <mat-icon class="tb-iot-hub-item-link-verified-icon">verified</mat-icon>
+          } @else {
+            <mat-icon>person</mat-icon>
+          }
           {{ item.creatorDisplayName }}
         </span>
       </div>

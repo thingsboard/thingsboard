@@ -62,8 +62,6 @@ const PHOTO_GALLERY_STYLE =
   '\n' +
   '.pswp__item img.pswp__img {\n' +
   '    display: block;\n' +
-  '    max-width: 90vw;\n' +
-  '    max-height: 78vh;\n' +
   '    object-fit: contain;\n' +
   '    border-radius: 4px;    \n' +
   '    box-shadow: 0 20px 60px #00000080;\n' +
@@ -90,14 +88,14 @@ const PHOTO_GALLERY_STYLE =
   '    outline: none;\n' +
   '}\n' +
   '\n' +
-  '.pswp__button.pswp__button--close {\n' +
+  '.pswp__button.pswp__button--close, .pswp__button.pswp__button--zoom {\n' +
   '    width: 40px;\n' +
   '    height: 40px;\n' +
   '    margin-top: 16px;\n' +
   '    margin-right: 16px;\n' +
   '}\n' +
   '\n' +
-  '.pswp__button.pswp__button--close .pswp__icn {\n' +
+  '.pswp__button.pswp__button--close .pswp__icn, .pswp__button.pswp__button--zoom .pswp__icn {\n' +
   '    width: 24px;\n' +
   '    height: 24px;\n' +
   '    top: 7px;\n' +

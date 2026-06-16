@@ -1,7 +1,7 @@
 {
   "fqn": "horizontal_flow_rate_card",
   "name": "Horizontal flow rate card",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/horizontal_flow_rate_card.svg",
   "description": "Displays the latest flow rate telemetry in a scalable horizontal layout.",
   "descriptor": {

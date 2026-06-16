@@ -21,11 +21,13 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { ItemType, itemTypeTranslations } from '@shared/models/iot-hub/iot-hub-item.models';
-import { SolutionTemplateInstalledItemDescriptor } from '@shared/models/iot-hub/iot-hub-installed-item.models';
+import {
+  getInstalledItemUrl,
+  SolutionTemplateInstalledItemDescriptor
+} from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
-import { resolveEntityDetailsUrl } from './iot-hub-components.models';
 import { SolutionInstallDialogComponent } from '@home/components/iot-hub/solution-install-dialog.component';
 
 export interface IotHubUpdateDialogData {
@@ -86,7 +88,7 @@ export class TbIotHubUpdateDialogComponent extends DialogComponent<TbIotHubUpdat
             });
           } else {
             this.state = 'success';
-            this.entityDetailsUrl = resolveEntityDetailsUrl(result.descriptor, this.data.itemType);
+            this.entityDetailsUrl = getInstalledItemUrl(result.descriptor);
           }
         } else if (result.entityModified) {
           this.state = 'confirm';

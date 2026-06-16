@@ -1,7 +1,7 @@
 {
   "fqn": "simple_noise_level_chart_card",
   "name": "Simple noise level chart card",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/simple_noise_level_chart_card_system_widget_image.png",
   "description": "Displays historical noise level values as a simplified chart. Optionally may display the corresponding latest noise level value.",
   "descriptor": {

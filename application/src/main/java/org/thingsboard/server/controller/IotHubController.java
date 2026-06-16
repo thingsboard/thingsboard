@@ -46,6 +46,8 @@ import org.thingsboard.server.dao.iot_hub.IotHubInstalledItemService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 import org.thingsboard.server.service.iot_hub.InstallItemVersionResult;
+import org.thingsboard.server.service.iot_hub.InstallPlan;
+import org.thingsboard.server.service.iot_hub.InstallPlanResult;
 import org.thingsboard.server.service.iot_hub.UpdateItemVersionResult;
 import org.thingsboard.server.service.iot_hub.IotHubService;
 
@@ -70,6 +72,23 @@ public class IotHubController extends BaseController {
                                                          HttpServletRequest request) throws ThingsboardException {
         return iotHubService.installItemVersion(getCurrentUser(), versionId, data, request);
     }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @GetMapping("/versions/{versionId}/installPlan")
+    @ResponseBody
+    public InstallPlan resolveInstallPlan(@PathVariable String versionId) throws ThingsboardException {
+        return iotHubService.resolveInstallPlan(getCurrentUser(), versionId);
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @PostMapping("/installPlan")
+    @ResponseBody
+    public InstallPlanResult installPlan(@RequestBody InstallPlanRequest body,
+                                         HttpServletRequest request) throws ThingsboardException {
+        return iotHubService.installPlan(getCurrentUser(), body.plan(), body.data(), request);
+    }
+
+    public record InstallPlanRequest(InstallPlan plan, JsonNode data) {}
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @PostMapping("/device/register")
