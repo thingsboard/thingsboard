@@ -2202,3 +2202,4 @@ iot-hub:
   max-uncompressed-archive-bytes: "${IOT_HUB_MAX_UNCOMPRESSED_ARCHIVE_BYTES:209715200}" # maximum cumulative uncompressed size in bytes for a solution template archive. Extraction aborts past this threshold to mitigate zip-bomb attacks.
   max-uncompressed-entry-bytes: "${IOT_HUB_MAX_UNCOMPRESSED_ENTRY_BYTES:52428800}" # maximum uncompressed size in bytes for any single entry inside a solution template archive.
   max-archive-entry-count: "${IOT_HUB_MAX_ARCHIVE_ENTRY_COUNT:10000}" # maximum number of entries allowed inside a solution template archive.
+  max-install-timeout-ms: "${IOT_HUB_MAX_INSTALL_TIMEOUT_MS:60000}" # upper clamp in milliseconds for the post-install wait declared in a solution template's solution.json. Prevents a malicious or misconfigured template from pinning an HTTP worker thread.
