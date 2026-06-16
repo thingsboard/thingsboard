@@ -33,8 +33,7 @@ import {
 } from '@shared/models/alias.models';
 import { MatDialog } from '@angular/material/dialog';
 import { ImportDialogComponent, ImportDialogData } from '@shared/import-export/import-dialog.component';
-import { forkJoin, Observable, of, Subject, throwError } from 'rxjs';
-import { HttpErrorResponse } from '@angular/common/http';
+import { forkJoin, Observable, of, Subject } from 'rxjs';
 import { catchError, map, mergeMap, switchMap, take, tap } from 'rxjs/operators';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { EntityService } from '@core/http/entity.service';
@@ -96,6 +95,9 @@ export type editMissingAliasesFunction = (widgets: Array<Widget>, isSingleWidget
                                           customTitle: string, missingEntityAliases: EntityAliases) => Observable<EntityAliases>;
 
 type SupportEntityResources = 'includeResourcesInExportWidgetTypes' | 'includeResourcesInExportDashboard' | 'includeBundleWidgetsInExport';
+
+const profileRuleChainFields = ['defaultRuleChainId', 'defaultEdgeRuleChainId'] as const;
+type ProfileRuleChainField = typeof profileRuleChainFields[number];
 
 // @dynamic
 @Injectable()
@@ -751,9 +753,8 @@ export class ImportExportService {
               type: 'error'}));
           throw new Error('Invalid device profile file');
         } else {
-          return this.clearMissingProfileRuleChains(deviceProfile).pipe(
-            mergeMap(profile => this.deviceProfileService.saveDeviceProfile(this.prepareImport(profile)))
-          );
+          return this.clearMissingRuleChainsAndSave(deviceProfile,
+            profile => this.deviceProfileService.saveDeviceProfile(profile));
         }
       }),
       catchError(() => of(null))
@@ -780,45 +781,41 @@ export class ImportExportService {
               type: 'error'}));
           throw new Error('Invalid asset profile file');
         } else {
-          return this.clearMissingProfileRuleChains(assetProfile).pipe(
-            mergeMap(profile => this.assetProfileService.saveAssetProfile(this.prepareImport(profile)))
-          );
+          return this.clearMissingRuleChainsAndSave(assetProfile,
+            profile => this.assetProfileService.saveAssetProfile(profile));
         }
       }),
       catchError(() => of(null))
     );
   }
 
-  private clearMissingProfileRuleChains<T extends { defaultRuleChainId?: RuleChainId; defaultEdgeRuleChainId?: RuleChainId }>(profile: T): Observable<T> {
-    const ruleChainFields: Array<'defaultRuleChainId' | 'defaultEdgeRuleChainId'> = ['defaultRuleChainId', 'defaultEdgeRuleChainId'];
-    const checks = ruleChainFields
-      .filter(field => profile[field]?.id)
-      .map(field => this.ruleChainExists(profile[field].id).pipe(
-        map(exists => ({field, exists}))
-      ));
-    if (!checks.length) {
+  private clearMissingRuleChainsAndSave<T extends ExportableEntity<EntityId> & Partial<Record<ProfileRuleChainField, RuleChainId>>>(
+    profile: T, save: (profile: T) => Observable<T>): Observable<T> {
+    return this.clearMissingProfileRuleChains(profile).pipe(
+      mergeMap(cleared => save(this.prepareImport(cleared)))
+    );
+  }
+
+  private clearMissingProfileRuleChains<T extends Partial<Record<ProfileRuleChainField, RuleChainId>>>(profile: T): Observable<T> {
+    const fieldsToCheck = profileRuleChainFields.filter(field => profile[field]?.id);
+
+    if (!fieldsToCheck.length) {
       return of(profile);
     }
-    return forkJoin(checks).pipe(
-      map(results => {
-        const missingFields = results.filter(result => !result.exists).map(result => result.field);
+    const ruleChainIds = fieldsToCheck.map(field => profile[field].id);
+    return this.ruleChainService.getRuleChainsByIds(ruleChainIds, {ignoreErrors: true, ignoreLoading: true}).pipe(
+      map(ruleChains => {
+        const existingIds = new Set(ruleChains.map(ruleChain => ruleChain.id.id));
+        const missingFields = fieldsToCheck.filter(field => !existingIds.has(profile[field].id));
         if (!missingFields.length) {
           return profile;
         }
         this.store.dispatch(new ActionNotificationShow(
           {message: this.translate.instant('rulechain.rulechain-not-found-warning'),
             type: 'warn'}));
-        const cleanedProfile = deepClone(profile);
-        missingFields.forEach(field => cleanedProfile[field] = null);
-        return cleanedProfile;
+        missingFields.forEach(field => profile[field] = null);
+        return profile;
       })
-    );
-  }
-
-  private ruleChainExists(ruleChainId: string): Observable<boolean> {
-    return this.ruleChainService.getRuleChain(ruleChainId, {ignoreErrors: true, ignoreLoading: true}).pipe(
-      map(() => true),
-      catchError((err: HttpErrorResponse) => err?.status === 404 ? of(false) : throwError(() => err))
     );
   }
 
