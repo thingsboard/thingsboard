@@ -31,7 +31,11 @@ import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItemDescriptor;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 @Getter
@@ -40,6 +44,10 @@ import java.util.UUID;
 @Entity
 @Table(name = ModelConstants.IOT_HUB_INSTALLED_ITEM_TABLE_NAME)
 public class IotHubInstalledItemEntity extends BaseSqlEntity<IotHubInstalledItem> {
+
+    public static final Set<String> ALLOWED_SORT_PROPERTIES = Collections.unmodifiableSet(
+            new LinkedHashSet<>(List.of("createdTime", "itemName", "itemType", "version"))
+    );
 
     @Column(name = ModelConstants.IOT_HUB_INSTALLED_ITEM_TENANT_ID_COLUMN, nullable = false, columnDefinition = "UUID")
     private UUID tenantId;

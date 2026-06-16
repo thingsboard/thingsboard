@@ -23,11 +23,14 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItem;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.model.sql.IotHubInstalledItemEntity;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 
 @Service
 @RequiredArgsConstructor
@@ -49,6 +52,7 @@ class IotHubInstalledItemServiceImpl implements IotHubInstalledItemService {
 
     @Override
     public PageData<IotHubInstalledItem> findByTenantId(TenantId tenantId, List<String> itemTypes, UUID itemId, PageLink pageLink) {
+        validatePageLink(pageLink, IotHubInstalledItemEntity.ALLOWED_SORT_PROPERTIES);
         return iotHubInstalledItemDao.findByTenantId(tenantId, itemTypes, itemId, pageLink);
     }
 
