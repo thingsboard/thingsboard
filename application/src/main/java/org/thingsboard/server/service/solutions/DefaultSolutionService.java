@@ -189,6 +189,9 @@ public class DefaultSolutionService implements SolutionService {
     @Value("${iot-hub.max-archive-entry-count:10000}")
     private int maxArchiveEntryCount;
 
+    @Value("${iot-hub.max-install-timeout-ms:60000}")
+    private long maxInstallTimeoutMs;
+
     private final RuleChainService ruleChainService;
     private final TbRuleChainService tbRuleChainService;
     private final DeviceProfileService deviceProfileService;
@@ -400,7 +403,7 @@ public class DefaultSolutionService implements SolutionService {
 
             List<ReferenceableEntityDefinition> ruleChainDefs = loadListOfEntitiesIfFileExists(ctx.getTempDir(), "rule_chains.json", new TypeReference<>() {});
             if (ruleChainDefs.stream().anyMatch(r -> StringUtils.isNotEmpty(r.getUpdate()))) {
-                long timeout = loadInstallTimeoutMs(ctx.getTempDir());
+                long timeout = Math.min(loadInstallTimeoutMs(ctx.getTempDir()), maxInstallTimeoutMs);
                 if (timeout > 0) {
                     Thread.sleep(timeout);
                 }
