@@ -23,7 +23,6 @@ export interface BreadCrumb extends HasUUID{
   label: string;
   customTranslate: boolean;
   labelFunction?: () => string;
-  icon: string;
   link: any[];
   queryParams: Params;
 }

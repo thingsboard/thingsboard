@@ -22,19 +22,20 @@
                [mode]="sidenavMode"
                [opened]="sidenavOpened && !forceFullscreen">
     <header class="tb-nav-header">
-      <mat-toolbar color="primary" class="tb-nav-header-toolbar">
-        <div class="flex flex-auto">
+      <mat-toolbar class="tb-nav-header-toolbar">
+        <div class="flex flex-1 flex-row justify-between">
           <tb-logo [src]="logo" class="tb-logo-title"></tb-logo>
+          <button mat-icon-button class="tb-mat-32"><tb-icon class="tb-mat-20">sidebar-close</tb-icon></button>
         </div>
       </mat-toolbar>
     </header>
-    <mat-toolbar color="primary" class="tb-side-menu-toolbar flex flex-1 flex-col" role="navigation">
+    <mat-toolbar class="tb-side-menu-toolbar flex flex-1 flex-col" role="navigation">
       <tb-side-menu></tb-side-menu>
     </mat-toolbar>
   </mat-sidenav>
   <mat-sidenav-content>
     <div class="flex flex-col" role="main" style="height: 100%;">
-      <mat-toolbar color="primary" class="tb-primary-toolbar flex flex-row">
+      <mat-toolbar class="tb-primary-toolbar flex flex-row">
         <button mat-icon-button id="main"
                 [class.!hidden]="forceFullscreen || displaySearchMode()"
                 class="gt-sm:!hidden" (click)="sidenav.toggle()">

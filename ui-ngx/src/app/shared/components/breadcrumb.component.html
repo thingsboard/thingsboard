@@ -16,27 +16,35 @@
 
 -->
 <div class="tb-breadcrumb flex flex-1 flex-row">
-  <h1 class="flex-1 gt-sm:!hidden" *ngIf="lastBreadcrumb$ | async; let breadcrumb">
-    {{ breadcrumb.labelFunction ? breadcrumb.labelFunction() : (breadcrumb.customTranslate ? (breadcrumb.label | customTranslate) : (breadcrumb.label | translate)) }}
-  </h1>
-  <span class="flex flex-row lt-md:!hidden" *ngFor="let breadcrumb of breadcrumbs$ | async; trackBy: trackByBreadcrumbs; last as isLast;" [ngSwitch]="isLast">
-	    <a *ngSwitchCase="false" [routerLink]="breadcrumb.link" [queryParams]="breadcrumb.queryParams">
-        <ng-container
-          *ngTemplateOutlet="breadcrumbWithIcon;context:{breadcrumb: breadcrumb}">
-        </ng-container>
-	    </a>
-	    <span *ngSwitchCase="true">
-        <ng-container
-          *ngTemplateOutlet="breadcrumbWithIcon;context:{breadcrumb: breadcrumb}">
-        </ng-container>
-      </span>
+  @if (lastBreadcrumb$ | async; as breadcrumb) {
+    <h1 class="flex-1 gt-sm:!hidden">
+      <ng-container
+        *ngTemplateOutlet="breadcrumbTpl;context:{breadcrumb: breadcrumb}">
+      </ng-container>
+    </h1>
+  }
+  @for (breadcrumb of breadcrumbs$ | async; track trackByBreadcrumbs; let isLast = $last) {
+    <span class="flex flex-row lt-md:!hidden">
+      @switch (isLast) {
+        @case (false) {
+          <a [routerLink]="breadcrumb.link" [queryParams]="breadcrumb.queryParams">
+            <ng-container
+              *ngTemplateOutlet="breadcrumbTpl;context:{breadcrumb: breadcrumb}">
+            </ng-container>
+    	    </a>
+        }
+        @case (true) {
+          <span>
+            <ng-container
+              *ngTemplateOutlet="breadcrumbTpl;context:{breadcrumb: breadcrumb}">
+            </ng-container>
+          </span>
+        }
+      }
 	    <span class="divider" [class.!hidden]="isLast"> > </span>
-	</span>
+	  </span>
+  }
 </div>
-<ng-template #breadcrumbWithIcon let-breadcrumb="breadcrumb">
-  <img *ngIf="breadcrumb.iconUrl" [src]="breadcrumb.iconUrl"/>
-  <tb-icon *ngIf="!breadcrumb.iconUrl">
-    {{ breadcrumb.icon }}
-  </tb-icon>
+<ng-template #breadcrumbTpl let-breadcrumb="breadcrumb">
   {{ breadcrumb.labelFunction ? breadcrumb.labelFunction() : (breadcrumb.customTranslate ? (breadcrumb.label | customTranslate) : (breadcrumb.label | translate)) }}
 </ng-template>

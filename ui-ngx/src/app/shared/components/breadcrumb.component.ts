@@ -127,14 +127,12 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
           labelFunction = () => this.activeComponentValue ?
             breadcrumbConfig.labelFunction(route, this.translate, this.activeComponentValue, lastChild.data) : label;
         }
-        const icon = section?.icon || breadcrumbConfig.icon || 'home';
         const link = [ route.pathFromRoot.map(v => v.url.map(segment => segment.toString()).join('/')).join('/') ];
         const breadcrumb = {
           id: guid(),
           label,
           customTranslate,
           labelFunction,
-          icon,
           link,
           queryParams: null
         };
