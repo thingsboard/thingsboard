@@ -70,7 +70,7 @@
              entries below once TB migrates its tests off the deprecated @SpyBean/@MockBean to @MockitoSpyBean/@MockitoBean. -->
         <spring-boot-test.version>3.5.13</spring-boot-test.version>
         <commons-lang3.version>3.18.0</commons-lang3.version> <!-- to fix CVE-2025-48924. TODO: remove when fixed in spring-boot-dependencies -->
-        <netty.version>4.1.134.Final</netty.version> <!-- to fix CVE-2026-42579, CVE-2026-42583, CVE-2026-42584, CVE-2026-42587, and MQTT decoder regression introduced in 4.1.133 by the CVE-2026-44248 fix. TODO: remove when fixed in spring-boot-dependencies -->
+        <netty.version>4.1.135.Final</netty.version> <!-- to fix CVE-2026-44249, CVE-2026-44250, CVE-2026-44890, CVE-2026-44893, CVE-2026-45416, CVE-2026-45674, CVE-2026-46340, CVE-2026-47691, CVE-2026-48006, CVE-2026-48059, CVE-2026-50010, CVE-2026-50011 (supersedes earlier netty CVE pins; also retains the 4.1.134 MQTT decoder regression fix). TODO: remove when fixed in spring-boot-dependencies -->
         <javax.xml.bind-api.version>2.4.0-b180830.0359</javax.xml.bind-api.version>
         <jjwt.version>0.12.5</jjwt.version>
         <rat.version>0.10</rat.version> <!-- unused -->
