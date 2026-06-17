@@ -89,6 +89,7 @@ import {
   noDataMessage,
   prepareTableCellButtonActions,
   RowStyleInfo,
+  setupPaginationResets,
   TableCellButtonActionDescriptor,
   TableWidgetDataKeySettings,
   TableWidgetSettings
@@ -653,7 +654,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
       if (this.displayPagination) {
         paginator = this.paginators.toArray()[index];
         this.subscriptions.push(
-          sort.sortChange.subscribe(() => paginator.pageIndex = 0)
+          setupPaginationResets(this.ctx, paginator, sort, this.destroy$)
         );
         observables.push(paginator.page);
       }

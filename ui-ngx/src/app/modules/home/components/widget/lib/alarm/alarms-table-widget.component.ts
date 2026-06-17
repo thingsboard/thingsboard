@@ -80,8 +80,8 @@ import {
   isValidPageStepIncrement,
   noDataMessage,
   prepareTableCellButtonActions,
-  resetPaginationOnStateChange,
   RowStyleInfo,
+  setupPaginationResets,
   TableCellButtonActionDescriptor,
   TableWidgetDataKeySettings,
   TableWidgetSettings,
@@ -331,9 +331,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     });
 
     if (this.displayPagination) {
-      this.sort.sortChange.pipe(takeUntil(this.destroy$)).subscribe(() => this.paginator.pageIndex = 0);
-
-      resetPaginationOnStateChange(this.ctx, this.paginator, this.destroy$);
+      setupPaginationResets(this.ctx, this.paginator, this.sort, this.destroy$);
 
       this.ctx.aliasController?.filtersChanged.pipe(
         takeUntil(this.destroy$)
