@@ -24,7 +24,7 @@ import {
   TbPolygonCoordinate,
   TbPolygonCoordinates,
   TbPolygonRawCoordinate,
-  TbPolygonRawCoordinates
+  TbPolygonRawCoordinates, WEBGL_ERROR_EVENT
 } from '@shared/models/widget/maps/map.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { DeepPartial } from '@shared/models/common';
@@ -92,18 +92,19 @@ export class TbGeoMap extends TbMap<GeoMapSettings> {
     return this.loadLayers().pipe(
       tap((layers: L.TB.LayerData[]) => {
         if (layers.length) {
-          const layer = layers[0];
+          const defaultLayer = layers[0];
           layers.forEach(layer => {
-            layer.layer.once('gl-error', () => {
-              const toastPosition = this.settings.controlsPosition === MapControlsPosition.bottomleft || this.settings.controlsPosition === MapControlsPosition.bottomright ? 'top' : 'bottom';
+            layer.layer.once(WEBGL_ERROR_EVENT, () => {
+              const toastPosition = this.settings.controlsPosition === MapControlsPosition.bottomleft
+              || this.settings.controlsPosition === MapControlsPosition.bottomright ? 'top' : 'bottom';
               this.ctx.showErrorToast(
-                this.ctx.translate.instant('widgets.maps.gl.webgl-not-available'),
+                this.ctx.translate.instant('widgets.maps.layer.webgl-not-available'),
                 toastPosition, 'left', this.ctx.toastTargetId, true
               );
             });
-          })
-          layer.layer.addTo(this.map);
-          this.map.attributionControl.setPrefix(layer.attributionPrefix);
+          });
+          defaultLayer.layer.addTo(this.map);
+          this.map.attributionControl.setPrefix(defaultLayer.attributionPrefix);
           if (layers.length > 1) {
             const sidebar = this.getSidebar();
             L.TB.layers({

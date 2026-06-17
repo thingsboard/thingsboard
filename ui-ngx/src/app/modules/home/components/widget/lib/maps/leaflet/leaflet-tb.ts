@@ -24,6 +24,7 @@ import { MatIconRegistry } from '@angular/material/icon';
 import { isSvgIcon, splitIconName } from '@shared/models/icon.models';
 import { catchError, take } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { WEBGL_ERROR_EVENT } from '@shared/models/widget/maps/map.models';
 
 L.MarkerCluster = L.MarkerCluster.mergeOptions({ pmIgnore: true });
 
@@ -1212,12 +1213,12 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
       this._glMap = new MapLibreGLMap(options);
     } catch (e) {
       this._glError = true;
-      this.fire('gl-error', { error: e });
+      this.fire(WEBGL_ERROR_EVENT, { error: e });
       return;
     }
     this._glMap.once('webglcontextlost', (e) => {
       this._glError = true;
-      this.fire('gl-error', {error: e});
+      this.fire(WEBGL_ERROR_EVENT, {error: e});
     });
     this._glMap.once('load', () => {
       this.fire('load');
@@ -1236,8 +1237,12 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
     }
   }
 
+  private _glReady(): boolean {
+    return !this._glError && !!this._glMap;
+  }
+
   private _update() {
-    if (!this._map || this._glError) {
+    if (!this._map || !this._glReady()) {
       return;
     }
     this._offset = this._map.containerPointToLayerPoint([0, 0]);
@@ -1275,7 +1280,7 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
   }
 
   private _pinchZoom() {
-    if (this._glError) { return; }
+    if (!this._glReady()) { return; }
     this._glMap.jumpTo({
       zoom: this._map.getZoom() - 1,
       center: this._map.getCenter()
@@ -1283,7 +1288,7 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
   }
 
   private _animateZoom(e: L.ZoomAnimEvent) {
-    if (this._glError || !this._actualCanvas) { return; }
+    if (!this._glReady() || !this._actualCanvas) { return; }
     const scale = this._map.getZoomScale(e.zoom);
     const padding = this._map.getSize().multiplyBy(this.options.padding * scale);
     const viewHalf = this.getSize().divideBy(2);
@@ -1308,7 +1313,7 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
   }
 
   private _zoomEnd() {
-    if (this._glError || !this._actualCanvas) { return; }
+    if (!this._glReady() || !this._actualCanvas) { return; }
     const scale = this._map.getZoomScale(this._map.getZoom());
     L.DomUtil.setTransform(
       this._actualCanvas,
@@ -1320,9 +1325,9 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
   }
 
   private _transitionEnd() {
-    if (this._glError) { return; }
+    if (!this._glReady()) { return; }
     L.Util.requestAnimFrame(() => {
-      if (this._glError) { return; }
+      if (!this._glReady()) { return; }
       const zoom = this._map.getZoom();
       const center = this._map.getCenter();
       const offset = this._map.latLngToContainerPoint(
