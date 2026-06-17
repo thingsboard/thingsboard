@@ -68,6 +68,7 @@
   width: 140px;
   height: 140px;
   min-width: 140px;
+  min-height: 140px;
   border-radius: 50%;
   overflow: hidden;
   display: flex;
@@ -105,6 +106,18 @@
   color: #00695c;
   flex-shrink: 0;
   cursor: default;
+}
+
+.tb-creator-desc-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  @media #{$mat-gt-md} {
+    padding-bottom: 1rem;
+  }
 }
 
 // Description
