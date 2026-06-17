@@ -26,7 +26,7 @@
       <div class="tb-dashboard-action-panels flex flex-col items-stretch justify-center gt-sm:flex-row gt-sm:items-center gt-sm:justify-between">
         <div class="tb-dashboard-action-panel tb-left-panel" [class.!hidden]="isMobileApp && !isEdit">
           @if (!isPublicUser() && forceFullscreen) {
-            <tb-user-menu class="gt-sm:!hidden" displayUserInfo="true">
+            <tb-user-menu class="gt-sm:!hidden">
             </tb-user-menu>
           }
           @if (isEdit) {
@@ -88,7 +88,7 @@
             <mat-icon>arrow_forward</mat-icon>
           </button>
           @if (!isPublicUser() && forceFullscreen) {
-            <tb-user-menu class="lt-md:!hidden" displayUserInfo="true">
+            <tb-user-menu class="lt-md:!hidden">
             </tb-user-menu>
           }
           <button [class.!hidden]="!showRightLayoutSwitch()" mat-icon-button

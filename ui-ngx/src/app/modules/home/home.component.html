@@ -33,6 +33,7 @@
       <div class="flex-1 overflow-y-auto">
         <tb-side-menu></tb-side-menu>
       </div>
+      <tb-user-menu></tb-user-menu>
     </mat-toolbar>
   </mat-sidenav>
   <mat-sidenav-content>
@@ -78,7 +79,6 @@
           </button>
         }
         <tb-notification-bell></tb-notification-bell>
-        <tb-user-menu [displayUserInfo]="!displaySearchMode()"></tb-user-menu>
       </mat-toolbar>
       @if (!hideLoadingBar && (isLoading$ | async)) {
         <mat-progress-bar color="warn" style="z-index: 10; margin-bottom: -4px; width: 100%;" mode="indeterminate"

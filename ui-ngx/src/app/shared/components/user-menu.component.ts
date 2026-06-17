@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { User } from '@shared/models/user.model';
 import { Authority } from '@shared/models/authority.enum';
 import { select, Store } from '@ngrx/store';
@@ -23,6 +23,7 @@ import { selectAuthUser, selectUserDetails } from '@core/auth/auth.selectors';
 import { map } from 'rxjs/operators';
 import { AuthService } from '@core/auth/auth.service';
 import { Router } from '@angular/router';
+import { MatMenu, MatMenuTrigger } from '@angular/material/menu';
 
 @Component({
     selector: 'tb-user-menu',
@@ -32,8 +33,6 @@ import { Router } from '@angular/router';
     standalone: false
 })
 export class UserMenuComponent implements OnInit, OnDestroy {
-
-  @Input() displayUserInfo: boolean;
 
   authorities = Authority;
 

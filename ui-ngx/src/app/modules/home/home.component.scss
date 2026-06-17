@@ -50,10 +50,13 @@
       }
     }
     .tb-side-menu-toolbar {
-      overflow-y: auto;
+      overflow: hidden;
       height: inherit;
       padding: 0;
       border-right: 1px solid rgba(0, 0, 0, 0.12);
+      tb-user-menu {
+        border-top: 1px solid rgba(0, 0, 0, 0.12);
+      }
     }
   }
   .tb-primary-toolbar {
