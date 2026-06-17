@@ -140,6 +140,7 @@
     "tinymce": "6.8.6",
     "@babel/core": "7.28.3",
     "esbuild": "0.28.1",
+    "vite": "7.3.5",
     "rollup": "4.59.0",
     "jquery.terminal/**/form-data": ">=4.0.4",
     "js-beautify/**/minimatch": "^9.0.7"
