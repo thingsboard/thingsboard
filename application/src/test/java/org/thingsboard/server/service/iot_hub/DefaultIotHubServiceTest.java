@@ -180,7 +180,7 @@ class DefaultIotHubServiceTest {
         String versionId = UUID.randomUUID().toString();
         UUID rootItemId = UUID.randomUUID();
         when(iotHubRestClient.getVersionInfo(versionId))
-                .thenReturn(version(versionId, rootItemId.toString(), "DASHBOARD", "Root", "1.0"));
+                .thenReturn(version(versionId, rootItemId.toString(), "WIDGET", "Root", "1.0"));
         when(iotHubInstalledItemService.findInstalledItemIdsByTenantIdAndItemIdIn(eq(tenantId), any())).thenReturn(List.of(rootItemId));
 
         InstallPlan plan = service.resolveInstallPlan(user, versionId);
@@ -231,6 +231,7 @@ class DefaultIotHubServiceTest {
         InstallPlanEntry entry = new InstallPlanEntry();
         entry.setItemId(itemId.toString());
         entry.setVersionId(UUID.randomUUID().toString());
+        entry.setType("WIDGET");
         entry.setStatus(InstallPlanEntry.Status.WILL_INSTALL);
         entry.setRoot(true);
         // The item is reported as already installed at install time, even though the plan says WILL_INSTALL.
