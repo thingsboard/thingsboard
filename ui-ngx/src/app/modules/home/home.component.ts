@@ -14,7 +14,17 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  computed,
+  ElementRef,
+  Inject,
+  OnDestroy,
+  OnInit,
+  signal,
+  ViewChild
+} from '@angular/core';
 import { skip, startWith, Subject } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
@@ -52,9 +62,14 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
 
   sidenavMode: 'over' | 'push' | 'side' = 'side';
   sidenavOpened = true;
-  sidenavDesktop = true;
+
+  sidenavDesktop = signal(true);
+  sidenavCollapsed = signal(false);
+  sidenavWidth = computed(() => this.sidenavDesktop() ? (this.sidenavCollapsed() ? '50px' : '250px') : '');
 
   logo = 'assets/logo_title_black.svg';
+
+  showLogo= computed(() => !this.sidenavDesktop() || !this.sidenavCollapsed());
 
   @ViewChild('sidenav')
   sidenav: MatSidenav;
@@ -84,7 +99,7 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
     const isGtSm = this.breakpointObserver.isMatched(MediaBreakpoints['gt-sm']);
     this.sidenavMode = isGtSm ? 'side' : 'over';
     this.sidenavOpened = isGtSm;
-    this.sidenavDesktop = isGtSm;
+    this.sidenavDesktop.set(isGtSm);
 
     this.breakpointObserver
       .observe(MediaBreakpoints['gt-sm'])
@@ -93,11 +108,11 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
           if (state.matches) {
             this.sidenavMode = 'side';
             this.sidenavOpened = true;
-            this.sidenavDesktop = true;
+            this.sidenavDesktop.set(true);
           } else {
             this.sidenavMode = 'over';
             this.sidenavOpened = false;
-            this.sidenavDesktop = false;
+            this.sidenavDesktop.set(false);
           }
         }
       );
@@ -122,6 +137,10 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
     if (this.sidenavMode === 'over') {
       this.sidenav.toggle();
     }
+  }
+
+  toggleSidenav() {
+    this.sidenavCollapsed.update(state => !state);
   }
 
   toggleFullscreen() {

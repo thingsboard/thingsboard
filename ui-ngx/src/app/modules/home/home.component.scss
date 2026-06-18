@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+$sidenav-anim-timing: 400ms cubic-bezier(0.25, 0.8, 0.25, 1);
+
 :host {
   display: flex;
   width: 100%;
@@ -25,6 +28,9 @@
     width: 250px;
     @media (max-width:456px) {
       width: calc(100% - 56px);
+    }
+    &.tb-desktop {
+      transition: width $sidenav-anim-timing;
     }
     .tb-nav-header {
       z-index: 2;
@@ -58,6 +64,12 @@
       tb-user-menu {
         border-top: 1px solid rgba(0, 0, 0, 0.12);
       }
+    }
+  }
+  mat-sidenav-content.tb-site-content {
+    &.tb-desktop {
+      margin-left: 250px;
+      transition: margin-left $sidenav-anim-timing;
     }
   }
   .tb-primary-toolbar {

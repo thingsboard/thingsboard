@@ -17,16 +17,26 @@
 -->
 <mat-sidenav-container>
   <mat-sidenav #sidenav class="tb-site-sidenav mat-elevation-z2"
+               [class.tb-desktop]="sidenavDesktop()"
                [disableClose]="sidenavOpened"
                (click)="sidenavClicked()"
                [mode]="sidenavMode"
-               [opened]="sidenavOpened && !forceFullscreen">
+               [opened]="sidenavOpened && !forceFullscreen"
+               [style.width]="sidenavWidth()">
     <header class="tb-nav-header">
       <mat-toolbar class="tb-nav-header-toolbar">
         <div class="flex flex-1 flex-row justify-between">
-          <tb-logo [src]="logo" class="tb-logo-title"></tb-logo>
-          @if (sidenavDesktop) {
-            <button mat-icon-button class="tb-mat-32"><tb-icon class="tb-mat-20">sidebar-close</tb-icon></button>
+          @if (showLogo()) {
+            <tb-logo [src]="logo" class="tb-logo-title"></tb-logo>
+          }
+          @if (sidenavDesktop()) {
+            <button mat-icon-button class="tb-mat-32" (click)="toggleSidenav()">
+              @if (sidenavCollapsed()) {
+                <tb-icon class="tb-mat-20">sidebar-open</tb-icon>
+              } @else {
+                <tb-icon class="tb-mat-20">sidebar-close</tb-icon>
+              }
+            </button>
           }
         </div>
       </mat-toolbar>
@@ -38,7 +48,9 @@
       <tb-user-menu></tb-user-menu>
     </mat-toolbar>
   </mat-sidenav>
-  <mat-sidenav-content>
+  <mat-sidenav-content class="tb-site-content"
+                       [class.tb-desktop]="sidenavDesktop()"
+                       [style.margin-left]="sidenavWidth()">
     <div class="flex flex-col" role="main" style="height: 100%;">
       <mat-toolbar class="tb-primary-toolbar flex flex-row">
         <button mat-icon-button id="main"
