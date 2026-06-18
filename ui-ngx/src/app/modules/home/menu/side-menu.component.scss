@@ -23,6 +23,7 @@
     padding: 12px 0;
     margin: 0;
     list-style: none;
+    --mat-button-text-label-text-weight: 400;
   }
 
   .tb-side-menu ul {
@@ -43,13 +44,12 @@
     --mat-button-text-label-text-color: rgba(0, 0, 0, .76);
     &:hover {
       border-bottom: none;
-      background-color: rgba(255,255,255,0.08);
     }
     &:focus {
       border-bottom: none;
     }
     &.tb-active {
-      background-color: rgba(255, 255, 255, .15);
+      background-color: rgba(0, 0, 0, .08);
     }
     .mat-icon {
       margin-right: 8px;
@@ -63,7 +63,6 @@
       text-overflow: ellipsis;
       white-space: nowrap;
       display: inline-flex;
-      font-weight: 400;
       & > span {
         overflow: hidden;
         text-overflow: ellipsis;

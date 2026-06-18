@@ -25,7 +25,9 @@
       <mat-toolbar class="tb-nav-header-toolbar">
         <div class="flex flex-1 flex-row justify-between">
           <tb-logo [src]="logo" class="tb-logo-title"></tb-logo>
-          <button mat-icon-button class="tb-mat-32"><tb-icon class="tb-mat-20">sidebar-close</tb-icon></button>
+          @if (sidenavDesktop) {
+            <button mat-icon-button class="tb-mat-32"><tb-icon class="tb-mat-20">sidebar-close</tb-icon></button>
+          }
         </div>
       </mat-toolbar>
     </header>

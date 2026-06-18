@@ -15,7 +15,8 @@
     limitations under the License.
 
 -->
-<button mat-button class="tb-user-menu" [matMenuTriggerFor]="userMenu">
+<button mat-button class="tb-user-menu" [matMenuTriggerFor]="userMenu" #menuButton
+        (click)="$event.stopPropagation();">
   <tb-icon class="material-icons tb-mini-avatar">mdi:account-circle-outline</tb-icon>
   <div class="flex flex-col items-stretch justify-center">
     @if (userDisplayName$ | async; as userDisplayName) {
@@ -26,9 +27,9 @@
     }
   </div>
 </button>
-<mat-menu #userMenu="matMenu" xPosition="before" yPosition="above">
+<mat-menu #userMenu="matMenu" class="tb-user-menu-panel" xPosition="after">
   @if (authority$ | async; as authority) {
-    <div class="tb-user-menu-items">
+    <div class="tb-user-menu-items" [style.width.px]="menuButton._elementRef.nativeElement.offsetWidth">
       <button mat-menu-item (click)="openAccount()">
         <tb-icon matMenuItemIcon>mdi:account-circle-outline</tb-icon>
         <span translate>account.account</span>

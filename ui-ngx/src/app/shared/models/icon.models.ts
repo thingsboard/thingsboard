@@ -83,6 +83,7 @@ export const svgIconsUrl: { [key: string]: string } = {
   linux: '/assets/linux.svg',
   docker: '/assets/docker.svg',
   'sidebar-close': '/assets/icons/sidebar-close.svg',
+  'sidebar-open': '/assets/icons/sidebar-open.svg'
 };
 
 const svgIconNamespaces: string[] = ['mdi'];

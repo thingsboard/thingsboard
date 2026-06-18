@@ -52,6 +52,7 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
 
   sidenavMode: 'over' | 'push' | 'side' = 'side';
   sidenavOpened = true;
+  sidenavDesktop = true;
 
   logo = 'assets/logo_title_black.svg';
 
@@ -83,6 +84,7 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
     const isGtSm = this.breakpointObserver.isMatched(MediaBreakpoints['gt-sm']);
     this.sidenavMode = isGtSm ? 'side' : 'over';
     this.sidenavOpened = isGtSm;
+    this.sidenavDesktop = isGtSm;
 
     this.breakpointObserver
       .observe(MediaBreakpoints['gt-sm'])
@@ -91,9 +93,11 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
           if (state.matches) {
             this.sidenavMode = 'side';
             this.sidenavOpened = true;
+            this.sidenavDesktop = true;
           } else {
             this.sidenavMode = 'over';
             this.sidenavOpened = false;
+            this.sidenavDesktop = false;
           }
         }
       );

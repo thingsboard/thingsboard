@@ -20,11 +20,13 @@
   .tb-button-toggle {
     &.tb-toggled {
       border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      --mat-button-text-label-text-weight: 500;
     }
     .tb-toggle-icon {
       display: inline-block;
-      width: 15px;
-      min-width: 15px;
+      width: 12px;
+      min-width: 12px;
+      font-size: 12px;
       margin: auto 0 auto auto;
       background-size: 100% auto;
       transition: transform .3s ease-in-out;
@@ -61,10 +63,13 @@
     transition-property: height;
 
     a.mat-mdc-button {
-      padding: 0 16px 0 32px;
-      font-weight: 500;
+      //padding: 0 16px 0 32px;
+      .mat-icon {
+        visibility: hidden;
+      }
+    /*  font-weight: 500;
       text-transform: none !important;
-      text-rendering: optimizeLegibility;
+      text-rendering: optimizeLegibility;*/
     }
   }
 }
