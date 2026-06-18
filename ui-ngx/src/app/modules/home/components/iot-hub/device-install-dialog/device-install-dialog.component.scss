@@ -1,0 +1,389 @@
+/**
+ * Copyright © 2016-2026 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+@import "../../../../../../scss/constants";
+
+:host-context(.tb-default .tb-dialog .mat-mdc-dialog-component-host),
+:host-context(.tb-default .tb-fullscreen-dialog-lt-md .mat-mdc-dialog-component-host) {
+  .mat-mdc-dialog-content {
+    padding: 0;
+    max-height: 100%;
+    overflow: hidden;
+  }
+  @media #{$mat-gt-sm} {
+    width: 800px;
+    height: 1000px;
+    max-width: 100%;
+  }
+  @media #{$mat-gt-md} {
+    width: 1000px;
+  }
+}
+
+:host {
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+
+  @media #{$mat-lt-md} {
+    max-height: 100%;
+    height: 100%;
+  }
+
+  .mat-mdc-tab-group {
+    height: 100%;
+  }
+
+  ::ng-deep {
+    .mat-stepper-horizontal {
+      height: 100%;
+    }
+    .mat-horizontal-stepper-wrapper {
+      height: 100%;
+    }
+    .mat-horizontal-stepper-header-container {
+      padding: 24px 16px 16px;
+    }
+    .mat-horizontal-content-container {
+      overflow: auto;
+      flex: 1;
+      padding: 0;
+    }
+    .mat-horizontal-stepper-content.mat-horizontal-stepper-content-current {
+      height: 100%;
+    }
+    .mat-horizontal-stepper-header.mat-step-header {
+      padding: 0 12px;
+    }
+  }
+}
+
+.tb-device-install-header {
+  .tb-device-install-title {
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 24px;
+    letter-spacing: 0.1px;
+    color: rgba(0, 0, 0, 0.87);
+    margin: 0;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.tb-device-install-connectivity {
+  p {
+    color: rgba(0, 0, 0, 0.54);
+    font-size: 16px;
+    line-height: 24px;
+    margin: 0;
+  }
+
+  // Card grid — design uses 276px cards with 12px gap, wrapping into rows.
+  // The 2-card variant uses a wider min-track so they don't squeeze.
+  .tb-connectivity-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
+
+    &.tb-connectivity-cards-pair {
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    }
+  }
+
+  // Connection-card-vertical from the design: primary-tinted surface
+  // (4 % alpha), 6px radius, 1px subtle border that becomes primary on
+  // hover/select.
+  .tb-connectivity-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    height: 116px;
+    background: rgba($tb-primary-color, 0.04);
+    border: 1px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.12s ease-out, box-shadow 0.12s ease-out;
+
+    &:hover,
+    &.selected {
+      border-color: $tb-primary-color;
+    }
+
+    &.selected {
+      box-shadow: 0 0 0 1px $tb-primary-color inset;
+
+      // Selected state inverts the icon: primary-coloured container
+      // with the masked glyph painted in white.
+      .tb-connectivity-card-icon {
+        background: $tb-primary-color;
+      }
+
+      .tb-connectivity-card-icon-mask {
+        background-color: white;
+      }
+    }
+  }
+
+  // 48×48 white icon container with subtle drop shadow + 4px radius,
+  // hosting a 40×40 mask-image rendered in the primary color.
+  .tb-connectivity-card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 4px;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow:
+      0 1px 2px 0 rgba(0, 0, 0, 0.06),
+      0 1px 3px 0 rgba(0, 0, 0, 0.10);
+  }
+
+  .tb-connectivity-card-icon-mask {
+    display: block;
+    width: 40px;
+    height: 40px;
+    background-color: $tb-primary-color;
+    -webkit-mask-image: var(--tb-icon-url);
+    mask-image: var(--tb-icon-url);
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+  }
+
+  .tb-connectivity-card-name {
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+    letter-spacing: 0.15px;
+    color: rgba(0, 0, 0, 0.87);
+  }
+
+  // PE-Only pill — primary 1px border + primary text on white background.
+  .tb-connectivity-card-badge {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    height: 24px;
+    padding: 0 8px;
+    border: 1px solid $tb-primary-color;
+    border-radius: 4px;
+    background: white;
+    color: $tb-primary-color;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 22px;
+    letter-spacing: 0.4px;
+  }
+}
+
+// Form view
+.tb-device-install-form {
+  mat-form-field {
+    width: 100%;
+  }
+
+  .tb-form-field-help {
+    color: rgba(0, 0, 0, 0.54);
+    font-size: 12px;
+    line-height: 16px;
+    margin-top: -4px;
+    margin-bottom: 8px;
+  }
+
+  .tb-form-field-help-image {
+    max-width: 100%;
+    margin-top: 4px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+  }
+}
+
+.tb-progress-divider {
+  width: 1px;
+  height: 16px;
+  background-color: rgba(0, 0, 0, 0.12);
+  margin-left: 24px;
+}
+
+.tb-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 12px;
+  border-radius: 4px;
+
+  &.tb-progress-row-active {
+    background: rgba(0, 0, 0, 0.03);
+  }
+
+  &.tb-progress-row-alert {
+    background: rgba(246, 103, 22, 0.06);
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+}
+
+.tb-progress-icon {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  mat-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+  }
+
+  .tb-progress-success {
+    color: #198038;
+  }
+
+  .tb-progress-warning {
+    color: #f66716;
+  }
+}
+
+.tb-progress-pending-circle {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  letter-spacing: 0.4px;
+  color: rgba(0, 0, 0, 0.54);
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border: 1px dashed rgba(0, 0, 0, 0.12);
+    border-radius: 999px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+}
+
+.tb-progress-label {
+  flex: 1;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  letter-spacing: 0.15px;
+  color: rgba(0, 0, 0, 0.76);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &.tb-progress-label-active {
+    font-weight: 500;
+    letter-spacing: 0.25px;
+  }
+
+  &.tb-progress-label-pending {
+    color: rgba(0, 0, 0, 0.54);
+  }
+}
+
+.tb-progress-status {
+  flex-shrink: 0;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  letter-spacing: 0.25px;
+  padding: 6px 12px;
+}
+
+.tb-progress-status-done {
+  color: #198038;
+}
+
+.tb-progress-status-progress {
+  color: rgba(0, 0, 0, 0.54);
+}
+
+
+.tb-progress-alert-msg {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  letter-spacing: 0.4px;
+
+  &.tb-progress-alert-msg-warning {
+    color: #f66716;
+  }
+
+  &.tb-progress-alert-msg-error {
+    color: #dd2c00;
+  }
+}
+
+.tb-progress-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: white;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  letter-spacing: 0.25px;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &.tb-progress-action-primary {
+    color: #00695c;
+  }
+
+  &.tb-progress-action-warning {
+    color: #f66716;
+  }
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.04);
+  }
+}
+
+mat-dialog-actions {
+  padding: 8px 24px 16px;
+  border-top-style: solid;
+  border-top-color: var(--mat-divider-color, var(--mat-app-outline));
+  border-top-width: var(--mat-divider-width);
+}

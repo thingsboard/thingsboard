@@ -694,7 +694,8 @@ export const baseDetailsPageByEntityType = new Map<EntityType, string>([
   [EntityType.WIDGET_TYPE, '/resources/widgets-library/widget-types/details'],
   [EntityType.OAUTH2_CLIENT, '/security-settings/oauth2/clients/details'],
   [EntityType.DOMAIN, '/security-settings/oauth2/clients/details'],
-  [EntityType.MOBILE_APP, '/mobile-center/applications']
+  [EntityType.MOBILE_APP, '/mobile-center/applications'],
+  [EntityType.CALCULATED_FIELD, '/calculatedFields']
 ]);
 
 export interface EntitySubtype {
