@@ -1,0 +1,690 @@
+/**
+ * Copyright © 2016-2026 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+@import "../../../../../scss/constants";
+
+// Dialog container
+.tb-iot-hub-detail-dialog {
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  max-height: 80vh;
+  width: 1200px;
+
+  @media #{$mat-lt-xxl} {
+    width: 900px;
+  }
+
+  @media #{$mat-lt-lg} {
+    width: 768px;
+  }
+
+  @media #{$mat-lt-md} {
+    width: 100%;
+  }
+
+  @media #{$mat-xs} {
+    max-height: 100%;
+    height: 100%;
+  }
+}
+
+// Header — Design: pl-24, pr-12, py-16, gap between icon+content=16, content+close=8
+.dlg-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px 12px 16px 24px;
+  flex-shrink: 0;
+
+}
+
+.dlg-close-btn-desktop {
+  @media #{$mat-lt-sm} {
+    display: none;
+  }
+}
+
+.dlg-close-btn-mobile {
+  position: absolute;
+  top: 16px;
+  right: 12px;
+  @media #{$mat-gt-xs} {
+    display: none;
+  }
+}
+
+// Header icon for CF/RC — Design: 64px, rounded-8, colored bg, white icon 36px
+.dlg-header-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  tb-icon {
+    font-size: 36px;
+    width: 36px;
+    height: 36px;
+    color: #fff;
+  }
+}
+
+// Title — Design: 24px Medium, rgba(0,0,0,0.87)
+.dlg-title {
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 32px;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+// Subtitle row — Design: 13px Regular, rgba(0,0,0,0.54), gap-12 between groups
+.dlg-subtitle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  line-height: 16px;
+  letter-spacing: 0.4px;
+  color: rgba(0, 0, 0, 0.54);
+  flex-wrap: wrap;
+}
+
+.dlg-subtitle-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dlg-subtitle-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  color: rgba(0, 0, 0, 0.54);
+}
+
+// Dot separator — Design: 3px circle, rgba(0,0,0,0.38)
+.dlg-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.38);
+  flex-shrink: 0;
+}
+
+// Scrollable body
+.dlg-body {
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1;
+  min-height: 0;
+}
+
+// Main content — Design: px-24, pb-16
+.dlg-main {
+  padding: 0 24px 16px;
+}
+
+// Preview image — Design: flex-1, aspect 305:172, bg rgba(0,0,0,0.06), rounded-8, p-16, dot pattern
+.dlg-preview {
+  flex: 1;
+  min-width: 0;
+  aspect-ratio: 305 / 172;
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.06) 1px, transparent 1px) 0 0 / 20px 20px rgba(0, 0, 0, 0.06);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+
+  &.dlg-preview-carousel {
+    aspect-ratio: 1.5;
+  }
+}
+
+.dlg-preview-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.dlg-preview-placeholder {
+  tb-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: rgba(0, 0, 0, 0.2);
+  }
+}
+
+
+// Description — strip padding from tb-iot-hub-markdown so the body
+// sits flush with the surrounding info layout.
+.dlg-description {
+  ::ng-deep tb-iot-hub-markdown .tb-markdown-view {
+    padding: 0;
+  }
+}
+
+// Author — Design: person icon 16px + name 12px Medium $tb-primary-color
+.dlg-author {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  tb-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: rgba(0, 0, 0, 0.54);
+  }
+
+  span {
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 16px;
+    letter-spacing: 0.25px;
+    color: $tb-primary-color;
+  }
+
+  &.clickable {
+    cursor: pointer;
+
+    &:hover span {
+      text-decoration: underline;
+    }
+  }
+}
+
+// Rule Chain node chips — Design: colored pill chips in a row, px-24 py-16
+.dlg-nodes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 16px 24px;
+}
+
+// Node chips — Design: pill shape, 1px border at full color, bg at 16% opacity, black text
+.dlg-node-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  border: 1px solid;
+  color: rgba(0, 0, 0, 0.76);
+
+  &.dlg-node-filter { background: rgba(241, 232, 97, 0.16); border-color: rgb(241, 232, 97); }
+  &.dlg-node-enrichment { background: rgba(205, 241, 78, 0.16); border-color: rgb(205, 241, 78); }
+  &.dlg-node-transformation { background: rgba(121, 206, 241, 0.16); border-color: rgb(121, 206, 241); }
+  &.dlg-node-action { background: rgba(241, 146, 143, 0.16); border-color: rgb(241, 146, 143); }
+  &.dlg-node-analytics { background: rgba(49, 210, 204, 0.16); border-color: rgb(49, 210, 204); }
+  &.dlg-node-external { background: rgba(251, 199, 102, 0.16); border-color: rgb(251, 199, 102); }
+  &.dlg-node-flow { background: rgba(214, 196, 241, 0.16); border-color: rgb(214, 196, 241); }
+  &.dlg-node-unknown { background: rgba(0, 0, 0, 0.04); border-color: rgba(0, 0, 0, 0.12); }
+}
+
+// Divider
+.dlg-divider {
+  height: 1px;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.dlg-meta-bar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: white;
+}
+
+// Meta section (categories + use cases) — Design: px-24, py-16, gap-24, grid row
+.dlg-meta {
+  display: grid;
+  gap: 24px;
+  padding: 16px 24px 12px;
+  grid-template-columns: minmax(0, max-content) minmax(0, max-content) minmax(auto, max-content) minmax(auto, 1fr) max-content;
+
+  &.dlg-meta-4-col {
+    grid-template-columns: minmax(0, max-content) minmax(auto, max-content) minmax(auto, 1fr) max-content;
+  }
+
+  .dlg-meta-details {
+    display: none;
+  }
+
+  .dlg-meta-creator-section {
+    min-width: 0;
+  }
+
+  @media #{$mat-lt-md} {
+    grid-template-columns: minmax(0, 1fr) max-content max-content;
+
+    &.dlg-meta-4-col {
+      grid-template-columns: minmax(0, 1fr) max-content max-content;
+    }
+
+    .dlg-meta-details-section {
+      display: none;
+    }
+
+    .dlg-meta-details {
+      display: flex;
+    }
+  }
+}
+
+.dlg-details-popover {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+
+  .dlg-details-popover-title {
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+    letter-spacing: 0.25px;
+    color: rgba(0, 0, 0, 0.87);
+  }
+
+  .dlg-details-popover-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+.dlg-meta-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dlg-meta-creator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+
+  &.clickable {
+    cursor: pointer;
+  }
+}
+
+.dlg-meta-creator-avatar {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+
+  img {
+    width: 32px;
+    height: 32px;
+    border-radius: 9999px;
+    object-fit: cover;
+  }
+
+  mat-icon:not(.dlg-meta-creator-verified) {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+    color: rgba(0, 0, 0, 0.38);
+  }
+
+  .dlg-meta-creator-verified {
+    position: absolute;
+    top: -6px;
+    left: 18px;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    color: #00695c;
+  }
+}
+
+.dlg-meta-creator-name {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0.25px;
+  color: rgba(0, 0, 0, 0.76);
+  white-space: nowrap;
+}
+
+// Meta label — Design: 12px Medium, rgba(0,0,0,0.54), tracking 0.25
+.dlg-meta-label {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0.25px;
+  color: rgba(0, 0, 0, 0.54);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dlg-meta-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 8px 0;
+}
+
+.dlg-meta-manage {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.dlg-meta-manage-actions {
+  display: flex;
+  align-items: center;
+}
+
+.dlg-manage-icon-btn.mat-mdc-icon-button {
+  width: 40px;
+  height: 40px;
+  padding: 8px;
+  --mdc-icon-button-state-layer-size: 40px;
+  color: rgba(0, 0, 0, 0.54);
+}
+
+.dlg-manage-remove-btn {
+  color: rgba(0, 0, 0, 0.54);
+}
+
+// Chip — Design: 12px Medium, h-24, p-4 px-8, rounded-4
+.dlg-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0.25px;
+  white-space: nowrap;
+}
+
+.dlg-chip.dlg-chip-inline {
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// Category chip — Design: bg rgba(16,108,200,0.06), color #106cc8
+.dlg-chip-category {
+  background: rgba(16, 108, 200, 0.06);
+  color: #106cc8;
+}
+
+// Type chip — Design: bg rgba(0,105,92,0.06), color #00695c
+.dlg-chip-type {
+  background: rgba(0, 105, 92, 0.06);
+  color: #00695c;
+}
+
+// Use case chip — Design: bg rgba(25,128,56,0.06), color #198038
+.dlg-chip-usecase {
+  background: rgba(25, 128, 56, 0.06);
+  color: #198038;
+}
+
+// Readme content — wraps tb-iot-hub-markdown, which carries the
+// markdown-view styles. Only the changelog heading layout lives here.
+.dlg-readme {
+  > h3 {
+    padding-left: 24px;
+  }
+}
+
+// Carousel (solution templates)
+.dlg-hero-carousel {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  animation: dlg-carousel-fade-in 0s 0.3s forwards;
+  visibility: hidden;
+}
+
+@keyframes dlg-carousel-fade-in {
+  to { visibility: visible; }
+}
+
+.dlg-carousel {
+  height: 100%;
+
+  ::ng-deep .carousel {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1;
+
+    > section { flex: 1; min-height: 0; }
+
+    ul.indicators { display: none !important; }
+    .direction { display: none !important; }
+  }
+
+  .dlg-carousel-container {
+    display: flex;
+    height: 100%;
+
+    .dlg-carousel-item {
+      position: relative;
+      overflow: hidden;
+
+      img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+    }
+  }
+}
+
+.dlg-carousel-hidden-nav {
+  display: none;
+}
+
+.dlg-carousel-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  padding-top: 16px;
+}
+
+.dlg-carousel-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+}
+
+.dlg-carousel-nav {
+  width: 40px;
+  height: 40px;
+  background: white;
+  color: rgba(0, 0, 0, 0.76);
+  flex-shrink: 0;
+
+  &:hover { background: rgba(245, 245, 245, 1); }
+}
+
+.dlg-carousel-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.38);
+  margin: 9px 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &.active { background: rgba(0, 0, 0, 0.76); }
+}
+
+// Info panel — Design: flex-col, space-between, py-16, gap-32
+.dlg-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 32px;
+  padding: 16px 0;
+
+  &.dlg-info-compact {
+    justify-content: flex-start;
+    padding: 0;
+  }
+}
+
+// Text container — Design: flex-col, gap-16
+.dlg-info-text {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+// Installed status row — Design: flex, justify-between, full width
+.dlg-info-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+// Installed badge — Design: pill, bg rgba(25,128,56,0.06), rounded-16, px-8 py-4
+.dlg-installed-badge {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 16px;
+  background: rgba(25, 128, 56, 0.06);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  letter-spacing: 0.4px;
+  color: #198038;
+
+  mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+  }
+}
+
+// Update button — Design: border #ff5722, text #ff5722, rounded-4, px-16 py-6
+.dlg-update-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 6px 16px;
+  border: 1px solid #ff5722;
+  border-radius: 4px;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  letter-spacing: 0.25px;
+  color: #ff5722;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(255, 87, 34, 0.04);
+  }
+}
+
+// Open details / Solution instructions link — Design: 12px Medium, $tb-primary-color
+.dlg-info-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0.25px;
+  color: $tb-primary-color;
+  cursor: pointer;
+  text-decoration: none;
+  border: none;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+// Solution template links row
+.dlg-info-links-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+// Footer
+.dlg-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+  flex-shrink: 0;
+}
+
+.dlg-footer-spacer {
+  flex: 1;
+}
+
+// Responsive
+@media #{$mat-xs} {
+  .dlg-header {
+    flex-direction: column;
+    position: relative;
+    padding-right: 48px;
+  }
+}
+
+.dlg-subtitle-group.tb-unpublished-preview-badge {
+  color: #d32f2f;
+  font-weight: 600;
+
+  .dlg-subtitle-icon {
+    color: #d32f2f;
+  }
+}

@@ -1,7 +1,7 @@
 {
   "fqn": "nitrogen_dioxide_no2_chart_card_with_background",
   "name": "Nitrogen dioxide (NO2) chart card with background",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/NO2-value-chart-card-with-background.svg",
   "description": "A gas produced from vehicle emissions and the burning of fossil fuels. Results displayed by combining the latest and aggregated values and optional simplified chart.",
   "descriptor": {

@@ -117,3 +117,9 @@ CREATE INDEX IF NOT EXISTS idx_job_tenant_id ON job(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_ai_model_tenant_id ON ai_model(tenant_id);
 
 CREATE INDEX IF NOT EXISTS idx_api_key_user_id ON api_key(user_id);
+
+CREATE INDEX IF NOT EXISTS idx_iot_hub_installed_item_tenant_id ON iot_hub_installed_item(tenant_id);
+
+CREATE INDEX IF NOT EXISTS idx_iot_hub_installed_item_item_type ON iot_hub_installed_item(tenant_id, item_type);
+
+CREATE INDEX IF NOT EXISTS idx_iot_hub_installed_item_item_id ON iot_hub_installed_item(tenant_id, item_id);

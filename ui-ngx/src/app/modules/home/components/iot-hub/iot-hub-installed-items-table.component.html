@@ -1,0 +1,169 @@
+<!--
+
+    Copyright © 2016-2026 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-installed-table-container flex flex-1 flex-col overflow-hidden rounded-lg">
+  <div class="tb-installed-table-wrapper flex flex-1 flex-col overflow-auto">
+    <table mat-table [dataSource]="dataSource" matSort matSortActive="createdTime" matSortDirection="desc">
+      <!-- Name -->
+      <ng-container matColumnDef="itemName">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'iot-hub.item-name' | translate }}</th>
+        <td mat-cell *matCellDef="let item">{{ item.itemName }}</td>
+      </ng-container>
+
+      <!-- Type -->
+      <ng-container matColumnDef="itemType">
+        <th mat-header-cell *matHeaderCellDef>{{ 'iot-hub.item-type' | translate }}</th>
+        <td mat-cell *matCellDef="let item">
+          <span class="tb-installed-type" [ngClass]="getItemTypeChipClass(item.itemType)">
+            <tb-icon class="tb-installed-type-icon">{{ getItemTypeIcon(item.itemType) }}</tb-icon>
+            {{ getItemTypeLabel(item.itemType) }}
+          </span>
+        </td>
+      </ng-container>
+
+      <!-- Version -->
+      <ng-container matColumnDef="version">
+        <th mat-header-cell *matHeaderCellDef>{{ 'iot-hub.item-version' | translate }}</th>
+        <td mat-cell *matCellDef="let item">{{ item.version }}</td>
+      </ng-container>
+
+      <!-- Installed date -->
+      <ng-container matColumnDef="createdTime">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'iot-hub.installed-date' | translate }}</th>
+        <td mat-cell *matCellDef="let item">{{ item.createdTime | date:'MMM d, y, h:mm a' }}</td>
+      </ng-container>
+
+      <!-- Updates -->
+      <ng-container matColumnDef="updates">
+        <th mat-header-cell *matHeaderCellDef>@if (updatesChecked) { {{ 'iot-hub.updates' | translate }} }</th>
+        <td mat-cell *matCellDef="let item">
+          @if (updatesChecked) {
+            @if (getPublishedVersionInfo(item); as pubInfo) {
+              @if (pubInfo.publishedVersionId !== item.itemVersionId) {
+                <div class="flex items-center gap-3">
+                  @if (!itemVersion) {
+                    <button class="tb-installed-version-btn" (click)="viewUpdateDetails(pubInfo, item)">
+                      <mat-icon>arrow_upward</mat-icon>
+                      v{{ pubInfo.publishedVersion }} {{ 'iot-hub.available' | translate }}
+                    </button>
+                  }
+                  <button mat-stroked-button color="warn" class="tb-installed-update-btn" (click)="updateItem(item, pubInfo)">
+                    @if (itemVersion) {
+                      {{ 'iot-hub.update-to-version' | translate:{ version: pubInfo.publishedVersion } }}
+                    } @else {
+                      {{ 'iot-hub.update' | translate }}
+                    }
+                  </button>
+                </div>
+              } @else {
+                <span class="tb-installed-up-to-date">
+                  <mat-icon>check</mat-icon>
+                  {{ 'iot-hub.up-to-date' | translate }}
+                </span>
+              }
+            } @else {
+              <span class="tb-installed-up-to-date">
+                <mat-icon>check</mat-icon>
+                {{ 'iot-hub.up-to-date' | translate }}
+              </span>
+            }
+          }
+        </td>
+      </ng-container>
+
+      <!-- Actions -->
+      <ng-container matColumnDef="actions" [stickyEnd]="true">
+        <th mat-header-cell *matHeaderCellDef>
+          <div [ngClass]="itemVersion ? 'gt-sm:!hidden' : 'gt-md:!hidden'" style="min-width: 48px;"></div>
+          <div [ngClass]="itemVersion ? 'lt-md:!hidden' : 'lt-lg:!hidden'" style="min-width: 144px;"></div>
+        </th>
+        <td mat-cell *matCellDef="let item">
+          <!-- Desktop: individual buttons -->
+          <div class="tb-installed-actions flex items-center justify-end" [ngClass]="itemVersion ? 'lt-md:!hidden' : 'lt-lg:!hidden'">
+            @if (!itemVersion || item.itemType === 'DEVICE') {
+              <button mat-icon-button (click)="viewItemDetails(item)" matTooltip="{{ (item.itemType === 'DEVICE' ? 'iot-hub.review-device-instructions' : 'iot-hub.view-item-details') | translate }}">
+                <mat-icon>info_outline</mat-icon>
+              </button>
+            }
+            <button mat-icon-button (click)="openEntity(item)" matTooltip="{{ (item.itemType === 'SOLUTION_TEMPLATE' ? 'iot-hub.goto-main-dashboard' : 'iot-hub.open-item-type') | translate:{ type: getItemTypeLabel(item.itemType) } }}">
+              <mat-icon>open_in_new</mat-icon>
+            </button>
+            <button mat-icon-button (click)="deleteItem(item)" matTooltip="{{ 'iot-hub.remove' | translate }}">
+              <tb-icon>mdi:trash-can-outline</tb-icon>
+            </button>
+          </div>
+          <!-- Mobile: dropdown menu -->
+          <div [ngClass]="itemVersion ? 'gt-sm:!hidden' : 'gt-md:!hidden'">
+            <button mat-icon-button (click)="$event.stopPropagation()" [matMenuTriggerFor]="actionsMenu">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+            <mat-menu #actionsMenu="matMenu" xPosition="before">
+              @if (!itemVersion || item.itemType === 'DEVICE') {
+                <button mat-menu-item (click)="viewItemDetails(item)">
+                  <mat-icon>info_outline</mat-icon>
+                  <span>{{ (item.itemType === 'DEVICE' ? 'iot-hub.review-device-instructions' : 'iot-hub.view-item-details') | translate }}</span>
+                </button>
+              }
+              <button mat-menu-item (click)="openEntity(item)">
+                <mat-icon>open_in_new</mat-icon>
+                <span>{{ (item.itemType === 'SOLUTION_TEMPLATE' ? 'iot-hub.goto-main-dashboard' : 'iot-hub.open-item-type') | translate:{ type: getItemTypeLabel(item.itemType) } }}</span>
+              </button>
+              <button mat-menu-item (click)="deleteItem(item)">
+                <tb-icon>mdi:trash-can-outline</tb-icon>
+                <span>{{ 'iot-hub.remove' | translate }}</span>
+              </button>
+            </mat-menu>
+          </div>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+      <tr mat-row *matRowDef="let _row; columns: displayedColumns;"></tr>
+    </table>
+
+    @if (isLoading) {
+      <div class="flex flex-1 items-center justify-center py-12">
+        <mat-spinner diameter="40"></mat-spinner>
+      </div>
+    }
+
+    @if (!isLoading && dataSource.length === 0) {
+      <div class="tb-iot-hub-empty-state flex flex-1 flex-col items-center justify-center py-20 text-center">
+        <div class="tb-no-data-bg"></div>
+        <h3>{{ 'iot-hub.no-installed-items' | translate }}</h3>
+        <p>{{ 'iot-hub.no-installed-items-text' | translate }}</p>
+        @if (hasActiveFilters()) {
+          <button mat-flat-button color="primary" (click)="clearFilters.emit()">
+            {{ 'iot-hub.clear-all-filters' | translate }}
+          </button>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Paginator inside border -->
+  <mat-divider></mat-divider>
+  <mat-paginator
+    [length]="totalElements"
+    [pageSize]="pageSize"
+    [pageIndex]="pageIndex"
+    [pageSizeOptions]="[10, 25, 50]"
+    [hidePageSize]="hidePageSize"
+    (page)="onPageChange($event)"
+    [showFirstLastButtons]="true">
+  </mat-paginator>
+</div>

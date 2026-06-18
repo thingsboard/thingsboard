@@ -1,0 +1,32 @@
+<!--
+
+    Copyright © 2016-2026 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-iot-hub-warning-content">
+  <div class="tb-iot-hub-warning-title-row">
+    <mat-icon class="tb-iot-hub-warning-icon">warning</mat-icon>
+    <h2 class="tb-iot-hub-warning-title">{{ 'iot-hub.unpublished-warning-title' | translate }}</h2>
+  </div>
+  <p class="tb-iot-hub-warning-text">{{ 'iot-hub.unpublished-warning-text' | translate }}</p>
+  <div class="tb-iot-hub-warning-item">
+    <span class="tb-iot-hub-warning-item-name">{{ data.item.name }}</span>
+    <span class="tb-iot-hub-warning-item-version">v {{ data.item.version }}</span>
+  </div>
+</div>
+<div class="tb-iot-hub-warning-actions">
+  <button mat-button (click)="cancel()">{{ 'action.cancel' | translate }}</button>
+  <button mat-flat-button color="warn" (click)="confirm()">{{ 'iot-hub.unpublished-warning-confirm' | translate }}</button>
+</div>

@@ -1,7 +1,7 @@
 {
   "fqn": "temperature_chart_card_with_background",
   "name": "Temperature chart card with background",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/temperature_chart_card_with_background_system_widget_image.png",
   "description": "Displays a temperature data by combining the latest and aggregated values with the background image and optional simplified chart.",
   "descriptor": {

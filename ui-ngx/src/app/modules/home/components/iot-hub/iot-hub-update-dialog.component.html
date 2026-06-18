@@ -1,0 +1,70 @@
+<!--
+
+    Copyright © 2016-2026 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="flex flex-col gap-5 p-6">
+  @switch (state) {
+    @case ('confirm') {
+      <h2 class="tb-iot-hub-install-title">{{ 'iot-hub.update-confirm-title' | translate:{ name: data.itemName } }}</h2>
+      <p class="tb-iot-hub-install-desc">{{ 'iot-hub.update-desc' | translate }}</p>
+    }
+    @case ('updating') {
+      <h2 class="tb-iot-hub-install-title">{{ 'iot-hub.update-confirm-title' | translate:{ name: data.itemName } }}</h2>
+      <p class="tb-iot-hub-install-desc">{{ 'iot-hub.update-desc' | translate }}</p>
+    }
+    @case ('success') {
+      <h2 class="tb-iot-hub-install-title">{{ 'iot-hub.update-success-title' | translate }}</h2>
+      <p class="tb-iot-hub-install-desc">{{ 'iot-hub.update-success-desc' | translate:{ name: data.itemName } }}</p>
+    }
+    @case ('error') {
+      <h2 class="tb-iot-hub-install-title">{{ 'iot-hub.update-error-title' | translate }}</h2>
+      <p class="tb-iot-hub-install-desc">{{ 'iot-hub.update-error-message' | translate:{ name: data.itemName } }}</p>
+      @if (data?.itemType === ItemType.SOLUTION_TEMPLATE) {
+        <tb-iot-hub-markdown class="tb-iot-hub-error-details-markdown" [data]="errorMessage"></tb-iot-hub-markdown>
+      } @else {
+        <div class="tb-iot-hub-error-details">
+          {{ errorMessage }}
+        </div>
+      }
+    }
+  }
+</div>
+<mat-dialog-actions align="end">
+  @switch (state) {
+    @case ('confirm') {
+      <button mat-button (click)="cancel()">{{ 'action.cancel' | translate }}</button>
+      <button mat-flat-button color="primary" (click)="update()">{{ 'iot-hub.update' | translate }}</button>
+    }
+    @case ('updating') {
+      <button mat-button disabled>{{ 'action.cancel' | translate }}</button>
+      <button mat-flat-button color="primary" disabled>
+        <mat-spinner diameter="18" class="mr-2 inline-block align-middle"></mat-spinner>
+        {{ 'iot-hub.updating' | translate }}
+      </button>
+    }
+    @case ('success') {
+      <button mat-button (click)="close()">{{ (entityDetailsUrl ? 'action.cancel' : 'action.close') | translate }}</button>
+      @if (entityDetailsUrl) {
+        <button mat-flat-button color="primary" (click)="openEntityDetails()">
+          {{ 'iot-hub.open-item-type' | translate:{ type: getTypeLabel() } }}
+        </button>
+      }
+    }
+    @case ('error') {
+      <button mat-button (click)="close()">{{ 'action.close' | translate }}</button>
+    }
+  }
+</mat-dialog-actions>

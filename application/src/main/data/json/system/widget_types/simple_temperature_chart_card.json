@@ -1,7 +1,7 @@
 {
   "fqn": "simple_temperature_chart_card",
   "name": "Simple temperature chart card",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/simple_temperature_chart_card_system_widget_image.png",
   "description": "Displays historical temperature values as a simplified chart. Optionally may display the corresponding latest temperature value.",
   "descriptor": {

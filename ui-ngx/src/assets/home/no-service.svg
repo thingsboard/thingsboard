@@ -1,0 +1,23 @@
+<svg width="140" height="140" viewBox="0 0 140 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_fetch_error)">
+<path opacity="0.06" fill-rule="evenodd" clip-rule="evenodd" d="M103.968 6.58246C87.6317 -0.131145 69.5645 6.70984 52.3206 12.8397C34.9036 19.031 15.4676 24.5221 6.28549 41.3064C-3.06157 58.3922 -2.96976 80.7328 6.47606 96.6404C14.774 110.615 35.0941 106.337 49.2539 113.669C63.5704 121.082 72.1004 142.391 88.3078 139.014C98.9862 136.79 105.249 127.095 110.677 116.374C112.406 112.96 114.051 109.441 115.726 106.027C116.901 103.632 118.091 101.288 119.337 99.0679C128.547 82.6501 142.092 66.5913 139.085 48.4973C135.871 29.1536 121.325 13.7158 103.968 6.58246Z" fill="#3D50F5"/>
+<circle opacity="0.16" cx="94.1" cy="18.1" r="2.1" fill="#3D50F5"/>
+<circle opacity="0.16" cx="110.1" cy="37.1" r="2.1" fill="#3D50F5"/>
+<circle opacity="0.16" cx="27.65" cy="59.85" r="1.05" fill="#3D50F5"/>
+<circle opacity="0.16" cx="82.05" cy="116.05" r="1.05" fill="#3D50F5"/>
+<circle opacity="0.16" cx="123.4" cy="52.4" r="1.4" fill="#3D50F5"/>
+<circle opacity="0.16" cx="18.4" cy="48.4" r="1.4" fill="#3D50F5"/>
+<circle opacity="0.16" cx="35.7" cy="100.7" r="0.7" fill="#3D50F5"/>
+<circle opacity="0.16" cx="119.7" cy="78.7" r="0.7" fill="#3D50F5"/>
+<path opacity="0.3" d="M38 70 A 32 32 0 0 1 102 70" stroke="#3D50F5" stroke-width="6" stroke-linecap="round" fill="none"/>
+<path opacity="0.55" d="M48 74 A 22 22 0 0 1 92 74" stroke="#3D50F5" stroke-width="6" stroke-linecap="round" fill="none"/>
+<path opacity="0.85" d="M58 78 A 12 12 0 0 1 82 78" stroke="#3D50F5" stroke-width="6" stroke-linecap="round" fill="none"/>
+<circle cx="70" cy="94" r="4.5" fill="#3D50F5"/>
+<line x1="30" y1="36" x2="110" y2="104" stroke="#3D50F5" stroke-width="7" stroke-linecap="round"/>
+</g>
+<defs>
+<clipPath id="clip0_fetch_error">
+<rect width="140" height="140" fill="white"/>
+</clipPath>
+</defs>
+</svg>
