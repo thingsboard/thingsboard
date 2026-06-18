@@ -19,15 +19,16 @@
 
 :host ::ng-deep {
 
-  .tb-side-menu,
+  .tb-side-menu {
+    padding: 12px 0;
+    margin: 0;
+    list-style: none;
+  }
+
   .tb-side-menu ul {
     padding: 0;
     margin-top: 0;
     list-style: none;
-  }
-
-  .tb-side-menu > li {
-    border-bottom: 1px solid rgba(0, 0, 0, .12);
   }
 
   a.mat-mdc-button.mat-mdc-button-base {
@@ -39,6 +40,7 @@
     line-height: 40px;
     border-radius: 0;
     padding: 0 16px;
+    --mat-button-text-label-text-color: rgba(0, 0, 0, .76);
     &:hover {
       border-bottom: none;
       background-color: rgba(255,255,255,0.08);

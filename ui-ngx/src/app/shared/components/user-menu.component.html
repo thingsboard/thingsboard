@@ -30,11 +30,11 @@
   @if (authority$ | async; as authority) {
     <div class="tb-user-menu-items">
       <button mat-menu-item (click)="openAccount()">
-        <mat-icon class="material-icons">account_circle</mat-icon>
+        <tb-icon matMenuItemIcon>mdi:account-circle-outline</tb-icon>
         <span translate>account.account</span>
       </button>
-      <button mat-menu-item (click)="logout()">
-        <mat-icon class="material-icons">exit_to_app</mat-icon>
+      <button class="tb-logout" mat-menu-item (click)="logout()">
+        <tb-icon matMenuItemIcon>logout</tb-icon>
         <span translate>home.logout</span>
       </button>
     </div>

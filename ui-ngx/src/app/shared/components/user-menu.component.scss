@@ -30,7 +30,6 @@
     }
 
     span.tb-user-display-name {
-      color: rgba(0, 0, 0, 0.76);
       font-size: 14px;
       line-height: 16px;
       font-weight: 500;
@@ -57,4 +56,20 @@
 
 .tb-user-menu-items {
   min-width: 250px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  --mat-menu-item-label-text-size: 14px;
+  --mat-menu-item-label-text-line-height: 20px;
+  --mat-menu-item-spacing: 8px;
+  --mat-menu-item-icon-size: 18px;
+  .mat-icon {
+    font-size: 18px;
+  }
+  .mat-mdc-menu-item {
+    min-height: 40px;
+    &.tb-logout {
+      border-top: 1px solid rgba(0, 0, 0, 0.12);
+    }
+  }
 }

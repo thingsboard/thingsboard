@@ -18,6 +18,9 @@
 
 :host ::ng-deep {
   .tb-button-toggle {
+    &.tb-toggled {
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
     .tb-toggle-icon {
       display: inline-block;
       width: 15px;
