@@ -1,0 +1,35 @@
+<!--
+
+    Copyright © 2016-2026 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="flex flex-col gap-5 p-6">
+  <h2 class="tb-iot-hub-install-title">{{ 'iot-hub.install-confirm-title' | translate:{ name: data.itemName } }}</h2>
+  <p class="tb-iot-hub-install-desc">{{ 'iot-hub.select-entity-for-cf' | translate:{ name: data.itemName } }}</p>
+  <tb-entity-select
+    [(ngModel)]="selectedEntityId"
+    [allowedEntityTypes]="cfEntityTypes"
+    [defaultEntityType]="defaultCfEntityType"
+    [filterAllowedEntityTypes]="false"
+    appearance="outline"
+    required>
+  </tb-entity-select>
+</div>
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()">{{ 'action.cancel' | translate }}</button>
+  <button mat-flat-button color="primary" [disabled]="!selectedEntityId" (click)="confirm()">
+    {{ 'iot-hub.install' | translate }}
+  </button>
+</mat-dialog-actions>

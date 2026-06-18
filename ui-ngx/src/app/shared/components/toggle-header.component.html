@@ -44,14 +44,18 @@
                              (ngModelChange)="valueChange.emit(value)">
       @for (option of options; track trackByHeaderOption($index, option)) {
         <mat-button-toggle [value]="option.value" [disabled]="disabled" [class.tb-toggle-button-error]="(option.error$ | async) && value !== option.value">
-          {{ option.name }}
-          @if ((option.error$ | async) && value !== option.value) {
-            <mat-icon matTooltipPosition="above"
-                      matTooltipClass="tb-error-tooltip"
-                      [matTooltip]="(option.error$ | async)"
-                      class="tb-error tb-error-icon">
-              warning
-            </mat-icon>
+          @if (option.template) {
+            <ng-container *ngTemplateOutlet="option.template"></ng-container>
+          } @else {
+            {{ option.name }}
+            @if ((option.error$ | async) && value !== option.value) {
+              <mat-icon matTooltipPosition="above"
+                        matTooltipClass="tb-error-tooltip"
+                        [matTooltip]="(option.error$ | async)"
+                        class="tb-error tb-error-icon">
+                warning
+              </mat-icon>
+            }
           }
         </mat-button-toggle>
       }

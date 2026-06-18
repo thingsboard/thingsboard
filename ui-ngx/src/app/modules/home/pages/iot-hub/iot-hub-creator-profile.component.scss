@@ -1,0 +1,360 @@
+/**
+ * Copyright © 2016-2026 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+@import "../../../../../scss/constants";
+
+:host {
+  display: block;
+  padding: 16px;
+  height: 100%;
+}
+
+.tb-creator-page {
+  background: white;
+  border-radius: 8px;
+  padding-left: 123px;
+  overflow: hidden;
+  display: flex;
+  height: 100%;
+}
+
+.tb-iot-hub-empty-state {
+  position: relative;
+  .tb-no-data-bg,
+  .tb-no-service-bg {
+    flex: auto;
+    height: 100px;
+  }
+
+  h3 {
+    font-size: 18px;
+    font-weight: 500;
+    color: rgba(0, 0, 0, 0.87);
+    margin: 16px 0 8px;
+  }
+
+  p {
+    font-size: 14px;
+    color: rgba(0, 0, 0, 0.54);
+    margin: 0 0 24px;
+  }
+}
+
+// Left column: creator info
+.tb-creator-info {
+  width: 360px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  padding: 40px 24px 0 0;
+}
+
+// Avatar
+.tb-creator-avatar {
+  width: 140px;
+  height: 140px;
+  min-width: 140px;
+  min-height: 140px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.06);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: rgba(0, 0, 0, 0.3);
+  }
+}
+
+.tb-creator-name {
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 36px;
+  letter-spacing: 0.07px;
+  color: rgba(0, 0, 0, 0.87);
+  margin: 0;
+}
+
+.tb-creator-verified-badge {
+  font-size: 32px;
+  width: 32px;
+  height: 32px;
+  color: #00695c;
+  flex-shrink: 0;
+  cursor: default;
+}
+
+.tb-creator-desc-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  @media #{$mat-gt-md} {
+    padding-bottom: 1rem;
+  }
+}
+
+// Description
+.tb-creator-desc {
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  letter-spacing: 0.15px;
+  color: rgba(0, 0, 0, 0.76);
+  margin: 0;
+  max-width: 800px;
+}
+
+.tb-creator-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  height: 32px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  letter-spacing: 0.25px;
+  color: rgba(0, 0, 0, 0.54);
+  text-decoration: none;
+  border-bottom: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  &:hover {
+    border-bottom: none;
+  }
+
+  mat-icon, tb-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    color: rgba(0, 0, 0, 0.54);
+  }
+
+  &.tb-creator-link-primary {
+    color: $tb-primary-color;
+
+    mat-icon {
+      color: $tb-primary-color;
+    }
+  }
+}
+
+a.tb-creator-link:hover span {
+  color: $tb-primary-color;
+  text-decoration: underline;
+}
+
+// Vertical divider (desktop)
+.tb-creator-divider {
+  width: 1px;
+  background: rgba(0, 0, 0, 0.12);
+  flex-shrink: 0;
+  align-self: stretch;
+}
+
+// Right column: published items
+.tb-creator-items {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding-top: 40px;
+  padding-left: 24px;
+  padding-right: 123px;
+
+  ::ng-deep {
+    .tb-search-divider {
+      margin-left: -24px;
+      margin-right: -123px;
+    }
+
+    .tb-results-container {
+      padding-right: 123px;
+      padding-bottom: 40px;
+      margin-right: -123px;
+    }
+
+    .tb-search-card-grid {
+      grid-template-columns: repeat(5, 1fr);
+
+      &.tb-search-card-grid-compact {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+  }
+}
+
+.tb-creator-items-heading {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 24px;
+  letter-spacing: 0.1px;
+  color: rgba(0, 0, 0, 0.87);
+  margin: 0 0 24px;
+}
+
+// Responsive
+
+@media #{$mat-lt-xxl} {
+  .tb-creator-page {
+    padding-left: 40px;
+  }
+
+  .tb-creator-items {
+    padding-right: 40px;
+
+    ::ng-deep {
+      .tb-search-divider {
+        margin-right: -40px;
+      }
+
+      .tb-results-container {
+        padding-right: 40px;
+        margin-right: -40px;
+      }
+
+      .tb-search-card-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+  }
+}
+
+@media #{$mat-lt-xl} {
+  .tb-creator-info {
+    width: 300px;
+  }
+
+  .tb-creator-items {
+    ::ng-deep {
+      .tb-search-card-grid {
+        grid-template-columns: repeat(3, 1fr);
+
+        &.tb-search-card-grid-compact {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+    }
+  }
+}
+
+@media #{$mat-lt-xmd} {
+
+  .tb-creator-items {
+    ::ng-deep {
+      .tb-search-card-grid {
+        grid-template-columns: repeat(2, 1fr);
+
+        &.tb-search-card-grid-compact {
+          grid-template-columns: repeat(1, 1fr);
+        }
+      }
+    }
+  }
+}
+
+@media #{$mat-lt-lg} {
+  :host {
+    height: auto;
+    flex: 1;
+  }
+
+  .tb-creator-page {
+    flex-direction: column;
+    padding: 0;
+    gap: 40px;
+  }
+
+  .tb-creator-info {
+    width: 100%;
+    padding: 40px 24px 0 24px;
+  }
+
+  .tb-creator-items {
+    padding-top: 0;
+    padding-right: 24px;
+
+    ::ng-deep {
+      .tb-search-divider {
+        margin-right: -24px;
+      }
+
+      .tb-results-container {
+        padding-right: 24px;
+        margin-right: -24px;
+      }
+    }
+  }
+
+  .tb-creator-items-heading {
+    margin-bottom: 0;
+  }
+
+  .tb-creator-divider {
+    width: 100%;
+    height: 1px;
+    align-self: auto;
+  }
+}
+
+@media #{$mat-lt-sm} {
+  .tb-creator-page {
+    gap: 24px;
+  }
+
+  .tb-creator-info {
+    padding: 16px 16px 0 16px;
+    gap: 24px;
+  }
+
+  .tb-creator-items {
+    padding-left: 16px;
+    padding-right: 16px;
+
+    ::ng-deep {
+      .tb-search-divider {
+        margin-left: -16px;
+        margin-right: -16px;
+      }
+
+      .tb-results-container {
+        padding-right: 16px;
+        margin-right: -16px;
+      }
+
+      .tb-search-card-grid {
+        grid-template-columns: repeat(1, 1fr);
+      }
+    }
+  }
+}

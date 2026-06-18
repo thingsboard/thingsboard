@@ -48,4 +48,5 @@ public class SystemParams {
     boolean allowKeyFiltersOrConditions;
     String nullsOrderStrategy;
     boolean edqsEnabled;
+    String iotHubBaseUrl;
 }

@@ -1,0 +1,116 @@
+<!--
+
+    Copyright © 2016-2026 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-creator-page">
+  @if (hasError) {
+    <div class="tb-iot-hub-empty-state flex flex-1 flex-col items-center justify-center py-20 text-center">
+      <div class="tb-no-service-bg"></div>
+      <h3>{{ 'iot-hub.network-server-unavailable' | translate }}</h3>
+      <p>{{ 'iot-hub.network-server-unavailable-text' | translate }}</p>
+      <button mat-flat-button color="primary" (click)="retryLoadCreator()">
+        {{ 'iot-hub.try-again' | translate }}
+      </button>
+      @if (isLoading) {
+        <div class="absolute inset-0 flex items-center justify-center backdrop-grayscale" style="background: rgba(255, 255, 255, 0.72)">
+          <div class="flex justify-center py-20">
+            <mat-spinner diameter="64"></mat-spinner>
+          </div>
+        </div>
+      }
+    </div>
+  }
+  @if (creator && !hasError) {
+    <!-- Left: creator info -->
+    <div class="tb-creator-info">
+        <!-- Back link -->
+        <button mat-button color="primary" class="tb-creator-back-btn self-start" (click)="goBack()">
+          <mat-icon>chevron_left</mat-icon>
+          {{ 'iot-hub.back-to-iot-hub' | translate }}
+        </button>
+        <div class="flex min-h-0 flex-1 flex-col gap-4">
+          <div class="tb-creator-avatar">
+            @if (getAvatarUrl(); as avatarUrl) {
+              <img [src]="avatarUrl" alt="">
+            } @else {
+              <mat-icon>person</mat-icon>
+            }
+          </div>
+          <div class="flex items-center gap-2">
+            <h2 class="tb-creator-name">{{ creator.displayName }}</h2>
+            @if (creator.verified) {
+              <mat-icon class="tb-creator-verified-badge"
+                        [matTooltip]="'iot-hub.verified-creator' | translate"
+                        matTooltipPosition="above">verified</mat-icon>
+            }
+          </div>
+          <div class="tb-creator-desc-container">
+            @if (creator.description) {
+              <p class="tb-creator-desc">{{ creator.description }}</p>
+            }
+            <div class="flex flex-col gap-1">
+              @if (creator.website) {
+                <a class="tb-creator-link tb-creator-link-primary" [href]="creator.website" target="_blank">
+                  <mat-icon>language</mat-icon>
+                  <span>{{ getWebsiteLabel() }}</span>
+                </a>
+              }
+              @if (creator.contactEmail) {
+                <span class="tb-creator-link">
+                <tb-icon>mdi:email-outline</tb-icon>
+                <span>{{ creator.contactEmail }}</span>
+              </span>
+              }
+              @if (creator.githubUrl) {
+                <a class="tb-creator-link" [href]="creator.githubUrl" target="_blank">
+                  <tb-icon>mdi:github</tb-icon>
+                  <span>GitHub</span>
+                </a>
+              }
+              @if (creator.linkedinUrl) {
+                <a class="tb-creator-link" [href]="creator.linkedinUrl" target="_blank">
+                  <tb-icon>mdi:linkedin</tb-icon>
+                  <span>LinkedIn</span>
+                </a>
+              }
+              @if (creator.twitterUrl) {
+                <a class="tb-creator-link" [href]="creator.twitterUrl" target="_blank">
+                  <tb-icon>mdi:twitter</tb-icon>
+                  <span>X</span>
+                </a>
+              }
+              @if (creator.youtubeUrl) {
+                <a class="tb-creator-link" [href]="creator.youtubeUrl" target="_blank">
+                  <tb-icon>mdi:youtube</tb-icon>
+                  <span>YouTube</span>
+                </a>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div class="tb-creator-divider"></div>
+
+      <!-- Right: published items -->
+      <tb-iot-hub-search class="tb-creator-items" [creatorId]="creatorId" [showCreator]="false">
+        <h3 class="tb-creator-items-heading">
+          {{ 'iot-hub.published-items' | translate }} ({{ creator.publishedCount }})
+        </h3>
+      </tb-iot-hub-search>
+  }
+</div>

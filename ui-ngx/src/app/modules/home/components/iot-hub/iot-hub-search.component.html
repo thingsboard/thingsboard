@@ -1,0 +1,158 @@
+<!--
+
+    Copyright © 2016-2026 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="mb-10 flex items-baseline gap-4 lt-md:mb-4">
+  <ng-content></ng-content>
+  <span class="tb-search-results-count tb-search-results-count-mobile">
+    {{ 'iot-hub.results-count' | translate:{ count: totalElements } }}
+  </span>
+</div>
+<!-- Search + Sort row -->
+<div class="flex items-center gap-4">
+  <div class="tb-search-input-field flex flex-1 items-center">
+    <input class="tb-search-input"
+           [placeholder]="searchPlaceholderKey | translate"
+           [(ngModel)]="searchText"
+           (input)="onSearchInput()"
+           (keyup.enter)="onSearchEnter()">
+    @if (searchText) {
+      <button mat-icon-button class="tb-search-input-action" (click)="clearSearch()">
+        <mat-icon>close</mat-icon>
+      </button>
+    } @else {
+      <span class="tb-search-input-action tb-search-input-action-static" aria-hidden="true">
+        <mat-icon>search</mat-icon>
+      </span>
+    }
+  </div>
+  <button mat-button color="primary" class="tb-search-sort-btn tb-search-sort-btn-full" [matMenuTriggerFor]="sortMenu">
+    {{ sortOptions[selectedSortIndex].label | translate }}
+    <mat-icon iconPositionEnd>arrow_drop_down</mat-icon>
+  </button>
+  <button mat-icon-button color="primary" class="tb-search-sort-btn tb-search-sort-btn-icon" [matMenuTriggerFor]="sortMenu">
+    <mat-icon>filter_list</mat-icon>
+  </button>
+  <mat-menu #sortMenu="matMenu">
+    @for (option of sortOptions; track option.value; let i = $index) {
+      <button mat-menu-item (click)="onSortChange(i)">{{ option.label | translate }}</button>
+    }
+  </mat-menu>
+</div>
+
+<!-- Results count + Pagination (shown when results exist) -->
+<div class="tb-search-pagination-row" [class.lt-md:!hidden]="totalElements === 0">
+  <span class="tb-search-results-count">
+    {{ 'iot-hub.results-count' | translate:{ count: totalElements } }}
+  </span>
+  @if (totalElements > 0) {
+    <div class="tb-search-pagination">
+    <div class="flex items-center gap-px">
+      <button mat-icon-button [disabled]="pageIndex === 0" (click)="goToPage(pageIndex - 1)">
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+      @for (p of getPageNumbers(); track p) {
+        <button class="tb-search-page-btn" [class.active]="p === pageIndex" (click)="goToPage(p)">
+          {{ p + 1 }}
+        </button>
+      }
+      <button mat-icon-button [disabled]="pageIndex >= totalPages - 1" (click)="goToPage(pageIndex + 1)">
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+    </div>
+    <div class="tb-search-page-size">
+      <span>{{ 'iot-hub.items-per-page' | translate }}:</span>
+      <mat-select [value]="pageSize" (selectionChange)="onPageSizeChange($event.value)" class="tb-search-page-size-select">
+        @for (size of pageSizeOptions; track size) {
+          <mat-option [value]="size">{{ size }}</mat-option>
+        }
+      </mat-select>
+    </div>
+  </div>
+  }
+</div>
+
+<div class="tb-search-divider"></div>
+
+<div class="relative min-h-0">
+
+  <div class="tb-results-container">
+    <!-- Error -->
+    @if (hasError) {
+      <div class="tb-search-empty flex flex-col items-center py-10">
+        <div class="tb-no-service-bg"></div>
+        <h3>{{ 'iot-hub.network-server-unavailable' | translate }}</h3>
+        <p>{{ 'iot-hub.network-server-unavailable-text' | translate }}</p>
+        <button mat-flat-button color="primary" (click)="retryLoadResults()">
+          {{ 'iot-hub.try-again' | translate }}
+        </button>
+      </div>
+    }
+
+    <!-- No results -->
+    @if (!hasError && totalElements === 0 && searchText?.trim()) {
+      <div class="tb-search-empty flex flex-col items-center py-10">
+        <div class="tb-no-data-bg"></div>
+        <h3>{{ 'iot-hub.no-items-found' | translate }}</h3>
+        <p>{{ 'iot-hub.try-adjusting-search' | translate }}</p>
+      </div>
+    }
+
+    <!-- Results grouped by type -->
+    @if (resultGroups.length > 0) {
+      <div class="tb-search-categories">
+        @for (group of resultGroups; track group.type) {
+          <div class="tb-search-section">
+            <!-- Section header -->
+            <button mat-button class="tb-search-section-header" (click)="navigateToType(group.type)">
+              {{ getTypeLabel(group.type) }}
+              <mat-icon>chevron_right</mat-icon>
+            </button>
+            <!-- Card grid -->
+            <div class="tb-search-card-grid" [class.tb-search-card-grid-compact]="isCompactType(group.type)">
+              @for (item of group.items; track item.id) {
+                <tb-iot-hub-item-card
+                  [item]="item"
+                  [installedItem]="getInstalledItem(item)"
+                  [installedItemsCount]="getInstalledItemsCount(item)"
+                  [showTypeChip]="false"
+                  [showSubtype]="false"
+                  [showCreator]="showCreator"
+                  (cardClick)="openItemDetail($event)"
+                  (creatorClick)="navigateToCreator($event)"
+                  (installClick)="installItem($event)"
+                  (updateClick)="updateItem($event)"
+                  (deleteClick)="deleteInstalledItem($event)">
+                </tb-iot-hub-item-card>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Loading -->
+  @if (isLoading) {
+    <div class="absolute inset-0 z-10 backdrop-grayscale" style="background: rgba(255, 255, 255, 0.72)">
+      <div class="flex justify-center py-32">
+        <mat-spinner diameter="64"></mat-spinner>
+      </div>
+    </div>
+  }
+
+</div>
+
