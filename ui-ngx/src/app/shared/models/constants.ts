@@ -69,11 +69,14 @@ export const MediaBreakpoints = {
   'lt-sm': 'screen and (max-width: 599px)',
   'lt-md': 'screen and (max-width: 959px)',
   'lt-lg': 'screen and (max-width: 1279px)',
+  'lt-xmd': 'screen and (max-width: 1599px)',
   'lt-xl': 'screen and (max-width: 1919px)',
   'gt-xs': 'screen and (min-width: 600px)',
   'gt-sm': 'screen and (min-width: 960px)',
   'gt-md': 'screen and (min-width: 1280px)',
+  'gt-xmd': 'screen and (min-width: 1600px)',
   'gt-lg': 'screen and (min-width: 1920px)',
+  'gt-xxl': 'screen and (min-width: 2448px)',
   'gt-xl': 'screen and (min-width: 5001px)',
   'md-lg': 'screen and (min-width: 960px) and (max-width: 1819px)'
 };

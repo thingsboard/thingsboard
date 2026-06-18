@@ -36,4 +36,12 @@ export class DeviceTabsComponent extends EntityTabsComponent<DeviceInfo> {
     super.ngOnInit();
   }
 
+  resolveTabIndex(tab: string): number {
+    if (tab === 'cf') {
+      return 3;
+    } else {
+      return super.resolveTabIndex(tab);
+    }
+  }
+
 }

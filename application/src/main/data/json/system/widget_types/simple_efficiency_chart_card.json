@@ -1,7 +1,7 @@
 {
   "fqn": "simple_efficiency_chart_card",
   "name": "Simple efficiency chart card",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/simple_efficiency_chart_card.svg",
   "description": "Displays historical efficiency values as a simplified chart. Optionally may display the corresponding efficiency value.",
   "descriptor": {

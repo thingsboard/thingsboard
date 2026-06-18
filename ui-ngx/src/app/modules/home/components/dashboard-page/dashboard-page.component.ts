@@ -30,7 +30,6 @@ import {
   OnInit,
   Optional,
   Renderer2,
-  StaticProvider,
   ViewChild,
   ViewContainerRef,
   ViewEncapsulation,
@@ -79,7 +78,6 @@ import {
   WidgetConfig,
   WidgetInfo,
   WidgetPosition,
-  widgetType,
   widgetTypesData
 } from '@shared/models/widget.models';
 import { environment as env } from '@env/environment';
@@ -127,13 +125,6 @@ import { ImportExportService } from '@shared/import-export/import-export.service
 import { AuthState } from '@app/core/auth/auth.models';
 import { FiltersDialogComponent, FiltersDialogData } from '@home/components/filter/filters-dialog.component';
 import { Filters } from '@shared/models/query/query.models';
-import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
-import { ComponentPortal } from '@angular/cdk/portal';
-import {
-  DISPLAY_WIDGET_TYPES_PANEL_DATA,
-  DisplayWidgetTypesPanelComponent,
-  DisplayWidgetTypesPanelData
-} from '@home/components/dashboard-page/widget-types-panel.component';
 import { DashboardWidgetSelectComponent } from '@home/components/dashboard-page/dashboard-widget-select.component';
 import { MobileService } from '@core/services/mobile.service';
 
@@ -245,7 +236,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   forceDashboardMobileMode = false;
   isAddingWidget = false;
   isAddingWidgetClosed = true;
-  filterWidgetTypes: widgetType[] = null;
 
   isToolbarOpened = false;
   isToolbarOpenedAnimate = false;
@@ -379,7 +369,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
               private renderer: Renderer2,
               private ngZone: NgZone,
               @Optional() @Inject('embeddedValue') private embeddedValue,
-              private overlay: Overlay,
               private viewContainerRef: ViewContainerRef,
               private cd: ChangeDetectorRef,
               public elRef: ElementRef,
@@ -1679,59 +1668,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       }
     }
     return widgetContextActions;
-  }
-
-  clearSelectedWidgetBundle() {
-    this.dashboardWidgetSelectComponent.search = '';
-    this.dashboardWidgetSelectComponent.widgetsBundle = null;
-    this.dashboardWidgetSelectComponent.selectWidgetMode = 'bundles';
-  }
-
-  editWidgetsTypesToDisplay($event: Event) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    const target = $event.target || $event.currentTarget;
-    const config = new OverlayConfig();
-    config.backdropClass = 'cdk-overlay-transparent-backdrop';
-    config.hasBackdrop = true;
-    const connectedPosition: ConnectedPosition = {
-      originX: 'end',
-      originY: 'bottom',
-      overlayX: 'end',
-      overlayY: 'top'
-    };
-    config.positionStrategy = this.overlay.position().flexibleConnectedTo(target as HTMLElement)
-      .withPositions([connectedPosition]);
-
-    const overlayRef = this.overlay.create(config);
-    overlayRef.backdropClick().subscribe(() => {
-      overlayRef.dispose();
-    });
-
-    const filterWidgetTypes = this.dashboardWidgetSelectComponent.filterWidgetTypes;
-    const widgetTypesList = Array.from(this.dashboardWidgetSelectComponent.widgetTypes.values()).map(type =>
-      ({type, display: filterWidgetTypes === null ? true : filterWidgetTypes.includes(type)}));
-
-    const providers: StaticProvider[] = [
-      {
-        provide: DISPLAY_WIDGET_TYPES_PANEL_DATA,
-        useValue: {
-          types: widgetTypesList,
-          typesUpdated: (newTypes) => {
-            this.filterWidgetTypes = newTypes.filter(type => type.display).map(type => type.type);
-            this.cd.markForCheck();
-          }
-        } as DisplayWidgetTypesPanelData
-      },
-      {
-        provide: OverlayRef,
-        useValue: overlayRef
-      }
-    ];
-    const injector = Injector.create({parent: this.viewContainerRef.injector, providers});
-    overlayRef.attach(new ComponentPortal(DisplayWidgetTypesPanelComponent, this.viewContainerRef, injector));
-    this.cd.markForCheck();
   }
 
   public updateDashboardImage($event: Event) {

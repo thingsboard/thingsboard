@@ -77,6 +77,7 @@
     "ngx-sharebuttons": "^17.0.0",
     "ngx-translate-messageformat-compiler": "^7.2.0",
     "objectpath": "^2.0.0",
+    "photoswipe": "^5.4.4",
     "qrcode": "^1.5.4",
     "raphael": "^2.3.0",
     "rxjs": "~7.8.2",

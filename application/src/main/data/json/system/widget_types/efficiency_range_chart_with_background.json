@@ -1,7 +1,7 @@
 {
   "fqn": "efficiency_range_chart_with_background",
   "name": "Efficiency range chart with background",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/efficiency_range_chart_with_background.svg",
   "description": "Displays changes to efficiency data over time visualized with color ranges and background.",
   "descriptor": {

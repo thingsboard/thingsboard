@@ -1,7 +1,7 @@
 {
   "fqn": "simple_rotational_speed_chart_card",
   "name": "Simple rotational speed chart card",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/simple_rotational_speed_chart_card.svg",
   "description": "Displays historical rotational speed values as a simplified chart. Optionally may display the corresponding latest rotational speed value.",
   "descriptor": {
