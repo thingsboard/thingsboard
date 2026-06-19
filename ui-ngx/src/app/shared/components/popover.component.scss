@@ -220,4 +220,36 @@ $box-shadow-base: 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 6px 16px 0 rgba(0, 0, 0,
   &-placement-leftBottom > &-content > &-arrow {
     bottom: 12px;
   }
+  &.tb-menu {
+    padding: 0;
+    .tb-popover-arrow {
+      display: none;
+    }
+    .tb-popover-inner {
+      border-radius: 4px;
+      box-shadow: 0 0 6px 1px rgba(0, 0, 0, 0.08), 0 1px 8px 1px rgba(0, 0, 0, 0.08);
+    }
+    .tb-popover-inner-content {
+      padding: 8px 0;
+    }
+    .tb-menu-content {
+      --mat-button-text-label-text-size: 14px;
+      --mat-button-text-label-text-weight: 400;
+      --mat-button-text-container-height: 40px;
+      .mat-mdc-button:not(.mat-mdc-icon-button) {
+        justify-content: start;
+        padding: 8px 16px;
+        & > .mat-icon {
+          width: 18px;
+          height: 18px;
+          font-size: 18px;
+          margin-right: 8px;
+        }
+        .mdc-button__label {
+          line-height: 20px;
+        }
+      }
+    }
+  }
 }
+

@@ -16,6 +16,7 @@
 
 import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
 import { MenuSection } from '@core/services/menu.models';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
     selector: 'tb-menu-link',
@@ -27,6 +28,10 @@ import { MenuSection } from '@core/services/menu.models';
 export class MenuLinkComponent implements OnInit {
 
   @Input() section: MenuSection;
+
+  @Input()
+  @coerceBoolean()
+  collapsed = false;
 
   constructor() {
   }

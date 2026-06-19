@@ -14,9 +14,10 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
 import { MenuService } from '@core/services/menu.service';
 import { MenuSection } from '@core/services/menu.models';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
     selector: 'tb-side-menu',
@@ -26,6 +27,10 @@ import { MenuSection } from '@core/services/menu.models';
     standalone: false
 })
 export class SideMenuComponent implements OnInit {
+
+  @Input()
+  @coerceBoolean()
+  collapsed = false;
 
   menuSections$ = this.menuService.menuSections();
 

@@ -16,6 +16,8 @@
 
 -->
 <a mat-button routerLinkActive="tb-active" [routerLinkActiveOptions]="{paths: 'subset', queryParams: 'ignored', matrixParams: 'ignored', fragment: 'ignored'}" routerLink="{{section.path}}"
+   [matTooltip]="collapsed ? (section.customTranslate ? (section.name | customTranslate) : (section.name | translate)) : null"
+   matTooltipPosition="right"
    [class.is-new]="section.isNew">
   @if (section.icon !== null) {
     <tb-icon matButtonIcon>{{section.icon}}</tb-icon>

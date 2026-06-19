@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+@import "constants";
+
 tb-user-menu {
   width: 100%;
 
@@ -26,6 +28,15 @@ tb-user-menu {
     justify-content: start;
     gap: 8px;
     line-height: 1.5;
+
+    .tb-user-info {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: center;
+      opacity: 1;
+      transition: opacity $sidenav-anim-timing;
+    }
 
     span {
       text-transform: none;
@@ -52,29 +63,38 @@ tb-user-menu {
       height: 32px;
       font-size: 32px;
       margin: 0;
+      transition: all $sidenav-anim-timing;
+    }
+    &.tb-collapsed {
+      min-width: 0;
+      .mat-icon.tb-mini-avatar {
+        width: 20px;
+        height: 20px;
+        font-size: 20px;
+      }
+
+      .tb-user-info {
+        opacity: 0;
+      }
     }
   }
 }
 
-.mat-mdc-menu-panel.tb-user-menu-panel {
-  max-width: 100%;
-  .tb-user-menu-items {
-    //min-width: 250px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    --mat-menu-item-label-text-size: 14px;
-    --mat-menu-item-label-text-line-height: 20px;
-    --mat-menu-item-spacing: 8px;
-    --mat-menu-item-icon-size: 18px;
-    .mat-icon {
-      font-size: 18px;
+.tb-popover.tb-menu.tb-user-menu-collapsed {
+  padding: 0 0 17px 0;
+}
+
+.tb-user-menu-items {
+  min-width: 250px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  .mat-mdc-button {
+    &:hover {
+      background-color: rgba(0, 0, 0, .07);
     }
-    .mat-mdc-menu-item {
-      min-height: 40px;
-      &.tb-logout {
-        border-top: 1px solid rgba(0, 0, 0, 0.12);
-      }
-    }
+  }
+  .tb-logout {
+    border-top: 1px solid rgba(0, 0, 0, 0.12);
   }
 }

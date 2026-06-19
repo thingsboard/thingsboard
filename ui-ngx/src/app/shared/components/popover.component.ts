@@ -96,6 +96,7 @@ export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
   @Input('tbPopoverOverlayClassName') overlayClassName?: string;
   @Input('tbPopoverOverlayStyle') overlayStyle?: { [klass: string]: any };
   @Input() tbPopoverBackdrop = false;
+  @Input() tbPopoverMenu = false;
 
   // eslint-disable-next-line @angular-eslint/no-output-rename
   @Output('tbPopoverVisibleChange') readonly visibleChange = new EventEmitter<boolean>();
@@ -242,7 +243,8 @@ export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
       mouseLeaveDelay: ['tbMouseLeaveDelay', () => this.mouseLeaveDelay],
       overlayClassName: ['tbOverlayClassName', () => this.overlayClassName],
       overlayStyle: ['tbOverlayStyle', () => this.overlayStyle],
-      tbPopoverBackdrop: ['tbBackdrop', () => this.tbPopoverBackdrop]
+      tbPopoverBackdrop: ['tbBackdrop', () => this.tbPopoverBackdrop],
+      tbPopoverMenu: ['tbMenu', () => this.tbPopoverMenu]
     };
 
     (keys || Object.keys(mappingProperties).filter(key => !key.startsWith('directive'))).forEach(
@@ -343,7 +345,7 @@ export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
               <span class="tb-popover-arrow-content"></span>
             </div>
             <div class="tb-popover-inner" [style]="tbPopoverInnerStyle" role="tooltip">
-              @if (tbShowCloseButton) {
+              @if (tbShowCloseButton && !tbMenu) {
                 <div class="tb-popover-close-button" (click)="closeButtonClick($event)">×</div>
               }
               <div style="width: 100%; height: 100%;">
@@ -389,6 +391,7 @@ export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
   tbPopoverInnerStyle: { [klass: string]: any } = {};
   tbPopoverInnerContentStyle: { [klass: string]: any } = {};
   tbBackdrop = false;
+  tbMenu = false;
   tbMouseEnterDelay?: number;
   tbMouseLeaveDelay?: number;
   tbHideOnClickOutside = true;
@@ -672,7 +675,8 @@ export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
   updateStyles(): void {
     this.classMap = {
       [`tb-popover-placement-${this.preferredPlacement}`]: true,
-      ['tb-popover-hidden']: this.tbHidden || !this.lastIsIntersecting
+      ['tb-popover-hidden']: this.tbHidden || !this.lastIsIntersecting,
+      ['tb-menu']: this.tbMenu
     };
     if (this.tbOverlayClassName) {
       this.classMap[this.tbOverlayClassName] = true;

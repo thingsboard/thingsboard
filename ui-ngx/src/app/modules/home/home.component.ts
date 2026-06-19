@@ -42,8 +42,7 @@ import { instanceOfSearchableComponent, ISearchableComponent } from '@home/model
 import { ActiveComponentService } from '@core/services/active-component.service';
 import { RouterTabsComponent } from '@home/components/router-tabs.component';
 import { FormBuilder } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
-import { isDefined, isDefinedAndNotNull } from '@core/utils';
+import { isDefinedAndNotNull } from '@core/utils';
 
 @Component({
     selector: 'tb-home',
@@ -65,11 +64,10 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
 
   sidenavDesktop = signal(true);
   sidenavCollapsed = signal(false);
-  sidenavWidth = computed(() => this.sidenavDesktop() ? (this.sidenavCollapsed() ? '50px' : '250px') : '');
+  menuCollapsed= computed(() => this.sidenavDesktop() && this.sidenavCollapsed());
 
   logo = 'assets/logo_title_black.svg';
-
-  showLogo= computed(() => !this.sidenavDesktop() || !this.sidenavCollapsed());
+  collapsedLogo =  'assets/small_logo_title_black.svg';
 
   @ViewChild('sidenav')
   sidenav: MatSidenav;

@@ -16,10 +16,10 @@
 
 import {
   ChangeDetectionStrategy,
-  Component,
+  Component, EventEmitter,
   Input,
   OnDestroy,
-  OnInit,
+  OnInit, Output,
   ViewChild,
   ViewEncapsulation
 } from '@angular/core';
@@ -32,6 +32,7 @@ import { map } from 'rxjs/operators';
 import { AuthService } from '@core/auth/auth.service';
 import { Router } from '@angular/router';
 import { MatMenu, MatMenuTrigger } from '@angular/material/menu';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
     selector: 'tb-user-menu',
@@ -42,6 +43,13 @@ import { MatMenu, MatMenuTrigger } from '@angular/material/menu';
     standalone: false
 })
 export class UserMenuComponent implements OnInit, OnDestroy {
+
+  @Input()
+  @coerceBoolean()
+  collapsed = false;
+
+  @Output()
+  menuClicked = new EventEmitter();
 
   authorities = Authority;
 
@@ -112,10 +120,12 @@ export class UserMenuComponent implements OnInit, OnDestroy {
   }
 
   openAccount(): void {
+    this.menuClicked.emit();
     this.router.navigate(['account']);
   }
 
   logout(): void {
+    this.menuClicked.emit();
     this.authService.logout();
   }
 

@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+@import "constants";
+
 :host {
   width: 100%;
 }
@@ -24,6 +27,15 @@
     margin: 0;
     list-style: none;
     --mat-button-text-label-text-weight: 400;
+    &.tb-collapsed {
+      a.mat-mdc-button.mat-mdc-button-base {
+        padding-right: 0;
+        min-width: 0;
+        span.mdc-button__label {
+          opacity: 0;
+        }
+      }
+    }
   }
 
   .tb-side-menu ul {
@@ -42,14 +54,15 @@
     border-radius: 0;
     padding: 0 16px;
     --mat-button-text-label-text-color: rgba(0, 0, 0, .76);
-    &:hover {
+    &:hover, &.tb-hovered {
+      background-color: rgba(0, 0, 0, .07);
       border-bottom: none;
     }
     &:focus {
       border-bottom: none;
     }
     &.tb-active {
-      background-color: rgba(0, 0, 0, .08);
+      background-color: rgba(0, 0, 0, .05);
     }
     .mat-icon {
       margin-right: 8px;
@@ -63,6 +76,8 @@
       text-overflow: ellipsis;
       white-space: nowrap;
       display: inline-flex;
+      opacity: 1;
+      transition: opacity $sidenav-anim-timing;
       & > span {
         overflow: hidden;
         text-overflow: ellipsis;

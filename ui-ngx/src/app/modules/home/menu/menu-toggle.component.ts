@@ -20,6 +20,7 @@ import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { ActionPreferencesUpdateOpenedMenuSection } from '@core/auth/auth.actions';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
     selector: 'tb-menu-toggle',
@@ -32,6 +33,10 @@ export class MenuToggleComponent implements OnInit {
 
   @Input() section: MenuSection;
 
+  @Input()
+  @coerceBoolean()
+  collapsed = false;
+
   constructor(private router: Router,
               private store: Store<AppState>) {
   }
@@ -40,7 +45,7 @@ export class MenuToggleComponent implements OnInit {
   }
 
   sectionHeight(): string {
-    if (this.section.opened) {
+    if (this.section.opened && !this.collapsed) {
       return this.section.pages.length * 40 + 'px';
     } else {
       return '0px';
@@ -49,8 +54,23 @@ export class MenuToggleComponent implements OnInit {
 
   toggleSection(event: MouseEvent) {
     event.stopPropagation();
-    this.section.opened = !this.section.opened;
-    this.store.dispatch(new ActionPreferencesUpdateOpenedMenuSection({path: this.section.path, opened: this.section.opened}));
+    if (this.collapsed) {
+      event.preventDefault();
+    } else {
+      this.section.opened = !this.section.opened;
+      this.store.dispatch(new ActionPreferencesUpdateOpenedMenuSection({
+        path: this.section.path,
+        opened: this.section.opened
+      }));
+    }
+  }
+
+  toggleSectionActive(): boolean {
+    if (this.collapsed) {
+      return this.router.isActive(this.router.parseUrl(this.section.path), {paths: 'subset', queryParams: 'ignored', matrixParams: 'ignored', fragment: 'ignored'});
+    } else {
+      return false;
+    }
   }
 
   trackBySectionPages(index: number, section: MenuSection){

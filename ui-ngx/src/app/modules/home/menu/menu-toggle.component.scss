@@ -73,3 +73,33 @@
     }
   }
 }
+
+.tb-toggle-menu-items {
+  min-width: 250px;
+  display: flex;
+  flex-direction: column;
+  .tb-menu-toggle-header {
+    display: flex;
+    align-items: center;
+    cursor: default;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 20px;
+    height: 40px;
+    padding: 8px 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  }
+  a.mat-mdc-button {
+    border-bottom: none;
+    &:hover {
+      background-color: rgba(0, 0, 0, .07);
+      border-bottom: none;
+    }
+    &:focus {
+      border-bottom: none;
+    }
+    &.tb-active {
+      background-color: rgba(0, 0, 0, .05);
+    }
+  }
+}

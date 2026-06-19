@@ -15,10 +15,16 @@
     limitations under the License.
 
 -->
-<button mat-button class="tb-user-menu" [matMenuTriggerFor]="userMenu" #menuButton
-        (click)="$event.stopPropagation();">
+<button #menuButton #menuPopover="tbPopover" mat-button class="tb-user-menu" [class.tb-collapsed]="collapsed"
+        (click)="$event.stopPropagation();"
+        tb-popover
+        tbPopoverTrigger="click"
+        [tbPopoverMenu]="true"
+        [tbPopoverContent]="userMenuTpl"
+        [tbPopoverOverlayClassName]="collapsed ? 'tb-user-menu-collapsed' : ''"
+        [tbPopoverPlacement]="collapsed ? 'right' : 'topLeft'">
   <tb-icon class="material-icons tb-mini-avatar">mdi:account-circle-outline</tb-icon>
-  <div class="flex flex-col items-stretch justify-center">
+  <div class="tb-user-info">
     @if (userDisplayName$ | async; as userDisplayName) {
       <span class="tb-user-display-name">{{ userDisplayName }}</span>
     }
@@ -27,17 +33,17 @@
     }
   </div>
 </button>
-<mat-menu #userMenu="matMenu" class="tb-user-menu-panel" xPosition="after">
+<ng-template #userMenuTpl>
   @if (authority$ | async; as authority) {
-    <div class="tb-user-menu-items" [style.width.px]="menuButton._elementRef.nativeElement.offsetWidth">
-      <button mat-menu-item (click)="openAccount()">
-        <tb-icon matMenuItemIcon>mdi:account-circle-outline</tb-icon>
+    <div class="tb-menu-content tb-user-menu-items" [style.width.px]="!collapsed ? menuButton._elementRef.nativeElement.offsetWidth : ''">
+      <button mat-button (click)="menuPopover?.hide(); openAccount()">
+        <tb-icon matButtonIcon>mdi:account-circle-outline</tb-icon>
         <span translate>account.account</span>
       </button>
-      <button class="tb-logout" mat-menu-item (click)="logout()">
-        <tb-icon matMenuItemIcon>logout</tb-icon>
+      <button mat-button class="tb-logout" (click)="menuPopover?.hide(); logout()">
+        <tb-icon matButtonIcon>logout</tb-icon>
         <span translate>home.logout</span>
       </button>
     </div>
   }
-</mat-menu>
+</ng-template>
