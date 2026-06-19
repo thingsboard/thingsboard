@@ -31,7 +31,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -126,6 +128,58 @@ class LtsMigrationServiceTest {
         service.runDataMigrations("4.2.2.2", "4.3.1.3");
 
         assertEquals(List.of("4.3.1.2", "4.3.1.3"), applied);
+    }
+
+    @Test
+    void applyMigrationsSkipsMigrationsOutsideTargetFamilyOnCrossFamilyUpgrade() {
+        List<String> applied = new ArrayList<>();
+        // The dormant 4.2.2.3 bean must not apply or record on a cross-family 4.2 -> 4.3 upgrade.
+        LtsMigrationService service = service(List.of(
+                migration("4.2.2.3", applied),
+                migration("4.3.1.2", applied),
+                migration("4.3.1.3", applied)));
+
+        service.applyMigrations("4.2.2.2", "4.3.1.3");
+
+        assertEquals(List.of("4.3.1.2", "4.3.1.3"), applied);
+        verify(schemaSettingsService, never()).updateSchemaVersion("4.2.2.3");
+        verify(schemaSettingsService).updateSchemaVersion("4.3.1.2");
+        verify(schemaSettingsService).updateSchemaVersion("4.3.1.3");
+    }
+
+    @Test
+    void runSchemaMigrationsSkipsMigrationsOutsideTargetFamilyOnCrossFamilyUpgrade() throws Exception {
+        List<String> applied = new ArrayList<>();
+        writeSql("4.2.2.3", "SELECT 1;");
+        writeSql("4.3.1.2", "SELECT 2;");
+        writeSql("4.3.1.3", "SELECT 3;");
+        LtsMigrationService service = service(List.of(
+                migration("4.2.2.3", applied),
+                migration("4.3.1.2", applied),
+                migration("4.3.1.3", applied)));
+
+        service.runSchemaMigrations("4.2.2.2", "4.3.1.3");
+
+        // The dormant 4.2.2.3 SQL must not run; the 4.3-family SQL must.
+        verify(jdbcTemplate, never()).execute("SELECT 1;");
+        verify(jdbcTemplate).execute("SELECT 2;");
+        verify(jdbcTemplate).execute("SELECT 3;");
+    }
+
+    @Test
+    void isInRangeForTargetFamilyPredicate() {
+        LtsVersion from = LtsVersion.parse("4.3.1.1");
+        LtsVersion to = LtsVersion.parse("4.3.1.3");
+        // same-family in range
+        assertTrue(LtsMigrationService.isInRangeForTargetFamily(LtsVersion.parse("4.3.1.2"), from, to));
+        // older-family bean within the numeric range but wrong family
+        assertFalse(LtsMigrationService.isInRangeForTargetFamily(LtsVersion.parse("4.2.2.3"), from, to));
+        // the target itself (upper boundary, inclusive)
+        assertTrue(LtsMigrationService.isInRangeForTargetFamily(to, from, to));
+        // at from (lower boundary, exclusive)
+        assertFalse(LtsMigrationService.isInRangeForTargetFamily(from, from, to));
+        // below from
+        assertFalse(LtsMigrationService.isInRangeForTargetFamily(LtsVersion.parse("4.3.1.0"), from, to));
     }
 
     @Test
