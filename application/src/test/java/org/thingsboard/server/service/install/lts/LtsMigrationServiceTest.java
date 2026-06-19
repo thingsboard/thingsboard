@@ -114,6 +114,21 @@ class LtsMigrationServiceTest {
     }
 
     @Test
+    void skipsMigrationsOutsideTargetFamilyOnCrossFamilyUpgrade() {
+        List<String> applied = new ArrayList<>();
+        // 4.2.2.3 is carried onto a 4.3 branch by the release-merge cascade but must stay dormant:
+        // a cross-family 4.2 -> 4.3 upgrade is handled entirely by the 4.3-family migrations.
+        LtsMigrationService service = service(List.of(
+                migration("4.2.2.3", applied),
+                migration("4.3.1.2", applied),
+                migration("4.3.1.3", applied)));
+
+        service.runDataMigrations("4.2.2.2", "4.3.1.3");
+
+        assertEquals(List.of("4.3.1.2", "4.3.1.3"), applied);
+    }
+
+    @Test
     void reRunAtCurrentVersionIsNoOp() throws Exception {
         List<String> applied = new ArrayList<>();
         writeSql("4.2.2.3", "SELECT 1;");
