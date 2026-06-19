@@ -29,6 +29,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -41,11 +42,14 @@ public class LtsMigrationService {
 
     private static final String SCHEMA_UPDATE_SQL = "schema_update.sql";
 
+    /** A migration paired with its parsed version, so the version is parsed exactly once per bean. */
+    private record VersionedMigration(LtsVersion version, LtsMigration migration) {}
+
     private final JdbcTemplate jdbcTemplate;
     private final InstallScripts installScripts;
     private final DatabaseSchemaSettingsService schemaSettingsService;
     private final TransactionTemplate transactionTemplate;
-    private final List<LtsMigration> migrations;
+    private final List<VersionedMigration> migrations;
 
     public LtsMigrationService(JdbcTemplate jdbcTemplate,
                                InstallScripts installScripts,
@@ -58,25 +62,28 @@ public class LtsMigrationService {
         this.transactionTemplate = new TransactionTemplate(transactionManager);
         this.migrations = validateAndSort(migrations);
         log.info("Discovered {} LTS migration(s): {}", this.migrations.size(),
-                this.migrations.stream().map(LtsMigration::getVersion).toList());
+                this.migrations.stream().map(vm -> vm.migration().getVersion()).toList());
     }
 
-    private static List<LtsMigration> validateAndSort(List<LtsMigration> migrations) {
+    private static List<VersionedMigration> validateAndSort(List<LtsMigration> migrations) {
         Set<String> seen = new HashSet<>();
+        List<VersionedMigration> versioned = new ArrayList<>();
         for (LtsMigration m : migrations) {
-            LtsVersion.parse(m.getVersion()); // fail loud on unparseable version
+            LtsVersion version = LtsVersion.parse(m.getVersion()); // fail loud on unparseable version
             if (!seen.add(m.getVersion())) {
                 throw new IllegalStateException("Duplicate LTS migration version: " + m.getVersion());
             }
+            versioned.add(new VersionedMigration(version, m));
         }
-        return migrations.stream()
-                .sorted(Comparator.comparing(m -> LtsVersion.parse(m.getVersion())))
+        return versioned.stream()
+                .sorted(Comparator.comparing(VersionedMigration::version))
                 .toList();
     }
 
     /** No-downtime path: per migration in (from, to] run SQL, then apply(), then record the version. */
     public void applyMigrations(String fromVersion, String toVersion) {
-        for (LtsMigration migration : select(fromVersion, toVersion)) {
+        for (VersionedMigration vm : select(fromVersion, toVersion)) {
+            LtsMigration migration = vm.migration();
             String version = migration.getVersion();
             transactionTemplate.executeWithoutResult(status -> {
                 runSchemaUpdate(version);
@@ -89,8 +96,8 @@ public class LtsMigrationService {
 
     /** Offline major-upgrade schema phase: per migration in (from, to] run SQL only. No version record. */
     public void runSchemaMigrations(String fromVersion, String toVersion) {
-        for (LtsMigration migration : select(fromVersion, toVersion)) {
-            String version = migration.getVersion();
+        for (VersionedMigration vm : select(fromVersion, toVersion)) {
+            String version = vm.migration().getVersion();
             transactionTemplate.executeWithoutResult(status -> runSchemaUpdate(version));
             log.info("Applied LTS schema migration {}", version);
         }
@@ -98,29 +105,30 @@ public class LtsMigrationService {
 
     /** Offline major-upgrade data phase: per migration in (from, to] run apply() only. No SQL, no version record. */
     public void runDataMigrations(String fromVersion, String toVersion) {
-        for (LtsMigration migration : select(fromVersion, toVersion)) {
-            migration.apply();
-            log.info("Applied LTS data migration {}", migration.getVersion());
+        for (VersionedMigration vm : select(fromVersion, toVersion)) {
+            vm.migration().apply();
+            log.info("Applied LTS data migration {}", vm.migration().getVersion());
         }
     }
 
-    private List<LtsMigration> select(String fromVersion, String toVersion) {
+    private List<VersionedMigration> select(String fromVersion, String toVersion) {
         LtsVersion from = LtsVersion.parse(fromVersion);
         LtsVersion to = LtsVersion.parse(toVersion);
         return migrations.stream()
-                .filter(migration -> {
-                    LtsVersion version = LtsVersion.parse(migration.getVersion());
-                    // Run only migrations whose family matches the target version. Older-family
-                    // migrations (e.g. 4.2.x) ride onto newer-family branches (e.g. 4.3.x) via the
-                    // release-merge cascade, but each branch's own family of migrations is
-                    // self-contained (newer-family copies reproduce the older schema/data changes),
-                    // so a cross-family upgrade is fully handled by the target-family migrations.
-                    // Excluding the dormant older-family beans avoids double-processing.
-                    return version.sameFamily(to)
-                            && version.compareTo(from) > 0
-                            && version.compareTo(to) <= 0;
-                })
+                .filter(vm -> isInRangeForTargetFamily(vm.version(), from, to))
                 .toList();
+    }
+
+    // Run only migrations whose family matches the target version. Older-family
+    // migrations (e.g. 4.2.x) ride onto newer-family branches (e.g. 4.3.x) via the
+    // release-merge cascade, but each branch's own family of migrations is
+    // self-contained (newer-family copies reproduce the older schema/data changes),
+    // so a cross-family upgrade is fully handled by the target-family migrations.
+    // Excluding the dormant older-family beans avoids double-processing.
+    static boolean isInRangeForTargetFamily(LtsVersion version, LtsVersion from, LtsVersion to) {
+        return version.sameFamily(to)
+                && version.compareTo(from) > 0
+                && version.compareTo(to) <= 0;
     }
 
     private void runSchemaUpdate(String version) {

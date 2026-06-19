@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.service.install.lts.LtsVersion;
 import org.thingsboard.server.service.install.update.DefaultDataUpdateService;
 
 import java.util.Map;
@@ -132,12 +133,8 @@ public class DefaultDatabaseSchemaSettingsService implements DatabaseSchemaSetti
     }
 
     private long toDbVersion(String version) {
-        String[] versionParts = version.split("\\.");
-        long major = Long.parseLong(versionParts[0]);
-        long minor = versionParts.length > 1 ? Long.parseLong(versionParts[1]) : 0;
-        long maintenance = versionParts.length > 2 ? Long.parseLong(versionParts[2]) : 0;
-        long patch = versionParts.length > 3 ? Long.parseLong(versionParts[3]) : 0;
-        return major * 1_000_000_000L + minor * 1_000_000L + maintenance * 1000L + patch;
+        LtsVersion v = LtsVersion.parse(version);
+        return v.major() * 1_000_000_000L + v.minor() * 1_000_000L + v.maintenance() * 1000L + v.patch();
     }
 
     private void onSchemaSettingsError(String message) {
@@ -146,14 +143,7 @@ public class DefaultDatabaseSchemaSettingsService implements DatabaseSchemaSetti
     }
 
     private String normalizeVersion(String version) {
-        String[] parts = version.split("\\.");
-
-        int major = Integer.parseInt(parts[0]);
-        int minor = parts.length > 1 ? Integer.parseInt(parts[1]) : 0;
-        int maintenance = parts.length > 2 ? Integer.parseInt(parts[2]) : 0;
-        int patch = parts.length > 3 ? Integer.parseInt(parts[3]) : 0;
-
-        return major + "." + minor + "." + maintenance + "." + patch;
+        return LtsVersion.parse(version).toString();
     }
 
 }
