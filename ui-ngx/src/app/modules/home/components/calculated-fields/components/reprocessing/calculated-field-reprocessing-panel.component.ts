@@ -215,7 +215,7 @@ export class CalculatedFieldReprocessingPanelComponent implements OnInit {
         if (progress > this.processProgress()) {
           this.processProgress.set(progress);
         }
-        this.processInfo.set(`${process}/${total} (${this.processProgress()}%)`);
+        this.processInfo.set(`${process}/${total} (${Math.round(this.processProgress())}%)`);
       }
     }
   }
