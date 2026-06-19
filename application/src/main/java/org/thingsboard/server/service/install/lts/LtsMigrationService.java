@@ -110,7 +110,15 @@ public class LtsMigrationService {
         return migrations.stream()
                 .filter(migration -> {
                     LtsVersion version = LtsVersion.parse(migration.getVersion());
-                    return version.compareTo(from) > 0 && version.compareTo(to) <= 0;
+                    // Run only migrations whose family matches the target version. Older-family
+                    // migrations (e.g. 4.2.x) ride onto newer-family branches (e.g. 4.3.x) via the
+                    // release-merge cascade, but each branch's own family of migrations is
+                    // self-contained (newer-family copies reproduce the older schema/data changes),
+                    // so a cross-family upgrade is fully handled by the target-family migrations.
+                    // Excluding the dormant older-family beans avoids double-processing.
+                    return version.sameFamily(to)
+                            && version.compareTo(from) > 0
+                            && version.compareTo(to) <= 0;
                 })
                 .toList();
     }
