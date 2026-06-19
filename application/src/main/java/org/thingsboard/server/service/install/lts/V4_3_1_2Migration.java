@@ -13,20 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.install;
+package org.thingsboard.server.service.install.lts;
 
-public interface DatabaseSchemaSettingsService {
+import org.springframework.stereotype.Component;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 
-    void validateSchemaSettings();
+@Component
+@TbCoreComponent
+public class V4_3_1_2Migration implements LtsMigration {
 
-    void createSchemaSettings();
-
-    void updateSchemaVersion();
-
-    void updateSchemaVersion(String version);
-
-    String getPackageSchemaVersion();
-
-    String getDbSchemaVersion();
-
+    @Override
+    public String getVersion() {
+        return "4.3.1.2";
+    }
 }

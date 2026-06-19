@@ -14,16 +14,6 @@
 -- limitations under the License.
 --
 
--- LTS cumulative schema update file.
--- All statements must be idempotent (use IF NOT EXISTS, ADD COLUMN IF NOT EXISTS, DO $$ ... END $$ guards, etc.).
--- This file is executed by SystemPatchApplier on every version increase within the LTS family.
-
--- CALCULATED FIELD ADDITIONAL INFO ADDITION START
-
-ALTER TABLE calculated_field ADD COLUMN IF NOT EXISTS additional_info varchar;
-
--- CALCULATED FIELD ADDITIONAL INFO ADDITION END
-
 -- IOT HUB INSTALLED ITEM START
 
 CREATE TABLE IF NOT EXISTS iot_hub_installed_item (

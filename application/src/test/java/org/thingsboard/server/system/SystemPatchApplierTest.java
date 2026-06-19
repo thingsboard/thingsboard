@@ -21,7 +21,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -39,6 +38,7 @@ import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.service.install.DatabaseSchemaSettingsService;
 import org.thingsboard.server.service.install.InstallScripts;
+import org.thingsboard.server.service.install.lts.LtsMigrationService;
 import org.thingsboard.server.service.system.SystemPatchApplier;
 
 import java.nio.file.Files;
@@ -56,7 +56,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -91,45 +90,14 @@ public class SystemPatchApplierTest {
     @Mock
     private ImageService imageService;
 
+    @Mock
+    private LtsMigrationService ltsMigrationService;
+
     @InjectMocks
     private SystemPatchApplier reconciler;
 
     @TempDir
     Path tempDir;
-
-    @ParameterizedTest(name = "Parse version {0} should return major={1}, minor={2}, patch={3}")
-    @CsvSource({
-            "4.2.1, 4, 2, 1, 0",
-            "4.2.0, 4, 2, 0, 0",
-            "4.2, 4, 2, 0, 0",
-            "4.0.1.2, 4, 0, 1, 2",
-            "4, 4, 0, 0, 0",
-            "1.0.5.7, 1, 0, 5, 7",
-            "10.20.30.40, 10, 20, 30, 40",
-            "0.0.1, 0, 0, 1, 0"
-    })
-    void testParseVersion(String versionString, int expectedMajor, int expectedMinor, int expectedMaintenance, int expectedPatch) {
-        SystemPatchApplier.VersionInfo version = ReflectionTestUtils.invokeMethod(reconciler, "parseVersion", versionString);
-
-        assertNotNull(version, "Version should not be null for: " + versionString);
-        assertEquals(expectedMajor, version.major(), "Major version mismatch");
-        assertEquals(expectedMinor, version.minor(), "Minor version mismatch");
-        assertEquals(expectedMaintenance, version.maintenance(), "Maintenance version mismatch");
-        assertEquals(expectedPatch, version.patch(), "Patch version mismatch");
-    }
-
-    @ParameterizedTest(name = "Parse invalid version: {0}")
-    @CsvSource({
-            "invalid",
-            "a.b.c",
-            "1.2.y.x",
-            "''",
-            "1.x.3"
-    })
-    void testParseInvalidVersion(String invalidVersion) {
-        SystemPatchApplier.VersionInfo version = ReflectionTestUtils.invokeMethod(reconciler, "parseVersion", invalidVersion);
-        assertNull(version, "Version should be null for invalid input: " + invalidVersion);
-    }
 
     @Test
     void whenLockIsNotAcquired_thenAcquiredIsSuccess() {
@@ -449,78 +417,6 @@ public class SystemPatchApplierTest {
         verify(widgetTypeService, times(1)).saveWidgetType(any());
     }
 
-    // --- isVersionIncreased tests ---
-
-    @ParameterizedTest(name = "isVersionIncreased: {0} (package={1}, db={2}) -> {3}")
-    @MethodSource("provideVersionComparisonTestCases")
-    void testIsVersionIncreased(String testName, SystemPatchApplier.VersionInfo packageVersion,
-                                SystemPatchApplier.VersionInfo dbVersion, boolean expected) {
-        Boolean result = ReflectionTestUtils.invokeMethod(reconciler, "isVersionIncreased", packageVersion, dbVersion);
-        assertEquals(expected, result, testName);
-    }
-
-    private static Stream<Arguments> provideVersionComparisonTestCases() {
-        return Stream.of(
-                // Maintenance digit increases within same LTS family
-                Arguments.of("maintenance increased",
-                        new SystemPatchApplier.VersionInfo(4, 3, 1, 0),
-                        new SystemPatchApplier.VersionInfo(4, 3, 0, 0), true),
-                Arguments.of("maintenance increased by more than one",
-                        new SystemPatchApplier.VersionInfo(4, 3, 3, 0),
-                        new SystemPatchApplier.VersionInfo(4, 3, 0, 0), true),
-
-                // Patch digit increases within same maintenance
-                Arguments.of("patch increased",
-                        new SystemPatchApplier.VersionInfo(4, 3, 0, 1),
-                        new SystemPatchApplier.VersionInfo(4, 3, 0, 0), true),
-                Arguments.of("patch increased by more than one",
-                        new SystemPatchApplier.VersionInfo(4, 3, 0, 5),
-                        new SystemPatchApplier.VersionInfo(4, 3, 0, 2), true),
-
-                // Both maintenance and patch increased
-                Arguments.of("maintenance and patch both increased",
-                        new SystemPatchApplier.VersionInfo(4, 3, 1, 1),
-                        new SystemPatchApplier.VersionInfo(4, 3, 0, 0), true),
-
-                // Maintenance increased, patch value is lower (irrelevant — maintenance wins)
-                Arguments.of("maintenance increased, patch is lower",
-                        new SystemPatchApplier.VersionInfo(4, 3, 2, 0),
-                        new SystemPatchApplier.VersionInfo(4, 3, 1, 5), true),
-
-                // Same version — no increase
-                Arguments.of("same version",
-                        new SystemPatchApplier.VersionInfo(4, 3, 0, 0),
-                        new SystemPatchApplier.VersionInfo(4, 3, 0, 0), false),
-                Arguments.of("same version with non-zero parts",
-                        new SystemPatchApplier.VersionInfo(4, 3, 1, 2),
-                        new SystemPatchApplier.VersionInfo(4, 3, 1, 2), false),
-
-                // Decreased versions — no increase
-                Arguments.of("maintenance decreased",
-                        new SystemPatchApplier.VersionInfo(4, 3, 0, 0),
-                        new SystemPatchApplier.VersionInfo(4, 3, 1, 0), false),
-                Arguments.of("patch decreased",
-                        new SystemPatchApplier.VersionInfo(4, 3, 0, 0),
-                        new SystemPatchApplier.VersionInfo(4, 3, 0, 1), false),
-
-                // Different major — different family, skip
-                Arguments.of("different major",
-                        new SystemPatchApplier.VersionInfo(5, 3, 0, 0),
-                        new SystemPatchApplier.VersionInfo(4, 3, 0, 0), false),
-                Arguments.of("major decreased",
-                        new SystemPatchApplier.VersionInfo(3, 3, 0, 0),
-                        new SystemPatchApplier.VersionInfo(4, 3, 0, 0), false),
-
-                // Different minor — different LTS family, skip
-                Arguments.of("minor increased (different LTS family)",
-                        new SystemPatchApplier.VersionInfo(4, 4, 0, 0),
-                        new SystemPatchApplier.VersionInfo(4, 3, 0, 0), false),
-                Arguments.of("minor decreased",
-                        new SystemPatchApplier.VersionInfo(4, 2, 0, 0),
-                        new SystemPatchApplier.VersionInfo(4, 3, 0, 0), false)
-        );
-    }
-
     // --- isVersionChanged tests ---
 
     @Test
@@ -563,76 +459,22 @@ public class SystemPatchApplierTest {
         assertFalse(result);
     }
 
-    // --- updateLtsSqlSchema tests ---
-
-    @Test
-    void whenLtsSqlFileExists_thenExecutesSql() throws Exception {
-        Path dataDir = tempDir.resolve("data");
-        Path ltsDir = dataDir.resolve("upgrade").resolve("lts");
-        Files.createDirectories(ltsDir);
-        Files.writeString(ltsDir.resolve("schema_update.sql"), "ALTER TABLE device ADD COLUMN IF NOT EXISTS test_col VARCHAR(255);");
-        when(installScripts.getDataDir()).thenReturn(dataDir.toString());
-
-        ReflectionTestUtils.invokeMethod(reconciler, "updateLtsSqlSchema");
-
-        verify(jdbcTemplate).execute("ALTER TABLE device ADD COLUMN IF NOT EXISTS test_col VARCHAR(255);");
-    }
-
-    @Test
-    void whenLtsSqlFileDoesNotExist_thenSkips() {
-        Path dataDir = tempDir.resolve("data");
-        // Don't create the file
-        when(installScripts.getDataDir()).thenReturn(dataDir.toString());
-
-        ReflectionTestUtils.invokeMethod(reconciler, "updateLtsSqlSchema");
-
-        verify(jdbcTemplate, never()).execute(anyString());
-    }
-
-    @Test
-    void whenLtsSqlFileHasMultipleStatements_thenExecutesAll() throws Exception {
-        Path dataDir = tempDir.resolve("data");
-        Path ltsDir = dataDir.resolve("upgrade").resolve("lts");
-        Files.createDirectories(ltsDir);
-        String sql = "DO $$ BEGIN\n" +
-                "  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'test_type') THEN\n" +
-                "    CREATE TYPE test_type AS ENUM ('A', 'B');\n" +
-                "  END IF;\n" +
-                "END $$;\n" +
-                "ALTER TABLE device ADD COLUMN IF NOT EXISTS test_col VARCHAR(255);";
-        Files.writeString(ltsDir.resolve("schema_update.sql"), sql);
-        when(installScripts.getDataDir()).thenReturn(dataDir.toString());
-
-        ReflectionTestUtils.invokeMethod(reconciler, "updateLtsSqlSchema");
-
-        verify(jdbcTemplate).execute(sql);
-    }
-
     // --- applyPatchIfNeeded flow tests ---
 
     @Test
-    void whenVersionIncreased_thenAppliesLtsSqlBeforeViewsAndWidgets() throws Exception {
+    void whenVersionIncreased_thenAppliesMigrationsBeforeViewsAndWidgets() {
         when(schemaSettingsService.getPackageSchemaVersion()).thenReturn("4.3.1.0");
         when(schemaSettingsService.getDbSchemaVersion()).thenReturn("4.3.0.0");
         when(jdbcTemplate.queryForObject(contains("pg_try_advisory_lock"), eq(Boolean.class), anyLong())).thenReturn(true);
         when(jdbcTemplate.queryForObject(contains("pg_advisory_unlock"), eq(Boolean.class), anyLong())).thenReturn(true);
 
-        Path dataDir = tempDir.resolve("data");
-        Path ltsDir = dataDir.resolve("upgrade").resolve("lts");
-        Files.createDirectories(ltsDir);
-        Files.writeString(ltsDir.resolve("schema_update.sql"), "SELECT 1;");
-        when(installScripts.getDataDir()).thenReturn(dataDir.toString());
-
-        Path widgetTypesDir = tempDir.resolve("widget_types");
-        Files.createDirectories(widgetTypesDir);
-        when(installScripts.getWidgetTypesDir()).thenReturn(widgetTypesDir);
+        when(installScripts.getWidgetTypesDir()).thenReturn(tempDir.resolve("widget_types"));
         when(installScripts.getWidgetBundlesDir()).thenReturn(tempDir.resolve("widget_bundles_missing"));
+        when(installScripts.getDataDir()).thenReturn(tempDir.resolve("data").toString());
 
         ReflectionTestUtils.invokeMethod(reconciler, "applyPatchIfNeeded");
 
-        // LTS SQL was executed
-        verify(jdbcTemplate).execute("SELECT 1;");
-        // Schema version was updated
+        verify(ltsMigrationService).applyMigrations("4.3.0.0", "4.3.1.0");
         verify(schemaSettingsService).updateSchemaVersion();
     }
 
@@ -668,17 +510,16 @@ public class SystemPatchApplierTest {
         when(jdbcTemplate.queryForObject(contains("pg_try_advisory_lock"), eq(Boolean.class), anyLong())).thenReturn(true);
         when(jdbcTemplate.queryForObject(contains("pg_advisory_unlock"), eq(Boolean.class), anyLong())).thenReturn(true);
 
-        Path dataDir = tempDir.resolve("data");
-        when(installScripts.getDataDir()).thenReturn(dataDir.toString());
-
         Path widgetTypesDir = tempDir.resolve("widget_types");
         Files.createDirectories(widgetTypesDir);
         when(installScripts.getWidgetTypesDir()).thenReturn(widgetTypesDir);
         when(installScripts.getWidgetBundlesDir()).thenReturn(tempDir.resolve("widget_bundles_missing"));
+        when(installScripts.getDataDir()).thenReturn(tempDir.resolve("data").toString());
 
         ReflectionTestUtils.invokeMethod(reconciler, "applyPatchIfNeeded");
 
         verify(schemaSettingsService).updateSchemaVersion();
+        verify(ltsMigrationService).applyMigrations("4.3.1.0", "4.3.2.0");
     }
 
     @Test

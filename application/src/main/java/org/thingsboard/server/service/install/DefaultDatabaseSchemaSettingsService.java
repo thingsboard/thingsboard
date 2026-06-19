@@ -75,7 +75,12 @@ public class DefaultDatabaseSchemaSettingsService implements DatabaseSchemaSetti
 
     @Override
     public void updateSchemaVersion() {
-        jdbcTemplate.execute("UPDATE tb_schema_settings SET schema_version = " + getPackageSchemaVersionForDb());
+        updateSchemaVersion(getPackageSchemaVersion());
+    }
+
+    @Override
+    public void updateSchemaVersion(String version) {
+        jdbcTemplate.execute("UPDATE tb_schema_settings SET schema_version = " + toDbVersion(version));
     }
 
     @Override
@@ -124,13 +129,15 @@ public class DefaultDatabaseSchemaSettingsService implements DatabaseSchemaSetti
     }
 
     private long getPackageSchemaVersionForDb() {
-        String[] versionParts = getPackageSchemaVersion().split("\\.");
+        return toDbVersion(getPackageSchemaVersion());
+    }
 
-        long major = Integer.parseInt(versionParts[0]);
-        long minor = Integer.parseInt(versionParts[1]);
-        long maintenance = Integer.parseInt(versionParts[2]);
-        long patch = Integer.parseInt(versionParts[3]);
-
+    private long toDbVersion(String version) {
+        String[] versionParts = version.split("\\.");
+        long major = Long.parseLong(versionParts[0]);
+        long minor = versionParts.length > 1 ? Long.parseLong(versionParts[1]) : 0;
+        long maintenance = versionParts.length > 2 ? Long.parseLong(versionParts[2]) : 0;
+        long patch = versionParts.length > 3 ? Long.parseLong(versionParts[3]) : 0;
         return major * 1_000_000_000L + minor * 1_000_000L + maintenance * 1000L + patch;
     }
 
