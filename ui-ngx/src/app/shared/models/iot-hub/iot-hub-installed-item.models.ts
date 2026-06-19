@@ -139,10 +139,12 @@ export const getInstalledItemUrl = (descriptor?: IotHubInstalledItemDescriptor):
   let entityType: EntityType | null = null;
   let query: string | null = null;
   switch (descriptor.type) {
-    case 'DEVICE':
-      entityId = descriptor.dashboardId?.id;
-      entityType = EntityType.DASHBOARD;
+    case 'DEVICE': {
+      const deviceEntity = descriptor.createdEntityIds?.find(e => e.entityType === EntityType.DEVICE);
+      entityId = deviceEntity?.id;
+      entityType = EntityType.DEVICE;
       break;
+    }
     case 'WIDGET':
       entityId = descriptor.widgetTypeId?.id;
       entityType = EntityType.WIDGET_TYPE;

@@ -344,8 +344,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       return { url: dashboard.url, label: 'Open Dashboard' };
     }
     const device = this.entityOutputs.get('device');
-    if (device?.url) {
-      return { url: device.url, label: 'Open Device' };
+    if (device?.id) {
+      return { url: `/entities/devices/${device.id}`, label: 'Open Device' };
     }
     const gateway = this.entityOutputs.get('gateway');
     if (gateway?.url) {
