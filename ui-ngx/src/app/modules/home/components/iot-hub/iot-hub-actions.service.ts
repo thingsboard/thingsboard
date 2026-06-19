@@ -17,7 +17,7 @@
 import { Injectable } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable, of, EMPTY } from 'rxjs';
-import { filter, mergeMap } from 'rxjs/operators';
+import { filter, map, mergeMap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from '@core/services/dialog.service';
 import { MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
@@ -94,11 +94,11 @@ export class IotHubActionsService {
     }).afterClosed();
   }
 
-  updateItem(installedItem: IotHubInstalledItem, version: string, versionId: string): Observable<string> {
+  updateItem(installedItem: IotHubInstalledItem, version: string, versionId: string): Observable<string | boolean> {
     if (!installedItem) {
-      return EMPTY;
+      return of(false);
     }
-    return this.dialog.open(TbIotHubUpdateDialogComponent, {
+    return this.dialog.open<TbIotHubUpdateDialogComponent, IotHubUpdateDialogData, string | boolean>(TbIotHubUpdateDialogComponent, {
       panelClass: ['tb-dialog'],
       disableClose: true,
       autoFocus: false,
@@ -108,7 +108,7 @@ export class IotHubActionsService {
         itemType: installedItem.itemType as ItemType,
         version,
         versionId
-      } as IotHubUpdateDialogData
+      }
     }).afterClosed();
   }
 
@@ -116,15 +116,16 @@ export class IotHubActionsService {
     if (!installedItem) {
       return of(false);
     }
-    return this.dialog.open(TbIotHubDeleteDialogComponent, {
+    return this.dialog.open<TbIotHubDeleteDialogComponent, IotHubDeleteDialogData, boolean>(TbIotHubDeleteDialogComponent, {
       panelClass: ['tb-dialog'],
       disableClose: true,
       autoFocus: false,
-      data: { itemName: installedItem.itemName, itemType: installedItem.itemType } as IotHubDeleteDialogData
+      data: { itemName: installedItem.itemName, itemType: installedItem.itemType }
     }).afterClosed().pipe(
-      filter(confirmed => !!confirmed),
-      mergeMap(() => this.iotHubApiService.deleteInstalledItem(installedItem.id.id)),
-      mergeMap(() => of(true))
+      mergeMap((confirmed) =>
+        confirmed
+          ? this.iotHubApiService.deleteInstalledItem(installedItem.id.id).pipe(map(() => true))
+          : of(false) )
     );
   }
 

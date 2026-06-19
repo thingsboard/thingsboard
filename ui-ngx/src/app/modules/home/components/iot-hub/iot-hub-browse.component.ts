@@ -580,8 +580,7 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
 
   updateItem(item: MpItemVersionView): void {
     const installedItem = this.getInstalledItem(item);
-    if (!installedItem) { return; }
-    this.iotHubActions.updateItem(installedItem, item.version, item.id as string).subscribe(result => {
+    this.iotHubActions.updateItem(installedItem, item.version, item.id).subscribe(result => {
       if (result === 'updated') {
         this.reloadInstalledItems();
       }
@@ -590,9 +589,10 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
 
   deleteInstalledItem(item: MpItemVersionView): void {
     const installedItem = this.getInstalledItem(item);
-    if (!installedItem) { return; }
-    this.iotHubActions.deleteItem(installedItem).subscribe(() => {
-      this.reloadInstalledItems();
+    this.iotHubActions.deleteItem(installedItem).subscribe((deleted) => {
+      if (deleted) {
+        this.reloadInstalledItems();
+      }
     });
   }
 

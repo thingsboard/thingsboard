@@ -28,9 +28,9 @@
     @if (!updatesChecked) {
       <button mat-flat-button color="primary" (click)="checkForUpdates()" [disabled]="isCheckingUpdates">
         @if (isCheckingUpdates) {
-          <mat-spinner diameter="18"></mat-spinner>
+          <mat-spinner matButtonIcon class="mr-2" diameter="18"></mat-spinner>
         } @else {
-          <mat-icon>update</mat-icon>
+          <mat-icon matButtonIcon>update</mat-icon>
         }
         {{ 'iot-hub.check-for-updates' | translate }}
       </button>
