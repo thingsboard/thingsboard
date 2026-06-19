@@ -31,14 +31,14 @@ import {
   OpenFreeMapStyleType,
   OpenStreetMapLayerSettings,
   ReferenceLayerType,
-  TencentMapLayerSettings
+  TencentMapLayerSettings, WEBGL_ERROR_EVENT
 } from '@shared/models/widget/maps/map.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { DeepPartial } from '@shared/models/common';
 import { mergeDeep } from '@core/utils';
 import { Observable, of, shareReplay, switchMap } from 'rxjs';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
-import L from 'leaflet';
+import L, { LeafletEvent } from 'leaflet';
 import { catchError, map } from 'rxjs/operators';
 import { ResourcesService } from '@core/services/resources.service';
 import { StyleSpecification } from '@maplibre/maplibre-gl-style-spec';
@@ -125,6 +125,13 @@ export abstract class TbMapLayer<S extends MapLayerSettings> {
                     let referenceLayerLoaded = false;
                     baseLayer.addTo(layer);
                     referenceLayer.addTo(layer);
+                    // Forwarding is needed only here: when a reference layer is present the base layer is
+                    // wrapped in this featureGroup, and geo-map listens for WEBGL_ERROR_EVENT on the
+                    // returned layer (the group). In the other branches the MapLibreGLLayer is returned
+                    // directly and fires WEBGL_ERROR_EVENT itself, so no forwarding is required.
+                    baseLayer.once(WEBGL_ERROR_EVENT, (e: LeafletEvent) => {
+                      layer.fire(WEBGL_ERROR_EVENT, e);
+                    });
                     baseLayer.once('load', () => {
                       baseLayerLoaded = true;
                       if (referenceLayerLoaded) {

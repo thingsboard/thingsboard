@@ -25,11 +25,11 @@ import {
   CalculatedFieldType,
   OutputStrategyType
 } from '@shared/models/calculated-field.models';
-import { oneSpaceInsideRegex } from '@shared/models/regex.constants';
 import { isDefined } from '@core/utils';
 import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { CalculatedFieldsTableEntity } from '@home/components/calculated-fields/calculated-fields-table-config';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { getTimezoneInfo } from '@shared/models/time/time.models';
 
 @Injectable({ providedIn: 'root' })
 export class CalculatedFieldFormService {
@@ -85,6 +85,9 @@ export class CalculatedFieldFormService {
     if (config.type !== CalculatedFieldType.ALARM) {
       if (isDefined(config?.output) && !config?.output?.strategy) {
         config.output.strategy = { type: OutputStrategyType.RULE_CHAIN };
+      }
+      if (config.type === CalculatedFieldType.ENTITY_AGGREGATION && config.interval) {
+        config.interval.tz = getTimezoneInfo(config.interval.tz, undefined, true)?.id;
       }
     }
     return config;
