@@ -226,8 +226,16 @@ export function objToBase64(obj: any): string {
     }));
 }
 
-const textDecoderUtf8 = new TextDecoder('utf-8', { fatal: true });
-const textDecoderLatin1 = new TextDecoder('iso-8859-1');
+const textDecoderUtf8 = new TextDecoder('UTF-8', { fatal: true });
+const textDecoderLatin1 = new TextDecoder('ISO-8859-1');
+
+export function bytesToString(bytes: Uint8Array): string {
+  try {
+    return textDecoderUtf8.decode(bytes);
+  } catch {
+    return textDecoderLatin1.decode(bytes);
+  }
+}
 
 export function base64toString(b64Encoded: string): string {
   const binary = atob(b64Encoded);
@@ -235,11 +243,7 @@ export function base64toString(b64Encoded: string): string {
   for (let i = 0; i < binary.length; i++) {
     bytes[i] = binary.charCodeAt(i);
   }
-  try {
-    return textDecoderUtf8.decode(bytes);
-  } catch {
-    return textDecoderLatin1.decode(bytes);
-  }
+  return bytesToString(bytes);
 }
 
 export function objToBase64URI(obj: any): string {
