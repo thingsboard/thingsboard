@@ -156,9 +156,12 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
   }
 
   deleteItem(item: IotHubInstalledItem): void {
-    this.iotHubActions.deleteItem(item).subscribe(confirmed => {
-      if (confirmed) {
+    this.isLoading = true;
+    this.iotHubActions.deleteItem(item).subscribe(deleted => {
+      if (deleted) {
         this.loadData();
+      } else {
+        this.isLoading = false;
       }
     });
   }
@@ -244,9 +247,12 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
   }
 
   updateItem(item: IotHubInstalledItem, publishedInfo: ItemPublishedVersionInfo): void {
+    this.isLoading = true;
     this.iotHubActions.updateItem(item, publishedInfo.publishedVersion, publishedInfo.publishedVersionId).subscribe(result => {
       if (result === 'updated') {
         this.loadData();
+      } else {
+        this.isLoading = false;
       }
     });
   }
