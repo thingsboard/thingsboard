@@ -1,0 +1,263 @@
+/**
+ * Copyright © 2016-2026 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+@import "../../../../../scss/constants";
+
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+// Table + paginator container — border
+.tb-installed-table-container {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.tb-installed-table-wrapper {
+  table {
+    width: 100%;
+  }
+
+  // Header cells — Design: 16px Medium, rgba(0,0,0,0.87), tracking 0.25
+  th.mat-mdc-header-cell {
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+    letter-spacing: 0.25px;
+    color: rgba(0, 0, 0, 0.87);
+  }
+
+  // Body cells — Design: 14px Regular, rgba(0,0,0,0.76), tracking 0.2
+  td.mat-mdc-cell {
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: 0.2px;
+    color: rgba(0, 0, 0, 0.76);
+  }
+}
+
+
+// Column sizing
+.mat-column-itemName {
+  width: 50%;
+  min-width: 200px;
+  max-width: 50%;
+}
+
+.mat-column-itemType {
+  width: 50%;
+  min-width: 50%;
+  max-width: 50%;
+}
+
+.mat-column-version {
+  width: 80px;
+  min-width: 80px;
+  max-width: 80px;
+}
+
+.mat-column-createdTime {
+  width: 160px;
+  min-width: 160px;
+  max-width: 160px;
+}
+
+.mat-column-updates {
+  width: 250px;
+  min-width: 250px;
+  max-width: 250px;
+}
+
+.mat-column-actions {
+  width: 108px;
+  min-width: 108px;
+  max-width: 108px;
+}
+
+::ng-deep .mat-mdc-paginator-range-label {
+  white-space: nowrap;
+}
+
+// Nowrap columns
+.mat-column-itemType,
+.mat-column-createdTime,
+.mat-column-updates {
+  white-space: nowrap;
+}
+
+// Type chip — Design: pill, h-32, rounded-16, px-12 py-6, gap-4, bg at 6% opacity
+.tb-installed-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 32px;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  letter-spacing: 0.2px;
+}
+
+.tb-installed-type-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: inherit !important;
+  --mat-icon-color: currentColor;
+}
+
+// Colors mirror itemTypeChipColors from the iot-hub mp-item.models.
+.tb-type-device { color: #3d4ca6; background: rgba(61, 76, 166, 0.06); }
+.tb-type-solution-template { color: #2c6cb4; background: rgba(44, 108, 180, 0.06); }
+.tb-type-widget { color: #20733d; background: rgba(46, 166, 88, 0.06); }
+.tb-type-calc-field { color: #3db5e0; background: rgba(61, 181, 224, 0.06); }
+.tb-type-alarm-rule { color: #d7702f; background: rgba(215, 112, 47, 0.06); }
+.tb-type-rule-chain { color: #aa5be3; background: rgba(170, 91, 227, 0.06); }
+.tb-type-dashboard { color: #607d8b; background: rgba(96, 125, 139, 0.06); }
+
+// "vX.X.X Available" button — Design: border rgba(0,0,0,0.12), rounded-4, px-12 py-6, gap-8
+.tb-installed-version-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  letter-spacing: 0.25px;
+  color: rgba(0, 0, 0, 0.76);
+  background: none;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-family: inherit;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: inherit !important;
+    --mat-icon-color: currentColor;
+  }
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.04);
+  }
+}
+
+// "Update" button — Design: same height as available btn, border matches text color
+.tb-installed-update-btn.mat-mdc-outlined-button {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  letter-spacing: 0.25px;
+  padding: 6px 12px;
+  height: auto;
+  --mat-button-outlined-outline-color: var(--mat-button-outlined-label-text-color);
+}
+
+// "Up to date" — Design: 14px Medium, #198038, gap-8, py-6
+.tb-installed-up-to-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  letter-spacing: 0.25px;
+  color: #198038;
+  padding: 6px 0;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: inherit !important;
+    --mat-icon-color: currentColor;
+  }
+}
+
+// Actions column — icon-button tweaks
+.tb-installed-actions {
+  .mat-mdc-icon-button {
+    width: 36px;
+    height: 36px;
+    padding: 6px;
+    --mdc-icon-button-state-layer-size: 36px;
+    --mdc-icon-button-icon-color: rgba(0, 0, 0, 0.54);
+    color: rgba(0, 0, 0, 0.54);
+  }
+}
+
+// Empty state — mirrors the browse component's tb-iot-hub-empty-state
+.tb-iot-hub-empty-state {
+  .tb-no-data-bg {
+    flex: auto;
+    height: 100px;
+  }
+
+  h3 {
+    font-size: 18px;
+    font-weight: 500;
+    color: rgba(0, 0, 0, 0.87);
+    margin: 16px 0 8px;
+  }
+
+  p {
+    font-size: 14px;
+    color: rgba(0, 0, 0, 0.54);
+    margin: 0 0 24px;
+  }
+}
+
+:host(:not(.tb-installed-with-version)) {
+  @media #{$mat-lt-lg} {
+    .mat-column-actions {
+      width: 36px;
+      min-width: 36px;
+      max-width: 36px;
+    }
+  }
+}
+
+:host(.tb-installed-with-version) {
+  .mat-column-version {
+    width: 160px;
+    min-width: 0;
+    max-width: 160px;
+  }
+
+  .mat-column-createdTime {
+    width: 200px;
+    min-width: 0;
+    max-width: 200px;
+  }
+
+  .mat-column-updates {
+    min-width: 0;
+  }
+
+  @media #{$mat-lt-md} {
+    .mat-column-actions {
+      width: 36px;
+      min-width: 36px;
+      max-width: 36px;
+    }
+  }
+}

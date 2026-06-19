@@ -43,6 +43,7 @@ export interface SysParamsState {
   trendzSettings: TrendzSettings;
   nullsOrderStrategy: NullsOrderStrategy;
   edqsEnabled: boolean;
+  iotHubBaseUrl: string;
 }
 
 export interface SysParams extends SysParamsState {

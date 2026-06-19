@@ -1,7 +1,7 @@
 {
   "fqn": "indoor_simple_humidity_chart_card_with_background",
   "name": "Indoor simple humidity chart card with background",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/indoor_simple_humidity_chart_card_with_background_system_widget_image.png",
   "description": "Displays historical indoor humidity values as a simplified chart with background. Optionally may display the corresponding latest indoor humidity value.",
   "descriptor": {

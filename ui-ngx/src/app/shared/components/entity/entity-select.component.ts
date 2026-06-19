@@ -102,8 +102,7 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit {
     const entityTypes = this.entityService.prepareAllowedEntityTypesList(this.allowedEntityTypes,
                                                                          this.useAliasEntityTypes);
 
-    let defaultEntityType: EntityType | AliasEntityType = null
-
+    let defaultEntityType: EntityType | AliasEntityType = null;
     if (entityTypes.length === 1) {
       this.displayEntityTypeSelect = false;
       defaultEntityType = entityTypes[0];
@@ -148,7 +147,7 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit {
     if (this.filterAllowedEntityTypes === false) {
       if (this.allowedEntityTypes?.length === 1) {
         this.displayEntityTypeSelect = false;
-        this.entitySelectFormGroup.get('entityType').setValue(this.allowedEntityTypes[0])
+        this.entitySelectFormGroup.get('entityType').setValue(this.allowedEntityTypes[0]);
       } else {
         this.displayEntityTypeSelect = true;
       }

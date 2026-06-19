@@ -29,7 +29,7 @@
     <div *ngIf="displayData" [class.!hidden]="selectedOption !== 'data'" class="mat-content">
       <ng-container *ngTemplateOutlet="data"></ng-container>
     </div>
-    <div [class.!hidden]="selectedOption !== 'appearance'" class="mat-content">
+    <div [class.!hidden]="selectedOption !== 'appearance'" class="mat-content tb-widget-config-fill">
       <ng-container *ngTemplateOutlet="appearance"></ng-container>
     </div>
     <div [class.!hidden]="selectedOption !== 'card'" [formGroup]="widgetSettings" class="mat-content">
@@ -227,7 +227,7 @@
   </div>
   <ng-template #basicMode>
     <div class="tb-widget-config-content">
-      <div class="mat-content" *ngIf="hasBasicModeDirective; else basicModeContent">
+      <div class="mat-content tb-widget-config-fill" *ngIf="hasBasicModeDirective; else basicModeContent">
         <ng-container #basicModeContainer></ng-container>
         <div class="tb-basic-mode-directive-error" *ngIf="basicModeDirectiveError">{{basicModeDirectiveError}}</div>
       </div>
