@@ -33,7 +33,9 @@ import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.component.RuleNodeClassInfo;
+import org.thingsboard.server.service.install.DatabaseSchemaSettingsService;
 import org.thingsboard.server.service.install.DbUpgradeExecutorService;
+import org.thingsboard.server.service.install.lts.LtsMigrationService;
 import org.thingsboard.server.utils.TbNodeUpgradeUtils;
 
 import java.util.ArrayList;
@@ -52,12 +54,13 @@ public class DefaultDataUpdateService implements DataUpdateService {
     private final RuleChainService ruleChainService;
     private final ComponentDiscoveryService componentDiscoveryService;
     private final DbUpgradeExecutorService executorService;
+    private final DatabaseSchemaSettingsService schemaSettingsService;
+    private final LtsMigrationService ltsMigrationService;
 
     @Override
     public void updateData() throws Exception {
         log.info("Updating data ...");
-        //TODO: should be cleaned after each release
-
+        ltsMigrationService.runDataMigrations(schemaSettingsService.getDbSchemaVersion(), schemaSettingsService.getPackageSchemaVersion());
         log.info("Data updated.");
     }
 
