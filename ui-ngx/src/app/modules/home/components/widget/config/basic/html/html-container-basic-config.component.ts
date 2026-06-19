@@ -51,12 +51,14 @@ export class HtmlContainerBasicConfigComponent extends BasicWidgetConfigComponen
   protected onConfigSet(configData: WidgetConfigComponentData) {
     const settings: HtmlContainerWidgetSettings = {...htmlContainerDefaultSettings, ...(configData.config.settings || {})};
     this.htmlContainerWidgetConfigForm = this.fb.group({
-      settings: [settings, []]
+      settings: [settings, []],
+      actions: [configData.config.actions || {}, []]
     });
   }
 
   protected prepareOutputConfig(config: any): WidgetConfigComponentData {
     this.widgetConfig.config.settings = {...(this.widgetConfig.config.settings || {}), ...config.settings};
+    this.widgetConfig.config.actions = config.actions;
     return this.widgetConfig;
   }
 }

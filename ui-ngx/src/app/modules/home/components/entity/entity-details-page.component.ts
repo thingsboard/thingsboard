@@ -98,7 +98,24 @@ export class EntityDetailsPageComponent extends EntityDetailsPanelComponent impl
         const id = paramMap.get('entityId');
         this.currentEntityId = { id, entityType };
         this.reload();
-        this.selectedTab = 0;
+        const queryParams = this.route.snapshot.queryParams;
+        let selectedTabIndex = 0;
+        if (queryParams['selectedTab']) {
+          this.router.navigate([], {
+            queryParams: {
+              selectedTab: null
+            },
+            queryParamsHandling: 'merge',
+            replaceUrl: true
+          });
+          if (this.entityTabsComponent) {
+            const selectedTab: string = queryParams['selectedTab'];
+            if (selectedTab) {
+              selectedTabIndex = this.entityTabsComponent.resolveTabIndex(selectedTab);
+            }
+          }
+        }
+        this.selectedTab = selectedTabIndex;
       }
     }));
   }

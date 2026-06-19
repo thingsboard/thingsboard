@@ -1,7 +1,7 @@
 {
   "fqn": "simple_pm10_chart_card",
   "name": "Simple PM10 chart card",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/simple_pm10_chart_card_system_widget_image.png",
   "description": "Displays historical fine and coarse particulate matter (PM10) values as a simplified chart. Optionally may display the corresponding latest PM10 value.",
   "descriptor": {

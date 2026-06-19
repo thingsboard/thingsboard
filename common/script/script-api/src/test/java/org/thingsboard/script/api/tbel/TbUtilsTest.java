@@ -1250,6 +1250,14 @@ public class TbUtilsTest {
     }
 
     @Test
+    public void toLong() {
+        Assertions.assertEquals(1729L, TbUtils.toLong(doubleVal));
+        Assertions.assertEquals(13L, TbUtils.toLong(12.8));
+        Assertions.assertEquals(28L, TbUtils.toLong(28.0));
+        Assertions.assertEquals(3_980_173_734L, TbUtils.toLong(3_980_173_734.0));
+    }
+
+    @Test
     public void isNaN() {
         assertFalse(TbUtils.isNaN(doubleVal));
         assertTrue(TbUtils.isNaN(Double.NaN));
