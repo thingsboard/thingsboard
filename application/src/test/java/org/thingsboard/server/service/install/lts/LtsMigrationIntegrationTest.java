@@ -45,6 +45,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -175,6 +176,20 @@ public class LtsMigrationIntegrationTest extends AbstractControllerTest {
     }
 
     @Test
+    public void appliesSchemaForV4312AddsCalculatedFieldAdditionalInfo() {
+        // The test-context schema already ships calculated_field.additional_info, so drop it first to prove the
+        // 4.3.1.2 schema_update.sql (ALTER TABLE calculated_field ADD COLUMN IF NOT EXISTS additional_info) re-adds it.
+        jdbcTemplate.execute("ALTER TABLE calculated_field DROP COLUMN IF EXISTS additional_info");
+        assertFalse(columnExists("calculated_field", "additional_info"));
+
+        // Drive the runner over a range whose target (4.3.1.2) selects only the 4.3.1.2 migration.
+        ltsMigrationService.applyMigrations("4.3.1.1", "4.3.1.2");
+
+        // The 4.3.1.2 schema SQL ran: the column exists again.
+        assertTrue(columnExists("calculated_field", "additional_info"));
+    }
+
+    @Test
     public void migrationDirectoriesAndBeansStayInSyncBothWays() {
         Path ltsDir = Paths.get(installScripts.getDataDir(), "upgrade", "lts");
         Set<String> dirVersions = listDirVersions(ltsDir);
@@ -214,6 +229,13 @@ public class LtsMigrationIntegrationTest extends AbstractControllerTest {
     private boolean tableExists(String table) {
         Boolean exists = jdbcTemplate.queryForObject(
                 "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = ?)", Boolean.class, table);
+        return Boolean.TRUE.equals(exists);
+    }
+
+    private boolean columnExists(String table, String column) {
+        Boolean exists = jdbcTemplate.queryForObject(
+                "SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = ? AND column_name = ?)",
+                Boolean.class, table, column);
         return Boolean.TRUE.equals(exists);
     }
 }
