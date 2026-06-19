@@ -31,6 +31,7 @@ import org.thingsboard.server.service.component.RuleNodeClassInfo;
 import org.thingsboard.server.service.install.DatabaseSchemaSettingsService;
 import org.thingsboard.server.service.install.DbUpgradeExecutorService;
 import org.thingsboard.server.service.install.lts.LtsMigrationService;
+import org.thingsboard.server.service.install.lts.V4_3_1_3Migration;
 import org.thingsboard.server.utils.TbNodeUpgradeUtils;
 
 import java.util.ArrayList;
@@ -51,11 +52,18 @@ public class DefaultDataUpdateService implements DataUpdateService {
     private final DbUpgradeExecutorService executorService;
     private final DatabaseSchemaSettingsService schemaSettingsService;
     private final LtsMigrationService ltsMigrationService;
+    private final V4_3_1_3Migration v4313Migration;
 
     @Override
     public void updateData() throws Exception {
         log.info("Updating data ...");
         ltsMigrationService.runDataMigrations(schemaSettingsService.getDbSchemaVersion(), schemaSettingsService.getPackageSchemaVersion());
+        // 4.4-release data step: the 4.3.1.3 data migration (obsolete widget-bundle cleanup) is dormant on 4.4 because
+        // LtsMigrationService.select() filters out non-target-family migrations and there are no 4.4-family beans, so the
+        // 4.3-family V4_3_1_3Migration is never selected. The 4.4 SUPPORTED_VERSIONS_FOR_UPGRADE allows upgrading from
+        // sources below 4.3.1.3, so we run it explicitly for every supported 4.3.x -> 4.4 upgrade. It is idempotent
+        // (bundle deletion checks existence first), so re-running it for a source already at 4.3.1.3 is a safe no-op.
+        v4313Migration.apply();
         log.info("Data updated.");
     }
 
