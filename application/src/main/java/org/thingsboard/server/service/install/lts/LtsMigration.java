@@ -13,20 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.install;
+package org.thingsboard.server.service.install.lts;
 
-public interface DatabaseSchemaSettingsService {
+/**
+ * One LTS migration, keyed by the version it ships in (e.g. "4.2.2.3").
+ * The runner runs the version's data/upgrade/lts/&lt;version&gt;/schema_update.sql by convention
+ * (if present), then calls {@link #apply()} for any programmatic work beyond SQL.
+ * Most migrations are SQL-only and only override {@link #getVersion()}.
+ */
+public interface LtsMigration {
 
-    void validateSchemaSettings();
+    String getVersion();
 
-    void createSchemaSettings();
-
-    void updateSchemaVersion();
-
-    void updateSchemaVersion(String version);
-
-    String getPackageSchemaVersion();
-
-    String getDbSchemaVersion();
-
+    default void apply() {
+    }
 }
