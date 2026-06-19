@@ -17,7 +17,7 @@
 -->
 <mat-form-field [formGroup]="otaPackageFormGroup" class="mat-block" [appearance]="appearance">
   <mat-label>{{ placeholderText | translate }}</mat-label>
-  <input matInput type="text"
+  <input matInput [errorStateMatcher]="this" type="text"
          #packageInput
          #autocompleteTrigger="matAutocompleteTrigger"
          formControlName="packageId"
@@ -41,6 +41,8 @@
     </button>
   }
   <mat-autocomplete class="tb-autocomplete"
+                    (opened)="onPanelOpened()"
+                    (closed)="onPanelClosed()"
                     #packageAutocomplete="matAutocomplete"
                     [displayWith]="displayPackageFn">
     @for (package of filteredPackages | async; track package) {

@@ -15,10 +15,13 @@
 ///
 
 import { Directive, ElementRef } from '@angular/core';
-import { FormControl } from '@angular/forms';
+import { FormControl, FormGroupDirective, NgForm } from '@angular/forms';
+import { ErrorStateMatcher } from '@angular/material/core';
 
 @Directive()
-export abstract class AutocompleteBaseDirective {
+export abstract class AutocompleteBaseDirective implements ErrorStateMatcher {
+
+  protected  isPanelOpen = false;
 
   protected dirty = false;
 
@@ -64,6 +67,23 @@ export abstract class AutocompleteBaseDirective {
   }
 
   onBlur(): void {
+    this.onTouched();
+  }
+
+
+  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+    if (this.isPanelOpen) {
+      return false;
+    }
+    return !!(control?.invalid && (control.touched || form?.submitted));
+  }
+
+  onPanelOpened() {
+    this.isPanelOpen = true;
+  }
+
+  onPanelClosed() {
+    this.isPanelOpen = false;
     this.onTouched();
   }
 }

@@ -24,7 +24,7 @@
   @if (!inlineField) {
     <mat-label>{{ 'device-profile.device-profile' | translate }}</mat-label>
   }
-  <input matInput type="text"
+  <input matInput [errorStateMatcher]="this" type="text"
          #deviceProfileInput
          #autocompleteTrigger="matAutocompleteTrigger"
          formControlName="deviceProfile"
@@ -65,6 +65,7 @@
   }
   <mat-autocomplete
     class="tb-autocomplete"
+    (opened)="onPanelOpened()"
     (closed)="onPanelClosed()"
     #deviceProfileAutocomplete="matAutocomplete"
     [displayWith]="displayDeviceProfileFn">

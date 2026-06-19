@@ -20,7 +20,7 @@
   @if (label) {
     <mat-label>{{ label }}</mat-label>
   }
-  <input matInput type="text"
+  <input matInput [errorStateMatcher]="this" type="text"
          #widgetTypeInput
          placeholder="{{ placeholder }}"
          formControlName="widgetType"
@@ -38,6 +38,8 @@
   }
   <mat-autocomplete
     class="tb-autocomplete tb-widget-type-autocomplete"
+    (opened)="onPanelOpened()"
+    (closed)="onPanelClosed()"
     #widgetTypeAutocomplete
     [displayWith]="displayWidgetTypeFn">
     @for (widgetType of filteredWidgetTypes | async; track widgetType) {

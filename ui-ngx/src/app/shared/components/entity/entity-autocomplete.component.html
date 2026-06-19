@@ -25,7 +25,7 @@
   @if (!inlineField) {
     <mat-label>{{ label | translate }}</mat-label>
   }
-  <input matInput type="text"
+  <input matInput [errorStateMatcher]="this" type="text"
          #entityInput
          #autocompleteTrigger="matAutocompleteTrigger"
          placeholder="{{ placeholder }}"
@@ -75,6 +75,8 @@
     </mat-icon>
   }
   <mat-autocomplete class="tb-autocomplete"
+                    (opened)="onPanelOpened()"
+                    (closed)="onPanelClosed()"
                     #entityAutocomplete="matAutocomplete"
                     [displayWith]="displayEntityFn">
     @for (entity of filteredEntities | async; track entity) {

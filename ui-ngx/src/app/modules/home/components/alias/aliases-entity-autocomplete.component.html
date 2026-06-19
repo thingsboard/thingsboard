@@ -17,7 +17,7 @@
 -->
 <mat-form-field [formGroup]="selectEntityInfoFormGroup" class="mat-block">
   <mat-label>{{ alias }}</mat-label>
-  <input matInput type="text"
+  <input matInput [errorStateMatcher]="this" type="text"
          #entityInfoInput
          #autocompleteTrigger="matAutocompleteTrigger"
          formControlName="entityInfo"
@@ -35,6 +35,8 @@
   }
   <mat-autocomplete
     class="tb-autocomplete"
+    (opened)="onPanelOpened()"
+    (closed)="onPanelClosed()"
     #entityInfoAutocomplete="matAutocomplete"
     [displayWith]="displayEntityInfoFn">
     @for (entityInfo of filteredEntityInfos | async; track entityInfo) {

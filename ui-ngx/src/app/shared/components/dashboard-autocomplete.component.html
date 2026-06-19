@@ -25,7 +25,7 @@
   @if (!inlineField && label) {
     <mat-label>{{ label }}</mat-label>
   }
-  <input matInput type="text"
+  <input matInput [errorStateMatcher]="this" type="text"
          #dashboardInput
          #autocompleteTrigger="matAutocompleteTrigger"
          placeholder="{{ placeholder }}"
@@ -71,6 +71,8 @@
   }
   <mat-autocomplete
     class="tb-autocomplete"
+    (opened)="onPanelOpened()"
+    (closed)="onPanelClosed()"
     #dashboardAutocomplete="matAutocomplete"
     [displayWith]="displayDashboardFn">
     @for (dashboard of filteredDashboards | async; track dashboard) {

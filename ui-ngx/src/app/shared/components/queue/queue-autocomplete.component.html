@@ -18,7 +18,7 @@
 <mat-form-field [formGroup]="selectQueueFormGroup"
                 class="mat-block autocomplete-queue" [subscriptSizing]="subscriptSizing" [appearance]="appearance">
   <mat-label>{{ 'queue.queue-name' | translate }}</mat-label>
-  <input matInput type="text"
+  <input matInput [errorStateMatcher]="this" type="text"
          #queueInput
          formControlName="queueName"
          (focusin)="onFocus()"
@@ -34,6 +34,8 @@
     </button>
   }
   <mat-autocomplete class="tb-autocomplete"
+                    (opened)="onPanelOpened()"
+                    (closed)="onPanelClosed()"
                     #queueAutocomplete="matAutocomplete"
                     [displayWith]="displayQueueFn"
                     >
