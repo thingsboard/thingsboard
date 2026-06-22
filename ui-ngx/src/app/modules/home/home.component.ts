@@ -26,13 +26,13 @@ import {
   ViewChild
 } from '@angular/core';
 import { skip, startWith, Subject } from 'rxjs';
-import { Store } from '@ngrx/store';
-import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
+import { select, Store } from '@ngrx/store';
+import { debounceTime, distinctUntilChanged, take, takeUntil } from 'rxjs/operators';
 
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { PageComponent } from '@shared/components/page.component';
 import { AppState } from '@core/core.state';
-import { getCurrentAuthState } from '@core/auth/auth.selectors';
+import { getCurrentAuthState, selectUserSettingsProperty } from '@core/auth/auth.selectors';
 import { MediaBreakpoints } from '@shared/models/constants';
 import screenfull from 'screenfull';
 import { MatSidenav } from '@angular/material/sidenav';
@@ -43,6 +43,7 @@ import { ActiveComponentService } from '@core/services/active-component.service'
 import { RouterTabsComponent } from '@home/components/router-tabs.component';
 import { FormBuilder } from '@angular/forms';
 import { isDefinedAndNotNull } from '@core/utils';
+import { ActionPreferencesPutUserSettings } from '@core/auth/auth.actions';
 
 @Component({
     selector: 'tb-home',
@@ -98,6 +99,11 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
     this.sidenavMode = isGtSm ? 'side' : 'over';
     this.sidenavOpened = isGtSm;
     this.sidenavDesktop.set(isGtSm);
+    this.store.pipe(select(selectUserSettingsProperty('menuCollapsed'))).pipe(
+      take(1)
+    ).subscribe((collapsed: boolean) => {
+      this.sidenavCollapsed.set(collapsed);
+    });
 
     this.breakpointObserver
       .observe(MediaBreakpoints['gt-sm'])
@@ -139,6 +145,7 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
 
   toggleSidenav() {
     this.sidenavCollapsed.update(state => !state);
+    this.store.dispatch(new ActionPreferencesPutUserSettings({ menuCollapsed: this.sidenavCollapsed() }));
   }
 
   toggleFullscreen() {

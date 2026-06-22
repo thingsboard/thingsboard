@@ -14,22 +14,23 @@
  * limitations under the License.
  */
 
-@import '../../../../scss/constants';
+@import "constants";
 
 :host ::ng-deep {
   a.is-new::after {
+    position: absolute;
+    right: 16px;
+    top: 4px;
     content: "NEW";
-    font-size: 12px;
-    letter-spacing: .03125em;
-    transform: translate(6px, -6px);
-    display: inline-block;
+    background: rgba(0, 0, 0, 0.03);
+    color: rgba(0, 0, 0, 0.76);
+    font-size: 11px;
+    letter-spacing: .25px;
+    line-height: 16px;
+    padding: 2px 8px;
     border-radius: 10px;
-    line-height: 22px;
-    height: 20px;
-    background: #fff;
-    color: $tb-primary-color;
-    padding-left: 6px;
-    padding-right: 6px;
-    margin-left: -6px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    opacity: 1;
+    transition: opacity $sidenav-anim-timing;
   }
 }

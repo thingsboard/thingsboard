@@ -127,6 +127,10 @@
     height: 56px;
     min-height: 56px;
     border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    .mat-toolbar-tools {
+      height: 56px;
+      padding: 0;
+    }
     h1 {
       font-size: 24px !important;
       font-weight: 400 !important;

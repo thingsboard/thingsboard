@@ -17,9 +17,11 @@
   min-width: 0;
 
   .tb-breadcrumb {
-    font-size: 18px;
+    font-size: 16px;
+    line-height: 20px;
     font-weight: 400;
     overflow: hidden;
+    color: rgba(0,0,0,0.76);
 
     h1,
     a,
@@ -51,7 +53,13 @@
     }
 
     .divider {
-      padding: 0 20px;
+      padding: 0;
+      width: 20px;
+      text-align: center;
+      opacity: .75;
+      &.last-divider {
+        opacity: 1;
+      }
     }
   }
 }

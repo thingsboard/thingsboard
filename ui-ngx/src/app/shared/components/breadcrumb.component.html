@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="tb-breadcrumb flex flex-1 flex-row">
+<div class="tb-breadcrumb flex flex-1 flex-row gap-2">
   @if (lastBreadcrumb$ | async; as breadcrumb) {
     <h1 class="flex-1 gt-sm:!hidden">
       <ng-container
@@ -23,8 +23,8 @@
       </ng-container>
     </h1>
   }
-  @for (breadcrumb of breadcrumbs$ | async; track trackByBreadcrumbs; let isLast = $last) {
-    <span class="flex flex-row lt-md:!hidden">
+  @for (breadcrumb of breadcrumbs$ | async; track trackByBreadcrumbs; let isLast = $last; let i = $index; let total = $count;) {
+    <span class="flex flex-row gap-2 lt-md:!hidden">
       @switch (isLast) {
         @case (false) {
           <a [routerLink]="breadcrumb.link" [queryParams]="breadcrumb.queryParams">
@@ -41,7 +41,7 @@
           </span>
         }
       }
-	    <span class="divider" [class.!hidden]="isLast"> > </span>
+	    <span class="divider" [class.last-divider]="i === total - 2" [class.!hidden]="isLast"> > </span>
 	  </span>
   }
 </div>
