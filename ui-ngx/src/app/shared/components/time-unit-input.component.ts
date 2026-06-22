@@ -206,7 +206,7 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
   writeValue(sec: number) {
     if (sec !== this.modelValue) {
       if (isDefinedAndNotNull(sec) && isNumeric(sec) && Number(sec) !== 0) {
-        this.timeInputForm.patchValue(this.parseTime(sec), {emitEvent: true});
+        this.timeInputForm.patchValue(this.parseTime(sec), {emitEvent: false});
         this.modelValue = sec;
       } else {
         this.timeInputForm.patchValue({
@@ -216,6 +216,7 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
         this.modelValue = 0;
       }
     }
+    this.refreshTimeValidators();
   }
 
   validate(): ValidationErrors | null {
@@ -242,6 +243,10 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
         }
       }
     }
+    return {
+      time: value,
+      timeUnit: TimeUnit.SECONDS
+    };
   }
 
   private createStepMultipleOfValidator(): ValidatorFn {
