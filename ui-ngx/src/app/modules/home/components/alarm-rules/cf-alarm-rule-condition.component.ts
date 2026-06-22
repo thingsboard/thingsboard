@@ -142,10 +142,9 @@ export class CfAlarmRuleConditionComponent implements ControlValueAccessor, Vali
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes.arguments) {
-      if (changes.arguments && !changes.arguments.firstChange) {
-        this.recalculateArgumentValidity();
-      }
+    if (changes.arguments && !changes.arguments.firstChange) {
+      this.recalculateArgumentValidity();
+      this.onValidatorChange();
     }
   }
 
