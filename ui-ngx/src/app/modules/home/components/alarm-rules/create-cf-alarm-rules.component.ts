@@ -100,7 +100,6 @@ export class CreateCfAlarmRulesComponent implements ControlValueAccessor, Valida
     this.onValidatorChange = fn;
   }
 
-
   createAlarmRulesFormArray(): UntypedFormArray {
     return this.createAlarmRulesFormGroup.get('createAlarmRules') as UntypedFormArray;
   }
