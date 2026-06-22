@@ -884,7 +884,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         return { id: gatewayOutput.id, name: connectorName };
       }
       case InstallStepType.DASHBOARD: {
-        const result = await firstValueFrom(this.dashboardService.saveDashboard(template, {ignoreErrors: true}));
+        const result = await firstValueFrom(this.dashboardService.saveDashboard(template, {ignoreErrors: false}));
         return { id: result.id.id, name: result.title, url: `/dashboards/${result.id.id}` };
       }
       case InstallStepType.RULE_CHAIN: {
@@ -999,7 +999,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       }
       case InstallStepType.DASHBOARD: {
         template.id = { id: existing.id, entityType: 'DASHBOARD' };
-        const result = await firstValueFrom(this.dashboardService.saveDashboard(template, {ignoreErrors: true}));
+        const result = await firstValueFrom(this.dashboardService.saveDashboard(template, {ignoreErrors: false}));
         return { id: result.id.id, name: result.title, url: `/dashboards/${result.id.id}` };
       }
       case InstallStepType.RULE_CHAIN: {
