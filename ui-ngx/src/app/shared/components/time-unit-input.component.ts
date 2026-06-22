@@ -209,14 +209,11 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
         this.timeInputForm.patchValue(this.parseTime(sec), {emitEvent: false});
         this.modelValue = sec;
       } else {
-        this.timeInputForm.patchValue({
-          time: 0,
-          timeUnit: TimeUnit.SECONDS
-        }, {emitEvent: false});
+        this.timeInputForm.patchValue(this.secondsModel(0), {emitEvent: false});
         this.modelValue = 0;
       }
+      this.refreshTimeValidators();
     }
-    this.refreshTimeValidators();
   }
 
   validate(): ValidationErrors | null {
@@ -243,8 +240,12 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
         }
       }
     }
+    return this.secondsModel(value);
+  }
+
+  private secondsModel(time: number): TimeUnitInputModel {
     return {
-      time: value,
+      time,
       timeUnit: TimeUnit.SECONDS
     };
   }
