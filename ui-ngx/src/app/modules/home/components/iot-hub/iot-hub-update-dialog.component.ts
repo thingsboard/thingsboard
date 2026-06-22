@@ -46,7 +46,7 @@ export type UpdateState = 'confirm' | 'updating' | 'success' | 'error';
   templateUrl: './iot-hub-update-dialog.component.html',
   styleUrls: ['./iot-hub-install-dialog.component.scss']
 })
-export class TbIotHubUpdateDialogComponent extends DialogComponent<TbIotHubUpdateDialogComponent> {
+export class TbIotHubUpdateDialogComponent extends DialogComponent<TbIotHubUpdateDialogComponent, string | boolean> {
 
   ItemType = ItemType;
 
@@ -58,7 +58,7 @@ export class TbIotHubUpdateDialogComponent extends DialogComponent<TbIotHubUpdat
   constructor(
     protected store: Store<AppState>,
     protected router: Router,
-    protected dialogRef: MatDialogRef<TbIotHubUpdateDialogComponent>,
+    protected dialogRef: MatDialogRef<TbIotHubUpdateDialogComponent, string | boolean>,
     @Inject(MAT_DIALOG_DATA) public data: IotHubUpdateDialogData,
     private dialog: MatDialog,
     private dialogService: DialogService,
