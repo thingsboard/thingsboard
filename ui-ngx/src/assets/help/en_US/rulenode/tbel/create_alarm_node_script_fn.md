@@ -63,7 +63,7 @@ More details about Alarms can be found in [this tutorial{:target="_blank"}](${si
 
 You can see the real life example, where this node is used, in the next tutorial:
 
-- [Create and Clear Alarms{:target="_blank"}](${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/tutorials/create-clear-alarms/)
+- [Create and Clear Alarms{:target="_blank"}](${siteBaseUrl}/docs${docPlatformPrefix}/recipes/create-clear-alarms/)
 
 <br>
 <br>
