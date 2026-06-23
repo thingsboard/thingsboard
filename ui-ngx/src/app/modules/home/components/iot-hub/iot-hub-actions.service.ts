@@ -17,11 +17,9 @@
 import { Injectable } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable, of } from 'rxjs';
-import { map, mergeMap } from 'rxjs/operators';
 import { MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
 import { ItemType } from '@shared/models/iot-hub/iot-hub-item.models';
 import { DeviceInstalledItemDescriptor, IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
-import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { EntityId } from '@shared/models/id/entity-id';
 import { TbIotHubAddItemDialogComponent, IotHubAddItemDialogData, IotHubAddItemDialogResult } from './iot-hub-add-item-dialog.component';
 import { TbIotHubItemDetailDialogComponent, IotHubItemDetailDialogData, IotHubItemDetailDialogMode } from './iot-hub-item-detail-dialog.component';
@@ -35,8 +33,7 @@ import { TbIotHubInstalledItemsDialogComponent, IotHubInstalledItemsDialogData }
 export class IotHubActionsService {
 
   constructor(
-    private dialog: MatDialog,
-    private iotHubApiService: IotHubApiService
+    private dialog: MatDialog
   ) {}
 
   openItemDetail(item: MpItemVersionView, installedItem?: IotHubInstalledItem, installedItemsCount?: number,
@@ -109,13 +106,8 @@ export class IotHubActionsService {
       panelClass: ['tb-dialog'],
       disableClose: true,
       autoFocus: false,
-      data: { itemName: installedItem.itemName, itemType: installedItem.itemType }
-    }).afterClosed().pipe(
-      mergeMap((confirmed) =>
-        confirmed
-          ? this.iotHubApiService.deleteInstalledItem(installedItem.id.id).pipe(map(() => true))
-          : of(false) )
-    );
+      data: { installedItemId: installedItem.id.id, itemName: installedItem.itemName, itemType: installedItem.itemType }
+    }).afterClosed();
   }
 
   installDevice(item: MpItemVersionView): Observable<string> {
