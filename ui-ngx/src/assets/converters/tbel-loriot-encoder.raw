@@ -1,0 +1,30 @@
+// Encode downlink data from incoming Rule Engine message.
+// msg      - JSON message payload (e.g. { "state": "on" })
+// msgType  - message type, e.g. 'ATTRIBUTES_UPDATED'
+// metadata - enriched by the Originator attributes node with device client attributes.
+//            ThingsBoard prefixes client-scope attributes with "cs_":
+//            metadata.cs_eui   — LORIOT device EUI stored on first uplink (e.g. "466ECD510CF7B021")
+//            metadata.cs_fPort — LoRaWAN frame port stored on first uplink (e.g. "1")
+
+var eui = metadata.cs_eui;
+
+// Default port to 1 when the device fPort attribute is missing or empty.
+var port = (metadata.cs_fPort != null && metadata.cs_fPort != '')
+    ? parseInt(metadata.cs_fPort)
+    : 1;
+
+var result = {
+  // Downlink data content type: JSON, TEXT, or BINARY (base64 format).
+  contentType: "JSON",
+
+  // Downlink data — serialise the full message payload as a JSON string.
+  data: JSON.stringify(msg),
+
+  // Metadata required by LORIOT for downlink delivery.
+  metadata: {
+    "EUI": eui,
+    "port": port
+  }
+};
+
+return result;
