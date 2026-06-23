@@ -42,7 +42,14 @@ export const IntegrationJSDefaultConvertersUrl = new Map<IntegrationType, string
 ]);
 
 export const IntegrationTbelDefaultEncodersUrl = new Map<IntegrationType, string>([
-  [IntegrationType.OPC_UA, '/assets/converters/tbel-opc-ua-encoder.raw']
+  [IntegrationType.OPC_UA, '/assets/converters/tbel-opc-ua-encoder.raw'],
+  [IntegrationType.TTI, '/assets/converters/tbel-tti-encoder.raw'],
+  [IntegrationType.TTN, '/assets/converters/tbel-ttn-encoder.raw']
+])
+
+export const IntegrationJSDefaultEncodersUrl = new Map<IntegrationType, string>([
+  [IntegrationType.TTI, '/assets/converters/js-tti-encoder.raw'],
+  [IntegrationType.TTN, '/assets/converters/js-ttn-encoder.raw']
 ])
 
 export const jsDefaultConvertersUrl = new Map<ConverterType, string>([
@@ -264,6 +271,8 @@ export const getTargetTemplateUrl =
    integrationType: IntegrationType, converterVersion: ConverterVersion = 1): string => {
     if (scriptLang === ScriptLanguage.JS && converterType === ConverterType.UPLINK && IntegrationJSDefaultConvertersUrl.has(integrationType)) {
       return IntegrationJSDefaultConvertersUrl.get(integrationType)
+    } else if (scriptLang === ScriptLanguage.JS && converterType === ConverterType.DOWNLINK && IntegrationJSDefaultEncodersUrl.has(integrationType)) {
+      return IntegrationJSDefaultEncodersUrl.get(integrationType);
     } else if (scriptLang === ScriptLanguage.JS) {
       return getJsTemplateUrl(converterType, converterVersion);
     } else if (converterType === ConverterType.UPLINK && IntegrationTbelDefaultConvertersUrl.has(integrationType)) {
