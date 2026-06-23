@@ -22,7 +22,6 @@ import { DialogService } from '@core/services/dialog.service';
 import { MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
 import { ItemType } from '@shared/models/iot-hub/iot-hub-item.models';
 import { DeviceInstalledItemDescriptor, IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
-import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { EntityId } from '@shared/models/id/entity-id';
 import { TbIotHubAddItemDialogComponent, IotHubAddItemDialogData, IotHubAddItemDialogResult } from './iot-hub-add-item-dialog.component';
 import { TbIotHubItemDetailDialogComponent, IotHubItemDetailDialogData, IotHubItemDetailDialogMode } from './iot-hub-item-detail-dialog.component';
@@ -37,7 +36,6 @@ export class IotHubActionsService {
 
   constructor(
     private dialog: MatDialog,
-    private iotHubApiService: IotHubApiService,
     private dialogService: DialogService,
     private translate: TranslateService
   ) {}
