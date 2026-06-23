@@ -20,8 +20,11 @@ import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { DialogComponent } from '@shared/components/dialog.component';
+import { IotHubInstalledItem } from 'src/app/shared/models/iot-hub/iot-hub-installed-item.models';
+import { IotHubApiService } from '@core/http/iot-hub-api.service';
 
 export interface IotHubDeleteDialogData {
+  installedItemId: string;
   itemName: string;
   itemType?: string;
 }
@@ -38,13 +41,18 @@ export class TbIotHubDeleteDialogComponent extends DialogComponent<TbIotHubDelet
     protected store: Store<AppState>,
     protected router: Router,
     protected dialogRef: MatDialogRef<TbIotHubDeleteDialogComponent, boolean>,
-    @Inject(MAT_DIALOG_DATA) public data: IotHubDeleteDialogData
+    @Inject(MAT_DIALOG_DATA) public data: IotHubDeleteDialogData,
+    private iotHubApiService: IotHubApiService
   ) {
     super(store, router, dialogRef);
   }
 
   confirm(): void {
-    this.dialogRef.close(true);
+    this.iotHubApiService.deleteInstalledItem(this.data.installedItemId).subscribe(
+      () => {
+        this.dialogRef.close(true);
+      }
+    );
   }
 
   cancel(): void {
