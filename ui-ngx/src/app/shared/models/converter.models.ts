@@ -45,13 +45,15 @@ export const IntegrationTbelDefaultEncodersUrl = new Map<IntegrationType, string
   [IntegrationType.OPC_UA, '/assets/converters/tbel-opc-ua-encoder.raw'],
   [IntegrationType.TTI, '/assets/converters/tbel-tti-encoder.raw'],
   [IntegrationType.TTN, '/assets/converters/tbel-ttn-encoder.raw'],
-  [IntegrationType.MQTT, '/assets/converters/tbel-mqtt-encoder.raw']
+  [IntegrationType.MQTT, '/assets/converters/tbel-mqtt-encoder.raw'],
+  [IntegrationType.CHIRPSTACK, '/assets/converters/tbel-chirpstack-encoder.raw']
 ])
 
 export const IntegrationJSDefaultEncodersUrl = new Map<IntegrationType, string>([
   [IntegrationType.TTI, '/assets/converters/js-tti-encoder.raw'],
   [IntegrationType.TTN, '/assets/converters/js-ttn-encoder.raw'],
-  [IntegrationType.MQTT, '/assets/converters/js-mqtt-encoder.raw']
+  [IntegrationType.MQTT, '/assets/converters/js-mqtt-encoder.raw'],
+  [IntegrationType.CHIRPSTACK, '/assets/converters/js-chirpstack-encoder.raw']
 ])
 
 export const jsDefaultConvertersUrl = new Map<ConverterType, string>([
