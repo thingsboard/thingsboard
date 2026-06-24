@@ -31,17 +31,33 @@ public class CoapAdaptorUtils {
         List<String> queryElements = inbound.getOptions().getUriQuery();
         TransportProtos.GetAttributeRequestMsg.Builder result = TransportProtos.GetAttributeRequestMsg.newBuilder();
         if (queryElements != null && queryElements.size() > 0) {
+            boolean allClient = "true".equalsIgnoreCase(getQueryValue(queryElements, "allClientKeys"));
+            boolean allShared = "true".equalsIgnoreCase(getQueryValue(queryElements, "allSharedKeys"));
             Set<String> clientKeys = toKeys(queryElements, "clientKeys");
             Set<String> sharedKeys = toKeys(queryElements, "sharedKeys");
-            if (clientKeys != null) {
+            if (allClient) {
+                result.setAllClientAttributes(true);
+            } else if (clientKeys != null) {
                 result.addAllClientAttributeNames(clientKeys);
             }
-            if (sharedKeys != null) {
+            if (allShared) {
+                result.setAllSharedAttributes(true);
+            } else if (sharedKeys != null) {
                 result.addAllSharedAttributeNames(sharedKeys);
             }
         }
         result.setOnlyShared(false);
         return result.build();
+    }
+
+    private static String getQueryValue(List<String> queryElements, String name) {
+        for (String queryElement : queryElements) {
+            String[] queryItem = queryElement.split("=");
+            if (queryItem.length == 2 && queryItem[0].equals(name)) {
+                return queryItem[1];
+            }
+        }
+        return null;
     }
 
     private static Set<String> toKeys(List<String> queryElements, String attributeName) throws AdaptorException {
