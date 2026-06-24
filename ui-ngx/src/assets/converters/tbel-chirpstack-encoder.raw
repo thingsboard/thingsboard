@@ -3,6 +3,11 @@
 // msg - JSON message payload downlink message json
 // msgType - type of message, for ex. 'ATTRIBUTES_UPDATED', 'POST_TELEMETRY_REQUEST', etc.
 // metadata - list of key-value pairs with additional data about the message
+//            ChirpStack reads DevEUI and fPort from the metadata below to enqueue the downlink (POST .../devices/{DevEUI}/queue).
+//            Both are client-side device attributes that could be populated via an Originator attributes rule node.
+//            ThingsBoard prefixes client-scope attributes with "cs_":
+//            metadata.cs_eui   — ChirpStack device EUI stored on first uplink (e.g. "466ECD510CF7B021")
+//            metadata.cs_fPort — LoRaWAN frame port stored on first uplink (e.g. "1")
 // integrationMetadata - list of key-value pairs with additional data defined in Integration executing this converter
 
 /** Encoder **/
@@ -12,10 +17,12 @@ var result = {
   // downlink data content type: JSON, TEXT or BINARY (base64 format)
   contentType: "TEXT",
   // downlink data
-  data: btoa(msg),
-  // Optional metadata object presented in key/value format
+  data: btoa(JSON.stringify(msg)),
+  // Metadata required by ChirpStack for downlink delivery.
   metadata: {
+    // Target device EUI; ChirpStack rejects the downlink if this is missing.
     DevEUI: metadata.cs_eui,
+    // LoRaWAN frame port (1-223); ChirpStack parses this as an integer.
     fPort: metadata.cs_fPort
   }
 };

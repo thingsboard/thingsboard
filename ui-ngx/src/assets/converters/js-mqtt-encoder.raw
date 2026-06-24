@@ -7,13 +7,13 @@
 
 /** Encoder **/
 
-// Publish the ThingsBoard message as JSON to the device command topic.
+// Publish the ThingsBoard message as JSON to the device upload topic.
 // metadata.topic is read by the integration when Downlink topic pattern is ${topic}.
 var result = {
   contentType: "JSON",
   data: JSON.stringify(msg),
   metadata: {
-    topic: metadata['deviceType']+'/'+metadata['deviceName']+'/upload'
+    topic: metadata['deviceType'] + '/' + metadata['deviceName'] + '/upload'
   }
 };
 

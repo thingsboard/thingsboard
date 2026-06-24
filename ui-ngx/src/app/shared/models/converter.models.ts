@@ -43,16 +43,16 @@ export const IntegrationJSDefaultConvertersUrl = new Map<IntegrationType, string
 
 export const IntegrationTbelDefaultEncodersUrl = new Map<IntegrationType, string>([
   [IntegrationType.OPC_UA, '/assets/converters/tbel-opc-ua-encoder.raw'],
-  [IntegrationType.TTI, '/assets/converters/tbel-tti-encoder.raw'],
-  [IntegrationType.TTN, '/assets/converters/tbel-ttn-encoder.raw'],
+  [IntegrationType.TTI, '/assets/converters/tbel-ttn-tti-encoder.raw'],
+  [IntegrationType.TTN, '/assets/converters/tbel-ttn-tti-encoder.raw'],
   [IntegrationType.MQTT, '/assets/converters/tbel-mqtt-encoder.raw'],
   [IntegrationType.CHIRPSTACK, '/assets/converters/tbel-chirpstack-encoder.raw'],
   [IntegrationType.LORIOT, '/assets/converters/tbel-loriot-encoder.raw']
 ])
 
 export const IntegrationJSDefaultEncodersUrl = new Map<IntegrationType, string>([
-  [IntegrationType.TTI, '/assets/converters/js-tti-encoder.raw'],
-  [IntegrationType.TTN, '/assets/converters/js-ttn-encoder.raw'],
+  [IntegrationType.TTI, '/assets/converters/js-ttn-tti-encoder.raw'],
+  [IntegrationType.TTN, '/assets/converters/js-ttn-tti-encoder.raw'],
   [IntegrationType.MQTT, '/assets/converters/js-mqtt-encoder.raw'],
   [IntegrationType.CHIRPSTACK, '/assets/converters/js-chirpstack-encoder.raw'],
   [IntegrationType.LORIOT, '/assets/converters/js-loriot-encoder.raw']
@@ -275,18 +275,19 @@ export const getTargetField =
 export const getTargetTemplateUrl =
   (converterType: ConverterType, scriptLang: ScriptLanguage,
    integrationType: IntegrationType, converterVersion: ConverterVersion = 1): string => {
-    if (scriptLang === ScriptLanguage.JS && converterType === ConverterType.UPLINK && IntegrationJSDefaultConvertersUrl.has(integrationType)) {
-      return IntegrationJSDefaultConvertersUrl.get(integrationType)
-    } else if (scriptLang === ScriptLanguage.JS && converterType === ConverterType.DOWNLINK && IntegrationJSDefaultEncodersUrl.has(integrationType)) {
-      return IntegrationJSDefaultEncodersUrl.get(integrationType);
-    } else if (scriptLang === ScriptLanguage.JS) {
-      return getJsTemplateUrl(converterType, converterVersion);
-    } else if (converterType === ConverterType.UPLINK && IntegrationTbelDefaultConvertersUrl.has(integrationType)) {
-      return IntegrationTbelDefaultConvertersUrl.get(integrationType);
-    } else if (converterType === ConverterType.DOWNLINK && IntegrationTbelDefaultEncodersUrl.has(integrationType)) {
-      return IntegrationTbelDefaultEncodersUrl.get(integrationType);
+    const isJs = scriptLang === ScriptLanguage.JS;
+    const isUplink = converterType === ConverterType.UPLINK;
+    // Integration-specific template map for this (language, direction); UPLINK -> decoders, DOWNLINK -> encoders.
+    const integrationUrls = isJs
+      ? (isUplink ? IntegrationJSDefaultConvertersUrl : IntegrationJSDefaultEncodersUrl)
+      : (isUplink ? IntegrationTbelDefaultConvertersUrl : IntegrationTbelDefaultEncodersUrl);
+    if (integrationUrls.has(integrationType)) {
+      return integrationUrls.get(integrationType);
     }
-    return getTbelTemplateUrl(converterType, converterVersion);
+    // Fall back to the generic template for the script language.
+    return isJs
+      ? getJsTemplateUrl(converterType, converterVersion)
+      : getTbelTemplateUrl(converterType, converterVersion);
   }
 
 const getTbelConverterFunctionHeldId = (converterType: ConverterType, converterVersion: ConverterVersion): string => {
