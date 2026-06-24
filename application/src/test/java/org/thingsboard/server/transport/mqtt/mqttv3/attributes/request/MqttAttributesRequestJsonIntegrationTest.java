@@ -57,4 +57,47 @@ public class MqttAttributesRequestJsonIntegrationTest extends AbstractMqttAttrib
     public void testRequestAttributesValuesFromTheServerGateway() throws Exception {
         processJsonTestGatewayRequestAttributesValuesFromTheServer();
     }
+
+    @Test
+    public void testRequestAllSharedAttributesViaEmptyValue() throws Exception {
+        // sharedKeys present + empty => all shared; clientKeys absent => no client
+        processJsonTestRequestAttributesWithPayload(
+                MqttTopics.DEVICE_ATTRIBUTES_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX,
+                "{\"sharedKeys\":\"\"}",
+                "{\"shared\":" + SHARED_ATTRIBUTES_PAYLOAD + "}");
+    }
+
+    @Test
+    public void testRequestAllClientAttributesViaEmptyValue() throws Exception {
+        // clientKeys present + empty => all client; sharedKeys absent => no shared
+        processJsonTestRequestAttributesWithPayload(
+                MqttTopics.DEVICE_ATTRIBUTES_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX,
+                "{\"clientKeys\":\"\"}",
+                "{\"client\":" + CLIENT_ATTRIBUTES_PAYLOAD + "}");
+    }
+
+    @Test
+    public void testRequestAllAttributesViaEmptyObject() throws Exception {
+        // both fields absent => fetch everything (both scopes)
+        processJsonTestRequestAttributesWithPayload(
+                MqttTopics.DEVICE_ATTRIBUTES_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX,
+                "{}",
+                "{\"client\":" + CLIENT_ATTRIBUTES_PAYLOAD + ",\"shared\":" + SHARED_ATTRIBUTES_PAYLOAD + "}");
+    }
+
+    @Test
+    public void testGatewayRequestAllAttributesSeparated() throws Exception {
+        // new format: empty clientKeys + empty sharedKeys => all both, scope-separated response
+        processJsonTestGatewayRequestAttributesSeparated(
+                ", \"clientKeys\": \"\", \"sharedKeys\": \"\"",
+                ",\"client\":" + CLIENT_ATTRIBUTES_PAYLOAD + ",\"shared\":" + SHARED_ATTRIBUTES_PAYLOAD);
+    }
+
+    @Test
+    public void testGatewayRequestAllSharedSeparated() throws Exception {
+        // new format: empty sharedKeys only => all shared, no client in the separated response
+        processJsonTestGatewayRequestAttributesSeparated(
+                ", \"sharedKeys\": \"\"",
+                ",\"shared\":" + SHARED_ATTRIBUTES_PAYLOAD);
+    }
 }
