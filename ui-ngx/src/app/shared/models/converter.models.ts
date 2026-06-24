@@ -15,7 +15,7 @@ export enum ConverterType {
   DOWNLINK = 'DOWNLINK'
 }
 
-export const IntegrationTbelDefaultConvertersUrl = new Map<IntegrationType, string>([
+export const IntegrationTbelDefaultDecodersUrl = new Map<IntegrationType, string>([
   [IntegrationType.CHIRPSTACK, '/assets/converters/tbel-chirpstack-decoder.raw'],
   [IntegrationType.LORIOT, '/assets/converters/tbel-loriot-decoder.raw'],
   [IntegrationType.TTI,'/assets/converters/tbel-tti-decoder.raw'],
@@ -31,7 +31,7 @@ export const IntegrationTbelDefaultConvertersUrl = new Map<IntegrationType, stri
   [IntegrationType.MQTT, '/assets/converters/tbel-mqtt-decoder.raw']
 ]);
 
-export const IntegrationJSDefaultConvertersUrl = new Map<IntegrationType, string>([
+export const IntegrationJSDefaultDecodersUrl = new Map<IntegrationType, string>([
   [IntegrationType.CHIRPSTACK, '/assets/converters/js-chirpstack-decoder.raw'],
   [IntegrationType.LORIOT, '/assets/converters/js-loriot-decoder.raw'],
   [IntegrationType.TTI,'/assets/converters/js-tti-decoder.raw'],
@@ -279,8 +279,8 @@ export const getTargetTemplateUrl =
     const isUplink = converterType === ConverterType.UPLINK;
     // Integration-specific template map for this (language, direction); UPLINK -> decoders, DOWNLINK -> encoders.
     const integrationUrls = isJs
-      ? (isUplink ? IntegrationJSDefaultConvertersUrl : IntegrationJSDefaultEncodersUrl)
-      : (isUplink ? IntegrationTbelDefaultConvertersUrl : IntegrationTbelDefaultEncodersUrl);
+      ? (isUplink ? IntegrationJSDefaultDecodersUrl : IntegrationJSDefaultEncodersUrl)
+      : (isUplink ? IntegrationTbelDefaultDecodersUrl : IntegrationTbelDefaultEncodersUrl);
     if (integrationUrls.has(integrationType)) {
       return integrationUrls.get(integrationType);
     }

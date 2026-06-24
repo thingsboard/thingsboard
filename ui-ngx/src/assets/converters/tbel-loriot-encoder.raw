@@ -13,7 +13,9 @@ var port = (metadata.cs_fPort != null && metadata.cs_fPort != '')
     ? parseInt(metadata.cs_fPort)
     : 1;
 
-// Send only the command value (powerState) rather than the whole message; fall back to 'unspecified' when absent.
+// EXAMPLE — replace this: it sends a single field ('powerState') from the downlink message.
+// Swap 'powerState' (and the 'unspecified' fallback) for the field your device expects;
+// as written, any downlink without a 'powerState' field sends the constant value 'unspecified'.
 var payload = (msg.powerState != null)
     ? msg.powerState
     : 'unspecified';
