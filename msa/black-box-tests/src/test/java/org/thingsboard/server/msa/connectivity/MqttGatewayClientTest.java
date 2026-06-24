@@ -236,6 +236,31 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
     }
 
     @Test
+    public void gatewayRequestAllSharedReturnsSeparatedResponse() throws Exception {
+        JsonObject sharedAttributes = new JsonObject();
+        sharedAttributes.addProperty("attr1", "value1");
+        sharedAttributes.addProperty("attr2", true);
+        testRestClient.postTelemetryAttribute(createdDevice.getId(), SHARED_SCOPE, mapper.readTree(sharedAttributes.toString()));
+
+        mqttClient.on("v1/gateway/attributes/response", listener, MqttQoS.AT_LEAST_ONCE).get();
+
+        // new format: empty sharedKeys => all shared; scope-separated response
+        JsonObject requestData = new JsonObject();
+        requestData.addProperty("id", 1);
+        requestData.addProperty("device", createdDevice.getName());
+        requestData.addProperty("sharedKeys", "");
+        mqttClient.publish("v1/gateway/attributes/request", Unpooled.wrappedBuffer(requestData.toString().getBytes())).get();
+
+        MqttEvent event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
+        JsonObject responseData = JsonParser.parseString(Objects.requireNonNull(event).getMessage()).getAsJsonObject();
+        assertThat(responseData.has("shared")).isTrue();
+        assertThat(responseData.has("value")).isFalse();
+        assertThat(responseData.has("values")).isFalse();
+        assertThat(responseData.getAsJsonObject("shared").get("attr1").getAsString()).isEqualTo("value1");
+        assertThat(responseData.getAsJsonObject("shared").get("attr2").getAsBoolean()).isTrue();
+    }
+
+    @Test
     public void requestAttributeValuesFromServer() throws Exception {
         WsClient wsClient = subscribeToWebSocket(createdDevice.getId(), "CLIENT_SCOPE", CmdsType.ATTR_SUB_CMDS);
         // Add a new client attribute
