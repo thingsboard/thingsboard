@@ -48,54 +48,59 @@
       <tb-user-menu [collapsed]="menuCollapsed()" (menuClicked)="sidenavClicked()"></tb-user-menu>
     </mat-toolbar>
   </mat-sidenav>
-  <mat-sidenav-content class="tb-site-content">
+  <mat-sidenav-content class="tb-site-content" [class.tb-force-fullscreen]="forceFullscreen">
     <div class="flex flex-col" role="main" style="height: 100%;">
-      <mat-toolbar class="tb-primary-toolbar flex flex-row">
-        <button mat-icon-button id="main"
-                [class.!hidden]="forceFullscreen || displaySearchMode()"
-                class="gt-sm:!hidden" (click)="sidenav.toggle()">
-          <mat-icon class="material-icons">menu</mat-icon>
-        </button>
-        <button mat-icon-button
-                [class.!hidden]="!forceFullscreen || displaySearchMode"
-                (click)="goBack()">
-          <mat-icon class="material-icons">arrow_back</mat-icon>
-        </button>
-        <button mat-icon-button
-                [class.!hidden]="!displaySearchMode()"
-                (click)="closeSearch()">
-          <mat-icon class="material-icons">arrow_back</mat-icon>
-        </button>
-        <tb-breadcrumb
-          [class.!hidden]="displaySearchMode()"
-          class="mat-toolbar-tools flex-1">
-        </tb-breadcrumb>
-        <div [class.!hidden]="!displaySearchMode()" class="flex flex-1 flex-row">
-          <mat-form-field class="tb-appearance-transparent flex-1">
-            <input #searchInput matInput
-                   [formControl]="textSearch"
-                   placeholder="{{ 'common.enter-search' | translate }}"/>
-          </mat-form-field>
-        </div>
-        <button [class.!hidden]="!searchEnabled"
-                mat-icon-button (click)="openSearch()">
-          <mat-icon class="material-icons">search</mat-icon>
-        </button>
-        <tb-github-badge class="lt-md:!hidden"></tb-github-badge>
-        @if (fullscreenEnabled) {
-          <button
-            [class.!hidden]="displaySearchMode()"
-            class="lt-md:!hidden"
-            mat-icon-button (click)="toggleFullscreen()">
-            <mat-icon class="material-icons">{{ isFullscreen() ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+      @if (!hideMainToolbar) {
+        <mat-toolbar class="tb-primary-toolbar flex flex-row">
+          <button mat-icon-button id="main"
+                  [class.!hidden]="forceFullscreen || displaySearchMode()"
+                  class="gt-sm:!hidden" (click)="sidenav.toggle()">
+            <mat-icon class="material-icons">menu</mat-icon>
           </button>
+          <button mat-icon-button
+                  [class.!hidden]="!forceFullscreen || displaySearchMode"
+                  (click)="goBack()">
+            <mat-icon class="material-icons">arrow_back</mat-icon>
+          </button>
+          <button mat-icon-button
+                  [class.!hidden]="!displaySearchMode()"
+                  (click)="closeSearch()">
+            <mat-icon class="material-icons">arrow_back</mat-icon>
+          </button>
+          <tb-breadcrumb
+            [class.!hidden]="displaySearchMode()"
+            class="mat-toolbar-tools flex-1">
+          </tb-breadcrumb>
+          <div [class.!hidden]="!displaySearchMode()" class="flex flex-1 flex-row">
+            <mat-form-field class="tb-appearance-transparent flex-1">
+              <input #searchInput matInput
+                     [formControl]="textSearch"
+                     placeholder="{{ 'common.enter-search' | translate }}"/>
+            </mat-form-field>
+          </div>
+          <button [class.!hidden]="!searchEnabled"
+                  mat-icon-button (click)="openSearch()">
+            <mat-icon class="material-icons">search</mat-icon>
+          </button>
+          <tb-github-badge class="lt-md:!hidden"></tb-github-badge>
+          @if (fullscreenEnabled) {
+            <button
+              [class.!hidden]="displaySearchMode()"
+              class="lt-md:!hidden"
+              mat-icon-button (click)="toggleFullscreen()">
+              <mat-icon class="material-icons">{{ isFullscreen() ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+            </button>
+          }
+          <tb-notification-bell></tb-notification-bell>
+          @if (forceFullscreen) {
+            <tb-user-menu></tb-user-menu>
+          }
+        </mat-toolbar>
+        @if (!hideLoadingBar && (isLoading$ | async)) {
+          <mat-progress-bar color="warn" style="z-index: 10; margin-bottom: -4px; width: 100%;" mode="indeterminate"
+                            >
+          </mat-progress-bar>
         }
-        <tb-notification-bell></tb-notification-bell>
-      </mat-toolbar>
-      @if (!hideLoadingBar && (isLoading$ | async)) {
-        <mat-progress-bar color="warn" style="z-index: 10; margin-bottom: -4px; width: 100%;" mode="indeterminate"
-                          >
-        </mat-progress-bar>
       }
       <div #mainContent tb-toast class="tb-main-content flex flex-1 flex-col">
         <router-outlet (activate)="activeComponentChanged($event)"></router-outlet>

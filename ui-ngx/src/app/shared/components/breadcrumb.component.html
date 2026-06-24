@@ -16,33 +16,64 @@
 
 -->
 <div class="tb-breadcrumb flex flex-1 flex-row gap-2">
-  @if (lastBreadcrumb$ | async; as breadcrumb) {
-    <h1 class="flex-1 gt-sm:!hidden">
+  @if (componentBreadcrumbsTpl && (lastBreadcrumb$ | async) === null) {
+    <div class="min-w-0 flex-1">
       <ng-container
-        *ngTemplateOutlet="breadcrumbTpl;context:{breadcrumb: breadcrumb}">
+        *ngTemplateOutlet="componentBreadcrumbsTpl">
       </ng-container>
-    </h1>
-  }
-  @for (breadcrumb of breadcrumbs$ | async; track trackByBreadcrumbs; let isLast = $last; let i = $index; let total = $count;) {
-    <span class="flex flex-row gap-2 lt-md:!hidden">
-      @switch (isLast) {
-        @case (false) {
-          <a [routerLink]="breadcrumb.link" [queryParams]="breadcrumb.queryParams">
-            <ng-container
-              *ngTemplateOutlet="breadcrumbTpl;context:{breadcrumb: breadcrumb}">
-            </ng-container>
-    	    </a>
-        }
-        @case (true) {
-          <span>
-            <ng-container
-              *ngTemplateOutlet="breadcrumbTpl;context:{breadcrumb: breadcrumb}">
-            </ng-container>
-          </span>
+    </div>
+  } @else {
+    @if (lastBreadcrumb$ | async; as breadcrumb) {
+      @if (componentBreadcrumbsTpl) {
+        <div class="flex-1 gt-sm:!hidden">
+          <ng-container
+            *ngTemplateOutlet="componentBreadcrumbsTpl">
+          </ng-container>
+        </div>
+      } @else {
+        <h1 class="flex-1 gt-sm:!hidden">
+          <ng-container
+            *ngTemplateOutlet="breadcrumbTpl;context:{breadcrumb: breadcrumb}">
+          </ng-container>
+        </h1>
+      }
+    }
+    <div class="flex flex-1 flex-row items-center gap-2 overflow-hidden lt-md:!hidden">
+      @for (breadcrumb of breadcrumbs$ | async; track breadcrumb.id; let isLast = $last; let i = $index;) {
+        @switch (isLast) {
+          @case (false) {
+            @if (i > 0) {
+              <span class="divider"> > </span>
+            }
+            <span class="flex flex-row gap-2">
+              <a [routerLink]="breadcrumb.link" [queryParams]="breadcrumb.queryParams">
+                <ng-container
+                  *ngTemplateOutlet="breadcrumbTpl;context:{breadcrumb: breadcrumb}">
+                </ng-container>
+              </a>
+            </span>
+          }
+          @case (true) {
+            @if (componentBreadcrumbsTpl) {
+              <span>
+                <ng-container
+                  *ngTemplateOutlet="componentBreadcrumbsTpl">
+                </ng-container>
+              </span>
+            } @else {
+              @if (i > 0) {
+                <span class="divider last-divider"> > </span>
+              }
+              <span>
+                <ng-container
+                  *ngTemplateOutlet="breadcrumbTpl;context:{breadcrumb: breadcrumb}">
+                </ng-container>
+              </span>
+            }
+          }
         }
       }
-	    <span class="divider" [class.last-divider]="i === total - 2" [class.!hidden]="isLast"> > </span>
-	  </span>
+    </div>
   }
 </div>
 <ng-template #breadcrumbTpl let-breadcrumb="breadcrumb">

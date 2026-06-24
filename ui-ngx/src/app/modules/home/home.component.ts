@@ -18,14 +18,14 @@ import {
   AfterViewInit,
   Component,
   computed,
-  ElementRef,
+  ElementRef, EventEmitter,
   Inject,
   OnDestroy,
   OnInit,
   signal,
   ViewChild
 } from '@angular/core';
-import { skip, startWith, Subject } from 'rxjs';
+import { skip, startWith, Subject, Subscription } from 'rxjs';
 import { select, Store } from '@ngrx/store';
 import { debounceTime, distinctUntilChanged, take, takeUntil } from 'rxjs/operators';
 
@@ -44,6 +44,7 @@ import { RouterTabsComponent } from '@home/components/router-tabs.component';
 import { FormBuilder } from '@angular/forms';
 import { isDefinedAndNotNull } from '@core/utils';
 import { ActionPreferencesPutUserSettings } from '@core/auth/auth.actions';
+import { isMainToolbarComponent } from '@home/models/main-toolbar.models';
 
 @Component({
     selector: 'tb-home',
@@ -85,6 +86,10 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
 
   hideLoadingBar = false;
 
+  hideMainToolbar = false;
+
+  private toggleSideBarSubscription: Subscription;
+
   private destroy$ = new Subject<void>();
 
   constructor(protected store: Store<AppState>,
@@ -125,6 +130,9 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
   }
 
   ngOnDestroy() {
+    if (this.toggleSideBarSubscription) {
+      this.toggleSideBarSubscription.unsubscribe();
+    }
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -196,6 +204,22 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
     } else {
       this.searchEnabled = false;
       this.searchableComponent = null;
+    }
+
+    if (this.toggleSideBarSubscription) {
+      this.toggleSideBarSubscription.unsubscribe();
+      this.toggleSideBarSubscription = null;
+    }
+
+    this.hideMainToolbar = false;
+
+    if (isMainToolbarComponent(this.activeComponent)) {
+      this.hideMainToolbar = this.activeComponent.hideMainToolbar;
+      this.toggleSideBarSubscription = this.activeComponent.toggleSideBar.subscribe(
+        () => {
+          this.sidenav.toggle();
+        }
+      );
     }
   }
 

@@ -15,11 +15,11 @@
  */
 @import "../../../../../scss/constants";
 
-$toolbar-height: 50px !default;
-$fullscreen-toolbar-height: 64px !default;
-$mobile-toolbar-height: 80px !default;
-$half-mobile-toolbar-height: 40px !default;
-$mobile-toolbar-height-total: 84px !default;
+$toolbar-height: 56px !default;
+$fullscreen-toolbar-height: 56px !default;
+$mobile-toolbar-height: 96px !default;
+$half-mobile-toolbar-height: 48px !default;
+$mobile-toolbar-height-total: 96px !default;
 
 $mobile-app-toolbar-height: 40px !default;
 
@@ -97,6 +97,7 @@ tb-dashboard-toolbar {
 
     .mat-fab-toolbar-wrapper {
       height: $mobile-toolbar-height-total;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.12);
 
       @media #{$mat-gt-sm} {
         height: $toolbar-height;
@@ -121,12 +122,12 @@ tb-dashboard-toolbar {
 
         mat-fab-actions {
           margin-top: 0;
+          padding: 0 16px !important;
           font-size: 16px;
 
           @media #{$mat-lt-md} {
             height: $mobile-toolbar-height;
             max-height: $mobile-toolbar-height;
-            padding: 0 8px !important;
           }
 
           .close-action {
@@ -138,14 +139,14 @@ tb-dashboard-toolbar {
             height: $mobile-toolbar-height;
 
             @media #{$mat-gt-sm} {
-              height: 46px;
+              height: $toolbar-height;
             }
 
             .tb-dashboard-action-panels {
               height: $mobile-toolbar-height;
 
               @media #{$mat-gt-sm} {
-                height: 46px;
+                height: $toolbar-height;
               }
 
               .tb-dashboard-action-panel {
@@ -161,14 +162,14 @@ tb-dashboard-toolbar {
                 }
 
                 @media #{$mat-lt-md} {
-                  padding-left: 12px;
+              //    padding-left: 12px;
                 }
 
                 @media #{$mat-xs} {
                   gap: 3px;
                   padding-left: 0;
                   &.tb-left-panel {
-                    padding-left: 12px;
+                 //   padding-left: 12px;
                   }
                 }
 
@@ -198,14 +199,14 @@ tb-dashboard-toolbar {
                   &.tb-left-panel {
                     place-content: center flex-end;
                   }
-                  height: 46px;
+                  height: $toolbar-height;
                 }
 
                 > div {
                   height: $half-mobile-toolbar-height;
 
                   @media #{$mat-gt-sm} {
-                    height: 46px;
+                    height: $toolbar-height;
                   }
                 }
 

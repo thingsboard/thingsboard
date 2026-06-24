@@ -16,13 +16,41 @@
 :host {
   pointer-events: all;
   width: min-content; //for Safari
+
+  .state-divider {
+    display: none;
+    padding: 0;
+    width: 20px;
+    min-width: 20px;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  :host-context(.tb-breadcrumb) {
+    .state-divider {
+      display: block;
+    }
+  }
+
+}
+
+:host-context(.tb-breadcrumb) {
+  ::ng-deep {
+    .mat-mdc-select.default-state-controller {
+      --mat-select-trigger-text-size: 16px;
+      --mat-select-enabled-trigger-text-color: rgba(0, 0, 0, 0.76);
+    }
+  }
 }
 
 :host ::ng-deep {
   .mat-mdc-select.default-state-controller {
+    --mat-select-trigger-text-size: 14px;
     .mat-mdc-select-value {
       max-width: 200px;
-      font-size: 14px;
     }
     .mat-mdc-select-arrow {
       width: 24px;

@@ -15,6 +15,20 @@
     limitations under the License.
 
 -->
+
+<ng-template #dashboardBreadcrumbsTpl>
+  <tb-states-component class="lt-md:flex-1"
+                       [statesControllerId]="dashboardConfiguration.settings.stateControllerId"
+                       [dashboardCtrl]="this"
+                       [dashboardId]="setStateDashboardId ? dashboard.id.id : ''"
+                       [isMobile]="isMobile"
+                       [state]="dashboardCtx.state"
+                       [currentState]="currentState"
+                       [syncStateWithQueryParam]="syncStateWithQueryParam"
+                       [states]="dashboardConfiguration.states">
+  </tb-states-component>
+</ng-template>
+
 <div class="tb-dashboard-page mat-content flex-1" [class.mobile-app]="isMobileApp && !isEdit" tb-toast
      tb-fullscreen [fullscreenElement]="elRef.nativeElement" [fullscreen]="widgetEditMode || iframeMode || forceFullscreen || isFullscreen">
   <tb-hotkeys-cheatsheet #cheatSheetComponent></tb-hotkeys-cheatsheet>
@@ -50,17 +64,22 @@
                 [dashboardCtrl]="this">
               </tb-select-dashboard-breakpoint>
             </div>
+            <tb-states-component class="lt-md:flex-1"
+                                 [statesControllerId]="'default'"
+                                 [dashboardCtrl]="this"
+                                 [dashboardId]="setStateDashboardId ? dashboard.id.id : ''"
+                                 [isMobile]="isMobile"
+                                 [state]="dashboardCtx.state"
+                                 [currentState]="currentState"
+                                 [syncStateWithQueryParam]="syncStateWithQueryParam"
+                                 [states]="dashboardConfiguration.states">
+            </tb-states-component>
+          } @else {
+            <tb-notification-bell class="gt-sm:!hidden"></tb-notification-bell>
+            <tb-breadcrumb class="lt-md:flex-1"
+              [componentBreadcrumbsTpl]="dashboardBreadcrumbsTpl">
+            </tb-breadcrumb>
           }
-          <tb-states-component class="lt-md:flex-1"
-                               [statesControllerId]="isEdit ? 'default' : dashboardConfiguration.settings.stateControllerId"
-                               [dashboardCtrl]="this"
-                               [dashboardId]="setStateDashboardId ? dashboard.id.id : ''"
-                               [isMobile]="isMobile"
-                               [state]="dashboardCtx.state"
-                               [currentState]="currentState"
-                               [syncStateWithQueryParam]="syncStateWithQueryParam"
-                               [states]="dashboardConfiguration.states">
-          </tb-states-component>
           @if (isEdit) {
             <button class="gt-md:!hidden" mat-icon-button
                     matTooltip="{{'dashboard.manage-states' | translate}}"
@@ -78,6 +97,13 @@
           }
           @if (showDashboardLogo()) {
             <tb-logo [link]="dashboardLogoLink" [src]="dashboardLogo | image | async" class="dashboard_logo"></tb-logo>
+          }
+          @if (!isEdit) {
+            <button mat-icon-button
+                    [class.!hidden]="forceFullscreen || isFullscreen"
+                    class="-ml-2 gt-sm:!hidden" (click)="toggleSidenav()">
+              <mat-icon class="material-icons">menu</mat-icon>
+            </button>
           }
         </div>
         <div class="tb-dashboard-action-panel">
@@ -97,12 +123,20 @@
                   (click)="toggleLayouts()">
             <mat-icon>{{isRightLayoutOpened ? 'arrow_back' : 'menu'}}</mat-icon>
           </button>
-          <button [class.!hidden]="hideFullscreenButton()" class="xs:!hidden" mat-icon-button
-                  matTooltip="{{(isFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
-                  matTooltipPosition="below"
-                  (click)="isFullscreen = !isFullscreen">
-            <mat-icon>{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
-          </button>
+          <div class="flex flex-row-reverse items-center lt-md:!hidden">
+            @if (!isEdit) {
+              <tb-notification-bell></tb-notification-bell>
+            }
+            <button [class.!hidden]="hideFullscreenButton()" mat-icon-button
+                    matTooltip="{{(isFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
+                    matTooltipPosition="below"
+                    (click)="isFullscreen = !isFullscreen">
+              <mat-icon>{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+            </button>
+          </div>
+          <mat-divider
+            [class.!hidden]="readonly || isEdit"
+            class="tb-toolbar-divider -mr-1.5 ml-2 lt-md:!hidden lt-lg:mr-[-3px]" vertical></mat-divider>
           <button [class.!hidden]="!currentDashboardId || isMobileApp || !displayExport() || isEdit" mat-icon-button
                   matTooltip="{{'dashboard.export' | translate}}"
                   matTooltipPosition="below"
@@ -191,7 +225,7 @@
               {{ 'dashboard.settings' | translate }}
             </button>
           }
-          <button [class.!hidden]="!currentDashboardId || isEdit || isMobileApp || !isTenantAdmin() || !displayUpdateDashboardImage()" mat-icon-button
+          <button [class.!hidden]="!currentDashboardId || isEdit || isMobileApp || !canEdit() || readonly || !displayUpdateDashboardImage()" mat-icon-button
                   matTooltip="{{'dashboard.update-image' | translate}}"
                   matTooltipPosition="below"
                   (click)="updateDashboardImage($event)">
@@ -264,11 +298,16 @@
                                     [aliasController]="dashboardCtx.aliasController">
           </tb-aliases-entity-select>
           @if (!isEdit && !widgetEditMode && !embedded && displayDashboardsSelect()) {
-            <tb-dashboard-select [(ngModel)]="currentDashboardId"
+            <tb-dashboard-select class="ml-2" [(ngModel)]="currentDashboardId"
                                  (ngModelChange)="currentDashboardIdChanged(currentDashboardId)"
                                  [customerId]="currentCustomerId"
                                  [dashboardsScope]="currentDashboardScope">
             </tb-dashboard-select>
+          }
+          @if (!isEdit && !widgetEditMode) {
+            <div class="-mr-1.5 md-lg:!hidden lt-md:!hidden" [class.!hidden]="githubBadge.hideGithubBadge">
+              <tb-github-badge #githubBadge ></tb-github-badge>
+            </div>
           }
         </div>
       </div>
@@ -350,7 +389,7 @@
         @if (!readonly && (hideToolbar || widgetEditMode)) {
           <section data-html2canvas-ignore class="tb-header-buttons tb-enter-edit-mode flex flex-row flex-wrap items-end justify-start">
             <button [class.!hidden]="isEdit"
-                    color="primary"
+                    color="#fff"
                     mat-mini-fab
                     class="tb-btn-header tb-btn-edit"
                     (click)="toggleDashboardEditMode()"
@@ -359,7 +398,7 @@
               <mat-icon>edit</mat-icon>
             </button>
             <button [class.!hidden]="!isEdit"
-                    color="primary"
+                    color="#fff"
                     mat-mini-fab
                     class="tb-btn-header tb-btn-edit"
                     (click)="saveDashboard()"
@@ -369,7 +408,7 @@
               <mat-icon>done</mat-icon>
             </button>
             <button [class.!hidden]="!isEdit"
-                    color="primary"
+                    color="#fff"
                     mat-mini-fab
                     class="tb-btn-header tb-btn-edit"
                     (click)="toggleDashboardEditMode()"

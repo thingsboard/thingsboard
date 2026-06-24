@@ -32,7 +32,7 @@
           transition: opacity $sidenav-anim-timing;
         }
       }
-      mat-sidenav-content.tb-site-content {
+      mat-sidenav-content.tb-site-content:not(.tb-force-fullscreen) {
         margin-left: 250px !important;
         transition: margin-left $sidenav-anim-timing;
       }

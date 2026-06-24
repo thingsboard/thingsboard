@@ -149,6 +149,7 @@ import {
   MoveWidgetsDialogResult
 } from '@home/components/dashboard-page/layout/move-widgets-dialog.component';
 import { HttpStatusCode } from '@angular/common/http';
+import { MainToolbarComponent } from '@home/models/main-toolbar.models';
 
 // @dynamic
 @Component({
@@ -159,7 +160,7 @@ import { HttpStatusCode } from '@angular/common/http';
     changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: false
 })
-export class DashboardPageComponent extends PageComponent implements IDashboardController, HasDirtyFlag, OnInit, AfterViewInit, OnDestroy {
+export class DashboardPageComponent extends PageComponent implements IDashboardController, HasDirtyFlag, MainToolbarComponent, OnInit, AfterViewInit, OnDestroy {
 
   LayoutType = LayoutType;
 
@@ -267,7 +268,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   dashboardLogoLink = this.getDashboardLogoLink();
 
   private dashboardLogoCache: SafeUrl;
-  private defaultDashboardLogo = 'assets/logo_title_white.svg';
+  private defaultDashboardLogo = 'assets/logo_title_black.svg';
 
   private dashboardResize$: ResizeObserver;
 
@@ -320,6 +321,9 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   };
 
   updateBreadcrumbs = new EventEmitter();
+
+  hideMainToolbar = true;
+  toggleSideBar = new EventEmitter();
 
   private rxSubscriptions = new Array<Subscription>();
 
@@ -865,6 +869,10 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   public isSystemAdmin(): boolean {
     return this.authUser.authority === Authority.SYS_ADMIN;
+  }
+
+  public canEdit(): boolean {
+    return this.isTenantAdmin() || (this.isSystemAdmin() && this.widgetEditMode);
   }
 
   public exportDashboard($event: Event) {
@@ -1743,6 +1751,10 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         });
       });
     }
+  }
+
+  toggleSidenav() {
+    this.toggleSideBar.emit();
   }
 
   get showMainLayoutFiller(): boolean {

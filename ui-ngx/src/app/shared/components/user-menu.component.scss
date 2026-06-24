@@ -16,6 +16,15 @@
 
 @import "constants";
 
+.tb-primary-toolbar, .tb-dashboard-action-panel {
+  tb-user-menu {
+    width: auto;
+    button.mat-mdc-button:not(.mat-mdc-icon-button).tb-user-menu {
+      padding: 12px 16px;
+    }
+  }
+}
+
 tb-user-menu {
   width: 100%;
 
