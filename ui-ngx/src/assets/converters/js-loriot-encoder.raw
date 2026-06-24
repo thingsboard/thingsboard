@@ -13,12 +13,17 @@ var port = (metadata.cs_fPort != null && metadata.cs_fPort != '')
     ? parseInt(metadata.cs_fPort)
     : 1;
 
+// Send only the command value (powerState) rather than the whole message; fall back to 'unspecified' when absent.
+var payload = (msg.powerState != null)
+    ? msg.powerState
+    : 'unspecified';
+
 var result = {
   // Downlink data content type: JSON, TEXT, or BINARY (base64 format).
-  contentType: "JSON",
+  contentType: "TEXT",
 
-  // Downlink data — serialise the full message payload as a JSON string.
-  data: JSON.stringify(msg),
+  // Downlink data — the command value; LORIOT hex-encodes it before delivery.
+  data: payload,
 
   // Metadata required by LORIOT for downlink delivery.
   metadata: {

@@ -12,12 +12,16 @@
 
 /** Encoder **/
 
+var base64Payload = (msg.powerState != null)
+    ? btoa(msg.powerState)         // if powerState is present, encode it to base64
+    : btoa('unspecified');         // fall back to 'unspecified' when absent
+
 // Result object with encoded downlink payload
 var result = {
   // downlink data content type: JSON, TEXT or BINARY (base64 format)
   contentType: "TEXT",
   // downlink data
-  data: btoa(JSON.stringify(msg)),
+  data: base64Payload,
   // Metadata required by ChirpStack for downlink delivery.
   metadata: {
     // Target device EUI; ChirpStack rejects the downlink if this is missing.
