@@ -82,6 +82,9 @@ let connections: Socket[] = [];
         }
         logger.info('Security headers: %s', JSON.stringify(securityHeaders));
 
+        const compressionEnabled = isEnabled(config.get('server.compression.enabled'));
+        logger.info('HTTP response compression enabled: %s', compressionEnabled);
+
         // Apply security headers to all responses
         app.use((_req, res, next) => {
             for (const [name, value] of Object.entries(securityHeaders)) {
@@ -126,7 +129,10 @@ let connections: Socket[] = [];
         }
 
         app.use(historyApiFallback());
-        app.use(compression());
+        if (compressionEnabled) {
+            app.use(compression());
+        }
+
 
         const root = path.join(webDir, 'public');
 
