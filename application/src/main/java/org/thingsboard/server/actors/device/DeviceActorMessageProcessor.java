@@ -518,6 +518,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         systemContext.getDeviceStateService().onDeviceDisconnect(tenantId, deviceId);
     }
 
+    @SuppressWarnings("deprecation") // isMultipleAttributesRequest retained for the legacy gateway value/values response
     private void handleGetAttributesRequest(SessionInfoProto sessionInfo, GetAttributeRequestMsg request) {
         int requestId = request.getRequestId();
         if (request.getOnlyShared()) {
@@ -548,6 +549,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
                 public void onSuccess(@Nullable List<List<AttributeKvEntry>> result) {
                     GetAttributeResponseMsg responseMsg = GetAttributeResponseMsg.newBuilder()
                             .setRequestId(requestId)
+                            .setSeparateScopesResponse(request.getSeparateScopesResponse())
                             .addAllClientAttributeList(KvProtoUtil.attrToTsKvProtos(result.get(0)))
                             .addAllSharedAttributeList(KvProtoUtil.attrToTsKvProtos(result.get(1)))
                             .setIsMultipleAttributesRequest(
@@ -568,20 +570,33 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
     }
 
     private ListenableFuture<List<List<AttributeKvEntry>>> getAttributesKvEntries(GetAttributeRequestMsg request) {
+        boolean clientAll = request.getAllClientAttributes();
+        boolean sharedAll = request.getAllSharedAttributes();
+        boolean clientSpecific = !CollectionUtils.isEmpty(request.getClientAttributeNamesList());
+        boolean sharedSpecific = !CollectionUtils.isEmpty(request.getSharedAttributeNamesList());
+
+        boolean noClientSignal = !clientAll && !clientSpecific;
+        boolean noSharedSignal = !sharedAll && !sharedSpecific;
+
         ListenableFuture<List<AttributeKvEntry>> clientAttributesFuture;
         ListenableFuture<List<AttributeKvEntry>> sharedAttributesFuture;
-        if (CollectionUtils.isEmpty(request.getClientAttributeNamesList()) && CollectionUtils.isEmpty(request.getSharedAttributeNamesList())) {
+
+        if (noClientSignal && noSharedSignal) {
+            // backward-compat: empty request => fetch everything from both scopes
             clientAttributesFuture = findAllAttributesByScope(AttributeScope.CLIENT_SCOPE);
             sharedAttributesFuture = findAllAttributesByScope(AttributeScope.SHARED_SCOPE);
-        } else if (!CollectionUtils.isEmpty(request.getClientAttributeNamesList()) && !CollectionUtils.isEmpty(request.getSharedAttributeNamesList())) {
-            clientAttributesFuture = findAttributesByScope(toSet(request.getClientAttributeNamesList()), AttributeScope.CLIENT_SCOPE);
-            sharedAttributesFuture = findAttributesByScope(toSet(request.getSharedAttributeNamesList()), AttributeScope.SHARED_SCOPE);
-        } else if (CollectionUtils.isEmpty(request.getClientAttributeNamesList()) && !CollectionUtils.isEmpty(request.getSharedAttributeNamesList())) {
-            clientAttributesFuture = Futures.immediateFuture(Collections.emptyList());
-            sharedAttributesFuture = findAttributesByScope(toSet(request.getSharedAttributeNamesList()), AttributeScope.SHARED_SCOPE);
         } else {
-            sharedAttributesFuture = Futures.immediateFuture(Collections.emptyList());
-            clientAttributesFuture = findAttributesByScope(toSet(request.getClientAttributeNamesList()), AttributeScope.CLIENT_SCOPE);
+            // "all <scope>" wins over a specific key list for the same scope
+            clientAttributesFuture = clientAll
+                    ? findAllAttributesByScope(AttributeScope.CLIENT_SCOPE)
+                    : (clientSpecific
+                        ? findAttributesByScope(toSet(request.getClientAttributeNamesList()), AttributeScope.CLIENT_SCOPE)
+                        : Futures.immediateFuture(Collections.emptyList()));
+            sharedAttributesFuture = sharedAll
+                    ? findAllAttributesByScope(AttributeScope.SHARED_SCOPE)
+                    : (sharedSpecific
+                        ? findAttributesByScope(toSet(request.getSharedAttributeNamesList()), AttributeScope.SHARED_SCOPE)
+                        : Futures.immediateFuture(Collections.emptyList()));
         }
         return Futures.allAsList(Arrays.asList(clientAttributesFuture, sharedAttributesFuture));
     }

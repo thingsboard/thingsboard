@@ -354,6 +354,7 @@ public class JsonConverter {
         return result;
     }
 
+    @SuppressWarnings("deprecation") // isMultipleAttributesRequest retained for the legacy gateway value/values response
     public static JsonObject getJsonObjectForGateway(
             String deviceName,
             TransportProtos.GetAttributeResponseMsg responseMsg
@@ -361,11 +362,24 @@ public class JsonConverter {
         JsonObject result = new JsonObject();
         result.addProperty("id", responseMsg.getRequestId());
         result.addProperty(DEVICE_PROPERTY, deviceName);
-        if (responseMsg.getClientAttributeListCount() > 0) {
-            addValues(result, responseMsg.getClientAttributeListList(), responseMsg.getIsMultipleAttributesRequest());
-        }
-        if (responseMsg.getSharedAttributeListCount() > 0) {
-            addValues(result, responseMsg.getSharedAttributeListList(), responseMsg.getIsMultipleAttributesRequest());
+        if (responseMsg.getSeparateScopesResponse()) {
+            if (responseMsg.getClientAttributeListCount() > 0) {
+                JsonObject client = new JsonObject();
+                responseMsg.getClientAttributeListList().forEach(addToObjectFromProto(client));
+                result.add("client", client);
+            }
+            if (responseMsg.getSharedAttributeListCount() > 0) {
+                JsonObject shared = new JsonObject();
+                responseMsg.getSharedAttributeListList().forEach(addToObjectFromProto(shared));
+                result.add("shared", shared);
+            }
+        } else {
+            if (responseMsg.getClientAttributeListCount() > 0) {
+                addValues(result, responseMsg.getClientAttributeListList(), responseMsg.getIsMultipleAttributesRequest());
+            }
+            if (responseMsg.getSharedAttributeListCount() > 0) {
+                addValues(result, responseMsg.getSharedAttributeListList(), responseMsg.getIsMultipleAttributesRequest());
+            }
         }
         return result;
     }
