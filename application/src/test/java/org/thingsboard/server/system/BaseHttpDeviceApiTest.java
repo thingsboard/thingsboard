@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.system;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.context.TestPropertySource;
@@ -72,6 +73,25 @@ public abstract class BaseHttpDeviceApiTest extends AbstractControllerTest {
                 .andExpect(status().isOk());
         Thread.sleep(2000);
         doGetAsync("/api/v1/" + deviceCredentials.getCredentialsId() + "/attributes?clientKeys=keyA,keyB,keyC").andExpect(status().isOk());
+    }
+
+    @Test
+    public void testGetAllClientAttributesViaAllClientKeysParam() throws Exception {
+        String token = deviceCredentials.getCredentialsId();
+        Map<String, String> clientAttrs = new HashMap<>();
+        clientAttrs.put("clientA", "valueA");
+        clientAttrs.put("clientB", "valueB");
+        mockMvc.perform(
+                        asyncDispatch(doPost("/api/v1/" + token + "/attributes", clientAttrs, new String[]{}).andReturn()))
+                .andExpect(status().isOk());
+        Thread.sleep(2000);
+        String body = doGetAsync("/api/v1/" + token + "/attributes?allClientKeys=true")
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        JsonNode resp = JacksonUtil.toJsonNode(body);
+        assertThat(resp.has("client")).isTrue();
+        assertThat(resp.get("client").get("clientA").asText()).isEqualTo("valueA");
+        assertThat(resp.get("client").get("clientB").asText()).isEqualTo("valueB");
+        assertThat(resp.has("shared")).isFalse();
     }
 
     @Test
