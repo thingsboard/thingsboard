@@ -47,4 +47,14 @@ public class CoapAttributesRequestJsonIntegrationTest extends CoapAttributesRequ
     public void testRequestAttributesValuesFromTheServer() throws Exception {
         processJsonTestRequestAttributesValuesFromTheServer();
     }
+
+    @Test
+    public void testRequestAllSharedAttributes() throws Exception {
+        processJsonTestRequestAttributesWithQuery("?allSharedKeys=true", "{\"shared\":" + SHARED_ATTRIBUTES_PAYLOAD + "}");
+    }
+
+    @Test
+    public void testRequestAllClientAttributes() throws Exception {
+        processJsonTestRequestAttributesWithQuery("?allClientKeys=true", "{\"client\":" + CLIENT_ATTRIBUTES_PAYLOAD + "}");
+    }
 }

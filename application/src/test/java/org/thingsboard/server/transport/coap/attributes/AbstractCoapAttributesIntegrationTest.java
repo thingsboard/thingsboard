@@ -89,10 +89,10 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
             "  }\n" +
             "}";
 
-    private static final String CLIENT_ATTRIBUTES_PAYLOAD = "{\"clientStr\":\"value1\",\"clientBool\":true,\"clientDbl\":42.0,\"clientLong\":73," +
+    protected static final String CLIENT_ATTRIBUTES_PAYLOAD = "{\"clientStr\":\"value1\",\"clientBool\":true,\"clientDbl\":42.0,\"clientLong\":73," +
             "\"clientJson\":{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}}";
 
-    private static final String SHARED_ATTRIBUTES_PAYLOAD = "{\"sharedStr\":\"value1\",\"sharedBool\":true,\"sharedDbl\":42.0,\"sharedLong\":73," +
+    protected static final String SHARED_ATTRIBUTES_PAYLOAD = "{\"sharedStr\":\"value1\",\"sharedBool\":true,\"sharedDbl\":42.0,\"sharedLong\":73," +
             "\"sharedJson\":{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}}";
 
     protected static final String SHARED_ATTRIBUTES_PAYLOAD_ON_CURRENT_STATE_NOTIFICATION = "{\"sharedStr\":\"value\",\"sharedBool\":false,\"sharedDbl\":41.0,\"sharedLong\":72," +
@@ -196,6 +196,34 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
         String featureTokenUrl = CoapTestClient.getFeatureTokenUrl(accessToken, FeatureType.ATTRIBUTES) + "?clientKeys=" + clientKeysStr + "&sharedKeys=" + sharedKeysStr;
         client.setURI(featureTokenUrl);
         validateJsonResponse(client.getMethod());
+    }
+
+    protected void processJsonTestRequestAttributesWithQuery(String querySuffix, String expectedResponse) throws Exception {
+        client = new CoapTestClient(accessToken, FeatureType.ATTRIBUTES);
+        SingleEntityFilter dtf = new SingleEntityFilter();
+        dtf.setSingleEntity(AliasEntityId.fromEntityId(savedDevice.getId()));
+        String clientKeysStr = "clientStr,clientBool,clientDbl,clientLong,clientJson";
+        String sharedKeysStr = "sharedStr,sharedBool,sharedDbl,sharedLong,sharedJson";
+        List<EntityKey> keys = new ArrayList<>();
+        keys.addAll(getEntityKeys(List.of(clientKeysStr.split(",")), CLIENT_ATTRIBUTE));
+        keys.addAll(getEntityKeys(List.of(sharedKeysStr.split(",")), SHARED_ATTRIBUTE));
+        getWsClient().subscribeLatestUpdate(keys, dtf);
+        getWsClient().registerWaitForUpdate(2);
+
+        doPostAsync("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/attributes/SHARED_SCOPE",
+                SHARED_ATTRIBUTES_PAYLOAD, String.class, status().isOk());
+
+        CoapResponse coapResponse = client.postMethod(CLIENT_ATTRIBUTES_PAYLOAD);
+        assertEquals(CoAP.ResponseCode.CREATED, coapResponse.getCode());
+
+        String update = getWsClient().waitForUpdate();
+        assertThat(update).as("ws update received").isNotBlank();
+
+        String featureTokenUrl = CoapTestClient.getFeatureTokenUrl(accessToken, FeatureType.ATTRIBUTES) + querySuffix;
+        client.setURI(featureTokenUrl);
+        CoapResponse response = client.getMethod();
+        assertEquals(CoAP.ResponseCode.CONTENT, response.getCode());
+        assertEquals(JacksonUtil.toJsonNode(expectedResponse), JacksonUtil.fromBytes(response.getPayload()));
     }
 
     protected void processProtoTestRequestAttributesValuesFromTheServer() throws Exception {
