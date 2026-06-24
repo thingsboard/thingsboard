@@ -98,4 +98,8 @@ message GatewayAttributesRequestMsg {
   string deviceName = 2;
   bool client = 3;
   repeated string keys = 4;
+  repeated string clientKeys = 5;
+  repeated string sharedKeys = 6;
+  bool allClientKeys = 7;
+  bool allSharedKeys = 8;
 }
