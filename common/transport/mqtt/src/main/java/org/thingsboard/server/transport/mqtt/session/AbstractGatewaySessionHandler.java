@@ -27,7 +27,6 @@ import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.google.protobuf.ProtocolStringList;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
@@ -654,30 +653,90 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
         JsonObject jsonObj = json.getAsJsonObject();
         int requestId = jsonObj.get("id").getAsInt();
         String deviceName = jsonObj.get(DEVICE_PROPERTY).getAsString();
-        boolean clientScope = jsonObj.get("client").getAsBoolean();
-        Set<String> keys;
-        if (jsonObj.has("key")) {
-            keys = Collections.singleton(jsonObj.get("key").getAsString());
-        } else {
-            JsonArray keysArray = jsonObj.get("keys").getAsJsonArray();
-            keys = new HashSet<>();
-            for (JsonElement keyObj : keysArray) {
-                keys.add(keyObj.getAsString());
+        TransportProtos.GetAttributeRequestMsg requestMsg;
+        if (jsonObj.has("clientKeys") || jsonObj.has("sharedKeys")) {
+            // new unified format: clientKeys/sharedKeys + empty-value="all"; emit the separated response
+            TransportProtos.GetAttributeRequestMsg.Builder b = TransportProtos.GetAttributeRequestMsg.newBuilder()
+                    .setRequestId(requestId).setSeparateScopesResponse(true);
+            parseGatewayScope(jsonObj, "clientKeys", b::addAllClientAttributeNames, () -> b.setAllClientAttributes(true));
+            parseGatewayScope(jsonObj, "sharedKeys", b::addAllSharedAttributeNames, () -> b.setAllSharedAttributes(true));
+            requestMsg = b.build();
+        } else if (jsonObj.has("client")) {
+            // legacy format: client boolean + key/keys; keep the legacy value/values response
+            boolean clientScope = jsonObj.get("client").getAsBoolean();
+            Set<String> keys;
+            if (jsonObj.has("key")) {
+                keys = Collections.singleton(jsonObj.get("key").getAsString());
+            } else {
+                JsonArray keysArray = jsonObj.get("keys").getAsJsonArray();
+                keys = new HashSet<>();
+                for (JsonElement keyObj : keysArray) {
+                    keys.add(keyObj.getAsString());
+                }
             }
+            requestMsg = toGetAttributeRequestMsg(requestId, clientScope, keys);
+        } else {
+            // neither marker present: fetch everything, separated response
+            requestMsg = TransportProtos.GetAttributeRequestMsg.newBuilder()
+                    .setRequestId(requestId).setSeparateScopesResponse(true).build();
         }
-        TransportProtos.GetAttributeRequestMsg requestMsg = toGetAttributeRequestMsg(requestId, clientScope, keys);
         processGetAttributeRequestMessage(msg, deviceName, requestMsg);
+    }
+
+    // Three-state per scope, accepting a comma-string or a JSON array; empty/absent value => all in scope.
+    private static void parseGatewayScope(JsonObject json, String field,
+                                          Consumer<List<String>> setNames, Runnable setAll) {
+        if (!json.has(field) || json.get(field).isJsonNull()) {
+            return;
+        }
+        JsonElement el = json.get(field);
+        List<String> names = new ArrayList<>();
+        if (el.isJsonArray()) {
+            for (JsonElement e : el.getAsJsonArray()) {
+                names.add(e.getAsString());
+            }
+        } else {
+            String v = el.getAsString();
+            if (v.trim().isEmpty()) {
+                setAll.run();
+                return;
+            }
+            names.addAll(java.util.Arrays.asList(v.split(",")));
+        }
+        if (names.isEmpty()) {
+            setAll.run();
+        } else {
+            setNames.accept(names);
+        }
     }
 
     private void onDeviceAttributesRequestProto(MqttPublishMessage mqttMsg) throws AdaptorException {
         try {
-            TransportApiProtos.GatewayAttributesRequestMsg gatewayAttributesRequestMsg = TransportApiProtos.GatewayAttributesRequestMsg.parseFrom(getBytes(mqttMsg.payload()));
-            String deviceName = checkDeviceName(gatewayAttributesRequestMsg.getDeviceName());
-            int requestId = gatewayAttributesRequestMsg.getId();
-            boolean clientScope = gatewayAttributesRequestMsg.getClient();
-            ProtocolStringList keysList = gatewayAttributesRequestMsg.getKeysList();
-            Set<String> keys = new HashSet<>(keysList);
-            TransportProtos.GetAttributeRequestMsg requestMsg = toGetAttributeRequestMsg(requestId, clientScope, keys);
+            TransportApiProtos.GatewayAttributesRequestMsg gw = TransportApiProtos.GatewayAttributesRequestMsg.parseFrom(getBytes(mqttMsg.payload()));
+            String deviceName = checkDeviceName(gw.getDeviceName());
+            int requestId = gw.getId();
+            boolean newFormat = gw.getAllClientKeys() || gw.getAllSharedKeys()
+                    || gw.getClientKeysCount() > 0 || gw.getSharedKeysCount() > 0;
+            TransportProtos.GetAttributeRequestMsg requestMsg;
+            if (newFormat) {
+                TransportProtos.GetAttributeRequestMsg.Builder b = TransportProtos.GetAttributeRequestMsg.newBuilder()
+                        .setRequestId(requestId).setSeparateScopesResponse(true);
+                if (gw.getAllClientKeys()) {
+                    b.setAllClientAttributes(true);
+                } else {
+                    b.addAllClientAttributeNames(gw.getClientKeysList());
+                }
+                if (gw.getAllSharedKeys()) {
+                    b.setAllSharedAttributes(true);
+                } else {
+                    b.addAllSharedAttributeNames(gw.getSharedKeysList());
+                }
+                requestMsg = b.build();
+            } else {
+                boolean clientScope = gw.getClient();
+                Set<String> keys = new HashSet<>(gw.getKeysList());
+                requestMsg = toGetAttributeRequestMsg(requestId, clientScope, keys);
+            }
             processGetAttributeRequestMessage(mqttMsg, deviceName, requestMsg);
         } catch (RuntimeException | InvalidProtocolBufferException e) {
             throw new AdaptorException(e);
