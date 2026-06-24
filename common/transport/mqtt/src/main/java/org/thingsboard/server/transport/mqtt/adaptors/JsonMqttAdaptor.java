@@ -38,9 +38,7 @@ import org.thingsboard.server.transport.mqtt.session.MqttDeviceAwareSessionConte
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_SOFTWARE_FIRMWARE_RESPONSES_TOPIC_FORMAT;
@@ -176,15 +174,9 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
             TransportProtos.GetAttributeRequestMsg.Builder result = TransportProtos.GetAttributeRequestMsg.newBuilder();
             result.setRequestId(getRequestId(topicName, topicBase));
             String payload = inbound.payload().toString(UTF8);
-            JsonElement requestBody = JsonParser.parseString(payload);
-            Set<String> clientKeys = toStringSet(requestBody, "clientKeys");
-            Set<String> sharedKeys = toStringSet(requestBody, "sharedKeys");
-            if (clientKeys != null) {
-                result.addAllClientAttributeNames(clientKeys);
-            }
-            if (sharedKeys != null) {
-                result.addAllSharedAttributeNames(sharedKeys);
-            }
+            JsonObject json = JsonParser.parseString(payload).getAsJsonObject();
+            parseAttrScope(json, "clientKeys", result::addAllClientAttributeNames, () -> result.setAllClientAttributes(true));
+            parseAttrScope(json, "sharedKeys", result::addAllSharedAttributeNames, () -> result.setAllSharedAttributes(true));
             return result.build();
         } catch (RuntimeException e) {
             log.debug("Failed to decode get attributes request", e);
@@ -248,12 +240,18 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
         return new MqttPublishMessage(mqttFixedHeader, header, payload);
     }
 
-    private Set<String> toStringSet(JsonElement requestBody, String name) {
-        JsonElement element = requestBody.getAsJsonObject().get(name);
-        if (element != null) {
-            return new HashSet<>(Arrays.asList(element.getAsString().split(",")));
+    // Three-state per scope: field absent => exclude; present + empty value => all in scope; present + list => those keys.
+    private static void parseAttrScope(JsonObject json, String field,
+                                       java.util.function.Consumer<java.util.List<String>> setNames,
+                                       Runnable setAll) {
+        if (!json.has(field) || json.get(field).isJsonNull()) {
+            return;
+        }
+        String value = json.get(field).getAsString();
+        if (value.trim().isEmpty()) {
+            setAll.run();
         } else {
-            return null;
+            setNames.accept(Arrays.asList(value.split(",")));
         }
     }
 
