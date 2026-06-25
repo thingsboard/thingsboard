@@ -149,7 +149,7 @@ import {
   MoveWidgetsDialogResult
 } from '@home/components/dashboard-page/layout/move-widgets-dialog.component';
 import { HttpStatusCode } from '@angular/common/http';
-import { MainToolbarComponent } from '@home/models/main-toolbar.models';
+import { HomeService } from '@core/services/home.service';
 
 // @dynamic
 @Component({
@@ -160,7 +160,7 @@ import { MainToolbarComponent } from '@home/models/main-toolbar.models';
     changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: false
 })
-export class DashboardPageComponent extends PageComponent implements IDashboardController, HasDirtyFlag, MainToolbarComponent, OnInit, AfterViewInit, OnDestroy {
+export class DashboardPageComponent extends PageComponent implements IDashboardController, HasDirtyFlag, OnInit, AfterViewInit, OnDestroy {
 
   LayoutType = LayoutType;
 
@@ -199,6 +199,9 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   get hideToolbar(): boolean {
     return ((this.hideToolbarValue || this.hideToolbarSetting()) && !this.isEdit) || (this.isEditingWidget || this.isAddingWidget);
   }
+
+  @Input()
+  hideMainToolbar = true;
 
   @Input()
   syncStateWithQueryParam = true;
@@ -322,9 +325,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   updateBreadcrumbs = new EventEmitter();
 
-  hideMainToolbar = true;
-  toggleSideBar = new EventEmitter();
-
   private rxSubscriptions = new Array<Subscription>();
 
   get toolbarOpened(): boolean {
@@ -378,7 +378,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
               private viewContainerRef: ViewContainerRef,
               private cd: ChangeDetectorRef,
               public elRef: ElementRef,
-              private injector: Injector) {
+              private injector: Injector,
+              public homeService: HomeService) {
     super(store);
     if (isDefinedAndNotNull(this.embeddedValue)) {
       this.embedded = this.embeddedValue;
@@ -386,6 +387,9 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   }
 
   ngOnInit() {
+    if (this.hideMainToolbar) {
+      this.homeService.setHideMainToolbar(true);
+    }
     this.rxSubscriptions.push(this.route.data.subscribe(
       (data) => {
         let dashboardPageInitData: DashboardPageInitData;
@@ -1754,7 +1758,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   }
 
   toggleSidenav() {
-    this.toggleSideBar.emit();
+    this.homeService.toggleSideBar.emit();
   }
 
   get showMainLayoutFiller(): boolean {

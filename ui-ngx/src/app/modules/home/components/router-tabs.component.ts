@@ -26,6 +26,7 @@ import { MenuSection } from '@core/services/menu.models';
 import { ActiveComponentService } from '@core/services/active-component.service';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { HomeService } from '@core/services/home.service';
 
 @Component({
     selector: 'tb-router-tabs',
@@ -46,10 +47,11 @@ export class RouterTabsComponent extends PageComponent implements OnInit {
   tabs$: Observable<Array<MenuSection>>;
 
   constructor(protected store: Store<AppState>,
-              private activatedRoute: ActivatedRoute,
+              public activatedRoute: ActivatedRoute,
               public router: Router,
               private menuService: MenuService,
-              private activeComponentService: ActiveComponentService) {
+              private activeComponentService: ActiveComponentService,
+              public homeService: HomeService) {
     super(store);
   }
 

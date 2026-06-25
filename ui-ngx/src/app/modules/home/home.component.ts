@@ -18,14 +18,14 @@ import {
   AfterViewInit,
   Component,
   computed,
-  ElementRef, EventEmitter,
+  ElementRef,
   Inject,
   OnDestroy,
   OnInit,
   signal,
   ViewChild
 } from '@angular/core';
-import { skip, startWith, Subject, Subscription } from 'rxjs';
+import { skip, startWith, Subject } from 'rxjs';
 import { select, Store } from '@ngrx/store';
 import { debounceTime, distinctUntilChanged, take, takeUntil } from 'rxjs/operators';
 
@@ -44,7 +44,7 @@ import { RouterTabsComponent } from '@home/components/router-tabs.component';
 import { FormBuilder } from '@angular/forms';
 import { isDefinedAndNotNull } from '@core/utils';
 import { ActionPreferencesPutUserSettings } from '@core/auth/auth.actions';
-import { isMainToolbarComponent } from '@home/models/main-toolbar.models';
+import { HomeService } from '@core/services/home.service';
 
 @Component({
     selector: 'tb-home',
@@ -84,19 +84,14 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
   showSearch = false;
   textSearch = this.fb.control('', {nonNullable: true});
 
-  hideLoadingBar = false;
-
-  hideMainToolbar = false;
-
-  private toggleSideBarSubscription: Subscription;
-
   private destroy$ = new Subject<void>();
 
   constructor(protected store: Store<AppState>,
               @Inject(WINDOW) private window: Window,
               private activeComponentService: ActiveComponentService,
               private fb: FormBuilder,
-              public breakpointObserver: BreakpointObserver) {
+              public breakpointObserver: BreakpointObserver,
+              public homeService: HomeService) {
     super(store);
   }
 
@@ -127,12 +122,13 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
           }
         }
       );
+
+    this.homeService.toggleSideBar.pipe(takeUntil(this.destroy$)).subscribe(() => {
+      this.sidenav.toggle();
+    });
   }
 
   ngOnDestroy() {
-    if (this.toggleSideBarSubscription) {
-      this.toggleSideBarSubscription.unsubscribe();
-    }
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -186,17 +182,8 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
 
   private updateActiveComponent(activeComponent: any) {
     this.showSearch = false;
-    this.hideLoadingBar = false;
     this.textSearch.reset('', {emitEvent: false});
     this.activeComponent = activeComponent;
-
-    if (activeComponent && activeComponent instanceof RouterTabsComponent
-      && isDefinedAndNotNull(this.activeComponent.activatedRoute?.snapshot?.data?.showMainLoadingBar)) {
-      this.hideLoadingBar = !this.activeComponent.activatedRoute.snapshot.data.showMainLoadingBar;
-    } else if (activeComponent && activeComponent instanceof PageComponent
-      && isDefinedAndNotNull(this.activeComponent?.showMainLoadingBar)) {
-      this.hideLoadingBar = !this.activeComponent.showMainLoadingBar;
-    }
 
     if (this.activeComponent && instanceOfSearchableComponent(this.activeComponent)) {
       this.searchEnabled = true;
@@ -204,22 +191,6 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
     } else {
       this.searchEnabled = false;
       this.searchableComponent = null;
-    }
-
-    if (this.toggleSideBarSubscription) {
-      this.toggleSideBarSubscription.unsubscribe();
-      this.toggleSideBarSubscription = null;
-    }
-
-    this.hideMainToolbar = false;
-
-    if (isMainToolbarComponent(this.activeComponent)) {
-      this.hideMainToolbar = this.activeComponent.hideMainToolbar;
-      this.toggleSideBarSubscription = this.activeComponent.toggleSideBar.subscribe(
-        () => {
-          this.sidenav.toggle();
-        }
-      );
     }
   }
 

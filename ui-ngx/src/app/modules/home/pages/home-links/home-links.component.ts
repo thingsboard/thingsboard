@@ -17,11 +17,8 @@
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
-  Component, DestroyRef,
-  effect,
-  EventEmitter,
-  OnInit,
-  viewChild
+  Component,
+  OnInit
 } from '@angular/core';
 import { MenuService } from '@core/services/menu.service';
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
@@ -29,9 +26,6 @@ import { MediaBreakpoints } from '@shared/models/constants';
 import { HomeSection } from '@core/services/menu.models';
 import { ActivatedRoute } from '@angular/router';
 import { HomeDashboard } from '@shared/models/dashboard.models';
-import { MainToolbarComponent } from '@home/models/main-toolbar.models';
-import { DashboardPageComponent } from '@home/components/dashboard-page/dashboard-page.component';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-home-links',
@@ -40,9 +34,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: false
 })
-export class HomeLinksComponent implements MainToolbarComponent, OnInit {
-
-  private dashboardPage = viewChild<DashboardPageComponent>('dashboardPage');
+export class HomeLinksComponent implements OnInit {
 
   homeSections$ = this.menuService.homeSections();
 
@@ -50,28 +42,16 @@ export class HomeLinksComponent implements MainToolbarComponent, OnInit {
 
   homeDashboard: HomeDashboard = this.route.snapshot.data.homeDashboard;
 
-  hideMainToolbar = false;
-  toggleSideBar = new EventEmitter<void>();
+  hideMainToolbar = true;
 
   constructor(private menuService: MenuService,
               public breakpointObserver: BreakpointObserver,
               private cd: ChangeDetectorRef,
-              private route: ActivatedRoute,
-              private destroyRef: DestroyRef) {
-    effect(() => {
-      const dashboardPage = this.dashboardPage();
-      if (dashboardPage) {
-        dashboardPage.toggleSideBar.pipe(
-          takeUntilDestroyed(this.destroyRef)
-        ).subscribe(() => {
-          this.toggleSideBar.emit();
-        });
-      }
-    });
-    this.hideMainToolbar = (!!this.homeDashboard && !this.homeDashboard.isSystemDashboard);
+              private route: ActivatedRoute) {
   }
 
   ngOnInit() {
+    this.hideMainToolbar = (!!this.homeDashboard && !this.homeDashboard.isSystemDashboard);
     if (!this.homeDashboard) {
       this.updateColumnCount();
       this.breakpointObserver

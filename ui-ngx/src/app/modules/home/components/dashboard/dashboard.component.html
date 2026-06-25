@@ -78,7 +78,7 @@
   </mat-menu>
   <div [class]="dashboardClass" id="gridster-background">
     <gridster #gridster id="gridster-child" [options]="gridsterOpts">
-      @for (widget of dashboardWidgets; track widget) {
+      @for (widget of dashboardWidgets; track widget.widgetId) {
         <gridster-item #gridsterItem [item]="widget" [class]="{'tb-noselect': isEdit}">
           <tb-widget-container
             [gridsterItem]="gridsterItem"

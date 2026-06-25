@@ -16,7 +16,7 @@
 
 -->
 @if (homeDashboard) {
-  <tb-dashboard-page #dashboardPage [embedded]="true" [dashboard]="homeDashboard" [hideToolbar]="homeDashboard.hideDashboardToolbar"></tb-dashboard-page>
+  <tb-dashboard-page [embedded]="true" [dashboard]="homeDashboard" [hideToolbar]="homeDashboard.hideDashboardToolbar" [hideMainToolbar]="hideMainToolbar"></tb-dashboard-page>
 } @else {
   <mat-grid-list class="tb-home-links" [cols]="cols" rowHeight="280px">
     @for (section of homeSections$| async; track section) {

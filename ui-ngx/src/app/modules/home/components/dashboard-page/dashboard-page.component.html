@@ -314,6 +314,11 @@
         </div>
       </div>
     </tb-dashboard-toolbar>
+    @if (hideMainToolbar && toolbarOpened && (homeService.hideLoadingBar$ | async) === false && (isLoading$ | async)) {
+      <mat-progress-bar color="warn" style="z-index: 10; margin-bottom: -4px; width: 100%;" mode="indeterminate"
+      >
+      </mat-progress-bar>
+    }
   </section>
   <section class="tb-dashboard-container tb-absolute-fill"
            tb-toast toastTarget="dashboardRoot"
