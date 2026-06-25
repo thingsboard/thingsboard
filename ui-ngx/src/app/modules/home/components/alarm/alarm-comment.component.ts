@@ -139,7 +139,8 @@ export class AlarmCommentComponent implements OnInit {
             displayDataElement.editedDateAgo = this.dateAgoPipe.transform(alarmComment.comment.editedOn) + '\n';
             displayDataElement.showActions = false;
             const isCommentAuthor = this.authUser.userId === alarmComment.userId?.id;
-            // Author may edit and delete own comments; tenant admin may delete any comment (matches backend).
+            // Mirrors backend AlarmCommentController#deleteAlarmComment / checkUserPermission:
+            // author may edit and delete own comments; tenant admin may delete any comment.
             displayDataElement.canEdit = isCommentAuthor;
             displayDataElement.canDelete = isCommentAuthor || this.authUser.authority === Authority.TENANT_ADMIN;
             displayDataElement.isSystemComment = false;
