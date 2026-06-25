@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { MenuSection } from '@core/services/menu.models';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
@@ -29,7 +29,7 @@ import { coerceBoolean } from '@shared/decorators/coercion';
     changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: false
 })
-export class MenuToggleComponent implements OnInit {
+export class MenuToggleComponent {
 
   @Input() section: MenuSection;
 
@@ -39,9 +39,6 @@ export class MenuToggleComponent implements OnInit {
 
   constructor(private router: Router,
               private store: Store<AppState>) {
-  }
-
-  ngOnInit() {
   }
 
   sectionHeight(): string {
@@ -71,9 +68,5 @@ export class MenuToggleComponent implements OnInit {
     } else {
       return false;
     }
-  }
-
-  trackBySectionPages(index: number, section: MenuSection){
-    return section.id;
   }
 }

@@ -16,7 +16,7 @@
 
 -->
 <ul class="tb-side-menu flex flex-col items-stretch justify-start" [class.tb-collapsed]="collapsed">
-  @for (section of menuSections$ | async; track trackByMenuSection($index, section)) {
+  @for (section of menuSections$ | async; track section.id) {
     <li>
       @switch (section.type === 'link') {
         @case (true) {

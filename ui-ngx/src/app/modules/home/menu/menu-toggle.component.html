@@ -37,7 +37,7 @@
   [class.tb-toggled]="section.opened"></span>
 </a>
 <ul id="docs-menu-{{section.name | nospace}}" class="tb-menu-toggle-list" [style.height]="sectionHeight()">
-  @for (page of section.pages; track trackBySectionPages($index, page)) {
+  @for (page of section.pages; track page.id) {
     <li>
       <tb-menu-link [section]="page"></tb-menu-link>
     </li>
@@ -49,7 +49,7 @@
     <div class="tb-menu-toggle-header">
       <span>{{section.customTranslate ? (section.name | customTranslate) : (section.name | translate)}}</span>
     </div>
-    @for (page of section.pages; track trackBySectionPages($index, page)) {
+    @for (page of section.pages; track page.id) {
       <a mat-button routerLinkActive="tb-active" [routerLinkActiveOptions]="{paths: 'subset', queryParams: 'ignored', matrixParams: 'ignored', fragment: 'ignored'}"
          routerLink="{{page.path}}" (click)="menuPopover?.hide();">
         <span>{{page.customTranslate ? (page.name | customTranslate) : (page.name | translate)}}</span>

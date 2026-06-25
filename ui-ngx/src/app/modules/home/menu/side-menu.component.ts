@@ -14,9 +14,8 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { MenuService } from '@core/services/menu.service';
-import { MenuSection } from '@core/services/menu.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
@@ -26,7 +25,7 @@ import { coerceBoolean } from '@shared/decorators/coercion';
     changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: false
 })
-export class SideMenuComponent implements OnInit {
+export class SideMenuComponent {
 
   @Input()
   @coerceBoolean()
@@ -35,13 +34,6 @@ export class SideMenuComponent implements OnInit {
   menuSections$ = this.menuService.menuSections();
 
   constructor(private menuService: MenuService) {
-  }
-
-  trackByMenuSection(index: number, section: MenuSection){
-    return section.id;
-  }
-
-  ngOnInit() {
   }
 
 }
