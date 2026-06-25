@@ -22,6 +22,7 @@ import { AlarmCommentService } from '@core/http/alarm-comment.service';
 import { AbstractControl, FormBuilder, FormGroup } from '@angular/forms';
 import { DialogService } from '@core/services/dialog.service';
 import { AuthUser } from '@shared/models/user.model';
+import { Authority } from '@shared/models/authority.enum';
 import { getCurrentAuthUser, selectUserDetails } from '@core/auth/auth.selectors';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { MAX_SAFE_PAGE_SIZE, PageLink } from '@shared/models/page/page-link';
@@ -44,6 +45,8 @@ interface AlarmCommentsDisplayData {
   editedTime?: string;
   editedDateAgo?: string;
   showActions?: boolean;
+  canEdit?: boolean;
+  canDelete?: boolean;
   commentText?: string;
   isSystemComment?: boolean;
   avatarBgColor?: string;
@@ -135,6 +138,11 @@ export class AlarmCommentComponent implements OnInit {
             displayDataElement.editedTime = this.datePipe.transform(alarmComment.comment.editedOn, 'yyyy-MM-dd HH:mm:ss');
             displayDataElement.editedDateAgo = this.dateAgoPipe.transform(alarmComment.comment.editedOn) + '\n';
             displayDataElement.showActions = false;
+            const isCommentAuthor = this.authUser.userId === alarmComment.userId?.id;
+            // Mirrors backend AlarmCommentController#deleteAlarmComment / checkUserPermission:
+            // author may edit and delete own comments; tenant admin may delete any comment.
+            displayDataElement.canEdit = isCommentAuthor;
+            displayDataElement.canDelete = isCommentAuthor || this.authUser.authority === Authority.TENANT_ADMIN;
             displayDataElement.isSystemComment = false;
             displayDataElement.avatarBgColor = this.utilsService.stringToHslColor(displayDataElement.displayName,
               40, 60);
@@ -243,11 +251,11 @@ export class AlarmCommentComponent implements OnInit {
     return this.alarmCommentSortOrder.direction === Direction.ASC;
   }
 
-  onCommentMouseEnter(commentId: string, displayDataIndex: number): void {
+  onCommentMouseEnter(displayDataIndex: number): void {
     if (!this.editMode) {
-      const alarmUserId = this.getAlarmCommentById(commentId).userId.id;
-      if (this.authUser.userId === alarmUserId) {
-        this.displayData[displayDataIndex].showActions = true;
+      const displayDataElement = this.displayData[displayDataIndex];
+      if (displayDataElement.canEdit || displayDataElement.canDelete) {
+        displayDataElement.showActions = true;
       }
     }
   }

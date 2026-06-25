@@ -69,7 +69,7 @@
         <ng-template #userComment>
           <div class="user-comment flex flex-row items-center justify-start gap-2"
                *ngIf="!displayDataElement.edit; else commentEditing"
-               (mouseenter)="onCommentMouseEnter(displayDataElement.commentId, i)"
+               (mouseenter)="onCommentMouseEnter(i)"
                (mouseleave)="onCommentMouseLeave(i)">
             <div *ngIf="displayDataElement.userExists; else userDeleted"
                  class="user-avatar flex flex-row items-center justify-center self-start xs:!hidden"
@@ -98,11 +98,13 @@
             <div class="action-buttons flex flex-row xs:flex-col"
                  [class.show-buttons]="displayDataElement.showActions">
               <button mat-icon-button
+                      *ngIf="displayDataElement.canEdit"
                       type="button"
                       (click)="editComment(displayDataElement.commentId)">
                 <mat-icon class="material-icons">edit</mat-icon>
               </button>
               <button mat-icon-button
+                      *ngIf="displayDataElement.canDelete"
                       type="button"
                       (click)="deleteComment(displayDataElement.commentId)">
                 <mat-icon class="material-icons">delete</mat-icon>
