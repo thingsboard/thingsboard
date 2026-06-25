@@ -16,23 +16,27 @@
 package org.thingsboard.monitoring.config.transport;
 
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
-@Component
-@ConditionalOnProperty(name = "monitoring.transports.coap.enabled", havingValue = "true")
-@ConfigurationProperties(prefix = "monitoring.transports.coap")
+import java.util.Optional;
+
 @Data
-@EqualsAndHashCode(callSuper = true)
-public class CoapTransportMonitoringConfig extends TransportMonitoringConfig {
+public class TlsConfig {
 
-    private TlsConfig tls;
+    private boolean fetchCertificateChain = false;
 
-    @Override
-    public TransportType getTransportType() {
-        return TransportType.COAP;
+    private String truststore;
+    private String truststorePassword;
+
+    private String keystore;
+    private String keystorePassword;
+    private String keystoreKeyAlias;
+
+    public Optional<String> getTruststore() {
+        return Optional.ofNullable(StringUtils.hasText(truststore) ? truststore : null);
     }
 
+    public Optional<String> getKeystore() {
+        return Optional.ofNullable(StringUtils.hasText(keystore) ? keystore : null);
+    }
 }

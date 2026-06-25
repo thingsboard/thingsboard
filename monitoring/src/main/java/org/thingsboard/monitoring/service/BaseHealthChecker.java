@@ -83,6 +83,8 @@ public abstract class BaseHealthChecker<C extends MonitoringConfig, T extends Mo
                 log.trace("[{}] Sent test payload ({})", info, testPayload);
             } catch (Throwable e) {
                 throw new ServiceFailureException(info, e);
+            } finally {
+                destroyClient();
             }
 
             log.trace("[{}] Waiting for WS update", info);

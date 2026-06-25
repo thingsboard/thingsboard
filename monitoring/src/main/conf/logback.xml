@@ -29,6 +29,8 @@
     <logger name="org.thingsboard.server" level="INFO"/>
     <logger name="org.thingsboard.monitoring" level="INFO"/>
     <logger name="org.thingsboard.monitoring.client" level="WARN"/>
+    <logger name="org.thingsboard.monitoring.service.MonitoringReporter" level="INFO"/>
+    <logger name="org.eclipse.californium.scandium" level="WARN"/>
 
     <root level="INFO">
         <appender-ref ref="STDOUT"/>

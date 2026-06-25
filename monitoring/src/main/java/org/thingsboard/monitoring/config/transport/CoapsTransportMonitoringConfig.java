@@ -22,17 +22,15 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 @Component
-@ConditionalOnProperty(name = "monitoring.transports.coap.enabled", havingValue = "true")
-@ConfigurationProperties(prefix = "monitoring.transports.coap")
+@ConditionalOnProperty(name = "monitoring.transports.coaps.enabled", havingValue = "true")
+@ConfigurationProperties(prefix = "monitoring.transports.coaps")
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class CoapTransportMonitoringConfig extends TransportMonitoringConfig {
-
-    private TlsConfig tls;
+public class CoapsTransportMonitoringConfig extends CoapTransportMonitoringConfig {
 
     @Override
     public TransportType getTransportType() {
-        return TransportType.COAP;
+        return TransportType.COAPS;
     }
 
 }

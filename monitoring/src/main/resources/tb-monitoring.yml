@@ -79,6 +79,30 @@ monitoring:
         # To add more targets, use following environment variables:
         # monitoring.transports.coap.targets[1].base_url, monitoring.transports.coap.targets[2].base_url, etc.
 
+    coaps:
+      # Enable CoAPS transport checks
+      enabled: '${COAPS_TRANSPORT_MONITORING_ENABLED:true}'
+      # CoAPS request timeout in milliseconds
+      request_timeout_ms: '${COAPS_REQUEST_TIMEOUT_MS:4000}'
+      tls:
+        fetchCertificateChain: '${COAPS_FETCH_CERTIFICATE_CHAIN:false}'
+        truststore: '${COAPS_TRUSTSTORE_PATH:}'
+        truststorePassword: '${COAPS_TRUSTSTORE_PASSWORD:}'
+        keystore: '${COAPS_KEYSTORE_PATH:}'
+        keystorePassword: '${COAPS_KEYSTORE_PASSWORD:}'
+        keystoreKeyAlias: '${COAPS_KEYSTORE_KEY_ALIAS:}'
+      targets:
+          # CoAPS transport base url, coaps://DOMAIN by default
+        - base_url: '${COAPS_TRANSPORT_BASE_URL:coaps://${monitoring.domain}}'
+          # Queue to use for target device
+          queue: '${COAPS_TRANSPORT_USED_QUEUE:Main}'
+          # Whether to monitor IPs associated with the domain from base url
+          check_domain_ips: '${COAPS_TRANSPORT_CHECK_DOMAIN_IPS:false}'
+          # Prefix for the target device name
+          name_prefix: '${COAPS_TRANSPORT_TARGET_NAME_PREFIX:}'
+        # To add more targets, use following environment variables:
+        # monitoring.transports.coaps.targets[1].base_url, monitoring.transports.coaps.targets[2].base_url, etc.
+
     http:
       # Enable HTTP transport checks
       enabled: '${HTTP_TRANSPORT_MONITORING_ENABLED:true}'
