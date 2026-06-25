@@ -113,6 +113,11 @@ public class DefaultIotHubService implements IotHubService {
     private final TbDeviceService tbDeviceService;
     private final SolutionService solutionService;
 
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private org.springframework.boot.info.BuildProperties buildProperties;
+
+    private static final String IOT_HUB_EDITION = "CE";
+
     // Field names of the marketplace version JSON payload. Both the install path and the
     // install-plan resolver parse the same shape, so the contract lives here in one place.
     private static final String FIELD_ID = "id";
@@ -196,10 +201,11 @@ public class DefaultIotHubService implements IotHubService {
         }
 
         try {
-            iotHubRestClient.reportVersionInstalled(versionId);
+            String tbVersion = buildProperties != null ? buildProperties.getVersion() : "unknown";
+            InstallReport report = buildInstallReport(tenantId.getId(), user.getId().getId(), tbVersion, IOT_HUB_EDITION);
+            iotHubRestClient.reportVersionInstalled(versionId, report);
         } catch (Exception e) {
-            // Counter ping is best-effort — do not fail the install if it errors.
-            log.warn("[{}] Failed to report install counter for version {}: {}", tenantId, versionId, e.getMessage());
+            log.warn("[{}] Failed to report install for version {}: {}", tenantId, versionId, e.getMessage());
         }
         log.info("[{}] Successfully installed IoT Hub item version: {} (type: {})", tenantId, itemName, itemType);
         return installedItem;
@@ -611,6 +617,13 @@ public class DefaultIotHubService implements IotHubService {
         }
     }
 
+    static InstallReport buildInstallReport(UUID tenantId, UUID userId, String tbVersion, String edition) {
+        String salt = tenantId.toString();
+        String tenantHash = sha256(salt + tenantId);
+        String userHash = sha256(salt + userId);
+        return new InstallReport(tenantHash, userHash, tbVersion, edition);
+    }
+
     @Override
     public InstallItemVersionResult registerDeviceInstall(SecurityUser user, String versionId, DeviceInstalledItemDescriptor descriptor) {
         TenantId tenantId = user.getTenantId();
@@ -650,10 +663,11 @@ public class DefaultIotHubService implements IotHubService {
             }
 
             try {
-                iotHubRestClient.reportVersionInstalled(versionId);
+                String tbVersion = buildProperties != null ? buildProperties.getVersion() : "unknown";
+                InstallReport report = buildInstallReport(tenantId.getId(), user.getId().getId(), tbVersion, IOT_HUB_EDITION);
+                iotHubRestClient.reportVersionInstalled(versionId, report);
             } catch (Exception e) {
-                // Counter ping is best-effort — do not fail the install if it errors.
-                log.warn("[{}] Failed to report install counter for version {}: {}", tenantId, versionId, e.getMessage());
+                log.warn("[{}] Failed to report install for version {}: {}", tenantId, versionId, e.getMessage());
             }
             log.info("[{}] Registered device package install: {} (version {})", tenantId, itemName, version);
 
