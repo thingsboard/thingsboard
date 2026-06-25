@@ -33,6 +33,11 @@
     .state-divider {
       display: block;
     }
+    .tb-mobile {
+      .state-divider {
+        display: none;
+      }
+    }
   }
 
 }
@@ -42,6 +47,15 @@
     .mat-mdc-select.default-state-controller {
       --mat-select-trigger-text-size: 16px;
       --mat-select-enabled-trigger-text-color: rgba(0, 0, 0, 0.76);
+    }
+  }
+  .tb-mobile {
+    ::ng-deep {
+      .mat-mdc-select.default-state-controller {
+        --mat-select-trigger-text-size: 24px;
+        --mat-select-trigger-text-line-height: 32px;
+        --mat-select-trigger-text-weight: 400;
+      }
     }
   }
 }

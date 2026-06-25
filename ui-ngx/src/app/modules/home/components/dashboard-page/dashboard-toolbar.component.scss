@@ -21,7 +21,7 @@ $mobile-toolbar-height: 96px !default;
 $half-mobile-toolbar-height: 48px !default;
 $mobile-toolbar-height-total: 96px !default;
 
-$mobile-app-toolbar-height: 40px !default;
+$mobile-app-toolbar-height: 48px !default;
 
 div.tb-dashboard-page.mobile-app {
   tb-dashboard-toolbar {
@@ -95,9 +95,14 @@ tb-dashboard-toolbar {
       }
     }
 
+    &.mat-is-open {
+      .mat-fab-toolbar-wrapper {
+        border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+      }
+    }
+
     .mat-fab-toolbar-wrapper {
       height: $mobile-toolbar-height-total;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.12);
 
       @media #{$mat-gt-sm} {
         height: $toolbar-height;

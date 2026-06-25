@@ -18,7 +18,7 @@
 <div class="entity-state-controller">
   @if (!isMobile) {
     <div class="flex flex-row items-center justify-start gap-2">
-      @for (state of stateObject; track state; let i = $index; let isLast = $last;) {
+      @for (state of stateObject; track state.id; let i = $index; let isLast = $last;) {
         @if ((breadcrumbs$ | async).length > 1 || i > 0) {
           <span class='state-divider' [class.last-divider]="isLast"> > </span>
         }
@@ -29,12 +29,11 @@
         </span>
       }
     </div>
-  }
-  @if (isMobile) {
+  } @else {
     @if (stateObject.length > 1) {
       <mat-select
         [(ngModel)]="selectedStateIndex" (ngModelChange)="selectedStateIndexChanged()">
-        @for (state of stateObject; track state; let i = $index) {
+        @for (state of stateObject; track state.id; let i = $index) {
           <mat-option [value]="i">
             {{getStateName(i)}}
           </mat-option>

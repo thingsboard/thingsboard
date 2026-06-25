@@ -14,12 +14,15 @@
 /// limitations under the License.
 ///
 
-import { Component } from '@angular/core';
+import { Component, DestroyRef, effect, EventEmitter, viewChild } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { PageComponent } from '@shared/components/page.component';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { ActivatedRoute } from '@angular/router';
+import { MainToolbarComponent } from '@home/models/main-toolbar.models';
+import { DashboardPageComponent } from '@home/components/dashboard-page/dashboard-page.component';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
     selector: 'tb-dashboard-view',
@@ -27,12 +30,29 @@ import { ActivatedRoute } from '@angular/router';
     styleUrls: ['./dashboard-view.component.scss'],
     standalone: false
 })
-export class DashboardViewComponent extends PageComponent {
+export class DashboardViewComponent extends PageComponent implements MainToolbarComponent {
 
   dashboard: Dashboard = this.route.snapshot.data.dashboard;
 
+  hideMainToolbar = true;
+  toggleSideBar = new EventEmitter<void>();
+
+  private dashboardPage = viewChild<DashboardPageComponent>('dashboardPage');
+
   constructor(protected store: Store<AppState>,
-              private route: ActivatedRoute) {
+              private route: ActivatedRoute,
+              private destroyRef: DestroyRef) {
     super(store);
+    effect(() => {
+      const dashboardPage = this.dashboardPage();
+      if (dashboardPage) {
+        dashboardPage.toggleSideBar.pipe(
+          takeUntilDestroyed(this.destroyRef)
+        ).subscribe(() => {
+          this.toggleSideBar.emit();
+        });
+      }
+    });
   }
+
 }

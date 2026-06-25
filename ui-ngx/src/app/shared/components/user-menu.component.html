@@ -33,9 +33,18 @@
     }
   </div>
 </button>
+<button #menuPopover="tbPopover" mat-icon-button class="tb-user-menu-icon"
+        (click)="$event.stopPropagation();"
+        tb-popover
+        tbPopoverTrigger="click"
+        [tbPopoverMenu]="true"
+        [tbPopoverContent]="userMenuTpl"
+        [tbPopoverPlacement]="'bottomRight'">
+  <tb-icon class="material-icons tb-mini-avatar">mdi:account-circle-outline</tb-icon>
+</button>
 <ng-template #userMenuTpl>
   @if (authority$ | async; as authority) {
-    <div class="tb-menu-content tb-user-menu-items" [style.width.px]="!collapsed ? menuButton._elementRef.nativeElement.offsetWidth : ''">
+    <div class="tb-menu-content tb-user-menu-items" [style.width.px]="!collapsed ? menuButton?._elementRef?.nativeElement?.offsetWidth : ''">
       <button mat-button (click)="menuPopover?.hide(); openAccount()">
         <tb-icon matButtonIcon>mdi:account-circle-outline</tb-icon>
         <span translate>account.account</span>

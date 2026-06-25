@@ -75,7 +75,9 @@
                                  [states]="dashboardConfiguration.states">
             </tb-states-component>
           } @else {
-            <tb-notification-bell class="gt-sm:!hidden"></tb-notification-bell>
+            @if (!isPublicUser()) {
+              <tb-notification-bell class="gt-sm:!hidden"></tb-notification-bell>
+            }
             <tb-breadcrumb class="lt-md:flex-1"
               [componentBreadcrumbsTpl]="dashboardBreadcrumbsTpl">
             </tb-breadcrumb>
@@ -124,7 +126,7 @@
             <mat-icon>{{isRightLayoutOpened ? 'arrow_back' : 'menu'}}</mat-icon>
           </button>
           <div class="flex flex-row-reverse items-center lt-md:!hidden">
-            @if (!isEdit) {
+            @if (!isEdit && !isPublicUser()) {
               <tb-notification-bell></tb-notification-bell>
             }
             <button [class.!hidden]="hideFullscreenButton()" mat-icon-button

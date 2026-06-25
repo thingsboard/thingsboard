@@ -14,22 +14,35 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component, DestroyRef,
+  effect,
+  EventEmitter,
+  OnInit,
+  viewChild
+} from '@angular/core';
 import { MenuService } from '@core/services/menu.service';
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { HomeSection } from '@core/services/menu.models';
 import { ActivatedRoute } from '@angular/router';
 import { HomeDashboard } from '@shared/models/dashboard.models';
+import { MainToolbarComponent } from '@home/models/main-toolbar.models';
+import { DashboardPageComponent } from '@home/components/dashboard-page/dashboard-page.component';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-    selector: 'tb-home-links',
-    templateUrl: './home-links.component.html',
-    styleUrls: ['./home-links.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+  selector: 'tb-home-links',
+  templateUrl: './home-links.component.html',
+  styleUrls: ['./home-links.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: false
 })
-export class HomeLinksComponent implements OnInit {
+export class HomeLinksComponent implements MainToolbarComponent, OnInit {
+
+  private dashboardPage = viewChild<DashboardPageComponent>('dashboardPage');
 
   homeSections$ = this.menuService.homeSections();
 
@@ -37,10 +50,25 @@ export class HomeLinksComponent implements OnInit {
 
   homeDashboard: HomeDashboard = this.route.snapshot.data.homeDashboard;
 
+  hideMainToolbar = false;
+  toggleSideBar = new EventEmitter<void>();
+
   constructor(private menuService: MenuService,
               public breakpointObserver: BreakpointObserver,
               private cd: ChangeDetectorRef,
-              private route: ActivatedRoute) {
+              private route: ActivatedRoute,
+              private destroyRef: DestroyRef) {
+    effect(() => {
+      const dashboardPage = this.dashboardPage();
+      if (dashboardPage) {
+        dashboardPage.toggleSideBar.pipe(
+          takeUntilDestroyed(this.destroyRef)
+        ).subscribe(() => {
+          this.toggleSideBar.emit();
+        });
+      }
+    });
+    this.hideMainToolbar = (!!this.homeDashboard && !this.homeDashboard.isSystemDashboard);
   }
 
   ngOnInit() {

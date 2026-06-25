@@ -15,8 +15,10 @@
     limitations under the License.
 
 -->
-<div class="flex flex-row items-center justify-start gap-2">
-  <span class='state-divider'> > </span>
+<div class="flex flex-row items-center justify-start gap-2" [class.tb-mobile]="isMobile">
+  @if ((breadcrumbs$ | async).length > 1) {
+    <span class='state-divider'> > </span>
+  }
   <mat-select class="default-state-controller" [class.!hidden]="!displayStateSelection()"
               [(ngModel)]="stateObject[0].id" (ngModelChange)="selectedStateIdChanged()">
     @for (stateKv of states | keyvalue; track stateKv) {
