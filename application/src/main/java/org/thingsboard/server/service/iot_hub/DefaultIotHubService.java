@@ -64,6 +64,7 @@ import org.thingsboard.server.service.entitiy.dashboard.TbDashboardService;
 import org.thingsboard.server.service.entitiy.device.TbDeviceService;
 import org.thingsboard.server.service.entitiy.device.profile.TbDeviceProfileService;
 import org.thingsboard.server.service.entitiy.widgets.type.TbWidgetTypeService;
+import org.thingsboard.server.service.install.ProjectInfo;
 import org.thingsboard.server.service.rule.TbRuleChainService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
@@ -112,6 +113,7 @@ public class DefaultIotHubService implements IotHubService {
     private final DeviceService deviceService;
     private final TbDeviceService tbDeviceService;
     private final SolutionService solutionService;
+    private final ProjectInfo projectInfo;
 
     // Field names of the marketplace version JSON payload. Both the install path and the
     // install-plan resolver parse the same shape, so the contract lives here in one place.
@@ -196,10 +198,11 @@ public class DefaultIotHubService implements IotHubService {
         }
 
         try {
-            iotHubRestClient.reportVersionInstalled(versionId);
+            InstallReport report = buildInstallReport(tenantId.getId(), user.getId().getId(),
+                    projectInfo.getProjectVersion(), projectInfo.getProductType());
+            iotHubRestClient.reportVersionInstalled(versionId, report);
         } catch (Exception e) {
-            // Counter ping is best-effort — do not fail the install if it errors.
-            log.warn("[{}] Failed to report install counter for version {}: {}", tenantId, versionId, e.getMessage());
+            log.warn("[{}] Failed to report install for version {}: {}", tenantId, versionId, e.getMessage());
         }
         log.info("[{}] Successfully installed IoT Hub item version: {} (type: {})", tenantId, itemName, itemType);
         return installedItem;
@@ -611,6 +614,13 @@ public class DefaultIotHubService implements IotHubService {
         }
     }
 
+    static InstallReport buildInstallReport(UUID tenantId, UUID userId, String tbVersion, String edition) {
+        String salt = tenantId.toString();
+        String tenantHash = sha256(salt + tenantId);
+        String userHash = sha256(salt + userId);
+        return new InstallReport(tenantHash, userHash, tbVersion, edition);
+    }
+
     @Override
     public InstallItemVersionResult registerDeviceInstall(SecurityUser user, String versionId, DeviceInstalledItemDescriptor descriptor) {
         TenantId tenantId = user.getTenantId();
@@ -650,10 +660,11 @@ public class DefaultIotHubService implements IotHubService {
             }
 
             try {
-                iotHubRestClient.reportVersionInstalled(versionId);
+                InstallReport report = buildInstallReport(tenantId.getId(), user.getId().getId(),
+                        projectInfo.getProjectVersion(), projectInfo.getProductType());
+                iotHubRestClient.reportVersionInstalled(versionId, report);
             } catch (Exception e) {
-                // Counter ping is best-effort — do not fail the install if it errors.
-                log.warn("[{}] Failed to report install counter for version {}: {}", tenantId, versionId, e.getMessage());
+                log.warn("[{}] Failed to report install for version {}: {}", tenantId, versionId, e.getMessage());
             }
             log.info("[{}] Registered device package install: {} (version {})", tenantId, itemName, version);
 
