@@ -16,10 +16,16 @@
 package org.thingsboard.server.service.rpc;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.util.concurrent.ListenableFuture;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.RpcId;
@@ -34,6 +40,11 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.rpc.RpcService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
+import java.util.UUID;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 @TbCoreComponent
 @Service
 @RequiredArgsConstructor
@@ -42,10 +53,40 @@ public class TbRpcService {
     private final RpcService rpcService;
     private final TbClusterService tbClusterService;
 
-    public Rpc save(TenantId tenantId, Rpc rpc) {
-        Rpc saved = rpcService.save(rpc);
-        pushRpcMsgToRuleEngine(tenantId, saved);
-        return saved;
+    @Value("${sql.rpc.callback_threads:3}")
+    private int callbackThreads;
+
+    private ExecutorService[] callbackExecutors;
+
+    @PostConstruct
+    private void init() {
+        callbackExecutors = new ExecutorService[callbackThreads];
+        for (int i = 0; i < callbackThreads; i++) {
+            callbackExecutors[i] = Executors.newSingleThreadExecutor(
+                    ThingsBoardThreadFactory.forName("rpc-persist-callback-" + i));
+        }
+    }
+
+    @PreDestroy
+    private void destroy() {
+        if (callbackExecutors != null) {
+            for (ExecutorService executor : callbackExecutors) {
+                executor.shutdownNow();
+            }
+        }
+    }
+
+    public void save(TenantId tenantId, Rpc rpc) {
+        ListenableFuture<Void> future = rpcService.saveAsync(rpc);
+        DonAsynchron.withCallback(future,
+                v -> pushRpcMsgToRuleEngine(tenantId, rpc),
+                t -> log.error("[{}][{}][{}] Failed to persist RPC with status [{}]",
+                        tenantId, rpc.getDeviceId(), rpc.getId(), rpc.getStatus(), t),
+                executorFor(rpc.getUuidId()));
+    }
+
+    private Executor executorFor(UUID rpcId) {
+        return callbackExecutors[(rpcId.hashCode() & 0x7FFFFFFF) % callbackThreads];
     }
 
     public void save(TenantId tenantId, RpcId rpcId, RpcStatus newStatus, JsonNode response) {
