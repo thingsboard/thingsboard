@@ -61,7 +61,7 @@ return details;
 
 More details about Alarms can be found in [this tutorial{:target="_blank"}](${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/alarms/).
 
-You can see the real life example, where this node is used, in the next tutorial:
+You can see a step-by-step guide on configuring alarm rules in the next tutorial:
 
 - [Create and Clear Alarms{:target="_blank"}](${siteBaseUrl}/docs${docPlatformPrefix}/recipes/create-clear-alarms/)
 
