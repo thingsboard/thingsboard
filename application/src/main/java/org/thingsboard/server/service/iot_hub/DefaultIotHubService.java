@@ -64,6 +64,7 @@ import org.thingsboard.server.service.entitiy.dashboard.TbDashboardService;
 import org.thingsboard.server.service.entitiy.device.TbDeviceService;
 import org.thingsboard.server.service.entitiy.device.profile.TbDeviceProfileService;
 import org.thingsboard.server.service.entitiy.widgets.type.TbWidgetTypeService;
+import org.thingsboard.server.service.install.ProjectInfo;
 import org.thingsboard.server.service.rule.TbRuleChainService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
@@ -112,11 +113,7 @@ public class DefaultIotHubService implements IotHubService {
     private final DeviceService deviceService;
     private final TbDeviceService tbDeviceService;
     private final SolutionService solutionService;
-
-    @org.springframework.beans.factory.annotation.Autowired(required = false)
-    private org.springframework.boot.info.BuildProperties buildProperties;
-
-    private static final String IOT_HUB_EDITION = "CE";
+    private final ProjectInfo projectInfo;
 
     // Field names of the marketplace version JSON payload. Both the install path and the
     // install-plan resolver parse the same shape, so the contract lives here in one place.
@@ -201,8 +198,8 @@ public class DefaultIotHubService implements IotHubService {
         }
 
         try {
-            String tbVersion = buildProperties != null ? buildProperties.getVersion() : "unknown";
-            InstallReport report = buildInstallReport(tenantId.getId(), user.getId().getId(), tbVersion, IOT_HUB_EDITION);
+            InstallReport report = buildInstallReport(tenantId.getId(), user.getId().getId(),
+                    projectInfo.getProjectVersion(), projectInfo.getProductType());
             iotHubRestClient.reportVersionInstalled(versionId, report);
         } catch (Exception e) {
             log.warn("[{}] Failed to report install for version {}: {}", tenantId, versionId, e.getMessage());
@@ -663,8 +660,8 @@ public class DefaultIotHubService implements IotHubService {
             }
 
             try {
-                String tbVersion = buildProperties != null ? buildProperties.getVersion() : "unknown";
-                InstallReport report = buildInstallReport(tenantId.getId(), user.getId().getId(), tbVersion, IOT_HUB_EDITION);
+                InstallReport report = buildInstallReport(tenantId.getId(), user.getId().getId(),
+                        projectInfo.getProjectVersion(), projectInfo.getProductType());
                 iotHubRestClient.reportVersionInstalled(versionId, report);
             } catch (Exception e) {
                 log.warn("[{}] Failed to report install for version {}: {}", tenantId, versionId, e.getMessage());
