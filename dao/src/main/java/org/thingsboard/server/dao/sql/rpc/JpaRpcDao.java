@@ -15,8 +15,12 @@
  */
 package org.thingsboard.server.dao.sql.rpc;
 
-import lombok.AllArgsConstructor;
+import com.google.common.util.concurrent.ListenableFuture;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,22 +31,76 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rpc.Rpc;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
+import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.TenantEntityDao;
 import org.thingsboard.server.dao.model.sql.RpcEntity;
 import org.thingsboard.server.dao.rpc.RpcDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
+import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
+import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
+import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
 import org.thingsboard.server.dao.util.SqlDao;
 
+import java.util.Comparator;
 import java.util.UUID;
+import java.util.function.Function;
 
 @Slf4j
 @Component
-@AllArgsConstructor
 @SqlDao
 public class JpaRpcDao extends JpaAbstractDao<RpcEntity, Rpc> implements RpcDao, TenantEntityDao<Rpc> {
 
-    private final RpcRepository rpcRepository;
+    @Autowired
+    private RpcRepository rpcRepository;
+    @Autowired
+    private RpcInsertRepository rpcInsertRepository;
+    @Autowired
+    private ScheduledLogExecutorComponent logExecutor;
+    @Autowired
+    private StatsFactory statsFactory;
+
+    @Value("${sql.rpc.batch_size:1000}")
+    private int batchSize;
+    @Value("${sql.rpc.batch_max_delay:50}")
+    private long maxDelay;
+    @Value("${sql.rpc.stats_print_interval_ms:10000}")
+    private long statsPrintIntervalMs;
+    @Value("${sql.rpc.batch_threads:3}")
+    private int batchThreads;
+    @Value("${sql.batch_sort:true}")
+    private boolean batchSortEnabled;
+
+    private TbSqlBlockingQueueWrapper<RpcEntity, Void> queue;
+
+    @PostConstruct
+    private void init() {
+        TbSqlBlockingQueueParams params = TbSqlBlockingQueueParams.builder()
+                .logName("RPC")
+                .batchSize(batchSize)
+                .maxDelay(maxDelay)
+                .statsPrintIntervalMs(statsPrintIntervalMs)
+                .statsNamePrefix("rpc")
+                .batchSortEnabled(batchSortEnabled)
+                .withResponse(false)
+                .build();
+        Function<RpcEntity, Integer> hashcodeFunction = entity -> entity.getUuid().hashCode();
+        queue = new TbSqlBlockingQueueWrapper<>(params, hashcodeFunction, batchThreads, statsFactory);
+        queue.init(logExecutor, entities -> rpcInsertRepository.saveOrUpdate(entities),
+                Comparator.comparing(RpcEntity::getUuid));
+    }
+
+    @PreDestroy
+    private void destroy() {
+        if (queue != null) {
+            queue.destroy();
+        }
+    }
+
+    @Override
+    public ListenableFuture<Void> saveAsync(TenantId tenantId, Rpc rpc) {
+        return queue.add(new RpcEntity(rpc));
+    }
 
     @Override
     protected Class<RpcEntity> getEntityClass() {

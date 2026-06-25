@@ -55,6 +55,12 @@ public class BaseRpcService implements RpcService {
     }
 
     @Override
+    public ListenableFuture<Void> saveAsync(Rpc rpc) {
+        log.trace("Executing saveAsync, [{}]", rpc);
+        return rpcDao.saveAsync(rpc.getTenantId(), rpc);
+    }
+
+    @Override
     public void deleteRpc(TenantId tenantId, RpcId rpcId) {
         log.trace("Executing deleteRpc, tenantId [{}], rpcId [{}]", tenantId, rpcId);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);

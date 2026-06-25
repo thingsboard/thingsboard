@@ -29,6 +29,8 @@ public interface RpcService extends EntityDaoService {
 
     Rpc save(Rpc rpc);
 
+    ListenableFuture<Void> saveAsync(Rpc rpc);
+
     void deleteRpc(TenantId tenantId, RpcId id);
 
     void deleteAllRpcByTenantId(TenantId tenantId);

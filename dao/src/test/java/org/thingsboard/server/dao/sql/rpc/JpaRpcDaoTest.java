@@ -19,12 +19,14 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.RpcId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rpc.Rpc;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.dao.AbstractJpaDaoTest;
 
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -55,6 +57,40 @@ public class JpaRpcDaoTest extends AbstractJpaDaoTest {
         assertThat(rpcDao.deleteOutdatedRpcByTenantIdBatch(TenantId.SYS_TENANT_ID, 0L, batchSize)).isEqualTo(0);
         assertThat(rpcDao.deleteOutdatedRpcByTenantIdBatch(TenantId.SYS_TENANT_ID, Long.MAX_VALUE, batchSize)).isEqualTo(2);
         assertThat(rpcDao.deleteOutdatedRpcByTenantIdBatch(tenantId, System.currentTimeMillis() + 1, batchSize)).isEqualTo(1);
+    }
+
+    @Test
+    public void saveAsyncInsertThenUpsert() throws Exception {
+        UUID id = UUID.randomUUID();
+        Rpc rpc = new Rpc(new RpcId(id));
+        rpc.setCreatedTime(System.currentTimeMillis());
+        rpc.setTenantId(TenantId.SYS_TENANT_ID);
+        rpc.setDeviceId(new DeviceId(UUID.randomUUID()));
+        rpc.setExpirationTime(System.currentTimeMillis() + 60_000);
+        rpc.setRequest(JacksonUtil.toJsonNode("{\"method\":\"x\"}"));
+        rpc.setStatus(RpcStatus.QUEUED);
+
+        rpcDao.saveAsync(rpc.getTenantId(), rpc).get(5, TimeUnit.SECONDS);
+
+        Rpc stored = rpcDao.findById(TenantId.SYS_TENANT_ID, id);
+        assertThat(stored).isNotNull();
+        assertThat(stored.getStatus()).isEqualTo(RpcStatus.QUEUED);
+        assertThat(stored.getResponse()).isNull();
+
+        Rpc update = new Rpc(new RpcId(id));
+        update.setCreatedTime(rpc.getCreatedTime());
+        update.setTenantId(TenantId.SYS_TENANT_ID);
+        update.setDeviceId(rpc.getDeviceId());
+        update.setExpirationTime(rpc.getExpirationTime());
+        update.setRequest(rpc.getRequest());
+        update.setStatus(RpcStatus.DELIVERED);
+        update.setResponse(JacksonUtil.toJsonNode("{\"ok\":true}"));
+
+        rpcDao.saveAsync(update.getTenantId(), update).get(5, TimeUnit.SECONDS);
+
+        Rpc afterUpdate = rpcDao.findById(TenantId.SYS_TENANT_ID, id);
+        assertThat(afterUpdate.getStatus()).isEqualTo(RpcStatus.DELIVERED);
+        assertThat(afterUpdate.getResponse()).isEqualTo(JacksonUtil.toJsonNode("{\"ok\":true}"));
     }
 
 }
