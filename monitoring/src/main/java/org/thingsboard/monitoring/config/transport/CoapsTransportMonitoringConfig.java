@@ -28,6 +28,8 @@ import org.springframework.stereotype.Component;
 @EqualsAndHashCode(callSuper = true)
 public class CoapsTransportMonitoringConfig extends CoapTransportMonitoringConfig {
 
+    private TlsConfig tls;
+
     @Override
     public TransportType getTransportType() {
         return TransportType.COAPS;

@@ -15,8 +15,6 @@
  */
 package org.thingsboard.monitoring.config.transport;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
@@ -24,11 +22,7 @@ import org.springframework.stereotype.Component;
 @Component
 @ConditionalOnProperty(name = "monitoring.transports.coap.enabled", havingValue = "true")
 @ConfigurationProperties(prefix = "monitoring.transports.coap")
-@Data
-@EqualsAndHashCode(callSuper = true)
 public class CoapTransportMonitoringConfig extends TransportMonitoringConfig {
-
-    private TlsConfig tls;
 
     @Override
     public TransportType getTransportType() {

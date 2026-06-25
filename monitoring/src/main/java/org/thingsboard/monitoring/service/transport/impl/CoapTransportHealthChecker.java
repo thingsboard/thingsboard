@@ -43,6 +43,7 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.thingsboard.monitoring.config.transport.CoapTransportMonitoringConfig;
+import org.thingsboard.monitoring.config.transport.CoapsTransportMonitoringConfig;
 import org.thingsboard.monitoring.config.transport.TlsConfig;
 import org.thingsboard.monitoring.config.transport.TransportMonitoringTarget;
 import org.thingsboard.monitoring.config.transport.TransportType;
@@ -51,13 +52,11 @@ import org.thingsboard.monitoring.util.SslUtil;
 
 import javax.security.auth.x500.X500Principal;
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.util.Arrays;
 import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.cert.Certificate;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -84,68 +83,68 @@ public class CoapTransportHealthChecker extends TransportHealthChecker<CoapTrans
     protected void initClient() throws Exception {
         String accessToken = target.getDevice().getCredentials().getCredentialsId();
         String uri = target.getBaseUrl() + "/api/v1/" + accessToken + "/telemetry";
-            coapClient = new CoapClient(uri);
-            if (getTransportType() == TransportType.COAPS) {
-                TlsConfig tlsConfig = config.getTls();
-                Configuration dtlsConfiguration = new Configuration();
+        coapClient = new CoapClient(uri);
+        if (getTransportType() == TransportType.COAPS) {
+            TlsConfig tlsConfig = ((CoapsTransportMonitoringConfig) config).getTls();
+            Configuration dtlsConfiguration = new Configuration();
 
-                dtlsConfiguration.set(DtlsConfig.DTLS_ROLE, DtlsConfig.DtlsRole.CLIENT_ONLY);
-                dtlsConfiguration.set(DtlsConfig.DTLS_USE_SERVER_NAME_INDICATION, true);
-                dtlsConfiguration.set(DtlsConfig.DTLS_VERIFY_SERVER_CERTIFICATES_SUBJECT, false);
-                dtlsConfiguration.setTransient(DtlsConfig.DTLS_SIGNATURE_AND_HASH_ALGORITHMS);
-                dtlsConfiguration.set(DtlsConfig.DTLS_SIGNATURE_AND_HASH_ALGORITHMS, Arrays.asList(
-                        SignatureAndHashAlgorithm.SHA256_WITH_ECDSA,
-                        SignatureAndHashAlgorithm.SHA384_WITH_ECDSA,
-                        SignatureAndHashAlgorithm.SHA256_WITH_RSA));
+            dtlsConfiguration.set(DtlsConfig.DTLS_ROLE, DtlsConfig.DtlsRole.CLIENT_ONLY);
+            dtlsConfiguration.set(DtlsConfig.DTLS_USE_SERVER_NAME_INDICATION, true);
+            dtlsConfiguration.set(DtlsConfig.DTLS_VERIFY_SERVER_CERTIFICATES_SUBJECT, false);
+            dtlsConfiguration.setTransient(DtlsConfig.DTLS_SIGNATURE_AND_HASH_ALGORITHMS);
+            dtlsConfiguration.set(DtlsConfig.DTLS_SIGNATURE_AND_HASH_ALGORITHMS, Arrays.asList(
+                    SignatureAndHashAlgorithm.SHA256_WITH_ECDSA,
+                    SignatureAndHashAlgorithm.SHA384_WITH_ECDSA,
+                    SignatureAndHashAlgorithm.SHA256_WITH_RSA));
 
-                DtlsConnectorConfig.Builder dtlsConfigBuilder = DtlsConnectorConfig.builder(dtlsConfiguration);
+            DtlsConnectorConfig.Builder dtlsConfigBuilder = DtlsConnectorConfig.builder(dtlsConfiguration);
 
-                boolean hasClientKeystore = tlsConfig != null && tlsConfig.getKeystore().isPresent();
-                if (hasClientKeystore) {
-                    KeyStore keyStore = SslUtil.loadKeyStore(tlsConfig.getKeystore().get(), tlsConfig.getKeystorePassword());
-                    PrivateKey privateKey = (PrivateKey) keyStore.getKey(tlsConfig.getKeystoreKeyAlias(), tlsConfig.getKeystorePassword().toCharArray());
-                    Certificate[] certificateChain = keyStore.getCertificateChain(tlsConfig.getKeystoreKeyAlias());
-                    dtlsConfigBuilder.setCertificateIdentityProvider(new SingleCertificateProvider(privateKey, certificateChain));
-                } else {
-                    // Server uses WANTED mode — no client cert required.
-                    // AnonymousCertificateProvider signals EC support (for ECDSA cipher suites)
-                    // but sends an empty Certificate message during the handshake.
-                    dtlsConfigBuilder.setCertificateIdentityProvider(new AnonymousCertificateProvider());
-                }
-
-                Certificate[] fetchedCerts = null;
-                if (tlsConfig != null && tlsConfig.isFetchCertificateChain()) {
-                    try {
-                        fetchedCerts = SslUtil.getCertificatesFromUrl(getTransportType(), domain);
-                    } catch (Exception e) {
-                        log.warn("Failed to fetch certificate chain for {}, falling back to truststore: {}", getTransportType(), e.getMessage());
-                    }
-                }
-                if (fetchedCerts != null && fetchedCerts.length > 0) {
-                    dtlsConfigBuilder.setAdvancedCertificateVerifier(
-                            StaticNewAdvancedCertificateVerifier.builder()
-                                    .setTrustedCertificates(fetchedCerts)
-                                    .build());
-                } else if (tlsConfig != null && tlsConfig.getTruststore().isPresent()) {
-                    KeyStore trustStore = SslUtil.loadKeyStore(tlsConfig.getTruststore().get(), tlsConfig.getTruststorePassword());
-                    List<Certificate> trustCerts = new ArrayList<>();
-                    for (String alias : Collections.list(trustStore.aliases())) {
-                        if (trustStore.isCertificateEntry(alias)) {
-                            trustCerts.add(trustStore.getCertificate(alias));
-                        }
-                    }
-                    dtlsConfigBuilder.setAdvancedCertificateVerifier(
-                            StaticNewAdvancedCertificateVerifier.builder()
-                                    .setTrustedCertificates(trustCerts.toArray(new Certificate[0]))
-                                    .build());
-                } else {
-                    dtlsConfigBuilder.setAdvancedCertificateVerifier(
-                            StaticNewAdvancedCertificateVerifier.builder()
-                                    .setTrustAllCertificates()
-                                    .build());
-                }
-                coapClient.setEndpoint(new CoapEndpoint.Builder().setConnector(new DTLSConnector(dtlsConfigBuilder.build())).build());
+            boolean hasClientKeystore = tlsConfig != null && tlsConfig.getKeystore().isPresent();
+            if (hasClientKeystore) {
+                KeyStore keyStore = SslUtil.loadKeyStore(tlsConfig.getKeystore().get(), tlsConfig.getKeystorePassword());
+                PrivateKey privateKey = (PrivateKey) keyStore.getKey(tlsConfig.getKeystoreKeyAlias(), tlsConfig.getKeystorePassword().toCharArray());
+                Certificate[] certificateChain = keyStore.getCertificateChain(tlsConfig.getKeystoreKeyAlias());
+                dtlsConfigBuilder.setCertificateIdentityProvider(new SingleCertificateProvider(privateKey, certificateChain));
+            } else {
+                // Server uses WANTED mode — no client cert required.
+                // AnonymousCertificateProvider signals EC support (for ECDSA cipher suites)
+                // but sends an empty Certificate message during the handshake.
+                dtlsConfigBuilder.setCertificateIdentityProvider(new AnonymousCertificateProvider());
             }
+
+            Certificate[] fetchedCerts = null;
+            if (tlsConfig != null && tlsConfig.isFetchCertificateChain()) {
+                try {
+                    fetchedCerts = SslUtil.getCertificatesFromUrl(getTransportType(), domain);
+                } catch (Exception e) {
+                    log.warn("Failed to fetch certificate chain for {}, falling back to truststore: {}", getTransportType(), e.getMessage());
+                }
+            }
+            if (fetchedCerts != null && fetchedCerts.length > 0) {
+                dtlsConfigBuilder.setAdvancedCertificateVerifier(
+                        StaticNewAdvancedCertificateVerifier.builder()
+                                .setTrustedCertificates(fetchedCerts)
+                                .build());
+            } else if (tlsConfig != null && tlsConfig.getTruststore().isPresent()) {
+                KeyStore trustStore = SslUtil.loadKeyStore(tlsConfig.getTruststore().get(), tlsConfig.getTruststorePassword());
+                List<Certificate> trustCerts = new ArrayList<>();
+                for (String alias : Collections.list(trustStore.aliases())) {
+                    if (trustStore.isCertificateEntry(alias)) {
+                        trustCerts.add(trustStore.getCertificate(alias));
+                    }
+                }
+                dtlsConfigBuilder.setAdvancedCertificateVerifier(
+                        StaticNewAdvancedCertificateVerifier.builder()
+                                .setTrustedCertificates(trustCerts.toArray(new Certificate[0]))
+                                .build());
+            } else {
+                dtlsConfigBuilder.setAdvancedCertificateVerifier(
+                        StaticNewAdvancedCertificateVerifier.builder()
+                                .setTrustAllCertificates()
+                                .build());
+            }
+            coapClient.setEndpoint(new CoapEndpoint.Builder().setConnector(new DTLSConnector(dtlsConfigBuilder.build())).build());
+        }
         coapClient.setTimeout((long) config.getRequestTimeoutMs());
         log.debug("Connecting {} client to {}", getTransportType(), target.getBaseUrl());
     }
