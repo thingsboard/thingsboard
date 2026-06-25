@@ -82,7 +82,6 @@ return [
 
 You can see real life example, how to use this node in those tutorials:
 
-- [Transform incoming telemetry{:target="_blank"}](${siteBaseUrl}/docs${docPlatformPrefix}/reference/rule-engine/nodes/transformation/script/)
 - [Reply to RPC Calls{:target="_blank"}](${siteBaseUrl}/docs${docPlatformPrefix}/recipes/rpc-reply-with-related-telemetry/#step-32-script-transformation-node)
 
 <br>

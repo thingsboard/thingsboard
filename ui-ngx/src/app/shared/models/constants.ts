@@ -195,7 +195,7 @@ export const HelpLinks = {
     dashboards: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/dashboards/`,
     otaUpdates: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ota-updates/`,
     widgetTypes: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/contribution/widgets-development/#widget-types`,
-    widgetsBundles: `${helpBaseUrl}/docs${docPlatformPrefix}/reference/widgets/widget-library/#widgets-library-bundles`,
+    widgetsBundles: `${helpBaseUrl}/docs${docPlatformPrefix}/reference/widgets/widget-library/`,
     widgetsConfig:  `${helpBaseUrl}/docs${docPlatformPrefix}/reference/widgets/widget-library/`,
     widgetsConfigTimeseries:  `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/contribution/widgets-development/time-series/`,
     widgetsConfigLatest: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/contribution/widgets-development/latest-values/`,
