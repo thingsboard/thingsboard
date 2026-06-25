@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.service.housekeeper.processor;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -35,9 +38,22 @@ public class TsHistoryDeletionTaskProcessor extends HousekeeperTaskProcessor<TsH
 
     @Override
     public void process(TsHistoryDeletionHousekeeperTask task) throws Exception {
+        wait(processAsync(task));
+    }
+
+    @Override
+    public ListenableFuture<Void> processAsync(TsHistoryDeletionHousekeeperTask task) {
         DeleteTsKvQuery deleteQuery = new BaseDeleteTsKvQuery(task.getKey(), 0, System.currentTimeMillis(), false, false);
-        wait(timeseriesService.remove(task.getTenantId(), task.getEntityId(), List.of(deleteQuery)));
-        log.debug("[{}][{}][{}] Deleted timeseries history for key '{}'", task.getTenantId(), task.getEntityId().getEntityType(), task.getEntityId(), task.getKey());
+        ListenableFuture<?> future = timeseriesService.remove(task.getTenantId(), task.getEntityId(), List.of(deleteQuery));
+        return Futures.transform(future, _ -> {
+            log.debug("[{}][{}][{}] Deleted timeseries history for key '{}'", task.getTenantId(), task.getEntityId().getEntityType(), task.getEntityId(), task.getKey());
+            return null;
+        }, MoreExecutors.directExecutor());
+    }
+
+    @Override
+    public boolean supportsAsyncProcessing() {
+        return true;
     }
 
     @Override
