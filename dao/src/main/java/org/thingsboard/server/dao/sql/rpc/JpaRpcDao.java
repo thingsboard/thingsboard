@@ -71,7 +71,10 @@ public class JpaRpcDao extends JpaAbstractDao<RpcEntity, Rpc> implements RpcDao,
     @Value("${sql.batch_sort:true}")
     private boolean batchSortEnabled;
 
-    private TbSqlBlockingQueueWrapper<RpcQueueEntry, Void> queue;
+    // Boolean response per queued write: an INSERT-on-conflict always persists (true), while an
+    // UPDATE-by-id reports false when it matched no row (the RPC was deleted in the meantime), so the
+    // service layer can skip the rule-engine notification for a row that no longer exists.
+    private TbSqlBlockingQueueWrapper<RpcQueueEntry, Boolean> queue;
 
     @PostConstruct
     private void init() {
@@ -82,12 +85,13 @@ public class JpaRpcDao extends JpaAbstractDao<RpcEntity, Rpc> implements RpcDao,
                 .statsPrintIntervalMs(statsPrintIntervalMs)
                 .statsNamePrefix("rpc")
                 .batchSortEnabled(batchSortEnabled)
-                .withResponse(false)
+                .withResponse(true)
                 .build();
         Function<RpcQueueEntry, Integer> hashcodeFunction = entry -> entry.entity().getUuid().hashCode();
         queue = new TbSqlBlockingQueueWrapper<>(params, hashcodeFunction, batchThreads, statsFactory);
         queue.init(logExecutor, entries -> rpcInsertRepository.saveOrUpdate(entries),
-                Comparator.comparing((RpcQueueEntry entry) -> entry.entity().getUuid()));
+                Comparator.comparing((RpcQueueEntry entry) -> entry.entity().getUuid()),
+                Function.identity());
     }
 
     @PreDestroy
@@ -98,12 +102,12 @@ public class JpaRpcDao extends JpaAbstractDao<RpcEntity, Rpc> implements RpcDao,
     }
 
     @Override
-    public ListenableFuture<Void> createAsync(TenantId tenantId, Rpc rpc) {
+    public ListenableFuture<Boolean> createAsync(Rpc rpc) {
         return queue.add(RpcQueueEntry.forInsert(new RpcEntity(rpc)));
     }
 
     @Override
-    public ListenableFuture<Void> updateAsync(TenantId tenantId, Rpc rpc) {
+    public ListenableFuture<Boolean> updateAsync(Rpc rpc) {
         return queue.add(RpcQueueEntry.forUpdate(new RpcEntity(rpc)));
     }
 

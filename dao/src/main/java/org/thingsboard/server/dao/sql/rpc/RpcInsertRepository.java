@@ -24,6 +24,7 @@ import org.thingsboard.server.dao.sqlts.insert.AbstractInsertRepository;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 @Repository
@@ -48,10 +49,10 @@ public class RpcInsertRepository extends AbstractInsertRepository {
         void bind(PreparedStatement ps, RpcEntity rpc) throws SQLException;
     }
 
-    public void saveOrUpdate(List<RpcQueueEntry> entries) {
+    public List<Boolean> saveOrUpdate(List<RpcQueueEntry> entries) {
         List<RpcEntity> inserts = entries.stream().filter(RpcQueueEntry::insert).map(RpcQueueEntry::entity).toList();
         List<RpcEntity> updates = entries.stream().filter(entry -> !entry.insert()).map(RpcQueueEntry::entity).toList();
-        transactionTemplate.execute(status -> {
+        int[] updateCounts = transactionTemplate.execute(status -> {
             // Inserts run first so a create and a status update for the same rpcId coalesced into one
             // batch still apply in create -> update order.
             if (!inserts.isEmpty()) {
@@ -68,18 +69,29 @@ public class RpcInsertRepository extends AbstractInsertRepository {
                 });
             }
             if (!updates.isEmpty()) {
-                batch(UPDATE, updates, (ps, rpc) -> {
+                return batch(UPDATE, updates, (ps, rpc) -> {
                     ps.setString(1, rpc.getStatus().name());
                     ps.setString(2, toJsonStr(rpc.getResponse()));
                     ps.setObject(3, rpc.getUuid());
                 });
             }
-            return null;
+            return new int[0];
         });
+
+        // Result is aligned to the submission order of entries: an insert always persists
+        // (INSERT ... ON CONFLICT), an update persists only if its WHERE id = ? matched a still-existing
+        // row. updateCounts keeps the same relative order as the filtered updates, so a single cursor
+        // walks it as we encounter update entries; insert entries short-circuit and don't advance it.
+        List<Boolean> persisted = new ArrayList<>(entries.size());
+        int updateIdx = 0;
+        for (RpcQueueEntry entry : entries) {
+            persisted.add(entry.insert() || updateCounts[updateIdx++] > 0);
+        }
+        return persisted;
     }
 
-    private void batch(String sql, List<RpcEntity> entities, ColumnBinder binder) {
-        jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
+    private int[] batch(String sql, List<RpcEntity> entities, ColumnBinder binder) {
+        return jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
             @Override
             public void setValues(PreparedStatement ps, int i) throws SQLException {
                 binder.bind(ps, entities.get(i));

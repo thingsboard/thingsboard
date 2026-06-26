@@ -18,7 +18,6 @@ package org.thingsboard.server.service.rpc;
 import com.google.common.util.concurrent.Futures;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -34,6 +33,7 @@ import java.util.UUID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -47,15 +47,13 @@ public class TbRpcServiceTest {
 
     @Before
     public void setUp() {
-        tbRpcService = new TbRpcService(rpcService, clusterService);
-        ReflectionTestUtils.setField(tbRpcService, "callbackThreads", 1);
-        ReflectionTestUtils.invokeMethod(tbRpcService, "init");
+        tbRpcService = new TbRpcService(rpcService, clusterService, 1);
     }
 
     @Test
     public void savePersistsViaUpdateAsyncThenPushesToRuleEngine() {
         Rpc rpc = newRpc();
-        when(rpcService.updateAsync(rpc)).thenReturn(Futures.immediateFuture(null));
+        when(rpcService.updateAsync(rpc)).thenReturn(Futures.immediateFuture(true));
 
         tbRpcService.save(rpc.getTenantId(), rpc);
 
@@ -67,13 +65,27 @@ public class TbRpcServiceTest {
     @Test
     public void createPersistsViaCreateAsyncThenPushesToRuleEngine() {
         Rpc rpc = newRpc();
-        when(rpcService.createAsync(rpc)).thenReturn(Futures.immediateFuture(null));
+        when(rpcService.createAsync(rpc)).thenReturn(Futures.immediateFuture(true));
 
         tbRpcService.create(rpc.getTenantId(), rpc);
 
         verify(rpcService).createAsync(rpc);
         verify(clusterService, timeout(5000))
                 .pushMsgToRuleEngine(eq(rpc.getTenantId()), eq(rpc.getDeviceId()), any(TbMsg.class), isNull());
+    }
+
+    @Test
+    public void saveDoesNotNotifyRuleEngineWhenRowMissing() {
+        Rpc rpc = newRpc();
+        // updateAsync resolves false: the UPDATE matched no row (RPC was deleted), so the rule engine
+        // must not be notified for a status change that never persisted.
+        when(rpcService.updateAsync(rpc)).thenReturn(Futures.immediateFuture(false));
+
+        tbRpcService.save(rpc.getTenantId(), rpc);
+
+        verify(rpcService).updateAsync(rpc);
+        verify(clusterService, after(500).never())
+                .pushMsgToRuleEngine(any(TenantId.class), any(DeviceId.class), any(TbMsg.class), isNull());
     }
 
     private Rpc newRpc() {
