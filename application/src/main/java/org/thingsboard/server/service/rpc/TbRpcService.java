@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.rpc;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -87,20 +86,6 @@ public class TbRpcService {
 
     private Executor executorFor(UUID rpcId) {
         return callbackExecutors[(rpcId.hashCode() & 0x7FFFFFFF) % callbackThreads];
-    }
-
-    public void save(TenantId tenantId, RpcId rpcId, RpcStatus newStatus, JsonNode response) {
-        Rpc foundRpc = rpcService.findById(tenantId, rpcId);
-        if (foundRpc != null) {
-            foundRpc.setStatus(newStatus);
-            if (response != null) {
-                foundRpc.setResponse(response);
-            }
-            Rpc saved = rpcService.save(foundRpc);
-            pushRpcMsgToRuleEngine(tenantId, saved);
-        } else {
-            log.warn("[{}] Failed to update RPC status because RPC was already deleted", rpcId);
-        }
     }
 
     private void pushRpcMsgToRuleEngine(TenantId tenantId, Rpc rpc) {
