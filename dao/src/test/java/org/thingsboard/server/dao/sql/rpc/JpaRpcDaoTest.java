@@ -93,4 +93,42 @@ public class JpaRpcDaoTest extends AbstractJpaDaoTest {
         assertThat(afterUpdate.getResponse()).isEqualTo(JacksonUtil.toJsonNode("{\"ok\":true}"));
     }
 
+    @Test
+    public void saveAsyncSameRpcIdCoalescedBatchKeepsLatestStatus() throws Exception {
+        UUID id = UUID.randomUUID();
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+        long createdTime = System.currentTimeMillis();
+        long expirationTime = createdTime + 60_000;
+
+        Rpc queued = new Rpc(new RpcId(id));
+        queued.setCreatedTime(createdTime);
+        queued.setTenantId(TenantId.SYS_TENANT_ID);
+        queued.setDeviceId(deviceId);
+        queued.setExpirationTime(expirationTime);
+        queued.setRequest(JacksonUtil.toJsonNode("{\"method\":\"x\"}"));
+        queued.setStatus(RpcStatus.QUEUED);
+
+        Rpc delivered = new Rpc(new RpcId(id));
+        delivered.setCreatedTime(createdTime);
+        delivered.setTenantId(TenantId.SYS_TENANT_ID);
+        delivered.setDeviceId(deviceId);
+        delivered.setExpirationTime(expirationTime);
+        delivered.setRequest(queued.getRequest());
+        delivered.setStatus(RpcStatus.DELIVERED);
+        delivered.setResponse(JacksonUtil.toJsonNode("{\"ok\":true}"));
+
+        // Enqueue both writes for the same rpcId back-to-back so they coalesce into one flush batch.
+        // Same rpcId -> same partition; the queue's stable sort must keep submission order
+        // (QUEUED before DELIVERED), so the final persisted row must be DELIVERED, never QUEUED.
+        var queuedFuture = rpcDao.saveAsync(TenantId.SYS_TENANT_ID, queued);
+        var deliveredFuture = rpcDao.saveAsync(TenantId.SYS_TENANT_ID, delivered);
+        queuedFuture.get(5, TimeUnit.SECONDS);
+        deliveredFuture.get(5, TimeUnit.SECONDS);
+
+        Rpc stored = rpcDao.findById(TenantId.SYS_TENANT_ID, id);
+        assertThat(stored).isNotNull();
+        assertThat(stored.getStatus()).isEqualTo(RpcStatus.DELIVERED);
+        assertThat(stored.getResponse()).isEqualTo(JacksonUtil.toJsonNode("{\"ok\":true}"));
+    }
+
 }
