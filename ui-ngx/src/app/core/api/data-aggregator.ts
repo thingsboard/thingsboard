@@ -310,22 +310,25 @@ export class DataAggregator {
       const delta = Math.floor(this.elapsed / this.aggregationTimeout);
       if (delta || !this.data || dataChanged) {
         const tickTs = delta * this.aggregationTimeout;
+        let currentEndTs: number;
         if (this.subsTw.quickInterval) {
           const startEndTime = calculateIntervalStartEndTime(this.subsTw.quickInterval, this.subsTw.timezone);
           this.startTs = startEndTime[0] + this.subsTw.tsOffset;
           this.endTs = startEndTime[1] + this.subsTw.tsOffset;
+          currentEndTs = this.endTs;
         } else {
           this.startTs += tickTs;
           this.endTs += tickTs;
+          currentEndTs = this.endTs + (this.elapsed - tickTs);
         }
         if (this.subsTw.aggregation.type !== AggregationType.NONE) {
-          this.updateLastInterval();
+          this.updateLastInterval(currentEndTs);
         }
-        this.data = this.updateData();
+        this.data = this.updateData(currentEndTs);
         this.elapsed = this.elapsed - delta * this.aggregationTimeout;
       }
     } else {
-      this.data = this.updateData();
+      this.data = this.updateData(this.endTs);
     }
     if (this.onDataCb && (!this.ignoreDataUpdateOnIntervalTick || this.updatedData)) {
       this.onDataCb(this.data, detectChanges);
@@ -336,7 +339,7 @@ export class DataAggregator {
     }
   }
 
-  private updateData(): IndexedData {
+  private updateData(currentEndTs: number): IndexedData {
     this.dataBuffer = [];
     this.tsKeys.forEach((key) => {
       if (!this.dataBuffer[key.id]) {
@@ -358,7 +361,7 @@ export class DataAggregator {
           }
           deletedKeys.push(aggStartTs);
           this.updatedData = true;
-        } else if (aggData.ts < this.endTs || noAggregation) {
+        } else if (aggData.ts < currentEndTs || noAggregation) {
           const kvPair: DataEntry = [aggData.ts, aggData.aggValue, aggData.interval];
           keyData.push(kvPair);
         }
@@ -366,7 +369,7 @@ export class DataAggregator {
       deletedKeys.forEach(ts => aggKeyData.delete(ts));
       keyData.sort((set1, set2) => set1[0] - set2[0]);
       if (this.subsTw.aggregation.stateData) {
-        this.updateStateBounds(keyData, deepClone(this.lastPrevKvPairData[id]));
+        this.updateStateBounds(keyData, currentEndTs, deepClone(this.lastPrevKvPairData[id]));
       }
       if (keyData.length > this.subsTw.aggregation.limit) {
         keyData = keyData.slice(keyData.length - this.subsTw.aggregation.limit);
@@ -376,7 +379,7 @@ export class DataAggregator {
     return this.dataBuffer;
   }
 
-  private updateStateBounds(keyData: DataSet, lastPrevKvPair: DataEntry) {
+  private updateStateBounds(keyData: DataSet, currentEndTs: number, lastPrevKvPair: DataEntry) {
     if (lastPrevKvPair) {
       lastPrevKvPair[0] = this.startTs;
       lastPrevKvPair[2] = [this.startTs, this.startTs];
@@ -397,10 +400,10 @@ export class DataAggregator {
     }
     if (keyData.length) {
       let lastKvPair = keyData[keyData.length - 1];
-      if (lastKvPair[0] < this.endTs) {
+      if (lastKvPair[0] < currentEndTs) {
         lastKvPair = deepClone(lastKvPair);
-        lastKvPair[0] = this.endTs;
-        lastKvPair[2] = [this.endTs, this.endTs];
+        lastKvPair[0] = currentEndTs;
+        lastKvPair[2] = [currentEndTs, currentEndTs];
         keyData.push(lastKvPair);
       }
     }
@@ -479,11 +482,11 @@ export class DataAggregator {
     }
   }
 
-  private updateLastInterval() {
+  private updateLastInterval(currentEndTs: number) {
     for (const idStr of Object.keys(this.aggregationMap.aggMap)) {
       const id = Number(idStr);
       const aggKeyData = this.aggregationMap.aggMap[id];
-      aggKeyData.updateLastInterval(this.endTs);
+      aggKeyData.updateLastInterval(currentEndTs);
     }
   }
 
