@@ -25,15 +25,19 @@
           {{ 'rule-node-config.unassign-from-customer' | translate }}
         </mat-slide-toggle>
       </div>
-      <mat-form-field class="mat-block" subscriptSizing="dynamic" *ngIf="unassignCustomerConfigForm.get('unassignFromCustomer').value">
-        <mat-label translate>rule-node-config.customer-name-pattern</mat-label>
-        <input required matInput formControlName="customerNamePattern">
-        <mat-error *ngIf="unassignCustomerConfigForm.get('customerNamePattern').hasError('required') ||
-                        unassignCustomerConfigForm.get('customerNamePattern').hasError('pattern')">
-          {{ 'rule-node-config.customer-name-pattern-required' | translate }}
-        </mat-error>
-        <mat-hint translate>rule-node-config.customer-name-pattern-hint</mat-hint>
-      </mat-form-field>
+      @if (unassignCustomerConfigForm.get('unassignFromCustomer').value) {
+        <mat-form-field class="mat-block" subscriptSizing="dynamic" appearance="outline">
+          <mat-label translate>rule-node-config.customer-name-pattern</mat-label>
+          <input required matInput formControlName="customerNamePattern">
+          @if (unassignCustomerConfigForm.get('customerNamePattern').hasError('required') ||
+            unassignCustomerConfigForm.get('customerNamePattern').hasError('pattern')) {
+            <mat-error>
+              {{ 'rule-node-config.customer-name-pattern-required' | translate }}
+            </mat-error>
+          }
+          <mat-hint translate>rule-node-config.customer-name-pattern-hint</mat-hint>
+        </mat-form-field>
+      }
     </div>
   </div>
 </section>

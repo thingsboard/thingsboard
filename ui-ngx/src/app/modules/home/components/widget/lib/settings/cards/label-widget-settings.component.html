@@ -17,27 +17,30 @@
 -->
 <section class="tb-widget-settings flex flex-col" [formGroup]="labelWidgetSettingsForm">
   <tb-gallery-image-input required
-                  label="{{ 'widgets.label-widget.background-image' | translate }}"
-                  formControlName="backgroundImageUrl">
+                          label="{{ 'widgets.label-widget.background-image' | translate }}"
+                          formControlName="backgroundImageUrl">
   </tb-gallery-image-input>
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.label-widget.labels</legend>
     <div class="flex flex-col">
       <div class="tb-control-list tb-drop-list" cdkDropList cdkDropListOrientation="vertical"
            (cdkDropListDropped)="labelDrop($event)">
-        <div cdkDrag class="tb-draggable flex flex-col" *ngFor="let labelControl of labelsFormArray().controls; trackBy: trackByLabelControl;
-                 let $index = index; last as isLast;"
-             [class.pb-2]="!isLast">
-          <tb-label-widget-label [formControl]="labelControl"
-                                 [expanded]="labelControl.new"
-                                 (removeLabel)="removeLabel($index)">
-          </tb-label-widget-label>
+        @for (labelControl of typedSelectOptions; track trackByLabelControl($index, labelControl); let isLast = $last) {
+          <div cdkDrag class="tb-draggable flex flex-col"
+               [class.pb-2]="!isLast">
+            <tb-label-widget-label [formControl]="labelControl"
+                                   [expanded]="labelControl.new"
+                                   (removeLabel)="removeLabel($index)">
+            </tb-label-widget-label>
+          </div>
+        }
+      </div>
+      @if (!labelsFormArray().controls.length) {
+        <div>
+          <span translate
+          class="tb-prompt flex items-center justify-center">widgets.label-widget.no-labels</span>
         </div>
-      </div>
-      <div *ngIf="!labelsFormArray().controls.length">
-      <span translate
-            class="tb-prompt flex items-center justify-center">widgets.label-widget.no-labels</span>
-      </div>
+      }
       <div style="padding-top: 16px;">
         <button mat-raised-button color="primary"
                 type="button"

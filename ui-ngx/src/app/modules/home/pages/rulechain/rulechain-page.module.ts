@@ -27,23 +27,27 @@ import {
   AddRuleNodeDialogComponent,
   AddRuleNodeLinkDialogComponent,
   CreateNestedRuleChainDialogComponent,
+  AddNoteDialogComponent,
   RuleChainPageComponent
 } from '@home/pages/rulechain/rulechain-page.component';
 import { RuleNodeDetailsComponent } from '@home/pages/rulechain/rule-node-details.component';
 import { RuleNodeConfigComponent } from '@home/pages/rulechain/rule-node-config.component';
 import { LinkLabelsComponent } from '@home/pages/rulechain/link-labels.component';
 import { RuleNodeLinkComponent } from '@home/pages/rulechain/rule-node-link.component';
+import { RuleNoteEditorComponent } from '@home/pages/rulechain/rule-note-editor.component';
 
 @NgModule({
   declarations: [
     RuleChainPageComponent,
     RuleNodeDetailsComponent,
+    RuleNoteEditorComponent,
     LinkLabelsComponent,
     RuleNodeLinkComponent,
     RuleNodeConfigComponent,
     AddRuleNodeLinkDialogComponent,
     AddRuleNodeDialogComponent,
-    CreateNestedRuleChainDialogComponent
+    CreateNestedRuleChainDialogComponent,
+    AddNoteDialogComponent
   ],
   imports: [
     CommonModule,

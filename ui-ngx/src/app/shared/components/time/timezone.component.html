@@ -15,40 +15,48 @@
     limitations under the License.
 
 -->
-<button *ngIf="asButton && !strokedButton && !flatButton"
-        [disabled]="timezoneDisabled"
-        [matTooltip]="tooltipValue()"
-        [matTooltipPosition]="tooltipPosition"
-        type="button"
-        mat-raised-button color="primary"
-        (click)="toggleTimezone($event)">
-  <span>{{displayValue()}}</span>
-</button>
-<button *ngIf="asButton && strokedButton"
-        [disabled]="timezoneDisabled"
-        [matTooltip]="tooltipValue()"
-        [matTooltipPosition]="tooltipPosition"
-        type="button"
-        mat-stroked-button color="primary"
-        (click)="toggleTimezone($event)">
-  <span>{{displayValue()}}</span>
-</button>
-<button *ngIf="asButton && flatButton"
-        [disabled]="timezoneDisabled"
-        [matTooltip]="tooltipValue()"
-        [matTooltipPosition]="tooltipPosition"
-        type="button"
-        mat-button
-        (click)="toggleTimezone($event)">
-  <span>{{displayValue()}}</span>
-</button>
-<section *ngIf="!asButton"
-         class="tb-timezone"
-         [class]="{'no-padding': noPadding}"
-         [matTooltip]="tooltipValue()"
-         [matTooltipPosition]="tooltipPosition"
-         (click)="toggleTimezone($event)">
-  <div class="tb-timezone-label" [class.!hidden]="hideLabel">
-    {{displayValue()}}
-  </div>
-</section>
+@if (asButton && !strokedButton && !flatButton) {
+  <button
+    [disabled]="timezoneDisabled"
+    [matTooltip]="tooltipValue()"
+    [matTooltipPosition]="tooltipPosition"
+    type="button"
+    mat-raised-button color="primary"
+    (click)="toggleTimezone($event)">
+    <span>{{displayValue()}}</span>
+  </button>
+}
+@if (asButton && strokedButton) {
+  <button
+    [disabled]="timezoneDisabled"
+    [matTooltip]="tooltipValue()"
+    [matTooltipPosition]="tooltipPosition"
+    type="button"
+    mat-stroked-button color="primary"
+    (click)="toggleTimezone($event)">
+    <span>{{displayValue()}}</span>
+  </button>
+}
+@if (asButton && flatButton) {
+  <button
+    [disabled]="timezoneDisabled"
+    [matTooltip]="tooltipValue()"
+    [matTooltipPosition]="tooltipPosition"
+    type="button"
+    mat-button
+    (click)="toggleTimezone($event)">
+    <span>{{displayValue()}}</span>
+  </button>
+}
+@if (!asButton) {
+  <section
+    class="tb-timezone"
+    [class]="{'no-padding': noPadding}"
+    [matTooltip]="tooltipValue()"
+    [matTooltipPosition]="tooltipPosition"
+    (click)="toggleTimezone($event)">
+    <div class="tb-timezone-label" [class.!hidden]="hideLabel">
+      {{displayValue()}}
+    </div>
+  </section>
+}

@@ -60,7 +60,8 @@ public class WebSocketConfiguration implements WebSocketConfigurer {
             log.error("TbWebSocketHandler expected but [{}] provided", wsHandler);
             throw new RuntimeException("TbWebSocketHandler expected but " + wsHandler + " provided");
         }
-        registry.addHandler(wsHandler, WS_API_MAPPING).setAllowedOriginPatterns("*");
+        registry.addHandler(wsHandler, WS_API_MAPPING)
+                .setAllowedOriginPatterns("*");
     }
 
 }

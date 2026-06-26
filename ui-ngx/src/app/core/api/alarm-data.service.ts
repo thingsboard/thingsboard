@@ -85,6 +85,7 @@ export class AlarmDataService {
       alarmDataSubscriptionOptions.entityFilter = alarmSource.entityFilter;
       alarmDataSubscriptionOptions.pageLink = pageLink;
       alarmDataSubscriptionOptions.keyFilters = alarmSource.keyFilters;
+      alarmDataSubscriptionOptions.keyFiltersOperation = alarmSource.keyFiltersOperation;
       alarmDataSubscriptionOptions.additionalKeyFilters = additionalKeyFilters;
     }
     return alarmDataSubscriptionOptions;

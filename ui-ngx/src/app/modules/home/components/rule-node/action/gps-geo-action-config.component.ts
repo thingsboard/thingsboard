@@ -38,16 +38,16 @@ export class GpsGeoActionConfigComponent extends RuleNodeConfigurationComponent 
   geoActionConfigForm: UntypedFormGroup;
 
   perimeterType = PerimeterType;
-  perimeterTypes = Object.keys(PerimeterType);
+  perimeterTypes = Object.values(PerimeterType);
   perimeterTypeTranslationMap = perimeterTypeTranslations;
 
-  rangeUnits = Object.keys(RangeUnit);
+  rangeUnits = Object.values(RangeUnit);
   rangeUnitTranslationMap = rangeUnitTranslations;
 
   presenceMonitoringStrategies = PresenceMonitoringStrategiesData;
   presenceMonitoringStrategyKeys = Array.from(this.presenceMonitoringStrategies.keys());
 
-  timeUnits = Object.keys(TimeUnit);
+  timeUnits = Object.values(TimeUnit);
   timeUnitsTranslationMap = timeUnitTranslations;
 
   public defaultPaddingEnable = true;

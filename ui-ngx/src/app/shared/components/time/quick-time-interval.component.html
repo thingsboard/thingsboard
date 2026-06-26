@@ -17,11 +17,15 @@
 -->
 <section class="interval-section flex flex-1 flex-row" [formGroup]="quickIntervalFormGroup">
   <mat-form-field class="flex-1" [subscriptSizing]="subscriptSizing" [appearance]="appearance">
-    <mat-label *ngIf="displayLabel" translate>timewindow.interval</mat-label>
+    @if (displayLabel) {
+      <mat-label translate>timewindow.interval</mat-label>
+    }
     <mat-select formControlName="interval">
-      <mat-option *ngFor="let interval of intervals" [value]="interval">
-        {{ timeIntervalTranslationMap.get(interval) | translate}}
-      </mat-option>
+      @for (interval of intervals; track interval) {
+        <mat-option [value]="interval">
+          {{ timeIntervalTranslationMap.get(interval) | translate}}
+        </mat-option>
+      }
     </mat-select>
     <ng-container matSuffix>
       <ng-content select="[matSuffix]"></ng-content>

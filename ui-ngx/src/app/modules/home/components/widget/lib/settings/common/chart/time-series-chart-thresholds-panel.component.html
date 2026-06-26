@@ -21,24 +21,34 @@
     <div class="tb-form-table-header">
       <div class="tb-form-table-header-cell tb-threshold-source-header" translate>widgets.time-series-chart.threshold.source</div>
       <div class="tb-form-table-header-cell tb-threshold-key-value-header" translate>widgets.time-series-chart.threshold.key-value</div>
-      <div *ngIf="!hideYAxis" class="tb-form-table-header-cell tb-y-axis-header" translate>widgets.time-series-chart.axis.y-axis</div>
+      @if (!hideYAxis) {
+        <div class="tb-form-table-header-cell tb-y-axis-header" translate>widgets.time-series-chart.axis.y-axis</div>
+      }
       <div class="tb-form-table-header-cell tb-color-header" translate>widgets.color.color</div>
       <div class="tb-form-table-header-cell tb-units-header" translate>widget-config.units-short</div>
       <div class="tb-form-table-header-cell tb-decimals-header" translate>widget-config.decimals-short</div>
       <div class="tb-form-table-header-cell tb-actions-header"></div>
     </div>
-    <div *ngIf="thresholdsFormArray().controls.length; else noThresholds" class="tb-form-table-body">
-      <div *ngFor="let thresholdControl of thresholdsFormArray().controls; trackBy: trackByThreshold; let $index = index; let $last = last">
-        <tb-time-series-chart-threshold-row class="flex-1"
-                                    [formControl]="thresholdControl"
-                                    [hideYAxis]="hideYAxis"
-                                    [yAxisIds]="yAxisIds"
-                                    [supportsUnitConversion]="supportsUnitConversion"
-                                    (thresholdRemoved)="removeThreshold($index)">
-        </tb-time-series-chart-threshold-row>
-        <mat-divider *ngIf="!$last"></mat-divider>
+    @if (thresholdsFormArray().controls.length) {
+      <div class="tb-form-table-body">
+        @for (thresholdControl of thresholdsFormArray().controls; track trackByThreshold($index, thresholdControl)) {
+          <div>
+            <tb-time-series-chart-threshold-row class="flex-1"
+                                                [formControl]="thresholdControl"
+                                                [hideYAxis]="hideYAxis"
+                                                [yAxisIds]="yAxisIds"
+                                                [supportsUnitConversion]="supportsUnitConversion"
+                                                (thresholdRemoved)="removeThreshold($index)">
+            </tb-time-series-chart-threshold-row>
+            @if (!$last) {
+              <mat-divider></mat-divider>
+            }
+          </div>
+        }
       </div>
-    </div>
+    } @else {
+      <span class="tb-prompt flex items-center justify-center">{{ 'widgets.time-series-chart.threshold.no-thresholds' | translate }}</span>
+    }
   </div>
   <div>
     <button type="button" mat-stroked-button color="primary" (click)="addThreshold()">
@@ -46,6 +56,3 @@
     </button>
   </div>
 </div>
-<ng-template #noThresholds>
-  <span class="tb-prompt flex items-center justify-center">{{ 'widgets.time-series-chart.threshold.no-thresholds' | translate }}</span>
-</ng-template>

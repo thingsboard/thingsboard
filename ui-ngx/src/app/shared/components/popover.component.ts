@@ -327,9 +327,9 @@ export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
       (overlayOutsideClick)="onClickOutside($event)"
       (detach)="hide()"
       (positionChange)="onPositionChange($event)"
-    >
+      >
       <div #popoverRoot [@popoverMotion]="tbAnimationState"
-           (@popoverMotion.done)="animationDone()">
+        (@popoverMotion.done)="animationDone()">
         <div
           #popover
           class="tb-popover"
@@ -337,28 +337,32 @@ export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
           [class.tb-popover-rtl]="dir === 'rtl'"
           [class]="classMap"
           [style]="tbOverlayStyle"
-        >
+          >
           <div class="tb-popover-content">
             <div class="tb-popover-arrow">
               <span class="tb-popover-arrow-content"></span>
             </div>
             <div class="tb-popover-inner" [style]="tbPopoverInnerStyle" role="tooltip">
-              <div *ngIf="tbShowCloseButton" class="tb-popover-close-button" (click)="closeButtonClick($event)">×</div>
+              @if (tbShowCloseButton) {
+                <div class="tb-popover-close-button" (click)="closeButtonClick($event)">×</div>
+              }
               <div style="width: 100%; height: 100%;">
                 <div class="tb-popover-inner-content"  [style]="tbPopoverInnerContentStyle"
-                     [class.strict-position]="strictPosition">
-                  <ng-container *ngIf="tbContent">
+                  [class.strict-position]="strictPosition">
+                  @if (tbContent) {
                     <ng-container *tbStringTemplateOutlet="tbContent; context: tbComponentContext">
                       {{ tbContent }}
                     </ng-container>
-                  </ng-container>
-                  <ng-container *ngIf="tbComponent"
-                                [tbComponentOutlet]="tbComponent"
-                                [tbComponentInjector]="tbComponentInjector"
-                                [tbComponentOutletContext]="tbComponentContext"
-                                (componentChange)="onComponentChange($event)"
-                                [tbComponentStyle]="tbComponentStyle">
-                  </ng-container>
+                  }
+                  @if (tbComponent) {
+                    <ng-container
+                      [tbComponentOutlet]="tbComponent"
+                      [tbComponentInjector]="tbComponentInjector"
+                      [tbComponentOutletContext]="tbComponentContext"
+                      (componentChange)="onComponentChange($event)"
+                      [tbComponentStyle]="tbComponentStyle">
+                    </ng-container>
+                  }
                 </div>
               </div>
             </div>
@@ -366,7 +370,7 @@ export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
         </div>
       </div>
     </ng-template>
-  `,
+    `,
     standalone: false
 })
 export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {

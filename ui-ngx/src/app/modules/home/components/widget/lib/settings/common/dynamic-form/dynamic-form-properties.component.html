@@ -22,72 +22,83 @@
       <div class="tb-form-table-header-cell tb-name-header" translate>dynamic-form.property.name</div>
       <div class="tb-form-table-header-cell tb-type-header" translate>dynamic-form.property.type</div>
       <div class="tb-form-table-header-cell tb-actions-header tb-form-table-row-cell-buttons justify-end" [class.disabled]="disabled">
-        <button mat-icon-button
-                *ngIf="!disabled && importExport"
-                type="button"
-                matTooltip="{{ 'dynamic-form.import-form' | translate }}"
-                matTooltipPosition="above"
-                (click)="import($event)">
-          <tb-icon>mdi:file-import</tb-icon>
-        </button>
-        <button mat-icon-button
-                *ngIf="!disabled && importExport"
-                [class.tb-hidden]="!propertiesFormArray().controls.length"
-                type="button"
-                [disabled]="!propertiesFormArray().controls.length"
-                matTooltip="{{ 'dynamic-form.export-form' | translate }}"
-                matTooltipPosition="above"
-                (click)="export($event)">
-          <tb-icon>mdi:file-export</tb-icon>
-        </button>
-        <button mat-icon-button
-                *ngIf="!disabled"
-                [class.tb-hidden]="!propertiesFormArray().controls.length"
-                type="button"
-                [disabled]="!propertiesFormArray().controls.length"
-                matTooltip="{{ 'dynamic-form.clear-form' | translate }}"
-                matTooltipPosition="above"
-                (click)="clear($event)">
-          <tb-icon>mdi:broom</tb-icon>
-        </button>
-      </div>
-    </div>
-    <div *ngIf="propertiesFormArray().controls.length; else noProperties" class="tb-form-table-body tb-drop-list"
-         cdkDropList cdkDropListOrientation="vertical"
-         [cdkDropListDisabled]="!dragEnabled"
-         (cdkDropListDropped)="propertyDrop($event)">
-      <div cdkDrag [cdkDragDisabled]="!dragEnabled"
-           [class.tb-draggable]="!disabled"
-           [class.tb-draggable-form-table-row]="!disabled"
-           *ngFor="let propertyControl of propertiesFormArray().controls; trackBy: trackByProperty; let $index = index;">
-        <tb-dynamic-form-property-row class="flex-1"
-                                      [index]="$index"
-                                      [booleanPropertyIds]="booleanPropertyIds"
-                                      [formControl]="propertyControl"
-                                      (propertyRemoved)="removeProperty($index)">
-        </tb-dynamic-form-property-row>
-        <div class="tb-form-table-row-cell-buttons">
+        @if (!disabled && importExport) {
           <button mat-icon-button
-                  *ngIf="!disabled"
                   type="button"
-                  cdkDragHandle
-                  [class.tb-hidden]="!dragEnabled"
-                  matTooltip="{{ 'action.drag' | translate }}"
-                  matTooltipPosition="above">
-            <mat-icon>drag_indicator</mat-icon>
+                  matTooltip="{{ 'dynamic-form.import-form' | translate }}"
+                  matTooltipPosition="above"
+                  (click)="import($event)">
+            <tb-icon>mdi:file-import</tb-icon>
           </button>
-        </div>
+        }
+        @if (!disabled && importExport) {
+          <button mat-icon-button
+                  [class.tb-hidden]="!propertiesFormArray().controls.length"
+                  type="button"
+                  [disabled]="!propertiesFormArray().controls.length"
+                  matTooltip="{{ 'dynamic-form.export-form' | translate }}"
+                  matTooltipPosition="above"
+                  (click)="export($event)">
+            <tb-icon>mdi:file-export</tb-icon>
+          </button>
+        }
+        @if (!disabled) {
+          <button mat-icon-button
+                  [class.tb-hidden]="!propertiesFormArray().controls.length"
+                  type="button"
+                  [disabled]="!propertiesFormArray().controls.length"
+                  matTooltip="{{ 'dynamic-form.clear-form' | translate }}"
+                  matTooltipPosition="above"
+                  (click)="clear($event)">
+            <tb-icon>mdi:broom</tb-icon>
+          </button>
+        }
       </div>
     </div>
-    <tb-error *ngIf="errorText" noMargin [error]="errorText" style="padding-left: 12px;"></tb-error>
+    @if (propertiesFormArray().controls.length) {
+      <div class="tb-form-table-body tb-drop-list"
+           cdkDropList cdkDropListOrientation="vertical"
+           [cdkDropListDisabled]="!dragEnabled"
+           (cdkDropListDropped)="propertyDrop($event)">
+        @for (propertyControl of propertiesFormArray().controls; track trackByProperty($index, propertyControl)) {
+          <div cdkDrag [cdkDragDisabled]="!dragEnabled"
+               [class.tb-draggable]="!disabled"
+               [class.tb-draggable-form-table-row]="!disabled"
+               >
+            <tb-dynamic-form-property-row class="flex-1"
+                                          [index]="$index"
+                                          [booleanPropertyIds]="booleanPropertyIds"
+                                          [formControl]="propertyControl"
+                                          (propertyRemoved)="removeProperty($index)">
+            </tb-dynamic-form-property-row>
+            <div class="tb-form-table-row-cell-buttons">
+              @if (!disabled) {
+                <button mat-icon-button
+                        type="button"
+                        cdkDragHandle
+                        [class.tb-hidden]="!dragEnabled"
+                        matTooltip="{{ 'action.drag' | translate }}"
+                        matTooltipPosition="above">
+                  <mat-icon>drag_indicator</mat-icon>
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    } @else {
+      <span class="tb-prompt flex items-center justify-center" [style]="fillHeight ? {height: '100%'} : {}">{{ 'dynamic-form.property.no-properties' | translate }}</span>
+    }
+    @if (errorText) {
+      <tb-error noMargin [error]="errorText" style="padding-left: 12px;"></tb-error>
+    }
   </div>
-  <div *ngIf="!disabled">
-    <button type="button" mat-stroked-button color="primary" (click)="addProperty()">
-      {{ 'dynamic-form.property.add-property' | translate }}
-    </button>
-  </div>
+  @if (!disabled) {
+    <div>
+      <button type="button" mat-stroked-button color="primary" (click)="addProperty()">
+        {{ 'dynamic-form.property.add-property' | translate }}
+      </button>
+    </div>
+  }
 </div>
 
-<ng-template #noProperties>
-  <span class="tb-prompt flex items-center justify-center" [style]="fillHeight ? {height: '100%'} : {}">{{ 'dynamic-form.property.no-properties' | translate }}</span>
-</ng-template>

@@ -19,120 +19,130 @@
   <div class="tb-source-field">
     <mat-form-field class="tb-ds-type-field tb-inline-field" appearance="outline" subscriptSizing="dynamic">
       <mat-select formControlName="dsType">
-        <mat-option *ngFor="let type of datasourceTypes" [value]="type">
-          {{ datasourceTypesTranslations.get(type) | translate }}
-        </mat-option>
+        @for (type of datasourceTypes; track type) {
+          <mat-option [value]="type">
+            {{ datasourceTypesTranslations.get(type) | translate }}
+          </mat-option>
+        }
       </mat-select>
     </mat-form-field>
-    <mat-form-field
-      *ngIf="dataLayerFormGroup.get('dsType').value === DatasourceType.function"
-      class="tb-label-field tb-inline-field" appearance="outline" subscriptSizing="dynamic">
-      <input matInput formControlName="dsLabel" placeholder="{{ 'widget-config.set' | translate }}">
-    </mat-form-field>
-    <tb-entity-autocomplete
-      class="tb-device-field"
-      *ngIf="dataLayerFormGroup.get('dsType').value === DatasourceType.device"
-      required
-      inlineField
-      placeholder="{{ 'device.select-device' | translate }}"
-      [entityType]="EntityType.DEVICE"
-      formControlName="dsDeviceId">
-    </tb-entity-autocomplete>
-    <tb-entity-alias-select
-      class="tb-entity-alias-field"
-      *ngIf="dataLayerFormGroup.get('dsType').value === DatasourceType.entity"
-      inlineField
-      tbRequired
-      [aliasController]="context.aliasController"
-      formControlName="dsEntityAliasId"
-      [callbacks]="context.callbacks">
-    </tb-entity-alias-select>
+    @if (dataLayerFormGroup.get('dsType').value === DatasourceType.function) {
+      <mat-form-field
+        class="tb-label-field tb-inline-field" appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="dsLabel" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    }
+    @if (dataLayerFormGroup.get('dsType').value === DatasourceType.device) {
+      <tb-entity-autocomplete
+        class="tb-device-field"
+        required
+        inlineField
+        placeholder="{{ 'device.select-device' | translate }}"
+        [entityType]="EntityType.DEVICE"
+        formControlName="dsDeviceId">
+      </tb-entity-autocomplete>
+    }
+    @if (dataLayerFormGroup.get('dsType').value === DatasourceType.entity) {
+      <tb-entity-alias-select
+        class="tb-entity-alias-field"
+        inlineField
+        tbRequired
+        [aliasController]="context.aliasController"
+        formControlName="dsEntityAliasId"
+        [callbacks]="context.callbacks">
+      </tb-entity-alias-select>
+    }
   </div>
-  <tb-data-key-input
-    class="tb-x-pos-field"
-    *ngIf="['trips', 'markers'].includes(dataLayerType)"
-    required
-    requiredText="{{ mapType === MapType.geoMap ? 'widgets.maps.data-layer.marker.latitude-key-required' : 'widgets.maps.data-layer.marker.x-pos-key-required' }}"
-    [datasourceType]="dataLayerFormGroup.get('dsType').value"
-    [entityAliasId]="dataLayerFormGroup.get('dsEntityAliasId').value"
-    [deviceId]="dataLayerFormGroup.get('dsDeviceId').value"
-    [aliasController]="context.aliasController"
-    [widgetType]="dataLayerType === 'trips' ? widgetType.timeseries : widgetType.latest"
-    [dataKeyType]="context.functionsOnly ? DataKeyType.function : null"
-    [dataKeyTypes]="dataLayerType === 'trips' ? [DataKeyType.timeseries] : [DataKeyType.attribute, DataKeyType.timeseries]"
-    [callbacks]="context.callbacks"
-    [generateKey]="context.generateDataKey"
-    (keyEdit)="editKey('xKey')"
-    formControlName="xKey">
-  </tb-data-key-input>
-  <tb-data-key-input
-    class="tb-y-pos-field"
-    *ngIf="['trips', 'markers'].includes(dataLayerType)"
-    required
-    requiredText="{{ mapType === MapType.geoMap ? 'widgets.maps.data-layer.marker.longitude-key-required' : 'widgets.maps.data-layer.marker.y-pos-key-required' }}"
-    [datasourceType]="dataLayerFormGroup.get('dsType').value"
-    [entityAliasId]="dataLayerFormGroup.get('dsEntityAliasId').value"
-    [deviceId]="dataLayerFormGroup.get('dsDeviceId').value"
-    [aliasController]="context.aliasController"
-    [widgetType]="dataLayerType === 'trips' ? widgetType.timeseries : widgetType.latest"
-    [dataKeyType]="context.functionsOnly ? DataKeyType.function : null"
-    [dataKeyTypes]="dataLayerType === 'trips' ? [DataKeyType.timeseries] : [DataKeyType.attribute, DataKeyType.timeseries]"
-    [callbacks]="context.callbacks"
-    [generateKey]="context.generateDataKey"
-    (keyEdit)="editKey('yKey')"
-    formControlName="yKey">
-  </tb-data-key-input>
-  <tb-data-key-input
-    class="tb-key-field"
-    *ngIf="dataLayerType === 'polygons'"
-    required
-    requiredText="widgets.maps.data-layer.polygon.polygon-key-required"
-    [datasourceType]="dataLayerFormGroup.get('dsType').value"
-    [entityAliasId]="dataLayerFormGroup.get('dsEntityAliasId').value"
-    [deviceId]="dataLayerFormGroup.get('dsDeviceId').value"
-    [aliasController]="context.aliasController"
-    [widgetType]="widgetType.latest"
-    [dataKeyType]="context.functionsOnly ? DataKeyType.function : null"
-    [dataKeyTypes]="[DataKeyType.attribute, DataKeyType.timeseries]"
-    [callbacks]="context.callbacks"
-    [generateKey]="context.generateDataKey"
-    (keyEdit)="editKey('polygonKey')"
-    formControlName="polygonKey">
-  </tb-data-key-input>
-  <tb-data-key-input
-    class="tb-key-field"
-    *ngIf="dataLayerType === 'circles'"
-    required
-    requiredText="widgets.maps.data-layer.circle.circle-key-required"
-    [datasourceType]="dataLayerFormGroup.get('dsType').value"
-    [entityAliasId]="dataLayerFormGroup.get('dsEntityAliasId').value"
-    [deviceId]="dataLayerFormGroup.get('dsDeviceId').value"
-    [aliasController]="context.aliasController"
-    [widgetType]="widgetType.latest"
-    [dataKeyType]="context.functionsOnly ? DataKeyType.function : null"
-    [dataKeyTypes]="[DataKeyType.attribute, DataKeyType.timeseries]"
-    [callbacks]="context.callbacks"
-    [generateKey]="context.generateDataKey"
-    (keyEdit)="editKey('circleKey')"
-    formControlName="circleKey">
-  </tb-data-key-input>
-  <tb-data-key-input
-    class="tb-key-field"
-    *ngIf="dataLayerType === 'polylines'"
-    required
-    requiredText="widgets.maps.data-layer.polyline.polyline-key-required"
-    [datasourceType]="dataLayerFormGroup.get('dsType').value"
-    [entityAliasId]="dataLayerFormGroup.get('dsEntityAliasId').value"
-    [deviceId]="dataLayerFormGroup.get('dsDeviceId').value"
-    [aliasController]="context.aliasController"
-    [widgetType]="widgetType.latest"
-    [dataKeyType]="context.functionsOnly ? DataKeyType.function : null"
-    [dataKeyTypes]="[DataKeyType.attribute, DataKeyType.timeseries]"
-    [callbacks]="context.callbacks"
-    [generateKey]="context.generateDataKey"
-    (keyEdit)="editKey('polylineKey')"
-    formControlName="polylineKey">
-  </tb-data-key-input>
+  @if (['trips', 'markers'].includes(dataLayerType)) {
+    <tb-data-key-input
+      class="tb-x-pos-field"
+      required
+      requiredText="{{ mapType === MapType.geoMap ? 'widgets.maps.data-layer.marker.latitude-key-required' : 'widgets.maps.data-layer.marker.x-pos-key-required' }}"
+      [datasourceType]="dataLayerFormGroup.get('dsType').value"
+      [entityAliasId]="dataLayerFormGroup.get('dsEntityAliasId').value"
+      [deviceId]="dataLayerFormGroup.get('dsDeviceId').value"
+      [aliasController]="context.aliasController"
+      [widgetType]="dataLayerType === 'trips' ? widgetType.timeseries : widgetType.latest"
+      [dataKeyType]="context.functionsOnly ? DataKeyType.function : null"
+      [dataKeyTypes]="dataLayerType === 'trips' ? [DataKeyType.timeseries] : [DataKeyType.attribute, DataKeyType.timeseries]"
+      [callbacks]="context.callbacks"
+      [generateKey]="context.generateDataKey"
+      (keyEdit)="editKey('xKey')"
+      formControlName="xKey">
+    </tb-data-key-input>
+  }
+  @if (['trips', 'markers'].includes(dataLayerType)) {
+    <tb-data-key-input
+      class="tb-y-pos-field"
+      required
+      requiredText="{{ mapType === MapType.geoMap ? 'widgets.maps.data-layer.marker.longitude-key-required' : 'widgets.maps.data-layer.marker.y-pos-key-required' }}"
+      [datasourceType]="dataLayerFormGroup.get('dsType').value"
+      [entityAliasId]="dataLayerFormGroup.get('dsEntityAliasId').value"
+      [deviceId]="dataLayerFormGroup.get('dsDeviceId').value"
+      [aliasController]="context.aliasController"
+      [widgetType]="dataLayerType === 'trips' ? widgetType.timeseries : widgetType.latest"
+      [dataKeyType]="context.functionsOnly ? DataKeyType.function : null"
+      [dataKeyTypes]="dataLayerType === 'trips' ? [DataKeyType.timeseries] : [DataKeyType.attribute, DataKeyType.timeseries]"
+      [callbacks]="context.callbacks"
+      [generateKey]="context.generateDataKey"
+      (keyEdit)="editKey('yKey')"
+      formControlName="yKey">
+    </tb-data-key-input>
+  }
+  @if (dataLayerType === 'polygons') {
+    <tb-data-key-input
+      class="tb-key-field"
+      required
+      requiredText="widgets.maps.data-layer.polygon.polygon-key-required"
+      [datasourceType]="dataLayerFormGroup.get('dsType').value"
+      [entityAliasId]="dataLayerFormGroup.get('dsEntityAliasId').value"
+      [deviceId]="dataLayerFormGroup.get('dsDeviceId').value"
+      [aliasController]="context.aliasController"
+      [widgetType]="widgetType.latest"
+      [dataKeyType]="context.functionsOnly ? DataKeyType.function : null"
+      [dataKeyTypes]="[DataKeyType.attribute, DataKeyType.timeseries]"
+      [callbacks]="context.callbacks"
+      [generateKey]="context.generateDataKey"
+      (keyEdit)="editKey('polygonKey')"
+      formControlName="polygonKey">
+    </tb-data-key-input>
+  }
+  @if (dataLayerType === 'circles') {
+    <tb-data-key-input
+      class="tb-key-field"
+      required
+      requiredText="widgets.maps.data-layer.circle.circle-key-required"
+      [datasourceType]="dataLayerFormGroup.get('dsType').value"
+      [entityAliasId]="dataLayerFormGroup.get('dsEntityAliasId').value"
+      [deviceId]="dataLayerFormGroup.get('dsDeviceId').value"
+      [aliasController]="context.aliasController"
+      [widgetType]="widgetType.latest"
+      [dataKeyType]="context.functionsOnly ? DataKeyType.function : null"
+      [dataKeyTypes]="[DataKeyType.attribute, DataKeyType.timeseries]"
+      [callbacks]="context.callbacks"
+      [generateKey]="context.generateDataKey"
+      (keyEdit)="editKey('circleKey')"
+      formControlName="circleKey">
+    </tb-data-key-input>
+  }
+  @if (dataLayerType === 'polylines') {
+    <tb-data-key-input
+      class="tb-key-field"
+      required
+      requiredText="widgets.maps.data-layer.polyline.polyline-key-required"
+      [datasourceType]="dataLayerFormGroup.get('dsType').value"
+      [entityAliasId]="dataLayerFormGroup.get('dsEntityAliasId').value"
+      [deviceId]="dataLayerFormGroup.get('dsDeviceId').value"
+      [aliasController]="context.aliasController"
+      [widgetType]="widgetType.latest"
+      [dataKeyType]="context.functionsOnly ? DataKeyType.function : null"
+      [dataKeyTypes]="[DataKeyType.attribute, DataKeyType.timeseries]"
+      [callbacks]="context.callbacks"
+      [generateKey]="context.generateDataKey"
+      (keyEdit)="editKey('polylineKey')"
+      formControlName="polylineKey">
+    </tb-data-key-input>
+  }
 
   <div class="tb-form-table-row-cell-buttons">
     <button type="button"

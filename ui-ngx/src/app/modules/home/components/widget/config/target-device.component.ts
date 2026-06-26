@@ -33,6 +33,7 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { IAliasController } from '@core/api/widget-api.models';
 import { EntityAliasSelectCallbacks } from '@home/components/widget/lib/settings/common/alias/entity-alias-select.component.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MatFormFieldAppearance } from '@angular/material/form-field';
 
 @Component({
     selector: 'tb-target-device',
@@ -72,6 +73,9 @@ export class TargetDeviceComponent implements ControlValueAccessor, OnInit, Vali
 
   @Input()
   disabled: boolean;
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   widgetEditMode = this.utils.widgetEditMode;
 

@@ -24,14 +24,16 @@
                      popupHelpLink="rulenode/node-templatization-doc">
     </tb-example-hint>
     <div class="tb-standard-fields">
-      <mat-form-field class="mat-block">
+      <mat-form-field class="mat-block" appearance="outline">
         <mat-label>{{'rule-node-config.function-name' | translate}}</mat-label>
         <input required matInput formControlName="functionName">
-        <mat-error *ngIf="lambdaConfigForm.get('functionName').hasError('required')">
-          {{'rule-node-config.function-name-required' | translate}}
-        </mat-error>
+        @if (lambdaConfigForm.get('functionName').hasError('required')) {
+          <mat-error>
+            {{'rule-node-config.function-name-required' | translate}}
+          </mat-error>
+        }
       </mat-form-field>
-      <mat-form-field class="mat-block">
+      <mat-form-field class="mat-block" appearance="outline">
         <mat-label>{{'rule-node-config.qualifier' | translate}}</mat-label>
         <input matInput formControlName="qualifier">
         <mat-hint translate>rule-node-config.qualifier-hint</mat-hint>
@@ -45,26 +47,32 @@
         <mat-panel-title class="tb-form-panel-title tb-required" translate>rule-node-config.aws-credentials</mat-panel-title>
       </mat-expansion-panel-header>
       <div class="tb-standard-fields">
-        <mat-form-field class="mat-block">
+        <mat-form-field class="mat-block" appearance="outline">
           <mat-label translate>rule-node-config.aws-access-key-id</mat-label>
           <input required matInput formControlName="accessKey">
-          <mat-error *ngIf="lambdaConfigForm.get('accessKey').hasError('required')">
-            {{ 'rule-node-config.aws-access-key-id-required' | translate }}
-          </mat-error>
+          @if (lambdaConfigForm.get('accessKey').hasError('required')) {
+            <mat-error>
+              {{ 'rule-node-config.aws-access-key-id-required' | translate }}
+            </mat-error>
+          }
         </mat-form-field>
-        <mat-form-field class="mat-block">
+        <mat-form-field class="mat-block" appearance="outline">
           <mat-label translate>rule-node-config.aws-secret-access-key</mat-label>
           <input required matInput formControlName="secretKey">
-          <mat-error *ngIf="lambdaConfigForm.get('secretKey').hasError('required')">
-            {{ 'rule-node-config.aws-secret-access-key-required' | translate }}
-          </mat-error>
+          @if (lambdaConfigForm.get('secretKey').hasError('required')) {
+            <mat-error>
+              {{ 'rule-node-config.aws-secret-access-key-required' | translate }}
+            </mat-error>
+          }
         </mat-form-field>
-        <mat-form-field class="mat-block">
+        <mat-form-field class="mat-block" appearance="outline">
           <mat-label translate>rule-node-config.aws-region</mat-label>
           <input required matInput formControlName="region">
-          <mat-error *ngIf="lambdaConfigForm.get('region').hasError('required')">
-            {{ 'rule-node-config.aws-region-required' | translate }}
-          </mat-error>
+          @if (lambdaConfigForm.get('region').hasError('required')) {
+            <mat-error>
+              {{ 'rule-node-config.aws-region-required' | translate }}
+            </mat-error>
+          }
         </mat-form-field>
       </div>
     </mat-expansion-panel>
@@ -76,31 +84,39 @@
       </mat-expansion-panel-header>
       <div class="tb-form-panel no-border no-padding no-gap" style="margin-top: 0">
         <div class="tb-form-row no-border same-padding tb-standard-fields">
-          <mat-form-field class="flex">
+          <mat-form-field class="flex" appearance="outline">
             <mat-label translate>rule-node-config.connection-timeout</mat-label>
             <input type="number" required min="0" matInput formControlName="connectionTimeout">
-            <mat-error *ngIf="lambdaConfigForm.get('connectionTimeout').hasError('required')">
-              {{ 'rule-node-config.connection-timeout-required' | translate }}
-            </mat-error>
-            <mat-error *ngIf="lambdaConfigForm.get('connectionTimeout').hasError('min')">
-              {{ 'rule-node-config.connection-timeout-min' | translate }}
-            </mat-error>
+            @if (lambdaConfigForm.get('connectionTimeout').hasError('required')) {
+              <mat-error>
+                {{ 'rule-node-config.connection-timeout-required' | translate }}
+              </mat-error>
+            }
+            @if (lambdaConfigForm.get('connectionTimeout').hasError('min')) {
+              <mat-error>
+                {{ 'rule-node-config.connection-timeout-min' | translate }}
+              </mat-error>
+            }
             <mat-icon matSuffix class="help-icon m-2 cursor-pointer" aria-hidden="false" aria-label="help-icon"
                       color="primary"
-                      matTooltip="{{ 'rule-node-config.connection-timeout-hint' | translate }}">help</mat-icon>
+            matTooltip="{{ 'rule-node-config.connection-timeout-hint' | translate }}">help</mat-icon>
           </mat-form-field>
-          <mat-form-field class="flex">
+          <mat-form-field class="flex" appearance="outline">
             <mat-label translate>rule-node-config.request-timeout</mat-label>
             <input type="number" required min="0" matInput formControlName="requestTimeout">
-            <mat-error *ngIf="lambdaConfigForm.get('requestTimeout').hasError('required')">
-              {{ 'rule-node-config.request-timeout-required' | translate }}
-            </mat-error>
-            <mat-error *ngIf="lambdaConfigForm.get('requestTimeout').hasError('min')">
-              {{ 'rule-node-config.request-timeout-min' | translate }}
-            </mat-error>
+            @if (lambdaConfigForm.get('requestTimeout').hasError('required')) {
+              <mat-error>
+                {{ 'rule-node-config.request-timeout-required' | translate }}
+              </mat-error>
+            }
+            @if (lambdaConfigForm.get('requestTimeout').hasError('min')) {
+              <mat-error>
+                {{ 'rule-node-config.request-timeout-min' | translate }}
+              </mat-error>
+            }
             <mat-icon matSuffix class="help-icon m-2 cursor-pointer" aria-hidden="false" aria-label="help-icon"
                       color="primary"
-                      matTooltip="{{ 'rule-node-config.request-timeout-hint' | translate }}">help</mat-icon>
+            matTooltip="{{ 'rule-node-config.request-timeout-hint' | translate }}">help</mat-icon>
           </mat-form-field>
         </div>
         <div tb-hint-tooltip-icon="{{ 'rule-node-config.tell-failure-aws-lambda-hint' | translate }}"

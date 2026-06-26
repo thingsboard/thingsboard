@@ -1,14 +1,16 @@
 Here is the list of commands that can be used to quickly install ThingsBoard Edge on Ubuntu Server and connect to the server.
 
-#### Step 1. Install Java 17 (OpenJDK)
-ThingsBoard service is running on Java 17. To install OpenJDK 17, follow these instructions:
+**Note:** OpenJDK 25 requires Ubuntu 22.04 LTS or newer. Earlier versions (20.04 and below) are not supported.
+
+#### Step 1. Install Java 25 (OpenJDK)
+ThingsBoard service is running on Java 25. To install OpenJDK 25, follow these instructions:
 
 ```bash
-sudo apt update && sudo apt install openjdk-17-jdk
+sudo apt update && sudo apt install openjdk-25-jdk
 {:copy-code}
 ```
 
-Configure your operating system to use OpenJDK 17 by default. You can configure the default version by running the following command:
+Configure your operating system to use OpenJDK 25 by default. You can configure the default version by running the following command:
 
 ```bash
 sudo update-alternatives --config java
@@ -25,7 +27,7 @@ java -version
 The expected result is:
 
 ```text
-openjdk version "17.x.xx"
+openjdk version "25.x.xx"
 OpenJDK Runtime Environment (...)
 OpenJDK 64-Bit Server VM (build ...)
 ```

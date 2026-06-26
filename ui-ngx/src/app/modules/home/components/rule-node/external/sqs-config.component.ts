@@ -30,7 +30,7 @@ export class SqsConfigComponent extends RuleNodeConfigurationComponent {
   sqsConfigForm: UntypedFormGroup;
 
   sqsQueueType = SqsQueueType;
-  sqsQueueTypes = Object.keys(SqsQueueType);
+  sqsQueueTypes = Object.values(SqsQueueType);
   sqsQueueTypeTranslationsMap = sqsQueueTypeTranslations;
 
   constructor(private fb: UntypedFormBuilder) {

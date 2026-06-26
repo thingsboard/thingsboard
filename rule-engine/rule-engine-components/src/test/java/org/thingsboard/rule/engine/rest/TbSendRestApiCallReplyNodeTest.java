@@ -51,7 +51,7 @@ public class TbSendRestApiCallReplyNodeTest {
 
     private TbSendRestApiCallReplyNode node;
     private TbSendRestApiCallReplyNodeConfiguration config;
-    
+
     @Mock
     private TbContext ctxMock;
     @Mock
@@ -140,4 +140,5 @@ public class TbSendRestApiCallReplyNodeTest {
                         TbMsg.EMPTY_STRING, "Request body is empty!")
         );
     }
+
 }

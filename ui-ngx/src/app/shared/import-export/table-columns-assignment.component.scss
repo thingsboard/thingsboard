@@ -32,4 +32,10 @@
     flex: 0 0 120px;
     min-width: 120px;
   }
+  mat-row {
+    mat-cell {
+      padding-top: 4px;
+      padding-bottom: 4px;
+    }
+  }
 }

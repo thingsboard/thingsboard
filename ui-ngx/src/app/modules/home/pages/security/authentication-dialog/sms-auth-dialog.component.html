@@ -24,9 +24,12 @@
     <mat-icon class="material-icons">close</mat-icon>
   </button>
 </mat-toolbar>
-<mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
-</mat-progress-bar>
-<div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
+@if (isLoading$ | async) {
+  <mat-progress-bar color="warn" mode="indeterminate">
+  </mat-progress-bar>
+} @else {
+  <div style="height: 4px;"></div>
+}
 <div mat-dialog-content tb-toast style="padding: 0">
   <mat-stepper linear #stepper>
     <ng-template matStepperIcon="edit">
@@ -39,6 +42,7 @@
         <div class="flex flex-row items-center justify-between gap-3.75">
           <tb-phone-input class="flex-1"
                           formControlName="phone"
+                          appearance="outline"
                           [floatLabel]="'never'"
                           placeholder="{{ 'security.2fa.dialog.sms-step-label' | translate }}">
           </tb-phone-input>
@@ -58,15 +62,17 @@
           {{ 'security.2fa.dialog.verification-step-description' | translate : {address: smsConfigForm.get('phone').value} }}
         </p>
         <div class="flex flex-row items-center justify-between xs:flex-col xs:items-end xs:justify-start">
-          <mat-form-field class="mat-block code-container full-width-xs flex-1">
+          <mat-form-field class="mat-block code-container full-width-xs flex-1" appearance="outline">
             <input matInput formControlName="verificationCode"
                    maxlength="6" type="text" required
                    inputmode="numeric" pattern="[0-9]*"
                    autocomplete="off"
                    placeholder="{{ 'security.2fa.dialog.verification-code' | translate }}">
-            <mat-error *ngIf="smsVerificationForm.get('verificationCode').invalid">
-              {{ 'security.2fa.dialog.verification-code-invalid' | translate }}
-            </mat-error>
+            @if (smsVerificationForm.get('verificationCode').invalid) {
+              <mat-error>
+                {{ 'security.2fa.dialog.verification-code-invalid' | translate }}
+              </mat-error>
+            }
           </mat-form-field>
           <div class="flex gap-2">
             <button mat-button

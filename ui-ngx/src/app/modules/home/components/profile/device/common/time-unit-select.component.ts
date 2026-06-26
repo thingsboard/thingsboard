@@ -37,6 +37,7 @@ import {
   timeUnitTranslationMap
 } from '@shared/models/time/time.models';
 import { isDefinedAndNotNull, isNumber } from '@core/utils';
+import { MatFormFieldAppearance } from '@angular/material/form-field';
 
 interface FormGroupModel {
   time: number;
@@ -104,6 +105,9 @@ export class TimeUnitSelectComponent implements OnInit, OnDestroy, ControlValueA
 
   @Input()
   minText: string;
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   private propagateChange = (v: any) => {
   }

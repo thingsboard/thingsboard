@@ -17,54 +17,56 @@
 -->
 <section [formGroup]="parentForm">
   <tb-country-autocomplete
+    appearance="outline"
     formControlName="country"
     (selectCountryCode)="changeCountry($event)">
   </tb-country-autocomplete>
   <div class="tb-form-row column-xs tb-standard-fields no-border no-padding">
-    <mat-form-field class="flex" subscriptSizing="dynamic">
+    <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
       <mat-label translate>contact.city</mat-label>
       <input matInput formControlName="city">
-      <mat-error *ngIf="parentForm.get('city').hasError('maxlength')">
-        {{ 'contact.city-max-length' | translate }}
-      </mat-error>
+      @if (parentForm.get('city').hasError('maxlength')) {
+        <mat-error>{{ 'contact.city-max-length' | translate }}</mat-error>
+      }
       <mat-hint></mat-hint>
     </mat-form-field>
-    <mat-form-field class="flex" subscriptSizing="dynamic">
+    <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
       <mat-label translate>contact.state</mat-label>
       <input matInput formControlName="state">
-      <mat-error *ngIf="parentForm.get('state').hasError('maxlength')">
-        {{ 'contact.state-max-length' | translate }}
-      </mat-error>
+      @if (parentForm.get('state').hasError('maxlength')) {
+        <mat-error>{{ 'contact.state-max-length' | translate }}</mat-error>
+      }
       <mat-hint></mat-hint>
     </mat-form-field>
-    <mat-form-field class="flex" subscriptSizing="dynamic">
+    <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
       <mat-label translate>contact.postal-code</mat-label>
       <input matInput formControlName="zip">
-      <mat-error *ngIf="parentForm.get('zip').hasError('pattern')">
-        {{ 'contact.postal-code-invalid' | translate }}
-      </mat-error>
+      @if (parentForm.get('zip').hasError('pattern')) {
+        <mat-error>{{ 'contact.postal-code-invalid' | translate }}</mat-error>
+      }
       <mat-hint></mat-hint>
     </mat-form-field>
   </div>
-  <mat-form-field class="mat-block">
+  <mat-form-field class="mat-block" appearance="outline">
     <mat-label translate>contact.address</mat-label>
     <input matInput formControlName="address">
   </mat-form-field>
-  <mat-form-field class="mat-block">
+  <mat-form-field class="mat-block" appearance="outline">
     <mat-label translate>contact.address2</mat-label>
     <input matInput formControlName="address2">
   </mat-form-field>
   <tb-phone-input [required]="false"
                   [defaultCountry]="phoneInputDefaultCountry"
                   label="{{ 'contact.phone' | translate }}"
+                  appearance="outline"
                   [enableFlagsSelect]="true"
                   formControlName="phone">
   </tb-phone-input>
-  <mat-form-field class="mat-block">
+  <mat-form-field class="mat-block" appearance="outline">
     <mat-label translate>contact.email</mat-label>
     <input matInput type="email" formControlName="email">
-    <mat-error *ngIf="parentForm.get('email').hasError('email')">
-      {{ 'user.invalid-email-format' | translate }}
-    </mat-error>
+    @if (parentForm.get('email').hasError('email')) {
+      <mat-error>{{ 'user.invalid-email-format' | translate }}</mat-error>
+    }
   </mat-form-field>
 </section>

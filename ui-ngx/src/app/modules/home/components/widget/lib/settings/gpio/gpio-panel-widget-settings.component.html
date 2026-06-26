@@ -28,20 +28,23 @@
       <legend class="group-title" translate>widgets.gpio.gpio-leds</legend>
       <div class="flex flex-col">
         <div class="tb-control-list">
-          <div *ngFor="let gpioItemControl of gpioListFormArray().controls; trackBy: trackByGpioItem;
-                 let $index = index; last as isLast;"
-               class="flex flex-col" [class.pb-2]="!isLast">
-            <tb-gpio-item [formControl]="gpioItemControl"
-                          [hasColor]="true"
-                          [expanded]="gpioItemControl.new"
-                          (removeGpioItem)="removeGpioItem($index)">
-            </tb-gpio-item>
-          </div>
+          @for (gpioItemControl of typedSelectOptions; track trackByGpioItem($index, gpioItemControl); let isLast = $last) {
+            <div
+              class="flex flex-col" [class.pb-2]="!isLast">
+              <tb-gpio-item [formControl]="gpioItemControl"
+                            [hasColor]="true"
+                            [expanded]="gpioItemControl.new"
+                            (removeGpioItem)="removeGpioItem($index)">
+              </tb-gpio-item>
+            </div>
+          }
         </div>
-        <div *ngIf="!gpioListFormArray().controls.length">
+        @if (!gpioListFormArray().controls.length) {
+          <div>
             <span translate
-                  class="tb-prompt flex items-center justify-center">widgets.gpio.no-gpio-leds</span>
-        </div>
+            class="tb-prompt flex items-center justify-center">widgets.gpio.no-gpio-leds</span>
+          </div>
+        }
         <div style="padding-top: 16px;">
           <button mat-raised-button color="primary"
                   type="button"

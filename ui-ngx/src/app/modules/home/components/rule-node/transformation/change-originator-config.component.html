@@ -16,51 +16,60 @@
 
 -->
 <section [formGroup]="changeOriginatorConfigForm" class="tb-form-panel no-border no-padding">
-  <mat-form-field class="mat-block" subscriptSizing="dynamic" hideRequiredMarker>
+  <mat-form-field class="mat-block" subscriptSizing="dynamic" hideRequiredMarker appearance="outline">
     <mat-label translate>rule-node-config.new-originator</mat-label>
     <mat-select formControlName="originatorSource" required>
       <mat-select-trigger>
-        <span *ngIf="originatorSourceTranslationMap.get(changeOriginatorConfigForm.get('originatorSource').value)">
-          {{ originatorSourceTranslationMap.get(changeOriginatorConfigForm.get('originatorSource').value) | translate }}
-        </span>
+        @if (originatorSourceTranslationMap.get(changeOriginatorConfigForm.get('originatorSource').value)) {
+          <span>
+            {{ originatorSourceTranslationMap.get(changeOriginatorConfigForm.get('originatorSource').value) | translate }}
+          </span>
+        }
       </mat-select-trigger>
-      <mat-option *ngFor="let source of originatorSources" [value]="source">
-        <span matListItemTitle>
-          {{ originatorSourceTranslationMap.get(source) | translate }}
-        </span>
-        <br>
-        <small matListItemMeta style="color: inherit">
-          {{ originatorSourceDescTranslationMap.get(source) | translate }}
-        </small>
-      </mat-option>
-    </mat-select>
-  </mat-form-field>
-  <div class="tb-form-panel stroked no-padding-bottom"
-        *ngIf="changeOriginatorConfigForm.get('originatorSource').value === originatorSource.ENTITY">
-    <tb-example-hint [hintText]="'rule-node-config.entity-name-pattern-hint'"
-                      popupHelpLink="rulenode/change_originator_node_fields_templatization">
-    </tb-example-hint>
-    <div class="tb-form-row no-border no-padding tb-standard-fields">
-      <tb-entity-type-select
-        showLabel
+      @for (source of originatorSources; track source) {
+        <mat-option [value]="source">
+          <span matListItemTitle>
+            {{ originatorSourceTranslationMap.get(source) | translate }}
+          </span>
+          <br>
+            <small matListItemMeta style="color: inherit">
+              {{ originatorSourceDescTranslationMap.get(source) | translate }}
+            </small>
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    @if (changeOriginatorConfigForm.get('originatorSource').value === originatorSource.ENTITY) {
+      <div class="tb-form-panel stroked no-padding-bottom">
+        <tb-example-hint [hintText]="'rule-node-config.entity-name-pattern-hint'"
+                         popupHelpLink="rulenode/change_originator_node_fields_templatization">
+        </tb-example-hint>
+        <div class="tb-form-row no-border no-padding tb-standard-fields">
+          <tb-entity-type-select
+            showLabel
+            required
+            appearance="outline"
+            [allowedEntityTypes] = "allowedEntityTypes"
+            formControlName="entityType"
+            class="mat-mdc-form-field flex">
+          </tb-entity-type-select>
+          <mat-form-field class="flex" appearance="outline">
+            <mat-label translate>rule-node-config.entity-name-pattern</mat-label>
+            <input required matInput formControlName="entityNamePattern">
+            @if (changeOriginatorConfigForm.get('entityNamePattern').hasError('required') ||
+              changeOriginatorConfigForm.get('entityNamePattern').hasError('pattern')) {
+              <mat-error>
+                {{ 'rule-node-config.entity-name-pattern-required' | translate }}
+              </mat-error>
+            }
+          </mat-form-field>
+        </div>
+      </div>
+    }
+    @if (changeOriginatorConfigForm.get('originatorSource').value === originatorSource.RELATED) {
+      <tb-relations-query-config
         required
-        [allowedEntityTypes] = "allowedEntityTypes"
-        formControlName="entityType"
-        class="mat-mdc-form-field flex">
-      </tb-entity-type-select>
-      <mat-form-field class="flex">
-        <mat-label translate>rule-node-config.entity-name-pattern</mat-label>
-        <input required matInput formControlName="entityNamePattern">
-        <mat-error *ngIf="changeOriginatorConfigForm.get('entityNamePattern').hasError('required') ||
-                          changeOriginatorConfigForm.get('entityNamePattern').hasError('pattern')">
-          {{ 'rule-node-config.entity-name-pattern-required' | translate }}
-        </mat-error>
-      </mat-form-field>
-    </div>
-  </div>
-  <tb-relations-query-config
-    required
-    *ngIf="changeOriginatorConfigForm.get('originatorSource').value === originatorSource.RELATED"
-    formControlName="relationsQuery">
-  </tb-relations-query-config>
-</section>
+        formControlName="relationsQuery">
+      </tb-relations-query-config>
+    }
+  </section>

@@ -51,7 +51,7 @@ public abstract class SequentialByEntityIdTbRuleEngineSubmitStrategy extends Abs
         entityIdToListMap.forEach((entityId, queue) -> {
             IdMsgPair<TransportProtos.ToRuleEngineMsg> msg = queue.peek();
             if (msg != null) {
-                msgConsumer.accept(msg.uuid, msg.msg);
+                msgConsumer.accept(msg.uuid(), msg.msg());
             }
         });
     }
@@ -71,13 +71,13 @@ public abstract class SequentialByEntityIdTbRuleEngineSubmitStrategy extends Abs
                 IdMsgPair<TransportProtos.ToRuleEngineMsg> next = null;
                 synchronized (queue) {
                     IdMsgPair<TransportProtos.ToRuleEngineMsg> expected = queue.peek();
-                    if (expected != null && expected.uuid.equals(id)) {
+                    if (expected != null && expected.uuid().equals(id)) {
                         queue.poll();
                         next = queue.peek();
                     }
                 }
                 if (next != null) {
-                    msgConsumer.accept(next.uuid, next.msg);
+                    msgConsumer.accept(next.uuid(), next.msg());
                 }
             }
         }
@@ -87,9 +87,9 @@ public abstract class SequentialByEntityIdTbRuleEngineSubmitStrategy extends Abs
         msgToEntityIdMap.clear();
         entityIdToListMap.clear();
         for (IdMsgPair<TransportProtos.ToRuleEngineMsg> pair : orderedMsgList) {
-            EntityId entityId = getEntityId(pair.msg.getValue());
+            EntityId entityId = getEntityId(pair.msg().getValue());
             if (entityId != null) {
-                msgToEntityIdMap.put(pair.uuid, entityId);
+                msgToEntityIdMap.put(pair.uuid(), entityId);
                 entityIdToListMap.computeIfAbsent(entityId, id -> new LinkedList<>()).add(pair);
             }
         }

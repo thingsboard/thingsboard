@@ -420,6 +420,7 @@ public class ModelConstants {
     public static final String RULE_CHAIN_FIRST_RULE_NODE_ID_PROPERTY = "first_rule_node_id";
     public static final String RULE_CHAIN_ROOT_PROPERTY = "root";
     public static final String RULE_CHAIN_CONFIGURATION_PROPERTY = "configuration";
+    public static final String RULE_CHAIN_NOTES_PROPERTY = "notes";
 
     /**
      * Rule node constants.

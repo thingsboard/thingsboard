@@ -26,30 +26,34 @@
             <mat-select formControlName="severity"
                         required
                         placeholder="{{ 'alarm-rule.select-alarm-severity' | translate }}">
-              <mat-option *ngFor="let alarmSeverity of alarmSeverities" [value]="alarmSeverity"
-                          [disabled]="isDisabledSeverity(alarmSeverityEnum[alarmSeverity], index)">
-                {{ alarmSeverityTranslationMap.get(alarmSeverityEnum[alarmSeverity]) | translate }}
-              </mat-option>
+              @for (alarmSeverity of alarmSeverities; track alarmSeverity) {
+                <mat-option [value]="alarmSeverity"
+                            [disabled]="isDisabledSeverity(alarmSeverityEnum[alarmSeverity], index)">
+                  {{ alarmSeverityTranslationMap.get(alarmSeverityEnum[alarmSeverity]) | translate }}
+                </mat-option>
+              }
             </mat-select>
           </mat-form-field>
         </div>
         <tb-cf-alarm-rule formControlName="alarmRule" [arguments]="arguments" [testScript]="testScript" required class="flex-1">
         </tb-cf-alarm-rule>
       </div>
-      <button *ngIf="!disabled"
-              class="button-icon"
-              mat-icon-button
-              type="button"
-              (click)="removeCreateAlarmRule(index)"
-              matTooltip="{{ 'action.remove' | translate }}"
-              matTooltipPosition="above">
-        <mat-icon>delete</mat-icon>
-      </button>
+      @if (!disabled) {
+        <button
+          class="button-icon"
+          mat-icon-button
+          type="button"
+          (click)="removeCreateAlarmRule(index)"
+          matTooltip="{{ 'action.remove' | translate }}"
+          matTooltipPosition="above">
+          <mat-icon>delete</mat-icon>
+        </button>
+      }
     </div>
   }
   @if (!createAlarmRulesFormArray().controls.length) {
     <span translate class="tb-prompt required flex items-center justify-center text-base" [class.required]="!disabled">
-        alarm-rule.add-create-alarm-rule-prompt
+      alarm-rule.add-create-alarm-rule-prompt
     </span>
   }
   <div>

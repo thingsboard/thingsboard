@@ -16,54 +16,61 @@
 
 -->
 <form [formGroup]="filterFormGroup" (ngSubmit)="save()" style="width: 700px;">
-  <mat-toolbar color="primary">
+  <mat-toolbar color="primary" class="justify-between">
     <h2>{{ (isAdd ? 'filter.add' : 'filter.edit') | translate }}</h2>
-    <span class="flex-1"></span>
     <button mat-icon-button
             (click)="cancel()"
             type="button">
       <mat-icon class="material-icons">close</mat-icon>
     </button>
   </mat-toolbar>
-  <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
-  </mat-progress-bar>
-  <div mat-dialog-content>
-    <fieldset [disabled]="isLoading$ | async">
-      <div class="flex flex-1 flex-col">
-        <div class="flex flex-row">
-          <mat-form-field class="mat-block flex-1">
-            <mat-label translate>filter.name</mat-label>
-            <input matInput formControlName="filter" required>
-            <mat-error *ngIf="filterFormGroup.get('filter').hasError('required')">
-              {{ 'filter.name-required' | translate }}
-            </mat-error>
-            <mat-error *ngIf="filterFormGroup.get('filter').hasError('duplicateFilterName')">
-              {{ 'filter.duplicate-filter' | translate }}
-            </mat-error>
-          </mat-form-field>
-          <section class="tb-editable-switch flex flex-col items-center justify-start">
-            <label class="tb-small editable-label" translate>filter.editable</label>
-            <mat-slide-toggle class="editable-switch"
-                              formControlName="editable">
-            </mat-slide-toggle>
-          </section>
-        </div>
-        <tb-key-filter-list
-          formControlName="keyFilters">
-        </tb-key-filter-list>
-      </div>
-    </fieldset>
+  <div mat-dialog-content class="flex flex-col">
+    <div class="flex flex-row items-start gap-2">
+      <mat-form-field class="mat-block flex-1" appearance="outline">
+        <mat-label translate>filter.name</mat-label>
+        <input matInput formControlName="filter" required>
+        @if (filterFormGroup.controls.filter.hasError('required')) {
+          <mat-error>{{ 'filter.name-required' | translate }}</mat-error>
+        }
+        @if (filterFormGroup.controls.filter.hasError('duplicateFilterName')) {
+          <mat-error>{{ 'filter.duplicate-filter' | translate }}</mat-error>
+        }
+      </mat-form-field>
+      <button mat-stroked-button
+              type="button"
+              class="tb-rounded-btn mt-2"
+              color="primary"
+              [class.active]="filterFormGroup.get('editable').value"
+              (click)="onEditableChange($event)">
+        <mat-icon [class.invisible]="!filterFormGroup.get('editable').value">checkmark</mat-icon>
+        <span translate>filter.editable</span>
+      </button>
+    </div>
+    <tb-key-filter-list
+        formControlName="keyFilters"
+        [operation]="filterFormGroup.get('keyFiltersOperation').value">
+      <tb-toggle-select keyFilterHeaderActions
+                        formControlName="keyFiltersOperation"
+                        [matTooltip]="!allowKeyFiltersOrConditions ? ('filter.or-conditions-disabled' | translate) : ''"
+                        selectMediaBreakpoint="xs">
+        <tb-toggle-option
+            [value]="ComplexOperation.AND">{{ complexOperationTranslationMap.get(ComplexOperation.AND) | translate | titlecase }}
+        </tb-toggle-option>
+        <tb-toggle-option
+            [value]="ComplexOperation.OR">{{ complexOperationTranslationMap.get(ComplexOperation.OR) | translate | titlecase }}
+        </tb-toggle-option>
+      </tb-toggle-select>
+    </tb-key-filter-list>
   </div>
   <div mat-dialog-actions  class="flex items-center justify-end">
     <button mat-button color="primary"
             type="button"
-            [disabled]="(isLoading$ | async)"
             (click)="cancel()" cdkFocusInitial>
       {{ 'action.cancel' | translate }}
     </button>
     <button mat-raised-button color="primary"
             type="submit"
-            [disabled]="(isLoading$ | async) || filterFormGroup.invalid || !filterFormGroup.dirty">
+            [disabled]="filterFormGroup.invalid || !filterFormGroup.dirty">
       {{ (isAdd ? 'action.add' : 'action.update') | translate }}
     </button>
   </div>

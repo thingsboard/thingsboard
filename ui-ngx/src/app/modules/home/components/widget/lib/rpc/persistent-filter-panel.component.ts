@@ -39,7 +39,7 @@ export class PersistentFilterPanelComponent {
   public rpcSearchStatusTranslationMap = rpcStatusTranslation;
   public rpcSearchPlaceholder: string;
 
-  public persistentSearchStatuses = Object.keys(RpcStatus);
+  public persistentSearchStatuses = Object.values(RpcStatus);
 
   constructor(@Inject(PERSISTENT_FILTER_PANEL_DATA)
               public data: PersistentFilterPanelData,

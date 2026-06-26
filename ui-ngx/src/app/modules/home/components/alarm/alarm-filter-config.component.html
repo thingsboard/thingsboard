@@ -15,11 +15,10 @@
     limitations under the License.
 
 -->
-<ng-container *ngIf="panelMode; else componentMode">
+@if (panelMode) {
   <ng-container *ngTemplateOutlet="alarmFilterPanel"></ng-container>
-</ng-container>
-<ng-template #componentMode>
-  <ng-container *ngIf="buttonMode; else alarmFilter">
+} @else {
+  @if (buttonMode) {
     <button color="primary"
             matTooltip="{{buttonDisplayValue}}"
             matTooltipPosition="above"
@@ -27,8 +26,52 @@
             (click)="toggleAlarmFilterPanel($event)">
       <mat-icon>filter_list</mat-icon>{{buttonDisplayValue}}
     </button>
-  </ng-container>
-</ng-template>
+  } @else {
+    <div class="tb-form-panel tb-alarm-filter-config-component no-padding no-border" [formGroup]="alarmFilterConfigForm">
+      <div class="tb-form-row space-between column-xs">
+        <div class="fixed-title-width" translate>alarm.alarm-status-list</div>
+        <mat-chip-listbox multiple formControlName="statusList">
+          @for (searchStatus of alarmSearchStatuses; track searchStatus) {
+            <mat-chip-option [value]="searchStatus">
+              {{ alarmSearchStatusTranslationMap.get(searchStatus) | translate }}
+            </mat-chip-option>
+          }
+        </mat-chip-listbox>
+      </div>
+      <div class="tb-form-row space-between column-xs">
+        <div class="fixed-title-width" translate>alarm.alarm-severity-list</div>
+        <mat-chip-listbox multiple formControlName="severityList">
+          @for (alarmSeverity of alarmSeverities; track alarmSeverity) {
+            <mat-chip-option [value]="alarmSeverity">
+              {{ alarmSeverityTranslationMap.get(alarmSeverityEnum[alarmSeverity]) | translate }}
+            </mat-chip-option>
+          }
+        </mat-chip-listbox>
+      </div>
+      <div class="tb-form-row column-xs">
+        <div class="fixed-title-width" translate>alarm.alarm-type-list</div>
+        <tb-entity-subtype-list subscriptSizing="dynamic"
+                                formControlName="typeList"
+                                appearance="outline"
+                                [additionalClasses]="['tb-chips', 'flex']"
+                                [entityType]="entityType.ALARM">
+        </tb-entity-subtype-list>
+      </div>
+      <div class="tb-form-row column-xs">
+        <div class="fixed-title-width" translate>alarm.assignee</div>
+        <tb-alarm-assignee-select class="flex-1" inline="true"
+                                  [userMode]="userMode"
+                                  formControlName="assigneeId">
+        </tb-alarm-assignee-select>
+      </div>
+      @if (propagatedFilter) {
+        <mat-slide-toggle class="mat-slide" formControlName="searchPropagatedAlarms">
+          {{ 'alarm.search-propagated-alarms' | translate }}
+        </mat-slide-toggle>
+      }
+    </div>
+  }
+}
 <ng-template #alarmFilterPanel>
   <form class="mat-content mat-padding flex flex-col" (ngSubmit)="update()">
     <ng-container *ngTemplateOutlet="alarmFilter"></ng-container>
@@ -59,17 +102,21 @@
     <div class="tb-form-row space-between column-xs">
       <div class="fixed-title-width" translate>alarm.alarm-status-list</div>
       <mat-chip-listbox multiple formControlName="statusList">
-        <mat-chip-option *ngFor="let searchStatus of alarmSearchStatuses" [value]="searchStatus">
-          {{ alarmSearchStatusTranslationMap.get(searchStatus) | translate }}
-        </mat-chip-option>
+        @for (searchStatus of alarmSearchStatuses; track searchStatus) {
+          <mat-chip-option [value]="searchStatus">
+            {{ alarmSearchStatusTranslationMap.get(searchStatus) | translate }}
+          </mat-chip-option>
+        }
       </mat-chip-listbox>
     </div>
     <div class="tb-form-row space-between column-xs">
       <div class="fixed-title-width" translate>alarm.alarm-severity-list</div>
       <mat-chip-listbox multiple formControlName="severityList">
-        <mat-chip-option *ngFor="let alarmSeverity of alarmSeverities" [value]="alarmSeverity">
-          {{ alarmSeverityTranslationMap.get(alarmSeverityEnum[alarmSeverity]) | translate }}
-        </mat-chip-option>
+        @for (alarmSeverity of alarmSeverities; track alarmSeverity) {
+          <mat-chip-option [value]="alarmSeverity">
+            {{ alarmSeverityTranslationMap.get(alarmSeverityEnum[alarmSeverity]) | translate }}
+          </mat-chip-option>
+        }
       </mat-chip-listbox>
     </div>
     <div class="tb-form-row column-xs">
@@ -85,11 +132,13 @@
       <div class="fixed-title-width" translate>alarm.assignee</div>
       <tb-alarm-assignee-select class="flex-1" inline="true"
                                 [userMode]="userMode"
-        formControlName="assigneeId">
+                                formControlName="assigneeId">
       </tb-alarm-assignee-select>
     </div>
-    <mat-slide-toggle class="mat-slide" *ngIf="propagatedFilter" formControlName="searchPropagatedAlarms">
-      {{ 'alarm.search-propagated-alarms' | translate }}
-    </mat-slide-toggle>
+    @if (propagatedFilter) {
+      <mat-slide-toggle class="mat-slide" formControlName="searchPropagatedAlarms">
+        {{ 'alarm.search-propagated-alarms' | translate }}
+      </mat-slide-toggle>
+    }
   </div>
 </ng-template>

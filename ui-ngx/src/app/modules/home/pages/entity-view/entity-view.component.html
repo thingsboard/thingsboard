@@ -64,7 +64,7 @@
   </div>
 </div>
 <div class="mat-padding flex flex-col">
-  <mat-form-field class="mat-block"
+  <mat-form-field class="mat-block" appearance="outline"
                   [class.!hidden]="isEdit || !isAssignedToCustomer(entity)
                               || entity?.customerIsPublic || entityViewScope !== 'tenant'">
     <mat-label translate>entity-view.assignedToCustomer</mat-label>
@@ -75,29 +75,30 @@
     {{ 'entity-view.entity-view-public' | translate }}
   </div>
   <form [formGroup]="entityForm">
-    <fieldset [disabled]="(isLoading$ | async) || !isEdit">
-      <mat-form-field class="mat-block">
+    <fieldset [disabled]="(isLoading$ | async) || !isEdit" style="min-width: 0;">
+      <mat-form-field class="mat-block" appearance="outline">
         <mat-label translate>entity-view.name</mat-label>
         <input matInput formControlName="name" required>
-        <mat-error *ngIf="entityForm.get('name').hasError('required')">
-          {{ 'entity-view.name-required' | translate }}
-        </mat-error>
-        <mat-error *ngIf="entityForm.get('name').hasError('maxlength')">
-          {{ 'entity-view.name-max-length' | translate }}
-        </mat-error>
+        @if (entityForm.get('name').hasError('required')) {
+          <mat-error>{{ 'entity-view.name-required' | translate }}</mat-error>
+        }
+        @if (entityForm.get('name').hasError('maxlength')) {
+          <mat-error>{{ 'entity-view.name-max-length' | translate }}</mat-error>
+        }
       </mat-form-field>
       <tb-entity-subtype-autocomplete
         formControlName="type"
+        appearance="outline"
         [required]="true"
-        [entityType]="entityType.ENTITY_VIEW"
-      >
+        [entityType]="entityType.ENTITY_VIEW">
       </tb-entity-subtype-autocomplete>
       <section class="flex flex-col">
-        <label translate class="tb-title no-padding">entity-view.target-entity</label>
+        <label translate class="tb-title">entity-view.target-entity</label>
         <tb-entity-select class="flex-1"
                           [required]="true"
                           [allowedEntityTypes]="allowedEntityTypes"
-                          formControlName="entityId">
+                          formControlName="entityId"
+                          appearance="outline">
         </tb-entity-select>
       </section>
       <div class="mat-accordion-container" formGroupName="keys">
@@ -109,26 +110,26 @@
               </mat-panel-title>
             </mat-expansion-panel-header>
             <div translate class="tb-hint">entity-view.attributes-propagation-hint</div>
-            <label translate class="tb-title no-padding">entity-view.client-attributes</label>
             <tb-entity-keys-list
               [entityId]="selectedEntityId | async"
               formControlName="cs"
-              keysText="entity-view.client-attributes-placeholder"
-              [dataKeyType]="dataKeyType.attribute">
+              label="entity-view.client-attributes"
+              [dataKeyType]="dataKeyType.attribute"
+              appearance="outline">
             </tb-entity-keys-list>
-            <label translate class="tb-title no-padding">entity-view.shared-attributes</label>
             <tb-entity-keys-list
               [entityId]="selectedEntityId | async"
               formControlName="sh"
-              keysText="entity-view.shared-attributes-placeholder"
-              [dataKeyType]="dataKeyType.attribute">
+              label="entity-view.shared-attributes"
+              [dataKeyType]="dataKeyType.attribute"
+              appearance="outline">
             </tb-entity-keys-list>
-            <label translate class="tb-title no-padding">entity-view.server-attributes</label>
             <tb-entity-keys-list
               [entityId]="selectedEntityId | async"
               formControlName="ss"
-              keysText="entity-view.server-attributes-placeholder"
-              [dataKeyType]="dataKeyType.attribute">
+              label="entity-view.server-attributes"
+              [dataKeyType]="dataKeyType.attribute"
+              appearance="outline">
             </tb-entity-keys-list>
           </mat-expansion-panel>
           <mat-expansion-panel [expanded]="true">
@@ -138,12 +139,12 @@
               </mat-panel-title>
             </mat-expansion-panel-header>
             <div translate class="tb-hint">entity-view.timeseries-data-hint</div>
-            <label translate class="tb-title no-padding">entity-view.timeseries</label>
             <tb-entity-keys-list
               [entityId]="selectedEntityId | async"
               formControlName="timeseries"
-              keysText="entity-view.timeseries-placeholder"
-              [dataKeyType]="dataKeyType.timeseries">
+              label="entity-view.timeseries"
+              [dataKeyType]="dataKeyType.timeseries"
+              appearance="outline">
             </tb-entity-keys-list>
           </mat-expansion-panel>
         </mat-accordion>
@@ -152,16 +153,18 @@
                    dateText="{{ 'entity-view.start-ts' | translate }}"
                    [maxDate]="maxStartTimeMs | async"
                    formControlName="startTimeMs"
+                   appearance="outline"
       ></tb-datetime>
       <tb-datetime class="block"
                    dateText="{{ 'entity-view.end-ts' | translate }}"
                    [minDate]="minEndTimeMs | async"
                    formControlName="endTimeMs"
+                   appearance="outline"
       ></tb-datetime>
       <div formGroupName="additionalInfo">
-        <mat-form-field class="mat-block">
+        <mat-form-field class="mat-block" appearance="outline">
           <mat-label translate>entity-view.description</mat-label>
-          <textarea matInput formControlName="description" rows="2"></textarea>
+          <textarea matInput formControlName="description" cdkTextareaAutosize cdkAutosizeMinRows="1" rows="1"></textarea>
         </mat-form-field>
       </div>
     </fieldset>

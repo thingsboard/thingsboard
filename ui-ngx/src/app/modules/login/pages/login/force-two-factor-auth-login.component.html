@@ -76,7 +76,7 @@
                     tooltipPosition="above"
                     icon="content_copy"
                     [style]="{'font-size': '24px', color: 'rgba(255,255,255,.8)'}"
-                  >
+                    >
                   </tb-copy-button>
                 </div>
                 <div class="flex w-full flex-col items-center justify-start gap-2">
@@ -120,6 +120,7 @@
                                     label="{{ 'login.phone-input.phone-input-label' | translate }}"
                                     hint="login.phone-input.phone-input-hint"
                                     requiredErrorText="{{ 'login.phone-input.phone-input-required' | translate }}"
+                                    appearance="outline"
                                     validationErrorText="{{ 'login.phone-input.phone-input-validation' | translate }}"
                                     formControlName="phone"
                                     [floatLabel]="'auto'">
@@ -167,12 +168,16 @@
                            type="email" required
                            autocomplete="email"
                            placeholder="{{ 'login.email-label' | translate }}" />
-                    <mat-error *ngIf="emailConfigForm.get('email').hasError('required')">
-                      {{ 'login.email-required' | translate }}
-                    </mat-error>
-                    <mat-error *ngIf="emailConfigForm.get('email').hasError('email')">
-                      {{ 'login.invalid-email-format' | translate }}
-                    </mat-error>
+                    @if (emailConfigForm.get('email').hasError('required')) {
+                      <mat-error>
+                        {{ 'login.email-required' | translate }}
+                      </mat-error>
+                    }
+                    @if (emailConfigForm.get('email').hasError('email')) {
+                      <mat-error>
+                        {{ 'login.invalid-email-format' | translate }}
+                      </mat-error>
+                    }
                   </mat-form-field>
                 </form>
                 <div class="flex w-full flex-col items-center justify-start gap-2">
@@ -267,9 +272,9 @@
                  autocomplete="one-time-code"
                  placeholder="{{ 'login.verification-code' | translate }}">
           @if (configForm.get('verificationCode').getError('required') ||
-          configForm.get('verificationCode').getError('minlength') ||
-          configForm.get('verificationCode').getError('maxlength') ||
-          configForm.get('verificationCode').getError('pattern')) {
+            configForm.get('verificationCode').getError('minlength') ||
+            configForm.get('verificationCode').getError('maxlength') ||
+            configForm.get('verificationCode').getError('pattern')) {
             <mat-error>{{ 'login.verification-code-invalid' | translate }}</mat-error>
           }
           @if (configForm.get('verificationCode').getError('incorrectCode')) {

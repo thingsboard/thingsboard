@@ -13,12 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.alarm.rule.condition.expression;
+package org.thingsboard.server.service.iot_hub;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-
-@Schema(name = "AlarmRuleComplexOperation")
-public enum ComplexOperation {
-    AND,
-    OR
+public record InstallReport(String tenantHash, String userHash, String tbVersion, String edition) {
 }

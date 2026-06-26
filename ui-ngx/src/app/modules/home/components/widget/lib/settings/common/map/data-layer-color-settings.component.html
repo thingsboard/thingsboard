@@ -21,10 +21,11 @@
         [disabled]="disabled"
         #matButton
         (click)="openColorSettingsPopup($event, matButton)">
-  <tb-icon matButtonIcon *ngIf="modelValue?.type === DataLayerColorType.function; else colorPreview">mdi:function-variant</tb-icon>
+  @if (modelValue?.type === DataLayerColorType.function) {
+    <tb-icon matButtonIcon>mdi:function-variant</tb-icon>
+  } @else {
+    <div class="tb-color-preview box" [class.disabled]="disabled">
+      <div class="tb-color-result" [style]="colorStyle"></div>
+    </div>
+  }
 </button>
-<ng-template #colorPreview>
-  <div class="tb-color-preview box" [class.disabled]="disabled">
-    <div class="tb-color-result" [style]="colorStyle"></div>
-  </div>
-</ng-template>

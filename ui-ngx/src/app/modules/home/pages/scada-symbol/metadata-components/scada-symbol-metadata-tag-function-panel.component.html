@@ -19,22 +19,22 @@
   <div class="tb-scada-symbol-metadata-tag-function-title-container">
     <mat-chip-set>
       <mat-chip>
-          <span>
-            {{ tag }}
-          </span>
+        <span>
+          {{ tag }}
+        </span>
       </mat-chip>
     </mat-chip-set>
     <div class="tb-scada-symbol-metadata-tag-function-title">{{ panelTitle | translate }}</div>
   </div>
   <div class="tb-scada-symbol-metadata-tag-function-panel-content">
-      <tb-js-func #tagFunctionComponent
-                  minHeight="300px"
-                  formControlName="tagFunction"
-                  [highlightRules]="highlightRules"
-                  [editorCompleter]="completer"
-                  [functionArgs]="tagFunctionArgs"
-                  [helpId]="tagFunctionHelpId">
-      </tb-js-func>
+    <tb-js-func #tagFunctionComponent
+                minHeight="300px"
+                formControlName="tagFunction"
+                [highlightRules]="highlightRules"
+                [editorCompleter]="completer"
+                [functionArgs]="tagFunctionArgs"
+                [helpId]="tagFunctionHelpId">
+    </tb-js-func>
   </div>
   <div class="tb-scada-symbol-metadata-tag-function-panel-buttons">
     <button mat-button
@@ -43,12 +43,14 @@
             (click)="cancel()">
       {{ (disabled ? 'action.close' : 'action.cancel') | translate }}
     </button>
-    <button *ngIf="!disabled" mat-raised-button
-            color="primary"
-            type="button"
-            (click)="applyTagFunction()"
-            [disabled]="tagFunctionFormGroup.invalid || !tagFunctionFormGroup.dirty">
-      {{ 'action.apply' | translate }}
-    </button>
+    @if (!disabled) {
+      <button mat-raised-button
+              color="primary"
+              type="button"
+              (click)="applyTagFunction()"
+              [disabled]="tagFunctionFormGroup.invalid || !tagFunctionFormGroup.dirty">
+        {{ 'action.apply' | translate }}
+      </button>
+    }
   </div>
 </div>

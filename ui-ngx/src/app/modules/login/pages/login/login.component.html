@@ -22,9 +22,13 @@
         <div class="flex flex-col items-center justify-start" style="padding: 16px 0;">
           <tb-logo link="https://thingsboard.io" target="_blank" class="login-logo"></tb-logo>
         </div>
-        <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading || (isLoading$ | async)">
-        </mat-progress-bar>
-        <span style="height: 4px;" *ngIf="!isLoading && !(isLoading$ | async)"></span>
+        @if (isLoading || (isLoading$ | async)) {
+          <mat-progress-bar color="warn" mode="indeterminate">
+          </mat-progress-bar>
+        }
+        @if (!isLoading && !(isLoading$ | async)) {
+          <span style="height: 4px;"></span>
+        }
         <span tb-toast style="height: 20px;"></span>
         <div class="flex flex-col">
           @if(oauth2Clients?.length) {
@@ -60,9 +64,11 @@
             <mat-label translate>login.username</mat-label>
             <input id="username-input" matInput type="email" autofocus formControlName="username" autocomplete="email"/>
             <mat-icon matPrefix>email</mat-icon>
-            <mat-error *ngIf="loginFormGroup.get('username').invalid">
-              {{ 'login.invalid-email-format' | translate }}
-            </mat-error>
+            @if (loginFormGroup.get('username').invalid) {
+              <mat-error>
+                {{ 'login.invalid-email-format' | translate }}
+              </mat-error>
+            }
           </mat-form-field>
           <mat-form-field class="tb-autofilled" appearance="outline">
             <mat-label translate>common.password</mat-label>
@@ -71,7 +77,7 @@
             <mat-icon matPrefix>lock</mat-icon>
           </mat-form-field>
           <button mat-flat-button color="accent" [disabled]="isLoading || (isLoading$ | async)"
-                  class="tb-action-button" type="submit">{{ 'login.sign-in' | translate }}</button>
+          class="tb-action-button" type="submit">{{ 'login.sign-in' | translate }}</button>
           <div class="forgot-password flex items-center justify-end gap-5">
             <button class="tb-reset-password" mat-button type="button" routerLink="/login/resetPasswordRequest">
               {{ (passwordViolation ? 'login.reset-password' : 'login.forgot-password') | translate }}

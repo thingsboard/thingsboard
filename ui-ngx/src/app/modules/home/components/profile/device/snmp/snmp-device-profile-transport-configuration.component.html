@@ -17,27 +17,27 @@
 -->
 <form [formGroup]="snmpDeviceProfileTransportConfigurationFormGroup" style="padding: 8px 0 16px;">
   <section class="flex flex-row gap-2 xs:flex-col">
-    <mat-form-field class="flex-1">
+    <mat-form-field class="flex-1" appearance="outline">
       <mat-label translate>device-profile.snmp.timeout-ms</mat-label>
       <input matInput formControlName="timeoutMs" type="number" min="0" required/>
-      <mat-error *ngIf="snmpDeviceProfileTransportConfigurationFormGroup.get('timeoutMs').hasError('required')">
-        {{ 'device-profile.snmp.timeout-ms-required' | translate }}
-      </mat-error>
-      <mat-error *ngIf="snmpDeviceProfileTransportConfigurationFormGroup.get('timeoutMs').hasError('pattern') ||
-    snmpDeviceProfileTransportConfigurationFormGroup.get('timeoutMs').hasError('min')">
-        {{ 'device-profile.snmp.timeout-ms-invalid-format' | translate }}
-      </mat-error>
+      @if (snmpDeviceProfileTransportConfigurationFormGroup.get('timeoutMs').hasError('required')) {
+        <mat-error>{{ 'device-profile.snmp.timeout-ms-required' | translate }}</mat-error>
+      }
+      @if (snmpDeviceProfileTransportConfigurationFormGroup.get('timeoutMs').hasError('pattern') ||
+      snmpDeviceProfileTransportConfigurationFormGroup.get('timeoutMs').hasError('min')) {
+        <mat-error>{{ 'device-profile.snmp.timeout-ms-invalid-format' | translate }}</mat-error>
+      }
     </mat-form-field>
-    <mat-form-field class="flex-1">
+    <mat-form-field class="flex-1" appearance="outline">
       <mat-label translate>device-profile.snmp.retries</mat-label>
       <input matInput formControlName="retries" type="number" min="0" required/>
-      <mat-error *ngIf="snmpDeviceProfileTransportConfigurationFormGroup.get('retries').hasError('required')">
-        {{ 'device-profile.snmp.retries-required' | translate }}
-      </mat-error>
-      <mat-error *ngIf="snmpDeviceProfileTransportConfigurationFormGroup.get('retries').hasError('pattern') ||
-    snmpDeviceProfileTransportConfigurationFormGroup.get('retries').hasError('min')">
-        {{ 'device-profile.snmp.retries-invalid-format' | translate }}
-      </mat-error>
+      @if (snmpDeviceProfileTransportConfigurationFormGroup.get('retries').hasError('required')) {
+        <mat-error>{{ 'device-profile.snmp.retries-required' | translate }}</mat-error>
+      }
+      @if (snmpDeviceProfileTransportConfigurationFormGroup.get('retries').hasError('pattern') ||
+      snmpDeviceProfileTransportConfigurationFormGroup.get('retries').hasError('min')) {
+        <mat-error>{{ 'device-profile.snmp.retries-invalid-format' | translate }}</mat-error>
+      }
     </mat-form-field>
   </section>
   <div class="tb-small" style="padding-bottom: 8px" translate>device-profile.snmp.communication-configs</div>

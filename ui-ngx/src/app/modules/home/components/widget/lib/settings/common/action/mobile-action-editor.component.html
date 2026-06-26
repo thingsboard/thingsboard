@@ -20,19 +20,22 @@
     <div class="fixed-title-width">{{ 'widget-action.mobile.action-type' | translate }}*</div>
     <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
       <mat-select required formControlName="type" placeholder="{{ 'widget-action.mobile.select-action-type' | translate }}">
-        <mat-option *ngFor="let actionType of mobileActionTypes" [value]="actionType">
-          {{ mobileActionTypeTranslations.get(mobileActionType[actionType]) | translate }}
-        </mat-option>
+        @for (actionType of mobileActionTypes; track actionType) {
+          <mat-option [value]="actionType">
+            {{ mobileActionTypeTranslations.get(mobileActionType[actionType]) | translate }}
+          </mat-option>
+        }
       </mat-select>
-      <mat-icon matSuffix
-                matTooltipPosition="above"
-                matTooltipClass="tb-error-tooltip"
-                [matTooltip]="'widget-action.mobile.action-type-required' | translate"
-                *ngIf="mobileActionFormGroup.get('type').hasError('required')
-                       && mobileActionFormGroup.get('type').touched"
-                class="tb-error">
-        warning
-      </mat-icon>
+      @if (mobileActionFormGroup.get('type').hasError('required')
+        && mobileActionFormGroup.get('type').touched) {
+        <mat-icon matSuffix
+                  matTooltipPosition="above"
+                  matTooltipClass="tb-error-tooltip"
+                  [matTooltip]="'widget-action.mobile.action-type-required' | translate"
+                  class="tb-error">
+          warning
+        </mat-icon>
+      }
     </mat-form-field>
   </div>
   <ng-container [formGroup]="mobileActionTypeFormGroup">
@@ -50,9 +53,11 @@
         <div class="fixed-title-width">{{ 'widget-action.mobile.provision-type' | translate }}*</div>
         <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
           <mat-select formControlName="provisionType">
-            <mat-option *ngFor="let type of provisionTypes" [value]="type">
-              {{ provisionTypeTranslationMap.get(type) | translate }}
-            </mat-option>
+            @for (type of provisionTypes; track type) {
+              <mat-option [value]="type">
+                {{  provisionTypeTranslationMap.get(type) | translate }}
+              </mat-option>
+            }
           </mat-select>
         </mat-form-field>
       </div>

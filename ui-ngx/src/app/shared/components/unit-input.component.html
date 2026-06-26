@@ -23,27 +23,33 @@
          (focusin)="onFocus()"
          [matAutocomplete]="unitsAutocomplete"
          [matAutocompleteDisabled]="supportsUnitConversion">
-  <button *ngIf="unitsFormControl.value && !disabled && unitsFormControl.valid && !isUnitMapping"
-          type="button"
-          class="tb-icon-24 mr-2"
-          matSuffix mat-icon-button aria-label="Clear"
-          (click)="clear($event)">
-    <mat-icon class="material-icons">close</mat-icon>
-  </button>
-  <mat-icon matSuffix
-            matTooltipPosition="above"
-            matTooltipClass="tb-error-tooltip"
-            [matTooltip]="'widget-config.units-required' | translate"
-            *ngIf="unitsFormControl.hasError('required')" class="material-icons tb-suffix-show-always tb-error">
-    warning
-  </mat-icon>
-  <tb-icon matSuffix
-           [color]="disabled ? null : 'primary'"
-           matTooltipPosition="above"
-           [matTooltip]="'unit.set-unit-conversion' | translate"
-           *ngIf="supportsUnitConversion && isUnitMapping" class="material-icons tb-suffix-show-always mr-2 !p-0">
-    mdi:swap-vertical-circle-outline
-  </tb-icon>
+  @if (unitsFormControl.value && !disabled && unitsFormControl.valid && !isUnitMapping) {
+    <button
+      type="button"
+      class="tb-icon-24 mr-2"
+      matSuffix mat-icon-button aria-label="Clear"
+      (click)="clear($event)">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  }
+  @if (unitsFormControl.hasError('required')) {
+    <mat-icon matSuffix
+              matTooltipPosition="above"
+              matTooltipClass="tb-error-tooltip"
+              [matTooltip]="'widget-config.units-required' | translate"
+              class="material-icons tb-suffix-show-always tb-error">
+      warning
+    </mat-icon>
+  }
+  @if (supportsUnitConversion && isUnitMapping) {
+    <tb-icon matSuffix
+             [color]="disabled ? null : 'primary'"
+             matTooltipPosition="above"
+             [matTooltip]="'unit.set-unit-conversion' | translate"
+             class="material-icons tb-suffix-show-always mr-2 !p-0">
+      mdi:swap-vertical-circle-outline
+    </tb-icon>
+  }
   <mat-autocomplete
     #unitsAutocomplete="matAutocomplete"
     class="tb-autocomplete tb-unit-input-autocomplete"
@@ -58,6 +64,6 @@
           </mat-option>
         }
       </mat-optgroup>
-  }
+    }
   </mat-autocomplete>
 </mat-form-field>

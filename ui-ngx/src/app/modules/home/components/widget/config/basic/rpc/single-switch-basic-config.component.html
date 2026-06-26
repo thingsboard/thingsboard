@@ -16,7 +16,7 @@
 
 -->
 <ng-container [formGroup]="singleSwitchWidgetConfigForm">
-  <tb-target-device formControlName="targetDevice"></tb-target-device>
+  <tb-target-device formControlName="targetDevice" appearance="outline"></tb-target-device>
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widgets.single-switch.behavior</div>
     <div class="tb-form-row">
@@ -30,7 +30,7 @@
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
                                     [widgetType]="widgetType"
-                                    formControlName="initialState"></tb-get-value-action-settings>
+      formControlName="initialState"></tb-get-value-action-settings>
     </div>
     <div class="tb-form-row space-between">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.turn-on-hint' | translate}}" translate>widgets.rpc-state.turn-on</div>
@@ -39,7 +39,7 @@
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
                                     [widgetType]="widgetType"
-                                    formControlName="onUpdateState"></tb-set-value-action-settings>
+      formControlName="onUpdateState"></tb-set-value-action-settings>
     </div>
     <div class="tb-form-row space-between">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.turn-off-hint' | translate}}" translate>widgets.rpc-state.turn-off</div>
@@ -48,7 +48,7 @@
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
                                     [widgetType]="widgetType"
-                                    formControlName="offUpdateState"></tb-set-value-action-settings>
+      formControlName="offUpdateState"></tb-set-value-action-settings>
     </div>
     <div class="tb-form-row">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.disabled-state-hint' | translate}}" translate>widgets.rpc-state.disabled-state</div>
@@ -59,7 +59,7 @@
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
                                     [widgetType]="widgetType"
-                                    formControlName="disabledState"></tb-get-value-action-settings>
+      formControlName="disabledState"></tb-get-value-action-settings>
     </div>
   </div>
   <div class="tb-form-panel">
@@ -70,12 +70,14 @@
                                       'lt-sm': 1,
                                       'lt-md': 2
                                     }}"
-                           label="{{ 'widgets.single-switch.layout' | translate }}" formControlName="layout">
-      <tb-image-cards-select-option *ngFor="let layout of singleSwitchLayouts"
-                                    [value]="layout"
-                                    [image]="singleSwitchLayoutImageMap.get(layout)">
-        {{ singleSwitchLayoutTranslationMap.get(layout) | translate }}
-      </tb-image-cards-select-option>
+      label="{{ 'widgets.single-switch.layout' | translate }}" formControlName="layout">
+      @for (layout of singleSwitchLayouts; track layout) {
+        <tb-image-cards-select-option
+          [value]="layout"
+          [image]="singleSwitchLayoutImageMap.get(layout)">
+          {{ singleSwitchLayoutTranslationMap.get(layout) | translate }}
+        </tb-image-cards-select-option>
+      }
     </tb-image-cards-select>
     <div class="tb-form-row">
       <mat-slide-toggle class="mat-slide" formControlName="autoScale">

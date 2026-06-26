@@ -58,19 +58,23 @@
     </div>
   </div>
   <div class="tb-widget-button-custom-style-panel-buttons">
-    <button *ngIf="copyFromStates?.length"
-            #copyStyleButton
-            class="tb-nowrap"
-            mat-stroked-button
-            color="primary"
-            type="button"
-            [matMenuTriggerFor]="styleSourcesMenu" [matMenuTriggerData]="{menuWidth: copyStyleButton._elementRef.nativeElement.clientWidth}">
-      {{ 'widgets.button.copy-style-from' | translate }}
-    </button>
+    @if (copyFromStates?.length) {
+      <button
+        #copyStyleButton
+        class="tb-nowrap"
+        mat-stroked-button
+        color="primary"
+        type="button"
+        [matMenuTriggerFor]="styleSourcesMenu" [matMenuTriggerData]="{menuWidth: copyStyleButton._elementRef.nativeElement.clientWidth}">
+        {{ 'widgets.button.copy-style-from' | translate }}
+      </button>
+    }
     <mat-menu #styleSourcesMenu="matMenu">
       <ng-template matMenuContent let-menuWidth="menuWidth">
         <div [style.min-width.px]="menuWidth">
-          <button mat-menu-item *ngFor="let state of copyFromStates" (click)="copyStyle(state)">{{ widgetButtonToggleStatesTranslationsMap.get(state) | translate }}</button>
+          @for (state of copyFromStates; track state) {
+            <button mat-menu-item (click)="copyStyle(state)">{{ widgetButtonToggleStatesTranslationsMap.get(state) | translate }}</button>
+          }
         </div>
       </ng-template>
     </mat-menu>

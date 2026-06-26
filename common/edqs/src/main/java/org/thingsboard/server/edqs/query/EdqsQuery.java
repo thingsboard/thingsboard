@@ -16,6 +16,7 @@
 package org.thingsboard.server.edqs.query;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.query.ComplexOperation;
 import org.thingsboard.server.common.data.query.EntityFilter;
 
 import java.util.List;
@@ -26,5 +27,6 @@ public abstract class EdqsQuery {
     private final EntityFilter entityFilter;
     private final boolean hasKeyFilters;
     private final List<EdqsFilter> keyFilters;
+    private final ComplexOperation keyFiltersOperation;
 
 }

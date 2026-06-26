@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="messageTypeFormGroup" class="mat-block">
+<mat-form-field [formGroup]="messageTypeFormGroup" class="mat-block" [appearance]="appearance">
   <mat-label>{{ 'rulenode.message-type' | translate }}</mat-label>
   <input matInput type="text" placeholder="{{ 'rulenode.select-message-type' | translate }}"
          #messageTypeInput
@@ -23,21 +23,27 @@
          (focusin)="onFocus()"
          [required]="required"
          [matAutocomplete]="messageTypeAutocomplete">
-  <button *ngIf="messageTypeFormGroup.get('messageType').value && !disabled"
-          type="button"
-          matSuffix mat-icon-button aria-label="Clear"
-          (click)="clear()">
-    <mat-icon class="material-icons">close</mat-icon>
-  </button>
+  @if (messageTypeFormGroup.get('messageType').value && !disabled) {
+    <button
+      type="button"
+      matSuffix mat-icon-button aria-label="Clear"
+      (click)="clear()">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  }
   <mat-autocomplete
     class="tb-autocomplete"
     #messageTypeAutocomplete="matAutocomplete"
     [displayWith]="displayMessageTypeFn">
-    <mat-option *ngFor="let messageType of filteredMessageTypes | async" [value]="messageType">
-      <span [innerHTML]="displayMessageTypeFn(messageType) | highlight:searchText"></span>
-    </mat-option>
+    @for (messageType of filteredMessageTypes | async; track messageType) {
+      <mat-option [value]="messageType">
+        <span [innerHTML]="displayMessageTypeFn(messageType) | highlight:searchText"></span>
+      </mat-option>
+    }
   </mat-autocomplete>
-  <mat-error *ngIf="messageTypeFormGroup.get('messageType').hasError('required')">
-    {{ 'rulenode.message-type-required' | translate }}
-  </mat-error>
+  @if (messageTypeFormGroup.get('messageType').hasError('required')) {
+    <mat-error>
+      {{ 'rulenode.message-type-required' | translate }}
+    </mat-error>
+  }
 </mat-form-field>

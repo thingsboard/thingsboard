@@ -15,16 +15,19 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="messageTypeConfigForm" style="width: 100%;">
-  <mat-label *ngIf="label">{{ label }}</mat-label>
+<mat-form-field [formGroup]="messageTypeConfigForm" style="width: 100%;" appearance="outline">
+  @if (label) {
+    <mat-label>{{ label }}</mat-label>
+  }
   <mat-chip-grid #chipList [required]="required">
-    <mat-chip-row
-      *ngFor="let messageType of messageTypes"
-      [removable]="true"
-      (removed)="remove(messageType)">
-      {{messageType.name}}
-      <mat-icon matChipRemove>close</mat-icon>
-    </mat-chip-row>
+    @for (messageType of messageTypes; track messageType) {
+      <mat-chip-row
+        [removable]="true"
+        (removed)="remove(messageType)">
+        {{messageType.name}}
+        <mat-icon matChipRemove>close</mat-icon>
+      </mat-chip-row>
+    }
     <input matInput type="text" placeholder="{{ placeholder | translate }}"
            #messageTypeInput
            (focusin)="onFocus()"
@@ -41,31 +44,38 @@
                     class="tb-autocomplete"
                     (optionSelected)="selected($event)"
                     [displayWith]="displayMessageTypeFn">
-    <mat-option *ngFor="let messageType of filteredMessageTypes | async" [value]="messageType">
-      <span [innerHTML]="messageType.name | highlight:searchText"></span>
-    </mat-option>
-    <mat-option *ngIf="(filteredMessageTypes | async)?.length === 0" [value]="null" class="tb-not-found">
-      <div class="tb-not-found-content" (click)="$event.stopPropagation()">
-        <div *ngIf="!textIsNotEmpty(searchText); else searchNotEmpty">
-          <span translate>rule-node-config.no-message-types-found</span>
+    @for (messageType of filteredMessageTypes | async; track messageType) {
+      <mat-option [value]="messageType">
+        <span [innerHTML]="messageType.name | highlight:searchText"></span>
+      </mat-option>
+    }
+    @if ((filteredMessageTypes | async)?.length === 0) {
+      <mat-option [value]="null" class="tb-not-found">
+        <div class="tb-not-found-content" (click)="$event.stopPropagation()">
+          @if (!textIsNotEmpty(searchText)) {
+            <div>
+              <span translate>rule-node-config.no-message-types-found</span>
+            </div>
+          } @else {
+            <span>
+              {{ 'rule-node-config.no-message-type-matching' | translate :
+              {messageType: truncate.transform(searchText, true, 6, &apos;...&apos;)}
+              }}
+            </span>
+          }
+          <span>
+            <a translate (click)="createMessageType($event, searchText)">rule-node-config.create-new-message-type</a>
+          </span>
         </div>
-        <ng-template #searchNotEmpty>
-                <span>
-                  {{ 'rule-node-config.no-message-type-matching' | translate :
-                  {messageType: truncate.transform(searchText, true, 6, &apos;...&apos;)}
-                  }}
-                </span>
-        </ng-template>
-        <span>
-          <a translate (click)="createMessageType($event, searchText)">rule-node-config.create-new-message-type</a>
-        </span>
-      </div>
-    </mat-option>
+      </mat-option>
+    }
   </mat-autocomplete>
   <mat-icon class="help-icon m-2 cursor-pointer" aria-hidden="false" aria-label="help-icon" matSuffix
             color="primary"
-            matTooltip="{{ 'rule-node-config.chip-help' | translate: { inputName: 'rule-node-config.message-type' | translate } }}">help</mat-icon>
-  <mat-error *ngIf="chipList.errorState">
-    {{ 'rule-node-config.select-message-types-required' | translate }}
-  </mat-error>
+  matTooltip="{{ 'rule-node-config.chip-help' | translate: { inputName: 'rule-node-config.message-type' | translate } }}">help</mat-icon>
+  @if (chipList.errorState) {
+    <mat-error>
+      {{ 'rule-node-config.select-message-types-required' | translate }}
+    </mat-error>
+  }
 </mat-form-field>

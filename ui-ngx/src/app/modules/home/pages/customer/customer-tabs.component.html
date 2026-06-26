@@ -39,13 +39,6 @@
   <mat-tab label="{{ 'alarm.alarms' | translate }}" #alarmsTab="matTab">
     <tb-alarm-table [active]="alarmsTab.isActive" [entityId]="entity.id"></tb-alarm-table>
   </mat-tab>
-  <mat-tab label="{{ 'customer.events' | translate }}" #eventsTab="matTab">
-    <tb-event-table [defaultEventType]="eventTypes.ERROR"
-                    [active]="eventsTab.isActive"
-                    [tenantId]="entity.tenantId.id"
-                    [entityId]="entity.id">
-    </tb-event-table>
-  </mat-tab>
   <mat-tab label="{{ 'relation.relations' | translate }}" #relationsTab="matTab">
     <tb-relation-table [active]="relationsTab.isActive" [entityId]="entity.id"></tb-relation-table>
   </mat-tab>

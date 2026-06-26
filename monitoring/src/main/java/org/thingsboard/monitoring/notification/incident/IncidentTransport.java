@@ -13,16 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  .tb-editable-switch {
-    padding-left: 10px;
+package org.thingsboard.monitoring.notification.incident;
 
-    .editable-switch {
-      margin: 0;
-    }
+public interface IncidentTransport {
 
-    .editable-label {
-      margin: 5px 0;
-    }
-  }
+    String postIncident(String text);
+
+    void postThreadReply(String threadId, String text);
+
+    void updateIncident(String threadId, String text);
+
 }

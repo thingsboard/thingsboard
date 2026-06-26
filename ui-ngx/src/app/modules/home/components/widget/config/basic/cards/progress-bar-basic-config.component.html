@@ -16,10 +16,12 @@
 
 -->
 <ng-container [formGroup]="progressBarWidgetConfigForm">
-  <tb-timewindow-config-panel *ngIf="displayTimewindowConfig"
-                              [onlyHistoryTimewindow]="onlyHistoryTimewindow()"
-                              formControlName="timewindowConfig">
-  </tb-timewindow-config-panel>
+  @if (displayTimewindowConfig) {
+    <tb-timewindow-config-panel
+      [onlyHistoryTimewindow]="onlyHistoryTimewindow()"
+      formControlName="timewindowConfig">
+    </tb-timewindow-config-panel>
+  }
   <tb-datasources
     [configMode]="basicMode"
     hideDataKeyLabel
@@ -35,12 +37,14 @@
                                     breakpoints: {
                                       'lt-sm': 1
                                     }}"
-                           label="{{ 'widgets.progress-bar.layout' | translate }}" formControlName="layout">
-      <tb-image-cards-select-option *ngFor="let layout of progressBarLayouts"
-                                    [value]="layout"
-                                    [image]="progressBarLayoutImageMap.get(layout)">
-        {{ progressBarLayoutTranslationMap.get(layout) | translate }}
-      </tb-image-cards-select-option>
+      label="{{ 'widgets.progress-bar.layout' | translate }}" formControlName="layout">
+      @for (layout of progressBarLayouts; track layout) {
+        <tb-image-cards-select-option
+          [value]="layout"
+          [image]="progressBarLayoutImageMap.get(layout)">
+          {{ progressBarLayoutTranslationMap.get(layout) | translate }}
+        </tb-image-cards-select-option>
+      }
     </tb-image-cards-select>
     <div class="tb-form-row">
       <mat-slide-toggle class="mat-slide" formControlName="autoScale">
@@ -126,20 +130,22 @@
         </mat-form-field>
       </div>
     </div>
-    <div *ngIf="progressBarWidgetConfigForm.get('layout').value === progressBarLayout.default" class="tb-form-row space-between">
-      <mat-slide-toggle class="mat-slide" formControlName="showTicks">
-        {{ 'widgets.progress-bar.range-ticks' | translate }}
-      </mat-slide-toggle>
-      <div class="flex flex-row items-center justify-start gap-2">
-        <tb-font-settings formControlName="ticksFont"
-                          previewText="100">
-        </tb-font-settings>
-        <tb-color-input asBoxInput
-                        colorClearButton
-                        formControlName="ticksColor">
-        </tb-color-input>
+    @if (progressBarWidgetConfigForm.get('layout').value === progressBarLayout.default) {
+      <div class="tb-form-row space-between">
+        <mat-slide-toggle class="mat-slide" formControlName="showTicks">
+          {{ 'widgets.progress-bar.range-ticks' | translate }}
+        </mat-slide-toggle>
+        <div class="flex flex-row items-center justify-start gap-2">
+          <tb-font-settings formControlName="ticksFont"
+                            previewText="100">
+          </tb-font-settings>
+          <tb-color-input asBoxInput
+                          colorClearButton
+                          formControlName="ticksColor">
+          </tb-color-input>
+        </div>
       </div>
-    </div>
+    }
   </div>
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widgets.progress-bar.bar</div>

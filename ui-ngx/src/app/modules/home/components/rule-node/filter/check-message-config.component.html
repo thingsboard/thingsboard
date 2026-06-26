@@ -23,6 +23,7 @@
     </div>
   </div>
   <tb-string-items-list editable subscriptSizing="dynamic"
+                        appearance="outline"
                         [label]="'rule-node-config.data-keys' | translate"
                         [placeholder]="'rule-node-config.add-message-field' | translate"
                         formControlName="messageNames">
@@ -30,6 +31,7 @@
               matTooltip="{{ 'rule-node-config.chip-help' | translate: { inputName: 'rule-node-config.field-name' | translate } }}">help</mat-icon>
   </tb-string-items-list>
   <tb-string-items-list editable subscriptSizing="dynamic"
+                        appearance="outline"
                         [label]="'rule-node-config.metadata-keys' | translate"
                         [placeholder]="'rule-node-config.add-metadata-field' | translate"
                         formControlName="metadataNames">

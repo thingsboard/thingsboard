@@ -15,26 +15,28 @@
     limitations under the License.
 
 -->
-<div class="tb-details-buttons xs:flex xs:flex-col" *ngIf="!standalone">
-  <button mat-raised-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'open')"
-          [class.!hidden]="isEdit || isDetailsPage">
-    {{ 'common.open-details-page' | translate }}
-  </button>
-  <button mat-raised-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'export')"
-          [class.!hidden]="isEdit">
-    {{ 'action.export' | translate }}
-  </button>
-  <button mat-raised-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'delete')"
-          [class.!hidden]="hideDelete() || isEdit">
-    {{ 'action.delete' | translate }}
-  </button>
-</div>
+@if (!standalone) {
+  <div class="tb-details-buttons xs:flex xs:flex-col">
+    <button mat-raised-button color="primary"
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'open')"
+            [class.!hidden]="isEdit || isDetailsPage">
+      {{ 'common.open-details-page' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'export')"
+            [class.!hidden]="isEdit">
+      {{ 'action.export' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'delete')"
+            [class.!hidden]="hideDelete() || isEdit">
+      {{ 'action.delete' | translate }}
+    </button>
+  </div>
+}
 <div class="mat-padding flex flex-1 flex-col" [formGroup]="entityForm">
   <div class="tb-form-panel no-border no-padding">
     <div class="tb-form-panel no-gap">
@@ -55,11 +57,11 @@
           <mat-hint></mat-hint>
         </mat-form-field>
         <tb-entity-debug-settings-button
-            formControlName="debugSettings"
-            style="margin-bottom: 22px"
-            [entityType]="EntityType.CALCULATED_FIELD"
-            [additionalActionConfig]="additionalDebugActionConfig"
-        />
+          formControlName="debugSettings"
+          style="margin-bottom: 22px"
+          [entityType]="EntityType.CALCULATED_FIELD"
+          [additionalActionConfig]="additionalDebugActionConfig"
+          />
       </div>
       <tb-entity-select formControlName="entityId"
                         appearance="outline"
@@ -74,8 +76,8 @@
         <mat-select formControlName="type">
           <mat-select-trigger>
             {{ CalculatedFieldTypeTranslations.has(entityForm.get('type').value)
-                ? (CalculatedFieldTypeTranslations.get(entityForm.get('type').value).name | translate)
-                : entityForm.get('type').value }}
+            ? (CalculatedFieldTypeTranslations.get(entityForm.get('type').value).name | translate)
+            : entityForm.get('type').value }}
           </mat-select-trigger>
           @for (type of fieldTypes; track type) {
             <mat-option [value]="type" class="py-1">
@@ -83,67 +85,67 @@
                 {{ CalculatedFieldTypeTranslations.get(type).name | translate }}
               </span>
               <br>
-              <small matListItemMeta style="color: inherit">
-                {{ CalculatedFieldTypeTranslations.get(type).hint | translate }}
-              </small>
-            </mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
+                <small matListItemMeta style="color: inherit">
+                  {{ CalculatedFieldTypeTranslations.get(type).hint | translate }}
+                </small>
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+      @switch (entityForm.get('type').value) {
+        @case (CalculatedFieldType.GEOFENCING) {
+          <tb-geofencing-configuration formControlName="configuration"
+                                       [class.tb-form-panel-disabled]="disabledConfiguration"
+                                       [entityId]="entityId"
+                                       [entityName]="entityName"
+                                       [ownerId]="ownerId"
+                                       [tenantId]="tenantId"
+                                       [isEditValue]="isEditValue"
+          ></tb-geofencing-configuration>
+        }
+        @case (CalculatedFieldType.PROPAGATION) {
+          <tb-propagation-configuration formControlName="configuration"
+                                        [class.tb-form-panel-disabled]="disabledConfiguration"
+                                        [entityId]="entityId"
+                                        [entityName]="entityName"
+                                        [tenantId]="tenantId"
+                                        [ownerId]="ownerId"
+                                        [testScript]="onTestScript.bind(this)"
+                                        [isEditValue]="isEditValue"
+          ></tb-propagation-configuration>
+        }
+        @case (CalculatedFieldType.RELATED_ENTITIES_AGGREGATION) {
+          <tb-related-entities-aggregation-component formControlName="configuration"
+                                                     [class.tb-form-panel-disabled]="disabledConfiguration"
+                                                     [entityId]="entityId"
+                                                     [entityName]="entityName"
+                                                     [tenantId]="tenantId"
+                                                     [testScript]="onTestScript.bind(this)"
+                                                     [isEditValue]="isEditValue"
+          ></tb-related-entities-aggregation-component>
+        }
+        @case (CalculatedFieldType.ENTITY_AGGREGATION) {
+          <tb-entity-aggregation-component formControlName="configuration"
+                                           [class.tb-form-panel-disabled]="disabledConfiguration"
+                                           [entityId]="entityId"
+                                           [entityName]="entityName"
+                                           [tenantId]="tenantId"
+                                           [isEditValue]="isEditValue"
+          ></tb-entity-aggregation-component>
+        }
+        @default {
+          <tb-simple-configuration formControlName="configuration"
+                                   [class.tb-form-panel-disabled]="disabledConfiguration"
+                                   [entityId]="entityId"
+                                   [entityName]="entityName"
+                                   [ownerId]="ownerId"
+                                   [tenantId]="tenantId"
+                                   [isScript]="entityForm.get('type').value === CalculatedFieldType.SCRIPT"
+                                   [testScript]="onTestScript.bind(this)"
+                                   [isEditValue]="isEditValue"
+          ></tb-simple-configuration>
+        }
+      }
     </div>
-    @switch (entityForm.get('type').value) {
-      @case (CalculatedFieldType.GEOFENCING) {
-        <tb-geofencing-configuration formControlName="configuration"
-                                     [class.tb-form-panel-disabled]="disabledConfiguration"
-                                     [entityId]="entityId"
-                                     [entityName]="entityName"
-                                     [ownerId]="ownerId"
-                                     [tenantId]="tenantId"
-                                     [isEditValue]="isEditValue"
-        ></tb-geofencing-configuration>
-      }
-      @case (CalculatedFieldType.PROPAGATION) {
-        <tb-propagation-configuration formControlName="configuration"
-                                      [class.tb-form-panel-disabled]="disabledConfiguration"
-                                      [entityId]="entityId"
-                                      [entityName]="entityName"
-                                      [tenantId]="tenantId"
-                                      [ownerId]="ownerId"
-                                      [testScript]="onTestScript.bind(this)"
-                                      [isEditValue]="isEditValue"
-        ></tb-propagation-configuration>
-      }
-      @case (CalculatedFieldType.RELATED_ENTITIES_AGGREGATION) {
-        <tb-related-entities-aggregation-component formControlName="configuration"
-                                                   [class.tb-form-panel-disabled]="disabledConfiguration"
-                                                   [entityId]="entityId"
-                                                   [entityName]="entityName"
-                                                   [tenantId]="tenantId"
-                                                   [testScript]="onTestScript.bind(this)"
-                                                   [isEditValue]="isEditValue"
-        ></tb-related-entities-aggregation-component>
-      }
-      @case (CalculatedFieldType.ENTITY_AGGREGATION) {
-        <tb-entity-aggregation-component formControlName="configuration"
-                                         [class.tb-form-panel-disabled]="disabledConfiguration"
-                                         [entityId]="entityId"
-                                         [entityName]="entityName"
-                                         [tenantId]="tenantId"
-                                         [isEditValue]="isEditValue"
-        ></tb-entity-aggregation-component>
-      }
-      @default {
-        <tb-simple-configuration formControlName="configuration"
-                                 [class.tb-form-panel-disabled]="disabledConfiguration"
-                                 [entityId]="entityId"
-                                 [entityName]="entityName"
-                                 [ownerId]="ownerId"
-                                 [tenantId]="tenantId"
-                                 [isScript]="entityForm.get('type').value === CalculatedFieldType.SCRIPT"
-                                 [testScript]="onTestScript.bind(this)"
-                                 [isEditValue]="isEditValue"
-        ></tb-simple-configuration>
-      }
-    }
   </div>
-</div>

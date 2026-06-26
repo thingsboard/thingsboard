@@ -26,15 +26,16 @@
     </button>
   </mat-toolbar>
   <div mat-dialog-content>
-    <fieldset [disabled]="isLoading$ | async"  class="flex flex-col">
-      <mat-form-field class="mat-block">
-        <mat-label translate>filter.operation.operation</mat-label>
-        <mat-select required formControlName="operation">
-          <mat-option *ngFor="let operation of complexOperations" [value]="operation">
-            {{complexOperationTranslations.get(complexOperationEnum[operation]) | translate}}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
+    <section class="tb-form-panel">
+      <div class="flex flex-row items-center justify-between">
+        <div class="tb-form-panel-title">{{ 'filter.filters' | translate }}
+        </div>
+        <tb-toggle-select formControlName="operation"
+                          selectMediaBreakpoint="xs">
+          <tb-toggle-option [value]="complexOperationEnum.AND">{{ complexOperationTranslations.get(complexOperationEnum.AND) | translate }}</tb-toggle-option>
+          <tb-toggle-option [value]="complexOperationEnum.OR">{{ complexOperationTranslations.get(complexOperationEnum.OR) | translate }}</tb-toggle-option>
+        </tb-toggle-select>
+      </div>
       <tb-filter-predicate-list
         [valueType]="data.valueType"
         [displayUserParameters]="data.displayUserParameters"
@@ -44,7 +45,7 @@
         [key]="data.key"
         formControlName="predicates">
       </tb-filter-predicate-list>
-    </fieldset>
+    </section>
   </div>
   <div mat-dialog-actions class="flex items-center justify-end">
     <button mat-button color="primary"
@@ -54,11 +55,12 @@
             cdkFocusInitial>
       {{ (data.readonly ? 'action.close' : 'action.cancel') | translate }}
     </button>
-    <button mat-raised-button color="primary"
-            *ngIf="!data.readonly"
-            type="submit"
-            [disabled]="(isLoading$ | async) || complexFilterFormGroup.invalid || !complexFilterFormGroup.dirty">
-      {{ (isAdd ? 'action.add' : 'action.update') | translate }}
-    </button>
+    @if (!data.readonly) {
+      <button mat-raised-button color="primary"
+              type="submit"
+              [disabled]="(isLoading$ | async) || complexFilterFormGroup.invalid || !complexFilterFormGroup.dirty">
+        {{ (isAdd ? 'action.add' : 'action.update') | translate }}
+      </button>
+    }
   </div>
 </form>

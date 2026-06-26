@@ -17,7 +17,7 @@
 -->
 <section [formGroup]="processingSettingRowForm" class="tb-form-panel stroked no-gap no-padding-bottom">
   <div class="tb-form-panel-title mb-4">{{ title }}</div>
-  <mat-form-field>
+  <mat-form-field [appearance]="appearance">
     <mat-label translate>rule-node-config.save-time-series.strategy</mat-label>
     <mat-select formControlName="type">
       @for (strategy of processingStrategies; track strategy) {
@@ -34,6 +34,7 @@
       maxErrorText="{{ 'rule-node-config.save-time-series.deduplication-interval-min-max-range' | translate }}"
       [minTime]="1"
       [maxTime]="maxDeduplicateTime"
+      [appearance]="appearance"
       formControlName="deduplicationIntervalSecs">
     </tb-time-unit-input>
   }

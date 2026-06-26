@@ -16,14 +16,15 @@
 
 -->
 <ng-container [formGroup]="actionButtonWidgetConfigForm">
-  <tb-datasources
-    *ngIf="!widgetEditMode"
-    [configMode]="basicMode"
-    hideDatasourceLabel
-    hideDataKeys
-    forceSingleDatasource
-    formControlName="datasources">
-  </tb-datasources>
+  @if (!widgetEditMode) {
+    <tb-datasources
+      [configMode]="basicMode"
+      hideDatasourceLabel
+      hideDataKeys
+      forceSingleDatasource
+      formControlName="datasources">
+    </tb-datasources>
+  }
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widgets.action-button.behavior</div>
     <div class="tb-form-row">
@@ -44,7 +45,7 @@
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
                                     [widgetType]="widgetType"
-                                    formControlName="activatedState"></tb-get-value-action-settings>
+      formControlName="activatedState"></tb-get-value-action-settings>
     </div>
     <div class="tb-form-row">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.button-state.disabled-state-hint' | translate}}" translate>widgets.button-state.disabled-state</div>
@@ -55,7 +56,7 @@
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
                                     [widgetType]="widgetType"
-                                    formControlName="disabledState"></tb-get-value-action-settings>
+      formControlName="disabledState"></tb-get-value-action-settings>
     </div>
   </div>
   <div class="tb-form-panel">

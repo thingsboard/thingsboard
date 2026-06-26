@@ -41,10 +41,12 @@
           @if (alarmScheduleForm.get('staticValue.type').value === alarmScheduleType.SPECIFIC_TIME) {
             <section>
               <mat-chip-listbox multiple formControlName="daysOfWeek">
-                <mat-chip-option *ngFor="let day of allDays; let i = index;"
-                                 [value]="i+1">
-                  {{ dayOfWeekTranslationsArray[day] | translate }}
-                </mat-chip-option>
+                @for (day of allDays; track day; let i = $index) {
+                  <mat-chip-option
+                    [value]="i+1">
+                    {{ dayOfWeekTranslationsArray[day] | translate }}
+                  </mat-chip-option>
+                }
               </mat-chip-listbox>
               <tb-error class="mb-2 block" [error]="alarmScheduleForm.get('staticValue.daysOfWeek').hasError('required')
                     ? ('alarm-rule.schedule-days-of-week-required' | translate) : ''"></tb-error>
@@ -71,30 +73,32 @@
           }
           @if (alarmScheduleForm.get('staticValue.type').value === alarmScheduleType.CUSTOM) {
             <section class="flex flex-col gap-4">
-              <div *ngFor="let day of allDays" class="flex flex-col gap-4" formArrayName="items">
-                <div class="flex flex-row items-center justify-start gap-2 xs:flex-col xs:items-start xs:justify-center" [formGroupName]="''+day">
-                  <mat-chip-listbox formControlName="enabled">
-                    <mat-chip-option  class="w-32" color="primary" (selectionChange)="changeCustomScheduler($event, day)" [value]="true">{{ dayOfWeekTranslationsArray[day] | translate }}</mat-chip-option>
-                  </mat-chip-listbox>
-                  <div class="flex flex-1 flex-row gap-2">
-                    <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
-                      <mat-label translate>alarm-rule.schedule-time-from</mat-label>
-                      <mat-datetimepicker-toggle [for]="startTimePicker" matPrefix></mat-datetimepicker-toggle>
-                      <mat-datetimepicker #startTimePicker type="time" openOnFocus="true"></mat-datetimepicker>
-                      <input required matInput formControlName="startsOn" [matDatetimepicker]="startTimePicker">
-                    </mat-form-field>
-                    <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
-                      <mat-label translate>alarm-rule.schedule-time-to</mat-label>
-                      <mat-datetimepicker-toggle [for]="endTimePicker" matPrefix></mat-datetimepicker-toggle>
-                      <mat-datetimepicker #endTimePicker type="time" openOnFocus="true"></mat-datetimepicker>
-                      <input required matInput formControlName="endsOn" [matDatetimepicker]="endTimePicker">
-                    </mat-form-field>
-                  </div>
-                  <div class="flex flex-1 items-center justify-center text-center sm:max-w-[120px]"
-                       [innerHTML]="getSchedulerRangeText(itemsSchedulerForm.at(day))">
+              @for (day of allDays; track day) {
+                <div class="flex flex-col gap-4" formArrayName="items">
+                  <div class="flex flex-row items-center justify-start gap-2 xs:flex-col xs:items-start xs:justify-center" [formGroupName]="''+day">
+                    <mat-chip-listbox formControlName="enabled">
+                      <mat-chip-option  class="w-32" color="primary" (selectionChange)="changeCustomScheduler($event, day)" [value]="true">{{ dayOfWeekTranslationsArray[day] | translate }}</mat-chip-option>
+                    </mat-chip-listbox>
+                    <div class="flex flex-1 flex-row gap-2">
+                      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+                        <mat-label translate>alarm-rule.schedule-time-from</mat-label>
+                        <mat-datetimepicker-toggle [for]="startTimePicker" matPrefix></mat-datetimepicker-toggle>
+                        <mat-datetimepicker #startTimePicker type="time" openOnFocus="true"></mat-datetimepicker>
+                        <input required matInput formControlName="startsOn" [matDatetimepicker]="startTimePicker">
+                      </mat-form-field>
+                      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+                        <mat-label translate>alarm-rule.schedule-time-to</mat-label>
+                        <mat-datetimepicker-toggle [for]="endTimePicker" matPrefix></mat-datetimepicker-toggle>
+                        <mat-datetimepicker #endTimePicker type="time" openOnFocus="true"></mat-datetimepicker>
+                        <input required matInput formControlName="endsOn" [matDatetimepicker]="endTimePicker">
+                      </mat-form-field>
+                    </div>
+                    <div class="flex flex-1 items-center justify-center text-center sm:max-w-[120px]"
+                         [innerHTML]="getSchedulerRangeText(itemsSchedulerForm.at(day))">
+                    </div>
                   </div>
                 </div>
-              </div>
+              }
               <tb-error class="block" [error]="alarmScheduleForm.get('staticValue.items').hasError('dayOfWeeks')
                     ? ('alarm-rule.schedule-days-of-week-required' | translate) : ''"></tb-error>
             </section>

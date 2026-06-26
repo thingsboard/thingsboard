@@ -68,16 +68,16 @@ export class SmppSmsProviderConfigurationComponent  implements ControlValueAcces
 
   smppVersions = smppVersions;
 
-  bindTypes = Object.keys(BindTypes);
+  bindTypes = Object.values(BindTypes);
   bindTypesTranslation = bindTypesTranslationMap;
 
-  typeOfNumber = Object.keys(TypeOfNumber);
+  typeOfNumber = Object.values(TypeOfNumber);
   typeOfNumberMap = typeOfNumberMap;
 
-  numberingPlanIdentification = Object.keys(NumberingPlanIdentification);
+  numberingPlanIdentification = Object.values(NumberingPlanIdentification);
   numberingPlanIdentificationMap = numberingPlanIdentificationMap;
 
-  codingSchemes = Object.keys(CodingSchemes);
+  codingSchemes = Object.values(CodingSchemes);
   codingSchemesMap = codingSchemesMap;
 
   private propagateChange = (v: any) => { };

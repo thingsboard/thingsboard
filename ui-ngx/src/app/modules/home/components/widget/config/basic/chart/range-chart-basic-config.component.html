@@ -83,7 +83,7 @@
       </mat-slide-toggle>
     </div>
     <tb-time-series-chart-grid-settings
-        formControlName="grid">
+      formControlName="grid">
     </tb-time-series-chart-grid-settings>
   </div>
   <div class="tb-form-panel">
@@ -118,11 +118,11 @@
         {{ 'widgets.range-chart.show-range-thresholds' | translate }}
       </mat-slide-toggle>
       <tb-time-series-chart-threshold-settings
-          boxButton
-          hideYAxis
-          [widgetConfig]="widgetConfig?.config"
-          title="widgets.range-chart.range-thresholds-settings"
-          formControlName="rangeThreshold">
+        boxButton
+        hideYAxis
+        [widgetConfig]="widgetConfig?.config"
+        title="widgets.range-chart.range-thresholds-settings"
+        formControlName="rangeThreshold">
       </tb-time-series-chart-threshold-settings>
     </div>
     <div class="tb-form-row">
@@ -150,9 +150,11 @@
         </mat-slide-toggle>
         <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
           <mat-select formControlName="stepType">
-            <mat-option *ngFor="let stepType of lineSeriesStepTypes" [value]="stepType">
-              {{ lineSeriesStepTypeTranslations.get(stepType) | translate }}
-            </mat-option>
+            @for (stepType of lineSeriesStepTypes; track stepType) {
+              <mat-option [value]="stepType">
+                {{ lineSeriesStepTypeTranslations.get(stepType) | translate }}
+              </mat-option>
+            }
           </mat-select>
         </mat-form-field>
       </div>
@@ -165,9 +167,11 @@
         <div translate>widgets.time-series-chart.line-type</div>
         <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
           <mat-select formControlName="lineType">
-            <mat-option *ngFor="let lineType of chartLineTypes" [value]="lineType">
-              {{ chartLineTypeTranslations.get(lineType) | translate }}
-            </mat-option>
+            @for (lineType of chartLineTypes; track lineType) {
+              <mat-option [value]="lineType">
+                {{ chartLineTypeTranslations.get(lineType) | translate }}
+              </mat-option>
+            }
           </mat-select>
         </mat-form-field>
       </div>
@@ -194,9 +198,11 @@
         <div class="flex flex-row items-center justify-start gap-2 lt-md:flex-1">
           <mat-form-field class="medium-width lt-md:flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="pointLabelPosition">
-              <mat-option *ngFor="let position of chartLabelPositions" [value]="position">
-                {{ chartLabelPositionTranslations.get(position) | translate }}
-              </mat-option>
+              @for (position of chartLabelPositions; track position) {
+                <mat-option [value]="position">
+                  {{ chartLabelPositionTranslations.get(position) | translate }}
+                </mat-option>
+              }
             </mat-select>
           </mat-form-field>
           <tb-font-settings formControlName="pointLabelFont"
@@ -224,9 +230,11 @@
         <div translate>widgets.time-series-chart.series.point.point-shape</div>
         <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
           <mat-select formControlName="pointShape">
-            <mat-option *ngFor="let shape of chartShapes" [value]="shape">
-              {{ chartShapeTranslations.get(shape) | translate }}
-            </mat-option>
+            @for (shape of chartShapes; track shape) {
+              <mat-option [value]="shape">
+                {{ chartShapeTranslations.get(shape) | translate }}
+              </mat-option>
+            }
           </mat-select>
         </mat-form-field>
       </div>
@@ -241,29 +249,29 @@
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widgets.time-series-chart.axis.y-axis</div>
     <tb-time-series-chart-axis-settings
-        formControlName="yAxis"
-        [aliasController]="aliasController"
-        [dataKeyCallbacks]="callbacks"
-        [datasource]="datasource"
-        axisType="yAxis"
-        hideUnits
-        hideDecimals>
+      formControlName="yAxis"
+      [aliasController]="aliasController"
+      [dataKeyCallbacks]="callbacks"
+      [datasource]="datasource"
+      axisType="yAxis"
+      hideUnits
+      hideDecimals>
     </tb-time-series-chart-axis-settings>
   </div>
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widgets.time-series-chart.axis.x-axis</div>
     <tb-time-series-chart-axis-settings
-        formControlName="xAxis"
-        axisType="xAxis">
+      formControlName="xAxis"
+      axisType="xAxis">
     </tb-time-series-chart-axis-settings>
   </div>
   <tb-time-series-chart-thresholds-panel
-      formControlName="thresholds"
-      [aliasController]="aliasController"
-      [dataKeyCallbacks]="callbacks"
-      [datasource]="datasource"
-      [widgetConfig]="widgetConfig?.config"
-      hideYAxis>
+    formControlName="thresholds"
+    [aliasController]="aliasController"
+    [dataKeyCallbacks]="callbacks"
+    [datasource]="datasource"
+    [widgetConfig]="widgetConfig?.config"
+    hideYAxis>
   </tb-time-series-chart-thresholds-panel>
   <div class="tb-form-panel tb-slide-toggle">
     <mat-expansion-panel class="tb-settings" [expanded]="rangeChartWidgetConfigForm.get('showLegend').value" [disabled]="!rangeChartWidgetConfigForm.get('showLegend').value">
@@ -279,9 +287,11 @@
           <div>{{ 'legend.position' | translate }}</div>
           <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="legendPosition">
-              <mat-option *ngFor="let pos of legendPositions" [value]="pos">
-                {{ legendPositionTranslationMap.get(pos) | translate }}
-              </mat-option>
+              @for (pos of legendPositions; track pos) {
+                <mat-option [value]="pos">
+                  {{ legendPositionTranslationMap.get(pos) | translate }}
+                </mat-option>
+              }
             </mat-select>
           </mat-form-field>
         </div>
@@ -336,76 +346,76 @@
             </tb-color-input>
           </div>
         </div>        <div class="tb-form-row column-xs">
-          <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="tooltipShowDate">
-            {{ 'tooltip.date' | translate }}
-          </mat-slide-toggle>
-          <div class="flex flex-row items-center justify-start gap-2 gt-xs:flex-1">
-            <tb-date-format-select class="flex-1" excludeLastUpdateAgo includeAuto
-                                   formControlName="tooltipDateFormat"></tb-date-format-select>
-            <tb-font-settings formControlName="tooltipDateFont"
-                              [initialPreviewStyle]="{ color: rangeChartWidgetConfigForm.get('tooltipDateColor').value }"
-                              [previewText]="tooltipDatePreviewFn">
-            </tb-font-settings>
-            <tb-color-input asBoxInput
-                            colorClearButton
-                            formControlName="tooltipDateColor">
-            </tb-color-input>
-          </div>
-        </div>
-        <div class="tb-form-row">
-          <mat-slide-toggle class="mat-slide" formControlName="tooltipDateInterval">
-            <div tb-hint-tooltip-icon="{{'tooltip.show-date-time-interval-hint' | translate}}">
-              {{ 'tooltip.show-date-time-interval' | translate }}
-            </div>
-          </mat-slide-toggle>
-        </div>
-        <div class="tb-form-row space-between">
-          <div>{{ 'tooltip.background-color' | translate }}</div>
+        <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="tooltipShowDate">
+          {{ 'tooltip.date' | translate }}
+        </mat-slide-toggle>
+        <div class="flex flex-row items-center justify-start gap-2 gt-xs:flex-1">
+          <tb-date-format-select class="flex-1" excludeLastUpdateAgo includeAuto
+          formControlName="tooltipDateFormat"></tb-date-format-select>
+          <tb-font-settings formControlName="tooltipDateFont"
+                            [initialPreviewStyle]="{ color: rangeChartWidgetConfigForm.get('tooltipDateColor').value }"
+                            [previewText]="tooltipDatePreviewFn">
+          </tb-font-settings>
           <tb-color-input asBoxInput
                           colorClearButton
-                          formControlName="tooltipBackgroundColor">
+                          formControlName="tooltipDateColor">
           </tb-color-input>
         </div>
-        <div class="tb-form-row space-between">
-          <div>{{ 'tooltip.background-blur' | translate }}</div>
-          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
-            <input matInput formControlName="tooltipBackgroundBlur" type="number" min="0" step="1" placeholder="{{ 'widget-config.set' | translate }}">
-            <div matSuffix>px</div>
-          </mat-form-field>
-        </div>
-      </ng-template>
-    </mat-expansion-panel>
+      </div>
+      <div class="tb-form-row">
+        <mat-slide-toggle class="mat-slide" formControlName="tooltipDateInterval">
+          <div tb-hint-tooltip-icon="{{'tooltip.show-date-time-interval-hint' | translate}}">
+            {{ 'tooltip.show-date-time-interval' | translate }}
+          </div>
+        </mat-slide-toggle>
+      </div>
+      <div class="tb-form-row space-between">
+        <div>{{ 'tooltip.background-color' | translate }}</div>
+        <tb-color-input asBoxInput
+                        colorClearButton
+                        formControlName="tooltipBackgroundColor">
+        </tb-color-input>
+      </div>
+      <div class="tb-form-row space-between">
+        <div>{{ 'tooltip.background-blur' | translate }}</div>
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+          <input matInput formControlName="tooltipBackgroundBlur" type="number" min="0" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+          <div matSuffix>px</div>
+        </mat-form-field>
+      </div>
+    </ng-template>
+  </mat-expansion-panel>
+</div>
+<tb-chart-animation-settings
+  formControlName="animation">
+</tb-chart-animation-settings>
+<div class="tb-form-panel">
+  <div class="tb-form-panel-title" translate>widget-config.card-appearance</div>
+  <div class="tb-form-row space-between">
+    <div>{{ 'widgets.background.background' | translate }}</div>
+    <tb-background-settings formControlName="background">
+    </tb-background-settings>
   </div>
-  <tb-chart-animation-settings
-      formControlName="animation">
-  </tb-chart-animation-settings>
-  <div class="tb-form-panel">
-    <div class="tb-form-panel-title" translate>widget-config.card-appearance</div>
-    <div class="tb-form-row space-between">
-      <div>{{ 'widgets.background.background' | translate }}</div>
-      <tb-background-settings formControlName="background">
-      </tb-background-settings>
-    </div>
-    <div class="tb-form-row space-between column-lt-md">
-      <div translate>widget-config.show-card-buttons</div>
-      <mat-chip-listbox multiple formControlName="cardButtons">
-        <mat-chip-option value="fullscreen">{{ 'fullscreen.fullscreen' | translate }}</mat-chip-option>
-      </mat-chip-listbox>
-    </div>
-    <div class="tb-form-row space-between">
-      <div>{{ 'widget-config.card-border-radius' | translate }}</div>
-      <mat-form-field appearance="outline" subscriptSizing="dynamic">
-        <input matInput formControlName="borderRadius" placeholder="{{ 'widget-config.set' | translate }}">
-      </mat-form-field>
-    </div>
-    <div class="tb-form-row space-between">
-      <div>{{ 'widget-config.card-padding' | translate }}</div>
-      <mat-form-field appearance="outline" subscriptSizing="dynamic">
-        <input matInput formControlName="padding" placeholder="{{ 'widget-config.set' | translate }}">
-      </mat-form-field>
-    </div>
+  <div class="tb-form-row space-between column-lt-md">
+    <div translate>widget-config.show-card-buttons</div>
+    <mat-chip-listbox multiple formControlName="cardButtons">
+      <mat-chip-option value="fullscreen">{{ 'fullscreen.fullscreen' | translate }}</mat-chip-option>
+    </mat-chip-listbox>
   </div>
-  <tb-widget-actions-panel
-    formControlName="actions">
-  </tb-widget-actions-panel>
+  <div class="tb-form-row space-between">
+    <div>{{ 'widget-config.card-border-radius' | translate }}</div>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <input matInput formControlName="borderRadius" placeholder="{{ 'widget-config.set' | translate }}">
+    </mat-form-field>
+  </div>
+  <div class="tb-form-row space-between">
+    <div>{{ 'widget-config.card-padding' | translate }}</div>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <input matInput formControlName="padding" placeholder="{{ 'widget-config.set' | translate }}">
+    </mat-form-field>
+  </div>
+</div>
+<tb-widget-actions-panel
+  formControlName="actions">
+</tb-widget-actions-panel>
 </ng-container>

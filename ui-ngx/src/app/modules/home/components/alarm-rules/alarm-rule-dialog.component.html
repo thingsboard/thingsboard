@@ -102,9 +102,11 @@
               <mat-icon>delete</mat-icon>
             </button>
           </div>
-          <div *ngIf="!configFormGroup.get('clearRule').value">
-            <span translate class="tb-prompt flex items-center justify-center text-base">alarm-rule.no-clear-alarm-rule</span>
-          </div>
+          @if (!configFormGroup.get('clearRule').value) {
+            <div>
+              <span translate class="tb-prompt flex items-center justify-center text-base">alarm-rule.no-clear-alarm-rule</span>
+            </div>
+          }
           <div [class.!hidden]="configFormGroup.get('clearRule').value">
             <button mat-stroked-button color="primary"
                     [disabled]="disabledClearRuleButton"

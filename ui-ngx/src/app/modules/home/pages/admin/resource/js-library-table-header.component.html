@@ -23,8 +23,10 @@
     <mat-option value="">
       {{ "javascript.all-types" | translate }}
     </mat-option>
-    <mat-option *ngFor="let jsResourceSubType of jsResourceSubTypes" [value]="jsResourceSubType">
-      {{ resourceSubTypesTranslationMap.get(jsResourceSubType) | translate }}
-    </mat-option>
+    @for (jsResourceSubType of jsResourceSubTypes; track jsResourceSubType) {
+      <mat-option [value]="jsResourceSubType">
+        {{ resourceSubTypesTranslationMap.get(jsResourceSubType) | translate }}
+      </mat-option>
+    }
   </mat-select>
 </mat-form-field>

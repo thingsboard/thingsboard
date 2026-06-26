@@ -36,9 +36,13 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
+import org.thingsboard.server.service.security.auth.jwt.JwtAuthenticationProvider;
+import org.thingsboard.server.service.security.auth.pat.ApiKeyAuthenticationProvider;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
+import org.thingsboard.server.service.ws.WebSocketService;
 import org.thingsboard.server.service.ws.WebSocketSessionRef;
+import org.thingsboard.server.service.ws.WebSocketSessionType;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -261,5 +265,102 @@ class TbWebSocketHandlerTest {
         willReturn(UUID.randomUUID().toString()).given(ref).getSessionId();
         return ref;
     }
+
+    private AuthTestFixture createAuthTestFixture() throws IOException {
+        TbWebSocketHandler handler = spy(new TbWebSocketHandler());
+        willDoNothing().given(handler).close(any(), any());
+
+        ApiKeyAuthenticationProvider apiKeyProvider = mock(ApiKeyAuthenticationProvider.class);
+        JwtAuthenticationProvider jwtProvider = mock(JwtAuthenticationProvider.class);
+        WebSocketService wsService = mock(WebSocketService.class);
+
+        ReflectionTestUtils.setField(handler, "apiKeyAuthenticationProvider", apiKeyProvider);
+        ReflectionTestUtils.setField(handler, "authenticationProvider", jwtProvider);
+        ReflectionTestUtils.setField(handler, "webSocketService", wsService);
+        ReflectionTestUtils.setField(handler, "tenantProfileCache", mock(TbTenantProfileCache.class));
+        ReflectionTestUtils.setField(handler, "authTimeoutMs", 10000);
+        ReflectionTestUtils.invokeMethod(handler, "init");
+
+        WebSocketSessionRef ref = WebSocketSessionRef.builder()
+                .sessionId(UUID.randomUUID().toString())
+                .sessionType(WebSocketSessionType.GENERAL)
+                .build();
+
+        NativeWebSocketSession wsSession = mock(NativeWebSocketSession.class);
+        Session nativeSess = mock(Session.class);
+        willReturn(nativeSess).given(wsSession).getNativeSession(Session.class);
+        RemoteEndpoint.Async async = mock(RemoteEndpoint.Async.class);
+        willReturn(async).given(nativeSess).getAsyncRemote();
+        willReturn("test-session-id").given(wsSession).getId();
+
+        TbWebSocketHandler.SessionMetaData sessionMd = handler.new SessionMetaData(wsSession, ref);
+
+        return new AuthTestFixture(handler, apiKeyProvider, jwtProvider, ref, sessionMd);
+    }
+
+    @Test
+    void processMsg_authenticatesWithApiKey() throws Exception {
+        AuthTestFixture f = createAuthTestFixture();
+
+        SecurityUser securityUser = mock(SecurityUser.class, Mockito.RETURNS_DEEP_STUBS);
+        willReturn(securityUser).given(f.apiKeyProvider).authenticate("my-api-key");
+
+        String msg = "{\"authCmd\":{\"cmdId\":1,\"apiKey\":\"my-api-key\"},\"cmds\":[]}";
+        f.handler.processMsg(f.sessionMd, msg);
+
+        verify(f.apiKeyProvider).authenticate("my-api-key");
+        verify(f.jwtProvider, never()).authenticate(anyString());
+        assertThat(f.ref.getSecurityCtx()).isSameAs(securityUser);
+    }
+
+    @Test
+    void processMsg_authenticatesWithJwtToken() throws Exception {
+        AuthTestFixture f = createAuthTestFixture();
+
+        SecurityUser securityUser = mock(SecurityUser.class, Mockito.RETURNS_DEEP_STUBS);
+        willReturn(securityUser).given(f.jwtProvider).authenticate("my-jwt-token");
+
+        String msg = "{\"authCmd\":{\"cmdId\":1,\"token\":\"my-jwt-token\"},\"cmds\":[]}";
+        f.handler.processMsg(f.sessionMd, msg);
+
+        verify(f.jwtProvider).authenticate("my-jwt-token");
+        verify(f.apiKeyProvider, never()).authenticate(anyString());
+        assertThat(f.ref.getSecurityCtx()).isSameAs(securityUser);
+    }
+
+    @Test
+    void processMsg_apiKeyTakesPrecedenceOverToken() throws Exception {
+        AuthTestFixture f = createAuthTestFixture();
+
+        SecurityUser securityUser = mock(SecurityUser.class, Mockito.RETURNS_DEEP_STUBS);
+        willReturn(securityUser).given(f.apiKeyProvider).authenticate("my-api-key");
+
+        String msg = "{\"authCmd\":{\"cmdId\":1,\"apiKey\":\"my-api-key\",\"token\":\"my-jwt-token\"},\"cmds\":[]}";
+        f.handler.processMsg(f.sessionMd, msg);
+
+        verify(f.apiKeyProvider).authenticate("my-api-key");
+        verify(f.jwtProvider, never()).authenticate(anyString());
+        assertThat(f.ref.getSecurityCtx()).isSameAs(securityUser);
+    }
+
+    @Test
+    void extractQueryParam_parsesCorrectly() throws Exception {
+        TbWebSocketHandler handler = new TbWebSocketHandler();
+        Method method = TbWebSocketHandler.class.getDeclaredMethod("extractQueryParam", String.class, String.class);
+        method.setAccessible(true);
+
+        assertThat(method.invoke(handler, "token=jwt123", "token")).isEqualTo("jwt123");
+        assertThat(method.invoke(handler, "token=jwt123&other=abc123", "token")).isEqualTo("jwt123");
+        assertThat(method.invoke(handler, "other=value", "token")).isNull();
+        assertThat(method.invoke(handler, "tokenExtra=value", "token")).isNull();
+    }
+
+    private record AuthTestFixture(
+            TbWebSocketHandler handler,
+            ApiKeyAuthenticationProvider apiKeyProvider,
+            JwtAuthenticationProvider jwtProvider,
+            WebSocketSessionRef ref,
+            TbWebSocketHandler.SessionMetaData sessionMd
+    ) {}
 
 }

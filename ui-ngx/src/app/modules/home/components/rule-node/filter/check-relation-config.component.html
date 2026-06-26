@@ -18,15 +18,18 @@
 <section [formGroup]="checkRelationConfigForm" class="tb-form-panel stroked no-padding-bottom">
   <div class="tb-form-panel-title" translate>rule-node-config.relation-search-parameters</div>
   <div class="flex flex-col">
-    <mat-form-field class="mat-block" hideRequiredMarker>
+    <mat-form-field class="mat-block" hideRequiredMarker appearance="outline">
       <mat-label>{{ 'relation.direction' | translate }}</mat-label>
       <mat-select formControlName="direction" required>
-        <mat-option *ngFor="let direction of entitySearchDirection" [value]="direction">
-          {{ entitySearchDirectionTranslationsMap.get(direction) | translate }} <span translate>rule-node-config.relations-query-config-direction-suffix</span>
-        </mat-option>
+        @for (direction of entitySearchDirection; track direction) {
+          <mat-option [value]="direction">
+            {{ entitySearchDirectionTranslationsMap.get(direction) | translate }} <span translate>rule-node-config.relations-query-config-direction-suffix</span>
+          </mat-option>
+        }
       </mat-select>
     </mat-form-field>
     <tb-relation-type-autocomplete
+      appearance="outline"
       required
       formControlName="relationType">
     </tb-relation-type-autocomplete>
@@ -36,20 +39,25 @@
         {{ 'rule-node-config.check-relation-to-specific-entity' | translate }}
       </mat-slide-toggle>
     </div>
-    <div *ngIf="checkRelationConfigForm.get('checkForSingleEntity').value" class="same-width-component-row">
-      <tb-entity-type-select
-        style="min-width: 100px; flex: 1;"
-        showLabel
-        required
-        formControlName="entityType">
-      </tb-entity-type-select>
-      <tb-entity-autocomplete
-        class="flex-1"
-        required
-        *ngIf="checkRelationConfigForm.get('entityType').value"
-        [entityType]="checkRelationConfigForm.get('entityType').value"
-        formControlName="entityId">
-      </tb-entity-autocomplete>
-    </div>
+    @if (checkRelationConfigForm.get('checkForSingleEntity').value) {
+      <div class="same-width-component-row">
+        <tb-entity-type-select
+          appearance="outline"
+          style="min-width: 100px; flex: 1;"
+          showLabel
+          required
+          formControlName="entityType">
+        </tb-entity-type-select>
+        @if (checkRelationConfigForm.get('entityType').value) {
+          <tb-entity-autocomplete
+            appearance="outline"
+            class="flex-1"
+            required
+            [entityType]="checkRelationConfigForm.get('entityType').value"
+            formControlName="entityId">
+          </tb-entity-autocomplete>
+        }
+      </div>
+    }
   </div>
 </section>

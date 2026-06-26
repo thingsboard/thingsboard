@@ -28,68 +28,71 @@
   <div mat-dialog-content>
     <div class="tb-drop-list" cdkDropList cdkDropListOrientation="vertical"
          (cdkDropListDropped)="linkDrop($event)" [cdkDropListDisabled]="editMode || addMode">
-      <div cdkDrag class="tb-draggable flex flex-row items-center justify-start" *ngFor="let linkControl of linksFormArray().controls; trackBy: trackByLink;
-               let $index = index; last as isLast;"
-           [class.pb-2]="!isLast">
-        <ng-container [ngSwitch]="mode">
-          <ng-template [ngSwitchCase]="'docs'">
-            <tb-doc-link class="flex-1" #docLink [formControl]="linkControl"
-                         [disableEdit]="editMode || addMode"
-                         (editModeChanged)="editMode = $event"
-                         (docLinkUpdated)="update()"
-                         (docLinkDeleted)="deleteLink($index)">
-            </tb-doc-link>
-            <ng-container *ngIf="!docLink.isEditing()">
-              <ng-container *ngTemplateOutlet="dragHandle"></ng-container>
-            </ng-container>
-          </ng-template>
-          <ng-template [ngSwitchCase]="'quickLinks'">
-            <tb-quick-link class="flex-1" #quickLink [formControl]="linkControl"
+      @for (linkControl of linksFormArray().controls; track trackByLink($index, linkControl); let isLast = $last) {
+        <div cdkDrag class="tb-draggable flex flex-row items-center justify-start"
+             [class.pb-2]="!isLast">
+          @switch (mode) {
+            @case ('docs') {
+              <tb-doc-link class="flex-1" #docLink [formControl]="linkControl"
                            [disableEdit]="editMode || addMode"
                            (editModeChanged)="editMode = $event"
-                           (quickLinkUpdated)="update()"
-                           (quickLinkDeleted)="deleteLink($index)">
-            </tb-quick-link>
-            <ng-container *ngIf="!quickLink.isEditing()">
-              <ng-container *ngTemplateOutlet="dragHandle"></ng-container>
-            </ng-container>
+                           (docLinkUpdated)="update()"
+                           (docLinkDeleted)="deleteLink($index)">
+              </tb-doc-link>
+              @if (!docLink.isEditing()) {
+                <ng-container *ngTemplateOutlet="dragHandle"></ng-container>
+              }
+            }
+            @case ('quickLinks') {
+              <tb-quick-link class="flex-1" #quickLink [formControl]="linkControl"
+                             [disableEdit]="editMode || addMode"
+                             (editModeChanged)="editMode = $event"
+                             (quickLinkUpdated)="update()"
+                             (quickLinkDeleted)="deleteLink($index)">
+              </tb-quick-link>
+              @if (!quickLink.isEditing()) {
+                <ng-container *ngTemplateOutlet="dragHandle"></ng-container>
+              }
+            }
+          }
+          <ng-template #dragHandle>
+            <div cdkDragHandle
+                 matTooltip="{{ 'action.drag' | translate }}"
+                 matTooltipPosition="above"
+                 class="tb-drag-handle">
+              <tb-icon>drag_indicator</tb-icon>
+            </div>
           </ng-template>
-        </ng-container>
-        <ng-template #dragHandle>
-          <div cdkDragHandle
-               matTooltip="{{ 'action.drag' | translate }}"
-               matTooltipPosition="above"
-               class="tb-drag-handle">
-            <tb-icon>drag_indicator</tb-icon>
-          </div>
-        </ng-template>
-      </div>
+        </div>
+      }
     </div>
   </div>
   <div mat-dialog-actions>
-    <div *ngIf="!editMode && !addMode" class="tb-add-link-button flex-1"
-         matTooltip="{{ (mode === 'docs' ? 'widgets.documentation.add-link' : 'widgets.quick-links.add-link') | translate }}"
-         matTooltipPosition="above"
-         (click)="addLink()">
-      <tb-icon class="tb-add-icon">add</tb-icon>
-    </div>
-    <ng-container *ngIf="addMode">
-      <ng-container [ngSwitch]="mode">
-        <ng-template [ngSwitchCase]="'docs'">
+    @if (!editMode && !addMode) {
+      <div class="tb-add-link-button flex-1"
+           matTooltip="{{ (mode === 'docs' ? 'widgets.documentation.add-link' : 'widgets.quick-links.add-link') | translate }}"
+           matTooltipPosition="above"
+           (click)="addLink()">
+        <tb-icon class="tb-add-icon">add</tb-icon>
+      </div>
+    }
+    @if (addMode) {
+      @switch (mode) {
+        @case ('docs') {
           <tb-doc-link class="flex-1" [(ngModel)]="addingLink"
                        [ngModelOptions]="{standalone: true}"
                        (docLinkAdded)="linkAdded($event)"
                        (docLinkAddCanceled)="addMode = false">
           </tb-doc-link>
-        </ng-template>
-        <ng-template [ngSwitchCase]="'quickLinks'">
+        }
+        @case ('quickLinks') {
           <tb-quick-link class="flex-1" [(ngModel)]="addingLink"
-                       [ngModelOptions]="{standalone: true}"
-                       (quickLinkAdded)="linkAdded($event)"
-                       (quickLinkAddCanceled)="addMode = false">
+                         [ngModelOptions]="{standalone: true}"
+                         (quickLinkAdded)="linkAdded($event)"
+                         (quickLinkAddCanceled)="addMode = false">
           </tb-quick-link>
-        </ng-template>
-      </ng-container>
-    </ng-container>
+        }
+      }
+    }
   </div>
 </form>

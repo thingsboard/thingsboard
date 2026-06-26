@@ -25,9 +25,11 @@
     <mat-icon class="material-icons">close</mat-icon>
   </button>
 </mat-toolbar>
-<mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
-</mat-progress-bar>
-<div *ngIf="!(isLoading$ | async)"></div>
+@if (isLoading$ | async) {
+  <mat-progress-bar color="warn" mode="indeterminate"></mat-progress-bar>
+} @else {
+  <div></div>
+}
 <div mat-dialog-content class="xs:!p-0">
   <mat-horizontal-stepper [linear]="isAdd" labelPosition="end" #addMobileBundle [orientation]="(stepperOrientation | async)"
                           (selectionChange)="changeStep($event)">
@@ -41,15 +43,21 @@
           <mat-label translate>mobile.title</mat-label>
           <input matInput required formControlName="title">
           <mat-hint> </mat-hint>
-          <mat-error *ngIf="bundlesForms.get('title').hasError('required')">
-            {{ 'mobile.title-required' | translate }}
-          </mat-error>
-          <mat-error *ngIf="bundlesForms.get('title').hasError('pattern')">
-            {{ 'mobile.title-cannot-contain-only-spaces' | translate }}
-          </mat-error>
-          <mat-error *ngIf="bundlesForms.get('title').hasError('maxlength')">
-            {{ 'mobile.title-max-length' | translate }}
-          </mat-error>
+          @if (bundlesForms.get('title').hasError('required')) {
+            <mat-error>
+              {{ 'mobile.title-required' | translate }}
+            </mat-error>
+          }
+          @if (bundlesForms.get('title').hasError('pattern')) {
+            <mat-error>
+              {{ 'mobile.title-cannot-contain-only-spaces' | translate }}
+            </mat-error>
+          }
+          @if (bundlesForms.get('title').hasError('maxlength')) {
+            <mat-error>
+              {{ 'mobile.title-max-length' | translate }}
+            </mat-error>
+          }
         </mat-form-field>
         <tb-entity-autocomplete
           allowCreateNew
@@ -73,7 +81,7 @@
         </tb-entity-autocomplete>
         <mat-form-field appearance="outline">
           <mat-label translate>mobile.description</mat-label>
-          <textarea matInput formControlName="description" rows="1"></textarea>
+          <textarea matInput formControlName="description" cdkTextareaAutosize cdkAutosizeMinRows="1" rows="1"></textarea>
         </mat-form-field>
       </form>
     </mat-step>
@@ -106,8 +114,10 @@
   </mat-horizontal-stepper>
 </div>
 <div mat-dialog-actions>
-  <button mat-stroked-button *ngIf="selectedIndex > 0"
-          (click)="backStep()">{{ 'action.back' | translate }}</button>
+  @if (selectedIndex > 0) {
+    <button mat-stroked-button
+            (click)="backStep()">{{ 'action.back' | translate }}</button>
+  }
   <span class="flex-1"></span>
   <button mat-raised-button
           color="primary"

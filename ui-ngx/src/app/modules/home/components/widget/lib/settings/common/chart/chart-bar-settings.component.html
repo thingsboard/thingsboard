@@ -33,13 +33,15 @@
       <input matInput type="number" formControlName="borderRadius" min="0" step="1" placeholder="{{ 'widget-config.set' | translate }}"/>
     </mat-form-field>
   </div>
-  <div *ngIf="!series" class="tb-form-row space-between column-xs">
-    <div translate>widgets.chart.bar.bar-width</div>
-    <mat-form-field class="medium-width number" appearance="outline" subscriptSizing="dynamic">
-      <input matInput type="number" formControlName="barWidth" min="0" max="100" placeholder="{{ 'widget-config.set' | translate }}"/>
-      <div matSuffix>%</div>
-    </mat-form-field>
-  </div>
+  @if (!series) {
+    <div class="tb-form-row space-between column-xs">
+      <div translate>widgets.chart.bar.bar-width</div>
+      <mat-form-field class="medium-width number" appearance="outline" subscriptSizing="dynamic">
+        <input matInput type="number" formControlName="barWidth" min="0" max="100" placeholder="{{ 'widget-config.set' | translate }}"/>
+        <div matSuffix>%</div>
+      </mat-form-field>
+    </div>
+  }
   <div class="tb-form-row space-between column-lt-md">
     <mat-slide-toggle class="mat-slide" formControlName="showLabel">
       <div tb-hint-tooltip-icon="{{(series ? 'widgets.chart.bar.series-label-hint' : 'widgets.chart.bar.label-hint') | translate}}">
@@ -49,9 +51,11 @@
     <div class="flex lt-md:flex-1 flex-row items-center justify-start gap-2">
       <mat-form-field class="medium-width lt-md:flex-1" appearance="outline" subscriptSizing="dynamic">
         <mat-select formControlName="labelPosition">
-          <mat-option *ngFor="let position of chartLabelPositions" [value]="position">
-            {{ chartLabelPositionTranslations.get(position) | translate }}
-          </mat-option>
+          @for (position of chartLabelPositions; track position) {
+            <mat-option [value]="position">
+              {{ chartLabelPositionTranslations.get(position) | translate }}
+            </mat-option>
+          }
         </mat-select>
       </mat-form-field>
       <tb-font-settings formControlName="labelFont"

@@ -16,36 +16,38 @@
 
 -->
 <div [formGroup]="deviceTransportConfigurationFormGroup">
-  <div [ngSwitch]="transportType">
-    <ng-template [ngSwitchCase]="deviceTransportType.DEFAULT">
-      <tb-default-device-transport-configuration
-        [required]="required"
-        formControlName="configuration">
-      </tb-default-device-transport-configuration>
-    </ng-template>
-    <ng-template [ngSwitchCase]="deviceTransportType.MQTT">
-      <tb-mqtt-device-transport-configuration
-        [required]="required"
-        formControlName="configuration">
-      </tb-mqtt-device-transport-configuration>
-    </ng-template>
-    <ng-template [ngSwitchCase]="deviceTransportType.LWM2M">
-      <tb-lwm2m-device-transport-configuration
-        [required]="required"
-        formControlName="configuration">
-      </tb-lwm2m-device-transport-configuration>
-    </ng-template>
-    <ng-template [ngSwitchCase]="deviceTransportType.COAP">
-      <tb-coap-device-transport-configuration
-        [required]="required"
-        formControlName="configuration">
-      </tb-coap-device-transport-configuration>
-    </ng-template>
-    <ng-template [ngSwitchCase]="deviceTransportType.SNMP">
-      <tb-snmp-device-transport-configuration
-        [required]="required"
-        formControlName="configuration">
-      </tb-snmp-device-transport-configuration>
-    </ng-template>
+  <div>
+    @switch (transportType) {
+      @case (deviceTransportType.DEFAULT) {
+        <tb-default-device-transport-configuration
+          [required]="required"
+          formControlName="configuration">
+        </tb-default-device-transport-configuration>
+      }
+      @case (deviceTransportType.MQTT) {
+        <tb-mqtt-device-transport-configuration
+          [required]="required"
+          formControlName="configuration">
+        </tb-mqtt-device-transport-configuration>
+      }
+      @case (deviceTransportType.LWM2M) {
+        <tb-lwm2m-device-transport-configuration
+          [required]="required"
+          formControlName="configuration">
+        </tb-lwm2m-device-transport-configuration>
+      }
+      @case (deviceTransportType.COAP) {
+        <tb-coap-device-transport-configuration
+          [required]="required"
+          formControlName="configuration">
+        </tb-coap-device-transport-configuration>
+      }
+      @case (deviceTransportType.SNMP) {
+        <tb-snmp-device-transport-configuration
+          [required]="required"
+          formControlName="configuration">
+        </tb-snmp-device-transport-configuration>
+      }
+    }
   </div>
 </div>

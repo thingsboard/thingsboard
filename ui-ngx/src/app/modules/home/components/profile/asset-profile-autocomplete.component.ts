@@ -44,7 +44,7 @@ import { AssetProfileId } from '@shared/models/id/asset-profile-id';
 import { AssetProfile, AssetProfileInfo } from '@shared/models/asset.models';
 import { AssetProfileService } from '@core/http/asset-profile.service';
 import { AssetProfileDialogComponent, AssetProfileDialogData } from './asset-profile-dialog.component';
-import { SubscriptSizing } from '@angular/material/form-field';
+import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { AuthUser } from '@shared/models/user.model';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
@@ -97,6 +97,9 @@ export class AssetProfileAutocompleteComponent implements ControlValueAccessor, 
 
   @Input()
   hint: string;
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   @Output()
   assetProfileUpdated = new EventEmitter<AssetProfileId>();

@@ -26,14 +26,16 @@
       <mat-icon [@fabToggler]="{value: fabTogglerState}">{{ footerFabButtons.fabTogglerIcon }}</mat-icon>
     </button>
     <div [@speedDialStagger]="buttons.length">
-      <button *ngFor="let btn of buttons"
-              mat-fab
-              color="accent"
-        matTooltip="{{ btn.name | translate }}"
-        matTooltipPosition="above"
-        (click)="btn.onAction($event)">
-        <mat-icon>{{btn.icon}}</mat-icon>
-      </button>
+      @for (btn of buttons; track btn) {
+        <button
+          mat-fab
+          color="accent"
+          matTooltip="{{ btn.name | translate }}"
+          matTooltipPosition="above"
+          (click)="btn.onAction($event)">
+          <mat-icon>{{btn.icon}}</mat-icon>
+        </button>
+      }
     </div>
   </div>
 </section>

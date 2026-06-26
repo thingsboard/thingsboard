@@ -19,18 +19,24 @@
   <div class="flex flex-row items-center justify-start gap-4">
     <div class="tb-form-panel-title" translate style="padding-right: 48px;">widget-config.actions</div>
     <mat-chip-listbox class="flex-1">
-      <ng-container *ngFor="let actionSourceId of widgetActionSourceIds">
-        <mat-chip *ngFor="let widgetAction of widgetActionsByActionSourceId(actionSourceId)">
-          <tb-icon matChipAvatar>{{ widgetAction.icon }}</tb-icon>
-          {{ widgetAction.name }}
-        </mat-chip>
-      </ng-container>
+      @for (actionSourceId of widgetActionSourceIds; track actionSourceId) {
+        @for (widgetAction of widgetActionsByActionSourceId(actionSourceId); track widgetAction) {
+          <mat-chip>
+            <tb-icon matChipAvatar>{{ widgetAction.icon }}</tb-icon>
+            {{ widgetAction.name }}
+          </mat-chip>
+        }
+      }
     </mat-chip-listbox>
-    <button mat-stroked-button color="primary" *ngIf="!hasWidgetActions">
-      {{ 'widget-config.add-action' | translate }}
-    </button>
-    <button mat-icon-button color="primary" *ngIf="hasWidgetActions">
-      <mat-icon>add</mat-icon>
-    </button>
+    @if (!hasWidgetActions) {
+      <button mat-stroked-button color="primary">
+        {{ 'widget-config.add-action' | translate }}
+      </button>
+    }
+    @if (hasWidgetActions) {
+      <button mat-icon-button color="primary">
+        <mat-icon>add</mat-icon>
+      </button>
+    }
   </div>
 </div>

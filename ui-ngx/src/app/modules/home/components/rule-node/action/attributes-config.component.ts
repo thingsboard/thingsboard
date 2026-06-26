@@ -41,7 +41,7 @@ import {
 export class AttributesConfigComponent extends RuleNodeConfigurationComponent {
 
   attributeScopeMap = AttributeScope;
-  attributeScopes = Object.keys(AttributeScope);
+  attributeScopes = Object.values(AttributeScope);
   telemetryTypeTranslationsMap = telemetryTypeTranslations;
 
   ProcessingType = ProcessingType;
