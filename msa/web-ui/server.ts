@@ -133,7 +133,6 @@ let connections: Socket[] = [];
             app.use(compression());
         }
 
-
         const root = path.join(webDir, 'public');
 
         const staticServe = express.static(root);
