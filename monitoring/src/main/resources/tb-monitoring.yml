@@ -84,13 +84,6 @@ monitoring:
       enabled: '${COAPS_TRANSPORT_MONITORING_ENABLED:true}'
       # CoAPS request timeout in milliseconds
       request_timeout_ms: '${COAPS_REQUEST_TIMEOUT_MS:4000}'
-      tls:
-        fetchCertificateChain: '${COAPS_FETCH_CERTIFICATE_CHAIN:false}'
-        truststore: '${COAPS_TRUSTSTORE_PATH:}'
-        truststorePassword: '${COAPS_TRUSTSTORE_PASSWORD:}'
-        keystore: '${COAPS_KEYSTORE_PATH:}'
-        keystorePassword: '${COAPS_KEYSTORE_PASSWORD:}'
-        keystoreKeyAlias: '${COAPS_KEYSTORE_KEY_ALIAS:}'
       targets:
           # CoAPS transport base url, coaps://DOMAIN by default
         - base_url: '${COAPS_TRANSPORT_BASE_URL:coaps://${monitoring.domain}}'
