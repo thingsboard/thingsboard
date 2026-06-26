@@ -16,7 +16,7 @@
 
 import { Component, ElementRef, forwardRef, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
 import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { LinkLabel } from '@shared/models/rule-node.models';
+import { LinkLabel, normalizeLinkLabel, toStandardizedLinkLabel } from '@shared/models/rule-node.models';
 import { Observable, of } from 'rxjs';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { deepClone } from '@core/utils';
@@ -150,12 +150,9 @@ export class LinkLabelsComponent implements ControlValueAccessor, OnInit, OnChan
       if (value) {
         value.forEach((label) => {
           if (this.allowedLabels[label]) {
-            this.labels.push(deepClone(this.allowedLabels[label]));
+            this.labels.push(deepClone(normalizeLinkLabel(this.allowedLabels[label])));
           } else {
-            this.labels.push({
-              name: label,
-              value: label
-            });
+            this.labels.push({name: toStandardizedLinkLabel(label), value: label});
           }
         });
       }
@@ -172,10 +169,7 @@ export class LinkLabelsComponent implements ControlValueAccessor, OnInit, OnChan
       return this.ruleChainService.getRuleChainOutputLabels(this.sourceRuleChainId, {ignoreErrors: true}).pipe(
         map((labels) => {
           for (const label of labels) {
-            labelsList.push({
-              name: label,
-              value: label
-            });
+            labelsList.push({name: toStandardizedLinkLabel(label), value: label});
           }
           return labelsList;
         }),
@@ -185,7 +179,7 @@ export class LinkLabelsComponent implements ControlValueAccessor, OnInit, OnChan
       );
     } else {
       for (const label of Object.keys(this.allowedLabels)) {
-        labelsList.push({name: this.allowedLabels[label].name, value: this.allowedLabels[label].value});
+        labelsList.push(normalizeLinkLabel(this.allowedLabels[label]));
       }
       return of(labelsList);
     }
