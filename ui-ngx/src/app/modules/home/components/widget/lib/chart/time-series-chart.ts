@@ -847,14 +847,23 @@ export class TbTimeSeriesChart {
   }
 
   private minTopOffset(): number {
-    const showTickLabels =
-      !!this.yAxisList.find(yAxis => yAxis.settings.show && yAxis.settings.showTickLabels);
-    return (this.topPointLabels) ? 25 :
-      (showTickLabels ? 10 : 5);
+    if (this.topPointLabels) return 25;
+    const yAxisWithTickLabels = this.yAxisList.filter(yAxis => yAxis.settings.show && yAxis.settings.showTickLabels);
+    if (yAxisWithTickLabels.length) {
+      const maxFontSize = Math.max(...yAxisWithTickLabels.map(a => a.settings.tickLabelFont?.size || 12));
+      return Math.max(10, Math.ceil(maxFontSize / 2));
+    }
+    return 5;
   }
 
   private minBottomOffset(): number {
-    return this.settings.dataZoom ? 45 : 5;
+    const yAxisWithTickLabels = this.yAxisList.filter(yAxis => yAxis.settings.show && yAxis.settings.showTickLabels);
+    let minOffset = 5;
+    if (yAxisWithTickLabels.length) {
+      const maxFontSize = Math.max(...yAxisWithTickLabels.map(a => a.settings.tickLabelFont?.size || 12));
+      minOffset = Math.max(5, Math.ceil(maxFontSize / 2));
+    }
+    return this.settings.dataZoom ? Math.max(45, minOffset) : minOffset;
   }
 
   private _onParentScroll() {
@@ -883,6 +892,7 @@ export class TbTimeSeriesChart {
             this.updateBarsAnimation(barItems, false);
           }
           this.timeSeriesChart.resize();
+          this.updateAxes();
           if (this.animationEnabled()) {
             this.updateBarsAnimation(barItems, true);
           }
