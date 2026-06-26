@@ -25,7 +25,9 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rpc.Rpc;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.dao.AbstractJpaDaoTest;
+import org.thingsboard.server.dao.model.sql.RpcEntity;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -35,6 +37,9 @@ public class JpaRpcDaoTest extends AbstractJpaDaoTest {
 
     @Autowired
     JpaRpcDao rpcDao;
+
+    @Autowired
+    RpcInsertRepository rpcInsertRepository;
 
     @Test
     public void deleteOutdated() {
@@ -83,34 +88,16 @@ public class JpaRpcDaoTest extends AbstractJpaDaoTest {
     }
 
     @Test
-    public void saveAsyncSameRpcIdCoalescedBatchKeepsLatestStatus() throws Exception {
+    public void saveAsyncSequentialWritesConvergeToLatestStatus() throws Exception {
         UUID id = UUID.randomUUID();
         DeviceId deviceId = new DeviceId(UUID.randomUUID());
-        long createdTime = System.currentTimeMillis();
-        long expirationTime = createdTime + 60_000;
 
-        Rpc queued = new Rpc(new RpcId(id));
-        queued.setCreatedTime(createdTime);
-        queued.setTenantId(TenantId.SYS_TENANT_ID);
-        queued.setDeviceId(deviceId);
-        queued.setExpirationTime(expirationTime);
-        queued.setRequest(JacksonUtil.toJsonNode("{\"method\":\"x\"}"));
-        queued.setStatus(RpcStatus.QUEUED);
-
-        Rpc delivered = new Rpc(new RpcId(id));
-        delivered.setCreatedTime(createdTime);
-        delivered.setTenantId(TenantId.SYS_TENANT_ID);
-        delivered.setDeviceId(deviceId);
-        delivered.setExpirationTime(expirationTime);
-        delivered.setRequest(queued.getRequest());
-        delivered.setStatus(RpcStatus.DELIVERED);
-        delivered.setResponse(JacksonUtil.toJsonNode("{\"ok\":true}"));
-
-        // Enqueue both writes for the same rpcId back-to-back so they coalesce into one flush batch.
-        // Same rpcId -> same partition; the queue's stable sort must keep submission order
-        // (QUEUED before DELIVERED), so the final persisted row must be DELIVERED, never QUEUED.
-        var queuedFuture = rpcDao.createAsync(queued);
-        var deliveredFuture = rpcDao.updateAsync(delivered);
+        // A create followed by a status update for the same rpcId, both via the async API. Whether the
+        // two land in one flush batch or two is up to the queue's timing and not asserted here (see
+        // saveOrUpdateCoalescedBatchAppliesInOrderAndAlignsResults for the deterministic coalesced case);
+        // either way the final persisted row must converge to DELIVERED, never get stuck at QUEUED.
+        var queuedFuture = rpcDao.createAsync(rpc(id, deviceId, RpcStatus.QUEUED, null));
+        var deliveredFuture = rpcDao.updateAsync(rpc(id, deviceId, RpcStatus.DELIVERED, JacksonUtil.toJsonNode("{\"ok\":true}")));
         queuedFuture.get(5, TimeUnit.SECONDS);
         deliveredFuture.get(5, TimeUnit.SECONDS);
 
@@ -118,6 +105,38 @@ public class JpaRpcDaoTest extends AbstractJpaDaoTest {
         assertThat(stored).isNotNull();
         assertThat(stored.getStatus()).isEqualTo(RpcStatus.DELIVERED);
         assertThat(stored.getResponse()).isEqualTo(JacksonUtil.toJsonNode("{\"ok\":true}"));
+    }
+
+    @Test
+    public void saveOrUpdateCoalescedBatchAppliesInOrderAndAlignsResults() {
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+        UUID idA = UUID.randomUUID();
+        UUID idB = UUID.randomUUID(); // never inserted -> its update must report no match
+
+        // Drive the persist logic directly with a single, deterministically-coalesced flush batch.
+        // This is exactly what "coalescing" means: one saveOrUpdate call carrying several writes for
+        // the same partition in submission order. No queue timing involved.
+        //   index 0: create A (QUEUED)              -> INSERT, always persists -> true
+        //   index 1: update B (SUCCESSFUL)          -> UPDATE for a missing row -> false
+        //   index 2: update A (DELIVERED, {ok:true}) -> UPDATE on the row inserted at index 0 -> true
+        List<RpcQueueEntry> batch = List.of(
+                RpcQueueEntry.forInsert(new RpcEntity(rpc(idA, deviceId, RpcStatus.QUEUED, null))),
+                RpcQueueEntry.forUpdate(new RpcEntity(rpc(idB, deviceId, RpcStatus.SUCCESSFUL, JacksonUtil.toJsonNode("{\"x\":1}")))),
+                RpcQueueEntry.forUpdate(new RpcEntity(rpc(idA, deviceId, RpcStatus.DELIVERED, JacksonUtil.toJsonNode("{\"ok\":true}")))));
+
+        List<Boolean> persisted = rpcInsertRepository.saveOrUpdate(batch);
+
+        // Booleans are aligned positionally to submission order even though saveOrUpdate runs all
+        // inserts before all updates internally - this guards the updateIdx cursor alignment.
+        assertThat(persisted).containsExactly(true, false, true);
+
+        // Inserts run before updates, so A ends DELIVERED (never stuck at QUEUED)...
+        Rpc storedA = rpcDao.findById(TenantId.SYS_TENANT_ID, idA);
+        assertThat(storedA).isNotNull();
+        assertThat(storedA.getStatus()).isEqualTo(RpcStatus.DELIVERED);
+        assertThat(storedA.getResponse()).isEqualTo(JacksonUtil.toJsonNode("{\"ok\":true}"));
+        // ...and the update for a never-created row neither persisted nor resurrected it.
+        assertThat(rpcDao.findById(TenantId.SYS_TENANT_ID, idB)).isNull();
     }
 
     @Test

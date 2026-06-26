@@ -17,11 +17,6 @@ package org.thingsboard.server.dao.sql.rpc;
 
 import org.thingsboard.server.dao.model.sql.RpcEntity;
 
-/**
- * Pairs an {@link RpcEntity} with the write intent for the batched persistence queue, so the entity
- * itself stays pure data. {@code insert} selects INSERT-on-conflict (initial create) vs UPDATE-by-id
- * (status change that must never resurrect a deleted row).
- */
 record RpcQueueEntry(RpcEntity entity, boolean insert) {
 
     static RpcQueueEntry forInsert(RpcEntity entity) {

@@ -17,25 +17,16 @@ package org.thingsboard.common.util;
 
 /**
  * Maps a hash code to a non-negative partition index in {@code [0, partitions)}.
- * <p>
- * Centralises the {@code (hashCode & 0x7FFFFFFF) % partitions} striping so that components which must
- * agree on a partition for the same key derive it identically. In particular, batched RPC persistence
- * relies on this: {@code TbSqlBlockingQueueWrapper} picks the DB write partition and {@code TbRpcService}
- * picks the post-persist callback stripe, both keyed off the rpcId hash. If those two ever disagreed on
- * how the index is computed, the submission-order guarantee (e.g. RPC_QUEUED before RPC_DELIVERED) would
- * silently break — keeping the math in one place removes that risk.
  */
 public final class HashPartitioner {
 
     private HashPartitioner() {
     }
 
-    /**
-     * @param hashCode  hash of the partition key
-     * @param partitions number of partitions; must be {@code > 0}
-     * @return a non-negative partition index in {@code [0, partitions)}
-     */
     public static int resolvePartition(int hashCode, int partitions) {
+        if (partitions <= 0) {
+            throw new IllegalArgumentException("partitions must be > 0, but was " + partitions);
+        }
         return (hashCode & 0x7FFFFFFF) % partitions;
     }
 }

@@ -71,9 +71,6 @@ public class JpaRpcDao extends JpaAbstractDao<RpcEntity, Rpc> implements RpcDao,
     @Value("${sql.batch_sort:true}")
     private boolean batchSortEnabled;
 
-    // Boolean response per queued write: an INSERT-on-conflict always persists (true), while an
-    // UPDATE-by-id reports false when it matched no row (the RPC was deleted in the meantime), so the
-    // service layer can skip the rule-engine notification for a row that no longer exists.
     private TbSqlBlockingQueueWrapper<RpcQueueEntry, Boolean> queue;
 
     @PostConstruct

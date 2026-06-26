@@ -49,16 +49,13 @@ public class TbRpcService {
     private final RpcService rpcService;
     private final TbClusterService tbClusterService;
 
-    // Post-persist rule-engine notifications run on these striped single-thread executors, keyed by
-    // rpcId, instead of inline on the SQL persist threads. A flush batch can carry up to batch_size
-    // entries, and each notification's pushMsgToRuleEngine may do a (potentially blocking) device-profile
-    // cache lookup; running them inline would serialize that work on the persist thread and stall the
-    // next DB flush. Striping by rpcId (rather than a shared multi-threaded pool) also preserves
-    // per-command notification order, e.g. RPC_QUEUED before RPC_DELIVERED.
     private final ExecutorService[] callbackExecutors;
 
     public TbRpcService(RpcService rpcService, TbClusterService tbClusterService,
                         @Value("${sql.rpc.callback_threads:3}") int callbackThreads) {
+        if (callbackThreads < 1) {
+            throw new IllegalArgumentException("sql.rpc.callback_threads must be >= 1, but was " + callbackThreads);
+        }
         this.rpcService = rpcService;
         this.tbClusterService = tbClusterService;
         this.callbackExecutors = new ExecutorService[callbackThreads];
