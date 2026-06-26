@@ -26,6 +26,8 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Repository
 public class RpcInsertRepository extends AbstractInsertRepository {
@@ -50,8 +52,10 @@ public class RpcInsertRepository extends AbstractInsertRepository {
     }
 
     public List<Boolean> saveOrUpdate(List<RpcQueueEntry> entries) {
-        List<RpcEntity> inserts = entries.stream().filter(RpcQueueEntry::insert).map(RpcQueueEntry::entity).toList();
-        List<RpcEntity> updates = entries.stream().filter(entry -> !entry.insert()).map(RpcQueueEntry::entity).toList();
+        Map<Boolean, List<RpcEntity>> byIntent = entries.stream().collect(Collectors.partitioningBy(
+                RpcQueueEntry::insert, Collectors.mapping(RpcQueueEntry::entity, Collectors.toList())));
+        List<RpcEntity> inserts = byIntent.get(true);
+        List<RpcEntity> updates = byIntent.get(false);
         int[] updateCounts = transactionTemplate.execute(status -> {
             // Inserts run first so a create and a status update for the same rpcId coalesced into one
             // batch still apply in create -> update order.

@@ -51,11 +51,11 @@ public class TbRpcServiceTest {
     }
 
     @Test
-    public void savePersistsViaUpdateAsyncThenPushesToRuleEngine() {
+    public void updatePersistsViaUpdateAsyncThenPushesToRuleEngine() {
         Rpc rpc = newRpc();
         when(rpcService.updateAsync(rpc)).thenReturn(Futures.immediateFuture(true));
 
-        tbRpcService.save(rpc.getTenantId(), rpc);
+        tbRpcService.update(rpc.getTenantId(), rpc);
 
         verify(rpcService).updateAsync(rpc);
         verify(clusterService, timeout(5000))
@@ -75,13 +75,13 @@ public class TbRpcServiceTest {
     }
 
     @Test
-    public void saveDoesNotNotifyRuleEngineWhenRowMissing() {
+    public void updateDoesNotNotifyRuleEngineWhenRowMissing() {
         Rpc rpc = newRpc();
         // updateAsync resolves false: the UPDATE matched no row (RPC was deleted), so the rule engine
         // must not be notified for a status change that never persisted.
         when(rpcService.updateAsync(rpc)).thenReturn(Futures.immediateFuture(false));
 
-        tbRpcService.save(rpc.getTenantId(), rpc);
+        tbRpcService.update(rpc.getTenantId(), rpc);
 
         verify(rpcService).updateAsync(rpc);
         verify(clusterService, after(500).never())

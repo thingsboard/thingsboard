@@ -356,7 +356,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
             UUID rpcId = toDeviceRpcRequest.getId();
             log.debug("[{}][{}][{}] RPC request timeout detected!", deviceId, rpcId, requestId);
             if (toDeviceRpcRequest.isPersisted()) {
-                systemContext.getTbRpcService().save(tenantId, buildRpc(toDeviceRpcRequest, RpcStatus.EXPIRED, null));
+                systemContext.getTbRpcService().update(tenantId, buildRpc(toDeviceRpcRequest, RpcStatus.EXPIRED, null));
             }
             systemContext.getTbCoreDeviceRpcService().processRpcResponseFromDeviceActor(new FromDeviceRpcResponse(rpcId,
                     null, requestMd.isSent() ? RpcError.TIMEOUT : RpcError.NO_ACTIVE_CONNECTION));
@@ -667,7 +667,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
                     } catch (IllegalArgumentException e) {
                         response = JacksonUtil.newObjectNode().put("error", payload);
                     }
-                    systemContext.getTbRpcService().save(tenantId, buildRpc(toDeviceRequestMsg, status, response));
+                    systemContext.getTbRpcService().update(tenantId, buildRpc(toDeviceRequestMsg, status, response));
                 }
             } finally {
                 if (rpcSubmitStrategy.equals(RpcSubmitStrategy.SEQUENTIAL_ON_RESPONSE_FROM_DEVICE)) {
@@ -731,7 +731,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
             }
 
             if (persisted) {
-                systemContext.getTbRpcService().save(tenantId, buildRpc(toDeviceRpcRequest, status, response));
+                systemContext.getTbRpcService().update(tenantId, buildRpc(toDeviceRpcRequest, status, response));
             }
             if (rpcSubmitStrategy.equals(RpcSubmitStrategy.SEQUENTIAL_ON_RESPONSE_FROM_DEVICE)
                     && status.equals(RpcStatus.DELIVERED) && !oneWayRpc) {
@@ -824,7 +824,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
             var toDeviceRpcRequest = md.getMsg().getMsg();
             if (toDeviceRpcRequest.isPersisted()) {
                 var responseAwaitTimeout = JacksonUtil.newObjectNode().put("error", "There was a timeout awaiting for RPC response from device.");
-                systemContext.getTbRpcService().save(tenantId, buildRpc(toDeviceRpcRequest, RpcStatus.FAILED, responseAwaitTimeout));
+                systemContext.getTbRpcService().update(tenantId, buildRpc(toDeviceRpcRequest, RpcStatus.FAILED, responseAwaitTimeout));
             }
         }, systemContext.getRpcResponseTimeout(), TimeUnit.MILLISECONDS);
     }
@@ -1035,7 +1035,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
                 long timeout = rpc.getExpirationTime() - System.currentTimeMillis();
                 if (timeout <= 0) {
                     rpc.setStatus(RpcStatus.EXPIRED);
-                    systemContext.getTbRpcService().save(tenantId, rpc);
+                    systemContext.getTbRpcService().update(tenantId, rpc);
                 } else {
                     registerPendingRpcRequest(ctx, new ToDeviceRpcRequestActorMsg(systemContext.getServiceId(), msg), false, createToDeviceRpcRequestMsg(msg), timeout);
                 }

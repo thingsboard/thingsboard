@@ -21,11 +21,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.DonAsynchron;
+import org.thingsboard.common.util.HashPartitioner;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.RpcId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.page.PageData;
@@ -79,7 +79,7 @@ public class TbRpcService {
         persist(tenantId, rpc, rpcService.createAsync(rpc));
     }
 
-    public void save(TenantId tenantId, Rpc rpc) {
+    public void update(TenantId tenantId, Rpc rpc) {
         persist(tenantId, rpc, rpcService.updateAsync(rpc));
     }
 
@@ -99,7 +99,7 @@ public class TbRpcService {
     }
 
     private Executor executorFor(UUID rpcId) {
-        return callbackExecutors[(rpcId.hashCode() & 0x7FFFFFFF) % callbackExecutors.length];
+        return callbackExecutors[HashPartitioner.resolvePartition(rpcId.hashCode(), callbackExecutors.length)];
     }
 
     private void pushRpcMsgToRuleEngine(TenantId tenantId, Rpc rpc) {
@@ -110,10 +110,6 @@ public class TbRpcService {
                 .data(JacksonUtil.toString(rpc))
                 .build();
         tbClusterService.pushMsgToRuleEngine(tenantId, rpc.getDeviceId(), msg, null);
-    }
-
-    public Rpc findRpcById(TenantId tenantId, RpcId rpcId) {
-        return rpcService.findById(tenantId, rpcId);
     }
 
     public PageData<Rpc> findAllByDeviceIdAndStatus(TenantId tenantId, DeviceId deviceId, RpcStatus rpcStatus, PageLink pageLink) {
