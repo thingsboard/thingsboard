@@ -26,7 +26,9 @@ import org.thingsboard.server.dao.Dao;
 
 public interface RpcDao extends Dao<Rpc> {
 
-    ListenableFuture<Void> saveAsync(TenantId tenantId, Rpc rpc);
+    ListenableFuture<Void> createAsync(TenantId tenantId, Rpc rpc);
+
+    ListenableFuture<Void> updateAsync(TenantId tenantId, Rpc rpc);
 
     PageData<Rpc> findAllByDeviceId(TenantId tenantId, DeviceId deviceId, PageLink pageLink);
 

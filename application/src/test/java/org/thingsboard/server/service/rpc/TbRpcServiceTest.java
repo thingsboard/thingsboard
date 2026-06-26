@@ -53,18 +53,35 @@ public class TbRpcServiceTest {
     }
 
     @Test
-    public void savePushesToRuleEngineAfterFlush() {
+    public void savePersistsViaUpdateAsyncThenPushesToRuleEngine() {
+        Rpc rpc = newRpc();
+        when(rpcService.updateAsync(rpc)).thenReturn(Futures.immediateFuture(null));
+
+        tbRpcService.save(rpc.getTenantId(), rpc);
+
+        verify(rpcService).updateAsync(rpc);
+        verify(clusterService, timeout(5000))
+                .pushMsgToRuleEngine(eq(rpc.getTenantId()), eq(rpc.getDeviceId()), any(TbMsg.class), isNull());
+    }
+
+    @Test
+    public void createPersistsViaCreateAsyncThenPushesToRuleEngine() {
+        Rpc rpc = newRpc();
+        when(rpcService.createAsync(rpc)).thenReturn(Futures.immediateFuture(null));
+
+        tbRpcService.create(rpc.getTenantId(), rpc);
+
+        verify(rpcService).createAsync(rpc);
+        verify(clusterService, timeout(5000))
+                .pushMsgToRuleEngine(eq(rpc.getTenantId()), eq(rpc.getDeviceId()), any(TbMsg.class), isNull());
+    }
+
+    private Rpc newRpc() {
         Rpc rpc = new Rpc(new RpcId(UUID.randomUUID()));
         rpc.setTenantId(TenantId.SYS_TENANT_ID);
         rpc.setDeviceId(new DeviceId(UUID.randomUUID()));
         rpc.setStatus(RpcStatus.QUEUED);
         rpc.setRequest(JacksonUtil.toJsonNode("{}"));
-
-        when(rpcService.saveAsync(rpc)).thenReturn(Futures.immediateFuture(null));
-
-        tbRpcService.save(rpc.getTenantId(), rpc);
-
-        verify(clusterService, timeout(5000))
-                .pushMsgToRuleEngine(eq(rpc.getTenantId()), eq(rpc.getDeviceId()), any(TbMsg.class), isNull());
+        return rpc;
     }
 }

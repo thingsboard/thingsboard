@@ -29,17 +29,33 @@ import java.util.List;
 @Repository
 public class RpcInsertRepository extends AbstractInsertRepository {
 
-    private static final String INSERT_OR_UPDATE =
+    // Used only for the initial persistence of a new RPC (RpcStatus.QUEUED / already-EXPIRED on arrival).
+    // ON CONFLICT keeps the create idempotent (e.g. on actor re-processing); COALESCE never clobbers an
+    // existing response with NULL.
+    private static final String INSERT =
             "INSERT INTO rpc (id, created_time, tenant_id, device_id, expiration_time, request, response, additional_info, status) " +
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) " +
-                    "ON CONFLICT (id) DO UPDATE SET status = EXCLUDED.status, response = EXCLUDED.response;";
+                    "ON CONFLICT (id) DO UPDATE SET status = EXCLUDED.status, response = COALESCE(EXCLUDED.response, rpc.response);";
 
-    public void saveOrUpdate(List<RpcEntity> entities) {
+    // Used for every subsequent status change. WHERE id = ? means a row deleted in the meantime
+    // (TTL cleanup / manual delete) is NOT resurrected - it matches the old findById-null skip.
+    // COALESCE preserves a previously stored response when a status update carries none.
+    private static final String UPDATE =
+            "UPDATE rpc SET status = ?, response = COALESCE(?, response) WHERE id = ?;";
+
+    @FunctionalInterface
+    private interface ColumnBinder {
+        void bind(PreparedStatement ps, RpcEntity rpc) throws SQLException;
+    }
+
+    public void saveOrUpdate(List<RpcQueueEntry> entries) {
+        List<RpcEntity> inserts = entries.stream().filter(RpcQueueEntry::insert).map(RpcQueueEntry::entity).toList();
+        List<RpcEntity> updates = entries.stream().filter(entry -> !entry.insert()).map(RpcQueueEntry::entity).toList();
         transactionTemplate.execute(status -> {
-            jdbcTemplate.batchUpdate(INSERT_OR_UPDATE, new BatchPreparedStatementSetter() {
-                @Override
-                public void setValues(PreparedStatement ps, int i) throws SQLException {
-                    RpcEntity rpc = entities.get(i);
+            // Inserts run first so a create and a status update for the same rpcId coalesced into one
+            // batch still apply in create -> update order.
+            if (!inserts.isEmpty()) {
+                batch(INSERT, inserts, (ps, rpc) -> {
                     ps.setObject(1, rpc.getUuid());
                     ps.setLong(2, rpc.getCreatedTime());
                     ps.setObject(3, rpc.getTenantId());
@@ -49,14 +65,30 @@ public class RpcInsertRepository extends AbstractInsertRepository {
                     ps.setString(7, toJsonStr(rpc.getResponse()));
                     ps.setString(8, toJsonStr(rpc.getAdditionalInfo()));
                     ps.setString(9, rpc.getStatus().name());
-                }
-
-                @Override
-                public int getBatchSize() {
-                    return entities.size();
-                }
-            });
+                });
+            }
+            if (!updates.isEmpty()) {
+                batch(UPDATE, updates, (ps, rpc) -> {
+                    ps.setString(1, rpc.getStatus().name());
+                    ps.setString(2, toJsonStr(rpc.getResponse()));
+                    ps.setObject(3, rpc.getUuid());
+                });
+            }
             return null;
+        });
+    }
+
+    private void batch(String sql, List<RpcEntity> entities, ColumnBinder binder) {
+        jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
+            @Override
+            public void setValues(PreparedStatement ps, int i) throws SQLException {
+                binder.bind(ps, entities.get(i));
+            }
+
+            @Override
+            public int getBatchSize() {
+                return entities.size();
+            }
         });
     }
 

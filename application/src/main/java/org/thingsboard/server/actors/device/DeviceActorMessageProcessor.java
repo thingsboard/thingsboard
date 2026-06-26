@@ -258,7 +258,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
     }
 
     private void createRpc(ToDeviceRpcRequest request, RpcStatus status) {
-        systemContext.getTbRpcService().save(tenantId, buildRpc(request, status, null));
+        systemContext.getTbRpcService().create(tenantId, buildRpc(request, status, null));
     }
 
     private Rpc buildRpc(ToDeviceRpcRequest request, RpcStatus status, JsonNode response) {

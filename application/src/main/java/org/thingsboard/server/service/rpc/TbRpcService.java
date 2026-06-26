@@ -75,8 +75,15 @@ public class TbRpcService {
         }
     }
 
+    public void create(TenantId tenantId, Rpc rpc) {
+        persist(tenantId, rpc, rpcService.createAsync(rpc));
+    }
+
     public void save(TenantId tenantId, Rpc rpc) {
-        ListenableFuture<Void> future = rpcService.saveAsync(rpc);
+        persist(tenantId, rpc, rpcService.updateAsync(rpc));
+    }
+
+    private void persist(TenantId tenantId, Rpc rpc, ListenableFuture<Void> future) {
         DonAsynchron.withCallback(future,
                 v -> pushRpcMsgToRuleEngine(tenantId, rpc),
                 t -> log.error("[{}][{}][{}] Failed to persist RPC with status [{}]",

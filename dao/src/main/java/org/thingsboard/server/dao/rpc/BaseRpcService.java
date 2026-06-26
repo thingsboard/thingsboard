@@ -55,9 +55,15 @@ public class BaseRpcService implements RpcService {
     }
 
     @Override
-    public ListenableFuture<Void> saveAsync(Rpc rpc) {
-        log.trace("Executing saveAsync, [{}]", rpc);
-        return rpcDao.saveAsync(rpc.getTenantId(), rpc);
+    public ListenableFuture<Void> createAsync(Rpc rpc) {
+        log.trace("Executing createAsync, [{}]", rpc);
+        return rpcDao.createAsync(rpc.getTenantId(), rpc);
+    }
+
+    @Override
+    public ListenableFuture<Void> updateAsync(Rpc rpc) {
+        log.trace("Executing updateAsync, [{}]", rpc);
+        return rpcDao.updateAsync(rpc.getTenantId(), rpc);
     }
 
     @Override

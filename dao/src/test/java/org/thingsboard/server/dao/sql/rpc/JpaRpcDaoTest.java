@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.rpc;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
@@ -70,7 +71,7 @@ public class JpaRpcDaoTest extends AbstractJpaDaoTest {
         rpc.setRequest(JacksonUtil.toJsonNode("{\"method\":\"x\"}"));
         rpc.setStatus(RpcStatus.QUEUED);
 
-        rpcDao.saveAsync(rpc.getTenantId(), rpc).get(5, TimeUnit.SECONDS);
+        rpcDao.createAsync(rpc.getTenantId(), rpc).get(5, TimeUnit.SECONDS);
 
         Rpc stored = rpcDao.findById(TenantId.SYS_TENANT_ID, id);
         assertThat(stored).isNotNull();
@@ -86,7 +87,7 @@ public class JpaRpcDaoTest extends AbstractJpaDaoTest {
         update.setStatus(RpcStatus.DELIVERED);
         update.setResponse(JacksonUtil.toJsonNode("{\"ok\":true}"));
 
-        rpcDao.saveAsync(update.getTenantId(), update).get(5, TimeUnit.SECONDS);
+        rpcDao.updateAsync(update.getTenantId(), update).get(5, TimeUnit.SECONDS);
 
         Rpc afterUpdate = rpcDao.findById(TenantId.SYS_TENANT_ID, id);
         assertThat(afterUpdate.getStatus()).isEqualTo(RpcStatus.DELIVERED);
@@ -120,8 +121,8 @@ public class JpaRpcDaoTest extends AbstractJpaDaoTest {
         // Enqueue both writes for the same rpcId back-to-back so they coalesce into one flush batch.
         // Same rpcId -> same partition; the queue's stable sort must keep submission order
         // (QUEUED before DELIVERED), so the final persisted row must be DELIVERED, never QUEUED.
-        var queuedFuture = rpcDao.saveAsync(TenantId.SYS_TENANT_ID, queued);
-        var deliveredFuture = rpcDao.saveAsync(TenantId.SYS_TENANT_ID, delivered);
+        var queuedFuture = rpcDao.createAsync(TenantId.SYS_TENANT_ID, queued);
+        var deliveredFuture = rpcDao.updateAsync(TenantId.SYS_TENANT_ID, delivered);
         queuedFuture.get(5, TimeUnit.SECONDS);
         deliveredFuture.get(5, TimeUnit.SECONDS);
 
@@ -129,6 +130,73 @@ public class JpaRpcDaoTest extends AbstractJpaDaoTest {
         assertThat(stored).isNotNull();
         assertThat(stored.getStatus()).isEqualTo(RpcStatus.DELIVERED);
         assertThat(stored.getResponse()).isEqualTo(JacksonUtil.toJsonNode("{\"ok\":true}"));
+    }
+
+    @Test
+    public void saveAsyncRequeueUpdatesExistingRowToQueued() throws Exception {
+        UUID id = UUID.randomUUID();
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+
+        // Initial create.
+        rpcDao.createAsync(TenantId.SYS_TENANT_ID, rpc(id, deviceId, RpcStatus.QUEUED, null)).get(5, TimeUnit.SECONDS);
+
+        // Delivery timeout with closeTransportSessionOnRpcDeliveryTimeout=true re-queues the RPC: the
+        // device actor persists status=QUEUED again as a status update so init() can re-pick it up.
+        // The update must land on the existing row, never be dropped.
+        rpcDao.updateAsync(TenantId.SYS_TENANT_ID, rpc(id, deviceId, RpcStatus.QUEUED, null)).get(5, TimeUnit.SECONDS);
+
+        Rpc stored = rpcDao.findById(TenantId.SYS_TENANT_ID, id);
+        assertThat(stored).isNotNull();
+        assertThat(stored.getStatus()).isEqualTo(RpcStatus.QUEUED);
+    }
+
+    @Test
+    public void saveAsyncNullResponseUpdateKeepsStoredResponse() throws Exception {
+        UUID id = UUID.randomUUID();
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+
+        rpcDao.createAsync(TenantId.SYS_TENANT_ID, rpc(id, deviceId, RpcStatus.QUEUED, null)).get(5, TimeUnit.SECONDS);
+
+        // A successful response is stored.
+        rpcDao.updateAsync(TenantId.SYS_TENANT_ID, rpc(id, deviceId, RpcStatus.SUCCESSFUL, JacksonUtil.toJsonNode("{\"ok\":true}")))
+                .get(5, TimeUnit.SECONDS);
+
+        // A later status update carries no response - it must NOT clobber the stored one.
+        rpcDao.updateAsync(TenantId.SYS_TENANT_ID, rpc(id, deviceId, RpcStatus.EXPIRED, null)).get(5, TimeUnit.SECONDS);
+
+        Rpc stored = rpcDao.findById(TenantId.SYS_TENANT_ID, id);
+        assertThat(stored.getStatus()).isEqualTo(RpcStatus.EXPIRED);
+        assertThat(stored.getResponse()).isEqualTo(JacksonUtil.toJsonNode("{\"ok\":true}"));
+    }
+
+    @Test
+    public void saveAsyncUpdateForDeletedRpcDoesNotResurrect() throws Exception {
+        UUID id = UUID.randomUUID();
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+
+        rpcDao.createAsync(TenantId.SYS_TENANT_ID, rpc(id, deviceId, RpcStatus.QUEUED, null)).get(5, TimeUnit.SECONDS);
+
+        // RPC is removed (TTL cleanup / manual delete) while a response is still in flight.
+        rpcDao.removeById(TenantId.SYS_TENANT_ID, id);
+        assertThat(rpcDao.findById(TenantId.SYS_TENANT_ID, id)).isNull();
+
+        // A late status update must not re-create the deleted row.
+        rpcDao.updateAsync(TenantId.SYS_TENANT_ID, rpc(id, deviceId, RpcStatus.SUCCESSFUL, JacksonUtil.toJsonNode("{\"ok\":true}")))
+                .get(5, TimeUnit.SECONDS);
+
+        assertThat(rpcDao.findById(TenantId.SYS_TENANT_ID, id)).isNull();
+    }
+
+    private Rpc rpc(UUID id, DeviceId deviceId, RpcStatus status, JsonNode response) {
+        Rpc rpc = new Rpc(new RpcId(id));
+        rpc.setCreatedTime(System.currentTimeMillis());
+        rpc.setTenantId(TenantId.SYS_TENANT_ID);
+        rpc.setDeviceId(deviceId);
+        rpc.setExpirationTime(System.currentTimeMillis() + 60_000);
+        rpc.setRequest(JacksonUtil.toJsonNode("{\"method\":\"x\"}"));
+        rpc.setStatus(status);
+        rpc.setResponse(response);
+        return rpc;
     }
 
 }

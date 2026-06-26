@@ -71,7 +71,7 @@ public class JpaRpcDao extends JpaAbstractDao<RpcEntity, Rpc> implements RpcDao,
     @Value("${sql.batch_sort:true}")
     private boolean batchSortEnabled;
 
-    private TbSqlBlockingQueueWrapper<RpcEntity, Void> queue;
+    private TbSqlBlockingQueueWrapper<RpcQueueEntry, Void> queue;
 
     @PostConstruct
     private void init() {
@@ -84,10 +84,10 @@ public class JpaRpcDao extends JpaAbstractDao<RpcEntity, Rpc> implements RpcDao,
                 .batchSortEnabled(batchSortEnabled)
                 .withResponse(false)
                 .build();
-        Function<RpcEntity, Integer> hashcodeFunction = entity -> entity.getUuid().hashCode();
+        Function<RpcQueueEntry, Integer> hashcodeFunction = entry -> entry.entity().getUuid().hashCode();
         queue = new TbSqlBlockingQueueWrapper<>(params, hashcodeFunction, batchThreads, statsFactory);
-        queue.init(logExecutor, entities -> rpcInsertRepository.saveOrUpdate(entities),
-                Comparator.comparing(RpcEntity::getUuid));
+        queue.init(logExecutor, entries -> rpcInsertRepository.saveOrUpdate(entries),
+                Comparator.comparing((RpcQueueEntry entry) -> entry.entity().getUuid()));
     }
 
     @PreDestroy
@@ -98,8 +98,13 @@ public class JpaRpcDao extends JpaAbstractDao<RpcEntity, Rpc> implements RpcDao,
     }
 
     @Override
-    public ListenableFuture<Void> saveAsync(TenantId tenantId, Rpc rpc) {
-        return queue.add(new RpcEntity(rpc));
+    public ListenableFuture<Void> createAsync(TenantId tenantId, Rpc rpc) {
+        return queue.add(RpcQueueEntry.forInsert(new RpcEntity(rpc)));
+    }
+
+    @Override
+    public ListenableFuture<Void> updateAsync(TenantId tenantId, Rpc rpc) {
+        return queue.add(RpcQueueEntry.forUpdate(new RpcEntity(rpc)));
     }
 
     @Override
