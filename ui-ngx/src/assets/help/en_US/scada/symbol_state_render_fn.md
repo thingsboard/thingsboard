@@ -10,7 +10,7 @@ A JavaScript function used to render SCADA symbol state.
 **Parameters:**
 
 <ul>
-  <li><b>ctx:</b> <code>ScadaSymbolContext</code> - <a href="${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/scada/scada-symbols-dev-guide/#scadasymbolcontext" target="_blank">Context</a> of the SCADA symbol.
+  <li><b>ctx:</b> <code>ScadaSymbolContext</code> - <a href="${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/scada-symbol-dev/#scadasymbolcontext" target="_blank">Context</a> of the SCADA symbol.
   </li>
   <li><b>svg:</b> <code><a href="https://svgjs.dev/docs/3.2/container-elements/#svg-svg">SVG.Svg</a></code> - A root svg node. Instance of <a href="https://svgjs.dev/docs/3.2/container-elements/#svg-svg" target="_blank">SVG.Svg</a>.
   </li>
@@ -72,7 +72,7 @@ if (levelDownEnabled) {
 This JavaScript code snippet dynamically handles the visibility and styling of an icon and label within a SCADA symbol.
 It checks the `showIcon` and `showLabel` properties from the context to determine whether to display the icon and/or label. 
 If the icon or label is shown, the script sets their respective properties like size, color, and position. 
-The script utilizes the <a href="${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/scada/scada-symbols-dev-guide/#scadasymbolapi" target="_blank">ScadaSymbolApi</a> to update the visual appearance of these elements based on the context properties.
+The script utilizes the <a href="${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/scada-symbol-dev/#scadasymbolapi" target="_blank">ScadaSymbolApi</a> to update the visual appearance of these elements based on the context properties.
 <br>
 This approach ensures that both the icon and label elements are dynamically shown or hidden based on context properties, with appropriate styling applied.
 

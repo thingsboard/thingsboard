@@ -10,10 +10,10 @@ A JavaScript function invoked when user clicks on SVG element with specific tag.
 **Parameters:**
 
 <ul>
-  <li><b>ctx:</b> <code>ScadaSymbolContext</code> - <a href="${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/scada/scada-symbols-dev-guide/#scadasymbolcontext" target="_blank">Context</a> of the SCADA symbol.
+  <li><b>ctx:</b> <code>ScadaSymbolContext</code> - <a href="${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/scada-symbol-dev/#scadasymbolcontext" target="_blank">Context</a> of the SCADA symbol.
   </li>
   <li><b>element:</b> <code>Element</code> - <a href="https://svgjs.dev/docs/3.2/getting-started/" target="_blank">SVG.js</a> element.<br>
-        See the examples below to learn how to <a href="https://svgjs.dev/docs/3.2/manipulating/" target="_blank">manipulate</a> and <a href="${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/scada/scada-symbols-dev-guide/#scadasymbolanimation" target="_blank">animate</a> elements.<br>
+        See the examples below to learn how to <a href="https://svgjs.dev/docs/3.2/manipulating/" target="_blank">manipulate</a> and <a href="${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/scada-symbol-dev/#scadasymbolanimation" target="_blank">animate</a> elements.<br>
   </li>
   <li><b>event:</b> <code>Event</code> - DOM event.
   </li>
@@ -28,7 +28,7 @@ A JavaScript function invoked when user clicks on SVG element with specific tag.
 
 <br>
 
-This JavaScript snippet demonstrates triggering a <a href="${siteBaseUrl}/docs${docPlatformPrefix}/user-guide//ui/widget-actions/#action-types" target="_blank">widget action</a> using the <a href="${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/scada/scada-symbols-dev-guide/#scadasymbolcontext" target="_blank">ScadaSymbolContext API</a> when the click event occurs. The widget action will be linked to the behaviorId 'click', which defines the action that will be executed upon the event.
+This JavaScript snippet demonstrates triggering a <a href="${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/actions/#action-types" target="_blank">widget action</a> using the <a href="${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/scada-symbol-dev/#scadasymbolcontext" target="_blank">ScadaSymbolContext API</a> when the click event occurs. The widget action will be linked to the behaviorId 'click', which defines the action that will be executed upon the event.
 The behavior of this action depends on the type of widget action configured in the ThingsBoard platform (e.g., navigating to a dashboard state, updating the current state, opening a URL, etc.).
 
 <br>
@@ -50,13 +50,13 @@ This action is executed automatically upon the 'click' event, making it useful f
 
 **Handle device activation toggle**
 
-The example demonstrates how to dynamically call the 'turnOn' or 'turnOff' actions based on the 'active' status from the context. The actions are implemented using the following methods from the <a href="${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/scada/scada-symbols-dev-guide/#scadasymbolapi" target="_blank">Scada Symbol API</a>:
+The example demonstrates how to dynamically call the 'turnOn' or 'turnOff' actions based on the 'active' status from the context. The actions are implemented using the following methods from the <a href="${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/scada-symbol-dev/#scadasymbolapi" target="_blank">Scada Symbol API</a>:
 
 - **callAction**: *(event: Event, behaviorId: string, value?: any, observer?: Partial\<Observer\<void\>\>): void* - Triggers a specific behavior action identified by its ID, allowing for the optional passing of values and observer callbacks.
 
 - **setValue**: *(valueId: string, value: any): void* - Updates a specific value within the `ctx.values` object and initiates all related rendering functions.
 
-For more detailed guidelines on device interaction, consider reviewing the <a href="${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/scada/scada-symbols-dev-guide/#best-practices" target="_blank">best practices</a>.
+For more detailed guidelines on device interaction, consider reviewing the <a href="${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/scada-symbol-dev/#best-practices" target="_blank">best practices</a>.
 
 ```javascript
 var active = ctx.values.active; // Current active status from context
@@ -97,7 +97,7 @@ This example utilizes two specific action behaviors, `turnOn` and `turnOff`, whi
 
 This JavaScript code demonstrates click actions for buttons that either increase or decrease the temperature value within a predefined range.
 The behavior triggered by the click event updates the time series data for the temperature and ensures that the value stays within the defined limits.
-The widget uses the <a href="${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/scada/scada-symbols-dev-guide/#scadasymbolcontext" target="_blank">ScadaSymbolContext API</a> to manage both temperature changes and the corresponding actions.
+The widget uses the <a href="${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/scada-symbol-dev/#scadasymbolcontext" target="_blank">ScadaSymbolContext API</a> to manage both temperature changes and the corresponding actions.
 
 1. **Decrease Temperature (levelDown button)**:
   * The user clicks the levelDown button to decrease the temperature. If the system is running, the temperature decreases by a step defined by `temperatureStep`, but it will never go below the `minTemperature`.
