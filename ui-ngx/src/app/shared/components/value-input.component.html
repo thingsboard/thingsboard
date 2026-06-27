@@ -68,7 +68,7 @@
     }
     @if (valueType === valueTypeEnum.DOUBLE) {
       <mat-form-field appearance="outline" subscriptSizing="dynamic" class="tb-inline-field tb-suffix-absolute number flex flex-1">
-        <input [disabled]="disabled" matInput [required]="required" name="value" type="number" step="any" #value="ngModel" [(ngModel)]="modelValue" (ngModelChange)="onValueChanged()"
+        <input [disabled]="disabled" matInput [required]="required" name="value" type="text" pattern="^-?[0-9]+(\.[0-9]+)?$" #value="ngModel" [(ngModel)]="modelValue" (ngModelChange)="onValueChanged()"
                placeholder="{{ 'value.double-value' | translate }}{{ required ? '*' : ''}}"/>
         @if (value.hasError('required') && value.control.touched) {
           <mat-icon matSuffix
