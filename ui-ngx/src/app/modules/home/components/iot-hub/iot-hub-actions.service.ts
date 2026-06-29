@@ -17,13 +17,11 @@
 import { Injectable } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable, of, EMPTY } from 'rxjs';
-import { filter, mergeMap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from '@core/services/dialog.service';
 import { MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
 import { ItemType } from '@shared/models/iot-hub/iot-hub-item.models';
 import { DeviceInstalledItemDescriptor, IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
-import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { EntityId } from '@shared/models/id/entity-id';
 import { TbIotHubAddItemDialogComponent, IotHubAddItemDialogData, IotHubAddItemDialogResult } from './iot-hub-add-item-dialog.component';
 import { TbIotHubItemDetailDialogComponent, IotHubItemDetailDialogData, IotHubItemDetailDialogMode } from './iot-hub-item-detail-dialog.component';
@@ -38,7 +36,6 @@ export class IotHubActionsService {
 
   constructor(
     private dialog: MatDialog,
-    private iotHubApiService: IotHubApiService,
     private dialogService: DialogService,
     private translate: TranslateService
   ) {}
@@ -94,11 +91,11 @@ export class IotHubActionsService {
     }).afterClosed();
   }
 
-  updateItem(installedItem: IotHubInstalledItem, version: string, versionId: string): Observable<string> {
+  updateItem(installedItem: IotHubInstalledItem, version: string, versionId: string): Observable<string | boolean> {
     if (!installedItem) {
-      return EMPTY;
+      return of(false);
     }
-    return this.dialog.open(TbIotHubUpdateDialogComponent, {
+    return this.dialog.open<TbIotHubUpdateDialogComponent, IotHubUpdateDialogData, string | boolean>(TbIotHubUpdateDialogComponent, {
       panelClass: ['tb-dialog'],
       disableClose: true,
       autoFocus: false,
@@ -108,7 +105,7 @@ export class IotHubActionsService {
         itemType: installedItem.itemType as ItemType,
         version,
         versionId
-      } as IotHubUpdateDialogData
+      }
     }).afterClosed();
   }
 
@@ -116,16 +113,12 @@ export class IotHubActionsService {
     if (!installedItem) {
       return of(false);
     }
-    return this.dialog.open(TbIotHubDeleteDialogComponent, {
+    return this.dialog.open<TbIotHubDeleteDialogComponent, IotHubDeleteDialogData, boolean>(TbIotHubDeleteDialogComponent, {
       panelClass: ['tb-dialog'],
       disableClose: true,
       autoFocus: false,
-      data: { itemName: installedItem.itemName, itemType: installedItem.itemType } as IotHubDeleteDialogData
-    }).afterClosed().pipe(
-      filter(confirmed => !!confirmed),
-      mergeMap(() => this.iotHubApiService.deleteInstalledItem(installedItem.id.id)),
-      mergeMap(() => of(true))
-    );
+      data: { installedItemId: installedItem.id.id, itemName: installedItem.itemName, itemType: installedItem.itemType }
+    }).afterClosed();
   }
 
   installDevice(item: MpItemVersionView): Observable<string> {

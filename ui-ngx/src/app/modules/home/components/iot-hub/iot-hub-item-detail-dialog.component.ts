@@ -220,8 +220,8 @@ export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubI
   }
 
   deleteItem(): void {
-    this.iotHubActions.deleteItem(this.installedItem).subscribe(confirmed => {
-      if (confirmed) {
+    this.iotHubActions.deleteItem(this.installedItem).subscribe(deleted => {
+      if (deleted) {
         this.dialogRef.close('deleted');
       }
     });

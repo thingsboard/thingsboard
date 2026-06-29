@@ -135,14 +135,8 @@
       <tr mat-row *matRowDef="let _row; columns: displayedColumns;"></tr>
     </table>
 
-    @if (isLoading) {
-      <div class="flex flex-1 items-center justify-center py-12">
-        <mat-spinner diameter="40"></mat-spinner>
-      </div>
-    }
-
     @if (!isLoading && dataSource.length === 0) {
-      <div class="tb-iot-hub-empty-state flex flex-1 flex-col items-center justify-center py-20 text-center">
+      <div class="tb-iot-hub-empty-state flex flex-1 flex-col items-center justify-center text-center">
         <div class="tb-no-data-bg"></div>
         <h3>{{ 'iot-hub.no-installed-items' | translate }}</h3>
         <p>{{ 'iot-hub.no-installed-items-text' | translate }}</p>
@@ -166,4 +160,13 @@
     (page)="onPageChange($event)"
     [showFirstLastButtons]="true">
   </mat-paginator>
+
+  @if (isLoading) {
+    <div class="absolute inset-0 backdrop-grayscale" style="background: rgba(255, 255, 255, 0.72); z-index: 100;">
+      <div class="flex h-full items-center justify-center">
+        <mat-spinner diameter="40"></mat-spinner>
+      </div>
+    </div>
+  }
+
 </div>
