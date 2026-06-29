@@ -400,8 +400,13 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
     }
 
     private MqttEvent pollEventForTopic(String topic) throws InterruptedException {
-        MqttEvent event;
-        while ((event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS)) != null) {
+        long deadline = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(10 * timeoutMultiplier);
+        long remaining;
+        while ((remaining = deadline - System.currentTimeMillis()) > 0) {
+            MqttEvent event = listener.getEvents().poll(remaining, TimeUnit.MILLISECONDS);
+            if (event == null) {
+                break;
+            }
             if (topic.equals(event.getTopic())) {
                 return event;
             }
