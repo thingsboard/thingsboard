@@ -846,23 +846,28 @@ export class TbTimeSeriesChart {
     }
   }
 
-  private minTopOffset(): number {
-    if (this.topPointLabels) return 25;
-    const yAxisWithTickLabels = this.yAxisList.filter(yAxis => yAxis.settings.show && yAxis.settings.showTickLabels);
-    if (yAxisWithTickLabels.length) {
-      const maxFontSize = Math.max(...yAxisWithTickLabels.map(a => a.settings.tickLabelFont?.size || 12));
-      return Math.max(10, Math.ceil(maxFontSize / 2));
+  private maxTickLabelHalfHeight(): number {
+    const axes = this.yAxisList.filter(a => a.settings.show && a.settings.showTickLabels);
+    if (!axes.length) {
+      return 0;
     }
-    return 5;
+
+    const defaultSize = defaultTimeSeriesChartYAxisSettings.tickLabelFont.size;
+    const maxFontSize = Math.max(...axes.map(a => a.settings.tickLabelFont?.size || defaultSize));
+    return Math.ceil(maxFontSize / 2);
+  }
+
+  private minTopOffset(): number {
+    if (this.topPointLabels) {
+      return 25;
+    }
+    const half = this.maxTickLabelHalfHeight();
+    return half ? Math.max(10, half) : 5;
   }
 
   private minBottomOffset(): number {
-    const yAxisWithTickLabels = this.yAxisList.filter(yAxis => yAxis.settings.show && yAxis.settings.showTickLabels);
-    let minOffset = 5;
-    if (yAxisWithTickLabels.length) {
-      const maxFontSize = Math.max(...yAxisWithTickLabels.map(a => a.settings.tickLabelFont?.size || 12));
-      minOffset = Math.max(5, Math.ceil(maxFontSize / 2));
-    }
+    const half = this.maxTickLabelHalfHeight();
+    const minOffset = half ? Math.max(5, half) : 5;
     return this.settings.dataZoom ? Math.max(45, minOffset) : minOffset;
   }
 
