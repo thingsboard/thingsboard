@@ -29,7 +29,6 @@ public enum TransportType {
 
     MQTT("MQTT", MqttTransportHealthChecker.class),
     COAP("CoAP", CoapTransportHealthChecker.class),
-    COAPS("CoAPS", CoapTransportHealthChecker.class),
     HTTP("HTTP", HttpTransportHealthChecker.class),
     LWM2M("LwM2M", Lwm2mTransportHealthChecker.class);
 

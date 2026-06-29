@@ -72,7 +72,7 @@ public class CoapTransportHealthChecker extends TransportHealthChecker<CoapTrans
         String accessToken = target.getDevice().getCredentials().getCredentialsId();
         String uri = target.getBaseUrl() + "/api/v1/" + accessToken + "/telemetry";
         coapClient = new CoapClient(uri);
-        if (getTransportType() == TransportType.COAPS) {
+        if (target.getBaseUrl().startsWith("coaps")) {
             Configuration dtlsConfiguration = new Configuration();
             dtlsConfiguration.set(DtlsConfig.DTLS_ROLE, DtlsConfig.DtlsRole.CLIENT_ONLY);
             dtlsConfiguration.set(DtlsConfig.DTLS_USE_SERVER_NAME_INDICATION, true);

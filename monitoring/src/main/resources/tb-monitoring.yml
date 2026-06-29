@@ -51,8 +51,8 @@ monitoring:
       # MQTT QoS
       qos: '${MQTT_QOS_LEVEL:1}'
       targets:
-          # MQTT transport base url, tcp://DOMAIN:1883 by default
-        - base_url: '${MQTT_TRANSPORT_BASE_URL:tcp://${monitoring.domain}:1883}'
+          # MQTT transport base url, tcp://DOMAIN by default (use ssl:// for TLS). Specify a custom port, e.g. tcp://DOMAIN:1883
+        - base_url: '${MQTT_TRANSPORT_BASE_URL:tcp://${monitoring.domain}}'
           # Queue to use for target device
           queue: '${MQTT_TRANSPORT_USED_QUEUE:Main}'
           # Whether to monitor IPs associated with the domain from base url
@@ -68,7 +68,7 @@ monitoring:
       # CoAP request timeout in milliseconds
       request_timeout_ms: '${COAP_REQUEST_TIMEOUT_MS:4000}'
       targets:
-          # CoAP transport base url, coap://DOMAIN by default
+          # CoAP transport base url, coap://DOMAIN by default (use coaps:// for DTLS). Specify a custom port, e.g. tcp://DOMAIN:5683
         - base_url: '${COAP_TRANSPORT_BASE_URL:coap://${monitoring.domain}}'
           # Queue to use for target device
           queue: '${COAP_TRANSPORT_USED_QUEUE:Main}'
@@ -78,23 +78,6 @@ monitoring:
           name_prefix: '${COAP_TRANSPORT_TARGET_NAME_PREFIX:}'
         # To add more targets, use following environment variables:
         # monitoring.transports.coap.targets[1].base_url, monitoring.transports.coap.targets[2].base_url, etc.
-
-    coaps:
-      # Enable CoAPS transport checks
-      enabled: '${COAPS_TRANSPORT_MONITORING_ENABLED:true}'
-      # CoAPS request timeout in milliseconds
-      request_timeout_ms: '${COAPS_REQUEST_TIMEOUT_MS:4000}'
-      targets:
-          # CoAPS transport base url, coaps://DOMAIN by default
-        - base_url: '${COAPS_TRANSPORT_BASE_URL:coaps://${monitoring.domain}}'
-          # Queue to use for target device
-          queue: '${COAPS_TRANSPORT_USED_QUEUE:Main}'
-          # Whether to monitor IPs associated with the domain from base url
-          check_domain_ips: '${COAPS_TRANSPORT_CHECK_DOMAIN_IPS:false}'
-          # Prefix for the target device name
-          name_prefix: '${COAPS_TRANSPORT_TARGET_NAME_PREFIX:}'
-        # To add more targets, use following environment variables:
-        # monitoring.transports.coaps.targets[1].base_url, monitoring.transports.coaps.targets[2].base_url, etc.
 
     http:
       # Enable HTTP transport checks

@@ -75,20 +75,6 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "coapsTransportWsUpdateLatency",
-                  "type": "timeseries",
-                  "label": "CoAPS - overall",
-                  "color": "#673ab7",
-                  "settings": {},
-                  "_hash": 0.5634789012345678,
-                  "aggregationType": null,
-                  "units": "ms",
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": null,
-                  "postFuncBody": null
-                },
-                {
                   "name": "httpTransportWsUpdateLatency",
                   "type": "timeseries",
                   "label": "HTTP - overall",
@@ -362,20 +348,6 @@
                   "color": "#f44336",
                   "settings": {},
                   "_hash": 0.6977575200148037,
-                  "aggregationType": null,
-                  "units": "ms",
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": null,
-                  "postFuncBody": null
-                },
-                {
-                  "name": "coapsTransportRequestLatency",
-                  "type": "timeseries",
-                  "label": "CoAPS transport request latency",
-                  "color": "#e91e63",
-                  "settings": {},
-                  "_hash": 0.4567890123456789,
                   "aggregationType": null,
                   "units": "ms",
                   "decimals": null,
