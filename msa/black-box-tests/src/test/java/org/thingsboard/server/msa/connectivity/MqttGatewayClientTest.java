@@ -251,7 +251,10 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         requestData.addProperty("sharedKeys", "");
         mqttClient.publish("v1/gateway/attributes/request", Unpooled.wrappedBuffer(requestData.toString().getBytes())).get();
 
-        MqttEvent event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
+        // Saving the shared attribute above also triggers an attribute-update push on
+        // v1/gateway/attributes, which can land in the queue before the request response.
+        // Skip those and read the event from the response topic.
+        MqttEvent event = pollEventForTopic("v1/gateway/attributes/response");
         JsonObject responseData = JsonParser.parseString(Objects.requireNonNull(event).getMessage()).getAsJsonObject();
         assertThat(responseData.has("shared")).isTrue();
         assertThat(responseData.has("value")).isFalse();
@@ -394,6 +397,16 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         testRestClient.deleteDevice(this.createdDevice.getId());
         testRestClient.getDeviceById(this.createdDevice.getId(), HttpStatus.NOT_FOUND.value());
         this.createdDevice = createDeviceThroughGateway(mqttClient, gatewayDevice);
+    }
+
+    private MqttEvent pollEventForTopic(String topic) throws InterruptedException {
+        MqttEvent event;
+        while ((event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS)) != null) {
+            if (topic.equals(event.getTopic())) {
+                return event;
+            }
+        }
+        return null;
     }
 
     private void checkAttribute(boolean client, String expectedValue) throws Exception {
