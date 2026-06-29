@@ -114,6 +114,9 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   formValues: Record<string, any> = {};
   entityOutputs = new Map<string, EntityStepOutput>();
   transportVars: Record<string, string> = {};
+  // form-field key → declared type. Used by resolveTemplateJson() to emit BOOLEAN/INTEGER
+  // placeholders as raw JSON values instead of quoted strings.
+  private fieldTypes = new Map<string, FormFieldType>();
   gatewayDockerComposeContent: string | null = null;
 
   resolveMarkdownVariable: (key: string) => string | undefined = this._resolveMarkdownVariable.bind(this);
@@ -499,6 +502,38 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     return undefined;
   }
 
+  /**
+   * Resolve a JSON template, type-aware. A placeholder that fills an entire JSON string
+   * token (e.g. "${mqttCleanSession}") whose form field is BOOLEAN or INTEGER is emitted as
+   * a raw JSON boolean/number rather than a quoted string. Authored templates always quote
+   * macros so the template file is valid JSON; the recorded form-field type decides the real
+   * type at install time. Without this, "cleanSession": "${mqttCleanSession}" parses as the
+   * string "false" (truthy) — so an unchecked boolean would be read as true. Placeholders
+   * embedded in a larger string (e.g. "v3/${mqttUsername}/...") and STRING/PASSWORD/SELECT
+   * fields are left quoted and handled by the regular resolveVariables() pass.
+   */
+  resolveTemplateJson(raw: string): any {
+    const typed = raw.replace(/"\$\{([^"{}]+)}"/g, (whole, key) => {
+      const type = this.fieldTypes.get(key);
+      if (type !== FormFieldType.BOOLEAN && type !== FormFieldType.INTEGER) {
+        return whole;
+      }
+      const res = this.resolveVariable(key);
+      if (res === undefined) {
+        return whole;
+      }
+      if (type === FormFieldType.BOOLEAN) {
+        return String(res).trim().toLowerCase() === 'true' ? 'true' : 'false';
+      }
+      // INTEGER: emit a raw JSON number only when the value really is an integer;
+      // otherwise leave it quoted for the regular pass (preserves prior behaviour).
+      const trimmed = String(res).trim();
+      const num = Number(trimmed);
+      return trimmed !== '' && Number.isInteger(num) ? String(num) : whole;
+    });
+    return JSON.parse(this.resolveVariables(typed));
+  }
+
   private _resolveMarkdownVariable(key: string): string | undefined {
     const res = this.resolveVariable(key);
     if (res) {
@@ -648,6 +683,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     // In review mode, use stored values; otherwise use defaults
     const storedValues = this.reviewMode && this.data.installState?.[ws.label]?.formValues;
     for (const field of ws.formFields) {
+      this.fieldTypes.set(field.key, field.type);
       const validators = [];
       if (field.required) {
         validators.push(Validators.required);
@@ -806,8 +842,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     if (!raw) {
       throw new Error(`Template file not found: ${step.template}`);
     }
-    const resolved = this.resolveVariables(raw);
-    const template = JSON.parse(resolved);
+    const template = this.resolveTemplateJson(raw);
 
     switch (step.type) {
       case InstallStepType.DEVICE_PROFILE: {
@@ -915,7 +950,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     if (step.credentials) {
       const raw = this.zipFiles.get(step.credentials);
       if (raw) {
-        const credTemplate = JSON.parse(this.resolveVariables(raw));
+        const credTemplate = this.resolveTemplateJson(raw);
         creds.credentialsType = credTemplate.credentialsType || creds.credentialsType;
         if (credTemplate.credentialsValue) {
           creds.credentialsValue = typeof credTemplate.credentialsValue === 'string'
@@ -964,8 +999,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   private async overwriteEntity(step: DeviceInstallStep, existing: EntityStepOutput): Promise<EntityStepOutput> {
     const raw = this.zipFiles.get(step.template);
     if (!raw) throw new Error(`Template file not found: ${step.template}`);
-    const resolved = this.resolveVariables(raw);
-    const template = JSON.parse(resolved);
+    const template = this.resolveTemplateJson(raw);
 
     switch (step.type) {
       case InstallStepType.DEVICE_PROFILE: {
@@ -1016,8 +1050,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   private async preCheckEntity(step: DeviceInstallStep): Promise<EntityStepOutput | null> {
     const raw = this.zipFiles.get(step.template);
     if (!raw) return null;
-    const resolved = this.resolveVariables(raw);
-    const template = JSON.parse(resolved);
+    const template = this.resolveTemplateJson(raw);
 
     switch (step.type) {
       case InstallStepType.DEVICE_PROFILE:
@@ -1095,7 +1128,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     if (step.serverAttributes) {
       const raw = this.zipFiles.get(step.serverAttributes);
       if (raw) {
-        const resolved = JSON.parse(this.resolveVariables(raw));
+        const resolved = this.resolveTemplateJson(raw);
         const attrs = Object.entries(resolved).map(([key, value]) => ({ key, value }));
         await firstValueFrom(this.attributeService.saveEntityAttributes(
           entityId, AttributeScope.SERVER_SCOPE, attrs, {ignoreErrors: true}
@@ -1105,7 +1138,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     if (step.sharedAttributes) {
       const raw = this.zipFiles.get(step.sharedAttributes);
       if (raw) {
-        const resolved = JSON.parse(this.resolveVariables(raw));
+        const resolved = this.resolveTemplateJson(raw);
         const attrs = Object.entries(resolved).map(([key, value]) => ({ key, value }));
         await firstValueFrom(this.attributeService.saveEntityAttributes(
           entityId, AttributeScope.SHARED_SCOPE, attrs, {ignoreErrors: true}
