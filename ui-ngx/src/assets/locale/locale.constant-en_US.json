@@ -1733,6 +1733,7 @@
     "customer": {
         "customer": "Customer",
         "customers": "Customers",
+        "customers-and-users": "Customers & users",
         "management": "Customer management",
         "dashboard": "Customer Dashboard",
         "dashboards": "Customer Dashboards",
@@ -3025,6 +3026,8 @@
     "entity": {
         "entity": "Entity",
         "entities": "Entities",
+        "devices-and-assets": "Devices & assets",
+        "data-processing": "Data processing",
         "entities-count": "Entities count",
         "alarms-count": "Alarms count",
         "aliases": "Entity aliases",

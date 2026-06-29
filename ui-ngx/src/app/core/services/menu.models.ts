@@ -73,6 +73,7 @@ export enum MenuId {
   mobile_bundles = 'mobile_bundles',
   mobile_qr_code_widget = 'mobile_qr_code_widget',
   platform = 'platform',
+  platform_section = 'platform_section',
   settings = 'settings',
   general = 'general',
   mail_server = 'mail_server',
@@ -101,7 +102,9 @@ export enum MenuId {
   profiles = 'profiles',
   device_profiles = 'device_profiles',
   asset_profiles = 'asset_profiles',
+  customers_and_users = 'customers_and_users',
   customers = 'customers',
+  data_processing = 'data_processing',
   calculated_fields = 'calculated_fields',
   rule_chains = 'rule_chains',
   edge_management = 'edge_management',
@@ -368,6 +371,16 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
     }
   ],
   [
+    MenuId.platform_section,
+    {
+      id: MenuId.platform_section,
+      name: 'admin.platform',
+      type: 'toggle',
+      path: '/platform',
+      icon: 'miscellaneous_services'
+    }
+  ],
+  [
     MenuId.settings,
     {
       id: MenuId.settings,
@@ -577,10 +590,10 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
     MenuId.entities,
     {
       id: MenuId.entities,
-      name: 'entity.entities',
+      name: 'entity.devices-and-assets',
       type: 'toggle',
       path: '/entities',
-      icon: 'category'
+      icon: 'mdi:shape-outline'
     }
   ],
   [
@@ -654,6 +667,16 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
     }
   ],
   [
+    MenuId.customers_and_users,
+    {
+      id: MenuId.customers_and_users,
+      name: 'customer.customers-and-users',
+      type: 'link',
+      path: '/customers',
+      icon: 'mdi:account-multiple-outline'
+    }
+  ],
+  [
     MenuId.customers,
     {
       id: MenuId.customers,
@@ -661,6 +684,16 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       type: 'link',
       path: '/customers',
       icon: 'supervisor_account'
+    }
+  ],
+  [
+    MenuId.data_processing,
+    {
+      id: MenuId.data_processing,
+      name: 'entity.data-processing',
+      type: 'toggle',
+      path: '/dataProcessing',
+      icon: 'settings_ethernet',
     }
   ],
   [
@@ -763,7 +796,7 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       name: 'api-usage.api-usage',
       type: 'link',
       path: '/usage',
-      icon: 'insert_chart'
+      icon: 'insert_chart_outlined'
     }
   ],
   [
@@ -917,33 +950,20 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
         id: MenuId.entities,
         pages: [
           {id: MenuId.devices},
+          {id: MenuId.gateways},
           {id: MenuId.assets},
-          {id: MenuId.entity_views},
-          {id: MenuId.gateways}
-        ]
-      },
-      {
-        id: MenuId.profiles,
-        pages: [
           {id: MenuId.device_profiles},
-          {id: MenuId.asset_profiles}
+          {id: MenuId.asset_profiles},
+          {id: MenuId.entity_views},
+          {id: MenuId.otaUpdates}
         ]
       },
-      {id: MenuId.customers},
-      {id: MenuId.calculated_fields},
-      {id: MenuId.rule_chains},
+      {id: MenuId.customers_and_users},
       {
-        id: MenuId.edge_management,
+        id: MenuId.data_processing,
         pages: [
-          {id: MenuId.edges},
-          {id: MenuId.rulechain_templates}
-        ]
-      },
-      {
-        id: MenuId.features,
-        pages: [
-          {id: MenuId.otaUpdates},
-          {id: MenuId.version_control}
+          {id: MenuId.calculated_fields},
+          {id: MenuId.rule_chains}
         ]
       },
       {
@@ -963,6 +983,42 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
         ]
       },
       {
+        id: MenuId.security_settings,
+        pages: [
+          {
+            id: MenuId.oauth2,
+            pages: [
+              {id: MenuId.clients}
+            ]
+          },
+          {id: MenuId.audit_log}
+        ]
+      },
+      {
+        id: MenuId.platform_section,
+        pages: [
+          {id: MenuId.version_control},
+          {
+            id: MenuId.settings,
+            pages: [
+              {id: MenuId.home_settings},
+              {id: MenuId.notification_settings},
+              {id: MenuId.repository_settings},
+              {id: MenuId.auto_commit_settings},
+              {id: MenuId.trendz_settings},
+              {id: MenuId.ai_models}
+            ]
+          }
+        ]
+      },
+      {
+        id: MenuId.edge_management,
+        pages: [
+          {id: MenuId.edges},
+          {id: MenuId.rulechain_templates}
+        ]
+      },
+      {
         id: MenuId.mobile_center,
         pages: [
           {id: MenuId.mobile_bundles},
@@ -970,29 +1026,6 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
         ]
       },
       {id: MenuId.api_usage},
-      {
-        id: MenuId.settings,
-        pages: [
-          {id: MenuId.home_settings},
-          {id: MenuId.notification_settings},
-          {id: MenuId.repository_settings},
-          {id: MenuId.auto_commit_settings},
-          {id: MenuId.trendz_settings},
-          {id: MenuId.ai_models}
-        ]
-      },
-      {
-        id: MenuId.security_settings,
-        pages: [
-          {id: MenuId.audit_log},
-          {
-            id: MenuId.oauth2,
-            pages: [
-              {id: MenuId.clients}
-            ]
-          }
-        ]
-      }
     ]
   ],
   [

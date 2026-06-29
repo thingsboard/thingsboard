@@ -38,7 +38,7 @@ const routes: Routes = [
     path: 'customers',
     data: {
       breadcrumb: {
-        menuId: MenuId.customers
+        menuId: MenuId.customers_and_users
       }
     },
     children: [

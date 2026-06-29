@@ -227,7 +227,10 @@ const routes: Routes = [
       auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
       showMainLoadingBar: false,
       breadcrumb: {
-        menuId: MenuId.platform
+        menuIdByAuthority: {
+          SYS_ADMIN: MenuId.platform,
+          TENANT_ADMIN: MenuId.settings
+        }
       }
     },
     children: [

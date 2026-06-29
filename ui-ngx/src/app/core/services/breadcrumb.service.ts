@@ -24,6 +24,9 @@ import { distinctUntilChanged, filter, first, map, switchMap } from 'rxjs/operat
 import { MenuSection, menuSectionMap } from '@core/services/menu.models';
 import { guid } from '@core/utils';
 import { ActiveComponentService } from '@core/services/active-component.service';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 
 @Injectable({
   providedIn: 'root'
@@ -45,6 +48,7 @@ export class BreadcrumbService {
   }
 
   constructor(private router: Router,
+              private store: Store<AppState>,
               private activatedRoute: ActivatedRoute,
               private translate: TranslateService,
               private menuService: MenuService,
@@ -90,10 +94,15 @@ export class BreadcrumbService {
       if (breadcrumbConfig && !breadcrumbConfig.skip) {
         let labelFunction: () => string;
         let section: MenuSection = null;
-        if (breadcrumbConfig.menuId) {
-          section = availableMenuSections.find(menu => menu.id === breadcrumbConfig.menuId);
+        let menuId = breadcrumbConfig.menuId;
+        if (!menuId && breadcrumbConfig.menuIdByAuthority) {
+          const authority = getCurrentAuthUser(this.store).authority;
+          menuId = breadcrumbConfig.menuIdByAuthority[authority];
+        }
+        if (menuId) {
+          section = availableMenuSections.find(menu => menu.id === menuId);
           if (!section) {
-            section = menuSectionMap.get(breadcrumbConfig.menuId);
+            section = menuSectionMap.get(menuId);
           }
         }
         const label = section?.name || breadcrumbConfig.label || 'home.home';

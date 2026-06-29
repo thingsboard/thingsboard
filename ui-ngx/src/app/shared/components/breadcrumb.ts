@@ -18,6 +18,7 @@ import { ActivatedRouteSnapshot, Params } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { HasUUID } from '@shared/models/id/has-uuid';
 import { MenuId } from '@core/services/menu.models';
+import { Authority } from '@shared/models/authority.enum';
 
 export interface BreadCrumb extends HasUUID{
   label: string;
@@ -32,6 +33,7 @@ export type BreadCrumbLabelFunction<C> = (route: ActivatedRouteSnapshot, transla
 export interface BreadCrumbConfig<C> {
   labelFunction: BreadCrumbLabelFunction<C>;
   menuId?: MenuId;
+  menuIdByAuthority?: {[authority: string]: MenuId};
   label?: string;
   icon?: string;
   skip: boolean;
