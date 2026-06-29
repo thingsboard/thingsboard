@@ -244,7 +244,8 @@ export const widgetsLibraryRoutes: Routes = [
     data: {
       auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
       breadcrumb: {
-        menuId: MenuId.widget_library
+        menuId: MenuId.widget_library,
+        skip: true
       }
     },
     children: [

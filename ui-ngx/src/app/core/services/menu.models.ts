@@ -18,7 +18,7 @@ import { AuthState } from '@core/auth/auth.models';
 import { Authority } from '@shared/models/authority.enum';
 import { deepClone } from '@core/utils';
 
-export declare type MenuSectionType = 'link' | 'toggle';
+export declare type MenuSectionType = 'link' | 'toggle' | 'divider';
 
 export interface MenuSection {
   id: MenuId | string;
@@ -88,6 +88,7 @@ export enum MenuId {
   domains = 'domains',
   clients = 'clients',
   audit_log = 'audit_log',
+  monitor = 'monitor',
   alarms_center = 'alarms_center',
   alarms = 'alarms',
   alarm_rules = 'alarm_rules',
@@ -113,7 +114,8 @@ export enum MenuId {
   api_usage = 'api_usage',
   trendz_settings = 'trendz_settings',
   ai_models = 'ai_models',
-  iot_hub = 'iot_hub'
+  iot_hub = 'iot_hub',
+  divider = 'divider'
 }
 
 declare type MenuFilter = (authState: AuthState) => boolean;
@@ -522,6 +524,16 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
     }
   ],
   [
+    MenuId.monitor,
+    {
+      id: MenuId.monitor,
+      name: 'monitor.monitor',
+      type: 'toggle',
+      path: '/monitor',
+      icon: 'mdi:view-dashboard-outline'
+    }
+  ],
+  [
     MenuId.alarms_center,
     {
       id: MenuId.alarms_center,
@@ -772,8 +784,18 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       name: 'iot-hub.iot-hub',
       type: 'link',
       path: '/iot-hub',
-      icon: 'hub',
+      icon: 'mdi:hub-outline',
       isNew: true
+    }
+  ],
+  [
+    MenuId.divider,
+    {
+      id: MenuId.divider,
+      name: '',
+      type: 'divider',
+      path: 'divider',
+      icon: ''
     }
   ]
 ]);
@@ -866,15 +888,31 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
     Authority.TENANT_ADMIN,
     [
       {id: MenuId.home},
+      {id: MenuId.iot_hub},
+      {id: MenuId.divider},
       {
-        id: MenuId.alarms_center,
+        id: MenuId.monitor,
         pages: [
-          {id: MenuId.alarms},
-          {id: MenuId.alarm_rules}
+          {id: MenuId.dashboards},
+          {
+            id: MenuId.alarms_center,
+            pages: [
+              {id: MenuId.alarms},
+              {id: MenuId.alarm_rules}
+            ]
+          },
+          {
+            id: MenuId.notifications_center,
+            pages: [
+              {id: MenuId.notification_inbox},
+              {id: MenuId.notification_sent},
+              {id: MenuId.notification_recipients},
+              {id: MenuId.notification_templates},
+              {id: MenuId.notification_rules}
+            ]
+          }
         ]
       },
-      {id: MenuId.dashboards},
-      {id: MenuId.iot_hub},
       {
         id: MenuId.entities,
         pages: [
@@ -922,16 +960,6 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
           {id: MenuId.scada_symbols},
           {id: MenuId.javascript_library},
           {id: MenuId.resources_library}
-        ]
-      },
-      {
-        id: MenuId.notifications_center,
-        pages: [
-          {id: MenuId.notification_inbox},
-          {id: MenuId.notification_sent},
-          {id: MenuId.notification_recipients},
-          {id: MenuId.notification_templates},
-          {id: MenuId.notification_rules}
         ]
       },
       {

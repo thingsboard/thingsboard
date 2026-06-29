@@ -4769,6 +4769,9 @@
             "getting-started": "Getting Started"
         }
     },
+    "monitor": {
+        "monitor": "Monitor"
+    },
     "notification": {
         "action-button": "Action button",
         "action-type": "Action type",

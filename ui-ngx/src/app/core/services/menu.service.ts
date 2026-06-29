@@ -74,7 +74,7 @@ export class MenuService {
     const openedMenuSections = getCurrentOpenedMenuSections(this.store);
     if (this.currentMenuSections?.length) {
       this.currentMenuSections.filter(section => section.type === 'toggle' &&
-        (url.startsWith(section.path) || openedMenuSections.includes(section.path))).forEach(
+        (url.startsWith(section.path) || openedMenuSections.includes(section.path) || section.pages.some(page => url.startsWith(page.path)) )).forEach(
         section => section.opened = true
       );
     }
