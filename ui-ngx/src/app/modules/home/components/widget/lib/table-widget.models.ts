@@ -33,7 +33,7 @@ import {
   TbFunction
 } from '@shared/models/js-function.models';
 import { forkJoin, Observable, of, ReplaySubject, Subscription } from 'rxjs';
-import { catchError, distinctUntilChanged, map, share, skip, startWith, takeUntil } from 'rxjs/operators';
+import { catchError, distinctUntilChanged, map, share, skip, startWith } from 'rxjs/operators';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import type { ValueFormatProcessor } from '@shared/models/widget-settings.models';
@@ -521,14 +521,11 @@ export function isValidPageStepCount(value: number): boolean {
 
 export function setupPaginationResets(ctx: WidgetContext,
                                       paginator: MatPaginator,
-                                      sort: MatSort,
-                                      destroyNotifier$: Observable<void>): Subscription {
+                                      sort: MatSort): Subscription {
   const subscription = new Subscription();
 
   subscription.add(
-    sort.sortChange.pipe(
-      takeUntil(destroyNotifier$)
-    ).subscribe(() => paginator.pageIndex = 0)
+    sort.sortChange.subscribe(() => paginator.pageIndex = 0)
   );
 
   subscription.add(
@@ -536,8 +533,7 @@ export function setupPaginationResets(ctx: WidgetContext,
       map(() => ctx.stateController.getStateParams()),
       startWith(ctx.stateController.getStateParams()),
       distinctUntilChanged(isEqual),
-      skip(1),
-      takeUntil(destroyNotifier$)
+      skip(1)
     ).subscribe(() => paginator.firstPage())
   );
   return subscription;

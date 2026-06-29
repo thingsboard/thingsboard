@@ -210,6 +210,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   private subscription: IWidgetSubscription;
   private widgetResize$: ResizeObserver;
   private destroy$ = new Subject<void>();
+  private paginationResetsSubscription: Subscription;
 
   private displayActivity = false;
   private displayDetails = true;
@@ -315,6 +316,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     if (this.widgetResize$) {
       this.widgetResize$.disconnect();
     }
+    this.paginationResetsSubscription?.unsubscribe();
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -331,7 +333,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     });
 
     if (this.displayPagination) {
-      setupPaginationResets(this.ctx, this.paginator, this.sort, this.destroy$);
+      this.paginationResetsSubscription = setupPaginationResets(this.ctx, this.paginator, this.sort);
 
       this.ctx.aliasController?.filtersChanged.pipe(
         takeUntil(this.destroy$)

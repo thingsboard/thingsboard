@@ -46,7 +46,7 @@ import { deepClone, hashCode, isDefined, isDefinedAndNotNull, isObject, isUndefi
 import cssjs from '@core/css/css';
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { BehaviorSubject, fromEvent, merge, Observable, of, Subject } from 'rxjs';
+import { BehaviorSubject, fromEvent, merge, Observable, of, Subject, Subscription } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
@@ -165,6 +165,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   private subscription: IWidgetSubscription;
   private widgetResize$: ResizeObserver;
   private destroy$ = new Subject<void>();
+  private paginationResetsSubscription: Subscription;
 
   private defaultPageSize;
   private defaultSortOrder = 'entityName';
@@ -248,6 +249,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     if (this.widgetResize$) {
       this.widgetResize$.disconnect();
     }
+    this.paginationResetsSubscription?.unsubscribe();
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -266,7 +268,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     });
 
     if (this.displayPagination) {
-      setupPaginationResets(this.ctx, this.paginator, this.sort, this.destroy$);
+      this.paginationResetsSubscription = setupPaginationResets(this.ctx, this.paginator, this.sort);
 
       this.ctx.aliasController?.filtersChanged.pipe(
         takeUntil(this.destroy$)
