@@ -58,6 +58,17 @@ export class KafkaTemplate implements IQueue {
                 // dependency on the lz4-napi native binary (e.g. inside pkg-built executables).
                 // The package re-assigns module.exports = LZ4Codec, which wipes the __esModule
                 // flag and the .default property — so accept either shape.
+                //
+                // Permission model note: LZ4 is backed by the native lz4-napi addon. Under
+                // Node's --permission model, loading any native addon (process.dlopen) is
+                // blocked unless --allow-addons is granted. That flag is global — Node has no
+                // per-addon allowlist and no build-time grant — so there is no way to permit
+                // only this addon. Operators who want to run under --permission WITHOUT
+                // --allow-addons should use kafka.compression=gzip (Node's built-in zlib, no
+                // native addon) or none. Where --allow-addons is granted, it is safe under a
+                // hardened runtime (read-only root filesystem, no writable mounts, dropped
+                // capabilities, read access scoped to the app dir): no attacker-controlled
+                // .node can be introduced, so the grant only permits the build-baked binary.
                 const lz4Module = require('@2l/kafkajs-lz4');
                 const LZ4Codec = lz4Module.default || lz4Module;
                 CompressionCodecs[CompressionTypes.LZ4] = new LZ4Codec().codec;
