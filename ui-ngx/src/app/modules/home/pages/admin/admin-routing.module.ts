@@ -103,7 +103,7 @@ const routes: Routes = [
             component: ImageGalleryComponent,
             data: {
               auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN],
-              title: 'image.gallery',
+              title: 'image.images',
               imageSubType: ResourceSubType.IMAGE
             }
           }
@@ -157,7 +157,7 @@ const routes: Routes = [
             component: EntitiesTableComponent,
             data: {
               auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN],
-              title: 'resource.resources-library',
+              title: 'resource.files',
             },
             resolve: {
               entitiesTableConfig: ResourcesLibraryTableConfigResolver
@@ -194,7 +194,7 @@ const routes: Routes = [
             component: EntitiesTableComponent,
             data: {
               auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN],
-              title: 'javascript.javascript-library',
+              title: 'javascript.scripts',
             },
             resolve: {
               entitiesTableConfig: JsLibraryTableConfigResolver

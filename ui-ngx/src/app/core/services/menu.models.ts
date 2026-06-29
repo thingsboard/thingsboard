@@ -52,6 +52,7 @@ export interface HomeSection {
 export enum MenuId {
   home = 'home',
   tenants = 'tenants',
+  tenants_section = 'tenants_section',
   tenant_profiles = 'tenant_profiles',
   resources = 'resources',
   widget_library = 'widget_library',
@@ -124,7 +125,17 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       name: 'home.home',
       type: 'link',
       path: '/home',
-      icon: 'home'
+      icon: 'mdi:home-outline'
+    }
+  ],
+  [
+    MenuId.tenants_section,
+    {
+      id: MenuId.tenants_section,
+      name: 'tenant.tenants',
+      type: 'toggle',
+      path: '/tenants',
+      icon: 'mdi:account-supervisor-outline'
     }
   ],
   [
@@ -134,7 +145,7 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       name: 'tenant.tenants',
       type: 'link',
       path: '/tenants',
-      icon: 'supervisor_account'
+      icon: 'mdi:account-supervisor-outline'
     }
   ],
   [
@@ -154,14 +165,14 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       name: 'admin.resources',
       type: 'toggle',
       path: '/resources',
-      icon: 'folder'
+      icon: 'mdi:folder-outline'
     }
   ],
   [
     MenuId.widget_library,
     {
       id: MenuId.widget_library,
-      name: 'widget.widget-library',
+      name: 'widget.widgets',
       type: 'link',
       path: '/resources/widgets-library',
       icon: 'now_widgets'
@@ -191,7 +202,7 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
     MenuId.images,
     {
       id: MenuId.images,
-      name: 'image.gallery',
+      name: 'image.images',
       type: 'link',
       path: '/resources/images',
       icon: 'filter'
@@ -211,7 +222,7 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
     MenuId.resources_library,
     {
       id: MenuId.resources_library,
-      name: 'resource.resources-library',
+      name: 'resource.files',
       type: 'link',
       path: '/resources/resources-library',
       icon: 'mdi:rhombus-split'
@@ -221,7 +232,7 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
     MenuId.javascript_library,
     {
       id: MenuId.javascript_library,
-      name: 'javascript.javascript-library',
+      name: 'javascript.scripts',
       type: 'link',
       path: '/resources/javascript-library',
       icon: 'mdi:language-javascript'
@@ -231,10 +242,10 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
     MenuId.notifications_center,
     {
       id: MenuId.notifications_center,
-      name: 'notification.notification-center',
+      name: 'notification.notifications',
       type: 'link',
       path: '/notification',
-      icon: 'mdi:message-badge'
+      icon: 'mdi:message-badge-outline'
     }
   ],
   [
@@ -306,7 +317,7 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
     MenuId.mobile_center,
     {
       id: MenuId.mobile_center,
-      name: 'mobile.mobile-center',
+      name: 'mobile.mobile-apps',
       type: 'link',
       path: '/mobile-center',
       icon: 'smartphone'
@@ -347,10 +358,10 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
     MenuId.settings,
     {
       id: MenuId.settings,
-      name: 'admin.settings',
+      name: 'admin.platform',
       type: 'link',
       path: '/settings',
-      icon: 'settings'
+      icon: 'miscellaneous_services'
     }
   ],
   [
@@ -773,8 +784,23 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
     Authority.SYS_ADMIN,
     [
       {id: MenuId.home},
-      {id: MenuId.tenants},
-      {id: MenuId.tenant_profiles},
+      {
+        id: MenuId.tenants_section,
+        pages: [
+          {id: MenuId.tenants},
+          {id: MenuId.tenant_profiles},
+        ]
+      },
+      {
+        id: MenuId.notifications_center,
+        pages: [
+          {id: MenuId.notification_inbox},
+          {id: MenuId.notification_sent},
+          {id: MenuId.notification_recipients},
+          {id: MenuId.notification_templates},
+          {id: MenuId.notification_rules}
+        ]
+      },
       {
         id: MenuId.resources,
         pages: [
@@ -792,33 +818,6 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
         ]
       },
       {
-        id: MenuId.notifications_center,
-        pages: [
-          {id: MenuId.notification_inbox},
-          {id: MenuId.notification_sent},
-          {id: MenuId.notification_recipients},
-          {id: MenuId.notification_templates},
-          {id: MenuId.notification_rules}
-        ]
-      },
-      {
-        id: MenuId.mobile_center,
-        pages: [
-          {id: MenuId.mobile_bundles},
-          {id: MenuId.mobile_apps},
-          {id: MenuId.mobile_qr_code_widget}
-        ]
-      },
-      {
-        id: MenuId.settings,
-        pages: [
-          {id: MenuId.general},
-          {id: MenuId.mail_server},
-          {id: MenuId.notification_settings},
-          {id: MenuId.queues}
-        ]
-      },
-      {
         id: MenuId.security_settings,
         pages: [
           {id: MenuId.security_settings_general},
@@ -831,6 +830,23 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
             ]
           },
           {id: MenuId.audit_log}
+        ]
+      },
+      {
+        id: MenuId.settings,
+        pages: [
+          {id: MenuId.general},
+          {id: MenuId.mail_server},
+          {id: MenuId.notification_settings},
+          {id: MenuId.queues}
+        ]
+      },
+      {
+        id: MenuId.mobile_center,
+        pages: [
+          {id: MenuId.mobile_bundles},
+          {id: MenuId.mobile_apps},
+          {id: MenuId.mobile_qr_code_widget}
         ]
       }
     ]

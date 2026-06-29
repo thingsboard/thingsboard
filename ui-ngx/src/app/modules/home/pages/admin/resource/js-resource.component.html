@@ -49,7 +49,7 @@
   <form [formGroup]="entityForm">
     <fieldset [disabled]="(isLoading$ | async) || !isEdit">
       <mat-form-field class="mat-block" appearance="outline">
-        <mat-label translate>javascript.javascript-type</mat-label>
+        <mat-label translate>javascript.script-type</mat-label>
         <mat-select formControlName="resourceSubType" required>
           @for (resourceSubType of jsResourceSubTypes; track resourceSubType) {
             <mat-option [value]="resourceSubType">

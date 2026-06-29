@@ -64,7 +64,13 @@ export class MenuToggleComponent {
 
   toggleSectionActive(): boolean {
     if (this.collapsed) {
-      return this.router.isActive(this.router.parseUrl(this.section.path), {paths: 'subset', queryParams: 'ignored', matrixParams: 'ignored', fragment: 'ignored'});
+      let active = this.router.isActive(this.router.parseUrl(this.section.path), {paths: 'subset', queryParams: 'ignored', matrixParams: 'ignored', fragment: 'ignored'});
+      if (!active) {
+        const found = this.section.pages.find(page =>
+          this.router.isActive(this.router.parseUrl(page.path), {paths: 'subset', queryParams: 'ignored', matrixParams: 'ignored', fragment: 'ignored'}));
+        active = !!found;
+      }
+      return active;
     } else {
       return false;
     }

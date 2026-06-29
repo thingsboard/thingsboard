@@ -100,6 +100,7 @@
     },
     "admin": {
         "settings": "Settings",
+        "platform": "Platform",
         "general": "General",
         "general-settings": "General Settings",
         "home-settings": "Home Settings",
@@ -3705,6 +3706,7 @@
         "browse-files": "Browse files"
     },
     "image": {
+        "images": "Images",
         "gallery": "Image gallery",
         "search": "Search image",
         "selected-images": "{ count, plural, =1 {1 image} other {# images} } selected",
@@ -4668,6 +4670,7 @@
         "min-version": "Min version",
         "invalid-version-pattern": "Invalid version format. Please use the format: major.minor.patch (e.g., 1.0.0).",
         "mobile-center": "Mobile center",
+        "mobile-apps": "Mobile apps",
         "mobile-package": "Application package",
         "mobile-package-max-length": "Application package should be less than 256",
         "mobile-package-required": "Application package is required.",
@@ -4899,6 +4902,7 @@
         "create-new-template": "Create a new one!",
         "not-found-slack-recipient": "Slack recipient not found",
         "notification": "Notification",
+        "notifications": "Notifications",
         "notification-center": "Notification center",
         "notification-tap-action": "Notification tap action",
         "notification-tap-action-hint": "If not enabled, the default alarm dashboard will be used",
@@ -5310,6 +5314,7 @@
         "resource-library-details": "Resource details",
         "resource-type": "Resource type",
         "resources-library": "Resources library",
+        "files": "Files",
         "search": "Search resources",
         "selected-resources": "{ count, plural, =1 {1 resource} other {# resources} } selected",
         "system": "System",
@@ -5352,6 +5357,8 @@
         "drop-resource-file-or": "Drag and drop a JavaScript file or",
         "javascript-library": "JavaScript library",
         "javascript-type": "JavaScript type",
+        "scripts": "Scripts",
+        "script-type": "Script type",
         "javascript-resource-details": "JavaScript resource details",
         "javascript-resource-is-in-use": "JavaScript resource is used by other entities",
         "javascript-resources-are-in-use": "JavaScript resources are used by other entities",
