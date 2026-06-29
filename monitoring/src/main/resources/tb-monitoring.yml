@@ -68,7 +68,7 @@ monitoring:
       # CoAP request timeout in milliseconds
       request_timeout_ms: '${COAP_REQUEST_TIMEOUT_MS:4000}'
       targets:
-          # CoAP transport base url, coap://DOMAIN by default (use coaps:// for DTLS). Specify a custom port, e.g. tcp://DOMAIN:5683
+          # CoAP transport base url, coap://DOMAIN by default (use coaps:// for DTLS). Specify a custom port, e.g. coap://DOMAIN:5683
         - base_url: '${COAP_TRANSPORT_BASE_URL:coap://${monitoring.domain}}'
           # Queue to use for target device
           queue: '${COAP_TRANSPORT_USED_QUEUE:Main}'
