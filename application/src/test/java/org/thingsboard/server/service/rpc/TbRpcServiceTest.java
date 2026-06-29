@@ -18,18 +18,22 @@ package org.thingsboard.server.service.rpc;
 import com.google.common.util.concurrent.Futures;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.RpcId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.rpc.Rpc;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.dao.rpc.RpcService;
 
+import java.util.List;
 import java.util.UUID;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -88,11 +92,41 @@ public class TbRpcServiceTest {
                 .pushMsgToRuleEngine(any(TenantId.class), any(DeviceId.class), any(TbMsg.class), isNull());
     }
 
+    @Test
+    public void sameRpcIdNotificationsRunInSubmissionOrderOnStripedExecutor() {
+        // Use several stripes so executorFor actually partitions. Both writes share an rpcId, so they
+        // must map to the same stripe and the rule-engine notifications must arrive in submission order
+        // (RPC_QUEUED before RPC_DELIVERED) - this is the ordering guarantee executorFor exists for.
+        tbRpcService = new TbRpcService(rpcService, clusterService, 3);
+
+        RpcId rpcId = new RpcId(UUID.randomUUID());
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+        Rpc queued = newRpc(rpcId, deviceId, RpcStatus.QUEUED);
+        Rpc delivered = newRpc(rpcId, deviceId, RpcStatus.DELIVERED);
+        when(rpcService.createAsync(queued)).thenReturn(Futures.immediateFuture(true));
+        when(rpcService.updateAsync(delivered)).thenReturn(Futures.immediateFuture(true));
+
+        tbRpcService.create(queued.getTenantId(), queued);
+        tbRpcService.update(delivered.getTenantId(), delivered);
+
+        ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        verify(clusterService, timeout(5000).times(2))
+                .pushMsgToRuleEngine(eq(TenantId.SYS_TENANT_ID), eq(deviceId), msgCaptor.capture(), isNull());
+
+        List<TbMsg> msgs = msgCaptor.getAllValues();
+        assertEquals(TbMsgType.RPC_QUEUED, msgs.get(0).getInternalType());
+        assertEquals(TbMsgType.RPC_DELIVERED, msgs.get(1).getInternalType());
+    }
+
     private Rpc newRpc() {
-        Rpc rpc = new Rpc(new RpcId(UUID.randomUUID()));
+        return newRpc(new RpcId(UUID.randomUUID()), new DeviceId(UUID.randomUUID()), RpcStatus.QUEUED);
+    }
+
+    private Rpc newRpc(RpcId rpcId, DeviceId deviceId, RpcStatus status) {
+        Rpc rpc = new Rpc(rpcId);
         rpc.setTenantId(TenantId.SYS_TENANT_ID);
-        rpc.setDeviceId(new DeviceId(UUID.randomUUID()));
-        rpc.setStatus(RpcStatus.QUEUED);
+        rpc.setDeviceId(deviceId);
+        rpc.setStatus(status);
         rpc.setRequest(JacksonUtil.toJsonNode("{}"));
         return rpc;
     }

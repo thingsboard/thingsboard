@@ -25,6 +25,9 @@ import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequestActorMsg;
 public class ToDeviceRpcRequestMetadata {
     private final ToDeviceRpcRequestActorMsg msg;
     private final boolean sent;
+    // Creation time of the persisted RPC row, captured once at create so post-persist rule-engine
+    // notifications on the update paths carry the original createdTime instead of the update moment.
+    private final long createdTime;
     private int retries;
     private boolean delivered;
 }

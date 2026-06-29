@@ -429,7 +429,7 @@ sql:
     batch_max_delay: "${SQL_RPC_BATCH_MAX_DELAY_MS:50}" # Max timeout for RPC entries queue polling, in milliseconds
     stats_print_interval_ms: "${SQL_RPC_BATCH_STATS_PRINT_MS:10000}" # Interval in milliseconds for printing RPC persistence statistic
     batch_threads: "${SQL_RPC_BATCH_THREADS:3}" # number of queue partitions for batched RPC persistence; writes for a given RPC always map to the same partition (by rpcId hash) so they persist in submission order. A prime value (e.g. 3 or 5) keeps the hash distribution even
-    callback_threads: "${SQL_RPC_CALLBACK_THREADS:3}" # striped threads for post-persist rule-engine notifications; each rpcId maps to a single stripe, preserving per-command notification order. A prime value (e.g. 3 or 5) keeps the hash distribution even
+    callback_threads: "${SQL_RPC_CALLBACK_THREADS:3}" # striped threads for post-persist rule-engine notifications; each rpcId maps to a single stripe, preserving per-command notification order (e.g. RPC_QUEUED before RPC_DELIVERED). Independent of batch_threads above: that pool partitions DB writes, this one partitions notifications, and each stripes by rpcId on its own - so the two can be sized independently without affecting ordering. A prime value (e.g. 3 or 5) keeps the hash distribution even
   events:
     batch_size: "${SQL_EVENTS_BATCH_SIZE:10000}" # Batch size for persisting latest telemetry updates
     batch_max_delay: "${SQL_EVENTS_BATCH_MAX_DELAY_MS:100}" # Max timeout for latest telemetry entries queue polling. The value set in milliseconds
