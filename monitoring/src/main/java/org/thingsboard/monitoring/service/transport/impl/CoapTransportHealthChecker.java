@@ -121,7 +121,7 @@ public class CoapTransportHealthChecker extends TransportHealthChecker<CoapTrans
 
         @Override
         public List<CipherSuite.CertificateKeyAlgorithm> getSupportedCertificateKeyAlgorithms() {
-            return Collections.singletonList(CipherSuite.CertificateKeyAlgorithm.EC);
+            return Arrays.asList(CipherSuite.CertificateKeyAlgorithm.EC, CipherSuite.CertificateKeyAlgorithm.RSA);
         }
 
         @Override
