@@ -157,7 +157,7 @@
       <button mat-button [disabled]="resolvingPlan" (click)="cancel()">{{ 'action.cancel' | translate }}</button>
       <button mat-flat-button color="primary" [disabled]="resolvingPlan" (click)="install()">
         @if (resolvingPlan) {
-          <mat-spinner diameter="18" class="mr-2 inline-block align-middle"></mat-spinner>
+          <mat-spinner matButtonIcon diameter="18" class="mr-2"></mat-spinner>
         }
         {{ 'iot-hub.install' | translate }}
       </button>
@@ -169,7 +169,7 @@
                 [disabled]="ruleChainInstallForm.invalid || resolvingPlan"
                 (click)="onRuleChainInstall()">
           @if (resolvingPlan) {
-            <mat-spinner diameter="18" class="mr-2 inline-block align-middle"></mat-spinner>
+            <mat-spinner matButtonIcon diameter="18" class="mr-2"></mat-spinner>
           }
           {{ 'iot-hub.install' | translate }}
         </button>
@@ -178,7 +178,7 @@
                 [disabled]="(activeSelectEntityConfig.required && !selectedEntityId) || resolvingPlan"
                 (click)="onEntitySelectInstall()">
           @if (resolvingPlan) {
-            <mat-spinner diameter="18" class="mr-2 inline-block align-middle"></mat-spinner>
+            <mat-spinner matButtonIcon diameter="18" class="mr-2"></mat-spinner>
           }
           {{ 'iot-hub.install' | translate }}
         </button>
@@ -188,7 +188,7 @@
       <button mat-button [disabled]="resolvingPlan" (click)="confirmOverwriteCancel()">{{ 'action.cancel' | translate }}</button>
       <button mat-flat-button color="primary" [disabled]="resolvingPlan" (click)="confirmOverwriteReplace()">
         @if (resolvingPlan) {
-          <mat-spinner diameter="18" class="mr-2 inline-block align-middle"></mat-spinner>
+          <mat-spinner matButtonIcon diameter="18" class="mr-2"></mat-spinner>
         }
         {{ 'iot-hub.rule-chain-overwrite-replace' | translate }}
       </button>
@@ -204,7 +204,7 @@
     @case ('installing') {
       <button mat-button disabled>{{ 'action.cancel' | translate }}</button>
       <button mat-flat-button color="primary" disabled>
-        <mat-spinner diameter="18" class="mr-2 inline-block align-middle"></mat-spinner>
+        <mat-spinner matButtonIcon diameter="18" class="mr-2"></mat-spinner>
         {{ 'iot-hub.installing' | translate }}
       </button>
     }

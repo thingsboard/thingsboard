@@ -381,7 +381,6 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
 
   updateItem(item: MpItemVersionView): void {
     const installedItem = this.findInstalledItem(item);
-    if (!installedItem) { return; }
     this.iotHubActions.updateItem(installedItem, item.version, item.id as string).subscribe(result => {
       if (result === 'updated') {
         this.reloadInstalledItems(item.type);
@@ -404,20 +403,22 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
   deleteInstalledItem(item: MpItemVersionView): void {
     const installedItem = this.findInstalledItem(item);
     if (!installedItem) { return; }
-    this.iotHubActions.deleteItem(installedItem).subscribe(() => {
-      this.installedItemsCount = Math.max(0, this.installedItemsCount - 1);
-      if (item.type === ItemType.WIDGET) {
-        this.installedWidgets = this.installedWidgets.filter(i => i.id.id !== installedItem.id.id);
-      } else if (item.type === ItemType.SOLUTION_TEMPLATE) {
-        this.installedSolutionTemplates = this.installedSolutionTemplates.filter(i => i.id.id !== installedItem.id.id);
-      } else if (item.type === ItemType.DEVICE && this.installedDeviceCounts[item.itemId]) {
-        this.installedDeviceCounts[item.itemId] = Math.max(0, this.installedDeviceCounts[item.itemId] - 1);
-      } else if (item.type === ItemType.CALCULATED_FIELD && this.installedCalcFieldCounts[item.itemId]) {
-        this.installedCalcFieldCounts[item.itemId] = Math.max(0, this.installedCalcFieldCounts[item.itemId] - 1);
-      } else if (item.type === ItemType.ALARM_RULE && this.installedAlarmRuleCounts[item.itemId]) {
-        this.installedAlarmRuleCounts[item.itemId] = Math.max(0, this.installedAlarmRuleCounts[item.itemId] - 1);
-      } else if (item.type === ItemType.RULE_CHAIN && this.installedRuleChainCounts[item.itemId]) {
-        this.installedRuleChainCounts[item.itemId] = Math.max(0, this.installedRuleChainCounts[item.itemId] - 1);
+    this.iotHubActions.deleteItem(installedItem).subscribe((deleted) => {
+      if (deleted) {
+        this.installedItemsCount = Math.max(0, this.installedItemsCount - 1);
+        if (item.type === ItemType.WIDGET) {
+          this.installedWidgets = this.installedWidgets.filter(i => i.id.id !== installedItem.id.id);
+        } else if (item.type === ItemType.SOLUTION_TEMPLATE) {
+          this.installedSolutionTemplates = this.installedSolutionTemplates.filter(i => i.id.id !== installedItem.id.id);
+        } else if (item.type === ItemType.DEVICE && this.installedDeviceCounts[item.itemId]) {
+          this.installedDeviceCounts[item.itemId] = Math.max(0, this.installedDeviceCounts[item.itemId] - 1);
+        } else if (item.type === ItemType.CALCULATED_FIELD && this.installedCalcFieldCounts[item.itemId]) {
+          this.installedCalcFieldCounts[item.itemId] = Math.max(0, this.installedCalcFieldCounts[item.itemId] - 1);
+        } else if (item.type === ItemType.ALARM_RULE && this.installedAlarmRuleCounts[item.itemId]) {
+          this.installedAlarmRuleCounts[item.itemId] = Math.max(0, this.installedAlarmRuleCounts[item.itemId] - 1);
+        } else if (item.type === ItemType.RULE_CHAIN && this.installedRuleChainCounts[item.itemId]) {
+          this.installedRuleChainCounts[item.itemId] = Math.max(0, this.installedRuleChainCounts[item.itemId] - 1);
+        }
       }
     });
   }

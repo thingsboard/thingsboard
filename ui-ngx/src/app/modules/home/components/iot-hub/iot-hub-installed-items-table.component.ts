@@ -156,8 +156,8 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
   }
 
   deleteItem(item: IotHubInstalledItem): void {
-    this.iotHubActions.deleteItem(item).subscribe(confirmed => {
-      if (confirmed) {
+    this.iotHubActions.deleteItem(item).subscribe(deleted => {
+      if (deleted) {
         this.loadData();
       }
     });

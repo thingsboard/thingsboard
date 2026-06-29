@@ -96,7 +96,7 @@
         </div>
       } @else {
         <!-- Widget/Dashboard/Solution: image + description side by side -->
-        <div class="flex gap-6">
+        <div class="flex gap-6 lt-md:flex-col">
           <div class="dlg-preview"
                [class.dlg-preview-carousel]="item.type === ItemType.SOLUTION_TEMPLATE && carouselImages.length > 1">
             @if (item.type === ItemType.SOLUTION_TEMPLATE && carouselImages.length > 1) {

@@ -142,21 +142,24 @@ export class CfAlarmRuleConditionComponent implements ControlValueAccessor, Vali
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes.arguments) {
-      if (changes.arguments && !changes.arguments.firstChange) {
-        this.recalculateArgumentValidity();
+    if (changes.arguments && !changes.arguments.firstChange) {
+      if (this.recalculateArgumentValidity()) {
+        this.onValidatorChange();
       }
     }
   }
 
-  private recalculateArgumentValidity(): void {
+  private recalculateArgumentValidity(): boolean {
+    const prevFiltersValid = this.filtersArgumentsValid;
+    const prevSchedulerValid = this.schedulerArgumentsValid;
     if (!this.modelValue || !this.arguments) {
       this.filtersArgumentsValid = true;
       this.schedulerArgumentsValid = true;
-      return;
+    } else {
+      this.filtersArgumentsValid = this.areFilterAndPredicateArgumentsValid(this.modelValue, this.arguments);
+      this.schedulerArgumentsValid = this.isScheduleArgumentValid(this.modelValue, Object.keys(this.arguments));
     }
-    this.filtersArgumentsValid = this.areFilterAndPredicateArgumentsValid(this.modelValue, this.arguments);
-    this.schedulerArgumentsValid = this.isScheduleArgumentValid(this.modelValue, Object.keys(this.arguments));
+    return prevFiltersValid !== this.filtersArgumentsValid || prevSchedulerValid !== this.schedulerArgumentsValid;
   }
 
   private isScheduleArgumentValid(obj: any, validArguments: string[]): boolean {
