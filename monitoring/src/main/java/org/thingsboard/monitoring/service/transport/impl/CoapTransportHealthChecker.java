@@ -62,6 +62,7 @@ public class CoapTransportHealthChecker extends TransportHealthChecker<CoapTrans
     }
 
     private CoapClient coapClient;
+    private CoapEndpoint coapEndpoint;
 
     protected CoapTransportHealthChecker(CoapTransportMonitoringConfig config, TransportMonitoringTarget target) {
         super(config, target);
@@ -88,7 +89,8 @@ public class CoapTransportHealthChecker extends TransportHealthChecker<CoapTrans
             dtlsConfigBuilder.setAdvancedCertificateVerifier(
                     StaticNewAdvancedCertificateVerifier.builder().setTrustAllCertificates().build());
 
-            coapClient.setEndpoint(new CoapEndpoint.Builder().setConnector(new DTLSConnector(dtlsConfigBuilder.build())).build());
+            coapEndpoint = new CoapEndpoint.Builder().setConnector(new DTLSConnector(dtlsConfigBuilder.build())).build();
+            coapClient.setEndpoint(coapEndpoint);
         }
         coapClient.setTimeout((long) config.getRequestTimeoutMs());
         log.debug("Connecting {} client to {}", getTransportType(), target.getBaseUrl());
@@ -104,11 +106,24 @@ public class CoapTransportHealthChecker extends TransportHealthChecker<CoapTrans
     }
 
     @Override
-    protected void destroyClient() throws Exception {
+    protected void destroyClient() {
         if (coapClient != null) {
-            coapClient.shutdown();
-            coapClient = null;
-            log.debug("Disconnected {} client", getTransportType());
+            try {
+                coapClient.shutdown();
+            } catch (Exception e) {
+                log.warn("Failed to shutdown CoAP client: {}", e.getMessage());
+            } finally {
+                if (coapEndpoint != null) {
+                    try {
+                        coapEndpoint.destroy();
+                    } catch (Exception e) {
+                        log.warn("Failed to destroy CoAP endpoint: {}", e.getMessage());
+                    }
+                    coapEndpoint = null;
+                }
+                coapClient = null;
+                log.debug("Disconnected {} client", getTransportType());
+            }
         }
     }
 
