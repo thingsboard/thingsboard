@@ -62,7 +62,7 @@
         <pkg.implementationTitle>${project.name}</pkg.implementationTitle>
         <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
-        <thingsboard.client.version>4.3.1.2</thingsboard.client.version>
+        <thingsboard.client.version>4.3.1.3</thingsboard.client.version>
         <spring-boot.version>3.5.15</spring-boot.version>
         <!-- Pins spring-boot-test to 3.5.13: the ImportsContextCustomizer change in 3.5.14 causes "Duplicate spy
              definition" failures on legacy @SpyBean fields (see PR #15557). Spring declined to restore the prior
