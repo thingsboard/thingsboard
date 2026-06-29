@@ -32,12 +32,16 @@ import org.thingsboard.server.dao.rpc.RpcService;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.after;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -93,10 +97,9 @@ public class TbRpcServiceTest {
     }
 
     @Test
-    public void sameRpcIdNotificationsRunInSubmissionOrderOnStripedExecutor() {
-        // Use several stripes so executorFor actually partitions. Both writes share an rpcId, so they
-        // must map to the same stripe and the rule-engine notifications must arrive in submission order
-        // (RPC_QUEUED before RPC_DELIVERED) - this is the ordering guarantee executorFor exists for.
+    public void sameRpcIdNotificationsRunInSubmissionOrderOnStripedExecutor() throws InterruptedException {
+        // The count is incidental here: a single rpcId always maps to one stripe. What the test really
+        // checks is that two notifications for the SAME rpcId are serialized on that one stripe.
         tbRpcService = new TbRpcService(rpcService, clusterService, 3);
 
         RpcId rpcId = new RpcId(UUID.randomUUID());
@@ -106,7 +109,23 @@ public class TbRpcServiceTest {
         when(rpcService.createAsync(queued)).thenReturn(Futures.immediateFuture(true));
         when(rpcService.updateAsync(delivered)).thenReturn(Futures.immediateFuture(true));
 
+        // Make the QUEUED notification block while it runs: it signals that it has started, then sleeps -
+        // holding the stripe. If the two callbacks for this rpcId were NOT serialized on one stripe, the
+        // fast DELIVERED callback would overtake the sleeping QUEUED one and be recorded first.
+        CountDownLatch queuedStarted = new CountDownLatch(1);
+        doAnswer(invocation -> {
+            TbMsg msg = invocation.getArgument(2);
+            if (msg.getInternalType() == TbMsgType.RPC_QUEUED) {
+                queuedStarted.countDown();
+                Thread.sleep(300);
+            }
+            return null;
+        }).when(clusterService).pushMsgToRuleEngine(eq(TenantId.SYS_TENANT_ID), eq(deviceId), any(TbMsg.class), isNull());
+
         tbRpcService.create(queued.getTenantId(), queued);
+        // Don't submit DELIVERED until QUEUED is actually in flight (and now sleeping) on the stripe -
+        // this makes the test about stripe serialization, not about submission timing.
+        assertTrue(queuedStarted.await(5, TimeUnit.SECONDS));
         tbRpcService.update(delivered.getTenantId(), delivered);
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
