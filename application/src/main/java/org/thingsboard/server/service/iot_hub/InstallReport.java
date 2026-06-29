@@ -13,14 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.solutions.data.definition;
+package org.thingsboard.server.service.iot_hub;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import org.thingsboard.server.common.data.cf.CalculatedField;
-
-@Data
-@EqualsAndHashCode(callSuper = true)
-public class CalculatedFieldDefinition extends CalculatedField {
-
+public record InstallReport(String tenantHash, String userHash, String tbVersion, String edition) {
 }
