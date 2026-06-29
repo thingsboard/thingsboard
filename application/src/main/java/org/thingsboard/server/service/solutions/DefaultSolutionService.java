@@ -393,11 +393,11 @@ public class DefaultSolutionService implements SolutionService {
 
             provisionAlarmRules(ctx);
 
+            provisionCalculatedFields(ctx);
+
             Set<CompletableFuture<Void>> telemetryLoading = launchEmulators(ctx, devices, assets);
 
             waitForTelemetryCompletion(telemetryLoading);
-
-            provisionCalculatedFields(ctx);
 
             ctx.getSolutionInstructions().setDetails(prepareInstructions(ctx, request));
 
@@ -1297,27 +1297,7 @@ public class DefaultSolutionService implements SolutionService {
         List<CalculatedFieldDefinition> cfs = loadListOfEntitiesIfFileExists(ctx.getTempDir(), "calculated_fields.json", new TypeReference<>() {
         });
         cfs.addAll(loadListOfEntitiesFromDirectory(ctx.getTempDir(), "calculated_fields", CalculatedFieldDefinition.class));
-
-        List<CalculatedFieldDefinition> createOnly = new ArrayList<>();
-        TreeMap<Integer, List<CalculatedFieldDefinition>> ordered = new TreeMap<>();
-
-        for (CalculatedFieldDefinition cf : cfs) {
-            if (cf.getReprocessingOrder() == null || cf.getReprocessingOrder() < 0) {
-                createOnly.add(cf);
-            } else {
-                ordered.computeIfAbsent(cf.getReprocessingOrder(), integer -> new ArrayList<>()).add(cf);
-            }
-        }
-
-        createOnly.forEach(cf -> ctx.register(createCalculatedField(cf, ctx)));
-
-        for (Map.Entry<Integer, List<CalculatedFieldDefinition>> entry : ordered.entrySet()) {
-            List<CalculatedFieldDefinition> cfDefs = entry.getValue();
-            for (CalculatedFieldDefinition cfDef : cfDefs) {
-                CalculatedField calculatedField = createCalculatedField(cfDef, ctx);
-                ctx.register(calculatedField);
-            }
-        }
+        cfs.forEach(cf -> ctx.register(createCalculatedField(cf, ctx)));
     }
 
     private CalculatedField createCalculatedField(CalculatedField cf, SolutionInstallContext ctx) {
