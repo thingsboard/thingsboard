@@ -72,6 +72,7 @@ export enum MenuId {
   mobile_apps = 'mobile_apps',
   mobile_bundles = 'mobile_bundles',
   mobile_qr_code_widget = 'mobile_qr_code_widget',
+  platform = 'platform',
   settings = 'settings',
   general = 'general',
   mail_server = 'mail_server',
@@ -355,13 +356,23 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
     }
   ],
   [
-    MenuId.settings,
+    MenuId.platform,
     {
-      id: MenuId.settings,
+      id: MenuId.platform,
       name: 'admin.platform',
       type: 'link',
       path: '/settings',
       icon: 'miscellaneous_services'
+    }
+  ],
+  [
+    MenuId.settings,
+    {
+      id: MenuId.settings,
+      name: 'admin.settings',
+      type: 'link',
+      path: '/settings',
+      icon: 'settings'
     }
   ],
   [
@@ -833,7 +844,7 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
         ]
       },
       {
-        id: MenuId.settings,
+        id: MenuId.platform,
         pages: [
           {id: MenuId.general},
           {id: MenuId.mail_server},
