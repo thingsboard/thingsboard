@@ -28,9 +28,8 @@ public class ProjectInfo {
     private final Optional<BuildProperties> buildProperties;
 
     public String getProjectVersion() {
-//        return buildProperties.orElseThrow(() -> new IllegalStateException("Build properties are missing. Please rebuild the project with maven"))
-//                .getVersion().replaceAll("[^\\d.]", "");
-        return "4.2.2.3";
+        return buildProperties.orElseThrow(() -> new IllegalStateException("Build properties are missing. Please rebuild the project with maven"))
+                .getVersion().replaceAll("[^\\d.]", "");
     }
 
     public String getProductType() {
