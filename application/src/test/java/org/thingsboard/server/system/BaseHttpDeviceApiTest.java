@@ -16,6 +16,7 @@
 package org.thingsboard.server.system;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.awaitility.Awaitility;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.context.TestPropertySource;
@@ -26,9 +27,11 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.controller.AbstractControllerTest;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -84,13 +87,21 @@ public abstract class BaseHttpDeviceApiTest extends AbstractControllerTest {
         mockMvc.perform(
                         asyncDispatch(doPost("/api/v1/" + token + "/attributes", clientAttrs, new String[]{}).andReturn()))
                 .andExpect(status().isOk());
-        Thread.sleep(2000);
-        String body = doGetAsync("/api/v1/" + token + "/attributes?allClientKeys=true")
+        String allClientKeysUrl = "/api/v1/" + token + "/attributes?allClientKeys=true";
+        Awaitility.await("client attributes are persisted and returned via allClientKeys=true")
+                .atMost(30, TimeUnit.SECONDS)
+                .pollInterval(Duration.ofMillis(100))
+                .ignoreExceptions()
+                .until(() -> {
+                    JsonNode r = JacksonUtil.toJsonNode(doGetAsync(allClientKeysUrl).andReturn().getResponse().getContentAsString());
+                    return r.has("client") && clientAttrs.keySet().stream().allMatch(r.get("client")::has);
+                });
+        String body = doGetAsync(allClientKeysUrl)
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
         JsonNode resp = JacksonUtil.toJsonNode(body);
         assertThat(resp.has("client")).isTrue();
-        assertThat(resp.get("client").get("clientA").asText()).isEqualTo("valueA");
-        assertThat(resp.get("client").get("clientB").asText()).isEqualTo("valueB");
+        JsonNode client = resp.get("client");
+        clientAttrs.forEach((key, value) -> assertThat(client.get(key).asText()).isEqualTo(value));
         assertThat(resp.has("shared")).isFalse();
     }
 

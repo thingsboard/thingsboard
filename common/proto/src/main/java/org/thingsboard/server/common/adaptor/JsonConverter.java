@@ -354,7 +354,6 @@ public class JsonConverter {
         return result;
     }
 
-    @SuppressWarnings("deprecation") // isMultipleAttributesRequest retained for the legacy gateway value/values response
     public static JsonObject getJsonObjectForGateway(
             String deviceName,
             TransportProtos.GetAttributeResponseMsg responseMsg
@@ -363,25 +362,22 @@ public class JsonConverter {
         result.addProperty("id", responseMsg.getRequestId());
         result.addProperty(DEVICE_PROPERTY, deviceName);
         if (responseMsg.getSeparateScopesResponse()) {
-            if (responseMsg.getClientAttributeListCount() > 0) {
-                JsonObject client = new JsonObject();
-                responseMsg.getClientAttributeListList().forEach(addToObjectFromProto(client));
-                result.add("client", client);
-            }
-            if (responseMsg.getSharedAttributeListCount() > 0) {
-                JsonObject shared = new JsonObject();
-                responseMsg.getSharedAttributeListList().forEach(addToObjectFromProto(shared));
-                result.add("shared", shared);
-            }
+            // Reuse the device-side scope-separated assembly so both responses stay identical in shape.
+            toJson(responseMsg).entrySet().forEach(entry -> result.add(entry.getKey(), entry.getValue()));
         } else {
-            if (responseMsg.getClientAttributeListCount() > 0) {
-                addValues(result, responseMsg.getClientAttributeListList(), responseMsg.getIsMultipleAttributesRequest());
-            }
-            if (responseMsg.getSharedAttributeListCount() > 0) {
-                addValues(result, responseMsg.getSharedAttributeListList(), responseMsg.getIsMultipleAttributesRequest());
-            }
+            addLegacyGatewayValues(result, responseMsg);
         }
         return result;
+    }
+
+    @SuppressWarnings("deprecation") // isMultipleAttributesRequest retained for the legacy gateway value/values response
+    private static void addLegacyGatewayValues(JsonObject result, TransportProtos.GetAttributeResponseMsg responseMsg) {
+        if (responseMsg.getClientAttributeListCount() > 0) {
+            addValues(result, responseMsg.getClientAttributeListList(), responseMsg.getIsMultipleAttributesRequest());
+        }
+        if (responseMsg.getSharedAttributeListCount() > 0) {
+            addValues(result, responseMsg.getSharedAttributeListList(), responseMsg.getIsMultipleAttributesRequest());
+        }
     }
 
     public static JsonObject getJsonObjectForGateway(String deviceName, AttributeUpdateNotificationMsg

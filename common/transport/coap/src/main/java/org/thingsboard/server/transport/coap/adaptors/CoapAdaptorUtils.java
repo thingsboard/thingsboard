@@ -51,24 +51,20 @@ public class CoapAdaptorUtils {
     }
 
     private static String getQueryValue(List<String> queryElements, String name) {
+        // Keep the last matching occurrence to preserve the original toKeys() behavior.
+        String value = null;
         for (String queryElement : queryElements) {
             String[] queryItem = queryElement.split("=");
             if (queryItem.length == 2 && queryItem[0].equals(name)) {
-                return queryItem[1];
+                value = queryItem[1];
             }
         }
-        return null;
+        return value;
     }
 
-    private static Set<String> toKeys(List<String> queryElements, String attributeName) throws AdaptorException {
-        String keys = null;
-        for (String queryElement : queryElements) {
-            String[] queryItem = queryElement.split("=");
-            if (queryItem.length == 2 && queryItem[0].equals(attributeName)) {
-                keys = queryItem[1];
-            }
-        }
-        if (keys != null && !StringUtils.isEmpty(keys)) {
+    private static Set<String> toKeys(List<String> queryElements, String attributeName) {
+        String keys = getQueryValue(queryElements, attributeName);
+        if (!StringUtils.isEmpty(keys)) {
             return new HashSet<>(Arrays.asList(keys.split(",")));
         } else {
             return null;

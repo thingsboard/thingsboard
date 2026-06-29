@@ -658,8 +658,8 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
             // new unified format: clientKeys/sharedKeys + empty-value="all"; emit the separated response
             TransportProtos.GetAttributeRequestMsg.Builder b = TransportProtos.GetAttributeRequestMsg.newBuilder()
                     .setRequestId(requestId).setSeparateScopesResponse(true);
-            parseGatewayScope(jsonObj, "clientKeys", b::addAllClientAttributeNames, () -> b.setAllClientAttributes(true));
-            parseGatewayScope(jsonObj, "sharedKeys", b::addAllSharedAttributeNames, () -> b.setAllSharedAttributes(true));
+            JsonMqttAdaptor.parseAttributeScope(jsonObj, "clientKeys", b::addAllClientAttributeNames, () -> b.setAllClientAttributes(true));
+            JsonMqttAdaptor.parseAttributeScope(jsonObj, "sharedKeys", b::addAllSharedAttributeNames, () -> b.setAllSharedAttributes(true));
             requestMsg = b.build();
         } else if (jsonObj.has("client")) {
             // legacy format: client boolean + key/keys; keep the legacy value/values response
@@ -681,33 +681,6 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
                     .setRequestId(requestId).setSeparateScopesResponse(true).build();
         }
         processGetAttributeRequestMessage(msg, deviceName, requestMsg);
-    }
-
-    // Three-state per scope, accepting a comma-string or a JSON array; empty/absent value => all in scope.
-    private static void parseGatewayScope(JsonObject json, String field,
-                                          Consumer<List<String>> setNames, Runnable setAll) {
-        if (!json.has(field) || json.get(field).isJsonNull()) {
-            return;
-        }
-        JsonElement el = json.get(field);
-        List<String> names = new ArrayList<>();
-        if (el.isJsonArray()) {
-            for (JsonElement e : el.getAsJsonArray()) {
-                names.add(e.getAsString());
-            }
-        } else {
-            String v = el.getAsString();
-            if (v.trim().isEmpty()) {
-                setAll.run();
-                return;
-            }
-            names.addAll(java.util.Arrays.asList(v.split(",")));
-        }
-        if (names.isEmpty()) {
-            setAll.run();
-        } else {
-            setNames.accept(names);
-        }
     }
 
     private void onDeviceAttributesRequestProto(MqttPublishMessage mqttMsg) throws AdaptorException {
@@ -733,14 +706,19 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
                 }
                 requestMsg = b.build();
             } else {
-                boolean clientScope = gw.getClient();
-                Set<String> keys = new HashSet<>(gw.getKeysList());
-                requestMsg = toGetAttributeRequestMsg(requestId, clientScope, keys);
+                requestMsg = toLegacyGatewayRequestMsg(requestId, gw);
             }
             processGetAttributeRequestMessage(mqttMsg, deviceName, requestMsg);
         } catch (RuntimeException | InvalidProtocolBufferException e) {
             throw new AdaptorException(e);
         }
+    }
+
+    @SuppressWarnings("deprecation") // gw.getClient()/getKeysList() retained for the legacy single-scope gateway request
+    private TransportProtos.GetAttributeRequestMsg toLegacyGatewayRequestMsg(int requestId, TransportApiProtos.GatewayAttributesRequestMsg gw) {
+        boolean clientScope = gw.getClient();
+        Set<String> keys = new HashSet<>(gw.getKeysList());
+        return toGetAttributeRequestMsg(requestId, clientScope, keys);
     }
 
     private void onDeviceRpcResponseJson(int msgId, ByteBuf payload) throws AdaptorException {

@@ -37,9 +37,12 @@ import org.thingsboard.server.transport.mqtt.session.MqttDeviceAwareSessionConte
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_SOFTWARE_FIRMWARE_RESPONSES_TOPIC_FORMAT;
 
@@ -175,8 +178,8 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
             result.setRequestId(getRequestId(topicName, topicBase));
             String payload = inbound.payload().toString(UTF8);
             JsonObject json = JsonParser.parseString(payload).getAsJsonObject();
-            parseAttrScope(json, "clientKeys", result::addAllClientAttributeNames, () -> result.setAllClientAttributes(true));
-            parseAttrScope(json, "sharedKeys", result::addAllSharedAttributeNames, () -> result.setAllSharedAttributes(true));
+            parseAttributeScope(json, "clientKeys", result::addAllClientAttributeNames, () -> result.setAllClientAttributes(true));
+            parseAttributeScope(json, "sharedKeys", result::addAllSharedAttributeNames, () -> result.setAllSharedAttributes(true));
             return result.build();
         } catch (RuntimeException e) {
             log.debug("Failed to decode get attributes request", e);
@@ -240,18 +243,37 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
         return new MqttPublishMessage(mqttFixedHeader, header, payload);
     }
 
-    // Three-state per scope: field absent => exclude; present + empty value => all in scope; present + list => those keys.
-    private static void parseAttrScope(JsonObject json, String field,
-                                       java.util.function.Consumer<java.util.List<String>> setNames,
-                                       Runnable setAll) {
+    /**
+     * Three-state per-scope attribute selection shared by the device and gateway JSON request parsers:
+     * <ul>
+     *     <li>field absent / null  =&gt; the scope is excluded (neither names nor "all" is set);</li>
+     *     <li>field present + empty value (empty string or empty array) =&gt; every key in that scope ({@code setAll});</li>
+     *     <li>field present + a comma-separated string or a JSON array of names =&gt; only those keys ({@code setNames}).</li>
+     * </ul>
+     */
+    public static void parseAttributeScope(JsonObject json, String field,
+                                           Consumer<List<String>> setNames, Runnable setAll) {
         if (!json.has(field) || json.get(field).isJsonNull()) {
             return;
         }
-        String value = json.get(field).getAsString();
-        if (value.trim().isEmpty()) {
+        JsonElement element = json.get(field);
+        List<String> names = new ArrayList<>();
+        if (element.isJsonArray()) {
+            for (JsonElement e : element.getAsJsonArray()) {
+                names.add(e.getAsString());
+            }
+        } else {
+            String value = element.getAsString();
+            if (value.trim().isEmpty()) {
+                setAll.run();
+                return;
+            }
+            names.addAll(Arrays.asList(value.split(",")));
+        }
+        if (names.isEmpty()) {
             setAll.run();
         } else {
-            setNames.accept(Arrays.asList(value.split(",")));
+            setNames.accept(names);
         }
     }
 

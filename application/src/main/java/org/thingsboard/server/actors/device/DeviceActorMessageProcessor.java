@@ -518,20 +518,18 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         systemContext.getDeviceStateService().onDeviceDisconnect(tenantId, deviceId);
     }
 
-    @SuppressWarnings("deprecation") // isMultipleAttributesRequest retained for the legacy gateway value/values response
     private void handleGetAttributesRequest(SessionInfoProto sessionInfo, GetAttributeRequestMsg request) {
         int requestId = request.getRequestId();
         if (request.getOnlyShared()) {
             Futures.addCallback(findAllAttributesByScope(AttributeScope.SHARED_SCOPE), new FutureCallback<>() {
                 @Override
                 public void onSuccess(@Nullable List<AttributeKvEntry> result) {
-                    GetAttributeResponseMsg responseMsg = GetAttributeResponseMsg.newBuilder()
+                    GetAttributeResponseMsg.Builder builder = GetAttributeResponseMsg.newBuilder()
                             .setRequestId(requestId)
                             .setSharedStateMsg(true)
-                            .addAllSharedAttributeList(KvProtoUtil.attrToTsKvProtos(result))
-                            .setIsMultipleAttributesRequest(request.getSharedAttributeNamesCount() > 1)
-                            .build();
-                    sendToTransport(responseMsg, sessionInfo);
+                            .addAllSharedAttributeList(KvProtoUtil.attrToTsKvProtos(result));
+                    setMultipleAttributesRequest(builder, request.getSharedAttributeNamesCount() > 1);
+                    sendToTransport(builder.build(), sessionInfo);
                 }
 
                 @Override
@@ -547,15 +545,14 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
             Futures.addCallback(getAttributesKvEntries(request), new FutureCallback<>() {
                 @Override
                 public void onSuccess(@Nullable List<List<AttributeKvEntry>> result) {
-                    GetAttributeResponseMsg responseMsg = GetAttributeResponseMsg.newBuilder()
+                    GetAttributeResponseMsg.Builder builder = GetAttributeResponseMsg.newBuilder()
                             .setRequestId(requestId)
                             .setSeparateScopesResponse(request.getSeparateScopesResponse())
                             .addAllClientAttributeList(KvProtoUtil.attrToTsKvProtos(result.get(0)))
-                            .addAllSharedAttributeList(KvProtoUtil.attrToTsKvProtos(result.get(1)))
-                            .setIsMultipleAttributesRequest(
-                                    request.getSharedAttributeNamesCount() + request.getClientAttributeNamesCount() > 1)
-                            .build();
-                    sendToTransport(responseMsg, sessionInfo);
+                            .addAllSharedAttributeList(KvProtoUtil.attrToTsKvProtos(result.get(1)));
+                    setMultipleAttributesRequest(builder,
+                            request.getSharedAttributeNamesCount() + request.getClientAttributeNamesCount() > 1);
+                    sendToTransport(builder.build(), sessionInfo);
                 }
 
                 @Override
@@ -567,6 +564,11 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
                 }
             }, MoreExecutors.directExecutor());
         }
+    }
+
+    @SuppressWarnings("deprecation") // isMultipleAttributesRequest retained for the legacy gateway value/values response
+    private static void setMultipleAttributesRequest(GetAttributeResponseMsg.Builder builder, boolean multipleAttributesRequest) {
+        builder.setIsMultipleAttributesRequest(multipleAttributesRequest);
     }
 
     private ListenableFuture<List<List<AttributeKvEntry>>> getAttributesKvEntries(GetAttributeRequestMsg request) {
@@ -586,19 +588,21 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
             clientAttributesFuture = findAllAttributesByScope(AttributeScope.CLIENT_SCOPE);
             sharedAttributesFuture = findAllAttributesByScope(AttributeScope.SHARED_SCOPE);
         } else {
-            // "all <scope>" wins over a specific key list for the same scope
-            clientAttributesFuture = clientAll
-                    ? findAllAttributesByScope(AttributeScope.CLIENT_SCOPE)
-                    : (clientSpecific
-                        ? findAttributesByScope(toSet(request.getClientAttributeNamesList()), AttributeScope.CLIENT_SCOPE)
-                        : Futures.immediateFuture(Collections.emptyList()));
-            sharedAttributesFuture = sharedAll
-                    ? findAllAttributesByScope(AttributeScope.SHARED_SCOPE)
-                    : (sharedSpecific
-                        ? findAttributesByScope(toSet(request.getSharedAttributeNamesList()), AttributeScope.SHARED_SCOPE)
-                        : Futures.immediateFuture(Collections.emptyList()));
+            clientAttributesFuture = resolveScopeFuture(clientAll, clientSpecific, request.getClientAttributeNamesList(), AttributeScope.CLIENT_SCOPE);
+            sharedAttributesFuture = resolveScopeFuture(sharedAll, sharedSpecific, request.getSharedAttributeNamesList(), AttributeScope.SHARED_SCOPE);
         }
         return Futures.allAsList(Arrays.asList(clientAttributesFuture, sharedAttributesFuture));
+    }
+
+    // "all <scope>" wins over a specific key list for the same scope; no signal => empty result.
+    private ListenableFuture<List<AttributeKvEntry>> resolveScopeFuture(boolean all, boolean specific, List<String> names, AttributeScope scope) {
+        if (all) {
+            return findAllAttributesByScope(scope);
+        } else if (specific) {
+            return findAttributesByScope(toSet(names), scope);
+        } else {
+            return Futures.immediateFuture(Collections.emptyList());
+        }
     }
 
     private ListenableFuture<List<AttributeKvEntry>> findAllAttributesByScope(AttributeScope scope) {
