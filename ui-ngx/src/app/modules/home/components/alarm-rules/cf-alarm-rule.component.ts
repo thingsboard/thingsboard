@@ -25,7 +25,7 @@ import {
   Validators
 } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
-import { isDefinedAndNotNull } from '@core/utils';
+import { isDefinedAndNotNull, isEqual } from '@core/utils';
 import { DashboardId } from '@shared/models/id/dashboard-id';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AlarmRule, AlarmRuleCondition } from "@shared/models/alarm-rule.models";
@@ -76,6 +76,7 @@ export class CfAlarmRuleComponent implements ControlValueAccessor, OnInit, Valid
   testScript: (expression: string) => Observable<string>;
 
   private modelValue: AlarmRule;
+  private propagatedValue: AlarmRule;
 
   alarmRuleFormGroup = this.fb.group({
     condition: this.fb.control<AlarmRuleCondition | null>(null, Validators.required),
@@ -131,6 +132,7 @@ export class CfAlarmRuleComponent implements ControlValueAccessor, OnInit, Valid
       dashboardId: this.modelValue.dashboardId?.id
     } : null;
     this.alarmRuleFormGroup.patchValue(model, {emitEvent: false});
+    this.propagatedValue = this.toModel(this.alarmRuleFormGroup.value);
   }
 
   public openEditDetailsDialog($event: Event) {
@@ -161,8 +163,16 @@ export class CfAlarmRuleComponent implements ControlValueAccessor, OnInit, Valid
   }
 
   private updateModel() {
-    const value = this.alarmRuleFormGroup.value;
-    this.modelValue = {...value, dashboardId: value.dashboardId ? new DashboardId(value.dashboardId) : null} as AlarmRule;
-    this.propagateChange(this.modelValue);
+    const modelValue = this.toModel(this.alarmRuleFormGroup.value);
+    if (isEqual(modelValue, this.propagatedValue)) {
+      return;
+    }
+    this.modelValue = modelValue;
+    this.propagatedValue = modelValue;
+    this.propagateChange(modelValue);
+  }
+
+  private toModel(value: any): AlarmRule {
+    return {...value, dashboardId: value.dashboardId ? new DashboardId(value.dashboardId) : null} as AlarmRule;
   }
 }
