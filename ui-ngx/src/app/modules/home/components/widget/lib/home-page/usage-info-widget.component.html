@@ -63,11 +63,11 @@
           </div>
           <div class="tb-usage-items-values">
             <div class="tb-usage-items-counts">
-              <div class="tb-usage-item-counts" [class.critical]="apiCallItemCritical.transportMessages">{{ usageInfo?.transportMessages | shortNumber }} / {{ maxValue(usageInfo?.maxTransportMessages) }}</div>
-              <div class="tb-usage-item-counts" [class.critical]="apiCallItemCritical.jsExecutions">{{ usageInfo?.jsExecutions | shortNumber }} / {{ maxValue(usageInfo?.maxJsExecutions) }}</div>
-              <div class="tb-usage-item-counts" [class.critical]="apiCallItemCritical.alarms">{{ usageInfo?.alarms | shortNumber }} / {{ maxValue(usageInfo?.maxAlarms) }}</div>
-              <div class="tb-usage-item-counts" [class.critical]="apiCallItemCritical.emails">{{ usageInfo?.emails | shortNumber }} / {{ maxValue(usageInfo?.maxEmails) }}</div>
-              <div class="tb-usage-item-counts" [class.critical]="apiCallItemCritical.sms">{{ usageInfo?.sms | shortNumber }} / {{ maxValue(usageInfo?.maxSms) }}</div>
+              <div class="tb-usage-item-counts" [class.critical]="apiCallItemCritical.transportMessages">{{ usageInfo?.transportMessages | shortNumber: {roundDown: true} }} / {{ maxValue(usageInfo?.maxTransportMessages) }}</div>
+              <div class="tb-usage-item-counts" [class.critical]="apiCallItemCritical.jsExecutions">{{ usageInfo?.jsExecutions | shortNumber: {roundDown: true} }} / {{ maxValue(usageInfo?.maxJsExecutions) }}</div>
+              <div class="tb-usage-item-counts" [class.critical]="apiCallItemCritical.alarms">{{ usageInfo?.alarms | shortNumber: {roundDown: true} }} / {{ maxValue(usageInfo?.maxAlarms) }}</div>
+              <div class="tb-usage-item-counts" [class.critical]="apiCallItemCritical.emails">{{ usageInfo?.emails | shortNumber: {roundDown: true} }} / {{ maxValue(usageInfo?.maxEmails) }}</div>
+              <div class="tb-usage-item-counts" [class.critical]="apiCallItemCritical.sms">{{ usageInfo?.sms | shortNumber: {roundDown: true} }} / {{ maxValue(usageInfo?.maxSms) }}</div>
             </div>
             <div class="tb-usage-items-progress">
               <mat-progress-bar [class.critical]="apiCallItemCritical.transportMessages" color="primary" mode="determinate" [value]="progressValue(usageInfo?.transportMessages, usageInfo?.maxTransportMessages)"></mat-progress-bar>
