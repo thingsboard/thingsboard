@@ -22,7 +22,7 @@ import { filter, map, take } from 'rxjs/operators';
 import { buildUserHome, buildUserMenu, HomeSection, MenuId, MenuSection } from '@core/services/menu.models';
 import { Observable, ReplaySubject, Subject } from 'rxjs';
 import { AuthState } from '@core/auth/auth.models';
-import { NavigationEnd, Router } from '@angular/router';
+import { ActivationEnd, NavigationEnd, Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root'
@@ -32,10 +32,13 @@ export class MenuService {
   private currentMenuSections: Array<MenuSection>;
   private menuSections$: Subject<Array<MenuSection>> = new ReplaySubject<Array<MenuSection>>(1);
   private homeSections$: Subject<Array<HomeSection>> = new ReplaySubject<Array<HomeSection>>(1);
+  private _availableMenuSections: Array<MenuSection> = [];
   private availableMenuSections$: Subject<Array<MenuSection>> = new ReplaySubject<Array<MenuSection>>(1);
   private availableMenuLinks$ = this.menuSections$.pipe(
     map((items) => this.allMenuLinks(items))
   );
+
+  private currentMenuSection: MenuSection = null;
 
   constructor(private store: Store<AppState>,
               private router: Router) {
@@ -51,6 +54,9 @@ export class MenuService {
         this.updateOpenedMenuSections();
       }
     );
+    this.router.events.pipe(filter(event => event instanceof ActivationEnd)).subscribe(() => {
+        this.updateCurrentMenuSection();
+    });
   }
 
   private buildMenu() {
@@ -58,11 +64,12 @@ export class MenuService {
       (authState: AuthState) => {
         if (authState.authUser) {
           this.currentMenuSections = buildUserMenu(authState);
+          this._availableMenuSections = this.allMenuSections(this.currentMenuSections);
+          this.updateCurrentMenuSection();
           this.updateOpenedMenuSections();
           this.menuSections$.next(this.currentMenuSections);
-          const availableMenuSections = this.allMenuSections(this.currentMenuSections);
-          this.availableMenuSections$.next(availableMenuSections);
-          const homeSections = buildUserHome(authState, availableMenuSections);
+          this.availableMenuSections$.next(this._availableMenuSections);
+          const homeSections = buildUserHome(authState, this._availableMenuSections);
           this.homeSections$.next(homeSections);
         }
       }
@@ -70,11 +77,10 @@ export class MenuService {
   }
 
   private updateOpenedMenuSections() {
-    const url = this.router.url;
     const openedMenuSections = getCurrentOpenedMenuSections(this.store);
     if (this.currentMenuSections?.length) {
       this.currentMenuSections.filter(section => section.type === 'toggle' &&
-        (url.startsWith(section.path) || openedMenuSections.includes(section.path) || section.pages.some(page => url.startsWith(page.path)) )).forEach(
+        (openedMenuSections.includes(section.path) || this.isActiveMenuSection(section))).forEach(
         section => section.opened = true
       );
     }
@@ -110,6 +116,24 @@ export class MenuService {
 
   public homeSections(): Observable<Array<HomeSection>> {
     return this.homeSections$;
+  }
+
+  private updateCurrentMenuSection() {
+    const url = this.router.url;
+    this.currentMenuSection = this._availableMenuSections.find(section => section.path === url);
+  }
+
+  public isActiveMenuSection(section: MenuSection): boolean {
+    if (this.currentMenuSection === section) {
+      return true;
+    } else if (section.pages?.length) {
+      for (const page of section.pages) {
+        if (this.isActiveMenuSection(page)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   public availableMenuLinks(): Observable<Array<MenuSection>> {

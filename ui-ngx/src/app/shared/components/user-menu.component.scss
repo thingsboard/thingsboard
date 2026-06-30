@@ -107,6 +107,13 @@ tb-user-menu {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  .tb-user-email {
+    font-size: 14px;
+    line-height: 16px;
+    font-weight: 500;
+    padding: 2px 16px;
+    color: rgba(0,0,0,0.57);
+  }
   .mat-mdc-button {
     &:hover {
       background-color: rgba(0, 0, 0, .07);

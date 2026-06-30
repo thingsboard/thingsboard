@@ -45,6 +45,9 @@
 <ng-template #userMenuTpl>
   @if (authority$ | async; as authority) {
     <div class="tb-menu-content tb-user-menu-items" [style.width.px]="!collapsed ? menuButton?._elementRef?.nativeElement?.offsetWidth : ''">
+      <div class="tb-user-email">
+        {{ userEmail$ | async }}
+      </div>
       <button mat-button (click)="menuPopover?.hide(); openAccount()">
         <tb-icon matButtonIcon>mdi:account-circle-outline</tb-icon>
         <span translate>account.account</span>

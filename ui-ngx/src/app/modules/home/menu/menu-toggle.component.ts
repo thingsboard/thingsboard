@@ -21,6 +21,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { ActionPreferencesUpdateOpenedMenuSection } from '@core/auth/auth.actions';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { MenuService } from '@core/services/menu.service';
 
 @Component({
     selector: 'tb-menu-toggle',
@@ -38,7 +39,8 @@ export class MenuToggleComponent {
   collapsed = false;
 
   constructor(private router: Router,
-              private store: Store<AppState>) {
+              private store: Store<AppState>,
+              private menuService: MenuService) {
   }
 
   sectionHeight(): string {
@@ -64,13 +66,14 @@ export class MenuToggleComponent {
 
   toggleSectionActive(): boolean {
     if (this.collapsed) {
-      let active = this.router.isActive(this.router.parseUrl(this.section.path), {paths: 'subset', queryParams: 'ignored', matrixParams: 'ignored', fragment: 'ignored'});
+      return this.menuService.isActiveMenuSection(this.section);
+/*      let active = this.router.isActive(this.router.parseUrl(this.section.path), {paths: 'subset', queryParams: 'ignored', matrixParams: 'ignored', fragment: 'ignored'});
       if (!active) {
         const found = this.section.pages.find(page =>
           this.router.isActive(this.router.parseUrl(page.path), {paths: 'subset', queryParams: 'ignored', matrixParams: 'ignored', fragment: 'ignored'}));
         active = !!found;
       }
-      return active;
+      return active;*/
     } else {
       return false;
     }

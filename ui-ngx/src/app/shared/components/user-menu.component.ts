@@ -66,6 +66,11 @@ export class UserMenuComponent implements OnInit, OnDestroy {
     map((user) => this.getUserDisplayName(user))
   );
 
+  userEmail$ = this.store.pipe(
+    select(selectUserDetails),
+    map((user) => user?.email)
+  );
+
   constructor(private store: Store<AppState>,
               private router: Router,
               private authService: AuthService) {
