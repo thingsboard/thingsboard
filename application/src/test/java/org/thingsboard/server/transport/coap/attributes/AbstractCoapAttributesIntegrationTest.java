@@ -95,6 +95,9 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
     protected static final String SHARED_ATTRIBUTES_PAYLOAD = "{\"sharedStr\":\"value1\",\"sharedBool\":true,\"sharedDbl\":42.0,\"sharedLong\":73," +
             "\"sharedJson\":{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}}";
 
+    protected static final String CLIENT_ATTRIBUTE_KEYS = "clientStr,clientBool,clientDbl,clientLong,clientJson";
+    protected static final String SHARED_ATTRIBUTE_KEYS = "sharedStr,sharedBool,sharedDbl,sharedLong,sharedJson";
+
     protected static final String SHARED_ATTRIBUTES_PAYLOAD_ON_CURRENT_STATE_NOTIFICATION = "{\"sharedStr\":\"value\",\"sharedBool\":false,\"sharedDbl\":41.0,\"sharedLong\":72," +
             "\"sharedJson\":{\"someNumber\":41,\"someArray\":[],\"someNestedObject\":{\"key\":\"value\"}}}";
 
@@ -172,8 +175,8 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
         client = new CoapTestClient(accessToken, FeatureType.ATTRIBUTES);
         SingleEntityFilter dtf = new SingleEntityFilter();
         dtf.setSingleEntity(AliasEntityId.fromEntityId(savedDevice.getId()));
-        String clientKeysStr = "clientStr,clientBool,clientDbl,clientLong,clientJson";
-        String sharedKeysStr = "sharedStr,sharedBool,sharedDbl,sharedLong,sharedJson";
+        String clientKeysStr = CLIENT_ATTRIBUTE_KEYS;
+        String sharedKeysStr = SHARED_ATTRIBUTE_KEYS;
         List<String> clientKeysList = List.of(clientKeysStr.split(","));
         List<String> sharedKeysList = List.of(sharedKeysStr.split(","));
         List<EntityKey> csKeys = getEntityKeys(clientKeysList, CLIENT_ATTRIBUTE);
@@ -202,8 +205,8 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
         client = new CoapTestClient(accessToken, FeatureType.ATTRIBUTES);
         SingleEntityFilter dtf = new SingleEntityFilter();
         dtf.setSingleEntity(AliasEntityId.fromEntityId(savedDevice.getId()));
-        String clientKeysStr = "clientStr,clientBool,clientDbl,clientLong,clientJson";
-        String sharedKeysStr = "sharedStr,sharedBool,sharedDbl,sharedLong,sharedJson";
+        String clientKeysStr = CLIENT_ATTRIBUTE_KEYS;
+        String sharedKeysStr = SHARED_ATTRIBUTE_KEYS;
         List<EntityKey> keys = new ArrayList<>();
         keys.addAll(getEntityKeys(List.of(clientKeysStr.split(",")), CLIENT_ATTRIBUTE));
         keys.addAll(getEntityKeys(List.of(sharedKeysStr.split(",")), SHARED_ATTRIBUTE));
@@ -230,8 +233,8 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
         client = new CoapTestClient(accessToken, FeatureType.ATTRIBUTES);
         SingleEntityFilter dtf = new SingleEntityFilter();
         dtf.setSingleEntity(AliasEntityId.fromEntityId(savedDevice.getId()));
-        String clientKeysStr = "clientStr,clientBool,clientDbl,clientLong,clientJson";
-        String sharedKeysStr = "sharedStr,sharedBool,sharedDbl,sharedLong,sharedJson";
+        String clientKeysStr = CLIENT_ATTRIBUTE_KEYS;
+        String sharedKeysStr = SHARED_ATTRIBUTE_KEYS;
         List<String> clientKeysList = List.of(clientKeysStr.split(","));
         List<String> sharedKeysList = List.of(sharedKeysStr.split(","));
         List<EntityKey> csKeys = getEntityKeys(clientKeysList, CLIENT_ATTRIBUTE);

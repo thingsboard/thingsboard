@@ -17,6 +17,7 @@ package org.thingsboard.server.transport.coap.adaptors;
 
 import org.eclipse.californium.core.coap.Request;
 import org.thingsboard.server.common.adaptor.AdaptorException;
+import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
@@ -33,18 +34,10 @@ public class CoapAdaptorUtils {
         if (queryElements != null && queryElements.size() > 0) {
             boolean allClient = "true".equalsIgnoreCase(getQueryValue(queryElements, "allClientKeys"));
             boolean allShared = "true".equalsIgnoreCase(getQueryValue(queryElements, "allSharedKeys"));
-            Set<String> clientKeys = toKeys(queryElements, "clientKeys");
-            Set<String> sharedKeys = toKeys(queryElements, "sharedKeys");
-            if (allClient) {
-                result.setAllClientAttributes(true);
-            } else if (clientKeys != null) {
-                result.addAllClientAttributeNames(clientKeys);
-            }
-            if (allShared) {
-                result.setAllSharedAttributes(true);
-            } else if (sharedKeys != null) {
-                result.addAllSharedAttributeNames(sharedKeys);
-            }
+            Set<String> clientKeys = allClient ? null : toKeys(queryElements, "clientKeys");
+            Set<String> sharedKeys = allShared ? null : toKeys(queryElements, "sharedKeys");
+            JsonConverter.applyClientScope(result, allClient, clientKeys);
+            JsonConverter.applySharedScope(result, allShared, sharedKeys);
         }
         result.setOnlyShared(false);
         return result.build();

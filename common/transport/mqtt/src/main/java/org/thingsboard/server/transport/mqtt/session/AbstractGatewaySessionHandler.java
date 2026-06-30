@@ -658,8 +658,8 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
             // new unified format: clientKeys/sharedKeys + empty-value="all"; emit the separated response
             TransportProtos.GetAttributeRequestMsg.Builder b = TransportProtos.GetAttributeRequestMsg.newBuilder()
                     .setRequestId(requestId).setSeparateScopesResponse(true);
-            JsonMqttAdaptor.parseAttributeScope(jsonObj, "clientKeys", b::addAllClientAttributeNames, () -> b.setAllClientAttributes(true));
-            JsonMqttAdaptor.parseAttributeScope(jsonObj, "sharedKeys", b::addAllSharedAttributeNames, () -> b.setAllSharedAttributes(true));
+            JsonConverter.parseAttributeScope(jsonObj, "clientKeys", b::addAllClientAttributeNames, () -> b.setAllClientAttributes(true));
+            JsonConverter.parseAttributeScope(jsonObj, "sharedKeys", b::addAllSharedAttributeNames, () -> b.setAllSharedAttributes(true));
             requestMsg = b.build();
         } else if (jsonObj.has("client")) {
             // legacy format: client boolean + key/keys; keep the legacy value/values response

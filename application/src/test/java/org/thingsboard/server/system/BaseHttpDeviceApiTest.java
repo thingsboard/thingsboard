@@ -106,6 +106,33 @@ public abstract class BaseHttpDeviceApiTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testGetAllSharedAttributesViaAllSharedKeysParam() throws Exception {
+        String token = deviceCredentials.getCredentialsId();
+        Map<String, String> sharedAttrs = new HashMap<>();
+        sharedAttrs.put("sharedA", "valueA");
+        sharedAttrs.put("sharedB", "valueB");
+        mockMvc.perform(
+                        asyncDispatch(doPost("/api/plugins/telemetry/DEVICE/" + device.getId().getId() + "/attributes/SHARED_SCOPE", sharedAttrs).andReturn()))
+                .andExpect(status().isOk());
+        String allSharedKeysUrl = "/api/v1/" + token + "/attributes?allSharedKeys=true";
+        Awaitility.await("shared attributes are persisted and returned via allSharedKeys=true")
+                .atMost(30, TimeUnit.SECONDS)
+                .pollInterval(Duration.ofMillis(100))
+                .ignoreExceptions()
+                .until(() -> {
+                    JsonNode r = JacksonUtil.toJsonNode(doGetAsync(allSharedKeysUrl).andReturn().getResponse().getContentAsString());
+                    return r.has("shared") && sharedAttrs.keySet().stream().allMatch(r.get("shared")::has);
+                });
+        String body = doGetAsync(allSharedKeysUrl)
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        JsonNode resp = JacksonUtil.toJsonNode(body);
+        assertThat(resp.has("shared")).isTrue();
+        JsonNode shared = resp.get("shared");
+        sharedAttrs.forEach((key, value) -> assertThat(shared.get(key).asText()).isEqualTo(value));
+        assertThat(resp.has("client")).isFalse();
+    }
+
+    @Test
     public void testReplyToCommandWithLargeResponse() throws Exception {
         String errorResponse = doPost("/api/v1/" + deviceCredentials.getCredentialsId() + "/rpc/5",
                 JacksonUtil.toString(createJsonPayloadOfSize(10001)),

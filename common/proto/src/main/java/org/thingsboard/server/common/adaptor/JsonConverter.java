@@ -55,6 +55,8 @@ import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509Ce
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -377,6 +379,51 @@ public class JsonConverter {
         }
         if (responseMsg.getSharedAttributeListCount() > 0) {
             addValues(result, responseMsg.getSharedAttributeListList(), responseMsg.getIsMultipleAttributesRequest());
+        }
+    }
+
+    /**
+     * Three-state per-scope attribute selection for the JSON {@code clientKeys}/{@code sharedKeys} format
+     * (device and gateway MQTT APIs):
+     * <ul>
+     *     <li>field absent / null  =&gt; the scope is excluded (neither names nor "all" is set);</li>
+     *     <li>field present + empty (or blank) string =&gt; every key in that scope ({@code setAll});</li>
+     *     <li>field present + a comma-separated string of names =&gt; only those keys ({@code setNames}).</li>
+     * </ul>
+     */
+    public static void parseAttributeScope(JsonObject json, String field,
+                                           Consumer<List<String>> setNames, Runnable setAll) {
+        if (!json.has(field) || json.get(field).isJsonNull()) {
+            return;
+        }
+        String value = json.get(field).getAsString();
+        if (value.trim().isEmpty()) {
+            setAll.run();
+        } else {
+            setNames.accept(Arrays.asList(value.split(",")));
+        }
+    }
+
+    /**
+     * Populate the client scope of an attribute request: "all" wins over a specific key list; a missing/empty
+     * list leaves the scope unset. Shared by the HTTP and CoAP query-parameter parsers.
+     */
+    public static void applyClientScope(TransportProtos.GetAttributeRequestMsg.Builder builder, boolean all, Collection<String> names) {
+        if (all) {
+            builder.setAllClientAttributes(true);
+        } else if (names != null && !names.isEmpty()) {
+            builder.addAllClientAttributeNames(names);
+        }
+    }
+
+    /**
+     * Shared-scope counterpart of {@link #applyClientScope}.
+     */
+    public static void applySharedScope(TransportProtos.GetAttributeRequestMsg.Builder builder, boolean all, Collection<String> names) {
+        if (all) {
+            builder.setAllSharedAttributes(true);
+        } else if (names != null && !names.isEmpty()) {
+            builder.addAllSharedAttributeNames(names);
         }
     }
 

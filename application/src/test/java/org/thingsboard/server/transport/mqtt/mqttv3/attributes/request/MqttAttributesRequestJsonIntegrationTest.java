@@ -89,6 +89,7 @@ public class MqttAttributesRequestJsonIntegrationTest extends AbstractMqttAttrib
     public void testGatewayRequestAllAttributesSeparated() throws Exception {
         // new format: empty clientKeys + empty sharedKeys => all both, scope-separated response
         processJsonTestGatewayRequestAttributesSeparated(
+                "Gateway Device Request All Both Separated Json",
                 ", \"clientKeys\": \"\", \"sharedKeys\": \"\"",
                 ",\"client\":" + CLIENT_ATTRIBUTES_PAYLOAD + ",\"shared\":" + SHARED_ATTRIBUTES_PAYLOAD);
     }
@@ -97,7 +98,26 @@ public class MqttAttributesRequestJsonIntegrationTest extends AbstractMqttAttrib
     public void testGatewayRequestAllSharedSeparated() throws Exception {
         // new format: empty sharedKeys only => all shared, no client in the separated response
         processJsonTestGatewayRequestAttributesSeparated(
+                "Gateway Device Request All Shared Separated Json",
                 ", \"sharedKeys\": \"\"",
                 ",\"shared\":" + SHARED_ATTRIBUTES_PAYLOAD);
+    }
+
+    @Test
+    public void testGatewayRequestAllClientSeparated() throws Exception {
+        // new format: empty clientKeys only => all client, no shared in the separated response
+        processJsonTestGatewayRequestAttributesSeparated(
+                "Gateway Device Request All Client Separated Json",
+                ", \"clientKeys\": \"\"",
+                ",\"client\":" + CLIENT_ATTRIBUTES_PAYLOAD);
+    }
+
+    @Test
+    public void testGatewayRequestSpecificSharedKeysSeparated() throws Exception {
+        // new format: specific shared key list => only those shared keys, scope-separated response
+        processJsonTestGatewayRequestAttributesSeparated(
+                "Gateway Device Request Specific Shared Keys Json",
+                ", \"sharedKeys\": \"sharedStr,sharedBool\"",
+                ",\"shared\":{\"sharedStr\":\"value1\",\"sharedBool\":true}");
     }
 }

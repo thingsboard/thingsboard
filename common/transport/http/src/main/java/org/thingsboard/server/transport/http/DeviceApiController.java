@@ -141,9 +141,9 @@ public class DeviceApiController implements TbTransportService {
     public DeferredResult<ResponseEntity> getDeviceAttributes(
             @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
             @PathVariable("deviceToken") String deviceToken,
-            @Parameter(description = "Comma separated key names for attribute with client scope", required = true , schema = @Schema(defaultValue = "state"))
+            @Parameter(description = "Comma separated key names for attribute with client scope", required = false, schema = @Schema(defaultValue = "state"))
             @RequestParam(value = "clientKeys", required = false, defaultValue = "") String clientKeys,
-            @Parameter(description = "Comma separated key names for attribute with shared scope", required = true , schema = @Schema(defaultValue = "configuration"))
+            @Parameter(description = "Comma separated key names for attribute with shared scope", required = false, schema = @Schema(defaultValue = "configuration"))
             @RequestParam(value = "sharedKeys", required = false, defaultValue = "") String sharedKeys,
             @Parameter(description = "Set to true to return ALL client-scope attributes (ignores clientKeys)")
             @RequestParam(value = "allClientKeys", required = false, defaultValue = "false") boolean allClientKeys,
@@ -155,16 +155,8 @@ public class DeviceApiController implements TbTransportService {
                     GetAttributeRequestMsg.Builder request = GetAttributeRequestMsg.newBuilder().setRequestId(0);
                     List<String> clientKeySet = !StringUtils.isEmpty(clientKeys) ? Arrays.asList(clientKeys.split(",")) : null;
                     List<String> sharedKeySet = !StringUtils.isEmpty(sharedKeys) ? Arrays.asList(sharedKeys.split(",")) : null;
-                    if (allClientKeys) {
-                        request.setAllClientAttributes(true);
-                    } else if (clientKeySet != null) {
-                        request.addAllClientAttributeNames(clientKeySet);
-                    }
-                    if (allSharedKeys) {
-                        request.setAllSharedAttributes(true);
-                    } else if (sharedKeySet != null) {
-                        request.addAllSharedAttributeNames(sharedKeySet);
-                    }
+                    JsonConverter.applyClientScope(request, allClientKeys, clientKeySet);
+                    JsonConverter.applySharedScope(request, allSharedKeys, sharedKeySet);
                     TransportService transportService = transportContext.getTransportService();
                     transportService.registerSyncSession(sessionInfo,
                             new HttpSessionListener(responseWriter, transportContext.getTransportService(), sessionInfo),
