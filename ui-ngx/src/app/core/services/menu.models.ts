@@ -1033,8 +1033,24 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
     Authority.CUSTOMER_USER,
     [
       {id: MenuId.home},
-      {id: MenuId.alarms},
-      {id: MenuId.dashboards},
+      {
+        id: MenuId.monitor,
+        pages: [
+          {id: MenuId.dashboards},
+          {
+            id: MenuId.alarms_center,
+            pages: [
+              {id: MenuId.alarms}
+            ]
+          },
+          {
+            id: MenuId.notifications_center,
+            pages: [
+              {id: MenuId.notification_inbox}
+            ]
+          }
+        ]
+      },
       {
         id: MenuId.entities,
         pages: [
@@ -1043,13 +1059,7 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
           {id: MenuId.entity_views}
         ]
       },
-      {id: MenuId.edge_instances},
-      {
-        id: MenuId.notifications_center,
-        pages: [
-          {id: MenuId.notification_inbox}
-        ]
-      }
+      {id: MenuId.edge_instances}
     ]
   ]
 ]);
