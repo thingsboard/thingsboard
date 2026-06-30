@@ -139,6 +139,9 @@ export interface TableReportCellSettings {
   backgroundColor?: string;
   textAlignment?: alignment;
   verticalAlignment?: alignment;
+  borderStyle?: string;
+  borderColor?: string;
+  borderWidth?: number;
 }
 
 export interface TableReportColumnSettings extends ReportDataKeySettings {
@@ -223,7 +226,71 @@ const tableReportCellSettings = (header = false): FormProperty[] => ([
       }
     ],
     default: 'middle'
-  }
+  },
+  {
+    id: 'borderWidth',
+    type: FormPropertyType.number,
+    name: 'Border',
+    subLabel: 'Width',
+    fieldSuffix: 'px',
+    default: 1
+  },
+  {
+    id: 'borderStyle',
+    type: FormPropertyType.select,
+    name: 'Border Style',
+    subLabel: 'Style',
+    fieldClass: 'standard-width',
+    items: [
+      {
+        label: 'solid',
+        value: 'solid'
+      },
+      {
+        label: 'dashed',
+        value: 'dashed'
+      },
+      {
+        label: 'dotted',
+        value: 'dotted'
+      },
+      {
+        label: 'double',
+        value: 'double'
+      },
+      {
+        label: 'groove',
+        value: 'groove'
+      },
+      {
+        label: 'ridge',
+        value: 'ridge'
+      },
+      {
+        label: 'inset',
+        value: 'inset'
+      },
+      {
+        label: 'outset',
+        value: 'outset'
+      },
+      {
+        label: 'none',
+        value: 'none'
+      },
+      {
+        label: 'hidden',
+        value: 'hidden'
+      }
+    ],
+    default: 'solid'
+  },
+  {
+    id: 'borderColor',
+    type: FormPropertyType.color,
+    name: 'Border Style',
+    default: 'rgba(0,0,0,1)'
+  },
 ]);
 
 const severityReportCellSettings = (): FormProperty[] => {

@@ -3,7 +3,7 @@
 import { Directive } from '@angular/core';
 import { AbstractReportComponentPreview } from '@home/pages/reporting/template/components/report-component.component';
 import { TableReportColumnSettings, TableReportComponentConfig } from '@shared/models/report-component.models';
-import { ComponentStyle, Font, textStyle } from '@shared/models/widget-settings.models';
+import { borderStyle, ComponentStyle, Font, textStyle } from '@shared/models/widget-settings.models';
 import { deepClone } from '@core/utils';
 import { DataKey } from '@shared/models/widget.models';
 import { Direction } from '@shared/models/page/sort-order';
@@ -90,6 +90,7 @@ export abstract class AbstractReportTablePreviewComponent<C extends TableReportC
     let style: ComponentStyle = {};
     if (!this.isPlainFormat && column?.settings) {
       const columnSettings: TableReportColumnSettings =  column.settings;
+
       if (columnSettings) {
         const cellSettings = header ? columnSettings.header : columnSettings.cell;
         if (cellSettings) {
@@ -100,7 +101,7 @@ export abstract class AbstractReportTablePreviewComponent<C extends TableReportC
           style.textAlign = cellSettings.textAlignment;
           style.verticalAlign = cellSettings.verticalAlignment;
           style.color = cellSettings.color;
-          style.backgroundColor = cellSettings.backgroundColor;
+          style.border = borderStyle(cellSettings).border;
         }
       }
     }

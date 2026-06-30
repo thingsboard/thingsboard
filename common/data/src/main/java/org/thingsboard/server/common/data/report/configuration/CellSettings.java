@@ -15,5 +15,8 @@ public class CellSettings {
     private String backgroundColor;
     private TextAlignment textAlignment;
     private VerticalAlignment verticalAlignment;
+    private String borderStyle;
+    private Integer borderWidth;
+    private String borderColor;
 
 }

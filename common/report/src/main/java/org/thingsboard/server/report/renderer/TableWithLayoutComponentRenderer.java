@@ -211,6 +211,9 @@ public abstract class TableWithLayoutComponentRenderer<C extends TableWithLayout
                         .fontFamily(font != null && font.getFamily() != null && !font.getFamily().isEmpty() ? font.getFamily() : null)
                         .textAlignment(cellSettings.getTextAlignment() != null ? cellSettings.getTextAlignment().name() : null)
                         .verticalAlignment(cellSettings.getVerticalAlignment() != null ? cellSettings.getVerticalAlignment().name() : null)
+                        .borderStyle(cellSettings.getBorderStyle())
+                        .borderWidth(cellSettings.getBorderWidth())
+                        .borderColor(cellSettings.getBorderColor() != null ? ColorUtils.normalizeCssColor(cellSettings.getBorderColor()) : null)
                         .build();
             } else {
                 cellVariables = new CellVariables(key);
@@ -251,6 +254,10 @@ public abstract class TableWithLayoutComponentRenderer<C extends TableWithLayout
         private String fontFamily;
         private String textAlignment;
         private String verticalAlignment;
+        private String borderStyle;
+        private Integer borderWidth;
+        private Integer borderRadius;
+        private String borderColor;
 
         public CellVariables(String key) {
             this.key = key;
