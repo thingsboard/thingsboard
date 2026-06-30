@@ -175,10 +175,8 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
         client = new CoapTestClient(accessToken, FeatureType.ATTRIBUTES);
         SingleEntityFilter dtf = new SingleEntityFilter();
         dtf.setSingleEntity(AliasEntityId.fromEntityId(savedDevice.getId()));
-        String clientKeysStr = CLIENT_ATTRIBUTE_KEYS;
-        String sharedKeysStr = SHARED_ATTRIBUTE_KEYS;
-        List<String> clientKeysList = List.of(clientKeysStr.split(","));
-        List<String> sharedKeysList = List.of(sharedKeysStr.split(","));
+        List<String> clientKeysList = List.of(CLIENT_ATTRIBUTE_KEYS.split(","));
+        List<String> sharedKeysList = List.of(SHARED_ATTRIBUTE_KEYS.split(","));
         List<EntityKey> csKeys = getEntityKeys(clientKeysList, CLIENT_ATTRIBUTE);
         List<EntityKey> shKeys = getEntityKeys(sharedKeysList, SHARED_ATTRIBUTE);
         List<EntityKey> keys = new ArrayList<>();
@@ -196,7 +194,7 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
         String update = getWsClient().waitForUpdate();
         assertThat(update).as("ws update received").isNotBlank();
 
-        String featureTokenUrl = CoapTestClient.getFeatureTokenUrl(accessToken, FeatureType.ATTRIBUTES) + "?clientKeys=" + clientKeysStr + "&sharedKeys=" + sharedKeysStr;
+        String featureTokenUrl = CoapTestClient.getFeatureTokenUrl(accessToken, FeatureType.ATTRIBUTES) + "?clientKeys=" + CLIENT_ATTRIBUTE_KEYS + "&sharedKeys=" + SHARED_ATTRIBUTE_KEYS;
         client.setURI(featureTokenUrl);
         validateJsonResponse(client.getMethod());
     }
@@ -205,11 +203,9 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
         client = new CoapTestClient(accessToken, FeatureType.ATTRIBUTES);
         SingleEntityFilter dtf = new SingleEntityFilter();
         dtf.setSingleEntity(AliasEntityId.fromEntityId(savedDevice.getId()));
-        String clientKeysStr = CLIENT_ATTRIBUTE_KEYS;
-        String sharedKeysStr = SHARED_ATTRIBUTE_KEYS;
         List<EntityKey> keys = new ArrayList<>();
-        keys.addAll(getEntityKeys(List.of(clientKeysStr.split(",")), CLIENT_ATTRIBUTE));
-        keys.addAll(getEntityKeys(List.of(sharedKeysStr.split(",")), SHARED_ATTRIBUTE));
+        keys.addAll(getEntityKeys(List.of(CLIENT_ATTRIBUTE_KEYS.split(",")), CLIENT_ATTRIBUTE));
+        keys.addAll(getEntityKeys(List.of(SHARED_ATTRIBUTE_KEYS.split(",")), SHARED_ATTRIBUTE));
         getWsClient().subscribeLatestUpdate(keys, dtf);
         getWsClient().registerWaitForUpdate(2);
 
@@ -233,10 +229,8 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
         client = new CoapTestClient(accessToken, FeatureType.ATTRIBUTES);
         SingleEntityFilter dtf = new SingleEntityFilter();
         dtf.setSingleEntity(AliasEntityId.fromEntityId(savedDevice.getId()));
-        String clientKeysStr = CLIENT_ATTRIBUTE_KEYS;
-        String sharedKeysStr = SHARED_ATTRIBUTE_KEYS;
-        List<String> clientKeysList = List.of(clientKeysStr.split(","));
-        List<String> sharedKeysList = List.of(sharedKeysStr.split(","));
+        List<String> clientKeysList = List.of(CLIENT_ATTRIBUTE_KEYS.split(","));
+        List<String> sharedKeysList = List.of(SHARED_ATTRIBUTE_KEYS.split(","));
         List<EntityKey> csKeys = getEntityKeys(clientKeysList, CLIENT_ATTRIBUTE);
         List<EntityKey> shKeys = getEntityKeys(sharedKeysList, SHARED_ATTRIBUTE);
         List<EntityKey> keys = new ArrayList<>();
@@ -254,7 +248,7 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
         String update = getWsClient().waitForUpdate();
         assertThat(update).as("ws update received").isNotBlank();
 
-        String featureTokenUrl = CoapTestClient.getFeatureTokenUrl(accessToken, FeatureType.ATTRIBUTES) + "?clientKeys=" + clientKeysStr + "&sharedKeys=" + sharedKeysStr;
+        String featureTokenUrl = CoapTestClient.getFeatureTokenUrl(accessToken, FeatureType.ATTRIBUTES) + "?clientKeys=" + CLIENT_ATTRIBUTE_KEYS + "&sharedKeys=" + SHARED_ATTRIBUTE_KEYS;
         client.setURI(featureTokenUrl);
         validateProtoResponse(client.getMethod());
     }

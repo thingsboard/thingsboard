@@ -344,10 +344,8 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
         client.connectAndWait(accessToken);
         SingleEntityFilter dtf = new SingleEntityFilter();
         dtf.setSingleEntity(AliasEntityId.fromEntityId(savedDevice.getId()));
-        String clientKeysStr = CLIENT_ATTRIBUTE_KEYS;
-        String sharedKeysStr = SHARED_ATTRIBUTE_KEYS;
-        List<String> clientKeysList = List.of(clientKeysStr.split(","));
-        List<String> sharedKeysList = List.of(sharedKeysStr.split(","));
+        List<String> clientKeysList = List.of(CLIENT_ATTRIBUTE_KEYS.split(","));
+        List<String> sharedKeysList = List.of(SHARED_ATTRIBUTE_KEYS.split(","));
         List<EntityKey> csKeys = getEntityKeys(clientKeysList, CLIENT_ATTRIBUTE);
         List<EntityKey> shKeys = getEntityKeys(sharedKeysList, SHARED_ATTRIBUTE);
         List<EntityKey> keys = new ArrayList<>();
@@ -365,7 +363,7 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
         assertThat(update).as("ws update received").isNotBlank();
         MqttTestCallback callback = new MqttTestSubscribeOnTopicCallback(attrSubTopic.replace("+", "1"));
         client.setCallback(callback);
-        String payloadStr = "{\"clientKeys\":\"" + clientKeysStr + "\", \"sharedKeys\":\"" + sharedKeysStr + "\"}";
+        String payloadStr = "{\"clientKeys\":\"" + CLIENT_ATTRIBUTE_KEYS + "\", \"sharedKeys\":\"" + SHARED_ATTRIBUTE_KEYS + "\"}";
         client.publishAndWait(attrReqTopicPrefix + "1", payloadStr.getBytes());
         String expectedResponse = "{\"client\":" + CLIENT_ATTRIBUTES_PAYLOAD + ",\"shared\":" + SHARED_ATTRIBUTES_PAYLOAD + "}";
         validateJsonResponse(callback, expectedResponse);
@@ -398,10 +396,8 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
         MqttTestClient client = new MqttTestClient();
         client.connectAndWait(accessToken);
         DeviceTypeFilter dtf = new DeviceTypeFilter(List.of(savedDevice.getType()), savedDevice.getName());
-        String clientKeysStr = CLIENT_ATTRIBUTE_KEYS;
-        String sharedKeysStr = SHARED_ATTRIBUTE_KEYS;
-        List<String> clientKeysList = List.of(clientKeysStr.split(","));
-        List<String> sharedKeysList = List.of(sharedKeysStr.split(","));
+        List<String> clientKeysList = List.of(CLIENT_ATTRIBUTE_KEYS.split(","));
+        List<String> sharedKeysList = List.of(SHARED_ATTRIBUTE_KEYS.split(","));
         List<EntityKey> csKeys = getEntityKeys(clientKeysList, CLIENT_ATTRIBUTE);
         List<EntityKey> shKeys = getEntityKeys(sharedKeysList, SHARED_ATTRIBUTE);
         List<EntityKey> keys = new ArrayList<>();
@@ -419,8 +415,8 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
         MqttTestCallback callback = new MqttTestSubscribeOnTopicCallback(attrSubTopic.replace("+", "1"));
         client.setCallback(callback);
         TransportApiProtos.AttributesRequest.Builder attributesRequestBuilder = TransportApiProtos.AttributesRequest.newBuilder();
-        attributesRequestBuilder.setClientKeys(clientKeysStr);
-        attributesRequestBuilder.setSharedKeys(sharedKeysStr);
+        attributesRequestBuilder.setClientKeys(CLIENT_ATTRIBUTE_KEYS);
+        attributesRequestBuilder.setSharedKeys(SHARED_ATTRIBUTE_KEYS);
         TransportApiProtos.AttributesRequest attributesRequest = attributesRequestBuilder.build();
         client.publishAndWait(attrReqTopicPrefix + "1", attributesRequest.toByteArray());
         validateProtoResponse(callback, getExpectedAttributeResponseMsg());
@@ -439,9 +435,8 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
                 100);
         assertNotNull(device);
 
-        String clientKeysStr = CLIENT_ATTRIBUTE_KEYS;
 
-        String attributeValuesUrl = "/api/plugins/telemetry/DEVICE/" + device.getId() + "/values/attributes/CLIENT_SCOPE?keys=" + clientKeysStr;
+        String attributeValuesUrl = "/api/plugins/telemetry/DEVICE/" + device.getId() + "/values/attributes/CLIENT_SCOPE?keys=" + CLIENT_ATTRIBUTE_KEYS;
 
         Awaitility.await()
                 .atMost(10, TimeUnit.SECONDS)
@@ -454,9 +449,8 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
 
         SingleEntityFilter dtf = new SingleEntityFilter();
         dtf.setSingleEntity(AliasEntityId.fromEntityId(device.getId()));
-        String sharedKeysStr = SHARED_ATTRIBUTE_KEYS;
-        List<String> clientKeysList = List.of(clientKeysStr.split(","));
-        List<String> sharedKeysList = List.of(sharedKeysStr.split(","));
+        List<String> clientKeysList = List.of(CLIENT_ATTRIBUTE_KEYS.split(","));
+        List<String> sharedKeysList = List.of(SHARED_ATTRIBUTE_KEYS.split(","));
         List<EntityKey> csKeys = getEntityKeys(clientKeysList, CLIENT_ATTRIBUTE);
         List<EntityKey> shKeys = getEntityKeys(sharedKeysList, SHARED_ATTRIBUTE);
         List<EntityKey> keys = new ArrayList<>();
@@ -544,8 +538,7 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
         client.connectAndWait(gatewayAccessToken);
 
         String deviceName = "Gateway Device Request Attributes";
-        String clientKeysStr = CLIENT_ATTRIBUTE_KEYS;
-        List<String> clientKeysList = List.of(clientKeysStr.split(","));
+        List<String> clientKeysList = List.of(CLIENT_ATTRIBUTE_KEYS.split(","));
         client.publishAndWait(GATEWAY_ATTRIBUTES_TOPIC, getProtoGatewayDeviceClientAttributesPayload(deviceName, clientKeysList));
 
         Device device = doExecuteWithRetriesAndInterval(() -> doGet("/api/tenant/devices?deviceName=" + deviceName, Device.class),
@@ -555,8 +548,7 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
 
         SingleEntityFilter dtf = new SingleEntityFilter();
         dtf.setSingleEntity(AliasEntityId.fromEntityId(device.getId()));
-        String sharedKeysStr = SHARED_ATTRIBUTE_KEYS;
-        List<String> sharedKeysList = List.of(sharedKeysStr.split(","));
+        List<String> sharedKeysList = List.of(SHARED_ATTRIBUTE_KEYS.split(","));
         List<EntityKey> csKeys = getEntityKeys(clientKeysList, CLIENT_ATTRIBUTE);
         List<EntityKey> shKeys = getEntityKeys(sharedKeysList, SHARED_ATTRIBUTE);
         List<EntityKey> keys = new ArrayList<>();
