@@ -90,10 +90,6 @@ export class ApiUsageWidgetSettingsComponent extends WidgetSettingsComponent {
     return this.apiUsageWidgetSettingsForm.get('apiUsageDataKeys') as UntypedFormArray;
   }
 
-  trackByDataKey(index: number): any {
-    return index;
-  }
-
   get dragEnabled(): boolean {
     return this.dataKeysFormArray().controls.length > 1;
   }

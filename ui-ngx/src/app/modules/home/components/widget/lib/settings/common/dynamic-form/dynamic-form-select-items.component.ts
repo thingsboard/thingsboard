@@ -174,10 +174,6 @@ export class DynamicFormSelectItemsComponent implements ControlValueAccessor, On
     return this.selectItemsFormGroup.get('selectItems') as UntypedFormArray;
   }
 
-  trackBySelectItem(_index: number, selectItemControl: AbstractControl): any {
-    return selectItemControl;
-  }
-
   removeSelectItem(index: number, emitEvent = true) {
     (this.selectItemsFormGroup.get('selectItems') as UntypedFormArray).removeAt(index, {emitEvent});
   }

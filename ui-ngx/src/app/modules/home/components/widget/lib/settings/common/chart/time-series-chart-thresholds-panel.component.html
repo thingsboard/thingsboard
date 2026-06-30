@@ -31,7 +31,7 @@
     </div>
     @if (thresholdsFormArray().controls.length) {
       <div class="tb-form-table-body">
-        @for (thresholdControl of thresholdsFormArray().controls; track trackByThreshold($index, thresholdControl)) {
+        @for (thresholdControl of thresholdsFormArray().controls; track thresholdControl) {
           <div>
             <tb-time-series-chart-threshold-row class="flex-1"
                                                 [formControl]="thresholdControl"

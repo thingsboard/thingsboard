@@ -186,10 +186,6 @@ export class ScadaSymbolBehaviorsComponent implements ControlValueAccessor, OnIn
     return this.behaviorsFormGroup.get('behaviors') as UntypedFormArray;
   }
 
-  trackByBehavior(index: number, behaviorControl: AbstractControl): any {
-    return behaviorControl;
-  }
-
   removeBehavior(index: number, emitEvent = true) {
     (this.behaviorsFormGroup.get('behaviors') as UntypedFormArray).removeAt(index, {emitEvent});
   }

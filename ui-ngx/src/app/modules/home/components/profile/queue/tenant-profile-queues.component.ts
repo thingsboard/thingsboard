@@ -141,12 +141,6 @@ export class TenantProfileQueuesComponent implements ControlValueAccessor, Valid
     }
   }
 
-  public trackByQueue(index: number, queueControl: AbstractControl) {
-    if (queueControl) {
-      return queueControl.value.id;
-    }
-    return null;
-  }
 
   public removeQueue(index: number) {
     (this.tenantProfileQueuesFormGroup.get('queues') as UntypedFormArray).removeAt(index);

@@ -35,7 +35,7 @@
   </div>
   <mat-divider></mat-divider>
   <div formArrayName="resources">
-    @for (resourceLwM2M of resourcesFormArray.controls; track trackByParams($index, resourceLwM2M.value)) {
+    @for (resourceLwM2M of resourcesFormArray.controls; track resourceLwM2M) {
       <div [formGroupName]="$index" class="resource-list flex flex-row items-center justify-start">
         <div class="resource-name max-w-30% flex-full">
           #{{ resourceLwM2M.get('id').value }} <span class="name">{{ resourceLwM2M.get('name').value }}</span>

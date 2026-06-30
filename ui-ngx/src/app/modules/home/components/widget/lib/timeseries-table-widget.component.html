@@ -41,7 +41,7 @@
                    class="flex-1"
                    mat-stretch-tabs="false"
                    [(selectedIndex)]="sourceIndex" (selectedIndexChange)="onSourceIndexChanged()">
-      @for (source of sources; track trackBySourcesIndex(index, source); let index = $index) {
+      @for (source of sources; track source; let index = $index) {
         <mat-tab [label]="source.displayName">
           @if (isActiveTab(index)) {
             <div class="table-container flex-1">
@@ -56,7 +56,7 @@
                     </mat-cell>
                   </ng-container>
                 }
-                @for (h of source.header; track trackByColumnIndex($index, h)) {
+                @for (h of source.header; track h) {
                   <ng-container [matColumnDef]="h.index + ''">
                     <mat-header-cell *matHeaderCellDef mat-sort-header [disabled]="!h.sortable"> {{ h.dataKey.label }} </mat-header-cell>
                     <mat-cell *matCellDef="let row; let rowIndex = index"
@@ -79,7 +79,7 @@
                     @if (source.timeseriesDatasource.countCellButtonAction) {
                       <div [class.lt-lg:!hidden]="showCellActionsMenu && source.timeseriesDatasource.countCellButtonAction !== 1" class="flex flex-row items-stretch justify-end"
                            [style.min-width]="(source.timeseriesDatasource.countCellButtonAction * 40) + 'px'">
-                        @for (actionDescriptor of row.actionCellButtons; track trackByActionCellDescriptionId($index, actionDescriptor)) {
+                        @for (actionDescriptor of row.actionCellButtons; track actionDescriptor) {
                           @if (!actionDescriptor.icon) {
                             <span style="width: 40px;"></span>
                           }
@@ -104,7 +104,7 @@
                             <mat-icon class="material-icons">more_vert</mat-icon>
                           </button>
                           <mat-menu #cellActionsMenu="matMenu" xPosition="before">
-                            @for (actionDescriptor of row.actionCellButtons; track trackByActionCellDescriptionId($index, actionDescriptor)) {
+                            @for (actionDescriptor of row.actionCellButtons; track actionDescriptor) {
                               @if (actionDescriptor.icon) {
                                 <button mat-menu-item
                                         (click)="onActionButtonClick($event, row, actionDescriptor)">

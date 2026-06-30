@@ -137,10 +137,6 @@ export class Lwm2mBootstrapConfigServersComponent implements OnInit, ControlValu
     }
   }
 
-  trackByParams(index: number): number {
-    return index;
-  }
-
   removeServerConfig($event: Event, index: number) {
     if ($event) {
       $event.stopPropagation();

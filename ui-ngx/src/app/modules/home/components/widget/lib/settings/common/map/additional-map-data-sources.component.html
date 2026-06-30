@@ -24,7 +24,7 @@
     </div>
     @if (dataSourcesFormArray().controls.length) {
       <div class="tb-form-table-body">
-        @for (dataSourceControl of dataSourcesFormArray().controls; track trackByDataSource($index, dataSourceControl)) {
+        @for (dataSourceControl of dataSourcesFormArray().controls; track dataSourceControl) {
           <div>
             <tb-additional-map-data-source-row class="flex-1"
                                                [context]="context"

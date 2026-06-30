@@ -52,8 +52,4 @@ export class MenuToggleComponent implements OnInit {
     this.section.opened = !this.section.opened;
     this.store.dispatch(new ActionPreferencesUpdateOpenedMenuSection({path: this.section.path, opened: this.section.opened}));
   }
-
-  trackBySectionPages(index: number, section: MenuSection){
-    return section.id;
-  }
 }

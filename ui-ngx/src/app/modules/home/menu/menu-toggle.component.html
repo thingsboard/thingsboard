@@ -24,7 +24,7 @@
   [class.tb-toggled]="section.opened"></span>
 </a>
 <ul id="docs-menu-{{section.name | nospace}}" class="tb-menu-toggle-list" [style.height]="sectionHeight()">
-  @for (page of section.pages; track trackBySectionPages($index, page)) {
+  @for (page of section.pages; track page) {
     <li>
       <tb-menu-link [section]="page"></tb-menu-link>
     </li>

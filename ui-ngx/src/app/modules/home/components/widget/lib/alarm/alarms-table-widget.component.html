@@ -81,7 +81,7 @@
             </mat-checkbox>
           </mat-cell>
         </ng-container>
-        @for (column of columns; track trackByColumnDef($index, column)) {
+        @for (column of columns; track column) {
           <ng-container [matColumnDef]="column.def">
             <mat-header-cell [style]="headerStyle(column)" *matHeaderCellDef mat-sort-header [disabled]="!column.sortable">
               {{ column.title }}
@@ -142,7 +142,7 @@
             @if (alarmsDatasource.countCellButtonAction) {
               <div [class.lt-lg:!hidden]="showCellActionsMenu && alarmsDatasource.countCellButtonAction !== 1" class="flex flex-row items-stretch justify-end"
                    [style.min-width]="(alarmsDatasource.countCellButtonAction * 48) + 'px'">
-                @for (actionDescriptor of alarm.actionCellButtons; track trackByActionCellDescriptionId($index, actionDescriptor)) {
+                @for (actionDescriptor of alarm.actionCellButtons; track actionDescriptor) {
                   @if (!actionDescriptor.icon) {
                     <span style="width: 48px;"></span>
                   }
@@ -164,7 +164,7 @@
                     <mat-icon class="material-icons">more_vert</mat-icon>
                   </button>
                   <mat-menu #cellActionsMenu="matMenu" xPosition="before">
-                    @for (actionDescriptor of alarm.actionCellButtons; track trackByActionCellDescriptionId($index, actionDescriptor)) {
+                    @for (actionDescriptor of alarm.actionCellButtons; track actionDescriptor) {
                       @if (actionDescriptor.icon) {
                         <button mat-menu-item
                                 [disabled]="(isLoading$ | async) || !actionEnabled(alarm, actionDescriptor)"

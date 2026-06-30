@@ -727,16 +727,8 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     this.ctx.detectChanges();
   }
 
-  public trackByColumnDef(index, column: EntityColumn) {
-    return column.def;
-  }
-
   public trackByAlarmId(index: number, alarm: AlarmData) {
     return alarm.id.id;
-  }
-
-  public trackByActionCellDescriptionId(index: number, action: WidgetActionDescriptor) {
-    return action.id;
   }
 
   public headerStyle(key: EntityColumn): any {

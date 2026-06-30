@@ -165,10 +165,6 @@ export class MapDataLayersComponent implements ControlValueAccessor, OnInit, Val
     return this.dataLayersFormGroup.get('dataLayers') as UntypedFormArray;
   }
 
-  trackByDataLayer(index: number, dataLayerControl: AbstractControl): any {
-    return dataLayerControl;
-  }
-
   removeDataLayer(index: number) {
     (this.dataLayersFormGroup.get('dataLayers') as UntypedFormArray).removeAt(index);
   }

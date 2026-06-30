@@ -91,10 +91,6 @@ export class AutoCommitSettingsComponent extends PageComponent implements OnInit
     return !!(entityTypeControl as any).expanded;
   }
 
-  public trackByEntityType(index: number, entityTypeControl: AbstractControl): any {
-    return entityTypeControl;
-  }
-
   public removeEntityType(index: number) {
     (this.autoCommitSettingsForm.get('entityTypes') as UntypedFormArray).removeAt(index);
     this.autoCommitSettingsForm.markAsDirty();

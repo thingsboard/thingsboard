@@ -232,7 +232,7 @@
           <div class="tb-form-panel-title" translate>widgets.gauge.tick-values</div>
           <div class="tb-control-list tb-drop-list" cdkDropList cdkDropListOrientation="vertical"
                (cdkDropListDropped)="tickValueDrop($event)">
-            @for (tickValueControl of tickValuesFormArray().controls; track trackByTickValue($index, tickValueControl); let isLast = $last) {
+            @for (tickValueControl of tickValuesFormArray().controls; track tickValueControl; let isLast = $last) {
               <div cdkDrag class="tb-draggable flex flex-row" [class.pb-2]="!isLast">
                 <tb-tick-value class="flex-1"
                                [formControl]="tickValueControl"

@@ -293,7 +293,7 @@
                 </mat-cell>
               </ng-container>
             }
-            @for (column of actionColumns; track trackByColumnKey($index, column)) {
+            @for (column of actionColumns; track column) {
               <ng-container [matColumnDef]="column.key">
                 <mat-header-cell *matHeaderCellDef [style]="headerCellStyle(column)" mat-sort-header [disabled]="!column.sortable"> {{ column.title | translate }} </mat-header-cell>
                 <mat-cell *matCellDef="let entity; let row = index"
