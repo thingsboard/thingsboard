@@ -49,6 +49,8 @@ public class ThingsboardMonitoringApplication {
 
     @Value("${monitoring.monitoring_rate_ms}")
     private int monitoringRateMs;
+    @Value("${monitoring.session_duration_ms:3600000}")
+    private long sessionDurationMs;
 
     ScheduledExecutorService scheduler = ThingsBoardExecutors.newSingleThreadScheduledExecutor("monitoring");
 
@@ -66,7 +68,7 @@ public class ThingsboardMonitoringApplication {
         for (int i = 0; i < monitoringServices.size(); i++) {
             int initialDelay = (monitoringRateMs / monitoringServices.size()) * i;
             BaseMonitoringService<?, ?> service = monitoringServices.get(i);
-            log.info("Scheduling initialDelay {}, fixedDelay {} for monitoring '{}' ", initialDelay, monitoringRateMs, service.getClass().getSimpleName());
+            log.info("Scheduling initialDelay {}, fixedDelay {} for monitoring '{}', session duration: {}ms", initialDelay, monitoringRateMs, service.getClass().getSimpleName(), sessionDurationMs);
             scheduler.scheduleWithFixedDelay(service::runChecks, initialDelay, monitoringRateMs, TimeUnit.MILLISECONDS);
         }
 

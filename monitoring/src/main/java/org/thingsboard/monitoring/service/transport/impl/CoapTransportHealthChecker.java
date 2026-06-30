@@ -48,7 +48,6 @@ import org.thingsboard.monitoring.service.transport.TransportHealthChecker;
 import javax.security.auth.x500.X500Principal;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 @Component
@@ -70,6 +69,15 @@ public class CoapTransportHealthChecker extends TransportHealthChecker<CoapTrans
 
     @Override
     protected void initClient() throws Exception {
+        if (coapClient != null) {
+            if (isSessionExpired()) {
+                log.info("Reconnecting {} client to {}", getTransportType(), target.getBaseUrl());
+                shutdownCoapClient();
+            } else {
+                return;
+            }
+        }
+
         String accessToken = target.getDevice().getCredentials().getCredentialsId();
         String uri = target.getBaseUrl() + "/api/v1/" + accessToken + "/telemetry";
         coapClient = new CoapClient(uri);
@@ -93,14 +101,17 @@ public class CoapTransportHealthChecker extends TransportHealthChecker<CoapTrans
             coapClient.setEndpoint(coapEndpoint);
         }
         coapClient.setTimeout((long) config.getRequestTimeoutMs());
+        recordSessionStart();
         log.debug("Connecting {} client to {}", getTransportType(), target.getBaseUrl());
     }
 
     @Override
     protected void sendTestPayload(String payload) throws Exception {
         CoapResponse response = coapClient.post(payload, MediaTypeRegistry.APPLICATION_JSON);
-        CoAP.ResponseCode code = response.getCode();
-        if (code.codeClass != CoAP.CodeClass.SUCCESS_RESPONSE.value) {
+        if (response == null) {
+            throw new IOException(getTransportType() + " request timed out");
+        }
+        if (response.getCode().codeClass != CoAP.CodeClass.SUCCESS_RESPONSE.value) {
             throw new IOException(getTransportType() + " client didn't receive success response from transport");
         }
     }
@@ -108,22 +119,26 @@ public class CoapTransportHealthChecker extends TransportHealthChecker<CoapTrans
     @Override
     protected void destroyClient() {
         if (coapClient != null) {
-            try {
-                coapClient.shutdown();
-            } catch (Exception e) {
-                log.warn("Failed to shutdown CoAP client: {}", e.getMessage());
-            } finally {
-                if (coapEndpoint != null) {
-                    try {
-                        coapEndpoint.destroy();
-                    } catch (Exception e) {
-                        log.warn("Failed to destroy CoAP endpoint: {}", e.getMessage());
-                    }
-                    coapEndpoint = null;
+            shutdownCoapClient();
+        }
+    }
+
+    private void shutdownCoapClient() {
+        try {
+            coapClient.shutdown();
+        } catch (Exception e) {
+            log.warn("Failed to shutdown CoAP client: {}", e.getMessage());
+        } finally {
+            if (coapEndpoint != null) {
+                try {
+                    coapEndpoint.destroy();
+                } catch (Exception e) {
+                    log.warn("Failed to destroy CoAP endpoint: {}", e.getMessage());
                 }
-                coapClient = null;
-                log.debug("Disconnected {} client", getTransportType());
+                coapEndpoint = null;
             }
+            coapClient = null;
+            log.debug("Disconnected {} client", getTransportType());
         }
     }
 
@@ -136,12 +151,12 @@ public class CoapTransportHealthChecker extends TransportHealthChecker<CoapTrans
 
         @Override
         public List<CipherSuite.CertificateKeyAlgorithm> getSupportedCertificateKeyAlgorithms() {
-            return Arrays.asList(CipherSuite.CertificateKeyAlgorithm.EC, CipherSuite.CertificateKeyAlgorithm.RSA);
+            return List.of(CipherSuite.CertificateKeyAlgorithm.EC, CipherSuite.CertificateKeyAlgorithm.RSA);
         }
 
         @Override
         public List<CertificateType> getSupportedCertificateTypes() {
-            return Collections.singletonList(CertificateType.X_509);
+            return List.of(CertificateType.X_509);
         }
 
         @Override

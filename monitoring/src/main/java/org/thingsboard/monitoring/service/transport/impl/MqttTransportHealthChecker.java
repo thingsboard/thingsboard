@@ -45,6 +45,14 @@ public class MqttTransportHealthChecker extends TransportHealthChecker<MqttTrans
 
     @Override
     protected void initClient() throws Exception {
+        if (mqttClient != null) {
+            if (mqttClient.isConnected() && !isSessionExpired()) {
+                return;
+            }
+            log.info("Reconnecting {} client to {}", getTransportType(), target.getBaseUrl());
+            closeMqttClient();
+        }
+
         String clientId = MqttAsyncClient.generateClientId();
         String accessToken = target.getDevice().getCredentials().getCredentialsId();
         mqttClient = new MqttClient(target.getBaseUrl(), clientId, new MemoryPersistence());
@@ -57,6 +65,7 @@ public class MqttTransportHealthChecker extends TransportHealthChecker<MqttTrans
         if (result.getException() != null) {
             throw result.getException();
         }
+        recordSessionStart();
         log.debug("Connecting {} client to {}", getTransportType(), target.getBaseUrl());
     }
 
@@ -71,19 +80,25 @@ public class MqttTransportHealthChecker extends TransportHealthChecker<MqttTrans
     @Override
     protected void destroyClient() throws Exception {
         if (mqttClient != null) {
-            try {
+            closeMqttClient();
+        }
+    }
+
+    private void closeMqttClient() {
+        try {
+            if (mqttClient.isConnected()) {
                 mqttClient.disconnect();
-            } catch (Exception e) {
-                log.warn("Failed to disconnect MQTT client: {}", e.getMessage());
-            } finally {
-                try {
-                    mqttClient.close();
-                } catch (Exception e) {
-                    log.warn("Failed to close MQTT client: {}", e.getMessage());
-                }
-                mqttClient = null;
-                log.debug("Disconnected {} client", getTransportType());
             }
+        } catch (Exception e) {
+            log.warn("Failed to disconnect MQTT client: {}", e.getMessage());
+        } finally {
+            try {
+                mqttClient.close();
+            } catch (Exception e) {
+                log.warn("Failed to close MQTT client: {}", e.getMessage());
+            }
+            mqttClient = null;
+            log.debug("Disconnected {} client", getTransportType());
         }
     }
 

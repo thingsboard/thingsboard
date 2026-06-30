@@ -36,6 +36,9 @@ monitoring:
   monitoring_rate_ms: '${MONITORING_RATE_MS:10000}'
   # Maximum time between request to transport and WebSocket update
   check_timeout_ms: '${CHECK_TIMEOUT_MS:5000}'
+  # Transport session duration in milliseconds. Connection is reused until it expires, then reconnected.
+  # Set to 0 to keep the session open indefinitely (reconnect only on failure).
+  session_duration_ms: '${SESSION_DURATION_MS:3600000}'
 
   # Failures threshold for notifying
   failures_threshold: '${FAILURES_THRESHOLD:1}'
