@@ -16,7 +16,6 @@
 
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { MenuSection } from '@core/services/menu.models';
-import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { ActionPreferencesUpdateOpenedMenuSection } from '@core/auth/auth.actions';
@@ -38,8 +37,7 @@ export class MenuToggleComponent {
   @coerceBoolean()
   collapsed = false;
 
-  constructor(private router: Router,
-              private store: Store<AppState>,
+  constructor(private store: Store<AppState>,
               private menuService: MenuService) {
   }
 
