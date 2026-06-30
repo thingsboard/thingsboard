@@ -90,7 +90,7 @@ export class ApiUsageWidgetComponent implements OnInit, OnDestroy {
             const progress = (this.isFiniteNumber(data[0][key.maxLimit.key]) && data[0][key.maxLimit.key] !== 0) ? Math.min(100, ((data[0][key.current.key] / data[0][key.maxLimit.key]) * 100)) : 0;
             key.progress = isFinite(progress) ? progress : 0;
             key.status.value = data[0][key.status.key] ? data[0][key.status.key].toLowerCase() : 'enabled';
-            key.maxLimit.value = this.isFiniteNumber(data[0][key.maxLimit.key]) && data[0][key.maxLimit.key] !== 0 ?  this.shortNumberPipe.transform(data[0][key.maxLimit.key]) : '∞';
+            key.maxLimit.value = this.isFiniteNumber(data[0][key.maxLimit.key]) && data[0][key.maxLimit.key] !== 0 ? this.shortNumberPipe.transform(data[0][key.maxLimit.key]) : '∞';
             key.current.value = this.isFiniteNumber(data[0][key.current.key]) ? this.shortNumberPipe.transform(data[0][key.current.key], {roundDown: true}) : 0;
           });
           this.cd.detectChanges();
