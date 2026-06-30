@@ -27,7 +27,7 @@
             <mat-grid-list rowHeight="170px" [cols]="sectionPlaces(section).length">
               @for (place of sectionPlaces(section); track place) {
                 <mat-grid-tile>
-                  <a mat-raised-button color="primary" class="tb-card-button" href="{{place.path}}" (click)="navigate($event, place.path)">
+                  <a mat-stroked-button class="tb-card-button" href="{{place.path}}" (click)="navigate($event, place.path)">
                     <tb-icon matButtonIcon class="tb-mat-96">{{place.icon}}</tb-icon>
                     <span>{{place.customTranslate ? (place.name | customTranslate) : (place.name | translate)}}</span>
                   </a>

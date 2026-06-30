@@ -67,7 +67,7 @@ export class MenuService {
           this.updateOpenedMenuSections();
           this.menuSections$.next(this.currentMenuSections);
           this.availableMenuSections$.next(this._availableMenuSections);
-          const homeSections = buildUserHome(authState, this._availableMenuSections);
+          const homeSections = buildUserHome(this.currentMenuSections);
           this.homeSections$.next(homeSections);
         }
       }
