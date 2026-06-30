@@ -13,21 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.actors.device;
-
-import lombok.Data;
-import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequestActorMsg;
+package org.thingsboard.common.util;
 
 /**
- * @author Andrew Shvayka
+ * Maps a hash code to a non-negative partition index in {@code [0, partitions)}.
  */
-@Data
-public class ToDeviceRpcRequestMetadata {
-    private final ToDeviceRpcRequestActorMsg msg;
-    private final boolean sent;
-    // Creation time of the persisted RPC row, captured once at create so post-persist rule-engine
-    // notifications on the update paths carry the original createdTime instead of the update moment.
-    private final long createdTime;
-    private int retries;
-    private boolean delivered;
+public final class HashPartitioner {
+
+    private HashPartitioner() {
+    }
+
+    public static int resolvePartition(int hashCode, int partitions) {
+        if (partitions <= 0) {
+            throw new IllegalArgumentException("partitions must be > 0, but was " + partitions);
+        }
+        return (hashCode & 0x7FFFFFFF) % partitions;
+    }
 }

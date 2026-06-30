@@ -13,21 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.actors.device;
+package org.thingsboard.server.dao.sql.rpc;
 
-import lombok.Data;
-import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequestActorMsg;
+import org.thingsboard.server.dao.model.sql.RpcEntity;
 
-/**
- * @author Andrew Shvayka
- */
-@Data
-public class ToDeviceRpcRequestMetadata {
-    private final ToDeviceRpcRequestActorMsg msg;
-    private final boolean sent;
-    // Creation time of the persisted RPC row, captured once at create so post-persist rule-engine
-    // notifications on the update paths carry the original createdTime instead of the update moment.
-    private final long createdTime;
-    private int retries;
-    private boolean delivered;
+record RpcQueueEntry(RpcEntity entity, boolean insert) {
+
+    static RpcQueueEntry forInsert(RpcEntity entity) {
+        return new RpcQueueEntry(entity, true);
+    }
+
+    static RpcQueueEntry forUpdate(RpcEntity entity) {
+        return new RpcQueueEntry(entity, false);
+    }
 }
