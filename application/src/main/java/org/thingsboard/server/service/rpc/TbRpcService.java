@@ -73,7 +73,8 @@ public class TbRpcService {
     }
 
     public void create(TenantId tenantId, Rpc rpc) {
-        persist(tenantId, rpc, rpcService.createAsync(rpc));
+        rpcService.save(rpc);
+        executorFor(rpc.getUuidId()).execute(() -> notifyRuleEngine(tenantId, rpc));
     }
 
     public void update(TenantId tenantId, Rpc rpc) {
@@ -97,6 +98,15 @@ public class TbRpcService {
 
     private Executor executorFor(UUID rpcId) {
         return callbackExecutors[HashPartitioner.resolvePartition(rpcId.hashCode(), callbackExecutors.length)];
+    }
+
+    private void notifyRuleEngine(TenantId tenantId, Rpc rpc) {
+        try {
+            pushRpcMsgToRuleEngine(tenantId, rpc);
+        } catch (Throwable t) {
+            log.error("[{}][{}][{}] Failed to push RPC with status [{}] to rule engine",
+                    tenantId, rpc.getDeviceId(), rpc.getId(), rpc.getStatus(), t);
+        }
     }
 
     private void pushRpcMsgToRuleEngine(TenantId tenantId, Rpc rpc) {

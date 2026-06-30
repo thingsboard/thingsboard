@@ -43,6 +43,7 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -71,13 +72,15 @@ public class TbRpcServiceTest {
     }
 
     @Test
-    public void createPersistsViaCreateAsyncThenPushesToRuleEngine() {
+    public void createPersistsSynchronouslyThenPushesToRuleEngine() {
         Rpc rpc = newRpc();
-        when(rpcService.createAsync(rpc)).thenReturn(Futures.immediateFuture(true));
+        when(rpcService.save(rpc)).thenReturn(rpc);
 
         tbRpcService.create(rpc.getTenantId(), rpc);
 
-        verify(rpcService).createAsync(rpc);
+        // create must persist synchronously via save(...), never via the async batch path
+        verify(rpcService).save(rpc);
+        verify(rpcService, never()).createAsync(any());
         verify(clusterService, timeout(5000))
                 .pushMsgToRuleEngine(eq(rpc.getTenantId()), eq(rpc.getDeviceId()), any(TbMsg.class), isNull());
     }
