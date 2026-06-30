@@ -98,8 +98,6 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
     protected static final String SHARED_ATTRIBUTES_PAYLOAD = "{\"sharedStr\":\"value1\",\"sharedBool\":true,\"sharedDbl\":42.0,\"sharedLong\":73," +
             "\"sharedJson\":{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}}";
 
-    protected static final String CLIENT_ATTRIBUTE_KEYS = "clientStr,clientBool,clientDbl,clientLong,clientJson";
-    protected static final String SHARED_ATTRIBUTE_KEYS = "sharedStr,sharedBool,sharedDbl,sharedLong,sharedJson";
 
     private static final String SHARED_ATTRIBUTES_DELETED_RESPONSE = "{\"deleted\":[\"sharedJson\"]}";
 

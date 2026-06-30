@@ -409,21 +409,22 @@ public class JsonConverter {
      * list leaves the scope unset. Shared by the HTTP and CoAP query-parameter parsers.
      */
     public static void applyClientScope(TransportProtos.GetAttributeRequestMsg.Builder builder, boolean all, Collection<String> names) {
-        if (all) {
-            builder.setAllClientAttributes(true);
-        } else if (names != null && !names.isEmpty()) {
-            builder.addAllClientAttributeNames(names);
-        }
+        applyScope(all, names, () -> builder.setAllClientAttributes(true), builder::addAllClientAttributeNames);
     }
 
     /**
      * Shared-scope counterpart of {@link #applyClientScope}.
      */
     public static void applySharedScope(TransportProtos.GetAttributeRequestMsg.Builder builder, boolean all, Collection<String> names) {
+        applyScope(all, names, () -> builder.setAllSharedAttributes(true), builder::addAllSharedAttributeNames);
+    }
+
+    // "all" wins over a specific key list; a missing/empty list leaves the scope unset.
+    private static void applyScope(boolean all, Collection<String> names, Runnable setAll, Consumer<Iterable<String>> addNames) {
         if (all) {
-            builder.setAllSharedAttributes(true);
+            setAll.run();
         } else if (names != null && !names.isEmpty()) {
-            builder.addAllSharedAttributeNames(names);
+            addNames.accept(names);
         }
     }
 
