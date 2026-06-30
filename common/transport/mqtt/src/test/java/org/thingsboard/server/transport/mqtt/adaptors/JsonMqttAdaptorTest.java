@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.transport.mqtt.adaptors;
 
-import com.google.gson.JsonArray;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import org.junit.jupiter.api.Test;
@@ -72,32 +71,11 @@ public class JsonMqttAdaptorTest {
     }
 
     @Test
-    public void emptyArray_setsAll() {
-        JsonObject json = new JsonObject();
-        json.add("clientKeys", new JsonArray());
-        parseClientKeys(json);
-        assertTrue(allInvoked.get());
-        assertTrue(names.isEmpty());
-    }
-
-    @Test
     public void commaSeparatedString_setsNames() {
         JsonObject json = new JsonObject();
         json.addProperty("clientKeys", "a,b,c");
         parseClientKeys(json);
         assertFalse(allInvoked.get());
         assertEquals(List.of("a", "b", "c"), names);
-    }
-
-    @Test
-    public void jsonArray_setsNames() {
-        JsonObject json = new JsonObject();
-        JsonArray arr = new JsonArray();
-        arr.add("a");
-        arr.add("b");
-        json.add("clientKeys", arr);
-        parseClientKeys(json);
-        assertFalse(allInvoked.get());
-        assertEquals(List.of("a", "b"), names);
     }
 }

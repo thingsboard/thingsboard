@@ -37,7 +37,6 @@ import org.thingsboard.server.transport.mqtt.session.MqttDeviceAwareSessionConte
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -244,11 +243,12 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
     }
 
     /**
-     * Three-state per-scope attribute selection shared by the device and gateway JSON request parsers:
+     * Three-state per-scope attribute selection shared by the device and gateway JSON request parsers,
+     * matching the comma-separated {@code clientKeys}/{@code sharedKeys} format of the device MQTT API:
      * <ul>
      *     <li>field absent / null  =&gt; the scope is excluded (neither names nor "all" is set);</li>
-     *     <li>field present + empty value (empty string or empty array) =&gt; every key in that scope ({@code setAll});</li>
-     *     <li>field present + a comma-separated string or a JSON array of names =&gt; only those keys ({@code setNames}).</li>
+     *     <li>field present + empty (or blank) string =&gt; every key in that scope ({@code setAll});</li>
+     *     <li>field present + a comma-separated string of names =&gt; only those keys ({@code setNames}).</li>
      * </ul>
      */
     public static void parseAttributeScope(JsonObject json, String field,
@@ -256,24 +256,11 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
         if (!json.has(field) || json.get(field).isJsonNull()) {
             return;
         }
-        JsonElement element = json.get(field);
-        List<String> names = new ArrayList<>();
-        if (element.isJsonArray()) {
-            for (JsonElement e : element.getAsJsonArray()) {
-                names.add(e.getAsString());
-            }
-        } else {
-            String value = element.getAsString();
-            if (value.trim().isEmpty()) {
-                setAll.run();
-                return;
-            }
-            names.addAll(Arrays.asList(value.split(",")));
-        }
-        if (names.isEmpty()) {
+        String value = json.get(field).getAsString();
+        if (value.trim().isEmpty()) {
             setAll.run();
         } else {
-            setNames.accept(names);
+            setNames.accept(Arrays.asList(value.split(",")));
         }
     }
 
