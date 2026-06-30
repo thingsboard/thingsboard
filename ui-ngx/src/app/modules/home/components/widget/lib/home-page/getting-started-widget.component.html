@@ -34,7 +34,7 @@
             </div>
           </ng-template>
           <div [innerHTML]="'widgets.getting-started.sys-admin.step1.content' | translate | safe: 'html'"></div>
-          <a mat-stroked-button color="primary" href="https://thingsboard.io/docs/user-guide/ui/tenants/" target="_blank">
+          <a mat-stroked-button color="primary" href="https://thingsboard.io/docs/user-guide/multi-tenancy/" target="_blank">
             <mat-icon>description</mat-icon>{{ 'widgets.getting-started.sys-admin.step1.how-to-create-tenant' | translate }}</a>
           </mat-step>
           <mat-step [completed]="gettingStarted.maxSelectedIndex > 0">
@@ -73,7 +73,7 @@
                   </div>
                 </ng-template>
                 <div [innerHTML]="'widgets.getting-started.sys-admin.step4.content' | translate | safe: 'html'"></div>
-                <a mat-stroked-button color="primary" href="https://thingsboard.io/docs/user-guide/two-factor-authentication/" target="_blank">
+                <a mat-stroked-button color="primary" href="https://thingsboard.io/docs/user-guide/security/two-factor-authentication/" target="_blank">
                   <mat-icon>description</mat-icon>{{ 'widgets.getting-started.sys-admin.step4.how-to-configure-2fa' | translate }}</a>
                 </mat-step>
                 <mat-step [completed]="gettingStarted.maxSelectedIndex > 3">
@@ -86,7 +86,7 @@
                     </div>
                   </ng-template>
                   <div [innerHTML]="'widgets.getting-started.sys-admin.step5.content' | translate | safe: 'html'"></div>
-                  <a mat-stroked-button color="primary" href="https://thingsboard.io/docs/user-guide/oauth-2-support/" target="_blank">
+                  <a mat-stroked-button color="primary" href="https://thingsboard.io/docs/user-guide/security/oauth-2-support/" target="_blank">
                     <mat-icon>description</mat-icon>{{ 'widgets.getting-started.sys-admin.step5.how-to-configure-oauth2' | translate }}</a>
                   </mat-step>
                   <mat-step [completed]="gettingStarted.maxSelectedIndex > 4">
@@ -114,7 +114,7 @@
                         </div>
                       </ng-template>
                       <div [innerHTML]="'widgets.getting-started.tenant-admin.step1.content' | translate | safe: 'html'"></div>
-                      <a mat-stroked-button color="primary" href="https://thingsboard.io/docs/getting-started-guides/helloworld/#step-1-provision-device" target="_blank">
+                      <a mat-stroked-button color="primary" href="https://thingsboard.io/docs/getting-started/1/#step-11-create-a-device" target="_blank">
                         <mat-icon>description</mat-icon>{{ 'widgets.getting-started.tenant-admin.step1.how-to-create-device' | translate }}</a>
                       </mat-step>
                       <mat-step [completed]="gettingStarted.maxSelectedIndex > 0">
@@ -162,7 +162,7 @@
                 "></tb-markdown>
                         </div>
                         <div [innerHTML]="'widgets.getting-started.tenant-admin.step2.content-after' | translate | safe: 'html'"></div>
-                        <a mat-stroked-button color="primary" href="https://thingsboard.io/docs/getting-started-guides/helloworld/#step-2-connect-device" target="_blank">
+                        <a mat-stroked-button color="primary" href="https://thingsboard.io/docs/getting-started/1/#step-12-verify-device-connectivity" target="_blank">
                           <mat-icon>description</mat-icon>{{ 'widgets.getting-started.tenant-admin.step2.how-to-connect-device' | translate }}</a>
                         </mat-step>
                         <mat-step [completed]="gettingStarted.maxSelectedIndex > 1">
@@ -175,7 +175,7 @@
                             </div>
                           </ng-template>
                           <div [innerHTML]="'widgets.getting-started.tenant-admin.step3.content' | translate | safe: 'html'"></div>
-                          <a mat-stroked-button color="primary" href="https://thingsboard.io/docs/getting-started-guides/helloworld/#step-3-create-dashboard" target="_blank">
+                          <a mat-stroked-button color="primary" href="https://thingsboard.io/docs/getting-started/2/" target="_blank">
                             <mat-icon>description</mat-icon>{{ 'widgets.getting-started.tenant-admin.step3.how-to-create-dashboard' | translate }}</a>
                           </mat-step>
                           <mat-step [completed]="gettingStarted.maxSelectedIndex > 2">
@@ -188,7 +188,7 @@
                               </div>
                             </ng-template>
                             <div [innerHTML]="'widgets.getting-started.tenant-admin.step4.content' | translate | safe: 'html'"></div>
-                            <a mat-stroked-button color="primary" href="https://thingsboard.io/docs/user-guide/alarm-rules/" target="_blank">
+                            <a mat-stroked-button color="primary" href="https://thingsboard.io/docs/getting-started/3/#step-31-configure-alarm-rule" target="_blank">
                               <mat-icon>description</mat-icon>{{ 'widgets.getting-started.tenant-admin.step4.how-to-configure-alarm-rules' | translate }}</a>
                             </mat-step>
                             <mat-step [completed]="gettingStarted.maxSelectedIndex > 3">
@@ -206,7 +206,7 @@
                     ```
                 "></tb-markdown>
                               <div [innerHTML]="'widgets.getting-started.tenant-admin.step5.content-after' | translate | safe: 'html'"></div>
-                              <a mat-stroked-button color="primary" href="https://thingsboard.io/docs/getting-started-guides/helloworld/#step-5-create-alarm" target="_blank">
+                              <a mat-stroked-button color="primary" href="https://thingsboard.io/docs/getting-started/3/#step-32-trigger-an-alarm" target="_blank">
                                 <mat-icon>description</mat-icon>{{ 'widgets.getting-started.tenant-admin.step5.how-to-create-alarm' | translate }}</a>
                               </mat-step>
                               <mat-step [completed]="gettingStarted.maxSelectedIndex > 4">
@@ -219,7 +219,7 @@
                                   </div>
                                 </ng-template>
                                 <div [innerHTML]="'widgets.getting-started.tenant-admin.step6.content' | translate | safe: 'html'"></div>
-                                <a mat-stroked-button color="primary" href="https://thingsboard.io/docs/getting-started-guides/helloworld/#step-7-assign-device-and-dashboard-to-customer" target="_blank">
+                                <a mat-stroked-button color="primary" href="https://thingsboard.io/docs/getting-started/4/#step-41-create-a-customer" target="_blank">
                                   <mat-icon>description</mat-icon>{{ 'widgets.getting-started.tenant-admin.step6.how-to-create-customer-and-assign-dashboard' | translate }}</a>
                                 </mat-step>
                               }

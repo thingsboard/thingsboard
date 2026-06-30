@@ -25,6 +25,7 @@ export type VolumeFlowMetricUnits =
   | 'L/min'
   | 'L/hr'
   | 'm³/s'
+  | 'm³/min'
   | 'm³/hr';
 
 export type VolumeFlowImperialUnits =
@@ -66,6 +67,11 @@ const METRIC: TbMeasureUnits<VolumeFlowMetricUnits> = {
       name: 'unit.cubic-meters-per-second',
       tags: ['airflow', 'ventilation', 'HVAC', 'gas flow rate'],
       to_anchor: 1000,
+    },
+    'm³/min': {
+      name: 'unit.cubic-meters-per-minute',
+      tags: ['airflow', 'ventilation', 'HVAC', 'gas flow rate'],
+      to_anchor: 1000 / 60,
     },
     'm³/hr': {
       name: 'unit.cubic-meters-per-hour',
