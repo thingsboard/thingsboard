@@ -42,7 +42,7 @@
       </mat-toolbar>
     </header>
     <mat-toolbar class="tb-side-menu-toolbar flex flex-1 flex-col" role="navigation">
-      <div class="w-full flex-1 overflow-y-auto">
+      <div class="w-full flex-1 overflow-y-auto overflow-x-hidden">
         <tb-side-menu  [collapsed]="menuCollapsed()"></tb-side-menu>
       </div>
       <tb-user-menu [collapsed]="menuCollapsed()" (menuClicked)="sidenavClicked()"></tb-user-menu>
