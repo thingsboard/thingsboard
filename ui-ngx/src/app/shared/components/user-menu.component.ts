@@ -20,7 +20,6 @@ import {
   Input,
   OnDestroy,
   OnInit, Output,
-  ViewChild,
   ViewEncapsulation
 } from '@angular/core';
 import { User } from '@shared/models/user.model';
@@ -31,7 +30,6 @@ import { selectAuthUser, selectUserDetails } from '@core/auth/auth.selectors';
 import { map } from 'rxjs/operators';
 import { AuthService } from '@core/auth/auth.service';
 import { Router } from '@angular/router';
-import { MatMenu, MatMenuTrigger } from '@angular/material/menu';
 import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
