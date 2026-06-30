@@ -32,6 +32,7 @@ export interface MenuSection {
   rootOnly?: boolean;
   isNew?: boolean;
   customTranslate?: boolean;
+  active?: boolean;
 }
 
 export interface MenuReference {
@@ -1008,7 +1009,8 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
               {id: MenuId.trendz_settings},
               {id: MenuId.ai_models}
             ]
-          }
+          },
+          {id: MenuId.api_usage}
         ]
       },
       {
@@ -1024,8 +1026,7 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
           {id: MenuId.mobile_bundles},
           {id: MenuId.mobile_apps}
         ]
-      },
-      {id: MenuId.api_usage},
+      }
     ]
   ],
   [

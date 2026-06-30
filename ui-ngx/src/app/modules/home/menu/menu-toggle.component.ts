@@ -20,7 +20,6 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { ActionPreferencesUpdateOpenedMenuSection } from '@core/auth/auth.actions';
 import { coerceBoolean } from '@shared/decorators/coercion';
-import { MenuService } from '@core/services/menu.service';
 
 @Component({
     selector: 'tb-menu-toggle',
@@ -37,8 +36,7 @@ export class MenuToggleComponent {
   @coerceBoolean()
   collapsed = false;
 
-  constructor(private store: Store<AppState>,
-              private menuService: MenuService) {
+  constructor(private store: Store<AppState>) {
   }
 
   sectionHeight(): string {
@@ -64,7 +62,7 @@ export class MenuToggleComponent {
 
   toggleSectionActive(): boolean {
     if (this.collapsed) {
-      return this.menuService.isActiveMenuSection(this.section);
+      return this.section.active;
     } else {
       return false;
     }

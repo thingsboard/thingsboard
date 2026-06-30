@@ -38,8 +38,6 @@ export class MenuService {
     map((items) => this.allMenuLinks(items))
   );
 
-  private currentMenuSection: MenuSection = null;
-
   constructor(private store: Store<AppState>,
               private router: Router) {
     this.store.pipe(select(selectIsAuthenticated)).subscribe(
@@ -55,7 +53,7 @@ export class MenuService {
       }
     );
     this.router.events.pipe(filter(event => event instanceof ActivationEnd)).subscribe(() => {
-        this.updateCurrentMenuSection();
+        this.updateActiveMenuSections();
     });
   }
 
@@ -65,7 +63,7 @@ export class MenuService {
         if (authState.authUser) {
           this.currentMenuSections = buildUserMenu(authState);
           this._availableMenuSections = this.allMenuSections(this.currentMenuSections);
-          this.updateCurrentMenuSection();
+          this.updateActiveMenuSections();
           this.updateOpenedMenuSections();
           this.menuSections$.next(this.currentMenuSections);
           this.availableMenuSections$.next(this._availableMenuSections);
@@ -80,7 +78,7 @@ export class MenuService {
     const openedMenuSections = getCurrentOpenedMenuSections(this.store);
     if (this.currentMenuSections?.length) {
       this.currentMenuSections.filter(section => section.type === 'toggle' &&
-        (openedMenuSections.includes(section.path) || this.isActiveMenuSection(section))).forEach(
+        (openedMenuSections.includes(section.path) || section.active)).forEach(
         section => section.opened = true
       );
     }
@@ -118,17 +116,20 @@ export class MenuService {
     return this.homeSections$;
   }
 
-  private updateCurrentMenuSection() {
+  private updateActiveMenuSections() {
     const url = this.router.url;
-    this.currentMenuSection = this._availableMenuSections.find(section => section.path === url);
+    const activeMenuSection = this._availableMenuSections.find(section => section.path === url);
+    this._availableMenuSections.forEach((section: MenuSection) => {
+      section.active = this.isSectionActive(section, activeMenuSection);
+    });
   }
 
-  public isActiveMenuSection(section: MenuSection): boolean {
-    if (this.currentMenuSection === section) {
+  private isSectionActive(section: MenuSection, activeMenuSection: MenuSection): boolean {
+    if (activeMenuSection === section) {
       return true;
     } else if (section.pages?.length) {
       for (const page of section.pages) {
-        if (this.isActiveMenuSection(page)) {
+        if (this.isSectionActive(page, activeMenuSection)) {
           return true;
         }
       }
