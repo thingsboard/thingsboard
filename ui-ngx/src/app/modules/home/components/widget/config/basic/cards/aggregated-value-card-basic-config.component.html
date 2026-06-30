@@ -45,7 +45,6 @@
                                         subscriptSizing="dynamic"
                                         predefinedValuesButton="true"
                                         [predefinedValues]="predefinedValues"
-                                        [disabled]="!aggregatedValueCardWidgetConfigForm.get('showTitle').value"
                                         placeholderText="{{ 'widget-config.set' | translate }}"
                                         formControlName="title"
         ></tb-string-pattern-autocomplete>
@@ -91,7 +90,6 @@
                                         subscriptSizing="dynamic"
                                         [predefinedValuesButton]="true"
                                         [predefinedValues]="predefinedValues"
-                                        [disabled]="!aggregatedValueCardWidgetConfigForm.get('showSubtitle').value"
                                         placeholderText="{{ 'widget-config.set' | translate }}"
                                         formControlName="subtitle"
         ></tb-string-pattern-autocomplete>
