@@ -141,9 +141,9 @@ public class DeviceApiController implements TbTransportService {
     public DeferredResult<ResponseEntity> getDeviceAttributes(
             @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
             @PathVariable("deviceToken") String deviceToken,
-            @Parameter(description = "Comma separated key names for attribute with client scope", required = false, schema = @Schema(defaultValue = "state"))
+            @Parameter(description = "Comma separated key names for attribute with client scope. Leave empty and set allClientKeys=true to fetch all client-scope attributes", required = false)
             @RequestParam(value = "clientKeys", required = false, defaultValue = "") String clientKeys,
-            @Parameter(description = "Comma separated key names for attribute with shared scope", required = false, schema = @Schema(defaultValue = "configuration"))
+            @Parameter(description = "Comma separated key names for attribute with shared scope. Leave empty and set allSharedKeys=true to fetch all shared-scope attributes", required = false)
             @RequestParam(value = "sharedKeys", required = false, defaultValue = "") String sharedKeys,
             @Parameter(description = "Set to true to return ALL client-scope attributes (ignores clientKeys)")
             @RequestParam(value = "allClientKeys", required = false, defaultValue = "false") boolean allClientKeys,
