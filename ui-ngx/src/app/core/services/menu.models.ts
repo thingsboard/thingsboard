@@ -280,7 +280,7 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       fullName: 'notification.notification-recipients',
       type: 'link',
       path: '/notification/recipients',
-      icon: 'contacts'
+      icon: 'mdi:contacts-outline'
     }
   ],
   [
@@ -302,7 +302,7 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       fullName: 'notification.notification-rules',
       type: 'link',
       path: '/notification/rules',
-      icon: 'mdi:message-cog'
+      icon: 'mdi:message-cog-outline'
     }
   ],
   [
