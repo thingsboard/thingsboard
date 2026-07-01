@@ -17,6 +17,7 @@ package org.thingsboard.server.transport.mqtt.session;
 
 import io.netty.channel.ChannelFuture;
 import io.netty.handler.codec.mqtt.MqttMessage;
+import io.netty.handler.codec.mqtt.MqttPublishMessage;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -106,19 +107,20 @@ public abstract class AbstractGatewayDeviceSessionContext<T extends AbstractGate
         try {
             parent.getPayloadAdaptor().convertToGatewayPublish(this, getDeviceInfo().getDeviceName(), request).ifPresent(
                     payload -> {
-                        ChannelFuture channelFuture = parent.writeAndFlush(payload);
-                        if (request.getPersisted()) {
-                            channelFuture.addListener(result -> {
-                                if (result.cause() == null) {
-                                    if (!isAckExpected(payload)) {
-                                        transportService.process(getSessionInfo(), request, RpcStatus.DELIVERED, TransportServiceCallback.EMPTY);
-                                    } else if (request.getPersisted()) {
-                                        transportService.process(getSessionInfo(), request, RpcStatus.SENT, TransportServiceCallback.EMPTY);
-
-                                    }
-                                }
-                            });
+                        if (isAckExpected(payload)) {
+                            int msgId = ((MqttPublishMessage) payload).variableHeader().packetId();
+                            parent.registerRpcAwaitingAck(msgId, getSessionInfo(), request);
                         }
+                        ChannelFuture channelFuture = parent.writeAndFlush(payload);
+                        channelFuture.addListener(result -> {
+                            if (result.cause() == null) {
+                                if (!isAckExpected(payload)) {
+                                    transportService.process(getSessionInfo(), request, RpcStatus.DELIVERED, TransportServiceCallback.EMPTY);
+                                } else if (request.getPersisted()) {
+                                    transportService.process(getSessionInfo(), request, RpcStatus.SENT, TransportServiceCallback.EMPTY);
+                                }
+                            }
+                        });
                     }
             );
         } catch (Exception e) {

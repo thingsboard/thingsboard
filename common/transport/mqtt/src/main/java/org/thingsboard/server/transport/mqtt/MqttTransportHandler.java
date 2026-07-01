@@ -385,6 +385,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 TransportProtos.ToDeviceRpcRequestMsg rpcRequest = rpcAwaitingAck.remove(msgId);
                 if (rpcRequest != null) {
                     transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, RpcStatus.DELIVERED, true, TransportServiceCallback.EMPTY);
+                } else if (gatewaySessionHandler != null) {
+                    gatewaySessionHandler.onPubAck(msgId);
                 }
                 break;
             default:
