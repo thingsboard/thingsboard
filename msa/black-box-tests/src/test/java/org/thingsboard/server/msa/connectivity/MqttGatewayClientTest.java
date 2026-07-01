@@ -236,6 +236,34 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
     }
 
     @Test
+    public void gatewayRequestAllSharedReturnsSeparatedResponse() throws Exception {
+        JsonObject sharedAttributes = new JsonObject();
+        sharedAttributes.addProperty("attr1", "value1");
+        sharedAttributes.addProperty("attr2", true);
+        testRestClient.postTelemetryAttribute(createdDevice.getId(), SHARED_SCOPE, mapper.readTree(sharedAttributes.toString()));
+
+        mqttClient.on("v1/gateway/attributes/response", listener, MqttQoS.AT_LEAST_ONCE).get();
+
+        // new format: empty sharedKeys => all shared; scope-separated response
+        JsonObject requestData = new JsonObject();
+        requestData.addProperty("id", 1);
+        requestData.addProperty("device", createdDevice.getName());
+        requestData.addProperty("sharedKeys", "");
+        mqttClient.publish("v1/gateway/attributes/request", Unpooled.wrappedBuffer(requestData.toString().getBytes())).get();
+
+        // Saving the shared attribute above also triggers an attribute-update push on
+        // v1/gateway/attributes, which can land in the queue before the request response.
+        // Skip those and read the event from the response topic.
+        MqttEvent event = pollEventForTopic("v1/gateway/attributes/response");
+        JsonObject responseData = JsonParser.parseString(Objects.requireNonNull(event).getMessage()).getAsJsonObject();
+        assertThat(responseData.has("shared")).isTrue();
+        assertThat(responseData.has("value")).isFalse();
+        assertThat(responseData.has("values")).isFalse();
+        assertThat(responseData.getAsJsonObject("shared").get("attr1").getAsString()).isEqualTo("value1");
+        assertThat(responseData.getAsJsonObject("shared").get("attr2").getAsBoolean()).isTrue();
+    }
+
+    @Test
     public void requestAttributeValuesFromServer() throws Exception {
         WsClient wsClient = subscribeToWebSocket(createdDevice.getId(), "CLIENT_SCOPE", CmdsType.ATTR_SUB_CMDS);
         // Add a new client attribute
@@ -369,6 +397,21 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         testRestClient.deleteDevice(this.createdDevice.getId());
         testRestClient.getDeviceById(this.createdDevice.getId(), HttpStatus.NOT_FOUND.value());
         this.createdDevice = createDeviceThroughGateway(mqttClient, gatewayDevice);
+    }
+
+    private MqttEvent pollEventForTopic(String topic) throws InterruptedException {
+        long deadline = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(10 * timeoutMultiplier);
+        long remaining;
+        while ((remaining = deadline - System.currentTimeMillis()) > 0) {
+            MqttEvent event = listener.getEvents().poll(remaining, TimeUnit.MILLISECONDS);
+            if (event == null) {
+                break;
+            }
+            if (topic.equals(event.getTopic())) {
+                return event;
+            }
+        }
+        return null;
     }
 
     private void checkAttribute(boolean client, String expectedValue) throws Exception {

@@ -55,6 +55,8 @@ import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509Ce
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -361,13 +363,70 @@ public class JsonConverter {
         JsonObject result = new JsonObject();
         result.addProperty("id", responseMsg.getRequestId());
         result.addProperty(DEVICE_PROPERTY, deviceName);
+        if (responseMsg.getSeparateScopesResponse()) {
+            // Reuse the device-side scope-separated assembly so both responses stay identical in shape.
+            toJson(responseMsg).entrySet().forEach(entry -> result.add(entry.getKey(), entry.getValue()));
+        } else {
+            addLegacyGatewayValues(result, responseMsg);
+        }
+        return result;
+    }
+
+    @SuppressWarnings("deprecation") // isMultipleAttributesRequest retained for the legacy gateway value/values response
+    private static void addLegacyGatewayValues(JsonObject result, TransportProtos.GetAttributeResponseMsg responseMsg) {
         if (responseMsg.getClientAttributeListCount() > 0) {
             addValues(result, responseMsg.getClientAttributeListList(), responseMsg.getIsMultipleAttributesRequest());
         }
         if (responseMsg.getSharedAttributeListCount() > 0) {
             addValues(result, responseMsg.getSharedAttributeListList(), responseMsg.getIsMultipleAttributesRequest());
         }
-        return result;
+    }
+
+    /**
+     * Three-state per-scope attribute selection for the JSON {@code clientKeys}/{@code sharedKeys} format
+     * (device and gateway MQTT APIs). Depending on the value of {@code keysField}:
+     * <ul>
+     *     <li>absent or null: the scope is excluded (neither callback is invoked);</li>
+     *     <li>present but empty (or blank): every key in that scope is selected ({@code selectAllKeys});</li>
+     *     <li>present with a comma-separated list of names: only those keys are selected ({@code selectKeys}).</li>
+     * </ul>
+     */
+    public static void parseAttributeScope(JsonObject json, String keysField,
+                                           Runnable selectAllKeys, Consumer<List<String>> selectKeys) {
+        if (!json.has(keysField) || json.get(keysField).isJsonNull()) {
+            return;
+        }
+        String rawKeys = json.get(keysField).getAsString();
+        if (rawKeys.trim().isEmpty()) {
+            selectAllKeys.run();
+        } else {
+            selectKeys.accept(Arrays.asList(rawKeys.split(",")));
+        }
+    }
+
+    /**
+     * Populate the client scope of an attribute request: "all" wins over a specific key list; a missing/empty
+     * list leaves the scope unset. Shared by the HTTP and CoAP query-parameter parsers.
+     */
+    public static void applyClientScope(TransportProtos.GetAttributeRequestMsg.Builder builder, boolean all, Collection<String> names) {
+        applyScope(all, names, () -> builder.setAllClientAttributes(true), builder::addAllClientAttributeNames);
+    }
+
+    /**
+     * Shared-scope counterpart of {@link #applyClientScope}.
+     */
+    public static void applySharedScope(TransportProtos.GetAttributeRequestMsg.Builder builder, boolean all, Collection<String> names) {
+        applyScope(all, names, () -> builder.setAllSharedAttributes(true), builder::addAllSharedAttributeNames);
+    }
+
+    // "all" wins over a specific key list; a missing/empty list leaves the scope unset.
+    // Same precedence as DeviceActorMessageProcessor.resolveScopeFuture (the fetch side); keep the two in sync.
+    private static void applyScope(boolean all, Collection<String> names, Runnable setAll, Consumer<Iterable<String>> addNames) {
+        if (all) {
+            setAll.run();
+        } else if (names != null && !names.isEmpty()) {
+            addNames.accept(names);
+        }
     }
 
     public static JsonObject getJsonObjectForGateway(String deviceName, AttributeUpdateNotificationMsg
