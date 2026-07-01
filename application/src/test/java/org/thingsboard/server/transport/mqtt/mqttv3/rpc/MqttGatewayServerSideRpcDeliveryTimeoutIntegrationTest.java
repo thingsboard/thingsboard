@@ -87,6 +87,9 @@ public class MqttGatewayServerSideRpcDeliveryTimeoutIntegrationTest extends Abst
         String rpcId = JacksonUtil.toJsonNode(response).get("rpcId").asText();
 
         callback.getSubscribeLatch().await(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        // Confirm the downlink arrived at QoS1 — a QoS0 downlink would produce no PUBACK path at all,
+        // so the timeout would fire for the wrong reason and mask a regression.
+        assertEquals(MqttQoS.AT_LEAST_ONCE.value(), callback.getMessageArrivedQoS());
 
         // No PUBACK is ever sent. The gateway awaiting-ack scheduler emits TIMEOUT after
         // transport.mqtt.timeout (100 ms); the server re-queues the RPC to QUEUED.
@@ -98,10 +101,6 @@ public class MqttGatewayServerSideRpcDeliveryTimeoutIntegrationTest extends Abst
         assertEquals(RpcStatus.QUEUED, rpc.getStatus());
 
         client.disconnect();
-    }
-
-    private Device getDeviceByName(String deviceName) throws Exception {
-        return doGet("/api/tenant/devices?deviceName=" + deviceName, Device.class);
     }
 
 }
