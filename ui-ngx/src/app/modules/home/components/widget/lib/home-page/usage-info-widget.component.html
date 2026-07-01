@@ -36,11 +36,11 @@
           </div>
           <div class="tb-usage-items-values">
             <div class="tb-usage-items-counts">
-              <div class="tb-usage-item-counts" [class.critical]="entityItemCritical.devices">{{ usageInfo?.devices | shortNumber }} / {{ maxValue(usageInfo?.maxDevices) }}</div>
-              <div class="tb-usage-item-counts" [class.critical]="entityItemCritical.assets">{{ usageInfo?.assets | shortNumber }} / {{ maxValue(usageInfo?.maxAssets) }}</div>
-              <div class="tb-usage-item-counts" [class.critical]="entityItemCritical.users">{{ usageInfo?.users | shortNumber }} / {{ maxValue(usageInfo?.maxUsers) }}</div>
-              <div class="tb-usage-item-counts" [class.critical]="entityItemCritical.dashboards">{{ usageInfo?.dashboards | shortNumber }} / {{ maxValue(usageInfo?.maxDashboards) }}</div>
-              <div class="tb-usage-item-counts" [class.critical]="entityItemCritical.customers">{{ usageInfo?.customers | shortNumber }} / {{ maxValue(usageInfo?.maxCustomers) }}</div>
+              <div class="tb-usage-item-counts" [class.critical]="entityItemCritical.devices">{{ usageInfo?.devices | shortNumber: {roundDown: true} }} / {{ maxValue(usageInfo?.maxDevices) }}</div>
+              <div class="tb-usage-item-counts" [class.critical]="entityItemCritical.assets">{{ usageInfo?.assets | shortNumber: {roundDown: true} }} / {{ maxValue(usageInfo?.maxAssets) }}</div>
+              <div class="tb-usage-item-counts" [class.critical]="entityItemCritical.users">{{ usageInfo?.users | shortNumber: {roundDown: true} }} / {{ maxValue(usageInfo?.maxUsers) }}</div>
+              <div class="tb-usage-item-counts" [class.critical]="entityItemCritical.dashboards">{{ usageInfo?.dashboards | shortNumber: {roundDown: true} }} / {{ maxValue(usageInfo?.maxDashboards) }}</div>
+              <div class="tb-usage-item-counts" [class.critical]="entityItemCritical.customers">{{ usageInfo?.customers | shortNumber: {roundDown: true} }} / {{ maxValue(usageInfo?.maxCustomers) }}</div>
             </div>
             <div class="tb-usage-items-progress">
               <mat-progress-bar [class.critical]="entityItemCritical.devices" color="primary" mode="determinate" [value]="progressValue(usageInfo?.devices, usageInfo?.maxDevices)"></mat-progress-bar>
