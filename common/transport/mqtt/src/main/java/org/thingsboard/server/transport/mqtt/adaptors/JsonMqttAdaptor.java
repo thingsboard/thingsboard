@@ -174,8 +174,8 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
             result.setRequestId(getRequestId(topicName, topicBase));
             String payload = inbound.payload().toString(UTF8);
             JsonObject json = JsonParser.parseString(payload).getAsJsonObject();
-            JsonConverter.parseAttributeScope(json, "clientKeys", result::addAllClientAttributeNames, () -> result.setAllClientAttributes(true));
-            JsonConverter.parseAttributeScope(json, "sharedKeys", result::addAllSharedAttributeNames, () -> result.setAllSharedAttributes(true));
+            JsonConverter.parseAttributeScope(json, "clientKeys", () -> result.setAllClientAttributes(true), result::addAllClientAttributeNames);
+            JsonConverter.parseAttributeScope(json, "sharedKeys", () -> result.setAllSharedAttributes(true), result::addAllSharedAttributeNames);
             return result.build();
         } catch (RuntimeException e) {
             log.debug("Failed to decode get attributes request", e);

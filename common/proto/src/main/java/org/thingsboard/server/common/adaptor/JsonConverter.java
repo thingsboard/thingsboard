@@ -384,23 +384,23 @@ public class JsonConverter {
 
     /**
      * Three-state per-scope attribute selection for the JSON {@code clientKeys}/{@code sharedKeys} format
-     * (device and gateway MQTT APIs):
+     * (device and gateway MQTT APIs). Depending on the value of {@code keysField}:
      * <ul>
-     *     <li>field absent / null  =&gt; the scope is excluded (neither names nor "all" is set);</li>
-     *     <li>field present + empty (or blank) string =&gt; every key in that scope ({@code setAll});</li>
-     *     <li>field present + a comma-separated string of names =&gt; only those keys ({@code setNames}).</li>
+     *     <li>absent or null: the scope is excluded (neither callback is invoked);</li>
+     *     <li>present but empty (or blank): every key in that scope is selected ({@code selectAllKeys});</li>
+     *     <li>present with a comma-separated list of names: only those keys are selected ({@code selectKeys}).</li>
      * </ul>
      */
-    public static void parseAttributeScope(JsonObject json, String field,
-                                           Consumer<List<String>> setNames, Runnable setAll) {
-        if (!json.has(field) || json.get(field).isJsonNull()) {
+    public static void parseAttributeScope(JsonObject json, String keysField,
+                                           Runnable selectAllKeys, Consumer<List<String>> selectKeys) {
+        if (!json.has(keysField) || json.get(keysField).isJsonNull()) {
             return;
         }
-        String value = json.get(field).getAsString();
-        if (value.trim().isEmpty()) {
-            setAll.run();
+        String rawKeys = json.get(keysField).getAsString();
+        if (rawKeys.trim().isEmpty()) {
+            selectAllKeys.run();
         } else {
-            setNames.accept(Arrays.asList(value.split(",")));
+            selectKeys.accept(Arrays.asList(rawKeys.split(",")));
         }
     }
 
@@ -420,6 +420,7 @@ public class JsonConverter {
     }
 
     // "all" wins over a specific key list; a missing/empty list leaves the scope unset.
+    // Same precedence as DeviceActorMessageProcessor.resolveScopeFuture (the fetch side); keep the two in sync.
     private static void applyScope(boolean all, Collection<String> names, Runnable setAll, Consumer<Iterable<String>> addNames) {
         if (all) {
             setAll.run();

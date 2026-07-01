@@ -35,7 +35,7 @@ public class JsonConverterAttributeRequestTest {
     private final AtomicBoolean allInvoked = new AtomicBoolean(false);
 
     private void parseClientKeys(JsonObject json) {
-        JsonConverter.parseAttributeScope(json, "clientKeys", names::addAll, () -> allInvoked.set(true));
+        JsonConverter.parseAttributeScope(json, "clientKeys", () -> allInvoked.set(true), names::addAll);
     }
 
     @Test

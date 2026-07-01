@@ -23,7 +23,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.LinkedHashMapRemoveEldest;
 import org.thingsboard.server.actors.ActorSystemContext;
@@ -97,7 +96,6 @@ import org.thingsboard.server.service.state.DefaultDeviceStateService;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -524,12 +522,11 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
             Futures.addCallback(findAllAttributesByScope(AttributeScope.SHARED_SCOPE), new FutureCallback<>() {
                 @Override
                 public void onSuccess(@Nullable List<AttributeKvEntry> result) {
-                    GetAttributeResponseMsg.Builder builder = GetAttributeResponseMsg.newBuilder()
+                    sendToTransport(GetAttributeResponseMsg.newBuilder()
                             .setRequestId(requestId)
                             .setSharedStateMsg(true)
-                            .addAllSharedAttributeList(KvProtoUtil.attrToTsKvProtos(result));
-                    setMultipleAttributesRequest(builder, request.getSharedAttributeNamesCount() > 1);
-                    sendToTransport(builder.build(), sessionInfo);
+                            .addAllSharedAttributeList(KvProtoUtil.attrToTsKvProtos(result))
+                            .build(), sessionInfo);
                 }
 
                 @Override
@@ -544,14 +541,18 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         } else {
             Futures.addCallback(getAttributesKvEntries(request), new FutureCallback<>() {
                 @Override
-                public void onSuccess(@Nullable List<List<AttributeKvEntry>> result) {
+                public void onSuccess(ClientSharedAttributes result) {
                     GetAttributeResponseMsg.Builder builder = GetAttributeResponseMsg.newBuilder()
                             .setRequestId(requestId)
-                            .setSeparateScopesResponse(request.getSeparateScopesResponse())
-                            .addAllClientAttributeList(KvProtoUtil.attrToTsKvProtos(result.get(0)))
-                            .addAllSharedAttributeList(KvProtoUtil.attrToTsKvProtos(result.get(1)));
-                    setMultipleAttributesRequest(builder,
-                            request.getSharedAttributeNamesCount() + request.getClientAttributeNamesCount() > 1);
+                            .addAllClientAttributeList(KvProtoUtil.attrToTsKvProtos(result.client()))
+                            .addAllSharedAttributeList(KvProtoUtil.attrToTsKvProtos(result.shared()));
+                    // legacy gateway value/values response relies on the deprecated isMultipleAttributesRequest flag
+                    if (!request.getSeparateScopesResponse()) {
+                        builder.setIsMultipleAttributesRequest(
+                                request.getSharedAttributeNamesCount() + request.getClientAttributeNamesCount() > 1);
+                    } else {
+                        builder.setSeparateScopesResponse(true);
+                    }
                     sendToTransport(builder.build(), sessionInfo);
                 }
 
@@ -566,40 +567,32 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         }
     }
 
-    @SuppressWarnings("deprecation") // isMultipleAttributesRequest retained for the legacy gateway value/values response
-    private static void setMultipleAttributesRequest(GetAttributeResponseMsg.Builder builder, boolean multipleAttributesRequest) {
-        builder.setIsMultipleAttributesRequest(multipleAttributesRequest);
-    }
+    private record ClientSharedAttributes(List<AttributeKvEntry> client, List<AttributeKvEntry> shared) {}
 
-    private ListenableFuture<List<List<AttributeKvEntry>>> getAttributesKvEntries(GetAttributeRequestMsg request) {
+    private ListenableFuture<ClientSharedAttributes> getAttributesKvEntries(GetAttributeRequestMsg request) {
         boolean clientAll = request.getAllClientAttributes();
         boolean sharedAll = request.getAllSharedAttributes();
-        boolean clientSpecific = !CollectionUtils.isEmpty(request.getClientAttributeNamesList());
-        boolean sharedSpecific = !CollectionUtils.isEmpty(request.getSharedAttributeNamesList());
+        List<String> clientNames = request.getClientAttributeNamesList();
+        List<String> sharedNames = request.getSharedAttributeNamesList();
 
-        boolean noClientSignal = !clientAll && !clientSpecific;
-        boolean noSharedSignal = !sharedAll && !sharedSpecific;
+        // backward-compat: an empty request (no scope signalled at all) fetches everything from both scopes
+        boolean fetchAll = !clientAll && !sharedAll && clientNames.isEmpty() && sharedNames.isEmpty();
 
-        ListenableFuture<List<AttributeKvEntry>> clientAttributesFuture;
-        ListenableFuture<List<AttributeKvEntry>> sharedAttributesFuture;
+        ListenableFuture<List<AttributeKvEntry>> clientFuture = resolveScopeFuture(clientAll || fetchAll, clientNames, AttributeScope.CLIENT_SCOPE);
+        ListenableFuture<List<AttributeKvEntry>> sharedFuture = resolveScopeFuture(sharedAll || fetchAll, sharedNames, AttributeScope.SHARED_SCOPE);
 
-        if (noClientSignal && noSharedSignal) {
-            // backward-compat: empty request => fetch everything from both scopes
-            clientAttributesFuture = findAllAttributesByScope(AttributeScope.CLIENT_SCOPE);
-            sharedAttributesFuture = findAllAttributesByScope(AttributeScope.SHARED_SCOPE);
-        } else {
-            clientAttributesFuture = resolveScopeFuture(clientAll, clientSpecific, request.getClientAttributeNamesList(), AttributeScope.CLIENT_SCOPE);
-            sharedAttributesFuture = resolveScopeFuture(sharedAll, sharedSpecific, request.getSharedAttributeNamesList(), AttributeScope.SHARED_SCOPE);
-        }
-        return Futures.allAsList(Arrays.asList(clientAttributesFuture, sharedAttributesFuture));
+        return Futures.whenAllSucceed(clientFuture, sharedFuture)
+                .call(() -> new ClientSharedAttributes(Futures.getDone(clientFuture), Futures.getDone(sharedFuture)),
+                        MoreExecutors.directExecutor());
     }
 
     // "all <scope>" wins over a specific key list for the same scope; no signal => empty result.
-    private ListenableFuture<List<AttributeKvEntry>> resolveScopeFuture(boolean all, boolean specific, List<String> names, AttributeScope scope) {
+    // Same precedence as JsonConverter.applyScope (the request-build side); keep the two in sync.
+    private ListenableFuture<List<AttributeKvEntry>> resolveScopeFuture(boolean all, List<String> names, AttributeScope scope) {
         if (all) {
             return findAllAttributesByScope(scope);
-        } else if (specific) {
-            return findAttributesByScope(toSet(names), scope);
+        } else if (!names.isEmpty()) {
+            return findAttributesByScope(new HashSet<>(names), scope);
         } else {
             return Futures.immediateFuture(Collections.emptyList());
         }
@@ -611,10 +604,6 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
 
     private ListenableFuture<List<AttributeKvEntry>> findAttributesByScope(Set<String> attributesSet, AttributeScope scope) {
         return systemContext.getAttributesService().find(tenantId, deviceId, scope, attributesSet);
-    }
-
-    private Set<String> toSet(List<String> strings) {
-        return new HashSet<>(strings);
     }
 
     private SessionType getSessionType(UUID sessionId) {
