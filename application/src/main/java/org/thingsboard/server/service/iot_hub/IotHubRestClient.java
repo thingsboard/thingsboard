@@ -120,9 +120,9 @@ public class IotHubRestClient {
         });
     }
 
-    public void reportVersionInstalled(String versionId) {
+    public void reportVersionInstalled(String versionId, InstallReport report) {
         String url = baseUrl + "/api/versions/" + versionId + "/install";
         log.debug("Reporting IoT Hub version installed: {}", url);
-        restTemplate.postForObject(url, null, Void.class);
+        restTemplate.postForObject(url, report, Void.class);
     }
 }
