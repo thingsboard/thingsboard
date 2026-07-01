@@ -233,6 +233,8 @@ const tableReportCellSettings = (header = false): FormProperty[] => ([
     name: 'Border',
     subLabel: 'Width',
     fieldSuffix: 'px',
+    min: 0,
+    step: 1,
     default: 1
   },
   {
