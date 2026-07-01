@@ -17,6 +17,7 @@ package org.thingsboard.server.transport.mqtt.session;
 
 import io.netty.channel.ChannelFuture;
 import io.netty.handler.codec.mqtt.MqttMessage;
+import io.netty.handler.codec.mqtt.MqttPublishMessage;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +30,7 @@ import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
+import org.thingsboard.server.transport.mqtt.util.MqttRpcStatusUtil;
 
 import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
@@ -106,19 +108,23 @@ public abstract class AbstractGatewayDeviceSessionContext<T extends AbstractGate
         try {
             parent.getPayloadAdaptor().convertToGatewayPublish(this, getDeviceInfo().getDeviceName(), request).ifPresent(
                     payload -> {
-                        ChannelFuture channelFuture = parent.writeAndFlush(payload);
-                        if (request.getPersisted()) {
-                            channelFuture.addListener(result -> {
-                                if (result.cause() == null) {
-                                    if (!isAckExpected(payload)) {
-                                        transportService.process(getSessionInfo(), request, RpcStatus.DELIVERED, TransportServiceCallback.EMPTY);
-                                    } else if (request.getPersisted()) {
-                                        transportService.process(getSessionInfo(), request, RpcStatus.SENT, TransportServiceCallback.EMPTY);
-
-                                    }
-                                }
-                            });
+                        MqttPublishMessage publishMsg = (MqttPublishMessage) payload;
+                        boolean requireDeliveryTracking = MqttRpcStatusUtil.requireDeliveryTracking(request);
+                        if (requireDeliveryTracking && isAckExpected(publishMsg)) {
+                            parent.registerRpcAwaitingAck(publishMsg.variableHeader().packetId(), getSessionInfo(), request);
                         }
+                        ChannelFuture channelFuture = parent.writeAndFlush(publishMsg);
+                        channelFuture.addListener(result -> {
+                            if (result.cause() == null) {
+                                if (!isAckExpected(publishMsg)) {
+                                    if (requireDeliveryTracking) {
+                                        transportService.process(getSessionInfo(), request, RpcStatus.DELIVERED, TransportServiceCallback.EMPTY);
+                                    }
+                                } else if (request.getPersisted()) {
+                                    transportService.process(getSessionInfo(), request, RpcStatus.SENT, TransportServiceCallback.EMPTY);
+                                }
+                            }
+                        });
                     }
             );
         } catch (Exception e) {

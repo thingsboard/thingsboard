@@ -88,6 +88,7 @@ import org.thingsboard.server.transport.mqtt.session.GatewaySessionHandler;
 import org.thingsboard.server.transport.mqtt.session.MqttTopicMatcher;
 import org.thingsboard.server.transport.mqtt.session.SparkplugDeviceSessionContext;
 import org.thingsboard.server.transport.mqtt.session.SparkplugNodeSessionHandler;
+import org.thingsboard.server.transport.mqtt.util.MqttRpcStatusUtil;
 import org.thingsboard.server.transport.mqtt.util.ReturnCodeResolver;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugRpcRequestHeader;
@@ -400,6 +401,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 TransportProtos.ToDeviceRpcRequestMsg rpcRequest = rpcAwaitingAck.remove(msgId);
                 if (rpcRequest != null) {
                     transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, RpcStatus.DELIVERED, true, TransportServiceCallback.EMPTY);
+                } else if (gatewaySessionHandler != null) {
+                    gatewaySessionHandler.onPubAck(msgId);
                 }
                 break;
             default:
@@ -1542,9 +1545,11 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     }
 
     public void sendToDeviceRpcRequest(MqttMessage payload, TransportProtos.ToDeviceRpcRequestMsg rpcRequest, TransportProtos.SessionInfoProto sessionInfo) {
-        int msgId = ((MqttPublishMessage) payload).variableHeader().packetId();
+        MqttPublishMessage publishMsg = (MqttPublishMessage) payload;
+        int msgId = publishMsg.variableHeader().packetId();
         int requestId = rpcRequest.getRequestId();
-        if (isAckExpected(payload)) {
+        boolean requireDeliveryTracking = MqttRpcStatusUtil.requireDeliveryTracking(rpcRequest);
+        if (requireDeliveryTracking && isAckExpected(publishMsg)) {
             rpcAwaitingAck.put(msgId, rpcRequest);
             context.getScheduler().schedule(() -> {
                 TransportProtos.ToDeviceRpcRequestMsg msg = rpcAwaitingAck.remove(msgId);
@@ -1554,7 +1559,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 }
             }, Math.max(0, Math.min(deviceSessionCtx.getContext().getTimeout(), rpcRequest.getExpirationTime() - System.currentTimeMillis())), TimeUnit.MILLISECONDS);
         }
-        var cf = publish(payload, deviceSessionCtx);
+        var cf = publish(publishMsg, deviceSessionCtx);
         cf.addListener(result -> {
             Throwable throwable = result.cause();
             if (throwable != null) {
@@ -1563,9 +1568,11 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                         ThingsboardErrorCode.INVALID_ARGUMENTS, " Failed send To Device Rpc Request: " + rpcRequest.getMethodName());
                 return;
             }
-            if (!isAckExpected(payload)) {
-                log.trace("[{}][{}][{}] Going to send to device actor RPC request DELIVERED status update ...", deviceSessionCtx.getDeviceId(), sessionId, requestId);
-                transportService.process(sessionInfo, rpcRequest, RpcStatus.DELIVERED, TransportServiceCallback.EMPTY);
+            if (!isAckExpected(publishMsg)) {
+                if (requireDeliveryTracking) {
+                    log.trace("[{}][{}][{}] Going to send to device actor RPC request DELIVERED status update ...", deviceSessionCtx.getDeviceId(), sessionId, requestId);
+                    transportService.process(sessionInfo, rpcRequest, RpcStatus.DELIVERED, TransportServiceCallback.EMPTY);
+                }
             } else if (rpcRequest.getPersisted()) {
                 log.trace("[{}][{}][{}] Going to send to device actor RPC request SENT status update ...", deviceSessionCtx.getDeviceId(), sessionId, requestId);
                 transportService.process(sessionInfo, rpcRequest, RpcStatus.SENT, TransportServiceCallback.EMPTY);
