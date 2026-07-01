@@ -141,22 +141,22 @@ public class DeviceApiController implements TbTransportService {
     public DeferredResult<ResponseEntity> getDeviceAttributes(
             @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
             @PathVariable("deviceToken") String deviceToken,
-            @Parameter(description = "Comma separated key names for attribute with client scope", required = true , schema = @Schema(defaultValue = "state"))
+            @Parameter(description = "Comma separated key names for attribute with client scope. Leave empty and set allClientKeys=true to fetch all client-scope attributes", required = false)
             @RequestParam(value = "clientKeys", required = false, defaultValue = "") String clientKeys,
-            @Parameter(description = "Comma separated key names for attribute with shared scope", required = true , schema = @Schema(defaultValue = "configuration"))
-            @RequestParam(value = "sharedKeys", required = false, defaultValue = "") String sharedKeys) {
+            @Parameter(description = "Comma separated key names for attribute with shared scope. Leave empty and set allSharedKeys=true to fetch all shared-scope attributes", required = false)
+            @RequestParam(value = "sharedKeys", required = false, defaultValue = "") String sharedKeys,
+            @Parameter(description = "Set to true to return ALL client-scope attributes (ignores clientKeys)")
+            @RequestParam(value = "allClientKeys", required = false, defaultValue = "false") boolean allClientKeys,
+            @Parameter(description = "Set to true to return ALL shared-scope attributes (ignores sharedKeys)")
+            @RequestParam(value = "allSharedKeys", required = false, defaultValue = "false") boolean allSharedKeys) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<>();
         transportContext.getTransportService().process(DeviceTransportType.DEFAULT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
                     GetAttributeRequestMsg.Builder request = GetAttributeRequestMsg.newBuilder().setRequestId(0);
                     List<String> clientKeySet = !StringUtils.isEmpty(clientKeys) ? Arrays.asList(clientKeys.split(",")) : null;
                     List<String> sharedKeySet = !StringUtils.isEmpty(sharedKeys) ? Arrays.asList(sharedKeys.split(",")) : null;
-                    if (clientKeySet != null) {
-                        request.addAllClientAttributeNames(clientKeySet);
-                    }
-                    if (sharedKeySet != null) {
-                        request.addAllSharedAttributeNames(sharedKeySet);
-                    }
+                    JsonConverter.applyClientScope(request, allClientKeys, clientKeySet);
+                    JsonConverter.applySharedScope(request, allSharedKeys, sharedKeySet);
                     TransportService transportService = transportContext.getTransportService();
                     transportService.registerSyncSession(sessionInfo,
                             new HttpSessionListener(responseWriter, transportContext.getTransportService(), sessionInfo),

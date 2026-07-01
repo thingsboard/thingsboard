@@ -75,6 +75,26 @@ public class MqttAttributesRequestProtoIntegrationTest extends AbstractMqttAttri
     }
 
     @Test
+    public void testRequestAllSharedAttributesFromTheServerGatewaySeparated() throws Exception {
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .gatewayName("Gateway Test Request all shared attributes from the server proto")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .build();
+        processBeforeTest(configProperties);
+        processProtoTestGatewayRequestAllSharedSeparated();
+    }
+
+    @Test
+    public void testRequestAllClientAttributesFromTheServerGatewaySeparated() throws Exception {
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .gatewayName("Gateway Test Request all client attributes from the server proto")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .build();
+        processBeforeTest(configProperties);
+        processProtoTestGatewayRequestAllClientSeparated();
+    }
+
+    @Test
     public void testRequestAttributesValuesFromTheServerOnShortJsonTopic() throws Exception {
         MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
                 .deviceName("Test Request attribute values from the server proto")

@@ -235,6 +235,33 @@ public class MqttClientTest extends AbstractContainerTest {
     }
 
     @Test
+    public void requestAllSharedAttributesFromServerViaEmptyValue() throws Exception {
+        DeviceCredentials deviceCredentials = testRestClient.getDeviceCredentialsByDeviceId(device.getId());
+        MqttMessageListener listener = new MqttMessageListener();
+        MqttClient mqttClient = getMqttClient(deviceCredentials, listener);
+
+        // Add a new shared attribute
+        JsonObject sharedAttributes = new JsonObject();
+        String sharedAttributeValue = StringUtils.randomAlphanumeric(8);
+        sharedAttributes.addProperty("sharedAttr", sharedAttributeValue);
+        testRestClient.postTelemetryAttribute(device.getId(), SHARED_SCOPE, mapper.readTree(sharedAttributes.toString()));
+
+        mqttClient.on("v1/devices/me/attributes/response/+", listener, MqttQoS.AT_LEAST_ONCE).get();
+        TimeUnit.SECONDS.sleep(3 * timeoutMultiplier);
+
+        // empty sharedKeys => all shared; clientKeys absent => no client
+        JsonObject request = new JsonObject();
+        request.addProperty("sharedKeys", "");
+        mqttClient.publish("v1/devices/me/attributes/request/" + new Random().nextInt(100), Unpooled.wrappedBuffer(request.toString().getBytes())).get();
+        MqttEvent event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
+        AttributesResponse attributes = mapper.readValue(Objects.requireNonNull(event).getMessage(), AttributesResponse.class);
+
+        assertThat(attributes.getShared()).hasSize(1);
+        assertThat(attributes.getShared().get("sharedAttr")).isEqualTo(sharedAttributeValue);
+        assertThat(attributes.getClient()).isNullOrEmpty();
+    }
+
+    @Test
     public void subscribeToAttributeUpdatesFromServer() throws Exception {
         DeviceCredentials deviceCredentials = testRestClient.getDeviceCredentialsByDeviceId(device.getId());
 
