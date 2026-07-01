@@ -120,7 +120,7 @@ export class WidgetActionSettingsComponent implements OnInit, ControlValueAccess
         renderer: this.renderer,
         componentType: WidgetActionSettingsPanelComponent,
         hostView: this.viewContainerRef,
-        preferredPlacement: ['leftTopOnly', 'leftOnly', 'leftBottomOnly'],
+        preferredPlacement: 'leftBottom',
         context: {
           widgetAction: this.modelValue,
           panelTitle: this.panelTitle,
@@ -128,7 +128,8 @@ export class WidgetActionSettingsComponent implements OnInit, ControlValueAccess
           callbacks: this.callbacks,
           additionalWidgetActionTypes: this.additionalWidgetActionTypes
         },
-        isModal: true
+        isModal: true,
+        overlayStyle: { maxHeight: '70vh', height: '100%' }
       });
       widgetActionSettingsPanelPopover.tbComponentRef.instance.widgetActionApplied.subscribe((widgetAction) => {
         widgetActionSettingsPanelPopover.hide();
