@@ -38,6 +38,7 @@ import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransp
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
 import org.thingsboard.server.common.data.rpc.Rpc;
+import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.gen.transport.TransportApiProtos;
 import org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest;
@@ -331,6 +332,46 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractM
         assertEquals(MqttQoS.AT_MOST_ONCE.value(), callback.getMessageArrivedQoS());
     }
 
+    protected void validateGatewayPersistentRpcDelivered(String deviceName) throws Exception {
+        MqttTestClient client = new MqttTestClient();
+        client.connectAndWait(gatewayAccessToken);
+
+        String connectPayload = "{\"device\": \"" + deviceName + "\", \"type\": \"" + TransportPayloadType.JSON.name() + "\"}";
+        client.publish(GATEWAY_CONNECT_TOPIC, connectPayload.getBytes());
+
+        Device device = doExecuteWithRetriesAndInterval(() -> getDeviceByName(deviceName), 20, 100);
+        assertNotNull(device);
+
+        MqttTestCallback callback = new MqttTestSubscribeOnTopicCallback(GATEWAY_RPC_TOPIC);
+        client.setCallback(callback);
+        // Subscribe at QoS1 so the downlink publish is QoS1 and Paho auto-PUBACKs (-> DELIVERED).
+        // Two-step subscribe (client.subscribeAndWait + awaitForDeviceActorToReceiveSubscription, 1)
+        // rather than subscribeAndWait(client, topic, deviceId, featureType, qos): the latter waits for
+        // count+1, but the gateway CONNECT already registered one RPC subscription, so it would hang.
+        client.subscribeAndWait(GATEWAY_RPC_TOPIC, MqttQoS.AT_LEAST_ONCE);
+        awaitForDeviceActorToReceiveSubscription(device.getId(), FeatureType.RPC, 1);
+
+        long expirationTime = System.currentTimeMillis() + TimeUnit.DAYS.toMillis(1);
+        String rpcRequest = "{\"method\":\"toggle_gpio\",\"params\":{\"pin\":1},\"persistent\":true,\"expirationTime\":" + expirationTime + "}";
+        String response = doPostAsync("/api/rpc/twoway/" + device.getId().getId().toString(), rpcRequest, String.class, status().isOk());
+        String rpcId = JacksonUtil.toJsonNode(response).get("rpcId").asText();
+
+        callback.getSubscribeLatch().await(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        // Confirm the downlink arrived at QoS1 — otherwise no PUBACK is produced and the test could
+        // pass for the wrong reason if a regression downgraded the gateway RPC to QoS0.
+        assertEquals(MqttQoS.AT_LEAST_ONCE.value(), callback.getMessageArrivedQoS());
+
+        // Poll the persisted status until DELIVERED (200 x 100ms = 20s window).
+        Rpc rpc = doExecuteWithRetriesAndInterval(() -> {
+            Rpc current = doGet("/api/rpc/persistent/" + rpcId, Rpc.class);
+            return RpcStatus.DELIVERED.equals(current.getStatus()) ? current : null;
+        }, 200, 100);
+        assertNotNull(rpc);
+        assertEquals(RpcStatus.DELIVERED, rpc.getStatus());
+
+        client.disconnect();
+    }
+
     protected void validateProtoTwoWayRpcGatewayResponse(String deviceName, MqttTestClient client, byte[] connectPayloadBytes) throws Exception {
         client.publish(GATEWAY_CONNECT_TOPIC, connectPayloadBytes);
 
@@ -353,7 +394,7 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractM
         assertEquals(MqttQoS.AT_MOST_ONCE.value(), callback.getMessageArrivedQoS());
     }
 
-    private Device getDeviceByName(String deviceName) throws Exception {
+    protected Device getDeviceByName(String deviceName) throws Exception {
         return doGet("/api/tenant/devices?deviceName=" + deviceName, Device.class);
     }
 
