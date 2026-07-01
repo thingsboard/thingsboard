@@ -30,6 +30,7 @@ import {
   ApiUsageWidgetSettings,
   getUniqueDataKeys
 } from '@home/components/widget/lib/settings/cards/api-usage-settings.component.models';
+import { ShortNumberPipe } from '@shared/pipe/short-number.pipe';
 
 @Component({
     selector: 'tb-api-usage-widget',
@@ -57,18 +58,12 @@ export class ApiUsageWidgetComponent implements OnInit, OnDestroy {
   noDataDisplayMessageText: string;
 
   private contentResize$: ResizeObserver;
-  private powers: {key: string, value: number}[] = [
-    { key: 'Q', value: 1e15 },
-    { key: 'T', value: 1e12 },
-    { key: 'B', value: 1e9 },
-    { key: 'M', value: 1e6 },
-    { key: 'K', value: 1e3 }
-  ];
 
   constructor(private imagePipe: ImagePipe,
               private utils: UtilsService,
               private sanitizer: DomSanitizer,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private shortNumberPipe: ShortNumberPipe) {
   }
 
   ngOnInit(): void {
@@ -95,8 +90,8 @@ export class ApiUsageWidgetComponent implements OnInit, OnDestroy {
             const progress = (this.isFiniteNumber(data[0][key.maxLimit.key]) && data[0][key.maxLimit.key] !== 0) ? Math.min(100, ((data[0][key.current.key] / data[0][key.maxLimit.key]) * 100)) : 0;
             key.progress = isFinite(progress) ? progress : 0;
             key.status.value = data[0][key.status.key] ? data[0][key.status.key].toLowerCase() : 'enabled';
-            key.maxLimit.value = this.isFiniteNumber(data[0][key.maxLimit.key]) && data[0][key.maxLimit.key] !== 0 ? this.toShortNumber(data[0][key.maxLimit.key]) : '∞';
-            key.current.value = this.isFiniteNumber(data[0][key.current.key]) ? this.toShortNumber(data[0][key.current.key]) : 0;
+            key.maxLimit.value = this.isFiniteNumber(data[0][key.maxLimit.key]) && data[0][key.maxLimit.key] !== 0 ? this.shortNumberPipe.transform(data[0][key.maxLimit.key]) : '∞';
+            key.current.value = this.isFiniteNumber(data[0][key.current.key]) ? this.shortNumberPipe.transform(data[0][key.current.key], {roundDown: true}) : 0;
           });
           this.cd.detectChanges();
         }
@@ -147,20 +142,6 @@ export class ApiUsageWidgetComponent implements OnInit, OnDestroy {
     if (this.contentResize$) {
       this.contentResize$.disconnect();
     }
-  }
-
-  private toShortNumber(number: any, decimals = 1) {
-    if (!Number.isFinite(number) || number < 0) {
-      return '0';
-    }
-    for (const power of this.powers) {
-      if (number >= power.value) {
-        const reduced = number / power.value;
-        const rounded = Number(reduced.toFixed(decimals));
-        return `${rounded}${power.key}`;
-      }
-    }
-    return `${Number(number.toFixed(decimals))}`;
   }
 
   public onInit() {
