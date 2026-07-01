@@ -45,8 +45,12 @@ import org.thingsboard.monitoring.config.transport.TransportMonitoringTarget;
 import org.thingsboard.monitoring.config.transport.TransportType;
 import org.thingsboard.monitoring.service.transport.TransportHealthChecker;
 
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 import javax.security.auth.x500.X500Principal;
 import java.io.IOException;
+import java.security.KeyStore;
+import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.List;
 
@@ -55,9 +59,19 @@ import java.util.List;
 @Slf4j
 public class CoapTransportHealthChecker extends TransportHealthChecker<CoapTransportMonitoringConfig> {
 
+    private static final X509Certificate[] TRUSTED_CERTS;
+
     static {
         SystemConfig.register();
         CoapConfig.register();
+        try {
+            TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            tmf.init((KeyStore) null);
+            TRUSTED_CERTS = ((X509TrustManager) tmf.getTrustManagers()[0]).getAcceptedIssuers();
+            log.debug("Loaded {} trusted certificates from JVM trust store", TRUSTED_CERTS.length);
+        } catch (Exception e) {
+            throw new ExceptionInInitializerError(e);
+        }
     }
 
     private CoapClient coapClient;
@@ -95,7 +109,7 @@ public class CoapTransportHealthChecker extends TransportHealthChecker<CoapTrans
             DtlsConnectorConfig.Builder dtlsConfigBuilder = DtlsConnectorConfig.builder(dtlsConfiguration);
             dtlsConfigBuilder.setCertificateIdentityProvider(new AnonymousCertificateProvider());
             dtlsConfigBuilder.setAdvancedCertificateVerifier(
-                    StaticNewAdvancedCertificateVerifier.builder().setTrustAllCertificates().build());
+                    StaticNewAdvancedCertificateVerifier.builder().setTrustedCertificates(TRUSTED_CERTS).build());
 
             coapEndpoint = new CoapEndpoint.Builder().setConnector(new DTLSConnector(dtlsConfigBuilder.build())).build();
             coapClient.setEndpoint(coapEndpoint);
