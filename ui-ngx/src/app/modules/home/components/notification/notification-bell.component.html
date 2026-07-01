@@ -16,5 +16,5 @@
 
 -->
 <button mat-icon-button #showNotificationButton (click)="showNotification($event, showNotificationButton)">
-  <mat-icon class="material-icons" aria-hidden="false" [matBadge]="(count$ | async)" [matBadgeHidden]="!(count$ | async)" matBadgeColor="warn" matBadgeSize="small">notifications</mat-icon>
+  <tb-icon aria-hidden="false" [matBadge]="(count$ | async)" [matBadgeHidden]="!(count$ | async)" matBadgeColor="warn" matBadgeSize="small">notifications_none</tb-icon>
 </button>

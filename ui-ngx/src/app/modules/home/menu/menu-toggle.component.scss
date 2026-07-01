@@ -18,10 +18,15 @@
 
 :host ::ng-deep {
   .tb-button-toggle {
+    &.tb-toggled {
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      --mat-button-text-label-text-weight: 500;
+    }
     .tb-toggle-icon {
       display: inline-block;
-      width: 15px;
-      min-width: 15px;
+      width: 12px;
+      min-width: 12px;
+      font-size: 12px;
       margin: auto 0 auto auto;
       background-size: 100% auto;
       transition: transform .3s ease-in-out;
@@ -34,17 +39,16 @@
       right: 44px;
       top: 4px;
       content: "NEW";
-      font-size: 12px;
-      letter-spacing: .03125em;
-      display: inline-block;
+      background: rgba(0, 0, 0, 0.03);
+      color: rgba(0, 0, 0, 0.76);
+      font-size: 11px;
+      letter-spacing: .25px;
+      line-height: 16px;
+      padding: 2px 8px;
       border-radius: 10px;
-      line-height: 22px;
-      height: 20px;
-      background: #fff;
-      color: $tb-primary-color;
-      padding-left: 6px;
-      padding-right: 6px;
-      margin-left: -6px;
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      opacity: 1;
+      transition: opacity $sidenav-anim-timing;
     }
   }
 
@@ -58,10 +62,39 @@
     transition-property: height;
 
     a.mat-mdc-button {
-      padding: 0 16px 0 32px;
-      font-weight: 500;
-      text-transform: none !important;
-      text-rendering: optimizeLegibility;
+      .mat-icon {
+        visibility: hidden;
+      }
+    }
+  }
+}
+
+.tb-toggle-menu-items {
+  min-width: 250px;
+  display: flex;
+  flex-direction: column;
+  .tb-menu-toggle-header {
+    display: flex;
+    align-items: center;
+    cursor: default;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 20px;
+    height: 40px;
+    padding: 8px 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  }
+  a.mat-mdc-button {
+    border-bottom: none;
+    &:hover {
+      background-color: rgba(0, 0, 0, .07);
+      border-bottom: none;
+    }
+    &:focus {
+      border-bottom: none;
+    }
+    &.tb-active {
+      background-color: rgba(0, 0, 0, .05);
     }
   }
 }

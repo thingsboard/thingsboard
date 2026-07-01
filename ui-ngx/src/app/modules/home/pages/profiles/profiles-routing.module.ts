@@ -27,7 +27,8 @@ const routes: Routes = [
     data: {
       auth: [Authority.TENANT_ADMIN],
       breadcrumb: {
-        menuId: MenuId.profiles
+        menuId: MenuId.profiles,
+        skip: true
       }
     },
     children: [

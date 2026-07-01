@@ -16,26 +16,26 @@
 
 -->
 <div class="tb-details-buttons xs:flex xs:flex-col">
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'open')"
           [class.!hidden]="isEdit || isDetailsPage">
     {{'common.open-details-page' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async) || !(entity?.hasData && !entity?.url)"
           (click)="onEntityAction($event, 'uploadPackage')"
           [class.!hidden]="isEdit">
     {{ 'ota-update.download' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'delete')"
           [class.!hidden]="hideDelete() || isEdit">
     {{ 'ota-update.delete' | translate }}
   </button>
   <div class="flex flex-row xs:flex-col">
-    <button mat-raised-button
+    <button mat-stroked-button
             ngxClipboard
             (cbOnSuccess)="onPackageIdCopied()"
             [cbContent]="entity?.id?.id"
@@ -43,7 +43,7 @@
       <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
       <span translate>ota-update.copyId</span>
     </button>
-    <button mat-raised-button
+    <button mat-stroked-button
             ngxClipboard
             (cbOnSuccess)="onPackageChecksumCopied()"
             [cbContent]="entity?.checksum"
@@ -51,7 +51,7 @@
       <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
       <span translate>ota-update.copy-checksum</span>
     </button>
-    <button mat-raised-button
+    <button mat-stroked-button
             ngxClipboard
             (cbOnSuccess)="onPackageDirectUrlCopied()"
             [cbContent]="entity?.url"

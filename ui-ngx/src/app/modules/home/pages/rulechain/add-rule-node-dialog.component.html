@@ -16,7 +16,7 @@
 
 -->
 <form (ngSubmit)="add()" class="dialog-container">
-  <mat-toolbar color="primary">
+  <mat-toolbar class="tb-dialog-header">
     <h2 translate>rulenode.add</h2>
     <span class="flex-1">: {{ruleNode.component.name}}</span>
     <div [tb-help]="helpLinkIdForRuleNodeType()"></div>

@@ -88,9 +88,11 @@ export const widgetsBundleWidgetsBreadcumbLabelFunction: BreadCrumbLabelFunction
   route.data.widgetsBundle.title);
 
 export const widgetEditorBreadcumbLabelFunction: BreadCrumbLabelFunction<WidgetEditorComponent> =
-  ((route, translate, component) =>
-    component?.widget?.widgetName ?
-      (component.widget.widgetName + (component.widget.deprecated ? ` (${translate.instant('widget.deprecated')})` : '')) : '');
+  ((route, translate, component) => {
+    const widget = component?.widget ?? route.data?.widgetEditorData?.widget;
+    return widget?.widgetName ?
+      (widget.widgetName + (widget.deprecated ? ` (${translate.instant('widget.deprecated')})` : '')) : '';
+  });
 
 const widgetEditorRouter: Routes = [
   {
@@ -242,7 +244,8 @@ export const widgetsLibraryRoutes: Routes = [
     data: {
       auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
       breadcrumb: {
-        menuId: MenuId.widget_library
+        menuId: MenuId.widget_library,
+        skip: true
       }
     },
     children: [

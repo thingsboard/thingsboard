@@ -16,56 +16,56 @@
 
 -->
 <div class="tb-details-buttons">
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'open')"
           [class.!hidden]="isEdit">
     {{'rulechain.open-rulechain' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'export')"
           [class.!hidden]="isEdit">
     {{'rulechain.export' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'setRoot')"
           [class.!hidden]="isEdit || !((!entity?.root && ruleChainScope === 'tenant') || (!isEdgeRootRuleChain() && ruleChainScope === 'edge'))">
     {{'rulechain.set-root' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'setEdgeTemplateRoot')"
           [class.!hidden]="isEdit || entity?.root || ruleChainScope !== 'edges'">
     {{'rulechain.set-edge-template-root-rulechain' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'setAutoAssignToEdge')"
           [class.!hidden]="isEdit || !isNotAutoAssignToEdgeRuleChain() || ruleChainScope !== 'edges'">
     {{'rulechain.set-auto-assign-to-edge' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'unsetAutoAssignToEdge')"
           [class.!hidden]="isEdit || !isAutoAssignToEdgeRuleChain() || ruleChainScope !== 'edges'">
     {{'rulechain.unset-auto-assign-to-edge' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'unassignFromEdge')"
           [class.!hidden]="isEdit || isEdgeRootRuleChain() || ruleChainScope !== 'edges'">
     {{'edge.unassign-from-edge' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'delete')"
           [class.!hidden]="hideDelete() || isEdit || ruleChainScope === 'edge'">
     {{'rulechain.delete' | translate }}
   </button>
   <div class="flex flex-row">
-    <button mat-raised-button
+    <button mat-stroked-button
             ngxClipboard
             (cbOnSuccess)="onRuleChainIdCopied($event)"
             [cbContent]="entity?.id?.id"

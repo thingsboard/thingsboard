@@ -202,6 +202,8 @@ import { ApiKeyGeneratedDialogComponent } from '@home/components/api-key/api-key
 import { ApiKeysTableDialogComponent } from '@home/components/api-key/api-keys-table-dialog.component';
 import { AuditLogFilterComponent } from "@home/components/audit-log/audit-log-filter.component";
 import { EventsDialogComponent } from '@home/dialogs/events-dialog.component';
+import { NotificationBellModule } from '@home/components/notification/notification-bell.module';
+import { GithubBadgeModule } from '@home/components/github-badge/github-badge.module';
 
 @NgModule({
   declarations:
@@ -374,7 +376,9 @@ import { EventsDialogComponent } from '@home/dialogs/events-dialog.component';
     StatesControllerModule,
     DeviceCredentialsModule,
     DeviceProfileCommonModule,
-    EntityDebugSettingsButtonComponent
+    EntityDebugSettingsButtonComponent,
+    NotificationBellModule,
+    GithubBadgeModule
   ],
   exports: [
     RouterTabsComponent,

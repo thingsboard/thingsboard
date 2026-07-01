@@ -16,7 +16,7 @@
 
 -->
 <form [formGroup]="filterFormGroup" (ngSubmit)="save()" style="width: 700px;">
-  <mat-toolbar color="primary" class="justify-between">
+  <mat-toolbar class="tb-dialog-header justify-between">
     <h2>{{ (isAdd ? 'filter.add' : 'filter.edit') | translate }}</h2>
     <button mat-icon-button
             (click)="cancel()"

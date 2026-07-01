@@ -23,9 +23,8 @@ import { SharedModule } from '@app/shared/shared.module';
 import { MenuLinkComponent } from '@modules/home/menu/menu-link.component';
 import { MenuToggleComponent } from '@modules/home/menu/menu-toggle.component';
 import { SideMenuComponent } from '@modules/home/menu/side-menu.component';
-import { GithubBadgeComponent } from '@home/components/github-badge/github-badge.component';
-import { NotificationBellComponent } from '@home/components/notification/notification-bell.component';
-import { ShowNotificationPopoverComponent } from '@home/components/notification/show-notification-popover.component';
+import { NotificationBellModule } from '@home/components/notification/notification-bell.module';
+import { GithubBadgeModule } from '@home/components/github-badge/github-badge.module';
 
 @NgModule({
   declarations:
@@ -33,14 +32,13 @@ import { ShowNotificationPopoverComponent } from '@home/components/notification/
       HomeComponent,
       MenuLinkComponent,
       MenuToggleComponent,
-      SideMenuComponent,
-      GithubBadgeComponent,
-      NotificationBellComponent,
-      ShowNotificationPopoverComponent
+      SideMenuComponent
     ],
   imports: [
     CommonModule,
     SharedModule,
+    NotificationBellModule,
+    GithubBadgeModule,
     HomeRoutingModule
   ]
 })

@@ -16,7 +16,7 @@
 
 -->
 <form [formGroup]="targetNotificationForm" class="tb-dialog-container">
-  <mat-toolbar color="primary">
+  <mat-toolbar class="tb-dialog-header">
     <h2>{{ (isAdd ? 'notification.add-notification-recipients-group' : 'notification.edit-notification-recipients-group') | translate }}</h2>
     <span class="flex-1"></span>
     <div tb-help="recipientNotifications"></div>

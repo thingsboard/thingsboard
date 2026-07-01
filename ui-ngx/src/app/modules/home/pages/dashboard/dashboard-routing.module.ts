@@ -21,7 +21,7 @@ import { EntitiesTableComponent } from '../../components/entity/entities-table.c
 import { Authority } from '@shared/models/authority.enum';
 import { DashboardsTableConfigResolver } from './dashboards-table-config.resolver';
 import { DashboardPageComponent } from '@home/components/dashboard-page/dashboard-page.component';
-import { BreadCrumbConfig, BreadCrumbLabelFunction } from '@shared/components/breadcrumb';
+import { BreadCrumbConfig } from '@shared/components/breadcrumb';
 import { mergeMap, Observable, of } from 'rxjs';
 import { Dashboard } from '@app/shared/models/dashboard.models';
 import { DashboardService } from '@core/http/dashboard.service';
@@ -59,9 +59,6 @@ export class DashboardResolver  {
   }
 }
 
-export const dashboardBreadcumbLabelFunction: BreadCrumbLabelFunction<DashboardPageComponent>
-  = ((route, translate, component) => component.dashboard.title);
-
 const routes: Routes = [
   {
     path: 'dashboards',
@@ -89,7 +86,6 @@ const routes: Routes = [
         canDeactivate: [ConfirmOnExitGuard],
         data: {
           breadcrumb: {
-            labelFunction: dashboardBreadcumbLabelFunction,
             icon: 'dashboard'
           } as BreadCrumbConfig<DashboardPageComponent>,
           auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],

@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+@import "constants";
+
 :host {
   display: flex;
   width: 100%;
@@ -20,6 +23,31 @@
 
   mat-sidenav-container {
     flex: 1;
+    &.tb-desktop {
+      mat-sidenav.tb-site-sidenav {
+        width: 250px;
+        transition: width $sidenav-anim-timing;
+        .tb-logo-title {
+          opacity: 1;
+          transition: opacity $sidenav-anim-timing;
+        }
+      }
+      mat-sidenav-content.tb-site-content:not(.tb-force-fullscreen) {
+        margin-left: 250px !important;
+        transition: margin-left $sidenav-anim-timing;
+      }
+      &.tb-collapsed {
+        mat-sidenav.tb-site-sidenav {
+          width: 50px;
+          .tb-logo-title {
+            opacity: 0;
+          }
+        }
+        mat-sidenav-content.tb-site-content {
+          margin-left: 50px !important;
+        }
+      }
+    }
   }
   mat-sidenav.tb-site-sidenav {
     width: 250px;
@@ -31,33 +59,78 @@
       flex-shrink: 0;
       white-space: nowrap;
       .tb-nav-header-toolbar {
-        min-height: 64px;
+        position: relative;
+        min-height: 56px;
         height: inherit;
-        padding: 0;
+        padding: 8px 12px 8px 16px;
         z-index: 2;
         flex-shrink: 0;
         white-space: nowrap;
-        border-bottom: 1px solid rgba(0, 0, 0, .12);
-        & > div {
-          height: 64px;
-          .tb-logo-title {
-            width: auto;
-            max-width: 100%;
-            height: 36px;
-            max-height: 100%;
-            margin: auto;
+        border-right: 1px solid rgba(0, 0, 0, 0.12);
+        .tb-logo-title {
+          width: auto;
+          max-width: 100%;
+          height: 30px;
+          max-height: 100%;
+          margin: auto 0;
+        }
+        .tb-sidenav-toggle {
+          margin: 0;
+          position: absolute;
+          right: 9px;
+          top: 12px;
+          .tb-collapsed-logo-container {
+            position: relative;
+            width: 20px;
+            height: 20px;
+            margin-left: 6px;
+            .mat-icon, img {
+              width: 20px;
+              height: 20px;
+              position: absolute;
+              inset: 0;
+              transition: opacity $sidenav-anim-timing;
+            }
+            .tb-open-icon {
+              opacity: 0;
+            }
+            .tb-collapsed-logo {
+              opacity: 1;
+            }
+          }
+          &:hover {
+            .tb-collapsed-logo-container {
+              .tb-open-icon {
+                opacity: 1;
+              }
+              .tb-collapsed-logo {
+                opacity: 0;
+              }
+            }
           }
         }
       }
     }
     .tb-side-menu-toolbar {
-      overflow-y: auto;
+      overflow: hidden;
       height: inherit;
       padding: 0;
+      border-right: 1px solid rgba(0, 0, 0, 0.12);
+      --mat-toolbar-container-text-color: rgba(0, 0, 0, .76);
+      tb-user-menu {
+        border-top: 1px solid rgba(0, 0, 0, 0.12);
+      }
     }
   }
   .tb-primary-toolbar {
     z-index: 2;
+    height: 56px;
+    min-height: 56px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    .mat-toolbar-tools {
+      height: 56px;
+      padding: 0;
+    }
     h1 {
       font-size: 24px !important;
       font-weight: 400 !important;

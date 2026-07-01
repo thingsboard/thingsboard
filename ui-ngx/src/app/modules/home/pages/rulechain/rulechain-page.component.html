@@ -27,7 +27,7 @@
                     #drawer
                     opened
                     position="start">
-          <mat-toolbar color="primary" class="tb-dark">
+          <mat-toolbar>
             @if (!isImport) {
               <tb-rule-chain-select
                 class="flex-1"
@@ -185,7 +185,7 @@
           }
         </mat-drawer>
         <mat-drawer-content class="tb-rulechain-graph-content">
-          <button color="primary"
+          <button color="#fff"
                   mat-mini-fab
                   class="tb-library-node-btn"
                   (click)="drawer.toggle();"
@@ -194,7 +194,7 @@
             <mat-icon class="tb-library-node-btn-icon" [class.tb-library-node-btn-icon-toggled]="drawer.opened">chevron_right</mat-icon>
           </button>
           @if (!isImport) {
-            <button color="primary"
+            <button color="#fff"
                     type="button"
                     mat-mini-fab class="add-note-button"
                     (click)="addNote()"
@@ -203,7 +203,7 @@
               <mat-icon>sticky_note_2</mat-icon>
             </button>
             <button #versionControlButton
-                    color="primary"
+                    color="#fff"
                     type="button"
                     mat-mini-fab class="version-control-button"
                     (click)="toggleVersionControl($event, versionControlButton)"
