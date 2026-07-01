@@ -1525,7 +1525,11 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     public void sendToDeviceRpcRequest(MqttMessage payload, TransportProtos.ToDeviceRpcRequestMsg rpcRequest, TransportProtos.SessionInfoProto sessionInfo) {
         int msgId = ((MqttPublishMessage) payload).variableHeader().packetId();
         int requestId = rpcRequest.getRequestId();
-        if (isAckExpected(payload)) {
+        // Non-persistent one-way RPCs self-complete on send (DeviceActorMessageProcessor) and are never
+        // in the pending map, so a delivery status for them only yields a benign "already removed from
+        // pending map" WARN. Track/emit delivery status only for the rest.
+        boolean oneWayNonPersisted = rpcRequest.getOneway() && !rpcRequest.getPersisted();
+        if (!oneWayNonPersisted && isAckExpected(payload)) {
             rpcAwaitingAck.put(msgId, rpcRequest);
             context.getScheduler().schedule(() -> {
                 TransportProtos.ToDeviceRpcRequestMsg msg = rpcAwaitingAck.remove(msgId);
@@ -1545,8 +1549,10 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 return;
             }
             if (!isAckExpected(payload)) {
-                log.trace("[{}][{}][{}] Going to send to device actor RPC request DELIVERED status update ...", deviceSessionCtx.getDeviceId(), sessionId, requestId);
-                transportService.process(sessionInfo, rpcRequest, RpcStatus.DELIVERED, TransportServiceCallback.EMPTY);
+                if (!oneWayNonPersisted) {
+                    log.trace("[{}][{}][{}] Going to send to device actor RPC request DELIVERED status update ...", deviceSessionCtx.getDeviceId(), sessionId, requestId);
+                    transportService.process(sessionInfo, rpcRequest, RpcStatus.DELIVERED, TransportServiceCallback.EMPTY);
+                }
             } else if (rpcRequest.getPersisted()) {
                 log.trace("[{}][{}][{}] Going to send to device actor RPC request SENT status update ...", deviceSessionCtx.getDeviceId(), sessionId, requestId);
                 transportService.process(sessionInfo, rpcRequest, RpcStatus.SENT, TransportServiceCallback.EMPTY);

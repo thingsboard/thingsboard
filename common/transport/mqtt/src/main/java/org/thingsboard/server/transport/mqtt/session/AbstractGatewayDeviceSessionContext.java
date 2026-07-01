@@ -107,7 +107,11 @@ public abstract class AbstractGatewayDeviceSessionContext<T extends AbstractGate
         try {
             parent.getPayloadAdaptor().convertToGatewayPublish(this, getDeviceInfo().getDeviceName(), request).ifPresent(
                     payload -> {
-                        if (isAckExpected(payload)) {
+                        // Non-persistent one-way RPCs self-complete on send; a delivery status for them
+                        // only yields a benign "already removed from pending map" WARN. Skip those
+                        // (mirrors MqttTransportHandler#sendToDeviceRpcRequest).
+                        boolean oneWayNonPersisted = request.getOneway() && !request.getPersisted();
+                        if (!oneWayNonPersisted && isAckExpected(payload)) {
                             int msgId = ((MqttPublishMessage) payload).variableHeader().packetId();
                             parent.registerRpcAwaitingAck(msgId, getSessionInfo(), request);
                         }
@@ -115,7 +119,9 @@ public abstract class AbstractGatewayDeviceSessionContext<T extends AbstractGate
                         channelFuture.addListener(result -> {
                             if (result.cause() == null) {
                                 if (!isAckExpected(payload)) {
-                                    transportService.process(getSessionInfo(), request, RpcStatus.DELIVERED, TransportServiceCallback.EMPTY);
+                                    if (!oneWayNonPersisted) {
+                                        transportService.process(getSessionInfo(), request, RpcStatus.DELIVERED, TransportServiceCallback.EMPTY);
+                                    }
                                 } else if (request.getPersisted()) {
                                     transportService.process(getSessionInfo(), request, RpcStatus.SENT, TransportServiceCallback.EMPTY);
                                 }
