@@ -88,6 +88,7 @@ import org.thingsboard.server.transport.mqtt.session.GatewaySessionHandler;
 import org.thingsboard.server.transport.mqtt.session.MqttTopicMatcher;
 import org.thingsboard.server.transport.mqtt.session.SparkplugDeviceSessionContext;
 import org.thingsboard.server.transport.mqtt.session.SparkplugNodeSessionHandler;
+import org.thingsboard.server.transport.mqtt.util.MqttRpcStatusUtil;
 import org.thingsboard.server.transport.mqtt.util.ReturnCodeResolver;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugRpcRequestHeader;
@@ -1525,11 +1526,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     public void sendToDeviceRpcRequest(MqttMessage payload, TransportProtos.ToDeviceRpcRequestMsg rpcRequest, TransportProtos.SessionInfoProto sessionInfo) {
         int msgId = ((MqttPublishMessage) payload).variableHeader().packetId();
         int requestId = rpcRequest.getRequestId();
-        // Non-persistent one-way RPCs self-complete on send (DeviceActorMessageProcessor) and are never
-        // in the pending map, so a delivery status for them only yields a benign "already removed from
-        // pending map" WARN. Track/emit delivery status only for the rest.
-        boolean oneWayNonPersisted = rpcRequest.getOneway() && !rpcRequest.getPersisted();
-        if (!oneWayNonPersisted && isAckExpected(payload)) {
+        boolean requireDeliveryTracking = MqttRpcStatusUtil.requireDeliveryTracking(rpcRequest);
+        if (requireDeliveryTracking && isAckExpected(payload)) {
             rpcAwaitingAck.put(msgId, rpcRequest);
             context.getScheduler().schedule(() -> {
                 TransportProtos.ToDeviceRpcRequestMsg msg = rpcAwaitingAck.remove(msgId);
@@ -1549,7 +1547,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 return;
             }
             if (!isAckExpected(payload)) {
-                if (!oneWayNonPersisted) {
+                if (requireDeliveryTracking) {
                     log.trace("[{}][{}][{}] Going to send to device actor RPC request DELIVERED status update ...", deviceSessionCtx.getDeviceId(), sessionId, requestId);
                     transportService.process(sessionInfo, rpcRequest, RpcStatus.DELIVERED, TransportServiceCallback.EMPTY);
                 }

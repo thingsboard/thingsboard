@@ -50,9 +50,9 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.gateway.metrics.GatewayMetadata;
-import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
@@ -262,7 +262,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
         return deviceSessionCtx.nextMsgId();
     }
 
-    public void registerRpcAwaitingAck(int msgId, SessionInfoProto deviceSessionInfo, TransportProtos.ToDeviceRpcRequestMsg rpc) {
+    void registerRpcAwaitingAck(int msgId, SessionInfoProto deviceSessionInfo, TransportProtos.ToDeviceRpcRequestMsg rpc) {
         rpcAwaitingAck.put(msgId, new RpcAwaitingAck(deviceSessionInfo, rpc));
         long delay = Math.max(0, Math.min(deviceSessionCtx.getContext().getTimeout(),
                 rpc.getExpirationTime() - System.currentTimeMillis()));
