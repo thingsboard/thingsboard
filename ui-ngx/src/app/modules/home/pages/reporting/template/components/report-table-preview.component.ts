@@ -101,6 +101,7 @@ export abstract class AbstractReportTablePreviewComponent<C extends TableReportC
           style.textAlign = cellSettings.textAlignment;
           style.verticalAlign = cellSettings.verticalAlignment;
           style.color = cellSettings.color;
+          style.backgroundColor = cellSettings.backgroundColor;
           style.border = borderStyle(cellSettings).border;
         }
       }
