@@ -30,6 +30,9 @@ public abstract class AbstractTransportIntegrationTest extends AbstractControlle
 
     public static final int DEFAULT_WAIT_TIMEOUT_SECONDS = 30;
 
+    protected static final String CLIENT_ATTRIBUTE_KEYS = "clientStr,clientBool,clientDbl,clientLong,clientJson";
+    protected static final String SHARED_ATTRIBUTE_KEYS = "sharedStr,sharedBool,sharedDbl,sharedLong,sharedJson";
+
     protected static final AtomicInteger atomicInteger = new AtomicInteger(2);
 
     public static final String DEVICE_TELEMETRY_PROTO_SCHEMA = "syntax =\"proto3\";\n" +

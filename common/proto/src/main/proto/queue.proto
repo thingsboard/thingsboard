@@ -425,15 +425,19 @@ message GetAttributeRequestMsg {
   repeated string clientAttributeNames = 2;
   repeated string sharedAttributeNames = 3;
   bool onlyShared = 4;
+  bool allClientAttributes = 5;
+  bool allSharedAttributes = 6;
+  bool separateScopesResponse = 7;
 }
 
 message GetAttributeResponseMsg {
   int32 requestId = 1;
   repeated TsKvProto clientAttributeList = 2;
   repeated TsKvProto sharedAttributeList = 3;
-  bool isMultipleAttributesRequest = 4;
+  bool isMultipleAttributesRequest = 4 [deprecated = true];
   string error = 5;
   bool sharedStateMsg = 6;
+  bool separateScopesResponse = 7;
 }
 
 message AttributeUpdateNotificationMsg {

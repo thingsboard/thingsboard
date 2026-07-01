@@ -96,6 +96,10 @@ message GatewayDeviceRpcRequestMsg {
 message GatewayAttributesRequestMsg {
   int32  id = 1;
   string deviceName = 2;
-  bool client = 3;
-  repeated string keys = 4;
+  bool client = 3 [deprecated = true];
+  repeated string keys = 4 [deprecated = true];
+  repeated string clientKeys = 5;
+  repeated string sharedKeys = 6;
+  bool allClientKeys = 7;
+  bool allSharedKeys = 8;
 }
