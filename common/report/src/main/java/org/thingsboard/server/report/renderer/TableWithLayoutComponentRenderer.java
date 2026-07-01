@@ -256,7 +256,6 @@ public abstract class TableWithLayoutComponentRenderer<C extends TableWithLayout
         private String verticalAlignment;
         private String borderStyle;
         private Integer borderWidth;
-        private Integer borderRadius;
         private String borderColor;
 
         public CellVariables(String key) {
