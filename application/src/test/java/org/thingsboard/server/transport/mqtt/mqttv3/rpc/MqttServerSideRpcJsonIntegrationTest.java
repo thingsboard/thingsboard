@@ -81,6 +81,11 @@ public class MqttServerSideRpcJsonIntegrationTest extends AbstractMqttServerSide
         processJsonTwoWayRpcTestGateway("Gateway Device TwoWay RPC Json");
     }
 
+    @Test
+    public void testGatewayServerMqttPersistentRpcDeliveredOnPuback() throws Exception {
+        validateGatewayPersistentRpcDelivered("Gateway Device Persistent RPC Json");
+    }
+
     protected void processJsonOneWayRpcTestGateway(String deviceName) throws Exception {
         MqttTestClient client = new MqttTestClient();
         client.connectAndWait(gatewayAccessToken);

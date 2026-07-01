@@ -50,6 +50,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.gateway.metrics.GatewayMetadata;
 import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
@@ -80,6 +81,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
@@ -122,6 +124,10 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
     protected final ChannelHandlerContext channel;
     protected final DeviceSessionCtx deviceSessionCtx;
     protected final GatewayMetricsService gatewayMetricsService;
+
+    private final ConcurrentMap<Integer, RpcAwaitingAck> rpcAwaitingAck = new ConcurrentHashMap<>();
+
+    private record RpcAwaitingAck(SessionInfoProto deviceSessionInfo, TransportProtos.ToDeviceRpcRequestMsg rpc) {}
 
     @Getter
     @Setter
@@ -201,6 +207,10 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
 
     public void onDevicesDisconnect() {
         log.debug("[{}] Gateway disconnect [{}]", gateway.getTenantId(), gateway.getDeviceId());
+        if (!rpcAwaitingAck.isEmpty()) {
+            log.debug("[{}] Cleanup gateway RPC awaiting ack map due to session close!", sessionId);
+            rpcAwaitingAck.clear();
+        }
         try {
             deviceFutures.forEach((name, future) -> {
                 Futures.addCallback(future, new FutureCallback<T>() {
@@ -250,6 +260,28 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
 
     int nextMsgId() {
         return deviceSessionCtx.nextMsgId();
+    }
+
+    void registerRpcAwaitingAck(int msgId, SessionInfoProto deviceSessionInfo, TransportProtos.ToDeviceRpcRequestMsg rpc) {
+        rpcAwaitingAck.put(msgId, new RpcAwaitingAck(deviceSessionInfo, rpc));
+        long delay = Math.max(0, Math.min(deviceSessionCtx.getContext().getTimeout(),
+                rpc.getExpirationTime() - System.currentTimeMillis()));
+        context.getScheduler().schedule(() -> {
+            RpcAwaitingAck pending = rpcAwaitingAck.remove(msgId);
+            if (pending != null) {
+                log.trace("[{}] Gateway RPC [{}] PUBACK timeout, sending TIMEOUT status", sessionId, rpc.getRequestId());
+                transportService.process(pending.deviceSessionInfo(), pending.rpc(), RpcStatus.TIMEOUT, TransportServiceCallback.EMPTY);
+            }
+        }, delay, TimeUnit.MILLISECONDS);
+    }
+
+    public void onPubAck(int msgId) {
+        RpcAwaitingAck pending = rpcAwaitingAck.remove(msgId);
+        if (pending == null) {
+            return;
+        }
+        log.trace("[{}] Gateway RPC [{}] PUBACK received, sending DELIVERED status", sessionId, pending.rpc().getRequestId());
+        transportService.process(pending.deviceSessionInfo(), pending.rpc(), RpcStatus.DELIVERED, true, TransportServiceCallback.EMPTY);
     }
 
     protected boolean isJsonPayloadType() {
