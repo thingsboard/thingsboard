@@ -157,7 +157,7 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       name: 'tenant-profile.tenant-profiles',
       type: 'link',
       path: '/tenantProfiles',
-      icon: 'mdi:alpha-t-box'
+      icon: 'mdi:alpha-t-box-outline'
     }
   ],
   [
@@ -177,7 +177,7 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       name: 'widget.widgets',
       type: 'link',
       path: '/resources/widgets-library',
-      icon: 'now_widgets'
+      icon: 'mdi:widgets-outline'
     }
   ],
   [
@@ -187,7 +187,7 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       name: 'widget.widgets',
       type: 'link',
       path: '/resources/widgets-library/widget-types',
-      icon: 'now_widgets'
+      icon: 'mdi:widgets-outline'
     }
   ],
   [
@@ -197,7 +197,7 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       name: 'widgets-bundle.widgets-bundles',
       type: 'link',
       path: '/resources/widgets-library/widgets-bundles',
-      icon: 'now_widgets'
+      icon: 'mdi:widgets-outline'
     }
   ],
   [
@@ -227,7 +227,7 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       name: 'resource.files',
       type: 'link',
       path: '/resources/resources-library',
-      icon: 'mdi:rhombus-split'
+      icon: 'mdi:rhombus-split-outline'
     }
   ],
   [
@@ -383,7 +383,7 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       name: 'admin.settings',
       type: 'link',
       path: '/settings',
-      icon: 'settings'
+      icon: 'mdi:cog-outline'
     }
   ],
   [
@@ -394,7 +394,7 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       fullName: 'admin.general-settings',
       type: 'link',
       path: '/settings/general',
-      icon: 'settings_applications'
+      icon: 'mdi:cog-outline'
     }
   ],
   [
@@ -404,7 +404,7 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       name: 'admin.outgoing-mail',
       type: 'link',
       path: '/settings/outgoing-mail',
-      icon: 'mail'
+      icon: 'mail_outline'
     }
   ],
   [
@@ -415,7 +415,7 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       fullName: 'admin.home-settings',
       type: 'link',
       path: '/settings/home',
-      icon: 'settings_applications'
+      icon: 'mdi:cog-outline'
     }
   ],
   [
@@ -426,7 +426,7 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       fullName: 'admin.notifications-settings',
       type: 'link',
       path: '/settings/notifications',
-      icon: 'mdi:message-badge'
+      icon: 'mdi:message-badge-outline'
     }
   ],
   [
@@ -479,7 +479,7 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       fullName: 'security.general-settings',
       type: 'link',
       path: '/security-settings/general',
-      icon: 'settings_applications'
+      icon: 'mdi:cog-outline'
     }
   ],
   [
@@ -499,7 +499,7 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       name: 'admin.oauth2.oauth2',
       type: 'link',
       path: '/security-settings/oauth2',
-      icon: 'mdi:shield-account'
+      icon: 'mdi:shield-account-outline'
     }
   ],
   [
@@ -579,7 +579,7 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       name: 'dashboard.dashboards',
       type: 'link',
       path: '/dashboards',
-      icon: 'dashboards'
+      icon: 'mdi:view-dashboard-outline'
     }
   ],
   [
@@ -619,7 +619,7 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       name: 'entity-view.entity-views',
       type: 'link',
       path: '/entities/entityViews',
-      icon: 'view_quilt'
+      icon: 'mdi:view-quilt-outline'
     }
   ],
   [
@@ -649,7 +649,7 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       name: 'device-profile.device-profiles',
       type: 'link',
       path: '/profiles/deviceProfiles',
-      icon: 'mdi:alpha-d-box'
+      icon: 'mdi:alpha-d-box-outline'
     }
   ],
   [
@@ -659,7 +659,7 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       name: 'asset-profile.asset-profiles',
       type: 'link',
       path: '/profiles/assetProfiles',
-      icon: 'mdi:alpha-a-box'
+      icon: 'mdi:alpha-a-box-outline'
     }
   ],
   [
@@ -679,7 +679,7 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       name: 'customer.customers',
       type: 'link',
       path: '/customers',
-      icon: 'supervisor_account'
+      icon: 'mdi:account-supervisor-outline'
     }
   ],
   [

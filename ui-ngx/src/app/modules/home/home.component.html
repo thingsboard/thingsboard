@@ -55,40 +55,40 @@
           <button mat-icon-button id="main"
                   [class.!hidden]="forceFullscreen || displaySearchMode()"
                   class="gt-sm:!hidden" (click)="sidenav.toggle()">
-            <mat-icon class="material-icons">menu</mat-icon>
+            <mat-icon>menu</mat-icon>
           </button>
           <button mat-icon-button
                   [class.!hidden]="!forceFullscreen || displaySearchMode"
                   (click)="goBack()">
-            <mat-icon class="material-icons">arrow_back</mat-icon>
-          </button>
-          <button mat-icon-button
-                  [class.!hidden]="!displaySearchMode()"
-                  (click)="closeSearch()">
-            <mat-icon class="material-icons">arrow_back</mat-icon>
+            <mat-icon>arrow_back</mat-icon>
           </button>
           <tb-breadcrumb
             [class.!hidden]="displaySearchMode()"
             class="mat-toolbar-tools flex-1">
           </tb-breadcrumb>
-          <div [class.!hidden]="!displaySearchMode()" class="flex flex-1 flex-row">
-            <mat-form-field class="tb-appearance-transparent flex-1">
-              <input #searchInput matInput
-                     [formControl]="textSearch"
-                     placeholder="{{ 'common.enter-search' | translate }}"/>
-            </mat-form-field>
-          </div>
-          <button [class.!hidden]="!searchEnabled"
-                  mat-icon-button (click)="openSearch()">
-            <mat-icon class="material-icons">search</mat-icon>
-          </button>
+          @if (searchEnabled) {
+            <div [class.!hidden]="!showSearch" [class.mr-4]="!textSearch.value" class="flex flex-1 flex-row">
+              <mat-form-field class="tb-appearance-transparent flex-1">
+                <input #searchInput matInput
+                       [formControl]="textSearch"
+                       placeholder="{{ 'common.enter-search' | translate }}"/>
+              </mat-form-field>
+            </div>
+            <button [class.!hidden]="showSearch"
+                    mat-icon-button (click)="openSearch()">
+              <mat-icon>search</mat-icon>
+            </button>
+            <button [class.!hidden]="!showSearch"
+                    mat-icon-button (click)="closeSearch()">
+              <mat-icon>close</mat-icon>
+            </button>
+          }
           <tb-github-badge class="lt-md:!hidden"></tb-github-badge>
           @if (fullscreenEnabled) {
             <button
-              [class.!hidden]="displaySearchMode()"
               class="lt-md:!hidden"
               mat-icon-button (click)="toggleFullscreen()">
-              <mat-icon class="material-icons">{{ isFullscreen() ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+              <mat-icon>{{ isFullscreen() ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
             </button>
           }
           <tb-notification-bell></tb-notification-bell>
