@@ -1524,10 +1524,11 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     }
 
     public void sendToDeviceRpcRequest(MqttMessage payload, TransportProtos.ToDeviceRpcRequestMsg rpcRequest, TransportProtos.SessionInfoProto sessionInfo) {
-        int msgId = ((MqttPublishMessage) payload).variableHeader().packetId();
+        MqttPublishMessage publishMsg = (MqttPublishMessage) payload;
+        int msgId = publishMsg.variableHeader().packetId();
         int requestId = rpcRequest.getRequestId();
         boolean requireDeliveryTracking = MqttRpcStatusUtil.requireDeliveryTracking(rpcRequest);
-        if (requireDeliveryTracking && isAckExpected(payload)) {
+        if (requireDeliveryTracking && isAckExpected(publishMsg)) {
             rpcAwaitingAck.put(msgId, rpcRequest);
             context.getScheduler().schedule(() -> {
                 TransportProtos.ToDeviceRpcRequestMsg msg = rpcAwaitingAck.remove(msgId);
@@ -1537,7 +1538,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 }
             }, Math.max(0, Math.min(deviceSessionCtx.getContext().getTimeout(), rpcRequest.getExpirationTime() - System.currentTimeMillis())), TimeUnit.MILLISECONDS);
         }
-        var cf = publish(payload, deviceSessionCtx);
+        var cf = publish(publishMsg, deviceSessionCtx);
         cf.addListener(result -> {
             Throwable throwable = result.cause();
             if (throwable != null) {
@@ -1546,7 +1547,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                         ThingsboardErrorCode.INVALID_ARGUMENTS, " Failed send To Device Rpc Request: " + rpcRequest.getMethodName());
                 return;
             }
-            if (!isAckExpected(payload)) {
+            if (!isAckExpected(publishMsg)) {
                 if (requireDeliveryTracking) {
                     log.trace("[{}][{}][{}] Going to send to device actor RPC request DELIVERED status update ...", deviceSessionCtx.getDeviceId(), sessionId, requestId);
                     transportService.process(sessionInfo, rpcRequest, RpcStatus.DELIVERED, TransportServiceCallback.EMPTY);
