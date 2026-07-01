@@ -38,7 +38,7 @@ export class HomeService {
     return this.hideLoadingBarSubject.asObservable().pipe(distinctUntilChanged(), shareReplay(1));
   }
 
-  toggleSideBar = new EventEmitter();
+  toggleSideBar = new EventEmitter<void>();
 
   constructor(private activeComponentService: ActiveComponentService) {
     this.activeComponentService.onActiveComponentChanged().subscribe(activeComponent => {

@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<button #menuButton #menuPopover="tbPopover" mat-button class="tb-user-menu" [class.tb-collapsed]="collapsed"
+<button #menuButton #menuPopoverFull="tbPopover" mat-button class="tb-user-menu" [class.tb-collapsed]="collapsed"
         (click)="$event.stopPropagation();"
         tb-popover
         tbPopoverTrigger="click"
@@ -33,7 +33,7 @@
     }
   </div>
 </button>
-<button #menuPopover="tbPopover" mat-icon-button class="tb-user-menu-icon"
+<button #menuPopoverIcon="tbPopover" mat-icon-button class="tb-user-menu-icon"
         (click)="$event.stopPropagation();"
         tb-popover
         tbPopoverTrigger="click"
@@ -48,11 +48,11 @@
       <div class="tb-user-email">
         {{ userEmail$ | async }}
       </div>
-      <button mat-button (click)="menuPopover?.hide(); openAccount()">
+      <button mat-button (click)="menuPopoverFull?.hide(); menuPopoverIcon?.hide(); openAccount()">
         <tb-icon matButtonIcon>mdi:account-circle-outline</tb-icon>
         <span translate>account.account</span>
       </button>
-      <button mat-button class="tb-logout" (click)="menuPopover?.hide(); logout()">
+      <button mat-button class="tb-logout" (click)="menuPopoverFull?.hide(); menuPopoverIcon?.hide(); logout()">
         <tb-icon matButtonIcon>logout</tb-icon>
         <span translate>home.logout</span>
       </button>
