@@ -166,6 +166,10 @@ section.tb-footer-buttons {
 .tb-details-buttons {
   button {
     margin: 6px 8px;
+    &.mat-mdc-outlined-button:not(:disabled) {
+      --mat-button-outlined-outline-color: inherit;
+      border-color: inherit;
+    }
   }
 }
 

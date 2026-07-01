@@ -16,44 +16,44 @@
 
 -->
 <div class="tb-details-buttons xs:flex xs:flex-col">
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'open')"
           [class.!hidden]="isEdit || isDetailsPage">
     {{'common.open-details-page' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'makePublic')"
           [class.!hidden]="isEdit || assetScope !== 'tenant' || isAssignedToCustomer(entity) || entity?.customerIsPublic">
     {{'asset.make-public' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'assignToCustomer')"
           [class.!hidden]="isEdit || assetScope !== 'tenant' || isAssignedToCustomer(entity)">
     {{'asset.assign-to-customer' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'unassignFromCustomer')"
           [class.!hidden]="isEdit || (assetScope !== 'customer' && assetScope !== 'tenant') || !isAssignedToCustomer(entity)">
     {{ (entity?.customerIsPublic ? 'asset.make-private' : 'asset.unassign-from-customer') | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'unassignFromEdge')"
           [class.!hidden]="isEdit || assetScope !== 'edge'">
     {{ 'edge.unassign-from-edge' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'delete')"
           [class.!hidden]="hideDelete() || isEdit">
     {{'asset.delete' | translate }}
   </button>
   <div class="flex flex-row xs:flex-col">
-    <button mat-raised-button
+    <button mat-stroked-button
             ngxClipboard
             (cbOnSuccess)="onAssetIdCopied($event)"
             [cbContent]="entity?.id?.id"
