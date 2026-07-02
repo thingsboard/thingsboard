@@ -15,9 +15,9 @@
 ///
 
 import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
-import { Observable, of } from 'rxjs';
-import { catchError, debounceTime, map, share, switchMap, tap } from 'rxjs/operators';
+import { ControlValueAccessor, FormBuilder, FormControl, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import { Observable, of, shareReplay } from 'rxjs';
+import { catchError, debounceTime, map, switchMap, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
@@ -34,7 +34,7 @@ import {
   NotificationType
 } from '@shared/models/notification.models';
 import { NotificationService } from '@core/http/notification.service';
-import { isEqual } from '@core/utils';
+import { isEqual, objectRequired } from '@core/utils';
 import {
   TemplateNotificationDialogComponent,
   TemplateNotificationDialogData
@@ -43,6 +43,8 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatButton } from '@angular/material/button';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { MatFormFieldAppearance } from '@angular/material/form-field';
+import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { AutocompleteBaseDirective } from '@shared/components/directives/autocomplete-base.directive';
 
 @Component({
     selector: 'tb-template-autocomplete',
@@ -56,7 +58,7 @@ import { MatFormFieldAppearance } from '@angular/material/form-field';
         }],
     standalone: false
 })
-export class TemplateAutocompleteComponent implements ControlValueAccessor, OnInit {
+export class TemplateAutocompleteComponent extends AutocompleteBaseDirective implements ControlValueAccessor, OnInit {
 
   notificationDeliveryMethodInfoMap = NotificationDeliveryMethodInfoMap;
   selectTemplateFormGroup: FormGroup;
@@ -93,14 +95,11 @@ export class TemplateAutocompleteComponent implements ControlValueAccessor, OnIn
 
   @ViewChild('templateInput', {static: true}) templateInput: ElementRef;
 
+  @ViewChild('templateInput', {read: MatAutocompleteTrigger}) autocompleteTrigger: MatAutocompleteTrigger;
+
   filteredTemplate: Observable<Array<NotificationTemplate>>;
 
-  searchText = '';
-
   private modelValue: EntityId | null;
-  private dirty = false;
-
-  private propagateChange = (v: any) => { };
 
   constructor(private store: Store<AppState>,
               public translate: TranslateService,
@@ -109,23 +108,27 @@ export class TemplateAutocompleteComponent implements ControlValueAccessor, OnIn
               private notificationService: NotificationService,
               private fb: FormBuilder,
               private dialog: MatDialog) {
+    super();
     this.selectTemplateFormGroup = this.fb.group({
       templateName: [null]
     });
   }
 
-  registerOnChange(fn: any): void {
-    this.propagateChange = fn;
+  protected getControl(): FormControl {
+    return this.selectTemplateFormGroup.get('templateName') as FormControl;
   }
 
-  registerOnTouched(fn: any): void {
+  protected getInput(): ElementRef<HTMLInputElement> {
+    return this.templateInput as ElementRef<HTMLInputElement>;
   }
 
   ngOnInit() {
+    const templateControl = this.selectTemplateFormGroup.get('templateName');
+    templateControl.addValidators(objectRequired());
     if (this.required) {
-      this.selectTemplateFormGroup.get('templateName').addValidators(Validators.required);
-      this.selectTemplateFormGroup.get('templateName').updateValueAndValidity({emitEvent: false});
+      templateControl.addValidators(Validators.required);
     }
+    templateControl.updateValueAndValidity({emitEvent: false});
     this.filteredTemplate = this.selectTemplateFormGroup.get('templateName').valueChanges
       .pipe(
         debounceTime(150),
@@ -143,7 +146,7 @@ export class TemplateAutocompleteComponent implements ControlValueAccessor, OnIn
         }),
         map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
         switchMap(name => this.fetchTemplate(name)),
-        share()
+        shareReplay(1)
       );
   }
 
@@ -154,10 +157,6 @@ export class TemplateAutocompleteComponent implements ControlValueAccessor, OnIn
     } else {
       this.selectTemplateFormGroup.enable({emitEvent: false});
     }
-  }
-
-  textIsNotEmpty(text: string): boolean {
-    return (text && text.length > 0);
   }
 
   writeValue(value: EntityId | null): void {
@@ -186,23 +185,8 @@ export class TemplateAutocompleteComponent implements ControlValueAccessor, OnIn
     this.dirty = true;
   }
 
-  onFocus() {
-    if (this.dirty) {
-      this.selectTemplateFormGroup.get('templateName').updateValueAndValidity({onlySelf: true, emitEvent: true});
-      this.dirty = false;
-    }
-  }
-
   displayTemplateFn(template?: NotificationTemplate): string | undefined {
     return template ? template.name : undefined;
-  }
-
-  clear() {
-    this.selectTemplateFormGroup.get('templateName').patchValue('', {emitEvent: true});
-    setTimeout(() => {
-      this.templateInput.nativeElement.blur();
-      this.templateInput.nativeElement.focus();
-    }, 0);
   }
 
   editTemplate($event: Event) {
@@ -245,7 +229,7 @@ export class TemplateAutocompleteComponent implements ControlValueAccessor, OnIn
       });
   }
 
-  private updateView(value: EntityId | null) {
+  updateView(value: EntityId | null) {
     if (!isEqual(this.modelValue, value)) {
       this.modelValue = value;
       this.propagateChange(this.modelValue);
@@ -253,7 +237,7 @@ export class TemplateAutocompleteComponent implements ControlValueAccessor, OnIn
   }
 
   private fetchTemplate(searchText?: string): Observable<Array<NotificationTemplate>> {
-    this.searchText = searchText;
+    this.searchText = searchText ?? '';
     const pageLink = new PageLink(10, 0, searchText, {
       property: 'name',
       direction: Direction.ASC
@@ -264,8 +248,8 @@ export class TemplateAutocompleteComponent implements ControlValueAccessor, OnIn
     );
   }
 
-  private reset() {
-    this.selectTemplateFormGroup.get('templateName').patchValue('', {emitEvent: false});
+  override reset() {
+    super.reset();
     this.updateView(null);
     this.dirty = true;
   }

@@ -24,18 +24,19 @@
   @if (!inlineField) {
     <mat-label>{{ 'device-profile.device-profile' | translate }}</mat-label>
   }
-  <input matInput type="text"
+  <input matInput [errorStateMatcher]="this" type="text"
          #deviceProfileInput
+         #autocompleteTrigger="matAutocompleteTrigger"
          formControlName="deviceProfile"
          (focusin)="onFocus()"
+         (blur)="onBlur()"
          [required]="required"
          (keydown)="deviceProfileEnter($event)"
          (keypress)="deviceProfileEnter($event)"
          [matAutocomplete]="deviceProfileAutocomplete"
          [class.!hidden]="showDetailsPageLink && useDeviceProfileLink && disabled && selectDeviceProfileFormGroup.get('deviceProfile').value">
   @if (showDetailsPageLink && useDeviceProfileLink && selectDeviceProfileFormGroup.get('deviceProfile').value && disabled) {
-    <a
-      aria-label="Open device profile" [routerLink]=deviceProfileURL>
+    <a aria-label="Open device profile" [routerLink]=deviceProfileURL>
       {{ displayDeviceProfileFn(selectDeviceProfileFormGroup.get('deviceProfile').value) }}
     </a>
   }
@@ -58,14 +59,13 @@
     </button>
   }
   @if (!selectDeviceProfileFormGroup.get('deviceProfile').value && !disabled && addNewProfile) {
-    <button mat-button color="primary" matSuffix
-            (click)="createDeviceProfile($event, '')"
-            >
+    <button mat-button color="primary" matSuffix (click)="createDeviceProfile($event, '')">
       <span style="white-space: nowrap">{{ 'notification.create-new' | translate }}</span>
     </button>
   }
   <mat-autocomplete
     class="tb-autocomplete"
+    (opened)="onPanelOpened()"
     (closed)="onPanelClosed()"
     #deviceProfileAutocomplete="matAutocomplete"
     [displayWith]="displayDeviceProfileFn">
@@ -97,6 +97,11 @@
   @if (selectDeviceProfileFormGroup.get('deviceProfile').hasError('required')) {
     <mat-error>
       {{ 'device-profile.device-profile-required' | translate }}
+    </mat-error>
+  }
+  @if (selectDeviceProfileFormGroup.get('deviceProfile').hasError('objectRequired')) {
+    <mat-error>
+      {{ (addNewProfile ? 'entity.entity-not-valid-create-new' : 'entity.entity-not-valid') | translate: {entity: 'device-profile.device-profile' | translate | lowercase} }}
     </mat-error>
   }
   @if (hint && !disabled) {

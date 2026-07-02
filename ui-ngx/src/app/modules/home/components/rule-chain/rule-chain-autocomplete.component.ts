@@ -15,9 +15,9 @@
 ///
 
 import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
-import { Observable, of } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged, map, share, switchMap, tap } from 'rxjs/operators';
+import { ControlValueAccessor, FormControl, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
+import { Observable, of, shareReplay } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, map, switchMap, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
@@ -30,8 +30,9 @@ import { TruncatePipe } from '@shared/pipe/truncate.pipe';
 import { RuleChainService } from '@core/http/rule-chain.service';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { RuleChainType } from '@app/shared/models/rule-chain.models';
-import { getEntityDetailsPageURL } from '@core/utils';
+import { getEntityDetailsPageURL, objectRequired } from '@core/utils';
 import { MatFormFieldAppearance } from '@angular/material/form-field';
+import { AutocompleteBaseDirective } from '@shared/components/directives/autocomplete-base.directive';
 
 @Component({
     selector: 'tb-rule-chain-autocomplete',
@@ -44,7 +45,7 @@ import { MatFormFieldAppearance } from '@angular/material/form-field';
         }],
     standalone: false
 })
-export class RuleChainAutocompleteComponent implements ControlValueAccessor, OnInit {
+export class RuleChainAutocompleteComponent extends AutocompleteBaseDirective implements ControlValueAccessor, OnInit {
 
   selectRuleChainFormGroup: UntypedFormGroup;
 
@@ -74,17 +75,15 @@ export class RuleChainAutocompleteComponent implements ControlValueAccessor, OnI
   @Input()
   disabled: boolean;
 
+  @Input()
+  entityNotValidTranslationKey: string = 'entity.entity-not-valid';
+
   @ViewChild('ruleChainInput', {static: true}) ruleChainInput: ElementRef;
   @ViewChild('ruleChainInput', {read: MatAutocompleteTrigger}) ruleChainAutocomplete: MatAutocompleteTrigger;
 
   filteredRuleChains: Observable<Array<BaseData<EntityId>>>;
 
-  searchText = '';
   ruleChainURL: string;
-
-  private dirty = false;
-
-  private propagateChange = (v: any) => { };
 
   constructor(private store: Store<AppState>,
               public translate: TranslateService,
@@ -92,16 +91,18 @@ export class RuleChainAutocompleteComponent implements ControlValueAccessor, OnI
               private entityService: EntityService,
               private ruleChainService: RuleChainService,
               private fb: UntypedFormBuilder) {
+    super();
     this.selectRuleChainFormGroup = this.fb.group({
-      ruleChainId: [null]
+      ruleChainId: [null, objectRequired()]
     });
   }
 
-  registerOnChange(fn: any): void {
-    this.propagateChange = fn;
+  protected getControl(): FormControl {
+    return this.selectRuleChainFormGroup.get('ruleChainId') as FormControl;
   }
 
-  registerOnTouched(fn: any): void {
+  protected getInput(): ElementRef<HTMLInputElement> {
+    return this.ruleChainInput as ElementRef<HTMLInputElement>;
   }
 
   ngOnInit() {
@@ -122,8 +123,8 @@ export class RuleChainAutocompleteComponent implements ControlValueAccessor, OnI
         }),
         map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
         distinctUntilChanged(),
-        switchMap(name => this.fetchRuleChain(name) ),
-        share()
+        switchMap(name => this.fetchRuleChain(name)),
+        shareReplay(1)
       );
   }
 
@@ -145,10 +146,6 @@ export class RuleChainAutocompleteComponent implements ControlValueAccessor, OnI
     } else {
       this.selectRuleChainFormGroup.enable({emitEvent: false});
     }
-  }
-
-  textIsNotEmpty(text: string): boolean {
-    return (text && text.length > 0);
   }
 
   writeValue(value: string | null): void {
@@ -179,17 +176,6 @@ export class RuleChainAutocompleteComponent implements ControlValueAccessor, OnI
     this.dirty = true;
   }
 
-  onFocus() {
-    if (this.dirty) {
-      this.selectRuleChainFormGroup.get('ruleChainId').updateValueAndValidity({onlySelf: true, emitEvent: true});
-      this.dirty = false;
-    }
-  }
-
-  reset() {
-    this.selectRuleChainFormGroup.get('ruleChainId').patchValue('', {emitEvent: false});
-  }
-
   updateView(value: string | null) {
     if (this.modelValue !== value) {
       this.modelValue = value;
@@ -202,19 +188,11 @@ export class RuleChainAutocompleteComponent implements ControlValueAccessor, OnI
   }
 
   fetchRuleChain(searchText?: string): Observable<Array<BaseData<EntityId>>> {
-    this.searchText = searchText;
+    this.searchText = searchText ?? '';
     return this.entityService.getEntitiesByNameFilter(EntityType.RULE_CHAIN, searchText,
       50, this.ruleChainType, {ignoreLoading: true}).pipe(
         catchError(() => of([]))
     );
-  }
-
-  clear() {
-    this.selectRuleChainFormGroup.get('ruleChainId').patchValue('', {emitEvent: true});
-    setTimeout(() => {
-      this.ruleChainInput.nativeElement.blur();
-      this.ruleChainInput.nativeElement.focus();
-    }, 0);
   }
 
   createDefaultRuleChain($event: Event, ruleChainName: string) {

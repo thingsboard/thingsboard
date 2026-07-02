@@ -17,15 +17,16 @@
 import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
 import {
   ControlValueAccessor,
+  FormControl,
   NG_VALUE_ACCESSOR,
   UntypedFormBuilder,
   UntypedFormGroup,
   Validators
 } from '@angular/forms';
-import { Observable, of } from 'rxjs';
+import { Observable, of, shareReplay } from 'rxjs';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
-import { catchError, debounceTime, map, share, switchMap, tap } from 'rxjs/operators';
+import { catchError, debounceTime, map, switchMap, tap } from 'rxjs/operators';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { DashboardInfo } from '@app/shared/models/dashboard.models';
 import { DashboardService } from '@core/http/dashboard.service';
@@ -35,11 +36,12 @@ import { getCurrentAuthUser } from '@app/core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 import { TranslateService } from '@ngx-translate/core';
 import { FloatLabelType, MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
-import { getEntityDetailsPageURL } from '@core/utils';
+import { getEntityDetailsPageURL, objectRequired } from '@core/utils';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AuthUser } from '@shared/models/user.model';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { AutocompleteBaseDirective } from '@shared/components/directives/autocomplete-base.directive';
 
 @Component({
     selector: 'tb-dashboard-autocomplete',
@@ -52,9 +54,7 @@ import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
         }],
     standalone: false
 })
-export class DashboardAutocompleteComponent implements ControlValueAccessor, OnInit {
-
-  private dirty = false;
+export class DashboardAutocompleteComponent extends AutocompleteBaseDirective implements ControlValueAccessor, OnInit {
 
   selectDashboardFormGroup: UntypedFormGroup;
 
@@ -105,11 +105,9 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
   disabled: boolean;
 
   @ViewChild('dashboardInput', {static: true}) dashboardInput: ElementRef;
-  @ViewChild('dashboardInput', {read: MatAutocompleteTrigger, static: true}) dashboardAutocomplete: MatAutocompleteTrigger;
+  @ViewChild('autocompleteTrigger') autocompleteTrigger: MatAutocompleteTrigger;
 
   filteredDashboards: Observable<Array<DashboardInfo>>;
-
-  searchText = '';
 
   dashboardURL: string;
 
@@ -117,30 +115,36 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
 
   private authUser: AuthUser;
 
-  private propagateChange = (_v: any) => { };
-
   constructor(private store: Store<AppState>,
               public translate: TranslateService,
               private dashboardService: DashboardService,
               private fb: UntypedFormBuilder) {
+    super();
     this.authUser = getCurrentAuthUser(this.store);
     if (this.authUser.authority === Authority.SYS_ADMIN) {
       this.useDashboardLink = false;
     }
 
     this.selectDashboardFormGroup = this.fb.group({
-      dashboard: [null, this.required ? [Validators.required] : []]
+      dashboard: [null]
     });
   }
 
-  registerOnChange(fn: any): void {
-    this.propagateChange = fn;
+  protected getControl(): FormControl {
+    return this.selectDashboardFormGroup.get('dashboard') as FormControl;
   }
 
-  registerOnTouched(_fn: any): void {
+  protected getInput(): ElementRef<HTMLInputElement> {
+    return this.dashboardInput as ElementRef<HTMLInputElement>;
   }
 
   ngOnInit() {
+    const dashboardControl = this.selectDashboardFormGroup.get('dashboard');
+    dashboardControl.addValidators(objectRequired());
+    if (this.required) {
+      dashboardControl.addValidators(Validators.required);
+    }
+    dashboardControl.updateValueAndValidity({emitEvent: false});
     this.filteredDashboards = this.selectDashboardFormGroup.get('dashboard').valueChanges
       .pipe(
         debounceTime(150),
@@ -154,8 +158,8 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
           this.updateView(modelValue);
         }),
         map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
-        switchMap(name => this.fetchDashboards(name) ),
-        share()
+        switchMap(name => this.fetchDashboards(name)),
+        shareReplay(1)
       );
   }
 
@@ -181,7 +185,7 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
     this.disabled = isDisabled;
     if (this.disabled) {
       this.selectDashboardFormGroup.disable({emitEvent: false});
-      this.dashboardAutocomplete.closePanel();
+      this.autocompleteTrigger?.closePanel();
     } else {
       this.selectDashboardFormGroup.enable({emitEvent: false});
     }
@@ -231,7 +235,7 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
   }
 
   fetchDashboards(searchText?: string): Observable<Array<DashboardInfo>> {
-    this.searchText = searchText;
+    this.searchText = searchText ?? '';
     const pageLink = new PageLink(25, 0, searchText, {
       property: 'title',
       direction: Direction.ASC
@@ -265,24 +269,5 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
       }
     }
     return dashboardsObservable;
-  }
-
-  onFocus() {
-    if (this.dirty) {
-      this.selectDashboardFormGroup.get('dashboard').updateValueAndValidity({onlySelf: true});
-      this.dirty = false;
-    }
-  }
-
-  clear() {
-    this.selectDashboardFormGroup.get('dashboard').patchValue('');
-    setTimeout(() => {
-      this.dashboardInput.nativeElement.blur();
-      this.dashboardInput.nativeElement.focus();
-    }, 0);
-  }
-
-  textIsNotEmpty(text: string): boolean {
-    return (text && text.length > 0);
   }
 }

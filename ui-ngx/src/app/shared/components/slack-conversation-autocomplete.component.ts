@@ -15,19 +15,18 @@
 ///
 
 import { Component, ElementRef, forwardRef, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
-import { Observable, of, ReplaySubject } from 'rxjs';
+import { ControlValueAccessor, FormBuilder, FormControl, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import { Observable, of, ReplaySubject, shareReplay } from 'rxjs';
 import { catchError, debounceTime, map, share, switchMap, tap } from 'rxjs/operators';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { EntityService } from '@core/http/entity.service';
 import { TruncatePipe } from '@shared/pipe/truncate.pipe';
 import { SlackChanelType, SlackConversation } from '@shared/models/notification.models';
 import { NotificationService } from '@core/http/notification.service';
-import { isEqual } from '@core/utils';
+import { isEqual, objectRequired } from '@core/utils';
 import { MatFormFieldAppearance } from '@angular/material/form-field';
+import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { AutocompleteBaseDirective } from '@shared/components/directives/autocomplete-base.directive';
 
 @Component({
     selector: 'tb-slack-conversation-autocomplete',
@@ -40,7 +39,8 @@ import { MatFormFieldAppearance } from '@angular/material/form-field';
         }],
     standalone: false
 })
-export class SlackConversationAutocompleteComponent implements ControlValueAccessor, OnInit, OnChanges {
+export class SlackConversationAutocompleteComponent extends AutocompleteBaseDirective
+  implements ControlValueAccessor, OnInit, OnChanges {
 
   conversationSlackFormGroup: FormGroup;
 
@@ -72,34 +72,30 @@ export class SlackConversationAutocompleteComponent implements ControlValueAcces
   appearance: MatFormFieldAppearance = 'fill';
 
   @ViewChild('slackInput', {static: true}) slackInput: ElementRef;
+  @ViewChild('slackInput', {read: MatAutocompleteTrigger}) autocompleteTrigger: MatAutocompleteTrigger;
 
   slackConversation$: Observable<Array<SlackConversation>>;
 
-  slackSearchText = '';
-
   private modelValue: SlackConversation | null;
-  private dirty = false;
   private latestSearchConversetionResult: Array<SlackConversation> = null;
   private slackConversetionFetchObservable$: Observable<Array<SlackConversation>> = null;
 
-  private propagateChange = (v: any) => { };
-
-  constructor(private store: Store<AppState>,
-              public translate: TranslateService,
+  constructor(public translate: TranslateService,
               public truncate: TruncatePipe,
-              private entityService: EntityService,
               private notificationService: NotificationService,
               private fb: FormBuilder) {
+    super();
     this.conversationSlackFormGroup = this.fb.group({
-      conversation: ['']
+      conversation: ['', [objectRequired()]]
     });
   }
 
-  registerOnChange(fn: any): void {
-    this.propagateChange = fn;
+  protected getControl(): FormControl {
+    return this.conversationSlackFormGroup.get('conversation') as FormControl;
   }
 
-  registerOnTouched(fn: any): void {
+  protected getInput(): ElementRef<HTMLInputElement> {
+    return this.slackInput as ElementRef<HTMLInputElement>;
   }
 
   ngOnInit() {
@@ -124,7 +120,7 @@ export class SlackConversationAutocompleteComponent implements ControlValueAcces
         }),
         map(value => value ? (typeof value === 'string' ? value : value.title) : ''),
         switchMap(name => this.fetchSlackConversation(name)),
-        share()
+        shareReplay(1)
       );
   }
 
@@ -150,12 +146,8 @@ export class SlackConversationAutocompleteComponent implements ControlValueAcces
     }
   }
 
-  textIsNotEmpty(text: string): boolean {
-    return (text && text.length > 0);
-  }
-
   writeValue(value: SlackConversation | null): void {
-    this.slackSearchText = '';
+    this.searchText = '';
     if (value != null) {
       this.modelValue = value;
       this.conversationSlackFormGroup.get('conversation').patchValue(value, {emitEvent: false});
@@ -164,13 +156,6 @@ export class SlackConversationAutocompleteComponent implements ControlValueAcces
       this.conversationSlackFormGroup.get('conversation').patchValue('', {emitEvent: false});
     }
     this.dirty = true;
-  }
-
-  onFocus() {
-    if (this.dirty) {
-      this.dirty = false;
-      this.conversationSlackFormGroup.get('conversation').updateValueAndValidity({onlySelf: true, emitEvent: true});
-    }
   }
 
   updateView(value: SlackConversation | null) {
@@ -188,9 +173,9 @@ export class SlackConversationAutocompleteComponent implements ControlValueAcces
     if (this.dirty) {
       return of([]);
     }
-    if (this.slackSearchText !== searchText || this.latestSearchConversetionResult === null) {
-      this.slackSearchText = searchText;
-      const slackConversationFilter = this.createSlackConversationFilter(this.slackSearchText);
+    if (this.searchText !== searchText || this.latestSearchConversetionResult === null) {
+      this.searchText = searchText;
+      const slackConversationFilter = this.createSlackConversationFilter(this.searchText);
       return this.getSlackConversationByType().pipe(
         map(name => name.filter(slackConversationFilter)),
         tap(res => this.latestSearchConversetionResult = res)
@@ -230,11 +215,4 @@ export class SlackConversationAutocompleteComponent implements ControlValueAcces
     this.slackConversetionFetchObservable$ = null;
   }
 
-  clear() {
-    this.conversationSlackFormGroup.get('conversation').patchValue('', {emitEvent: true});
-    setTimeout(() => {
-      this.slackInput.nativeElement.blur();
-      this.slackInput.nativeElement.focus();
-    }, 0);
-  }
 }

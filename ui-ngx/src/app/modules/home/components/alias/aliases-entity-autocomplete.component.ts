@@ -14,10 +14,16 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
-import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { Observable, of } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged, map, share, switchMap, tap } from 'rxjs/operators';
+import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
+import {
+  ControlValueAccessor,
+  UntypedFormBuilder,
+  UntypedFormGroup,
+  NG_VALUE_ACCESSOR,
+  FormControl
+} from '@angular/forms';
+import { Observable, of, shareReplay } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, map, switchMap, tap } from 'rxjs/operators';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
@@ -27,6 +33,8 @@ import { EntityInfo } from '@shared/models/entity.models';
 import { EntityFilter } from '@shared/models/query/query.models';
 import { EntityService } from '@core/http/entity.service';
 import { isDefinedAndNotNull } from '@core/utils';
+import { AutocompleteBaseDirective } from '@shared/components/directives/autocomplete-base.directive';
+import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 
 @Component({
     selector: 'tb-aliases-entity-autocomplete',
@@ -39,7 +47,7 @@ import { isDefinedAndNotNull } from '@core/utils';
         }],
     standalone: false
 })
-export class AliasesEntityAutocompleteComponent implements ControlValueAccessor, OnInit, AfterViewInit {
+export class AliasesEntityAutocompleteComponent extends AutocompleteBaseDirective implements ControlValueAccessor, OnInit {
 
   selectEntityInfoFormGroup: UntypedFormGroup;
 
@@ -65,26 +73,26 @@ export class AliasesEntityAutocompleteComponent implements ControlValueAccessor,
 
   @ViewChild('entityInfoInput', {static: true}) entityInfoInput: ElementRef;
 
+  @ViewChild('autocompleteTrigger') autocompleteTrigger: MatAutocompleteTrigger;
+
   filteredEntityInfos: Observable<Array<EntityInfo>>;
-
-  searchText = '';
-
-  private propagateChange = (v: any) => { };
 
   constructor(private store: Store<AppState>,
               public translate: TranslateService,
               private entityService: EntityService,
               private fb: UntypedFormBuilder) {
+    super();
     this.selectEntityInfoFormGroup = this.fb.group({
       entityInfo: [null]
     });
   }
 
-  registerOnChange(fn: any): void {
-    this.propagateChange = fn;
+  protected getControl(): FormControl {
+    return this.selectEntityInfoFormGroup.get('entityInfo') as FormControl;
   }
 
-  registerOnTouched(fn: any): void {
+  protected getInput(): ElementRef<HTMLInputElement> {
+    return this.entityInfoInput as ElementRef<HTMLInputElement>;
   }
 
   ngOnInit() {
@@ -103,11 +111,8 @@ export class AliasesEntityAutocompleteComponent implements ControlValueAccessor,
         map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
         distinctUntilChanged(),
         switchMap(name => this.fetchEntityInfos(name)),
-        share()
+        shareReplay(1)
       );
-  }
-
-  ngAfterViewInit(): void {
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -118,7 +123,7 @@ export class AliasesEntityAutocompleteComponent implements ControlValueAccessor,
     this.searchText = '';
     if (isDefinedAndNotNull(value)) {
       this.modelValue = value;
-      this.selectEntityInfoFormGroup.get('entityInfo').patchValue(value, {emitEvent: true});
+      this.selectEntityInfoFormGroup.get('entityInfo').patchValue(value, {emitEvent: false});
     } else {
       this.modelValue = null;
       this.selectEntityInfoFormGroup.get('entityInfo').patchValue(null, {emitEvent: false});
@@ -137,7 +142,7 @@ export class AliasesEntityAutocompleteComponent implements ControlValueAccessor,
   }
 
   fetchEntityInfos(searchText?: string): Observable<Array<EntityInfo>> {
-    this.searchText = searchText;
+    this.searchText = searchText ?? '';
     return this.getEntityInfos(this.searchText).pipe(
       map(pageData => {
         return pageData.data;
@@ -150,13 +155,4 @@ export class AliasesEntityAutocompleteComponent implements ControlValueAccessor,
       catchError(() => of(emptyPageData<EntityInfo>()))
     );
   }
-
-  clear() {
-    this.selectEntityInfoFormGroup.get('entityInfo').patchValue(null, {emitEvent: true});
-    setTimeout(() => {
-      this.entityInfoInput.nativeElement.blur();
-      this.entityInfoInput.nativeElement.focus();
-    }, 0);
-  }
-
 }

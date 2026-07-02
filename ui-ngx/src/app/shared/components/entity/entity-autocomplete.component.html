@@ -25,11 +25,13 @@
   @if (!inlineField) {
     <mat-label>{{ label | translate }}</mat-label>
   }
-  <input matInput type="text"
+  <input matInput [errorStateMatcher]="this" type="text"
          #entityInput
+         #autocompleteTrigger="matAutocompleteTrigger"
          placeholder="{{ placeholder }}"
          formControlName="entity"
          (focusin)="onFocus()"
+         (blur)="onBlur()"
          [required]="required"
          [matAutocomplete]="entityAutocomplete"
          [class.!hidden]="showEntityLink">
@@ -63,7 +65,18 @@
       warning
     </mat-icon>
   }
+  @if (inlineField && selectEntityFormGroup.get('entity').hasError('objectRequired') && selectEntityFormGroup.get('entity').touched) {
+    <mat-icon matSuffix
+              matTooltipPosition="above"
+              matTooltipClass="tb-error-tooltip"
+              [matTooltip]="entityNotValidTranslationKey | translate: {entity: entityNameForError}"
+              class="tb-error">
+      warning
+    </mat-icon>
+  }
   <mat-autocomplete class="tb-autocomplete"
+                    (opened)="onPanelOpened()"
+                    (closed)="onPanelClosed()"
                     #entityAutocomplete="matAutocomplete"
                     [displayWith]="displayEntityFn">
     @for (entity of filteredEntities | async; track entity) {
@@ -95,6 +108,11 @@
   @if (!inlineField && selectEntityFormGroup.get('entity').hasError('required')) {
     <mat-error>
       {{ requiredErrorText | translate }}
+    </mat-error>
+  }
+  @if (!inlineField && selectEntityFormGroup.get('entity').hasError('objectRequired')) {
+    <mat-error>
+      {{ entityNotValidTranslationKey | translate: {entity: entityNameForError} }}
     </mat-error>
   }
 </mat-form-field>

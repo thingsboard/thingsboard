@@ -24,10 +24,11 @@
   @if (showLabel && !inlineField) {
     <mat-label>{{ 'entity.entity-alias' | translate }}</mat-label>
   }
-  <input matInput type="text" placeholder="{{ (!showLabel || inlineField) ? ('entity.entity-alias' | translate) : ''}}"
+  <input matInput [errorStateMatcher]="this" type="text" placeholder="{{ (!showLabel || inlineField) ? ('entity.entity-alias' | translate) : ''}}"
          #entityAliasInput
          formControlName="entityAlias"
          (focusin)="onFocus()"
+         (blur)="onBlur()"
          [required]="tbRequired"
          (keydown)="entityAliasEnter($event)"
          (keypress)="entityAliasEnter($event)"
@@ -71,6 +72,8 @@
     </button>
   }
   <mat-autocomplete class="tb-autocomplete"
+                    (opened)="onPanelOpened()"
+                    (closed)="onPanelClosed()"
                     #entityAliasAutocomplete="matAutocomplete"
                     [displayWith]="displayEntityAliasFn">
     @for (entityAlias of filteredEntityAliases | async; track entityAlias) {
