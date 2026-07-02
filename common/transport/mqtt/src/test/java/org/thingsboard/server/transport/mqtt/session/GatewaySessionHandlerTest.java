@@ -75,7 +75,7 @@ public class GatewaySessionHandlerTest {
         ConcurrentHashMap<String, GatewayDeviceSessionContext> devices = new ConcurrentHashMap<>();
         TransportDeviceInfo deviceInfo = new TransportDeviceInfo();
         deviceInfo.setDeviceId(new DeviceId(UUID.randomUUID()));
-        deviceInfo.setTenantId(new TenantId(UUID.randomUUID()));
+        deviceInfo.setTenantId(TenantId.fromUUID(UUID.randomUUID()));
         deviceInfo.setCustomerId(new CustomerId(UUID.randomUUID()));
         deviceInfo.setDeviceName("device1");
         deviceInfo.setDeviceType("default");

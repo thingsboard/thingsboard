@@ -98,7 +98,7 @@ class TbUnassignFromCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
     private final Edge EDGE = new Edge();
     private final Dashboard DASHBOARD = new Dashboard();
 
-    private final TenantId TENANT_ID = new TenantId(UUID.fromString("06fcc15f-2677-436d-a1cb-7754bd0bcccf"));
+    private final TenantId TENANT_ID = TenantId.fromUUID(UUID.fromString("06fcc15f-2677-436d-a1cb-7754bd0bcccf"));
 
     private final ListeningExecutor DB_EXECUTOR = DirectListeningExecutor.INSTANCE;
 

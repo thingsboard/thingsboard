@@ -58,7 +58,7 @@ class TbAssetTypeSwitchNodeTest {
 
     @BeforeEach
     void setUp() throws TbNodeException {
-        TenantId tenantId = new TenantId(UUID.randomUUID());
+        TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
         assetId = new AssetId(UUID.randomUUID());
         assetIdDeleted = new AssetId(UUID.randomUUID());
 
