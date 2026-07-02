@@ -208,7 +208,7 @@
     "minimum-max-failed-login-attempts-range": "最大登录失败次数不能为负数",
     "user-lockout-notification-email": "用户账户锁定时，发送通知到 email",
     "user-activation-token-ttl": "用户激活链接 TTL（小时）",
-    "user-activation-token-ttl-range": "用户激活链接 TTL 必须在 1 到 24 小时范围内",
+    "user-activation-token-ttl-range": "用户激活链接 TTL 必须在 1 到 {{max}} 小时范围内",
     "password-reset-token-ttl": "密码重置链接 TTL（小时）",
     "password-reset-token-ttl-range": "密码重置链接 TTL 必须在 1 到 24 小时范围内",
     "mobile-secret-key-length": "移动端密钥长度",

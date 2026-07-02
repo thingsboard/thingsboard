@@ -208,7 +208,7 @@
     "minimum-max-failed-login-attempts-range": "Maximale Anzahl fehlgeschlagener Anmeldeversuche darf nicht negativ sein",
     "user-lockout-notification-email": "Im Falle einer Kontosperrung des Benutzers, Benachrichtigung per E-Mail senden",
     "user-activation-token-ttl": "Gültigkeit des Aktivierungslinks in Stunden",
-    "user-activation-token-ttl-range": "Aktivierungslink muss zwischen 1 und 24 Stunden gültig sein",
+    "user-activation-token-ttl-range": "Aktivierungslink muss zwischen 1 und {{max}} Stunden gültig sein",
     "password-reset-token-ttl": "Gültigkeit des Passwort-Reset-Links in Stunden",
     "password-reset-token-ttl-range": "Reset-Link muss zwischen 1 und 24 Stunden gültig sein",
     "mobile-secret-key-length": "Länge des mobilen Geheimschlüssels",

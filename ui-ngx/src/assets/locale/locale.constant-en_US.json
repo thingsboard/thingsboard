@@ -209,7 +209,7 @@
         "minimum-max-failed-login-attempts-range": "Maximum number of failed login attempts can't be negative",
         "user-lockout-notification-email": "In case user account lockout, send notification to email",
         "user-activation-token-ttl": "User activation link TTL in hours",
-        "user-activation-token-ttl-range": "User activation link TTL must be in range from 1 to 24 hours",
+        "user-activation-token-ttl-range": "User activation link TTL must be in range from 1 to {{max}} hours",
         "password-reset-token-ttl": "Password reset link TTL in hours",
         "password-reset-token-ttl-range": "Password reset link TTL must be in range from 1 to 24 hours",
         "mobile-secret-key-length": "Mobile secret key length",

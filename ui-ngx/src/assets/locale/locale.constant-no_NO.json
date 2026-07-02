@@ -208,7 +208,7 @@
     "minimum-max-failed-login-attempts-range": "Maks antall mislykkede innloggingsforsøk kan ikke være negativt",
     "user-lockout-notification-email": "Ved kontolåsing sendes varsel til e-post",
     "user-activation-token-ttl": "Gyldighetstid for aktiveringslenke (timer)",
-    "user-activation-token-ttl-range": "Gyldighetstiden for aktiveringslenke må være mellom 1 og 24 timer",
+    "user-activation-token-ttl-range": "Gyldighetstiden for aktiveringslenke må være mellom 1 og {{max}} timer",
     "password-reset-token-ttl": "Gyldighetstid for tilbakestillingslenke (timer)",
     "password-reset-token-ttl-range": "Gyldighetstiden for tilbakestillingslenke må være mellom 1 og 24 timer",
     "mobile-secret-key-length": "Lengde på mobil hemmelig nøkkel",

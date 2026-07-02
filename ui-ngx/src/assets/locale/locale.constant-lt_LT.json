@@ -208,7 +208,7 @@
     "minimum-max-failed-login-attempts-range": "Maksimalus neteisingų prisijungimų skaičius negali būti neigiamas",
     "user-lockout-notification-email": "Naudotojo paskyros užrakinimo atveju siųsti pranešimą el. paštu",
     "user-activation-token-ttl": "Naudotojo aktyvavimo nuorodos TTL valandomis",
-    "user-activation-token-ttl-range": "Naudotojo aktyvavimo nuorodos TTL turi būti nuo 1 iki 24 valandų",
+    "user-activation-token-ttl-range": "Naudotojo aktyvavimo nuorodos TTL turi būti nuo 1 iki {{max}} valandų",
     "password-reset-token-ttl": "Slaptažodžio atstatymo nuorodos TTL valandomis",
     "password-reset-token-ttl-range": "Slaptažodžio atstatymo nuorodos TTL turi būti nuo 1 iki 24 valandų",
     "mobile-secret-key-length": "Mobiliojo slaptosios rakto ilgis",
