@@ -92,6 +92,7 @@ import java.util.stream.Collectors;
 public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService<EntityId> implements TbApiUsageStateService {
 
     public static final String HOURLY = "Hourly";
+    public static final String DAILY = "Daily";
 
     private final PartitionService partitionService;
     private final TenantService tenantService;
@@ -199,8 +200,13 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
             if (newHourTs != hourTs) {
                 usageState.setHour(newHourTs);
             }
+            long dayTs = usageState.getCurrentDayTs();
+            long newDayTs = SchedulerUtils.getStartOfCurrentDay();
+            if (newDayTs != dayTs) {
+                usageState.setDay(newDayTs);
+            }
             if (log.isTraceEnabled()) {
-                log.trace("[{}][{}] Processing usage stats from {} (currentCycleTs={}, currentHourTs={}): {}", tenantId, ownerId, serviceId, ts, newHourTs, values);
+                log.trace("[{}][{}] Processing usage stats from {} (currentCycleTs={}, currentHourTs={}, currentDayTs={}): {}", tenantId, ownerId, serviceId, ts, newHourTs, newDayTs, values);
             }
             updatedEntries = new ArrayList<>(ApiUsageRecordKey.values().length);
             Set<ApiFeature> apiFeatures = new HashSet<>();
@@ -222,6 +228,10 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
                 if (calculationResult.isHourlyValueChanged()) {
                     long newHourlyValue = calculationResult.getNewHourlyValue();
                     updatedEntries.add(new BasicTsKvEntry(newHourTs, new LongDataEntry(recordKey.getApiCountKey() + HOURLY, newHourlyValue)));
+                }
+                if (calculationResult.isDailyValueChanged()) {
+                    long newDailyValue = calculationResult.getNewDailyValue();
+                    updatedEntries.add(new BasicTsKvEntry(newDayTs, new LongDataEntry(recordKey.getApiCountKey() + DAILY, newDailyValue)));
                 }
                 if (recordKey.getApiFeature() != null) {
                     apiFeatures.add(recordKey.getApiFeature());
@@ -511,6 +521,7 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
             for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
                 boolean cycleEntryFound = false;
                 boolean hourlyEntryFound = false;
+                boolean dailyEntryFound = false;
                 for (TsKvEntry tsKvEntry : dbValues) {
                     if (tsKvEntry.getKey().equals(key.getApiCountKey())) {
                         cycleEntryFound = true;
@@ -524,8 +535,11 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
                     } else if (tsKvEntry.getKey().equals(key.getApiCountKey() + HOURLY)) {
                         hourlyEntryFound = true;
                         state.setHourly(key, tsKvEntry.getTs() == state.getCurrentHourTs() ? tsKvEntry.getLongValue().get() : 0L);
+                    } else if (tsKvEntry.getKey().equals(key.getApiCountKey() + DAILY)) {
+                        dailyEntryFound = true;
+                        state.setDaily(key, tsKvEntry.getTs() == state.getCurrentDayTs() ? tsKvEntry.getLongValue().get() : 0L);
                     }
-                    if (cycleEntryFound && hourlyEntryFound) {
+                    if (cycleEntryFound && hourlyEntryFound && dailyEntryFound) {
                         break;
                     }
                 }
