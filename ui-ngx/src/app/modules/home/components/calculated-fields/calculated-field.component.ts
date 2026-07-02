@@ -132,7 +132,7 @@ export class CalculatedFieldComponent extends EntityComponent<CalculatedFieldsTa
   onTestScript(expression?: string): Observable<string> {
     return this.cfFormService.testScript(
       this.entity?.id?.id,
-      this.entityValue,
+      this.entityFormValue(),
       this.entitiesTableConfig.getTestScriptDialog.bind(this.entitiesTableConfig),
       this.destroyRef,
       expression
