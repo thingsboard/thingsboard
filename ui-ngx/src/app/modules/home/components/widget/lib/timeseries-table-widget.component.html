@@ -41,7 +41,7 @@
                    class="flex-1"
                    mat-stretch-tabs="false"
                    [(selectedIndex)]="sourceIndex" (selectedIndexChange)="onSourceIndexChanged()">
-      @for (source of sources; track source; let index = $index) {
+      @for (source of sources; track source.datasource.entityId; let index = $index) {
         <mat-tab [label]="source.displayName">
           @if (isActiveTab(index)) {
             <div class="table-container flex-1">
@@ -56,7 +56,7 @@
                     </mat-cell>
                   </ng-container>
                 }
-                @for (h of source.header; track h) {
+                @for (h of source.header; track h.index) {
                   <ng-container [matColumnDef]="h.index + ''">
                     <mat-header-cell *matHeaderCellDef mat-sort-header [disabled]="!h.sortable"> {{ h.dataKey.label }} </mat-header-cell>
                     <mat-cell *matCellDef="let row; let rowIndex = index"

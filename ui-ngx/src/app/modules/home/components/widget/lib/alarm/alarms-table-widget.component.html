@@ -81,7 +81,7 @@
             </mat-checkbox>
           </mat-cell>
         </ng-container>
-        @for (column of columns; track column) {
+        @for (column of columns; track column.def) {
           <ng-container [matColumnDef]="column.def">
             <mat-header-cell [style]="headerStyle(column)" *matHeaderCellDef mat-sort-header [disabled]="!column.sortable">
               {{ column.title }}
