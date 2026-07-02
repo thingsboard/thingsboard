@@ -13,25 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.monitoring.data;
+package org.thingsboard.monitoring.config.transport;
 
-public class Latencies {
+import lombok.Data;
+import org.thingsboard.monitoring.data.notification.ShortNameProvider;
 
-    public static final String WS_CONNECT = "wsConnect";
-    public static final String WS_SUBSCRIBE = "wsSubscribe";
-    public static final String LOG_IN = "logIn";
-    public static final String EDQS_QUERY = "edqsQuery";
+@Data
+public class RpcInfo implements ShortNameProvider {
 
-    public static String request(String key) {
-        return String.format("%sRequest", key);
+    public static final String RPC_SUFFIX = " RPC";
+
+    private final TransportInfo transportInfo;
+
+    @Override
+    public String getShortName() {
+        return transportInfo.getShortName() + RPC_SUFFIX;
     }
 
-    public static String wsUpdate(String key) {
-        return String.format("%sWsUpdate", key);
-    }
-
-    public static String rpcRoundTrip(String key) {
-        return String.format("%sRpcRoundTrip", key);
+    @Override
+    public String toString() {
+        return transportInfo.toString() + RPC_SUFFIX;
     }
 
 }
