@@ -311,15 +311,21 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
     protected void testNotifyEntityIsNullOneTimeEdgeServiceNeverError(HasName entity, TenantId tenantId,
                                                                       UserId userId, String userName, ActionType actionType, Exception exp,
                                                                       Object... additionalInfo) {
+        testNotifyEntityIsNullOneTimeEdgeServiceNeverError(entity, null, tenantId, userId, userName, actionType, exp, additionalInfo);
+    }
+
+    protected void testNotifyEntityIsNullOneTimeEdgeServiceNeverError(HasName entity, EntityId originatorId, TenantId tenantId,
+                                                                      UserId userId, String userName, ActionType actionType, Exception exp,
+                                                                      Object... additionalInfo) {
         CustomerId customer_NULL_UUID = (CustomerId) EntityIdFactory.getByTypeAndUuid(EntityType.CUSTOMER, ModelConstants.NULL_UUID);
-        EntityId entity_originator_NULL_UUID = createEntityId_NULL_UUID(entity);
-        testNotificationMsgToEdgeServiceNeverWithActionType(entity_originator_NULL_UUID, actionType);
+        EntityId entity_originator = originatorId != null ? originatorId : createEntityId_NULL_UUID(entity);
+        testNotificationMsgToEdgeServiceNeverWithActionType(entity_originator, actionType);
         ArgumentMatcher<HasName> matcherEntityIsNull = Objects::isNull;
         ArgumentMatcher<Exception> matcherError = argument -> argument.getMessage().contains(exp.getMessage()) &
                 argument.getClass().equals(exp.getClass());
-        testLogEntityActionErrorAdditionalInfo(matcherEntityIsNull, entity_originator_NULL_UUID, tenantId, customer_NULL_UUID,
+        testLogEntityActionErrorAdditionalInfo(matcherEntityIsNull, entity_originator, tenantId, customer_NULL_UUID,
                 userId, userName, actionType, 1, matcherError, extractMatcherAdditionalInfo(additionalInfo));
-        testPushMsgToRuleEngineNever(entity_originator_NULL_UUID);
+        testPushMsgToRuleEngineNever(entity_originator);
     }
 
     protected void testNotifyEntityNever(EntityId entityId, HasName entity) {

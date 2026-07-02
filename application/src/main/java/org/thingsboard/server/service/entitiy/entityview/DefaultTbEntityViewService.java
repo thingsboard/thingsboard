@@ -144,7 +144,7 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
 
             localCache.computeIfAbsent(tenantId, (k) -> new ConcurrentReferenceHashMap<>()).clear();
         } catch (Exception e) {
-            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.ENTITY_VIEW),
+            logEntityActionService.logEntityAction(tenantId, getOrEmptyId(entityViewId, EntityType.ENTITY_VIEW),
                     ActionType.DELETED, user, e, entityViewId.toString());
             throw e;
         }

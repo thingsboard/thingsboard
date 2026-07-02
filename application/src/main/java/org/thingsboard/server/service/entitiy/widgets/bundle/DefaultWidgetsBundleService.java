@@ -66,7 +66,7 @@ public class DefaultWidgetsBundleService extends AbstractTbEntityService impleme
             widgetsBundleService.deleteWidgetsBundle(widgetsBundle.getTenantId(), widgetsBundle.getId());
             logEntityActionService.logEntityAction(tenantId, widgetsBundle.getId(), widgetsBundle, null, actionType, user);
         } catch (Exception e) {
-            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.WIDGETS_BUNDLE), actionType, user, e, widgetsBundle.getId());
+            logEntityActionService.logEntityAction(tenantId, getOrEmptyId(widgetsBundle.getId(), EntityType.WIDGETS_BUNDLE), actionType, user, e, widgetsBundle.getId());
             throw e;
         }
     }
