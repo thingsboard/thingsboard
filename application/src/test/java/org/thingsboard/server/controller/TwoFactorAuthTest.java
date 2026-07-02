@@ -23,8 +23,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
@@ -78,9 +78,9 @@ public class TwoFactorAuthTest extends AbstractControllerTest {
 
     @Autowired
     private TwoFaConfigManager twoFaConfigManager;
-    @SpyBean
+    @MockitoSpyBean
     private TwoFactorAuthService twoFactorAuthService;
-    @MockBean
+    @MockitoBean
     private SmsService smsService;
     @Autowired
     private AuditLogService auditLogService;

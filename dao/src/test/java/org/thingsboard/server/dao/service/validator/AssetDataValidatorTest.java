@@ -22,7 +22,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.asset.AssetDao;
@@ -39,11 +39,11 @@ import static org.mockito.BDDMockito.willReturn;
 @Slf4j
 class AssetDataValidatorTest {
 
-    @MockBean
+    @MockitoBean
     AssetDao assetDao;
-    @MockBean
+    @MockitoBean
     TenantService tenantService;
-    @MockBean
+    @MockitoBean
     CustomerDao customerDao;
     @Autowired
     AssetDataValidator validator;

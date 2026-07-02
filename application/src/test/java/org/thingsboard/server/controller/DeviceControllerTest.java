@@ -31,7 +31,7 @@ import org.mockito.AdditionalAnswers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ContextConfiguration;
@@ -109,10 +109,10 @@ public class DeviceControllerTest extends AbstractControllerTest {
     private Tenant savedTenant;
     private User tenantAdmin;
 
-    @SpyBean
+    @MockitoSpyBean
     private GatewayNotificationsService gatewayNotificationsService;
 
-    @SpyBean
+    @MockitoSpyBean
     private DeviceStateService deviceStateService;
 
     @Autowired
