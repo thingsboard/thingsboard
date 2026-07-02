@@ -230,18 +230,18 @@ const tableReportCellSettings = (header = false): FormProperty[] => ([
   {
     id: 'borderWidth',
     type: FormPropertyType.number,
-    name: 'Border',
-    subLabel: 'Width',
+    name: '{i18n:report-template.border}',
+    subLabel: '{i18n:report-template.width}',
     fieldSuffix: 'px',
     min: 0,
     step: 1,
-    default: 1
+    default: null
   },
   {
     id: 'borderStyle',
     type: FormPropertyType.select,
-    name: 'Border Style',
-    subLabel: 'Style',
+    name: '{i18n:report-template.border}',
+    subLabel: '{i18n:report-template.style}',
     fieldClass: 'standard-width',
     items: [
       {
@@ -285,13 +285,13 @@ const tableReportCellSettings = (header = false): FormProperty[] => ([
         value: 'hidden'
       }
     ],
-    default: 'solid'
+    default: null
   },
   {
     id: 'borderColor',
     type: FormPropertyType.color,
-    name: 'Border Style',
-    default: 'rgba(0,0,0,1)'
+    name: '{i18n:report-template.border}',
+    default: null
   },
 ]);
 
