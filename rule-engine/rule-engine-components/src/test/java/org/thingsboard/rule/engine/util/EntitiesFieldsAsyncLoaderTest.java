@@ -104,7 +104,7 @@ public class EntitiesFieldsAsyncLoaderTest {
     @BeforeAll
     public static void setup() {
         RANDOM_UUID = UUID.randomUUID();
-        TENANT_ID = new TenantId(UUID.randomUUID());
+        TENANT_ID = TenantId.fromUUID(UUID.randomUUID());
         SUPPORTED_ENTITY_TYPES = EnumSet.of(
                 EntityType.TENANT,
                 EntityType.CUSTOMER,
@@ -172,7 +172,7 @@ public class EntitiesFieldsAsyncLoaderTest {
     private void initMocks(EntityType entityType, boolean entityDoesNotExist) {
         switch (entityType) {
             case TENANT:
-                var tenant = Futures.immediateFuture(entityDoesNotExist ? null : new Tenant(new TenantId(RANDOM_UUID)));
+                var tenant = Futures.immediateFuture(entityDoesNotExist ? null : new Tenant(TenantId.fromUUID(RANDOM_UUID)));
 
                 when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
                 when(ctxMock.getTenantService()).thenReturn(tenantServiceMock);

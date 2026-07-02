@@ -187,7 +187,7 @@ public class NotificationTargetApiTest extends AbstractNotificationApiTest {
         NotificationTarget sysAdmins = createNotificationTarget(new SystemAdministratorsFilter());
 
         NotificationTarget slack = new NotificationTarget();
-        slack.setName(RandomStringUtils.randomNumeric(5));
+        slack.setName(RandomStringUtils.secure().nextNumeric(5));
         SlackNotificationTargetConfig slackConfig = new SlackNotificationTargetConfig();
         SlackConversation slackConversation = new SlackConversation();
         slackConversation.setType(SlackConversationType.DIRECT);

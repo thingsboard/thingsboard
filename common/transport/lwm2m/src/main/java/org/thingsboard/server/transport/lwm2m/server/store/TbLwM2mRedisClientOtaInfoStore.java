@@ -33,7 +33,7 @@ public class TbLwM2mRedisClientOtaInfoStore implements TbLwM2MClientOtaInfoStore
 
     private void put(OtaPackageType type, LwM2MClientOtaInfo<?, ?, ?> info) {
         try (var connection = connectionFactory.getConnection()) {
-            connection.set((OTA_EP + type + info.getEndpoint()).getBytes(), JacksonUtil.toString(info).getBytes());
+            connection.stringCommands().set((OTA_EP + type + info.getEndpoint()).getBytes(), JacksonUtil.toString(info).getBytes());
         }
     }
 
@@ -59,7 +59,7 @@ public class TbLwM2mRedisClientOtaInfoStore implements TbLwM2MClientOtaInfoStore
 
     private <T extends LwM2MClientOtaInfo<?, ?, ?>> T getLwM2MClientOtaInfo(OtaPackageType type, String endpoint, Class<T> clazz) {
         try (var connection = connectionFactory.getConnection()) {
-            byte[] data = connection.get((OTA_EP + type + endpoint).getBytes());
+            byte[] data = connection.stringCommands().get((OTA_EP + type + endpoint).getBytes());
             return JacksonUtil.fromBytes(data, clazz);
         }
     }

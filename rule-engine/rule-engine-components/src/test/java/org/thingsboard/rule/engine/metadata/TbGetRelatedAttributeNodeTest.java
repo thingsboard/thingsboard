@@ -91,7 +91,7 @@ import static org.mockito.Mockito.when;
 public class TbGetRelatedAttributeNodeTest {
 
     private static final EntityId DUMMY_DEVICE_ORIGINATOR = new DeviceId(UUID.randomUUID());
-    private static final TenantId TENANT_ID = new TenantId(UUID.randomUUID());
+    private static final TenantId TENANT_ID = TenantId.fromUUID(UUID.randomUUID());
     private static final ListeningExecutor DB_EXECUTOR = DirectListeningExecutor.INSTANCE;
     @Mock
     private TbContext ctxMock;
@@ -427,7 +427,7 @@ public class TbGetRelatedAttributeNodeTest {
     @Test
     public void givenFetchTelemetryToMetaData_whenOnMsg_thenShouldFetchTelemetryToMetaData() {
         // GIVEN
-        var tenant = new Tenant(new TenantId(UUID.randomUUID()));
+        var tenant = new Tenant(TenantId.fromUUID(UUID.randomUUID()));
         var device = new Device(new DeviceId(UUID.randomUUID()));
 
         prepareMsgAndConfig(TbMsgSource.METADATA, DataToFetch.LATEST_TELEMETRY, tenant.getId());

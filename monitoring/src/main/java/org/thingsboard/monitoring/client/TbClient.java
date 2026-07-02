@@ -34,8 +34,8 @@ public class TbClient extends RestClient {
     public TbClient(@Value("${monitoring.rest.base_url}") String baseUrl,
                     @Value("${monitoring.rest.request_timeout_ms}") int requestTimeoutMs) {
         super(new RestTemplateBuilder()
-                .setConnectTimeout(Duration.ofMillis(requestTimeoutMs))
-                .setReadTimeout(Duration.ofMillis(requestTimeoutMs))
+                .connectTimeout(Duration.ofMillis(requestTimeoutMs))
+                .readTimeout(Duration.ofMillis(requestTimeoutMs))
                 .build(), baseUrl);
     }
 

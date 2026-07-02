@@ -149,7 +149,7 @@ public class HashPartitionServiceTest {
         Random random = new Random();
         long ts = new SimpleDateFormat("dd-MM-yyyy").parse("06-12-2016").getTime() - TimeUnit.DAYS.toMillis(tenantCount);
         for (int tenantIndex = 0; tenantIndex < tenantCount; tenantIndex++) {
-            TenantId tenantId = new TenantId(Uuids.startOf(ts));
+            TenantId tenantId = TenantId.fromUUID(Uuids.startOf(ts));
             ts += TimeUnit.DAYS.toMillis(1) + random.nextInt(1000);
             for (int queueIndex = 0; queueIndex < queueCount; queueIndex++) {
                 QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, "queue" + queueIndex, tenantId);
@@ -190,7 +190,7 @@ public class HashPartitionServiceTest {
         Map<TenantId, TenantProfileId> tenants = new HashMap<>();
         for (TenantProfileId tenantProfileId : isolatedTenantProfiles) {
             for (int i = 0; i < tenantsCountPerProfile; i++) {
-                tenants.put(new TenantId(UUID.randomUUID()), tenantProfileId);
+                tenants.put(TenantId.fromUUID(UUID.randomUUID()), tenantProfileId);
             }
         }
 
@@ -299,7 +299,7 @@ public class HashPartitionServiceTest {
         Queue systemQueue = createQueue(TenantId.SYS_TENANT_ID, 10);
         queues.add(systemQueue);
 
-        TenantId tenantId = new TenantId(UUID.randomUUID());
+        TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
         mockRoutingInfo(tenantId, tenantProfileId, false); // not isolated yet
         mockQueues(queues);
 
@@ -380,7 +380,7 @@ public class HashPartitionServiceTest {
         }
 
         Stream.concat(Stream.of(TenantId.SYS_TENANT_ID), Stream.generate(UUID::randomUUID).map(TenantId::new).limit(10)).forEach(tenantId -> {
-            List<QueueKey> queues = Stream.generate(() -> RandomStringUtils.randomAlphabetic(10))
+            List<QueueKey> queues = Stream.generate(() -> RandomStringUtils.secure().nextAlphabetic(10))
                     .map(queueName -> new QueueKey(ServiceType.TB_RULE_ENGINE, queueName, tenantId))
                     .limit(100).toList();
 

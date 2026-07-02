@@ -24,7 +24,7 @@ import org.eclipse.leshan.server.registration.RegistrationStore;
 import org.eclipse.leshan.server.registration.RegistrationUpdate;
 import org.junit.Assert;
 import org.mockito.Mockito;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
@@ -49,7 +49,7 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClient
 @Slf4j
 public abstract class AbstractLwM2MIntegrationDiffPortTest extends AbstractSecurityLwM2MIntegrationTest {
 
-    @SpyBean
+    @MockitoSpyBean
     private RegistrationStore registrationStoreTest;
 
     protected void basicTestConnectionDifferentPort(Lwm2mDeviceProfileTransportConfiguration transportConfiguration,

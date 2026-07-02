@@ -27,7 +27,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-import org.testcontainers.shaded.org.apache.commons.lang3.RandomUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
@@ -542,18 +542,18 @@ public class TbRuleEngineQueueConsumerManagerTest {
             Queue oldConfig = consumerManager.getConfig();
             Queue newConfig = JacksonUtil.clone(oldConfig);
             newConfig.setConsumerPerPartition(RandomUtils.nextBoolean());
-            newConfig.setPollInterval(RandomUtils.nextInt(100, 501));
-            newConfig.setPartitions(RandomUtils.nextInt(1, 10));
+            newConfig.setPollInterval(RandomUtils.secure().randomInt(100, 501));
+            newConfig.setPartitions(RandomUtils.secure().randomInt(1, 10));
             newConfig.setPackProcessingTimeout(RandomUtils.nextLong(100, 5001));
-            newConfig.getSubmitStrategy().setType(SubmitStrategyType.values()[RandomUtils.nextInt(0, SubmitStrategyType.values().length)]);
-            newConfig.getProcessingStrategy().setType(ProcessingStrategyType.values()[RandomUtils.nextInt(0, ProcessingStrategyType.values().length)]);
+            newConfig.getSubmitStrategy().setType(SubmitStrategyType.values()[RandomUtils.secure().randomInt(0, SubmitStrategyType.values().length)]);
+            newConfig.getProcessingStrategy().setType(ProcessingStrategyType.values()[RandomUtils.secure().randomInt(0, ProcessingStrategyType.values().length)]);
             log.info("Generated new config: consumerPerPartition={}, pollInterval={}, processingStrategy={}",
                     newConfig.isConsumerPerPartition(), newConfig.getPollInterval(), newConfig.getProcessingStrategy().getType());
             return newConfig;
         };
         Supplier<Set<TopicPartitionInfo>> partitionsUpdater = () -> {
-            int partitionsCount = RandomUtils.nextInt(0, 20);
-            int[] partitions = IntStream.generate(() -> RandomUtils.nextInt(0, 20))
+            int partitionsCount = RandomUtils.secure().randomInt(0, 20);
+            int[] partitions = IntStream.generate(() -> RandomUtils.secure().randomInt(0, 20))
                     .distinct().limit(partitionsCount)
                     .sorted().toArray();
             log.info("Generated new partitions: {}", Arrays.toString(partitions));

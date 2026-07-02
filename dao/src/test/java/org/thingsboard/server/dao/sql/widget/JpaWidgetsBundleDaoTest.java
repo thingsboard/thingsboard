@@ -276,8 +276,8 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
         widgetsBundles = widgetsBundleDao.find(TenantId.SYS_TENANT_ID).stream().sorted(Comparator.comparing(WidgetsBundle::getTitle)).collect(Collectors.toList());;
         assertEquals(100, widgetsBundles.size());
 
-        var widgetType1 = createAndSaveWidgetType(new TenantId(tenantId1), 1, "Test widget type 1", "This is the widget type 1", new String[]{"tag1", "Tag2", "TEST_TAG"});
-        var widgetType2 = createAndSaveWidgetType(new TenantId(tenantId2), 2, "Test widget type 2", "This is the widget type 2", new String[]{"tag3", "Tag5", "TEST_Tag2"});
+        var widgetType1 = createAndSaveWidgetType(TenantId.fromUUID(tenantId1), 1, "Test widget type 1", "This is the widget type 1", new String[]{"tag1", "Tag2", "TEST_TAG"});
+        var widgetType2 = createAndSaveWidgetType(TenantId.fromUUID(tenantId2), 2, "Test widget type 2", "This is the widget type 2", new String[]{"tag3", "Tag5", "TEST_Tag2"});
 
         var widgetsBundle1 = widgetsBundles.stream().filter(widgetsBundle -> widgetsBundle.getTenantId().getId().equals(tenantId1)).collect(Collectors.toList()).get(10);
         widgetTypeDao.saveWidgetsBundleWidget(new WidgetsBundleWidget(widgetsBundle1.getId(), widgetType1.getId(), 0));

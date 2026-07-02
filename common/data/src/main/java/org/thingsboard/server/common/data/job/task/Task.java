@@ -46,7 +46,7 @@ public abstract class Task<R extends TaskResult> {
     public Task() {
     }
 
-    private int attempt = 0;
+    private int attempt;
 
     public abstract R toFailed(Throwable error);
 
