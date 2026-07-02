@@ -44,6 +44,8 @@ public interface CalculatedFieldDao extends Dao<CalculatedField> {
 
     PageData<CalculatedField> findAllByTenantId(TenantId tenantId, PageLink pageLink);
 
+    PageData<CalculatedField> findAllByTenantIdAndEnabled(TenantId tenantId, boolean enabled, PageLink pageLink);
+
     PageData<CalculatedField> findByEntityIdAndTypes(TenantId tenantId, EntityId entityId, Set<CalculatedFieldType> types, PageLink pageLink);
 
     List<CalculatedField> removeAllByEntityId(TenantId tenantId, EntityId entityId);

@@ -298,6 +298,122 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testCalculatedFieldEnabledByDefault() throws Exception {
+        Device testDevice = createDevice("Test device", "1234567890");
+        CalculatedField calculatedField = getSimpleCalculatedField(testDevice.getId());
+
+        CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
+
+        assertThat(savedCalculatedField.isEnabled()).isTrue();
+
+        CalculatedField fetchedCalculatedField = doGet("/api/calculatedField/" + savedCalculatedField.getId().getId(), CalculatedField.class);
+        assertThat(fetchedCalculatedField.isEnabled()).isTrue();
+
+        doDelete("/api/calculatedField/" + savedCalculatedField.getId().getId().toString())
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void testDisableCalculatedField() throws Exception {
+        Device testDevice = createDevice("Test device", "1234567890");
+        CalculatedField calculatedField = getSimpleCalculatedField(testDevice.getId());
+
+        CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
+        assertThat(savedCalculatedField.isEnabled()).isTrue();
+
+        savedCalculatedField.setEnabled(false);
+        CalculatedField disabledCalculatedField = doPost("/api/calculatedField", savedCalculatedField, CalculatedField.class);
+
+        assertThat(disabledCalculatedField.isEnabled()).isFalse();
+        assertThat(disabledCalculatedField.getVersion()).isEqualTo(savedCalculatedField.getVersion() + 1);
+
+        CalculatedField fetchedCalculatedField = doGet("/api/calculatedField/" + disabledCalculatedField.getId().getId(), CalculatedField.class);
+        assertThat(fetchedCalculatedField.isEnabled()).isFalse();
+
+        doDelete("/api/calculatedField/" + savedCalculatedField.getId().getId().toString())
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void testEnableDisableCycles() throws Exception {
+        Device testDevice = createDevice("Test device", "1234567890");
+        CalculatedField calculatedField = getSimpleCalculatedField(testDevice.getId());
+
+        CalculatedField cf = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
+        assertThat(cf.isEnabled()).isTrue();
+        long version = cf.getVersion();
+
+        // Cycle 1: disable
+        cf.setEnabled(false);
+        cf = doPost("/api/calculatedField", cf, CalculatedField.class);
+        assertThat(cf.isEnabled()).isFalse();
+        assertThat(cf.getVersion()).isEqualTo(++version);
+
+        // Cycle 1: re-enable
+        cf.setEnabled(true);
+        cf = doPost("/api/calculatedField", cf, CalculatedField.class);
+        assertThat(cf.isEnabled()).isTrue();
+        assertThat(cf.getVersion()).isEqualTo(++version);
+
+        // Cycle 2: disable again
+        cf.setEnabled(false);
+        cf = doPost("/api/calculatedField", cf, CalculatedField.class);
+        assertThat(cf.isEnabled()).isFalse();
+        assertThat(cf.getVersion()).isEqualTo(++version);
+
+        // Cycle 2: re-enable again
+        cf.setEnabled(true);
+        cf = doPost("/api/calculatedField", cf, CalculatedField.class);
+        assertThat(cf.isEnabled()).isTrue();
+        assertThat(cf.getVersion()).isEqualTo(++version);
+
+        // Cycle 3: disable
+        cf.setEnabled(false);
+        cf = doPost("/api/calculatedField", cf, CalculatedField.class);
+        assertThat(cf.isEnabled()).isFalse();
+        assertThat(cf.getVersion()).isEqualTo(++version);
+
+        // Verify final state via GET
+        CalculatedField fetched = doGet("/api/calculatedField/" + cf.getId().getId(), CalculatedField.class);
+        assertThat(fetched.isEnabled()).isFalse();
+
+        doDelete("/api/calculatedField/" + cf.getId().getId().toString())
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void testDisabledCalculatedFieldVisibleInList() throws Exception {
+        Device testDevice = createDevice("Test device", "1234567890");
+        CalculatedField calculatedField = getSimpleCalculatedField(testDevice.getId());
+
+        CalculatedField cf = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
+        cf.setEnabled(false);
+        cf = doPost("/api/calculatedField", cf, CalculatedField.class);
+
+        assertThat(getEntityCalculatedFields(testDevice.getId(), null, new PageLink(10)).getData())
+                .singleElement()
+                .satisfies(found -> assertThat(found.isEnabled()).isFalse());
+
+        doDelete("/api/calculatedField/" + cf.getId().getId().toString())
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void testDeleteDisabledCalculatedField() throws Exception {
+        Device testDevice = createDevice("Test device", "1234567890");
+        CalculatedField calculatedField = getSimpleCalculatedField(testDevice.getId());
+
+        CalculatedField cf = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
+        cf.setEnabled(false);
+        cf = doPost("/api/calculatedField", cf, CalculatedField.class);
+        assertThat(cf.isEnabled()).isFalse();
+
+        doDelete("/api/calculatedField/" + cf.getId().getId().toString())
+                .andExpect(status().isOk());
+        doGet("/api/calculatedField/" + cf.getId().getId()).andExpect(status().isNotFound());
+    }
+
+    @Test
     public void testDeleteCalculatedField() throws Exception {
         Device testDevice = createDevice("Test device", "1234567890");
         CalculatedField calculatedField = getSimpleCalculatedField(testDevice.getId());
