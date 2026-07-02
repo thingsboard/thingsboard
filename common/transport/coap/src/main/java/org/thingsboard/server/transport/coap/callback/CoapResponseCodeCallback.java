@@ -34,17 +34,11 @@ public class CoapResponseCodeCallback implements TransportServiceCallback<Void> 
 
     @Override
     public void onSuccess(Void msg) {
-        Response response = new Response(onSuccessResponse);
-        response.setConfirmable(isConRequest());
-        exchange.respond(response);
+        exchange.respond(new Response(onSuccessResponse));
     }
 
     @Override
     public void onError(Throwable e) {
         exchange.respond(onFailureResponse);
-    }
-
-    protected boolean isConRequest() {
-        return exchange.advanced().getRequest().isConfirmable();
     }
 }
