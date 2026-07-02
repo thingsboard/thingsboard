@@ -88,6 +88,7 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
       maxSms: [0],
       smsEnabled: [false],
       maxCreatedAlarms: [0, [Validators.required, Validators.min(0)]],
+      maxEdgeEvents: [0, [Validators.required, Validators.min(0)]],
       maxDebugModeDurationMinutes: [0, [Validators.min(0)]],
       defaultStorageTtlDays: [0, [Validators.required, Validators.min(0)]],
       alarmsTtlDays: [0, [Validators.required, Validators.min(0)]],
