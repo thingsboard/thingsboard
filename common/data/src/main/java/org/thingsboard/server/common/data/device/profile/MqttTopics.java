@@ -37,6 +37,7 @@ public class MqttTopics {
     private static final String TELEMETRY_SHORT = "/t";
     private static final String ATTRIBUTES_SHORT = "/a";
     private static final String RPC_SHORT = "/r";
+    private static final String CLAIM_SHORT = "/c";
     private static final String REQUEST_SHORT = "/req";
     private static final String RESPONSE_SHORT = "/res";
     private static final String JSON_SHORT = "j";
@@ -113,6 +114,9 @@ public class MqttTopics {
     public static final String DEVICE_ATTRIBUTES_REQUEST_SHORT_TOPIC_PREFIX = BASE_DEVICE_API_TOPIC_V2 + ATTRIBUTES_REQUEST_SHORT;
     public static final String DEVICE_ATTRIBUTES_REQUEST_SHORT_JSON_TOPIC_PREFIX = DEVICE_ATTRIBUTES_REQUEST_SHORT_TOPIC_PREFIX + JSON_SHORT + "/";
     public static final String DEVICE_ATTRIBUTES_REQUEST_SHORT_PROTO_TOPIC_PREFIX = DEVICE_ATTRIBUTES_REQUEST_SHORT_TOPIC_PREFIX + PROTO_SHORT + "/";
+    public static final String DEVICE_CLAIM_SHORT_TOPIC = BASE_DEVICE_API_TOPIC_V2 + CLAIM_SHORT;
+    public static final String DEVICE_CLAIM_SHORT_JSON_TOPIC = BASE_DEVICE_API_TOPIC_V2 + CLAIM_SHORT + "/" + JSON_SHORT;
+    public static final String DEVICE_CLAIM_SHORT_PROTO_TOPIC = BASE_DEVICE_API_TOPIC_V2 + CLAIM_SHORT + "/" + PROTO_SHORT;
 
     private MqttTopics() {
     }
