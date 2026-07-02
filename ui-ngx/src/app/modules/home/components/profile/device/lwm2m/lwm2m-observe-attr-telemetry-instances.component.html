@@ -17,7 +17,7 @@
 -->
 <section [formGroup]="instancesFormGroup">
   <mat-accordion multi="true" formArrayName="instances">
-    @for (instances of instancesFormArray.controls; track instances) {
+    @for (instances of instancesFormArray.controls; track instances.value.id) {
       <mat-expansion-panel
         class="instance-row"
         [formGroupName]="$index"

@@ -65,7 +65,7 @@
             @if (entityDatasource.countCellButtonAction) {
               <div [class.lt-lg:!hidden]="showCellActionsMenu && entityDatasource.countCellButtonAction !== 1" class="flex flex-row items-stretch justify-end"
                    [style.min-width]="(entityDatasource.countCellButtonAction * 48) + 'px'">
-                @for (actionDescriptor of entity.actionCellButtons; track actionDescriptor) {
+                @for (actionDescriptor of entity.actionCellButtons; track actionDescriptor.id) {
                   @if (!actionDescriptor.icon) {
                     <span style="width: 48px;"></span>
                   }
@@ -87,7 +87,7 @@
                     <mat-icon class="material-icons">more_vert</mat-icon>
                   </button>
                   <mat-menu #cellActionsMenu="matMenu" xPosition="before">
-                    @for (actionDescriptor of entity.actionCellButtons; track actionDescriptor) {
+                    @for (actionDescriptor of entity.actionCellButtons; track actionDescriptor.id) {
                       @if (actionDescriptor.icon) {
                         <button mat-menu-item
                                 (click)="onActionButtonClick($event, entity, actionDescriptor)">

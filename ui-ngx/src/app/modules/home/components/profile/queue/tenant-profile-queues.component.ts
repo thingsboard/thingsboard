@@ -141,7 +141,6 @@ export class TenantProfileQueuesComponent implements ControlValueAccessor, Valid
     }
   }
 
-
   public removeQueue(index: number) {
     (this.tenantProfileQueuesFormGroup.get('queues') as UntypedFormArray).removeAt(index);
     this.idMap.splice(index, 1);

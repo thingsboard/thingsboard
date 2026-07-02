@@ -79,7 +79,7 @@
                     @if (source.timeseriesDatasource.countCellButtonAction) {
                       <div [class.lt-lg:!hidden]="showCellActionsMenu && source.timeseriesDatasource.countCellButtonAction !== 1" class="flex flex-row items-stretch justify-end"
                            [style.min-width]="(source.timeseriesDatasource.countCellButtonAction * 40) + 'px'">
-                        @for (actionDescriptor of row.actionCellButtons; track actionDescriptor) {
+                        @for (actionDescriptor of row.actionCellButtons; track actionDescriptor.id) {
                           @if (!actionDescriptor.icon) {
                             <span style="width: 40px;"></span>
                           }
@@ -104,7 +104,7 @@
                             <mat-icon class="material-icons">more_vert</mat-icon>
                           </button>
                           <mat-menu #cellActionsMenu="matMenu" xPosition="before">
-                            @for (actionDescriptor of row.actionCellButtons; track actionDescriptor) {
+                            @for (actionDescriptor of row.actionCellButtons; track actionDescriptor.id) {
                               @if (actionDescriptor.icon) {
                                 <button mat-menu-item
                                         (click)="onActionButtonClick($event, row, actionDescriptor)">

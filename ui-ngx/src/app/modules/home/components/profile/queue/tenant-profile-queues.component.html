@@ -16,7 +16,7 @@
 
 -->
 <div class="flex flex-col">
-  @for (queuesControl of queuesFormArray.controls; track queuesControl; let isLast = $last) {
+  @for (queuesControl of queuesFormArray.controls; track queuesControl.value.id; let isLast = $last) {
     <div class="tb-tenant-profile-queues"
          [class.pb-2]="!isLast">
       <mat-expansion-panel class="flex-1" [expanded]="true">

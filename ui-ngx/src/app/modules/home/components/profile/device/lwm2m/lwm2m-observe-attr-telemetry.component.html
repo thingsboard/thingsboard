@@ -17,7 +17,7 @@
 -->
 <section [formGroup]="modelsFormGroup">
   <mat-accordion multi="true" formArrayName="models">
-    @for (objectLwM2M of modelsFormArray.controls; track objectLwM2M) {
+    @for (objectLwM2M of modelsFormArray.controls; track objectLwM2M.value.id) {
       <mat-expansion-panel [formGroupName]="$index">
         <mat-expansion-panel-header>
           <mat-panel-title class="flex items-center justify-start">
