@@ -37,7 +37,7 @@ import {
   digitalGaugeLayoutTranslations,
   DigitalGaugeType
 } from '@home/components/widget/lib/digital-gauge.models';
-import { formatValue, isDefined, isDefinedAndNotNull } from '@core/utils';
+import { formatValue, isDefined, isDefinedAndNotNull, isNumeric } from '@core/utils';
 import {
   ColorSettings,
   ColorType,
@@ -218,11 +218,10 @@ export class DigitalGaugeWidgetSettingsComponent extends WidgetSettingsComponent
 
   private maxValueValidation(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
-      const value: string = control.value;
-      if (isDefinedAndNotNull(value)) {
-        if (value < control.parent?.get('minValue').value) {
-          return {maxValue: true};
-        }
+      const value: number = control.value;
+      const minValue = control.parent?.get('minValue').value;
+      if (isNumeric(value) && isDefinedAndNotNull(minValue) && value < minValue) {
+        return {maxValue: true};
       }
       return null;
     };
