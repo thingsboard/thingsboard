@@ -30,6 +30,18 @@ public abstract class TransportHealthChecker<C extends TransportMonitoringConfig
 
     @Value("${monitoring.calculated_fields.enabled:true}")
     private boolean calculatedFieldsMonitoringEnabled;
+    @Value("${monitoring.session_duration_ms:3600000}")
+    private long sessionDurationMs;
+
+    private long sessionStartTime;
+
+    protected boolean isSessionExpired() {
+        return sessionDurationMs > 0 && System.currentTimeMillis() - sessionStartTime >= sessionDurationMs;
+    }
+
+    protected void recordSessionStart() {
+        sessionStartTime = System.currentTimeMillis();
+    }
 
     public TransportHealthChecker(C config, TransportMonitoringTarget target) {
         super(config, target);

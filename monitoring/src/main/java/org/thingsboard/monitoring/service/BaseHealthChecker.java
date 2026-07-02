@@ -82,6 +82,7 @@ public abstract class BaseHealthChecker<C extends MonitoringConfig, T extends Mo
                 reporter.reportLatency(Latencies.request(getKey()), stopWatch.getTime());
                 log.trace("[{}] Sent test payload ({})", info, testPayload);
             } catch (Throwable e) {
+                safeDestroyClient();
                 throw new ServiceFailureException(info, e);
             }
 
@@ -122,6 +123,14 @@ public abstract class BaseHealthChecker<C extends MonitoringConfig, T extends Mo
             }
         }
         reporter.reportLatency(Latencies.wsUpdate(getKey()), stopWatch.getTime());
+    }
+
+    private void safeDestroyClient() {
+        try {
+            destroyClient();
+        } catch (Throwable e) {
+            log.warn("[{}] Failed to destroy client: {}", info, e.getMessage());
+        }
     }
 
     protected abstract void initClient() throws Exception;
