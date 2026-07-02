@@ -38,8 +38,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.DirectListeningExecutor;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.ai.TbResponseFormat.TbJsonResponseFormat;
 import org.thingsboard.rule.engine.ai.TbResponseFormat.TbJsonSchemaResponseFormat;
 import org.thingsboard.rule.engine.ai.TbResponseFormat.TbTextResponseFormat;
@@ -53,8 +53,10 @@ import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceDataInfo;
 import org.thingsboard.server.common.data.ai.AiModel;
 import org.thingsboard.server.common.data.ai.model.AiModelConfig;
+import org.thingsboard.server.common.data.ai.model.chat.AmazonBedrockChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.chat.AnthropicChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.chat.OpenAiChatModelConfig;
+import org.thingsboard.server.common.data.ai.provider.AmazonBedrockProviderConfig;
 import org.thingsboard.server.common.data.ai.provider.AnthropicProviderConfig;
 import org.thingsboard.server.common.data.ai.provider.OpenAiProviderConfig;
 import org.thingsboard.server.common.data.id.AiModelId;
@@ -401,6 +403,124 @@ class TbAiNodeTest {
     }
 
     @Test
+    void givenJsonSchemaResponseFormatAndModelSupportsIt_whenInit_thenDoesNotThrow() {
+        // GIVEN
+        var jsonSchema = """
+                {
+                    "title": "Joke",
+                    "type": "object",
+                    "properties": {
+                        "joke": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "joke"
+                    ]
+                }
+                """;
+
+        config = constructValidConfig();
+        config.setResponseFormat(new TbJsonSchemaResponseFormat((ObjectNode) JacksonUtil.toJsonNode(jsonSchema)));
+
+        // Anthropic does not support schemaless JSON mode, but does support JSON Schema constrained output
+        modelConfig = AnthropicChatModelConfig.builder()
+                .providerConfig(new AnthropicProviderConfig("test-api-key"))
+                .modelId("claude-sonnet-4-5")
+                .build();
+
+        model = AiModel.builder()
+                .tenantId(tenantId)
+                .name("Test model")
+                .configuration(modelConfig)
+                .build();
+
+        model.setId(modelId);
+        model.setVersion(1L);
+        model.setCreatedTime(123L);
+
+        given(aiModelServiceMock.findAiModelByTenantIdAndId(tenantId, modelId)).willReturn(Optional.of(model));
+
+        // WHEN-THEN
+        assertThatNoException()
+                .isThrownBy(() -> aiNode.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config))));
+    }
+
+    @Test
+    void givenJsonSchemaResponseFormatAndBedrockModel_whenInit_thenDoesNotThrow() {
+        // GIVEN
+        var jsonSchema = """
+                {
+                    "title": "Joke",
+                    "type": "object",
+                    "properties": {
+                        "joke": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "joke"
+                    ]
+                }
+                """;
+
+        config = constructValidConfig();
+        config.setResponseFormat(new TbJsonSchemaResponseFormat((ObjectNode) JacksonUtil.toJsonNode(jsonSchema)));
+
+        // Bedrock does not support schemaless JSON mode, but does support JSON Schema constrained output (Converse API)
+        modelConfig = AmazonBedrockChatModelConfig.builder()
+                .providerConfig(new AmazonBedrockProviderConfig("us-east-1", "test-access-key", "test-secret-key"))
+                .modelId("anthropic.claude-sonnet-4-5")
+                .build();
+
+        model = AiModel.builder()
+                .tenantId(tenantId)
+                .name("Test model")
+                .configuration(modelConfig)
+                .build();
+
+        model.setId(modelId);
+        model.setVersion(1L);
+        model.setCreatedTime(123L);
+
+        given(aiModelServiceMock.findAiModelByTenantIdAndId(tenantId, modelId)).willReturn(Optional.of(model));
+
+        // WHEN-THEN
+        assertThatNoException()
+                .isThrownBy(() -> aiNode.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config))));
+    }
+
+    @Test
+    void givenSchemalessJsonResponseFormatAndBedrockModel_whenInit_thenThrowsUnrecoverableTbNodeException() {
+        // GIVEN
+        config = constructValidConfig();
+        config.setResponseFormat(new TbJsonResponseFormat());
+
+        modelConfig = AmazonBedrockChatModelConfig.builder()
+                .providerConfig(new AmazonBedrockProviderConfig("us-east-1", "test-access-key", "test-secret-key"))
+                .modelId("anthropic.claude-sonnet-4-5")
+                .build();
+
+        model = AiModel.builder()
+                .tenantId(tenantId)
+                .name("Test model")
+                .configuration(modelConfig)
+                .build();
+
+        model.setId(modelId);
+        model.setVersion(1L);
+        model.setCreatedTime(123L);
+
+        given(aiModelServiceMock.findAiModelByTenantIdAndId(tenantId, modelId)).willReturn(Optional.of(model));
+
+        // WHEN-THEN
+        assertThatThrownBy(() -> aiNode.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config))))
+                .isInstanceOf(TbNodeException.class)
+                .hasMessage("[" + tenantId + "] AI model with ID: [" + modelId + "] does not support 'JSON' response format")
+                .matches(e -> ((TbNodeException) e).isUnrecoverable());
+    }
+
+    @Test
     void givenNotExistingResources_whenInit_thenThrowsException() {
         // GIVEN
         config = constructValidConfig();
@@ -669,7 +789,7 @@ class TbAiNodeTest {
                 argThat(actualChatRequest -> {
                     assertThat(actualChatRequest.messages()).hasSize(2);
                     assertThat(actualChatRequest.messages().get(0)).isEqualTo(SystemMessage.from(systemPrompt));
-                    assertThat(((UserMessage)actualChatRequest.messages().get(1)).contents())
+                    assertThat(((UserMessage) actualChatRequest.messages().get(1)).contents())
                             .containsAll(List.of(new TextContent(userPrompt), new TextContent(textData),
                                     new TextContent(xmlData), new ImageContent(Base64.getEncoder().encodeToString(PNG_IMAGE), "image/png")));
                     return true;
@@ -706,7 +826,7 @@ class TbAiNodeTest {
                 argThat(actualChatRequest -> {
                     assertThat(actualChatRequest.messages()).hasSize(2);
                     assertThat(actualChatRequest.messages().get(0)).isEqualTo(SystemMessage.from(config.getSystemPrompt()));
-                    assertThat(((UserMessage)actualChatRequest.messages().get(1)).contents())
+                    assertThat(((UserMessage) actualChatRequest.messages().get(1)).contents())
                             .containsAll(List.of(new TextContent(config.getUserPrompt())));
                     return true;
                 })
@@ -993,7 +1113,7 @@ class TbAiNodeTest {
         then(aiChatModelServiceMock).should().sendChatRequestAsync(
                 any(),
                 argThat(actualChatRequest -> {
-                    assertThat(actualChatRequest.responseFormat()).isNull();
+                    assertThat(actualChatRequest.responseFormat()).isEqualTo(ResponseFormat.builder().type(ResponseFormatType.TEXT).build());
                     return true;
                 })
         );

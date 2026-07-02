@@ -16,7 +16,7 @@
 
 -->
 <form (ngSubmit)="add()" style="min-width: 400px; width: 750px;" [style]="entitiesTableConfig.addDialogStyle">
-  <mat-toolbar color="primary">
+  <mat-toolbar class="tb-dialog-header">
     <h2 translate>{{ translations.add }}</h2>
     <span class="flex-1"></span>
     <div [tb-help]="helpLinkId()"></div>

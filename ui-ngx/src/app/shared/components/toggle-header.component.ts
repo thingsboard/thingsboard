@@ -33,7 +33,7 @@ import {
   OnInit,
   Output,
   QueryList,
-  SimpleChanges,
+  SimpleChanges, TemplateRef,
   ViewChild
 } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
@@ -50,6 +50,7 @@ import { MatButtonToggle, MatButtonToggleGroup } from '@angular/material/button-
 export interface ToggleHeaderOption {
   name: string;
   value: any;
+  template?: TemplateRef<any>;
   error$?: Observable<string>;
 }
 
@@ -68,6 +69,8 @@ export type ScrollDirection = 'after' | 'before';
 export class ToggleOption implements OnChanges, OnDestroy {
 
   @Input() value: any;
+
+  @Input() template: TemplateRef<any>;
 
   @Input() error: string;
 
@@ -127,6 +130,7 @@ export abstract class _ToggleBase extends PageComponent implements AfterContentI
           {
             name: option.viewValue,
             value: option.value,
+            template: option.template,
             error$: option.currentError.asObservable()
           }
         );

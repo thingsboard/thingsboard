@@ -1,7 +1,7 @@
 {
   "fqn": "volatile_organic_compounds_card",
   "name": "Volatile organic compounds card",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/volatile_organic_compounds_card_system_widget_image.png",
   "description": "Displays the latest volatile organic compounds (VOCs) telemetry in a scalable rectangle card.",
   "descriptor": {

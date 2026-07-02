@@ -14,8 +14,9 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { MenuService } from '@core/services/menu.service';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
     selector: 'tb-side-menu',
@@ -24,14 +25,15 @@ import { MenuService } from '@core/services/menu.service';
     changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: false
 })
-export class SideMenuComponent implements OnInit {
+export class SideMenuComponent {
+
+  @Input()
+  @coerceBoolean()
+  collapsed = false;
 
   menuSections$ = this.menuService.menuSections();
 
   constructor(private menuService: MenuService) {
-  }
-
-  ngOnInit() {
   }
 
 }

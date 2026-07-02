@@ -81,7 +81,9 @@ export const svgIconsUrl: { [key: string]: string } = {
   windows: '/assets/windows.svg',
   macos: '/assets/macos.svg',
   linux: '/assets/linux.svg',
-  docker: '/assets/docker.svg'
+  docker: '/assets/docker.svg',
+  'sidebar-close': '/assets/icons/sidebar-close.svg',
+  'sidebar-open': '/assets/icons/sidebar-open.svg'
 };
 
 const svgIconNamespaces: string[] = ['mdi'];

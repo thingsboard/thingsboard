@@ -15,15 +15,18 @@
     limitations under the License.
 
 -->
-<ul class="tb-side-menu flex flex-col items-stretch justify-start">
+<ul class="tb-side-menu flex flex-col items-stretch justify-start" [class.tb-collapsed]="collapsed">
   @for (section of menuSections$ | async; track section) {
     <li>
-      @switch (section.type === 'link') {
-        @case (true) {
-          <tb-menu-link [section]="section"></tb-menu-link>
+      @switch (section.type) {
+        @case ('link') {
+          <tb-menu-link [section]="section" [collapsed]="collapsed"></tb-menu-link>
         }
-        @case (false) {
-          <tb-menu-toggle [section]="section"></tb-menu-toggle>
+        @case ('toggle') {
+          <tb-menu-toggle [section]="section" [collapsed]="collapsed"></tb-menu-toggle>
+        }
+        @case ('divider') {
+          <mat-divider></mat-divider>
         }
       }
     </li>

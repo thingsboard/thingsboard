@@ -174,7 +174,7 @@
           </button>
           <button mat-raised-button color="primary"
                   type="submit"
-                  [disabled]="(isLoading$ | async) || (!changePassword.valid && changePassword.touched)">
+                  [disabled]="(isLoading$ | async) || changePassword.invalid">
             {{ 'profile.change-password' | translate }}
           </button>
         </div>

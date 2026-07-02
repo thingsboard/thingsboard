@@ -29,6 +29,7 @@ import { EntityService } from '@core/http/entity.service';
 import { EntityType } from '@shared/models/entity-type.models';
 import { map, tap } from 'rxjs/operators';
 import { MobileService } from '@core/services/mobile.service';
+import { BreadcrumbService } from '@core/services/breadcrumb.service';
 
 @Component({
     selector: 'tb-entity-state-controller',
@@ -37,6 +38,8 @@ import { MobileService } from '@core/services/mobile.service';
     standalone: false
 })
 export class EntityStateControllerComponent extends StateControllerComponent implements OnInit, OnDestroy {
+
+  breadcrumbs$ = this.breadcrumbService.breadcrumbs$;
 
   selectedStateIndex = -1;
 
@@ -47,7 +50,8 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
               private utils: UtilsService,
               private entityService: EntityService,
               private mobileService: MobileService,
-              private dashboardUtils: DashboardUtilsService) {
+              private dashboardUtils: DashboardUtilsService,
+              private breadcrumbService: BreadcrumbService) {
     super(router, route, ngZone, statesControllerService);
   }
 

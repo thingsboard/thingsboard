@@ -34,6 +34,15 @@
      }
    }
 
+   ::ng-deep {
+     button {
+       &.mat-mdc-outlined-button:not(:disabled) {
+         --mat-button-outlined-outline-color: inherit;
+         border-color: inherit;
+       }
+     }
+   }
+
    @media #{$mat-md} {
      width: 80%;
    }

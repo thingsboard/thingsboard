@@ -1,0 +1,70 @@
+<!--
+
+    Copyright © 2016-2026 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+@switch (state) {
+  @case ('loading') {
+    <div class="tb-iot-hub-item-link-card tb-iot-hub-item-link-card--skeleton" aria-busy="true">
+      <div class="tb-iot-hub-item-link-thumb tb-iot-hub-item-link-skeleton-block"></div>
+      <div class="tb-iot-hub-item-link-text">
+        <span class="tb-iot-hub-item-link-skeleton-line"></span>
+        <span class="tb-iot-hub-item-link-skeleton-line tb-iot-hub-item-link-skeleton-line--short"></span>
+      </div>
+    </div>
+  }
+  @case ('loaded') {
+    <a [href]="getHref()"
+       target="_blank"
+       rel="noopener noreferrer"
+       class="tb-iot-hub-item-link-card">
+      @if (isCompact()) {
+        <div class="tb-iot-hub-item-link-thumb tb-iot-hub-item-link-thumb--compact"
+             [style.background]="getCompactColor()">
+          <tb-icon class="tb-iot-hub-item-link-thumb-icon">{{ getCompactIcon() }}</tb-icon>
+        </div>
+      } @else {
+        <div class="tb-iot-hub-item-link-thumb">
+          @if (getImageUrl(); as imgUrl) {
+            <img [src]="imgUrl" alt="">
+          } @else {
+            <tb-icon class="tb-iot-hub-item-link-thumb-fallback">{{ getTypeIcon() }}</tb-icon>
+          }
+        </div>
+      }
+      <div class="tb-iot-hub-item-link-text">
+        <span class="tb-iot-hub-item-link-name">{{ item.name }}</span>
+        <span class="tb-iot-hub-item-link-author">
+          @if (item.creatorVerified) {
+            <mat-icon class="tb-iot-hub-item-link-verified-icon">verified</mat-icon>
+          } @else {
+            <mat-icon>person</mat-icon>
+          }
+          {{ item.creatorDisplayName }}
+        </span>
+      </div>
+    </a>
+  }
+  @case ('unavailable') {
+    <div class="tb-iot-hub-item-link-card tb-iot-hub-item-link-card--unavailable">
+      <div class="tb-iot-hub-item-link-thumb tb-iot-hub-item-link-thumb--unavailable">
+        <mat-icon>link_off</mat-icon>
+      </div>
+      <div class="tb-iot-hub-item-link-text">
+        <span class="tb-iot-hub-item-link-name">{{ 'iot-hub.item-link-unavailable' | translate }}</span>
+      </div>
+    </div>
+  }
+}

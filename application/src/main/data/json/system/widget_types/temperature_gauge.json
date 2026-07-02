@@ -1,7 +1,7 @@
 {
   "fqn": "temperature_gauge",
   "name": "Temperature gauge",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/Temperature_gauge.svg",
   "description": "Temperature gauge.",
   "descriptor": {

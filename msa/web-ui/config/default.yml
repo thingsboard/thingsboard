@@ -19,6 +19,10 @@ server:
   address: "0.0.0.0"
   # Server bind port
   port: "8090"
+  # HTTP response compression
+  compression:
+    # Enable/disable HTTP response compression
+    enabled: "true"
 thingsboard:
   enableProxy: "false"
   # ThingsBoard node host

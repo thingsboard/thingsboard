@@ -14,37 +14,65 @@
  * limitations under the License.
  */
 :host {
+  display: block;
   overflow: hidden;
 
   .entity-state-controller {
+    color: rgba(0,0,0,0.76);
     .state-divider {
-      padding: 0 15px;
+      padding: 0;
+      width: 20px;
+      text-align: center;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
       pointer-events: none;
+      opacity: .75;
+      &.last-divider {
+        opacity: 1;
+      }
     }
 
     .state-entry {
       pointer-events: all;
       overflow: hidden;
-      font-size: 18px;
+      font-size: 16px;
+      font-weight: 400;
       text-overflow: ellipsis;
       white-space: nowrap;
+      color: inherit;
       outline: none;
+      cursor: pointer;
+      &:not(.last-entry) {
+        opacity: .75;
+        transition: opacity .35s;
+        &:hover,
+        &:focus {
+          opacity: 1;
+        }
+      }
+      &.last-entry {
+        cursor: default;
+      }
+    }
+
+    h1 {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 24px;
+      line-height: 32px;
+      font-weight: 400;
     }
   }
 }
 
 :host ::ng-deep {
   .mat-mdc-select {
-    .mat-mdc-select-value {
-      max-width: 200px;
-      .mat-mdc-select-value-text {
-        font-size: 18px;
-        font-weight: 700;
-      }
-    }
+    --mat-select-trigger-text-size: 24px;
+    --mat-select-trigger-text-line-height: 32px;
+    --mat-select-trigger-text-weight: 400;
+    --mat-select-enabled-trigger-text-color: rgba(0,0,0,0.76);
     .mat-mdc-select-arrow {
       width: 24px;
     }

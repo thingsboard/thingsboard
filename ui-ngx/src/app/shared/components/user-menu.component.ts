@@ -14,7 +14,14 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component, EventEmitter,
+  Input,
+  OnDestroy,
+  OnInit, Output,
+  ViewEncapsulation
+} from '@angular/core';
 import { User } from '@shared/models/user.model';
 import { Authority } from '@shared/models/authority.enum';
 import { select, Store } from '@ngrx/store';
@@ -23,17 +30,24 @@ import { selectAuthUser, selectUserDetails } from '@core/auth/auth.selectors';
 import { map } from 'rxjs/operators';
 import { AuthService } from '@core/auth/auth.service';
 import { Router } from '@angular/router';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
     selector: 'tb-user-menu',
     templateUrl: './user-menu.component.html',
     styleUrls: ['./user-menu.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    encapsulation: ViewEncapsulation.None,
     standalone: false
 })
 export class UserMenuComponent implements OnInit, OnDestroy {
 
-  @Input() displayUserInfo: boolean;
+  @Input()
+  @coerceBoolean()
+  collapsed = false;
+
+  @Output()
+  menuClicked = new EventEmitter();
 
   authorities = Authority;
 
@@ -50,6 +64,11 @@ export class UserMenuComponent implements OnInit, OnDestroy {
   userDisplayName$ = this.store.pipe(
     select(selectUserDetails),
     map((user) => this.getUserDisplayName(user))
+  );
+
+  userEmail$ = this.store.pipe(
+    select(selectUserDetails),
+    map((user) => user?.email)
   );
 
   constructor(private store: Store<AppState>,
@@ -104,10 +123,12 @@ export class UserMenuComponent implements OnInit, OnDestroy {
   }
 
   openAccount(): void {
+    this.menuClicked.emit();
     this.router.navigate(['account']);
   }
 
   logout(): void {
+    this.menuClicked.emit();
     this.authService.logout();
   }
 

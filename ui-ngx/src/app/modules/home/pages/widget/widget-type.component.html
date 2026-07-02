@@ -16,25 +16,25 @@
 
 -->
 <div class="tb-details-buttons xs:flex xs:flex-col">
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'edit')"
           [class.!hidden]="isEdit">
     {{ 'widget.edit' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'openDetails')"
           [class.!hidden]="isEdit || isDetailsPage">
     {{'common.open-details-page' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'export')"
           [class.!hidden]="isEdit">
     {{ 'widget.export' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'delete')"
           [class.!hidden]="hideDelete() || isEdit">

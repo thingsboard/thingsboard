@@ -15,8 +15,6 @@
  */
 @import '../../../../../scss/constants';
 
-$edit-toolbar-height: 40px !default;
-
 tb-widget-editor {
   flex: 1;
   display: flex;
@@ -173,8 +171,34 @@ div.tb-editor-area-title-panel {
 
 mat-toolbar.tb-edit-toolbar {
 
-  min-height: $edit-toolbar-height !important;
-  max-height: $edit-toolbar-height !important;
+  height: 56px;
+  min-height: 56px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+
+  & > div {
+    height: 56px;
+  }
+  .mat-toolbar-tools {
+    padding: 0;
+    height: 56px;
+    width: auto;
+  }
+  .tb-breadcrumb-divider {
+    width: 20px;
+    text-align: center;
+    font-size: 16px;
+    line-height: 20px;
+    font-weight: 400;
+    overflow: hidden;
+    color: rgba(0, 0, 0, 0.76);
+    @media #{$mat-lt-md} {
+      display: none;
+    }
+  }
+
+  .mat-divider-vertical {
+    height: 100%;
+  }
 
   button.mat-mdc-button-base:not(.mat-mdc-icon-button) {
     font-size: 12px;
@@ -193,19 +217,25 @@ mat-toolbar.tb-edit-toolbar {
   }
 
   .mat-mdc-form-field {
+    --mat-form-field-filled-input-text-color: rgba(0,0,0,0.76);
     input, .mat-mdc-select {
-      font-size: 1.1rem;
+      font-size: 16px;
       font-weight: 400;
       letter-spacing: .005em;
     }
     &.tb-widget-title {
-      min-width: 250px;
+      width: 250px;
+      @media #{$mat-lt-md} {
+        input {
+            font-size: 24px;
+        }
+      }
     }
   }
 
-  @media #{$mat-lt-lg} {
+  @media #{$mat-lt-xmd} {
     .mat-mdc-form-field.tb-widget-title {
-      min-width: 0;
+      width: auto;
     }
   }
 }

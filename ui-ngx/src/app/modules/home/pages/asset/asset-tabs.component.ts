@@ -39,6 +39,14 @@ export class AssetTabsComponent extends EntityTabsComponent<AssetInfo> {
     super.ngOnInit();
   }
 
+  resolveTabIndex(tab: string): number {
+    if (tab === 'cf') {
+      return 3;
+    } else {
+      return super.resolveTabIndex(tab);
+    }
+  }
+
   protected setEntity(entity: AssetInfo) {
     this.ownerId = entity.customerId.id !== this.nullUid ? entity.customerId : entity.tenantId;
     super.setEntity(entity);

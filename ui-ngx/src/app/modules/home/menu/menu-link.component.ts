@@ -14,8 +14,9 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { MenuSection } from '@core/services/menu.models';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
     selector: 'tb-menu-link',
@@ -24,14 +25,15 @@ import { MenuSection } from '@core/services/menu.models';
     changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: false
 })
-export class MenuLinkComponent implements OnInit {
+export class MenuLinkComponent {
 
   @Input() section: MenuSection;
 
-  constructor() {
-  }
+  @Input()
+  @coerceBoolean()
+  collapsed = false;
 
-  ngOnInit() {
+  constructor() {
   }
 
 }

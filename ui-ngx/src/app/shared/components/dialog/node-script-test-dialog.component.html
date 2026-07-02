@@ -17,7 +17,7 @@
 -->
 <form class="tb-node-script-test-dialog"
       [formGroup]="nodeScriptTestFormGroup" (ngSubmit)="save()">
-  <mat-toolbar class="flex flex-row" color="primary">
+  <mat-toolbar class="tb-dialog-header flex flex-row">
     <h2>{{ 'rulenode.test-script-function' | translate }} ({{ (scriptLang === scriptLanguage.JS ? 'rulenode.script-lang-java-script' : 'rulenode.script-lang-tbel') | translate }})</h2>
     <span class="flex-1"></span>
     <button mat-icon-button

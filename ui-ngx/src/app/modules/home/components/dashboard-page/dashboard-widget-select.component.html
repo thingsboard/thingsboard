@@ -16,55 +16,232 @@
 
 -->
 <div class="tb-dashboard-widget-select">
-  @if (selectWidgetMode === 'bundles') {
-    @if (widgetsBundle) {
-      <ng-container *ngTemplateOutlet="widgets; context:{ fetchFunction: widgetsFetchFunction, filter: widgetsFilter }"></ng-container>
-    } @else {
-      <tb-scroll-grid
-        [columns]="columns"
-        [itemSize]="gridWidgetsItemSizeStrategy"
-        [fetchFunction]="widgetBundlesFetchFunction"
-        [filter]="widgetsBundleFilter"
-        [itemCard]="widgetsBundleCard"
-        [loadingCell]="widgetLoadingCard"
-        [dataLoading]="loadingWidgetBundles"
-        [noData]="noWidgetBundles">
-      </tb-scroll-grid>
-      <ng-template #widgetsBundleCard let-item="item">
-        <mat-card class="tb-widget-preview-card flex flex-col gap-2" appearance="raised" (click)="selectBundle($event, item)">
-          <div class="title-container">
-            <div title="{{item.name}}" class="widget-title">
-              {{item.title}}
-            </div>
-            <div class="title-items">
-              @if (isSystem(item)) {
-                <div class="widget-type">sys</div>
-              }
-              <div tb-popover [tbPopoverContent]="item.description" [tbPopoverOverlayStyle]="{maxWidth: '300px'}" tbPopoverShowCloseButton="false" class="info-banner tb-primary-fill"><span>i</span></div>
-            </div>
+  <mat-toolbar class="tb-widget-select-header flex flex-col">
+    <div class="tb-widget-select-title-row flex flex-row items-center">
+      @if (showTopLevelWidgetModeToggle()) {
+        <tb-toggle-select class="tb-top-level-widget-mode-toggle"
+                          appearance="fill"
+                          [disablePagination]="true"
+                          [(ngModel)]="selectWidgetMode">
+          <tb-toggle-option value="installed" [template]="installedWidgetsOption"></tb-toggle-option>
+          <tb-toggle-option value="iotHub" [template]="iotHubWidgetsOption"></tb-toggle-option>
+        </tb-toggle-select>
+        <ng-template #installedWidgetsOption>
+          <div class="flex items-center gap-2">
+            <tb-icon>now_widgets</tb-icon>
+            <div>{{ 'widget.installed' | translate }}</div>
           </div>
-          <div class="preview-container">
-            <div class="preview-spacer"></div>
-            <img class="preview" [src]="item.image | image: {emptyUrl: '/assets/widget-preview-empty.svg'} | async" alt="{{ item.title }}">
+        </ng-template>
+        <ng-template #iotHubWidgetsOption>
+          <div class="flex items-center gap-2">
+            <tb-icon>hub</tb-icon>
+            <div>{{ 'iot-hub.iot-hub' | translate }}</div>
           </div>
-        </mat-card>
-      </ng-template>
-      <ng-template #loadingWidgetBundles>
-        <div class="tb-absolute-fill flex flex-col items-center justify-center">
-          <span class="mat-headline-5" style="padding-bottom: 20px;">
-            {{ 'widgets-bundle.loading-widgets-bundles' | translate }}
-          </span>
-          <mat-spinner strokeWidth="5"></mat-spinner>
-        </div>
-      </ng-template>
-      <ng-template #noWidgetBundles>
-        <span translate
-        class="mat-headline-5 tb-absolute-fill flex items-center justify-center">widgets-bundle.no-widgets-bundles-text</span>
-      </ng-template>
+        </ng-template>
+      } @else if (showBackButton()) {
+        <button mat-icon-button type="button" (click)="onBackClick()">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <span class="tb-widget-select-title">{{ getHeaderTitle() }}</span>
+      }
+      <span class="flex-1"></span>
+      @if (selectWidgetMode === 'installed') {
+        <button mat-icon-button type="button" (click)="onImport($event)"
+                matTooltip="{{ 'dashboard.import-widget' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>file_upload</mat-icon>
+        </button>
+      }
+      <button mat-icon-button type="button" (click)="onClose()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+    <div class="tb-widget-select-search-row flex flex-row items-center">
+      <div class="tb-widget-select-search flex flex-1 items-center gap-4"
+           [class.focus]="searchFocused">
+        <mat-icon>search</mat-icon>
+        <input type="text"
+               [(ngModel)]="search"
+               (focus)="searchFocused = true"
+               (blur)="searchFocused = false"
+               [placeholder]="getSearchPlaceholder()">
+        @if (search) {
+          <button type="button" mat-icon-button (click)="clearSearch($event)">
+            <mat-icon class="close">close</mat-icon>
+          </button>
+        }
+      </div>
+      @if (isFilterVisible()) {
+        <button mat-icon-button type="button"
+                tb-popover #widgetSelectFilterPopover="tbPopover"
+                [tbPopoverContent]="iotHubFilterPanel"
+                [tbPopoverContext]="{ popover: widgetSelectFilterPopover }"
+                tbPopoverTrigger="click"
+                [tbPopoverShowCloseButton]="false"
+                tbPopoverPlacement="bottomRight"
+                [tbPopoverOverlayStyle]="{width: '380px'}"
+                matTooltip="{{ 'iot-hub.filter' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon [matBadge]="totalFilterCount || null"
+                    [matBadgeHidden]="!totalFilterCount"
+                    matBadgeColor="warn"
+                    matBadgeSize="small"
+                    aria-hidden="false">filter_list</mat-icon>
+        </button>
+      }
+      @if (selectWidgetMode === 'iotHub' && iotHubSubMode !== 'default') {
+        <button mat-button type="button" class="tb-widget-select-sort" [matMenuTriggerFor]="sortMenu">
+          {{ iotHubSortOptions[iotHubSelectedSortIndex].label | translate }}
+          <mat-icon iconPositionEnd>arrow_drop_down</mat-icon>
+        </button>
+        <mat-menu #sortMenu="matMenu">
+          @for (option of iotHubSortOptions; track option.value; let i = $index) {
+            <button mat-menu-item (click)="onIotHubSortChange(i)">{{ option.label | translate }}</button>
+          }
+        </mat-menu>
+      }
+    </div>
+  </mat-toolbar>
+  <div class="tb-widget-select-body">
+  @switch (selectWidgetMode) {
+    @case ('installed') {
+      @if (widgetsBundle) {
+        <ng-container *ngTemplateOutlet="widgets; context:{ fetchFunction: widgetsFetchFunction, filter: widgetsFilter }"></ng-container>
+      } @else if (installedSubMode === 'allWidgets') {
+        <ng-container *ngTemplateOutlet="widgets; context:{ fetchFunction: allWidgetsFetchFunction, filter: allWidgetsFilter }"></ng-container>
+      } @else {
+        <tb-scroll-grid
+          [columns]="columns"
+          [itemSize]="gridWidgetsItemSizeStrategy"
+          [fetchFunction]="installedDefaultFetchFunction"
+          [filter]="widgetsBundleFilter"
+          [itemCard]="installedDefaultCard"
+          [loadingCell]="widgetLoadingCard"
+          [dataLoading]="loadingWidgetBundles"
+          [noData]="noData">
+        </tb-scroll-grid>
+        <ng-template #installedDefaultCard let-item="item">
+          @switch (item.__logical) {
+            @case (LOGICAL_ALL_WIDGETS) {
+              <mat-card class="tb-widget-preview-card tb-widget-logical-card flex flex-col gap-2"
+                        appearance="raised"
+                        (click)="onAllWidgetsCardClicked($event)">
+                <div class="title-container">
+                  <div class="widget-title">{{ 'widget.all-widgets' | translate }}</div>
+                </div>
+                <div class="preview-container">
+                  <div class="preview-spacer"></div>
+                  <img class="preview" src="/assets/widget/all-widgets.png" alt="{{ 'widget.all-widgets' | translate }}">
+                </div>
+              </mat-card>
+            }
+            @default {
+              <mat-card class="tb-widget-preview-card flex flex-col gap-2" appearance="raised" (click)="selectBundle($event, item)">
+                <div class="title-container">
+                  <div title="{{item.name}}" class="widget-title">
+                    {{item.title}}
+                  </div>
+                  <div class="title-items">
+                    @if (isSystem(item)) {
+                      <div class="widget-type">sys</div>
+                    }
+                    <div tb-popover [tbPopoverContent]="item.description" [tbPopoverOverlayStyle]="{maxWidth: '300px'}" [tbPopoverShowCloseButton]="false" class="info-banner tb-primary-fill"><span>i</span></div>
+                  </div>
+                </div>
+                <div class="preview-container">
+                  <div class="preview-spacer"></div>
+                  <img class="preview" [src]="item.image | image: {emptyUrl: '/assets/widget-preview-empty.svg'} | async" alt="{{ item.title }}">
+                </div>
+              </mat-card>
+            }
+          }
+        </ng-template>
+        <ng-template #loadingWidgetBundles>
+          <div class="tb-absolute-fill flex flex-col items-center justify-center">
+            <span class="mat-headline-5" style="padding-bottom: 20px;">
+              {{ 'widgets-bundle.loading-widgets-bundles' | translate }}
+            </span>
+            <mat-spinner strokeWidth="5"></mat-spinner>
+          </div>
+        </ng-template>
+      }
     }
-  } @else {
-    <ng-container *ngTemplateOutlet="widgets; context:{ fetchFunction: allWidgetsFetchFunction, filter: allWidgetsFilter }"></ng-container>
+    @case ('iotHub') {
+      @switch (iotHubSubMode) {
+        @case ('default') {
+          <tb-scroll-grid
+            [columns]="columns"
+            [itemSize]="gridWidgetsItemSizeStrategy"
+            [fetchFunction]="iotHubDefaultFetchFunction"
+            [filter]="widgetCategoriesFilter"
+            [itemCard]="iotHubDefaultCard"
+            [loadingCell]="widgetLoadingCard"
+            [dataLoading]="loadingCategories"
+            [noData]="noData">
+          </tb-scroll-grid>
+          <ng-template #iotHubDefaultCard let-item="item">
+            @switch (item.__logical) {
+              @case (LOGICAL_ALL_WIDGETS) {
+                <mat-card class="tb-widget-preview-card tb-widget-logical-card flex flex-col gap-2"
+                          appearance="raised"
+                          (click)="onAllWidgetsCardClicked($event)">
+                  <div class="title-container">
+                    <div class="widget-title">{{ 'widget.all-widgets' | translate }}</div>
+                  </div>
+                  <div class="preview-container">
+                    <div class="preview-spacer"></div>
+                    <img class="preview" src="/assets/widget/all-iot-hub-widgets.png" alt="{{ 'widget.all-widgets' | translate }}">
+                  </div>
+                </mat-card>
+              }
+              @case (LOGICAL_INSTALLED_FROM_IOT_HUB) {
+                <mat-card class="tb-widget-preview-card tb-widget-logical-card flex flex-col gap-2"
+                          appearance="raised"
+                          (click)="onInstalledFromIotHubCardClicked($event)">
+                  <div class="title-container">
+                    <div class="widget-title">{{ 'iot-hub.installed-from-iot-hub' | translate }}</div>
+                  </div>
+                  <div class="preview-container">
+                    <div class="preview-spacer"></div>
+                    <img class="preview" src="/assets/widget/installed-from-iot-hub.png" alt="{{ 'iot-hub.installed-from-iot-hub' | translate }}">
+                  </div>
+                </mat-card>
+              }
+              @default {
+                <mat-card class="tb-widget-preview-card tb-widget-category-card flex flex-col gap-2"
+                          appearance="raised" (click)="onCategoryCardClicked($event, item)">
+                  <div class="title-container">
+                    <div title="{{ item.name }}" class="widget-title">{{ item.name }}</div>
+                  </div>
+                  <div class="preview-container">
+                    <div class="preview-spacer"></div>
+                    @if (getCategoryImageUrl(item); as imgUrl) {
+                      <img class="preview" [src]="imgUrl" alt="{{ item.name }}">
+                    } @else {
+                      <img class="preview" src="/assets/widget-preview-empty.svg" alt="{{ item.name }}">
+                    }
+                  </div>
+                </mat-card>
+              }
+            }
+          </ng-template>
+          <ng-template #loadingCategories>
+            <div class="tb-absolute-fill flex flex-col items-center justify-center">
+              <mat-spinner color="accent" strokeWidth="5"></mat-spinner>
+            </div>
+          </ng-template>
+        }
+        @case ('installed') {
+          <ng-container *ngTemplateOutlet="iotHubInstalledGrid"></ng-container>
+        }
+        @default {
+          <ng-container *ngTemplateOutlet="iotHubAllGrid"></ng-container>
+        }
+      }
+    }
   }
+  </div>
+
   <ng-template #widgets let-fetchFunction="fetchFunction" let-filter="filter">
     <tb-scroll-grid
       [columns]="columns"
@@ -74,10 +251,10 @@
       [itemCard]="widgetCard"
       [loadingCell]="widgetLoadingCard"
       [dataLoading]="loadingWidgets"
-      [noData]="noWidgets">
+      [noData]="noData">
     </tb-scroll-grid>
     <ng-template #widgetCard let-item="item">
-      <mat-card class="tb-widget-preview-card flex flex-col gap-2" appearance="raised" (click)="onWidgetClicked($event, item)">
+      <mat-card class="tb-widget-preview-card flex flex-col gap-2" appearance="raised" (click)="onWidgetClicked(item)">
         <div class="title-container">
           <div title="{{item.name}}" class="widget-title">
             {{item.name}}
@@ -85,7 +262,7 @@
           <div class="title-items-container">
             <div class="title-items">
               <div class="widget-type">{{ 'widget.' + item.widgetType + '-short' | translate }}</div>
-              <div tb-popover [tbPopoverContent]="item.description" [tbPopoverOverlayStyle]="{maxWidth: '300px'}" tbPopoverShowCloseButton="false" class="info-banner tb-primary-fill"><span>i</span></div>
+              <div tb-popover [tbPopoverContent]="item.description" [tbPopoverOverlayStyle]="{maxWidth: '300px'}" [tbPopoverShowCloseButton]="false" class="info-banner tb-primary-fill"><span>i</span></div>
             </div>
             @if (item.deprecated) {
               <div class="widget-deprecated" translate>widget.deprecated</div>
@@ -106,9 +283,6 @@
         <mat-spinner color="accent" strokeWidth="5"></mat-spinner>
       </div>
     </ng-template>
-    <ng-template #noWidgets>
-      <span class="mat-headline-5 tb-absolute-fill flex items-center justify-center">{{(selectWidgetMode === 'bundles' ? 'widgets-bundle.empty' : 'widget.no-widgets-text') | translate}}</span>
-    </ng-template>
   </ng-template>
 
   <ng-template #widgetLoadingCard>
@@ -119,5 +293,294 @@
         <div class="preview-spacer"></div>
       </div>
     </mat-card>
+  </ng-template>
+
+  <ng-template #iotHubAllGrid>
+    <tb-scroll-grid
+      [columns]="columns"
+      [itemSize]="gridWidgetsItemSizeStrategy"
+      [fetchFunction]="iotHubWidgetsFetchFunction"
+      [filter]="iotHubWidgetsFilter"
+      [itemCard]="iotHubWidgetCard"
+      [loadingCell]="widgetLoadingCard"
+      [dataLoading]="loadingIotHubWidgets"
+      [noData]="noData">
+    </tb-scroll-grid>
+    <ng-template #iotHubWidgetCard let-item="item">
+      <ng-container *ngTemplateOutlet="iotHubWidgetCardTpl; context: { $implicit: item, showInstalledBadge: true }"></ng-container>
+    </ng-template>
+    <ng-template #loadingIotHubWidgets>
+      <div class="tb-absolute-fill flex flex-col items-center justify-center">
+        <span class="mat-headline-5" style="padding-bottom: 20px;">
+          {{ 'widget.loading-widgets' | translate }}
+        </span>
+        <mat-spinner color="accent" strokeWidth="5"></mat-spinner>
+      </div>
+    </ng-template>
+  </ng-template>
+
+  <ng-template #iotHubInstalledGrid>
+    <tb-scroll-grid
+      [columns]="columns"
+      [itemSize]="gridWidgetsItemSizeStrategy"
+      [fetchFunction]="iotHubInstalledWidgetsFetchFunction"
+      [filter]="iotHubInstalledWidgetsFilter"
+      [itemCard]="iotHubInstalledWidgetCard"
+      [loadingCell]="widgetLoadingCard"
+      [dataLoading]="loadingIotHubInstalledWidgets"
+      [noData]="noData">
+    </tb-scroll-grid>
+    <ng-template #iotHubInstalledWidgetCard let-item="item">
+      <ng-container *ngTemplateOutlet="iotHubWidgetCardTpl; context: { $implicit: item, showInstalledBadge: false }"></ng-container>
+    </ng-template>
+    <ng-template #loadingIotHubInstalledWidgets>
+      <div class="tb-absolute-fill flex flex-col items-center justify-center">
+        <span class="mat-headline-5" style="padding-bottom: 20px;">
+          {{ 'widget.loading-widgets' | translate }}
+        </span>
+        <mat-spinner color="accent" strokeWidth="5"></mat-spinner>
+      </div>
+    </ng-template>
+  </ng-template>
+
+  <ng-template #noData>
+    <div class="tb-widget-select-empty-state tb-absolute-fill flex flex-col items-center">
+      <div class="tb-widget-select-empty-inner flex flex-col items-center">
+        <div class="tb-no-data-bg"></div>
+        <h3>{{ 'iot-hub.no-widgets-found' | translate }}</h3>
+        <p>{{ 'iot-hub.no-items-found-text' | translate }}</p>
+        @if (hasActiveSearchOrFilters()) {
+          <button mat-flat-button color="primary" (click)="clearSearchAndFilters()">
+            {{ 'iot-hub.clear-all-filters' | translate }}
+          </button>
+        }
+      </div>
+      @if (selectWidgetMode === 'installed' && installedSubMode === 'allWidgets') {
+        <div class="tb-widget-select-browse-tip" role="button" tabindex="0"
+             (click)="navigateToIotHubAllWidgets()"
+             (keyup.enter)="navigateToIotHubAllWidgets()">
+          <mat-icon class="tb-widget-select-browse-tip-icon">storefront</mat-icon>
+          <p class="tb-widget-select-browse-tip-text">
+            <span>{{ 'iot-hub.browse-tip-prefix' | translate }} </span><span class="tb-widget-select-browse-tip-link">{{ 'iot-hub.browse-tip-link' | translate }}</span><span> {{ 'iot-hub.browse-tip-suffix' | translate }}</span>
+          </p>
+          <mat-icon class="tb-widget-select-browse-tip-arrow">arrow_forward</mat-icon>
+        </div>
+      }
+    </div>
+  </ng-template>
+
+  <ng-template #iotHubWidgetCardTpl let-item let-showInstalledBadge="showInstalledBadge">
+    <mat-card class="tb-widget-preview-card tb-iot-hub-widget-card flex flex-col gap-2" appearance="raised" (click)="onIotHubWidgetClicked($event, item)">
+      <div class="title-container">
+        <div title="{{item.name}}" class="widget-title">
+          {{item.name}}
+        </div>
+        <div class="title-items">
+          @if (item.dataDescriptor?.widgetType) {
+            <div class="widget-type">{{ 'widget.' + item.dataDescriptor.widgetType + '-short' | translate }}</div>
+          }
+          <div tb-popover [tbPopoverContent]="item.description" [tbPopoverOverlayStyle]="{maxWidth: '300px'}" [tbPopoverShowCloseButton]="false" class="info-banner tb-primary-fill"><span>i</span></div>
+        </div>
+      </div>
+      <div class="preview-container">
+        <div class="preview-spacer"></div>
+        @if (getIotHubItemImage(item); as imgUrl) {
+          <img class="preview" [src]="imgUrl" alt="{{ item.name }}">
+        } @else {
+          <img class="preview" src="/assets/widget-preview-empty.svg" alt="{{ item.name }}">
+        }
+      </div>
+      <div class="tb-iot-hub-widget-footer">
+        <span class="tb-iot-hub-widget-author">
+          @if (item.creatorVerified) {
+            <mat-icon class="tb-iot-hub-verified-icon">verified</mat-icon>
+          } @else {
+            <mat-icon>person</mat-icon>
+          }
+          {{ item.creatorDisplayName }}
+        </span>
+        @if (showInstalledBadge && isIotHubWidgetInstalled(item)) {
+          <span class="tb-iot-hub-widget-installed-badge">
+            <mat-icon>check</mat-icon>
+            {{ 'iot-hub.installed' | translate }}
+          </span>
+        }
+        <span class="tb-iot-hub-widget-installs">
+          <mat-icon>file_download</mat-icon>
+          {{ item.totalInstallCount | shortNumber }}
+        </span>
+      </div>
+    </mat-card>
+  </ng-template>
+
+  <!-- IoT Hub Filter Panel -->
+  <ng-template #iotHubFilterPanel let-popover="popover">
+    <div class="tb-iot-hub-filter-panel">
+      <div class="tb-iot-hub-filter-header">
+        <span class="tb-iot-hub-filter-title">{{ 'iot-hub.filters' | translate }}</span>
+        <span class="flex-1"></span>
+        @if (hasActiveFilters()) {
+          <button mat-stroked-button color="primary" class="tb-wsp-clear-all" (click)="clearAllFilters()">
+            {{ 'iot-hub.clear-all' | translate }}
+          </button>
+        }
+        <button mat-icon-button (click)="popover?.hide()" class="tb-wsp-close">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+      <mat-divider></mat-divider>
+      <div class="tb-iot-hub-filter-sections" [class.filter-items-hovered]="iotHubFilterItemsHovered">
+        @if (selectWidgetMode === 'installed') {
+          @if (widgetTypes.size > 1) {
+            <mat-expansion-panel [expanded]="true">
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  {{ 'iot-hub.type' | translate }}
+                  @if (filterWidgetTypes?.length) {
+                    <span class="tb-iot-hub-filter-badge">{{ filterWidgetTypes.length }}</span>
+                  }
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+              <div class="tb-iot-hub-filter-items">
+                @for (type of widgetTypesList; track type) {
+                  <div class="tb-iot-hub-filter-option">
+                    <mat-checkbox [checked]="isWidgetTypeChecked(type)"
+                                  (change)="toggleWidgetTypeFilter(type)">
+                      {{ getWidgetTypeLabel(type) }}
+                    </mat-checkbox>
+                  </div>
+                }
+              </div>
+            </mat-expansion-panel>
+          }
+          @if (hasDeprecated) {
+            @if (widgetTypes.size > 1) {
+              <mat-divider></mat-divider>
+            }
+            <div class="tb-iot-hub-filter-option">
+              <mat-checkbox [checked]="includeDeprecated"
+                            (change)="onIncludeDeprecatedChange($event.checked)">
+                {{ 'iot-hub.include-deprecated' | translate }}
+              </mat-checkbox>
+            </div>
+          }
+        } @else {
+          <mat-expansion-panel [expanded]="true">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                {{ 'iot-hub.type' | translate }}
+                @if (iotHubAppliedWidgetTypes.size) {
+                  <span class="tb-iot-hub-filter-badge">{{ iotHubAppliedWidgetTypes.size }}</span>
+                }
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            @if (iotHubWidgetTypeOptions.length >= 10) {
+              <div class="tb-iot-hub-filter-search">
+                <mat-icon>search</mat-icon>
+                <input [placeholder]="'iot-hub.search' | translate"
+                       [ngModel]="iotHubFilterSearch['widgetType']"
+                       (ngModelChange)="iotHubFilterSearch['widgetType'] = $event">
+                @if (iotHubFilterSearch['widgetType']) {
+                  <button mat-icon-button class="tb-iot-hub-filter-search-clear" (click)="iotHubFilterSearch['widgetType'] = ''">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                }
+              </div>
+            }
+            <div class="tb-iot-hub-filter-items" [class.scrollable]="getFilteredIotHubItems(iotHubWidgetTypeOptions, 'widgetType').length > 8"
+                 (mouseenter)="getFilteredIotHubItems(iotHubWidgetTypeOptions, 'widgetType').length > 8 && (iotHubFilterItemsHovered = true)"
+                 (mouseleave)="iotHubFilterItemsHovered = false">
+              @for (opt of getFilteredIotHubItems(iotHubWidgetTypeOptions, 'widgetType'); track opt.key) {
+                <div class="tb-iot-hub-filter-option">
+                  <mat-checkbox [checked]="iotHubAppliedWidgetTypes.has(opt.key)"
+                                (change)="toggleIotHubWidgetType(opt.key)">
+                    {{ getIotHubWidgetTypeLabel(opt.key) }}
+                  </mat-checkbox>
+                </div>
+              }
+            </div>
+          </mat-expansion-panel>
+          @if (!hideCategoriesFilterSection) {
+            <mat-divider></mat-divider>
+            <mat-expansion-panel [expanded]="false">
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  {{ 'iot-hub.category' | translate }}
+                  @if (iotHubAppliedCategories.size) {
+                    <span class="tb-iot-hub-filter-badge">{{ iotHubAppliedCategories.size }}</span>
+                  }
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+              @if (iotHubCategoryOptions.length >= 10) {
+                <div class="tb-iot-hub-filter-search">
+                  <mat-icon>search</mat-icon>
+                  <input [placeholder]="'iot-hub.search' | translate"
+                         [ngModel]="iotHubFilterSearch['category']"
+                         (ngModelChange)="iotHubFilterSearch['category'] = $event">
+                  @if (iotHubFilterSearch['category']) {
+                    <button mat-icon-button class="tb-iot-hub-filter-search-clear" (click)="iotHubFilterSearch['category'] = ''">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  }
+                </div>
+              }
+              <div class="tb-iot-hub-filter-items" [class.scrollable]="getFilteredIotHubItems(iotHubCategoryOptions, 'category').length > 8"
+                   (mouseenter)="getFilteredIotHubItems(iotHubCategoryOptions, 'category').length > 8 && (iotHubFilterItemsHovered = true)"
+                   (mouseleave)="iotHubFilterItemsHovered = false">
+                @for (opt of getFilteredIotHubItems(iotHubCategoryOptions, 'category'); track opt.key) {
+                  <div class="tb-iot-hub-filter-option">
+                    <mat-checkbox [checked]="iotHubAppliedCategories.has(opt.key)"
+                                  (change)="toggleIotHubCategory(opt.key)">
+                      {{ opt.key }}
+                    </mat-checkbox>
+                  </div>
+                }
+              </div>
+            </mat-expansion-panel>
+          }
+          <mat-divider></mat-divider>
+          <mat-expansion-panel [expanded]="false">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                {{ 'iot-hub.use-case' | translate }}
+                @if (iotHubAppliedUseCases.size) {
+                  <span class="tb-iot-hub-filter-badge">{{ iotHubAppliedUseCases.size }}</span>
+                }
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            @if (iotHubUseCaseOptions.length >= 10) {
+              <div class="tb-iot-hub-filter-search">
+                <mat-icon>search</mat-icon>
+                <input [placeholder]="'iot-hub.search' | translate"
+                       [ngModel]="iotHubFilterSearch['useCase']"
+                       (ngModelChange)="iotHubFilterSearch['useCase'] = $event">
+                @if (iotHubFilterSearch['useCase']) {
+                  <button mat-icon-button class="tb-iot-hub-filter-search-clear" (click)="iotHubFilterSearch['useCase'] = ''">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                }
+              </div>
+            }
+            <div class="tb-iot-hub-filter-items" [class.scrollable]="getFilteredIotHubItems(iotHubUseCaseOptions, 'useCase').length > 8"
+                 (mouseenter)="getFilteredIotHubItems(iotHubUseCaseOptions, 'useCase').length > 8 && (iotHubFilterItemsHovered = true)"
+                 (mouseleave)="iotHubFilterItemsHovered = false">
+              @for (group of getGroupedIotHubFilterItems(iotHubUseCaseOptions, 'useCase'); track group.label) {
+                @if (group.label) {
+                  <div class="tb-iot-hub-filter-group-label">{{ group.label | translate }}</div>
+                }
+                @for (opt of group.items; track opt.key) {
+                  <div class="tb-iot-hub-filter-option">
+                    <mat-checkbox [checked]="iotHubAppliedUseCases.has(opt.key)"
+                                  (change)="toggleIotHubUseCase(opt.key)">
+                      {{ opt.key }}
+                    </mat-checkbox>
+                  </div>
+                }
+              }
+            </div>
+          </mat-expansion-panel>
+        }
+      </div>
+    </div>
   </ng-template>
 </div>
