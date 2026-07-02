@@ -52,7 +52,6 @@ import {
 } from '@core/api/widget-api.models';
 import { UnitService } from '@core/services/unit.service';
 import { TbUnit, TbUnitConverter } from '@shared/models/unit.models';
-import { TableReportCellSettings } from '@shared/models/report-component.models';
 
 export type ComponentStyle = {[klass: string]: any};
 
@@ -1120,10 +1119,6 @@ export const iconStyle = (size: number | string, sizeUnit: cssUnit = 'px'): Comp
     lineHeight: iconSize
   };
 };
-
-export const borderStyle = (cellSettings: TableReportCellSettings): ComponentStyle => ({
-  border: `${cellSettings.borderWidth}px ${cellSettings.borderStyle} ${cellSettings.borderColor}`
-});
 
 export const textStyle = (font?: Font, letterSpacing = 'normal'): ComponentStyle => {
   const style: ComponentStyle = {
