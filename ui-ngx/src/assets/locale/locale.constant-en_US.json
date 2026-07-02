@@ -1045,6 +1045,7 @@
         "type-attributes-deleted": "Attributes deleted",
         "type-rpc-call": "RPC call",
         "type-credentials-updated": "Credentials updated",
+        "type-settings-updated": "Settings updated",
         "type-assigned-to-customer": "Assigned to Customer",
         "type-unassigned-from-customer": "Unassigned from Customer",
         "type-assigned-to-edge": "Assigned to Edge",

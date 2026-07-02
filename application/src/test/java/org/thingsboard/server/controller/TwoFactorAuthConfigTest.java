@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import org.awaitility.Awaitility;
 import org.jboss.aerogear.security.otp.Totp;
 import org.jboss.aerogear.security.otp.api.Base32;
 import org.junit.After;
@@ -29,9 +31,13 @@ import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.server.common.data.CacheConstants;
+import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.targets.platform.AllUsersFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.TenantAdministratorsFilter;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.security.model.mfa.PlatformTwoFaSettings;
 import org.thingsboard.server.common.data.security.model.mfa.account.AccountTwoFaSettings;
 import org.thingsboard.server.common.data.security.model.mfa.account.SmsTwoFaAccountConfig;
@@ -51,6 +57,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -500,6 +507,33 @@ public class TwoFactorAuthConfigTest extends AbstractControllerTest {
             });
         });
         return (TotpTwoFaAccountConfig) generatedTwoFaAccountConfig;
+    }
+
+    @Test
+    public void testSavePlatformTwoFaSettingsAuditLog() throws Exception {
+        loginSysAdmin();
+
+        long startTs = System.currentTimeMillis();
+        TotpTwoFaProviderConfig totpTwoFaProviderConfig = new TotpTwoFaProviderConfig();
+        totpTwoFaProviderConfig.setIssuerName("tb");
+
+        PlatformTwoFaSettings twoFaSettings = new PlatformTwoFaSettings();
+        twoFaSettings.setProviders(List.of(totpTwoFaProviderConfig));
+        twoFaSettings.setMinVerificationCodeSendPeriod(5);
+        twoFaSettings.setTotalAllowedTimeForVerification(100);
+
+        saveTwoFaSettings(twoFaSettings);
+
+        Awaitility.await("Audit log for savePlatformTwoFaSettings")
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> doGetTypedWithTimePageLink(
+                        "/api/audit/logs/entity/USER/" + currentUserId.getId() + "?",
+                        new TypeReference<PageData<AuditLog>>() {},
+                        new TimePageLink(100, 0, null, null, startTs, null)).getData().stream()
+                        .anyMatch(log -> log.getActionType() == ActionType.SETTINGS_UPDATED
+                                && log.getActionData() != null
+                                && "twoFaSettings".equals(log.getActionData().path("settingsKey").asText(null)))
+                );
     }
 
     private String savePlatformTwoFaSettingsAndGetError(TwoFaProviderConfig invalidTwoFaProviderConfig) throws Exception {

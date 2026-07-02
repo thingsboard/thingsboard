@@ -23,9 +23,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.queue.Queue;
+import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.discovery.TopicService;
@@ -50,16 +52,19 @@ public class DefaultTbQueueServiceTest {
     private TbClusterService tbClusterServiceMock;
     @Mock
     private TbQueueAdmin tbQueueAdminMock;
+    @Mock
+    private AuditLogService auditLogServiceMock;
 
     private TopicService topicService;
     private DefaultTbQueueService tbQueueService;
 
     private final TenantId tenantId = TenantId.SYS_TENANT_ID;
+    private final User user = new User();
 
     @BeforeEach
     public void setUp() {
         topicService = new TopicService();
-        tbQueueService = new DefaultTbQueueService(queueServiceMock, tbClusterServiceMock, tbQueueAdminMock, topicService);
+        tbQueueService = new DefaultTbQueueService(queueServiceMock, tbClusterServiceMock, tbQueueAdminMock, auditLogServiceMock, topicService);
     }
 
     private Queue newQueue(int partitions) {
@@ -79,7 +84,7 @@ public class DefaultTbQueueServiceTest {
         Queue queue = newQueue(2);
         when(queueServiceMock.saveQueue(queue)).thenReturn(queue);
 
-        tbQueueService.saveQueue(queue);
+        tbQueueService.saveQueue(queue, user);
 
         ArgumentCaptor<String> topicCaptor = ArgumentCaptor.forClass(String.class);
         verify(tbQueueAdminMock, times(2)).createTopicIfNotExists(topicCaptor.capture(), any(), anyBoolean());
@@ -103,7 +108,7 @@ public class DefaultTbQueueServiceTest {
         Queue queue = newQueue(2);
         when(queueServiceMock.saveQueue(queue)).thenReturn(queue);
 
-        tbQueueService.saveQueue(queue);
+        tbQueueService.saveQueue(queue, user);
 
         ArgumentCaptor<String> topicCaptor = ArgumentCaptor.forClass(String.class);
         verify(tbQueueAdminMock, times(2)).createTopicIfNotExists(topicCaptor.capture(), any(), anyBoolean());
@@ -126,7 +131,7 @@ public class DefaultTbQueueServiceTest {
         when(queueServiceMock.findQueueById(tenantId, updatedQueue.getId())).thenReturn(oldQueue);
         when(queueServiceMock.saveQueue(updatedQueue)).thenReturn(updatedQueue);
 
-        tbQueueService.saveQueue(updatedQueue);
+        tbQueueService.saveQueue(updatedQueue, user);
 
         ArgumentCaptor<String> topicCaptor = ArgumentCaptor.forClass(String.class);
         verify(tbQueueAdminMock, times(2)).createTopicIfNotExists(topicCaptor.capture(), any(), anyBoolean());
