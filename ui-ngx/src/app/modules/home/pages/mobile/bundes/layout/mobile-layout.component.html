@@ -61,7 +61,7 @@
        cdkDropListOrientation="vertical"
        (cdkDropListDropped)="mobileItemDrop($event)"
        [cdkDropListDisabled]="!dragEnabled">
-    @for (menuItemControl of visibleMobilePagesControls(); track trackByMenuItem($index, menuItemControl);) {
+    @for (menuItemControl of visibleMobilePagesControls(); track menuItemControl) {
       <div class="tb-mobile-item-row-container">
         <div cdkDrag [cdkDragDisabled]="!dragEnabled"
              class="tb-draggable tb-mobile-item-row">

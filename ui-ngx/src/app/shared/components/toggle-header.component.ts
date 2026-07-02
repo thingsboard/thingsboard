@@ -306,10 +306,6 @@ export class ToggleHeaderComponent extends _ToggleBase implements OnInit, AfterV
     }
   }
 
-  trackByHeaderOption(index: number, option: ToggleHeaderOption){
-    return option.value;
-  }
-
   handlePaginatorClick(direction: ScrollDirection, $event: Event) {
     if ($event) {
       $event.stopPropagation();

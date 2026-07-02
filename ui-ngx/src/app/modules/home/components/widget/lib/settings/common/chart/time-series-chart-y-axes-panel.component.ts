@@ -182,10 +182,6 @@ export class TimeSeriesChartYAxesPanelComponent implements ControlValueAccessor,
     return this.yAxesFormGroup.get('axes') as UntypedFormArray;
   }
 
-  trackByAxis(index: number, axisControl: AbstractControl): any {
-    return axisControl;
-  }
-
   removeAxis(index: number) {
     const axis =
       (this.yAxesFormGroup.get('axes') as UntypedFormArray).at(index).value as TimeSeriesChartYAxisSettings;

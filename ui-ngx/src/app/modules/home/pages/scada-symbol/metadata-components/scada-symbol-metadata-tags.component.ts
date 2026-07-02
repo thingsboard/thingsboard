@@ -175,10 +175,6 @@ export class ScadaSymbolMetadataTagsComponent implements ControlValueAccessor, O
     return this.tagsFormGroup.get('tags') as UntypedFormArray;
   }
 
-  trackByTag(_index: number, tagControl: AbstractControl): any {
-    return tagControl;
-  }
-
   editTagStateRenderFunction(tag: string): void {
     setTimeout(() => {
       const tags: ScadaSymbolTag[] = this.tagsFormGroup.get('tags').value;

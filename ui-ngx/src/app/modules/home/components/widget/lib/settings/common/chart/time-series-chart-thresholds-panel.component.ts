@@ -149,10 +149,6 @@ export class TimeSeriesChartThresholdsPanelComponent implements ControlValueAcce
     return this.thresholdsFormGroup.get('thresholds') as UntypedFormArray;
   }
 
-  trackByThreshold(index: number, thresholdControl: AbstractControl): any {
-    return thresholdControl;
-  }
-
   removeThreshold(index: number) {
     (this.thresholdsFormGroup.get('thresholds') as UntypedFormArray).removeAt(index);
   }

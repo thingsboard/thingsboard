@@ -42,7 +42,7 @@
                              [name]="name"
                              [(ngModel)]="value"
                              (ngModelChange)="valueChange.emit(value)">
-      @for (option of options; track trackByHeaderOption($index, option)) {
+      @for (option of options; track option.value) {
         <mat-button-toggle [value]="option.value" [disabled]="disabled" [class.tb-toggle-button-error]="(option.error$ | async) && value !== option.value">
           @if (option.template) {
             <ng-container *ngTemplateOutlet="option.template"></ng-container>

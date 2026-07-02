@@ -24,7 +24,7 @@
     </div>
     @if (tagsFormArray().controls.length) {
       <div class="tb-form-table-body">
-        @for (tagControl of tagsFormArray().controls; track trackByTag($index, tagControl)) {
+        @for (tagControl of tagsFormArray().controls; track tagControl) {
           <div>
             <tb-scada-symbol-metadata-tag class="flex-1"
                                           [elementStateRenderFunctionCompleter]="elementStateRenderFunctionCompleter"

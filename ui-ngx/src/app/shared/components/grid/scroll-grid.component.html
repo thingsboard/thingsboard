@@ -20,7 +20,7 @@
   <ng-container *cdkVirtualFor="let itemsRow of dataSource; let row = index; trackBy: trackByItemsRow">
     @if (itemsRow) {
       <div class="tb-scroll-grid-items-row" [style]="{gap: gap+'px'}">
-        @for (item of itemsRow; track trackByItem(col, item); let col = $index) {
+        @for (item of itemsRow; track item; let col = $index) {
           <div class="tb-scroll-grid-item-container">
             @if (item === 'loadingCell') {
               <ng-container *ngTemplateOutlet="loadingCell ? loadingCell : defaultLoadingCell"></ng-container>

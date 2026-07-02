@@ -392,10 +392,6 @@ export class DigitalGaugeWidgetSettingsComponent extends WidgetSettingsComponent
     return this.digitalGaugeWidgetSettingsForm.get('ticksValue') as UntypedFormArray;
   }
 
-  public trackByTickValue(index: number, tickValueControl: AbstractControl): any {
-    return tickValueControl;
-  }
-
   public removeTickValue(index: number) {
     (this.digitalGaugeWidgetSettingsForm.get('ticksValue') as UntypedFormArray).removeAt(index);
   }

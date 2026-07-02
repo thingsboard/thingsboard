@@ -30,7 +30,7 @@
     </div>
     @if (keysFormArray().controls.length) {
       <div class="tb-form-table-body">
-        @for (keyControl of keysFormArray().controls; track trackByKey($index, keyControl)) {
+        @for (keyControl of keysFormArray().controls; track keyControl) {
           <div>
             <tb-aggregated-data-key-row class="flex-1"
                                         [formControl]="keyControl"

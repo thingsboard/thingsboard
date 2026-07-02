@@ -274,10 +274,6 @@ export class DataKeysPanelComponent implements ControlValueAccessor, OnInit, OnC
     return this.keysListFormGroup.get('keys') as UntypedFormArray;
   }
 
-  trackByKey(index: number, keyControl: AbstractControl): any {
-    return keyControl;
-  }
-
   removeKey(index: number) {
     (this.keysListFormGroup.get('keys') as UntypedFormArray).removeAt(index);
   }

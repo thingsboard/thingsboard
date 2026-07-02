@@ -61,7 +61,7 @@
           <div class="tb-colors-gradient">
             <div class="tb-control-list tb-drop-list" cdkDropList cdkDropListOrientation="vertical"
                  (cdkDropListDropped)="gradientDrop($event)">
-              @for (gradientFormGroup of gradientListFormGroups; track trackByGradient($index, gradientFormGroup); let isLast = $last) {
+              @for (gradientFormGroup of gradientListFormGroups; track gradientFormGroup; let isLast = $last) {
                 <div cdkDrag class="tb-form-row no-padding no-border tb-draggable"
                      [formGroup]="gradientFormGroup"
                      [class.pb-2]="!isLast">
@@ -142,7 +142,7 @@
           <div class="tb-colors-gradient">
             <div class="tb-control-list tb-drop-list" cdkDropList cdkDropListOrientation="vertical"
                  (cdkDropListDropped)="gradientDrop($event, true)">
-              @for (gradientFormGroup of advancedGradientListFormGroups; track trackByGradient($index, gradientFormGroup); let isLast = $last) {
+              @for (gradientFormGroup of advancedGradientListFormGroups; track gradientFormGroup; let isLast = $last) {
                 <div cdkDrag class="tb-form-row no-padding no-border tb-draggable"
                      [formGroup]="gradientFormGroup"
                      [class.pb-2]="!isLast">

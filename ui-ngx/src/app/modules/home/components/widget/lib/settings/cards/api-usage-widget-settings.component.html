@@ -42,7 +42,7 @@
           <div cdkDropList cdkDropListOrientation="vertical"
                [cdkDropListDisabled]="!dragEnabled"
                (cdkDropListDropped)="layerDrop($event)" class="tb-form-table-body">
-            @for (dataKeyControl of dataKeysFormArray().controls; track trackByDataKey($index)) {
+            @for (dataKeyControl of dataKeysFormArray().controls; track dataKeyControl) {
               <div cdkDrag [cdkDragDisabled]="!dragEnabled"
                    >
                 <div class="tb-draggable-form-table-row">

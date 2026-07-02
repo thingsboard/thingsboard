@@ -191,7 +191,7 @@
       </mat-card-subtitle>
       <h3 class="mat-h3 auth-title" translate>security.2fa.authenticate-with</h3>
       <form [formGroup]="twoFactorAuth">
-        @for (provider of allowTwoFactorProviders; track trackByProvider($index, provider)) {
+        @for (provider of allowTwoFactorProviders; track provider) {
           <div class="provider">
             <h4 class="provider-title">{{ providersData.get(provider).name | translate }}</h4>
             <div class="flex flex-row items-start justify-between">

@@ -167,14 +167,6 @@ export class ColorRangeListComponent implements OnInit, ControlValueAccessor, On
     return this.rangeListFormArray.controls as FormGroup[];
   }
 
-  trackByRange(index: number, rangeControl: AbstractControl): any {
-    return rangeControl;
-  }
-
-  public trackByAdvancedRange(index: number, advancedRangeControl: AbstractControl): any {
-    return advancedRangeControl;
-  }
-
   public removeAdvancedRange(index: number) {
     (this.colorRangeListFormGroup.get('rangeAdvanced') as UntypedFormArray).removeAt(index);
   }

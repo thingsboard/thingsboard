@@ -154,7 +154,7 @@
     <div class="flex flex-col">
       <div class="tb-control-list tb-drop-list" cdkDropList cdkDropListOrientation="vertical"
            (cdkDropListDropped)="selectOptionDrop($event)">
-        @for (selectOptionControl of typedSelectOptions; track trackBySelectOption($index, selectOptionControl); let isLast = $last) {
+        @for (selectOptionControl of typedSelectOptions; track selectOptionControl; let isLast = $last) {
           <div cdkDrag class="tb-draggable flex flex-col" [class.pb-2]="!isLast">
             <tb-datakey-select-option [formControl]="selectOptionControl"
                                       [expanded]="selectOptionControl.new"

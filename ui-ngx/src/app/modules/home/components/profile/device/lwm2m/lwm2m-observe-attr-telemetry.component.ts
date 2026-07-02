@@ -169,10 +169,6 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
     this.modelsFormArray.updateValueAndValidity();
   }
 
-  trackByParams = (index: number, objectLwM2M: ObjectLwM2M): number => {
-    return objectLwM2M.id;
-  }
-
   /**
    * Instances: indicates whether this Object supports multiple Object Instances or not.
    * 1) Field in object: <MultipleInstances> == Multiple/Single

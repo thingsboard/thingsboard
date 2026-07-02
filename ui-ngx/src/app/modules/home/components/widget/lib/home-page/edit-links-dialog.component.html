@@ -28,7 +28,7 @@
   <div mat-dialog-content>
     <div class="tb-drop-list" cdkDropList cdkDropListOrientation="vertical"
          (cdkDropListDropped)="linkDrop($event)" [cdkDropListDisabled]="editMode || addMode">
-      @for (linkControl of linksFormArray().controls; track trackByLink($index, linkControl); let isLast = $last) {
+      @for (linkControl of linksFormArray().controls; track linkControl; let isLast = $last) {
         <div cdkDrag class="tb-draggable flex flex-row items-center justify-start"
              [class.pb-2]="!isLast">
           @switch (mode) {

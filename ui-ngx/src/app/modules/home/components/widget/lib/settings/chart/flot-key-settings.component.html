@@ -205,7 +205,7 @@
     @if (thresholdsFormArray().length) {
       <div class="tb-control-list tb-drop-list flex flex-col gap-3" cdkDropList cdkDropListOrientation="vertical"
            (cdkDropListDropped)="thresholdDrop($event)">
-        @for (thresholdControl of thresholdsFormArray().controls; track trackByThreshold($index, thresholdControl)) {
+        @for (thresholdControl of thresholdsFormArray().controls; track thresholdControl) {
           <div cdkDrag class="tb-draggable">
             <tb-flot-threshold [formControl]="thresholdControl"
                                [aliasController]="aliasController"

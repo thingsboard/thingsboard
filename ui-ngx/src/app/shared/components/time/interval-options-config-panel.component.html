@@ -38,7 +38,7 @@
       }
     </div>
     <div class="tb-form-table-body" formArrayName="intervals">
-      @for (interval of intervalsFormArray.controls; track trackByElement(i, interval); let i = $index) {
+      @for (interval of intervalsFormArray.controls; track interval; let i = $index) {
         <div [formGroupName]="i" class="tb-form-table-row">
           <div class="tb-form-table-row-cell tb-interval">
             <mat-checkbox class="tb-interval-option" formControlName="enabled" color="primary">
