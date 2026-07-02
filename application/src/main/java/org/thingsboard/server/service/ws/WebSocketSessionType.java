@@ -17,9 +17,9 @@ package org.thingsboard.server.service.ws;
 
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Optional;
 
 @NoArgsConstructor
@@ -33,7 +33,7 @@ public enum WebSocketSessionType {
 
     public static Optional<WebSocketSessionType> forName(String name) {
         return Arrays.stream(values())
-                .filter(sessionType -> StringUtils.equals(sessionType.name, name))
+                .filter(sessionType -> Objects.equals(sessionType.name, name))
                 .findFirst();
     }
 

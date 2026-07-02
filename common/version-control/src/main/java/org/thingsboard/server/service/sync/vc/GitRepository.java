@@ -99,6 +99,7 @@ import static org.eclipse.jgit.transport.RemoteRefUpdate.Status.REJECTED_NODELET
 import static org.eclipse.jgit.transport.RemoteRefUpdate.Status.REJECTED_NONFASTFORWARD;
 import static org.eclipse.jgit.transport.RemoteRefUpdate.Status.REJECTED_OTHER_REASON;
 import static org.eclipse.jgit.transport.RemoteRefUpdate.Status.REJECTED_REMOTE_CHANGED;
+import static org.thingsboard.server.common.data.StringUtils.removeStart;
 
 @Slf4j
 public class GitRepository {
@@ -448,7 +449,7 @@ public class GitRepository {
 
     private BranchInfo toBranchInfo(Ref ref) {
         String name = org.eclipse.jgit.lib.Repository.shortenRefName(ref.getName());
-        String branchName = StringUtils.removeStart(name, "origin/");
+        String branchName = removeStart(name, "origin/");
         boolean isDefault = this.headId != null && this.headId.equals(ref.getObjectId());
         return new BranchInfo(branchName, isDefault);
     }
@@ -465,7 +466,7 @@ public class GitRepository {
 
     private ObjectId resolve(String rev) throws IOException {
         if (settings.isLocalOnly()) {
-            rev = StringUtils.removeStart(rev, "origin/");
+            rev = removeStart(rev, "origin/");
         }
         ObjectId result = git.getRepository().resolve(rev);
         if (result == null) {
