@@ -1715,7 +1715,7 @@
         "timeseries-placeholder": "Časové řady",
         "target-entity": "Cílová entita",
         "attributes-propagation": "Propagace atributů",
-        "attributes-propagation-hint": "Entitní pohled bude automaticky kopírovat specifikované atributy z cílové entity vždy, když uložíte nebo aktualizujete tento entitní pohled. Z výkonnostních důvodů nejsou atributy cílové entity propagovány při každé změně atributu. Automatickou propagaci můžete povolit konfigurací \"copy to view\" uzlu pravidla v rámci vašeho řetězu pravidel a provázáním \"Post attributes\" a \"Attributes Updated\" zpráv na nový uzel pravidla.",
+        "attributes-propagation-hint": "Entitní pohled bude automaticky kopírovat specifikované atributy z cílové entity vždy, když uložíte nebo aktualizujete tento entitní pohled. Z výkonnostních důvodů nejsou atributy cílové entity propagovány při každé změně atributu. Automatickou propagaci můžete povolit konfigurací \"copy to view\" uzlu pravidla v rámci vašeho řetězu pravidel a provázáním \"Post Attributes\" a \"Attributes Updated\" zpráv na nový uzel pravidla.",
         "timeseries-data": "Data časových řad",
         "timeseries-data-hint": "Nakonfigurujte klíče dat časových řad cílové entity, která budou dostupná pro entitní pohled. Tato data časových řad jsou pouze pro čtení.",
         "make-public-entity-view-title": "Jste si jisti, že chcete entitní pohled '{{entityViewName}}' zveřejnit?",

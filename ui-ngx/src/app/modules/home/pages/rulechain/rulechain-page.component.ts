@@ -67,14 +67,14 @@ import {
   FcRuleNode,
   FcRuleNodeType,
   getRuleNodeHelpLink,
-  LinkLabel,
+  LinkLabel, normalizeLinkLabel,
   outputNodeClazz,
   ruleChainNodeClazz,
   RuleNode,
   RuleNodeComponentDescriptor,
   RuleNodeType,
   ruleNodeTypeDescriptors,
-  ruleNodeTypesLibrary
+  ruleNodeTypesLibrary, toStandardizedLinkLabel
 } from '@shared/models/rule-node.models';
 import { FcRuleNodeModel, FcRuleNodeTypeModel, RuleChainMenuContextInfo } from './rulechain-page.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
@@ -221,6 +221,11 @@ export class RuleChainPageComponent extends PageComponent
           const allowCustomLabels = this.ruleChainService.ruleNodeAllowCustomLinks(sourceNode.component);
           const sourceRuleChainId = this.ruleChainService.ruleNodeSourceRuleChainId(sourceNode.component, sourceNode.configuration);
           this.enableHotKeys = false;
+
+          for (const key of Object.keys(labels)) {
+            labels[key] = normalizeLinkLabel(labels[key]);
+          }
+
           return this.addRuleNodeLink(edge, labels, allowCustomLabels, sourceRuleChainId).pipe(
             tap(() => {
                 this.enableHotKeys = true;
@@ -1367,7 +1372,7 @@ export class RuleChainPageComponent extends PageComponent
           details = this.sanitizer.sanitize(SecurityContext.HTML, node.additionalInfo.description);
         }
       }
-      
+
       name = this.sanitizer.sanitize(SecurityContext.HTML, name);
       desc = this.sanitizer.sanitize(SecurityContext.HTML, desc);
 
@@ -1807,7 +1812,7 @@ export class AddRuleNodeLinkDialogComponent extends DialogComponent<AddRuleNodeL
   add(): void {
     this.submitted = true;
     const link: FcRuleEdge = this.ruleNodeLinkFormGroup.get('link').value;
-    this.link = {...this.link, ...link};
+    this.link = {...this.link, ...link, label: toStandardizedLinkLabel(link.label)};
     this.dialogRef.close(this.link);
   }
 }

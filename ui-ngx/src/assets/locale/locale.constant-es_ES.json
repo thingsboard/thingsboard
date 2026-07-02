@@ -2821,7 +2821,7 @@
     "timeseries-placeholder": "Series temporales",
     "target-entity": "Entidad objetivo",
     "attributes-propagation": "Propagación de atributos",
-    "attributes-propagation-hint": "La vista de entidad copiará automáticamente los atributos especificados desde la entidad objetivo cada vez que guarde o actualice esta vista de entidad. Por razones de rendimiento, los atributos de la entidad objetivo no se propagan a la vista de entidad en cada cambio. Puede habilitar la propagación automática configurando un nodo de reglas \"copy to view\" y vinculando los mensajes \"Post attributes\" y \"Attributes Updated\" al nuevo nodo de reglas.",
+    "attributes-propagation-hint": "La vista de entidad copiará automáticamente los atributos especificados desde la entidad objetivo cada vez que guarde o actualice esta vista de entidad. Por razones de rendimiento, los atributos de la entidad objetivo no se propagan a la vista de entidad en cada cambio. Puede habilitar la propagación automática configurando un nodo de reglas \"copy to view\" y vinculando los mensajes \"Post Attributes\" y \"Attributes Updated\" al nuevo nodo de reglas.",
     "timeseries-data": "Datos de series temporales",
     "timeseries-data-hint": "Configure las claves de datos de series temporales de la entidad objetivo que estarán accesibles para la vista de entidad. Estos datos de series temporales son de solo lectura.",
     "search": "Buscar vistas de entidad",

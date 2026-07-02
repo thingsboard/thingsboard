@@ -80,8 +80,36 @@ export interface IRuleNodeConfigurationComponent {
   configuration: RuleNodeConfiguration;
   configurationChanged: Observable<RuleNodeConfiguration>;
   validate();
-  testScript? (debugEventBody?: DebugRuleNodeEventBody);
+  testScript?(debugEventBody?: DebugRuleNodeEventBody);
   [key: string]: any;
+}
+
+const LOWERCASE_WORDS = new Set(['a', 'an', 'the', 'and',
+  'but', 'or', 'nor', 'for', 'yet', 'so', 'at', 'by', 'from',
+  'in', 'of', 'on', 'to', 'up', 'with', 'as', 'into', 'per', 'via', 'than'
+]);
+
+export function toStandardizedLinkLabel(label: string): string {
+  return label
+    .split(' ')
+    .map((word, index) => {
+      if (word.length > 1 && word === word.toUpperCase()) {
+        return word;
+      }
+
+      if (index === 0) {
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+      }
+
+      if (LOWERCASE_WORDS.has(word.toLowerCase())) {
+        return word.toLowerCase();
+      }
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    }).join(' ');
+}
+
+export function normalizeLinkLabel(label: LinkLabel): LinkLabel {
+  return {name: toStandardizedLinkLabel(label.name), value: label.value};
 }
 
 @Directive()
@@ -412,8 +440,8 @@ export enum MessageType {
 
 export const messageTypeNames = new Map<MessageType, string>(
   [
-    [MessageType.POST_ATTRIBUTES_REQUEST, 'Post attributes'],
-    [MessageType.POST_TELEMETRY_REQUEST, 'Post telemetry'],
+    [MessageType.POST_ATTRIBUTES_REQUEST, 'Post Attributes'],
+    [MessageType.POST_TELEMETRY_REQUEST, 'Post Telemetry'],
     [MessageType.TO_SERVER_RPC_REQUEST, 'RPC Request from Device'],
     [MessageType.RPC_CALL_FROM_SERVER_TO_DEVICE, 'RPC Request to Device'],
     [MessageType.RPC_QUEUED, 'RPC Queued'],
@@ -441,8 +469,8 @@ export const messageTypeNames = new Map<MessageType, string>(
     [MessageType.ALARM_UNASSIGNED, 'Alarm Unassigned'],
     [MessageType.COMMENT_CREATED, 'Comment Created'],
     [MessageType.COMMENT_UPDATED, 'Comment Updated'],
-    [MessageType.ENTITY_ASSIGNED_FROM_TENANT, 'Entity Assigned From Tenant'],
-    [MessageType.ENTITY_ASSIGNED_TO_TENANT, 'Entity Assigned To Tenant'],
+    [MessageType.ENTITY_ASSIGNED_FROM_TENANT, 'Entity Assigned from Tenant'],
+    [MessageType.ENTITY_ASSIGNED_TO_TENANT, 'Entity Assigned to Tenant'],
     [MessageType.TIMESERIES_UPDATED, 'Timeseries Updated'],
     [MessageType.TIMESERIES_DELETED, 'Timeseries Deleted']
   ]
