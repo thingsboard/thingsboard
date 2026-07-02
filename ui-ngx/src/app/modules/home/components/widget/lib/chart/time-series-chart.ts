@@ -1093,15 +1093,29 @@ export class TbTimeSeriesChart {
     }
   }
 
+  private maxTickLabelHalfHeight(): number {
+    const axes = this.yAxisList.filter(a => a.settings.show && a.settings.showTickLabels);
+    if (!axes.length) {
+      return 0;
+    }
+
+    const defaultSize = defaultTimeSeriesChartYAxisSettings.tickLabelFont.size;
+    const maxFontSize = Math.max(...axes.map(a => a.settings.tickLabelFont?.size || defaultSize));
+    return Math.ceil(maxFontSize / 2);
+  }
+
   private minTopOffset(): number {
-    const showTickLabels =
-      !!this.yAxisList.find(yAxis => yAxis.settings.show && yAxis.settings.showTickLabels);
-    return (this.topPointLabels) ? 25 :
-      (showTickLabels ? 10 : 5);
+    if (this.topPointLabels) {
+      return 25;
+    }
+    const half = this.maxTickLabelHalfHeight();
+    return half ? Math.max(10, half) : 5;
   }
 
   private minBottomOffset(): number {
-    return this.settings.dataZoom ? 45 : 5;
+    const half = this.maxTickLabelHalfHeight();
+    const minOffset = half ? Math.max(5, half) : 5;
+    return this.settings.dataZoom ? Math.max(45, minOffset) : minOffset;
   }
 
   private _onParentScroll() {
@@ -1130,6 +1144,7 @@ export class TbTimeSeriesChart {
             this.updateBarsAnimation(barItems, false);
           }
           this.timeSeriesChart.resize();
+          this.updateAxes();
           if (this.animationEnabled()) {
             this.updateBarsAnimation(barItems, true);
           }
