@@ -68,6 +68,11 @@
         labelText="device-profile.default-rule-chain"
         formControlName="defaultRuleChainId">
       </tb-rule-chain-autocomplete>
+      <tb-time-unit-input
+        labelText="{{ 'device-profile.inactivity-timeout' | translate }}"
+        hintText="{{ 'device-profile.inactivity-timeout-hint' | translate }}"
+        formControlName="inactivityTimeoutSec">
+      </tb-time-unit-input>
       <tb-dashboard-autocomplete
         label="{{'device-profile.mobile-dashboard' | translate}}"
         formControlName="defaultDashboardId">
