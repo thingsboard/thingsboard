@@ -28,7 +28,7 @@
         <div *ngIf="showLabel" [class.tb-label-value-card-label]="!settings.autoScale" [style]="labelStyle" [style.color]="labelColor.color"
              [innerHTML]="label$ | async | safe:'html'"></div>
       </div>
-      <div class="tb-label-value-card-value" [style]="valueStyle" [style.color]="valueColor.color">{{ valueText }}</div>
+      <div class="tb-label-value-card-value" [style]="valueStyle" [style.color]="valueColor.color">{{ valueText | customTranslate }}</div>
     </div>
   </div>
 </div>
