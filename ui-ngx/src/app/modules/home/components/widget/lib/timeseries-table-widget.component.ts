@@ -89,6 +89,7 @@ import {
   noDataMessage,
   prepareTableCellButtonActions,
   RowStyleInfo,
+  setupPaginationResets,
   TableCellButtonActionDescriptor,
   TableWidgetDataKeySettings,
   TableWidgetSettings
@@ -286,6 +287,9 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     if (this.widgetResize$) {
       this.widgetResize$.disconnect();
     }
+    this.subscriptions.forEach(subscription => subscription.unsubscribe());
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   ngAfterViewInit(): void {
@@ -653,7 +657,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
       if (this.displayPagination) {
         paginator = this.paginators.toArray()[index];
         this.subscriptions.push(
-          sort.sortChange.subscribe(() => paginator.pageIndex = 0)
+          setupPaginationResets(this.ctx, paginator, sort)
         );
         observables.push(paginator.page);
       }
