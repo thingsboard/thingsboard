@@ -815,7 +815,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
                 LwM2mPath pathSingleOb = singleObs.getPath();
                 LwM2mPath pathObjectId = new LwM2mPath(objectId);
                 if (!pathSingleOb.toString().equals(objectId)) {
-                    List paths = Arrays.asList(pathSingleOb, pathObjectId);
+                    List<LwM2mPath> paths = Arrays.asList(pathSingleOb, pathObjectId);
                     try {
                         LwM2mPath.validateNotOverlapping(paths);
                     } catch (IllegalArgumentException e){
