@@ -1297,9 +1297,9 @@ public class UserControllerTest extends AbstractControllerTest {
         Assert.assertEquals(savedDashboard2.getTitle(), starred.getTitle());
 
         //TEST renaming in the cache.
-        savedDashboard1.setTitle(RandomStringUtils.randomAlphanumeric(10));
+        savedDashboard1.setTitle(RandomStringUtils.secure().nextAlphanumeric(10));
         savedDashboard1 = doPost("/api/dashboard", savedDashboard1, Dashboard.class);
-        savedDashboard2.setTitle(RandomStringUtils.randomAlphanumeric(10));
+        savedDashboard2.setTitle(RandomStringUtils.secure().nextAlphanumeric(10));
         savedDashboard2 = doPost("/api/dashboard", savedDashboard2, Dashboard.class);
 
         newSettings = doGet("/api/user/dashboards/" + savedDashboard1.getId().getId() + "/unstar", UserDashboardsInfo.class);

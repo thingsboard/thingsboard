@@ -131,7 +131,7 @@ public class NotificationApiWsClient extends TbTestWebSocketClient {
     }
 
     private int newCmdId() {
-        return RandomUtils.nextInt(1, 1000);
+        return RandomUtils.secure().randomInt(1, 1000);
     }
 
 }

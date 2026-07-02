@@ -50,7 +50,7 @@ import static org.mockito.Mockito.when;
 
 class TbCheckAlarmStatusNodeTest {
 
-    private static final TenantId TENANT_ID = new TenantId(UUID.randomUUID());
+    private static final TenantId TENANT_ID = TenantId.fromUUID(UUID.randomUUID());
     private static final DeviceId DEVICE_ID = new DeviceId(UUID.randomUUID());
     private static final AlarmId ALARM_ID = new AlarmId(UUID.randomUUID());
     private static final DirectListeningExecutor DB_EXECUTOR = DirectListeningExecutor.INSTANCE;

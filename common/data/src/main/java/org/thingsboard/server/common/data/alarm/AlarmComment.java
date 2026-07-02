@@ -34,6 +34,7 @@ import java.io.Serial;
 
 @Schema
 @Data
+@EqualsAndHashCode(callSuper = false)
 @Builder
 @AllArgsConstructor
 public class AlarmComment extends BaseData<AlarmCommentId> implements HasName {

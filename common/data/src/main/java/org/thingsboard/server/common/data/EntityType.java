@@ -23,6 +23,8 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 
+import static org.thingsboard.server.common.data.StringUtils.removeStart;
+
 public enum EntityType {
 
     TENANT(1),

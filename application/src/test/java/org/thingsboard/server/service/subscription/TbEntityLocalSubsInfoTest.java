@@ -161,7 +161,7 @@ public class TbEntityLocalSubsInfoTest {
     }
 
     private TbEntityLocalSubsInfo createSubsInfo() {
-        return new TbEntityLocalSubsInfo(new TenantId(UUID.randomUUID()), new DeviceId(UUID.randomUUID()));
+        return new TbEntityLocalSubsInfo(TenantId.fromUUID(UUID.randomUUID()), new DeviceId(UUID.randomUUID()));
     }
 
     private void checkEvent(TbEntitySubEvent event, Set<TbAttributeSubscription> expectedSubs, ComponentLifecycleEvent expectedType) {

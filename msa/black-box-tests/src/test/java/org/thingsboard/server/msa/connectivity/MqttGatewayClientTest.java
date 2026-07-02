@@ -29,7 +29,7 @@ import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -400,7 +400,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
             TimeUnit.SECONDS.sleep(30);
         }
 
-        String deviceName = "mqtt_device" + RandomStringUtils.randomAlphabetic(5);
+        String deviceName = "mqtt_device" + RandomStringUtils.secure().nextAlphabetic(5);
         mqttClient.publish("v1/gateway/connect", Unpooled.wrappedBuffer(createGatewayConnectPayload(deviceName).toString().getBytes()), MqttQoS.AT_LEAST_ONCE).get();
 
         if (timeoutMultiplier > 1) {

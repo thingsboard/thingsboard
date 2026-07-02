@@ -335,7 +335,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
     private String generateRandomKey() {
         return Base64.getEncoder().encodeToString(
-                RandomStringUtils.randomAlphanumeric(64).getBytes(StandardCharsets.UTF_8));
+                RandomStringUtils.secure().nextAlphanumeric(64).getBytes(StandardCharsets.UTF_8));
     }
 
     @Override

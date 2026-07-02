@@ -20,8 +20,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -52,30 +52,30 @@ import static org.mockito.BDDMockito.willReturn;
 @SpringBootTest(classes = {InstallScripts.class, RuleChainDataValidator.class})
 class InstallScriptsTest {
 
-    @MockBean
+    @MockitoBean
     RuleChainService ruleChainService;
-    @MockBean
+    @MockitoBean
     DashboardService dashboardService;
-    @MockBean
+    @MockitoBean
     WidgetTypeService widgetTypeService;
-    @MockBean
+    @MockitoBean
     WidgetsBundleService widgetsBundleService;
-    @MockBean
+    @MockitoBean
     OAuth2ConfigTemplateService oAuth2TemplateService;
-    @MockBean
+    @MockitoBean
     ResourceService resourceService;
-    @MockBean
+    @MockitoBean
     ImageService imageService;
-    @MockBean
+    @MockitoBean
     ResourcesUpdater resourcesUpdater;
-    @SpyBean
+    @MockitoSpyBean
     InstallScripts installScripts;
 
-    @MockBean
+    @MockitoBean
     TenantService tenantService;
-    @MockBean
+    @MockitoBean
     ApiLimitService apiLimitService;
-    @SpyBean
+    @MockitoSpyBean
     RuleChainDataValidator ruleChainValidator;
     TenantId tenantId = TenantId.fromUUID(UUID.fromString("9ef79cdf-37a8-4119-b682-2e7ed4e018da"));
 
