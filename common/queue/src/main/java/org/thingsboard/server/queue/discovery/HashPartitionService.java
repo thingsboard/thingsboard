@@ -109,7 +109,7 @@ public class HashPartitionService implements PartitionService {
 
     private final ConcurrentMap<TenantId, TenantRoutingInfo> tenantRoutingInfoMap = new ConcurrentHashMap<>();
 
-    private List<ServiceInfo> currentOtherServices;
+    private volatile List<ServiceInfo> currentOtherServices;
     private final Map<String, List<ServiceInfo>> tbTransportServicesByType = new HashMap<>();
     private volatile Map<TenantProfileId, List<ServiceInfo>> responsibleServices = Collections.emptyMap();
 
