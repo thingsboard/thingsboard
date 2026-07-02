@@ -41,6 +41,7 @@
     "@tinymce/tinymce-angular": "^8.0.1",
     "ace-builds": "1.43.6",
     "ace-diff": "^3.3.0",
+    "ace-linters": "^2.0.0",
     "angular-gridster2": "~20.2.4",
     "angular2-hotkeys": "^16.0.1",
     "canvas-gauges": "^2.1.7",
