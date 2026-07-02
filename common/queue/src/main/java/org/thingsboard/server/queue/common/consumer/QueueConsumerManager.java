@@ -25,6 +25,7 @@ import org.thingsboard.server.queue.TbQueueMsg;
 
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -36,6 +37,8 @@ import java.util.function.Supplier;
 @Slf4j
 public class QueueConsumerManager<M extends TbQueueMsg> {
 
+    public static final long DEFAULT_STOP_TIMEOUT_MS = TimeUnit.SECONDS.toMillis(10);
+
     private final String name;
     private final MsgPackProcessor<M> msgPackProcessor;
     private final long pollInterval;
@@ -43,6 +46,7 @@ public class QueueConsumerManager<M extends TbQueueMsg> {
     private final String threadPrefix;
     /** Optional poll gate: while {@code false} the loop skips polling so the position doesn't advance; {@code null} = always ready (default). */
     private final BooleanSupplier readinessCheck;
+    private final long stopTimeoutMs;
 
     @Getter
     private final TbQueueConsumer<M> consumer;
@@ -52,13 +56,15 @@ public class QueueConsumerManager<M extends TbQueueMsg> {
     @Builder
     public QueueConsumerManager(String name, MsgPackProcessor<M> msgPackProcessor,
                                 long pollInterval, Supplier<TbQueueConsumer<M>> consumerCreator,
-                                ExecutorService consumerExecutor, String threadPrefix, BooleanSupplier readinessCheck) {
+                                ExecutorService consumerExecutor, String threadPrefix,
+                                BooleanSupplier readinessCheck, Long stopTimeoutMs) {
         this.name = name;
         this.pollInterval = pollInterval;
         this.msgPackProcessor = msgPackProcessor;
         this.consumerExecutor = consumerExecutor;
         this.threadPrefix = threadPrefix;
         this.readinessCheck = readinessCheck;
+        this.stopTimeoutMs = stopTimeoutMs != null ? stopTimeoutMs : DEFAULT_STOP_TIMEOUT_MS;
         this.consumer = consumerCreator.get();
     }
 
@@ -135,11 +141,22 @@ public class QueueConsumerManager<M extends TbQueueMsg> {
         log.debug("[{}] Stopping consumer", name);
         stopped = true;
         consumer.unsubscribe();
+        if (consumerTask == null) {
+            return;
+        }
         try {
-            if (consumerTask != null) {
-                consumerTask.get(10, TimeUnit.SECONDS);
-            }
-        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            consumerTask.get(stopTimeoutMs, TimeUnit.MILLISECONDS);
+        } catch (TimeoutException e) {
+            // The loop did not finish in time: it is most likely blocked inside the message pack
+            // processor (e.g. waiting for a downlink delivery that will never be acknowledged).
+            // A leftover consumer keeps its group membership alive via heartbeats and thereby
+            // blocks a replacement consumer of the same group from getting partitions assigned,
+            // so we must interrupt it instead of abandoning it.
+            log.warn("[{}] Consumer loop did not stop in {} ms, interrupting it", name, stopTimeoutMs);
+            consumerTask.cancel(true);
+        } catch (CancellationException e) {
+            log.debug("[{}] Consumer loop was already cancelled", name);
+        } catch (InterruptedException | ExecutionException e) {
             log.error("[{}] Failed to await consumer loop stop", name, e);
         }
     }
