@@ -121,7 +121,7 @@ export class SetValueActionSettingsComponent implements OnInit, ControlValueAcce
        renderer: this.renderer,
        componentType: SetValueActionSettingsPanelComponent,
        hostView: this.viewContainerRef,
-       preferredPlacement: ['leftTopOnly', 'leftOnly', 'leftBottomOnly'],
+       preferredPlacement: 'leftBottom',
        context: {
          setValueSettings: this.modelValue,
          panelTitle: this.panelTitle,
@@ -130,7 +130,8 @@ export class SetValueActionSettingsComponent implements OnInit, ControlValueAcce
          targetDevice: this.targetDevice,
          widgetType: this.widgetType
        },
-       isModal: true
+       isModal: true,
+       overlayStyle: { maxHeight: '70vh', height: '100%' }
      });
       setValueSettingsPanelPopover.tbComponentRef.instance.popover = setValueSettingsPanelPopover;
       setValueSettingsPanelPopover.tbComponentRef.instance.setValueSettingsApplied.subscribe((setValueSettings) => {
