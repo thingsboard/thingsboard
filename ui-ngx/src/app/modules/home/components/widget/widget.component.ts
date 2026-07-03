@@ -60,7 +60,7 @@ import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { UtilsService } from '@core/services/utils.service';
-import { forkJoin, Observable, of, ReplaySubject, Subscription, throwError } from 'rxjs';
+import { defer, forkJoin, Observable, of, ReplaySubject, Subscription, throwError } from 'rxjs';
 import {
   deepClone,
   guid,
@@ -1502,7 +1502,7 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
   private saveMobileActionLocation(mobileAction: WidgetMobileActionDescriptor,
                                    locationResult: MobileLocationResult,
                                    currentEntityId?: EntityId): void {
-    this.resolveMobileActionTargetEntity(mobileAction, currentEntityId).pipe(
+    defer(() => this.resolveMobileActionTargetEntity(mobileAction, currentEntityId)).pipe(
       switchMap((targetEntityId) => {
         const data: Array<AttributeData> = [
           {key: mobileAction.latitudeKey || 'latitude', value: locationResult.latitude},
@@ -1528,7 +1528,7 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
         this.widgetContext.showSuccessToast(this.translate.instant('widget-action.mobile.location-saved'));
       },
       error: (err) => {
-        const message = err?.message ? err.message : JSON.stringify(err);
+        const message = err?.error?.message || err?.message || JSON.stringify(err);
         this.widgetContext.showErrorToast(
           this.translate.instant('widget-action.mobile.location-save-failed', {error: message}));
       }
