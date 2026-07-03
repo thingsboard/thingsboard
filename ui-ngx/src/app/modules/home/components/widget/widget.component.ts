@@ -38,7 +38,11 @@ import {
 } from '@angular/core';
 import { DashboardWidget } from '@home/models/dashboard-component.models';
 import {
+  MobileActionAttributeSource,
+  MobileActionSaveAs,
+  MobileActionTargetEntityType,
   MobileImageResult,
+  MobileLocationResult,
   Widget,
   WidgetAction,
   WidgetActionDescriptor,
@@ -62,6 +66,7 @@ import {
   guid,
   insertVariable,
   isDefined,
+  isDefinedAndNotNull,
   isNotEmptyStr,
   objToBase64,
   objToBase64URI,
@@ -90,6 +95,9 @@ import {
   WidgetSubscriptionOptions
 } from '@core/api/widget-api.models';
 import { EntityId } from '@shared/models/id/entity-id';
+import { EntityType } from '@shared/models/entity-type.models';
+import { AttributeData, AttributeScope } from '@shared/models/telemetry/telemetry.models';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { ActivatedRoute, Router } from '@angular/router';
 import cssjs from '@core/css/css';
 import {
@@ -1371,6 +1379,9 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
                     case WidgetMobileActionType.getLocation:
                       const latitude = actionResult.latitude;
                       const longitude = actionResult.longitude;
+                      if (mobileAction.saveToEntity) {
+                        this.saveMobileActionLocation(mobileAction, actionResult, entityId);
+                      }
                       if (isNotEmptyTbFunction(mobileAction.processLocationFunction)) {
                         compileTbFunction(this.http, mobileAction.processLocationFunction, 'latitude', 'longitude', '$event', 'widgetContext', 'entityId',
                           'entityName', 'additionalParams', 'entityLabel').subscribe(
@@ -1486,6 +1497,119 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
         }
       );
     }
+  }
+
+  private saveMobileActionLocation(mobileAction: WidgetMobileActionDescriptor,
+                                   locationResult: MobileLocationResult,
+                                   currentEntityId?: EntityId): void {
+    this.resolveMobileActionTargetEntity(mobileAction, currentEntityId).pipe(
+      switchMap((targetEntityId) => {
+        const data: Array<AttributeData> = [
+          {key: mobileAction.latitudeKey || 'latitude', value: locationResult.latitude},
+          {key: mobileAction.longitudeKey || 'longitude', value: locationResult.longitude}
+        ];
+        if (mobileAction.includeMetadata) {
+          if (isDefinedAndNotNull(locationResult.accuracy)) {
+            data.push({key: 'gpsAccuracy', value: locationResult.accuracy});
+          }
+          if (isDefinedAndNotNull(locationResult.ts)) {
+            data.push({key: 'gpsTimestamp', value: locationResult.ts});
+          }
+        }
+        if (mobileAction.saveAs === MobileActionSaveAs.timeseries) {
+          return this.widgetContext.attributeService.saveEntityTimeseries(targetEntityId, 'scope', data, {ignoreErrors: true});
+        } else {
+          return this.widgetContext.attributeService.saveEntityAttributes(targetEntityId, AttributeScope.SERVER_SCOPE, data,
+            {ignoreErrors: true});
+        }
+      })
+    ).subscribe({
+      next: () => {
+        this.widgetContext.showSuccessToast(this.translate.instant('widget-action.mobile.location-saved'));
+      },
+      error: (err) => {
+        const message = err?.message ? err.message : JSON.stringify(err);
+        this.widgetContext.showErrorToast(
+          this.translate.instant('widget-action.mobile.location-save-failed', {error: message}));
+      }
+    });
+  }
+
+  private resolveMobileActionTargetEntity(mobileAction: WidgetMobileActionDescriptor,
+                                          currentEntityId?: EntityId): Observable<EntityId> {
+    const target = mobileAction.targetEntity;
+    const type = target?.type || MobileActionTargetEntityType.currentEntity;
+    switch (type) {
+      case MobileActionTargetEntityType.currentEntity:
+        if (validateEntityId(currentEntityId)) {
+          return of(currentEntityId);
+        }
+        return throwError(() => new Error('Widget action has no current entity'));
+      case MobileActionTargetEntityType.currentUser:
+        return of(this.currentUserEntityId());
+      case MobileActionTargetEntityType.entityAlias: {
+        const aliases = this.widgetContext.aliasController.getEntityAliases();
+        const aliasId = Object.keys(aliases).find(id => aliases[id].alias === target.aliasName);
+        if (!aliasId) {
+          return throwError(() => new Error(`Entity alias '${target.aliasName}' not found in the dashboard`));
+        }
+        return this.widgetContext.aliasController.getAliasInfo(aliasId).pipe(
+          map((aliasInfo) => {
+            const entity = aliasInfo.currentEntity;
+            if (!entity?.id || !entity?.entityType) {
+              throw new Error(`Entity alias '${target.aliasName}' did not resolve to an entity`);
+            }
+            return {entityType: entity.entityType, id: entity.id} as EntityId;
+          })
+        );
+      }
+      case MobileActionTargetEntityType.fromAttribute: {
+        let sourceEntityId: EntityId;
+        if (target.attributeSource === MobileActionAttributeSource.currentEntity) {
+          if (!validateEntityId(currentEntityId)) {
+            return throwError(() => new Error('Widget action has no current entity'));
+          }
+          sourceEntityId = currentEntityId;
+        } else {
+          sourceEntityId = this.currentUserEntityId();
+        }
+        return this.widgetContext.attributeService.getEntityAttributes(
+          sourceEntityId, AttributeScope.SERVER_SCOPE, [target.attributeKey], {ignoreErrors: true}).pipe(
+          map((attributes) => {
+            const attribute = attributes.find(a => a.key === target.attributeKey);
+            if (!attribute || !isDefinedAndNotNull(attribute.value)) {
+              throw new Error(`Attribute '${target.attributeKey}' not found on the source entity`);
+            }
+            return this.parseTargetEntityAttributeValue(attribute.value, target.defaultEntityType);
+          })
+        );
+      }
+    }
+  }
+
+  private currentUserEntityId(): EntityId {
+    const authUser = getCurrentAuthUser(this.store);
+    return {entityType: EntityType.USER, id: authUser.userId};
+  }
+
+  private parseTargetEntityAttributeValue(value: any, defaultEntityType?: EntityType): EntityId {
+    if (typeof value === 'object' && value?.id && value?.entityType) {
+      return {entityType: value.entityType, id: value.id};
+    }
+    if (typeof value === 'string') {
+      let parsed: any = null;
+      try {
+        parsed = JSON.parse(value);
+      } catch (e) {}
+      if (parsed?.id && parsed?.entityType) {
+        return {entityType: parsed.entityType, id: parsed.id};
+      }
+      if (defaultEntityType) {
+        return {entityType: defaultEntityType, id: value};
+      }
+    }
+    throw new Error('Attribute value does not identify a target entity ' +
+      '(expected {entityType, id} JSON or a UUID with a configured entity type)');
   }
 
   private openDashboardStateInPopover($event: Event,
