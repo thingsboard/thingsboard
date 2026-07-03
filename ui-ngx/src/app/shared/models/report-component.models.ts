@@ -259,33 +259,9 @@ const tableReportCellSettings = (header = false): FormProperty[] => ([
       {
         label: 'double',
         value: 'double'
-      },
-      {
-        label: 'groove',
-        value: 'groove'
-      },
-      {
-        label: 'ridge',
-        value: 'ridge'
-      },
-      {
-        label: 'inset',
-        value: 'inset'
-      },
-      {
-        label: 'outset',
-        value: 'outset'
-      },
-      {
-        label: 'none',
-        value: 'none'
-      },
-      {
-        label: 'hidden',
-        value: 'hidden'
       }
     ],
-    default: null
+    default: 'solid'
   },
   {
     id: 'borderColor',

@@ -3,6 +3,7 @@
 package org.thingsboard.server.common.data.report.configuration;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.report.configuration.style.BorderType;
 import org.thingsboard.server.common.data.report.configuration.style.Font;
 import org.thingsboard.server.common.data.report.configuration.style.TextAlignment;
 import org.thingsboard.server.common.data.report.configuration.style.VerticalAlignment;
@@ -15,7 +16,7 @@ public class CellSettings {
     private String backgroundColor;
     private TextAlignment textAlignment;
     private VerticalAlignment verticalAlignment;
-    private String borderStyle;
+    private BorderType borderStyle;
     private Integer borderWidth;
     private String borderColor;
 
