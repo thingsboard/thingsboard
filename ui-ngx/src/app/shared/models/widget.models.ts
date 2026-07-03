@@ -722,6 +722,8 @@ export interface MobileQrCodeResult {
 export interface MobileLocationResult {
   latitude: number;
   longitude: number;
+  accuracy?: number;
+  ts?: number;
 }
 
 export interface MobileDeviceProvisionResult {
@@ -767,7 +769,64 @@ export interface MakePhoneCallDescriptor extends ProcessLaunchResultDescriptor {
   getPhoneNumberFunction: TbFunction;
 }
 
-export interface GetLocationDescriptor {
+export enum MobileActionTargetEntityType {
+  currentEntity = 'CURRENT_ENTITY',
+  currentUser = 'CURRENT_USER',
+  entityAlias = 'ENTITY_ALIAS',
+  fromAttribute = 'FROM_ATTRIBUTE'
+}
+
+export const mobileActionTargetEntityTypeTranslationMap = new Map<MobileActionTargetEntityType, string>(
+  [
+    [ MobileActionTargetEntityType.currentEntity, 'widget-action.mobile.target-current-entity' ],
+    [ MobileActionTargetEntityType.currentUser, 'widget-action.mobile.target-current-user' ],
+    [ MobileActionTargetEntityType.entityAlias, 'widget-action.mobile.target-entity-alias' ],
+    [ MobileActionTargetEntityType.fromAttribute, 'widget-action.mobile.target-from-attribute' ]
+  ]
+);
+
+export enum MobileActionAttributeSource {
+  currentEntity = 'CURRENT_ENTITY',
+  currentUser = 'CURRENT_USER'
+}
+
+export const mobileActionAttributeSourceTranslationMap = new Map<MobileActionAttributeSource, string>(
+  [
+    [ MobileActionAttributeSource.currentEntity, 'widget-action.mobile.target-current-entity' ],
+    [ MobileActionAttributeSource.currentUser, 'widget-action.mobile.target-current-user' ]
+  ]
+);
+
+export enum MobileActionSaveAs {
+  attributes = 'ATTRIBUTES',
+  timeseries = 'TIMESERIES'
+}
+
+export const mobileActionSaveAsTranslationMap = new Map<MobileActionSaveAs, string>(
+  [
+    [ MobileActionSaveAs.attributes, 'widget-action.mobile.save-as-attributes' ],
+    [ MobileActionSaveAs.timeseries, 'widget-action.mobile.save-as-timeseries' ]
+  ]
+);
+
+export interface MobileActionTargetEntityConfig {
+  type: MobileActionTargetEntityType;
+  aliasName?: string;
+  attributeSource?: MobileActionAttributeSource;
+  attributeKey?: string;
+  defaultEntityType?: EntityType;
+}
+
+export interface SaveLocationDescriptor {
+  saveToEntity?: boolean;
+  targetEntity?: MobileActionTargetEntityConfig;
+  saveAs?: MobileActionSaveAs;
+  latitudeKey?: string;
+  longitudeKey?: string;
+  includeMetadata?: boolean;
+}
+
+export interface GetLocationDescriptor extends SaveLocationDescriptor {
   processLocationFunction: TbFunction;
 }
 
