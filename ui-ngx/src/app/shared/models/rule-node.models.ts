@@ -90,8 +90,7 @@ const LOWERCASE_WORDS = new Set(['a', 'an', 'the', 'and',
 ]);
 
 export function toStandardizedLinkLabel(label: string): string {
-  return label
-    .split(' ')
+  return label?.split(' ')
     .map((word, index) => {
       if (word.length > 1 && word === word.toUpperCase()) {
         return word;
@@ -105,11 +104,17 @@ export function toStandardizedLinkLabel(label: string): string {
         return word.toLowerCase();
       }
       return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-    }).join(' ');
+    }).join(' ') ?? '';
 }
 
 export function normalizeLinkLabel(label: LinkLabel): LinkLabel {
   return {name: toStandardizedLinkLabel(label.name), value: label.value};
+}
+
+export function toStandardizedLinkLabels(labels: string[], allowedLabels: {[label: string]: LinkLabel}): string {
+  return labels
+    .map(label => allowedLabels?.[label] ? toStandardizedLinkLabel(label) : label)
+    .join(' / ');
 }
 
 @Directive()

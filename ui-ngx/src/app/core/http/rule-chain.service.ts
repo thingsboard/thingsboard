@@ -31,6 +31,7 @@ import { ComponentDescriptorService } from './component-descriptor.service';
 import {
   IRuleNodeConfigurationComponent,
   LinkLabel,
+  normalizeLinkLabel,
   RuleNodeComponentDescriptor,
   RuleNodeConfiguration,
   RuleNodeConfigurationComponent,
@@ -149,10 +150,10 @@ export class RuleChainService {
     const relationTypes = component.configurationDescriptor.nodeDefinition.relationTypes;
     const linkLabels: {[label: string]: LinkLabel} = {};
     relationTypes.forEach((label) => {
-      linkLabels[label] = {
+      linkLabels[label] = normalizeLinkLabel({
         name: label,
         value: label
-      };
+      });
     });
     return linkLabels;
   }

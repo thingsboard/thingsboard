@@ -150,9 +150,9 @@ export class LinkLabelsComponent implements ControlValueAccessor, OnInit, OnChan
       if (value) {
         value.forEach((label) => {
           if (this.allowedLabels[label]) {
-            this.labels.push(deepClone(normalizeLinkLabel(this.allowedLabels[label])));
+            this.labels.push(normalizeLinkLabel(this.allowedLabels[label]));
           } else {
-            this.labels.push({name: toStandardizedLinkLabel(label), value: label});
+            this.labels.push({name: label, value: label});
           }
         });
       }
