@@ -25,6 +25,12 @@ import {
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
   ActionConfig,
+  MobileActionAttributeSource,
+  mobileActionAttributeSourceTranslationMap,
+  MobileActionSaveAs,
+  mobileActionSaveAsTranslationMap,
+  MobileActionTargetEntityType,
+  mobileActionTargetEntityTypeTranslationMap,
   ProvisionType,
   provisionTypeTranslationMap,
   WidgetActionType,
@@ -78,6 +84,16 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
 
   provisionTypes: string[] = Object.keys(ProvisionType);
   provisionTypeTranslationMap = provisionTypeTranslationMap;
+
+  targetEntityTypes = Object.values(MobileActionTargetEntityType);
+  targetEntityTypeTranslations = mobileActionTargetEntityTypeTranslationMap;
+  targetEntityType = MobileActionTargetEntityType;
+
+  attributeSources = Object.values(MobileActionAttributeSource);
+  attributeSourceTranslations = mobileActionAttributeSourceTranslationMap;
+
+  saveAsOptions = Object.values(MobileActionSaveAs);
+  saveAsTranslations = mobileActionSaveAsTranslationMap;
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -282,6 +298,44 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
             'processLocationFunction',
             this.fb.control(processLocationFunction, [Validators.required])
           );
+          const targetEntity = action?.targetEntity;
+          this.mobileActionTypeFormGroup.addControl(
+            'saveToEntity',
+            this.fb.control(action?.saveToEntity || false, [])
+          );
+          this.mobileActionTypeFormGroup.addControl(
+            'targetEntity',
+            this.fb.group({
+              type: [targetEntity?.type || MobileActionTargetEntityType.currentEntity, []],
+              aliasName: [targetEntity?.aliasName, []],
+              attributeSource: [targetEntity?.attributeSource || MobileActionAttributeSource.currentUser, []],
+              attributeKey: [targetEntity?.attributeKey, []],
+              defaultEntityType: [targetEntity?.defaultEntityType, []]
+            })
+          );
+          this.mobileActionTypeFormGroup.addControl(
+            'saveAs',
+            this.fb.control(action?.saveAs || MobileActionSaveAs.attributes, [])
+          );
+          this.mobileActionTypeFormGroup.addControl(
+            'latitudeKey',
+            this.fb.control(action?.latitudeKey || 'latitude', [])
+          );
+          this.mobileActionTypeFormGroup.addControl(
+            'longitudeKey',
+            this.fb.control(action?.longitudeKey || 'longitude', [])
+          );
+          this.mobileActionTypeFormGroup.addControl(
+            'includeMetadata',
+            this.fb.control(action?.includeMetadata || false, [])
+          );
+          this.updateSaveLocationValidators();
+          this.mobileActionTypeFormGroup.get('saveToEntity').valueChanges.pipe(
+            takeUntilDestroyed(this.destroyRef)
+          ).subscribe(() => this.updateSaveLocationValidators());
+          this.mobileActionTypeFormGroup.get('targetEntity.type').valueChanges.pipe(
+            takeUntilDestroyed(this.destroyRef)
+          ).subscribe(() => this.updateSaveLocationValidators());
           break;
         case WidgetMobileActionType.deviceProvision:
           let handleProvisionSuccessFunction = action?.handleProvisionSuccessFunction;
@@ -306,6 +360,19 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
     ).subscribe(() => {
       this.updateModel();
     });
+  }
+
+  private updateSaveLocationValidators() {
+    const saveToEntity: boolean = this.mobileActionTypeFormGroup.get('saveToEntity').value;
+    const type: MobileActionTargetEntityType = this.mobileActionTypeFormGroup.get('targetEntity.type').value;
+    const aliasName = this.mobileActionTypeFormGroup.get('targetEntity.aliasName');
+    const attributeKey = this.mobileActionTypeFormGroup.get('targetEntity.attributeKey');
+    aliasName.setValidators(
+      saveToEntity && type === MobileActionTargetEntityType.entityAlias ? [Validators.required] : []);
+    attributeKey.setValidators(
+      saveToEntity && type === MobileActionTargetEntityType.fromAttribute ? [Validators.required] : []);
+    aliasName.updateValueAndValidity({emitEvent: false});
+    attributeKey.updateValueAndValidity({emitEvent: false});
   }
 
   getActionConfigs() {

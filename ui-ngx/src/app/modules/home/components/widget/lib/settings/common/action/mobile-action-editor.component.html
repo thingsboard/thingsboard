@@ -57,6 +57,105 @@
         </mat-form-field>
       </div>
     }
+    @if (mobileActionFormGroup.get('type').value === mobileActionType.getLocation) {
+      <div class="tb-form-row">
+        <mat-slide-toggle class="mat-slide" formControlName="saveToEntity">
+          {{ 'widget-action.mobile.save-to-entity' | translate }}
+        </mat-slide-toggle>
+      </div>
+      @if (mobileActionTypeFormGroup.get('saveToEntity').value) {
+        <ng-container formGroupName="targetEntity">
+          <div class="tb-form-row">
+            <div class="fixed-title-width">{{ 'widget-action.mobile.target-entity-type' | translate }}</div>
+            <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+              <mat-select formControlName="type">
+                <mat-option *ngFor="let type of targetEntityTypes" [value]="type">
+                  {{ targetEntityTypeTranslations.get(type) | translate }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          @if (mobileActionTypeFormGroup.get('targetEntity.type').value === targetEntityType.entityAlias) {
+            <div class="tb-form-row">
+              <div class="fixed-title-width">{{ 'widget-action.mobile.target-entity-alias-name' | translate }}*</div>
+              <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+                <input matInput required formControlName="aliasName"
+                       placeholder="{{ 'widget-action.mobile.target-entity-alias-name' | translate }}">
+                <mat-icon matSuffix
+                          matTooltipPosition="above"
+                          matTooltipClass="tb-error-tooltip"
+                          [matTooltip]="'widget-action.mobile.target-entity-alias-name-required' | translate"
+                          *ngIf="mobileActionTypeFormGroup.get('targetEntity.aliasName').hasError('required')
+                                 && mobileActionTypeFormGroup.get('targetEntity.aliasName').touched"
+                          class="tb-error">
+                  warning
+                </mat-icon>
+              </mat-form-field>
+            </div>
+          }
+          @if (mobileActionTypeFormGroup.get('targetEntity.type').value === targetEntityType.fromAttribute) {
+            <div class="tb-form-row">
+              <div class="fixed-title-width">{{ 'widget-action.mobile.target-attribute-source' | translate }}</div>
+              <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+                <mat-select formControlName="attributeSource">
+                  <mat-option *ngFor="let source of attributeSources" [value]="source">
+                    {{ attributeSourceTranslations.get(source) | translate }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+            <div class="tb-form-row">
+              <div class="fixed-title-width">{{ 'widget-action.mobile.target-attribute-key' | translate }}*</div>
+              <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+                <input matInput required formControlName="attributeKey"
+                       placeholder="{{ 'widget-action.mobile.target-attribute-key' | translate }}">
+                <mat-icon matSuffix
+                          matTooltipPosition="above"
+                          matTooltipClass="tb-error-tooltip"
+                          [matTooltip]="'widget-action.mobile.target-attribute-key-required' | translate"
+                          *ngIf="mobileActionTypeFormGroup.get('targetEntity.attributeKey').hasError('required')
+                                 && mobileActionTypeFormGroup.get('targetEntity.attributeKey').touched"
+                          class="tb-error">
+                  warning
+                </mat-icon>
+              </mat-form-field>
+            </div>
+            <div class="tb-form-row">
+              <div class="fixed-title-width">{{ 'widget-action.mobile.target-default-entity-type' | translate }}</div>
+              <tb-entity-type-select class="flex-1" formControlName="defaultEntityType">
+              </tb-entity-type-select>
+            </div>
+          }
+        </ng-container>
+        <div class="tb-form-row">
+          <div class="fixed-title-width">{{ 'widget-action.mobile.save-as' | translate }}</div>
+          <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+            <mat-select formControlName="saveAs">
+              <mat-option *ngFor="let option of saveAsOptions" [value]="option">
+                {{ saveAsTranslations.get(option) | translate }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row">
+          <div class="fixed-title-width">{{ 'widget-action.mobile.latitude-key' | translate }}</div>
+          <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="latitudeKey">
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row">
+          <div class="fixed-title-width">{{ 'widget-action.mobile.longitude-key' | translate }}</div>
+          <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="longitudeKey">
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row">
+          <mat-slide-toggle class="mat-slide" formControlName="includeMetadata">
+            {{ 'widget-action.mobile.include-metadata' | translate }}
+          </mat-slide-toggle>
+        </div>
+      }
+    }
 
     @for (config of actionConfig; track config.formControlName) {
       <div class="tb-form-panel stroked">
