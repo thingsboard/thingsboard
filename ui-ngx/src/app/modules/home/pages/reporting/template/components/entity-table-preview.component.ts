@@ -42,8 +42,8 @@ export class EntityTablePreviewComponent extends AbstractReportTablePreviewCompo
     }
   }
 
-  protected styleFromColumnSettings(column: DataKey, header = false): ComponentStyle {
-    const style = super.styleFromColumnSettings(column, header);
+  protected styleFromColumnSettings(column: DataKey, header = false, firstColumn = false): ComponentStyle {
+    const style = super.styleFromColumnSettings(column, header, firstColumn);
     if (!this.isPlainFormat && !header) {
       if (column.name === 'createdTime') {
         style.fontSize = style.fontSize || '9pt';
