@@ -32,9 +32,8 @@ import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { EntityInfo } from '@shared/models/entity.models';
 import { EntityFilter } from '@shared/models/query/query.models';
 import { EntityService } from '@core/http/entity.service';
-import { isDefinedAndNotNull } from '@core/utils';
+import { isDefinedAndNotNull, objectRequired } from '@core/utils';
 import { AutocompleteBaseDirective } from '@shared/components/directives/autocomplete-base.directive';
-import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 
 @Component({
     selector: 'tb-aliases-entity-autocomplete',
@@ -73,8 +72,6 @@ export class AliasesEntityAutocompleteComponent extends AutocompleteBaseDirectiv
 
   @ViewChild('entityInfoInput', {static: true}) entityInfoInput: ElementRef;
 
-  @ViewChild('autocompleteTrigger') autocompleteTrigger: MatAutocompleteTrigger;
-
   filteredEntityInfos: Observable<Array<EntityInfo>>;
 
   constructor(private store: Store<AppState>,
@@ -83,7 +80,7 @@ export class AliasesEntityAutocompleteComponent extends AutocompleteBaseDirectiv
               private fb: UntypedFormBuilder) {
     super();
     this.selectEntityInfoFormGroup = this.fb.group({
-      entityInfo: [null]
+      entityInfo: [null, objectRequired()]
     });
   }
 
@@ -111,7 +108,7 @@ export class AliasesEntityAutocompleteComponent extends AutocompleteBaseDirectiv
         map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
         distinctUntilChanged(),
         switchMap(name => this.fetchEntityInfos(name)),
-        shareReplay(1)
+        shareReplay({bufferSize: 1, refCount: true})
       );
   }
 
@@ -128,6 +125,7 @@ export class AliasesEntityAutocompleteComponent extends AutocompleteBaseDirectiv
       this.modelValue = null;
       this.selectEntityInfoFormGroup.get('entityInfo').patchValue(null, {emitEvent: false});
     }
+    this.dirty = true;
   }
 
   updateView(value: EntityInfo | null) {

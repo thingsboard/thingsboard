@@ -26,7 +26,6 @@
   }
   <input matInput [errorStateMatcher]="this" type="text"
          #deviceProfileInput
-         #autocompleteTrigger="matAutocompleteTrigger"
          formControlName="deviceProfile"
          (focusin)="onFocus()"
          (blur)="onBlur()"
@@ -101,7 +100,7 @@
   }
   @if (selectDeviceProfileFormGroup.get('deviceProfile').hasError('objectRequired')) {
     <mat-error>
-      {{ (addNewProfile ? 'entity.entity-not-valid-create-new' : 'entity.entity-not-valid') | translate: {entity: 'device-profile.device-profile' | translate | lowercase} }}
+      {{ entityNotValidTranslationKey | translate: {entity: 'device-profile.device-profile' | translate | lowercase} }}
     </mat-error>
   }
   @if (hint && !disabled) {

@@ -76,7 +76,7 @@ export class RuleChainAutocompleteComponent extends AutocompleteBaseDirective im
   disabled: boolean;
 
   @Input()
-  entityNotValidTranslationKey: string = 'entity.entity-not-valid';
+  entityNotValidTranslationKey: string = 'entity.entity-not-valid-create-new';
 
   @ViewChild('ruleChainInput', {static: true}) ruleChainInput: ElementRef;
   @ViewChild('ruleChainInput', {read: MatAutocompleteTrigger}) ruleChainAutocomplete: MatAutocompleteTrigger;
@@ -124,7 +124,7 @@ export class RuleChainAutocompleteComponent extends AutocompleteBaseDirective im
         map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
         distinctUntilChanged(),
         switchMap(name => this.fetchRuleChain(name)),
-        shareReplay(1)
+        shareReplay({bufferSize: 1, refCount: true})
       );
   }
 

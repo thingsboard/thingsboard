@@ -21,7 +21,7 @@ import { ErrorStateMatcher } from '@angular/material/core';
 @Directive()
 export abstract class AutocompleteBaseDirective implements ErrorStateMatcher {
 
-  protected  isPanelOpen = false;
+  protected isPanelOpen = false;
 
   protected dirty = false;
 
@@ -56,7 +56,7 @@ export abstract class AutocompleteBaseDirective implements ErrorStateMatcher {
   }
 
   textIsNotEmpty(text: string): boolean {
-    return (text && text.length > 0);
+    return !!text?.length;
   }
 
   onFocus(): void {
@@ -69,7 +69,6 @@ export abstract class AutocompleteBaseDirective implements ErrorStateMatcher {
   onBlur(): void {
     this.onTouched();
   }
-
 
   isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
     if (this.isPanelOpen) {

@@ -36,7 +36,6 @@ import { TenantProfileDialogComponent, TenantProfileDialogData } from './tenant-
 import { emptyPageData } from '@shared/models/page/page-data';
 import { getEntityDetailsPageURL, objectRequired } from '@core/utils';
 import { MatFormFieldAppearance } from '@angular/material/form-field';
-import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { AutocompleteBaseDirective } from '@shared/components/directives/autocomplete-base.directive';
 
 @Component({
@@ -82,8 +81,6 @@ export class TenantProfileAutocompleteComponent extends AutocompleteBaseDirectiv
 
   @ViewChild('tenantProfileInput', {static: true}) tenantProfileInput: ElementRef;
 
-  @ViewChild('tenantProfileInput', {read: MatAutocompleteTrigger}) autocompleteTrigger: MatAutocompleteTrigger;
-
   filteredTenantProfiles: Observable<Array<EntityInfoData>>;
 
   tenantProfileURL: string;
@@ -124,7 +121,7 @@ export class TenantProfileAutocompleteComponent extends AutocompleteBaseDirectiv
         map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
         distinctUntilChanged(),
         switchMap(name => this.fetchTenantProfiles(name)),
-        shareReplay(1)
+        shareReplay({bufferSize: 1, refCount: true})
       );
   }
 

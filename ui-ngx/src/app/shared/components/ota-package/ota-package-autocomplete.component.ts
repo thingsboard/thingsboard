@@ -43,7 +43,7 @@ import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 import { MatFormFieldAppearance } from '@angular/material/form-field';
 import { AutocompleteBaseDirective } from '@shared/components/directives/autocomplete-base.directive';
-import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
     selector: 'tb-ota-package-autocomplete',
@@ -96,16 +96,9 @@ export class OtaPackageAutocompleteComponent extends AutocompleteBaseDirective i
   @Input()
   requiredText: string;
 
-  private _useFullEntityId = false;
-
-  get useFullEntityId(): boolean {
-    return this._useFullEntityId;
-  }
-
   @Input()
-  set useFullEntityId(value: boolean) {
-    this._useFullEntityId = coerceBooleanProperty(value);
-  }
+  @coerceBoolean()
+  useFullEntityId = false;
 
   @Input()
   showDetailsPageLink = false;
@@ -128,8 +121,6 @@ export class OtaPackageAutocompleteComponent extends AutocompleteBaseDirective i
   disabled: boolean;
 
   @ViewChild('packageInput', {static: true}) packageInput: ElementRef;
-
-  @ViewChild('autocompleteTrigger') autocompleteTrigger: MatAutocompleteTrigger;
 
   filteredPackages: Observable<Array<OtaPackageInfo>>;
 
@@ -183,7 +174,7 @@ export class OtaPackageAutocompleteComponent extends AutocompleteBaseDirective i
         }),
         map(value => value ? (typeof value === 'string' ? value : value.title) : ''),
         switchMap(name => this.fetchPackages(name)),
-        shareReplay(1)
+        shareReplay({bufferSize: 1, refCount: true})
       );
 
     this.filteredPackages = merge(this.cleanFilteredPackages, getPackages);

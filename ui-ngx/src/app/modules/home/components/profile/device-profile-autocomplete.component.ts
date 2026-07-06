@@ -43,7 +43,7 @@ import { DeviceProfileId } from '@shared/models/id/device-profile-id';
 import { DeviceProfile, DeviceProfileInfo, DeviceProfileType, DeviceTransportType } from '@shared/models/device.models';
 import { DeviceProfileService } from '@core/http/device-profile.service';
 import { DeviceProfileDialogComponent, DeviceProfileDialogData } from './device-profile-dialog.component';
-import { MatAutocomplete, MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { MatAutocomplete } from '@angular/material/autocomplete';
 import { AddDeviceProfileDialogComponent, AddDeviceProfileDialogData } from './add-device-profile-dialog.component';
 import { emptyPageData } from '@shared/models/page/page-data';
 import { getEntityDetailsPageURL, objectRequired } from '@core/utils';
@@ -115,8 +115,16 @@ export class DeviceProfileAutocompleteComponent extends AutocompleteBaseDirectiv
   @coerceBoolean()
   inlineField: boolean;
 
+  private _entityNotValidTranslationKey: string = null;
+
   @Input()
-  entityNotValidTranslationKey: string = 'entity.entity-not-valid';
+  set entityNotValidTranslationKey(value: string) {
+    this._entityNotValidTranslationKey = value;
+  }
+
+  get entityNotValidTranslationKey(): string {
+    return this._entityNotValidTranslationKey || (this.addNewProfile ? 'entity.entity-not-valid-create-new' : 'entity.entity-not-valid');
+  }
 
   @Output()
   deviceProfileUpdated = new EventEmitter<DeviceProfileId>();
@@ -127,8 +135,6 @@ export class DeviceProfileAutocompleteComponent extends AutocompleteBaseDirectiv
   @ViewChild('deviceProfileInput', {static: true}) deviceProfileInput: ElementRef;
 
   @ViewChild('deviceProfileAutocomplete', {static: true}) deviceProfileAutocomplete: MatAutocomplete;
-
-  @ViewChild('autocompleteTrigger') autocompleteTrigger: MatAutocompleteTrigger;
 
   filteredDeviceProfiles: Observable<Array<DeviceProfileInfo>>;
 
@@ -204,7 +210,7 @@ export class DeviceProfileAutocompleteComponent extends AutocompleteBaseDirectiv
         debounceTime(150),
         distinctUntilChanged(),
         switchMap(name => this.fetchDeviceProfiles(name)),
-        shareReplay(1)
+        shareReplay({bufferSize: 1, refCount: true})
       );
   }
 
@@ -287,7 +293,8 @@ export class DeviceProfileAutocompleteComponent extends AutocompleteBaseDirectiv
     this.dirty = true;
   }
 
-  onPanelClosed() {
+  override onPanelClosed() {
+    super.onPanelClosed();
     if (this.ignoreClosedPanel) {
       this.ignoreClosedPanel = false;
     } else {

@@ -70,4 +70,9 @@
       {{ 'queue.queue-required' | translate }}
     </mat-error>
   }
+  @if (selectQueueFormGroup.get('queueName').hasError('objectRequired')) {
+    <mat-error>
+      {{ 'entity.entity-not-valid' | translate: {entity: 'queue.queue-name' | translate | lowercase} }}
+    </mat-error>
+  }
 </mat-form-field>

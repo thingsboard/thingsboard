@@ -16,7 +16,6 @@
 
 import { Component, ElementRef, forwardRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import {
-  AbstractControl,
   ControlValueAccessor,
   FormControl,
   NG_VALUE_ACCESSOR,
@@ -28,13 +27,13 @@ import { ErrorStateMatcher } from '@angular/material/core';
 import { Observable, of, shareReplay, Subject } from 'rxjs';
 import { debounceTime, map, switchMap, takeUntil, tap } from 'rxjs/operators';
 import { IAliasController } from '@core/api/widget-api.models';
-import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { ENTER } from '@angular/cdk/keycodes';
 import { FilterSelectCallbacks } from './filter-select.component.models';
 import { Filter } from '@shared/models/query/query.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 import { AutocompleteBaseDirective } from '@shared/components/directives/autocomplete-base.directive';
+import { objectRequired } from '@core/utils';
 
 @Component({
     selector: 'tb-filter-select',
@@ -89,8 +88,6 @@ export class FilterSelectComponent extends AutocompleteBaseDirective
 
   @ViewChild('filterInput', {static: true}) filterInput: ElementRef;
 
-  @ViewChild('filterInput', {read: MatAutocompleteTrigger}) autocompleteTrigger: MatAutocompleteTrigger;
-
   filteredFilters: Observable<Array<Filter>>;
 
   private filterList: Array<Filter> = [];
@@ -99,13 +96,8 @@ export class FilterSelectComponent extends AutocompleteBaseDirective
   constructor(private fb: UntypedFormBuilder) {
     super();
     this.selectFilterFormGroup = this.fb.group({
-      filter: [null]
+      filter: [null, objectRequired()]
     });
-  }
-
-  isErrorState(control: AbstractControl | null, form: any): boolean {
-    const submitted = form?.submitted ?? false;
-    return !!(control?.invalid && (control?.dirty || control?.touched || submitted));
   }
 
   protected getControl(): FormControl {
@@ -140,7 +132,7 @@ export class FilterSelectComponent extends AutocompleteBaseDirective
         }),
         map(value => value ? (typeof value === 'string' ? value : value.filter) : ''),
         switchMap(name => this.fetchFilters(name)),
-        shareReplay(1)
+        shareReplay({bufferSize: 1, refCount: true})
       );
 
     this.aliasController.filtersChanged.pipe(

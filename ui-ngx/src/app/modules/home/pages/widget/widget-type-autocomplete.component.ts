@@ -35,7 +35,6 @@ import { WidgetTypeInfo } from '@shared/models/widget.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { WidgetService } from '@core/http/widget.service';
 import { objectRequired } from '@core/utils';
-import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { AutocompleteBaseDirective } from '@shared/components/directives/autocomplete-base.directive';
 
 @Component({
@@ -82,7 +81,6 @@ export class WidgetTypeAutocompleteComponent extends AutocompleteBaseDirective i
   excludeWidgetTypeIds: Array<string>;
 
   @ViewChild('widgetTypeInput', {static: true}) widgetTypeInput: ElementRef;
-  @ViewChild('widgetTypeInput', {read: MatAutocompleteTrigger}) autocompleteTrigger: MatAutocompleteTrigger;
 
   filteredWidgetTypes: Observable<Array<WidgetTypeInfo>>;
 
@@ -119,7 +117,7 @@ export class WidgetTypeAutocompleteComponent extends AutocompleteBaseDirective i
         map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
         distinctUntilChanged(),
         switchMap(name => this.fetchWidgetTypes(name)),
-        shareReplay(1)
+        shareReplay({bufferSize: 1, refCount: true})
       );
   }
 

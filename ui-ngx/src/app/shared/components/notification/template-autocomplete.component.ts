@@ -43,7 +43,6 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatButton } from '@angular/material/button';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { MatFormFieldAppearance } from '@angular/material/form-field';
-import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { AutocompleteBaseDirective } from '@shared/components/directives/autocomplete-base.directive';
 
 @Component({
@@ -95,8 +94,6 @@ export class TemplateAutocompleteComponent extends AutocompleteBaseDirective imp
 
   @ViewChild('templateInput', {static: true}) templateInput: ElementRef;
 
-  @ViewChild('templateInput', {read: MatAutocompleteTrigger}) autocompleteTrigger: MatAutocompleteTrigger;
-
   filteredTemplate: Observable<Array<NotificationTemplate>>;
 
   private modelValue: EntityId | null;
@@ -146,7 +143,7 @@ export class TemplateAutocompleteComponent extends AutocompleteBaseDirective imp
         }),
         map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
         switchMap(name => this.fetchTemplate(name)),
-        shareReplay(1)
+        shareReplay({bufferSize: 1, refCount: true})
       );
   }
 

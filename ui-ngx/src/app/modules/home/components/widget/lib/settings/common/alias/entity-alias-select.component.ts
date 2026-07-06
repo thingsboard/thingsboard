@@ -16,7 +16,6 @@
 
 import { Component, ElementRef, forwardRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import {
-  AbstractControl,
   ControlValueAccessor,
   FormBuilder,
   FormControl,
@@ -32,11 +31,11 @@ import { EntityService } from '@core/http/entity.service';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { EntityAlias } from '@shared/models/alias.models';
 import { IAliasController } from '@core/api/widget-api.models';
-import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { EntityAliasSelectCallbacks } from './entity-alias-select.component.models';
 import { ENTER } from '@angular/cdk/keycodes';
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 import { AutocompleteBaseDirective } from '@shared/components/directives/autocomplete-base.directive';
+import { objectRequired } from '@core/utils';
 
 @Component({
     selector: 'tb-entity-alias-select',
@@ -77,8 +76,6 @@ export class EntityAliasSelectComponent extends AutocompleteBaseDirective
 
   @ViewChild('entityAliasInput', {static: true}) entityAliasInput: ElementRef;
 
-  @ViewChild('entityAliasInput', {read: MatAutocompleteTrigger}) autocompleteTrigger: MatAutocompleteTrigger;
-
   @Input()
   @coerceBoolean()
   tbRequired: boolean;
@@ -105,13 +102,8 @@ export class EntityAliasSelectComponent extends AutocompleteBaseDirective
               private fb: FormBuilder) {
     super();
     this.selectEntityAliasFormGroup = this.fb.group({
-      entityAlias: [null]
+      entityAlias: [null, objectRequired()]
     });
-  }
-
-  isErrorState(control: AbstractControl | null, form: any): boolean {
-    const submitted = form?.submitted ?? false;
-    return !!(control?.invalid && (control?.dirty || control?.touched || submitted));
   }
 
   protected getControl(): FormControl {
@@ -146,7 +138,7 @@ export class EntityAliasSelectComponent extends AutocompleteBaseDirective
         }),
         map(value => value ? (typeof value === 'string' ? value : value.alias) : ''),
         switchMap(name => this.fetchEntityAliases(name)),
-        shareReplay(1)
+        shareReplay({bufferSize: 1, refCount: true})
       );
 
     this.aliasController.entityAliasesChanged.pipe(

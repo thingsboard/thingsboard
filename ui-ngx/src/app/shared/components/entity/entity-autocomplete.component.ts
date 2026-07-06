@@ -35,10 +35,8 @@ import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 import { getEntityDetailsPageURL, isDefinedAndNotNull, isEqual, objectRequired } from '@core/utils';
 import { coerceArray, coerceBoolean } from '@shared/decorators/coercion';
-import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { TranslateService } from '@ngx-translate/core';
 import { AutocompleteBaseDirective } from '@shared/components/directives/autocomplete-base.directive';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
 
 @Component({
     selector: 'tb-entity-autocomplete',
@@ -127,16 +125,9 @@ export class EntityAutocompleteComponent extends AutocompleteBaseDirective imple
   @Input()
   placeholder: string;
 
-  private _useFullEntityId = false;
-
-  get useFullEntityId(): boolean {
-    return this._useFullEntityId;
-  }
-
   @Input()
-  set useFullEntityId(value: boolean) {
-    this._useFullEntityId = coerceBooleanProperty(value);
-  }
+  @coerceBoolean()
+  useFullEntityId = false;
 
   @Input()
   appearance: MatFormFieldAppearance = 'fill';
@@ -175,8 +166,6 @@ export class EntityAutocompleteComponent extends AutocompleteBaseDirective imple
   createNew = new EventEmitter<string>();
 
   @ViewChild('entityInput', {static: true}) entityInput: ElementRef;
-
-  @ViewChild('autocompleteTrigger') autocompleteTrigger: MatAutocompleteTrigger;
 
   get requiredErrorText(): string {
     if (this.requiredText && this.requiredText.length) {
@@ -234,12 +223,12 @@ export class EntityAutocompleteComponent extends AutocompleteBaseDirective imple
           }),
           map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
           switchMap(name => this.fetchEntities(name)),
-          shareReplay(1)
+          shareReplay({bufferSize: 1, refCount: true})
         )
     );
   }
 
-  private static resolveEntityTexts(entityTypeValue: EntityType | AliasEntityType, store: Store<AppState>): {
+  private resolveEntityTexts(entityTypeValue: EntityType | AliasEntityType): {
     entityText: string;
     noEntitiesMatchingText: string;
     entityRequiredText: string;
@@ -378,7 +367,7 @@ export class EntityAutocompleteComponent extends AutocompleteBaseDirective imple
           notFoundEntities: 'customer.no-customers-text'
         };
       case AliasEntityType.CURRENT_USER_OWNER:
-        const authUser = getCurrentAuthUser(store);
+        const authUser = getCurrentAuthUser(this.store);
         if (authUser.authority === Authority.TENANT_ADMIN) {
           return {
             entityText: 'tenant.tenant',
@@ -400,7 +389,7 @@ export class EntityAutocompleteComponent extends AutocompleteBaseDirective imple
   }
 
   private load(): void {
-    const texts = EntityAutocompleteComponent.resolveEntityTexts(this.entityTypeValue, this.store);
+    const texts = this.resolveEntityTexts(this.entityTypeValue);
     if (texts) {
       this.entityText = texts.entityText;
       this.noEntitiesMatchingText = texts.noEntitiesMatchingText;

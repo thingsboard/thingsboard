@@ -25,7 +25,6 @@ import { SlackChanelType, SlackConversation } from '@shared/models/notification.
 import { NotificationService } from '@core/http/notification.service';
 import { isEqual, objectRequired } from '@core/utils';
 import { MatFormFieldAppearance } from '@angular/material/form-field';
-import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { AutocompleteBaseDirective } from '@shared/components/directives/autocomplete-base.directive';
 
 @Component({
@@ -72,7 +71,6 @@ export class SlackConversationAutocompleteComponent extends AutocompleteBaseDire
   appearance: MatFormFieldAppearance = 'fill';
 
   @ViewChild('slackInput', {static: true}) slackInput: ElementRef;
-  @ViewChild('slackInput', {read: MatAutocompleteTrigger}) autocompleteTrigger: MatAutocompleteTrigger;
 
   slackConversation$: Observable<Array<SlackConversation>>;
 
@@ -120,7 +118,7 @@ export class SlackConversationAutocompleteComponent extends AutocompleteBaseDire
         }),
         map(value => value ? (typeof value === 'string' ? value : value.title) : ''),
         switchMap(name => this.fetchSlackConversation(name)),
-        shareReplay(1)
+        shareReplay({bufferSize: 1, refCount: true})
       );
   }
 

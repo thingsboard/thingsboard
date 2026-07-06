@@ -37,7 +37,7 @@ import { entityIdEquals } from '@shared/models/id/entity-id';
 import { TruncatePipe } from '@shared//pipe/truncate.pipe';
 import { ENTER } from '@angular/cdk/keycodes';
 import { MatDialog } from '@angular/material/dialog';
-import { MatAutocomplete, MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { MatAutocomplete } from '@angular/material/autocomplete';
 import { emptyPageData } from '@shared/models/page/page-data';
 import { getEntityDetailsPageURL, objectRequired } from '@core/utils';
 import { AssetProfileId } from '@shared/models/id/asset-profile-id';
@@ -112,8 +112,6 @@ export class AssetProfileAutocompleteComponent extends AutocompleteBaseDirective
 
   @ViewChild('assetProfileAutocomplete', {static: true}) assetProfileAutocomplete: MatAutocomplete;
 
-  @ViewChild('assetProfileInput', {read: MatAutocompleteTrigger}) autocompleteTrigger: MatAutocompleteTrigger;
-
   filteredAssetProfiles: Observable<Array<AssetProfileInfo>>;
 
   assetProfileURL: string;
@@ -186,7 +184,7 @@ export class AssetProfileAutocompleteComponent extends AutocompleteBaseDirective
         debounceTime(150),
         distinctUntilChanged(),
         switchMap(name => this.fetchAssetProfiles(name)),
-        shareReplay(1)
+        shareReplay({bufferSize: 1, refCount: true})
       );
   }
 
@@ -258,7 +256,8 @@ export class AssetProfileAutocompleteComponent extends AutocompleteBaseDirective
     this.dirty = true;
   }
 
-  onPanelClosed() {
+  override onPanelClosed() {
+    super.onPanelClosed();
     if (this.ignoreClosedPanel) {
       this.ignoreClosedPanel = false;
     } else {

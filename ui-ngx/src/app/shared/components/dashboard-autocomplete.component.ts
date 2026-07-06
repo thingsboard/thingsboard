@@ -159,7 +159,7 @@ export class DashboardAutocompleteComponent extends AutocompleteBaseDirective im
         }),
         map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
         switchMap(name => this.fetchDashboards(name)),
-        shareReplay(1)
+        shareReplay({bufferSize: 1, refCount: true})
       );
   }
 

@@ -19,7 +19,6 @@
   <mat-label>{{ placeholderText | translate }}</mat-label>
   <input matInput [errorStateMatcher]="this" type="text"
          #packageInput
-         #autocompleteTrigger="matAutocompleteTrigger"
          formControlName="packageId"
          (blur)="onBlur()"
          (focusin)="onFocus()"
