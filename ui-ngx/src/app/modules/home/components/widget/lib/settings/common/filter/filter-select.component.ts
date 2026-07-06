@@ -33,7 +33,6 @@ import { Filter } from '@shared/models/query/query.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 import { AutocompleteBaseDirective } from '@shared/components/directives/autocomplete-base.directive';
-import { objectRequired } from '@core/utils';
 
 @Component({
     selector: 'tb-filter-select',
@@ -96,7 +95,7 @@ export class FilterSelectComponent extends AutocompleteBaseDirective
   constructor(private fb: UntypedFormBuilder) {
     super();
     this.selectFilterFormGroup = this.fb.group({
-      filter: [null, objectRequired()]
+      filter: [null]
     });
   }
 
@@ -109,6 +108,7 @@ export class FilterSelectComponent extends AutocompleteBaseDirective
   }
 
   ngOnInit() {
+    super.ngOnInit();
     const filterControl = this.selectFilterFormGroup.get('filter');
     if (this.tbRequired) {
       filterControl.addValidators(Validators.required);

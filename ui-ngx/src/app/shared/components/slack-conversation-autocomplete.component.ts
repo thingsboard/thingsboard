@@ -23,7 +23,7 @@ import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { TruncatePipe } from '@shared/pipe/truncate.pipe';
 import { SlackChanelType, SlackConversation } from '@shared/models/notification.models';
 import { NotificationService } from '@core/http/notification.service';
-import { isEqual, objectRequired } from '@core/utils';
+import { isEqual } from '@core/utils';
 import { MatFormFieldAppearance } from '@angular/material/form-field';
 import { AutocompleteBaseDirective } from '@shared/components/directives/autocomplete-base.directive';
 
@@ -84,7 +84,7 @@ export class SlackConversationAutocompleteComponent extends AutocompleteBaseDire
               private fb: FormBuilder) {
     super();
     this.conversationSlackFormGroup = this.fb.group({
-      conversation: ['', [objectRequired()]]
+      conversation: ['']
     });
   }
 
@@ -97,6 +97,7 @@ export class SlackConversationAutocompleteComponent extends AutocompleteBaseDire
   }
 
   ngOnInit() {
+    super.ngOnInit();
     if (this.required) {
       this.conversationSlackFormGroup.get('conversation').addValidators(Validators.required);
       this.conversationSlackFormGroup.get('conversation').updateValueAndValidity({emitEvent: false});

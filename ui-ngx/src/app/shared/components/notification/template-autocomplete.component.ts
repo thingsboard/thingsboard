@@ -34,7 +34,7 @@ import {
   NotificationType
 } from '@shared/models/notification.models';
 import { NotificationService } from '@core/http/notification.service';
-import { isEqual, objectRequired } from '@core/utils';
+import { isEqual } from '@core/utils';
 import {
   TemplateNotificationDialogComponent,
   TemplateNotificationDialogData
@@ -120,8 +120,8 @@ export class TemplateAutocompleteComponent extends AutocompleteBaseDirective imp
   }
 
   ngOnInit() {
+    super.ngOnInit();
     const templateControl = this.selectTemplateFormGroup.get('templateName');
-    templateControl.addValidators(objectRequired());
     if (this.required) {
       templateControl.addValidators(Validators.required);
     }

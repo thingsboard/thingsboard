@@ -37,7 +37,7 @@ import { OtaPackageService } from '@core/http/ota-package.service';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
 import { emptyPageData } from '@shared/models/page/page-data';
-import { getEntityDetailsPageURL, isDefinedAndNotNull, objectRequired } from '@core/utils';
+import { getEntityDetailsPageURL, isDefinedAndNotNull } from '@core/utils';
 import { AuthUser } from '@shared/models/user.model';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
@@ -144,7 +144,7 @@ export class OtaPackageAutocompleteComponent extends AutocompleteBaseDirective i
       this.usePackageLink = false;
     }
     this.otaPackageFormGroup = this.fb.group({
-      packageId: [null, objectRequired()]
+      packageId: [null]
     });
   }
 
@@ -157,6 +157,7 @@ export class OtaPackageAutocompleteComponent extends AutocompleteBaseDirective i
   }
 
   ngOnInit() {
+    super.ngOnInit();
     const getPackages = this.otaPackageFormGroup.get('packageId').valueChanges
       .pipe(
         debounceTime(150),

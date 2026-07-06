@@ -33,7 +33,7 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { EntityService } from '@core/http/entity.service';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
-import { getEntityDetailsPageURL, isDefinedAndNotNull, isEqual, objectRequired } from '@core/utils';
+import { getEntityDetailsPageURL, isDefinedAndNotNull, isEqual } from '@core/utils';
 import { coerceArray, coerceBoolean } from '@shared/decorators/coercion';
 import { TranslateService } from '@ngx-translate/core';
 import { AutocompleteBaseDirective } from '@shared/components/directives/autocomplete-base.directive';
@@ -199,11 +199,12 @@ export class EntityAutocompleteComponent extends AutocompleteBaseDirective imple
               private translate: TranslateService) {
     super();
     this.selectEntityFormGroup = this.fb.group({
-      entity: [null, objectRequired()]
+      entity: [null]
     });
   }
 
   ngOnInit() {
+    super.ngOnInit();
     this.filteredEntities = merge(
       this.refresh$.asObservable(),
       this.selectEntityFormGroup.get('entity').valueChanges

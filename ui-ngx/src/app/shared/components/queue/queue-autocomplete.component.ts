@@ -28,7 +28,6 @@ import { Direction } from '@shared/models/page/sort-order';
 import { emptyPageData } from '@shared/models/page/page-data';
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 import { AutocompleteBaseDirective } from '@shared/components/directives/autocomplete-base.directive';
-import { objectRequired } from '@core/utils';
 
 @Component({
     selector: 'tb-queue-autocomplete',
@@ -88,7 +87,7 @@ export class QueueAutocompleteComponent extends AutocompleteBaseDirective
               private fb: FormBuilder) {
     super();
     this.selectQueueFormGroup = this.fb.group({
-      queueName: [null, objectRequired()]
+      queueName: [null]
     });
   }
 
@@ -101,6 +100,7 @@ export class QueueAutocompleteComponent extends AutocompleteBaseDirective
   }
 
   ngOnInit() {
+    super.ngOnInit();
     const queueControl = this.selectQueueFormGroup.get('queueName');
     if (this.required) {
       queueControl.addValidators(Validators.required);

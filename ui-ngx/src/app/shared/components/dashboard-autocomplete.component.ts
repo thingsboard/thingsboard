@@ -36,7 +36,7 @@ import { getCurrentAuthUser } from '@app/core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 import { TranslateService } from '@ngx-translate/core';
 import { FloatLabelType, MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
-import { getEntityDetailsPageURL, objectRequired } from '@core/utils';
+import { getEntityDetailsPageURL } from '@core/utils';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AuthUser } from '@shared/models/user.model';
 import { coerceBoolean } from '@shared/decorators/coercion';
@@ -139,8 +139,8 @@ export class DashboardAutocompleteComponent extends AutocompleteBaseDirective im
   }
 
   ngOnInit() {
+    super.ngOnInit();
     const dashboardControl = this.selectDashboardFormGroup.get('dashboard');
-    dashboardControl.addValidators(objectRequired());
     if (this.required) {
       dashboardControl.addValidators(Validators.required);
     }

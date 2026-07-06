@@ -30,7 +30,7 @@ import { TruncatePipe } from '@shared/pipe/truncate.pipe';
 import { RuleChainService } from '@core/http/rule-chain.service';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { RuleChainType } from '@app/shared/models/rule-chain.models';
-import { getEntityDetailsPageURL, objectRequired } from '@core/utils';
+import { getEntityDetailsPageURL } from '@core/utils';
 import { MatFormFieldAppearance } from '@angular/material/form-field';
 import { AutocompleteBaseDirective } from '@shared/components/directives/autocomplete-base.directive';
 
@@ -93,7 +93,7 @@ export class RuleChainAutocompleteComponent extends AutocompleteBaseDirective im
               private fb: UntypedFormBuilder) {
     super();
     this.selectRuleChainFormGroup = this.fb.group({
-      ruleChainId: [null, objectRequired()]
+      ruleChainId: [null]
     });
   }
 
@@ -106,6 +106,7 @@ export class RuleChainAutocompleteComponent extends AutocompleteBaseDirective im
   }
 
   ngOnInit() {
+    super.ngOnInit();
     this.filteredRuleChains = this.selectRuleChainFormGroup.get('ruleChainId').valueChanges
       .pipe(
         debounceTime(150),

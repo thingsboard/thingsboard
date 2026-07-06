@@ -14,12 +14,13 @@
 /// limitations under the License.
 ///
 
-import { Directive, ElementRef } from '@angular/core';
+import { Directive, ElementRef, OnInit } from '@angular/core';
 import { FormControl, FormGroupDirective, NgForm } from '@angular/forms';
 import { ErrorStateMatcher } from '@angular/material/core';
+import { objectRequired } from '@core/utils';
 
 @Directive()
-export abstract class AutocompleteBaseDirective implements ErrorStateMatcher {
+export abstract class AutocompleteBaseDirective implements ErrorStateMatcher, OnInit {
 
   protected isPanelOpen = false;
 
@@ -41,6 +42,11 @@ export abstract class AutocompleteBaseDirective implements ErrorStateMatcher {
 
   registerOnTouched(fn: any): void {
     this.onTouched = fn;
+  }
+
+  ngOnInit(): void {
+    this.getControl().addValidators(objectRequired());
+    this.getControl().updateValueAndValidity({ onlySelf: true, emitEvent: false });
   }
 
   protected reset(): void {

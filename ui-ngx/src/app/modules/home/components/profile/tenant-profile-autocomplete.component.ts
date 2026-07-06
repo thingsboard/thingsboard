@@ -34,7 +34,7 @@ import { TenantProfile } from '@shared/models/tenant.model';
 import { MatDialog } from '@angular/material/dialog';
 import { TenantProfileDialogComponent, TenantProfileDialogData } from './tenant-profile-dialog.component';
 import { emptyPageData } from '@shared/models/page/page-data';
-import { getEntityDetailsPageURL, objectRequired } from '@core/utils';
+import { getEntityDetailsPageURL } from '@core/utils';
 import { MatFormFieldAppearance } from '@angular/material/form-field';
 import { AutocompleteBaseDirective } from '@shared/components/directives/autocomplete-base.directive';
 
@@ -93,7 +93,7 @@ export class TenantProfileAutocompleteComponent extends AutocompleteBaseDirectiv
               private dialog: MatDialog) {
     super();
     this.selectTenantProfileFormGroup = this.fb.group({
-      tenantProfile: [null, [objectRequired()]]
+      tenantProfile: [null]
     });
   }
 
@@ -106,6 +106,7 @@ export class TenantProfileAutocompleteComponent extends AutocompleteBaseDirectiv
   }
 
   ngOnInit() {
+    super.ngOnInit();
     this.filteredTenantProfiles = this.selectTenantProfileFormGroup.get('tenantProfile').valueChanges
       .pipe(
         debounceTime(150),

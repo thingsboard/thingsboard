@@ -46,7 +46,7 @@ import { DeviceProfileDialogComponent, DeviceProfileDialogData } from './device-
 import { MatAutocomplete } from '@angular/material/autocomplete';
 import { AddDeviceProfileDialogComponent, AddDeviceProfileDialogData } from './add-device-profile-dialog.component';
 import { emptyPageData } from '@shared/models/page/page-data';
-import { getEntityDetailsPageURL, objectRequired } from '@core/utils';
+import { getEntityDetailsPageURL } from '@core/utils';
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { AuthUser } from '@shared/models/user.model';
@@ -166,7 +166,7 @@ export class DeviceProfileAutocompleteComponent extends AutocompleteBaseDirectiv
       this.useDeviceProfileLink = false;
     }
     this.selectDeviceProfileFormGroup = this.fb.group({
-      deviceProfile: [null, [objectRequired()]]
+      deviceProfile: [null]
     });
   }
 
@@ -179,6 +179,7 @@ export class DeviceProfileAutocompleteComponent extends AutocompleteBaseDirectiv
   }
 
   ngOnInit() {
+    super.ngOnInit();
     this.filteredDeviceProfiles = this.selectDeviceProfileFormGroup.get('deviceProfile').valueChanges
       .pipe(
         tap((value: DeviceProfileInfo | string) => {

@@ -32,7 +32,7 @@ import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { EntityInfo } from '@shared/models/entity.models';
 import { EntityFilter } from '@shared/models/query/query.models';
 import { EntityService } from '@core/http/entity.service';
-import { isDefinedAndNotNull, objectRequired } from '@core/utils';
+import { isDefinedAndNotNull } from '@core/utils';
 import { AutocompleteBaseDirective } from '@shared/components/directives/autocomplete-base.directive';
 
 @Component({
@@ -80,7 +80,7 @@ export class AliasesEntityAutocompleteComponent extends AutocompleteBaseDirectiv
               private fb: UntypedFormBuilder) {
     super();
     this.selectEntityInfoFormGroup = this.fb.group({
-      entityInfo: [null, objectRequired()]
+      entityInfo: [null]
     });
   }
 
@@ -93,6 +93,7 @@ export class AliasesEntityAutocompleteComponent extends AutocompleteBaseDirectiv
   }
 
   ngOnInit() {
+    super.ngOnInit();
     this.filteredEntityInfos = this.selectEntityInfoFormGroup.get('entityInfo').valueChanges
       .pipe(
         debounceTime(150),

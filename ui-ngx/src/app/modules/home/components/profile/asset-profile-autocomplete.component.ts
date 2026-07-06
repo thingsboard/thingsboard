@@ -39,7 +39,7 @@ import { ENTER } from '@angular/cdk/keycodes';
 import { MatDialog } from '@angular/material/dialog';
 import { MatAutocomplete } from '@angular/material/autocomplete';
 import { emptyPageData } from '@shared/models/page/page-data';
-import { getEntityDetailsPageURL, objectRequired } from '@core/utils';
+import { getEntityDetailsPageURL } from '@core/utils';
 import { AssetProfileId } from '@shared/models/id/asset-profile-id';
 import { AssetProfile, AssetProfileInfo } from '@shared/models/asset.models';
 import { AssetProfileService } from '@core/http/asset-profile.service';
@@ -140,7 +140,7 @@ export class AssetProfileAutocompleteComponent extends AutocompleteBaseDirective
       this.useAssetProfileLink = false;
     }
     this.selectAssetProfileFormGroup = this.fb.group({
-      assetProfile: [null, objectRequired()]
+      assetProfile: [null]
     });
   }
 
@@ -153,6 +153,7 @@ export class AssetProfileAutocompleteComponent extends AutocompleteBaseDirective
   }
 
   ngOnInit() {
+    super.ngOnInit();
     this.filteredAssetProfiles = this.selectAssetProfileFormGroup.get('assetProfile').valueChanges
       .pipe(
         tap((value: AssetProfileInfo | string) => {

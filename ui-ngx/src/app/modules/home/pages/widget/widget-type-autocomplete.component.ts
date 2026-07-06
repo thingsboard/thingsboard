@@ -34,7 +34,6 @@ import { FloatLabelType, MatFormFieldAppearance, SubscriptSizing } from '@angula
 import { WidgetTypeInfo } from '@shared/models/widget.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { WidgetService } from '@core/http/widget.service';
-import { objectRequired } from '@core/utils';
 import { AutocompleteBaseDirective } from '@shared/components/directives/autocomplete-base.directive';
 
 @Component({
@@ -89,7 +88,7 @@ export class WidgetTypeAutocompleteComponent extends AutocompleteBaseDirective i
               private fb: UntypedFormBuilder) {
     super();
     this.selectWidgetTypeFormGroup = this.fb.group({
-      widgetType: [null, [objectRequired()]]
+      widgetType: [null]
     });
   }
 
@@ -102,6 +101,7 @@ export class WidgetTypeAutocompleteComponent extends AutocompleteBaseDirective i
   }
 
   ngOnInit() {
+    super.ngOnInit();
     this.filteredWidgetTypes = this.selectWidgetTypeFormGroup.get('widgetType').valueChanges
       .pipe(
         debounceTime(150),

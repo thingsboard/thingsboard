@@ -35,7 +35,6 @@ import { EntityAliasSelectCallbacks } from './entity-alias-select.component.mode
 import { ENTER } from '@angular/cdk/keycodes';
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 import { AutocompleteBaseDirective } from '@shared/components/directives/autocomplete-base.directive';
-import { objectRequired } from '@core/utils';
 
 @Component({
     selector: 'tb-entity-alias-select',
@@ -102,7 +101,7 @@ export class EntityAliasSelectComponent extends AutocompleteBaseDirective
               private fb: FormBuilder) {
     super();
     this.selectEntityAliasFormGroup = this.fb.group({
-      entityAlias: [null, objectRequired()]
+      entityAlias: [null]
     });
   }
 
@@ -115,6 +114,7 @@ export class EntityAliasSelectComponent extends AutocompleteBaseDirective
   }
 
   ngOnInit() {
+    super.ngOnInit();
     const aliasControl = this.selectEntityAliasFormGroup.get('entityAlias');
     if (this.tbRequired) {
       aliasControl.addValidators(Validators.required);
