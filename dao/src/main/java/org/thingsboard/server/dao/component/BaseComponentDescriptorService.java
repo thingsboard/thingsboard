@@ -60,7 +60,7 @@ public class BaseComponentDescriptorService implements ComponentDescriptorServic
 
     @Override
     public ComponentDescriptor findById(TenantId tenantId, ComponentDescriptorId componentId) {
-        Validator.validateId(componentId, "Incorrect component id for search request.");
+        Validator.validateId(componentId, id -> "Incorrect component id for search request.");
         return componentDescriptorDao.findById(tenantId, componentId);
     }
 

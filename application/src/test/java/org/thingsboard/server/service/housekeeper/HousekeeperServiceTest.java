@@ -25,7 +25,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
-import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNode;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNodeConfiguration;
@@ -570,7 +570,7 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
                 .tenantId(tenantId)
                 .originator(entityId)
                 .severity(AlarmSeverity.CRITICAL)
-                .type("test alarm for " + entityId + " " + RandomStringUtils.randomAlphabetic(10))
+                .type("test alarm for " + entityId + " " + RandomStringUtils.secure().nextAlphabetic(10))
                 .build(), Alarm.class);
         assertThat(alarmService.findAlarmIdsByOriginatorId(tenantId, entityId, 0, null, 10)).isNotEmpty();
     }

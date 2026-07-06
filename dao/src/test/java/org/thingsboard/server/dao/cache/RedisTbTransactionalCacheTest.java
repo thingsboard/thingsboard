@@ -18,7 +18,7 @@ package org.thingsboard.server.dao.cache;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.test.context.ContextConfiguration;
@@ -50,13 +50,13 @@ import static org.mockito.Mockito.when;
 @Slf4j
 public class RedisTbTransactionalCacheTest {
 
-    @MockBean
+    @MockitoBean
     private RelationRedisCache relationRedisCache;
-    @MockBean
+    @MockitoBean
     private RedisConnectionFactory connectionFactory;
-    @MockBean
+    @MockitoBean
     private RedisConnection redisConnection;
-    @MockBean
+    @MockitoBean
     private RedisSslCredentials redisSslCredentials;
 
     @Test

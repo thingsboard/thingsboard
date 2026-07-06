@@ -21,7 +21,7 @@ import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.alarm.Alarm;
@@ -50,9 +50,9 @@ import static org.mockito.Mockito.verify;
 })
 public class AlarmsCleanUpServiceTest extends AbstractControllerTest {
 
-    @SpyBean
+    @MockitoSpyBean
     private AlarmsCleanUpService alarmsCleanUpService;
-    @SpyBean
+    @MockitoSpyBean
     private AlarmService alarmService;
     @Autowired
     private AlarmDao alarmDao;

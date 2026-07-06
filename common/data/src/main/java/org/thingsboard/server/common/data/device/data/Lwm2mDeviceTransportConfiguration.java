@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.DeviceTransportType;
 
 import java.util.HashMap;
@@ -27,6 +28,7 @@ import java.util.Map;
 
 @Schema
 @Data
+@EqualsAndHashCode(callSuper = true)
 public class Lwm2mDeviceTransportConfiguration extends PowerSavingConfiguration implements DeviceTransportConfiguration {
 
     @JsonIgnore

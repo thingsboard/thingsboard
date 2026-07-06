@@ -477,7 +477,7 @@ public class VersionControlTest extends AbstractControllerTest {
         Dashboard importedOtherDashboard = findDashboard(otherDashboard.getName());
         Dashboard importedDashboard = findDashboard(dashboard.getName());
 
-        Map.Entry<String, JsonNode> entityAlias = importedDashboard.getConfiguration().get("entityAliases").fields().next();
+        Map.Entry<String, JsonNode> entityAlias = importedDashboard.getConfiguration().get("entityAliases").properties().iterator().next();
         assertThat(entityAlias.getKey()).isEqualTo(aliasId);
         assertThat(entityAlias.getValue().get("id").asText()).isEqualTo(aliasId);
 

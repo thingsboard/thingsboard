@@ -60,7 +60,7 @@ import static org.mockito.BDDMockito.then;
 @ExtendWith(MockitoExtension.class)
 public class TbGetDeviceAttrNodeTest extends AbstractRuleNodeUpgradeTest {
 
-    private final TenantId TENANT_ID = new TenantId(UUID.fromString("5aea576c-66c4-4732-86b8-dc6bfcde7443"));
+    private final TenantId TENANT_ID = TenantId.fromUUID(UUID.fromString("5aea576c-66c4-4732-86b8-dc6bfcde7443"));
     private final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("40b6b393-6ddf-47f9-973a-18550ca70384"));
     private final ListeningExecutor executor = DirectListeningExecutor.INSTANCE;
 
