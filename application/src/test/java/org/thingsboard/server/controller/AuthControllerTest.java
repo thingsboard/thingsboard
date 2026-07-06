@@ -59,6 +59,7 @@ public class AuthControllerTest extends AbstractControllerTest {
         updateSecuritySettings(securitySettings -> {
             securitySettings.getPasswordPolicy().setMaximumLength(72);
             securitySettings.getPasswordPolicy().setForceUserToResetPasswordIfNotValid(false);
+            securitySettings.setUserActivationTokenTtl(24);
         });
     }
 
@@ -297,9 +298,8 @@ public class AuthControllerTest extends AbstractControllerTest {
     @Test
     public void testActivationLinkMaxTtlExposedInSecuritySettings() throws Exception {
         loginSysAdmin();
-        // maxActivationLinkTtl is a read-only field, so read it from the raw response rather than the typed object
-        JsonNode securitySettings = doGet("/api/admin/securitySettings", JsonNode.class);
-        assertThat(securitySettings.get("maxActivationLinkTtl").asInt()).isEqualTo(720);
+        SecuritySettings securitySettings = doGet("/api/admin/securitySettings", SecuritySettings.class);
+        assertThat(securitySettings.getMaxActivationLinkTtl()).isEqualTo(720);
     }
 
     @Test
@@ -326,8 +326,8 @@ public class AuthControllerTest extends AbstractControllerTest {
         securitySettings.setMaxActivationLinkTtl(1);
         securitySettings.setUserActivationTokenTtl(100);
         doPost("/api/admin/securitySettings", securitySettings).andExpect(status().isOk());
-        JsonNode updated = doGet("/api/admin/securitySettings", JsonNode.class);
-        assertThat(updated.get("maxActivationLinkTtl").asInt()).isEqualTo(720);
+        SecuritySettings updated = doGet("/api/admin/securitySettings", SecuritySettings.class);
+        assertThat(updated.getMaxActivationLinkTtl()).isEqualTo(720);
     }
 
     @Test
