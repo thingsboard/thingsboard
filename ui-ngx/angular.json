@@ -134,8 +134,7 @@
             ],
             "allowedCommonJsDependencies": [
               "*"
-            ],
-            "webWorkerTsConfig": "tsconfig.worker.json"
+            ]
           },
           "configurations": {
             "production": {

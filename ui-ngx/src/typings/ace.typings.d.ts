@@ -15,16 +15,16 @@
 ///
 
 declare module 'ace-code' {
-  export type EditSession = any;
-  export type Editor = any;
-  export type Point = { row: number; column: number };
-  export type Range = any;
+  export type EditSession = import('ace-builds').Ace.EditSession;
+  export type Editor = import('ace-builds').Ace.Editor;
+  export type Point = import('ace-builds').Ace.Point;
+  export type Range = import('ace-builds').Ace.Range;
 
   export namespace Ace {
-    export type EditSession = any;
-    export type Editor = any;
-    export type Point = { row: number; column: number };
-    export type Range = any;
+    export type EditSession = import('ace-builds').Ace.EditSession;
+    export type Editor = import('ace-builds').Ace.Editor;
+    export type Point = import('ace-builds').Ace.Point;
+    export type Range = import('ace-builds').Ace.Range;
     export type Completion = {
       value: string;
       meta?: string;
@@ -36,8 +36,18 @@ declare module 'ace-code' {
       docHTML?: string;
       [key: string]: any;
     };
-    export type Document = any;
-    export type MarkerGroupItem = any;
+    export type Document = import('ace-builds').Ace.Document;
+    export type MarkerGroupItem = import('ace-builds').Ace.MarkerGroupItem;
+  }
+}
+
+// ace-linters' bundled types reference htmlhint's Ruleset type for its (unused-by-us) HTML
+// validation service. htmlhint is only a devDependency of ace-linters (needed to build its
+// bundled .d.ts, not to consume it), so it's correctly absent from this project's node_modules -
+// this shim just satisfies the import without pulling htmlhint in as a real dependency.
+declare module 'htmlhint/dist/core/types' {
+  export interface Ruleset {
+    [key: string]: any;
   }
 }
 

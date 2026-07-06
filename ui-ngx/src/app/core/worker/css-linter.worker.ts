@@ -16,12 +16,12 @@
 
 /// <reference lib="webworker" />
 
-import { ServiceManager } from "ace-linters/build/service-manager";
-import { CssService } from "ace-linters/build/css-service";
+import { ServiceManager } from 'ace-linters/build/service-manager';
+import { CssService } from 'ace-linters/build/css-service';
 
 const manager = new ServiceManager(self);
 
-manager.registerService("css", {
+manager.registerService('css', {
   features: {
     completion: true,
     completionResolve: true,
@@ -32,6 +32,6 @@ manager.registerService("css", {
     signatureHelp: false,
   },
   module: () => Promise.resolve({ CssService }),
-  className: "CssService",
-  modes: "css",
+  className: 'CssService',
+  modes: 'css',
 });
