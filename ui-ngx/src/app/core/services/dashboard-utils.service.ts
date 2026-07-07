@@ -33,7 +33,8 @@ import {
   DashboardStateLayouts,
   GridSettings,
   LayoutType,
-  WidgetLayout
+  WidgetLayout,
+  WidgetLayouts
 } from '@shared/models/dashboard.models';
 import { deepClone, isDefined, isDefinedAndNotNull, isNotEmptyStr, isString, isUndefined } from '@core/utils';
 import {
@@ -766,6 +767,25 @@ export class DashboardUtilsService {
       const bottom2 = widget.row + widget.sizeY;
 
       if (left < right2 && right > left2 && top < bottom2 && bottom > top2) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public hasCollidingWidgets(widgetLayouts: WidgetLayouts): boolean {
+    if (!widgetLayouts) {
+      return false;
+    }
+    const layouts = Object.values(widgetLayouts).map(widget => ({
+      row: widget.row || 0,
+      col: widget.col || 0,
+      sizeX: widget.sizeX || 1,
+      sizeY: widget.sizeY || 1
+    }));
+    for (let i = 0; i < layouts.length; i++) {
+      const widget = layouts[i];
+      if (this.hasWidgetCollision(widget.row, widget.col, widget.sizeX, widget.sizeY, layouts.slice(i + 1))) {
         return true;
       }
     }
