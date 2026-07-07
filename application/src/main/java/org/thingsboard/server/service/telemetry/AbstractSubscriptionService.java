@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.exception.TenantNotFoundException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.ServiceType;
@@ -86,7 +87,15 @@ public abstract class AbstractSubscriptionService extends TbApplicationEventList
     protected void forwardToSubscriptionManagerService(TenantId tenantId, EntityId entityId,
                                                        Consumer<SubscriptionManagerService> toSubscriptionManagerService,
                                                        Supplier<TransportProtos.ToCoreMsg> toCore) {
-        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
+        TopicPartitionInfo tpi;
+        try {
+            tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
+        } catch (TenantNotFoundException e) {
+            // The tenant was deleted (e.g. concurrently with an in-flight asynchronous save callback),
+            // so there is no partition to route to and no subscribers to notify. Nothing to forward.
+            log.debug("[{}][{}] Skipping subscription update: tenant no longer exists.", tenantId, entityId);
+            return;
+        }
         if (currentPartitions.contains(tpi)) {
             if (subscriptionManagerService.isPresent()) {
                 toSubscriptionManagerService.accept(subscriptionManagerService.get());
