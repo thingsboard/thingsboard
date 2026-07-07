@@ -129,7 +129,7 @@ public abstract class BaseHealthChecker<C extends MonitoringConfig, T extends Mo
         try {
             destroyClient();
         } catch (Throwable e) {
-            log.warn("[{}] Failed to destroy client: {}", info, e.getMessage());
+            log.warn("[{}] Failed to destroy client", info, e);
         }
     }
 

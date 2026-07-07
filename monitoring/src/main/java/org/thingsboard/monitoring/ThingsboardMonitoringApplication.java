@@ -49,7 +49,7 @@ public class ThingsboardMonitoringApplication {
 
     @Value("${monitoring.monitoring_rate_ms}")
     private int monitoringRateMs;
-    @Value("${monitoring.session_duration_ms:3600000}")
+    @Value("${monitoring.session_duration_ms}")
     private long sessionDurationMs;
 
     ScheduledExecutorService scheduler = ThingsBoardExecutors.newSingleThreadScheduledExecutor("monitoring");

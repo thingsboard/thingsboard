@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.common.util;
+package org.thingsboard.monitoring.util;
 
 import org.apache.hc.client5.http.psl.PublicSuffixMatcher;
 import org.apache.hc.client5.http.psl.PublicSuffixMatcherLoader;
@@ -42,24 +42,12 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Scandium's own subject/hostname check ({@code DTLS_VERIFY_SERVER_CERTIFICATES_SUBJECT})
- * matches SAN entries with a plain {@code equalsIgnoreCase}, so it rejects wildcard
- * certificates (e.g. {@code *.example.com}) outright. This verifier delegates chain-of-trust
- * validation to {@link StaticNewAdvancedCertificateVerifier} (with its subject check disabled)
- * and delegates the actual hostname/IP identity check to Apache HttpClient's
- * {@link DefaultHostnameVerifier} (RFC 2818/6125 SAN + wildcard + IPv4/IPv6 matching), constructed
- * with a real {@link PublicSuffixMatcher} so its own built-in public-suffix rejection is active
- * (the no-arg constructor would otherwise silently disable it) instead of re-implementing
- * certificate-matching logic.
- * <p>
- * The library's public-suffix check only rejects a wildcard when its suffix is itself a bare
- * public suffix (e.g. {@code *.com}) — it doesn't reject multi-label public suffixes such as
- * {@code *.co.uk} or {@code *.github.io} (verified empirically; guarded by
- * {@code verifySubject_overlyBroadWildcard_returnsException} so a future httpclient5 upgrade that
- * changes this would fail the build rather than regress silently). {@link #matchesOverlyBroadWildcard}
- * closes that specific gap, scoped to only the SAN entry that would actually match the destination
- * (so an unrelated overly-broad SAN elsewhere on a multi-domain certificate can't cause a false
- * rejection).
+ * Scandium's own subject check ({@code DTLS_VERIFY_SERVER_CERTIFICATES_SUBJECT}) rejects wildcard
+ * certificates outright, so this verifier delegates chain-of-trust to
+ * {@link StaticNewAdvancedCertificateVerifier} and hostname/wildcard matching to Apache HttpClient's
+ * {@link DefaultHostnameVerifier}, constructed with a real {@link PublicSuffixMatcher} (the no-arg
+ * constructor silently disables its public-suffix protection). {@link #matchesOverlyBroadWildcard}
+ * covers the one gap that verifier leaves open: multi-label public suffixes like {@code *.co.uk}.
  */
 class WildcardAwareCertificateVerifier implements NewAdvancedCertificateVerifier {
 
@@ -72,9 +60,13 @@ class WildcardAwareCertificateVerifier implements NewAdvancedCertificateVerifier
     private final NewAdvancedCertificateVerifier delegate;
 
     WildcardAwareCertificateVerifier(X509Certificate[] trustedCertificates) {
-        this.delegate = StaticNewAdvancedCertificateVerifier.builder()
+        this(StaticNewAdvancedCertificateVerifier.builder()
                 .setTrustedCertificates(trustedCertificates)
-                .build();
+                .build());
+    }
+
+    WildcardAwareCertificateVerifier(NewAdvancedCertificateVerifier delegate) {
+        this.delegate = delegate;
     }
 
     @Override
@@ -87,7 +79,8 @@ class WildcardAwareCertificateVerifier implements NewAdvancedCertificateVerifier
             boolean clientUsage, boolean verifySubject, boolean truncateCertificatePath, CertificateMessage message) {
         CertificateVerificationResult result = delegate.verifyCertificate(cid, serverNames, remotePeer,
                 clientUsage, false, truncateCertificatePath, message);
-        if (!verifySubject || result.getException() != null || result.getCertificatePath() == null) {
+        if (!verifySubject || result.getException() != null
+                || result.getCertificatePath() == null || result.getCertificatePath().getCertificates().isEmpty()) {
             return result;
         }
 
@@ -122,14 +115,8 @@ class WildcardAwareCertificateVerifier implements NewAdvancedCertificateVerifier
         }
     }
 
-    /**
-     * {@link DefaultHostnameVerifier} (even with a real {@link PublicSuffixMatcher}) only rejects
-     * a wildcard when its suffix is itself a bare public suffix (e.g. {@code *.com}) — it doesn't
-     * reject multi-label public suffixes such as {@code *.co.uk} or {@code *.github.io}. Only the
-     * SAN entry that would actually be used to match {@code destination} is checked, so an
-     * unrelated overly-broad wildcard elsewhere on a multi-domain certificate can't cause a false
-     * rejection of an otherwise valid match.
-     */
+    // Only the SAN entry that would actually match destination is checked, so an unrelated
+    // overly-broad wildcard elsewhere on a multi-domain certificate can't cause a false rejection.
     private static boolean matchesOverlyBroadWildcard(X509Certificate certificate, String destination) {
         int firstDot = destination.indexOf('.');
         if (firstDot < 0) {

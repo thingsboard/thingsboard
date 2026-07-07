@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.common.util;
+package org.thingsboard.monitoring.util;
 
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.Extension;
@@ -24,21 +24,36 @@ import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+import org.eclipse.californium.scandium.dtls.AlertMessage;
+import org.eclipse.californium.scandium.dtls.CertificateMessage;
+import org.eclipse.californium.scandium.dtls.CertificateVerificationResult;
+import org.eclipse.californium.scandium.dtls.ConnectionId;
 import org.eclipse.californium.scandium.dtls.HandshakeException;
+import org.eclipse.californium.scandium.dtls.x509.NewAdvancedCertificateVerifier;
 import org.eclipse.californium.scandium.util.ServerNames;
 import org.junit.jupiter.api.Test;
 
+import javax.security.auth.x500.X500Principal;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.Security;
+import java.security.cert.CertPath;
+import java.security.cert.CertificateFactory;
+import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.util.Date;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class WildcardAwareCertificateVerifierTest {
 
@@ -129,6 +144,95 @@ class WildcardAwareCertificateVerifierTest {
         HandshakeException mismatch = WildcardAwareCertificateVerifier.verifySubject(null, remotePeer, cert);
 
         assertThat(mismatch).isNotNull();
+    }
+
+    @Test
+    void verifyCertificate_delegateReportsMismatch_returnsDelegateExceptionWithoutSubjectCheck() throws Exception {
+        NewAdvancedCertificateVerifier delegate = mock(NewAdvancedCertificateVerifier.class);
+        AlertMessage alert = new AlertMessage(AlertMessage.AlertLevel.FATAL, AlertMessage.AlertDescription.BAD_CERTIFICATE);
+        CertificateVerificationResult delegateResult = new CertificateVerificationResult(ConnectionId.EMPTY,
+                new HandshakeException("untrusted", alert), null);
+        when(delegate.verifyCertificate(any(), any(), any(), anyBoolean(), eq(false), anyBoolean(), any())).thenReturn(delegateResult);
+        WildcardAwareCertificateVerifier verifier = new WildcardAwareCertificateVerifier(delegate);
+
+        CertificateVerificationResult result = verifier.verifyCertificate(ConnectionId.EMPTY, ServerNames.newInstance("coap.example.com"),
+                new InetSocketAddress(InetAddress.getByName("192.0.2.10"), 5684), true, true, false, mock(CertificateMessage.class));
+
+        assertThat(result).isSameAs(delegateResult);
+    }
+
+    @Test
+    void verifyCertificate_verifySubjectFalse_skipsHostnameCheckEvenOnMismatch() throws Exception {
+        X509Certificate cert = selfSignedCertWithDnsSan("other.example.com");
+        NewAdvancedCertificateVerifier delegate = mock(NewAdvancedCertificateVerifier.class);
+        CertificateVerificationResult delegateResult = new CertificateVerificationResult(ConnectionId.EMPTY, certPath(cert), null);
+        when(delegate.verifyCertificate(any(), any(), any(), anyBoolean(), eq(false), anyBoolean(), any())).thenReturn(delegateResult);
+        WildcardAwareCertificateVerifier verifier = new WildcardAwareCertificateVerifier(delegate);
+
+        CertificateVerificationResult result = verifier.verifyCertificate(ConnectionId.EMPTY, ServerNames.newInstance("coap.example.com"),
+                new InetSocketAddress(InetAddress.getByName("192.0.2.10"), 5684), true, false, false, mock(CertificateMessage.class));
+
+        assertThat(result).isSameAs(delegateResult);
+    }
+
+    @Test
+    void verifyCertificate_emptyCertPath_returnsDelegateResultUnchanged() throws Exception {
+        NewAdvancedCertificateVerifier delegate = mock(NewAdvancedCertificateVerifier.class);
+        CertificateVerificationResult delegateResult = new CertificateVerificationResult(ConnectionId.EMPTY,
+                CertificateFactory.getInstance("X.509").generateCertPath(List.of()), null);
+        when(delegate.verifyCertificate(any(), any(), any(), anyBoolean(), eq(false), anyBoolean(), any())).thenReturn(delegateResult);
+        WildcardAwareCertificateVerifier verifier = new WildcardAwareCertificateVerifier(delegate);
+
+        CertificateVerificationResult result = verifier.verifyCertificate(ConnectionId.EMPTY, ServerNames.newInstance("coap.example.com"),
+                new InetSocketAddress(InetAddress.getByName("192.0.2.10"), 5684), true, true, false, mock(CertificateMessage.class));
+
+        assertThat(result).isSameAs(delegateResult);
+    }
+
+    @Test
+    void verifyCertificate_matchingHostname_returnsDelegateResultUnchanged() throws Exception {
+        X509Certificate cert = selfSignedCertWithDnsSan("coap.example.com");
+        NewAdvancedCertificateVerifier delegate = mock(NewAdvancedCertificateVerifier.class);
+        CertificateVerificationResult delegateResult = new CertificateVerificationResult(ConnectionId.EMPTY, certPath(cert), null);
+        when(delegate.verifyCertificate(any(), any(), any(), anyBoolean(), eq(false), anyBoolean(), any())).thenReturn(delegateResult);
+        WildcardAwareCertificateVerifier verifier = new WildcardAwareCertificateVerifier(delegate);
+
+        CertificateVerificationResult result = verifier.verifyCertificate(ConnectionId.EMPTY, ServerNames.newInstance("coap.example.com"),
+                new InetSocketAddress(InetAddress.getByName("192.0.2.10"), 5684), true, true, false, mock(CertificateMessage.class));
+
+        assertThat(result).isSameAs(delegateResult);
+    }
+
+    @Test
+    void verifyCertificate_mismatchingHostname_returnsNewExceptionResult() throws Exception {
+        X509Certificate cert = selfSignedCertWithDnsSan("other.example.com");
+        NewAdvancedCertificateVerifier delegate = mock(NewAdvancedCertificateVerifier.class);
+        CertificateVerificationResult delegateResult = new CertificateVerificationResult(ConnectionId.EMPTY, certPath(cert), null);
+        when(delegate.verifyCertificate(any(), any(), any(), anyBoolean(), eq(false), anyBoolean(), any())).thenReturn(delegateResult);
+        WildcardAwareCertificateVerifier verifier = new WildcardAwareCertificateVerifier(delegate);
+
+        CertificateVerificationResult result = verifier.verifyCertificate(ConnectionId.EMPTY, ServerNames.newInstance("coap.example.com"),
+                new InetSocketAddress(InetAddress.getByName("192.0.2.10"), 5684), true, true, false, mock(CertificateMessage.class));
+
+        assertThat(result).isNotSameAs(delegateResult);
+        assertThat(result.getException()).isNotNull();
+    }
+
+    @Test
+    void verifySubject_certificateParsingExceptionOnSanLookup_failsClosed() throws Exception {
+        X509Certificate cert = mock(X509Certificate.class);
+        when(cert.getSubjectAlternativeNames()).thenThrow(new CertificateParsingException("malformed SAN"));
+        when(cert.getSubjectX500Principal()).thenReturn(new X500Principal("CN=test"));
+        ServerNames serverNames = ServerNames.newInstance("coap.example.com");
+        InetSocketAddress remotePeer = new InetSocketAddress(InetAddress.getByName("192.0.2.10"), 5684);
+
+        HandshakeException mismatch = WildcardAwareCertificateVerifier.verifySubject(serverNames, remotePeer, cert);
+
+        assertThat(mismatch).isNotNull();
+    }
+
+    private static CertPath certPath(X509Certificate cert) throws Exception {
+        return CertificateFactory.getInstance("X.509").generateCertPath(List.of(cert));
     }
 
     private static X509Certificate selfSignedCertWithDnsSan(String dnsName) throws Exception {

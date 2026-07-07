@@ -19,8 +19,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.eclipse.californium.core.config.CoapConfig;
 import org.eclipse.californium.elements.config.Configuration;
 import org.eclipse.californium.scandium.config.DtlsConfig;
 import org.eclipse.leshan.client.LeshanClient;
@@ -95,11 +93,6 @@ public class Lwm2mClient extends BaseInstanceEnabler implements Destroyable {
         }
 
         Security security = noSec(serverUri, 123);
-        Configuration coapConfig = new Configuration();
-        String portStr = StringUtils.substringAfterLast(serverUri, ":");
-        if (StringUtils.isNotEmpty(portStr)) {
-            coapConfig.set(CoapConfig.COAP_PORT, Integer.parseInt(portStr));
-        }
 
         LwM2mModel model = new StaticModel(models);
         ObjectsInitializer initializer = new ObjectsInitializer(model);

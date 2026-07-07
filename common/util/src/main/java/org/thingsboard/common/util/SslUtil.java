@@ -31,12 +31,6 @@ import org.bouncycastle.operator.InputDecryptorProvider;
 import org.bouncycastle.pkcs.PKCS8EncryptedPrivateKeyInfo;
 import org.bouncycastle.pkcs.PKCSException;
 import org.bouncycastle.pkcs.jcajce.JcePKCSPBEInputDecryptorProviderBuilder;
-import org.eclipse.californium.elements.config.Configuration;
-import org.eclipse.californium.elements.config.SystemConfig;
-import org.eclipse.californium.scandium.DTLSConnector;
-import org.eclipse.californium.scandium.config.DtlsConfig;
-import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
-import org.eclipse.californium.scandium.dtls.SignatureAndHashAlgorithm;
 import org.thingsboard.server.common.data.StringUtils;
 
 import javax.net.ssl.TrustManagerFactory;
@@ -60,23 +54,10 @@ public class SslUtil {
 
     public static final BouncyCastleProvider DEFAULT_PROVIDER = new BouncyCastleProvider();
 
-    // Californium only exposes named constants for SHA256_WITH_ECDSA/SHA384_WITH_ECDSA/SHA256_WITH_RSA;
-    // the other RSA/ECDSA combinations below have no named constant in this version and must be
-    // looked up by name instead.
-    private static final List<SignatureAndHashAlgorithm> CLIENT_SIG_ALGS = List.of(
-            SignatureAndHashAlgorithm.SHA256_WITH_ECDSA,
-            SignatureAndHashAlgorithm.SHA384_WITH_ECDSA,
-            SignatureAndHashAlgorithm.valueOf("SHA512withECDSA"),
-            SignatureAndHashAlgorithm.SHA256_WITH_RSA,
-            SignatureAndHashAlgorithm.valueOf("SHA384withRSA"),
-            SignatureAndHashAlgorithm.valueOf("SHA512withRSA"),
-            SignatureAndHashAlgorithm.INTRINSIC_WITH_ED25519);
-
     static {
         if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
             Security.addProvider(DEFAULT_PROVIDER);
         }
-        SystemConfig.register();
     }
 
     private SslUtil() {
@@ -161,18 +142,6 @@ public class SslUtil {
         TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
         tmf.init((KeyStore) null); // JVM default trust store (cacerts)
         return ((X509TrustManager) tmf.getTrustManagers()[0]).getAcceptedIssuers();
-    }
-
-    public static DTLSConnector defaultDtlsClientConnector() {
-        Configuration config = new Configuration();
-        config.set(DtlsConfig.DTLS_ROLE, DtlsConfig.DtlsRole.CLIENT_ONLY); // no client cert required
-        config.set(DtlsConfig.DTLS_USE_SERVER_NAME_INDICATION, true); // select the correct server cert
-        config.set(DtlsConfig.DTLS_SIGNATURE_AND_HASH_ALGORITHMS, CLIENT_SIG_ALGS);
-        // hostname is validated by WildcardAwareCertificateVerifier, since Scandium's own
-        // DTLS_VERIFY_SERVER_CERTIFICATES_SUBJECT check doesn't support wildcard SANs
-        return new DTLSConnector(DtlsConnectorConfig.builder(config)
-                .setAdvancedCertificateVerifier(new WildcardAwareCertificateVerifier(getDefaultTrustedCertificates()))
-                .build());
     }
 
 }

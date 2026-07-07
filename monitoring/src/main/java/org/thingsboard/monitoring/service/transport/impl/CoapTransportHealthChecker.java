@@ -26,11 +26,11 @@ import org.eclipse.californium.elements.config.SystemConfig;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import org.thingsboard.common.util.SslUtil;
 import org.thingsboard.monitoring.config.transport.CoapTransportMonitoringConfig;
 import org.thingsboard.monitoring.config.transport.TransportMonitoringTarget;
 import org.thingsboard.monitoring.config.transport.TransportType;
 import org.thingsboard.monitoring.service.transport.TransportHealthChecker;
+import org.thingsboard.monitoring.util.DtlsClientConnectorFactory;
 
 import java.io.IOException;
 
@@ -53,25 +53,19 @@ public class CoapTransportHealthChecker extends TransportHealthChecker<CoapTrans
 
     @Override
     protected void initClient() throws Exception {
-        if (coapClient != null) {
-            if (isSessionExpired()) {
-                log.info("Reconnecting {} client to {}", getTransportType(), target.getBaseUrl());
-                shutdownCoapClient();
-            } else {
-                return;
+        if (coapClient != null && !isSessionExpired()) {
+            return;
+        }
+        reconnectIfNeeded(coapClient != null, this::shutdownCoapClient, () -> {
+            String accessToken = target.getDevice().getCredentials().getCredentialsId();
+            String uri = target.getBaseUrl() + "/api/v1/" + accessToken + "/telemetry";
+            coapClient = new CoapClient(uri);
+            if (isSecure()) {
+                coapEndpoint = new CoapEndpoint.Builder().setConnector(DtlsClientConnectorFactory.jvmTrustedDtlsClientConnector()).build();
+                coapClient.setEndpoint(coapEndpoint);
             }
-        }
-
-        String accessToken = target.getDevice().getCredentials().getCredentialsId();
-        String uri = target.getBaseUrl() + "/api/v1/" + accessToken + "/telemetry";
-        coapClient = new CoapClient(uri);
-        if (target.getBaseUrl().startsWith("coaps")) {
-            coapEndpoint = new CoapEndpoint.Builder().setConnector(SslUtil.defaultDtlsClientConnector()).build();
-            coapClient.setEndpoint(coapEndpoint);
-        }
-        coapClient.setTimeout((long) config.getRequestTimeoutMs());
-        recordSessionStart();
-        log.debug("Connecting {} client to {}", getTransportType(), target.getBaseUrl());
+            coapClient.setTimeout((long) config.getRequestTimeoutMs());
+        });
     }
 
     @Override
@@ -96,13 +90,13 @@ public class CoapTransportHealthChecker extends TransportHealthChecker<CoapTrans
         try {
             coapClient.shutdown();
         } catch (Exception e) {
-            log.warn("Failed to shutdown CoAP client: {}", e.getMessage());
+            log.warn("Failed to shutdown CoAP client", e);
         } finally {
             if (coapEndpoint != null) {
                 try {
                     coapEndpoint.destroy();
                 } catch (Exception e) {
-                    log.warn("Failed to destroy CoAP endpoint: {}", e.getMessage());
+                    log.warn("Failed to destroy CoAP endpoint", e);
                 }
                 coapEndpoint = null;
             }
@@ -113,7 +107,11 @@ public class CoapTransportHealthChecker extends TransportHealthChecker<CoapTrans
 
     @Override
     protected TransportType getTransportType() {
-        return config.getTransportType();
+        return TransportType.COAP;
+    }
+
+    private boolean isSecure() {
+        return CoAP.isSecureScheme(CoAP.getSchemeFromUri(target.getBaseUrl()));
     }
 
 }
