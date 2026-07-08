@@ -61,7 +61,7 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
 
   public init() {
     if (this.preservedState) {
-      this.stateObject = this.preservedState;
+      this.stateObject = this.syncPreservedStateWithDashboardState(this.preservedState);
       this.selectedStateIndex = this.stateObject.length - 1;
       setTimeout(() => {
         this.gotoState(this.stateObject[this.stateObject.length - 1].id, true);
@@ -83,6 +83,29 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
   }
 
   protected onStatesChanged() {
+    const prevStateId = this.getStateId();
+    let i = this.stateObject.length;
+    while (i--) {
+      if (!this.stateObject[i].id || !this.states[this.stateObject[i].id]) {
+        this.stateObject.splice(i, 1);
+      }
+    }
+    if (!this.stateObject.length) {
+      const currentStateId = this.dashboardCtrl.dashboardCtx.state;
+      this.stateObject.push({
+        id: currentStateId && this.states[currentStateId] ? currentStateId : this.dashboardUtils.getRootStateId(this.states),
+        params: {}
+      });
+    }
+    this.selectedStateIndex = this.stateObject.length - 1;
+    const newStateId = this.getStateId();
+    if (newStateId !== prevStateId) {
+      this.stateIdSubject.next(newStateId);
+      if (this.syncStateWithQueryParam) {
+        this.mobileService.handleDashboardStateName(this.getStateName(this.stateObject.length - 1));
+      }
+      this.updateLocation(false);
+    }
   }
 
   protected onStateChanged() {
@@ -274,6 +297,24 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
       if (!result[i].id || !this.states[result[i].id]) {
         result.splice(i, 1);
       }
+    }
+    return result;
+  }
+
+  private syncPreservedStateWithDashboardState(preservedState: StateControllerState): StateControllerState {
+    const result = preservedState.filter((stateObj) => stateObj.id && this.states[stateObj.id]);
+    const currentStateId = this.dashboardCtrl.dashboardCtx.state;
+    if (currentStateId && this.states[currentStateId] &&
+        (!result.length || result[result.length - 1].id !== currentStateId)) {
+      const stateIndex = result.map((stateObj) => stateObj.id).lastIndexOf(currentStateId);
+      if (stateIndex > -1) {
+        result.splice(stateIndex + 1);
+      } else {
+        result.push({ id: currentStateId, params: {} });
+      }
+    }
+    if (!result.length) {
+      result.push({ id: this.dashboardUtils.getRootStateId(this.states), params: {} });
     }
     return result;
   }
