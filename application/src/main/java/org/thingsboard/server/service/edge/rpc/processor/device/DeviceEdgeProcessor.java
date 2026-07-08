@@ -144,7 +144,7 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor implements DevicePr
         log.trace("[{}] processDeviceRpcCallFromEdge [{}]", tenantId, deviceRpcCallMsg);
         if (deviceRpcCallMsg.hasRpcStatus()) {
             // RPC v2 (persistent) status update from the edge - update the cloud Rpc entity (same id == request UUID).
-            return processDeviceRpcStatusFromEdge(tenantId, deviceRpcCallMsg);
+            return processDeviceRpcStatusFromEdge(tenantId, edge, deviceRpcCallMsg);
         } else if (deviceRpcCallMsg.hasResponseMsg()) {
             return processDeviceRpcResponseFromEdge(tenantId, deviceRpcCallMsg);
         } else if (deviceRpcCallMsg.hasRequestMsg()) {
@@ -153,12 +153,18 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor implements DevicePr
         return Futures.immediateFuture(null);
     }
 
-    private ListenableFuture<Void> processDeviceRpcStatusFromEdge(TenantId tenantId, DeviceRpcCallMsg deviceRpcCallMsg) {
+    private ListenableFuture<Void> processDeviceRpcStatusFromEdge(TenantId tenantId, Edge edge, DeviceRpcCallMsg deviceRpcCallMsg) {
         RpcId rpcId = new RpcId(new UUID(deviceRpcCallMsg.getRequestUuidMSB(), deviceRpcCallMsg.getRequestUuidLSB()));
         if (RpcStatus.DELETED.name().equals(deviceRpcCallMsg.getRpcStatus())) {
             // RPC v2 (persistent) delete/abort propagation Edge -> Cloud: remove the cloud copy.
+            // Mark the edge-sync context so TbRpcService.deleteRpc does not echo the delete back to edges.
             if (edgeCtx.getTbRpcService().findRpcById(tenantId, rpcId) != null) {
-                edgeCtx.getTbRpcService().deleteRpc(tenantId, rpcId);
+                try {
+                    edgeSynchronizationManager.getEdgeId().set(edge.getId());
+                    edgeCtx.getTbRpcService().deleteRpc(tenantId, rpcId);
+                } finally {
+                    edgeSynchronizationManager.getEdgeId().remove();
+                }
             }
             return Futures.immediateFuture(null);
         }
