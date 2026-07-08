@@ -17,8 +17,8 @@ package org.thingsboard.server.dao.service.validator;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CalculatedFieldLinkId;
@@ -37,9 +37,9 @@ public class CalculatedFieldLinkDataValidatorTest {
     private final TenantId TENANT_ID = TenantId.fromUUID(UUID.fromString("2ba09d99-6143-43dc-b645-381fc0c43ebe"));
     private final CalculatedFieldLinkId CALCULATED_FIELD_LINK_ID = new CalculatedFieldLinkId(UUID.fromString("a5609ef4-cb42-43ce-9b23-e090a4878d1c"));
 
-    @MockBean
+    @MockitoBean
     private CalculatedFieldLinkDao calculatedFieldLinkDao;
-    @SpyBean
+    @MockitoSpyBean
     private CalculatedFieldLinkDataValidator validator;
 
     @Test

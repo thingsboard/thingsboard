@@ -22,7 +22,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.SmsService;
@@ -85,10 +85,10 @@ public class HomePageApiTest extends AbstractControllerTest {
     @Autowired
     private OAuth2ClientService oAuth2ClientService;
 
-    @MockBean
+    @MockitoBean
     private MailService mailService;
 
-    @MockBean
+    @MockitoBean
     private SmsService smsService;
 
     private static final int DEFAULT_DASHBOARDS_COUNT = 0;

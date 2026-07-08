@@ -73,7 +73,7 @@ public class TbGetTenantDetailsNodeTest {
         config = new TbGetTenantDetailsNodeConfiguration().defaultConfiguration();
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         tenant = new Tenant();
-        tenant.setId(new TenantId(UUID.randomUUID()));
+        tenant.setId(TenantId.fromUUID(UUID.randomUUID()));
         tenant.setTitle("Tenant title");
         tenant.setCountry("Tenant country");
         tenant.setCity("Tenant city");

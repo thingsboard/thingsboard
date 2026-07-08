@@ -23,7 +23,7 @@ import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
@@ -103,7 +103,7 @@ public class DeviceServiceTest extends AbstractServiceTest {
     private CalculatedFieldService calculatedFieldService;
     @Autowired
     private PlatformTransactionManager platformTransactionManager;
-    @SpyBean
+    @MockitoSpyBean
     private DeviceCredentialsDataValidator validator;
 
     private IdComparator<Device> idComparator = new IdComparator<>();

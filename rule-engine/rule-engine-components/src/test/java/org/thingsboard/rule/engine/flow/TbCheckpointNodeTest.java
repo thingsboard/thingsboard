@@ -114,7 +114,7 @@ public class TbCheckpointNodeTest extends AbstractRuleNodeUpgradeTest {
                 .build();
         node.onMsg(ctxMock, msg);
 
-        ArgumentCaptor<Consumer<Throwable>> onFailure = ArgumentCaptor.forClass(Consumer.class);
+        ArgumentCaptor<Consumer<Throwable>> onFailure = ArgumentCaptor.captor();
         then(ctxMock).should().enqueueForTellNext(eq(msg), eq(DataConstants.HP_QUEUE_NAME), eq(TbNodeConnectionType.SUCCESS), any(), onFailure.capture());
         String errorMsg = "Something went wrong.";
         onFailure.getValue().accept(new RuntimeException(errorMsg));

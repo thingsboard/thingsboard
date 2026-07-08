@@ -657,7 +657,7 @@ public abstract class BaseController {
 
     protected <E extends HasId<I> & HasTenantId, I extends EntityId> E checkEntityId(I entityId, ThrowingBiFunction<TenantId, I, E> findingFunction, Operation operation) throws ThingsboardException {
         try {
-            validateId((UUIDBased) entityId, "Invalid entity id");
+            validateId((UUIDBased) entityId, id -> "Invalid entity id");
             SecurityUser user = getCurrentUser();
             E entity = findingFunction.apply(user.getTenantId(), entityId);
             checkNotNull(entity, entityId.getEntityType().getNormalName() + " with id [" + entityId + "] is not found");
@@ -939,7 +939,7 @@ public abstract class BaseController {
     }
 
     private CalculatedField checkCalculatedFieldId(CalculatedFieldId calculatedFieldId, Operation operation) throws ThingsboardException {
-        validateId(calculatedFieldId, "Invalid entity id");
+        validateId(calculatedFieldId, id -> "Invalid entity id");
         SecurityUser user = getCurrentUser();
         CalculatedField cf = calculatedFieldService.findById(user.getTenantId(), calculatedFieldId);
         checkNotNull(cf, calculatedFieldId.getEntityType().getNormalName() + " with id [" + calculatedFieldId + "] is not found");

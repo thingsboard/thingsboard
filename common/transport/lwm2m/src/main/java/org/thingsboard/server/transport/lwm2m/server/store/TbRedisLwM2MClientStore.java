@@ -45,7 +45,7 @@ public class TbRedisLwM2MClientStore implements TbLwM2MClientStore {
     @Override
     public LwM2mClient get(String endpoint) {
         try (var connection = connectionFactory.getConnection()) {
-            byte[] data = connection.get(getKey(endpoint));
+            byte[] data = connection.stringCommands().get(getKey(endpoint));
             if (data == null) {
                 return null;
             } else {
@@ -70,12 +70,12 @@ public class TbRedisLwM2MClientStore implements TbLwM2MClientStore {
                 clusterConnection.clusterGetNodes().forEach(node ->
                         scans.add(clusterConnection.scan(node, scanOptions)));
             } else {
-                scans.add(scanConnection.scan(scanOptions));
+                scans.add(scanConnection.keyCommands().scan(scanOptions));
             }
 
             scans.forEach(scan -> {
                 scan.forEachRemaining(key -> {
-                    byte[] element = getConnection.get(key);
+                    byte[] element = getConnection.stringCommands().get(key);
                     if (element != null) {
                         try {
                             clients.add(deserialize(element));
@@ -97,7 +97,7 @@ public class TbRedisLwM2MClientStore implements TbLwM2MClientStore {
             try {
                 byte[] clientSerialized = serialize(client);
                 try (var connection = connectionFactory.getConnection()) {
-                    connection.getSet(getKey(client.getEndpoint()), clientSerialized);
+                    connection.stringCommands().getSet(getKey(client.getEndpoint()), clientSerialized);
                 }
             } catch (Exception e) {
                 log.warn("Failed to serialize client: {}", client, e);
@@ -108,7 +108,7 @@ public class TbRedisLwM2MClientStore implements TbLwM2MClientStore {
     @Override
     public void remove(String endpoint) {
         try (var connection = connectionFactory.getConnection()) {
-            connection.del(getKey(endpoint));
+            connection.keyCommands().del(getKey(endpoint));
         }
     }
 

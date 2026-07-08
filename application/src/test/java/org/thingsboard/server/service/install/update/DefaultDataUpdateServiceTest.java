@@ -20,7 +20,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.thingsboard.common.util.JacksonUtil;
 
@@ -34,7 +34,7 @@ import static org.mockito.BDDMockito.willCallRealMethod;
 @SpringBootTest(classes = DefaultDataUpdateService.class)
 class DefaultDataUpdateServiceTest {
 
-    @MockBean
+    @MockitoBean
     DefaultDataUpdateService service;
 
     @BeforeEach
