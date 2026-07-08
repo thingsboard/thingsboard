@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -24,6 +25,7 @@ import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -35,8 +37,13 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.server.ResponseStatusException;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.EdgeUtils;
+import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.RpcId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
@@ -46,12 +53,15 @@ import org.thingsboard.server.common.data.rpc.Rpc;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.edge.EdgeHighPriorityMsg;
 import org.thingsboard.server.common.msg.rpc.RemoveRpcActorMsg;
+import org.thingsboard.server.service.rpc.TbRpcService;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.exception.ToErrorResponseEntity;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_ID;
@@ -73,6 +83,9 @@ import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CU
 @RequestMapping(TbUrlConstants.RPC_V2_URL_PREFIX)
 @Slf4j
 public class RpcV2Controller extends AbstractRpcController {
+
+    @Autowired
+    private TbRpcService tbRpcService;
 
     private static final String RPC_REQUEST_DESCRIPTION = "Sends the one-way remote-procedure call (RPC) request to device. " +
             "The RPC call is A JSON that contains the method name ('method'), parameters ('params') and multiple optional fields. " +
@@ -230,14 +243,18 @@ public class RpcV2Controller extends AbstractRpcController {
         Rpc rpc = checkRpcId(rpcId, Operation.DELETE);
 
         if (rpc != null) {
-            if (rpc.getStatus().isPushDeleteNotificationToCore()) {
+            if (rpc.getStatus().isIntermediate()) {
                 RemoveRpcActorMsg removeMsg = new RemoveRpcActorMsg(getTenantId(), rpc.getDeviceId(), rpc.getUuidId());
                 log.trace("[{}] Forwarding msg {} to queue actor!", rpc.getDeviceId(), rpc);
                 tbClusterService.pushMsgToCore(removeMsg, null);
             }
 
-            rpcService.deleteRpc(getTenantId(), rpcId);
+            tbRpcService.deleteRpc(getTenantId(), rpcId);
             rpc.setStatus(RpcStatus.DELETED);
+
+            // RPC v2 (persistent) delete/abort propagation Cloud -> Edge for ANY status
+            // (the actor RemoveRpcActorMsg above only covers non-terminal RPCs).
+            pushRpcDeleteToEdges(rpc);
 
             TbMsg msg = TbMsg.newMsg()
                     .type(TbMsgType.RPC_DELETED)
@@ -246,6 +263,21 @@ public class RpcV2Controller extends AbstractRpcController {
                     .data(JacksonUtil.toString(rpc))
                     .build();
             tbClusterService.pushMsgToRuleEngine(getTenantId(), rpc.getDeviceId(), msg, null);
+        }
+    }
+
+    private void pushRpcDeleteToEdges(Rpc rpc) throws ThingsboardException {
+        List<EdgeId> relatedEdgeIds = edgeService.findAllRelatedEdgeIds(getTenantId(), rpc.getDeviceId());
+        if (relatedEdgeIds == null || relatedEdgeIds.isEmpty()) {
+            return;
+        }
+        ObjectNode body = JacksonUtil.newObjectNode();
+        body.put("requestUUID", rpc.getId().getId().toString());
+        body.put("rpcStatus", RpcStatus.DELETED.name());
+        for (EdgeId edgeId : relatedEdgeIds) {
+            EdgeEvent edgeEvent = EdgeUtils.constructEdgeEvent(getTenantId(), edgeId, EdgeEventType.DEVICE,
+                    EdgeEventActionType.RPC_CALL, rpc.getDeviceId(), body);
+            tbClusterService.onEdgeHighPriorityMsg(new EdgeHighPriorityMsg(getTenantId(), edgeEvent));
         }
     }
 }

@@ -80,4 +80,8 @@ public class TbRpcService {
         return rpcService.findAllByDeviceIdAndStatus(tenantId, deviceId, rpcStatus, pageLink);
     }
 
+    public void deleteRpc(TenantId tenantId, RpcId rpcId) {
+        rpcService.deleteRpc(tenantId, rpcId);
+    }
+
 }

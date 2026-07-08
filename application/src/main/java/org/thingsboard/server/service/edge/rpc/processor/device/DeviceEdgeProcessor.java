@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Component;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
@@ -37,7 +38,10 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.id.RpcId;
+import org.thingsboard.server.common.data.rpc.Rpc;
 import org.thingsboard.server.common.data.rpc.RpcError;
+import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
@@ -138,11 +142,42 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor implements DevicePr
     @Override
     public ListenableFuture<Void> processDeviceRpcCallFromEdge(TenantId tenantId, Edge edge, DeviceRpcCallMsg deviceRpcCallMsg) {
         log.trace("[{}] processDeviceRpcCallFromEdge [{}]", tenantId, deviceRpcCallMsg);
-        if (deviceRpcCallMsg.hasResponseMsg()) {
+        if (deviceRpcCallMsg.hasRpcStatus()) {
+            // RPC v2 (persistent) status update from the edge - update the cloud Rpc entity (same id == request UUID).
+            return processDeviceRpcStatusFromEdge(tenantId, deviceRpcCallMsg);
+        } else if (deviceRpcCallMsg.hasResponseMsg()) {
             return processDeviceRpcResponseFromEdge(tenantId, deviceRpcCallMsg);
         } else if (deviceRpcCallMsg.hasRequestMsg()) {
             return processDeviceRpcRequestFromEdge(tenantId, edge, deviceRpcCallMsg);
         }
+        return Futures.immediateFuture(null);
+    }
+
+    private ListenableFuture<Void> processDeviceRpcStatusFromEdge(TenantId tenantId, DeviceRpcCallMsg deviceRpcCallMsg) {
+        RpcId rpcId = new RpcId(new UUID(deviceRpcCallMsg.getRequestUuidMSB(), deviceRpcCallMsg.getRequestUuidLSB()));
+        if (RpcStatus.DELETED.name().equals(deviceRpcCallMsg.getRpcStatus())) {
+            // RPC v2 (persistent) delete/abort propagation Edge -> Cloud: remove the cloud copy.
+            if (edgeCtx.getTbRpcService().findRpcById(tenantId, rpcId) != null) {
+                edgeCtx.getTbRpcService().deleteRpc(tenantId, rpcId);
+            }
+            return Futures.immediateFuture(null);
+        }
+        RpcStatus rpcStatus = RpcStatus.valueOf(deviceRpcCallMsg.getRpcStatus());
+        Rpc existingRpc = edgeCtx.getTbRpcService().findRpcById(tenantId, rpcId);
+        if (existingRpc == null) {
+            return Futures.immediateFuture(null);
+        }
+        if (!existingRpc.getStatus().isIntermediate() && rpcStatus.isIntermediate()) {
+            // guard against out-of-order status uplinks regressing a terminal RPC (e.g. stale DELIVERED after SUCCESSFUL)
+            log.debug("[{}][{}] Ignoring stale RPC status [{}] - RPC is already terminal [{}]",
+                    tenantId, rpcId, rpcStatus, existingRpc.getStatus());
+            return Futures.immediateFuture(null);
+        }
+        JsonNode response = null;
+        if (deviceRpcCallMsg.hasResponseMsg() && !StringUtils.isEmpty(deviceRpcCallMsg.getResponseMsg().getResponse())) {
+            response = JacksonUtil.toJsonNode(deviceRpcCallMsg.getResponseMsg().getResponse());
+        }
+        edgeCtx.getTbRpcService().save(tenantId, rpcId, rpcStatus, response);
         return Futures.immediateFuture(null);
     }
 

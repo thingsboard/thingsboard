@@ -390,6 +390,7 @@ message DeviceRpcCallMsg {
   optional string additionalInfo = 12;
   optional string serviceId = 13;
   optional string sessionId = 14;
+  optional string rpcStatus = 15;
 }
 
 message RpcRequestMsg {
