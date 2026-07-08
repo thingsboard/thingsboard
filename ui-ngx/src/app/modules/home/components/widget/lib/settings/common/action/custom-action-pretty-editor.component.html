@@ -17,32 +17,22 @@
 -->
 <div class="tb-custom-action-pretty" tb-fullscreen [fullscreen]="fullscreen">
   <div class="tb-action-expand-button flex flex-row items-center justify-end" [class.tb-fullscreen-editor]="fullscreen">
-    <button *ngIf="!fullscreen"
-            class="lt-md:!hidden"
-            mat-icon-button
+    <button mat-stroked-button
             matTooltip="{{ 'widget.toggle-fullscreen' | translate }}"
             matTooltipPosition="above"
-            (click)="fullscreen = true">
-      <mat-icon>fullscreen</mat-icon>
-    </button>
-    <button *ngIf="fullscreen"
-            mat-button
-            matTooltip="{{ 'widget.toggle-fullscreen' | translate }}"
-            matTooltipPosition="above"
-            (click)="fullscreen = false">
-      <mat-icon>fullscreen_exit</mat-icon>
-      <span translate>widget.toggle-fullscreen</span>
+            (click)="toggleFullScreen()">
+      <mat-icon>{{ fullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+      <span>{{ (fullscreen ? 'fullscreen.exit' : 'fullscreen.fullscreen') | translate }}</span>
     </button>
   </div>
   <div class="tb-custom-action-editor" [class.tb-fullscreen-editor]="fullscreen">
-    <div *ngIf="!fullscreen; else fullscreenEditor">
-      <tb-custom-action-pretty-resources-tabs [hasCustomFunction]="true"
-                                              [fullscreen]="fullscreen"
-                                              [helpId]="helpId"
-                                              [action]="action" (actionUpdated)="onActionUpdated($event ? true : false)">
-      </tb-custom-action-pretty-resources-tabs>
-    </div>
-    <ng-template #fullscreenEditor>
+    @if (!fullscreen) {
+        <tb-custom-action-pretty-resources-tabs [hasCustomFunction]="true"
+                                                [fullscreen]="fullscreen"
+                                                [helpId]="helpId"
+                                                [action]="action" (actionUpdated)="onActionUpdated($event ? true : false)">
+        </tb-custom-action-pretty-resources-tabs>
+    } @else {
       <div class="tb-fullscreen-panel tb-layout-fill flex flex-row">
         <div #leftPanel class="tb-split tb-content left-panel">
           <tb-custom-action-pretty-resources-tabs [hasCustomFunction]="false"
@@ -67,6 +57,6 @@
           </tb-js-func>
         </div>
       </div>
-    </ng-template>
+    }
   </div>
 </div>

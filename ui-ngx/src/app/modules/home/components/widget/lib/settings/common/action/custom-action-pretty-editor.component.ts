@@ -43,6 +43,7 @@ import {
         }
     ],
     encapsulation: ViewEncapsulation.None,
+    host: { class: 'tb-custom-action-pretty' },
     standalone: false
 })
 export class CustomActionPrettyEditorComponent implements AfterViewInit, ControlValueAccessor {
@@ -104,6 +105,11 @@ export class CustomActionPrettyEditorComponent implements AfterViewInit, Control
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
   }
+
+  toggleFullScreen(): void {
+    this.fullscreen = !this.fullscreen;
+  }
+
 
   writeValue(obj: CustomActionDescriptor): void {
     this.action = obj;
