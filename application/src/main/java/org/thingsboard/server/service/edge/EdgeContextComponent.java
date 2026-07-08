@@ -60,6 +60,7 @@ import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.rpc.EdgeEventStorageSettings;
 import org.thingsboard.server.service.edge.rpc.EdgeRpcService;
+import org.thingsboard.server.service.rpc.TbRpcService;
 import org.thingsboard.server.service.edge.rpc.processor.EdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.ai.AiModelProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.apikey.ApiKeyProcessor;
@@ -142,6 +143,9 @@ public class EdgeContextComponent {
 
     @Autowired
     private DeviceService deviceService;
+
+    @Autowired
+    private TbRpcService tbRpcService;
 
     @Autowired
     private DomainService domainService;

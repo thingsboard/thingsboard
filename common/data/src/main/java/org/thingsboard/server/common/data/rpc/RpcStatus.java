@@ -29,10 +29,10 @@ public enum RpcStatus {
     DELETED(false);
 
     @Getter
-    private final boolean pushDeleteNotificationToCore;
+    private final boolean intermediate;
 
-    RpcStatus(boolean pushDeleteNotificationToCore) {
-        this.pushDeleteNotificationToCore = pushDeleteNotificationToCore;
+    RpcStatus(boolean intermediate) {
+        this.intermediate = intermediate;
     }
 
 }
