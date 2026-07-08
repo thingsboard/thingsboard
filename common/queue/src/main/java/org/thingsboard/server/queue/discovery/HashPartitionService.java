@@ -551,6 +551,23 @@ public class HashPartitionService implements PartitionService {
     }
 
     @Override
+    public boolean isKnownServiceId(ServiceType serviceType, String serviceId) {
+        ServiceInfo current = serviceInfoProvider.getServiceInfo();
+        if (serviceId.equals(current.getServiceId()) && current.getServiceTypesList().contains(serviceType.name())) {
+            return true;
+        }
+        List<ServiceInfo> others = currentOtherServices;
+        if (others != null) {
+            for (ServiceInfo serviceInfo : others) {
+                if (serviceId.equals(serviceInfo.getServiceId()) && serviceInfo.getServiceTypesList().contains(serviceType.name())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    @Override
     public Set<ServiceInfo> getAllServices(ServiceType serviceType) {
         Set<ServiceInfo> result = getOtherServices(serviceType);
         ServiceInfo current = serviceInfoProvider.getServiceInfo();
