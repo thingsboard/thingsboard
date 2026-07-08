@@ -15,8 +15,6 @@
  */
 package org.thingsboard.server.service.queue;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +24,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.SetCache;
 import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.ApiUsageState;
@@ -133,13 +132,12 @@ public class DefaultTbClusterService implements TbClusterService {
     private final AtomicInteger toTransportNfs = new AtomicInteger(0);
     private final AtomicInteger toEdgeMsgs = new AtomicInteger(0);
     private final AtomicInteger toEdgeNfs = new AtomicInteger(0);
+    private final AtomicInteger skippedUnknownServiceNfs = new AtomicInteger(0);
 
     private static final int RECENTLY_SEEN_SERVICES_MAX_SIZE = 1024;
     // serviceType:serviceId -> seen. Bounded LRU of cluster members ever observed, used to grace a service id that is
     // briefly missing from the live snapshot (see isUnknownService). Fed from ServiceListChangedEvent.
-    private final Cache<String, Boolean> recentlySeenServices = Caffeine.newBuilder()
-            .maximumSize(RECENTLY_SEEN_SERVICES_MAX_SIZE)
-            .build();
+    private final SetCache<String> recentlySeenServices = SetCache.boundedBySize(RECENTLY_SEEN_SERVICES_MAX_SIZE);
 
     @Autowired
     private PartitionService partitionService;
@@ -255,7 +253,7 @@ public class DefaultTbClusterService implements TbClusterService {
      * skipped.
      * <p>
      * This is a safety net for never-real ids, not a precise gatekeeper, so it is deliberately lenient. A service id is
-     * treated as known if it is either a current member ({@link PartitionService#getAllServiceIds}) or a recently seen
+     * treated as known if it is either a current member ({@link PartitionService#isKnownServiceId}) or a recently seen
      * one ({@link #recentlySeenServices}). The recently-seen grace covers nodes that are briefly absent from the live
      * snapshot - a discovery-propagation lag, a rolling restart or a transient scale-down - so legitimate replies to
      * them are not dropped; genuine non-delivery to a node that is actually gone is already handled by the caller-side
@@ -266,18 +264,19 @@ public class DefaultTbClusterService implements TbClusterService {
         if (serviceId == null || serviceId.isEmpty()) {
             return true;
         }
+        if (partitionService.isKnownServiceId(serviceType, serviceId)) {
+            return false; // currently a live member
+        }
         Set<String> serviceIds = partitionService.getAllServiceIds(serviceType);
         if (serviceIds == null || serviceIds.isEmpty()) {
             return false; // topology not known yet - fail open
         }
-        if (serviceIds.contains(serviceId)) {
-            return false; // currently a live member
-        }
-        return recentlySeenServices.getIfPresent(recentlySeenServiceKey(serviceType, serviceId)) == null;
+        return !recentlySeenServices.contains(recentlySeenServiceKey(serviceType, serviceId));
     }
 
     private void skipNotificationToUnknownService(ServiceType serviceType, String serviceId, TbQueueCallback callback) {
         log.debug("Skipping notification push to unknown {} service id [{}]", serviceType, serviceId);
+        skippedUnknownServiceNfs.incrementAndGet();
         if (callback != null) {
             // Deliberate skip - the target is not a cluster member. Complete the callback as a no-op success,
             // matching pushNotificationToTransport, so callers don't treat an intentional skip as a delivery error.
@@ -311,7 +310,7 @@ public class DefaultTbClusterService implements TbClusterService {
             return;
         }
         for (String serviceType : serviceInfo.getServiceTypesList()) {
-            recentlySeenServices.put(recentlySeenServiceKey(serviceType, serviceId), Boolean.TRUE);
+            recentlySeenServices.add(recentlySeenServiceKey(serviceType, serviceId));
         }
     }
 
@@ -435,13 +434,6 @@ public class DefaultTbClusterService implements TbClusterService {
 
     @Override
     public void pushNotificationToTransport(String serviceId, ToTransportMsg response, TbQueueCallback callback) {
-        if (serviceId == null || serviceId.isEmpty()) {
-            log.trace("pushNotificationToTransport: skipping message without serviceId [{}], (ToTransportMsg) response [{}]", serviceId, response);
-            if (callback != null) {
-                callback.onSuccess(null); //callback that message already sent, no useful payload expected
-            }
-            return;
-        }
         if (isUnknownService(ServiceType.TB_TRANSPORT, serviceId)) {
             skipNotificationToUnknownService(ServiceType.TB_TRANSPORT, serviceId, callback);
             return;
@@ -733,9 +725,11 @@ public class DefaultTbClusterService implements TbClusterService {
             int toTransportNfsCnt = toTransportNfs.getAndSet(0);
             int toEdgeMsgCnt = toEdgeMsgs.getAndSet(0);
             int toEdgeNfsCnt = toEdgeNfs.getAndSet(0);
-            if (toCoreMsgCnt > 0 || toCoreNfsCnt > 0 || toRuleEngineMsgsCnt > 0 || toRuleEngineNfsCnt > 0 || toTransportNfsCnt > 0 || toEdgeMsgCnt > 0 || toEdgeNfsCnt > 0) {
+            int skippedUnknownServiceNfsCnt = skippedUnknownServiceNfs.getAndSet(0);
+            if (toCoreMsgCnt > 0 || toCoreNfsCnt > 0 || toRuleEngineMsgsCnt > 0 || toRuleEngineNfsCnt > 0 || toTransportNfsCnt > 0 || toEdgeMsgCnt > 0 || toEdgeNfsCnt > 0 || skippedUnknownServiceNfsCnt > 0) {
                 log.info("To TbCore: [{}] messages [{}] notifications; To TbRuleEngine: [{}] messages [{}] notifications; To Transport: [{}] notifications;" +
-                        "To Edge: [{}] messages [{}] notifications", toCoreMsgCnt, toCoreNfsCnt, toRuleEngineMsgsCnt, toRuleEngineNfsCnt, toTransportNfsCnt, toEdgeMsgCnt, toEdgeNfsCnt);
+                        "To Edge: [{}] messages [{}] notifications; Skipped notifications to unknown service id: [{}]",
+                        toCoreMsgCnt, toCoreNfsCnt, toRuleEngineMsgsCnt, toRuleEngineNfsCnt, toTransportNfsCnt, toEdgeMsgCnt, toEdgeNfsCnt, skippedUnknownServiceNfsCnt);
             }
         }
     }
