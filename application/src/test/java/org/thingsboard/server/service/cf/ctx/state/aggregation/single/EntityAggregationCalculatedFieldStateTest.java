@@ -98,9 +98,10 @@ public class EntityAggregationCalculatedFieldStateTest {
     }
 
     // A numeric aggregation result (SUM/AVG/COUNT/..., numeric MIN/MAX) must be serialized as a numeric
-    // JSON node; a genuine string result (lexical MIN/MAX over string telemetry, spec §7) must stay a string
-    // node. The node type is asserted explicitly, so asText() is only used to verify the value once the type
-    // is already pinned - it is not relied on to distinguish the types (that blindness is what hid the bug).
+    // JSON node; a genuine string result (lexical MIN/MAX over string telemetry, e.g. a zero-padded code)
+    // must stay a string node. The node type is asserted explicitly, so asText() is only used to verify the
+    // value once the type is already pinned - it is not relied on to distinguish the types (that blindness
+    // is what hid the bug).
     @ParameterizedTest(name = "{0} (precision {2}) -> numeric={3}")
     @MethodSource("toResultSerializationCases")
     void toResultSerializesResultWithTypePreservingNode(String metricName, BasicKvEntry kvEntry, Integer precision,
@@ -118,8 +119,9 @@ public class EntityAggregationCalculatedFieldStateTest {
                 arguments("consumption", new DoubleDataEntry("consumption", 400.0), 0, true, "400"),
                 // AVG: Number result, precision 2 -> half-up rounded double node
                 arguments("avgConsumption", new DoubleDataEntry("avgConsumption", 133.335), 2, true, "133.34"),
-                // MIN/MAX over string telemetry: lexical String result -> preserved as string node (spec §7)
-                arguments("maxCode", new StringDataEntry("maxCode", "9"), 0, false, "9")
+                // MAX over string telemetry: a zero-padded code is a genuine String result and must stay a
+                // string node - as a number it would lose its padding ("0009" -> 9).
+                arguments("maxCode", new StringDataEntry("maxCode", "0009"), 0, false, "0009")
         );
     }
 
@@ -165,6 +167,11 @@ public class EntityAggregationCalculatedFieldStateTest {
         avgConsumption.setFunction(AggFunction.AVG);
         avgConsumption.setInput(new AggKeyInput("en"));
         metrics.put("avgConsumption", avgConsumption);
+
+        AggMetric maxCode = new AggMetric();
+        maxCode.setFunction(AggFunction.MAX);
+        maxCode.setInput(new AggKeyInput("en"));
+        metrics.put("maxCode", maxCode);
         configuration.setMetrics(metrics);
 
         configuration.setInterval(new CustomInterval("UTC", 0L, 5L));
