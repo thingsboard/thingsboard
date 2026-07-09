@@ -342,7 +342,7 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
     }
   }
 
-  get entityIdType() {
-    return Array.isArray(this.entityId) ? this.entityId[0]?.entityType : this.entityId?.entityType;
+  get entityIdType(): EntityType {
+    return (Array.isArray(this.entityId) ? this.entityId[0]?.entityType : this.entityId?.entityType) as EntityType;
   }
 }

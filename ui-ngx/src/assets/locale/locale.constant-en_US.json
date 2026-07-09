@@ -1557,6 +1557,9 @@
         "min-value": "Value must be 1 or greater.",
         "argument-in-use": "Argument is used as general argument.",
         "import-invalid-alarm-rule-type": "Unable to import alarm rule: Invalid alarm rule structure.",
+        "alarm-rules-created": "{ count, plural, =1 {Alarm rule has been created} other {# alarm rules have been created} }",
+        "alarm-rules-creation-failed": "Failed to save {{count}} of {{total}} alarm rules.",
+        "profiles-not-found": "Unable to save alarm rules. Matching profiles not found: {{names}}",
         "no-filter-preview": "No filter specified",
         "filter-operation": {
             "and": "And",

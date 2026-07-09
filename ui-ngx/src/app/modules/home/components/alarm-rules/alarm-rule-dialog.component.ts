@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, DestroyRef, Inject, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, DestroyRef, Inject, ViewEncapsulation } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -41,19 +41,16 @@ import {
   AlarmRuleTestScriptFn
 } from "@shared/models/alarm-rule.models";
 import { deepTrim } from "@core/utils";
-import { combineLatest, forkJoin, Observable, of } from 'rxjs';
-import { debounceTime, map, startWith, switchMap } from 'rxjs/operators';
+import { combineLatest, from, Observable, of } from 'rxjs';
+import { catchError, debounceTime, map, mergeMap, startWith, switchMap, toArray } from 'rxjs/operators';
 import { RelationTypes } from "@shared/models/relation.models";
 import { StringItemsOption } from "@shared/components/string-items-list.component";
-import { BaseData } from "@shared/models/base-data";
 import { CalculatedFieldFormService } from '@core/services/calculated-field-form.service';
-import { EntitySelectComponent } from '@shared/components/entity/entity-select.component';
-import { NULL_UUID } from '@shared/models/id/has-uuid';
-import { AssetInfo } from '@shared/models/asset.models';
-import { DeviceInfo } from '@shared/models/device.models';
 import { DeviceProfileService } from '@core/http/device-profile.service';
 import { AssetProfileService } from '@core/http/asset-profile.service';
 import { EntityInfoData } from '@shared/models/entity.models';
+import { TranslateService } from '@ngx-translate/core';
+import { ActionNotificationShow } from '@core/notification/notification.actions';
 
 export interface AlarmRuleDialogData {
   value?: CalculatedFieldAlarmRule;
@@ -76,8 +73,6 @@ export interface AlarmRuleDialogData {
 })
 export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogComponent, CalculatedFieldAlarmRule> {
 
-  @ViewChild('entitySelect') entitySelect!: EntitySelectComponent;
-
   fieldFormGroup: FormGroup ;
 
   additionalDebugActionConfig = this.data.value?.id ? {
@@ -99,7 +94,6 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
   disabledClearRuleButton = false;
   disabledArguments = false;
   isLoading = false;
-  createNew = false;
 
   entityTypeControl = new FormControl<EntityType>(EntityType.DEVICE_PROFILE, { nonNullable: true, validators: Validators.required });
 
@@ -112,6 +106,7 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
               private alarmRulesService: AlarmRulesService,
               private deviceProfileService: DeviceProfileService,
               private assetProfileService: AssetProfileService,
+              private translate: TranslateService,
               private destroyRef: DestroyRef,
               private cfFormService: CalculatedFieldFormService) {
     super(store, router, dialogRef);
@@ -130,7 +125,10 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
     });
 
     if (!this.data.entityId) {
-      this.createNew = true;
+      const copiedEntityType = this.data.value?.entityId?.entityType as EntityType;
+      if (alarmRuleEntityTypeList.includes(copiedEntityType)) {
+        this.entityTypeControl.setValue(copiedEntityType, { emitEvent: false });
+      }
       this.entityTypeControl.valueChanges.pipe(
         takeUntilDestroyed()
       ).subscribe(() => this.fieldFormGroup.get('entityId')!.reset(null));
@@ -142,7 +140,8 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
         debounceTime(50),
         takeUntilDestroyed()
       ).subscribe(([entityId, name]) => {
-        this.disabledArguments = Array.isArray(entityId) ? !entityId.length : !entityId || !name?.length;
+        const hasEntity = Array.isArray(entityId) ? !!entityId.length : !!entityId;
+        this.disabledArguments = !hasEntity || !name?.length;
         this.argsEntityId = Array.isArray(entityId) ? entityId.map(id => ({ entityType: this.entityTypeControl.value, id })) : entityId;
         const argsControl = this.fieldFormGroup.get('configuration.arguments')!;
         if (this.disabledArguments) {
@@ -190,25 +189,38 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
   add(): void {
     if (this.fieldFormGroup.valid && Object.keys(this.arguments ?? {}).length > 0) {
       this.isLoading = true;
+      const value = this.fromGroupValue;
+      value.configuration.type = CalculatedFieldType.ALARM;
       this.resolveEntityIds().pipe(
         switchMap(entityIds =>
           entityIds.length
-            ? forkJoin(entityIds.map((entityId: EntityId) => {
-                const alarmRule = { ...(this.data.value ?? {}), ...this.fromGroupValue, entityId };
-                alarmRule.configuration.type = CalculatedFieldType.ALARM;
-                return this.alarmRulesService.saveAlarmRule(alarmRule);
-              }))
+            ? from(entityIds).pipe(
+                mergeMap(entityId =>
+                  this.alarmRulesService.saveAlarmRule({ ...(this.data.value ?? {}), ...value, entityId }).pipe(
+                    catchError(() => of(null as CalculatedFieldAlarmRule))
+                  ), 4),
+                toArray()
+              )
             : of([] as CalculatedFieldAlarmRule[])),
         takeUntilDestroyed(this.destroyRef)
-      ).subscribe({
-        next: (calculatedFields: CalculatedFieldAlarmRule[]) =>
-          calculatedFields.length ? this.dialogRef.close(calculatedFields[0]) : this.isLoading = false,
-        error: () => this.isLoading = false
+      ).subscribe((results: CalculatedFieldAlarmRule[]) => {
+        const saved = results.filter(Boolean);
+        const failedCount = results.length - saved.length;
+        if (failedCount) {
+          this.showNotification(
+            this.translate.instant('alarm-rule.alarm-rules-creation-failed', { count: failedCount, total: results.length }), 'error');
+        } else if (saved.length > 1) {
+          this.showNotification(this.translate.instant('alarm-rule.alarm-rules-created', { count: saved.length }), 'success');
+        }
+        if (saved.length) {
+          this.dialogRef.close(saved[0]);
+        } else {
+          this.isLoading = false;
+        }
       });
     } else {
       this.fieldFormGroup.get('name').markAsTouched();
       this.fieldFormGroup.get('entityId')?.markAsTouched();
-      this.entitySelect?.entityAutocompleteMarkAsTouched();
     }
   }
 
@@ -233,12 +245,28 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
 
   private toProfileEntityIds(profiles: EntityInfoData[], names: string[]): EntityId[] {
     const idByName = new Map(profiles.map(profile => [profile.name, profile.id]));
-    return names.map(name => idByName.get(name)).filter((id): id is EntityId => !!id);
+    const notFoundNames = names.filter(name => !idByName.has(name));
+    if (notFoundNames.length) {
+      this.showNotification(
+        this.translate.instant('alarm-rule.profiles-not-found', { names: notFoundNames.join(', ') }), 'error');
+      return [];
+    }
+    return names.map(name => idByName.get(name));
+  }
+
+  private showNotification(message: string, type: 'success' | 'error'): void {
+    this.store.dispatch(new ActionNotificationShow({
+      message,
+      type,
+      verticalPosition: 'top',
+      horizontalPosition: 'left',
+      duration: 5000
+    }));
   }
 
   private applyDialogData(): void {
     const { configuration = {}, type = CalculatedFieldType.ALARM, debugSettings = { failuresEnabled: true, allEnabled: true }, entityId = this.data.entityId, ...value } = this.data.value ?? {};
-    this.fieldFormGroup.patchValue({ configuration, type, debugSettings, entityId, ...value }, {emitEvent: false});
+    this.fieldFormGroup.patchValue({ configuration, type, debugSettings, entityId: this.data.entityId ? entityId : null, ...value }, {emitEvent: false});
   }
 
   onTestScript(expression: string): Observable<string> {
@@ -277,14 +305,11 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
     }));
   }
 
-  changeEntity(entity: BaseData<EntityId>): void {
-    this.entityName = entity.name;
-    if (this.isAssignedToCustomer(entity as AssetInfo | DeviceInfo)) {
-      this.ownerId = (entity as AssetInfo | DeviceInfo).customerId;
-    }
+  get isProfileEntityType(): boolean {
+    return this.entityTypeControl.value === EntityType.DEVICE_PROFILE || this.entityTypeControl.value === EntityType.ASSET_PROFILE;
   }
 
-  private isAssignedToCustomer(entity: AssetInfo | DeviceInfo): boolean {
-    return entity && entity.customerId && entity.customerId.id !== NULL_UUID;
+  get subtypeListEntityType(): EntityType {
+    return this.entityTypeControl.value === EntityType.DEVICE_PROFILE ? EntityType.DEVICE : EntityType.ASSET;
   }
 }
