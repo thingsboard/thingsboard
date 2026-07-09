@@ -25,7 +25,10 @@ $mat-lt-xl: "screen and (max-width: 1919px)";
 $mat-gt-xs: "screen and (min-width: 600px)";
 $mat-gt-sm: "screen and (min-width: 960px)";
 $mat-gt-md: "screen and (min-width: 1280px)";
+$mat-lt-xmd: "screen and (max-width: 1599px)";
 $mat-gt-xmd: "screen and (min-width: 1600px)";
+$mat-lt-xxl: "screen and (max-width: 2447px)";
+$mat-gt-xxl: "screen and (min-width: 2448px)";
 $mat-gt-xl: "screen and (min-width: 1920px)";
 $mat-md-lg: "screen and (min-width: 960px) and (max-width: 1819px)";
 
@@ -37,3 +40,5 @@ $tb-hue3-color: #a7c1de;
 
 $tb-dark-primary-color: #9fa8da;
 $tb-primary-color-light: #7986cb;
+
+$sidenav-anim-timing: 400ms cubic-bezier(0.25, 0.8, 0.25, 1);

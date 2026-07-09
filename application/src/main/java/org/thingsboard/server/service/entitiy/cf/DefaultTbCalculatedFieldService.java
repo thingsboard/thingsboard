@@ -32,6 +32,7 @@ import org.thingsboard.script.api.tbel.TbelCfTsDoubleVal;
 import org.thingsboard.script.api.tbel.TbelCfTsRollingArg;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
@@ -99,7 +100,7 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
 
     @Override
     @Transactional
-    public void delete(CalculatedField calculatedField, SecurityUser user) {
+    public void delete(CalculatedField calculatedField, User user) {
         ActionType actionType = ActionType.DELETED;
         TenantId tenantId = calculatedField.getTenantId();
         CalculatedFieldId calculatedFieldId = calculatedField.getId();

@@ -1,0 +1,403 @@
+/**
+ * Copyright © 2016-2026 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+@import "../../../../../scss/constants";
+
+:host {
+  display: block;
+  height: 100%;
+  min-width: 0;
+}
+
+// Card — Design: white bg, border rgba(0,0,0,0.12), rounded-8, overflow-clip, flex-col, gap-16, pb-16
+.tb-iot-hub-item-card {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.2s;
+  background: white;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  &:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+  }
+
+}
+
+// Preview area — Design: aspect ~305:172, bg rgba(0,0,0,0.04), overflow-clip, p-12, dot pattern bg
+.tb-iot-hub-card-preview {
+  aspect-ratio: 305 / 172;
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.06) 1px, transparent 1px) 0 0 / 20px 20px rgba(0, 0, 0, 0.04);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  padding: 12px;
+}
+
+.tb-iot-hub-preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.tb-iot-hub-preview-placeholder {
+  width: 62px;
+  height: 62px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.06);
+
+  tb-icon {
+    font-size: 36px;
+    width: 36px;
+    height: 36px;
+    color: rgba(0, 0, 0, 0.38);
+  }
+}
+
+.tb-iot-hub-pe-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+// Compact card (CF / RC) — Design: horizontal flex, gap-16, p-16, rounded-8
+.tb-iot-hub-card-compact {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+  cursor: pointer;
+  height: 100%;
+  transition: box-shadow 0.2s, transform 0.2s;
+
+  &:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+  }
+}
+
+// Compact icon — Design: 72x72, rounded-6, colored bg, white icon 36px centered
+.tb-iot-hub-compact-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  tb-icon {
+    font-size: 36px;
+    width: 36px;
+    height: 36px;
+    color: #fff;
+  }
+}
+
+// Compact content — Design: flex-1, flex-col, gap-8
+.tb-iot-hub-compact-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+// Compact name — Design: 16px Medium, line-height 24, tracking 0.25, ellipsis
+.tb-iot-hub-compact-name {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  letter-spacing: 0.25px;
+  color: rgba(0, 0, 0, 0.87);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// Compact meta row — Design: flex row, gap-8, items-center
+.tb-iot-hub-compact-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.25px;
+  color: rgba(0, 0, 0, 0.54);
+}
+
+.tb-iot-hub-compact-author-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.tb-iot-hub-verified-icon {
+  color: #00695c;
+}
+
+.tb-iot-hub-compact-creator {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  &.clickable {
+    cursor: pointer;
+
+    &:hover {
+      color: $tb-primary-color;
+      text-decoration: underline;
+    }
+  }
+}
+
+.tb-iot-hub-compact-dot {
+  margin: 0 4px;
+  flex-shrink: 0;
+}
+
+.tb-iot-hub-compact-download-icon {
+  font-size: 12px;
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+.tb-iot-hub-compact-count {
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+// Subtype label — Design: 12px Medium uppercase, rgba(0,0,0,0.54), tracking 0.25
+.tb-iot-hub-card-subtype {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0.25px;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.54);
+}
+
+// Name — Design: 16px Medium, line-height 24, tracking 0.25, ellipsis
+.tb-iot-hub-card-name {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  letter-spacing: 0.25px;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+
+// Footer — Design: flex, justify-between, no border-top, inline with content
+.tb-iot-hub-card-footer {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.25px;
+  color: rgba(0, 0, 0, 0.54);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: auto;
+
+  // Author icon — Design: person icon, 16px
+  .tb-iot-hub-card-author-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    margin-right: 4px;
+  }
+
+  .tb-iot-hub-card-creator {
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    &.clickable {
+      cursor: pointer;
+
+      &:hover {
+        color: $tb-primary-color;
+        text-decoration: underline;
+      }
+    }
+  }
+
+  // Dot separator — Design: 3px circle, rgba(0,0,0,0.38)
+  .tb-iot-hub-card-dot {
+    margin: 0 8px;
+    flex-shrink: 0;
+  }
+
+  .tb-iot-hub-card-stats {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
+  // Download stat — Design: download icon 12px, count 12px Medium uppercase
+  .tb-iot-hub-card-stat {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(0, 0, 0, 0.54);
+    text-transform: uppercase;
+    margin-right: 8px;
+
+    tb-icon {
+      font-size: 12px;
+      width: 12px;
+      height: 12px;
+    }
+  }
+
+}
+
+// Install button — Design: border rgba(0,0,0,0.12), rounded-4, px-16 py-6, text #00695c 14px Medium
+.tb-iot-hub-card-install-btn {
+  padding: 6px 16px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: transparent;
+  color: $tb-primary-color;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  letter-spacing: 0.25px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.15s;
+
+  &:hover {
+    background: rgba($tb-primary-color, 0.04);
+  }
+}
+
+// Installed chip — Design: pill, bg rgba(25,128,56,0.06), check 18px + "Installed" 14px Regular, #198038
+.tb-iot-hub-card-installed-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 32px;
+  padding: 6px 12px 6px 8px;
+  border-radius: 16px;
+  background: rgba(25, 128, 56, 0.06);
+  color: #198038;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+
+  tb-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+%tb-iot-hub-card-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 4px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  border-radius: 50%;
+  transition: background 0.15s;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.04);
+  }
+}
+
+// Guide icon button
+.tb-iot-hub-card-guide-btn {
+  @extend %tb-iot-hub-card-icon-btn;
+
+  tb-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    color: rgba(0, 0, 0, 0.54);
+  }
+}
+
+// Remove icon button — Design: trash-can-outline 24px, rgba(0,0,0,0.54)
+.tb-iot-hub-card-remove-btn {
+  @extend %tb-iot-hub-card-icon-btn;
+
+  tb-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    color: rgba(0, 0, 0, 0.54);
+  }
+}
+
+.tb-iot-hub-card-update-btn {
+  padding: 6px 16px;
+  border-radius: 4px;
+  border: 1px solid #f57c00;
+  background: transparent;
+  color: #f57c00;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.15s;
+
+  &:hover {
+    background: rgba(245, 124, 0, 0.04);
+  }
+}

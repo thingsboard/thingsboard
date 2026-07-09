@@ -15,10 +15,10 @@
  */
 @import "../../../../../scss/constants";
 
-$toolbar-height: 50px !default;
-$fullscreen-toolbar-height: 64px !default;
-$mobile-toolbar-height: 84px !default;
-$mobile-app-toolbar-height: 40px !default;
+$toolbar-height: 56px !default;
+$fullscreen-toolbar-height: 56px !default;
+$mobile-toolbar-height: 96px !default;
+$mobile-app-toolbar-height: 48px !default;
 
 tb-dashboard-page {
   display: flex;
@@ -63,6 +63,7 @@ div.tb-dashboard-page {
 
     .dashboard_logo{
       height: 75%;
+      width: auto;
       margin-right: 16px;
     }
 
@@ -78,8 +79,7 @@ div.tb-dashboard-page {
   }
 
   .mat-divider-vertical.tb-toolbar-divider {
-    border-right-color: rgba(255,255,255,0.75);
-    height: 30px;
+    height: 100%;
   }
 
   .tb-dashboard-container {
@@ -195,3 +195,4 @@ div.tb-dashboard-page {
   }
 
 }
+

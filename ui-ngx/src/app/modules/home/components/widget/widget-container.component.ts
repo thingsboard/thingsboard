@@ -49,6 +49,7 @@ import { WidgetHeaderActionButtonType } from '@shared/models/widget.models';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 import ITooltipsterGeoHelper = JQueryTooltipster.ITooltipsterGeoHelper;
 import { WidgetComponent } from '@home/components/widget/widget.component';
+import { WidgetAction } from '@home/models/widget-component.models';
 
 export enum WidgetComponentActionType {
   MOUSE_DOWN,
@@ -292,6 +293,10 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
         this.editWidgetActionsTooltip.disable();
       }
     }
+  }
+
+  actionVisible(action: WidgetAction): boolean {
+    return typeof action.show === 'function' ? action.show() : action.show;
   }
 
   private initEditWidgetActionTooltip(parent: HTMLElement) {

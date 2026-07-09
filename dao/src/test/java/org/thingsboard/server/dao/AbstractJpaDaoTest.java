@@ -17,7 +17,7 @@ package org.thingsboard.server.dao;
 
 import org.junit.runner.RunWith;
 import org.mockito.Answers;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -42,7 +42,7 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
         DirtiesContextTestExecutionListener.class})
 public abstract class AbstractJpaDaoTest {
 
-    @MockBean(answer = Answers.RETURNS_MOCKS)
+    @MockitoBean(answers = Answers.RETURNS_MOCKS)
     StatsFactory statsFactory;
 
 }

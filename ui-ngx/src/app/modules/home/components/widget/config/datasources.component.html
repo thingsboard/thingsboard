@@ -50,7 +50,7 @@
                 (cdkDropListDropped)="onDatasourceDrop($event)"
                 [cdkDropListDisabled]="dragDisabled"
                 formArrayName="datasources">
-        @for (datasourceControl of datasourcesControls; track trackByDatasource($index, datasourceControl)) {
+        @for (datasourceControl of datasourcesControls; track datasourceControl) {
           <mat-list-item
             class="tb-datasource-list-item tb-draggable" cdkDrag
             [cdkDragDisabled]="dragDisabled">

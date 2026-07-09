@@ -1,7 +1,7 @@
 {
   "fqn": "simple_solar_radiation_chart_card_with_background",
   "name": "Simple solar radiation chart card with background",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/simple_solar_radiation_chart_card_with_background_system_widget_image.png",
   "description": "Displays historical solar radiation values as a simplified chart with background. Optionally may display the corresponding latest solar radiation value.",
   "descriptor": {

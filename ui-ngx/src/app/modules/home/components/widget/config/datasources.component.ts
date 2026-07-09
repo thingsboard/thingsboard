@@ -16,7 +16,6 @@
 
 import { Component, DestroyRef, forwardRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import {
-  AbstractControl,
   ControlValueAccessor,
   FormControl,
   NG_VALIDATORS,
@@ -321,10 +320,6 @@ export class DatasourcesComponent implements ControlValueAccessor, OnInit, Valid
 
   get datasourcesControls(): FormControl[] {
     return this.datasourcesFormArray.controls as FormControl[];
-  }
-
-  public trackByDatasource(index: number, datasourceControl: AbstractControl): any {
-    return datasourceControl;
   }
 
   private datasourcesUpdated(datasources: Datasource[]) {

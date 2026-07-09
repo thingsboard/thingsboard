@@ -22,7 +22,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.debug.TbMsgGeneratorNode;
 import org.thingsboard.rule.engine.debug.TbMsgGeneratorNodeConfiguration;
@@ -127,9 +127,9 @@ import static org.mockito.Mockito.verify;
 @DaoSqlTest
 public class ExportImportServiceSqlTest extends AbstractControllerTest {
 
-    @SpyBean
+    @MockitoSpyBean
     private EntityActionService entityActionService;
-    @SpyBean
+    @MockitoSpyBean
     private OtaPackageStateService otaPackageStateService;
 
     @Autowired

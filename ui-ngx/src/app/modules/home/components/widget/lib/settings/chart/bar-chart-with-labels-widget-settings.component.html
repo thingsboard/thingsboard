@@ -23,6 +23,11 @@
         {{ 'widgets.time-series-chart.data-zoom' | translate }}
       </mat-slide-toggle>
     </div>
+    <div class="tb-form-row">
+      <mat-slide-toggle class="mat-slide" formControlName="dataZoomUpdateTimewindow">
+        {{ 'widgets.time-series-chart.data-zoom-update-timewindow' | translate }}
+      </mat-slide-toggle>
+    </div>
     <tb-time-series-chart-grid-settings
       formControlName="grid">
     </tb-time-series-chart-grid-settings>

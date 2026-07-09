@@ -34,6 +34,7 @@ import { CalculatedFieldsTableConfig } from '@home/components/calculated-fields/
 import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { ImportExportService } from '@shared/import-export/import-export.service';
 import { EntityDebugSettingsService } from '@home/components/entity/debug/entity-debug-settings.service';
+import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
 import { DatePipe } from '@angular/common';
 import { UtilsService } from "@core/services/utils.service";
 import { ActivatedRoute, Router } from '@angular/router';
@@ -71,7 +72,8 @@ export class CalculatedFieldsTableComponent {
               private utilsService: UtilsService,
               private destroyRef: DestroyRef,
               private route: ActivatedRoute,
-              private router: Router
+              private router: Router,
+              private iotHubActions: IotHubActionsService
   ) {
     this.pageMode = !!this.route.snapshot.data.isPage;
     effect(() => {
@@ -91,6 +93,7 @@ export class CalculatedFieldsTableComponent {
           this.entityDebugSettingsService,
           this.utilsService,
           this.router,
+          this.iotHubActions,
           this.pageMode,
         );
         this.cd.markForCheck();

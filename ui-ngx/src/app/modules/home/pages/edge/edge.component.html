@@ -16,68 +16,68 @@
 
 -->
 <div class="tb-details-buttons xs:flex xs:flex-col">
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'open')"
           [class.!hidden]="isEdit || isDetailsPage">
     {{'common.open-details-page' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'makePublic')"
           [class.!hidden]="isEdit || edgeScope !== 'tenant' || isAssignedToCustomer(entity) || entity?.customerIsPublic">
     {{'edge.make-public' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'assignToCustomer')"
           [class.!hidden]="isEdit || edgeScope !== 'tenant' || isAssignedToCustomer(entity)">
     {{'edge.assign-to-customer' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'unassignFromCustomer')"
           [class.!hidden]="isEdit || (edgeScope !== 'customer' && edgeScope !== 'tenant') || !isAssignedToCustomer(entity)">
     {{ (entity?.customerIsPublic ? 'edge.make-private' : 'edge.unassign-from-customer') | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'openEdgeAssets')"
           [class.!hidden]="isEdit || edgeScope === 'customer'">
     {{'edge.manage-assets' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'openEdgeDevices')"
           [class.!hidden]="isEdit || edgeScope === 'customer'">
     {{'edge.manage-devices' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'openEdgeEntityViews')"
           [class.!hidden]="isEdit || edgeScope === 'customer'">
     {{'edge.manage-entity-views' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'openEdgeDashboards')"
           [class.!hidden]="isEdit || edgeScope === 'customer'">
     {{'edge.manage-dashboards' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'openEdgeRuleChains')"
           [class.!hidden]="isEdit || edgeScope !== 'tenant'">
     {{'edge.manage-rulechains' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'delete')"
           [class.!hidden]="hideDelete() || isEdit">
     {{'edge.delete' | translate }}
   </button>
   <div class="flex flex-row flex-wrap xs:flex-col">
-    <button mat-raised-button
+    <button mat-stroked-button
             ngxClipboard
             (cbOnSuccess)="onEdgeIdCopied($event)"
             [cbContent]="entity?.id?.id"
@@ -86,7 +86,7 @@
       <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
       <span translate>edge.copy-id</span>
     </button>
-    <button mat-raised-button
+    <button mat-stroked-button
             ngxClipboard
             (cbOnSuccess)="onEdgeInfoCopied('key')"
             [cbContent]="entity?.routingKey"
@@ -95,7 +95,7 @@
       <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
       <span translate>edge.copy-edge-key</span>
     </button>
-    <button mat-raised-button
+    <button mat-stroked-button
             ngxClipboard
             (cbOnSuccess)="onEdgeInfoCopied('secret')"
             [cbContent]="entity?.secret"
@@ -104,7 +104,7 @@
       <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
       <span translate>edge.copy-edge-secret</span>
     </button>
-    <button mat-raised-button
+    <button mat-stroked-button
             ngxClipboard
             [disabled]="(isLoading$ | async)"
             (click)="onEntityAction($event, 'syncEdge')"
@@ -115,7 +115,7 @@
   </div>
   <div class="flex flex-row xs:flex-col">
     @if (!upgradeAvailable) {
-      <button mat-raised-button color="primary"
+      <button mat-stroked-button color="primary"
               [disabled]="(isLoading$ | async)"
               (click)="onEntityAction($event, 'openInstallInstructions')"
               [class.!hidden]="isEdit || edgeScope === 'customer_user'">
@@ -123,7 +123,7 @@
         <span>{{ 'edge.install-connect-instructions' | translate }}</span>
       </button>
     } @else {
-      <button mat-raised-button color="primary"
+      <button mat-stroked-button color="primary"
               [disabled]="(isLoading$ | async)"
               (click)="onEntityAction($event, 'openUpgradeInstructions')"
               [class.!hidden]="isEdit || edgeScope === 'customer_user'">

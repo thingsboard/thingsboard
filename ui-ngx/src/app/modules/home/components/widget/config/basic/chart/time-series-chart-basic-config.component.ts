@@ -96,7 +96,7 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
   seriesMode = 'series';
 
   predefinedValues = widgetTitleAutocompleteValues;
-  
+
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,
               private $injector: Injector,
@@ -164,6 +164,7 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
       iconColor: [configData.config.iconColor, []],
 
       dataZoom: [settings.dataZoom, []],
+      dataZoomUpdateTimewindow: [settings.dataZoomUpdateTimewindow, []],
       stack: [settings.stack, []],
 
       grid: [settings.grid, []],
@@ -241,6 +242,7 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
     this.widgetConfig.config.settings.thresholds = config.thresholds;
 
     this.widgetConfig.config.settings.dataZoom = config.dataZoom;
+    this.widgetConfig.config.settings.dataZoomUpdateTimewindow = config.dataZoomUpdateTimewindow;
     this.widgetConfig.config.settings.stack = config.stack;
 
     this.widgetConfig.config.settings.grid = config.grid;
@@ -292,17 +294,24 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
   }
 
   protected validatorTriggers(): string[] {
-    return ['comparisonEnabled', 'showTitle', 'showIcon', 'showLegend', 'showTooltip', 'tooltipShowDate', 'stack'];
+    return ['comparisonEnabled', 'dataZoom', 'showTitle', 'showIcon', 'showLegend', 'showTooltip', 'tooltipShowDate', 'stack'];
   }
 
   protected updateValidators(emitEvent: boolean, trigger?: string) {
     const comparisonEnabled: boolean = this.timeSeriesChartWidgetConfigForm.get('comparisonEnabled').value;
+    const dataZoom: boolean = this.timeSeriesChartWidgetConfigForm.get('dataZoom').value;
     const showTitle: boolean = this.timeSeriesChartWidgetConfigForm.get('showTitle').value;
     const showIcon: boolean = this.timeSeriesChartWidgetConfigForm.get('showIcon').value;
     const showLegend: boolean = this.timeSeriesChartWidgetConfigForm.get('showLegend').value;
     const showTooltip: boolean = this.timeSeriesChartWidgetConfigForm.get('showTooltip').value;
     const tooltipShowDate: boolean = this.timeSeriesChartWidgetConfigForm.get('tooltipShowDate').value;
     const stack: boolean = this.timeSeriesChartWidgetConfigForm.get('stack').value;
+
+    if (dataZoom) {
+      this.timeSeriesChartWidgetConfigForm.get('dataZoomUpdateTimewindow').enable();
+    } else {
+      this.timeSeriesChartWidgetConfigForm.get('dataZoomUpdateTimewindow').disable();
+    }
 
     if (comparisonEnabled) {
       this.timeSeriesChartWidgetConfigForm.get('timeForComparison').enable();

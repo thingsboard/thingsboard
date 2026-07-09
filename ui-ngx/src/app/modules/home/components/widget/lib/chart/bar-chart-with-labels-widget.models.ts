@@ -53,6 +53,7 @@ import {
 
 export interface BarChartWithLabelsWidgetSettings extends TimeSeriesChartTooltipWidgetSettings {
   dataZoom: boolean;
+  dataZoomUpdateTimewindow: boolean;
   showBarLabel: boolean;
   barLabelFont: Font;
   barLabelColor: string;
@@ -79,6 +80,7 @@ export interface BarChartWithLabelsWidgetSettings extends TimeSeriesChartTooltip
 
 export const barChartWithLabelsDefaultSettings: BarChartWithLabelsWidgetSettings = {
   dataZoom: false,
+  dataZoomUpdateTimewindow: false,
   showBarLabel: true,
   barLabelFont: {
     family: 'Roboto',
@@ -181,6 +183,7 @@ export const barChartWithLabelsDefaultSettings: BarChartWithLabelsWidgetSettings
 
 export const barChartWithLabelsTimeSeriesSettings = (settings: BarChartWithLabelsWidgetSettings): DeepPartial<TimeSeriesChartSettings> => ({
   dataZoom: settings.dataZoom,
+  dataZoomUpdateTimewindow: settings.dataZoomUpdateTimewindow,
   grid: settings.grid,
   yAxes: {
     default: settings.yAxis

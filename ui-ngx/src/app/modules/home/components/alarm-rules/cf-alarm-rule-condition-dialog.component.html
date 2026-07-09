@@ -16,7 +16,7 @@
 
 -->
 <form [formGroup]="conditionFormGroup" (ngSubmit)="save()">
-  <mat-toolbar color="primary">
+  <mat-toolbar class="tb-dialog-header">
     <h2>{{ (readonly ? 'alarm-rule.alarm-rule-condition' : 'alarm-rule.edit-alarm-rule-condition') | translate }}</h2>
     <span class="flex-1"></span>
     <button mat-icon-button

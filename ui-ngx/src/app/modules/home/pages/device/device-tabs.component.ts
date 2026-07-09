@@ -39,6 +39,14 @@ export class DeviceTabsComponent extends EntityTabsComponent<DeviceInfo> {
     super.ngOnInit();
   }
 
+  resolveTabIndex(tab: string): number {
+    if (tab === 'cf') {
+      return 3;
+    } else {
+      return super.resolveTabIndex(tab);
+    }
+  }
+
   protected setEntity(entity: DeviceInfo) {
     this.ownerId = entity.customerId.id !== this.nullUid ? entity.customerId : entity.tenantId;
     super.setEntity(entity);

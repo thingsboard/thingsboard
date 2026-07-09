@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.DeviceTransportType;
 
 import java.util.HashMap;
@@ -27,6 +28,7 @@ import java.util.Map;
 
 @Data
 @Schema
+@EqualsAndHashCode(callSuper = true)
 public class CoapDeviceTransportConfiguration extends PowerSavingConfiguration implements DeviceTransportConfiguration {
 
     private static final long serialVersionUID = 6061442236008925609L;

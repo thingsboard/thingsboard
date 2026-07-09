@@ -64,7 +64,7 @@
   <mat-card-content>
     <div class="tb-drop-list tb-bundle-widgets-container" cdkDropList cdkDropListOrientation="vertical"
          (cdkDropListDropped)="widgetDrop($event)" [cdkDropListDisabled]="!editMode || widgets?.length < 2">
-      @for (widget of widgets; track trackByWidget($index, widget); let isLast = $last) {
+      @for (widget of widgets; track widget.id.id; let isLast = $last) {
         <div cdkDrag class="tb-draggable tb-bundle-widget-row">
           <div class="tb-bundle-widget-row-details">
             <img class="tb-bundle-widget-image-preview" [src]="widget.image | image: {preview: true, emptyUrl: '/assets/widget-preview-empty.svg'} | async" alt="{{ widget.name }}">

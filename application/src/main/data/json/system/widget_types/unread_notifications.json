@@ -3,6 +3,7 @@
   "name": "Unread notifications",
   "deprecated": false,
   "image": "tb-image;/api/images/system/unread_notification_system_widget_image.png",
+  "description": "Displays the latest unread notifications and alarms for the current user.",
   "descriptor": {
     "type": "static",
     "sizeX": 5.5,

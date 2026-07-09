@@ -133,14 +133,6 @@ export class DeviceProfileAlarmsComponent implements ControlValueAccessor, OnIni
     }
   }
 
-  public trackByAlarm(index: number, alarmControl: AbstractControl): string {
-    if (alarmControl) {
-      return alarmControl.value.id;
-    } else {
-      return null;
-    }
-  }
-
   public removeAlarm(index: number) {
     (this.deviceProfileAlarmsFormGroup.get('alarms') as UntypedFormArray).removeAt(index);
   }

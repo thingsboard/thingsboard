@@ -700,10 +700,6 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
     return res;
   }
 
-  trackByColumnKey(index, column: EntityTableColumn<BaseData<HasId>> | EntityActionTableColumn<BaseData<HasId>>) {
-    return column.key;
-  }
-
   trackByEntityId(index: number, entity: BaseData<HasId>) {
     return entity.id.id;
   }

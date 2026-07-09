@@ -149,7 +149,7 @@ export class ResourcesLibraryTableConfigResolver  {
   }
 
   resolve(): EntityTableConfig<Resource, PageLink, ResourceInfo> {
-    this.config.tableTitle = this.translate.instant('resource.resources-library');
+    this.config.tableTitle = this.translate.instant('resource.files');
     this.config.componentsData = {
       resourceType: ''
     };

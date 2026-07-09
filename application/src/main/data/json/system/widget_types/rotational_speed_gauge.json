@@ -1,7 +1,7 @@
 {
   "fqn": "rotational_speed_gauge",
   "name": "Rotational speed gauge",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/rotational_speed_gauge.svg",
   "description": "Rotational speed gauge.",
   "descriptor": {

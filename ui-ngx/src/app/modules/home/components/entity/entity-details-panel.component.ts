@@ -215,6 +215,7 @@ export class EntityDetailsPanelComponent extends PageComponent implements AfterV
           if (entityTabs) {
             if (this.viewInited) {
               this.matTabGroup._tabs.reset([...this.inclusiveTabs.toArray(), ...entityTabs]);
+              this.matTabGroup.selectedIndex = this.selectedTab;
               this.matTabGroup._tabs.notifyOnChanges();
             } else {
               this.pendingTabs = entityTabs;
@@ -321,6 +322,7 @@ export class EntityDetailsPanelComponent extends PageComponent implements AfterV
     this.viewInited = true;
     if (this.pendingTabs) {
       this.matTabGroup._tabs.reset([...this.inclusiveTabs.toArray(), ...this.pendingTabs]);
+      this.matTabGroup.selectedIndex = this.selectedTab;
       this.matTabGroup._tabs.notifyOnChanges();
       this.pendingTabs = null;
     }

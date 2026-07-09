@@ -1,0 +1,82 @@
+<!--
+
+    Copyright © 2016-2026 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-card-content flex h-full flex-col">
+  @if (hasIotHubAccess) {
+    <div class="tb-card-header flex flex-col">
+      <div class="tb-card-title-text">{{ 'widgets.iot-hub.title-text' | translate }}&nbsp;<a routerLink="/iot-hub">IoT Hub</a></div>
+      <mat-divider></mat-divider>
+    </div>
+    <div class="tb-iot-hub-widget-body">
+      <div class="tb-iot-hub-widget-column">
+        <a class="tb-title-link" routerLink="/iot-hub/solution-templates">{{ 'item.type-solution-template-plural' | translate }}</a>
+        <div class="tb-iot-hub-widget-cards">
+          @for (item of solutionTemplates; track item.id) {
+            <div class="tb-iot-hub-widget-card" role="button" tabindex="0"
+                 (click)="openItemDetail(item)"
+                 (keyup.enter)="openItemDetail(item)">
+              <div class="tb-iot-hub-widget-card-image">
+                @if (getItemImage(item); as imgUrl) {
+                  <img [src]="imgUrl" alt="">
+                }
+                @if (isInstalled(item)) {
+                  <mat-icon class="tb-iot-hub-widget-card-installed">check_circle</mat-icon>
+                }
+              </div>
+              <div class="tb-iot-hub-widget-card-label">
+                <span class="tb-iot-hub-widget-card-name" tbTruncateWithTooltip>{{ item.name }}</span>
+                <span class="tb-iot-hub-widget-card-installs">
+                  <mat-icon>file_download</mat-icon>
+                  {{ item.totalInstallCount | shortNumber }}
+                </span>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+      <mat-divider vertical></mat-divider>
+      <div class="tb-iot-hub-widget-column">
+        <a class="tb-title-link" routerLink="/iot-hub/devices">{{ 'iot-hub.device-library' | translate }}</a>
+        <div class="tb-iot-hub-widget-cards">
+          @for (item of devices; track item.id) {
+            <div class="tb-iot-hub-widget-card" role="button" tabindex="0"
+                 (click)="openItemDetail(item)"
+                 (keyup.enter)="openItemDetail(item)">
+              <div class="tb-iot-hub-widget-card-image">
+                @if (getItemImage(item); as imgUrl) {
+                  <img [src]="imgUrl" alt="">
+                }
+              </div>
+              <div class="tb-iot-hub-widget-card-label">
+                <span class="tb-iot-hub-widget-card-name" tbTruncateWithTooltip>{{ item.name }}</span>
+                <span class="tb-iot-hub-widget-card-installs">
+                  <mat-icon>file_download</mat-icon>
+                  {{ item.totalInstallCount | shortNumber }}
+                </span>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  } @else {
+    <div class="tb-no-data-available">
+      <div class="tb-no-data-bg"></div>
+      <div class="tb-no-data-text" translate>widgets.home.no-data-available</div>
+    </div>
+  }
+</div>

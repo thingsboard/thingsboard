@@ -6,6 +6,31 @@
   "configuration": {
     "description": "",
     "widgets": {
+      "fe678c4f-ea86-4cae-8d81-6fca493fe311": {
+          "type": "static",
+          "sizeX": 7.5,
+          "sizeY": 6.5,
+          "config": {
+              "showTitle": false,
+              "backgroundColor": "rgb(255, 255, 255)",
+              "color": "rgba(0, 0, 0, 0.87)",
+              "padding": "16px",
+              "settings": {},
+              "title": "IoT Hub",
+              "dropShadow": true,
+              "enableFullscreen": false,
+              "widgetStyle": {},
+              "widgetCss": "",
+              "pageSize": 1024,
+              "noDataDisplayMessage": "",
+              "showLegend": false,
+              "datasources": []
+          },
+          "row": 0,
+          "col": 0,
+          "id": "fe678c4f-ea86-4cae-8d81-6fca493fe311",
+          "typeFullFqn": "system.home_page_widgets.iot_hub"
+      },
       "d70cc256-4c7b-ee06-9905-b8c5e546605f": {
         "type": "latest",
         "sizeX": 5,
@@ -224,7 +249,7 @@
           "padding": "16px",
           "settings": {
             "useMarkdownTextFunction": false,
-            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-content-container\">\n        <div class=\"tb-card-header\">\n            <div class=\"tb-card-title\">\n                <a class=\"tb-home-widget-title tb-home-widget-link\" routerLink=\"/entities/devices\">{{ 'device.devices' | translate }}</a>\n            </div>\n            <div class=\"flex flex-row gap-3\">\n                <a class=\"md:!hidden\" mat-button color=\"primary\" href=\"https://thingsboard.io/docs\" target=\"_blank\">{{ 'widgets.devices.view-docs' | translate }}</a>\n                <a *ngIf=\"${totalDevices:0} === 0\" mat-flat-button color=\"primary\" routerLink=\"/entities/devices\" [queryParams]=\"{action: 'add'}\">{{ 'device.add' | translate }}</a>\n                <a *ngIf=\"${totalDevices:0} !== 0\" mat-stroked-button color=\"primary\" routerLink=\"/entities/devices\" [queryParams]=\"{action: 'add'}\">{{ 'device.add' | translate }}</a>\n            </div>\n        </div>\n        <div class=\"tb-item-cards\">\n            <a class=\"tb-item-card tb-inactive\" routerLink=\"/entities/devices\" [queryParams]=\"{active: false}\">\n                <div class=\"tb-item-title-container\">\n                    <div class=\"tb-item-title tb-home-widget-link\" translate>widgets.devices.inactive</div>\n                </div>\n                <div class=\"tb-count-container\">\n                    <div class=\"tb-count\">${inactiveDevices:0}</div>\n                </div>\n            </a>\n            <a class=\"tb-item-card tb-active\" routerLink=\"/entities/devices\" [queryParams]=\"{active: true}\">\n                <div class=\"tb-item-title-container\">\n                    <div class=\"tb-item-title tb-home-widget-link\" translate>widgets.devices.active</div>\n                </div>    \n                <div class=\"tb-count-container\">\n                    <div class=\"tb-count\">${activeDevices:0}</div>\n                </div>\n            </a>\n            <a class=\"tb-item-card tb-total md:!hidden\" routerLink=\"/entities/devices\">\n                <div class=\"tb-item-title-container\">\n                    <div class=\"tb-item-title tb-home-widget-link\" translate>widgets.devices.total</div>\n                </div>    \n                <div class=\"tb-count-container\">\n                    <div class=\"tb-count\">${totalDevices:0}</div>\n                </div>\n            </a>\n        </div>\n    </div>\n</div>",
+            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-content-container\">\n        <div class=\"tb-card-header\">\n            <div class=\"tb-card-title\">\n                <a class=\"tb-home-widget-title tb-home-widget-link\" routerLink=\"/entities/devices\">{{ 'device.devices' | translate }}</a>\n            </div>\n            <div class=\"flex flex-row gap-3\">\n                <a class=\"md:!hidden\" mat-button color=\"primary\" href=\"https://thingsboard.io/docs/\" target=\"_blank\">{{ 'widgets.devices.view-docs' | translate }}</a>\n                <a *ngIf=\"${totalDevices:0} === 0\" mat-flat-button color=\"primary\" routerLink=\"/entities/devices\" [queryParams]=\"{action: 'add'}\">{{ 'device.add' | translate }}</a>\n                <a *ngIf=\"${totalDevices:0} !== 0\" mat-stroked-button color=\"primary\" routerLink=\"/entities/devices\" [queryParams]=\"{action: 'add'}\">{{ 'device.add' | translate }}</a>\n            </div>\n        </div>\n        <div class=\"tb-item-cards\">\n            <a class=\"tb-item-card tb-inactive\" routerLink=\"/entities/devices\" [queryParams]=\"{active: false}\">\n                <div class=\"tb-item-title-container\">\n                    <div class=\"tb-item-title tb-home-widget-link\" translate>widgets.devices.inactive</div>\n                </div>\n                <div class=\"tb-count-container\">\n                    <div class=\"tb-count\">${inactiveDevices:0}</div>\n                </div>\n            </a>\n            <a class=\"tb-item-card tb-active\" routerLink=\"/entities/devices\" [queryParams]=\"{active: true}\">\n                <div class=\"tb-item-title-container\">\n                    <div class=\"tb-item-title tb-home-widget-link\" translate>widgets.devices.active</div>\n                </div>    \n                <div class=\"tb-count-container\">\n                    <div class=\"tb-count\">${activeDevices:0}</div>\n                </div>\n            </a>\n            <a class=\"tb-item-card tb-total md:!hidden\" routerLink=\"/entities/devices\">\n                <div class=\"tb-item-title-container\">\n                    <div class=\"tb-item-title tb-home-widget-link\" translate>widgets.devices.total</div>\n                </div>    \n                <div class=\"tb-count-container\">\n                    <div class=\"tb-count\">${totalDevices:0}</div>\n                </div>\n            </a>\n        </div>\n    </div>\n</div>",
             "applyDefaultMarkdownStyle": false,
             "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: row;\n}\n\n.tb-content-container {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    justify-content: flex-start;\n    gap: 12px;\n}\n\n.tb-card-header {\n    height: 36px;\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n}\n\n.tb-item-cards {\n    flex: 1;\n    display: flex;\n    flex-direction: row;\n    gap: 12px;\n    overflow: hidden;\n}\n\na.tb-item-card {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    padding: 8px 12px;\n    border: 1px solid;\n    border-radius: 10px;\n    margin-bottom: 12px;\n    overflow: hidden;\n    justify-content: space-evenly;\n}\n\na.tb-item-card.tb-inactive {\n    background: rgba(209, 39, 48, 0.04);\n    border-color: rgba(209, 39, 48, 0.06);\n}\n\na.tb-item-card.tb-active {\n    background: rgba(48, 86, 128, 0.04);\n    border-color: rgba(48, 86, 128, 0.12);\n}\n\na.tb-item-card.tb-total {\n    background: rgba(0, 0, 0, 0.01);\n    border-color: rgba(0, 0, 0, 0.05);\n}\n\n.tb-item-title-container {\n    display: grid;\n}\n\n.tb-item-title {\n    font-weight: 400;\n    font-size: 14px;\n    line-height: 20px;\n    letter-spacing: 0.2px;\n    white-space: nowrap;\n    overflow: hidden;\n    text-overflow: ellipsis;    \n    color: rgba(0, 0, 0, 0.76);\n}\n\n.tb-item-title.tb-home-widget-link:after {\n    position: absolute;\n    right: 0;\n}\n\na.tb-item-card:hover .tb-item-title.tb-home-widget-link:after { \n    color: rgba(0, 0, 0, 0.38);\n}\n\na.tb-item-card:hover {\n    box-shadow: 0px 4px 10px rgba(23, 33, 90, 0.08);\n}\n\n.tb-count-container {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    align-items: flex-start;\n    justify-content: center;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 24px;\n    line-height: 36px;\n    white-space: nowrap;\n    color: rgba(0, 0, 0, 0.87);\n}\n\n@media screen and (max-width: 959px) {\n    .tb-item-cards {\n        flex-direction: column;\n    }\n    a.tb-item-card {\n        margin-bottom: 0;\n    }\n}\n\n@media screen and (max-width: 1279px) {\n    a.tb-item-card {\n        flex-direction: row;\n        align-items: center;\n    }\n    .tb-item-title.tb-home-widget-link:after {\n        position: relative;\n    }\n    .tb-count-container {\n        align-items: flex-end;\n    }\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-item-title {\n        font-size: 11px;\n        line-height: 16px;\n    }\n    .tb-count {\n        font-size: 16px;\n        line-height: 24px;\n    }\n    a.tb-item-card {\n        padding: 4px 8px;\n        margin-bottom: 6px;\n    }\n    a.tb-item-card:hover {\n        box-shadow: 0px 2px 5px rgba(23, 33, 90, 0.08);\n    }\n}\n"
           },
@@ -1143,55 +1168,63 @@
             "widgets": {
               "d70cc256-4c7b-ee06-9905-b8c5e546605f": {
                 "sizeX": 42,
-                "sizeY": 29,
-                "row": 13,
+                "sizeY": 17,
+                "row": 27,
                 "col": 43,
-                "mobileOrder": 4,
+                "mobileOrder": 5,
                 "mobileHeight": 10
               },
               "867f82cf-ecf2-2d5c-35cb-08c6f2edc3a4": {
                 "sizeX": 29,
-                "sizeY": 16,
-                "row": 42,
+                "sizeY": 14,
+                "row": 44,
                 "col": 28,
                 "mobileHide": true
               },
               "ebbd0a6e-8a47-e770-5086-7f4974250f2d": {
                 "sizeX": 28,
-                "sizeY": 16,
-                "row": 42,
+                "sizeY": 14,
+                "row": 44,
                 "col": 57,
-                "mobileOrder": 3,
+                "mobileOrder": 4,
                 "mobileHeight": 10
               },
               "9e3ef045-d8bc-1640-a3f4-2dd10b19d50e": {
                 "sizeX": 28,
-                "sizeY": 16,
-                "row": 42,
+                "sizeY": 14,
+                "row": 44,
                 "col": 0,
                 "mobileHide": true
               },
               "6d6e2b1d-6ce7-4678-3745-c6b0897b2674": {
                 "sizeX": 43,
-                "sizeY": 29,
-                "row": 13,
+                "sizeY": 17,
+                "row": 27,
                 "col": 0,
                 "mobileOrder": 2,
                 "mobileHeight": 10
               },
+              "fe678c4f-ea86-4cae-8d81-6fca493fe311": {
+                "sizeX": 85,
+                "sizeY": 15,
+                "row": 0,
+                "col": 0,
+                "mobileOrder": 3,
+                "mobileHeight": 12
+              },
               "35d3ac3b-f1af-dc3d-a1d1-11f351d16fc6": {
                 "sizeX": 43,
-                "sizeY": 13,
-                "row": 0,
+                "sizeY": 12,
+                "row": 15,
                 "col": 0,
                 "mobileHeight": 9,
                 "mobileOrder": 1
               },
               "7ac20b6a-dc40-b18e-9f5f-bca20bc693bb": {
                 "sizeX": 42,
-                "sizeY": 13,
+                "sizeY": 12,
                 "mobileHeight": 9,
-                "row": 0,
+                "row": 15,
                 "col": 43,
                 "mobileOrder": 0
               },
@@ -1283,15 +1316,15 @@
             "widgets": {
               "ed33e56f-293b-aaaa-ad19-0cf499dc926f": {
                 "sizeX": 120,
-                "sizeY": 45,
+                "sizeY": 44,
                 "row": 0,
                 "col": 0,
                 "mobileHide": true
               },
               "8c5207d8-7103-4dc2-db48-d61c0c8c61fd": {
                 "sizeX": 120,
-                "sizeY": 17,
-                "row": 45,
+                "sizeY": 14,
+                "row": 44,
                 "col": 0
               }
             },

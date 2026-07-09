@@ -699,6 +699,7 @@ export interface TimeSeriesChartSettings extends TimeSeriesChartTooltipWidgetSet
   thresholds: TimeSeriesChartThreshold[];
   darkMode: boolean;
   dataZoom: boolean;
+  dataZoomUpdateTimewindow: boolean;
   stack: boolean;
   grid: TimeSeriesChartGridSettings;
   yAxes: TimeSeriesChartYAxes;
@@ -714,6 +715,7 @@ export const timeSeriesChartDefaultSettings: TimeSeriesChartSettings = {
   thresholds: [],
   darkMode: false,
   dataZoom: true,
+  dataZoomUpdateTimewindow: false,
   stack: false,
   grid: mergeDeep({} as TimeSeriesChartGridSettings,
     timeSeriesChartGridDefaultSettings),

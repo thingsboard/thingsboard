@@ -77,8 +77,8 @@ public class SlackNotificationChannel implements NotificationChannel {
                         "falling back to plain webhook mode without incident support");
             }
             restTemplate = new RestTemplateBuilder()
-                    .setConnectTimeout(Duration.ofSeconds(5))
-                    .setReadTimeout(Duration.ofSeconds(2))
+                    .connectTimeout(Duration.ofSeconds(5))
+                    .readTimeout(Duration.ofSeconds(2))
                     .build();
             log.info("Slack webhook mode enabled");
         }

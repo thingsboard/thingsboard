@@ -1,0 +1,203 @@
+/**
+ * Copyright © 2016-2026 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import "../../../../../../../scss/constants";
+
+:host {
+  .tb-card-header {
+    gap: 10px;
+    @media #{$mat-md-lg} {
+      gap: 8px;
+      @media #{$mat-lt-lg} {
+        gap: 4px;
+      }
+    }
+    .tb-card-title-text {
+      font-size: 14px;
+      font-style: normal;
+      font-weight: 500;
+      line-height: 20px;
+      color: rgba(0, 0, 0, 0.76);
+      @media #{$mat-md-lg} {
+        font-size: 12px;
+        line-height: 16px;
+      }
+      a {
+        display: inline-block;
+        font-weight: 500;
+        border: none;
+        color: $tb-primary-color;
+      }
+    }
+    .mat-divider {
+      margin-left: -16px;
+      margin-right: -16px;
+      @media #{$mat-md-lg} {
+        margin-left: -8px;
+        margin-right: -8px;
+        @media #{$mat-lt-lg} {
+          margin-left: -2px;
+          margin-right: -2px;
+        }
+      }
+    }
+  }
+
+  .tb-iot-hub-widget-body {
+    display: flex;
+    flex: 1 1 0;
+    min-height: 0;
+    gap: 0;
+    padding: 8px 0 0;
+
+    @media #{$mat-lt-md} {
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .mat-divider {
+      margin: 24px 16px;
+      @media #{$mat-lt-md} {
+        display: none;
+      }
+      @media #{$mat-md-lg} {
+        margin-left: 8px;
+        margin-right: 8px;
+      }
+    }
+  }
+
+  .tb-iot-hub-widget-column {
+    display: flex;
+    flex: 1 1 0;
+    min-width: 0;
+    flex-direction: column;
+    gap: 8px;
+    overflow: hidden;
+  }
+
+  .tb-iot-hub-widget-cards {
+    display: flex;
+    flex: 1 1 0;
+    min-height: 0;
+    gap: 12px;
+    @media #{$mat-md} {
+      gap: 8px;
+    }
+  }
+
+  .tb-iot-hub-widget-card {
+    display: flex;
+    flex: 1 1 0;
+    min-width: 0;
+    flex-direction: column;
+    gap: 4px;
+    cursor: pointer;
+    border: none;
+    background: none;
+    padding: 0;
+    text-align: left;
+
+    &:hover .tb-iot-hub-widget-card-image,
+    &:focus-visible .tb-iot-hub-widget-card-image {
+      border-color: rgba(0, 0, 0, 0.12);
+      box-shadow: 0 4px 10px 0 rgba(23, 33, 90, 0.08);
+    }
+
+    &:focus-visible {
+      outline: none;
+    }
+  }
+
+  .tb-iot-hub-widget-card-image {
+    position: relative;
+    display: flex;
+    flex: 1 1 0;
+    min-height: 0;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 10px;
+    background: radial-gradient(circle, rgba(0, 0, 0, 0.06) 1px, transparent 1px) 0 0 / 16px 16px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    @media #{$mat-md-lg} {
+      padding: 4px;
+    }
+    img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+  }
+
+  // Installed badge — green circle + check icon, top-right corner
+  .tb-iot-hub-widget-card-installed {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+    line-height: 20px;
+    color: #2e7d32;
+    background: white;
+    border-radius: 50%;
+  }
+
+  .tb-iot-hub-widget-card-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 4px;
+  }
+
+  .tb-iot-hub-widget-card-name {
+    flex: 1 1 0;
+    min-width: 0;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 16px;
+    color: rgba(0, 0, 0, 0.76);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    @media #{$mat-md-lg} {
+      font-size: 11px;
+    }
+  }
+
+  .tb-iot-hub-widget-card-installs {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 2px;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 16px;
+    letter-spacing: 0.4px;
+    color: rgba(0, 0, 0, 0.54);
+
+    mat-icon {
+      width: 12px;
+      height: 12px;
+      font-size: 12px;
+      line-height: 12px;
+      color: rgba(0, 0, 0, 0.54);
+    }
+  }
+}

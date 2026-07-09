@@ -223,10 +223,6 @@ export class GradientComponent implements OnInit, ControlValueAccessor, OnDestro
     return this.advancedGradientListFormArray.controls as FormGroup[];
   }
 
-  trackByGradient(index: number, gradientControl: AbstractControl): any {
-    return gradientControl;
-  }
-
   removeGradient(index: number, advanced = false) {
     if (advanced) {
       this.advancedGradientListFormArray.removeAt(index);

@@ -45,7 +45,8 @@ const emptyUserAuthState: AuthPayload = {
   trendzSettings: initialTrendzSettings,
   allowKeyFiltersOrConditions: true,
   nullsOrderStrategy: 'default',
-  edqsEnabled: false
+  edqsEnabled: false,
+  iotHubBaseUrl: ''
 };
 
 export const initialState: AuthState = {

@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.geo;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.common.util.geo.PerimeterType;
 
 import java.util.concurrent.TimeUnit;
@@ -24,6 +25,7 @@ import java.util.concurrent.TimeUnit;
  * Created by ashvayka on 19.01.18.
  */
 @Data
+@EqualsAndHashCode(callSuper = true)
 public class TbGpsGeofencingActionNodeConfiguration extends TbGpsGeofencingFilterNodeConfiguration {
 
     private int minInsideDuration;

@@ -76,10 +76,6 @@ export class LabelWidgetSettingsComponent extends WidgetSettingsComponent {
     return this.labelsFormArray().controls as (AbstractControl & { new?: boolean })[];
   }
 
-  public trackByLabelControl(index: number, labelControl: AbstractControl): any {
-    return labelControl;
-  }
-
   public removeLabel(index: number) {
     (this.labelWidgetSettingsForm.get('labels') as UntypedFormArray).removeAt(index);
   }

@@ -17,9 +17,11 @@ package org.thingsboard.rule.engine.mqtt.azure;
 
 import io.netty.handler.codec.mqtt.MqttVersion;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.rule.engine.mqtt.TbMqttNodeConfiguration;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 public class TbAzureIotHubNodeConfiguration extends TbMqttNodeConfiguration {
 
     @Override

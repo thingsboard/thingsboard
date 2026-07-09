@@ -15,28 +15,56 @@
     limitations under the License.
 
 -->
-<div class="tb-breadcrumb flex flex-1 flex-row">
-  <h1 class="flex-1 gt-sm:!hidden" *ngIf="lastBreadcrumb$ | async; let breadcrumb">
-    {{ breadcrumb.labelFunction ? breadcrumb.labelFunction() : (breadcrumb.customTranslate ? (breadcrumb.label | customTranslate) : (breadcrumb.label | translate)) }}
-  </h1>
-  <span class="flex flex-row lt-md:!hidden" *ngFor="let breadcrumb of breadcrumbs$ | async; trackBy: trackByBreadcrumbs; last as isLast;" [ngSwitch]="isLast">
-	    <a *ngSwitchCase="false" [routerLink]="breadcrumb.link" [queryParams]="breadcrumb.queryParams">
+<div class="tb-breadcrumb flex flex-1 flex-row gap-2">
+  @if (lastBreadcrumb$ | async; as breadcrumb) {
+    @if (!componentBreadcrumbsTpl) {
+      <h1 class="flex-1 gt-sm:!hidden">
         <ng-container
-          *ngTemplateOutlet="breadcrumbWithIcon;context:{breadcrumb: breadcrumb}">
+          *ngTemplateOutlet="breadcrumbTpl;context:{breadcrumb: breadcrumb}">
         </ng-container>
-	    </a>
-	    <span *ngSwitchCase="true">
-        <ng-container
-          *ngTemplateOutlet="breadcrumbWithIcon;context:{breadcrumb: breadcrumb}">
-        </ng-container>
-      </span>
-	    <span class="divider" [class.!hidden]="isLast"> > </span>
-	</span>
+      </h1>
+    }
+  }
+  @if (!componentBreadcrumbsTpl || (breadcrumbs$ | async).length > 1) {
+    <div class="flex flex-1 flex-row items-center gap-2 overflow-hidden lt-md:!hidden">
+      @for (breadcrumb of breadcrumbs$ | async; track breadcrumb.id; let isLast = $last; let i = $index;) {
+        @switch (isLast) {
+          @case (false) {
+            @if (i > 0) {
+              <span class="divider"> > </span>
+            }
+            <span class="flex flex-row gap-2">
+            <a [routerLink]="breadcrumb.link" [queryParams]="breadcrumb.queryParams">
+              <ng-container
+                *ngTemplateOutlet="breadcrumbTpl;context:{breadcrumb: breadcrumb}">
+              </ng-container>
+            </a>
+          </span>
+          }
+          @case (true) {
+            @if (!componentBreadcrumbsTpl) {
+              @if (i > 0) {
+                <span class="divider last-divider"> > </span>
+              }
+              <span>
+              <ng-container
+                *ngTemplateOutlet="breadcrumbTpl;context:{breadcrumb: breadcrumb}">
+              </ng-container>
+            </span>
+            }
+          }
+        }
+      }
+    </div>
+  }
+  @if (componentBreadcrumbsTpl) {
+    <span>
+      <ng-container
+        *ngTemplateOutlet="componentBreadcrumbsTpl">
+      </ng-container>
+    </span>
+  }
 </div>
-<ng-template #breadcrumbWithIcon let-breadcrumb="breadcrumb">
-  <img *ngIf="breadcrumb.iconUrl" [src]="breadcrumb.iconUrl"/>
-  <tb-icon *ngIf="!breadcrumb.iconUrl">
-    {{ breadcrumb.icon }}
-  </tb-icon>
+<ng-template #breadcrumbTpl let-breadcrumb="breadcrumb">
   {{ breadcrumb.labelFunction ? breadcrumb.labelFunction() : (breadcrumb.customTranslate ? (breadcrumb.label | customTranslate) : (breadcrumb.label | translate)) }}
 </ng-template>

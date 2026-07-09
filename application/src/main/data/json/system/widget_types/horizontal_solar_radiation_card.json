@@ -1,7 +1,7 @@
 {
   "fqn": "horizontal_solar_radiation_card",
   "name": "Horizontal solar radiation card",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/horizontal_solar_radiation_card_system_widget_image.png",
   "description": "Displays the latest solar radiation telemetry in a scalable horizontal layout.",
   "descriptor": {

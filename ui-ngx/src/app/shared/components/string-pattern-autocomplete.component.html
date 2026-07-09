@@ -26,7 +26,7 @@
          [formControl]="selectionFormControl"
          [placeholder]="placeholderText"
          (focusin)="onFocus()"
-         (scroll)="onInputScroll($event)">
+         (focusout)="onBlur()">
   @if (predefinedValuesButton) {
     <button type="button"
             matSuffix

@@ -131,10 +131,6 @@ export class MapLayersComponent implements ControlValueAccessor, OnInit, Validat
     return this.layersFormGroup.get('layers') as UntypedFormArray;
   }
 
-  trackByLayer(index: number, layerControl: AbstractControl): any {
-    return layerControl;
-  }
-
   removeLayer(index: number) {
     (this.layersFormGroup.get('layers') as UntypedFormArray).removeAt(index);
   }

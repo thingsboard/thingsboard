@@ -127,10 +127,6 @@ export class DynamicFormArrayComponent implements ControlValueAccessor, OnInit, 
     return this.propertiesFormGroup.get('properties') as UntypedFormArray;
   }
 
-  trackByProperty(_index: number, propertyControl: AbstractControl): any {
-    return propertyControl;
-  }
-
   removeProperty(index: number, emitEvent = true) {
     (this.propertiesFormGroup.get('properties') as UntypedFormArray).removeAt(index, {emitEvent});
   }

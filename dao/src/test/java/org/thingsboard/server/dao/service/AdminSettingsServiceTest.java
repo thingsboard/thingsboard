@@ -21,7 +21,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -90,7 +90,7 @@ public class AdminSettingsServiceTest extends AbstractServiceTest {
 
     @Test
     public void whenSavingAdminSettingsWithAlreadyExistingKey_thenReturnError() {
-        String key = RandomStringUtils.randomAlphanumeric(15);
+        String key = RandomStringUtils.secure().nextAlphanumeric(15);
         ObjectNode value = JacksonUtil.newObjectNode().put("test", "test");
 
         AdminSettings systemSettings = new AdminSettings();
@@ -124,7 +124,7 @@ public class AdminSettingsServiceTest extends AbstractServiceTest {
         for (int i = 0; i < totalElements; i++) {
             AdminSettings settings = new AdminSettings();
             settings.setTenantId(tenantId);
-            String key = RandomStringUtils.randomAlphanumeric(15);
+            String key = RandomStringUtils.secure().nextAlphanumeric(15);
             settings.setKey(key);
             settings.setJsonValue(JacksonUtil.newObjectNode().put("value", i));
             adminSettingsService.saveAdminSettings(tenantId, settings);

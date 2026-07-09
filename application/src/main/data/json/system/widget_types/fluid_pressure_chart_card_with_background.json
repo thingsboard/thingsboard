@@ -1,7 +1,7 @@
 {
   "fqn": "fluid_pressure_chart_card_with_background",
   "name": "Pressure chart card with background",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/pressure_chart_card_with_background.svg",
   "description": "Displays fluid pressure data by combining the latest and aggregated values with the background image and optional simplified chart.",
   "descriptor": {

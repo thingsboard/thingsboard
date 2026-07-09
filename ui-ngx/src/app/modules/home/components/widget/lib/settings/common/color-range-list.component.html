@@ -42,7 +42,7 @@
       @case (false) {
         <div class="tb-control-list tb-drop-list" cdkDropList cdkDropListOrientation="vertical"
              (cdkDropListDropped)="rangeDrop($event, 'range')">
-          @for (rangeFormGroup of rangeListFormGroups; track trackByRange($index, rangeFormGroup); let isLast = $last) {
+          @for (rangeFormGroup of rangeListFormGroups; track rangeFormGroup; let isLast = $last) {
             <div cdkDrag class="tb-draggable tb-advanced-range-drag"
                  [formGroup]="rangeFormGroup"
                  [class.pb-2]="!isLast">
@@ -84,7 +84,7 @@
       @case (true) {
         <div class="tb-control-list tb-drop-list" cdkDropList cdkDropListOrientation="vertical"
              (cdkDropListDropped)="rangeDrop($event, 'rangeAdvanced')">
-          @for (advancedRangeControl of advancedRangeControls; track trackByAdvancedRange($index, advancedRangeControl); let isLast = $last) {
+          @for (advancedRangeControl of advancedRangeControls; track advancedRangeControl; let isLast = $last) {
             <div cdkDrag class="tb-draggable tb-advanced-range-drag"
                  [class.pb-2]="!isLast">
               <tb-advanced-range [formControl]="advancedRangeControl"

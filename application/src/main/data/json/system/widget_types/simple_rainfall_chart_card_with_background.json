@@ -1,7 +1,7 @@
 {
   "fqn": "simple_rainfall_chart_card_with_background",
   "name": "Simple rainfall chart card with background",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/simple_rainfall_chart_card_with_background_system_widget_image.png",
   "description": "Displays historical rainfall values as a simplified chart with background. Optionally may display the corresponding latest rainfall value.",
   "descriptor": {

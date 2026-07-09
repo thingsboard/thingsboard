@@ -1,7 +1,7 @@
 {
   "fqn": "volatile_organic_compounds_chart_card",
   "name": "Volatile organic compounds chart card",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/volatile_organic_compounds_chart_card_system_widget_image.png",
   "description": "Displays a volatile organic compounds (VOCs) data by combining the latest and aggregated values with an optional simplified chart.",
   "descriptor": {

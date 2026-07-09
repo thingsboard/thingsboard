@@ -27,7 +27,7 @@
     </div>
     @if (statesFormArray().controls.length) {
       <div class="tb-form-table-body">
-        @for (stateControl of statesFormArray().controls; track trackByState($index, stateControl)) {
+        @for (stateControl of statesFormArray().controls; track stateControl) {
           <div>
             <tb-time-series-chart-state-row class="flex-1"
                                             [formControl]="stateControl"

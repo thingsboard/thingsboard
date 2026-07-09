@@ -16,52 +16,52 @@
 
 -->
 <div class="tb-details-buttons xs:flex xs:flex-col">
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'open')"
           [class.!hidden]="isEdit || isDetailsPage">
     {{'common.open-details-page' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'manageUsers')"
           [class.!hidden]="isEdit || isPublic">
     {{'customer.manage-users' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'manageAssets')"
           [class.!hidden]="isEdit">
     {{'customer.manage-assets' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'manageDevices')"
           [class.!hidden]="isEdit">
     {{'customer.manage-devices' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'manageDashboards')"
           [class.!hidden]="isEdit">
     {{'customer.manage-dashboards' | translate }}
   </button>
   @if (edgesSupportEnabled()) {
-    <button mat-raised-button color="primary"
+    <button mat-stroked-button color="primary"
             [disabled]="(isLoading$ | async)"
             (click)="onEntityAction($event, 'manageEdges')"
             [class.!hidden]="isEdit">
       {{'customer.manage-edges' | translate }}
     </button>
   }
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'delete')"
           [class.!hidden]="hideDelete() || isEdit || isPublic">
     {{'customer.delete' | translate }}
   </button>
   <div class="flex flex-row xs:flex-col">
-    <button mat-raised-button
+    <button mat-stroked-button
             ngxClipboard
             (cbOnSuccess)="onCustomerIdCopied($event)"
             [cbContent]="entity?.id?.id"

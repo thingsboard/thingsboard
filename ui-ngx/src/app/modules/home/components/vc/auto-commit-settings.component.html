@@ -36,7 +36,7 @@
         <fieldset class="fields-group" [disabled]="(isLoading$ | async) || (isReadOnly | async)">
           <legend class="group-title" translate>admin.auto-commit-entities</legend>
           <div class="flex flex-col">
-            @for (entityTypeFormGroup of entityTypesFormGroupArray(); track trackByEntityType($index, entityTypeFormGroup); let isLast = $last) {
+            @for (entityTypeFormGroup of entityTypesFormGroupArray(); track entityTypeFormGroup; let isLast = $last) {
               <div
                 class="flex flex-row items-center justify-start" [class.pb-2]="!isLast">
                 <mat-expansion-panel class="entity-type-config flex-1" [formGroup]="entityTypeFormGroup" [expanded]="entityTypesFormGroupExpanded(entityTypeFormGroup)">

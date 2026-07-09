@@ -15,27 +15,44 @@
     limitations under the License.
 
 -->
+
+<ng-template #widgetTitleTpl>
+  <div class="flex flex-row items-center justify-start gap-2">
+    @if ((breadcrumbs$ | async).length > 1) {
+      <span class='tb-breadcrumb-divider'> > </span>
+    }
+    <mat-form-field class="tb-widget-title tb-appearance-transparent flex-1 gt-xmd:flex-initial">
+      <input [disabled]="isReadOnly" matInput required maxlength="255"
+             [(ngModel)]="widget.widgetName" (ngModelChange)="isDirty = true"
+             placeholder="{{ 'widget.widget-title' | translate }}"/>
+    </mat-form-field>
+    <mat-form-field class="tb-appearance-transparent flex-1 gt-xmd:flex-initial">
+      <mat-select [disabled]="isReadOnly" placeholder="{{ 'widget.type' | translate }}"
+                  [(ngModel)]="widget.type" (ngModelChange)="widgetTypeChanged()">
+        @for (type of allWidgetTypes; track type) {
+          <mat-option [value]="type">
+            {{ widgetTypesDataMap.get(widgetTypes[type]).name | translate }}
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </div>
+</ng-template>
+
 <div class="flex flex-1 flex-col">
   <div class="flex flex-1 flex-col" tb-fullscreen [fullscreen]="fullscreen" [tb-hotkeys]="hotKeys" [cheatSheet]="cheatSheetComponent">
     <tb-hotkeys-cheatsheet #cheatSheetComponent></tb-hotkeys-cheatsheet>
-    <mat-toolbar class="mat-elevation-z1 tb-edit-toolbar mat-hue-3 gap-4 lt-xl:gap-2">
-      <mat-form-field class="tb-widget-title tb-appearance-transparent">
-        <input [disabled]="isReadOnly" matInput required maxlength="255"
-               [(ngModel)]="widget.widgetName" (ngModelChange)="isDirty = true"
-               placeholder="{{ 'widget.widget-title' | translate }}"/>
-      </mat-form-field>
-      <mat-form-field class="tb-appearance-transparent">
-        <mat-select [disabled]="isReadOnly" placeholder="{{ 'widget.type' | translate }}"
-                    [(ngModel)]="widget.type" (ngModelChange)="widgetTypeChanged()">
-          @for (type of allWidgetTypes; track type) {
-            <mat-option [value]="type">
-              {{ widgetTypesDataMap.get(widgetTypes[type]).name | translate }}
-            </mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-      <span class="flex-1"></span>
-      <button mat-button class="lt-md:!hidden" [disabled]="!iframeWidgetEditModeInited"
+    <mat-toolbar class="tb-edit-toolbar gap-4 lt-xl:gap-2">
+      <button mat-icon-button
+              [class.!hidden]="fullscreen"
+              class="-ml-2 -mr-2 gt-sm:!hidden" (click)="toggleSidenav()">
+        <mat-icon class="material-icons">menu</mat-icon>
+      </button>
+      <div class="flex flex-1 flex-row items-center overflow-hidden">
+        <tb-breadcrumb class="mat-toolbar-tools" [componentBreadcrumbsTpl]="widgetTitleTpl"></tb-breadcrumb>
+      </div>
+      <tb-github-badge class="lt-lg:!hidden"></tb-github-badge>
+      <button mat-button class="lt-lg:!hidden" [disabled]="!iframeWidgetEditModeInited"
               (click)="applyWidgetScript()"
               matTooltip="{{ 'widget.run' | translate }} (CTRL + Return)"
               matTooltipPosition="below">
@@ -43,7 +60,7 @@
         <span translate>action.run</span>
       </button>
       <button mat-raised-button
-              class="lt-md:!hidden" [disabled]="(isLoading$ | async) || undoDisabled()"
+              class="lt-lg:!hidden" [disabled]="(isLoading$ | async) || undoDisabled()"
               (click)="undoWidget()"
               matTooltip="{{ 'widget.undo' | translate }} (CTRL + Q)"
               matTooltipPosition="below">
@@ -52,7 +69,7 @@
       </button>
       @if (!isReadOnly) {
         <button mat-raised-button
-                class="lt-md:!hidden" [disabled]="(isLoading$ | async) || saveDisabled()"
+                class="lt-lg:!hidden" [disabled]="(isLoading$ | async) || saveDisabled()"
                 (click)="saveWidget()"
                 [tb-circular-progress]="saveWidgetPending"
                 matTooltip="{{ 'widget.save' | translate }} (CTRL + S)"
@@ -62,7 +79,7 @@
         </button>
       }
       <button mat-raised-button
-              class="lt-md:!hidden" [disabled]="(isLoading$ | async) || saveAsDisabled()"
+              class="lt-lg:!hidden" [disabled]="(isLoading$ | async) || saveAsDisabled()"
               (click)="saveWidgetAs()"
               [tb-circular-progress]="saveWidgetAsPending"
               matTooltip="{{ 'widget.saveAs' | translate }} (Shift + CTRL + S)"
@@ -70,24 +87,20 @@
         <mat-icon>save_as</mat-icon>
         <span translate>action.saveAs</span>
       </button>
-      <button mat-button
-              class="lt-lg:!hidden"
-              (click)="fullscreen = !fullscreen"
-              matTooltip="{{ 'widget.toggle-fullscreen' | translate }} (Shift + CTRL + F)"
-              matTooltipPosition="below">
-        <mat-icon>{{ fullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
-        <span translate>widget.toggle-fullscreen</span>
-      </button>
-      <button mat-icon-button class="lt-md:!hidden gt-md:!hidden"
-              (click)="fullscreen = !fullscreen"
-              matTooltip="{{ 'widget.toggle-fullscreen' | translate }} (Shift + CTRL + F)"
-              matTooltipPosition="below">
-        <mat-icon>{{ fullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
-      </button>
       <button mat-icon-button class="gt-md:!hidden"
               [matMenuTriggerFor]="widgetEditMenu">
         <mat-icon>more_vert</mat-icon>
       </button>
+      <div class="flex flex-row items-center">
+        <mat-divider vertical></mat-divider>
+        <button mat-icon-button class="lt-md:!hidden"
+                matTooltip="{{ 'widget.toggle-fullscreen' | translate }} (Shift + CTRL + F)"
+                matTooltipPosition="below"
+                (click)="fullscreen = !fullscreen">
+          <mat-icon>{{ fullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+        </button>
+        <tb-notification-bell></tb-notification-bell>
+      </div>
       <mat-menu #widgetEditMenu="matMenu" xPosition="before">
         <button mat-menu-item
                 [disabled]="!iframeWidgetEditModeInited"
@@ -117,7 +130,12 @@
         </button>
       </mat-menu>
     </mat-toolbar>
-    <div class="flex-1" style="position: relative;">
+    @if ((homeService.hideLoadingBar$ | async) === false && (isLoading$ | async)) {
+      <mat-progress-bar color="warn" style="z-index: 10; margin-bottom: -4px; width: 100%;" mode="indeterminate"
+      >
+      </mat-progress-bar>
+    }
+    <div class="flex-1 mt-2" style="position: relative;">
       <div class="tb-editor tb-absolute-fill">
         <div #topPanel class="tb-split tb-split-vertical">
           <div #topLeftPanel class="tb-split tb-content">

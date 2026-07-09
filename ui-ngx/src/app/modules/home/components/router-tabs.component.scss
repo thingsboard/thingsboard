@@ -19,11 +19,14 @@
   height: 100%;
 
   .mat-mdc-tab-nav-bar.tb-router-tabs {
+    --mat-tab-container-height: 38px;
+    --mat-tab-divider-height: 1px;
+    --mat-tab-divider-color: rgba(0, 0, 0, 0.12);
     a.mat-mdc-tab-link {
       display: inline-flex;
       align-items: center;
       overflow: hidden;
-      line-height: 40px;
+      line-height: 38px;
       min-width: 200px;
       border-bottom: none;
       .mat-icon {

@@ -122,10 +122,6 @@ export class MapDataSourcesComponent implements ControlValueAccessor, OnInit, Va
     return this.dataSourcesFormGroup.get('dataSources') as UntypedFormArray;
   }
 
-  trackByDataSource(index: number, dataSourceControl: AbstractControl): any {
-    return dataSourceControl;
-  }
-
   removeDataSource(index: number) {
     (this.dataSourcesFormGroup.get('dataSources') as UntypedFormArray).removeAt(index);
   }

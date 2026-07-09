@@ -1,7 +1,7 @@
 {
   "fqn": "uv_index_chart_card_with_background",
   "name": "UV Index chart card with background",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/uv_index_chart_card_with_background_system_widget_image.png",
   "description": "Displays a UV index data by combining the latest and aggregated values with the background image and optional simplified chart.",
   "descriptor": {

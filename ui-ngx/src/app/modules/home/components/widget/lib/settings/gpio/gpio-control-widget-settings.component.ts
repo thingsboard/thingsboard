@@ -123,10 +123,6 @@ export class GpioControlWidgetSettingsComponent extends WidgetSettingsComponent 
     return this.gpioListFormArray().controls as (AbstractControl & { new?: boolean })[];
   }
 
-  public trackByGpioItem(index: number, gpioItemControl: AbstractControl): any {
-    return gpioItemControl;
-  }
-
   public removeGpioItem(index: number) {
     (this.gpioControlWidgetSettingsForm.get('gpioList') as UntypedFormArray).removeAt(index);
   }

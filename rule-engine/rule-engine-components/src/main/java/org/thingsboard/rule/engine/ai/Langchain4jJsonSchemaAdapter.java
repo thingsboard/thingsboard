@@ -94,7 +94,7 @@ final class Langchain4jJsonSchemaAdapter {
 
         JsonNode propertiesNode = objectSchema.get("properties");
         if (propertiesNode != null) {
-            propertiesNode.fields().forEachRemaining(entry -> {
+            propertiesNode.properties().forEach(entry -> {
                 String key = entry.getKey();
                 JsonNode value = entry.getValue();
                 builder.addProperty(key, parse(value));

@@ -1,7 +1,7 @@
 {
   "fqn": "simple_flooding_level_chart_card",
   "name": "Simple flooding level chart card",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/simple_flooding_level_chart_card_system_widget_image.png",
   "description": "Displays historical flooding level values as a simplified chart. Optionally may display the corresponding latest flooding level value.",
   "descriptor": {

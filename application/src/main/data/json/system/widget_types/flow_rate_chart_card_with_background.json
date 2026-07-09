@@ -1,7 +1,7 @@
 {
   "fqn": "flow_rate_chart_card_with_background",
   "name": "Flow rate chart card with background",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/flow_rate_chart_card_with_background.svg",
   "description": "Displays flow rate data by combining the latest and aggregated values with the background image and optional simplified chart.",
   "descriptor": {

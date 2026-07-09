@@ -16,7 +16,7 @@
 
 -->
 <form [formGroup]="stateFormGroup" (ngSubmit)="save()" style="min-width: 480px;">
-  <mat-toolbar color="primary">
+  <mat-toolbar class="tb-dialog-header">
     <h2 translate>{{ isAdd ? 'dashboard.add-state' : 'dashboard.edit-state' }}</h2>
     <span class="flex-1"></span>
     <button mat-icon-button

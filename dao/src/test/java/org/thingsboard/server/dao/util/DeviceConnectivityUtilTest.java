@@ -20,6 +20,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
+import org.thingsboard.server.dao.device.DockerComposeParams;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -115,8 +116,9 @@ class DeviceConnectivityUtilTest {
     }
 
     private static String renderCompose(DeviceCredentials credentials) throws Exception {
+        DockerComposeParams params = new DockerComposeParams(true, "tb-gateway", true, true, true, true);
         var resource = DeviceConnectivityUtil.getGatewayDockerComposeFile(
-                "host.docker.internal", "3.8-stable", credentials);
+                "host.docker.internal", "3.8-stable", credentials, params);
         try (var in = resource.getInputStream()) {
             return new String(in.readAllBytes(), StandardCharsets.UTF_8);
         }

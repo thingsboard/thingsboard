@@ -36,6 +36,7 @@ import { ImportExportService } from '@shared/import-export/import-export.service
 import { EntityDebugSettingsService } from '@home/components/entity/debug/entity-debug-settings.service';
 import { UtilsService } from '@core/services/utils.service';
 import { AlarmRulesTableConfig } from '@home/components/alarm-rules/alarm-rules-table-config';
+import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
 
 export const AlarmRulesTableConfigResolver: ResolveFn<AlarmRulesTableConfig> =
   (_route: ActivatedRouteSnapshot,
@@ -50,6 +51,7 @@ export const AlarmRulesTableConfigResolver: ResolveFn<AlarmRulesTableConfig> =
    entityDebugSettingsService = inject(EntityDebugSettingsService),
    utilsService = inject(UtilsService),
    router = inject(Router),
+   iotHubActions = inject(IotHubActionsService),
   ) => {
     return new AlarmRulesTableConfig(
       alarmRulesService,
@@ -66,6 +68,7 @@ export const AlarmRulesTableConfigResolver: ResolveFn<AlarmRulesTableConfig> =
       entityDebugSettingsService,
       utilsService,
       router,
+      iotHubActions,
       true,
     );
   };
