@@ -22,6 +22,7 @@ import org.eclipse.californium.scandium.DTLSConnector;
 import org.eclipse.californium.scandium.config.DtlsConfig;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
 import org.eclipse.californium.scandium.dtls.SignatureAndHashAlgorithm;
+import org.eclipse.californium.scandium.dtls.cipher.CipherSuite;
 import org.thingsboard.common.util.SslUtil;
 
 import java.security.cert.X509Certificate;
@@ -47,6 +48,17 @@ public class DtlsClientConnectorFactory {
             SignatureAndHashAlgorithm.valueOf("SHA512withRSA"),
             SignatureAndHashAlgorithm.INTRINSIC_WITH_ED25519);
 
+    // default implicitly limits a cert-verifier-only client to ECDSA suites, breaking RSA-cert servers
+    private static final List<CipherSuite> CLIENT_CIPHER_SUITES = List.of(
+            CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+            CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+            CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+            CipherSuite.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+            CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8,
+            CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CCM_8,
+            CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM,
+            CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CCM);
+
     private static final X509Certificate[] TRUSTED_CERTIFICATES = SslUtil.getDefaultTrustedCertificates();
 
     static {
@@ -62,6 +74,7 @@ public class DtlsClientConnectorFactory {
         config.set(DtlsConfig.DTLS_ROLE, DtlsConfig.DtlsRole.CLIENT_ONLY); // no client cert required
         config.set(DtlsConfig.DTLS_USE_SERVER_NAME_INDICATION, true); // select the correct server cert
         config.set(DtlsConfig.DTLS_SIGNATURE_AND_HASH_ALGORITHMS, CLIENT_SIG_ALGS);
+        config.set(DtlsConfig.DTLS_CIPHER_SUITES, CLIENT_CIPHER_SUITES);
         // hostname is validated by WildcardAwareCertificateVerifier, since Scandium's own
         // DTLS_VERIFY_SERVER_CERTIFICATES_SUBJECT check doesn't support wildcard SANs
         return new DTLSConnector(DtlsConnectorConfig.builder(config)
