@@ -23,6 +23,7 @@ import org.eclipse.californium.core.coap.MediaTypeRegistry;
 import org.eclipse.californium.core.config.CoapConfig;
 import org.eclipse.californium.core.network.CoapEndpoint;
 import org.eclipse.californium.elements.config.SystemConfig;
+import org.eclipse.californium.scandium.config.DtlsConfig;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -42,6 +43,7 @@ public class CoapTransportHealthChecker extends TransportHealthChecker<CoapTrans
     static {
         SystemConfig.register();
         CoapConfig.register();
+        DtlsConfig.register();
     }
 
     private CoapClient coapClient;

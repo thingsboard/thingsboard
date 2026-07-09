@@ -64,13 +64,14 @@ public class DtlsClientConnectorFactory {
     static {
         SystemConfig.register();
         CoapConfig.register();
+        DtlsConfig.register();
     }
 
     private DtlsClientConnectorFactory() {
     }
 
     public static DTLSConnector jvmTrustedDtlsClientConnector() {
-        Configuration config = new Configuration();
+        Configuration config = Configuration.getStandard();
         config.set(DtlsConfig.DTLS_ROLE, DtlsConfig.DtlsRole.CLIENT_ONLY); // no client cert required
         config.set(DtlsConfig.DTLS_USE_SERVER_NAME_INDICATION, true); // select the correct server cert
         config.set(DtlsConfig.DTLS_SIGNATURE_AND_HASH_ALGORITHMS, CLIENT_SIG_ALGS);
