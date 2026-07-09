@@ -155,6 +155,44 @@ public class EntityAggregationCalculatedFieldTest extends AbstractControllerTest
     }
 
     @Test
+    public void testAggregationResult_isStoredAsNumericTelemetry() throws Exception {
+        // Regression: ENTITY_AGGREGATION must store numeric results as numbers (ts_kv.dbl_v/long_v),
+        // not as JSON strings (ts_kv.str_v) - otherwise server-side AVG/SUM return no data.
+        // The existing .asText()-based tests cannot catch this (asText coerces both types), so this
+        // test reads with useStrictDataTypes=true and asserts the value node type.
+        Device device = createDevice("Device", "1234567890111");
+
+        CustomInterval customInterval = new CustomInterval(TZ, 0L, 5L);
+        createConsumptionCF(device.getId(), customInterval, null);
+
+        long currentIntervalStartTs = customInterval.getCurrentIntervalStartTs();
+        long tsInInterval_1 = currentIntervalStartTs + 1000;
+        long tsInInterval_2 = currentIntervalStartTs + 500;
+        long tsInInterval_3 = currentIntervalStartTs + 200;
+        postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"energy\":100}}", tsInInterval_1));
+        postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"energy\":180}}", tsInInterval_2));
+        postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"energy\":120}}", tsInInterval_3));
+
+        long interval = customInterval.getCurrentIntervalDurationMillis();
+
+        await().alias("create CF -> aggregation result stored as numeric telemetry")
+                .atMost(2 * interval, TimeUnit.MILLISECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode result = getLatestTelemetryStrict(device.getId(), "consumption", "avgConsumption");
+                    assertThat(result).isNotNull();
+                    assertThat(result.get("consumption")).isNotNull();
+                    assertThat(result.get("avgConsumption")).isNotNull();
+                    // SUM and AVG results must be numeric JSON nodes, not strings.
+                    assertThat(result.get("consumption").get(0).get("value").isNumber()).isTrue();
+                    assertThat(result.get("avgConsumption").get(0).get("value").isNumber()).isTrue();
+                    // Values are still correct (SUM=400, AVG=133).
+                    assertThat(result.get("consumption").get(0).get("value").asInt()).isEqualTo(400);
+                    assertThat(result.get("avgConsumption").get(0).get("value").asInt()).isEqualTo(133);
+                });
+    }
+
+    @Test
     public void testCreateCfWithWatermark_checkAggregationDuringWatermark() throws Exception {
         Device device = createDevice("Device", "1234567890111");
 
@@ -374,6 +412,12 @@ public class EntityAggregationCalculatedFieldTest extends AbstractControllerTest
 
     private ObjectNode getLatestTelemetry(EntityId entityId, String... keys) throws Exception {
         return doGetAsync("/api/plugins/telemetry/" + entityId.getEntityType() + "/" + entityId.getId() + "/values/timeseries?keys=" + String.join(",", keys), ObjectNode.class);
+    }
+
+    // useStrictDataTypes=true so the value node keeps its stored type (numeric -> JSON number, str_v -> JSON string).
+    // Without it the endpoint returns every value via getValueAsString(), masking the string-vs-number distinction.
+    private ObjectNode getLatestTelemetryStrict(EntityId entityId, String... keys) throws Exception {
+        return doGetAsync("/api/plugins/telemetry/" + entityId.getEntityType() + "/" + entityId.getId() + "/values/timeseries?useStrictDataTypes=true&keys=" + String.join(",", keys), ObjectNode.class);
     }
 
 }
