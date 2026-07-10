@@ -31,6 +31,11 @@ import {
   ViewEncapsulation
 } from '@angular/core';
 import { ScadaSymbolElement } from '@home/pages/scada-symbol/scada-symbol-editor.models';
+import {
+  ScadaSymbolActionTrigger,
+  scadaSymbolActionTriggers,
+  scadaSymbolActionTriggerTranslations
+} from '@home/components/widget/lib/scada/scada-symbol.models';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
 import { ENTER } from '@angular/cdk/keycodes';
@@ -241,7 +246,7 @@ class ScadaSymbolTagPanelComponent extends ScadaSymbolPanelComponent implements 
 
   ngOnInit() {
     if (this.symbolElement?.readonly) {
-      this.displayTagSettings = (this.symbolElement?.hasStateRenderFunction() || this.symbolElement?.hasClickAction());
+      this.displayTagSettings = (this.symbolElement?.hasStateRenderFunction() || this.symbolElement?.hasAnyAction());
     }
   }
 
@@ -387,26 +392,28 @@ class ScadaSymbolRemoveTagConfirmComponent extends ScadaSymbolPanelComponent imp
           <span translate>action.add</span>
         </button>
       }
-      @if (!symbolElement?.readonly || hasClickAction) {
-        <div translate>scada.tag.on-click-action</div>
-      }
-      @if (hasClickAction) {
-        <button
-          mat-stroked-button
-          color="primary"
-          (click)="editClickAction()">
-          <mat-icon>{{ symbolElement?.readonly ? 'visibility' : 'edit' }}</mat-icon>
-          <span>{{ (symbolElement?.readonly ? 'action.view' : 'action.edit') | translate }}</span>
-        </button>
-      }
-      @if (!hasClickAction && !symbolElement?.readonly) {
-        <button
-          mat-stroked-button
-          color="primary"
-          (click)="editClickAction()">
-          <mat-icon>add</mat-icon>
-          <span translate>action.add</span>
-        </button>
+      @for (trigger of actionTriggers; track trigger) {
+        @if (!symbolElement?.readonly || hasActions[trigger]) {
+          <div>{{ actionTriggerTranslations.get(trigger) | translate }}</div>
+        }
+        @if (hasActions[trigger]) {
+          <button
+            mat-stroked-button
+            color="primary"
+            (click)="editAction(trigger)">
+            <mat-icon>{{ symbolElement?.readonly ? 'visibility' : 'edit' }}</mat-icon>
+            <span>{{ (symbolElement?.readonly ? 'action.view' : 'action.edit') | translate }}</span>
+          </button>
+        }
+        @if (!hasActions[trigger] && !symbolElement?.readonly) {
+          <button
+            mat-stroked-button
+            color="primary"
+            (click)="editAction(trigger)">
+            <mat-icon>add</mat-icon>
+            <span translate>action.add</span>
+          </button>
+        }
       }
     </div>`,
     styleUrls: ['./scada-symbol-tooltip.component.scss'],
@@ -415,9 +422,13 @@ class ScadaSymbolRemoveTagConfirmComponent extends ScadaSymbolPanelComponent imp
 })
 class ScadaSymbolTagSettingsComponent extends ScadaSymbolPanelComponent implements OnInit, AfterViewInit {
 
+  actionTriggers = scadaSymbolActionTriggers;
+
+  actionTriggerTranslations = scadaSymbolActionTriggerTranslations;
+
   hasStateRenderFunction = false;
 
-  hasClickAction = false;
+  hasActions: {[trigger in ScadaSymbolActionTrigger]?: boolean} = {};
 
   constructor(public element: ElementRef<HTMLElement>) {
     super(element);
@@ -429,15 +440,17 @@ class ScadaSymbolTagSettingsComponent extends ScadaSymbolPanelComponent implemen
 
   updateFunctionsState() {
     this.hasStateRenderFunction = this.symbolElement.hasStateRenderFunction();
-    this.hasClickAction = this.symbolElement.hasClickAction();
+    for (const trigger of this.actionTriggers) {
+      this.hasActions[trigger] = this.symbolElement.hasAction(trigger);
+    }
   }
 
   editStateRenderFunction() {
     this.symbolElement.editStateRenderFunction();
   }
 
-  editClickAction() {
-    this.symbolElement.editClickAction();
+  editAction(trigger: ScadaSymbolActionTrigger) {
+    this.symbolElement.editAction(trigger);
   }
 }
 

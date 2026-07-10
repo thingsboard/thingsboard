@@ -116,7 +116,17 @@ export type ScadaSymbolStateRenderFunction = (ctx: ScadaSymbolContext, svg: Svg)
 export type ScadaSymbolTagStateRenderFunction = (ctx: ScadaSymbolContext, element: Element) => void;
 
 // noinspection JSUnusedGlobalSymbols
-export type ScadaSymbolActionTrigger = 'click';
+export type ScadaSymbolActionTrigger = 'click' | 'dblclick' | 'contextmenu';
+
+export const scadaSymbolActionTriggers: ScadaSymbolActionTrigger[] = ['click', 'dblclick', 'contextmenu'];
+
+export const scadaSymbolActionTriggerTranslations = new Map<ScadaSymbolActionTrigger, string>(
+  [
+    ['click', 'scada.tag.on-click-action'],
+    ['dblclick', 'scada.tag.on-double-click-action'],
+    ['contextmenu', 'scada.tag.on-right-click-action']
+  ]
+);
 
 export type ScadaSymbolActionFunction = (ctx: ScadaSymbolContext, element: Element, event: Event) => void;
 export interface ScadaSymbolAction {
@@ -674,6 +684,9 @@ export class ScadaSymbolObject {
           elements.forEach(element => {
             element.attr('cursor', 'pointer');
             element.on(trigger, (event) => {
+              if (trigger === 'contextmenu') {
+                event.preventDefault();
+              }
               action.action(this.context, element, event);
             });
           });

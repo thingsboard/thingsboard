@@ -37,16 +37,19 @@
       </button>
     }
   </div>
-  <div class="tb-on-click-action-field">
-    @if (!disabled || tagFormGroup.get('clickAction').value) {
-      <button
-        #editClickActionButton
-        mat-button
-        color="primary"
-        (click)="editClickAction()">
-        <mat-icon>{{ disabled ? 'visibility' : (tagFormGroup.get('clickAction').value ? 'edit' : 'add') }}</mat-icon>
-        <span>{{ ( disabled ? 'action.view' : (tagFormGroup.get('clickAction').value ? 'action.edit' : 'action.add') ) | translate }}</span>
-      </button>
-    }
-  </div>
+  @for (trigger of actionTriggers; track trigger) {
+    <div class="tb-action-function-field">
+      @if (!disabled || tagFormGroup.get(actionControlName(trigger)).value) {
+        <button
+          #editActionButton
+          [attr.data-trigger]="trigger"
+          mat-button
+          color="primary"
+          (click)="editAction(trigger)">
+          <mat-icon>{{ disabled ? 'visibility' : (tagFormGroup.get(actionControlName(trigger)).value ? 'edit' : 'add') }}</mat-icon>
+          <span>{{ ( disabled ? 'action.view' : (tagFormGroup.get(actionControlName(trigger)).value ? 'action.edit' : 'action.add') ) | translate }}</span>
+        </button>
+      }
+    </div>
+  }
 </div>

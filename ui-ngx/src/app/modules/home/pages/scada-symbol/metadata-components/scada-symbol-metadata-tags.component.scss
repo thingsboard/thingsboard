@@ -18,15 +18,10 @@
   margin: 12px;
   .tb-form-table-header-cell {
     &.tb-tag-header {
-      flex: 1 1 70%;
+      flex: 1 1 40%;
     }
-    &.tb-state-render-function-header {
+    &.tb-state-render-function-header, &.tb-action-function-header {
       flex: 1 1 15%;
-    }
-    &.tb-on-click-action-header {
-      flex: 1 1 15%;
-    }
-    &.tb-state-render-function-header, &.tb-on-click-action-header {
       display: flex;
       justify-content: flex-end;
     }
