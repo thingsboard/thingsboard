@@ -49,8 +49,7 @@
     </mat-form-field>
   </div>
   <ng-container [formGroup]="actionTypeFormGroup">
-    @switch (widgetActionFormGroup.get('type').value) {
-      @case (widgetActionType.openDashboard) {
+      @if (widgetActionFormGroup.get('type').value === widgetActionType.openDashboard) {
         <div class="tb-form-row">
           <div class="fixed-title-width">{{ 'widget-action.target-dashboard' | translate }}*</div>
           <tb-dashboard-autocomplete class="flex-1"
@@ -63,10 +62,9 @@
           ></tb-dashboard-autocomplete>
         </div>
       }
-      @case (widgetActionFormGroup.get('type').value === widgetActionType.openDashboardState ||
+      @if (widgetActionFormGroup.get('type').value === widgetActionType.openDashboardState ||
         widgetActionFormGroup.get('type').value === widgetActionType.updateDashboardState ||
-        widgetActionFormGroup.get('type').value === widgetActionType.openDashboard ?
-        widgetActionFormGroup.get('type').value : '') {
+        widgetActionFormGroup.get('type').value === widgetActionType.openDashboard) {
         <div class="tb-form-row">
           <div class="fixed-title-width">
             <span>{{ 'widget-action.target-dashboard-state' | translate }}</span>
@@ -112,7 +110,7 @@
           </mat-form-field>
         </div>
       }
-      @case (widgetActionType.openURL) {
+      @if (widgetActionFormGroup.get('type').value === widgetActionType.openURL) {
         <div class="tb-form-row">
           <div class="tb-required">{{ 'widget-action.URL' | translate }}</div>
           <mat-form-field class="flex-1" style="margin-left: 9px" appearance="outline" subscriptSizing="dynamic">
@@ -129,28 +127,25 @@
           </mat-form-field>
         </div>
       }
-      @case (widgetActionFormGroup.get('type').value === widgetActionType.openDashboardState ||
-        widgetActionFormGroup.get('type').value === widgetActionType.updateDashboardState ?
-        widgetActionFormGroup.get('type').value : '') {
+      @if (widgetActionFormGroup.get('type').value === widgetActionType.openDashboardState ||
+        widgetActionFormGroup.get('type').value === widgetActionType.updateDashboardState) {
         <div class="tb-form-row">
           <mat-slide-toggle class="mat-slide" formControlName="openRightLayout">
             {{ 'widget-action.open-right-layout' | translate }}
           </mat-slide-toggle>
         </div>
       }
-      @case (widgetActionFormGroup.get('type').value === widgetActionType.openDashboard ||
-        widgetActionFormGroup.get('type').value === widgetActionType.openURL ?
-        widgetActionFormGroup.get('type').value : '') {
+      @if (widgetActionFormGroup.get('type').value === widgetActionType.openDashboard ||
+        widgetActionFormGroup.get('type').value === widgetActionType.openURL) {
         <div class="tb-form-row">
           <mat-slide-toggle class="mat-slide" formControlName="openNewBrowserTab">
             {{ 'widget-action.open-new-browser-tab' | translate }}
           </mat-slide-toggle>
         </div>
       }
-      @case (widgetActionFormGroup.get('type').value === widgetActionType.openDashboardState ||
+      @if (widgetActionFormGroup.get('type').value === widgetActionType.openDashboardState ||
         widgetActionFormGroup.get('type').value === widgetActionType.updateDashboardState ||
-        widgetActionFormGroup.get('type').value === widgetActionType.openDashboard ?
-        widgetActionFormGroup.get('type').value : '') {
+        widgetActionFormGroup.get('type').value === widgetActionType.openDashboard) {
         @if (widgetType !== WidgetType.static) {
           <div class="tb-form-row">
             <mat-slide-toggle class="mat-slide" formControlName="setEntityId">
@@ -169,8 +164,7 @@
           </div>
         }
       }
-      @case (widgetActionFormGroup.get('type').value === widgetActionType.openDashboardState ?
-        widgetActionFormGroup.get('type').value : '') {
+      @if (widgetActionFormGroup.get('type').value === widgetActionType.openDashboardState) {
         <div class="tb-form-row">
           <div class="fixed-title-width">{{ 'widget-action.state-display-type' | translate }}</div>
           <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
@@ -272,7 +266,7 @@
           }
         </ng-container>
       }
-      @case (widgetActionType.custom) {
+      @if (widgetActionFormGroup.get('type').value === widgetActionType.custom) {
         <tb-js-func
           formControlName="customFunction"
           functionTitle="{{ 'widget-action.custom-action-function' | translate }}"
@@ -285,7 +279,7 @@
           [helpPopupStyle]="{width: '900px'}"
         ></tb-js-func>
       }
-      @case (widgetActionType.placeMapItem) {
+      @if (widgetActionFormGroup.get('type').value === widgetActionType.placeMapItem) {
         <div class="tb-form-row">
           <div class="fixed-title-width">{{ 'widget-action.map-item-type' | translate }}</div>
           <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
@@ -301,18 +295,16 @@
           formControlName="mapItemTooltips">
         </tb-map-item-tooltips>
       }
-      @case (widgetActionFormGroup.get('type').value === widgetActionType.customPretty
-        || widgetActionFormGroup.get('type').value === widgetActionType.placeMapItem
-        ? widgetActionFormGroup.get('type').value : '') {
+      @if (widgetActionFormGroup.get('type').value === widgetActionType.customPretty
+        || widgetActionFormGroup.get('type').value === widgetActionType.placeMapItem) {
         <tb-custom-action-pretty-editor
           [widgetActionType]="widgetActionFormGroup.get('type').value"
           formControlName="customAction">
         </tb-custom-action-pretty-editor>
       }
-      @case (widgetActionType.mobileAction) {
+      @if (widgetActionFormGroup.get('type').value === widgetActionType.mobileAction) {
         <tb-mobile-action-editor formControlName="mobileAction">
         </tb-mobile-action-editor>
       }
-    }
   </ng-container>
 </div>
