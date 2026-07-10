@@ -23,6 +23,46 @@
         <span class="flex-1"></span>
         <button mat-icon-button [disabled]="isLoading$ | async"
                 type="button"
+                [matMenuTriggerFor]="actionsToolbarMenu"
+                matTooltip="{{ 'action.more' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>more_vert</mat-icon>
+        </button>
+        <mat-menu #actionsToolbarMenu="matMenu">
+          <button mat-menu-item type="button"
+                  [disabled]="!hasActions"
+                  (click)="copyAllActions(null)">
+            <mat-icon matMenuItemIcon>copy_all</mat-icon>
+            <span translate>widget-config.copy-all-actions</span>
+          </button>
+          <button mat-menu-item type="button"
+                  [disabled]="!hasActionsInBuffer"
+                  (click)="pasteActions(null)">
+            <mat-icon matMenuItemIcon>content_paste</mat-icon>
+            <span translate>widget-config.paste-actions</span>
+          </button>
+          <mat-divider></mat-divider>
+          <button mat-menu-item type="button"
+                  (click)="importActions(null)">
+            <tb-icon matMenuItemIcon>mdi:file-import</tb-icon>
+            <span translate>widget-config.import-actions</span>
+          </button>
+          <button mat-menu-item type="button"
+                  [disabled]="!hasActions"
+                  (click)="exportActions(null)">
+            <tb-icon matMenuItemIcon>mdi:file-export</tb-icon>
+            <span translate>widget-config.export-actions</span>
+          </button>
+          <mat-divider></mat-divider>
+          <button mat-menu-item type="button"
+                  [disabled]="!hasActions"
+                  (click)="clearActions(null)">
+            <tb-icon matMenuItemIcon>mdi:broom</tb-icon>
+            <span translate>widget-config.clear-actions</span>
+          </button>
+        </mat-menu>
+        <button mat-icon-button [disabled]="isLoading$ | async"
+                type="button"
                 (click)="addAction($event)"
                 matTooltip="{{ 'widget-config.add-action' | translate }}"
                 matTooltipPosition="above">
@@ -106,10 +146,36 @@
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="actions" stickyEnd>
-          <mat-header-cell *matHeaderCellDef style="min-width: 80px; max-width: 80px; width: 80px">
+          <mat-header-cell *matHeaderCellDef style="min-width: 120px; max-width: 120px; width: 120px">
           </mat-header-cell>
           <mat-cell *matCellDef="let action">
             <div class="flex flex-1 flex-row items-stretch justify-end">
+              <button mat-icon-button [disabled]="isLoading$ | async"
+                      type="button"
+                      [matMenuTriggerFor]="actionRowMenu"
+                      matTooltip="{{ 'action.more' | translate }}"
+                      matTooltipPosition="above">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+              <mat-menu #actionRowMenu="matMenu">
+                <button mat-menu-item type="button"
+                        (click)="copyAction(null, action)">
+                  <mat-icon matMenuItemIcon>copy_all</mat-icon>
+                  <span translate>widget-config.copy-action</span>
+                </button>
+                @if (actionSources[action.actionSourceId]?.multiple) {
+                  <button mat-menu-item type="button"
+                          (click)="duplicateAction(null, action)">
+                    <mat-icon matMenuItemIcon>content_copy</mat-icon>
+                    <span translate>widget-config.duplicate-action</span>
+                  </button>
+                }
+                <button mat-menu-item type="button"
+                        (click)="exportAction(null, action)">
+                  <tb-icon matMenuItemIcon>mdi:file-export</tb-icon>
+                  <span translate>widget-config.export-action</span>
+                </button>
+              </mat-menu>
               <button mat-icon-button [disabled]="isLoading$ | async"
                       type="button"
                       matTooltip="{{ 'widget-config.edit-action' | translate }}"

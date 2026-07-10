@@ -864,6 +864,8 @@ export interface WidgetActionDescriptor extends WidgetAction {
   columnIndex?: number;
 }
 
+export type WidgetActionsMap = {[actionSourceId: string]: Array<WidgetActionDescriptor>};
+
 export const actionDescriptorToAction = (descriptor: WidgetActionDescriptor): WidgetAction => {
   const result: WidgetActionDescriptor = {...descriptor};
   delete result.id;
@@ -953,7 +955,7 @@ export interface WidgetConfig {
   decimals?: number;
   noDataDisplayMessage?: string;
   pageSize?: number;
-  actions?: {[actionSourceId: string]: Array<WidgetActionDescriptor>};
+  actions?: WidgetActionsMap;
   settings?: WidgetSettings;
   alarmSource?: Datasource;
   alarmFilterConfig?: AlarmFilterConfig;

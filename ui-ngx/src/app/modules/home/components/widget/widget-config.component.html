@@ -183,6 +183,7 @@
           <tb-manage-widget-actions
             [callbacks]="widgetConfigCallbacks"
             [widgetType] = "modelValue.widgetType"
+            [widgetTitle]="modelValue.widgetName"
             [defaultIconColor]="widgetSettings.get('color').value"
             [actionSources]="modelValue.actionSources"
             [additionalWidgetActionTypes]="modelValue.typeParameters?.additionalWidgetActionTypes"
