@@ -1087,7 +1087,7 @@ export const scadaSymbolRenderFunctionHighlightRules: AceHighlightRules = {
   ...scadaSymbolElementPropertyHighlightRules
 };
 
-export const scadaSymbolClickActionHighlightRules: AceHighlightRules = {
+export const scadaSymbolActionFunctionHighlightRules: AceHighlightRules = {
   start: [
     scadaSymbolCtxObjectHighlightRule,
     scadaSymbolElementHighlightRule,
@@ -1120,7 +1120,7 @@ export const elementStateRenderFunctionCompletions = (ctxCompletion: TbEditorCom
     }
   });
 
-export const clickActionFunctionCompletions = (ctxCompletion: TbEditorCompletion): TbEditorCompletions => {
+export const actionFunctionCompletions = (ctxCompletion: TbEditorCompletion): TbEditorCompletions => {
   const completions = elementStateRenderFunctionCompletions(ctxCompletion);
   completions.event = {
     meta: 'argument',

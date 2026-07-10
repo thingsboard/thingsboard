@@ -90,7 +90,7 @@ export class ScadaSymbolMetadataTagsComponent implements ControlValueAccessor, O
   elementStateRenderFunctionCompleter: TbEditorCompleter;
 
   @Input()
-  clickActionFunctionCompleter: TbEditorCompleter;
+  actionFunctionCompleter: TbEditorCompleter;
 
   actionTriggers = scadaSymbolActionTriggers;
 

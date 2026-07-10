@@ -120,11 +120,23 @@ export type ScadaSymbolActionTrigger = 'click' | 'dblclick' | 'contextmenu';
 
 export const scadaSymbolActionTriggers: ScadaSymbolActionTrigger[] = ['click', 'dblclick', 'contextmenu'];
 
+// Max interval between clicks of a double click: a click action is deferred by this amount
+// when the same tag also has a dblclick action, so it can be canceled by the second click.
+const dblClickDelay = 300;
+
 export const scadaSymbolActionTriggerTranslations = new Map<ScadaSymbolActionTrigger, string>(
   [
     ['click', 'scada.tag.on-click-action'],
     ['dblclick', 'scada.tag.on-double-click-action'],
     ['contextmenu', 'scada.tag.on-right-click-action']
+  ]
+);
+
+export const scadaSymbolActionTriggerHelpIds = new Map<ScadaSymbolActionTrigger, string>(
+  [
+    ['click', 'scada/tag_click_action_fn'],
+    ['dblclick', 'scada/tag_dblclick_action_fn'],
+    ['contextmenu', 'scada/tag_contextmenu_action_fn']
   ]
 );
 
@@ -679,16 +691,29 @@ export class ScadaSymbolObject {
     for (const tag of this.metadata.tags) {
       if (tag.actions) {
         const elements = this.svgShape.find(`[tb\\:tag="${tag.tag}"]`);
+        const deferClick = !!tag.actions.click && !!tag.actions.dblclick;
         for (const trigger of Object.keys(tag.actions)) {
           const action = tag.actions[trigger];
           elements.forEach(element => {
             element.attr('cursor', 'pointer');
-            element.on(trigger, (event) => {
-              if (trigger === 'contextmenu') {
-                event.preventDefault();
-              }
-              action.action(this.context, element, event);
-            });
+            if (trigger === 'click' && deferClick) {
+              let clickTimeout: ReturnType<typeof setTimeout> = null;
+              element.on('click', (event: MouseEvent) => {
+                clearTimeout(clickTimeout);
+                if (event.detail === 1) {
+                  clickTimeout = setTimeout(() => {
+                    action.action(this.context, element, event);
+                  }, dblClickDelay);
+                }
+              });
+            } else {
+              element.on(trigger, (event) => {
+                if (trigger === 'contextmenu') {
+                  event.preventDefault();
+                }
+                action.action(this.context, element, event);
+              });
+            }
           });
         }
       }

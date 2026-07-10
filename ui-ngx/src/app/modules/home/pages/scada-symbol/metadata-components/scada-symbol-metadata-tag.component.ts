@@ -82,7 +82,7 @@ export class ScadaSymbolMetadataTagComponent implements ControlValueAccessor, On
   elementStateRenderFunctionCompleter: TbEditorCompleter;
 
   @Input()
-  clickActionFunctionCompleter: TbEditorCompleter;
+  actionFunctionCompleter: TbEditorCompleter;
 
   actionTriggers = scadaSymbolActionTriggers;
 
@@ -176,7 +176,7 @@ export class ScadaSymbolMetadataTagComponent implements ControlValueAccessor, On
         completer = this.elementStateRenderFunctionCompleter;
       } else {
         tagFunctionControl = this.tagFormGroup.get(this.actionControlName(tagFunctionType));
-        completer = this.clickActionFunctionCompleter;
+        completer = this.actionFunctionCompleter;
       }
       const scadaSymbolTagFunctionPanelPopover =  this.popoverService.displayPopover({
         trigger,

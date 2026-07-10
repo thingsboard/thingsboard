@@ -30,12 +30,13 @@ import { WidgetService } from '@core/http/widget.service';
 import { TbEditorCompleter } from '@shared/models/ace/completion.models';
 import { AceHighlightRules } from '@shared/models/ace/ace.models';
 import {
-  scadaSymbolClickActionHighlightRules,
+  scadaSymbolActionFunctionHighlightRules,
   scadaSymbolRenderFunctionHighlightRules
 } from '@home/pages/scada-symbol/scada-symbol-editor.models';
 import { JsFuncComponent } from '@shared/components/js-func.component';
 import {
   ScadaSymbolActionTrigger,
+  scadaSymbolActionTriggerHelpIds,
   scadaSymbolActionTriggerTranslations
 } from '@home/components/widget/lib/scada/scada-symbol.models';
 
@@ -105,8 +106,8 @@ export class ScadaSymbolMetadataTagFunctionPanelComponent implements OnInit, Aft
     } else {
       this.panelTitle = scadaSymbolActionTriggerTranslations.get(this.tagFunctionType);
       this.tagFunctionArgs = ['ctx', 'element', 'event'];
-      this.highlightRules = scadaSymbolClickActionHighlightRules;
-      this.tagFunctionHelpId = 'scada/tag_click_action_fn';
+      this.highlightRules = scadaSymbolActionFunctionHighlightRules;
+      this.tagFunctionHelpId = scadaSymbolActionTriggerHelpIds.get(this.tagFunctionType);
     }
   }
 
