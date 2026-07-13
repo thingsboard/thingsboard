@@ -15,9 +15,13 @@
     limitations under the License.
 
 -->
-<div class="tb-custom-action-pretty" tb-fullscreen [fullscreen]="fullscreen">
-  <div class="tb-action-expand-button flex flex-row items-center justify-end" [class.tb-fullscreen-editor]="fullscreen">
+<div class="tb-custom-action-pretty flex flex-col gap-2" tb-fullscreen [fullscreen]="fullscreen">
+  <div class="tb-action-expand-button flex flex-row items-center justify-end gap-1" [class.tb-fullscreen-editor]="fullscreen">
+    @if (helpId) {
+      <div [tb-help-popup]="helpId" [tb-help-popup-placement]="'bottomRight'" [tb-help-popup-style]="fullscreen ? {width: '900px'} : {maxWidth: '60vw'}"></div>
+    }
     <button mat-stroked-button
+            type="button"
             matTooltip="{{ 'widget.toggle-fullscreen' | translate }}"
             matTooltipPosition="above"
             (click)="toggleFullScreen()">
@@ -29,7 +33,6 @@
     @if (!fullscreen) {
         <tb-custom-action-pretty-resources-tabs [hasCustomFunction]="true"
                                                 [fullscreen]="fullscreen"
-                                                [helpId]="helpId"
                                                 [action]="action" (actionUpdated)="onActionUpdated($event ? true : false)">
         </tb-custom-action-pretty-resources-tabs>
     } @else {
@@ -37,7 +40,6 @@
         <div #leftPanel class="tb-split tb-content left-panel">
           <tb-custom-action-pretty-resources-tabs [hasCustomFunction]="false"
                                                   [fullscreen]="fullscreen"
-                                                  [helpId]="helpId"
                                                   [action]="action" (actionUpdated)="onActionUpdated($event ? true : false)">
           </tb-custom-action-pretty-resources-tabs>
         </div>
@@ -51,9 +53,7 @@
             [disableUndefinedCheck]="true"
             [validationArgs]="[]"
             [editorCompleter]="customPrettyActionEditorCompleter"
-            functionTitle="{{ 'widget-action.custom-pretty-function' | translate }}"
-            [helpId]="helpId"
-            [helpPopupStyle]="{width: '900px'}">
+            functionTitle="{{ 'widget-action.custom-pretty-function' | translate }}">
           </tb-js-func>
         </div>
       </div>

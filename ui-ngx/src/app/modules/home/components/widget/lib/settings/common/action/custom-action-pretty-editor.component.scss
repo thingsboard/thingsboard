@@ -51,7 +51,7 @@
     }
 
     .right-panel {
-      padding: 8px 0 0;
+      padding: 0;
     }
 
     .tb-js-func {
@@ -138,11 +138,15 @@
   .tb-action-expand-button {
     position: absolute;
     right: 14px;
+    top: 8px;
+    height: 48px;
     z-index: 2;
 
     &.tb-fullscreen-editor {
       position: relative;
       right: 0;
+      top: 0;
+      height: auto;
     }
   }
 
